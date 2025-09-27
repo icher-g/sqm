@@ -1,0 +1,36 @@
+package io.cherlabs.sqlmodel.render.ansi;
+
+import io.cherlabs.sqlmodel.core.Column;
+import io.cherlabs.sqlmodel.render.DefaultSqlWriter;
+import io.cherlabs.sqlmodel.render.ansi.spi.AnsiRenderContext;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class ExpressionColumnRendererTest {
+
+    @Test
+    @DisplayName("CASE WHEN C1 IS NULL THEN 1 ELSE 0 END AS Alias")
+    void render_expr_with_alias() {
+        var column = Column.expr("CASE WHEN C1 IS NULL THEN 1 ELSE 0 END").as("Alias");
+        var renderer = new ExpressionColumnRenderer();
+        var context = new AnsiRenderContext();
+        var writer = new DefaultSqlWriter(context);
+        renderer.render(column, context, writer);
+        assertEquals("CASE WHEN C1 IS NULL THEN 1 ELSE 0 END AS Alias", writer.toText(List.of()).sql());
+    }
+
+    @Test
+    @DisplayName("CASE WHEN C1 IS NULL THEN 1 ELSE 0 END AS Order")
+    void render_expr_with_aliasAsKeyword() {
+        var column = Column.expr("CASE WHEN C1 IS NULL THEN 1 ELSE 0 END").as("Order");
+        var renderer = new ExpressionColumnRenderer();
+        var context = new AnsiRenderContext();
+        var writer = new DefaultSqlWriter(context);
+        renderer.render(column, context, writer);
+        assertEquals("CASE WHEN C1 IS NULL THEN 1 ELSE 0 END AS \"Order\"", writer.toText(List.of()).sql());
+    }
+}

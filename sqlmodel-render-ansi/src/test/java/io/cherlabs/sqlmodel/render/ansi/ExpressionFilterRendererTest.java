@@ -1,0 +1,25 @@
+package io.cherlabs.sqlmodel.render.ansi;
+
+import io.cherlabs.sqlmodel.core.Filter;
+import io.cherlabs.sqlmodel.render.DefaultSqlWriter;
+import io.cherlabs.sqlmodel.render.ansi.spi.AnsiRenderContext;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class ExpressionFilterRendererTest {
+
+    @Test
+    @DisplayName("CASE WHEN C1 IS NULL THEN 1 ELSE 0 END == 1")
+    void render_expr() {
+        var expression = Filter.expr("CASE WHEN C1 IS NULL THEN 1 ELSE 0 END == 1");
+        var renderer = new ExpressionFilterRenderer();
+        var context = new AnsiRenderContext();
+        var writer = new DefaultSqlWriter(context);
+        renderer.render(expression, context, writer);
+        assertEquals("CASE WHEN C1 IS NULL THEN 1 ELSE 0 END == 1", writer.toText(List.of()).sql());
+    }
+}
