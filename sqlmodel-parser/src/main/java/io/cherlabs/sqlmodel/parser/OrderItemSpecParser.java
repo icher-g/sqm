@@ -3,11 +3,11 @@ package io.cherlabs.sqlmodel.parser;
 import io.cherlabs.sqlmodel.core.Column;
 import io.cherlabs.sqlmodel.core.Direction;
 import io.cherlabs.sqlmodel.core.Nulls;
-import io.cherlabs.sqlmodel.core.OrderItem;
+import io.cherlabs.sqlmodel.core.Order;
 import io.cherlabs.sqlmodel.parser.core.Cursor;
 import io.cherlabs.sqlmodel.parser.core.TokenType;
 
-public class OrderItemSpecParser implements SpecParser<OrderItem> {
+public class OrderItemSpecParser implements SpecParser<Order> {
 
     private static String unquoteIfQuoted(String s) {
         int n = s.length();
@@ -19,12 +19,12 @@ public class OrderItemSpecParser implements SpecParser<OrderItem> {
     }
 
     @Override
-    public Class<OrderItem> targetType() {
-        return OrderItem.class;
+    public Class<Order> targetType() {
+        return Order.class;
     }
 
     @Override
-    public ParseResult<OrderItem> parse(Cursor cur) {
+    public ParseResult<Order> parse(Cursor cur) {
         // 1) Find end of the column-spec portion (before ASC|DESC|NULLS|COLLATE outside parens)
         final int colEnd = cur.find(TokenType.ASC, TokenType.DESC, TokenType.NULLS, TokenType.COLLATE, TokenType.EOF);
         if (colEnd <= 0) {
@@ -76,6 +76,6 @@ public class OrderItemSpecParser implements SpecParser<OrderItem> {
             return ParseResult.error("Unexpected token in ORDER BY item: " + cur.peek().lexeme());
         }
 
-        return ParseResult.ok(new OrderItem(column, direction, nulls, collate));
+        return ParseResult.ok(new Order(column, direction, nulls, collate));
     }
 }

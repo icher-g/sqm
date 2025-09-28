@@ -35,7 +35,36 @@ public final class QueryBuilder {
         return this;
     }
 
-    public QueryBuilder join(String joinSpec) {
+    public QueryBuilder innerJoin(String joinSpec) {
+        joinSpec = appendJoin(Join.JoinType.Inner, joinSpec);
+        var join = create(Join.class, joinSpec);
+        query.join(join);
+        return this;
+    }
+
+    public QueryBuilder leftJoin(String joinSpec) {
+        joinSpec = appendJoin(Join.JoinType.Left, joinSpec);
+        var join = create(Join.class, joinSpec);
+        query.join(join);
+        return this;
+    }
+
+    public QueryBuilder rightJoin(String joinSpec) {
+        joinSpec = appendJoin(Join.JoinType.Right, joinSpec);
+        var join = create(Join.class, joinSpec);
+        query.join(join);
+        return this;
+    }
+
+    public QueryBuilder fullJoin(String joinSpec) {
+        joinSpec = appendJoin(Join.JoinType.Full, joinSpec);
+        var join = create(Join.class, joinSpec);
+        query.join(join);
+        return this;
+    }
+
+    public QueryBuilder crossJoin(String joinSpec) {
+        joinSpec = appendJoin(Join.JoinType.Cross, joinSpec);
         var join = create(Join.class, joinSpec);
         query.join(join);
         return this;
@@ -54,12 +83,12 @@ public final class QueryBuilder {
     }
 
     public QueryBuilder groupBy(String... itemSpecs) {
-        add(GroupItem.class, this.query.groupBy(), itemSpecs);
+        add(Group.class, this.query.groupBy(), itemSpecs);
         return this;
     }
 
     public QueryBuilder orderBy(String... itemSpecs) {
-        add(OrderItem.class, this.query.orderBy(), itemSpecs);
+        add(Order.class, this.query.orderBy(), itemSpecs);
         return this;
     }
 
@@ -95,5 +124,14 @@ public final class QueryBuilder {
             throw new IllegalArgumentException(result.problems().toString());
         }
         return result.value();
+    }
+
+    private static String appendJoin(Join.JoinType joinType, String joinSpec) {
+        var joinStr = joinType.toString().toUpperCase();
+        var startsWith = joinSpec.regionMatches(true, 0, joinStr, 0, joinStr.length());
+        if (!startsWith) {
+            return joinStr + " JOIN " + joinSpec;
+        }
+        return joinSpec;
     }
 }

@@ -17,8 +17,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class QueryBuilderTest {
 
-    private static final String DIALECT = "ansi";
-
     @Test
     @DisplayName("Builds a simple SELECT ... FROM ... WHERE ... JOIN ... GROUP BY ... ORDER BY with specs")
     void end_to_end_with_specs() {
@@ -27,7 +25,7 @@ class QueryBuilderTest {
         qb.select("p.id", "lower(name) lname")
                 .from("sales.products p")
                 .where("status IN ('A','B')")
-                .join("inner join dep d on p.dept_id = d.id")
+                .innerJoin("dep d on p.dept_id = d.id")
                 .groupBy("p.id")
                 .orderBy("lname")
                 .limit(10);
@@ -78,7 +76,7 @@ class QueryBuilderTest {
         QueryBuilder qb = QueryBuilder.newBuilder();
 
         qb.from("products p")
-                .join("right join dep d on p.dept_id = d.id");
+                .rightJoin("dep d on p.dept_id = d.id");
 
         Query q = qb.build();
         assertEquals(1, q.joins().size());
@@ -95,7 +93,7 @@ class QueryBuilderTest {
         QueryBuilder qb = QueryBuilder.newBuilder();
 
         qb.from("products p")
-                .join("full join dep d on p.dept_id = d.id");
+                .fullJoin("dep d on p.dept_id = d.id");
 
         Query q = qb.build();
         assertEquals(1, q.joins().size());
@@ -112,7 +110,7 @@ class QueryBuilderTest {
         QueryBuilder qb = QueryBuilder.newBuilder();
 
         qb.from("products p")
-                .join("cross join regions r");
+                .crossJoin("regions r");
 
         Query q = qb.build();
         assertEquals(1, q.joins().size());
@@ -129,9 +127,9 @@ class QueryBuilderTest {
         QueryBuilder qb = QueryBuilder.newBuilder();
 
         qb.from("products p")
-                .join("inner join dep d on p.dept_id = d.id")
-                .join("left join prices pr on p.id = pr.product_id")
-                .join("right join stock s on p.id = s.product_id");
+                .innerJoin("inner join dep d on p.dept_id = d.id")
+                .leftJoin("left join prices pr on p.id = pr.product_id")
+                .rightJoin("right join stock s on p.id = s.product_id");
 
         Query q = qb.build();
         assertEquals(3, q.joins().size());

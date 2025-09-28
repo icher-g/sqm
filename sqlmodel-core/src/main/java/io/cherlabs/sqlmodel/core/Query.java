@@ -6,8 +6,8 @@ public class Query implements Entity {
 
     private final List<Column> columns;
     private final List<Join> joins;
-    private final List<GroupItem> groupBy;
-    private final List<OrderItem> orderBy;
+    private final List<Group> groupBy;
+    private final List<Order> orderBy;
     private Table table;
     private Filter where;
     private Filter having;
@@ -68,30 +68,30 @@ public class Query implements Entity {
         return this;
     }
 
-    public List<GroupItem> groupBy() {
+    public List<Group> groupBy() {
         return groupBy;
     }
 
-    public Query groupBy(GroupItem... items) {
+    public Query groupBy(Group... items) {
         this.groupBy.addAll(List.of(items));
         return this;
     }
 
-    public Query groupBy(List<GroupItem> items) {
+    public Query groupBy(List<Group> items) {
         this.groupBy.addAll(items);
         return this;
     }
 
-    public List<OrderItem> orderBy() {
+    public List<Order> orderBy() {
         return orderBy;
     }
 
-    public Query orderBy(OrderItem... items) {
+    public Query orderBy(Order... items) {
         this.orderBy.addAll(List.of(items));
         return this;
     }
 
-    public Query orderBy(List<OrderItem> items) {
+    public Query orderBy(List<Order> items) {
         this.orderBy.addAll(items);
         return this;
     }

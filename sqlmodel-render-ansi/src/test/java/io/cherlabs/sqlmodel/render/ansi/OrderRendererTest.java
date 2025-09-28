@@ -3,7 +3,7 @@ package io.cherlabs.sqlmodel.render.ansi;
 import io.cherlabs.sqlmodel.core.Column;
 import io.cherlabs.sqlmodel.core.Direction;
 import io.cherlabs.sqlmodel.core.Nulls;
-import io.cherlabs.sqlmodel.core.OrderItem;
+import io.cherlabs.sqlmodel.core.Order;
 import io.cherlabs.sqlmodel.render.*;
 import io.cherlabs.sqlmodel.render.spi.*;
 import org.junit.jupiter.api.DisplayName;
@@ -22,9 +22,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * - If your project already registers a column renderer in the dialect,
  * you can drop TestRenderers and wire the real one.
  */
-class OrderItemRendererTest {
+class OrderRendererTest {
 
-    private final Renderer<OrderItem> renderer = new OrderItemRenderer();
+    private final Renderer<Order> renderer = new OrderItemRenderer();
 
     // ---------- Helpers ----------
 
@@ -182,7 +182,7 @@ class OrderItemRendererTest {
         };
     }
 
-    private static String renderToSql(Renderer<OrderItem> r, OrderItem item, RenderContext rc) {
+    private static String renderToSql(Renderer<Order> r, Order item, RenderContext rc) {
         SqlWriter w = new DefaultSqlWriter(rc);
         r.render(item, rc, w);
         return w.toText(List.of()).sql();
@@ -200,7 +200,7 @@ class OrderItemRendererTest {
         var d = dialect(passThruQuoter(), explicitNulls());
         var rc = ctx(d);
 
-        var item = new OrderItem(col("t", "c"), Direction.ASC, Nulls.FIRST, "de_CH");
+        var item = new Order(col("t", "c"), Direction.ASC, Nulls.FIRST, "de_CH");
         String sql = renderToSql(renderer, item, rc);
 
         // must include pieces in the right order
@@ -222,7 +222,7 @@ class OrderItemRendererTest {
         var rc = ctx(d);
 
         // DEFAULT + DESC -> dialect says FIRST
-        var item = new OrderItem(col("t", "c"), Direction.DESC, Nulls.DEFAULT, null);
+        var item = new Order(col("t", "c"), Direction.DESC, Nulls.DEFAULT, null);
         String sql = renderToSql(renderer, item, rc);
 
         assertTrue(sql.contains(" DESC"), "should render DESC");
@@ -236,7 +236,7 @@ class OrderItemRendererTest {
         var rc = ctx(d);
 
         // no direction -> renderer treats as ASC for default mapping -> LAST
-        var item = new OrderItem(col("t", "c"), null, Nulls.DEFAULT, null);
+        var item = new Order(col("t", "c"), null, Nulls.DEFAULT, null);
         String sql = renderToSql(renderer, item, rc);
 
         assertFalse(sql.contains(" ASC"), "direction unspecified -> no ASC printed");
@@ -249,7 +249,7 @@ class OrderItemRendererTest {
         var d = dialect(passThruQuoter(), noExplicitNulls());
         var rc = ctx(d);
 
-        var item = new OrderItem(col("t", "c"), Direction.ASC, Nulls.FIRST, null);
+        var item = new Order(col("t", "c"), Direction.ASC, Nulls.FIRST, null);
         String sql = renderToSql(renderer, item, rc);
 
         assertTrue(sql.contains(" ASC"), "should render ASC");
@@ -262,7 +262,7 @@ class OrderItemRendererTest {
         var d = dialect(quotingHyphenQuoter(), explicitNulls());
         var rc = ctx(d);
 
-        var item = new OrderItem(col("t", "c"), null, null, "de-CH");
+        var item = new Order(col("t", "c"), null, null, "de-CH");
         String sql = renderToSql(renderer, item, rc);
 
         assertTrue(sql.contains(" COLLATE \"de-CH\""), "collation with hyphen should be quoted by quoter");

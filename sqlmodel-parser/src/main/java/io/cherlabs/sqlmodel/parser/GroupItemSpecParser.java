@@ -1,9 +1,9 @@
 package io.cherlabs.sqlmodel.parser;
 
-import io.cherlabs.sqlmodel.core.GroupItem;
+import io.cherlabs.sqlmodel.core.Group;
 import io.cherlabs.sqlmodel.parser.core.Cursor;
 
-public class GroupItemSpecParser implements SpecParser<GroupItem> {
+public class GroupItemSpecParser implements SpecParser<Group> {
     private static boolean isPositiveInteger(String s) {
         // Fast path: all digits, no sign, no decimal.
         for (int i = 0, n = s.length(); i < n; i++) {
@@ -14,12 +14,12 @@ public class GroupItemSpecParser implements SpecParser<GroupItem> {
     }
 
     @Override
-    public Class<GroupItem> targetType() {
-        return GroupItem.class;
+    public Class<Group> targetType() {
+        return Group.class;
     }
 
     @Override
-    public ParseResult<GroupItem> parse(Cursor cur) {
+    public ParseResult<Group> parse(Cursor cur) {
         // Positional GROUP BY: "1", "2", ...
         // SQL allows positive 1-based ordinals.
         if (isPositiveInteger(cur.peek().lexeme())) {
@@ -27,7 +27,7 @@ public class GroupItemSpecParser implements SpecParser<GroupItem> {
             if (pos <= 0) {
                 return ParseResult.error("GROUP BY position must be a positive integer", pos);
             }
-            return ParseResult.ok(GroupItem.ofOrdinal(pos));
+            return ParseResult.ok(Group.ofOrdinal(pos));
         }
 
         // Otherwise: delegate to the column parser
@@ -35,6 +35,6 @@ public class GroupItemSpecParser implements SpecParser<GroupItem> {
         if (!result.ok()) {
             return ParseResult.error(result);
         }
-        return ParseResult.ok(GroupItem.of(result.value()));
+        return ParseResult.ok(Group.of(result.value()));
     }
 }

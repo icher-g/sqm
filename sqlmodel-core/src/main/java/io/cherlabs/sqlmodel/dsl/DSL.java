@@ -278,32 +278,32 @@ public final class DSL {
 
     /* ========================= GROUP BY / ORDER BY ========================= */
 
-    public static GroupItem g(Column col) {
-        return GroupItem.of(col);
+    public static Group g(Column col) {
+        return Group.of(col);
     }
 
-    public static GroupItem g(int ordinal) {
-        return GroupItem.ofOrdinal(ordinal);
+    public static Group g(int ordinal) {
+        return Group.ofOrdinal(ordinal);
     }
 
-    public static OrderItem o(Column col) {
-        return OrderItem.of(col);
+    public static Order o(Column col) {
+        return Order.of(col);
     }
 
-    public static OrderItem asc(Column col) {
-        return OrderItem.of(col).asc();
+    public static Order asc(Column col) {
+        return Order.of(col).asc();
     }
 
-    public static OrderItem desc(Column col) {
-        return OrderItem.of(col).desc();
+    public static Order desc(Column col) {
+        return Order.of(col).desc();
     }
 
-    public static OrderItem nulls(OrderItem oi, Nulls n) {
-        return new OrderItem(oi.column(), oi.direction(), n, oi.collate());
+    public static Order nulls(Order oi, Nulls n) {
+        return new Order(oi.column(), oi.direction(), n, oi.collate());
     }
 
-    public static OrderItem collate(OrderItem oi, String locale) {
-        return new OrderItem(oi.column(), oi.direction(), oi.nulls(), locale);
+    public static Order collate(Order oi, String locale) {
+        return new Order(oi.column(), oi.direction(), oi.nulls(), locale);
     }
 
     /* ========================= Query ========================= */
@@ -340,19 +340,19 @@ public final class DSL {
         return q.join(joins);
     }
 
-    public static Query groupBy(Query q, GroupItem... items) {
+    public static Query groupBy(Query q, Group... items) {
         return q.groupBy(List.of(items));
     }
 
-    public static Query groupBy(Query q, List<GroupItem> items) {
+    public static Query groupBy(Query q, List<Group> items) {
         return q.groupBy(items);
     }
 
-    public static Query orderBy(Query q, OrderItem... items) {
+    public static Query orderBy(Query q, Order... items) {
         return q.orderBy(List.of(items));
     }
 
-    public static Query orderBy(Query q, List<OrderItem> items) {
+    public static Query orderBy(Query q, List<Order> items) {
         return q.orderBy(items);
     }
 

@@ -30,8 +30,8 @@ public class QueryRendererTest {
         return Table.of(name);
     }
 
-    private static OrderItem asc(Column c) {
-        return OrderItem.of(c).asc();
+    private static Order asc(Column c) {
+        return Order.of(c).asc();
     }
 
     private static String toSql(Renderer<Query> r, Query q, RenderContext ctx) {

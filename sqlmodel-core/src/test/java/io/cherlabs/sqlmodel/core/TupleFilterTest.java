@@ -15,7 +15,7 @@ public class TupleFilterTest {
                 .tuple(List.of(Column.of("a"), Column.of("b")))
                 .in(List.of(List.of(1, 2), List.of(3, 4)));
 
-        assertEquals(ColumnFilter.Operator.In, tcf.operator());
+        assertEquals(TupleFilter.Operator.In, tcf.operator());
 
         var v = tcf.valuesAs(Values.Tuples.class);
         var rows = v.rows();

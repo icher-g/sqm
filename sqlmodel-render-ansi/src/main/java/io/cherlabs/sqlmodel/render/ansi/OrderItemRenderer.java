@@ -2,14 +2,14 @@ package io.cherlabs.sqlmodel.render.ansi;
 
 import io.cherlabs.sqlmodel.core.Direction;
 import io.cherlabs.sqlmodel.core.Nulls;
-import io.cherlabs.sqlmodel.core.OrderItem;
+import io.cherlabs.sqlmodel.core.Order;
 import io.cherlabs.sqlmodel.render.Renderer;
 import io.cherlabs.sqlmodel.render.SqlWriter;
 import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
-public class OrderItemRenderer implements Renderer<OrderItem> {
+public class OrderItemRenderer implements Renderer<Order> {
     @Override
-    public void render(OrderItem entity, RenderContext ctx, SqlWriter w) {
+    public void render(Order entity, RenderContext ctx, SqlWriter w) {
         // expression (column or function) — delegate to its renderer
         w.append(entity.column());
 
