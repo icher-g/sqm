@@ -7,7 +7,7 @@ import io.cherlabs.sqlmodel.core.Order;
 import io.cherlabs.sqlmodel.parser.core.Cursor;
 import io.cherlabs.sqlmodel.parser.core.TokenType;
 
-public class OrderItemSpecParser implements SpecParser<Order> {
+public class OrderSpecParser implements SpecParser<Order> {
 
     private static String unquoteIfQuoted(String s) {
         int n = s.length();

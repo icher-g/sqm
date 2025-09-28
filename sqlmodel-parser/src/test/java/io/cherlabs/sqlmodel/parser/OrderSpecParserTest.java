@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class OrderSpecParserTest {
 
-    private final OrderItemSpecParser parser = new OrderItemSpecParser();
+    private final OrderSpecParser parser = new OrderSpecParser();
 
     @Nested
     @DisplayName("Happy path")

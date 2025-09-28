@@ -18,7 +18,7 @@ public final class SpecParsers {
                 .register(Filter.class, new FilterSpecParser())
                 .register(Join.class, new JoinSpecParser())
                 .register(Table.class, new TableSpecParser())
-                .register(Order.class, new OrderItemSpecParser())
-                .register(Group.class, new GroupItemSpecParser());
+                .register(Order.class, new OrderSpecParser())
+                .register(Group.class, new GroupSpecParser());
     }
 }
