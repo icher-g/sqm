@@ -3,7 +3,7 @@ package io.cherlabs.sqlmodel.core;
 import java.util.Objects;
 
 public record Group(Column column, Integer ordinal) implements Entity {
-    public static Group of(Column expr) {
+    public static Group by(Column expr) {
         return new Group(Objects.requireNonNull(expr), null);
     }
 

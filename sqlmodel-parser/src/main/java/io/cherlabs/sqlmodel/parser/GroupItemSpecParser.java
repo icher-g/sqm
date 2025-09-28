@@ -35,6 +35,6 @@ public class GroupItemSpecParser implements SpecParser<Group> {
         if (!result.ok()) {
             return ParseResult.error(result);
         }
-        return ParseResult.ok(Group.of(result.value()));
+        return ParseResult.ok(Group.by(result.value()));
     }
 }

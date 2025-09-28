@@ -1,7 +1,7 @@
 package io.cherlabs.sqlmodel.render.ansi;
 
 import io.cherlabs.sqlmodel.core.Column;
-import io.cherlabs.sqlmodel.core.Query;
+import io.cherlabs.sqlmodel.core.SelectQuery;
 import io.cherlabs.sqlmodel.core.Table;
 import io.cherlabs.sqlmodel.render.DefaultSqlWriter;
 import io.cherlabs.sqlmodel.render.ansi.spi.AnsiRenderContext;
@@ -10,14 +10,14 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class QueryColumnRendererTest {
 
     @Test
     @DisplayName("(SELECT c1 FROM t) AS a")
     void render_query_as_column() {
-        var query = new Query();
+        var query = new SelectQuery();
         query.select().add(Column.of("c1"));
         query.from(Table.of("t"));
         var column = Column.of(query).as("a");

@@ -13,15 +13,15 @@ public class AnsiNullSorting implements NullSorting {
     @Override
     public String keyword(Nulls n) {
         return switch (n) {
-            case FIRST -> "NULLS FIRST";
-            case LAST -> "NULLS LAST";
-            case DEFAULT -> ""; // caller should omit when DEFAULT
+            case First -> "NULLS FIRST";
+            case Last -> "NULLS LAST";
+            case Default -> ""; // caller should omit when DEFAULT
         };
     }
 
     @Override
     public Nulls defaultFor(Direction dir) {
         // Typical SQL engine behavior adopted by many systems:
-        return (dir == Direction.ASC) ? Nulls.LAST : Nulls.FIRST;
+        return (dir == Direction.Asc) ? Nulls.Last : Nulls.First;
     }
 }

@@ -36,7 +36,7 @@ class OrderSpecParserTest {
             assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
             Order oi = res.value();
             assertNotNull(oi.column());         // Column is parsed by ColumnSpecParser
-            assertEquals(Direction.DESC, oi.direction());
+            assertEquals(Direction.Desc, oi.direction());
             assertNull(oi.nulls());
             assertNull(oi.collate());
         }
@@ -48,8 +48,8 @@ class OrderSpecParserTest {
             assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
             Order oi = res.value();
             assertNotNull(oi.column());         // should be FunctionColumn under the hood
-            assertEquals(Direction.ASC, oi.direction());
-            assertEquals(Nulls.LAST, oi.nulls());
+            assertEquals(Direction.Asc, oi.direction());
+            assertEquals(Nulls.Last, oi.nulls());
             assertNull(oi.collate());
         }
 
@@ -81,8 +81,8 @@ class OrderSpecParserTest {
             assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
             Order oi = res.value();
             assertNotNull(oi.column());
-            assertEquals(Direction.DESC, oi.direction());
-            assertEquals(Nulls.FIRST, oi.nulls());
+            assertEquals(Direction.Desc, oi.direction());
+            assertEquals(Nulls.First, oi.nulls());
             assertEquals("de-CH", oi.collate());
         }
     }

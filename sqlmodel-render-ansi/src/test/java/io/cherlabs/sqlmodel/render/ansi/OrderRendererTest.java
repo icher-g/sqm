@@ -150,15 +150,15 @@ class OrderRendererTest {
             @Override
             public String keyword(Nulls n) {
                 return switch (n) {
-                    case FIRST -> "NULLS FIRST";
-                    case LAST -> "NULLS LAST";
-                    case DEFAULT -> ""; // won't be used directly; DEFAULT is mapped via defaultFor(...)
+                    case First -> "NULLS FIRST";
+                    case Last -> "NULLS LAST";
+                    case Default -> ""; // won't be used directly; DEFAULT is mapped via defaultFor(...)
                 };
             }
 
             @Override
             public Nulls defaultFor(Direction dir) {
-                return dir == Direction.DESC ? Nulls.FIRST : Nulls.LAST; // typical
+                return dir == Direction.Desc ? Nulls.First : Nulls.Last; // typical
             }
         };
     }
@@ -177,7 +177,7 @@ class OrderRendererTest {
 
             @Override
             public Nulls defaultFor(Direction dir) {
-                return Nulls.LAST;
+                return Nulls.Last;
             }
         };
     }
@@ -200,7 +200,7 @@ class OrderRendererTest {
         var d = dialect(passThruQuoter(), explicitNulls());
         var rc = ctx(d);
 
-        var item = new Order(col("t", "c"), Direction.ASC, Nulls.FIRST, "de_CH");
+        var item = new Order(col("t", "c"), Direction.Asc, Nulls.First, "de_CH");
         String sql = renderToSql(renderer, item, rc);
 
         // must include pieces in the right order
@@ -222,7 +222,7 @@ class OrderRendererTest {
         var rc = ctx(d);
 
         // DEFAULT + DESC -> dialect says FIRST
-        var item = new Order(col("t", "c"), Direction.DESC, Nulls.DEFAULT, null);
+        var item = new Order(col("t", "c"), Direction.Desc, Nulls.Default, null);
         String sql = renderToSql(renderer, item, rc);
 
         assertTrue(sql.contains(" DESC"), "should render DESC");
@@ -236,7 +236,7 @@ class OrderRendererTest {
         var rc = ctx(d);
 
         // no direction -> renderer treats as ASC for default mapping -> LAST
-        var item = new Order(col("t", "c"), null, Nulls.DEFAULT, null);
+        var item = new Order(col("t", "c"), null, Nulls.Default, null);
         String sql = renderToSql(renderer, item, rc);
 
         assertFalse(sql.contains(" ASC"), "direction unspecified -> no ASC printed");
@@ -249,7 +249,7 @@ class OrderRendererTest {
         var d = dialect(passThruQuoter(), noExplicitNulls());
         var rc = ctx(d);
 
-        var item = new Order(col("t", "c"), Direction.ASC, Nulls.FIRST, null);
+        var item = new Order(col("t", "c"), Direction.Asc, Nulls.First, null);
         String sql = renderToSql(renderer, item, rc);
 
         assertTrue(sql.contains(" ASC"), "should render ASC");
