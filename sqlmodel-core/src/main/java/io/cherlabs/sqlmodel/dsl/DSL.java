@@ -65,7 +65,7 @@ public final class DSL {
         return Column.of(name).from(table).as(alias);
     }
 
-    public static QueryColumn c(Query subquery) {
+    public static QueryColumn c(Query<?> subquery) {
         return Column.of(subquery);
     }
 
@@ -135,7 +135,7 @@ public final class DSL {
         return Values.range(min, max);
     }
 
-    public static Values.Subquery subq(Query q) {
+    public static Values.Subquery subq(Query<?> q) {
         return Values.subquery(q);
     }
 
@@ -279,7 +279,7 @@ public final class DSL {
     /* ========================= GROUP BY / ORDER BY ========================= */
 
     public static Group g(Column col) {
-        return Group.of(col);
+        return Group.by(col);
     }
 
     public static Group g(int ordinal) {
@@ -287,15 +287,15 @@ public final class DSL {
     }
 
     public static Order o(Column col) {
-        return Order.of(col);
+        return Order.by(col);
     }
 
     public static Order asc(Column col) {
-        return Order.of(col).asc();
+        return Order.by(col).asc();
     }
 
     public static Order desc(Column col) {
-        return Order.of(col).desc();
+        return Order.by(col).desc();
     }
 
     public static Order nulls(Order oi, Nulls n) {
@@ -308,63 +308,63 @@ public final class DSL {
 
     /* ========================= Query ========================= */
 
-    public static Query q() {
-        return new Query();
+    public static SelectQuery q() {
+        return new SelectQuery();
     }
 
-    public static Query select(Query q, Column... cols) {
+    public static Query<?> select(Query<?> q, Column... cols) {
         return q.select(List.of(cols));
     }
 
-    public static Query select(Query q, List<Column> cols) {
+    public static Query<?> select(Query<?> q, List<Column> cols) {
         return q.select(cols);
     }
 
-    public static Query from(Query q, Table table) {
+    public static Query<?> from(Query<?> q, Table table) {
         return q.from(table);
     }
 
-    public static Query where(Query q, Filter filter) {
+    public static Query<?> where(Query<?> q, Filter filter) {
         return q.where(filter);
     }
 
-    public static Query having(Query q, Filter filter) {
+    public static Query<?> having(Query<?> q, Filter filter) {
         return q.having(filter);
     }
 
-    public static Query join(Query q, Join... joins) {
+    public static Query<?> join(Query<?> q, Join... joins) {
         return q.join(List.of(joins));
     }
 
-    public static Query join(Query q, List<Join> joins) {
+    public static Query<?> join(Query<?> q, List<Join> joins) {
         return q.join(joins);
     }
 
-    public static Query groupBy(Query q, Group... items) {
+    public static Query<?> groupBy(Query<?> q, Group... items) {
         return q.groupBy(List.of(items));
     }
 
-    public static Query groupBy(Query q, List<Group> items) {
+    public static Query<?> groupBy(Query<?> q, List<Group> items) {
         return q.groupBy(items);
     }
 
-    public static Query orderBy(Query q, Order... items) {
+    public static Query<?> orderBy(Query<?> q, Order... items) {
         return q.orderBy(List.of(items));
     }
 
-    public static Query orderBy(Query q, List<Order> items) {
+    public static Query<?> orderBy(Query<?> q, List<Order> items) {
         return q.orderBy(items);
     }
 
-    public static Query distinct(Query q) {
+    public static Query<?> distinct(Query<?> q) {
         return q.distinct(true);
     }
 
-    public static Query limit(Query q, long limit) {
+    public static Query<?> limit(Query<?> q, long limit) {
         return q.limit(limit);
     }
 
-    public static Query offset(Query q, long offset) {
+    public static Query<?> offset(Query<?> q, long offset) {
         return q.offset(offset);
     }
 }

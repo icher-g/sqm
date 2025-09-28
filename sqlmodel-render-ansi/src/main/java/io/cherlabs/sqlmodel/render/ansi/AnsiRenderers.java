@@ -1,5 +1,6 @@
 package io.cherlabs.sqlmodel.render.ansi;
 
+import io.cherlabs.sqlmodel.core.WithQuery;
 import io.cherlabs.sqlmodel.core.*;
 import io.cherlabs.sqlmodel.render.repos.DefaultRenderersRepository;
 import io.cherlabs.sqlmodel.render.spi.RenderersRepository;
@@ -18,6 +19,7 @@ public final class AnsiRenderers {
                 .register(NamedColumn.class, new NamedColumnRenderer())
                 .register(ExpressionColumn.class, new ExpressionColumnRenderer())
                 .register(QueryColumn.class, new QueryColumnRenderer())
+                .register(SelectQuery.class, new QueryRenderer())
                 .register(Query.class, new QueryRenderer())
                 .register(ColumnFilter.class, new ColumnFilterRenderer())
                 .register(TupleFilter.class, new TupleFilterRenderer())
@@ -39,6 +41,9 @@ public final class AnsiRenderers {
                 .register(Values.Subquery.class, new ValuesSubqueryRenderer())
                 .register(Values.Tuples.class, new ValuesTuplesRenderer())
                 .register(Values.Column.class, new ValuesColumnRenderer())
-                .register(CaseColumn.class, new CaseColumnRenderer());
+                .register(CaseColumn.class, new CaseColumnRenderer())
+                .register(CompositeQuery.class, new CompositeQueryRenderer())
+                .register(WithQuery.class, new WithQueryRenderer())
+                .register(CteQuery.class, new CteQueryRenderer());
     }
 }

@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class GroupSpecParserTest {
 
-    private final GroupItemSpecParser parser = new GroupItemSpecParser();
+    private final GroupSpecParser parser = new GroupSpecParser();
 
     // ---------- Positional (GROUP BY 1, 2, ...) ----------
 

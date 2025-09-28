@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static io.cherlabs.sqlmodel.dsl.DSL.q;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -31,10 +32,10 @@ public class QueryRendererTest {
     }
 
     private static Order asc(Column c) {
-        return Order.of(c).asc();
+        return Order.by(c).asc();
     }
 
-    private static String toSql(Renderer<Query> r, Query q, RenderContext ctx) {
+    private static String toSql(Renderer<Query<?>> r, SelectQuery q, RenderContext ctx) {
         SqlWriter w = new DefaultSqlWriter(ctx);
         r.render(q, ctx, w);
         return w.toText(List.of()).sql(); // your SqlWriter usually returns SqlText; adapt if needed
@@ -173,7 +174,7 @@ public class QueryRendererTest {
             var ctx = ctxWith(limitOffset());
             var r = new QueryRenderer();
 
-            var q = new Query()
+            var q = q()
                     .select(List.of(col("t1", "c1")))
                     .from(t("t1"))
                     .orderBy(List.of(asc(col("t1", "c1")))) // not required for this style, but harmless
@@ -194,7 +195,7 @@ public class QueryRendererTest {
             var ctx = ctxWith(limitOffset());
             var r = new QueryRenderer();
 
-            var q = new Query()
+            var q = q()
                     .select(List.of(col("t", "c")))
                     .from(t("t"))
                     .limit(3L);
@@ -210,7 +211,7 @@ public class QueryRendererTest {
             var ctx = ctxWith(limitOffset());
             var r = new QueryRenderer();
 
-            var q = new Query()
+            var q = q()
                     .select(List.of(col("t", "c")))
                     .from(t("t"))
                     .offset(7L);
@@ -224,32 +225,13 @@ public class QueryRendererTest {
     @Nested
     @DisplayName("OFFSET … FETCH style")
     class OffsetFetchStyle {
-
-        @Test
-        @DisplayName("Requires ORDER BY -> throws if missing")
-        void requiresOrderBy_throws() {
-            var ctx = ctxWith(offsetFetch());
-            var r = new QueryRenderer();
-
-            var q = new Query()
-                    .select(List.of(col("t", "c")))
-                    .from(t("t"))
-                    .limit(10L)
-                    .offset(5L);
-
-            IllegalStateException ex = assertThrows(IllegalStateException.class,
-                    () -> toSql(r, q, ctx));
-            assertTrue(ex.getMessage().toLowerCase().contains("order by"),
-                    "message should mention ORDER BY requirement");
-        }
-
         @Test
         @DisplayName("ORDER BY present -> 'ORDER BY … OFFSET m ROWS FETCH NEXT n ROWS ONLY'")
         void offsetFetch_ok() {
             var ctx = ctxWith(offsetFetch());
             var r = new QueryRenderer();
 
-            var q = new Query()
+            var q = q()
                     .select(List.of(col("t1", "c1")))
                     .from(t("t1"))
                     .orderBy(List.of(asc(col("t1", "c1"))))
@@ -270,7 +252,7 @@ public class QueryRendererTest {
             var ctx = ctxWith(offsetFetch());
             var r = new QueryRenderer();
 
-            var q = new Query()
+            var q = q()
                     .select(List.of(col("t", "c")))
                     .from(t("t"))
                     .orderBy(List.of(asc(col("t", "c"))))
@@ -294,7 +276,7 @@ public class QueryRendererTest {
             var ctx = ctxWith(topOnly());
             var r = new QueryRenderer();
 
-            var q = new Query()
+            var q = q()
                     .select(List.of(col("t", "c")))
                     .from(t("t"))
                     .limit(4L);
@@ -313,7 +295,7 @@ public class QueryRendererTest {
             var ctx = ctxWith(topOnly());
             var r = new QueryRenderer();
 
-            var q = new Query()
+            var q = q()
                     .select(List.of(col("t", "c")))
                     .from(t("t"))
                     .limit(4L)

@@ -7,7 +7,7 @@ import io.cherlabs.sqlmodel.core.Order;
 import io.cherlabs.sqlmodel.parser.core.Cursor;
 import io.cherlabs.sqlmodel.parser.core.TokenType;
 
-public class OrderItemSpecParser implements SpecParser<Order> {
+public class OrderSpecParser implements SpecParser<Order> {
 
     private static String unquoteIfQuoted(String s) {
         int n = s.length();
@@ -48,20 +48,20 @@ public class OrderItemSpecParser implements SpecParser<Order> {
         while (!cur.isEof()) {
             if (cur.consumeIf(TokenType.ASC)) {
                 if (direction != null) return ParseResult.error("Direction specified more than once");
-                direction = Direction.ASC;
+                direction = Direction.Asc;
                 continue;
             }
             if (cur.consumeIf(TokenType.DESC)) {
                 if (direction != null) return ParseResult.error("Direction specified more than once");
-                direction = Direction.DESC;
+                direction = Direction.Desc;
                 continue;
             }
             if (cur.consumeIf(TokenType.NULLS)) {
                 if (nulls != null) return ParseResult.error("NULLS specified more than once");
                 var t = cur.expect("Expected FIRST | LAST | DEFAULT after NULLS", TokenType.FIRST, TokenType.LAST, TokenType.DEFAULT);
-                if (t.type() == TokenType.FIRST) nulls = Nulls.FIRST;
-                else if (t.type() == TokenType.LAST) nulls = Nulls.LAST;
-                else if (t.type() == TokenType.DEFAULT) nulls = Nulls.DEFAULT;
+                if (t.type() == TokenType.FIRST) nulls = Nulls.First;
+                else if (t.type() == TokenType.LAST) nulls = Nulls.Last;
+                else if (t.type() == TokenType.DEFAULT) nulls = Nulls.Default;
                 else return ParseResult.error("Expected FIRST | LAST | DEFAULT after NULLS");
                 continue;
             }

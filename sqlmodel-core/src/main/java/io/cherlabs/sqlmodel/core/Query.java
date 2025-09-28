@@ -1,13 +1,15 @@
 package io.cherlabs.sqlmodel.core;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
-public class Query implements Entity {
-
+public abstract class Query<Q extends Query<Q>> implements Entity {
     private final List<Column> columns;
     private final List<Join> joins;
     private final List<Group> groupBy;
     private final List<Order> orderBy;
+    private String name;
     private Table table;
     private Filter where;
     private Filter having;
@@ -22,113 +24,127 @@ public class Query implements Entity {
         this.orderBy = new ArrayList<>();
     }
 
+    @SuppressWarnings("unchecked")
+    protected final Q self() {
+        return (Q) this;
+    }
+
+    public String name() {
+        return this.name;
+    }
+
+    public Q name(String name) {
+        this.name = name;
+        return self();
+    }
+
     public List<Column> select() {
         return columns;
     }
 
-    public Query select(Column... columns) {
+    public Q select(Column... columns) {
         this.columns.addAll(List.of(columns));
-        return this;
+        return self();
     }
 
-    public Query select(List<Column> columns) {
+    public Q select(List<Column> columns) {
         this.columns.addAll(columns);
-        return this;
+        return self();
     }
 
     public Filter where() {
         return where;
     }
 
-    public Query where(Filter filter) {
+    public Q where(Filter filter) {
         this.where = filter;
-        return this;
+        return self();
     }
 
     public Filter having() {
         return having;
     }
 
-    public Query having(Filter filter) {
+    public Q having(Filter filter) {
         this.having = filter;
-        return this;
+        return self();
     }
 
     public List<Join> joins() {
         return joins;
     }
 
-    public Query join(Join... joins) {
+    public Q join(Join... joins) {
         this.joins.addAll(List.of(joins));
-        return this;
+        return self();
     }
 
-    public Query join(List<Join> joins) {
+    public Q join(List<Join> joins) {
         this.joins.addAll(joins);
-        return this;
+        return self();
     }
 
     public List<Group> groupBy() {
         return groupBy;
     }
 
-    public Query groupBy(Group... items) {
+    public Q groupBy(Group... items) {
         this.groupBy.addAll(List.of(items));
-        return this;
+        return self();
     }
 
-    public Query groupBy(List<Group> items) {
+    public Q groupBy(List<Group> items) {
         this.groupBy.addAll(items);
-        return this;
+        return self();
     }
 
     public List<Order> orderBy() {
         return orderBy;
     }
 
-    public Query orderBy(Order... items) {
+    public Q orderBy(Order... items) {
         this.orderBy.addAll(List.of(items));
-        return this;
+        return self();
     }
 
-    public Query orderBy(List<Order> items) {
+    public Q orderBy(List<Order> items) {
         this.orderBy.addAll(items);
-        return this;
+        return self();
     }
 
     public Table from() {
         return table;
     }
 
-    public Query from(Table table) {
+    public Q from(Table table) {
         this.table = Objects.requireNonNull(table, "table");
-        return this;
+        return self();
     }
 
     public Boolean distinct() {
         return distinct;
     }
 
-    public Query distinct(boolean distinct) {
+    public Q distinct(boolean distinct) {
         this.distinct = distinct;
-        return this;
+        return self();
     }
 
     public Long limit() {
         return limit;
     }
 
-    public Query limit(long limit) {
+    public Q limit(long limit) {
         this.limit = limit;
-        return this;
+        return self();
     }
 
     public Long offset() {
         return offset;
     }
 
-    public Query offset(long offset) {
+    public Q offset(long offset) {
         this.offset = offset;
-        return this;
+        return self();
     }
 }

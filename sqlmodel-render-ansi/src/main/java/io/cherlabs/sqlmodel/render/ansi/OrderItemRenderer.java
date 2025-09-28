@@ -23,7 +23,7 @@ public class OrderItemRenderer implements Renderer<Order> {
         // ASC/DESC (omit if unspecified -> dialect default)
         var dir = entity.direction();
         if (dir != null) {
-            w.space().append(dir == Direction.ASC ? "ASC" : "DESC");
+            w.space().append(dir == Direction.Asc ? "ASC" : "DESC");
         }
 
         // NULLS FIRST/LAST/DEFAULT (only when dialect supports explicit keywords)
@@ -31,8 +31,8 @@ public class OrderItemRenderer implements Renderer<Order> {
         var n = entity.nulls();
         if (n != null && ns != null && ns.supportsExplicit()) {
             // Map DEFAULT to dialect’s default for the (possibly null) direction
-            if (n == Nulls.DEFAULT) {
-                var effectiveDir = (dir != null) ? dir : Direction.ASC;
+            if (n == Nulls.Default) {
+                var effectiveDir = (dir != null) ? dir : Direction.Asc;
                 n = ns.defaultFor(effectiveDir);
             }
             var keyword = ns.keyword(n); // e.g., "NULLS FIRST" / "NULLS LAST"

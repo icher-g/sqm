@@ -3,7 +3,7 @@ package io.cherlabs.sqlmodel.parser;
 import io.cherlabs.sqlmodel.core.Group;
 import io.cherlabs.sqlmodel.parser.core.Cursor;
 
-public class GroupItemSpecParser implements SpecParser<Group> {
+public class GroupSpecParser implements SpecParser<Group> {
     private static boolean isPositiveInteger(String s) {
         // Fast path: all digits, no sign, no decimal.
         for (int i = 0, n = s.length(); i < n; i++) {
@@ -35,6 +35,6 @@ public class GroupItemSpecParser implements SpecParser<Group> {
         if (!result.ok()) {
             return ParseResult.error(result);
         }
-        return ParseResult.ok(Group.of(result.value()));
+        return ParseResult.ok(Group.by(result.value()));
     }
 }

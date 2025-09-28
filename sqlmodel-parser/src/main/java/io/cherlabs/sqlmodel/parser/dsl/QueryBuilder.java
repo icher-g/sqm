@@ -8,20 +8,28 @@ import java.util.List;
 
 public final class QueryBuilder {
 
-    private final Query query;
+    private final Query<?> query;
     private final SpecParsersRepository parsers;
 
-    private QueryBuilder(SpecParsersRepository parsers) {
-        this.query = new Query();
+    private QueryBuilder(Query<?> query, SpecParsersRepository parsers) {
+        this.query = query == null ? new SelectQuery() : query;
         this.parsers = parsers;
     }
 
     public static QueryBuilder newBuilder() {
-        return newBuilder(SpecParsers.defaultRepository());
+        return newBuilder(new SelectQuery(), SpecParsers.defaultRepository());
+    }
+
+    public static QueryBuilder newBuilder(Query<?> query) {
+        return newBuilder(query, SpecParsers.defaultRepository());
     }
 
     public static QueryBuilder newBuilder(SpecParsersRepository parsersRepository) {
-        return new QueryBuilder(parsersRepository);
+        return newBuilder(new SelectQuery(), parsersRepository);
+    }
+
+    public static QueryBuilder newBuilder(Query<?> query, SpecParsersRepository parsersRepository) {
+        return new QueryBuilder(query, parsersRepository);
     }
 
     public QueryBuilder select(String... specs) {
