@@ -1,16 +1,18 @@
 package io.cherlabs.sqlmodel.render.ansi;
 
-import io.cherlabs.sqlmodel.core.ExpressionColumn;
+import io.cherlabs.sqlmodel.core.QueryTable;
 import io.cherlabs.sqlmodel.render.Renderer;
 import io.cherlabs.sqlmodel.render.SqlWriter;
 import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
-public class ExpressionColumnRenderer implements Renderer<ExpressionColumn> {
+public class QueryTableRenderer implements Renderer<QueryTable> {
     @Override
-    public void render(ExpressionColumn entity, RenderContext ctx, SqlWriter w) {
-        w.append(entity.expr());
+    public void render(QueryTable entity, RenderContext ctx, SqlWriter w) {
+        w.append("(").newline().indent();
+        w.append(entity.query());
+        w.outdent().append(")");
 
-        var alias = entity.alias();
+        var alias = entity.alias() == null ? entity.query().name() : entity.alias();
         if (alias != null && !alias.isBlank()) {
             var quoter = ctx.dialect().quoter();
             w.space().append("AS").space().append(quoter.quoteIfNeeded(alias));

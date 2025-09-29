@@ -9,9 +9,18 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 public class ColumnFilterTest {
+    static Stream<Object[]> inCases() {
+        return Stream.of(
+                new Object[]{"category", new Object[]{1, 2}, List.of(1, 2)},
+                new Object[]{"category", new Object[]{1, 2, 3}, List.of(1, 2, 3)},
+                new Object[]{"flags", new Object[]{"A", "B", "C"}, List.of("A", "B", "C")}
+        );
+    }
+
     @Test
     void in_builds_List_values_and_sets_operator_In() {
         ColumnFilter cf = Filter.column(Column.of("category")).in(1, 2, 3);
@@ -68,13 +77,5 @@ public class ColumnFilterTest {
             assertInstanceOf(Values.ListValues.class, cf.values());
             assertEquals(expected, ((Values.ListValues) cf.values()).items());
         }
-    }
-
-    static Stream<Object[]> inCases() {
-        return Stream.of(
-                new Object[]{"category", new Object[]{1}, List.of(1)},
-                new Object[]{"category", new Object[]{1, 2}, List.of(1, 2)},
-                new Object[]{"flags",    new Object[]{"A", "B", "C"}, List.of("A","B","C")}
-        );
     }
 }

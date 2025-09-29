@@ -39,7 +39,7 @@ class CompositeQueryRendererTest {
         var t2 = sel("archived_users", "a", "id", "name");
 
         var cq = new CompositeQuery(List.of(t1, t2), List.of(unionAll()))
-                .orderBy(Order.by(Column.of("id").from("1")).asc()) // assuming ordinal or expression handled by your Order renderer
+                .orderBy(Order.by(Column.of("id").from("1")).asc()) // assuming ordinal or expr handled by your Order renderer
                 .limit(10);
 
         var sql = render(cq);

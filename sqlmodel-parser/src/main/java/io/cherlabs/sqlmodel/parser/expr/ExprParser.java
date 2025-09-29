@@ -209,7 +209,7 @@ public final class ExprParser {
             case TRUE -> new Expr.BoolLit(true);
             case FALSE -> new Expr.BoolLit(false);
             case NULL -> new Expr.NullLit();
-            default -> throw new ParserException("Expected expression term", t.pos());
+            default -> throw new ParserException("Expected expr term", t.pos());
         };
     }
 

@@ -7,13 +7,13 @@ import io.cherlabs.sqlmodel.render.Renderer;
 import io.cherlabs.sqlmodel.render.SqlWriter;
 import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
-public class OrderItemRenderer implements Renderer<Order> {
+public class OrderRenderer implements Renderer<Order> {
     @Override
     public void render(Order entity, RenderContext ctx, SqlWriter w) {
-        // expression (column or function) — delegate to its renderer
+        // expr (column or function) — delegate to its renderer
         w.append(entity.column());
 
-        // COLLATE (if any) — typically placed right after the expression
+        // COLLATE (if any) — typically placed right after the expr
         var collate = entity.collate();
         if (collate != null && !collate.isBlank()) {
             var quoter = ctx.dialect().quoter();

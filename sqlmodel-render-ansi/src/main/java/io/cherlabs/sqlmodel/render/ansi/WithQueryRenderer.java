@@ -9,20 +9,20 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class WithQueryRenderer implements Renderer<WithQuery> {
     @Override
-    public void render(WithQuery entity, RenderContext ctx, SqlWriter w) {
-        var queries = entity.getQueries();
-        if (queries == null || queries.isEmpty()) {
+    public void render(WithQuery with, RenderContext ctx, SqlWriter w) {
+        var ctes = with.ctes();
+        if (ctes == null || ctes.isEmpty()) {
             throw new IllegalArgumentException("WITH requires at least one query (CTE + outer query).");
         }
 
         w.append("WITH");
-        if (entity.isRecursive()) w.space().append("RECURSIVE");
+        if (with.isRecursive()) w.space().append("RECURSIVE");
         w.newline();
         w.indent();
 
-        for (int i = 0; i < queries.size(); i++) {
+        for (int i = 0; i < ctes.size(); i++) {
             if (i > 0) w.append(",").newline();
-            var query = queries.get(i);
+            var query = ctes.get(i);
             if (query instanceof CteQuery cte) {
                 w.append(cte);
             } else {
@@ -37,6 +37,6 @@ public class WithQueryRenderer implements Renderer<WithQuery> {
         w.outdent();
 
         var renderer = ctx.dialect().renderers().require(Query.class);
-        renderer.render(entity, ctx, w);
+        renderer.render(with, ctx, w);
     }
 }

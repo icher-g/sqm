@@ -23,7 +23,7 @@ class ValuesTest {
         // mutate original outer list -> should not affect internal list
         src.add(4);
         assertEquals(List.of(1, 2, 3), lv.items());
-        assertThrows(UnsupportedOperationException.class, () -> lv.items().add(5));
+        assertThrows(UnsupportedOperationException.class, () -> lv.items().add(null));
     }
 
     @Test
@@ -38,8 +38,8 @@ class ValuesTest {
         rows.add(List.of(5, 6));
 
         assertEquals(List.of(List.of(1, 2), List.of(3, 4)), t.rows());
-        assertThrows(UnsupportedOperationException.class, () -> t.rows().add(List.of(7,8)));
-        assertThrows(UnsupportedOperationException.class, () -> t.rows().get(0).set(1, 9));
+        assertThrows(UnsupportedOperationException.class, () -> t.rows().add(null));
+        assertThrows(UnsupportedOperationException.class, () -> t.rows().get(0).set(1, null));
     }
 
     @Test

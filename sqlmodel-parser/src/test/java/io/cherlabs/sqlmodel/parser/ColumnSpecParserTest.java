@@ -47,7 +47,7 @@ class ColumnSpecParserTest {
     }
 
     @Test
-    @DisplayName("Invalid expression")
+    @DisplayName("Invalid expr")
     void invalid_expr() {
         var r = parser.parse("(price * qty) AS total");
         assertFalse(r.ok());
