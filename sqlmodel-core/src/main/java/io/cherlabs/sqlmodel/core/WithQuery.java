@@ -21,19 +21,23 @@ import java.util.List;
  * </pre>
  */
 public class WithQuery extends Query<WithQuery> {
-    private final List<? extends Query<?>> queries;
-    private final boolean isRecursive;
+    private final List<? extends Query<?>> ctes;
+    private boolean isRecursive;
 
-    public WithQuery(List<Query<?>> queries, boolean isRecursive) {
-        this.queries = queries;
-        this.isRecursive = isRecursive;
+    public WithQuery(List<? extends Query<?>> ctes) {
+        this.ctes = ctes;
     }
 
-    public List<? extends Query<?>> getQueries() {
-        return queries;
+    public List<? extends Query<?>> ctes() {
+        return ctes;
     }
 
     public boolean isRecursive() {
         return isRecursive;
+    }
+
+    public WithQuery isRecursive(boolean isRecursive) {
+        this.isRecursive = isRecursive;
+        return this;
     }
 }

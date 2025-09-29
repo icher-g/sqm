@@ -24,6 +24,12 @@ import io.cherlabs.sqlmodel.core.traits.HasTable;
  * @param on       The ON part. T1 ON T1.Col1 = B.Col1 AND T1.Col2 = 1 -> here will be a CompositeSqlFilter.
  */
 public record TableJoin(JoinType joinType, Table table, Filter on) implements Join, HasJoinType, HasTable, HasJoinOn {
+    /**
+     * Creates a join with the provided filter.
+     *
+     * @param on a filter to be used in a JOIN ON statement.
+     * @return A new instance of the join.
+     */
     public TableJoin on(Filter on) {
         return new TableJoin(joinType, table, on);
     }

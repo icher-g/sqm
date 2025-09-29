@@ -2,6 +2,7 @@ package io.cherlabs.sqlmodel.core;
 
 import org.junit.jupiter.api.Test;
 
+import static io.cherlabs.sqlmodel.dsl.DSL.f;
 import static org.junit.jupiter.api.Assertions.*;
 
 class JoinFactoryAndTableJoinTest {
@@ -36,12 +37,12 @@ class JoinFactoryAndTableJoinTest {
         NamedColumn lc = new NamedColumn("id", null, "p");
         NamedColumn rc = new NamedColumn("id", null, "d");
 
-        TableJoin withJoinFilter = j.on(lc, JoinFilter.Operator.Gte, rc);
-        assertInstanceOf(JoinFilter.class, withJoinFilter.on());
-        JoinFilter jf = (JoinFilter) withJoinFilter.on();
-        assertEquals(JoinFilter.Operator.Gte, jf.operator());
-        assertSame(lc, jf.left());
-        assertSame(rc, jf.right());
+        TableJoin withJoinFilter = j.on(f(lc).gte(rc));
+        assertInstanceOf(ColumnFilter.class, withJoinFilter.on());
+        ColumnFilter jf = (ColumnFilter) withJoinFilter.on();
+        assertEquals(ColumnFilter.Operator.Gte, jf.operator());
+        assertSame(lc, jf.column());
+        assertSame(rc, ((Values.Column)jf.values()).column());
 
         ColumnFilter cf = new ColumnFilter(new NamedColumn("active", null, "d"), ColumnFilter.Operator.Eq, Values.single(true));
         TableJoin withColumnFilter = j.on(cf);

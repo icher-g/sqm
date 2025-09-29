@@ -80,11 +80,11 @@ class GroupSpecParserTest {
     // ---------- Errors / propagation ----------
 
     @Test
-    @DisplayName("Blank -> error: Missing expression")
+    @DisplayName("Blank -> error: Missing expr")
     void blank_error() {
         ParseResult<Group> res = parser.parse("   ");
         assertFalse(res.ok());
-        assertTrue(res.errorMessage().toLowerCase().contains("spec cannot be blank"), "should mention missing expression");
+        assertTrue(res.errorMessage().toLowerCase().contains("spec cannot be blank"), "should mention missing expr");
     }
 
     @Test

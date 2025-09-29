@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class OrderRendererTest {
 
-    private final Renderer<Order> renderer = new OrderItemRenderer();
+    private final Renderer<Order> renderer = new OrderRenderer();
 
     // ---------- Helpers ----------
 

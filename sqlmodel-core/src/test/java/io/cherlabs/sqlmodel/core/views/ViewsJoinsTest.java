@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
+import static io.cherlabs.sqlmodel.dsl.DSL.f;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ViewsJoinsTest {
@@ -12,7 +13,7 @@ class ViewsJoinsTest {
     @Test
     void table_join_fields_are_exposed() {
         NamedTable t = new NamedTable("products", "p", null);
-        TableJoin j = Join.left(t).on(new NamedColumn("id", null, "p"), JoinFilter.Operator.Eq, new NamedColumn("id", null, "d"));
+        TableJoin j = Join.left(t).on(f(new NamedColumn("id", null, "p")).eq(new NamedColumn("id", null, "d")));
 
         assertEquals(Optional.of(Join.JoinType.Left), Joins.joinType(j));
         assertEquals(Optional.of(t), Joins.table(j));

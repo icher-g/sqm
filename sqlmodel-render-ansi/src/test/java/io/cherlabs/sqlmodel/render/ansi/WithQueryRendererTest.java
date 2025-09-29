@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static io.cherlabs.sqlmodel.dsl.DSL.with;
 import static org.junit.jupiter.api.Assertions.*;
 
 class WithQueryRendererTest {
@@ -34,11 +35,11 @@ class WithQueryRendererTest {
 
         // WITH ... (cte_users, cte_orders)  <— CTEs live in WithQuery.getQueries()
         // Outer body is the WithQuery itself (inherited Query fields)
-        var with = new WithQuery(List.of(cteUsers, cteOrders), false);
-        with.select(col("x", "id"))
+        var q = with(cteUsers, cteOrders);
+        q.select(col("x", "id"))
                 .from(tbl("cte_users", "x"));
 
-        var sql = renderWith(with);
+        var sql = renderWith(q);
 
         // Loose, order-preserving checks on the normalized SQL:
         assertContainsInOrder(sql,
@@ -62,11 +63,11 @@ class WithQueryRendererTest {
                 .select(col("s", "n"))
                 .from(tbl("seed_numbers", "s"));
 
-        var with = new WithQuery(List.of(nums), true);
-        with.select(col("t", "n"))
+        var q = with(nums).isRecursive(true);
+        q.select(col("t", "n"))
                 .from(tbl("nums", "t"));
 
-        var sql = normalize(renderWith(with));
+        var sql = normalize(renderWith(q));
         assertTrue(sql.startsWith("WITH RECURSIVE "), "Expected WITH RECURSIVE prefix");
         assertTrue(sql.contains("nums (n) AS ("), "Expected aliased CTE header");
         assertTrue(sql.contains("SELECT t.n FROM nums AS t"), "Expected outer query selecting from CTE");
@@ -84,10 +85,10 @@ class WithQueryRendererTest {
                 .select(col("b", "user_id"))
                 .from(tbl("orders", "b"));
 
-        var with = new WithQuery(List.of(c1, c2), false);
-        with.select(col("b", "user_id")).from(tbl("c2", "b"));
+        var q = with(c1, c2);
+        q.select(col("b", "user_id")).from(tbl("c2", "b"));
 
-        var sql = normalize(renderWith(with));
+        var sql = normalize(renderWith(q));
         assertTrue(sql.contains("WITH"), "Expected WITH");
         assertTrue(sql.contains("c1 AS ("), "First CTE should render");
         assertTrue(sql.contains("c2 AS ("), "Second CTE should render");
@@ -99,9 +100,9 @@ class WithQueryRendererTest {
     @Test
     @DisplayName("Empty CTE list -> throws")
     void with_emptyCtes_throws() {
-        var with = new WithQuery(List.of(), false);
-        with.select(col("t", "id")).from(tbl("users", "t"));
-        var ex = assertThrows(IllegalArgumentException.class, () -> renderWith(with));
+        var q = with();
+        q.select(col("t", "id")).from(tbl("users", "t"));
+        var ex = assertThrows(IllegalArgumentException.class, () -> renderWith(q));
         assertTrue(ex.getMessage().toLowerCase().contains("with requires at least one query"));
     }
 
@@ -113,12 +114,12 @@ class WithQueryRendererTest {
                 .select(col("u", "id"))
                 .from(tbl("users", "u"));
 
-        var with = new WithQuery(List.of(nameless), false);
-        with.select(col("u", "id")).from(tbl("users", "u"));
+        var q = with(nameless);
+        q.select(col("u", "id")).from(tbl("users", "u"));
 
         // Depending on your writer/renderer, this may NPE or be validated elsewhere.
         // We just assert that rendering fails with some exception.
-        assertThrows(RuntimeException.class, () -> renderWith(with));
+        assertThrows(RuntimeException.class, () -> renderWith(q));
     }
 
     /* ===================== HELPERS ===================== */

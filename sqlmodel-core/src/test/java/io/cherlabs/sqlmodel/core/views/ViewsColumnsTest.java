@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Optional;
 
+import static io.cherlabs.sqlmodel.dsl.DSL.q;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ViewsColumnsTest {
@@ -32,7 +33,7 @@ class ViewsColumnsTest {
 
     @Test
     void query_column_fields_are_exposed() {
-        Query q = new Query();
+        Query<?> q = q();
         QueryColumn c = new QueryColumn(q, "q");
         assertEquals(Optional.empty(), Columns.name(c));
         assertEquals(Optional.of("q"), Columns.alias(c));
@@ -48,7 +49,7 @@ class ViewsColumnsTest {
         assertEquals(Optional.of("c"), Columns.alias(c));
         assertTrue(Columns.table(c).isEmpty());
         assertTrue(Columns.expr(c).isEmpty());
-        var args = Columns.functionArgs(c);
+        var args = Columns.funcArgs(c);
         assertTrue(args.isPresent());
         var arg = (FunctionColumn.Arg.Column)args.get().get(0);
         assertEquals("t", arg.table());

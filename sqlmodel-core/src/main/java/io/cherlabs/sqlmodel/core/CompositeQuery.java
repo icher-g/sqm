@@ -11,6 +11,8 @@ import java.util.Objects;
  *     (SELECT * FROM TABLE1)
  *     UNION
  *     (SELECT * FROM TABLE2)
+ *     INTERSECT
+ *     (SELECT * FROM TABLE3)
  *     }
  * </pre>
  */
@@ -31,10 +33,19 @@ public final class CompositeQuery extends Query<CompositeQuery> {
         return new UnsupportedOperationException("CompositeQuery does not support " + what + " at top level; put it inside terms.");
     }
 
+    /**
+     * A list of terms to be joined by the operators.
+     * @return a list of terms.
+     */
     public List<? extends Query<?>> terms() {
         return terms;
     }
 
+    /**
+     * A list of operators.
+     * A number of operators must be equal to the size of terms - 1.
+     * @return a list of operators.
+     */
     public List<Op> ops() {
         return ops;
     }
@@ -106,12 +117,13 @@ public final class CompositeQuery extends Query<CompositeQuery> {
         return java.util.List.of();
     }
 
-    public enum Kind {Union, Intersect, Except}
+    public enum Kind {
+        Union,
+        Intersect,
+        Except
+    }
 
-    public static final class Op {
-        private final Kind kind;
-        private final boolean all;
-
+    public record Op(Kind kind, boolean all) {
         public Op(Kind kind, boolean all) {
             this.kind = Objects.requireNonNull(kind, "kind");
             this.all = all;
@@ -139,14 +151,6 @@ public final class CompositeQuery extends Query<CompositeQuery> {
 
         public static Op exceptAll() {
             return new Op(Kind.Except, true);
-        }
-
-        public Kind kind() {
-            return kind;
-        }
-
-        public boolean all() {
-            return all;
         }
     }
 }

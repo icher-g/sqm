@@ -3,7 +3,19 @@ package io.cherlabs.sqlmodel.core;
 import io.cherlabs.sqlmodel.core.traits.HasAlias;
 import io.cherlabs.sqlmodel.core.traits.HasQuery;
 
-public record QueryColumn(Query query, String alias) implements Column, HasQuery, HasAlias {
+/**
+ * Represents a sub query to be used as a column in SELECT statement.
+ *
+ * @param query a query.
+ * @param alias an alias of the column.
+ */
+public record QueryColumn(Query<?> query, String alias) implements Column, HasQuery, HasAlias {
+    /**
+     * Adds an alias to the column.
+     *
+     * @param alias an alias.
+     * @return A new instance with the provided alias. A query field is preserved.
+     */
     public QueryColumn as(String alias) {
         return new QueryColumn(query, alias);
     }

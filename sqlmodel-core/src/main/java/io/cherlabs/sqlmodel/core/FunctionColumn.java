@@ -6,7 +6,6 @@ import io.cherlabs.sqlmodel.core.traits.HasDistinct;
 import io.cherlabs.sqlmodel.core.traits.HasName;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -23,16 +22,79 @@ public record FunctionColumn(
         Objects.requireNonNull(name, "name");
     }
 
+    /**
+     * Creates a function column.
+     *
+     * @param name a function name
+     * @param args an array of function arguments.
+     * @return A newly created instance of a function column.
+     */
     public static FunctionColumn of(String name, Arg... args) {
         return new FunctionColumn(name, List.of(args), false, null);
     }
 
+    /**
+     * Adds alias to a function column.
+     *
+     * @param alias an alias.
+     * @return A new instance of the function column with the preserved other fields and new alias.
+     */
     public FunctionColumn as(String alias) {
         return new FunctionColumn(name, args, distinct, alias);
     }
 
     /* -------- Function arguments (structured) -------- */
     public sealed interface Arg extends Entity permits Arg.Column, Arg.Literal, Arg.Function, Arg.Star {
+        /**
+         * Creates a column argument.
+         *
+         * @param name a name of the column.
+         * @return A newly created instance of the column argument.
+         */
+        static Arg column(String name) {
+            return new Column(null, name);
+        }
+
+        /**
+         * Creates a column argument.
+         *
+         * @param table a table name.
+         * @param name  a column name.
+         * @return A newly created instance of the column argument.
+         */
+        static Arg column(String table, String name) {
+            return new Column(table, name);
+        }
+
+        /**
+         * Creates a literal argument.
+         *
+         * @param value a literal
+         * @return A newly created instance of the literal argument.
+         */
+        static Arg lit(Object value) {
+            return new Literal(value);
+        }
+
+        /**
+         * Creates a function argument. Used for nested functions.
+         *
+         * @param call a function column.
+         * @return A newly created instance of the function column argument.
+         */
+        static Arg func(FunctionColumn call) {
+            return new Function(call);
+        }
+
+        /**
+         * Creates a start '*' argument.
+         *
+         * @return A newly created instance of a star argument.
+         */
+        static Arg star() {
+            return new Star();
+        }
+
         /**
          * Column reference argument: t.c or just c.
          */
@@ -55,26 +117,6 @@ public record FunctionColumn(
          * The '*' argument (e.g., COUNT(*))
          */
         record Star() implements Arg {
-        }
-
-        static Arg column(String name) {
-            return new Column(null, name);
-        }
-
-        static Arg column(String table, String name) {
-            return new Column(table, name);
-        }
-
-        static Arg lit(Object value) {
-            return new Literal(value);
-        }
-
-        static Arg func(FunctionColumn call) {
-            return new Function(call);
-        }
-
-        static Arg star() {
-            return new Star();
         }
     }
 }

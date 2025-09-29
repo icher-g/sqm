@@ -115,7 +115,7 @@ public class DslTest {
     // ---------- helpers ----------
 
     @Test
-    @DisplayName("5) CASE expression in SELECT list")
+    @DisplayName("5) CASE expr in SELECT list")
     void caseExpression() {
         Query q = q()
                 .select(

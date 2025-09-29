@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
+import static io.cherlabs.sqlmodel.dsl.DSL.q;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ViewsTablesTest {
@@ -20,7 +21,7 @@ class ViewsTablesTest {
 
     @Test
     void query_table_fields_are_exposed() {
-        Query q = new Query();
+        Query<?> q = q();
         QueryTable t = new QueryTable(q, "qt");
         assertTrue(Tables.name(t).isEmpty());
         assertEquals(Optional.of("qt"), Tables.alias(t));

@@ -5,7 +5,7 @@ import io.cherlabs.sqlmodel.render.Renderer;
 import io.cherlabs.sqlmodel.render.SqlWriter;
 import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
-public class GroupItemRenderer implements Renderer<Group> {
+public class GroupRenderer implements Renderer<Group> {
     @Override
     public void render(Group entity, RenderContext ctx, SqlWriter w) {
         if (entity.isOrdinal()) {

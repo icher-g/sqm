@@ -42,7 +42,7 @@ class OrderSpecParserTest {
         }
 
         @Test
-        @DisplayName("Function expression + ASC + NULLS LAST (case-insensitive)")
+        @DisplayName("Function expr + ASC + NULLS LAST (case-insensitive)")
         void function_with_dir_and_nulls() {
             ParseResult<Order> res = parser.parse("lower(t.c) aSc nUlLs lAsT");
             assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());

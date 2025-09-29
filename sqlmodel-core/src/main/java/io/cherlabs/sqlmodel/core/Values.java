@@ -8,31 +8,70 @@ import java.util.Objects;
  */
 public sealed interface Values extends Entity permits Values.ListValues, Values.Range, Values.Single, Values.Column, Values.Subquery, Values.Tuples {
 
-    /* ---------- Factory helpers for nice DSL ---------- */
+    /**
+     * Creates a single value.
+     *
+     * @param value a value.
+     * @return A new instance of Values.
+     */
     static Single single(Object value) {
         return new Single(value);
     }
 
+    /**
+     * Creates a column value.
+     *
+     * @param column a column.
+     * @return A new instance of Values.
+     */
     static Column column(io.cherlabs.sqlmodel.core.Column column) {
         return new Column(column);
     }
 
+    /**
+     * Creates a list of values.
+     *
+     * @param items a list of values.
+     * @return A new instance of Values.
+     */
     static ListValues list(List<?> items) {
         return new ListValues(items);
     }
 
+    /**
+     * Creates a list of tuples.
+     *
+     * @param rows a list of tuples.
+     * @return A new instance of Values.
+     */
     static Tuples tuples(List<? extends List<?>> rows) {
         return new Tuples(rows);
     }
 
+    /**
+     * Creates a range value.
+     *
+     * @param min a minimum value.
+     * @param max a maximum value.
+     * @return A new instance of Values.
+     */
     static Range range(Object min, Object max) {
         return new Range(min, max);
     }
 
-    static Subquery subquery(Query q) {
+    /**
+     * Creates a query value.
+     *
+     * @param q a query.
+     * @return A new instance of Values.
+     */
+    static Subquery subquery(Query<?> q) {
         return new Subquery(q);
     }
 
+    /**
+     * Single‑column =: {@code col = 1 }.
+     */
     record Single(Object value) implements Values {
     }
 
@@ -77,7 +116,7 @@ public sealed interface Values extends Entity permits Values.ListValues, Values.
     /**
      * Subquery: {@code col IN (SELECT ...)}.
      */
-    record Subquery(Query query) implements Values {
+    record Subquery(Query<?> query) implements Values {
         public Subquery {
             Objects.requireNonNull(query);
         }

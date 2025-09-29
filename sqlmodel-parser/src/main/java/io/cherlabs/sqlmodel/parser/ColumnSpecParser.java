@@ -63,7 +63,7 @@ public class ColumnSpecParser implements SpecParser<Column> {
                 return fr;
             }
 
-            // Simple expression like: t.c [AS a] | c [AS a]
+            // Simple expr like: t.c [AS a] | c [AS a]
             var nr = parseNamedColumn(cur);
             if (!nr.ok()) return ParseResult.error(nr);
             if (!cur.isEof()) {
@@ -112,7 +112,7 @@ public class ColumnSpecParser implements SpecParser<Column> {
             return ParseResult.ok(new NamedColumn(name, alias, table));
         }
 
-        return ParseResult.error("Unexpected tokens at the beginning of expression, expected identifier but found: " + cur.peek(), cur.pos());
+        return ParseResult.error("Unexpected tokens at the beginning of expr, expected identifier but found: " + cur.peek(), cur.pos());
     }
 
     private ParseResult<Column> parseCaseColumn(Cursor cur) {
@@ -169,7 +169,7 @@ public class ColumnSpecParser implements SpecParser<Column> {
     }
 
     /**
-     * Parses a CASE result expression:
+     * Parses a CASE result expr:
      * - string/number/boolean/null literal → boxed Java Object
      * - qualified identifier like  t.col  or  "T"."Name"  → Column.of(...).from(...)
      * - parenthesized CASE (nested) → delegate to this parser (optional; shown here)

@@ -153,7 +153,7 @@ public class FilterVisitor implements Expr.Visitor<Filter> {
             return new ColumnFilter(col, in.negated() ? ColumnFilter.Operator.NotIn : ColumnFilter.Operator.In, values);
         }
 
-        // Fallback: unsupported needle (e.g., expression IN (...)) → ExpressionFilter
+        // Fallback: unsupported needle (e.g., expr IN (...)) → ExpressionFilter
         return fallback(in);
     }
 
@@ -166,7 +166,7 @@ public class FilterVisitor implements Expr.Visitor<Filter> {
         if (!b.negated()) {
             return new ColumnFilter(col, ColumnFilter.Operator.Range, Values.range(lo, hi));
         }
-        // NOT BETWEEN -> fallback as expression (or expand to NE of range)
+        // NOT BETWEEN -> fallback as expr (or expand to NE of range)
         return fallback(b);
     }
 

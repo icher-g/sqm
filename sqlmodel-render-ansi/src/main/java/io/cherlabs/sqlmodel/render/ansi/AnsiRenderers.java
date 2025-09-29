@@ -33,8 +33,8 @@ public final class AnsiRenderers {
                 .register(FunctionColumn.Arg.Literal.class, new LiteralArgRenderer())
                 .register(FunctionColumn.Arg.Function.class, new FunctionArgRenderer())
                 .register(FunctionColumn.Arg.Star.class, new StarArgRenderer())
-                .register(Group.class, new GroupItemRenderer())
-                .register(Order.class, new OrderItemRenderer())
+                .register(Group.class, new GroupRenderer())
+                .register(Order.class, new OrderRenderer())
                 .register(Values.ListValues.class, new ValuesListRenderer())
                 .register(Values.Range.class, new ValuesRangeRenderer())
                 .register(Values.Single.class, new ValuesSingleRenderer())
@@ -44,6 +44,7 @@ public final class AnsiRenderers {
                 .register(CaseColumn.class, new CaseColumnRenderer())
                 .register(CompositeQuery.class, new CompositeQueryRenderer())
                 .register(WithQuery.class, new WithQueryRenderer())
-                .register(CteQuery.class, new CteQueryRenderer());
+                .register(CteQuery.class, new CteQueryRenderer())
+                .register(QueryTable.class, new QueryTableRenderer());
     }
 }
