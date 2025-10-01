@@ -31,7 +31,7 @@ class FilterSpecParserTest {
         var r = parser.parse("category IN (1, 2, 3)");
         assertOk(r);
         var f = assertIs(ColumnFilter.class, r.value());
-        assertEquals(ColumnFilter.Operator.In, f.operator());
+        assertEquals(ColumnFilter.Operator.In, f.op());
         var v = assertIs(Values.ListValues.class, f.values());
         assertEquals(List.of(1L, 2L, 3L), v.items()); // longs if your parser maps integers to Long
         assertEquals("category", f.columnAs(NamedColumn.class).name());
@@ -43,7 +43,7 @@ class FilterSpecParserTest {
         var r = parser.parse("status NOT IN ('A','B')");
         assertOk(r);
         var f = assertIs(ColumnFilter.class, r.value());
-        assertEquals(ColumnFilter.Operator.NotIn, f.operator());
+        assertEquals(ColumnFilter.Operator.NotIn, f.op());
         var v = assertIs(Values.ListValues.class, f.values());
         assertEquals(List.of("A", "B"), v.items());
         assertEquals("status", f.columnAs(NamedColumn.class).name());
@@ -55,7 +55,7 @@ class FilterSpecParserTest {
         var r = parser.parse("name LIKE '%abc%'");
         assertOk(r);
         var f = assertIs(ColumnFilter.class, r.value());
-        assertEquals(ColumnFilter.Operator.Like, f.operator());
+        assertEquals(ColumnFilter.Operator.Like, f.op());
         var v = assertIs(Values.Single.class, f.values());
         assertEquals("%abc%", v.value());
         assertEquals("name", f.columnAs(NamedColumn.class).name());
@@ -67,7 +67,7 @@ class FilterSpecParserTest {
         var r = parser.parse("price BETWEEN 10 AND 20");
         assertOk(r);
         var f = assertIs(ColumnFilter.class, r.value());
-        assertEquals(ColumnFilter.Operator.Range, f.operator());
+        assertEquals(ColumnFilter.Operator.Range, f.op());
         var v = assertIs(Values.Range.class, f.values());
         assertEquals(10L, v.min());
         assertEquals(20L, v.max());
@@ -89,7 +89,7 @@ class FilterSpecParserTest {
         var r = parser.parse(expr);
         assertOk(r);
         var f = assertIs(ColumnFilter.class, r.value());
-        assertEquals(operator, f.operator());
+        assertEquals(operator, f.op());
         var v = assertIs(Values.Single.class, f.values());
         assertEquals(expected, v.value());
         assertEquals("qty", f.columnAs(NamedColumn.class).name());
@@ -123,7 +123,7 @@ class FilterSpecParserTest {
         assertOk(r);
 
         var root = assertIs(CompositeFilter.class, r.value());
-        assertEquals(CompositeFilter.Operator.And, root.operator());
+        assertEquals(CompositeFilter.Operator.And, root.op());
         assertEquals(2, root.filters().size());
 
         // left is ColumnFilter IN
@@ -131,11 +131,11 @@ class FilterSpecParserTest {
 
         // right is ( ... OR NOT ... )
         var right = assertIs(CompositeFilter.class, root.filters().get(1));
-        assertEquals(CompositeFilter.Operator.Or, right.operator());
+        assertEquals(CompositeFilter.Operator.Or, right.op());
         assertEquals(2, right.filters().size());
 
         var not = assertIs(CompositeFilter.class, right.filters().get(1));
-        assertEquals(CompositeFilter.Operator.Not, not.operator());
+        assertEquals(CompositeFilter.Operator.Not, not.op());
         assertEquals(1, not.filters().size());
         assertIs(ColumnFilter.class, not.filters().get(0));
     }
@@ -147,11 +147,11 @@ class FilterSpecParserTest {
         assertOk(r);
 
         var or = assertIs(CompositeFilter.class, r.value());
-        assertEquals(CompositeFilter.Operator.Or, or.operator());
+        assertEquals(CompositeFilter.Operator.Or, or.op());
         assertEquals(2, or.filters().size());
 
         var left = assertIs(CompositeFilter.class, or.filters().get(0));
-        assertEquals(CompositeFilter.Operator.Not, left.operator());
+        assertEquals(CompositeFilter.Operator.Not, left.op());
         assertIs(ColumnFilter.class, left.filters().get(0));
     }
 

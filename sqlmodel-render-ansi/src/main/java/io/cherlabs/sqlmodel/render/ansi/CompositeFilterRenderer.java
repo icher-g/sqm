@@ -12,7 +12,7 @@ import static io.cherlabs.sqlmodel.core.CompositeFilter.Operator.Not;
 public class CompositeFilterRenderer implements Renderer<CompositeFilter> {
     @Override
     public void render(CompositeFilter entity, RenderContext ctx, SqlWriter w) {
-        var operator = switch (entity.operator()) {
+        var operator = switch (entity.op()) {
             case And -> ctx.dialect().operators().and();
             case Or -> ctx.dialect().operators().or();
             case Not -> ctx.dialect().operators().not();
@@ -29,11 +29,11 @@ public class CompositeFilterRenderer implements Renderer<CompositeFilter> {
         }
         else {
             var filter = entity.filters().get(0);
-            if (entity.operator() == Not) {
+            if (entity.op() == Not) {
                 w.append(operator).space().append("(");
             }
             render(filter, ctx, w);
-            if (entity.operator() == Not) {
+            if (entity.op() == Not) {
                 w.append(")");
             }
         }
@@ -41,11 +41,11 @@ public class CompositeFilterRenderer implements Renderer<CompositeFilter> {
 
     private void render(Filter filter, RenderContext ctx, SqlWriter w) {
         var sql = SqlFragment.capture(ctx, writer -> writer.append(filter));
-        if (filter instanceof CompositeFilter cf && cf.operator() != Not) {
+        if (filter instanceof CompositeFilter cf && cf.op() != Not) {
             w.indent().append("(").newline();
         }
         w.append(sql);
-        if (filter instanceof CompositeFilter cf && cf.operator() != Not) {
+        if (filter instanceof CompositeFilter cf && cf.op() != Not) {
             w.outdent().newline().append(")");
         }
     }

@@ -6,9 +6,10 @@ import io.cherlabs.sqlmodel.core.*;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = NamedColumn.class,    name = "column"),
-        @JsonSubTypes.Type(value = QueryColumn.class,    name = "tuple"),
+        @JsonSubTypes.Type(value = NamedColumn.class,    name = "named"),
+        @JsonSubTypes.Type(value = QueryColumn.class,    name = "query"),
         @JsonSubTypes.Type(value = ExpressionColumn.class,name = "expr"),
-        @JsonSubTypes.Type(value = FunctionColumn.class,   name = "func")
+        @JsonSubTypes.Type(value = FunctionColumn.class,   name = "func"),
+        @JsonSubTypes.Type(value = CaseColumn.class, name = "case")
 })
 public abstract class ColumnMixIn {}

@@ -13,15 +13,9 @@ public class TupleFilterRenderer implements Renderer<TupleFilter> {
         w.append("(").comma(entity.columns()).append(")").space();
 
         switch (entity.operator()) {
-            case In -> {
-                renderIn(entity.values(), ctx, w);
-            }
-            case NotIn -> {
-                renderNotIn(entity.values(), ctx, w);
-            }
-            default -> {
-                throw new UnsupportedOperationException("The specified operator: " + entity.operator() + " is not supported.");
-            }
+            case In -> renderIn(entity.values(), ctx, w);
+            case NotIn -> renderNotIn(entity.values(), ctx, w);
+            default -> throw new UnsupportedOperationException("The specified op: " + entity.operator() + " is not supported.");
         }
     }
 
@@ -29,7 +23,7 @@ public class TupleFilterRenderer implements Renderer<TupleFilter> {
         if (values instanceof Values.Tuples t) {
             w.append(ctx.dialect().operators().in()).space().append(ctx.dialect().formatter().format(t.rows()));
         } else {
-            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'IN' operator.");
+            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'IN' op.");
         }
     }
 
@@ -37,7 +31,7 @@ public class TupleFilterRenderer implements Renderer<TupleFilter> {
         if (values instanceof Values.Tuples t) {
             w.append(ctx.dialect().operators().notIn()).space().append(ctx.dialect().formatter().format(t.rows()));
         } else {
-            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'NOT IN' operator.");
+            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'NOT IN' op.");
         }
     }
 }

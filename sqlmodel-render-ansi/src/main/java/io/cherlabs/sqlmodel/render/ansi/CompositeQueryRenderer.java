@@ -62,7 +62,7 @@ public final class CompositeQueryRenderer implements Renderer<CompositeQuery> {
             case Union -> w.append("UNION");
             case Intersect -> w.append("INTERSECT");
             case Except -> w.append("EXCEPT");
-            default -> throw new UnsupportedOperationException("Unknown set operator: " + op.kind());
+            default -> throw new UnsupportedOperationException("Unknown set op: " + op.kind());
         }
         if (op.all()) w.space().append("ALL");
     }

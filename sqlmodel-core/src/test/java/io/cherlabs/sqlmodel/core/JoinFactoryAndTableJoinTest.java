@@ -40,7 +40,7 @@ class JoinFactoryAndTableJoinTest {
         TableJoin withJoinFilter = j.on(f(lc).gte(rc));
         assertInstanceOf(ColumnFilter.class, withJoinFilter.on());
         ColumnFilter jf = (ColumnFilter) withJoinFilter.on();
-        assertEquals(ColumnFilter.Operator.Gte, jf.operator());
+        assertEquals(ColumnFilter.Operator.Gte, jf.op());
         assertSame(lc, jf.column());
         assertSame(rc, ((Values.Column)jf.values()).column());
 

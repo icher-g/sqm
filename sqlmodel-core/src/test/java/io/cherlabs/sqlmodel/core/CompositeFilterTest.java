@@ -14,7 +14,7 @@ public class CompositeFilterTest {
 
         CompositeFilter and = Filter.and(f1, f2, f3);
 
-        assertEquals(CompositeFilter.Operator.And, and.operator());
+        assertEquals(CompositeFilter.Operator.And, and.op());
         assertNotNull(and.filters());
         assertEquals(3, and.filters().size());
         assertSame(f1, and.filters().get(0));
