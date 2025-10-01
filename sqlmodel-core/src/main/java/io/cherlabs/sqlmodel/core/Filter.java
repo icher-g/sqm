@@ -27,7 +27,7 @@ public interface Filter extends Entity {
     }
 
     /**
-     * Creates a composite filter with an {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#And} operator.
+     * Creates a composite filter with an {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#And} op.
      *
      * @param filters an array of filters to compose.
      * @return A newly created instance of a filter.
@@ -37,7 +37,7 @@ public interface Filter extends Entity {
     }
 
     /**
-     * Creates a composite filter with an {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#And} operator.
+     * Creates a composite filter with an {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#And} op.
      *
      * @param filters a list of filters to compose.
      * @return A newly created instance of a filter.
@@ -47,7 +47,7 @@ public interface Filter extends Entity {
     }
 
     /**
-     * Creates a composite filter with an {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#Or} operator.
+     * Creates a composite filter with an {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#Or} op.
      *
      * @param filters an array of filters to compose.
      * @return A newly created instance of a filter.
@@ -57,7 +57,7 @@ public interface Filter extends Entity {
     }
 
     /**
-     * Creates a composite filter with an {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#Or} operator.
+     * Creates a composite filter with an {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#Or} op.
      *
      * @param filters a list of filters to compose.
      * @return A newly created instance of a filter.
@@ -67,7 +67,7 @@ public interface Filter extends Entity {
     }
 
     /**
-     * Creates a composite filter with an {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#Not} operator.
+     * Creates a composite filter with an {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#Not} op.
      *
      * @param filter a filter to negate.
      * @return A newly created instance of a filter.

@@ -25,7 +25,7 @@ public class ColumnFilterTest {
     void in_builds_List_values_and_sets_operator_In() {
         ColumnFilter cf = Filter.column(Column.of("category")).in(1, 2, 3);
 
-        assertEquals(ColumnFilter.Operator.In, cf.operator());
+        assertEquals(ColumnFilter.Operator.In, cf.op());
         assertEquals("category", cf.columnAs(NamedColumn.class).name());
 
         Values v = cf.values();
@@ -37,7 +37,7 @@ public class ColumnFilterTest {
     @Test
     void notIn_builds_List_values_and_sets_operator_NotIn() {
         ColumnFilter cf = Filter.column(Column.of("status")).notIn(List.of("A", "B"));
-        assertEquals(ColumnFilter.Operator.NotIn, cf.operator());
+        assertEquals(ColumnFilter.Operator.NotIn, cf.op());
 
         var v = cf.values();
         assertInstanceOf(Values.ListValues.class, v);
@@ -47,7 +47,7 @@ public class ColumnFilterTest {
     @Test
     void like_builds_Single_value_and_sets_operator_Like() {
         ColumnFilter cf = Filter.column(Column.of("name")).like("%abc%");
-        assertEquals(ColumnFilter.Operator.Like, cf.operator());
+        assertEquals(ColumnFilter.Operator.Like, cf.op());
 
         var v = cf.values();
         assertInstanceOf(Values.Single.class, v, "Expected Values.Single for LIKE");
@@ -57,7 +57,7 @@ public class ColumnFilterTest {
     @Test
     void range_builds_Range_value_and_sets_operator_Ranges() {
         ColumnFilter cf = Filter.column(Column.of("price")).range(10, 20);
-        assertEquals(ColumnFilter.Operator.Range, cf.operator());
+        assertEquals(ColumnFilter.Operator.Range, cf.op());
 
         var v = cf.values();
         assertInstanceOf(Values.Range.class, v, "Expected Values.Range for range()");
@@ -73,7 +73,7 @@ public class ColumnFilterTest {
         @MethodSource("io.cherlabs.sqlmodel.core.ColumnFilterTest#inCases")
         void in_various(String columnName, Object[] args, List<Object> expected) {
             ColumnFilter cf = Filter.column(Column.of(columnName)).in(args);
-            assertEquals(ColumnFilter.Operator.In, cf.operator());
+            assertEquals(ColumnFilter.Operator.In, cf.op());
             assertInstanceOf(Values.ListValues.class, cf.values());
             assertEquals(expected, ((Values.ListValues) cf.values()).items());
         }

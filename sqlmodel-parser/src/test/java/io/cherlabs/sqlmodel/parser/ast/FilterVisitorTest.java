@@ -39,7 +39,7 @@ class FilterVisitorTest {
     void eq_single() {
         Filter f = visit("qty = 5");
         ColumnFilter cf = as(ColumnFilter.class, f);
-        assertEquals(ColumnFilter.Operator.Eq, cf.operator());
+        assertEquals(ColumnFilter.Operator.Eq, cf.op());
         Values.Single v = as(Values.Single.class, cf.values());
         assertEquals(5L, v.value()); // adjust if your numbers are Integer/BigDecimal
         assertEquals("qty", cf.columnAs(NamedColumn.class).name());
@@ -49,26 +49,26 @@ class FilterVisitorTest {
     @DisplayName("!= and <> map to ColumnFilter(Ne)")
     void ne_single() {
         ColumnFilter cf1 = as(ColumnFilter.class, visit("qty != 5"));
-        assertEquals(ColumnFilter.Operator.Ne, cf1.operator());
+        assertEquals(ColumnFilter.Operator.Ne, cf1.op());
 
         ColumnFilter cf2 = as(ColumnFilter.class, visit("qty <> 5"));
-        assertEquals(ColumnFilter.Operator.Ne, cf2.operator());
+        assertEquals(ColumnFilter.Operator.Ne, cf2.op());
     }
 
     @Test
     @DisplayName(">, >=, <, <= map to respective ColumnFilter.Operator")
     void comparisons() {
-        assertEquals(ColumnFilter.Operator.Gt, as(ColumnFilter.class, visit("price > 10")).operator());
-        assertEquals(ColumnFilter.Operator.Gte, as(ColumnFilter.class, visit("price >= 10")).operator());
-        assertEquals(ColumnFilter.Operator.Lt, as(ColumnFilter.class, visit("price < 10")).operator());
-        assertEquals(ColumnFilter.Operator.Lte, as(ColumnFilter.class, visit("price <= 10")).operator());
+        assertEquals(ColumnFilter.Operator.Gt, as(ColumnFilter.class, visit("price > 10")).op());
+        assertEquals(ColumnFilter.Operator.Gte, as(ColumnFilter.class, visit("price >= 10")).op());
+        assertEquals(ColumnFilter.Operator.Lt, as(ColumnFilter.class, visit("price < 10")).op());
+        assertEquals(ColumnFilter.Operator.Lte, as(ColumnFilter.class, visit("price <= 10")).op());
     }
 
     @Test
     @DisplayName("LIKE produces ColumnFilter(Like) + Values.Single")
     void like_op() {
         ColumnFilter cf = as(ColumnFilter.class, visit("name LIKE '%abc%'"));
-        assertEquals(ColumnFilter.Operator.Like, cf.operator());
+        assertEquals(ColumnFilter.Operator.Like, cf.op());
         assertEquals("%abc%", as(Values.Single.class, cf.values()).value());
         assertEquals("name", cf.columnAs(NamedColumn.class).name());
     }
@@ -77,7 +77,7 @@ class FilterVisitorTest {
     @DisplayName("BETWEEN produces ColumnFilter(Ranges) + Values.Range")
     void between_op() {
         ColumnFilter cf = as(ColumnFilter.class, visit("price BETWEEN 10 AND 20"));
-        assertEquals(ColumnFilter.Operator.Range, cf.operator());
+        assertEquals(ColumnFilter.Operator.Range, cf.op());
         Values.Range r = as(Values.Range.class, cf.values());
         assertEquals(10L, r.min());
         assertEquals(20L, r.max());
@@ -88,7 +88,7 @@ class FilterVisitorTest {
     @DisplayName("IN (list) -> ColumnFilter(In) + Values.ListVals")
     void in_list() {
         ColumnFilter cf = as(ColumnFilter.class, visit("category IN (1, 2, 3)"));
-        assertEquals(ColumnFilter.Operator.In, cf.operator());
+        assertEquals(ColumnFilter.Operator.In, cf.op());
         Values.ListValues v = as(Values.ListValues.class, cf.values());
         assertEquals(List.of(1L, 2L, 3L), v.items());
         assertEquals("category", cf.columnAs(NamedColumn.class).name());
@@ -98,7 +98,7 @@ class FilterVisitorTest {
     @DisplayName("NOT IN (list) -> ColumnFilter(NotIn)")
     void not_in_list() {
         ColumnFilter cf = as(ColumnFilter.class, visit("status NOT IN ('A','B')"));
-        assertEquals(ColumnFilter.Operator.NotIn, cf.operator());
+        assertEquals(ColumnFilter.Operator.NotIn, cf.op());
         assertEquals(List.of("A", "B"), as(Values.ListValues.class, cf.values()).items());
         assertEquals("status", cf.columnAs(NamedColumn.class).name());
     }
@@ -126,17 +126,17 @@ class FilterVisitorTest {
         // status IN ('A','B') AND (price BETWEEN 10 AND 20 OR NOT name LIKE '%test%')
         Filter root = visit("status IN ('A','B') AND (price BETWEEN 10 AND 20 OR NOT name LIKE '%test%')");
         CompositeFilter and = as(CompositeFilter.class, root);
-        assertEquals(CompositeFilter.Operator.And, and.operator());
+        assertEquals(CompositeFilter.Operator.And, and.op());
         assertEquals(2, and.filters().size());
 
         assertInstanceOf(ColumnFilter.class, and.filters().get(0)); // left IN
 
         CompositeFilter or = as(CompositeFilter.class, and.filters().get(1));
-        assertEquals(CompositeFilter.Operator.Or, or.operator());
+        assertEquals(CompositeFilter.Operator.Or, or.op());
         assertEquals(2, or.filters().size());
 
         CompositeFilter not = as(CompositeFilter.class, or.filters().get(1));
-        assertEquals(CompositeFilter.Operator.Not, not.operator());
+        assertEquals(CompositeFilter.Operator.Not, not.op());
         assertEquals(1, not.filters().size());
         assertInstanceOf(ColumnFilter.class, not.filters().get(0)); // LIKE inside NOT
     }

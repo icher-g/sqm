@@ -36,21 +36,21 @@ public final class Filters {
     }
 
     /**
-     * Gets a column filter operator from the filter implemented by one of the derived types if presented.
+     * Gets a column filter op from the filter implemented by one of the derived types if presented.
      *
      * @param f a filter.
-     * @return {@link Optional} with the column filter operator if presented or an {@link Optional#empty()}.
+     * @return {@link Optional} with the column filter op if presented or an {@link Optional#empty()}.
      */
     public static Optional<ColumnFilter.Operator> columnOperator(Filter f) {
-        if (f instanceof HasColumnOperator h) return Optional.ofNullable(h.operator());
+        if (f instanceof HasColumnOperator h) return Optional.ofNullable(h.op());
         return Optional.empty();
     }
 
     /**
-     * Gets a tuple filter operator from the filter implemented by one of the derived types if presented.
+     * Gets a tuple filter op from the filter implemented by one of the derived types if presented.
      *
      * @param f a filter.
-     * @return {@link Optional} with the tuple filter operator if presented or an {@link Optional#empty()}.
+     * @return {@link Optional} with the tuple filter op if presented or an {@link Optional#empty()}.
      */
     public static Optional<TupleFilter.Operator> tupleOperator(Filter f) {
         if (f instanceof HasTupleOperator h) return Optional.ofNullable(h.operator());
@@ -69,13 +69,13 @@ public final class Filters {
     }
 
     /**
-     * Gets a composite filter operator from the filter implemented by one of the derived types if presented.
+     * Gets a composite filter op from the filter implemented by one of the derived types if presented.
      *
      * @param f a filter.
-     * @return {@link Optional} with the composite filter operator if presented or an {@link Optional#empty()}.
+     * @return {@link Optional} with the composite filter op if presented or an {@link Optional#empty()}.
      */
     public static Optional<CompositeFilter.Operator> compositeOperator(Filter f) {
-        if (f instanceof HasCompositeOperator h) return Optional.ofNullable(h.operator());
+        if (f instanceof HasCompositeOperator h) return Optional.ofNullable(h.op());
         return Optional.empty();
     }
 

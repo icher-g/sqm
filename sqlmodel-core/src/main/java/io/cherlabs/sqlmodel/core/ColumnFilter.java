@@ -7,7 +7,7 @@ import io.cherlabs.sqlmodel.core.traits.HasValues;
 import java.util.List;
 
 /**
- * Represents a filter that has a column on its left side an operator in the middle and a set of possible values on the right.
+ * Represents a filter that has a column on its left side an op in the middle and a set of possible values on the right.
  * For example:
  * {@code
  * c <> 7
@@ -18,12 +18,12 @@ import java.util.List;
  * }
  *
  * @param column   a column
- * @param operator an operator
+ * @param op an op
  * @param values   a value(s)
  */
-public record ColumnFilter(Column column, Operator operator, Values values) implements Filter, HasColumn, HasColumnOperator, HasValues {
+public record ColumnFilter(Column column, Operator op, Values values) implements Filter, HasColumn, HasColumnOperator, HasValues {
     /**
-     * Creates a filter with {@link Operator#In} operator and an array of values.
+     * Creates a filter with {@link Operator#In} op and an array of values.
      *
      * @param items an array of values
      * @return A newly created instance of a filter.
@@ -37,7 +37,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#In} operator and a list of values.
+     * Creates a filter with {@link Operator#In} op and a list of values.
      *
      * @param items a list of values
      * @return A newly created instance of a filter.
@@ -50,7 +50,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#NotIn} operator and an array of values.
+     * Creates a filter with {@link Operator#NotIn} op and an array of values.
      *
      * @param items an array of values
      * @return A newly created instance of a filter.
@@ -64,7 +64,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#NotIn} operator and a list of values.
+     * Creates a filter with {@link Operator#NotIn} op and a list of values.
      *
      * @param items a list of values
      * @return A newly created instance of a filter.
@@ -77,7 +77,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#Eq} operator and a value.
+     * Creates a filter with {@link Operator#Eq} op and a value.
      *
      * @param item a value to compare to.
      * @return A newly created instance of a filter.
@@ -87,7 +87,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#Eq} operator and a column.
+     * Creates a filter with {@link Operator#Eq} op and a column.
      *
      * @param item a column to compare to.
      * @return A newly created instance of a filter.
@@ -97,7 +97,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#Ne} operator and a value.
+     * Creates a filter with {@link Operator#Ne} op and a value.
      *
      * @param item a value to compare to.
      * @return A newly created instance of a filter.
@@ -107,7 +107,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#Ne} operator and a column.
+     * Creates a filter with {@link Operator#Ne} op and a column.
      *
      * @param item a column to compare to.
      * @return A newly created instance of a filter.
@@ -117,7 +117,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#Lt} operator and a value.
+     * Creates a filter with {@link Operator#Lt} op and a value.
      *
      * @param item a value to compare to.
      * @return A newly created instance of a filter.
@@ -127,7 +127,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#Lt} operator and a column.
+     * Creates a filter with {@link Operator#Lt} op and a column.
      *
      * @param item a column to compare to.
      * @return A newly created instance of a filter.
@@ -137,7 +137,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#Lte} operator and a value.
+     * Creates a filter with {@link Operator#Lte} op and a value.
      *
      * @param item a value to compare to.
      * @return A newly created instance of a filter.
@@ -147,7 +147,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#Lte} operator and a column.
+     * Creates a filter with {@link Operator#Lte} op and a column.
      *
      * @param item a column to compare to.
      * @return A newly created instance of a filter.
@@ -157,7 +157,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#Gt} operator and a value.
+     * Creates a filter with {@link Operator#Gt} op and a value.
      *
      * @param item a value to compare to.
      * @return A newly created instance of a filter.
@@ -167,7 +167,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#Gt} operator and a column.
+     * Creates a filter with {@link Operator#Gt} op and a column.
      *
      * @param item a column to compare to.
      * @return A newly created instance of a filter.
@@ -177,7 +177,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#Gte} operator and a value.
+     * Creates a filter with {@link Operator#Gte} op and a value.
      *
      * @param item a value to compare to.
      * @return A newly created instance of a filter.
@@ -187,7 +187,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#Gte} operator and a column.
+     * Creates a filter with {@link Operator#Gte} op and a column.
      *
      * @param item a column to compare to.
      * @return A newly created instance of a filter.
@@ -197,7 +197,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#Like} operator and a string.
+     * Creates a filter with {@link Operator#Like} op and a string.
      *
      * @param value a string to compare to.
      * @return A newly created instance of a filter.
@@ -207,7 +207,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#NotLike} operator and a string.
+     * Creates a filter with {@link Operator#NotLike} op and a string.
      *
      * @param value a string to compare to.
      * @return A newly created instance of a filter.
@@ -217,7 +217,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#IsNull} operator.
+     * Creates a filter with {@link Operator#IsNull} op.
      *
      * @return A newly created instance of a filter.
      */
@@ -226,7 +226,7 @@ public record ColumnFilter(Column column, Operator operator, Values values) impl
     }
 
     /**
-     * Creates a filter with {@link Operator#IsNotNull} operator.
+     * Creates a filter with {@link Operator#IsNotNull} op.
      *
      * @return A newly created instance of a filter.
      */

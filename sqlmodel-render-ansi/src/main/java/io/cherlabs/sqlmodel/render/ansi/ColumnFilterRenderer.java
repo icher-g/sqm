@@ -13,10 +13,10 @@ public class ColumnFilterRenderer implements Renderer<ColumnFilter> {
         w.append(entity.column());
         w.space();
 
-        switch (entity.operator()) {
+        switch (entity.op()) {
             case In -> renderIn(entity.values(), ctx, w);
             case NotIn -> renderNotIn(entity.values(), ctx, w);
-            case Range -> renderRange(entity.values(), ctx, w);
+            case Range -> renderRange(entity.values(), w);
             case Eq -> renderEq(entity.values(), ctx, w);
             case Ne -> renderNe(entity.values(), ctx, w);
             case Lt -> renderLt(entity.values(), ctx, w);
@@ -27,7 +27,7 @@ public class ColumnFilterRenderer implements Renderer<ColumnFilter> {
             case NotLike -> renderNotLike(entity.values(), ctx, w);
             case IsNull -> renderIsNull(entity.values(), ctx, w);
             case IsNotNull -> renderIsNotNull(entity.values(), ctx, w);
-            default -> throw new UnsupportedOperationException("The specified operator: " + entity.operator() + " is not supported.");
+            default -> throw new UnsupportedOperationException("The specified op: " + entity.op() + " is not supported.");
         }
     }
 
@@ -39,7 +39,7 @@ public class ColumnFilterRenderer implements Renderer<ColumnFilter> {
         } else if (values instanceof Values.Subquery q) {
             w.append(ctx.dialect().operators().in()).space().append(q);
         } else {
-            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'IN' operator.");
+            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'IN' op.");
         }
     }
 
@@ -51,15 +51,15 @@ public class ColumnFilterRenderer implements Renderer<ColumnFilter> {
         } else if (values instanceof Values.Subquery q) {
             w.append(ctx.dialect().operators().notIn()).space().append(q);
         } else {
-            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'NotIn' operator.");
+            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'NotIn' op.");
         }
     }
 
-    private void renderRange(Values values, RenderContext ctx, SqlWriter w) {
+    private void renderRange(Values values, SqlWriter w) {
         if (values instanceof Values.Range r) {
             w.append(r);
         } else {
-            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Range' operator.");
+            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Range' op.");
         }
     }
 
@@ -69,7 +69,7 @@ public class ColumnFilterRenderer implements Renderer<ColumnFilter> {
         } else if (values instanceof Values.Column c) {
             w.append(ctx.dialect().operators().eq()).space().append(c);
         } else {
-            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Eq' operator.");
+            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Eq' op.");
         }
     }
 
@@ -79,7 +79,7 @@ public class ColumnFilterRenderer implements Renderer<ColumnFilter> {
         } else if (values instanceof Values.Column c) {
             w.append(ctx.dialect().operators().ne()).space().append(c);
         } else {
-            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Ne' operator.");
+            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Ne' op.");
         }
     }
 
@@ -89,7 +89,7 @@ public class ColumnFilterRenderer implements Renderer<ColumnFilter> {
         } else if (values instanceof Values.Column c) {
             w.append(ctx.dialect().operators().lt()).space().append(c);
         } else {
-            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Lt' operator.");
+            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Lt' op.");
         }
     }
 
@@ -99,7 +99,7 @@ public class ColumnFilterRenderer implements Renderer<ColumnFilter> {
         } else if (values instanceof Values.Column c) {
             w.append(ctx.dialect().operators().lte()).space().append(c);
         } else {
-            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Lte' operator.");
+            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Lte' op.");
         }
     }
 
@@ -109,7 +109,7 @@ public class ColumnFilterRenderer implements Renderer<ColumnFilter> {
         } else if (values instanceof Values.Column c) {
             w.append(ctx.dialect().operators().gt()).space().append(c);
         } else {
-            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Gt' operator.");
+            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Gt' op.");
         }
     }
 
@@ -119,7 +119,7 @@ public class ColumnFilterRenderer implements Renderer<ColumnFilter> {
         } else if (values instanceof Values.Column c) {
             w.append(ctx.dialect().operators().gte()).space().append(c);
         } else {
-            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Gte' operator.");
+            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Gte' op.");
         }
     }
 
@@ -127,7 +127,7 @@ public class ColumnFilterRenderer implements Renderer<ColumnFilter> {
         if (values instanceof Values.Single s) {
             w.append(ctx.dialect().operators().like()).space().append(s);
         } else {
-            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Like' operator.");
+            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'Like' op.");
         }
     }
 
@@ -135,7 +135,7 @@ public class ColumnFilterRenderer implements Renderer<ColumnFilter> {
         if (values instanceof Values.Single s) {
             w.append(ctx.dialect().operators().notLike()).space().append(s);
         } else {
-            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'NotLike' operator.");
+            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'NotLike' op.");
         }
     }
 
@@ -143,7 +143,7 @@ public class ColumnFilterRenderer implements Renderer<ColumnFilter> {
         if (values == null || values instanceof Values.Single) {
             w.append(ctx.dialect().operators().isNull());
         } else {
-            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'IsNull' operator.");
+            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'IsNull' op.");
         }
     }
 
@@ -151,7 +151,7 @@ public class ColumnFilterRenderer implements Renderer<ColumnFilter> {
         if (values == null || values instanceof Values.Single) {
             w.append(ctx.dialect().operators().isNotNull());
         } else {
-            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'IsNotNull' operator.");
+            throw new UnsupportedOperationException("The specified value type: " + values.getClass().getSimpleName() + " is not supported in 'IsNotNull' op.");
         }
     }
 }

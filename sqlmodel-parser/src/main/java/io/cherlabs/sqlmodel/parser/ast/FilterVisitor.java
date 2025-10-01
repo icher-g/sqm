@@ -49,12 +49,12 @@ public class FilterVisitor implements Expr.Visitor<Filter> {
 
     protected static Filter merge(CompositeFilter.Operator operator, Filter a, Filter b) {
         var list = new ArrayList<Filter>();
-        if (a instanceof CompositeFilter ca && ca.operator() == operator) {
+        if (a instanceof CompositeFilter ca && ca.op() == operator) {
             list.addAll(ca.filters());
         } else {
             list.add(a);
         }
-        if (b instanceof CompositeFilter cb && cb.operator() == operator) {
+        if (b instanceof CompositeFilter cb && cb.op() == operator) {
             list.addAll(cb.filters());
         } else {
             list.add(b);

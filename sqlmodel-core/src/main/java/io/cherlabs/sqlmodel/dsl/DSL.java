@@ -342,7 +342,7 @@ public final class DSL {
     /* ========================= column operators ========================= */
 
     /**
-     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Eq} operator and value.
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Eq} op and value.
      * For example: {@code WHERE c1 = 1}
      *
      * @param col   a column.
@@ -354,7 +354,7 @@ public final class DSL {
     }
 
     /**
-     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Eq} operator between two columns.
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Eq} op between two columns.
      * For example: {@code WHERE c1 = c2}
      *
      * @param col1 a left column.
@@ -366,7 +366,7 @@ public final class DSL {
     }
 
     /**
-     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Ne} operator and value.
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Ne} op and value.
      * For example: {@code WHERE c1 <> 1}
      *
      * @param col   a column.
@@ -378,7 +378,7 @@ public final class DSL {
     }
 
     /**
-     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Ne} operator between two columns.
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Ne} op between two columns.
      * For example: {@code WHERE c1 <> c2}
      *
      * @param col1 a left column.
@@ -390,7 +390,7 @@ public final class DSL {
     }
 
     /**
-     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Lt} operator and value.
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Lt} op and value.
      * For example: {@code WHERE c1 < 1}
      *
      * @param col   a column.
@@ -402,7 +402,7 @@ public final class DSL {
     }
 
     /**
-     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Lt} operator between two columns.
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Lt} op between two columns.
      * For example: {@code WHERE c1 < c2}
      *
      * @param col1 a left column.
@@ -414,7 +414,7 @@ public final class DSL {
     }
 
     /**
-     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Lte} operator and value.
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Lte} op and value.
      * For example: {@code WHERE c1 <= 1}
      *
      * @param col   a column.
@@ -426,7 +426,7 @@ public final class DSL {
     }
 
     /**
-     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Lte} operator between two columns.
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Lte} op between two columns.
      * For example: {@code WHERE c1 <= c2}
      *
      * @param col1 a left column.
@@ -438,7 +438,7 @@ public final class DSL {
     }
 
     /**
-     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Gt} operator and value.
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Gt} op and value.
      * For example: {@code WHERE c1 > 1}
      *
      * @param col   a column.
@@ -450,7 +450,7 @@ public final class DSL {
     }
 
     /**
-     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Gt} operator between two columns.
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Gt} op between two columns.
      * For example: {@code WHERE c1 > c2}
      *
      * @param col1 a left column.
@@ -462,7 +462,7 @@ public final class DSL {
     }
 
     /**
-     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Gte} operator and value.
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Gte} op and value.
      * For example: {@code WHERE c1 >= 1}
      *
      * @param col   a column.
@@ -474,7 +474,7 @@ public final class DSL {
     }
 
     /**
-     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Gte} operator between two columns.
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Gte} op between two columns.
      * For example: {@code WHERE c1 >= c2}
      *
      * @param col1 a left column.
@@ -486,7 +486,7 @@ public final class DSL {
     }
 
     /**
-     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#In} operator and values.
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#In} op and values.
      * For example: {@code WHERE c1 IN (1, 2, 3)}
      *
      * @param col    a column.
@@ -498,7 +498,7 @@ public final class DSL {
     }
 
     /**
-     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#NotIn} operator and values.
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#NotIn} op and values.
      * For example: {@code WHERE c1 NOT IN (1, 2, 3)}
      *
      * @param col    a column.
@@ -510,7 +510,7 @@ public final class DSL {
     }
 
     /**
-     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Range} operator.
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#Range} op.
      * For example: {@code c1 BETWEEN 1 AND 100}
      *
      * @param col a column.
@@ -523,7 +523,7 @@ public final class DSL {
     }
 
     /**
-     * Creates a tuple filter with {@link io.cherlabs.sqlmodel.core.TupleFilter.Operator#In} operator.
+     * Creates a tuple filter with {@link io.cherlabs.sqlmodel.core.TupleFilter.Operator#In} op.
      * For example: {@code (c1, c2) IN ((1, 2), (3, 4))}
      *
      * @param cols a list of columns on the left side of the filter.
@@ -535,7 +535,7 @@ public final class DSL {
     }
 
     /**
-     * Creates a tuple filter with {@link io.cherlabs.sqlmodel.core.TupleFilter.Operator#NotIn} operator.
+     * Creates a tuple filter with {@link io.cherlabs.sqlmodel.core.TupleFilter.Operator#NotIn} op.
      * For example: {@code (c1, c2) NOT IN ((1, 2), (3, 4))}
      *
      * @param cols a list of columns on the left side of the filter.
@@ -547,7 +547,7 @@ public final class DSL {
     }
 
     /**
-     * Creates a composite filter with {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#And} operator between the filters.
+     * Creates a composite filter with {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#And} op between the filters.
      *
      * @param filters a list of filters.
      * @return a composite filter.
@@ -557,7 +557,7 @@ public final class DSL {
     }
 
     /**
-     * Creates a composite filter with {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#And} operator between the filters.
+     * Creates a composite filter with {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#And} op between the filters.
      *
      * @param filters a list of filters.
      * @return a composite filter.
@@ -567,7 +567,7 @@ public final class DSL {
     }
 
     /**
-     * Creates a composite filter with {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#Or} operator between the filters.
+     * Creates a composite filter with {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#Or} op between the filters.
      *
      * @param filters a list of filters.
      * @return a composite filter.
@@ -577,7 +577,7 @@ public final class DSL {
     }
 
     /**
-     * Creates a composite filter with {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#And} operator between the filters.
+     * Creates a composite filter with {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#And} op between the filters.
      *
      * @param filters a list of filters.
      * @return a composite filter.
@@ -587,7 +587,7 @@ public final class DSL {
     }
 
     /**
-     * Creates a composite filter with {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#Not} operator to negate the filter.
+     * Creates a composite filter with {@link io.cherlabs.sqlmodel.core.CompositeFilter.Operator#Not} op to negate the filter.
      *
      * @param filter a filter.
      * @return a composite filter.

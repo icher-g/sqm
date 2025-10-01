@@ -43,7 +43,7 @@ class JoinSpecParserTest {
 
         assertInstanceOf(CompositeFilter.class, j.on(), "Expected a composite AND");
         var and = (CompositeFilter) j.on();
-        assertEquals(CompositeFilter.Operator.And, and.operator());
+        assertEquals(CompositeFilter.Operator.And, and.op());
         assertEquals(2, and.filters().size(), "AND should contain two predicates");
     }
 

@@ -11,7 +11,7 @@ import java.util.List;
  * For example: {@code WHERE (c1, c2) IN ((1, 2), (3, 4))}
  *
  * @param columns  a list of the columns to be used in a filter.
- * @param operator a filter operator.
+ * @param operator a filter op.
  * @param values   values for a filter.
  */
 public record TupleFilter(List<Column> columns, Operator operator, Values values) implements Filter, HasColumns, HasTupleOperator, HasValues {
@@ -19,7 +19,7 @@ public record TupleFilter(List<Column> columns, Operator operator, Values values
      * Creates an {@link Operator#In} filter with the provided tuple values.
      *
      * @param rows a list of tuples.
-     * @return A new instance with the provided operator. The columns filed is preserved.
+     * @return A new instance with the provided op. The columns filed is preserved.
      */
     public TupleFilter in(List<List<Object>> rows) {
         return new TupleFilter(columns, Operator.In, Values.tuples(rows));
@@ -29,7 +29,7 @@ public record TupleFilter(List<Column> columns, Operator operator, Values values
      * Creates an {@link Operator#NotIn} filter with the provided tuple values.
      *
      * @param rows a list of tuples.
-     * @return A new instance with the provided operator. The columns filed is preserved.
+     * @return A new instance with the provided op. The columns filed is preserved.
      */
     public TupleFilter notIn(List<List<Object>> rows) {
         return new TupleFilter(columns, Operator.NotIn, Values.tuples(rows));
