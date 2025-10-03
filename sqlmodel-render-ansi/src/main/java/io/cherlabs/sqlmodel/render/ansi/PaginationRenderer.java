@@ -7,6 +7,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class PaginationRenderer implements Renderer<Query<?>> {
     @Override
+    public Class<Query<?>> targetType() {
+        return null;
+    }
+
+    @Override
     public void render(Query<?> entity, RenderContext ctx, SqlWriter w) {
         Long limit = entity.limit();
         Long offset = entity.offset();

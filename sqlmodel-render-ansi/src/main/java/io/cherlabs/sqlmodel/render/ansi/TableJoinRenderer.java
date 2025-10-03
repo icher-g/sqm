@@ -7,6 +7,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class TableJoinRenderer implements Renderer<TableJoin> {
     @Override
+    public Class<TableJoin> targetType() {
+        return TableJoin.class;
+    }
+
+    @Override
     public void render(TableJoin entity, RenderContext ctx, SqlWriter w) {
         switch (entity.joinType()) {
             case Inner -> {

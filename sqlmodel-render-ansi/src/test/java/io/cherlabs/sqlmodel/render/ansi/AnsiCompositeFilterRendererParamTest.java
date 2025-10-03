@@ -20,7 +20,7 @@ class AnsiCompositeFilterRendererParamTest extends BaseValuesRendererTest {
 
     @Test
     void collects_params_in_traversal_order() {
-        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.POSITIONAL, ParameterizationMode.BIND);
+        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.Positional, ParameterizationMode.Bind);
         SqlWriter w = new DefaultSqlWriter(ctx);
 
         Column c1 = of("age").from("u");

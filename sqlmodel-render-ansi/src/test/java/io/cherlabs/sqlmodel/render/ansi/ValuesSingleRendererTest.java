@@ -16,7 +16,7 @@ class ValuesSingleRendererTest extends BaseValuesRendererTest {
 
     @Test
     void inline_single_literal_string() {
-        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.POSITIONAL, ParameterizationMode.INLINE);
+        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.Positional, ParameterizationMode.Inline);
         SqlWriter w = new DefaultSqlWriter(ctx);
 
         renderer.render(Values.single("Igor"), ctx, w);
@@ -26,7 +26,7 @@ class ValuesSingleRendererTest extends BaseValuesRendererTest {
 
     @Test
     void param_positional_single() {
-        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.POSITIONAL, ParameterizationMode.BIND);
+        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.Positional, ParameterizationMode.Bind);
         SqlWriter w = new DefaultSqlWriter(ctx);
 
         // Typical renderer implementation would call bind(value, ctx, w) internally

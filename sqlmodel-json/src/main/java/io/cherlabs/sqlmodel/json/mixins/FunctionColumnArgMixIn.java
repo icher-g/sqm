@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.cherlabs.sqlmodel.core.FunctionColumn;
 
+/**
+ * An abstract class used as a placeholder for {@link FunctionColumn.Arg} derived classes mapping.
+ */
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,

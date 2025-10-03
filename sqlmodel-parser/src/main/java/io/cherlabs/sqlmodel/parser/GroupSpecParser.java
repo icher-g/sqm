@@ -3,6 +3,16 @@ package io.cherlabs.sqlmodel.parser;
 import io.cherlabs.sqlmodel.core.Group;
 import io.cherlabs.sqlmodel.parser.core.Cursor;
 
+/**
+ * A spec parser for group by item specifications.
+ * <p>Example:</p>
+ * <pre>
+ *     {@code
+ *     "u.user_name", "o.status"
+ *     "1", "2", "3" // ordinal group by.
+ *     }
+ * </pre>
+ */
 public class GroupSpecParser implements SpecParser<Group> {
     private static boolean isPositiveInteger(String s) {
         // Fast path: all digits, no sign, no decimal.
@@ -13,11 +23,22 @@ public class GroupSpecParser implements SpecParser<Group> {
         return !s.isEmpty();
     }
 
+    /**
+     * Gets the {@link Group} type.
+     *
+     * @return {@link Group} type.
+     */
     @Override
     public Class<Group> targetType() {
         return Group.class;
     }
 
+    /**
+     * Parses the group by item specification.
+     *
+     * @param cur the {@link Cursor} class containing the tokens.
+     * @return a parser result.
+     */
     @Override
     public ParseResult<Group> parse(Cursor cur) {
         // Positional GROUP BY: "1", "2", ...

@@ -1,7 +1,7 @@
 package io.cherlabs.sqlmodel.render.ansi;
 
-import io.cherlabs.sqlmodel.core.WithQuery;
-import io.cherlabs.sqlmodel.core.*;
+import io.cherlabs.sqlmodel.core.Query;
+import io.cherlabs.sqlmodel.core.SelectQuery;
 import io.cherlabs.sqlmodel.render.repos.DefaultRenderersRepository;
 import io.cherlabs.sqlmodel.render.spi.RenderersRepository;
 
@@ -16,35 +16,35 @@ public final class AnsiRenderers {
 
     private static RenderersRepository registerDefaults(RenderersRepository r) {
         return r
-                .register(NamedColumn.class, new NamedColumnRenderer())
-                .register(ExpressionColumn.class, new ExpressionColumnRenderer())
-                .register(QueryColumn.class, new QueryColumnRenderer())
-                .register(SelectQuery.class, new QueryRenderer())
+                .register(new NamedColumnRenderer())
+                .register(new ExpressionColumnRenderer())
+                .register(new QueryColumnRenderer())
                 .register(Query.class, new QueryRenderer())
-                .register(ColumnFilter.class, new ColumnFilterRenderer())
-                .register(TupleFilter.class, new TupleFilterRenderer())
-                .register(CompositeFilter.class, new CompositeFilterRenderer())
-                .register(ExpressionFilter.class, new ExpressionFilterRenderer())
-                .register(TableJoin.class, new TableJoinRenderer())
-                .register(NamedTable.class, new NamedTableRenderer())
-                .register(ExpressionJoin.class, new ExpressionJoinRenderer())
-                .register(FunctionColumn.class, new FunctionColumnRenderer())
-                .register(FunctionColumn.Arg.Column.class, new ColumnArgRenderer())
-                .register(FunctionColumn.Arg.Literal.class, new LiteralArgRenderer())
-                .register(FunctionColumn.Arg.Function.class, new FunctionArgRenderer())
-                .register(FunctionColumn.Arg.Star.class, new StarArgRenderer())
-                .register(Group.class, new GroupRenderer())
-                .register(Order.class, new OrderRenderer())
-                .register(Values.ListValues.class, new ValuesListRenderer())
-                .register(Values.Range.class, new ValuesRangeRenderer())
-                .register(Values.Single.class, new ValuesSingleRenderer())
-                .register(Values.Subquery.class, new ValuesSubqueryRenderer())
-                .register(Values.Tuples.class, new ValuesTuplesRenderer())
-                .register(Values.Column.class, new ValuesColumnRenderer())
-                .register(CaseColumn.class, new CaseColumnRenderer())
-                .register(CompositeQuery.class, new CompositeQueryRenderer())
-                .register(WithQuery.class, new WithQueryRenderer())
-                .register(CteQuery.class, new CteQueryRenderer())
-                .register(QueryTable.class, new QueryTableRenderer());
+                .register(SelectQuery.class, new QueryRenderer())
+                .register(new ColumnFilterRenderer())
+                .register(new TupleFilterRenderer())
+                .register(new CompositeFilterRenderer())
+                .register(new ExpressionFilterRenderer())
+                .register(new TableJoinRenderer())
+                .register(new NamedTableRenderer())
+                .register(new ExpressionJoinRenderer())
+                .register(new FunctionColumnRenderer())
+                .register(new ColumnArgRenderer())
+                .register(new LiteralArgRenderer())
+                .register(new FunctionArgRenderer())
+                .register(new StarArgRenderer())
+                .register(new GroupRenderer())
+                .register(new OrderRenderer())
+                .register(new ValuesListRenderer())
+                .register(new ValuesRangeRenderer())
+                .register(new ValuesSingleRenderer())
+                .register(new ValuesSubqueryRenderer())
+                .register(new ValuesTuplesRenderer())
+                .register(new ValuesColumnRenderer())
+                .register(new CaseColumnRenderer())
+                .register(new CompositeQueryRenderer())
+                .register(new WithQueryRenderer())
+                .register(new CteQueryRenderer())
+                .register(new QueryTableRenderer());
     }
 }

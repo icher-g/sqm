@@ -8,6 +8,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class TupleFilterRenderer implements Renderer<TupleFilter> {
     @Override
+    public Class<TupleFilter> targetType() {
+        return TupleFilter.class;
+    }
+
+    @Override
     public void render(TupleFilter entity, RenderContext ctx, SqlWriter w) {
 
         w.append("(").comma(entity.columns()).append(")").space();

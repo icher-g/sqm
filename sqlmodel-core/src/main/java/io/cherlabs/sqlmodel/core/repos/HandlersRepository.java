@@ -57,10 +57,8 @@ public interface HandlersRepository<K extends Handler<?>> {
 
     /**
      * Registers a new handler for a type.
-     * @param type the type of the entity the handler handles.
      * @param handler the handler implementation
      * @return this.
-     * @param <T> the type of the entity.
      */
-    <T extends Entity> HandlersRepository<K> register(Class<T> type, K handler);
+    HandlersRepository<K> register(K handler);
 }

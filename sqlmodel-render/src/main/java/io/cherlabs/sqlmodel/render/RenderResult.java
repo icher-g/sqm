@@ -2,5 +2,11 @@ package io.cherlabs.sqlmodel.render;
 
 import java.util.List;
 
+/**
+ * Represents a render result.
+ *
+ * @param sql    a rendered string.
+ * @param params a list of parameters if there are any.
+ */
 public record RenderResult(String sql, List<Object> params) implements SqlText {
 }

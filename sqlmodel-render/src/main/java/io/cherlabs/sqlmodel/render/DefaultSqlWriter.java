@@ -5,6 +5,9 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 import java.util.List;
 
+/**
+ * A default implementation of the {@link SqlWriter}. This implementation uses {@link StringBuilder} to keep the written SQL in memory.
+ */
 public class DefaultSqlWriter implements SqlWriter {
 
     private final StringBuilder sb = new StringBuilder();

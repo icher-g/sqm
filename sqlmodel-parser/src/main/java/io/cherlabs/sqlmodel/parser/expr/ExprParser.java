@@ -8,6 +8,9 @@ import java.util.List;
 
 import static io.cherlabs.sqlmodel.parser.core.TokenType.*;
 
+/**
+ * This class is used to parse a string and to create expressions tree.
+ */
 public final class ExprParser {
     private final Cursor cur;
 

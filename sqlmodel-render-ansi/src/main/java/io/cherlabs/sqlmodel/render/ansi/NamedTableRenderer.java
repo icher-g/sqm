@@ -7,6 +7,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class NamedTableRenderer implements Renderer<NamedTable> {
     @Override
+    public Class<NamedTable> targetType() {
+        return NamedTable.class;
+    }
+
+    @Override
     public void render(NamedTable entity, RenderContext ctx, SqlWriter w) {
         var quoter = ctx.dialect().quoter();
         var schema = entity.schema();

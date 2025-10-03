@@ -8,6 +8,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class CaseColumnRenderer implements Renderer<CaseColumn> {
     @Override
+    public Class<CaseColumn> targetType() {
+        return CaseColumn.class;
+    }
+
+    @Override
     public void render(CaseColumn entity, RenderContext ctx, SqlWriter w) {
         w.append("CASE");
 

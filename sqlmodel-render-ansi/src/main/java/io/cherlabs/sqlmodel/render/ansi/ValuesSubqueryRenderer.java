@@ -7,6 +7,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class ValuesSubqueryRenderer implements Renderer<Values.Subquery> {
     @Override
+    public Class<Values.Subquery> targetType() {
+        return Values.Subquery.class;
+    }
+
+    @Override
     public void render(Values.Subquery entity, RenderContext ctx, SqlWriter w) {
         w.ignoreNewLine(true);
         w.append("(").append(entity.query()).append(")");

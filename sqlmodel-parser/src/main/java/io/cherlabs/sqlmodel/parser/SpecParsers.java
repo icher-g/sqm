@@ -14,11 +14,11 @@ public final class SpecParsers {
 
     private static SpecParsersRepository registerDefaults(SpecParsersRepository r) {
         return r
-                .register(Column.class, new ColumnSpecParser())
-                .register(Filter.class, new FilterSpecParser())
-                .register(Join.class, new JoinSpecParser())
-                .register(Table.class, new TableSpecParser())
-                .register(Order.class, new OrderSpecParser())
-                .register(Group.class, new GroupSpecParser());
+                .register(new ColumnSpecParser())
+                .register(new FilterSpecParser())
+                .register(new JoinSpecParser())
+                .register(new TableSpecParser())
+                .register(new OrderSpecParser())
+                .register(new GroupSpecParser());
     }
 }

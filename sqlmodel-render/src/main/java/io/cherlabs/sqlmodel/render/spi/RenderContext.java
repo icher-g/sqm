@@ -11,15 +11,15 @@ public interface RenderContext {
     ParamSink params();
 
     default ParameterizationMode parameterizationMode() {
-        return ParameterizationMode.INLINE;
+        return ParameterizationMode.Inline;
     }
 
     default PlaceholderPreference placeholderPreference() {
-        return PlaceholderPreference.AUTO;
+        return PlaceholderPreference.Auto;
     }
 
     default String bindOrFormat(Object value) {
-        if (parameterizationMode() == ParameterizationMode.INLINE) {
+        if (parameterizationMode() == ParameterizationMode.Inline) {
             return dialect().formatter().format(value);
         } else {
             if (value instanceof Collection<?> col) {

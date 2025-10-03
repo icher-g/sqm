@@ -7,6 +7,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class QueryTableRenderer implements Renderer<QueryTable> {
     @Override
+    public Class<QueryTable> targetType() {
+        return QueryTable.class;
+    }
+
+    @Override
     public void render(QueryTable entity, RenderContext ctx, SqlWriter w) {
         w.append("(").newline().indent();
         w.append(entity.query());

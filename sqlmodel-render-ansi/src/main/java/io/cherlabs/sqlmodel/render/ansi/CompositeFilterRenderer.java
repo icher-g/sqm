@@ -11,6 +11,11 @@ import static io.cherlabs.sqlmodel.core.CompositeFilter.Operator.Not;
 
 public class CompositeFilterRenderer implements Renderer<CompositeFilter> {
     @Override
+    public Class<CompositeFilter> targetType() {
+        return CompositeFilter.class;
+    }
+
+    @Override
     public void render(CompositeFilter entity, RenderContext ctx, SqlWriter w) {
         var operator = switch (entity.op()) {
             case And -> ctx.dialect().operators().and();
@@ -26,8 +31,7 @@ public class CompositeFilterRenderer implements Renderer<CompositeFilter> {
                 }
                 render(filter, ctx, w);
             }
-        }
-        else {
+        } else {
             var filter = entity.filters().get(0);
             if (entity.op() == Not) {
                 w.append(operator).space().append("(");

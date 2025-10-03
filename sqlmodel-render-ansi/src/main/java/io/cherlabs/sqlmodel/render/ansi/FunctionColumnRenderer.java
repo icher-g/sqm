@@ -6,6 +6,10 @@ import io.cherlabs.sqlmodel.render.SqlWriter;
 import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class FunctionColumnRenderer implements Renderer<FunctionColumn> {
+    @Override
+    public Class<FunctionColumn> targetType() {
+        return FunctionColumn.class;
+    }
 
     @Override
     public void render(FunctionColumn entity, RenderContext ctx, SqlWriter w) {

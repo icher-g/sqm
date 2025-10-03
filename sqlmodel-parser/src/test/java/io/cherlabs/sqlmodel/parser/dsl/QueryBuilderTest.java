@@ -30,7 +30,7 @@ class QueryBuilderTest {
                 .orderBy("lname")
                 .limit(10);
 
-        Query q = qb.build();
+        Query<?> q = qb.build();
 
         assertEquals(2, q.select().size());
         assertTrue(q.select().stream().anyMatch(c -> c instanceof NamedColumn n && "id".equals(n.name()) && "p".equals(n.table())));
@@ -78,7 +78,7 @@ class QueryBuilderTest {
         qb.from("products p")
                 .rightJoin("dep d on p.dept_id = d.id");
 
-        Query q = qb.build();
+        Query<?> q = qb.build();
         assertEquals(1, q.joins().size());
         TableJoin j = (TableJoin) q.joins().iterator().next();
         assertEquals(Join.JoinType.Right, j.joinType());
@@ -95,7 +95,7 @@ class QueryBuilderTest {
         qb.from("products p")
                 .fullJoin("dep d on p.dept_id = d.id");
 
-        Query q = qb.build();
+        Query<?> q = qb.build();
         assertEquals(1, q.joins().size());
         TableJoin j = (TableJoin) q.joins().iterator().next();
         assertEquals(Join.JoinType.Full, j.joinType());
@@ -112,7 +112,7 @@ class QueryBuilderTest {
         qb.from("products p")
                 .crossJoin("regions r");
 
-        Query q = qb.build();
+        Query<?> q = qb.build();
         assertEquals(1, q.joins().size());
         TableJoin j = (TableJoin) q.joins().iterator().next();
         assertEquals(Join.JoinType.Cross, j.joinType());
@@ -131,7 +131,7 @@ class QueryBuilderTest {
                 .leftJoin("left join prices pr on p.id = pr.product_id")
                 .rightJoin("right join stock s on p.id = s.product_id");
 
-        Query q = qb.build();
+        Query<?> q = qb.build();
         assertEquals(3, q.joins().size());
 
         var it = q.joins().iterator();
@@ -162,7 +162,7 @@ class QueryBuilderTest {
     @Test
     void custom_repo_and_dialect() {
         var repo = new DefaultSpecParsersRepository();
-        repo.register(Table.class, new TableSpecParser());
+        repo.register(new TableSpecParser());
         var qb = QueryBuilder.newBuilder(repo);
         var q = qb.from("srv.db.schema.tbl t").build();
         assertNotNull(q.from());

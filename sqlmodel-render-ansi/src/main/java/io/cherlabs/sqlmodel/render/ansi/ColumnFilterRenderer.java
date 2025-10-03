@@ -8,6 +8,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class ColumnFilterRenderer implements Renderer<ColumnFilter> {
     @Override
+    public Class<ColumnFilter> targetType() {
+        return ColumnFilter.class;
+    }
+
+    @Override
     public void render(ColumnFilter entity, RenderContext ctx, SqlWriter w) {
 
         w.append(entity.column());

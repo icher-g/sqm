@@ -7,6 +7,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class ValuesColumnRenderer implements Renderer<Values.Column> {
     @Override
+    public Class<Values.Column> targetType() {
+        return Values.Column.class;
+    }
+
+    @Override
     public void render(Values.Column entity, RenderContext ctx, SqlWriter w) {
         w.append(entity.column());
     }

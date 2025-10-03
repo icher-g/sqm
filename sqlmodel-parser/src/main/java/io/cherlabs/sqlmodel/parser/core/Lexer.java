@@ -5,6 +5,9 @@ import java.util.regex.*;
 
 import static io.cherlabs.sqlmodel.parser.core.TokenType.*;
 
+/**
+ * This class is used to split the string into a list of tokens.
+ */
 public final class Lexer {
     private final String s;
     private int pos = 0;
@@ -17,6 +20,11 @@ public final class Lexer {
         this.len = s.length();
     }
 
+    /**
+     * Converts a string into a list of tokens.
+     * @param s a string to convert.
+     * @return a list of tokens.
+     */
     public static List<Token> lexAll(String s) {
         Lexer lx = new Lexer(s);
         List<Token> out = new ArrayList<>();
@@ -27,6 +35,10 @@ public final class Lexer {
         return out;
     }
 
+    /**
+     * Gets a next token.
+     * @return a token.
+     */
     public Token next() {
         skipWSandComments();
 
