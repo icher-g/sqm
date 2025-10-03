@@ -1,12 +1,18 @@
 package io.cherlabs.sqlmodel.parser;
 
-import io.cherlabs.sqlmodel.core.Column;
-import io.cherlabs.sqlmodel.core.Direction;
-import io.cherlabs.sqlmodel.core.Nulls;
-import io.cherlabs.sqlmodel.core.Order;
+import io.cherlabs.sqlmodel.core.*;
 import io.cherlabs.sqlmodel.parser.core.Cursor;
 import io.cherlabs.sqlmodel.parser.core.TokenType;
 
+/**
+ * A spec parser for order by specifications.
+ * <p>Example:</p>
+ * <pre>
+ *     {@code
+ *     "o.status ASC", "u.name DESC"
+ *     }
+ * </pre>
+ */
 public class OrderSpecParser implements SpecParser<Order> {
 
     private static String unquoteIfQuoted(String s) {
@@ -18,11 +24,22 @@ public class OrderSpecParser implements SpecParser<Order> {
         return s;
     }
 
+    /**
+     * Gets the {@link Order} type.
+     *
+     * @return {@link Order} type.
+     */
     @Override
     public Class<Order> targetType() {
         return Order.class;
     }
 
+    /**
+     * Parses the order by specification.
+     *
+     * @param cur the {@link Cursor} class containing the tokens.
+     * @return a parser result.
+     */
     @Override
     public ParseResult<Order> parse(Cursor cur) {
         // 1) Find end of the column-spec portion (before ASC|DESC|NULLS|COLLATE outside parens)

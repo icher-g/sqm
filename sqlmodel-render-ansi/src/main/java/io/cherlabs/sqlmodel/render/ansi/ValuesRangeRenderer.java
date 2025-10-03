@@ -7,6 +7,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class ValuesRangeRenderer implements Renderer<Values.Range> {
     @Override
+    public Class<Values.Range> targetType() {
+        return Values.Range.class;
+    }
+
+    @Override
     public void render(Values.Range entity, RenderContext ctx, SqlWriter w) {
         var min = ctx.bindOrFormat(entity.min());
         var max = ctx.bindOrFormat(entity.max());

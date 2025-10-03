@@ -9,6 +9,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class OrderRenderer implements Renderer<Order> {
     @Override
+    public Class<Order> targetType() {
+        return Order.class;
+    }
+
+    @Override
     public void render(Order entity, RenderContext ctx, SqlWriter w) {
         // expr (column or function) — delegate to its renderer
         w.append(entity.column());

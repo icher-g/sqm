@@ -8,6 +8,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class CteQueryRenderer implements Renderer<CteQuery> {
     @Override
+    public Class<CteQuery> targetType() {
+        return CteQuery.class;
+    }
+
+    @Override
     public void render(CteQuery entity, RenderContext ctx, SqlWriter w) {
         var name = entity.name();
         if (name == null || name.isBlank()) {

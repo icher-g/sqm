@@ -16,7 +16,7 @@ class ValuesListRendererTest extends BaseValuesRendererTest {
 
     @Test
     void inline_list_literals() {
-        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.POSITIONAL, ParameterizationMode.INLINE);
+        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.Positional, ParameterizationMode.Inline);
         SqlWriter w = new DefaultSqlWriter(ctx);
 
         renderer.render(Values.list(List.of(1, 2, 3)), ctx, w);
@@ -26,7 +26,7 @@ class ValuesListRendererTest extends BaseValuesRendererTest {
 
     @Test
     void param_positional_list() {
-        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.POSITIONAL, ParameterizationMode.BIND);
+        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.Positional, ParameterizationMode.Bind);
         SqlWriter w = new DefaultSqlWriter(ctx);
 
         renderer.render(Values.list(List.of("a", "b", "c")), ctx, w);
@@ -36,7 +36,7 @@ class ValuesListRendererTest extends BaseValuesRendererTest {
 
     @Test
     void param_ordinal_list() {
-        var ctx = new TestRenderContext(ordinalDialect, PlaceholderPreference.ORDINAL, ParameterizationMode.BIND);
+        var ctx = new TestRenderContext(ordinalDialect, PlaceholderPreference.Ordinal, ParameterizationMode.Bind);
         SqlWriter w = new DefaultSqlWriter(ctx);
 
         renderer.render(Values.list(List.of(10, 20)), ctx, w);
@@ -46,7 +46,7 @@ class ValuesListRendererTest extends BaseValuesRendererTest {
 
     @Test
     void param_named_list() {
-        var ctx = new TestRenderContext(namedDialect, PlaceholderPreference.NAMED, ParameterizationMode.BIND);
+        var ctx = new TestRenderContext(namedDialect, PlaceholderPreference.Named, ParameterizationMode.Bind);
         SqlWriter w = new DefaultSqlWriter(ctx);
 
         renderer.render(Values.list(List.of(true, false)), ctx, w);

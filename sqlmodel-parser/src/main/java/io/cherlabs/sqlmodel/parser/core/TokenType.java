@@ -1,5 +1,8 @@
 package io.cherlabs.sqlmodel.parser.core;
 
+/**
+ * A list of token types.
+ */
 public enum TokenType {
     // literals & names
     IDENT, NUMBER, STRING, PARAM_QMARK,       // ?

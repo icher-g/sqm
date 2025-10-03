@@ -53,7 +53,7 @@ HAVING count(*) > 10
 Query q = q()
    .select(c("u", "user_name"), c("o", "status"), func("count", star()).as("cnt"))
    .from(t("orders").as("o"))
-   .where(in(List.of("A", "B")))
+   .where(in("A", "B"))
    .join(inner(t("users").as("u")).on(eq(c("u", "id"), c("o", "user_id"))))
    .groupBy(g(c("u", "user_name")), g(c("o", "status")))
    .having(gt(func("count", star()), 10));

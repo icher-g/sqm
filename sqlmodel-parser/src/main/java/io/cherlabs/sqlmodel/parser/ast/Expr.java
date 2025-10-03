@@ -2,9 +2,16 @@ package io.cherlabs.sqlmodel.parser.ast;
 
 import java.util.*;
 
+/**
+ * A base interface for an expression
+ */
 public interface Expr {
     <R> R accept(Visitor<R> v);
 
+    /**
+     * An interface used in a Visitor pattern
+     * @param <R> The type of the entity to be created from the expression.
+     */
     interface Visitor<R> {
         R visitBinary(Binary e);
         R visitUnary(Unary e);
@@ -23,54 +30,93 @@ public interface Expr {
     }
 
     // Basic nodes
+
+    /**
+     * Represents a binary expression.
+     * @param left the left expression.
+     * @param op an operator.
+     * @param right the right expression.
+     */
     record Binary(Expr left, String op, Expr right) implements Expr {
         public <R> R accept(Visitor<R> v) {
             return v.visitBinary(this);
         }
     }
 
+    /**
+     * Represents a unary expression. For example: {@code NOT TRUE}
+     * @param op a unary operator.
+     * @param expr an expression.
+     */
     record Unary(String op, Expr expr) implements Expr {
         public <R> R accept(Visitor<R> v) {
             return v.visitUnary(this);
         }
     }
 
+    /**
+     * Represents a column expression.
+     * @param qname a qualified column name such as schema.table.column
+     */
     record Column(List<String> qname) implements Expr {
         public <R> R accept(Visitor<R> v) {
             return v.visitColumn(this);
         }
     }
 
+    /**
+     * Represents a number.
+     * @param text string containing the number.
+     */
     record NumberLit(String text) implements Expr {
         public <R> R accept(Visitor<R> v) {
             return v.visitNumber(this);
         }
     }
 
+    /**
+     * Represents a string.
+     * @param text a text.
+     */
     record StringLit(String text) implements Expr {
         public <R> R accept(Visitor<R> v) {
             return v.visitString(this);
         }
     }
 
+    /**
+     * Represents a parameter used in a query.
+     * @param name the parameter.
+     */
     record Param(String name) implements Expr {
         public <R> R accept(Visitor<R> v) {
             return v.visitParam(this);
         }
     } // "?" or ":name"
 
+    /**
+     * Represents an expression inside the parenthesis '(', ')'.
+     * @param inner
+     */
     record Group(Expr inner) implements Expr {
         public <R> R accept(Visitor<R> v) {
             return v.visitGroup(this);
         }
     }
 
+    /**
+     * Represents a boolean.
+     * @param value a boolean value.
+     */
     record BoolLit(boolean value) implements Expr {
         public <R> R accept(Visitor<R> v) {
             return v.visitBool(this);
         }
     }
 
+    /**
+     * Represents a NULL.
+     */
     record NullLit() implements Expr {
         public <R> R accept(Visitor<R> v) {
             return v.visitNull(this);
@@ -78,6 +124,13 @@ public interface Expr {
     }
 
     // SQL-y extras
+
+    /**
+     * Represents an IN expression. For example: {@code col1 IN (1, 2, 3)}
+     * @param needle a left expression. A column or a list of columns in case of a tuple.
+     * @param haystack a list of expressions inside the IN.
+     * @param negated indicates whether the expression should be negated or no.
+     */
     record InExpr(Expr needle, List<Expr> haystack, boolean negated) implements Expr {
         public <R> R accept(Visitor<R> v) {
             return v.visitIn(this);
@@ -96,12 +149,25 @@ public interface Expr {
         }
     }
 
+    /**
+     * Represents a LIKE expression.
+     * @param left a left expression.
+     * @param pattern a LIKE pattern.
+     * @param negated indicates whether the expression should be negated or no.
+     */
     record LikeExpr(Expr left, Expr pattern, boolean negated) implements Expr {
         public <R> R accept(Visitor<R> v) {
             return v.visitLike(this);
         }
     }
 
+    /**
+     * Represents a BETWEEN expression.
+     * @param left a left expression.
+     * @param lo a minimum value.
+     * @param hi a maximum value.
+     * @param negated indicates whether the expression should be negated or no.
+     */
     record BetweenExpr(Expr left, Expr lo, Expr hi, boolean negated) implements Expr {
         public <R> R accept(Visitor<R> v) {
             return v.visitBetween(this);

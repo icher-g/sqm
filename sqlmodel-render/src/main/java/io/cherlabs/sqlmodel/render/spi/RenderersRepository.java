@@ -27,5 +27,9 @@ public interface RenderersRepository extends HandlersRepository<Renderer<?>> {
     }
 
     @Override
+    default RenderersRepository register(Renderer<?> handler) {
+        return register(handler.targetType(), handler);
+    }
+
     <T extends Entity> RenderersRepository register(Class<T> type, Renderer<?> handler);
 }

@@ -2,6 +2,9 @@ package io.cherlabs.sqlmodel.render;
 
 import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
+/**
+ * A helper class for providing a parameter placeholder according to the placeholder preferences provided by the dialect.
+ */
 public final class PlaceholderResolver {
     public static String next(RenderContext ctx) {
         var ph = ctx.dialect().placeholders();
@@ -9,18 +12,18 @@ public final class PlaceholderResolver {
         var pref = ctx.placeholderPreference();
 
         switch (pref) {
-            case ORDINAL -> {
+            case Ordinal -> {
                 if (ph.supportsOrdinal()) return ph.ordinal(pos);
                 // fallback
             }
-            case NAMED -> {
+            case Named -> {
                 if (ph.supportsNamed()) return ph.named("p" + pos);
                 // fallback
             }
-            case POSITIONAL -> {
+            case Positional -> {
                 return ph.marker(); // expect "?"
             }
-            case AUTO -> {
+            case Auto -> {
                 if (ph.supportsOrdinal()) return ph.ordinal(pos);
                 if (ph.supportsNamed()) return ph.named("p" + pos);
                 return ph.marker();

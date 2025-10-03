@@ -16,7 +16,7 @@ class ValuesRangeRendererTest extends BaseValuesRendererTest {
 
     @Test
     void inline_range_literals() {
-        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.POSITIONAL, ParameterizationMode.INLINE);
+        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.Positional, ParameterizationMode.Inline);
         SqlWriter w = new DefaultSqlWriter(ctx);
 
         renderer.render(Values.range(5, 15), ctx, w);
@@ -26,7 +26,7 @@ class ValuesRangeRendererTest extends BaseValuesRendererTest {
 
     @Test
     void param_positional_range() {
-        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.POSITIONAL, ParameterizationMode.BIND);
+        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.Positional, ParameterizationMode.Bind);
         SqlWriter w = new DefaultSqlWriter(ctx);
 
         renderer.render(Values.range("A", "Z"), ctx, w);

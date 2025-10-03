@@ -1,8 +1,11 @@
 package io.cherlabs.sqlmodel.render.spi;
 
+/**
+ * A list of supported types of placeholders.
+ */
 public enum PlaceholderPreference {
-    AUTO,       // pick the “best” supported by the dialect
-    POSITIONAL, // "?"
-    ORDINAL,    // "$1", "$2"...
-    NAMED       // ":p1", "@p1", etc.
+    Auto,       // pick the “best” supported by the dialect
+    Positional, // "?"
+    Ordinal,    // "$1", "$2"...
+    Named       // ":p1", "@p1", etc.
 }

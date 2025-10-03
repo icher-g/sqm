@@ -40,15 +40,27 @@ public final class JoinSpecParser implements SpecParser<Join> {
         };
     }
 
+    /**
+     * Gets the {@link Join} type.
+     *
+     * @return {@link Join} type.
+     */
     @Override
     public Class<Join> targetType() {
         return Join.class;
     }
 
+    /**
+     * Parses the join specification.
+     *
+     * @param cur the {@link Cursor} class containing the tokens.
+     * @return a parser result.
+     */
     @Override
     public ParseResult<Join> parse(Cursor cur) {
         // Optional join type
         Join.JoinType type = Join.JoinType.Inner;
+
         if (cur.matchAny(TokenType.INNER, TokenType.LEFT, TokenType.RIGHT, TokenType.FULL, TokenType.CROSS)) {
             type = mapJoinType(cur.advance().type());
             cur.consumeIf(TokenType.OUTER); // LEFT/RIGHT/FULL OUTER

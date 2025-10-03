@@ -9,6 +9,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class WithQueryRenderer implements Renderer<WithQuery> {
     @Override
+    public Class<WithQuery> targetType() {
+        return WithQuery.class;
+    }
+
+    @Override
     public void render(WithQuery with, RenderContext ctx, SqlWriter w) {
         var ctes = with.ctes();
         if (ctes == null || ctes.isEmpty()) {

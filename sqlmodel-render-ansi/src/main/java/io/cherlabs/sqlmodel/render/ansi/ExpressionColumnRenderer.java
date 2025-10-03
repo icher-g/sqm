@@ -7,6 +7,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class ExpressionColumnRenderer implements Renderer<ExpressionColumn> {
     @Override
+    public Class<ExpressionColumn> targetType() {
+        return ExpressionColumn.class;
+    }
+
+    @Override
     public void render(ExpressionColumn entity, RenderContext ctx, SqlWriter w) {
         w.append(entity.expr());
 

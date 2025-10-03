@@ -2,7 +2,8 @@ package io.cherlabs.sqlmodel.parser;
 
 import io.cherlabs.sqlmodel.core.NamedTable;
 import io.cherlabs.sqlmodel.core.Table;
-import io.cherlabs.sqlmodel.parser.core.*;
+import io.cherlabs.sqlmodel.parser.core.Cursor;
+import io.cherlabs.sqlmodel.parser.core.TokenType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,11 +17,22 @@ import java.util.List;
  */
 public final class TableSpecParser implements SpecParser<Table> {
 
+    /**
+     * Gets the {@link Table} type.
+     *
+     * @return {@link Table} type.
+     */
     @Override
     public Class<Table> targetType() {
         return Table.class;
     }
 
+    /**
+     * Parses the table specification.
+     *
+     * @param cur the {@link Cursor} class containing the tokens.
+     * @return a parser result.
+     */
     @Override
     public ParseResult<Table> parse(Cursor cur) {
         // first identifier

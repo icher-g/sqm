@@ -14,6 +14,11 @@ public final class QueryRenderer implements Renderer<Query<?>> {
     }
 
     @Override
+    public Class<Query<?>> targetType() {
+        return null;
+    }
+
+    @Override
     public void render(Query<?> q, RenderContext ctx, SqlWriter w) {
         // SELECT
         w.append("SELECT");

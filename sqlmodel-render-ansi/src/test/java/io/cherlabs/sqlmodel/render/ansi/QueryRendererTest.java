@@ -35,7 +35,7 @@ public class QueryRendererTest {
         return Order.by(c).asc();
     }
 
-    private static String toSql(Renderer<Query<?>> r, SelectQuery q, RenderContext ctx) {
+    private static String toSql(Renderer<Query<?>> r, Query<?> q, RenderContext ctx) {
         SqlWriter w = new DefaultSqlWriter(ctx);
         r.render(q, ctx, w);
         return w.toText(List.of()).sql(); // your SqlWriter usually returns SqlText; adapt if needed

@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * An implementation of a Visitor to handle filter parsing.
+ */
 public class FilterVisitor implements Expr.Visitor<Filter> {
 
     protected static final Object INVALID = new Object();

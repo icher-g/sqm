@@ -16,7 +16,7 @@ class ValuesTuplesRendererTest extends BaseValuesRendererTest {
 
     @Test
     void inline_tuples_literals() {
-        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.POSITIONAL, ParameterizationMode.INLINE);
+        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.Positional, ParameterizationMode.Inline);
         SqlWriter w = new DefaultSqlWriter(ctx);
 
         var tuples = List.of(
@@ -35,7 +35,7 @@ class ValuesTuplesRendererTest extends BaseValuesRendererTest {
 
     @Test
     void param_positional_tuples() {
-        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.POSITIONAL, ParameterizationMode.BIND);
+        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.Positional, ParameterizationMode.Bind);
         SqlWriter w = new DefaultSqlWriter(ctx);
 
         var tuples = List.of(

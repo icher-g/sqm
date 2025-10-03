@@ -10,6 +10,15 @@ import java.util.List;
 
 import static java.util.List.copyOf;
 
+/**
+ * A spec parser for column specifications.
+ * <p>Example:</p>
+ * <pre>
+ *     {@code
+ *     "u.user_name", "o.status", "count(*) AS cnt"
+ *     }
+ * </pre>
+ */
 public class ColumnSpecParser implements SpecParser<Column> {
 
     private static Object parseNumber(String lexeme) {
@@ -35,11 +44,20 @@ public class ColumnSpecParser implements SpecParser<Column> {
         return s.replace("''", "'");
     }
 
+    /**
+     * Gets the {@link Column} type.
+     * @return {@link Column} type.
+     */
     @Override
     public Class<Column> targetType() {
         return Column.class;
     }
 
+    /**
+     * Parses the column specification.
+     * @param cur the {@link Cursor} class containing the tokens.
+     * @return a parser result.
+     */
     @Override
     public ParseResult<Column> parse(Cursor cur) {
         try {

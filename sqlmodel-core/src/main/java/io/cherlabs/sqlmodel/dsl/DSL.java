@@ -5,7 +5,6 @@ import io.cherlabs.sqlmodel.core.views.Columns;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Minimal, ergonomic, static-import friendly helpers to build the core model
@@ -493,8 +492,20 @@ public final class DSL {
      * @param values a list of values.
      * @return a column filter.
      */
-    public static ColumnFilter in(Column col, List<?> values) {
-        return Filter.column(col).in(values.stream().map(Object.class::cast).collect(Collectors.toList()));
+    public static ColumnFilter in(Column col, List<Object> values) {
+        return Filter.column(col).in(values);
+    }
+
+    /**
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#In} op and values.
+     * For example: {@code WHERE c1 IN (1, 2, 3)}
+     *
+     * @param col    a column.
+     * @param values a list of values.
+     * @return a column filter.
+     */
+    public static ColumnFilter in(Column col, Object... values) {
+        return Filter.column(col).in(values);
     }
 
     /**
@@ -505,8 +516,20 @@ public final class DSL {
      * @param values a list of values.
      * @return a column filter.
      */
-    public static ColumnFilter notIn(Column col, List<?> values) {
-        return Filter.column(col).notIn(values.stream().map(Object.class::cast).collect(Collectors.toList()));
+    public static ColumnFilter notIn(Column col, List<Object> values) {
+        return Filter.column(col).notIn(values);
+    }
+
+    /**
+     * Creates column filter with {@link io.cherlabs.sqlmodel.core.ColumnFilter.Operator#NotIn} op and values.
+     * For example: {@code WHERE c1 NOT IN (1, 2, 3)}
+     *
+     * @param col    a column.
+     * @param values a list of values.
+     * @return a column filter.
+     */
+    public static ColumnFilter notIn(Column col, Object... values) {
+        return Filter.column(col).notIn(values);
     }
 
     /**

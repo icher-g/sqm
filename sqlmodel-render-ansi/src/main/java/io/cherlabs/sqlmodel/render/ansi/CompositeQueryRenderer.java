@@ -8,6 +8,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 public final class CompositeQueryRenderer implements Renderer<CompositeQuery> {
 
     @Override
+    public Class<CompositeQuery> targetType() {
+        return CompositeQuery.class;
+    }
+
+    @Override
     public void render(CompositeQuery entity, RenderContext ctx, SqlWriter w) {
         var terms = entity.terms();
         var ops = entity.ops();

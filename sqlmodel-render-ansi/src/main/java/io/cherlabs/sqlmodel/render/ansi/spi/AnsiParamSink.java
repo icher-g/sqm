@@ -14,9 +14,8 @@ public class AnsiParamSink implements ParamSink {
     }
 
     @Override
-    public int add(Object value) {
+    public void add(Object value) {
         values.add(value);
-        return values.size();
     }
 
     @Override

@@ -7,6 +7,11 @@ import io.cherlabs.sqlmodel.render.spi.RenderContext;
 
 public class QueryColumnRenderer implements Renderer<QueryColumn> {
     @Override
+    public Class<QueryColumn> targetType() {
+        return QueryColumn.class;
+    }
+
+    @Override
     public void render(QueryColumn entity, RenderContext ctx, SqlWriter w) {
 
         w.ignoreNewLine(true);
