@@ -4,16 +4,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.cherlabs</groupId>
-    <artifactId>sqlmodel-parent</artifactId>
+    <artifactId>sqm-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>CherLabs SQLModel (parent)</name>
+    <name>SQM (parent)</name>
     <modules>
-        <module>sqlmodel-core</module>
-        <module>sqlmodel-render</module>
-        <module>sqlmodel-parser</module>
-        <module>sqlmodel-json</module>
-        <module>sqlmodel-render-ansi</module>
+        <module>sqm-core</module>
+        <module>sqm-render</module>
+        <module>sqm-parser</module>
+        <module>sqm-json</module>
+        <module>sqm-render-ansi</module>
     </modules>
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
