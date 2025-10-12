@@ -1,6 +1,9 @@
 package io.cherlabs.sqm.core;
 
-import java.util.ArrayList;
+import io.cherlabs.sqm.core.traits.HasBody;
+import io.cherlabs.sqm.core.traits.HasColumnAliases;
+import io.cherlabs.sqm.core.traits.HasName;
+
 import java.util.List;
 
 /**
@@ -37,28 +40,35 @@ import java.util.List;
  *     }
  * </pre>
  */
-public class CteQuery extends Query<CteQuery> {
-    private final List<String> columnAliases;
-
-    public CteQuery() {
-        this.columnAliases = new ArrayList<>();
-    }
+public record CteQuery(String name, Query body, List<String> columnAliases) implements Query, HasName, HasBody, HasColumnAliases {
 
     /**
-     * Gets a list of column aliases to be added into a CTE name for recursive usage.
-     * @return a list of strings.
+     * Adds a select statement to the WITH query.
+     *
+     * @param body a select statement.
+     * @return A new instance of {@link CteQuery} with the select statement. All other fields are preserved.
      */
-    public List<String> columnAliases() {
-        return columnAliases;
+    public CteQuery select(Query body) {
+        return new CteQuery(name, body, columnAliases);
     }
 
     /**
-     * Sets an array of column aliases to be added into a CTE name for recursive usage.
-     * @param columnAliases an array of column aliases
-     * @return a reference to this.
+     * Adds a list of column aliases to the WITH query.
+     *
+     * @param columnAliases a list of column aliases.
+     * @return A new instance of {@link CteQuery} with the list of column aliases. All other fields are preserved.
+     */
+    public CteQuery columnAliases(List<String> columnAliases) {
+        return new CteQuery(name, body, columnAliases);
+    }
+
+    /**
+     * Adds a list of column aliases to the WITH query.
+     *
+     * @param columnAliases a list of column aliases.
+     * @return A new instance of {@link CteQuery} with the list of column aliases. All other fields are preserved.
      */
     public CteQuery columnAliases(String... columnAliases) {
-        this.columnAliases.addAll(List.of(columnAliases));
-        return this;
+        return new CteQuery(name, body, List.of(columnAliases));
     }
 }

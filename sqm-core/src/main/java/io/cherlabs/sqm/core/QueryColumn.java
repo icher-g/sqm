@@ -9,7 +9,7 @@ import io.cherlabs.sqm.core.traits.HasQuery;
  * @param query a query.
  * @param alias an alias of the column.
  */
-public record QueryColumn(Query<?> query, String alias) implements Column, HasQuery, HasAlias {
+public record QueryColumn(Query query, String alias) implements Column, HasQuery, HasAlias {
     /**
      * Adds an alias to the column.
      *

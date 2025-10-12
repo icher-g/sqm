@@ -13,7 +13,7 @@ import io.cherlabs.sqm.parser.core.TokenType;
  *     }
  * </pre>
  */
-public class OrderSpecParser implements SpecParser<Order> {
+public class OrderParser implements Parser<Order> {
 
     private static String unquoteIfQuoted(String s) {
         int n = s.length();
@@ -44,17 +44,16 @@ public class OrderSpecParser implements SpecParser<Order> {
     public ParseResult<Order> parse(Cursor cur) {
         // 1) Find end of the column-spec portion (before ASC|DESC|NULLS|COLLATE outside parens)
         final int colEnd = cur.find(TokenType.ASC, TokenType.DESC, TokenType.NULLS, TokenType.COLLATE, TokenType.EOF);
-        if (colEnd <= 0) {
+        if (colEnd == cur.size()) {
             return ParseResult.error("Missing column in ORDER BY item");
         }
 
         // 2) Parse the column via ColumnSpecParser on the exact substring slice
-        var colCur = cur.sliceUntil(colEnd);
-        final ParseResult<Column> colRes = new ColumnSpecParser().parse(colCur);
+        var colCur = cur.advance(colEnd);
+        final ParseResult<Column> colRes = new ColumnParser().parse(colCur);
         if (!colRes.ok()) {
             return ParseResult.error(colRes);
         }
-        cur.setPos(colEnd);
         final Column column = colRes.value();
 
         // 3) Parse optional modifiers in any order from the remaining tokens

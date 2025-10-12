@@ -40,7 +40,7 @@ class CompositeQueryRendererTest {
 
         var cq = new CompositeQuery(List.of(t1, t2), List.of(unionAll()))
                 .orderBy(Order.by(Column.of("id").from("1")).asc()) // assuming ordinal or expr handled by your Order renderer
-                .limit(10);
+                .limit(10L);
 
         var sql = render(cq);
 
@@ -60,7 +60,7 @@ class CompositeQueryRendererTest {
         var cq = new CompositeQuery(
                 List.of(t1, t2, t3),
                 List.of(union(), intersect())
-        ).offset(20).limit(5);
+        ).offset(20L).limit(5L);
 
         var sql = render(cq);
 

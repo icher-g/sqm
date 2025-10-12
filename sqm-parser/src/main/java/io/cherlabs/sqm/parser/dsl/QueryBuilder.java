@@ -1,8 +1,8 @@
 package io.cherlabs.sqm.parser.dsl;
 
 import io.cherlabs.sqm.core.*;
-import io.cherlabs.sqm.parser.SpecParsers;
-import io.cherlabs.sqm.parser.repos.SpecParsersRepository;
+import io.cherlabs.sqm.parser.Parsers;
+import io.cherlabs.sqm.parser.repos.ParsersRepository;
 
 import java.util.List;
 
@@ -26,31 +26,31 @@ import java.util.List;
  */
 public final class QueryBuilder {
 
-    private final Query<?> query;
-    private final SpecParsersRepository parsers;
+    private final SelectQuery query;
+    private final ParsersRepository parsers;
 
-    private QueryBuilder(Query<?> query, SpecParsersRepository parsers) {
+    private QueryBuilder(SelectQuery query, ParsersRepository parsers) {
         this.query = query == null ? new SelectQuery() : query;
         this.parsers = parsers;
     }
 
     /**
-     * Creates new instance of {@link QueryBuilder} with default query: {@link SelectQuery} and specs repository: {@link SpecParsers#defaultRepository()}l
+     * Creates new instance of {@link QueryBuilder} with default query: {@link SelectQuery} and specs repository: {@link Parsers#defaultRepository()}l
      *
      * @return a new instance of {@link QueryBuilder}.
      */
     public static QueryBuilder newBuilder() {
-        return newBuilder(new SelectQuery(), SpecParsers.defaultRepository());
+        return newBuilder(new SelectQuery(), Parsers.defaultRepository());
     }
 
     /**
-     * Creates new instance of {@link QueryBuilder} with provided query and default specs repository: {@link SpecParsers#defaultRepository()}.
+     * Creates new instance of {@link QueryBuilder} with provided query and default specs repository: {@link Parsers#defaultRepository()}.
      *
      * @param query a query instance to build.
      * @return a new instance of {@link QueryBuilder}.
      */
-    public static QueryBuilder newBuilder(Query<?> query) {
-        return newBuilder(query, SpecParsers.defaultRepository());
+    public static QueryBuilder newBuilder(SelectQuery query) {
+        return newBuilder(query, Parsers.defaultRepository());
     }
 
     /**
@@ -59,7 +59,7 @@ public final class QueryBuilder {
      * @param parsersRepository specs repository to use to get specs parsers.
      * @return a new instance of {@link QueryBuilder}.
      */
-    public static QueryBuilder newBuilder(SpecParsersRepository parsersRepository) {
+    public static QueryBuilder newBuilder(ParsersRepository parsersRepository) {
         return newBuilder(new SelectQuery(), parsersRepository);
     }
 
@@ -70,7 +70,7 @@ public final class QueryBuilder {
      * @param parsersRepository specs repository to use to get specs parsers.
      * @return a new instance of {@link QueryBuilder}.
      */
-    public static QueryBuilder newBuilder(Query<?> query, SpecParsersRepository parsersRepository) {
+    public static QueryBuilder newBuilder(SelectQuery query, ParsersRepository parsersRepository) {
         return new QueryBuilder(query, parsersRepository);
     }
 
@@ -96,7 +96,7 @@ public final class QueryBuilder {
      * @return this.
      */
     public QueryBuilder select(String... specs) {
-        add(Column.class, this.query.select(), specs);
+        add(Column.class, this.query.columns(), specs);
         return this;
     }
 
@@ -289,7 +289,7 @@ public final class QueryBuilder {
      * @param limit a limit.
      * @return this.
      */
-    public QueryBuilder limit(int limit) {
+    public QueryBuilder limit(long limit) {
         this.query.limit(limit);
         return this;
     }
@@ -300,7 +300,7 @@ public final class QueryBuilder {
      * @param offset an offset.
      * @return this.
      */
-    public QueryBuilder offset(int offset) {
+    public QueryBuilder offset(long offset) {
         this.query.offset(offset);
         return this;
     }
@@ -310,7 +310,7 @@ public final class QueryBuilder {
      *
      * @return a query.
      */
-    public Query<?> build() {
+    public SelectQuery build() {
         return this.query;
     }
 

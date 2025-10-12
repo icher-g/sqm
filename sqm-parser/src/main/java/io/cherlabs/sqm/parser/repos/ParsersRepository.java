@@ -2,12 +2,12 @@ package io.cherlabs.sqm.parser.repos;
 
 import io.cherlabs.sqm.core.Entity;
 import io.cherlabs.sqm.core.repos.HandlersRepository;
-import io.cherlabs.sqm.parser.SpecParser;
+import io.cherlabs.sqm.parser.Parser;
 
 /**
  * A base interface for the spec parsers' repository.
  */
-public interface SpecParsersRepository extends HandlersRepository<SpecParser<?>> {
+public interface ParsersRepository extends HandlersRepository<Parser<?>> {
     /**
      * Returns a SpecParser for the specific class.
      * @param type the type of the class which parser is needed.
@@ -15,7 +15,7 @@ public interface SpecParsersRepository extends HandlersRepository<SpecParser<?>>
      * @param <T> the actual type of the entity to be parsed.
      */
     @Override
-    <T extends Entity> SpecParser<T> get(Class<T> type);
+    <T extends Entity> Parser<T> get(Class<T> type);
 
     /**
      * Returns a SpecParser for the provided entity.
@@ -25,8 +25,8 @@ public interface SpecParsersRepository extends HandlersRepository<SpecParser<?>>
      */
     @Override
     @SuppressWarnings("unchecked")
-    default <T extends Entity> SpecParser<T> getFor(T instance) {
-        return (SpecParser<T>) HandlersRepository.super.getFor(instance);
+    default <T extends Entity> Parser<T> getFor(T instance) {
+        return (Parser<T>) HandlersRepository.super.getFor(instance);
     }
 
     /**
@@ -38,8 +38,8 @@ public interface SpecParsersRepository extends HandlersRepository<SpecParser<?>>
      */
     @Override
     @SuppressWarnings("unchecked")
-    default <T extends Entity> SpecParser<T> require(Class<T> type) {
-        return (SpecParser<T>) HandlersRepository.super.require(type);
+    default <T extends Entity> Parser<T> require(Class<T> type) {
+        return (Parser<T>) HandlersRepository.super.require(type);
     }
 
     /**
@@ -51,8 +51,8 @@ public interface SpecParsersRepository extends HandlersRepository<SpecParser<?>>
      */
     @Override
     @SuppressWarnings("unchecked")
-    default <T extends Entity> SpecParser<T> requireFor(T instance) {
-        return (SpecParser<T>) HandlersRepository.super.requireFor(instance);
+    default <T extends Entity> Parser<T> requireFor(T instance) {
+        return (Parser<T>) HandlersRepository.super.requireFor(instance);
     }
 
     /**
@@ -61,7 +61,7 @@ public interface SpecParsersRepository extends HandlersRepository<SpecParser<?>>
      * @return this.
      */
     @Override
-    default SpecParsersRepository register(SpecParser<?> handler) {
+    default ParsersRepository register(Parser<?> handler) {
         return register(handler.targetType(), handler);
     }
 
@@ -72,5 +72,5 @@ public interface SpecParsersRepository extends HandlersRepository<SpecParser<?>>
      * @return this.
      * @param <T> the type of the entity.
      */
-    <T extends Entity> SpecParsersRepository register(Class<T> type, SpecParser<?> handler);
+    <T extends Entity> ParsersRepository register(Class<T> type, Parser<?> handler);
 }

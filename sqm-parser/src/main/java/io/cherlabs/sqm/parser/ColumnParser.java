@@ -19,7 +19,7 @@ import static java.util.List.copyOf;
  *     }
  * </pre>
  */
-public class ColumnSpecParser implements SpecParser<Column> {
+public class ColumnParser implements Parser<Column> {
 
     private static Object parseNumber(String lexeme) {
         // match FilterSpecParser number policy: prefer Long, fallback Double
@@ -46,6 +46,7 @@ public class ColumnSpecParser implements SpecParser<Column> {
 
     /**
      * Gets the {@link Column} type.
+     *
      * @return {@link Column} type.
      */
     @Override
@@ -55,42 +56,64 @@ public class ColumnSpecParser implements SpecParser<Column> {
 
     /**
      * Parses the column specification.
+     *
      * @param cur the {@link Cursor} class containing the tokens.
      * @return a parser result.
      */
     @Override
     public ParseResult<Column> parse(Cursor cur) {
         try {
-            // Try CASE first
+            // The column spec might be inside the brackets ().
+            cur.consumeIf(TokenType.LPAREN);
+
+            // Check if this is a *.
+            if (cur.consumeIf(TokenType.STAR)) {
+                return finalize(cur, ParseResult.ok(new StarColumn()), null);
+            }
+
+            // Try value: SELECT 1
+            if (looksLikeValue(cur)) {
+                var vr = parseValueColumn(cur);
+                return finalize(cur, vr, "Unexpected tokens after value.");
+            }
+
+            // Try CASE
             if (looksLikeCase(cur)) {
                 var cr = parseCaseColumn(cur);
-                if (!cr.ok()) return ParseResult.error(cr);
-                if (!cur.isEof()) {
-                    return ParseResult.error("Unexpected tokens after CASE...END alias at pos " + cur.pos(), cur.pos());
-                }
-                return cr;
+                return finalize(cur, cr, "Unexpected tokens after CASE...END.");
             }
 
             // Try function column: IDENT ('.' IDENT)* '(' ...
             if (looksLikeFunctionAt(cur)) {
                 var fr = parseFunctionColumn(cur);
-                if (!fr.ok()) return ParseResult.error(fr);
-                if (!cur.isEof()) {
-                    return ParseResult.error("Unexpected tokens after function column", cur.pos());
-                }
-                return fr;
+                return finalize(cur, fr, "Unexpected tokens after function column.");
             }
 
             // Simple expr like: t.c [AS a] | c [AS a]
             var nr = parseNamedColumn(cur);
-            if (!nr.ok()) return ParseResult.error(nr);
-            if (!cur.isEof()) {
-                return ParseResult.error("Unexpected tokens after column alias at pos " + cur.pos(), cur.pos());
-            }
-            return nr;
+            return finalize(cur, nr, "Unexpected tokens after column alias.");
         } catch (ParserException ex) {
             return ParseResult.error(ex.getMessage());
         }
+    }
+
+    private ParseResult<Column> finalize(Cursor cur, ParseResult<Column> pr, String error) {
+        if (!pr.ok()) return ParseResult.error(pr);
+        cur.consumeIf(TokenType.RPAREN); // in case it was in brackets.
+        if (!cur.isEof()) {
+            return ParseResult.error(error, cur.pos());
+        }
+        return pr;
+    }
+
+    private ParseResult<Column> parseValueColumn(Cursor cur) {
+        var t = cur.advance();
+        Object value = t.lexeme();
+        if (t.type() == TokenType.NUMBER) {
+            value = parseNumber(t.lexeme());
+        }
+        var alias = tryParseAlias(cur);
+        return ParseResult.ok(new ValueColumn(value, alias));
     }
 
     private ParseResult<Column> parseFunctionColumn(Cursor cur) {
@@ -141,15 +164,14 @@ public class ColumnSpecParser implements SpecParser<Column> {
         var whens = new ArrayList<WhenThen>();
         while (cur.consumeIf(TokenType.WHEN)) {
             var end = cur.find(TokenType.THEN);
-            if (end < 0) {
+            if (end == cur.size()) {
                 return ParseResult.error("Expected THEN after WHEN <predicate>", cur.pos());
             }
 
-            var fr = new FilterSpecParser().parse(cur.sliceUntil(end));
+            var fr = new FilterParser().parse(cur.advance(end));
             if (!fr.ok()) {
                 return ParseResult.error(fr);
             }
-            cur.setPos(end);
 
             // THEN
             cur.expect("Expected THEN after WHEN <predicate>", TokenType.THEN);
@@ -261,6 +283,10 @@ public class ColumnSpecParser implements SpecParser<Column> {
 
     private boolean looksLikeCase(Cursor cur) {
         return cur.match(TokenType.CASE);
+    }
+
+    private boolean looksLikeValue(Cursor cur) {
+        return cur.matchAny(TokenType.NUMBER, TokenType.STRING);
     }
 
     /**

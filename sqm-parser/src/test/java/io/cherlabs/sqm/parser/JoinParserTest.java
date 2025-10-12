@@ -9,12 +9,12 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class JoinSpecParserTest {
+class JoinParserTest {
 
     @Test
     @DisplayName("INNER JOIN with alias and simple ON equality")
     void inner_join_with_on_eq() {
-        var p = new JoinSpecParser();
+        var p = new JoinParser(Parsers.defaultRepository());
         ParseResult<Join> r = p.parse("JOIN products p ON p.category_id = c.id");
 
         assertTrue(r.ok(), () -> "problems: " + r.problems());
@@ -32,7 +32,7 @@ class JoinSpecParserTest {
     @Test
     @DisplayName("LEFT OUTER JOIN with AS alias and compound ON")
     void left_outer_with_compound_on() {
-        var p = new JoinSpecParser();
+        var p = new JoinParser(Parsers.defaultRepository());
         var r = p.parse("LEFT OUTER JOIN warehouses AS w ON w.product_id = p.id AND w.stock > 0");
 
         assertTrue(r.ok(), () -> "problems: " + r.problems());
@@ -50,7 +50,7 @@ class JoinSpecParserTest {
     @Test
     @DisplayName("CROSS JOIN with alias (no ON)")
     void cross_join_without_on() {
-        var p = new JoinSpecParser();
+        var p = new JoinParser(Parsers.defaultRepository());
         var r = p.parse("CROSS JOIN regions r");
 
         assertTrue(r.ok(), () -> "problems: " + r.problems());
@@ -64,7 +64,7 @@ class JoinSpecParserTest {
     @Test
     @DisplayName("Qualified table name schema.table and implicit INNER")
     void qualified_table_implicit_inner() {
-        var p = new JoinSpecParser();
+        var p = new JoinParser(Parsers.defaultRepository());
         var r = p.parse("JOIN sales.products AS sp ON sp.id = p.id");
 
         assertTrue(r.ok(), () -> "problems: " + r.problems());
@@ -78,7 +78,7 @@ class JoinSpecParserTest {
     @Test
     @DisplayName("RIGHT JOIN without OUTER and simple ON")
     void right_join() {
-        var p = new JoinSpecParser();
+        var p = new JoinParser(Parsers.defaultRepository());
         var r = p.parse("RIGHT JOIN t2 ON t2.k = t1.k");
 
         assertTrue(r.ok(), () -> "problems: " + r.problems());
@@ -92,7 +92,7 @@ class JoinSpecParserTest {
     @Test
     @DisplayName("JOIN without ON is allowed (except when ON is required by your policy)")
     void allow_join_without_on() {
-        var p = new JoinSpecParser();
+        var p = new JoinParser(Parsers.defaultRepository());
         var r = p.parse("JOIN t a");
         assertTrue(r.ok(), () -> "problems: " + r.problems());
         TableJoin j = (TableJoin) r.value();

@@ -18,6 +18,7 @@ public final class Tables {
 
     /**
      * Gets the table name implemented by one of the derived types if presented.
+     *
      * @param t a table
      * @return {@link Optional} with the table name if presented or an {@link Optional#empty()}.
      */
@@ -28,6 +29,7 @@ public final class Tables {
 
     /**
      * Gets the table alias implemented by one of the derived types if presented.
+     *
      * @param t a table
      * @return {@link Optional} with the table alias if presented or an {@link Optional#empty()}.
      */
@@ -38,6 +40,7 @@ public final class Tables {
 
     /**
      * Gets the table schema implemented by one of the derived types if presented.
+     *
      * @param t a table
      * @return {@link Optional} with the table schema if presented or an {@link Optional#empty()}.
      */
@@ -48,10 +51,11 @@ public final class Tables {
 
     /**
      * Gets the sub query implemented by one of the derived types if presented.
+     *
      * @param t a table
      * @return {@link Optional} with the sub query if presented or an {@link Optional#empty()}.
      */
-    public static Optional<Query<?>> query(Table t) {
+    public static Optional<Query> query(Table t) {
         if (t instanceof HasQuery h) return Optional.ofNullable(h.query());
         return Optional.empty();
     }

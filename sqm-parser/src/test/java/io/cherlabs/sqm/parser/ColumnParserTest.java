@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ColumnSpecParserTest {
+class ColumnParserTest {
 
-    private final ColumnSpecParser parser = new ColumnSpecParser();
+    private final ColumnParser parser = new ColumnParser();
 
     @Test
     @DisplayName("Parses name only")

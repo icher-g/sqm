@@ -201,10 +201,34 @@ public final class ExprParser {
                 }
             }
             case IDENT -> {
+                // collect qualified name: fn, schema.fn, db.schema.fn, ...
                 var parts = new ArrayList<String>();
                 parts.add(t.lexeme());
                 while (match(DOT)) parts.add(expect(IDENT, "Expected identifier after '.'").lexeme());
-                yield new Expr.Column(parts);
+
+                // Function call or column?
+                if (match(LPAREN)) {
+                    boolean distinct = match(DISTINCT); // optional DISTINCT for aggregates
+                    List<Expr> args = new ArrayList<>();
+
+                    if (!peekIs(RPAREN)) {
+                        if (!distinct && peekIs(STAR)) {
+                            // COUNT(*) — treat '*' as a special Star argument
+                            advance(); // consume '*'
+                            args.add(new Expr.Star()); // use your star node/type here
+                        } else {
+                            // Normal argument list
+                            do args.add(parseOr());
+                            while (match(COMMA));
+                        }
+                    }
+
+                    expect(RPAREN, "Expected ')' to close function call");
+                    yield new Expr.FuncCall(new Expr.Column(parts), List.copyOf(args), distinct);
+                } else {
+                    // plain column reference
+                    yield new Expr.Column(parts);
+                }
             }
             case NUMBER -> new Expr.NumberLit(t.lexeme());
             case STRING -> new Expr.StringLit(t.lexeme());

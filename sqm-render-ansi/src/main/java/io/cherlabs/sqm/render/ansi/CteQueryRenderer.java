@@ -1,7 +1,6 @@
 package io.cherlabs.sqm.render.ansi;
 
 import io.cherlabs.sqm.core.CteQuery;
-import io.cherlabs.sqm.core.Query;
 import io.cherlabs.sqm.render.Renderer;
 import io.cherlabs.sqm.render.SqlWriter;
 import io.cherlabs.sqm.render.spi.RenderContext;
@@ -34,10 +33,7 @@ public class CteQueryRenderer implements Renderer<CteQuery> {
 
         w.space().append("AS").space().append("(").newline();
         w.indent();
-
-        var renderer = ctx.dialect().renderers().require(Query.class);
-        renderer.render(entity, ctx, w);
-
+        w.append(entity.body());
         w.outdent();
         w.append(")");
     }

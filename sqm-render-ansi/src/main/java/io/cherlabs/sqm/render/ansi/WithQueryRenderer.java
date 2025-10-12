@@ -1,7 +1,5 @@
 package io.cherlabs.sqm.render.ansi;
 
-import io.cherlabs.sqm.core.CteQuery;
-import io.cherlabs.sqm.core.Query;
 import io.cherlabs.sqm.core.WithQuery;
 import io.cherlabs.sqm.render.Renderer;
 import io.cherlabs.sqm.render.SqlWriter;
@@ -21,27 +19,16 @@ public class WithQueryRenderer implements Renderer<WithQuery> {
         }
 
         w.append("WITH");
-        if (with.isRecursive()) w.space().append("RECURSIVE");
+        if (with.recursive()) w.space().append("RECURSIVE");
         w.newline();
         w.indent();
 
         for (int i = 0; i < ctes.size(); i++) {
             if (i > 0) w.append(",").newline();
-            var query = ctes.get(i);
-            if (query instanceof CteQuery cte) {
-                w.append(cte);
-            } else {
-                w.append(query.name()).space().append("AS").space().append("(").newline();
-                w.indent();
-                w.append(query);
-                w.outdent();
-                w.append(")");
-            }
+            w.append(ctes.get(i));
         }
         w.newline();
         w.outdent();
-
-        var renderer = ctx.dialect().renderers().require(Query.class);
-        renderer.render(with, ctx, w);
+        w.append(with.body());
     }
 }

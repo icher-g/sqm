@@ -14,6 +14,7 @@
         <module>sqm-parser</module>
         <module>sqm-json</module>
         <module>sqm-render-ansi</module>
+        <module>sqm-it</module>
     </modules>
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
