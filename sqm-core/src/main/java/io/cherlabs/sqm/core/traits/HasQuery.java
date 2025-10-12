@@ -9,5 +9,5 @@ import io.cherlabs.sqm.core.QueryColumn;
  * Use {@link io.cherlabs.sqm.core.views.Columns#query(Column)} to get it.
  */
 public interface HasQuery {
-    Query<?> query();
+    Query query();
 }

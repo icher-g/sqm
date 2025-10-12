@@ -1,6 +1,7 @@
 package io.cherlabs.sqm.parser.ast;
 
 import io.cherlabs.sqm.core.*;
+import io.cherlabs.sqm.core.views.Columns;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,21 +12,33 @@ import java.util.Locale;
  */
 public class FilterVisitor implements Expr.Visitor<Filter> {
 
-    protected static final Object INVALID = new Object();
+    private static final Object INVALID = new Object();
 
     // ---------- helpers ----------
-    protected static Column toColumn(Expr.Column c) {
+    private static Column toColumn(Expr.Column c) {
         var parts = c.qname();
         String name = parts.get(parts.size() - 1);
         String table = parts.size() > 1 ? parts.get(parts.size() - 2) : null;
         return new NamedColumn(name, null, table);
     }
 
-    protected static Column asColumn(Expr e) {
-        return (e instanceof Expr.Column c) ? toColumn(c) : null;
+    private static Column toFunc(Expr.FuncCall f) {
+        var name = String.join(".", f.col().qname());
+        var args = buildFuncArgs(f);
+        return new FunctionColumn(name, args, f.distinct(), null);
     }
 
-    protected static Object asScalar(Expr e) {
+    private static Column asColumn(Expr e) {
+        if (e instanceof Expr.Column c) {
+            return toColumn(c);
+        }
+        if (e instanceof Expr.FuncCall f) {
+            return toFunc(f);
+        }
+        return null;
+    }
+
+    private static Object asScalar(Expr e) {
         if (e instanceof Expr.NumberLit n) {
             String t = n.text();
             if (t.contains(".") || t.contains("e") || t.contains("E")) try {
@@ -46,11 +59,11 @@ public class FilterVisitor implements Expr.Visitor<Filter> {
         return INVALID;
     }
 
-    protected static boolean isCmp(String op) {
+    private static boolean isCmp(String op) {
         return op.equals("=") || op.equals("!=") || op.equals("<") || op.equals("<=") || op.equals(">") || op.equals(">=");
     }
 
-    protected static Filter merge(CompositeFilter.Operator operator, Filter a, Filter b) {
+    private static Filter merge(CompositeFilter.Operator operator, Filter a, Filter b) {
         var list = new ArrayList<Filter>();
         if (a instanceof CompositeFilter ca && ca.op() == operator) {
             list.addAll(ca.filters());
@@ -65,9 +78,28 @@ public class FilterVisitor implements Expr.Visitor<Filter> {
         return new CompositeFilter(operator, list);
     }
 
-    protected static Filter fallback(Object node) {
+    private static Filter fallback(Object node) {
         // simple printer; if you already have one, use it
         return Filter.expr(node.toString());
+    }
+
+    private static List<FunctionColumn.Arg> buildFuncArgs(Expr.FuncCall fc) {
+        var args = fc.args().stream().map(a -> {
+            if (a instanceof Expr.Column col) {
+                var nc = toColumn(col);
+                return FunctionColumn.Arg.column(Columns.table(nc).orElse(null), Columns.name(nc).orElse(null));
+            }
+            if (a instanceof Expr.Star) {
+                return FunctionColumn.Arg.star();
+            }
+            if (a instanceof Expr.FuncCall f) {
+                var inName = String.join(".", f.col().qname());
+                var inArgs = buildFuncArgs(f);
+                return FunctionColumn.Arg.func(new FunctionColumn(inName, inArgs, f.distinct(), null));
+            }
+            return FunctionColumn.Arg.lit(asScalar(a));
+        });
+        return args.toList();
     }
 
     // ---------- Boolean composition ----------
@@ -91,18 +123,22 @@ public class FilterVisitor implements Expr.Visitor<Filter> {
         // comparisons & LIKE between col and value
         if (isCmp(op) || op.equals("LIKE")) {
             // col <> lit/param  --> ColumnFilter
-            Column col = asColumn(b.left());
+            Column left = asColumn(b.left());
+            Column right = asColumn(b.right());
             Object val = asScalar(b.right());
-            if (col == null || val == INVALID) return fallback(b);
+
+            if (left == null || (val == INVALID && right == null)) return fallback(b);
+
+            Values vs = right == null ? Values.single(val) : Values.column(right);
 
             return switch (op) {
-                case "=" -> new ColumnFilter(col, ColumnFilter.Operator.Eq, Values.single(val));
-                case "!=" -> new ColumnFilter(col, ColumnFilter.Operator.Ne, Values.single(val));
-                case "<" -> new ColumnFilter(col, ColumnFilter.Operator.Lt, Values.single(val));
-                case "<=" -> new ColumnFilter(col, ColumnFilter.Operator.Lte, Values.single(val));
-                case ">" -> new ColumnFilter(col, ColumnFilter.Operator.Gt, Values.single(val));
-                case ">=" -> new ColumnFilter(col, ColumnFilter.Operator.Gte, Values.single(val));
-                case "LIKE" -> new ColumnFilter(col, ColumnFilter.Operator.Like, Values.single(val));
+                case "=" -> new ColumnFilter(left, ColumnFilter.Operator.Eq, vs);
+                case "!=" -> new ColumnFilter(left, ColumnFilter.Operator.Ne, vs);
+                case "<" -> new ColumnFilter(left, ColumnFilter.Operator.Lt, vs);
+                case "<=" -> new ColumnFilter(left, ColumnFilter.Operator.Lte, vs);
+                case ">" -> new ColumnFilter(left, ColumnFilter.Operator.Gt, vs);
+                case ">=" -> new ColumnFilter(left, ColumnFilter.Operator.Gte, vs);
+                case "LIKE" -> new ColumnFilter(left, ColumnFilter.Operator.Like, vs);
                 default -> fallback(b);
             };
         }
@@ -173,6 +209,11 @@ public class FilterVisitor implements Expr.Visitor<Filter> {
         return fallback(b);
     }
 
+    @Override
+    public Filter visitFuncCall(Expr.FuncCall fc) {
+        return Filter.column(toFunc(fc));
+    }
+
     // ---------- Leaf-ish ----------
     @Override
     public Filter visitGroup(Expr.Group g) {
@@ -186,27 +227,27 @@ public class FilterVisitor implements Expr.Visitor<Filter> {
 
     @Override
     public Filter visitNumber(Expr.NumberLit n) {
-        return fallback(n);
+        return Filter.column(Column.val(asScalar(n)));
     }
 
     @Override
     public Filter visitString(Expr.StringLit s) {
-        return fallback(s);
+        return Filter.column(Column.val(asScalar(s)));
     }
 
     @Override
     public Filter visitBool(Expr.BoolLit b) {
-        return fallback(b);
+        return Filter.column(Column.val(asScalar(b)));
     }
 
     @Override
     public Filter visitNull(Expr.NullLit n) {
-        return fallback(n);
+        return Filter.column(Column.val(asScalar(n)));
     }
 
     @Override
     public Filter visitColumn(Expr.Column c) {
-        return fallback(c);
+        return Filter.column(toColumn(c));
     }
 
     @Override

@@ -65,7 +65,7 @@ public sealed interface Values extends Entity permits Values.ListValues, Values.
      * @param q a query.
      * @return A new instance of Values.
      */
-    static Subquery subquery(Query<?> q) {
+    static Subquery subquery(Query q) {
         return new Subquery(q);
     }
 
@@ -116,7 +116,7 @@ public sealed interface Values extends Entity permits Values.ListValues, Values.
     /**
      * Subquery: {@code col IN (SELECT ...)}.
      */
-    record Subquery(Query<?> query) implements Values {
+    record Subquery(Query query) implements Values {
         public Subquery {
             Objects.requireNonNull(query);
         }

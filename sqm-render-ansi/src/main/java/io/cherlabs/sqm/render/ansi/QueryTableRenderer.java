@@ -17,7 +17,7 @@ public class QueryTableRenderer implements Renderer<QueryTable> {
         w.append(entity.query());
         w.outdent().append(")");
 
-        var alias = entity.alias() == null ? entity.query().name() : entity.alias();
+        var alias = entity.alias();
         if (alias != null && !alias.isBlank()) {
             var quoter = ctx.dialect().quoter();
             w.space().append("AS").space().append(quoter.quoteIfNeeded(alias));

@@ -58,7 +58,7 @@ public final class Columns {
      * @param c a reference to a column.
      * @return {@link Optional} with the sub query if presented or an {@link Optional#empty()}.
      */
-    public static Optional<Query<?>> query(Column c) {
+    public static Optional<Query> query(Column c) {
         if (c instanceof HasQuery h) return Optional.ofNullable(h.query());
         return Optional.empty();
     }
@@ -79,7 +79,7 @@ public final class Columns {
      * @return {@link Optional} with the distinct value if presented or an {@link Optional#empty()}.
      */
     public static Optional<Boolean> distinct(Column c) {
-        if (c instanceof HasDistinct h) return Optional.of(h.distinct());
+        if (c instanceof HasDistinct h) return Optional.ofNullable(h.distinct());
         return Optional.empty();
     }
 

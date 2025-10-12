@@ -1,13 +1,17 @@
 package io.cherlabs.sqm.core.views;
 
-import io.cherlabs.sqm.core.*;
+import io.cherlabs.sqm.core.ExpressionColumn;
+import io.cherlabs.sqm.core.FunctionColumn;
+import io.cherlabs.sqm.core.NamedColumn;
+import io.cherlabs.sqm.core.QueryColumn;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
 
 import static io.cherlabs.sqm.dsl.Dsl.query;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ViewsColumnsTest {
 
@@ -33,7 +37,7 @@ class ViewsColumnsTest {
 
     @Test
     void query_column_fields_are_exposed() {
-        Query<?> q = query();
+        var q = query();
         QueryColumn c = new QueryColumn(q, "q");
         assertEquals(Optional.empty(), Columns.name(c));
         assertEquals(Optional.of("q"), Columns.alias(c));
@@ -51,7 +55,7 @@ class ViewsColumnsTest {
         assertTrue(Columns.expr(c).isEmpty());
         var args = Columns.funcArgs(c);
         assertTrue(args.isPresent());
-        var arg = (FunctionColumn.Arg.Column)args.get().get(0);
+        var arg = (FunctionColumn.Arg.Column) args.get().get(0);
         assertEquals("t", arg.table());
         assertEquals("id", arg.name());
     }

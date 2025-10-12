@@ -34,14 +34,12 @@ public final class DefaultRenderersRepository implements RenderersRepository {
     /**
      * Registers a {@link Renderer} for the provided entity type.
      *
-     * @param type     the entity type.
      * @param renderer the renderer to register.
-     * @param <T>      the entity type.
      * @return this.
      */
     @Override
-    public <T extends Entity> RenderersRepository register(Class<T> type, Renderer<?> renderer) {
-        renderers.put(type, renderer);
+    public RenderersRepository register(Renderer<?> renderer) {
+        renderers.put(renderer.targetType(), renderer);
         return this;
     }
 }

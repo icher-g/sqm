@@ -6,6 +6,9 @@ import io.cherlabs.sqm.core.NamedTable;
 import io.cherlabs.sqm.core.Table;
 import io.cherlabs.sqm.parser.core.Cursor;
 import io.cherlabs.sqm.parser.core.TokenType;
+import io.cherlabs.sqm.parser.repos.ParsersRepository;
+
+import java.util.Objects;
 
 /**
  * Parses a JOIN clause into a {@link Join}.
@@ -16,7 +19,15 @@ import io.cherlabs.sqm.parser.core.TokenType;
  * LEFT OUTER JOIN warehouses AS w ON w.product_id = p.id AND w.stock > 0
  * CROSS JOIN regions r
  */
-public final class JoinSpecParser implements SpecParser<Join> {
+public final class JoinParser implements Parser<Join> {
+
+    private final ParsersRepository repository;
+
+    /* ---------------- helpers ---------------- */
+
+    public JoinParser(ParsersRepository repository) {
+        this.repository = Objects.requireNonNull(repository, "repository");
+    }
 
     private static Join.JoinType mapJoinType(TokenType tt) {
         return switch (tt) {
@@ -27,8 +38,6 @@ public final class JoinSpecParser implements SpecParser<Join> {
             default -> Join.JoinType.Inner;
         };
     }
-
-    /* ---------------- helpers ---------------- */
 
     private static Join buildJoin(Join.JoinType type, Table table, Filter on) {
         return switch (type) {
@@ -93,8 +102,9 @@ public final class JoinSpecParser implements SpecParser<Join> {
         // Optional ON <expr> (not for CROSS)
         Filter on = null;
         if (type != Join.JoinType.Cross && cur.consumeIf(TokenType.ON)) {
-            var subCur = cur.sliceUntil(cur.size());
-            var fr = new FilterSpecParser().parse(subCur);
+            var subCur = cur.advance(cur.size());
+            var filterParser = repository.require(Filter.class);
+            var fr = filterParser.parse(subCur);
             if (!fr.ok()) return ParseResult.error(fr);
             on = fr.value();
         }

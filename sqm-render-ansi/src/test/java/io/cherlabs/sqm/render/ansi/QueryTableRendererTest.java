@@ -46,13 +46,10 @@ class QueryTableRendererTest {
      * Create a minimal Query suitable for nesting as a subquery.
      * Adjust to your real builders/helpers (e.g., Query.builder()...).
      */
-    private Query<?> makeSimpleQuery(String nameOrNull) {
-        // If you have a fluent/builder API, use it instead of this placeholder.
-        // The important part: the query must render to a valid SELECT and have an optional name.
+    private Query makeSimpleQuery() {
         return query()
                 .select(col("u", "id"), col("u", "name"))
-                .from(table("users").as("u"))
-                .name(nameOrNull);
+                .from(table("users").as("u"));
     }
 
     // --- Tests ---------------------------------------------------------------
@@ -60,7 +57,7 @@ class QueryTableRendererTest {
     @Test
     @DisplayName("Renders subquery with explicit alias: uses AS <alias>")
     void renders_with_explicit_alias() {
-        var inner = makeSimpleQuery("u_sub");
+        var inner = makeSimpleQuery();
         var qt = new QueryTable(inner, "users_view"); // explicit alias
 
         var sql = render(qt);
@@ -76,21 +73,9 @@ class QueryTableRendererTest {
     }
 
     @Test
-    @DisplayName("Alias is null -> falls back to inner query's name()")
-    void alias_falls_back_to_query_name() {
-        var inner = makeSimpleQuery("u_cte_like_name");
-        var qt = new QueryTable(inner, null); // no explicit alias
-
-        var sql = render(qt);
-
-        assertTrue(flat(sql).contains("AS u_cte_like_name"),
-                "Should fall back to inner query name when alias is null");
-    }
-
-    @Test
     @DisplayName("No alias when both explicit alias is blank and query.name() is null")
     void no_alias_when_both_missing() {
-        var inner = makeSimpleQuery(null);
+        var inner = makeSimpleQuery();
         var qt = new QueryTable(inner, "   "); // blank alias
 
         var sql = render(qt);
@@ -103,7 +88,7 @@ class QueryTableRendererTest {
     @Test
     @DisplayName("Alias is quoted when needed (e.g., keyword alias)")
     void alias_is_quoted_if_needed() {
-        var inner = makeSimpleQuery(null);
+        var inner = makeSimpleQuery();
         // Force fallback via explicit alias that is a keyword (e.g., SELECT) to check quoting
         var qt = new QueryTable(inner, "select");
 
@@ -120,7 +105,7 @@ class QueryTableRendererTest {
     @Test
     @DisplayName("Keeps subquery on new line with indent and closes before AS")
     void uses_newline_and_indent_block() {
-        var inner = makeSimpleQuery("sub");
+        var inner = makeSimpleQuery();
         var qt = new QueryTable(inner, "sub");
 
         var sql = render(qt);

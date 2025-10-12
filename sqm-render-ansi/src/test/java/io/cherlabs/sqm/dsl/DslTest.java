@@ -40,9 +40,9 @@ public class DslTest {
     @Test
     @DisplayName("1) Simple SELECT … FROM")
     void simpleSelectFrom() {
-        Query<?> q = query()
+        var q = query()
                 .select(col("u", "id"), col("u", "name"))
-                .from(table("users").as("u"));
+                .from(tbl("users").as("u"));
 
         SqlText out = render(q);
         assertSql(
@@ -55,9 +55,9 @@ public class DslTest {
     @Test
     @DisplayName("2) WHERE + ORDER BY + LIMIT/OFFSET")
     void whereOrderLimitOffset() {
-        Query<?> q = query()
+        var q = query()
                 .select(col("u", "id"), col("u", "name"))
-                .from(table("users").as("u"))
+                .from(tbl("users").as("u"))
                 .where(eq(col("u", "active"), true))
                 .orderBy(asc(col("u", "name")))
                 .limit(10)
@@ -77,9 +77,9 @@ public class DslTest {
     @Test
     @DisplayName("3) Aggregation + GROUP BY + HAVING")
     void groupByHaving() {
-        Query<?> q = query()
+        var q = query()
                 .select(func("count", star()).as("cnt"), col("o", "status"))
-                .from(table("orders").as("o"))
+                .from(tbl("orders").as("o"))
                 .groupBy(group(col("o", "status")))
                 .having(gt(func("count", star()), 10));
 
@@ -96,10 +96,10 @@ public class DslTest {
     @Test
     @DisplayName("4) INNER JOIN with predicate + WHERE")
     void innerJoinWithWhere() {
-        Query<?> q = query()
+        var q = query()
                 .select(col("u", "id"), col("u", "name"), col("o", "total"))
-                .from(table("users").as("u"))
-                .join(inner(table("orders").as("o")).on(eq(col("u", "id"), col("o", "user_id"))))
+                .from(tbl("users").as("u"))
+                .join(inner(tbl("orders").as("o")).on(eq(col("u", "id"), col("o", "user_id"))))
                 .where(gt(col("o", "total"), 100));
 
         SqlText out = render(q);
@@ -117,7 +117,7 @@ public class DslTest {
     @Test
     @DisplayName("5) CASE expr in SELECT list")
     void caseExpression() {
-        Query<?> q = query()
+        var q = query()
                 .select(
                         col("p", "id"),
                         kase(
@@ -125,7 +125,7 @@ public class DslTest {
                                 when(eq(col("p", "status"), "I")).then(val("Inactive"))
                         ).elseValue(val("Unknown")).as("status_text")
                 )
-                .from(table("products").as("p"));
+                .from(tbl("products").as("p"));
 
         SqlText out = render(q);
         assertSql(
@@ -143,9 +143,9 @@ public class DslTest {
     @Test
     @DisplayName("6) Tuple IN")
     void tupleIn() {
-        Query<?> q = query()
+        var q = query()
                 .select(col("id"), col("first_name"), col("last_name"))
-                .from(table("person"))
+                .from(tbl("person"))
                 .where(in(
                         List.of(col("first_name"), col("last_name")),
                         List.of(
@@ -165,7 +165,7 @@ public class DslTest {
         );
     }
 
-    private SqlText render(Query<?> q) {
+    private SqlText render(Query q) {
         var w = new DefaultSqlWriter(ctx);
         w.append(q);
         return w.toText(List.of());

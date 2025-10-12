@@ -30,7 +30,7 @@ public interface Column extends Entity {
      * @param query a sub query.
      * @return A newly created instance of a column.
      */
-    static QueryColumn of(Query<?> query) {
+    static QueryColumn of(Query query) {
         return new QueryColumn(query, null);
     }
 
@@ -72,6 +72,17 @@ public interface Column extends Entity {
      */
     static ExpressionColumn expr(String exp) {
         return new ExpressionColumn(exp, null);
+    }
+
+    /**
+     * Creates a column that represents a value.
+     * For example: {@code SELECT 1}.
+     *
+     * @param value a value.
+     * @return a newly created instance of a column.
+     */
+    static ValueColumn val(Object value) {
+        return new ValueColumn(value, null);
     }
 
     /**

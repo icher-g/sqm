@@ -1,25 +1,25 @@
 package io.cherlabs.sqm.render.ansi;
 
-import io.cherlabs.sqm.core.Query;
+import io.cherlabs.sqm.core.SelectQuery;
 import io.cherlabs.sqm.render.Renderer;
 import io.cherlabs.sqm.render.SqlWriter;
 import io.cherlabs.sqm.render.spi.RenderContext;
 
 import java.util.List;
 
-public final class QueryRenderer implements Renderer<Query<?>> {
+public final class SelectQueryRenderer implements Renderer<SelectQuery> {
 
     private static boolean has(List<?> parts) {
         return parts != null && !parts.isEmpty();
     }
 
     @Override
-    public Class<Query<?>> targetType() {
-        return null;
+    public Class<SelectQuery> targetType() {
+        return SelectQuery.class;
     }
 
     @Override
-    public void render(Query<?> q, RenderContext ctx, SqlWriter w) {
+    public void render(SelectQuery q, RenderContext ctx, SqlWriter w) {
         // SELECT
         w.append("SELECT");
         if (q.distinct() != null && q.distinct()) {
@@ -34,12 +34,12 @@ public final class QueryRenderer implements Renderer<Query<?>> {
         }
 
         w.space();
-        w.comma(q.select()); // each column rendered via its own registered renderer
+        w.comma(q.columns()); // each column rendered via its own registered renderer
 
         // FROM
-        if (q.from() != null) {
+        if (q.table() != null) {
             w.newline().append("FROM").space();
-            w.append(q.from()); // table (with optional schema/alias) rendered by its renderer
+            w.append(q.table()); // table (with optional schema/alias) rendered by its renderer
         }
 
         // JOINS

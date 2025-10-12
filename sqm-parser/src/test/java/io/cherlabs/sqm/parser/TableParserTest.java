@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class TableSpecParserTest {
+class TableParserTest {
 
-    private final TableSpecParser parser = new TableSpecParser();
+    private final TableParser parser = new TableParser();
 
     @Test
     @DisplayName("Parses table only")

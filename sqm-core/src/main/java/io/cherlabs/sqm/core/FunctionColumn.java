@@ -14,7 +14,7 @@ import java.util.Objects;
 public record FunctionColumn(
         String name,                 // bare or qualified; e.g., "lower" or "pg_catalog.lower"
         List<Arg> args,              // structured arguments
-        boolean distinct,            // COUNT(DISTINCT ...)
+        Boolean distinct,            // COUNT(DISTINCT ...)
         String alias                 // optional
 ) implements Column, HasName, HasArgs, HasDistinct, HasAlias {
 

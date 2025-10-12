@@ -1,6 +1,7 @@
 package io.cherlabs.sqm.render.ansi;
 
 import io.cherlabs.sqm.core.CompositeQuery;
+import io.cherlabs.sqm.core.SelectQuery;
 import io.cherlabs.sqm.render.Renderer;
 import io.cherlabs.sqm.render.SqlWriter;
 import io.cherlabs.sqm.render.spi.RenderContext;
@@ -19,11 +20,12 @@ public final class CompositeQueryRenderer implements Renderer<CompositeQuery> {
 
         // Validate ANSI constraints on each term (no per-term ORDER/LIMIT/OFFSET)
         for (int i = 0; i < terms.size(); i++) {
-            var t = terms.get(i);
-            if (t.limit() != null || t.offset() != null || (t.orderBy() != null && !t.orderBy().isEmpty())) {
-                throw new UnsupportedOperationException(
+            if (terms.get(i) instanceof SelectQuery t) {
+                if (t.limit() != null || t.offset() != null || (t.orderBy() != null && !t.orderBy().isEmpty())) {
+                    throw new UnsupportedOperationException(
                         "ANSI: operands of UNION/INTERSECT/EXCEPT must not have their own ORDER BY / LIMIT / OFFSET (term #" + (i + 1) + ")"
-                );
+                    );
+                }
             }
         }
 

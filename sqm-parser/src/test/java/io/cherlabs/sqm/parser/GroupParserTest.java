@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class GroupSpecParserTest {
+class GroupParserTest {
 
-    private final GroupSpecParser parser = new GroupSpecParser();
+    private final GroupParser parser = new GroupParser();
 
     // ---------- Positional (GROUP BY 1, 2, ...) ----------
 

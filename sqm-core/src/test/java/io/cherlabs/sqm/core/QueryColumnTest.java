@@ -9,7 +9,7 @@ class QueryColumnTest {
 
     @Test
     void as_sets_alias() {
-        Query<?> sub = query();
+        var sub = query();
         QueryColumn qc = new QueryColumn(sub, null);
         QueryColumn a = qc.as("q");
         assertSame(sub, a.query());

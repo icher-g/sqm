@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class OrderSpecParserTest {
+class OrderParserTest {
 
-    private final OrderSpecParser parser = new OrderSpecParser();
+    private final OrderParser parser = new OrderParser();
 
     @Nested
     @DisplayName("Happy path")

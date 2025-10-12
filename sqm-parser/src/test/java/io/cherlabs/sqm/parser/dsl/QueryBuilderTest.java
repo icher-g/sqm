@@ -3,8 +3,8 @@ package io.cherlabs.sqm.parser.dsl;
 import io.cherlabs.sqm.core.*;
 import io.cherlabs.sqm.core.views.Columns;
 import io.cherlabs.sqm.core.views.Tables;
-import io.cherlabs.sqm.parser.TableSpecParser;
-import io.cherlabs.sqm.parser.repos.DefaultSpecParsersRepository;
+import io.cherlabs.sqm.parser.TableParser;
+import io.cherlabs.sqm.parser.repos.DefaultParsersRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,22 +23,22 @@ class QueryBuilderTest {
         QueryBuilder qb = QueryBuilder.newBuilder();
 
         qb.select("p.id", "lower(name) lname")
-                .from("sales.products p")
-                .where("status IN ('A','B')")
-                .innerJoin("dep d on p.dept_id = d.id")
-                .groupBy("p.id")
-                .orderBy("lname")
-                .limit(10);
+            .from("sales.products p")
+            .where("status IN ('A','B')")
+            .innerJoin("dep d on p.dept_id = d.id")
+            .groupBy("p.id")
+            .orderBy("lname")
+            .limit(10);
 
-        Query<?> q = qb.build();
+        var q = qb.build();
 
-        assertEquals(2, q.select().size());
-        assertTrue(q.select().stream().anyMatch(c -> c instanceof NamedColumn n && "id".equals(n.name()) && "p".equals(n.table())));
-        assertTrue(q.select().stream().anyMatch(c -> c instanceof FunctionColumn f && "lower".equals(f.name()) && "lname".equals(f.alias())));
+        assertEquals(2, q.columns().size());
+        assertTrue(q.columns().stream().anyMatch(c -> c instanceof NamedColumn n && "id".equals(n.name()) && "p".equals(n.table())));
+        assertTrue(q.columns().stream().anyMatch(c -> c instanceof FunctionColumn f && "lower".equals(f.name()) && "lname".equals(f.alias())));
 
-        assertNotNull(q.from());
-        assertInstanceOf(NamedTable.class, q.from());
-        NamedTable t = (NamedTable) q.from();
+        assertNotNull(q.table());
+        assertInstanceOf(NamedTable.class, q.table());
+        NamedTable t = (NamedTable) q.table();
         assertEquals("sales", t.schema());
         assertEquals("products", t.name());
         assertEquals("p", t.alias());
@@ -66,7 +66,7 @@ class QueryBuilderTest {
         QueryBuilder qb = QueryBuilder.newBuilder();
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> qb.from("sales.")); // bad table spec
+            () -> qb.from("sales.")); // bad table spec
         assertTrue(ex.getMessage().contains("Expected identifier"));
     }
 
@@ -76,9 +76,9 @@ class QueryBuilderTest {
         QueryBuilder qb = QueryBuilder.newBuilder();
 
         qb.from("products p")
-                .rightJoin("dep d on p.dept_id = d.id");
+            .rightJoin("dep d on p.dept_id = d.id");
 
-        Query<?> q = qb.build();
+        var q = qb.build();
         assertEquals(1, q.joins().size());
         TableJoin j = (TableJoin) q.joins().iterator().next();
         assertEquals(Join.JoinType.Right, j.joinType());
@@ -93,9 +93,9 @@ class QueryBuilderTest {
         QueryBuilder qb = QueryBuilder.newBuilder();
 
         qb.from("products p")
-                .fullJoin("dep d on p.dept_id = d.id");
+            .fullJoin("dep d on p.dept_id = d.id");
 
-        Query<?> q = qb.build();
+        var q = qb.build();
         assertEquals(1, q.joins().size());
         TableJoin j = (TableJoin) q.joins().iterator().next();
         assertEquals(Join.JoinType.Full, j.joinType());
@@ -110,9 +110,9 @@ class QueryBuilderTest {
         QueryBuilder qb = QueryBuilder.newBuilder();
 
         qb.from("products p")
-                .crossJoin("regions r");
+            .crossJoin("regions r");
 
-        Query<?> q = qb.build();
+        var q = qb.build();
         assertEquals(1, q.joins().size());
         TableJoin j = (TableJoin) q.joins().iterator().next();
         assertEquals(Join.JoinType.Cross, j.joinType());
@@ -127,11 +127,11 @@ class QueryBuilderTest {
         QueryBuilder qb = QueryBuilder.newBuilder();
 
         qb.from("products p")
-                .innerJoin("inner join dep d on p.dept_id = d.id")
-                .leftJoin("left join prices pr on p.id = pr.product_id")
-                .rightJoin("right join stock s on p.id = s.product_id");
+            .innerJoin("inner join dep d on p.dept_id = d.id")
+            .leftJoin("left join prices pr on p.id = pr.product_id")
+            .rightJoin("right join stock s on p.id = s.product_id");
 
-        Query<?> q = qb.build();
+        var q = qb.build();
         assertEquals(3, q.joins().size());
 
         var it = q.joins().iterator();
@@ -152,20 +152,20 @@ class QueryBuilderTest {
     void ansi_defaults_work() {
         var qb = QueryBuilder.newBuilder();
         var q = qb.select("p.id")
-                .from("sales.products p")
-                .build();
+            .from("sales.products p")
+            .build();
         assertInstanceOf(Query.class, q);
-        assertEquals(1, q.select().size());
-        assertNotNull(q.from());
+        assertEquals(1, q.columns().size());
+        assertNotNull(q.table());
     }
 
     @Test
     void custom_repo_and_dialect() {
-        var repo = new DefaultSpecParsersRepository();
-        repo.register(new TableSpecParser());
+        var repo = new DefaultParsersRepository();
+        repo.register(new TableParser());
         var qb = QueryBuilder.newBuilder(repo);
         var q = qb.from("srv.db.schema.tbl t").build();
-        assertNotNull(q.from());
-        assertEquals("tbl", ((io.cherlabs.sqm.core.NamedTable) q.from()).name());
+        assertNotNull(q.table());
+        assertEquals("tbl", ((io.cherlabs.sqm.core.NamedTable) q.table()).name());
     }
 }

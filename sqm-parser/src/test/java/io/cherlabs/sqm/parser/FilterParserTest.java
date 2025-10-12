@@ -19,9 +19,9 @@ import static org.junit.jupiter.api.Assertions.*;
  *  - error handling
  * Adjust assertions if your concrete type names differ.
  */
-class FilterSpecParserTest {
+class FilterParserTest {
 
-    private final FilterSpecParser parser = new FilterSpecParser();
+    private final FilterParser parser = new FilterParser();
 
     /* ------------------------ single-column operators ------------------------ */
 
@@ -212,6 +212,7 @@ class FilterSpecParserTest {
     private static void assertOk(ParseResult<?> r) {
         assertTrue(r.ok(), () -> "problems: " + r.problems());
         assertNotNull(r.value());
+        assertFalse(r.value() instanceof ExpressionFilter);
     }
 
     private static <T> T assertIs(Class<T> type, Object value) {

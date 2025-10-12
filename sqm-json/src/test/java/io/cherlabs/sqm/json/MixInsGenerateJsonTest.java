@@ -102,9 +102,9 @@ public class MixInsGenerateJsonTest {
     void query_select_serializes() throws Exception {
         var q = query()
                 .select(func("count", star()).as("cnt"))
-                .from(table("orders").as("o"))
+                .from(tbl("orders").as("o"))
                 .where(col("o", "status").in("A", "B"))
-                .join(inner(table("users").as("u")).on(col("u", "id").eq(col("o", "user_id"))))
+                .join(inner(tbl("users").as("u")).on(col("u", "id").eq(col("o", "user_id"))))
                 .groupBy(group("u", "user_name"), group("o", "status"))
                 .having(func("count", star()).gt(10));
 

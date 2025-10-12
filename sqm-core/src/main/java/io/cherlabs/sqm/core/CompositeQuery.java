@@ -1,5 +1,10 @@
 package io.cherlabs.sqm.core;
 
+import io.cherlabs.sqm.core.traits.HasLimit;
+import io.cherlabs.sqm.core.traits.HasOffset;
+import io.cherlabs.sqm.core.traits.HasOrderBy;
+import io.cherlabs.sqm.core.traits.HasTerms;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -15,106 +20,65 @@ import java.util.Objects;
  *     (SELECT * FROM TABLE3)
  *     }
  * </pre>
+ *
+ * @param terms size >= 1
+ * @param ops   size == terms.size()-1
  */
-public final class CompositeQuery extends Query<CompositeQuery> {
+public record CompositeQuery(List<Query> terms, List<Op> ops, List<Order> orderBy, Long limit, Long offset) implements Query, HasTerms, HasLimit, HasOffset, HasOrderBy {
 
-    private final List<? extends Query<?>> terms;   // size >= 1
-    private final List<Op> ops;                     // size == terms.size()-1
+    public CompositeQuery(List<Query> terms, List<Op> ops) {
+        this(terms, ops, List.of(), null, null);
+    }
 
-    public CompositeQuery(List<? extends Query<?>> terms, List<Op> ops) {
+    public CompositeQuery(List<Query> terms, List<Op> ops, List<Order> orderBy, Long limit, Long offset) {
         this.terms = Objects.requireNonNull(terms);
         this.ops = Objects.requireNonNull(ops);
+        this.orderBy = orderBy;
+        this.limit = limit;
+        this.offset = offset;
         if (terms.isEmpty() || ops.size() != terms.size() - 1) {
             throw new IllegalArgumentException("CompositeQuery: operators must be terms.size()-1");
         }
     }
 
-    private static UnsupportedOperationException unsupported(String what) {
-        return new UnsupportedOperationException("CompositeQuery does not support " + what + " at top level; put it inside terms.");
+    /**
+     * Adds an OrderBy statement to the composite query.
+     *
+     * @param items a list of items in the OrderBy statement.
+     * @return A new instance of the composite query with the provided OrderBy items. All the rest of the fields are preserved.
+     */
+    public CompositeQuery orderBy(List<Order> items) {
+        return new CompositeQuery(terms, ops, items, limit, offset);
     }
 
     /**
-     * A list of terms to be joined by the operators.
-     * @return a list of terms.
+     * Adds an OrderBy statement to the composite query.
+     *
+     * @param items a list of items in the OrderBy statement.
+     * @return A new instance of the composite query with the provided OrderBy items. All the rest of the fields are preserved.
      */
-    public List<? extends Query<?>> terms() {
-        return terms;
+    public CompositeQuery orderBy(Order... items) {
+        return new CompositeQuery(terms, ops, List.of(items), limit, offset);
     }
 
     /**
-     * A list of operators.
-     * A number of operators must be equal to the size of terms - 1.
-     * @return a list of operators.
+     * Adds a limit to the composite query.
+     *
+     * @param limit a limit to add to the OrderBy statement.
+     * @return A new instance of the composite query with the provided limit. All the rest of the fields are preserved.
      */
-    public List<Op> ops() {
-        return ops;
+    public CompositeQuery limit(Long limit) {
+        return new CompositeQuery(terms, ops, orderBy, limit, offset);
     }
 
-    @Override
-    public CompositeQuery select(Column... cols) {
-        throw unsupported("select");
-    }
-
-    /* ---- Disallow irrelevant mutators inherited from Query ---- */
-
-    @Override
-    public CompositeQuery select(List<Column> cols) {
-        throw unsupported("select");
-    }
-
-    @Override
-    public CompositeQuery from(Table t) {
-        throw unsupported("from");
-    }
-
-    @Override
-    public CompositeQuery where(Filter f) {
-        throw unsupported("where");
-    }
-
-    @Override
-    public CompositeQuery having(Filter f) {
-        throw unsupported("having");
-    }
-
-    @Override
-    public CompositeQuery join(Join... j) {
-        throw unsupported("join");
-    }
-
-    @Override
-    public CompositeQuery join(List<Join> j) {
-        throw unsupported("join");
-    }
-
-    @Override
-    public CompositeQuery groupBy(Group... g) {
-        throw unsupported("groupBy");
-    }
-
-    @Override
-    public CompositeQuery groupBy(List<Group> g) {
-        throw unsupported("groupBy");
-    }
-
-    @Override
-    public CompositeQuery distinct(boolean d) {
-        throw unsupported("distinct");
-    }
-
-    @Override
-    public List<Column> select() {
-        return java.util.List.of();
-    }
-
-    @Override
-    public List<Join> joins() {
-        return java.util.List.of();
-    }
-
-    @Override
-    public List<Group> groupBy() {
-        return java.util.List.of();
+    /**
+     * Adds an offset to the composite query.
+     *
+     * @param offset an offset to add to the OrderBy statement.
+     * @return A new instance of the composite query with the provided offset. All the rest of the fields are preserved.
+     */
+    public CompositeQuery offset(Long offset) {
+        return new CompositeQuery(terms, ops, orderBy, limit, offset);
     }
 
     public enum Kind {

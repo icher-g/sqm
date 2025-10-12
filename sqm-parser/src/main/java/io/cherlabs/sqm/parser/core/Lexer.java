@@ -243,6 +243,27 @@ public final class Lexer {
             case "THEN" -> THEN;
             case "ELSE" -> ELSE;
             case "END" -> END;
+            case "WITH" -> WITH;
+            case "RECURSIVE" -> RECURSIVE;
+            case "SELECT" -> SELECT;
+            case "FROM" -> FROM;
+            case "WHERE" -> WHERE;
+            case "GROUP" -> GROUP;
+            case "HAVING" -> HAVING;
+            case "ORDER" -> ORDER;
+            case "LIMIT" -> LIMIT;
+            case "OFFSET" -> OFFSET;
+            case "FETCH" -> FETCH;
+            case "NEXT" -> NEXT;
+            case "ROW" -> ROW;
+            case "ROWS" -> ROWS;
+            case "ONLY" -> ONLY;
+            case "BY" -> BY;
+            case "TOP" -> TOP;
+            case "UNION" -> UNION;
+            case "INTERSECT" -> INTERSECT;
+            case "EXCEPT" -> EXCEPT;
+            case "ALL" -> ALL;
             default -> null;
         };
     }

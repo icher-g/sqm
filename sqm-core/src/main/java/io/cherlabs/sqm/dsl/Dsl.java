@@ -38,7 +38,7 @@ public final class Dsl {
      * @param name a name of the table.
      * @return a table.
      */
-    public static NamedTable table(String name) {
+    public static NamedTable tbl(String name) {
         return Table.of(name);
     }
 
@@ -49,7 +49,7 @@ public final class Dsl {
      * @param name   a table name.
      * @return a table.
      */
-    public static NamedTable table(String schema, String name) {
+    public static NamedTable tbl(String schema, String name) {
         return Table.of(name).from(schema);
     }
 
@@ -82,7 +82,7 @@ public final class Dsl {
      * @param subquery a sub query.
      * @return a query column.
      */
-    public static QueryColumn col(Query<?> subquery) {
+    public static QueryColumn col(Query subquery) {
         return Column.of(subquery);
     }
 
@@ -253,7 +253,7 @@ public final class Dsl {
      * @param q a sbu query.
      * @return Values that represents a sub query.
      */
-    public static Values.Subquery subq(Query<?> q) {
+    public static Values.Subquery val(Query q) {
         return Values.subquery(q);
     }
 
@@ -725,28 +725,6 @@ public final class Dsl {
         return Order.by(col).desc();
     }
 
-    /**
-     * Adds NULLS definition to an order by item.
-     *
-     * @param oi an order by item.
-     * @param n  NULLS.
-     * @return an order by item.
-     */
-    public static Order nulls(Order oi, Nulls n) {
-        return new Order(oi.column(), oi.direction(), n, oi.collate());
-    }
-
-    /**
-     * Adds collate definition to an order by item.
-     *
-     * @param oi     an order by item.
-     * @param locale collate definition.
-     * @return an order by item.
-     */
-    public static Order collate(Order oi, String locale) {
-        return new Order(oi.column(), oi.direction(), oi.nulls(), locale);
-    }
-
     /* ========================= Query ========================= */
 
     /**
@@ -759,165 +737,30 @@ public final class Dsl {
     }
 
     /**
-     * Create a query that represents a WITH statement.
+     * Creates a query that represents a WITH statement.
      *
      * @param ctes a list of CTE queries.
-     * @return a with query.
+     * @return a WITH query.
      */
-    public static WithQuery with(Query<?>... ctes) {
-        return new WithQuery(List.of(ctes));
+    public static WithQuery with(CteQuery... ctes) {
+        return new WithQuery(null, List.of(ctes), false);
     }
 
     /**
-     * Adds columns to SELECT statement of the query.
+     * Creates a query that represents a CTE statement.
+     * <p>Example of the CTE statement inside the WITH:</p>
+     * <pre>
+     *     {@code
+     *     TABLE1 AS (
+     *        SELECT * FROM SCHEMA.TABLE1
+     *     )
+     *     }
+     * </pre>
      *
-     * @param q    a query to add to.
-     * @param cols a list of columns to be added.
-     * @return an updated query.
+     * @param name the name of the CTE statement (TABLE1 in the example).
+     * @return a CTE query.
      */
-    public static Query<?> select(Query<?> q, Column... cols) {
-        return q.select(List.of(cols));
-    }
-
-    /**
-     * Adds columns to SELECT statement of the query.
-     *
-     * @param q    a query to add to.
-     * @param cols a list of columns to be added.
-     * @return an updated query.
-     */
-    public static Query<?> select(Query<?> q, List<Column> cols) {
-        return q.select(cols);
-    }
-
-    /**
-     * Sets a table as a FROM statement on a query.
-     *
-     * @param q     a query to update.
-     * @param table a table to be used as a FROM statement.
-     * @return an updated query.
-     */
-    public static Query<?> from(Query<?> q, Table table) {
-        return q.from(table);
-    }
-
-    /**
-     * Sets a filter as a WHERE statement on a query.
-     *
-     * @param q      a query to update.
-     * @param filter a filter to be used as a WHERE statement.
-     * @return an updated query.
-     */
-    public static Query<?> where(Query<?> q, Filter filter) {
-        return q.where(filter);
-    }
-
-    /**
-     * Sets a filter as a HAVING statement on a query.
-     *
-     * @param q      a query to update.
-     * @param filter a filter to be used as a HAVING statement.
-     * @return an updated query.
-     */
-    public static Query<?> having(Query<?> q, Filter filter) {
-        return q.having(filter);
-    }
-
-    /**
-     * Adds a list of joins to the query.
-     *
-     * @param q     a query to update.
-     * @param joins a list of joins to be added.
-     * @return an updated query.
-     */
-    public static Query<?> join(Query<?> q, Join... joins) {
-        return q.join(List.of(joins));
-    }
-
-    /**
-     * Adds a list of joins to the query.
-     *
-     * @param q     a query to update.
-     * @param joins a list of joins to be added.
-     * @return an updated query.
-     */
-    public static Query<?> join(Query<?> q, List<Join> joins) {
-        return q.join(joins);
-    }
-
-    /**
-     * Adds a list of group by items to the query.
-     *
-     * @param q     a query to update.
-     * @param items a list of group by items to be added.
-     * @return an updated query.
-     */
-    public static Query<?> groupBy(Query<?> q, Group... items) {
-        return q.groupBy(List.of(items));
-    }
-
-    /**
-     * Adds a list of group by items to the query.
-     *
-     * @param q     a query to update.
-     * @param items a list of group by items to be added.
-     * @return an updated query.
-     */
-    public static Query<?> groupBy(Query<?> q, List<Group> items) {
-        return q.groupBy(items);
-    }
-
-    /**
-     * Adds a list of order by items to the query.
-     *
-     * @param q     a query to update.
-     * @param items a list of order by items to be added.
-     * @return an updated query.
-     */
-    public static Query<?> orderBy(Query<?> q, Order... items) {
-        return q.orderBy(List.of(items));
-    }
-
-    /**
-     * Adds a list of order by items to the query.
-     *
-     * @param q     a query to update.
-     * @param items a list of order by items to be added.
-     * @return an updated query.
-     */
-    public static Query<?> orderBy(Query<?> q, List<Order> items) {
-        return q.orderBy(items);
-    }
-
-    /**
-     * Set distinct to true on a query.
-     *
-     * @param q a query to update.
-     * @return an updated query.
-     */
-    public static Query<?> distinct(Query<?> q) {
-        return q.distinct(true);
-    }
-
-    /**
-     * Sets a limit on a query.
-     *
-     * @param q     a query to update.
-     * @param limit a limit to set.
-     * @return an updated query.
-     */
-    public static Query<?> limit(Query<?> q, long limit) {
-        return q.limit(limit);
-    }
-
-    /**
-     * Sets an offset on a query.
-     *
-     * @param q      a query to update.
-     * @param offset an offset to set.
-     * @return an updated query.
-     */
-    public static Query<?> offset(Query<?> q, long offset) {
-        return q.offset(offset);
+    public static CteQuery cte(String name) {
+        return new CteQuery(name, null, null);
     }
 }

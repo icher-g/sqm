@@ -13,6 +13,7 @@ import io.cherlabs.sqm.core.*;
         @JsonSubTypes.Type(value = QueryColumn.class,    name = "query"),
         @JsonSubTypes.Type(value = ExpressionColumn.class,name = "expr"),
         @JsonSubTypes.Type(value = FunctionColumn.class,   name = "func"),
-        @JsonSubTypes.Type(value = CaseColumn.class, name = "case")
+        @JsonSubTypes.Type(value = CaseColumn.class, name = "case"),
+        @JsonSubTypes.Type(value = ValueColumn.class, name = "value")
 })
 public abstract class ColumnMixIn {}

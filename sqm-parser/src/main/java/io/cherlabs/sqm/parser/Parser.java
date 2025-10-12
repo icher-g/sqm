@@ -13,10 +13,10 @@ import java.util.Objects;
  *
  * @param <T> the type of the entity.
  */
-public interface SpecParser<T extends Entity> extends Handler<T> {
+public interface Parser<T extends Entity> extends Handler<T> {
     /**
      * A default implementation of the parse method that accepts a spec as a string.
-     * The method converts the spec into a {@link Cursor} and calls {@link SpecParser#parse(Cursor)} method.
+     * The method converts the spec into a {@link Cursor} and calls {@link Parser#parse(Cursor)} method.
      *
      * @param spec a spec string
      * @return a parsing result.
@@ -31,7 +31,6 @@ public interface SpecParser<T extends Entity> extends Handler<T> {
         try {
             var ts = Lexer.lexAll(spec);
             return parse(new Cursor(ts));
-
         } catch (ParserException ex) {
             return ParseResult.error(ex.getMessage());
         }

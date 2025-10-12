@@ -18,7 +18,7 @@ class QueryColumnRendererTest {
     @DisplayName("(SELECT c1 FROM t) AS a")
     void render_query_as_column() {
         var query = new SelectQuery();
-        query.select().add(Column.of("c1"));
+        query.columns().add(Column.of("c1"));
         query.from(Table.of("t"));
         var column = Column.of(query).as("a");
         var renderer = new QueryColumnRenderer();

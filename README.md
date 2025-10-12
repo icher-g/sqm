@@ -79,7 +79,9 @@ HAVING count(*) > 10
 ### Parse SQL statements into a Model and Re-render
 
 ```java
-QueryBuilder qb = QueryBuilder.newBuilder();
+import io.cherlabs.sqm.parser.dsl.QueryBuilder;
+
+QueryBuilder qb = io.cherlabs.sqm.parser.dsl.QueryBuilder.newBuilder();
 
 qb.select("u.user_name", "o.status", "count(*) AS cnt")
   .from("orders AS o")
@@ -93,6 +95,28 @@ var sql = Renderers.render(q).sql();
 
 System.out.println(sql);
 ```
+
+### Parse SQL into a Model
+
+```java
+import io.cherlabs.sqm.parser.Parsers;
+
+var sql = """
+    SELECT u.user_name, o.status, count(*) AS cnt
+    FROM orders AS o
+    INNER JOIN users AS u ON u.id = o.user_id
+    WHERE o.status in ('A', 'B')
+    GROUP BY u.user_name, o.status
+    HAVING count(*) > 10""";
+
+var parser = Parsers.defaultRepository().require(Query.class);
+var pr = parser.parse(sql);
+if (!pr.ok()) {
+    throw new RuntimeException(pr.errorMessage());
+}
+var query = pr.value();
+```
+
 
 ---
 
@@ -149,6 +173,7 @@ Output:
 | `sqm-renderer` | Base SQL renderer interfaces |
 | `sqm-renderer-ansi` | ANSI SQL renderer |
 | `sqm-json` | JSON serialization mixins |
+| `sqm-it` | SQM integration tests |
 
 ---
 
@@ -201,6 +226,8 @@ mvn test
 
 ## 🧭 Roadmap
 
+- [ ] Arithmetic operations in SQL statements (SELECT salary + bonus AS total_income)
+- [ ] Add support for INSERT | UPDATE | DELETE | MERGE
 - [ ] PostgreSQL renderer & parser
 - [ ] SQL Server renderer & parser
 - [ ] Function & operator registry

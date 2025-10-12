@@ -5,7 +5,7 @@ package io.cherlabs.sqm.parser.core;
  */
 public enum TokenType {
     // literals & names
-    IDENT, NUMBER, STRING, PARAM_QMARK,       // ?
+    IDENT, NUMBER, STRING, PARAM_QMARK, // ?
     PARAM_NAMED,       // :name or @name
 
     // punctuation
@@ -28,6 +28,10 @@ public enum TokenType {
 
     // case
     CASE, WHEN, THEN, ELSE, END,
+
+    // query
+    WITH, RECURSIVE, SELECT, FROM, WHERE, GROUP, HAVING, ORDER, LIMIT, OFFSET, FETCH, NEXT, ROW, ROWS, ONLY, BY, TOP,
+    UNION, INTERSECT, EXCEPT, ALL,
 
     EOF
 }

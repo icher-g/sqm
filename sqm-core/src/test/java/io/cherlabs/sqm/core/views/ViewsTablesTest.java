@@ -1,12 +1,14 @@
 package io.cherlabs.sqm.core.views;
 
-import io.cherlabs.sqm.core.*;
+import io.cherlabs.sqm.core.NamedTable;
+import io.cherlabs.sqm.core.QueryTable;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
 import static io.cherlabs.sqm.dsl.Dsl.query;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ViewsTablesTest {
 
@@ -21,7 +23,7 @@ class ViewsTablesTest {
 
     @Test
     void query_table_fields_are_exposed() {
-        Query<?> q = query();
+        var q = query();
         QueryTable t = new QueryTable(q, "qt");
         assertTrue(Tables.name(t).isEmpty());
         assertEquals(Optional.of("qt"), Tables.alias(t));

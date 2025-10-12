@@ -15,7 +15,7 @@ import io.cherlabs.sqm.parser.expr.ExprParser;
  *     }
  * </pre>
  */
-public class FilterSpecParser implements SpecParser<Filter> {
+public class FilterParser implements Parser<Filter> {
 
     /**
      * Gets the {@link Filter} type.

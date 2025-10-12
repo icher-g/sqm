@@ -13,7 +13,7 @@ import io.cherlabs.sqm.parser.core.Cursor;
  *     }
  * </pre>
  */
-public class GroupSpecParser implements SpecParser<Group> {
+public class GroupParser implements Parser<Group> {
     private static boolean isPositiveInteger(String s) {
         // Fast path: all digits, no sign, no decimal.
         for (int i = 0, n = s.length(); i < n; i++) {
@@ -52,7 +52,7 @@ public class GroupSpecParser implements SpecParser<Group> {
         }
 
         // Otherwise: delegate to the column parser
-        var result = new ColumnSpecParser().parse(cur);
+        var result = new ColumnParser().parse(cur);
         if (!result.ok()) {
             return ParseResult.error(result);
         }

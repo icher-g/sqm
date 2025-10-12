@@ -1,5 +1,9 @@
 package io.cherlabs.sqm.core;
 
+import io.cherlabs.sqm.core.traits.HasBody;
+import io.cherlabs.sqm.core.traits.HasCtes;
+import io.cherlabs.sqm.core.traits.HasRecursive;
+
 import java.util.List;
 
 /**
@@ -20,24 +24,25 @@ import java.util.List;
  *     }
  * </pre>
  */
-public class WithQuery extends Query<WithQuery> {
-    private final List<? extends Query<?>> ctes;
-    private boolean isRecursive;
+public record WithQuery(Query body, List<CteQuery> ctes, boolean recursive) implements Query, HasBody, HasCtes, HasRecursive {
 
-    public WithQuery(List<? extends Query<?>> ctes) {
-        this.ctes = ctes;
+    /**
+     * Adds a select statement to the WITH query.
+     *
+     * @param body a select statement.
+     * @return A new instance of {@link WithQuery} with the select statement. All other fields are preserved.
+     */
+    public WithQuery select(Query body) {
+        return new WithQuery(body, ctes, recursive);
     }
 
-    public List<? extends Query<?>> ctes() {
-        return ctes;
-    }
-
-    public boolean isRecursive() {
-        return isRecursive;
-    }
-
-    public WithQuery isRecursive(boolean isRecursive) {
-        this.isRecursive = isRecursive;
-        return this;
+    /**
+     * Adds a recursive indication to the WITH query.
+     *
+     * @param recursive indicates whether the WITH statement is recursive or not.
+     * @return A new instance of {@link WithQuery} with the select statement. All other fields are preserved.
+     */
+    public WithQuery recursive(boolean recursive) {
+        return new WithQuery(body, ctes, recursive);
     }
 }

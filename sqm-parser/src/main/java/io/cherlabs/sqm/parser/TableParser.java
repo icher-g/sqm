@@ -15,7 +15,7 @@ import java.util.List;
  * sales.products AS p
  * server.db.schema.table t  (schema becomes "server.db.schema")
  */
-public final class TableSpecParser implements SpecParser<Table> {
+public final class TableParser implements Parser<Table> {
 
     /**
      * Gets the {@link Table} type.

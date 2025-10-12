@@ -19,5 +19,5 @@ import io.cherlabs.sqm.core.traits.HasQuery;
  * @param query a query.
  * @param alias an alias for a query.
  */
-public record QueryTable(Query<?> query, String alias) implements Table, HasQuery, HasAlias {
+public record QueryTable(Query query, String alias) implements Table, HasQuery, HasAlias {
 }
