@@ -1,7 +1,11 @@
 package io.cherlabs.sqm.parser;
 
+import io.cherlabs.sqm.core.Column;
 import io.cherlabs.sqm.core.Group;
 import io.cherlabs.sqm.parser.core.Cursor;
+import io.cherlabs.sqm.parser.repos.ParsersRepository;
+
+import java.util.Objects;
 
 /**
  * A spec parser for group by item specifications.
@@ -14,6 +18,17 @@ import io.cherlabs.sqm.parser.core.Cursor;
  * </pre>
  */
 public class GroupParser implements Parser<Group> {
+
+    private final ParsersRepository repository;
+
+    public GroupParser() {
+        this(Parsers.defaultRepository());
+    }
+
+    public GroupParser(ParsersRepository repository) {
+        this.repository = Objects.requireNonNull(repository, "repository");
+    }
+
     private static boolean isPositiveInteger(String s) {
         // Fast path: all digits, no sign, no decimal.
         for (int i = 0, n = s.length(); i < n; i++) {
@@ -48,12 +63,12 @@ public class GroupParser implements Parser<Group> {
             if (pos <= 0) {
                 return ParseResult.error("GROUP BY position must be a positive integer", pos);
             }
-            return ParseResult.ok(Group.ofOrdinal(pos));
+            return ParseResult.ok(Group.by(pos));
         }
 
         // Otherwise: delegate to the column parser
-        var result = new ColumnParser().parse(cur);
-        if (!result.ok()) {
+        var result = repository.require(Column.class).parse(cur);
+        if (result.isError()) {
             return ParseResult.error(result);
         }
         return ParseResult.ok(Group.by(result.value()));

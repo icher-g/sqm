@@ -10,7 +10,7 @@ import java.util.Objects;
 
 /**
  * Represents a composite query.
- * <p>Example for Union statement:</p>
+ * <p>Example:</p>
  * <pre>
  *     {@code
  *     (SELECT * FROM TABLE1)

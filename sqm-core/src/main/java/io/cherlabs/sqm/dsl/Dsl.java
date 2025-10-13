@@ -666,7 +666,7 @@ public final class Dsl {
      * @return a group by item.
      */
     public static Group group(int ordinal) {
-        return Group.ofOrdinal(ordinal);
+        return Group.by(ordinal);
     }
 
     /**
@@ -737,13 +737,23 @@ public final class Dsl {
     }
 
     /**
+     * Creates a {@link SelectQuery} with the list of columns.
+     *
+     * @param columns a list of columns to select.
+     * @return a query.
+     */
+    public static SelectQuery select(Column... columns) {
+        return Query.select(columns);
+    }
+
+    /**
      * Creates a query that represents a WITH statement.
      *
      * @param ctes a list of CTE queries.
      * @return a WITH query.
      */
     public static WithQuery with(CteQuery... ctes) {
-        return new WithQuery(null, List.of(ctes), false);
+        return Query.with(ctes);
     }
 
     /**
@@ -761,6 +771,27 @@ public final class Dsl {
      * @return a CTE query.
      */
     public static CteQuery cte(String name) {
-        return new CteQuery(name, null, null);
+        return Query.cte(name);
+    }
+
+    /**
+     * Creates a composite query consisting of a list of sub queries and operators between them.
+     * <p>Example:</p>
+     * <pre>
+     *     {@code
+     *     (SELECT * FROM TABLE1)
+     *     UNION
+     *     (SELECT * FROM TABLE2)
+     *     INTERSECT
+     *     (SELECT * FROM TABLE3)
+     *     }
+     * </pre>
+     *
+     * @param terms a list of sub queries.
+     * @param ops   a list of operators. See {@link CompositeQuery.Kind}
+     * @return a composite query.
+     */
+    public static CompositeQuery composite(List<Query> terms, List<CompositeQuery.Op> ops) {
+        return Query.composite(terms, ops);
     }
 }

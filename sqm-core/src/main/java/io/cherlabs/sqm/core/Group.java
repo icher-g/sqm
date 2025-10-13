@@ -26,7 +26,7 @@ public record Group(Column column, Integer ordinal) implements Entity {
      * @param ordinal an ordinal to group by.
      * @return A newly created instance of a group item.
      */
-    public static Group ofOrdinal(int ordinal) {
+    public static Group by(int ordinal) {
         return new Group(null, ordinal);
     }
 

@@ -2,7 +2,6 @@ package io.cherlabs.sqm.render;
 
 import io.cherlabs.sqm.render.spi.RenderContext;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -16,8 +15,9 @@ public class SqlFragment {
      * Render the given lambda into a String using an internal buffer writer.
      */
     public static String capture(RenderContext ctx, Consumer<SqlWriter> render) {
-        var w = new DefaultSqlWriter(ctx);
+        var c = RenderContext.of(ctx.dialect()); // create new RenderContext to have new ParamSink instance.
+        var w = new DefaultSqlWriter(c);
         render.accept(w);
-        return w.toText(List.of()).sql();
+        return w.toText(c.params().snapshot()).sql();
     }
 }

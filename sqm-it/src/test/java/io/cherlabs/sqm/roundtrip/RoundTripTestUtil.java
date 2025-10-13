@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import io.cherlabs.sqm.core.Query;
 import io.cherlabs.sqm.json.SqmMapperFactory;
 import io.cherlabs.sqm.parser.Parsers;
-import io.cherlabs.sqm.render.ansi.Renderers;
+import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
+import io.cherlabs.sqm.render.spi.RenderContext;
 
 public final class RoundTripTestUtil {
     private static final ObjectMapper MAPPER = SqmMapperFactory.createDefault()
@@ -16,13 +17,14 @@ public final class RoundTripTestUtil {
     }
 
     public static String renderAnsi(Query q) {
-        var r = Renderers.render(q);
-        return normalizeSql(r.sql());
+        var r = RenderContext.of(new AnsiDialect());
+        var s = r.render(q);
+        return normalizeSql(s.sql());
     }
 
     public static Query parse(String sql) {
         var pr = Parsers.defaultRepository().require(Query.class).parse(sql);
-        if (!pr.ok()) {
+        if (pr.isError()) {
             throw new RuntimeException(pr.errorMessage());
         }
         return pr.value();

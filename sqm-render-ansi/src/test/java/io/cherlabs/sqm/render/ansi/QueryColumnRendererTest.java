@@ -4,7 +4,8 @@ import io.cherlabs.sqm.core.Column;
 import io.cherlabs.sqm.core.SelectQuery;
 import io.cherlabs.sqm.core.Table;
 import io.cherlabs.sqm.render.DefaultSqlWriter;
-import io.cherlabs.sqm.render.ansi.spi.AnsiRenderContext;
+import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
+import io.cherlabs.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +23,7 @@ class QueryColumnRendererTest {
         query.from(Table.of("t"));
         var column = Column.of(query).as("a");
         var renderer = new QueryColumnRenderer();
-        var context = new AnsiRenderContext();
+        var context = RenderContext.of(new AnsiDialect());
         var writer = new DefaultSqlWriter(context);
         renderer.render(column, context, writer);
         assertEquals("(SELECT c1 FROM t) AS a", writer.toText(List.of()).sql());

@@ -14,7 +14,7 @@ import java.util.List;
 
 import static io.cherlabs.sqm.core.Column.of;
 
-class AnsiCompositeFilterRendererParamTest extends BaseValuesRendererTest {
+class CompositeFilterRendererParamTest extends BaseValuesRendererTest {
 
     private final Renderer<CompositeFilter> renderer = new CompositeFilterRenderer();
 

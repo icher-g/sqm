@@ -30,6 +30,7 @@ public final class SqmMapperFactory {
         mapper.addMixIn(Table.class, TableMixIn.class);
         mapper.addMixIn(Values.class, ValuesMixIn.class);
         mapper.addMixIn(Query.class, QueryMixIn.class);
+        mapper.addMixIn(Group.class, GroupMixIn.class);
 
         return mapper;
     }

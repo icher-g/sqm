@@ -4,13 +4,13 @@ import io.cherlabs.sqm.core.Column;
 import io.cherlabs.sqm.core.Filter;
 import io.cherlabs.sqm.render.DefaultSqlWriter;
 import io.cherlabs.sqm.render.SqlWriter;
-import io.cherlabs.sqm.render.ansi.spi.AnsiRenderContext;
+import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import io.cherlabs.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TupleFilterRendererTest {
 
@@ -18,7 +18,7 @@ class TupleFilterRendererTest {
 
     @Test
     void in_tuples() {
-        RenderContext ctx = new AnsiRenderContext();
+        RenderContext ctx = RenderContext.of(new AnsiDialect());
         List<List<Object>> rows = List.of(List.of(1, "a"), List.of(2, "b"));
 
         SqlWriter w = new DefaultSqlWriter(ctx);
@@ -29,7 +29,7 @@ class TupleFilterRendererTest {
 
     @Test
     void notIn_tuples() {
-        RenderContext ctx = new AnsiRenderContext();
+        RenderContext ctx = RenderContext.of(new AnsiDialect());
         List<List<Object>> rows = List.of(List.of("x", 1), List.of("y", 2));
 
         SqlWriter w = new DefaultSqlWriter(ctx);

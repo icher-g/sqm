@@ -40,7 +40,7 @@ public class FilterParser implements Parser<Filter> {
             Filter filter = toFilter(ast);
             return ParseResult.ok(filter);
         } catch (Exception e) {
-            return ParseResult.error(e.getMessage());
+            return ParseResult.error(e);
         }
     }
 

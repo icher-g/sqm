@@ -1,9 +1,8 @@
 package io.cherlabs.sqm.dsl;
 
 import io.cherlabs.sqm.core.Query;
-import io.cherlabs.sqm.render.DefaultSqlWriter;
 import io.cherlabs.sqm.render.SqlText;
-import io.cherlabs.sqm.render.ansi.spi.AnsiRenderContext;
+import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import io.cherlabs.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +24,7 @@ public class DslTest {
 
     private static void assertSql(String actual, String expected) {
         assertEquals(norm(expected), norm(actual), () ->
-                "Expected:\n" + expected + "\n\nActual:\n" + actual);
+            "Expected:\n" + expected + "\n\nActual:\n" + actual);
     }
 
     private static String norm(String s) {
@@ -34,20 +33,20 @@ public class DslTest {
 
     @BeforeEach
     void setUp() {
-        this.ctx = new AnsiRenderContext();                       // <-- adapt to your actual context factory
+        this.ctx = RenderContext.of(new AnsiDialect());                       // <-- adapt to your actual context factory
     }
 
     @Test
     @DisplayName("1) Simple SELECT … FROM")
     void simpleSelectFrom() {
         var q = query()
-                .select(col("u", "id"), col("u", "name"))
-                .from(tbl("users").as("u"));
+            .select(col("u", "id"), col("u", "name"))
+            .from(tbl("users").as("u"));
 
         SqlText out = render(q);
         assertSql(
-                out.sql(),
-                "SELECT u.id, u.name FROM users AS u"
+            out.sql(),
+            "SELECT u.id, u.name FROM users AS u"
         );
         assertTrue(out.params().isEmpty(), "No params expected");
     }
@@ -56,21 +55,21 @@ public class DslTest {
     @DisplayName("2) WHERE + ORDER BY + LIMIT/OFFSET")
     void whereOrderLimitOffset() {
         var q = query()
-                .select(col("u", "id"), col("u", "name"))
-                .from(tbl("users").as("u"))
-                .where(eq(col("u", "active"), true))
-                .orderBy(asc(col("u", "name")))
-                .limit(10)
-                .offset(20);
+            .select(col("u", "id"), col("u", "name"))
+            .from(tbl("users").as("u"))
+            .where(eq(col("u", "active"), true))
+            .orderBy(asc(col("u", "name")))
+            .limit(10)
+            .offset(20);
 
         SqlText out = render(q);
         assertSql(
-                out.sql(),
-                "SELECT u.id, u.name " +
-                        "FROM users AS u " +
-                        "WHERE u.active = TRUE " +
-                        "ORDER BY u.name ASC " +
-                        "OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY"
+            out.sql(),
+            "SELECT u.id, u.name " +
+                "FROM users AS u " +
+                "WHERE u.active = TRUE " +
+                "ORDER BY u.name ASC " +
+                "OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY"
         );
     }
 
@@ -78,18 +77,18 @@ public class DslTest {
     @DisplayName("3) Aggregation + GROUP BY + HAVING")
     void groupByHaving() {
         var q = query()
-                .select(func("count", star()).as("cnt"), col("o", "status"))
-                .from(tbl("orders").as("o"))
-                .groupBy(group(col("o", "status")))
-                .having(gt(func("count", star()), 10));
+            .select(func("count", star()).as("cnt"), col("o", "status"))
+            .from(tbl("orders").as("o"))
+            .groupBy(group(col("o", "status")))
+            .having(gt(func("count", star()), 10));
 
         SqlText out = render(q);
         assertSql(
-                out.sql(),
-                "SELECT count(*) AS cnt, o.status " +
-                        "FROM orders AS o " +
-                        "GROUP BY o.status " +
-                        "HAVING count(*) > 10"
+            out.sql(),
+            "SELECT count(*) AS cnt, o.status " +
+                "FROM orders AS o " +
+                "GROUP BY o.status " +
+                "HAVING count(*) > 10"
         );
     }
 
@@ -97,18 +96,18 @@ public class DslTest {
     @DisplayName("4) INNER JOIN with predicate + WHERE")
     void innerJoinWithWhere() {
         var q = query()
-                .select(col("u", "id"), col("u", "name"), col("o", "total"))
-                .from(tbl("users").as("u"))
-                .join(inner(tbl("orders").as("o")).on(eq(col("u", "id"), col("o", "user_id"))))
-                .where(gt(col("o", "total"), 100));
+            .select(col("u", "id"), col("u", "name"), col("o", "total"))
+            .from(tbl("users").as("u"))
+            .join(inner(tbl("orders").as("o")).on(eq(col("u", "id"), col("o", "user_id"))))
+            .where(gt(col("o", "total"), 100));
 
         SqlText out = render(q);
         assertSql(
-                out.sql(),
-                "SELECT u.id, u.name, o.total " +
-                        "FROM users AS u " +
-                        "INNER JOIN orders AS o ON u.id = o.user_id " +
-                        "WHERE o.total > 100"
+            out.sql(),
+            "SELECT u.id, u.name, o.total " +
+                "FROM users AS u " +
+                "INNER JOIN orders AS o ON u.id = o.user_id " +
+                "WHERE o.total > 100"
         );
     }
 
@@ -118,25 +117,25 @@ public class DslTest {
     @DisplayName("5) CASE expr in SELECT list")
     void caseExpression() {
         var q = query()
-                .select(
-                        col("p", "id"),
-                        kase(
-                                when(eq(col("p", "status"), "A")).then(val("Active")),
-                                when(eq(col("p", "status"), "I")).then(val("Inactive"))
-                        ).elseValue(val("Unknown")).as("status_text")
-                )
-                .from(tbl("products").as("p"));
+            .select(
+                col("p", "id"),
+                kase(
+                    when(eq(col("p", "status"), "A")).then(val("Active")),
+                    when(eq(col("p", "status"), "I")).then(val("Inactive"))
+                ).elseValue(val("Unknown")).as("status_text")
+            )
+            .from(tbl("products").as("p"));
 
         SqlText out = render(q);
         assertSql(
-                out.sql(),
-                "SELECT p.id, " +
-                        "CASE " +
-                        "WHEN p.status = 'A' THEN 'Active' " +
-                        "WHEN p.status = 'I' THEN 'Inactive' " +
-                        "ELSE 'Unknown' " +
-                        "END AS status_text " +
-                        "FROM products AS p"
+            out.sql(),
+            "SELECT p.id, " +
+                "CASE " +
+                "WHEN p.status = 'A' THEN 'Active' " +
+                "WHEN p.status = 'I' THEN 'Inactive' " +
+                "ELSE 'Unknown' " +
+                "END AS status_text " +
+                "FROM products AS p"
         );
     }
 
@@ -144,30 +143,28 @@ public class DslTest {
     @DisplayName("6) Tuple IN")
     void tupleIn() {
         var q = query()
-                .select(col("id"), col("first_name"), col("last_name"))
-                .from(tbl("person"))
-                .where(in(
-                        List.of(col("first_name"), col("last_name")),
-                        List.of(
-                                List.of("John", "Doe"),
-                                List.of("Jane", "Smith")
-                        )
-                ));
+            .select(col("id"), col("first_name"), col("last_name"))
+            .from(tbl("person"))
+            .where(in(
+                List.of(col("first_name"), col("last_name")),
+                List.of(
+                    List.of("John", "Doe"),
+                    List.of("Jane", "Smith")
+                )
+            ));
 
         SqlText out = render(q);
         // Depending on your placeholders strategy, the VALUES may be literal or parameterized.
         // Here we assert the literal form; if you emit placeholders, adjust expected accordingly.
         assertSql(
-                out.sql(),
-                "SELECT id, first_name, last_name " +
-                        "FROM person " +
-                        "WHERE (first_name, last_name) IN (('John', 'Doe'), ('Jane', 'Smith'))"
+            out.sql(),
+            "SELECT id, first_name, last_name " +
+                "FROM person " +
+                "WHERE (first_name, last_name) IN (('John', 'Doe'), ('Jane', 'Smith'))"
         );
     }
 
     private SqlText render(Query q) {
-        var w = new DefaultSqlWriter(ctx);
-        w.append(q);
-        return w.toText(List.of());
+        return ctx.render(q);
     }
 }

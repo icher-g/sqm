@@ -6,7 +6,7 @@ import io.cherlabs.sqm.render.spi.ValueFormatter;
 import io.cherlabs.sqm.render.ansi.DefaultValueFormatter;
 import io.cherlabs.sqm.render.spi.*;
 
-public class AnsiSqlDialect implements SqlDialect {
+public class AnsiDialect implements SqlDialect {
 
     private final IdentifierQuoter quoter = new AnsiIdentifierQuoter();
     private final ValueFormatter formatter = new DefaultValueFormatter(this);

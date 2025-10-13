@@ -6,7 +6,7 @@ import io.cherlabs.sqm.core.CompositeFilter;
 import io.cherlabs.sqm.core.Filter;
 import io.cherlabs.sqm.render.DefaultSqlWriter;
 import io.cherlabs.sqm.render.SqlWriter;
-import io.cherlabs.sqm.render.ansi.spi.AnsiRenderContext;
+import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import io.cherlabs.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.Test;
 
@@ -42,14 +42,14 @@ class CompositeFilterRendererTest {
         ColumnFilter f2 = eq("t", "d", "Y");
         CompositeFilter root = Filter.and(f1, f2);
 
-        RenderContext ctx = new AnsiRenderContext();
+        RenderContext ctx = RenderContext.of(new AnsiDialect());
         SqlWriter w = new DefaultSqlWriter(ctx);
 
         sut.render(root, ctx, w);
 
         assertEquals("""
-                t.c = 'X'
-                AND t.d = 'Y'""".stripIndent(), w.toText(List.of()).sql());
+            t.c = 'X'
+            AND t.d = 'Y'""".stripIndent(), w.toText(List.of()).sql());
     }
 
     @Test
@@ -59,15 +59,15 @@ class CompositeFilterRendererTest {
         ColumnFilter f3 = eq("c", "z", 3);
         CompositeFilter root = Filter.or(f1, f2, f3);
 
-        RenderContext ctx = new AnsiRenderContext();
+        RenderContext ctx = RenderContext.of(new AnsiDialect());
         SqlWriter w = new DefaultSqlWriter(ctx);
 
         sut.render(root, ctx, w);
 
         assertEquals("""
-                a.x = 1
-                OR b.y = 2
-                OR c.z = 3""".stripIndent(), w.toText(List.of()).sql());
+            a.x = 1
+            OR b.y = 2
+            OR c.z = 3""".stripIndent(), w.toText(List.of()).sql());
     }
 
     @Test
@@ -80,18 +80,18 @@ class CompositeFilterRendererTest {
         CompositeFilter cf2 = Filter.or(f1, f2, f3);
         CompositeFilter root = Filter.and(cf1, cf2);
 
-        RenderContext ctx = new AnsiRenderContext();
+        RenderContext ctx = RenderContext.of(new AnsiDialect());
         SqlWriter w = new DefaultSqlWriter(ctx);
 
         sut.render(root, ctx, w);
 
         assertEquals("""
-                NOT (t.flag = TRUE)
-                AND (
-                  a.x = 1
-                  OR b.y = 2
-                  OR c.z = 3
-                )""".stripIndent(), w.toText(List.of()).sql());
+            NOT (t.flag = TRUE)
+            AND (
+              a.x = 1
+              OR b.y = 2
+              OR c.z = 3
+            )""".stripIndent(), w.toText(List.of()).sql());
     }
 
     @Test
@@ -99,7 +99,7 @@ class CompositeFilterRendererTest {
         ColumnFilter only = eq("t", "is_deleted", false);
         CompositeFilter root = Filter.not(only);
 
-        RenderContext ctx = new AnsiRenderContext();
+        RenderContext ctx = RenderContext.of(new AnsiDialect());
         SqlWriter w = new DefaultSqlWriter(ctx);
 
         sut.render(root, ctx, w);

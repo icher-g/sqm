@@ -2,8 +2,8 @@ package io.cherlabs.sqm.render.ansi;
 
 import io.cherlabs.sqm.render.SqlText;
 import io.cherlabs.sqm.render.SqlWriter;
-import io.cherlabs.sqm.render.ansi.spi.AnsiParamSink;
-import io.cherlabs.sqm.render.ansi.spi.AnsiSqlDialect;
+import io.cherlabs.sqm.render.DefaultParamSink;
+import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import io.cherlabs.sqm.render.spi.*;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -45,7 +45,7 @@ public abstract class BaseValuesRendererTest {
         TestRenderContext(SqlDialect dialect, PlaceholderPreference pref, ParameterizationMode paramMode) {
             this.dialect = dialect;
             this.pref = pref;
-            this.params = new AnsiParamSink();
+            this.params = new DefaultParamSink();
             this.paramMode = paramMode;
         }
 
@@ -72,7 +72,7 @@ public abstract class BaseValuesRendererTest {
      * ANSI dialect w/ plain '?'
      */
     protected static final class AnsiTestDialect implements SqlDialect {
-        private final SqlDialect dialect = new AnsiSqlDialect();
+        private final SqlDialect dialect = new AnsiDialect();
         private final Placeholders placeholders = () -> "?";
 
         @Override
@@ -125,7 +125,7 @@ public abstract class BaseValuesRendererTest {
      * PG-like ordinal placeholders $1,$2…
      */
     protected static final class OrdinalTestDialect implements SqlDialect {
-        private final SqlDialect dialect = new AnsiSqlDialect();
+        private final SqlDialect dialect = new AnsiDialect();
         private final Placeholders placeholders = new Placeholders() {
             @Override
             public String marker() {
@@ -193,7 +193,7 @@ public abstract class BaseValuesRendererTest {
      * Named placeholders :p1,:p2…
      */
     protected static final class NamedTestDialect implements SqlDialect {
-        private final SqlDialect dialect = new AnsiSqlDialect();
+        private final SqlDialect dialect = new AnsiDialect();
         private final Placeholders placeholders = new Placeholders() {
             @Override
             public String marker() {
