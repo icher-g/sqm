@@ -14,5 +14,5 @@ import io.cherlabs.sqm.core.TableJoin;
         @JsonSubTypes.Type(value = TableJoin.class, name = "table"),
         @JsonSubTypes.Type(value = ExpressionJoin.class, name = "expr")
 })
-public class JoinMixIn {
+public abstract class JoinMixIn {
 }

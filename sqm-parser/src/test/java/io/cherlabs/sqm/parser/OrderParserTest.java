@@ -120,7 +120,7 @@ class OrderParserTest {
         void duplicate_direction() {
             ParseResult<Order> res = parser.parse("c ASC DESC");
             assertFalse(res.ok());
-            assertEquals("Direction specified more than once", res.errorMessage());
+            assertEquals("Direction specified more than once at 3", res.errorMessage());
         }
 
         @Test
@@ -128,7 +128,7 @@ class OrderParserTest {
         void duplicate_nulls() {
             ParseResult<Order> res = parser.parse("c NULLS FIRST NULLS LAST");
             assertFalse(res.ok());
-            assertEquals("NULLS specified more than once", res.errorMessage());
+            assertEquals("NULLS specified more than once at 4", res.errorMessage());
         }
 
         @Test
@@ -136,7 +136,7 @@ class OrderParserTest {
         void duplicate_collate() {
             ParseResult<Order> res = parser.parse("c COLLATE de_CH COLLATE fr_CH");
             assertFalse(res.ok());
-            assertEquals("COLLATE specified more than once", res.errorMessage());
+            assertEquals("COLLATE specified more than once at 4", res.errorMessage());
         }
 
         @Test

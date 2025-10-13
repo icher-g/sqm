@@ -318,8 +318,8 @@ public final class QueryBuilder {
         var parser = parsers.require(type);
         for (String spec : specs) {
             var result = parser.parse(spec);
-            if (!result.ok()) {
-                throw new IllegalArgumentException(result.problems().toString());
+            if (result.isError()) {
+                throw new IllegalArgumentException(result.errorMessage());
             }
             list.add(result.value());
         }
@@ -328,8 +328,8 @@ public final class QueryBuilder {
     private <T extends Entity> T create(Class<T> type, String spec) {
         var parser = parsers.require(type);
         var result = parser.parse(spec);
-        if (!result.ok()) {
-            throw new IllegalArgumentException(result.problems().toString());
+        if (result.isError()) {
+            throw new IllegalArgumentException(result.errorMessage());
         }
         return result.value();
     }

@@ -5,7 +5,7 @@ import io.cherlabs.sqm.core.Entity;
 import java.util.List;
 
 /**
- * An interface to for SQL query writing.
+ * An interface for SQL query writing.
  */
 public interface SqlWriter {
     /**

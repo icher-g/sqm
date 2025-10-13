@@ -5,7 +5,7 @@ import io.cherlabs.sqm.core.CteQuery;
 import io.cherlabs.sqm.core.Table;
 import io.cherlabs.sqm.render.DefaultSqlWriter;
 import io.cherlabs.sqm.render.SqlWriter;
-import io.cherlabs.sqm.render.ansi.spi.AnsiRenderContext;
+import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import io.cherlabs.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,7 +28,7 @@ class CteQueryRendererTest {
 
     private static RenderContext ctx() {
         // Replace if your context factory is different
-        return new AnsiRenderContext();
+        return RenderContext.of(new AnsiDialect());
     }
 
     /* ===================== HELPERS ===================== */
@@ -48,8 +48,8 @@ class CteQueryRendererTest {
     @DisplayName("CTE with aliases renders: name (a, b) AS ( <inner-select> )")
     void cte_with_aliases_ok() {
         var q = query()
-                .select(col("u", "id"), col("u", "name"))
-                .from(tbl("users", "u"));
+            .select(col("u", "id"), col("u", "name"))
+            .from(tbl("users", "u"));
         var cte = new CteQuery("u_cte", q, List.of("id", "name"));
         var sql = render(cte);
         var norm = normalize(sql);
@@ -62,8 +62,8 @@ class CteQueryRendererTest {
     @DisplayName("CTE without aliases renders: name AS ( <inner-select> )")
     void cte_without_aliases_ok() {
         var q = query()
-                .select(col("o", "user_id"), col("o", "amount"))
-                .from(tbl("orders", "o"));
+            .select(col("o", "user_id"), col("o", "amount"))
+            .from(tbl("orders", "o"));
         var cte = new CteQuery("orders_cte", q, null);
         var sql = render(cte);
 
@@ -77,8 +77,8 @@ class CteQueryRendererTest {
     @DisplayName("CTE missing name -> expect a render failure")
     void cte_missing_name_fails() {
         var q = query()
-                .select(col("u", "id"))
-                .from(tbl("users", "u"));
+            .select(col("u", "id"))
+            .from(tbl("users", "u"));
         var cte = new CteQuery(null, q, null);
 
         assertThrows(RuntimeException.class, () -> render(cte));

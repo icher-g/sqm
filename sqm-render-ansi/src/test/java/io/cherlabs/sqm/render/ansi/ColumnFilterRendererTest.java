@@ -4,9 +4,7 @@ import io.cherlabs.sqm.core.Column;
 import io.cherlabs.sqm.core.ColumnFilter;
 import io.cherlabs.sqm.core.Filter;
 import io.cherlabs.sqm.core.Values;
-import io.cherlabs.sqm.render.DefaultSqlWriter;
-import io.cherlabs.sqm.render.SqlWriter;
-import io.cherlabs.sqm.render.ansi.spi.AnsiRenderContext;
+import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import io.cherlabs.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,17 +24,13 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class ColumnFilterRendererTest {
 
-    private final ColumnFilterRenderer renderer = new ColumnFilterRenderer();
-
     private static Column col(String table, String name) {
         return Column.of(name).from(table);
     }
 
     private String render(ColumnFilter cf) {
-        var ctx = new AnsiRenderContext();
-        SqlWriter w = new DefaultSqlWriter(ctx);
-        renderer.render(cf, ctx, w);
-        return w.toText(List.of()).sql();
+        var ctx = RenderContext.of(new AnsiDialect());
+        return ctx.render(cf).sql();
     }
 
     @Test
@@ -64,32 +58,26 @@ class ColumnFilterRendererTest {
 
     @Test
     void lt_lte_gt_gte_like_notLike_single() {
-        RenderContext ctx = new AnsiRenderContext();
+        var ctx = RenderContext.of(new AnsiDialect());
 
         Column column = Column.of("c");
-        SqlWriter w1 = new DefaultSqlWriter(ctx);
-        renderer.render(Filter.column(column).lt(10), ctx, w1);
-        assertEquals("c < 10", w1.toText(List.of()).sql());
+        var w1 = ctx.render(Filter.column(column).lt(10));
+        assertEquals("c < 10", w1.sql());
 
-        SqlWriter w2 = new DefaultSqlWriter(ctx);
-        renderer.render(Filter.column(column).lte(11), ctx, w2);
-        assertEquals("c <= 11", w2.toText(List.of()).sql());
+        var w2 = ctx.render(Filter.column(column).lte(11));
+        assertEquals("c <= 11", w2.sql());
 
-        SqlWriter w3 = new DefaultSqlWriter(ctx);
-        renderer.render(Filter.column(column).gt(12), ctx, w3);
-        assertEquals("c > 12", w3.toText(List.of()).sql());
+        var w3 = ctx.render(Filter.column(column).gt(12));
+        assertEquals("c > 12", w3.sql());
 
-        SqlWriter w4 = new DefaultSqlWriter(ctx);
-        renderer.render(Filter.column(column).gte(13), ctx, w4);
-        assertEquals("c >= 13", w4.toText(List.of()).sql());
+        var w4 = ctx.render(Filter.column(column).gte(13));
+        assertEquals("c >= 13", w4.sql());
 
-        SqlWriter w5 = new DefaultSqlWriter(ctx);
-        renderer.render(Filter.column(column).like("%abc%"), ctx, w5);
-        assertEquals("c LIKE '%abc%'", w5.toText(List.of()).sql());
+        var w5 = ctx.render(Filter.column(column).like("%abc%"));
+        assertEquals("c LIKE '%abc%'", w5.sql());
 
-        SqlWriter w6 = new DefaultSqlWriter(ctx);
-        renderer.render(Filter.column(column).notLike("%abc%"), ctx, w6);
-        assertEquals("c NOT LIKE '%abc%'", w6.toText(List.of()).sql());
+        var w6 = ctx.render(Filter.column(column).notLike("%abc%"));
+        assertEquals("c NOT LIKE '%abc%'", w6.sql());
     }
 
     @Test
@@ -109,21 +97,6 @@ class ColumnFilterRendererTest {
         assertEquals("c IN (1, 2, 3)", result);
     }
 
-//    @Test
-//    void in_subquery() {
-//        RenderContext ctx = new AnsiRenderContext();
-//
-//        // Subquery renderer that writes: SELECT 1
-//        Query subq = new Query();
-//        Renderer<Query> subqRenderer = (entity, c, w) -> w.append("SELECT 1");
-//        when(ctx.dialect().renderers().requireFor(subq)).thenReturn(subqRenderer);
-//
-//        SqlWriter w = new BufferedSqlWriter(ctx);
-//        renderer.render(filter(ColumnFilter.Operator.In, Column.of("c"), subquery(subq)), ctx, w);
-//
-//        assertEquals("c IN (SELECT 1)", result);
-//    }
-
     @Test
     @DisplayName("NOT IN with a single value downgrades to '<>'")
     void notIn_single_downgrades_to_ne() {
@@ -138,20 +111,6 @@ class ColumnFilterRendererTest {
         var result = render(f);
         assertEquals("c NOT IN ('a', 'b')", result);
     }
-
-//    @Test
-//    void notIn_subquery() {
-//        RenderContext ctx = new AnsiRenderContext();
-//
-//        Query subq = new Query();
-//        Renderer<Query> subqRenderer = (entity, c, w) -> w.append("SELECT * FROM t");
-//        when(ctx.dialect().renderers().requireFor(subq)).thenReturn(subqRenderer);
-//
-//        SqlWriter w = new BufferedSqlWriter(ctx);
-//        renderer.render(filter(ColumnFilter.Operator.NotIn, Column.of("c"), subquery(subq)), ctx, w);
-//
-//        assertEquals("c NOT IN (SELECT * FROM t)", result);
-//    }
 
     @Test
     void range_between() {
@@ -241,21 +200,19 @@ class ColumnFilterRendererTest {
     class ErrorCases {
         @Test
         void eq_with_list_throws() {
-            RenderContext ctx = new AnsiRenderContext();
+            var ctx = RenderContext.of(new AnsiDialect());
             ColumnFilter f = new ColumnFilter(Column.of("c"), ColumnFilter.Operator.Eq, Values.list(List.of(1, 2)));
-            SqlWriter w = new DefaultSqlWriter(ctx);
 
-            UnsupportedOperationException ex = assertThrows(UnsupportedOperationException.class, () -> renderer.render(f, ctx, w));
+            UnsupportedOperationException ex = assertThrows(UnsupportedOperationException.class, () -> ctx.render(f));
             assertTrue(ex.getMessage().contains("Eq"));
         }
 
         @Test
         void range_with_single_throws() {
-            RenderContext ctx = new AnsiRenderContext();
+            var ctx = RenderContext.of(new AnsiDialect());
             ColumnFilter f = new ColumnFilter(Column.of("c"), ColumnFilter.Operator.Range, Values.single(1));
-            SqlWriter w = new DefaultSqlWriter(ctx);
 
-            UnsupportedOperationException ex = assertThrows(UnsupportedOperationException.class, () -> renderer.render(f, ctx, w));
+            UnsupportedOperationException ex = assertThrows(UnsupportedOperationException.class, () -> ctx.render(f));
             assertTrue(ex.getMessage().contains("Range"));
         }
     }

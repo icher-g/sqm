@@ -1,9 +1,7 @@
 package io.cherlabs.sqm.render.ansi;
 
 import io.cherlabs.sqm.core.*;
-import io.cherlabs.sqm.render.DefaultSqlWriter;
-import io.cherlabs.sqm.render.SqlWriter;
-import io.cherlabs.sqm.render.ansi.spi.AnsiRenderContext;
+import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import io.cherlabs.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,14 +22,6 @@ class CaseColumnRendererTest {
 
     // --- helpers -------------------------------------------------------------
 
-    private RenderContext ctx() {
-        return new AnsiRenderContext();
-    }
-
-    private SqlWriter writer(RenderContext ctx) {
-        return new DefaultSqlWriter(ctx);
-    }
-
     private Column col(String name) {
         return Column.of(name);
     }
@@ -49,11 +39,8 @@ class CaseColumnRendererTest {
     }
 
     private String render(CaseColumn cc) {
-        var ctx = ctx();
-        var w = writer(ctx);
-        new CaseColumnRenderer().render(cc, ctx, w);
-        // assuming you don't pass params here
-        return w.toText(of()).sql();
+        var ctx = RenderContext.of(new AnsiDialect());
+        return ctx.render(cc).sql();
     }
 
     // --- tests ---------------------------------------------------------------
@@ -64,9 +51,9 @@ class CaseColumnRendererTest {
         // CASE WHEN a = TRUE THEN TRUE ELSE NULL END AS is_active
         var when = Filter.column(col("a")).eq(true);
         var cc = new CaseColumn(
-                of(arm(when, val(true))),
-                val(null),
-                "is_active"
+            of(arm(when, val(true))),
+            val(null),
+            "is_active"
         );
 
         var sql = render(cc);
@@ -81,17 +68,17 @@ class CaseColumnRendererTest {
         var w2 = Filter.column(col("x")).eq(2);
 
         var cc = new CaseColumn(
-                of(
-                        arm(w1, val(10)),
-                        arm(w2, val(20))
-                ),
-                null,
-                "result"
+            of(
+                arm(w1, val(10)),
+                arm(w2, val(20))
+            ),
+            null,
+            "result"
         );
 
         var sql = render(cc);
         assertEquals("CASE WHEN x = 1 THEN 10 WHEN x = 2 THEN 20 END AS result", sql,
-                "Renderer emits AS before alias by design; adjust if you render bare alias.");
+            "Renderer emits AS before alias by design; adjust if you render bare alias.");
     }
 
     @Test
@@ -101,9 +88,9 @@ class CaseColumnRendererTest {
         var when = Filter.column(col("flag")).eq(true);
 
         var cc = new CaseColumn(
-                of(arm(when, col("t2", "name"))),
-                null,
-                null
+            of(arm(when, col("t2", "name"))),
+            null,
+            null
         );
 
         var sql = render(cc);
@@ -116,31 +103,31 @@ class CaseColumnRendererTest {
         // outer: CASE WHEN x > 0 THEN <inner> ELSE 'C' END alias1
         // inner: CASE WHEN y > 10 THEN 'A' ELSE 'B' END
         var inner = new CaseColumn(
-                of(
-                        arm(
-                                Filter.column(col("y")).gt(10),
-                                val("A")
-                        )
-                ),
-                val("B"),
-                null
+            of(
+                arm(
+                    Filter.column(col("y")).gt(10),
+                    val("A")
+                )
+            ),
+            val("B"),
+            null
         );
 
         var outer = new CaseColumn(
-                of(
-                        arm(
-                                Filter.column(col("x")).gt(0),
-                                inner
-                        )
-                ),
-                val("C"),
-                "alias1"
+            of(
+                arm(
+                    Filter.column(col("x")).gt(0),
+                    inner
+                )
+            ),
+            val("C"),
+            "alias1"
         );
 
         var sql = render(outer);
         assertEquals(
-                "CASE WHEN x > 0 THEN CASE WHEN y > 10 THEN 'A' ELSE 'B' END ELSE 'C' END AS alias1",
-                sql
+            "CASE WHEN x > 0 THEN CASE WHEN y > 10 THEN 'A' ELSE 'B' END ELSE 'C' END AS alias1",
+            sql
         );
     }
 
@@ -149,9 +136,9 @@ class CaseColumnRendererTest {
     void else_omitted() {
         // CASE WHEN score >= 90 THEN 'A' END grade
         var cc = new CaseColumn(
-                of(arm(Filter.column(col("score")).gte(90), val("A"))),
-                null,
-                "grade"
+            of(arm(Filter.column(col("score")).gte(90), val("A"))),
+            null,
+            "grade"
         );
 
         var sql = render(cc);
@@ -163,12 +150,12 @@ class CaseColumnRendererTest {
     void mixed_then_types() {
         // CASE WHEN with_name THEN t.name WHEN with_code THEN 'N/A' END label
         var cc = new CaseColumn(
-                of(
-                        arm(Filter.column(col("with_name")).eq(true), col("t", "name")),
-                        arm(Filter.column(col("with_code")).eq(true), val("N/A"))
-                ),
-                null,
-                "label"
+            of(
+                arm(Filter.column(col("with_name")).eq(true), col("t", "name")),
+                arm(Filter.column(col("with_code")).eq(true), val("N/A"))
+            ),
+            null,
+            "label"
         );
 
         var sql = render(cc);

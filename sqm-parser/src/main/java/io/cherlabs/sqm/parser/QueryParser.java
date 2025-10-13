@@ -51,6 +51,10 @@ public final class QueryParser implements Parser<Query> {
 
     private final ParsersRepository repository;
 
+    public QueryParser() {
+        this(Parsers.defaultRepository());
+    }
+
     public QueryParser(ParsersRepository repository) {
         this.repository = Objects.requireNonNull(repository, "repository");
     }
@@ -77,7 +81,7 @@ public final class QueryParser implements Parser<Query> {
     }
 
     private ParseResult<Query> finalize(Cursor cur, ParseResult<? extends Query> pr) {
-        if (!pr.ok()) {
+        if (pr.isError()) {
             return ParseResult.error(pr);
         }
         if (!cur.isEof()) {
@@ -132,7 +136,7 @@ public final class QueryParser implements Parser<Query> {
             var tableParser = repository.require(Table.class);
             var fromCur = cur.advance(cur.find(FROM_OR_JOIN_TERMINATORS));
             var tr = tableParser.parse(fromCur);
-            if (!tr.ok()) return ParseResult.error(tr);
+            if (tr.isError()) return ParseResult.error(tr);
             q.from(tr.value());
 
             // JOINs (0..n)
@@ -145,7 +149,7 @@ public final class QueryParser implements Parser<Query> {
                 }
                 var joinCur = cur.advance(cur.find(FROM_OR_JOIN_TERMINATORS, i));
                 var jr = joinParser.parse(joinCur);
-                if (!jr.ok()) return ParseResult.error(jr);
+                if (jr.isError()) return ParseResult.error(jr);
                 q.join(jr.value());
             }
         }
@@ -154,7 +158,7 @@ public final class QueryParser implements Parser<Query> {
         if (cur.consumeIf(TokenType.WHERE)) {
             var whereCur = cur.advance(cur.find(WHERE_TERMINATORS));
             var fr = repository.require(Filter.class).parse(whereCur);
-            if (!fr.ok()) return ParseResult.error(fr);
+            if (fr.isError()) return ParseResult.error(fr);
             q.where(fr.value());
         }
 
@@ -168,7 +172,7 @@ public final class QueryParser implements Parser<Query> {
             while (!groupCur.isEof()) {
                 Cursor itemCur = groupCur.advance(groupCur.find(ITEM_TERMINATORS));
                 var gr = grpParser.parse(itemCur);
-                if (!gr.ok()) return ParseResult.error(gr);
+                if (gr.isError()) return ParseResult.error(gr);
                 q.groupBy().add(gr.value());
                 groupCur.consumeIf(TokenType.COMMA);
             }
@@ -178,13 +182,13 @@ public final class QueryParser implements Parser<Query> {
         if (cur.consumeIf(TokenType.HAVING)) {
             var havingCur = cur.advance(cur.find(HAVING_TERMINATORS));
             var hr = repository.require(Filter.class).parse(havingCur);
-            if (!hr.ok()) return ParseResult.error(hr);
+            if (hr.isError()) return ParseResult.error(hr);
             q.having(hr.value());
         }
 
         // ORDER BY, LIMIT & OFFSET (optional)
         var res = parseOrderByLimitAndOffset(cur);
-        if (!res.ok()) {
+        if (res.isError()) {
             return ParseResult.error(res.errorMessage(), res.problems().get(0).pos());
         }
 
@@ -217,7 +221,7 @@ public final class QueryParser implements Parser<Query> {
 
         var subCur = cur.advance(cur.find(TokenType.RPAREN));
         var body = parse(subCur);
-        if (!body.ok()) {
+        if (body.isError()) {
             return ParseResult.error(body);
         }
         cur.expect("Expected '(' before CTE subquery", TokenType.RPAREN);
@@ -232,14 +236,14 @@ public final class QueryParser implements Parser<Query> {
         List<CteQuery> ctes = new ArrayList<>();
         do {
             var cte = parseCte(cur);
-            if (!cte.ok()) {
+            if (cte.isError()) {
                 return ParseResult.error(cte);
             }
             ctes.add(cte.value());
         } while (cur.consumeIf(TokenType.COMMA));
 
         var body = parse(cur);
-        if (!body.ok()) {
+        if (body.isError()) {
             return ParseResult.error(body);
         }
         return ParseResult.ok(new WithQuery(body.value(), ctes, recursive));
@@ -254,7 +258,7 @@ public final class QueryParser implements Parser<Query> {
             cur.consumeIf(TokenType.LPAREN); // remove '(' if presented.
             var subCur = cur.advance(cur.find(TokenType.UNION, TokenType.INTERSECT, TokenType.EXCEPT, TokenType.EOF));
             var term = parse(subCur);
-            if (!term.ok()) {
+            if (term.isError()) {
                 return ParseResult.error(term);
             }
             cur.consumeIf(TokenType.RPAREN); // remove ')' if presented.
@@ -285,7 +289,7 @@ public final class QueryParser implements Parser<Query> {
 
         // ORDER BY, LIMIT & OFFSET (optional)
         var res = parseOrderByLimitAndOffset(cur);
-        if (!res.ok()) {
+        if (res.isError()) {
             return ParseResult.error(res.errorMessage(), res.problems().get(0).pos());
         }
 
@@ -326,7 +330,7 @@ public final class QueryParser implements Parser<Query> {
             while (!orderCur.isEof()) {
                 Cursor itemCur = orderCur.advance(orderCur.find(ITEM_TERMINATORS));
                 var or = orderParser.parse(itemCur);
-                if (!or.ok()) return ParseResult.error(or);
+                if (or.isError()) return ParseResult.error(or);
                 orderBy.add(or.value());
                 orderCur.consumeIf(TokenType.COMMA);
             }
@@ -345,7 +349,7 @@ public final class QueryParser implements Parser<Query> {
         // ANSI FETCH (can appear with or without OFFSET)
         if (cur.consumeIf(TokenType.FETCH)) {
             var fr = parseOptionalFetchClause(cur);
-            if (!fr.ok()) {
+            if (fr.isError()) {
                 return ParseResult.error(fr.errorMessage(), fr.problems().get(0).pos());
             }
             limit = fr.value();
@@ -368,7 +372,7 @@ public final class QueryParser implements Parser<Query> {
             // Optional ANSI FETCH after OFFSET
             if (cur.consumeIf(TokenType.FETCH)) {
                 var fr = parseOptionalFetchClause(cur);
-                if (!fr.ok()) {
+                if (fr.isError()) {
                     return ParseResult.error(fr.errorMessage(), fr.problems().get(0).pos());
                 }
                 limit = fr.value();

@@ -25,14 +25,14 @@ public interface Parser<T extends Entity> extends Handler<T> {
         Objects.requireNonNull(spec, "spec cannot be null.");
 
         if (spec.isBlank()) {
-            return ParseResult.error("The spec cannot be blank.");
+            return ParseResult.error("The spec cannot be blank.", -1);
         }
 
         try {
             var ts = Lexer.lexAll(spec);
             return parse(new Cursor(ts));
         } catch (ParserException ex) {
-            return ParseResult.error(ex.getMessage());
+            return ParseResult.error(ex);
         }
     }
 

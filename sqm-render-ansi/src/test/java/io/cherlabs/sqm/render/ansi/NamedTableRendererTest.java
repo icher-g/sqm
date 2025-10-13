@@ -3,16 +3,16 @@ package io.cherlabs.sqm.render.ansi;
 import io.cherlabs.sqm.core.NamedTable;
 import io.cherlabs.sqm.core.Table;
 import io.cherlabs.sqm.render.DefaultSqlWriter;
-import io.cherlabs.sqm.render.SqlWriter;
 import io.cherlabs.sqm.render.SqlText;
-import io.cherlabs.sqm.render.ansi.spi.AnsiRenderContext;
+import io.cherlabs.sqm.render.SqlWriter;
+import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import io.cherlabs.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit tests for AnsiNamedTableRenderer.
@@ -24,7 +24,7 @@ class NamedTableRendererTest {
     private final NamedTableRenderer renderer = new NamedTableRenderer();
 
     private String renderToSql(NamedTable table) {
-        RenderContext ctx = new AnsiRenderContext();
+        RenderContext ctx = RenderContext.of(new AnsiDialect());
         SqlWriter w = new DefaultSqlWriter(ctx);
         renderer.render(table, ctx, w);
         SqlText sql = w.toText(List.of());

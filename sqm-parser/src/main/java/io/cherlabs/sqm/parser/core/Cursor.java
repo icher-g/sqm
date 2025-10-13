@@ -187,8 +187,8 @@ public final class Cursor {
      */
     public Token expect(TokenType... types) {
         return expect(
-                tts -> "Expected token(s) " + Arrays.stream(types).map(Enum::toString).collect(Collectors.joining(",")) + " at position " + pos,
-                types);
+            tts -> "Expected token(s) " + Arrays.stream(types).map(Enum::toString).collect(Collectors.joining(",")),
+            types);
     }
 
     /**
@@ -210,8 +210,9 @@ public final class Cursor {
     public Token expect(Function<TokenType[], String> funcMessage, TokenType... types) {
         Token t = advance();
         var set = Set.of(types);
-        if (!set.contains(t.type()))
+        if (!set.contains(t.type())) {
             throw new ParserException(funcMessage.apply(types), t.pos());
+        }
         return t;
     }
 

@@ -13,12 +13,12 @@ public final class Parsers {
 
     private static ParsersRepository registerDefaults(ParsersRepository r) {
         return r
-                .register(new ColumnParser())
+                .register(new ColumnParser(r))
                 .register(new FilterParser())
                 .register(new JoinParser(r))
                 .register(new TableParser())
-                .register(new OrderParser())
-                .register(new GroupParser())
+                .register(new OrderParser(r))
+                .register(new GroupParser(r))
                 .register(new QueryParser(r));
     }
 }

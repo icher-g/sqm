@@ -3,9 +3,10 @@ package io.cherlabs.sqm.render.ansi;
 import io.cherlabs.sqm.core.Entity;
 import io.cherlabs.sqm.core.Query;
 import io.cherlabs.sqm.core.QueryTable;
+import io.cherlabs.sqm.render.DefaultRenderContext;
 import io.cherlabs.sqm.render.DefaultSqlWriter;
 import io.cherlabs.sqm.render.SqlWriter;
-import io.cherlabs.sqm.render.ansi.spi.AnsiRenderContext;
+import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -37,7 +38,7 @@ class QueryTableRendererTest {
     }
 
     private static String render(Entity entity) {
-        SqlWriter w = new DefaultSqlWriter(new AnsiRenderContext());
+        SqlWriter w = new DefaultSqlWriter(new DefaultRenderContext(new AnsiDialect()));
         w.append(entity);
         return w.toText(List.of()).sql();
     }
@@ -48,8 +49,8 @@ class QueryTableRendererTest {
      */
     private Query makeSimpleQuery() {
         return query()
-                .select(col("u", "id"), col("u", "name"))
-                .from(table("users").as("u"));
+            .select(col("u", "id"), col("u", "name"))
+            .from(table("users").as("u"));
     }
 
     // --- Tests ---------------------------------------------------------------
@@ -69,7 +70,7 @@ class QueryTableRendererTest {
 
         // also ensure inner query text is inside
         assertTrue(flat(sql).contains("SELECT u.id, u.name FROM users AS u"),
-                "Should render the inner SELECT");
+            "Should render the inner SELECT");
     }
 
     @Test
@@ -82,7 +83,7 @@ class QueryTableRendererTest {
 
         // Must not contain " AS "
         assertFalse(sql.matches(".*\\sAS\\s+.+"),
-                "Must not append AS <alias> when both alias and query name are missing");
+            "Must not append AS <alias> when both alias and query name are missing");
     }
 
     @Test
@@ -97,8 +98,8 @@ class QueryTableRendererTest {
         // Depending on your IdentifierQuoter, this could be "AS \"select\"" or [select].
         // We only assert that something was quoted; adapt if your quoter uses a different style.
         assertTrue(
-                sql.contains("AS \"select\"") || sql.contains("AS [select]") || sql.contains("AS `select`"),
-                "Alias that is a keyword should be quoted by the dialect quoter"
+            sql.contains("AS \"select\"") || sql.contains("AS [select]") || sql.contains("AS `select`"),
+            "Alias that is a keyword should be quoted by the dialect quoter"
         );
     }
 

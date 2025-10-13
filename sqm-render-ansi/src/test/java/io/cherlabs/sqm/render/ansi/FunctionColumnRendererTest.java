@@ -1,9 +1,7 @@
 package io.cherlabs.sqm.render.ansi;
 
 import io.cherlabs.sqm.core.FunctionColumn;
-import io.cherlabs.sqm.render.DefaultSqlWriter;
-import io.cherlabs.sqm.render.SqlWriter;
-import io.cherlabs.sqm.render.ansi.spi.AnsiRenderContext;
+import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import io.cherlabs.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,10 +19,9 @@ class FunctionColumnRendererTest {
      * Helper to render a function column and return the SQL string.
      */
     private String render(FunctionColumn f) {
-        RenderContext ctx = new AnsiRenderContext();
-        SqlWriter w = new DefaultSqlWriter(ctx);
-        renderer.render(f, ctx, w);
-        return w.toText(List.of()).sql(); // If your SqlText accessor differs, adjust here.
+        RenderContext ctx = RenderContext.of(new AnsiDialect());
+        ctx.dialect().renderers().register(renderer);
+        return ctx.render(f).sql();
     }
 
     @Test
@@ -47,10 +44,10 @@ class FunctionColumnRendererTest {
     @DisplayName("DISTINCT inside call with single column")
     void distinct_singleColumn() {
         var fc = new FunctionColumn(
-                "count",
-                List.of(column("t", "id")),
-                true,   // DISTINCT
-                null
+            "count",
+            List.of(column("t", "id")),
+            true,   // DISTINCT
+            null
         );
         var sql = render(fc);
         assertEquals("count(DISTINCT t.id)", sql);
@@ -84,16 +81,16 @@ class FunctionColumnRendererTest {
     @DisplayName("Literals: NULL, booleans, numbers, strings (escaping)")
     void literals_various() {
         var fc = new FunctionColumn(
-                "coalesce",
-                List.of(
-                        lit(null),        // NULL
-                        lit(true),        // TRUE
-                        lit(42),          // number
-                        lit(3.14),        // decimal
-                        lit("O'Reilly")   // string with quote to be doubled
-                ),
-                false,
-                null
+            "coalesce",
+            List.of(
+                lit(null),        // NULL
+                lit(true),        // TRUE
+                lit(42),          // number
+                lit(3.14),        // decimal
+                lit("O'Reilly")   // string with quote to be doubled
+            ),
+            false,
+            null
         );
         var sql = render(fc);
         assertEquals("coalesce(NULL, TRUE, 42, 3.14, 'O''Reilly')", sql);
@@ -103,14 +100,14 @@ class FunctionColumnRendererTest {
     @DisplayName("String concatenation example with multiple literals")
     void concat_withLiterals() {
         var fc = new FunctionColumn(
-                "concat",
-                List.of(
-                        lit("Hello"),
-                        lit(", "),
-                        lit("World")
-                ),
-                false,
-                "greeting"
+            "concat",
+            List.of(
+                lit("Hello"),
+                lit(", "),
+                lit("World")
+            ),
+            false,
+            "greeting"
         );
         var sql = render(fc);
         assertEquals("concat('Hello', ', ', 'World') AS greeting", sql);
@@ -128,10 +125,10 @@ class FunctionColumnRendererTest {
     @DisplayName("DISTINCT with multiple args (generic function)")
     void distinct_multipleArgs() {
         var fc = new FunctionColumn(
-                "some_func",
-                List.of(column("t", "a"), column("t", "b")),
-                true,
-                null
+            "some_func",
+            List.of(column("t", "a"), column("t", "b")),
+            true,
+            null
         );
         var sql = render(fc);
         // DISTINCT prefix is applied once before the full comma-separated list

@@ -4,9 +4,11 @@ import io.cherlabs.sqm.core.*;
 import io.cherlabs.sqm.parser.core.Cursor;
 import io.cherlabs.sqm.parser.core.ParserException;
 import io.cherlabs.sqm.parser.core.TokenType;
+import io.cherlabs.sqm.parser.repos.ParsersRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static java.util.List.copyOf;
 
@@ -21,8 +23,17 @@ import static java.util.List.copyOf;
  */
 public class ColumnParser implements Parser<Column> {
 
+    private final ParsersRepository repository;
+
+    public ColumnParser() {
+        this(Parsers.defaultRepository());
+    }
+
+    public ColumnParser(ParsersRepository repository) {
+        this.repository = Objects.requireNonNull(repository, "repository");
+    }
+
     private static Object parseNumber(String lexeme) {
-        // match FilterSpecParser number policy: prefer Long, fallback Double
         try {
             if (lexeme.contains(".") || lexeme.contains("e") || lexeme.contains("E")) {
                 return Double.valueOf(lexeme);
@@ -93,12 +104,12 @@ public class ColumnParser implements Parser<Column> {
             var nr = parseNamedColumn(cur);
             return finalize(cur, nr, "Unexpected tokens after column alias.");
         } catch (ParserException ex) {
-            return ParseResult.error(ex.getMessage());
+            return ParseResult.error(ex);
         }
     }
 
     private ParseResult<Column> finalize(Cursor cur, ParseResult<Column> pr, String error) {
-        if (!pr.ok()) return ParseResult.error(pr);
+        if (pr.isError()) return ParseResult.error(pr);
         cur.consumeIf(TokenType.RPAREN); // in case it was in brackets.
         if (!cur.isEof()) {
             return ParseResult.error(error, cur.pos());
@@ -119,7 +130,7 @@ public class ColumnParser implements Parser<Column> {
     private ParseResult<Column> parseFunctionColumn(Cursor cur) {
         // parse the call starting at 0
         var funcResult = parseFunctionCall(cur);
-        if (!funcResult.ok()) return ParseResult.error(funcResult);
+        if (funcResult.isError()) return ParseResult.error(funcResult);
 
         // optional alias: AS identifier | bare identifier
         String alias = null;
@@ -168,8 +179,8 @@ public class ColumnParser implements Parser<Column> {
                 return ParseResult.error("Expected THEN after WHEN <predicate>", cur.pos());
             }
 
-            var fr = new FilterParser().parse(cur.advance(end));
-            if (!fr.ok()) {
+            var fr = repository.require(Filter.class).parse(cur.advance(end));
+            if (fr.isError()) {
                 return ParseResult.error(fr);
             }
 
@@ -178,7 +189,7 @@ public class ColumnParser implements Parser<Column> {
 
             // <result>
             var thenResult = parseResultExpr(cur);
-            if (!thenResult.ok()) {
+            if (thenResult.isError()) {
                 return ParseResult.error(thenResult);
             }
 
@@ -194,7 +205,7 @@ public class ColumnParser implements Parser<Column> {
 
         if (cur.consumeIf(TokenType.ELSE)) {
             var elseResult = parseResultExpr(cur);
-            if (!elseResult.ok()) {
+            if (elseResult.isError()) {
                 return ParseResult.error(elseResult);
             }
             elseValue = elseResult.value();
@@ -240,7 +251,7 @@ public class ColumnParser implements Parser<Column> {
         // Nested CASE
         if (cur.match(TokenType.CASE)) {
             var pr = parseCaseColumn(cur);
-            if (!pr.ok()) return ParseResult.error(pr);
+            if (pr.isError()) return ParseResult.error(pr);
             return ParseResult.ok(pr.value());
         }
 
@@ -313,7 +324,7 @@ public class ColumnParser implements Parser<Column> {
             // one or more comma-separated args
             while (true) {
                 var argResult = parseFunctionArg(cur); // parses one arg (may include nested function)
-                if (!argResult.ok()) {
+                if (argResult.isError()) {
                     return ParseResult.error(argResult);
                 }
                 args.add(argResult.value());
@@ -337,7 +348,7 @@ public class ColumnParser implements Parser<Column> {
         // Nested function: IDENT ('.' IDENT)* '(' ...
         if (looksLikeFunctionAt(cur)) {
             var funcResult = parseFunctionCall(cur);
-            if (!funcResult.ok()) return ParseResult.error(funcResult); // <— no alias, no EOF check here
+            if (funcResult.isError()) return ParseResult.error(funcResult); // <— no alias, no EOF check here
             return ParseResult.ok(new FunctionColumn.Arg.Function(funcResult.value()));
         }
 

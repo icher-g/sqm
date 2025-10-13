@@ -23,8 +23,6 @@ public final class JoinParser implements Parser<Join> {
 
     private final ParsersRepository repository;
 
-    /* ---------------- helpers ---------------- */
-
     public JoinParser(ParsersRepository repository) {
         this.repository = Objects.requireNonNull(repository, "repository");
     }
@@ -105,7 +103,7 @@ public final class JoinParser implements Parser<Join> {
             var subCur = cur.advance(cur.size());
             var filterParser = repository.require(Filter.class);
             var fr = filterParser.parse(subCur);
-            if (!fr.ok()) return ParseResult.error(fr);
+            if (fr.isError()) return ParseResult.error(fr);
             on = fr.value();
         }
 

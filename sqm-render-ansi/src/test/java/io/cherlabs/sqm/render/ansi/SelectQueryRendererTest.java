@@ -4,7 +4,8 @@ import io.cherlabs.sqm.core.SelectQuery;
 import io.cherlabs.sqm.render.DefaultSqlWriter;
 import io.cherlabs.sqm.render.Renderer;
 import io.cherlabs.sqm.render.SqlWriter;
-import io.cherlabs.sqm.render.ansi.spi.AnsiRenderContext;
+import io.cherlabs.sqm.render.DefaultRenderContext;
+import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import io.cherlabs.sqm.render.spi.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -90,7 +91,7 @@ public class SelectQueryRendererTest {
 
     private RenderContext ctxWith(PaginationStyle style) {
         return new RenderContext() {
-            private final AnsiRenderContext ctx = new AnsiRenderContext();
+            private final DefaultRenderContext ctx = new DefaultRenderContext(new AnsiDialect());
             private final SqlDialect dialect = ctx.dialect();
 
             @Override

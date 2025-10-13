@@ -111,7 +111,7 @@ var sql = """
 
 var parser = Parsers.defaultRepository().require(Query.class);
 var pr = parser.parse(sql);
-if (!pr.ok()) {
+if (pr.isError()) {
     throw new RuntimeException(pr.errorMessage());
 }
 var query = pr.value();
@@ -166,14 +166,15 @@ Output:
 
 ## 🧩 Core Modules
 
-| Module | Description |
-|--------|--------------|
-| `sqm-core` | Core model, renderers, DSL |
-| `sqm-parser` | Default SQL parser implementation |
-| `sqm-renderer` | Base SQL renderer interfaces |
-| `sqm-renderer-ansi` | ANSI SQL renderer |
-| `sqm-json` | JSON serialization mixins |
-| `sqm-it` | SQM integration tests |
+| Module              | Description                       |
+|---------------------|-----------------------------------|
+| `sqm-core`          | Core model, renderers, DSL        |
+| `sqm-parser`        | Default SQL parser implementation |
+| `sqm-renderer`      | Base SQL renderer interfaces      |
+| `sqm-renderer-ansi` | ANSI SQL renderer                 |
+| `sqm-json`          | JSON serialization mixins         |
+| `sqm-it`            | SQM integration tests             |
+| `example`           | Code Examples                     |
 
 ---
 
@@ -226,6 +227,7 @@ mvn test
 
 ## 🧭 Roadmap
 
+- [ ] Add support for parsing SELECT from sub query (SELECT * FROM (SELECT * FROM))
 - [ ] Arithmetic operations in SQL statements (SELECT salary + bonus AS total_income)
 - [ ] Add support for INSERT | UPDATE | DELETE | MERGE
 - [ ] PostgreSQL renderer & parser

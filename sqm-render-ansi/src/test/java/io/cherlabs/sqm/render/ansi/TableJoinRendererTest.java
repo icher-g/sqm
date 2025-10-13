@@ -4,7 +4,8 @@ import io.cherlabs.sqm.core.*;
 import io.cherlabs.sqm.dsl.Dsl;
 import io.cherlabs.sqm.render.DefaultSqlWriter;
 import io.cherlabs.sqm.render.Renderer;
-import io.cherlabs.sqm.render.ansi.spi.AnsiRenderContext;
+import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
+import io.cherlabs.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +29,7 @@ class TableJoinRendererTest {
      * Minimal context just to satisfy BufferSqlWriter / renderer. Replace with your real ANSI context if available.
      */
     private String renderToSql(TableJoin join) {
-        var ctx = new AnsiRenderContext();
+        var ctx = RenderContext.of(new AnsiDialect());
         var w = new DefaultSqlWriter(ctx);
         renderer.render(join, ctx, w);
         return w.toText(List.of()).sql();
@@ -38,7 +39,7 @@ class TableJoinRendererTest {
     @DisplayName("INNER JOIN -> INNER JOIN <table> ON <predicate>")
     void innerJoin_renders() {
         var join = Join.inner(Table.of("t2"))
-                .on(eq(Dsl.col("t1", "id"), Dsl.col("t2", "id")));
+            .on(eq(Dsl.col("t1", "id"), Dsl.col("t2", "id")));
 
         var sql = renderToSql(join);
         assertEquals("INNER JOIN t2 ON t1.id = t2.id", sql);
@@ -48,8 +49,8 @@ class TableJoinRendererTest {
     @DisplayName("LEFT JOIN -> LEFT JOIN <table> ON <predicate>")
     void leftJoin_renders() {
         var join = Join.left(Table.of("orders"))
-                .on(Filter.column(Column.of("customer_id").from("orders"))
-                        .eq(Column.of("id").from("customers")));
+            .on(Filter.column(Column.of("customer_id").from("orders"))
+                .eq(Column.of("id").from("customers")));
 
         var sql = renderToSql(join);
         // Expected canonical ANSI shape. If this fails with a missing space, add `.space()` after "LEFT JOIN" in the renderer.
@@ -60,8 +61,8 @@ class TableJoinRendererTest {
     @DisplayName("RIGHT JOIN -> RIGHT JOIN <table> ON <predicate>")
     void rightJoin_renders() {
         var join = Join.right(Table.of("payments"))
-                .on(Filter.column(Column.of("order_id").from("payments"))
-                        .eq(Column.of("id").from("orders")));
+            .on(Filter.column(Column.of("order_id").from("payments"))
+                .eq(Column.of("id").from("orders")));
 
         var sql = renderToSql(join);
         // If it fails, likely missing `.space()` after "RIGHT JOIN".
@@ -72,8 +73,8 @@ class TableJoinRendererTest {
     @DisplayName("FULL JOIN -> FULL JOIN <table> ON <predicate>")
     void fullJoin_renders() {
         var join = Join.full(Table.of("x"))
-                .on(Filter.column(Column.of("id").from("x"))
-                        .eq(Column.of("id").from("y")));
+            .on(Filter.column(Column.of("id").from("x"))
+                .eq(Column.of("id").from("y")));
 
         var sql = renderToSql(join);
         // If it fails, likely missing `.space()` after "FULL JOIN".

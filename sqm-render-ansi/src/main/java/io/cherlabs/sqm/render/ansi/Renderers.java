@@ -1,12 +1,6 @@
 package io.cherlabs.sqm.render.ansi;
 
-import io.cherlabs.sqm.core.Query;
-import io.cherlabs.sqm.render.DefaultSqlWriter;
-import io.cherlabs.sqm.render.SqlText;
-import io.cherlabs.sqm.render.SqlWriter;
-import io.cherlabs.sqm.render.ansi.spi.AnsiRenderContext;
 import io.cherlabs.sqm.render.repos.DefaultRenderersRepository;
-import io.cherlabs.sqm.render.spi.RenderContext;
 import io.cherlabs.sqm.render.spi.RenderersRepository;
 
 public final class Renderers {
@@ -14,20 +8,6 @@ public final class Renderers {
     private static RenderersRepository repository;
 
     private Renderers() {
-    }
-
-    public static SqlText render(Query query) {
-        return render(query, new AnsiRenderContext());
-    }
-
-    public static SqlText render(Query query, RenderContext ctx) {
-        return render(query, ctx, new DefaultSqlWriter(ctx));
-    }
-
-    public static SqlText render(Query query, RenderContext ctx, SqlWriter w) {
-        var renderer = defaultRepository().getFor(query);
-        renderer.render(query, ctx, w);
-        return w.toText(ctx.params().snapshot());
     }
 
     public static RenderersRepository defaultRepository() {
