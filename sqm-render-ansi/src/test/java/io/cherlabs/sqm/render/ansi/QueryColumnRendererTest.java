@@ -4,6 +4,7 @@ import io.cherlabs.sqm.core.Column;
 import io.cherlabs.sqm.core.SelectQuery;
 import io.cherlabs.sqm.core.Table;
 import io.cherlabs.sqm.render.DefaultSqlWriter;
+import io.cherlabs.sqm.render.ansi.column.QueryColumnRenderer;
 import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import io.cherlabs.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;

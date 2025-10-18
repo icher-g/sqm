@@ -2,7 +2,6 @@ package io.cherlabs.sqm.render.spi;
 
 import io.cherlabs.sqm.core.Entity;
 import io.cherlabs.sqm.core.repos.HandlersRepository;
-import io.cherlabs.sqm.render.Renderer;
 
 public interface RenderersRepository extends HandlersRepository<Renderer<?>> {
     @Override

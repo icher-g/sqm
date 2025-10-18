@@ -1,6 +1,7 @@
 package io.cherlabs.sqm.render;
 
 import io.cherlabs.sqm.core.Entity;
+import io.cherlabs.sqm.render.spi.Renderer;
 
 import java.util.List;
 

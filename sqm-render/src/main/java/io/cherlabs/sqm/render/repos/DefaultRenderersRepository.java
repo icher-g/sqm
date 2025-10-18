@@ -1,7 +1,7 @@
 package io.cherlabs.sqm.render.repos;
 
 import io.cherlabs.sqm.core.Entity;
-import io.cherlabs.sqm.render.Renderer;
+import io.cherlabs.sqm.render.spi.Renderer;
 import io.cherlabs.sqm.render.spi.RenderersRepository;
 
 import java.util.Map;

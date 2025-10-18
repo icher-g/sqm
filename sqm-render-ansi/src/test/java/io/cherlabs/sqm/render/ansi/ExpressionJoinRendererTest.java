@@ -2,6 +2,7 @@ package io.cherlabs.sqm.render.ansi;
 
 import io.cherlabs.sqm.core.Join;
 import io.cherlabs.sqm.render.DefaultSqlWriter;
+import io.cherlabs.sqm.render.ansi.join.ExpressionJoinRenderer;
 import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import io.cherlabs.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;

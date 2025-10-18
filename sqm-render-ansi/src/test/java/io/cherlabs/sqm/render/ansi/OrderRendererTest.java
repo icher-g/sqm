@@ -5,6 +5,7 @@ import io.cherlabs.sqm.core.Direction;
 import io.cherlabs.sqm.core.Nulls;
 import io.cherlabs.sqm.core.Order;
 import io.cherlabs.sqm.render.*;
+import io.cherlabs.sqm.render.ansi.statement.OrderRenderer;
 import io.cherlabs.sqm.render.spi.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -72,7 +73,7 @@ class OrderRendererTest {
 
             @Override
             public RenderersRepository renderers() {
-                return Renderers.defaultRepository();
+                return Renderers.ansi();
             }
             // other SqlDialect members (operators, pagination, etc.) are not used here
         };

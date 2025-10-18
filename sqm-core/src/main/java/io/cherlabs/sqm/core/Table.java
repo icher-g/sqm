@@ -13,4 +13,14 @@ public interface Table extends Entity {
     static NamedTable of(String name) {
         return new NamedTable(name, null, null);
     }
+
+    /**
+     * Creates a table that is based on a sub query.
+     *
+     * @param query a sub query.
+     * @return A new instance of the table.
+     */
+    static QueryTable of(Query query) {
+        return new QueryTable(query, null);
+    }
 }

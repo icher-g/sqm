@@ -15,7 +15,7 @@ public class AnsiDialect implements SqlDialect {
     private final Booleans booleans = new AnsiBooleans();
     private final NullSorting nullSorting = new AnsiNullSorting();
     private final PaginationStyle paginationStyle = new AnsiPaginationStyle();
-    private final RenderersRepository repo = Renderers.defaultRepository();
+    private final RenderersRepository repo = Renderers.ansi();
 
     @Override
     public String name() {

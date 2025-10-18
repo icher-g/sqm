@@ -1,10 +1,13 @@
 package io.cherlabs.sqm.parser;
 
+import io.cherlabs.sqm.core.ColumnFilter;
+import io.cherlabs.sqm.core.CompositeFilter;
 import io.cherlabs.sqm.core.Filter;
-import io.cherlabs.sqm.parser.ast.Expr;
-import io.cherlabs.sqm.parser.ast.FilterVisitor;
+import io.cherlabs.sqm.core.TupleFilter;
 import io.cherlabs.sqm.parser.core.Cursor;
-import io.cherlabs.sqm.parser.expr.ExprParser;
+import io.cherlabs.sqm.parser.spi.ParseContext;
+import io.cherlabs.sqm.parser.spi.ParseResult;
+import io.cherlabs.sqm.parser.spi.Parser;
 
 /**
  * A spec parser for filter specifications.
@@ -34,17 +37,20 @@ public class FilterParser implements Parser<Filter> {
      * @return a parser result.
      */
     @Override
-    public ParseResult<Filter> parse(Cursor cur) {
-        try {
-            Expr ast = new ExprParser(cur).parseExpr();
-            Filter filter = toFilter(ast);
-            return ParseResult.ok(filter);
-        } catch (Exception e) {
-            return ParseResult.error(e);
-        }
-    }
+    public ParseResult<Filter> parse(Cursor cur, ParseContext ctx) {
+        cur = cur.removeBrackets();
 
-    private Filter toFilter(Expr e) {
-        return e.accept(new FilterVisitor());
+        if (ctx.lookups().looksLikeCompositeFilter(cur)) {
+            var cfr = ctx.parse(CompositeFilter.class, cur);
+            return finalize(cur, ctx, cfr);
+        }
+
+        if (ctx.lookups().looksLikeTupleFilter(cur)) {
+            var tfr = ctx.parse(TupleFilter.class, cur);
+            return finalize(cur, ctx, tfr);
+        }
+
+        var cfr = ctx.parse(ColumnFilter.class, cur);
+        return finalize(cur, ctx, cfr);
     }
 }

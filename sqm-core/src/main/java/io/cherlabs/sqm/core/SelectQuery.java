@@ -13,20 +13,17 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
 
     private final List<Column> columns;
     private final List<Join> joins;
-    private final List<Group> groupBy;
-    private final List<Order> orderBy;
+    private GroupBy groupBy;
+    private OrderBy orderBy;
     private Table table;
     private Filter where;
     private Filter having;
     private Boolean distinct;
-    private Long limit;
-    private Long offset;
+    private LimitOffset limitOffset;
 
     public SelectQuery() {
         this.columns = new ArrayList<>();
         this.joins = new ArrayList<>();
-        this.groupBy = new ArrayList<>();
-        this.orderBy = new ArrayList<>();
     }
 
     /**
@@ -136,7 +133,7 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      *
      * @return a list of group by items.
      */
-    public List<Group> groupBy() {
+    public GroupBy groupBy() {
         return groupBy;
     }
 
@@ -147,8 +144,7 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @return this.
      */
     public SelectQuery groupBy(Group... items) {
-        this.groupBy.addAll(List.of(items));
-        return this;
+        return groupBy(List.of(items));
     }
 
     /**
@@ -158,7 +154,9 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @return this.
      */
     public SelectQuery groupBy(List<Group> items) {
-        this.groupBy.addAll(items);
+        if (items != null && !items.isEmpty()) {
+            this.groupBy = new GroupBy(items);
+        }
         return this;
     }
 
@@ -167,7 +165,7 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      *
      * @return a list of oder by items.
      */
-    public List<Order> orderBy() {
+    public OrderBy orderBy() {
         return orderBy;
     }
 
@@ -178,8 +176,7 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @return this.
      */
     public SelectQuery orderBy(Order... items) {
-        this.orderBy.addAll(List.of(items));
-        return this;
+        return orderBy(List.of(items));
     }
 
     /**
@@ -189,7 +186,9 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @return this.
      */
     public SelectQuery orderBy(List<Order> items) {
-        this.orderBy.addAll(items);
+        if (items != null && !items.isEmpty()) {
+            this.orderBy = new OrderBy(items);
+        }
         return this;
     }
 
@@ -239,7 +238,7 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @return a value of the limit.
      */
     public Long limit() {
-        return limit;
+        return limitOffset == null ? null : limitOffset.limit();
     }
 
     /**
@@ -249,7 +248,7 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @return this.
      */
     public SelectQuery limit(long limit) {
-        this.limit = limit;
+        this.limitOffset = LimitOffset.of(limit, offset());
         return this;
     }
 
@@ -259,7 +258,7 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @return a value of the offset.
      */
     public Long offset() {
-        return offset;
+        return limitOffset == null ? null : limitOffset.offset();
     }
 
     /**
@@ -269,7 +268,7 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @return this.
      */
     public SelectQuery offset(long offset) {
-        this.offset = offset;
+        this.limitOffset = LimitOffset.of(limit(), offset);
         return this;
     }
 }
