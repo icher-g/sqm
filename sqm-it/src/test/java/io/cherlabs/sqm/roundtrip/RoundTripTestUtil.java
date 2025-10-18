@@ -4,7 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.cherlabs.sqm.core.Query;
 import io.cherlabs.sqm.json.SqmMapperFactory;
-import io.cherlabs.sqm.parser.Parsers;
+import io.cherlabs.sqm.parser.ansi.AnsiSpecs;
+import io.cherlabs.sqm.parser.spi.ParseContext;
 import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import io.cherlabs.sqm.render.spi.RenderContext;
 
@@ -23,7 +24,8 @@ public final class RoundTripTestUtil {
     }
 
     public static Query parse(String sql) {
-        var pr = Parsers.defaultRepository().require(Query.class).parse(sql);
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var pr = ctx.parse(Query.class, sql);
         if (pr.isError()) {
             throw new RuntimeException(pr.errorMessage());
         }

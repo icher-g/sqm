@@ -131,7 +131,7 @@ public class MixInsSmokeTest {
                         {
                           "kind": "table",
                           "joinType": "Inner",
-                          "table": { "kind": "table", "name": "users", "alias": "u" },
+                          "table": { "kind": "named", "name": "users", "alias": "u" },
                           "on": {
                             "kind": "column",
                             "column":  { "kind": "named", "name": "u.id" },
@@ -159,7 +159,7 @@ public class MixInsSmokeTest {
         String json =
                 """
                         {
-                          "kind": "table",
+                          "kind": "named",
                           "name": "users",
                           "schema": "public",
                           "alias": "u"

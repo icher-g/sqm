@@ -1,14 +1,11 @@
 package io.cherlabs.sqm.parser;
 
-import io.cherlabs.sqm.core.Filter;
 import io.cherlabs.sqm.core.Join;
-import io.cherlabs.sqm.core.NamedTable;
-import io.cherlabs.sqm.core.Table;
+import io.cherlabs.sqm.core.TableJoin;
 import io.cherlabs.sqm.parser.core.Cursor;
-import io.cherlabs.sqm.parser.core.TokenType;
-import io.cherlabs.sqm.parser.repos.ParsersRepository;
-
-import java.util.Objects;
+import io.cherlabs.sqm.parser.spi.ParseContext;
+import io.cherlabs.sqm.parser.spi.ParseResult;
+import io.cherlabs.sqm.parser.spi.Parser;
 
 /**
  * Parses a JOIN clause into a {@link Join}.
@@ -21,31 +18,6 @@ import java.util.Objects;
  */
 public final class JoinParser implements Parser<Join> {
 
-    private final ParsersRepository repository;
-
-    public JoinParser(ParsersRepository repository) {
-        this.repository = Objects.requireNonNull(repository, "repository");
-    }
-
-    private static Join.JoinType mapJoinType(TokenType tt) {
-        return switch (tt) {
-            case LEFT -> Join.JoinType.Left;
-            case RIGHT -> Join.JoinType.Right;
-            case FULL -> Join.JoinType.Full;
-            case CROSS -> Join.JoinType.Cross;
-            default -> Join.JoinType.Inner;
-        };
-    }
-
-    private static Join buildJoin(Join.JoinType type, Table table, Filter on) {
-        return switch (type) {
-            case Inner -> (on != null) ? Join.inner(table).on(on) : Join.inner(table);
-            case Left -> (on != null) ? Join.left(table).on(on) : Join.left(table);
-            case Right -> (on != null) ? Join.right(table).on(on) : Join.right(table);
-            case Full -> (on != null) ? Join.full(table).on(on) : Join.full(table);
-            case Cross -> Join.cross(table);
-        };
-    }
 
     /**
      * Gets the {@link Join} type.
@@ -64,50 +36,11 @@ public final class JoinParser implements Parser<Join> {
      * @return a parser result.
      */
     @Override
-    public ParseResult<Join> parse(Cursor cur) {
-        // Optional join type
-        Join.JoinType type = Join.JoinType.Inner;
-
-        if (cur.matchAny(TokenType.INNER, TokenType.LEFT, TokenType.RIGHT, TokenType.FULL, TokenType.CROSS)) {
-            type = mapJoinType(cur.advance().type());
-            cur.consumeIf(TokenType.OUTER); // LEFT/RIGHT/FULL OUTER
+    public ParseResult<Join> parse(Cursor cur, ParseContext ctx) {
+        var join = ctx.parse(TableJoin.class, cur);
+        if (join.isError()) {
+            return error(join);
         }
-
-        // JOIN keyword
-        cur.expect(TokenType.JOIN);
-
-        // Table (possibly qualified via dots)
-        var t = cur.expect("Expected table name after JOIN", TokenType.IDENT);
-
-        String table = t.lexeme();
-        String schema = null;
-
-        while (cur.consumeIf(TokenType.DOT)) {
-            t = cur.expect("Expected identifier after '.' in table", TokenType.IDENT);
-            schema = table;
-            table = t.lexeme();
-        }
-
-        // Optional alias: AS identifier | bare identifier (not a keyword)
-        String alias = null;
-        if (cur.consumeIf(TokenType.AS)) {
-            t = cur.expect("Expected alias after AS", TokenType.IDENT);
-            alias = t.lexeme();
-        } else if (cur.match(TokenType.IDENT)) {
-            alias = cur.advance().lexeme();
-        }
-
-        // Optional ON <expr> (not for CROSS)
-        Filter on = null;
-        if (type != Join.JoinType.Cross && cur.consumeIf(TokenType.ON)) {
-            var subCur = cur.advance(cur.size());
-            var filterParser = repository.require(Filter.class);
-            var fr = filterParser.parse(subCur);
-            if (fr.isError()) return ParseResult.error(fr);
-            on = fr.value();
-        }
-
-        // 6) Build the Join
-        return ParseResult.ok(buildJoin(type, new NamedTable(table, alias, schema), on));
+        return finalize(cur, ctx, join);
     }
 }

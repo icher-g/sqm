@@ -1,19 +1,23 @@
 package io.cherlabs.sqm.parser;
 
 import io.cherlabs.sqm.core.NamedTable;
+import io.cherlabs.sqm.core.QueryTable;
 import io.cherlabs.sqm.core.Table;
 import io.cherlabs.sqm.parser.core.Cursor;
-import io.cherlabs.sqm.parser.core.TokenType;
-
-import java.util.ArrayList;
-import java.util.List;
+import io.cherlabs.sqm.parser.spi.ParseContext;
+import io.cherlabs.sqm.parser.spi.ParseResult;
+import io.cherlabs.sqm.parser.spi.Parser;
 
 /**
  * Parses table specs like:
+ * <pre>
+ * {@code
  * products
  * sales.products p
  * sales.products AS p
  * server.db.schema.table t  (schema becomes "server.db.schema")
+ * }
+ * </pre>
  */
 public final class TableParser implements Parser<Table> {
 
@@ -34,35 +38,16 @@ public final class TableParser implements Parser<Table> {
      * @return a parser result.
      */
     @Override
-    public ParseResult<Table> parse(Cursor cur) {
-        // first identifier
-        var t = cur.expect("Expected identifier for table name", TokenType.IDENT);
-        List<String> parts = new ArrayList<>();
-        parts.add(t.lexeme());
-
-        // dot-separated identifiers
-        while (cur.consumeIf(TokenType.DOT)) {
-            t = cur.expect("Expected identifier after '.'", TokenType.IDENT);
-            parts.add(t.lexeme());
+    public ParseResult<Table> parse(Cursor cur, ParseContext ctx) {
+        if (ctx.lookups().looksLikeSubquery(cur)) {
+            var sr = ctx.parse(QueryTable.class, cur);
+            return finalize(cur, ctx, sr);
         }
 
-        // optional alias: AS identifier | bare identifier
-        String alias = null;
-        if (cur.consumeIf(TokenType.AS)) {
-            t = cur.expect("Expected alias after AS", TokenType.IDENT);
-            alias = t.lexeme();
-        } else if (cur.match(TokenType.IDENT)) {
-            // bare alias
-            alias = cur.advance().lexeme();
+        var tr = ctx.parse(NamedTable.class, cur);
+        if (tr.isError()) {
+            return error(tr);
         }
-
-        // must be EOF now
-        cur.expect("Unexpected tokens after table: " + cur.peek(), TokenType.EOF);
-
-        // Map parts → schema + name
-        String name = parts.get(parts.size() - 1);
-        String schema = parts.size() > 1 ? String.join(".", parts.subList(0, parts.size() - 1)) : null;
-
-        return ParseResult.ok(new NamedTable(name, alias, schema));
+        return finalize(cur, ctx, tr);
     }
 }

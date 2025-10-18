@@ -1,5 +1,27 @@
 package io.cherlabs.sqm.render.ansi;
 
+import io.cherlabs.sqm.render.ansi.arg.ColumnArgRenderer;
+import io.cherlabs.sqm.render.ansi.arg.FunctionArgRenderer;
+import io.cherlabs.sqm.render.ansi.arg.LiteralArgRenderer;
+import io.cherlabs.sqm.render.ansi.arg.StarArgRenderer;
+import io.cherlabs.sqm.render.ansi.column.*;
+import io.cherlabs.sqm.render.ansi.filter.ColumnFilterRenderer;
+import io.cherlabs.sqm.render.ansi.filter.CompositeFilterRenderer;
+import io.cherlabs.sqm.render.ansi.filter.ExpressionFilterRenderer;
+import io.cherlabs.sqm.render.ansi.filter.TupleFilterRenderer;
+import io.cherlabs.sqm.render.ansi.join.ExpressionJoinRenderer;
+import io.cherlabs.sqm.render.ansi.join.TableJoinRenderer;
+import io.cherlabs.sqm.render.ansi.query.CompositeQueryRenderer;
+import io.cherlabs.sqm.render.ansi.query.CteQueryRenderer;
+import io.cherlabs.sqm.render.ansi.query.SelectQueryRenderer;
+import io.cherlabs.sqm.render.ansi.query.WithQueryRenderer;
+import io.cherlabs.sqm.render.ansi.statement.GroupByRenderer;
+import io.cherlabs.sqm.render.ansi.statement.GroupRenderer;
+import io.cherlabs.sqm.render.ansi.statement.OrderByRenderer;
+import io.cherlabs.sqm.render.ansi.statement.OrderRenderer;
+import io.cherlabs.sqm.render.ansi.table.NamedTableRenderer;
+import io.cherlabs.sqm.render.ansi.table.QueryTableRenderer;
+import io.cherlabs.sqm.render.ansi.value.*;
 import io.cherlabs.sqm.render.repos.DefaultRenderersRepository;
 import io.cherlabs.sqm.render.spi.RenderersRepository;
 
@@ -10,7 +32,7 @@ public final class Renderers {
     private Renderers() {
     }
 
-    public static RenderersRepository defaultRepository() {
+    public static RenderersRepository ansi() {
         if (repository == null) {
             repository = registerDefaults(new DefaultRenderersRepository());
         }
@@ -49,6 +71,8 @@ public final class Renderers {
             .register(new CteQueryRenderer())
             .register(new QueryTableRenderer())
             .register(new ValueColumnRenderer())
-            .register(new StarColumnRenderer());
+            .register(new StarColumnRenderer())
+            .register(new GroupByRenderer())
+            .register(new OrderByRenderer());
     }
 }

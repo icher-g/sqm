@@ -79,9 +79,9 @@ HAVING count(*) > 10
 ### Parse SQL statements into a Model and Re-render
 
 ```java
-import io.cherlabs.sqm.parser.dsl.QueryBuilder;
+import io.cherlabs.sqm.parser.ansi.dsl.QueryBuilder;
 
-QueryBuilder qb = io.cherlabs.sqm.parser.dsl.QueryBuilder.newBuilder();
+QueryBuilder qb = QueryBuilder.newBuilder();
 
 qb.select("u.user_name", "o.status", "count(*) AS cnt")
   .from("orders AS o")
@@ -91,7 +91,8 @@ qb.select("u.user_name", "o.status", "count(*) AS cnt")
   .having("count(*) > 10");
 
 var q = qb.build();
-var sql = Renderers.render(q).sql();
+var ctx = RenderContext.of(new AnsiDialect());
+var sql = ctx.render(q).sql();
 
 System.out.println(sql);
 ```
@@ -99,7 +100,7 @@ System.out.println(sql);
 ### Parse SQL into a Model
 
 ```java
-import io.cherlabs.sqm.parser.Parsers;
+import io.cherlabs.sqm.parser.ansi.Parsers;
 
 var sql = """
     SELECT u.user_name, o.status, count(*) AS cnt
@@ -109,8 +110,8 @@ var sql = """
     GROUP BY u.user_name, o.status
     HAVING count(*) > 10""";
 
-var parser = Parsers.defaultRepository().require(Query.class);
-var pr = parser.parse(sql);
+var ctx = ParseContext.of(new AnsiSpecs());
+var pr = ctx.parse(Query.class, sql);
 if (pr.isError()) {
     throw new RuntimeException(pr.errorMessage());
 }
@@ -124,41 +125,39 @@ var query = pr.value();
 
 ```java
 ObjectMapper mapper = SqmMapperFactory.createDefault();
-String json = mapper.writeValueAsString(model);
+String json = mapper.writeValueAsString(query);
 ```
 
-Output:
+Output example:
 ```json
 {
-  "kind" : "select",
-  "columns" : [ 
-    { "kind" : "func", "name" : "count", "args" : [ { "kind" : "star" } ], "distinct" : false, "alias" : "cnt" } 
-  ],
-  "joins" : [ 
-    { "kind" : "table", "joinType" : "Inner", "table" : { "kind" : "table", "name" : "users", "alias" : "u", "schema" : null },
-      "on" : { "kind" : "column", "column" : { "kind" : "named", "name" : "id", "alias" : null, "table" : "u" },
-      "op" : "Eq",
-      "values" : { "kind" : "column", "column" : { "kind" : "named", "name" : "user_id", "alias" : null, "table" : "o" } } }
-  } ],
-  "groupBy" : [ 
-    { "column" : { "kind" : "named", "name" : "user_name", "alias" : null, "table" : "u" }, "ordinal" : false }, 
-    { "column" : { "kind" : "named", "name" : "status", "alias" : null, "table" : "o" }, "ordinal" : false } 
-  ],
-  "orderBy" : [ ],
-  "name" : null,
-  "table" : { "kind" : "table", "name" : "orders", "alias" : "o", "schema" : null },
-  "where" : { "kind" : "column", "column" : { "kind" : "named", "name" : "status", "alias" : null, "table" : "o" },
-    "op" : "In",
-    "values" : { "kind" : "list", "items" : [ "A", "B" ] }
+  "kind" : "table",
+  "joinType" : "Inner",
+  "table" : {
+    "kind" : "named",
+    "name" : "orders",
+    "alias" : "o",
+    "schema" : null
   },
-  "having" : { "kind" : "column", "column" : { "kind" : "func", "name" : "count", "args" : [ { "kind" : "star" } ], "distinct" : false,  "alias" : null
+  "on" : {
+    "kind" : "column",
+    "column" : {
+      "kind" : "named",
+      "name" : "id",
+      "alias" : null,
+      "table" : "u"
     },
-    "op" : "Gt",
-    "values" : { "kind" : "single", "value" : 10 }
-  },
-  "distinct" : null,
-  "limit" : null,
-  "offset" : null
+    "op" : "Eq",
+    "values" : {
+      "kind" : "column",
+      "column" : {
+        "kind" : "named",
+        "name" : "user_id",
+        "alias" : null,
+        "table" : "o"
+      }
+    }
+  }
 }
 ```
 
@@ -166,15 +165,16 @@ Output:
 
 ## 🧩 Core Modules
 
-| Module              | Description                       |
-|---------------------|-----------------------------------|
-| `sqm-core`          | Core model, renderers, DSL        |
-| `sqm-parser`        | Default SQL parser implementation |
-| `sqm-renderer`      | Base SQL renderer interfaces      |
-| `sqm-renderer-ansi` | ANSI SQL renderer                 |
-| `sqm-json`          | JSON serialization mixins         |
-| `sqm-it`            | SQM integration tests             |
-| `example`           | Code Examples                     |
+| Module              | Description                      |
+|---------------------|----------------------------------|
+| `sqm-core`          | Core model, renderers, DSL       |
+| `sqm-parser`        | Base SQL parser interfaces       |
+| `sqm-parser-ansi`   | ANSI SQL parser implementation   |
+| `sqm-renderer`      | Base SQL renderer interfaces     |
+| `sqm-renderer-ansi` | ANSI SQL renderer                |
+| `sqm-json`          | JSON serialization mixins        |
+| `sqm-it`            | SQM integration tests            |
+| `example`           | Code Examples                    |
 
 ---
 
@@ -227,6 +227,7 @@ mvn test
 
 ## 🧭 Roadmap
 
+- [ ] Add support for parsing parameters in query (WHERE q = ?)
 - [ ] Add support for parsing SELECT from sub query (SELECT * FROM (SELECT * FROM))
 - [ ] Arithmetic operations in SQL statements (SELECT salary + bonus AS total_income)
 - [ ] Add support for INSERT | UPDATE | DELETE | MERGE
@@ -248,7 +249,7 @@ See [LICENSE](LICENSE) for details.
 ## 📚 Learn More
 
 - [Documentation (coming soon)](https://icher-g.github.io/sqm)
-- [Project examples](examples/)
+- [Project examples](examples/src/main/java/io/cherlabs/sqm/examples/)
 - [GitHub Issues](https://github.com/icher-g/sqm/issues)
 
 ---

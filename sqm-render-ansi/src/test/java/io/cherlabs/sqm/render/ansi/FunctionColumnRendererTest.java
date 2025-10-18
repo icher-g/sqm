@@ -1,6 +1,7 @@
 package io.cherlabs.sqm.render.ansi;
 
 import io.cherlabs.sqm.core.FunctionColumn;
+import io.cherlabs.sqm.render.ansi.column.FunctionColumnRenderer;
 import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import io.cherlabs.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;

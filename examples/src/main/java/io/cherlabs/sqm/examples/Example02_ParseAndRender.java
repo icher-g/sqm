@@ -1,7 +1,8 @@
 package io.cherlabs.sqm.examples;
 
 import io.cherlabs.sqm.core.Query;
-import io.cherlabs.sqm.parser.QueryParser;
+import io.cherlabs.sqm.parser.ansi.AnsiSpecs;
+import io.cherlabs.sqm.parser.spi.ParseContext;
 import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
 import io.cherlabs.sqm.render.spi.RenderContext;
 
@@ -18,8 +19,8 @@ public final class Example02_ParseAndRender {
             OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY
             """;
 
-        QueryParser p = new QueryParser();
-        var result = p.parse(sql);
+        var pctx = ParseContext.of(new AnsiSpecs());
+        var result = pctx.parse(Query.class, sql);
 
         if (result.isError()) {
             System.err.println("Parse error: " + result.errorMessage());
@@ -28,8 +29,8 @@ public final class Example02_ParseAndRender {
 
         Query q = result.value();
 
-        var ctx = RenderContext.of(new AnsiDialect());
-        var sqlText = ctx.render(q);
+        var rctx = RenderContext.of(new AnsiDialect());
+        var sqlText = rctx.render(q);
 
         System.out.println("=== Canonical ANSI SQL ===");
         System.out.println(sqlText.sql());

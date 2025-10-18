@@ -24,9 +24,9 @@ public class SelectRoundTripTest {
         String sql = RoundTripTestUtil.renderAnsi(original);
         Query reparsed = RoundTripTestUtil.parse(sql);
 
-        // Prefer model comparison if equals/hashCode are implemented well,
-        // otherwise compare canonical JSON or re-render both and compare SQL.
-        assertEquals(RoundTripTestUtil.canonicalJson(reparsed), RoundTripTestUtil.canonicalJson(original));
+        String expected = RoundTripTestUtil.canonicalJson(original);
+        String actual = RoundTripTestUtil.canonicalJson(reparsed);
+        assertEquals(actual, expected);
     }
 
     @Test

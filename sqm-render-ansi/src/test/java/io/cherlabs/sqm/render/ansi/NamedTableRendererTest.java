@@ -6,6 +6,7 @@ import io.cherlabs.sqm.render.DefaultSqlWriter;
 import io.cherlabs.sqm.render.SqlText;
 import io.cherlabs.sqm.render.SqlWriter;
 import io.cherlabs.sqm.render.ansi.spi.AnsiDialect;
+import io.cherlabs.sqm.render.ansi.table.NamedTableRenderer;
 import io.cherlabs.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -127,7 +127,7 @@ public class Queries {
      * @param q the query to retrieve the property from.
      * @return {@link Optional} with the list of group by items if presented or an {@link Optional#empty()}.
      */
-    public static Optional<List<Group>> groupBy(Query q) {
+    public static Optional<GroupBy> groupBy(Query q) {
         if (q instanceof HasGroupBy h) return Optional.ofNullable(h.groupBy());
         return Optional.empty();
     }
@@ -138,7 +138,7 @@ public class Queries {
      * @param q the query to retrieve the property from.
      * @return {@link Optional} with the list of order by items if presented or an {@link Optional#empty()}.
      */
-    public static Optional<List<Order>> orderBy(Query q) {
+    public static Optional<OrderBy> orderBy(Query q) {
         if (q instanceof HasOrderBy h) return Optional.ofNullable(h.orderBy());
         return Optional.empty();
     }

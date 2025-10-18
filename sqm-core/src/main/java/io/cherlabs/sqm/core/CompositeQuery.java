@@ -24,21 +24,30 @@ import java.util.Objects;
  * @param terms size >= 1
  * @param ops   size == terms.size()-1
  */
-public record CompositeQuery(List<Query> terms, List<Op> ops, List<Order> orderBy, Long limit, Long offset) implements Query, HasTerms, HasLimit, HasOffset, HasOrderBy {
+public record CompositeQuery(List<Query> terms, List<Op> ops, OrderBy orderBy, LimitOffset limitOffset) implements Query, HasTerms, HasLimit, HasOffset, HasOrderBy {
 
     public CompositeQuery(List<Query> terms, List<Op> ops) {
-        this(terms, ops, List.of(), null, null);
+        this(terms, ops, null, null);
     }
 
-    public CompositeQuery(List<Query> terms, List<Op> ops, List<Order> orderBy, Long limit, Long offset) {
+    public CompositeQuery(List<Query> terms, List<Op> ops, OrderBy orderBy, LimitOffset limitOffset) {
         this.terms = Objects.requireNonNull(terms);
         this.ops = Objects.requireNonNull(ops);
         this.orderBy = orderBy;
-        this.limit = limit;
-        this.offset = offset;
+        this.limitOffset = limitOffset;
         if (terms.isEmpty() || ops.size() != terms.size() - 1) {
             throw new IllegalArgumentException("CompositeQuery: operators must be terms.size()-1");
         }
+    }
+
+    @Override
+    public Long limit() {
+        return limitOffset == null ? null : limitOffset.limit();
+    }
+
+    @Override
+    public Long offset() {
+        return limitOffset == null ? null : limitOffset.offset();
     }
 
     /**
@@ -48,7 +57,7 @@ public record CompositeQuery(List<Query> terms, List<Op> ops, List<Order> orderB
      * @return A new instance of the composite query with the provided OrderBy items. All the rest of the fields are preserved.
      */
     public CompositeQuery orderBy(List<Order> items) {
-        return new CompositeQuery(terms, ops, items, limit, offset);
+        return new CompositeQuery(terms, ops, new OrderBy(items), limitOffset);
     }
 
     /**
@@ -58,7 +67,7 @@ public record CompositeQuery(List<Query> terms, List<Op> ops, List<Order> orderB
      * @return A new instance of the composite query with the provided OrderBy items. All the rest of the fields are preserved.
      */
     public CompositeQuery orderBy(Order... items) {
-        return new CompositeQuery(terms, ops, List.of(items), limit, offset);
+        return new CompositeQuery(terms, ops, new OrderBy(List.of(items)), limitOffset);
     }
 
     /**
@@ -68,7 +77,7 @@ public record CompositeQuery(List<Query> terms, List<Op> ops, List<Order> orderB
      * @return A new instance of the composite query with the provided limit. All the rest of the fields are preserved.
      */
     public CompositeQuery limit(Long limit) {
-        return new CompositeQuery(terms, ops, orderBy, limit, offset);
+        return new CompositeQuery(terms, ops, orderBy, LimitOffset.of(limit, offset()));
     }
 
     /**
@@ -78,7 +87,7 @@ public record CompositeQuery(List<Query> terms, List<Op> ops, List<Order> orderB
      * @return A new instance of the composite query with the provided offset. All the rest of the fields are preserved.
      */
     public CompositeQuery offset(Long offset) {
-        return new CompositeQuery(terms, ops, orderBy, limit, offset);
+        return new CompositeQuery(terms, ops, orderBy, LimitOffset.of(limit(), offset));
     }
 
     public enum Kind {

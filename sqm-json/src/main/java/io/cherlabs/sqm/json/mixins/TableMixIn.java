@@ -11,7 +11,7 @@ import io.cherlabs.sqm.core.Table;
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = NamedTable.class, name = "table"),
+        @JsonSubTypes.Type(value = NamedTable.class, name = "named"),
         @JsonSubTypes.Type(value = QueryTable.class, name = "query")
 })
 public abstract class TableMixIn {
