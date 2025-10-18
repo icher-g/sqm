@@ -53,15 +53,15 @@ Core components:
 ### Build a query with the DSL
 
 ```java
-import static io.cherlabs.sqm.dsl.Dsl.*;
+
 
 var q = query()
-   .select(col("u", "user_name"), col("o", "status"), func("count", star()).as("cnt"))
-   .from(table("orders").as("o"))
-   .where(col("o", "status").in("A", "B"))
-   .join(inner(table("users").as("u")).on(col("u", "id").eq(col("o", "user_id"))))
-   .groupBy(group("u", "user_name"), group("o", "status"))
-   .having(func("count", star()).gt(10));
+    .select(col("u", "user_name"), col("o", "status"), func("count", star()).as("cnt"))
+    .from(table("orders").as("o"))
+    .where(col("o", "status").in("A", "B"))
+    .join(inner(table("users").as("u")).on(col("u", "id").eq(col("o", "user_id"))))
+    .groupBy(group("u", "user_name"), group("o", "status"))
+    .having(func("count", star()).gt(10));
 ```
 
 **Rendered (ANSI):**
@@ -79,8 +79,6 @@ HAVING count(*) > 10
 ### Parse SQL statements into a Model and Re-render
 
 ```java
-import io.cherlabs.sqm.parser.ansi.dsl.QueryBuilder;
-
 QueryBuilder qb = QueryBuilder.newBuilder();
 
 qb.select("u.user_name", "o.status", "count(*) AS cnt")
@@ -100,8 +98,6 @@ System.out.println(sql);
 ### Parse SQL into a Model
 
 ```java
-import io.cherlabs.sqm.parser.ansi.Parsers;
-
 var sql = """
     SELECT u.user_name, o.status, count(*) AS cnt
     FROM orders AS o
@@ -174,7 +170,7 @@ Output example:
 | `sqm-renderer-ansi` | ANSI SQL renderer                |
 | `sqm-json`          | JSON serialization mixins        |
 | `sqm-it`            | SQM integration tests            |
-| `example`           | Code Examples                    |
+| `examples`          | Code Examples                    |
 
 ---
 
@@ -217,8 +213,8 @@ mvn test
 
 ```xml
 <dependency>
-  <groupId>io.cherlabs</groupId>
-  <artifactId>sqm</artifactId>
+  <groupId>io.sqm</groupId>
+  <artifactId>sqm-core</artifactId>
   <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
@@ -233,9 +229,7 @@ mvn test
 - [ ] Add support for INSERT | UPDATE | DELETE | MERGE
 - [ ] PostgreSQL renderer & parser
 - [ ] SQL Server renderer & parser
-- [ ] Function & operator registry
 - [ ] Query optimizer & rewrite utilities
-- [ ] AST visualization & JSON schema
 
 ---
 
@@ -249,7 +243,7 @@ See [LICENSE](LICENSE) for details.
 ## 📚 Learn More
 
 - [Documentation (coming soon)](https://icher-g.github.io/sqm)
-- [Project examples](examples/src/main/java/io/cherlabs/sqm/examples/)
+- [Project examples](examples/src/main/java/io/sqm/examples/)
 - [GitHub Issues](https://github.com/icher-g/sqm/issues)
 
 ---
