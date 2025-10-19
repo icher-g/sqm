@@ -3,6 +3,7 @@ package io.sqm.parser;
 import io.sqm.parser.spi.Lookups;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParsersRepository;
+import io.sqm.parser.spi.Specs;
 
 /**
  * Default implementation of the {@link ParseContext}.

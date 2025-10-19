@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.NamedTable;
+import io.sqm.core.QueryTable;
 import io.sqm.parser.TableParser;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Assertions;
@@ -75,5 +76,13 @@ class TableParserTest {
     void error_extra_tokens() {
         var r = parser.parse("products p unexpected", ctx);
         Assertions.assertFalse(r.ok());
+    }
+
+    @Test
+    @DisplayName("From a sub query")
+    void select_from_subquery() {
+        var r = parser.parse("(SELECT * FROM t)", ctx);
+        Assertions.assertTrue(r.ok());
+        Assertions.assertInstanceOf(QueryTable.class, r.value());
     }
 }

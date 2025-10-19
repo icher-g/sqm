@@ -1,6 +1,6 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.parser.Specs;
+import io.sqm.parser.spi.Specs;
 import io.sqm.parser.spi.Lookups;
 import io.sqm.parser.spi.ParsersRepository;
 

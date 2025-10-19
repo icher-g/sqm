@@ -1,7 +1,4 @@
-package io.sqm.parser;
-
-import io.sqm.parser.spi.Lookups;
-import io.sqm.parser.spi.ParsersRepository;
+package io.sqm.parser.spi;
 
 public interface Specs {
     /**

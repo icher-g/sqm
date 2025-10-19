@@ -2,7 +2,6 @@ package io.sqm.parser.spi;
 
 import io.sqm.core.Entity;
 import io.sqm.parser.DefaultParseContext;
-import io.sqm.parser.Specs;
 import io.sqm.parser.core.Cursor;
 
 /**

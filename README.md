@@ -41,7 +41,7 @@ It enables **bidirectional transformations** between SQL, JSON, and DSL forms �
 
 Core components:
 - **Model** — unified AST representing any SQL query.
-- **SpecParsers** — turn SQL strings into model objects.
+- **Parsers** — turn SQL strings into model objects.
 - **Renderers** — convert model objects back into SQL (dialect-aware).
 - **DSL Builders** — programmatic query construction.
 - **JSON Mixins** — serialization/deserialization for external tools.
