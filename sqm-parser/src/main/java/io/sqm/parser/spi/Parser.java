@@ -141,6 +141,7 @@ public interface Parser<T extends Entity> extends Handler<T> {
      * Parses the spec represented by the {@link Cursor} instance.
      *
      * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.
+     * @param ctx a parser context containing parsers and lookups.
      * @return a parsing result.
      */
     ParseResult<T> parse(Cursor cur, ParseContext ctx);

@@ -9,52 +9,30 @@ import io.sqm.parser.spi.Parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static java.util.List.copyOf;
 
+/**
+ * A parser used to parse a function call.
+ * <p>For example:</p>
+ * <pre>
+ *     {@code
+ *     SELECT UPPER(CONCAT(customer.name, 'com'));
+ *     }
+ * </pre>
+ */
 public class FunctionColumnParser implements Parser<FunctionColumn> {
 
-    private static String unescapeSqlString(String tokenLexeme) {
-        // token lexeme is usually without surrounding quotes if Lexer strips them; if not, trim them first:
-        String s = tokenLexeme;
-        if (s.length() >= 2 && s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'') {
-            s = s.substring(1, s.length() - 1);
-        }
-        // SQL escape of single quote is doubled: ''
-        return s.replace("''", "'");
-    }
-
+    /**
+     * Parses a function call.
+     *
+     * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.
+     * @param ctx a parser context containing parsers and lookups.
+     * @return a parsing result.
+     */
     @Override
     public ParseResult<FunctionColumn> parse(Cursor cur, ParseContext ctx) {
-        // parse the call starting at 0
-        var funcResult = parseFunctionCall(cur, ctx);
-        if (funcResult.isError()) {
-            return error(funcResult);
-        }
-
-        // optional alias: AS identifier | bare identifier
-        String alias = null;
-        if (cur.consumeIf(TokenType.AS)) {
-            if (!cur.match(TokenType.IDENT)) {
-                return error("Expected alias after AS", cur.fullPos());
-            }
-            alias = cur.advance().lexeme();
-        } else if (cur.match(TokenType.IDENT)) {
-            alias = cur.advance().lexeme();
-        }
-        return ok(funcResult.value().as(alias));
-    }
-
-    @Override
-    public Class<FunctionColumn> targetType() {
-        return FunctionColumn.class;
-    }
-
-    /**
-     * Parse ONLY a function call (no alias), starting at idx. Returns {FunctionColumn, nextIndex}.
-     */
-    private ParseResult<FunctionColumn> parseFunctionCall(Cursor cur, ParseContext ctx) {
-        // name: IDENT ('.' IDENT)*
         var t = cur.expect("Expected function name", TokenType.IDENT);
 
         StringBuilder name = new StringBuilder(t.lexeme());
@@ -65,85 +43,32 @@ public class FunctionColumnParser implements Parser<FunctionColumn> {
         // '('
         cur.expect("Expected '(' after function name", TokenType.LPAREN);
 
-        boolean distinct = cur.consumeIf(TokenType.DISTINCT);
+        final boolean distinct = cur.consumeIf(TokenType.DISTINCT);
+        final Set<TokenType> terminates = Set.of(TokenType.RPAREN, TokenType.COMMA);
+        final List<FunctionColumn.Arg> args = new ArrayList<>();
 
-        List<FunctionColumn.Arg> args = new ArrayList<>();
-        if (cur.consumeIf(TokenType.STAR)) { // '*'
-            args.add(new FunctionColumn.Arg.Star());
-        } else if (!cur.match(TokenType.RPAREN)) {
-            // one or more comma-separated args
-            while (true) {
-                var ar = parseFunctionArg(cur, ctx); // parses one arg (may include nested function)
-                if (ar.isError()) {
-                    return error(ar);
-                }
-                args.add(ar.value());
-                if (cur.consumeIf(TokenType.COMMA)) {
-                    continue;
-                }
-                break;
+        do {
+            var vr = ctx.parse(FunctionColumn.Arg.class, cur.advance(cur.find(terminates)));
+            if (vr.isError()) {
+                return error(vr);
             }
-        }
+            args.add(vr.value());
+        } while (cur.consumeIf(TokenType.COMMA));
 
         // ')'
         cur.expect("Expected ')' to close function", TokenType.RPAREN);
-        return ok(new FunctionColumn(name.toString(), copyOf(args), distinct, null));
+
+        String alias = parseAlias(cur);
+        return ok(new FunctionColumn(name.toString(), copyOf(args), distinct, alias));
     }
 
     /**
-     * Parse one function argument (column ref, literal, nested function, or '*').
+     * Gets {@link FunctionColumn} as a target type for this parser.
+     *
+     * @return {@link FunctionColumn}.
      */
-    private ParseResult<FunctionColumn.Arg> parseFunctionArg(Cursor cur, ParseContext ctx) {
-        // Nested function: IDENT ('.' IDENT)* '(' ...
-        if (ctx.lookups().looksLikeFunction(cur)) {
-            var funcResult = parseFunctionCall(cur, ctx);
-            if (funcResult.isError()) {
-                return error(funcResult); // <— no alias, no EOF check here
-            }
-            return ok(new FunctionColumn.Arg.Function(funcResult.value()));
-        }
-
-        // ColumnRef: IDENT ('.' IDENT)?
-        if (cur.match(TokenType.IDENT)) {
-            String first = cur.advance().lexeme();
-            if (cur.consumeIf(TokenType.DOT)) {
-                var t = cur.expect("Expected identifier after '.'", TokenType.IDENT);
-                String second = t.lexeme();
-                return ok(new FunctionColumn.Arg.Column(first, second));
-            } else {
-                return ok(new FunctionColumn.Arg.Column(null, first));
-            }
-        }
-
-        // Literals
-        switch (cur.peek().type()) {
-            case NUMBER -> {
-                Object num = parseNumber(cur.advance().lexeme());
-                return ok(new FunctionColumn.Arg.Literal(num));
-            }
-            case STRING -> {
-                String s = unescapeSqlString(cur.advance().lexeme());
-                return ok(new FunctionColumn.Arg.Literal(s));
-            }
-            case TRUE -> {
-                cur.advance(); // skip the literal itself
-                return ok(new FunctionColumn.Arg.Literal(Boolean.TRUE));
-            }
-            case FALSE -> {
-                cur.advance(); // skip the literal itself
-                return ok(new FunctionColumn.Arg.Literal(Boolean.FALSE));
-            }
-            case NULL -> {
-                cur.advance(); // skip the literal itself
-                return ok(new FunctionColumn.Arg.Literal(null));
-            }
-            case STAR -> {
-                cur.advance(); // skip the literal itself
-                return ok(new FunctionColumn.Arg.Star());
-            }
-            default -> {
-                return error("Unexpected token in function args: " + cur.peek().type(), cur.fullPos());
-            }
-        }
+    @Override
+    public Class<FunctionColumn> targetType() {
+        return FunctionColumn.class;
     }
 }

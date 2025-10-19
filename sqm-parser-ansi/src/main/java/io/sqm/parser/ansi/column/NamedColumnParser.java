@@ -7,8 +7,24 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+/**
+ * A parser used to parse a column that contains table/name/alias.
+ * <p>For example:</p>
+ * <pre>
+ *     {@code
+ *     SELECT products.name as product;
+ *     }
+ * </pre>
+ */
 public class NamedColumnParser implements Parser<NamedColumn> {
 
+    /**
+     * Parses column from the SQL statement.
+     *
+     * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.
+     * @param ctx a parser context containing parsers and lookups.
+     * @return a parsing result.
+     */
     @Override
     public ParseResult<NamedColumn> parse(Cursor cur, ParseContext ctx) {
         // 1) Try: table.name or name
@@ -34,6 +50,11 @@ public class NamedColumnParser implements Parser<NamedColumn> {
         return error("Unexpected tokens at the beginning of expr, expected identifier but found: " + cur.peek(), cur.fullPos());
     }
 
+    /**
+     * Gets {@link NamedColumn} as a target type for this parser.
+     *
+     * @return {@link NamedColumn}.
+     */
     @Override
     public Class<NamedColumn> targetType() {
         return NamedColumn.class;

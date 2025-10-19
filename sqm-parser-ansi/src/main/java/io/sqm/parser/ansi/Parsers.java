@@ -1,6 +1,10 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.parser.*;
+import io.sqm.parser.ansi.arg.ArgColumnParser;
+import io.sqm.parser.ansi.arg.ArgFunctionParser;
+import io.sqm.parser.ansi.arg.ArgLiteralParser;
+import io.sqm.parser.ansi.arg.ArgStarParser;
 import io.sqm.parser.ansi.column.*;
 import io.sqm.parser.ansi.filter.ColumnFilterParser;
 import io.sqm.parser.ansi.filter.CompositeFilterParser;
@@ -61,6 +65,11 @@ public final class Parsers {
             .register(new RangeValuesParser())
             .register(new ColumnValueParser())
             .register(new SubqueryValueParser())
-            .register(new TableJoinParser());
+            .register(new TableJoinParser())
+            .register(new FunctionArgParser())
+            .register(new ArgColumnParser())
+            .register(new ArgFunctionParser())
+            .register(new ArgLiteralParser())
+            .register(new ArgStarParser());
     }
 }

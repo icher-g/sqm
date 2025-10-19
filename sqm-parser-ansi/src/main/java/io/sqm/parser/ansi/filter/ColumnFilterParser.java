@@ -12,6 +12,15 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+/**
+ * A parser used to parse a filter (condition) with the column on the left side.
+ * <p>For example:</p>
+ * <pre>
+ *     {@code
+ *     WHERE products.name = 'a';
+ *     }
+ * </pre>
+ */
 public class ColumnFilterParser implements Parser<ColumnFilter> {
     @Override
     public ParseResult<ColumnFilter> parse(Cursor cur, ParseContext ctx) {

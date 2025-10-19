@@ -9,8 +9,29 @@ import io.sqm.parser.spi.Parser;
 
 import java.util.ArrayList;
 
+/**
+ * A parser used to parse a CASE statement.
+ * <p>For example:</p>
+ * <pre>
+ *     {@code
+ *     CASE
+ *        WHEN condition1 THEN result1
+ *        WHEN condition2 THEN result2
+ *        WHEN conditionN THEN resultN
+ *        ELSE result
+ *     END;
+ *     }
+ * </pre>
+ */
 public class CaseColumnParser implements Parser<CaseColumn> {
 
+    /**
+     * Parses SQL CASE statement.
+     *
+     * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.
+     * @param ctx a parser context containing parsers and lookups.
+     * @return a parsing result.
+     */
     @Override
     public ParseResult<CaseColumn> parse(Cursor cur, ParseContext ctx) {
         // CASE
