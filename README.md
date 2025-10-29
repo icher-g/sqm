@@ -48,6 +48,15 @@ Core components:
 
 ---
 
+## Model Hierarchy
+
+SQM defines a rich, type-safe model (AST) to represent SQL queries internally.
+This model is shared between the DSL, parser, and renderer modules.
+
+➡️ [View the full hierarchy in docs/MODEL.md](docs/MODEL.md)
+
+---
+
 ## 🚀 Quick Example
 
 ### Build a query with the DSL and Render
