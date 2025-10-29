@@ -90,12 +90,12 @@ Expression <|-- Predicate
 Expression <|-- ValueSet
 
 class FunctionExpr
-class "FunctionExpr.Arg" as FuncArg
+class FunctionExpr_Arg as FuncArg
 FunctionExpr *-- FuncArg
-FuncArg <|-- "FunctionExpr.Arg.Column"
-FuncArg <|-- "FunctionExpr.Arg.Literal"
-FuncArg <|-- "FunctionExpr.Arg.Function"
-FuncArg <|-- "FunctionExpr.Arg.Star"
+FuncArg <|-- FunctionExpr_Arg_Column
+FuncArg <|-- FunctionExpr_Arg_Literal
+FuncArg <|-- FunctionExpr_Arg_Function
+FuncArg <|-- FunctionExpr_Arg_Star
 
 class Predicate
 Predicate <|-- AnyAllPredicate
