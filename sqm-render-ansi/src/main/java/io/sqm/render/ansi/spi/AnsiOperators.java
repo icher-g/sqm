@@ -15,7 +15,7 @@ public final class AnsiOperators implements Operators {
     }
 
     @Override
-    public String range() {
+    public String between() {
         return "BETWEEN";
     }
 

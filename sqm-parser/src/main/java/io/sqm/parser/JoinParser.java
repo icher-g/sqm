@@ -1,46 +1,47 @@
 package io.sqm.parser;
 
-import io.sqm.core.Join;
-import io.sqm.core.TableJoin;
+import io.sqm.core.*;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-/**
- * Parses a JOIN clause into a {@link Join}.
- * Grammar (case-insensitive):
- * [INNER|LEFT [OUTER]|RIGHT [OUTER]|FULL [OUTER]|CROSS] JOIN table [AS alias] [ON <boolean-expr>]
- * Examples:
- * JOIN products p ON p.category_id = c.id
- * LEFT OUTER JOIN warehouses AS w ON w.product_id = p.id AND w.stock > 0
- * CROSS JOIN regions r
- */
-public final class JoinParser implements Parser<Join> {
+public class JoinParser implements Parser<Join> {
+    /**
+     * Parses the spec represented by the {@link Cursor} instance.
+     *
+     * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.
+     * @param ctx a parser context containing parsers and lookups.
+     * @return a parsing result.
+     */
+    @Override
+    public ParseResult<Join> parse(Cursor cur, ParseContext ctx) {
+        if (ctx.lookups().looksLikeCrossJoin(cur)) {
+            var res = ctx.parse(CrossJoin.class, cur);
+            return finalize(cur, ctx, res);
+        }
 
+        if (ctx.lookups().looksLikeNaturalJoin(cur)) {
+            var res = ctx.parse(NaturalJoin.class, cur);
+            return finalize(cur, ctx, res);
+        }
+
+        if (ctx.lookups().looksLikeUsingJoin(cur)) {
+            var res = ctx.parse(UsingJoin.class, cur);
+            return finalize(cur, ctx, res);
+        }
+
+        var res = ctx.parse(OnJoin.class, cur);
+        return finalize(cur, ctx, res);
+    }
 
     /**
-     * Gets the {@link Join} type.
+     * Gets the target type this handler can handle.
      *
-     * @return {@link Join} type.
+     * @return an entity type to be handled by the handler.
      */
     @Override
     public Class<Join> targetType() {
         return Join.class;
-    }
-
-    /**
-     * Parses the join specification.
-     *
-     * @param cur the {@link Cursor} class containing the tokens.
-     * @return a parser result.
-     */
-    @Override
-    public ParseResult<Join> parse(Cursor cur, ParseContext ctx) {
-        var join = ctx.parse(TableJoin.class, cur);
-        if (join.isError()) {
-            return error(join);
-        }
-        return finalize(cur, ctx, join);
     }
 }

@@ -8,7 +8,7 @@ public interface Operators {
 
     String notIn();         // "NOT IN"
 
-    String range();         // e.g. "BETWEEN" (or emulation if not supported)
+    String between();       // e.g. "BETWEEN" (or emulation if not supported)
 
     String eq();            // "="
 

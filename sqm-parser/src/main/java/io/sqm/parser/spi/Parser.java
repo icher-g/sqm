@@ -1,6 +1,6 @@
 package io.sqm.parser.spi;
 
-import io.sqm.core.Entity;
+import io.sqm.core.Node;
 import io.sqm.core.repos.Handler;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.Lexer;
@@ -8,13 +8,14 @@ import io.sqm.parser.core.ParserException;
 import io.sqm.parser.core.TokenType;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * A base interface for all spec parsers.
  *
  * @param <T> the type of the entity.
  */
-public interface Parser<T extends Entity> extends Handler<T> {
+public interface Parser<T extends Node> extends Handler<T> {
 
     /**
      * A default implementation of the parse method that accepts a spec as a string.
@@ -83,6 +84,23 @@ public interface Parser<T extends Entity> extends Handler<T> {
      * @return a valid or invalid parsing result depending on the validation result.
      */
     default ParseResult<T> finalize(Cursor cur, ParseContext ctx, ParseResult<? extends T> pr) {
+        return finalize(cur, ctx, pr, null);
+    }
+
+    /**
+     * Finalizes the parsing by applying some validations. Checks if the provided {@link ParseResult} is valid and if the cursor is on the EOF token.
+     * If everything ok the valid {@link ParseResult} instance.
+     *
+     * @param cur          a cursor.
+     * @param ctx          a parsing context.
+     * @param pr           a parsing result.
+     * @param customAction an additional action to be executed before the finalization logic.
+     * @return a valid or invalid parsing result depending on the validation result.
+     */
+    default ParseResult<T> finalize(Cursor cur, ParseContext ctx, ParseResult<? extends T> pr, Consumer<Cursor> customAction) {
+        if (customAction != null) {
+            customAction.accept(cur);
+        }
         if (pr.isError()) {
             return error(pr);
         }

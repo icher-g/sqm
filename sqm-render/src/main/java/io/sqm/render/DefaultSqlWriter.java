@@ -1,6 +1,6 @@
 package io.sqm.render;
 
-import io.sqm.core.Entity;
+import io.sqm.core.Node;
 import io.sqm.render.spi.RenderContext;
 
 import java.util.List;
@@ -36,9 +36,9 @@ public class DefaultSqlWriter implements SqlWriter {
     }
 
     @Override
-    public <T extends Entity> SqlWriter append(T entity) {
-        var r = ctx.dialect().renderers().requireFor(entity);
-        r.render(entity, ctx, this);
+    public <T extends Node> SqlWriter append(T node) {
+        var r = ctx.dialect().renderers().requireFor(node);
+        r.render(node, ctx, this);
         return this;
     }
 
@@ -84,20 +84,6 @@ public class DefaultSqlWriter implements SqlWriter {
     @Override
     public SqlWriter outdent() {
         if (indentLevel > 0) indentLevel--;
-        return this;
-    }
-
-    @Override
-    public <T extends Entity> SqlWriter comma(List<T> parts) {
-        if (parts == null || parts.isEmpty()) return this;
-
-        for (int i = 0; i < parts.size(); i++) {
-            if (i > 0) {
-                sb.append(',');
-                sb.append(' ');
-            }
-            append(parts.get(i));
-        }
         return this;
     }
 

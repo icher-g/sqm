@@ -1,16 +1,13 @@
 package io.sqm.render.ansi;
 
-import io.sqm.core.*;
-import io.sqm.render.DefaultRenderContext;
-import io.sqm.render.DefaultSqlWriter;
-import io.sqm.render.SqlWriter;
+import io.sqm.core.Node;
+import io.sqm.core.SelectQuery;
 import io.sqm.render.ansi.spi.AnsiDialect;
+import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
-import static io.sqm.dsl.Dsl.query;
+import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -19,15 +16,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class QueryTableRendererTest {
 
-    // If you already have these helpers in your tests, use them instead.
-    private static Column col(String alias, String name) {
-        return Column.of(name).from(alias);
-    }
-
-    private static NamedTable table(String name) {
-        return Table.of(name);
-    }
-
     /**
      * Robust comparison not sensitive to newlines/indent.
      */
@@ -35,20 +23,18 @@ class QueryTableRendererTest {
         return s.replaceAll("\\s+", " ").trim();
     }
 
-    private static String render(Entity entity) {
-        SqlWriter w = new DefaultSqlWriter(new DefaultRenderContext(new AnsiDialect()));
-        w.append(entity);
-        return w.toText(List.of()).sql();
+    private static String render(Node node) {
+        var ctx = RenderContext.of(new AnsiDialect());
+        return ctx.render(node).sql();
     }
 
     /**
      * Create a minimal Query suitable for nesting as a subquery.
      * Adjust to your real builders/helpers (e.g., Query.builder()...).
      */
-    private Query makeSimpleQuery() {
-        return query()
-            .select(col("u", "id"), col("u", "name"))
-            .from(table("users").as("u"));
+    private SelectQuery makeSimpleQuery() {
+        return select(col("u", "id"), col("u", "name"))
+            .from(tbl("users").as("u"));
     }
 
     // --- Tests ---------------------------------------------------------------
@@ -57,7 +43,7 @@ class QueryTableRendererTest {
     @DisplayName("Renders subquery with explicit alias: uses AS <alias>")
     void renders_with_explicit_alias() {
         var inner = makeSimpleQuery();
-        var qt = new QueryTable(inner, "users_view"); // explicit alias
+        var qt = tbl(inner).as("users_view"); // explicit alias
 
         var sql = render(qt);
 
@@ -75,7 +61,7 @@ class QueryTableRendererTest {
     @DisplayName("No alias when both explicit alias is blank and query.name() is null")
     void no_alias_when_both_missing() {
         var inner = makeSimpleQuery();
-        var qt = new QueryTable(inner, "   "); // blank alias
+        var qt = tbl(inner).as("   "); // blank alias
 
         var sql = render(qt);
 
@@ -89,7 +75,7 @@ class QueryTableRendererTest {
     void alias_is_quoted_if_needed() {
         var inner = makeSimpleQuery();
         // Force fallback via explicit alias that is a keyword (e.g., SELECT) to check quoting
-        var qt = new QueryTable(inner, "select");
+        var qt = tbl(inner).as("select");
 
         var sql = render(qt);
 
@@ -105,7 +91,7 @@ class QueryTableRendererTest {
     @DisplayName("Keeps subquery on new line with indent and closes before AS")
     void uses_newline_and_indent_block() {
         var inner = makeSimpleQuery();
-        var qt = new QueryTable(inner, "sub");
+        var qt = tbl(inner).as("sub");
 
         var sql = render(qt);
 

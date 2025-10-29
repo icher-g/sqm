@@ -1,0 +1,116 @@
+package io.sqm.core;
+
+import io.sqm.core.internal.FunctionExprImpl;
+
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * Represents a function call.
+ * <p>For example:</p>
+ * <pre>
+ *     {@code
+ *     COUNT(*);
+ *     UPPER(products.name)
+ *     COUNT(DISTINCT t.id) AS c
+ *     }
+ * </pre>
+ */
+public non-sealed interface FunctionExpr extends Expression {
+    /**
+     * Creates a function call expression.
+     *
+     * @param name a function name
+     * @param args an array of function arguments.
+     * @return A newly created instance of a function call expression.
+     */
+    static FunctionExpr of(String name, FunctionExpr.Arg... args) {
+        return new FunctionExprImpl(Objects.requireNonNull(name), List.of(args), null);
+    }
+
+    /**
+     * Creates a function call expression.
+     *
+     * @param name        a function name
+     * @param distinctArg indicates whether DISTINCT should be added before the list of arguments in the function call. {@code COUNT(DISTINCT t.id) AS c}
+     * @param args        an array of function arguments.
+     * @return A newly created instance of a function call expression.
+     */
+    static FunctionExpr of(String name, Boolean distinctArg, FunctionExpr.Arg... args) {
+        return new FunctionExprImpl(Objects.requireNonNull(name), List.of(args), distinctArg);
+    }
+
+    /**
+     * Creates a function call expression.
+     *
+     * @param name        a function name
+     * @param distinctArg indicates whether DISTINCT should be added before the list of arguments in the function call. {@code COUNT(DISTINCT t.id) AS c}
+     * @param args        an array of function arguments.
+     * @return A newly created instance of a function call expression.
+     */
+    static FunctionExpr of(String name, Boolean distinctArg, List<FunctionExpr.Arg> args) {
+        return new FunctionExprImpl(Objects.requireNonNull(name), args, distinctArg);
+    }
+
+    /**
+     * Gets the name of the function.
+     *
+     * @return the name of the function.
+     */
+    String name();
+
+    /**
+     * Gets a list of arguments. Can be NULL or empty if there are no arguments.
+     *
+     * @return a list of arguments if exists or NULL otherwise.
+     */
+    List<Arg> args();
+
+    /**
+     * Indicates whether DISTINCT should be added before the list of arguments in the function call.
+     * {@code COUNT(DISTINCT t.id) AS c}
+     *
+     * @return True if DISTINCT needs to be added and False otherwise.
+     */
+    Boolean distinctArg();
+
+    /**
+     * Adds DISTINCT indication to an expression.
+     *
+     * @param distinctArg an indication.
+     * @return A newly created instance of the function call expression with the added indication. All other fields are preserved.
+     */
+    default FunctionExpr distinct(boolean distinctArg) {
+        return new FunctionExprImpl(name(), args(), distinctArg);
+    }
+
+    /* -------- Function arguments (structured) -------- */
+    sealed interface Arg extends Expression permits FunctionExpr.Arg.Column, FunctionExpr.Arg.Literal, FunctionExpr.Arg.Function, FunctionExpr.Arg.Star {
+        /**
+         * Column reference argument: t.c or just c.
+         */
+        non-sealed interface Column extends FunctionExpr.Arg {
+            ColumnExpr ref();
+        }
+
+        /**
+         * Literal argument (String, Number, Boolean, null).
+         */
+        non-sealed interface Literal extends FunctionExpr.Arg {
+            Object value();
+        }
+
+        /**
+         * Nested function call as an argument.
+         */
+        non-sealed interface Function extends FunctionExpr.Arg {
+            FunctionExpr call();
+        }
+
+        /**
+         * The '*' argument (e.g., COUNT(*))
+         */
+        non-sealed interface Star extends FunctionExpr.Arg {
+        }
+    }
+}

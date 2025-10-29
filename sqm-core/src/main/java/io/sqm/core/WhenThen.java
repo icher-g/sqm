@@ -1,30 +1,69 @@
 package io.sqm.core;
 
-/**
- * Represents a WHEN...THEN statement used in a CASE.
- *
- * @param when a when statement
- * @param then a then statement.
- */
-public record WhenThen(Filter when, Entity then) implements Entity {
+import io.sqm.core.internal.WhenThenImpl;
 
+/**
+ * Represents WHEN...THEN statement used in CASE expression.
+ * <p>For example:</p>
+ * <pre>
+ *     {@code
+ *     CASE WHEN x = 1 THEN 10 WHEN x = 2 THEN 20 END AS result
+ *     }
+ * </pre>
+ */
+public non-sealed interface WhenThen extends Node {
     /**
-     * Creates a WHEN...THEN statement with the provided condition.
+     * Creates a WHEN...THEN statement.
      *
-     * @param condition a filter to be used in WHEN.
-     * @return A new instance of the WhenThen object.
+     * @param when a WHEN predicate.
+     * @param then a THEN expression.
+     * @return A newly created instance of the WHEN...THEN statement.
      */
-    public static WhenThen when(Filter condition) {
-        return new WhenThen(condition, null);
+    static WhenThen of(Predicate when, Expression then) {
+        return new WhenThenImpl(when, then);
     }
 
     /**
-     * Adds THEN statement to the WhenThen object.
+     * Creates a WHEN...THEN statement.
      *
-     * @param value a value.
-     * @return A new instance with the provided value. The when field is preserved.
+     * @param when a WHEN predicate.
+     * @return A newly created instance of the WHEN...THEN statement.
      */
-    public WhenThen then(Entity value) {
-        return new WhenThen(when, value);
+    static WhenThen of(Predicate when) {
+        return new WhenThenImpl(when, null);
+    }
+
+    /**
+     * Gets a WHEN predicate.
+     *
+     * @return a WHEN predicate.
+     */
+    Predicate when();
+
+    /**
+     * Gets a THEN expression.
+     *
+     * @return a THEN expression.
+     */
+    Expression then();
+
+    /**
+     * Adds a THEN statement.
+     *
+     * @param then a THEN statement.
+     * @return this.
+     */
+    default WhenThen then(Expression then) {
+        return new WhenThenImpl(when(), then);
+    }
+
+    /**
+     * Adds a THEN statement.
+     *
+     * @param then a THEN statement.
+     * @return this.
+     */
+    default WhenThen then(Object then) {
+        return new WhenThenImpl(when(), Expression.literal(then));
     }
 }

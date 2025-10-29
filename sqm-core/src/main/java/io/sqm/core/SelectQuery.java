@@ -1,110 +1,82 @@
 package io.sqm.core;
 
-import io.sqm.core.traits.*;
+import io.sqm.core.internal.SelectQueryImpl;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 /**
- * Represent a simple query.
+ * A SELECT-style query.
  */
-public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, HasColumns, HasTable, HasJoins, HasGroupBy, HasOrderBy, HasWhere, HasHaving {
-
-    private final List<Column> columns;
-    private final List<Join> joins;
-    private GroupBy groupBy;
-    private OrderBy orderBy;
-    private Table table;
-    private Filter where;
-    private Filter having;
-    private Boolean distinct;
-    private LimitOffset limitOffset;
-
-    public SelectQuery() {
-        this.columns = new ArrayList<>();
-        this.joins = new ArrayList<>();
-    }
+public non-sealed interface SelectQuery extends Query {
 
     /**
-     * Gets a list of the columns to be used in SELECT statement.
+     * Creates instance of the SELECT statement.
      *
-     * @return a list of columns.
+     * @return new instance of SELECT query.
      */
-    public List<Column> columns() {
-        return columns;
+    static SelectQuery of() {
+        return new SelectQueryImpl();
     }
 
     /**
-     * Adds columns to the SELECT statement.
+     * Gets a list of select items to be used in SELECT statement.
      *
-     * @param columns an array of columns.
+     * @return a list of select items.
+     */
+    List<SelectItem> select();
+
+    /**
+     * Adds items to the SELECT statement.
+     *
+     * @param items an array of items.
      * @return this.
      */
-    public SelectQuery select(Column... columns) {
-        this.columns.addAll(List.of(columns));
-        return this;
+    default SelectQuery select(SelectItem... items) {
+        return select(List.of(items));
     }
 
     /**
-     * Adds columns to the SELECT statement.
+     * Adds expressions to the SELECT statement.
      *
-     * @param columns a list of columns.
+     * @param expressions an array of expressions.
      * @return this.
      */
-    public SelectQuery select(List<Column> columns) {
-        this.columns.addAll(columns);
-        return this;
+    default SelectQuery select(Expression... expressions) {
+        return select(Arrays.stream(expressions)
+            .map(e -> (SelectItem) SelectItem.expr(e))
+            .toList());
     }
 
     /**
-     * Gets a filter to be used in a WHERE statement.
+     * Adds items to the SELECT statement.
      *
-     * @return a filter.
-     */
-    public Filter where() {
-        return where;
-    }
-
-    /**
-     * Sets a filter to be used in a WHERE statement.
-     *
-     * @param filter a filter.
+     * @param items a list of items.
      * @return this.
      */
-    public SelectQuery where(Filter filter) {
-        this.where = filter;
-        return this;
-    }
+    SelectQuery select(List<SelectItem> items);
 
     /**
-     * Gets a filter to be used in a HAVING statement.
+     * Gets a table reference used in a FROM statement.
      *
-     * @return a filter.
+     * @return a table.
      */
-    public Filter having() {
-        return having;
-    }
+    TableRef from();
 
     /**
-     * Sets a filter to be used in a HAVING statement.
+     * Sets a table reference used in a FROM statement. The table can be a sub query.
      *
-     * @param filter a filter.
+     * @param table a table reference.
      * @return this.
      */
-    public SelectQuery having(Filter filter) {
-        this.having = filter;
-        return this;
-    }
+    SelectQuery from(TableRef table);
 
     /**
      * Gets a list of joins.
      *
      * @return a list of joins.
      */
-    public List<Join> joins() {
-        return joins;
-    }
+    List<Join> joins();
 
     /**
      * Adds joins to the query.
@@ -112,9 +84,8 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @param joins an array of joins.
      * @return this.
      */
-    public SelectQuery join(Join... joins) {
-        this.joins.addAll(List.of(joins));
-        return this;
+    default SelectQuery join(Join... joins) {
+        return join(List.of(joins));
     }
 
     /**
@@ -123,19 +94,29 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @param joins a list of joins.
      * @return this.
      */
-    public SelectQuery join(List<Join> joins) {
-        this.joins.addAll(joins);
-        return this;
-    }
+    SelectQuery join(List<Join> joins);
+
+    /**
+     * Gets a predicate to be used in a WHERE statement.
+     *
+     * @return a predicate.
+     */
+    Predicate where();
+
+    /**
+     * Sets a predicate to be used in a WHERE statement.
+     *
+     * @param predicate a predicate.
+     * @return this.
+     */
+    SelectQuery where(Predicate predicate);
 
     /**
      * Gets a list of GroupBy items.
      *
      * @return a list of group by items.
      */
-    public GroupBy groupBy() {
-        return groupBy;
-    }
+    GroupBy groupBy();
 
     /**
      * Adds group by items to the query.
@@ -143,7 +124,7 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @param items an array of group by items.
      * @return this.
      */
-    public SelectQuery groupBy(Group... items) {
+    default SelectQuery groupBy(GroupItem... items) {
         return groupBy(List.of(items));
     }
 
@@ -153,21 +134,29 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @param items a list of group by items.
      * @return this.
      */
-    public SelectQuery groupBy(List<Group> items) {
-        if (items != null && !items.isEmpty()) {
-            this.groupBy = new GroupBy(items);
-        }
-        return this;
-    }
+    SelectQuery groupBy(List<GroupItem> items);
+
+    /**
+     * Gets a predicate to be used in a HAVING statement.
+     *
+     * @return a predicate.
+     */
+    Predicate having();
+
+    /**
+     * Sets a predicate to be used in a HAVING statement.
+     *
+     * @param predicate a predicate.
+     * @return this.
+     */
+    SelectQuery having(Predicate predicate);
 
     /**
      * Gets a list of order by items.
      *
      * @return a list of oder by items.
      */
-    public OrderBy orderBy() {
-        return orderBy;
-    }
+    OrderBy orderBy();             // null if absent
 
     /**
      * Adds order by items to the query.
@@ -175,7 +164,7 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @param items an array of order by items.
      * @return this.
      */
-    public SelectQuery orderBy(Order... items) {
+    default SelectQuery orderBy(OrderItem... items) {
         return orderBy(List.of(items));
     }
 
@@ -185,41 +174,14 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @param items a list of group by items.
      * @return this.
      */
-    public SelectQuery orderBy(List<Order> items) {
-        if (items != null && !items.isEmpty()) {
-            this.orderBy = new OrderBy(items);
-        }
-        return this;
-    }
-
-    /**
-     * Gets a table used in a FROM statement.
-     *
-     * @return a table.
-     */
-    public Table table() {
-        return table;
-    }
-
-    /**
-     * Sets a table used in a FROM statement. The table can be a sub query.
-     *
-     * @param table a table.
-     * @return this.
-     */
-    public SelectQuery from(Table table) {
-        this.table = Objects.requireNonNull(table, "table");
-        return this;
-    }
+    SelectQuery orderBy(List<OrderItem> items);
 
     /**
      * Indicates if a DISTINCT keyword should be added to a SELECT statement.
      *
      * @return TRUE if a distinct needs to be added or FALSE otherwise.
      */
-    public Boolean distinct() {
-        return distinct;
-    }
+    Boolean distinct();
 
     /**
      * Sets distinct used in SELECT statement.
@@ -227,19 +189,14 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @param distinct a value.
      * @return this.
      */
-    public SelectQuery distinct(boolean distinct) {
-        this.distinct = distinct;
-        return this;
-    }
+    SelectQuery distinct(boolean distinct);
 
     /**
      * Gets a limit of the query if there is any or NULL otherwise.
      *
      * @return a value of the limit.
      */
-    public Long limit() {
-        return limitOffset == null ? null : limitOffset.limit();
-    }
+    Long limit();
 
     /**
      * Sets the query limit.
@@ -247,19 +204,14 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @param limit a limit.
      * @return this.
      */
-    public SelectQuery limit(long limit) {
-        this.limitOffset = LimitOffset.of(limit, offset());
-        return this;
-    }
+    SelectQuery limit(long limit);
 
     /**
      * Gets an offset of the query if there is any or NULL otherwise.
      *
      * @return a value of the offset.
      */
-    public Long offset() {
-        return limitOffset == null ? null : limitOffset.offset();
-    }
+    Long offset();
 
     /**
      * Sets the query offset.
@@ -267,8 +219,5 @@ public class SelectQuery implements Query, HasLimit, HasOffset, HasDistinct, Has
      * @param offset an offset.
      * @return this.
      */
-    public SelectQuery offset(long offset) {
-        this.limitOffset = LimitOffset.of(limit(), offset);
-        return this;
-    }
+    SelectQuery offset(long offset);
 }

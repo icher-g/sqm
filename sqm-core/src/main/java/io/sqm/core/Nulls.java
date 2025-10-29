@@ -1,10 +1,6 @@
 package io.sqm.core;
 
 /**
- * Used in OrderBy clause.
+ * Dialect-aware nulls ordering preference.
  */
-public enum Nulls {
-    First,
-    Last,
-    Default
-}
+public enum Nulls { DEFAULT, FIRST, LAST }

@@ -1,16 +1,14 @@
 package io.sqm.dsl;
 
 import io.sqm.core.*;
-import io.sqm.core.views.Columns;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * Minimal, ergonomic, static-import friendly helpers to build the core model
  * without touching parsers. Keep names short and predictable.
  * <p>
- * Usage (static import io.cherlabs.sqm.dsl.DSL.*):
+ * Usage (static import io.sqm.dsl.DSL.*):
  * <p>
  * <pre>
  * {@code
@@ -27,6 +25,8 @@ import java.util.List;
  * </pre>
  */
 public final class Dsl {
+    public final static Object NULL = null;
+
     private Dsl() {
     }
 
@@ -38,7 +38,7 @@ public final class Dsl {
      * @param name a name of the table.
      * @return a table.
      */
-    public static NamedTable tbl(String name) {
+    public static Table tbl(String name) {
         return Table.of(name);
     }
 
@@ -49,8 +49,18 @@ public final class Dsl {
      * @param name   a table name.
      * @return a table.
      */
-    public static NamedTable tbl(String schema, String name) {
-        return Table.of(name).from(schema);
+    public static Table tbl(String schema, String name) {
+        return Table.of(name).inSchema(schema);
+    }
+
+    /**
+     * Wraps a query as a table for use in FROM statement.
+     *
+     * @param query a query to wrap.
+     * @return a table that wraps a query.
+     */
+    public static QueryTable tbl(Query query) {
+        return Query.table(query);
     }
 
     /* ========================= Columns ========================= */
@@ -61,8 +71,8 @@ public final class Dsl {
      * @param name a column name.
      * @return a column.
      */
-    public static NamedColumn col(String name) {
-        return Column.of(name);
+    public static ColumnExpr col(String name) {
+        return ColumnExpr.of(name);
     }
 
     /**
@@ -72,8 +82,8 @@ public final class Dsl {
      * @param name  a column name.
      * @return a column.
      */
-    public static NamedColumn col(String table, String name) {
-        return Column.of(name).from(table);
+    public static ColumnExpr col(String table, String name) {
+        return ColumnExpr.of(name).inTable(table);
     }
 
     /**
@@ -82,18 +92,59 @@ public final class Dsl {
      * @param subquery a sub query.
      * @return a query column.
      */
-    public static QueryColumn col(Query subquery) {
-        return Column.of(subquery);
+    public static QueryExpr col(Query subquery) {
+        return QueryExpr.of(subquery);
+    }
+
+    /* ========================= Select Items ====================== */
+
+    /**
+     * Creates a select item from a column with the provided name.
+     *
+     * @param name a column name.
+     * @return a column.
+     */
+    public static SelectItem sel(String name) {
+        return ColumnExpr.of(name).toSelectItem();
     }
 
     /**
-     * Creates a column that is represented by a string expression.
+     * Creates a select item from a column with the provided table and name.
      *
-     * @param sqlExpression an expression.
-     * @return an expression column.
+     * @param table a column table.
+     * @param name  a column name.
+     * @return a column.
      */
-    public static ExpressionColumn expr(String sqlExpression) {
-        return Column.expr(sqlExpression);
+    public static SelectItem sel(String table, String name) {
+        return ColumnExpr.of(table, name).toSelectItem();
+    }
+
+    /**
+     * Creates SELECT item from expression.
+     *
+     * @param expr an expression.
+     * @return SELECT item.
+     */
+    public static SelectItem sel(Expression expr) {
+        return SelectItem.expr(expr);
+    }
+
+    /**
+     * Crates a '*' item for SELECT statement.
+     *
+     * @return select item.
+     */
+    public static StarSelectItem star() {
+        return StarSelectItem.of();
+    }
+
+    /**
+     * Crates a qualified '*' item for SELECT statement: t.*
+     *
+     * @return select item.
+     */
+    public static QualifiedStarSelectItem star(String qualifier) {
+        return QualifiedStarSelectItem.of(qualifier);
     }
 
     /* ========================= Functions ========================= */
@@ -105,8 +156,20 @@ public final class Dsl {
      * @param args an array of arguments for the function. An array can be empty if a function does not accept any arguments.
      * @return a function column.
      */
-    public static FunctionColumn func(String name, FunctionColumn.Arg... args) {
-        return Column.func(name, args);
+    public static FunctionExpr func(String name, FunctionExpr.Arg... args) {
+        return Expression.func(name, args);
+    }
+
+    /**
+     * Creates a column that represents a function call.
+     *
+     * @param name        a name of the function.
+     * @param distinctArg indicates whether DISTINCT should be added before the list of arguments in the function call. {@code COUNT(DISTINCT t.id) AS c}
+     * @param args        an array of arguments for the function. An array can be empty if a function does not accept any arguments.
+     * @return a function column.
+     */
+    public static FunctionExpr func(String name, boolean distinctArg, FunctionExpr.Arg... args) {
+        return Expression.func(name, distinctArg, args);
     }
 
     /**
@@ -115,8 +178,8 @@ public final class Dsl {
      * @param col a column to be passed to a function.
      * @return a function argument.
      */
-    public static FunctionColumn.Arg argCol(Column col) {
-        return FunctionColumn.Arg.column(Columns.table(col).orElse(null), Columns.name(col).orElse(null));
+    public static FunctionExpr.Arg arg(ColumnExpr col) {
+        return Expression.funcArg(col);
     }
 
     /**
@@ -125,8 +188,8 @@ public final class Dsl {
      * @param value a literal value.
      * @return a function argument.
      */
-    public static FunctionColumn.Arg argLit(Object value) {
-        return FunctionColumn.Arg.lit(value);
+    public static FunctionExpr.Arg arg(Object value) {
+        return Expression.funcArg(value);
     }
 
     /**
@@ -135,8 +198,8 @@ public final class Dsl {
      * @param call a nested function call.
      * @return a function argument.
      */
-    public static FunctionColumn.Arg argFunc(FunctionColumn call) {
-        return FunctionColumn.Arg.func(call);
+    public static FunctionExpr.Arg arg(FunctionExpr call) {
+        return Expression.funcArg(call);
     }
 
     /**
@@ -144,8 +207,8 @@ public final class Dsl {
      *
      * @return a function argument.
      */
-    public static FunctionColumn.Arg star() {
-        return FunctionColumn.Arg.star();
+    public static FunctionExpr.Arg starArg() {
+        return Expression.starArg();
     }
 
     /* ========================= CASE ========================= */
@@ -156,8 +219,8 @@ public final class Dsl {
      * @param whens an array of WHEN...THEN groups.
      * @return a case column.
      */
-    public static CaseColumn kase(WhenThen... whens) { // "case" is reserved in Java
-        return CaseColumn.of(List.of(whens));
+    public static CaseExpr kase(WhenThen... whens) { // "case" is reserved in Java
+        return CaseExpr.of(List.of(whens));
     }
 
     /**
@@ -167,8 +230,8 @@ public final class Dsl {
      * @param thenValue a value returned by the statement if the WHEN statement returns true.
      * @return a WhenThen object.
      */
-    public static WhenThen when(Filter condition, Entity thenValue) {
-        return CaseColumn.when(condition, thenValue);
+    public static WhenThen when(Predicate condition, Expression thenValue) {
+        return WhenThen.of(condition, thenValue);
     }
 
     /**
@@ -177,30 +240,8 @@ public final class Dsl {
      * @param condition a condition used in the WHEN statement.
      * @return a WhenThen object.
      */
-    public static WhenThen when(Filter condition) {
-        return WhenThen.when(condition);
-    }
-
-    /**
-     * Adds a THEN statement to a previously created WHEN.
-     *
-     * @param w     a WhenThen object to add the THEN to.
-     * @param value a THEN value.
-     * @return a WhenThen object.
-     */
-    public static WhenThen then(WhenThen w, Entity value) {
-        return w.then(value);
-    }
-
-    /**
-     * Adds an ELSE value to a column that represents a CASE statement.
-     *
-     * @param c         a case column.
-     * @param elseValue an else value.
-     * @return a case column.
-     */
-    public static CaseColumn kaseElse(CaseColumn c, Entity elseValue) {
-        return c.elseValue(elseValue);
+    public static WhenThen when(Predicate condition) {
+        return WhenThen.of(condition);
     }
 
     /* ========================= Filters (Column RHS values) ========================= */
@@ -211,18 +252,8 @@ public final class Dsl {
      * @param value a value.
      * @return Values that represents a single value.
      */
-    public static Values.Single val(Object value) {
-        return Values.single(value);
-    }
-
-    /**
-     * Creates a list of values. Can be used in an IN filter.
-     *
-     * @param values a list of values.
-     * @return Values that represents a list of values.
-     */
-    public static Values.ListValues vals(List<Object> values) {
-        return Values.list(values);
+    public static LiteralExpr lit(Object value) {
+        return Expression.literal(value);
     }
 
     /**
@@ -231,30 +262,18 @@ public final class Dsl {
      * @param values an array of values.
      * @return Values that represents a list of values.
      */
-    public static Values.ListValues vals(Object... values) {
-        return Values.list(Arrays.asList(values));
+    public static RowExpr row(Object... values) {
+        return Expression.row(values);
     }
 
     /**
-     * Creates a values range. Used in BETWEEN statement.
+     * Creates a list of values. Can be used in an IN filter.
      *
-     * @param min a minimum value.
-     * @param max a maximum value.
-     * @return Values that represents a range.
+     * @param values an array of values.
+     * @return Values that represents a list of values.
      */
-    public static Values.Range range(Object min, Object max) {
-        return Values.range(min, max);
-    }
-
-    /**
-     * Creates a sub query value.
-     * For example: {@code WHERE c1 IN (SELECT ID FROM t)}
-     *
-     * @param q a sbu query.
-     * @return Values that represents a sub query.
-     */
-    public static Values.Subquery val(Query q) {
-        return Values.subquery(q);
+    public static RowExpr row(Expression... values) {
+        return Expression.row(List.of(values));
     }
 
     /**
@@ -264,289 +283,30 @@ public final class Dsl {
      * @param rows a list of tuples.
      * @return Values that represents a list of tuples.
      */
-    public static Values.Tuples tuples(List<List<Object>> rows) {
-        return Values.tuples(rows);
-    }
-
-    /* ========================= column operators ========================= */
-
-    /**
-     * Creates column filter with {@link ColumnFilter.Operator#Eq} op and value.
-     * For example: {@code WHERE c1 = 1}
-     *
-     * @param col   a column.
-     * @param value a value.
-     * @return a column filter.
-     */
-    public static ColumnFilter eq(Column col, Object value) {
-        return Filter.column(col).eq(value);
+    public static RowListExpr rows(List<List<Object>> rows) {
+        return Expression.rows(rows.stream().map(Expression::row).toList());
     }
 
     /**
-     * Creates column filter with {@link ColumnFilter.Operator#Eq} op between two columns.
-     * For example: {@code WHERE c1 = c2}
+     * Creates a list of tuples.
+     * For example: {@code WHERE (c1, c2) IN ((1, 2), (3, 4))}
      *
-     * @param col1 a left column.
-     * @param col2 a right column.
-     * @return a column filter.
+     * @param rows a list of tuples.
+     * @return Values that represents a list of tuples.
      */
-    public static ColumnFilter eq(Column col1, Column col2) {
-        return Filter.column(col1).eq(col2);
+    public static RowListExpr rows(RowExpr... rows) {
+        return Expression.rows(List.of(rows));
     }
 
     /**
-     * Creates column filter with {@link ColumnFilter.Operator#Ne} op and value.
-     * For example: {@code WHERE c1 <> 1}
+     * Creates a sub query value.
+     * For example: {@code WHERE c1 IN (SELECT ID FROM t)}
      *
-     * @param col   a column.
-     * @param value a value.
-     * @return a column filter.
+     * @param q a sbu query.
+     * @return Values that represents a sub query.
      */
-    public static ColumnFilter ne(Column col, Object value) {
-        return Filter.column(col).ne(value);
-    }
-
-    /**
-     * Creates column filter with {@link ColumnFilter.Operator#Ne} op between two columns.
-     * For example: {@code WHERE c1 <> c2}
-     *
-     * @param col1 a left column.
-     * @param col2 a right column.
-     * @return a column filter.
-     */
-    public static ColumnFilter ne(Column col1, Column col2) {
-        return Filter.column(col1).ne(col2);
-    }
-
-    /**
-     * Creates column filter with {@link ColumnFilter.Operator#Lt} op and value.
-     * For example: {@code WHERE c1 < 1}
-     *
-     * @param col   a column.
-     * @param value a value.
-     * @return a column filter.
-     */
-    public static ColumnFilter lt(Column col, Object value) {
-        return Filter.column(col).lt(value);
-    }
-
-    /**
-     * Creates column filter with {@link ColumnFilter.Operator#Lt} op between two columns.
-     * For example: {@code WHERE c1 < c2}
-     *
-     * @param col1 a left column.
-     * @param col2 a right column.
-     * @return a column filter.
-     */
-    public static ColumnFilter lt(Column col1, Column col2) {
-        return Filter.column(col1).lt(col2);
-    }
-
-    /**
-     * Creates column filter with {@link ColumnFilter.Operator#Lte} op and value.
-     * For example: {@code WHERE c1 <= 1}
-     *
-     * @param col   a column.
-     * @param value a value.
-     * @return a column filter.
-     */
-    public static ColumnFilter lte(Column col, Object value) {
-        return Filter.column(col).lte(value);
-    }
-
-    /**
-     * Creates column filter with {@link ColumnFilter.Operator#Lte} op between two columns.
-     * For example: {@code WHERE c1 <= c2}
-     *
-     * @param col1 a left column.
-     * @param col2 a right column.
-     * @return a column filter.
-     */
-    public static ColumnFilter lte(Column col1, Column col2) {
-        return Filter.column(col1).lte(col2);
-    }
-
-    /**
-     * Creates column filter with {@link ColumnFilter.Operator#Gt} op and value.
-     * For example: {@code WHERE c1 > 1}
-     *
-     * @param col   a column.
-     * @param value a value.
-     * @return a column filter.
-     */
-    public static ColumnFilter gt(Column col, Object value) {
-        return Filter.column(col).gt(value);
-    }
-
-    /**
-     * Creates column filter with {@link ColumnFilter.Operator#Gt} op between two columns.
-     * For example: {@code WHERE c1 > c2}
-     *
-     * @param col1 a left column.
-     * @param col2 a right column.
-     * @return a column filter.
-     */
-    public static ColumnFilter gt(Column col1, Column col2) {
-        return Filter.column(col1).gt(col2);
-    }
-
-    /**
-     * Creates column filter with {@link ColumnFilter.Operator#Gte} op and value.
-     * For example: {@code WHERE c1 >= 1}
-     *
-     * @param col   a column.
-     * @param value a value.
-     * @return a column filter.
-     */
-    public static ColumnFilter gte(Column col, Object value) {
-        return Filter.column(col).gte(value);
-    }
-
-    /**
-     * Creates column filter with {@link ColumnFilter.Operator#Gte} op between two columns.
-     * For example: {@code WHERE c1 >= c2}
-     *
-     * @param col1 a left column.
-     * @param col2 a right column.
-     * @return a column filter.
-     */
-    public static ColumnFilter gte(Column col1, Column col2) {
-        return Filter.column(col1).gte(col2);
-    }
-
-    /**
-     * Creates column filter with {@link ColumnFilter.Operator#In} op and values.
-     * For example: {@code WHERE c1 IN (1, 2, 3)}
-     *
-     * @param col    a column.
-     * @param values a list of values.
-     * @return a column filter.
-     */
-    public static ColumnFilter in(Column col, List<Object> values) {
-        return Filter.column(col).in(values);
-    }
-
-    /**
-     * Creates column filter with {@link ColumnFilter.Operator#In} op and values.
-     * For example: {@code WHERE c1 IN (1, 2, 3)}
-     *
-     * @param col    a column.
-     * @param values a list of values.
-     * @return a column filter.
-     */
-    public static ColumnFilter in(Column col, Object... values) {
-        return Filter.column(col).in(values);
-    }
-
-    /**
-     * Creates column filter with {@link ColumnFilter.Operator#NotIn} op and values.
-     * For example: {@code WHERE c1 NOT IN (1, 2, 3)}
-     *
-     * @param col    a column.
-     * @param values a list of values.
-     * @return a column filter.
-     */
-    public static ColumnFilter notIn(Column col, List<Object> values) {
-        return Filter.column(col).notIn(values);
-    }
-
-    /**
-     * Creates column filter with {@link ColumnFilter.Operator#NotIn} op and values.
-     * For example: {@code WHERE c1 NOT IN (1, 2, 3)}
-     *
-     * @param col    a column.
-     * @param values a list of values.
-     * @return a column filter.
-     */
-    public static ColumnFilter notIn(Column col, Object... values) {
-        return Filter.column(col).notIn(values);
-    }
-
-    /**
-     * Creates column filter with {@link ColumnFilter.Operator#Range} op.
-     * For example: {@code c1 BETWEEN 1 AND 100}
-     *
-     * @param col a column.
-     * @param min a minimum value.
-     * @param max a maximum value.
-     * @return a column filter.
-     */
-    public static ColumnFilter between(Column col, Object min, Object max) {
-        return Filter.column(col).range(min, max);
-    }
-
-    /**
-     * Creates a tuple filter with {@link TupleFilter.Operator#In} op.
-     * For example: {@code (c1, c2) IN ((1, 2), (3, 4))}
-     *
-     * @param cols a list of columns on the left side of the filter.
-     * @param rows a list of tuple values.
-     * @return a tuple filter.
-     */
-    public static TupleFilter in(List<Column> cols, List<List<Object>> rows) {
-        return Filter.tuple(cols).in(rows);
-    }
-
-    /**
-     * Creates a tuple filter with {@link TupleFilter.Operator#NotIn} op.
-     * For example: {@code (c1, c2) NOT IN ((1, 2), (3, 4))}
-     *
-     * @param cols a list of columns on the left side of the filter.
-     * @param rows a list of tuple values.
-     * @return a tuple filter.
-     */
-    public static TupleFilter notIn(List<Column> cols, List<List<Object>> rows) {
-        return Filter.tuple(cols).notIn(rows);
-    }
-
-    /**
-     * Creates a composite filter with {@link CompositeFilter.Operator#And} op between the filters.
-     *
-     * @param filters a list of filters.
-     * @return a composite filter.
-     */
-    public static CompositeFilter and(Filter... filters) {
-        return Filter.and(filters);
-    }
-
-    /**
-     * Creates a composite filter with {@link CompositeFilter.Operator#And} op between the filters.
-     *
-     * @param filters a list of filters.
-     * @return a composite filter.
-     */
-    public static CompositeFilter and(List<Filter> filters) {
-        return Filter.and(filters);
-    }
-
-    /**
-     * Creates a composite filter with {@link CompositeFilter.Operator#Or} op between the filters.
-     *
-     * @param filters a list of filters.
-     * @return a composite filter.
-     */
-    public static CompositeFilter or(Filter... filters) {
-        return Filter.or(filters);
-    }
-
-    /**
-     * Creates a composite filter with {@link CompositeFilter.Operator#And} op between the filters.
-     *
-     * @param filters a list of filters.
-     * @return a composite filter.
-     */
-    public static CompositeFilter or(List<Filter> filters) {
-        return Filter.or(filters);
-    }
-
-    /**
-     * Creates a composite filter with {@link CompositeFilter.Operator#Not} op to negate the filter.
-     *
-     * @param filter a filter.
-     * @return a composite filter.
-     */
-    public static CompositeFilter not(Filter filter) {
-        return Filter.not(filter);
+    public static QueryExpr subquery(Query q) {
+        return Expression.subquery(q);
     }
 
     /* ========================= Joins ========================= */
@@ -557,8 +317,8 @@ public final class Dsl {
      * @param table a table to join with.
      * @return a table join.
      */
-    public static TableJoin inner(Table table) {
-        return Join.inner(table);
+    public static OnJoin inner(TableRef table) {
+        return Join.join(table);
     }
 
     /**
@@ -567,7 +327,7 @@ public final class Dsl {
      * @param table a table to join with.
      * @return a table join.
      */
-    public static TableJoin left(Table table) {
+    public static OnJoin left(TableRef table) {
         return Join.left(table);
     }
 
@@ -577,7 +337,7 @@ public final class Dsl {
      * @param table a table to join with.
      * @return a table join.
      */
-    public static TableJoin right(Table table) {
+    public static OnJoin right(TableRef table) {
         return Join.right(table);
     }
 
@@ -587,7 +347,7 @@ public final class Dsl {
      * @param table a table to join with.
      * @return a table join.
      */
-    public static TableJoin full(Table table) {
+    public static OnJoin full(TableRef table) {
         return Join.full(table);
     }
 
@@ -597,42 +357,41 @@ public final class Dsl {
      * @param table a table to join with.
      * @return a table join.
      */
-    public static TableJoin cross(Table table) {
+    public static CrossJoin cross(TableRef table) {
         return Join.cross(table);
     }
 
     /**
-     * Adds ON statement represented by a filter to a join.
+     * Creates a using join with the provided table.
      *
-     * @param j  a join.
-     * @param on a filter.
-     * @return a table join.
+     * @param table        a table to join.
+     * @param usingColumns a list of columns to be used for joining.
+     * @return A newly created instance of USING JOIN with the provided table and a list of columns.
      */
-    public static TableJoin on(TableJoin j, Filter on) {
-        return j.on(on);
+    public static UsingJoin cross(TableRef table, List<String> usingColumns) {
+        return Join.using(table, usingColumns);
     }
 
     /**
-     * Creates a join represented by a string expression.
+     * Creates a natural join with the provided table.
      *
-     * @param expression a string expression.
-     * @return an expression join.
+     * @param table a table to join with.
+     * @return a table join.
      */
-    public static ExpressionJoin joinExpr(String expression) {
-        return Join.expr(expression);
+    public static NaturalJoin natural(TableRef table) {
+        return Join.natural(table);
     }
 
     /* ========================= GROUP BY / ORDER BY ========================= */
 
     /**
-     * Creates a group by item from the provided table name and column name.
+     * Creates a group by item from the provided column name.
      *
-     * @param table the name of the column.
      * @param col   the name of the table.
      * @return a group by item.
      */
-    public static Group group(String table, String col) {
-        return Group.by(Column.of(col).from(table));
+    public static GroupItem group(String col) {
+        return GroupItem.by(col(col));
     }
 
     /**
@@ -640,11 +399,10 @@ public final class Dsl {
      *
      * @param table the name of the column.
      * @param col   the name of the table.
-     * @param alias the column alias.
      * @return a group by item.
      */
-    public static Group group(String table, String col, String alias) {
-        return Group.by(Column.of(col).from(table).as(alias));
+    public static GroupItem group(String table, String col) {
+        return GroupItem.by(col(table, col));
     }
 
     /**
@@ -654,8 +412,8 @@ public final class Dsl {
      * @param col a column to be used in a group by statement.
      * @return a group by item.
      */
-    public static Group group(Column col) {
-        return Group.by(col);
+    public static GroupItem group(Expression col) {
+        return GroupItem.by(col);
     }
 
     /**
@@ -665,8 +423,18 @@ public final class Dsl {
      * @param ordinal a value.
      * @return a group by item.
      */
-    public static Group group(int ordinal) {
-        return Group.by(ordinal);
+    public static GroupItem group(int ordinal) {
+        return GroupItem.by(ordinal);
+    }
+
+    /**
+     * Creates an order by item from the provided column name.
+     *
+     * @param col   the name of the column.
+     * @return an order by item.
+     */
+    public static OrderItem order(String col) {
+        return OrderItem.by(col(col));
     }
 
     /**
@@ -676,20 +444,8 @@ public final class Dsl {
      * @param col   the name of the column.
      * @return an order by item.
      */
-    public static Order order(String table, String col) {
-        return Order.by(Column.of(col).from(table));
-    }
-
-    /**
-     * Creates an order by item from the provided table name and column name.
-     *
-     * @param table the name of the table.
-     * @param col   the name of the column.
-     * @param alias the column alias.
-     * @return an order by item.
-     */
-    public static Order order(String table, String col, String alias) {
-        return Order.by(Column.of(col).from(table).as(alias));
+    public static OrderItem order(String table, String col) {
+        return OrderItem.by(col(table, col));
     }
 
     /**
@@ -699,51 +455,30 @@ public final class Dsl {
      * @param col a column
      * @return an order by item.
      */
-    public static Order order(Column col) {
-        return Order.by(col);
-    }
-
-    /**
-     * Creates an ascending order by item from the provided column.
-     * For example: {@code OrderBy c1 ASC, c2 ASC, c3 ASC}
-     *
-     * @param col a column
-     * @return an order by item.
-     */
-    public static Order asc(Column col) {
-        return Order.by(col).asc();
-    }
-
-    /**
-     * Creates a descending order by item from the provided column.
-     * For example: {@code OrderBy c1 DESC, c2 DESC, c3 DESC}
-     *
-     * @param col a column
-     * @return an order by item.
-     */
-    public static Order desc(Column col) {
-        return Order.by(col).desc();
+    public static OrderItem order(Expression col) {
+        return OrderItem.by(col);
     }
 
     /* ========================= Query ========================= */
 
     /**
-     * Creates an empty query object.
+     * Creates a {@link SelectQuery} with the list of items.
      *
+     * @param items a list of items to select.
      * @return a query.
      */
-    public static SelectQuery query() {
-        return new SelectQuery();
+    public static SelectQuery select(SelectItem... items) {
+        return Query.select(items);
     }
 
     /**
-     * Creates a {@link SelectQuery} with the list of columns.
+     * Creates a {@link SelectQuery} with the list of expressions.
      *
-     * @param columns a list of columns to select.
+     * @param expressions a list of expressions to select.
      * @return a query.
      */
-    public static SelectQuery select(Column... columns) {
-        return Query.select(columns);
+    public static SelectQuery select(Expression... expressions) {
+        return Query.select(expressions);
     }
 
     /**
@@ -752,8 +487,8 @@ public final class Dsl {
      * @param ctes a list of CTE queries.
      * @return a WITH query.
      */
-    public static WithQuery with(CteQuery... ctes) {
-        return Query.with(ctes);
+    public static WithQuery with(CteDef... ctes) {
+        return Query.with(List.of(ctes), null);
     }
 
     /**
@@ -770,8 +505,27 @@ public final class Dsl {
      * @param name the name of the CTE statement (TABLE1 in the example).
      * @return a CTE query.
      */
-    public static CteQuery cte(String name) {
+    public static CteDef cte(String name) {
         return Query.cte(name);
+    }
+
+    /**
+     * Creates a query that represents a CTE statement.
+     * <p>Example of the CTE statement inside the WITH:</p>
+     * <pre>
+     *     {@code
+     *     TABLE1 AS (
+     *        SELECT * FROM SCHEMA.TABLE1
+     *     )
+     *     }
+     * </pre>
+     *
+     * @param name the name of the CTE statement (TABLE1 in the example).
+     * @param body a sub query wrapped by the CTE.
+     * @return a CTE query.
+     */
+    public static CteDef cte(String name, Query body) {
+        return Query.cte(name, body);
     }
 
     /**
@@ -788,10 +542,10 @@ public final class Dsl {
      * </pre>
      *
      * @param terms a list of sub queries.
-     * @param ops   a list of operators. See {@link CompositeQuery.Kind}
+     * @param ops   a list of operators. See {@link SetOperator}
      * @return a composite query.
      */
-    public static CompositeQuery composite(List<Query> terms, List<CompositeQuery.Op> ops) {
-        return Query.composite(terms, ops);
+    public static CompositeQuery compose(List<Query> terms, List<SetOperator> ops) {
+        return Query.compose(terms, ops);
     }
 }

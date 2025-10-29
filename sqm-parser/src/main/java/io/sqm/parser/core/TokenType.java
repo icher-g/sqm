@@ -18,10 +18,10 @@ public enum TokenType {
     EQ, NEQ1, NEQ2, LT, LTE, GT, GTE,
 
     // keywords (recognized case-insensitively)
-    AND, OR, NOT, IN, LIKE, BETWEEN, IS, NULL, TRUE, FALSE, DISTINCT,
+    AND, OR, NOT, IN, LIKE, BETWEEN, SYMMETRIC, IS, NULL, TRUE, FALSE, DISTINCT, EXISTS, ESCAPE, ANY,
 
     // join-specific (kept, since core is shared; harmless for filters)
-    JOIN, INNER, LEFT, RIGHT, FULL, OUTER, CROSS, ON, AS,
+    JOIN, INNER, LEFT, RIGHT, FULL, OUTER, CROSS, USING, NATURAL, ON, AS,
 
     // order by specific
     ASC, DESC, NULLS, FIRST, LAST, DEFAULT, COLLATE,
@@ -31,7 +31,7 @@ public enum TokenType {
 
     // query
     WITH, RECURSIVE, SELECT, FROM, WHERE, GROUP, HAVING, ORDER, LIMIT, OFFSET, FETCH, NEXT, ROW, ROWS, ONLY, BY, TOP,
-    UNION, INTERSECT, EXCEPT, ALL,
+    UNION, INTERSECT, EXCEPT, ALL, VALUES,
 
     EOF
 }

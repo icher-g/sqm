@@ -8,8 +8,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -39,8 +37,7 @@ public class DslTest {
     @Test
     @DisplayName("1) Simple SELECT … FROM")
     void simpleSelectFrom() {
-        var q = query()
-            .select(col("u", "id"), col("u", "name"))
+        var q = select(col("u", "id"), col("u", "name"))
             .from(tbl("users").as("u"));
 
         SqlText out = render(q);
@@ -54,11 +51,10 @@ public class DslTest {
     @Test
     @DisplayName("2) WHERE + ORDER BY + LIMIT/OFFSET")
     void whereOrderLimitOffset() {
-        var q = query()
-            .select(col("u", "id"), col("u", "name"))
+        var q = select(col("u", "id"), col("u", "name"))
             .from(tbl("users").as("u"))
-            .where(eq(col("u", "active"), true))
-            .orderBy(asc(col("u", "name")))
+            .where(col("u", "active").eq(true))
+            .orderBy(order("u", "name").asc())
             .limit(10)
             .offset(20);
 
@@ -76,11 +72,10 @@ public class DslTest {
     @Test
     @DisplayName("3) Aggregation + GROUP BY + HAVING")
     void groupByHaving() {
-        var q = query()
-            .select(func("count", star()).as("cnt"), col("o", "status"))
+        var q = select(func("count", starArg()).as("cnt"), sel(col("o", "status")))
             .from(tbl("orders").as("o"))
             .groupBy(group(col("o", "status")))
-            .having(gt(func("count", star()), 10));
+            .having(func("count", starArg()).gt(10));
 
         SqlText out = render(q);
         assertSql(
@@ -95,11 +90,10 @@ public class DslTest {
     @Test
     @DisplayName("4) INNER JOIN with predicate + WHERE")
     void innerJoinWithWhere() {
-        var q = query()
-            .select(col("u", "id"), col("u", "name"), col("o", "total"))
+        var q = select(col("u", "id"), col("u", "name"), col("o", "total"))
             .from(tbl("users").as("u"))
-            .join(inner(tbl("orders").as("o")).on(eq(col("u", "id"), col("o", "user_id"))))
-            .where(gt(col("o", "total"), 100));
+            .join(inner(tbl("orders").as("o")).on(col("u", "id").eq(col("o", "user_id"))))
+            .where(col("o", "total").gt(100));
 
         SqlText out = render(q);
         assertSql(
@@ -116,14 +110,13 @@ public class DslTest {
     @Test
     @DisplayName("5) CASE expr in SELECT list")
     void caseExpression() {
-        var q = query()
-            .select(
-                col("p", "id"),
-                kase(
-                    when(eq(col("p", "status"), "A")).then(val("Active")),
-                    when(eq(col("p", "status"), "I")).then(val("Inactive"))
-                ).elseValue(val("Unknown")).as("status_text")
-            )
+        var q = select(
+            sel(col("p", "id")),
+            kase(
+                when(col("p", "status").eq("A")).then(lit("Active")),
+                when(col("p", "status").eq("I")).then(lit("Inactive"))
+            ).elseExpr(lit("Unknown")).as("status_text")
+        )
             .from(tbl("products").as("p"));
 
         SqlText out = render(q);
@@ -142,16 +135,17 @@ public class DslTest {
     @Test
     @DisplayName("6) Tuple IN")
     void tupleIn() {
-        var q = query()
-            .select(col("id"), col("first_name"), col("last_name"))
+        var q = select(col("id"), col("first_name"), col("last_name"))
             .from(tbl("person"))
-            .where(in(
-                List.of(col("first_name"), col("last_name")),
-                List.of(
-                    List.of("John", "Doe"),
-                    List.of("Jane", "Smith")
+            .where(
+                row(col("first_name"), col("last_name"))
+                .in(
+                    rows(
+                        row("John", "Doe"),
+                        row("Jane", "Smith")
+                    )
                 )
-            ));
+            );
 
         SqlText out = render(q);
         // Depending on your placeholders strategy, the VALUES may be literal or parameterized.

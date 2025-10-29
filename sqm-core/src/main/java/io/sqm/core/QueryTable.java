@@ -1,33 +1,36 @@
 package io.sqm.core;
 
-import io.sqm.core.traits.HasAlias;
-import io.sqm.core.traits.HasQuery;
+import io.sqm.core.internal.QueryTableImpl;
 
 /**
- * Represents a sub query used in a FROM statement.
- *
- * <p>For example:</p>
- * <pre>
- *     {@code
- *     SELECT *
- *     FROM (
- *      SELECT * FROM t
- *     )
- *     }
- * </pre>
- *
- * @param query a query.
- * @param alias an alias for a query.
+ * A subquery used as a table source: (SELECT ...) AS alias
  */
-public record QueryTable(Query query, String alias) implements Table, HasQuery, HasAlias {
+public non-sealed interface QueryTable extends TableRef {
 
     /**
-     * Adds an alias to the table.
+     * Wraps a query as a table for use in FROM statement.
      *
-     * @param alias an alias.
-     * @return A new instance of the {@link QueryTable} with the alias.
+     * @param query a query to wrap.
+     * @return A newly created instance of a wrapped query.
      */
-    public QueryTable as(String alias) {
-        return new QueryTable(query, alias);
+    static QueryTable of(Query query) {
+        return new QueryTableImpl(query, null);
+    }
+
+    /**
+     * Gets a sub query.
+     *
+     * @return a sub query.
+     */
+    Query query();
+
+    /**
+     * Adds an alias to a query table.
+     *
+     * @param alias an alias to add.
+     * @return this.
+     */
+    default QueryTable as(String alias) {
+        return new QueryTableImpl(query(), alias);
     }
 }

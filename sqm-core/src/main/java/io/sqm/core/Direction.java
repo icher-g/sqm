@@ -1,8 +1,3 @@
 package io.sqm.core;
 
-/**
- * An order by direction.
- */
-public enum Direction {
-    Asc, Desc
-}
+public enum Direction { ASC, DESC }

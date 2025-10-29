@@ -1,6 +1,6 @@
 package io.sqm.render.spi;
 
-import io.sqm.core.Entity;
+import io.sqm.core.Node;
 import io.sqm.render.*;
 
 import java.util.Collection;
@@ -41,23 +41,23 @@ public interface RenderContext {
     }
 
     /**
-     * Renders the entity into an {@link SqlWriter}.
+     * Renders the node into an {@link SqlWriter}.
      *
-     * @param entity an entity to render.
-     * @param w      a writer.
+     * @param node a node to render.
+     * @param w    a writer.
      */
-    default <T extends Entity> void render(T entity, SqlWriter w) {
-        w.append(entity);
+    default <T extends Node> void render(T node, SqlWriter w) {
+        w.append(node);
     }
 
     /**
-     * Renders the entity into an {@link SqlWriter}.
+     * Renders the node into an {@link SqlWriter}.
      *
-     * @param entity an entity to render.
+     * @param node a node to render.
      */
-    default <T extends Entity> SqlText render(T entity) {
+    default <T extends Node> SqlText render(T node) {
         var w = new DefaultSqlWriter(this);
-        w.append(entity);
+        w.append(node);
         return w.toText(params().snapshot());
     }
 }

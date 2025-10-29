@@ -8,23 +8,22 @@ import static io.sqm.dsl.Dsl.*;
 
 public final class Example01_SelectJoinGroup {
     public static void main(String[] args) {
-        Query q = query()
-            .select(
-                col("u", "user_name"),
-                col("o", "status"),
-                func("count", star()).as("cnt")
-            )
-            .from(tbl("orders").as("o"))
-            .join(
-                inner(tbl("users").as("u"))
-                    .on(col("u", "id").eq(col("o", "user_id")))
-            )
-            .where(col("o", "status").in("A", "B"))
-            .groupBy(group("u", "user_name"), group("o", "status"))
-            .having(func("count", star()).gt(10))
-            .orderBy(desc(col("cnt")))
-            .limit(10)
-            .offset(20);
+        Query q = select(
+            sel("u", "user_name"),
+            sel("o", "status"),
+            func("count", starArg()).as("cnt")
+        )
+        .from(tbl("orders").as("o"))
+        .join(
+            inner(tbl("users").as("u"))
+                .on(col("u", "id").eq(col("o", "user_id")))
+        )
+        .where(col("o", "status").in("A", "B"))
+        .groupBy(group("u", "user_name"), group("o", "status"))
+        .having(func("count", starArg()).gt(10))
+        .orderBy(order("cnt"))
+        .limit(10)
+        .offset(20);
 
         var ctx = RenderContext.of(new AnsiDialect());
         var sql = ctx.render(q);

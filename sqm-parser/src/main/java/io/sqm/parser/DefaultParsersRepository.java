@@ -1,6 +1,6 @@
 package io.sqm.parser;
 
-import io.sqm.core.Entity;
+import io.sqm.core.Node;
 import io.sqm.core.repos.Handler;
 import io.sqm.parser.spi.Parser;
 import io.sqm.parser.spi.ParsersRepository;
@@ -17,7 +17,7 @@ public class DefaultParsersRepository implements ParsersRepository {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends Entity> Parser<T> get(Class<T> type) {
+    public <T extends Node> Parser<T> get(Class<T> type) {
         var p = parsers.get(type);
         if (p != null) {
             return (Parser<T>) p;
@@ -26,7 +26,7 @@ public class DefaultParsersRepository implements ParsersRepository {
     }
 
     @Override
-    public <T extends Entity> ParsersRepository register(Class<T> type, Parser<?> handler) {
+    public <T extends Node> ParsersRepository register(Class<T> type, Parser<?> handler) {
         parsers.put(type, handler);
         return this;
     }

@@ -50,51 +50,45 @@ Core components:
 
 ## 🚀 Quick Example
 
-### Build a query with the DSL
+### Build a query with the DSL and Render
 
 ```java
-
-
-var q = query()
-    .select(col("u", "user_name"), col("o", "status"), func("count", star()).as("cnt"))
-    .from(table("orders").as("o"))
+Query q = select(
+        sel("u", "user_name"),
+        sel("o", "status"),
+        func("count", starArg()).as("cnt")
+    )
+    .from(tbl("orders").as("o"))
+    .join(
+        inner(tbl("users").as("u"))
+            .on(col("u", "id").eq(col("o", "user_id")))
+    )
     .where(col("o", "status").in("A", "B"))
-    .join(inner(table("users").as("u")).on(col("u", "id").eq(col("o", "user_id"))))
     .groupBy(group("u", "user_name"), group("o", "status"))
-    .having(func("count", star()).gt(10));
-```
+    .having(func("count", starArg()).gt(10))
+    .orderBy(order("cnt"))
+    .limit(10)
+    .offset(20);
 
-**Rendered (ANSI):**
-```sql
-SELECT u.user_name, o.status, count(*) AS cnt
-FROM orders AS o
-INNER JOIN users AS u ON u.id = o.user_id
-WHERE o.status in ('A', 'B')
-GROUP BY u.user_name, o.status
-HAVING count(*) > 10
-```
-
----
-
-### Parse SQL statements into a Model and Re-render
-
-```java
-QueryBuilder qb = QueryBuilder.newBuilder();
-
-qb.select("u.user_name", "o.status", "count(*) AS cnt")
-  .from("orders AS o")
-  .where("o.status IN ('A','B')")
-  .innerJoin("users AS u ON u.id = o.user_id")
-  .groupBy("u.user_name, o.status")
-  .having("count(*) > 10");
-
-var q = qb.build();
 var ctx = RenderContext.of(new AnsiDialect());
 var sql = ctx.render(q).sql();
 
 System.out.println(sql);
 ```
 
+**Rendered (ANSI):**
+
+```sql
+SELECT u.user_name, o.status, count(*) AS cnt
+FROM orders AS o
+INNER JOIN users AS u ON u.id = o.user_id
+WHERE o.status IN ('A', 'B')
+GROUP BY u.user_name, o.status
+HAVING count(*) > 10
+ORDER BY cnt DESC
+OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY
+```
+---
 ### Parse SQL into a Model
 
 ```java
@@ -113,45 +107,37 @@ if (pr.isError()) {
 }
 var query = pr.value();
 ```
-
-
 ---
 
 ### Serialize to JSON
 
 ```java
-ObjectMapper mapper = SqmMapperFactory.createDefault();
+ObjectMapper mapper = SqmJsonMixins.createPretty();
 String json = mapper.writeValueAsString(query);
 ```
 
 Output example:
 ```json
 {
-  "kind" : "table",
-  "joinType" : "Inner",
-  "table" : {
-    "kind" : "named",
-    "name" : "orders",
-    "alias" : "o",
-    "schema" : null
+  "kind" : "on",
+  "right" : {
+    "kind": "table",
+    "name": "users",
+    "alias": "u"
   },
+  "kind" : "INNER",
   "on" : {
-    "kind" : "column",
-    "column" : {
-      "kind" : "named",
-      "name" : "id",
-      "alias" : null,
-      "table" : "u"
-    },
-    "op" : "Eq",
-    "values" : {
+    "kind": "comparison",
+    "lhs":  {
       "kind" : "column",
-      "column" : {
-        "kind" : "named",
-        "name" : "user_id",
-        "alias" : null,
-        "table" : "o"
-      }
+      "tableAlias" : "u",
+      "name" : "id"
+    },
+    "operator": "EQ",
+    "rhs": {
+      "kind" : "column",
+      "tableAlias" : "o",
+      "name" : "user_id"
     }
   }
 }

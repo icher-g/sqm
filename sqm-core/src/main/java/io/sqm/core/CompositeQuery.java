@@ -1,12 +1,9 @@
 package io.sqm.core;
 
-import io.sqm.core.traits.HasLimit;
-import io.sqm.core.traits.HasOffset;
-import io.sqm.core.traits.HasOrderBy;
-import io.sqm.core.traits.HasTerms;
+import io.sqm.core.internal.CompositeQueryImpl;
+import io.sqm.core.internal.OrderByImpl;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Represents a composite query.
@@ -20,34 +17,69 @@ import java.util.Objects;
  *     (SELECT * FROM TABLE3)
  *     }
  * </pre>
- *
- * @param terms size >= 1
- * @param ops   size == terms.size()-1
  */
-public record CompositeQuery(List<Query> terms, List<Op> ops, OrderBy orderBy, LimitOffset limitOffset) implements Query, HasTerms, HasLimit, HasOffset, HasOrderBy {
+public non-sealed interface CompositeQuery extends Query {
 
-    public CompositeQuery(List<Query> terms, List<Op> ops) {
-        this(terms, ops, null, null);
+    /**
+     * Creates a composite query from a list of sub queries and a list of operators.
+     *
+     * @param terms a list of sub queries. size >= 1.
+     * @param ops   a list of operators. size == terms.size()-1.
+     * @return A newly created composite query.
+     */
+    static CompositeQuery of(List<Query> terms, List<SetOperator> ops) {
+        return new CompositeQueryImpl(terms, ops, null, null);
     }
 
-    public CompositeQuery(List<Query> terms, List<Op> ops, OrderBy orderBy, LimitOffset limitOffset) {
-        this.terms = Objects.requireNonNull(terms);
-        this.ops = Objects.requireNonNull(ops);
-        this.orderBy = orderBy;
-        this.limitOffset = limitOffset;
-        if (terms.isEmpty() || ops.size() != terms.size() - 1) {
-            throw new IllegalArgumentException("CompositeQuery: operators must be terms.size()-1");
-        }
+    /**
+     * Creates a composite query from a list of sub queries and a list of operators.
+     *
+     * @param terms a list of sub queries. size >= 1.
+     * @param ops   a list of operators. size == terms.size()-1.
+     * @param orderBy an OrderBy statement. Can be NULL.
+     * @param limitOffset a limit and offest definition.
+     * @return A newly created composite query.
+     */
+    static CompositeQuery of(List<Query> terms, List<SetOperator> ops, OrderBy orderBy, LimitOffset limitOffset) {
+        return new CompositeQueryImpl(terms, ops, orderBy, limitOffset);
     }
 
-    @Override
-    public Long limit() {
-        return limitOffset == null ? null : limitOffset.limit();
-    }
+    /**
+     * Gets a list of sub queries.
+     *
+     * @return a list of sub queries.
+     */
+    List<Query> terms();
 
-    @Override
-    public Long offset() {
-        return limitOffset == null ? null : limitOffset.offset();
+    /**
+     * Gets a list of operations. size = terms.size() - 1
+     *
+     * @return a list of operations.
+     */
+    List<SetOperator> ops();
+
+    /**
+     * Gets an OrderBy statement. Can be NULL.
+     *
+     * @return an OrderBy statement.
+     */
+    OrderBy orderBy();
+
+    /**
+     * Gets a limit and offest definition.
+     *
+     * @return limit/offset definition or NULL if is not defined.
+     */
+    LimitOffset limitOffset();
+
+    /**
+     * Adds an OrderBy statement to the composite query.
+     *
+     * @param items a list of items in the OrderBy statement.
+     * @return A new instance of the composite query with the provided OrderBy items. All the rest of the fields are preserved.
+     */
+    default CompositeQuery orderBy(List<OrderItem> items) {
+        return new CompositeQueryImpl(terms(), ops(), new OrderByImpl(items), limitOffset());
     }
 
     /**
@@ -56,18 +88,8 @@ public record CompositeQuery(List<Query> terms, List<Op> ops, OrderBy orderBy, L
      * @param items a list of items in the OrderBy statement.
      * @return A new instance of the composite query with the provided OrderBy items. All the rest of the fields are preserved.
      */
-    public CompositeQuery orderBy(List<Order> items) {
-        return new CompositeQuery(terms, ops, new OrderBy(items), limitOffset);
-    }
-
-    /**
-     * Adds an OrderBy statement to the composite query.
-     *
-     * @param items a list of items in the OrderBy statement.
-     * @return A new instance of the composite query with the provided OrderBy items. All the rest of the fields are preserved.
-     */
-    public CompositeQuery orderBy(Order... items) {
-        return new CompositeQuery(terms, ops, new OrderBy(List.of(items)), limitOffset);
+    default CompositeQuery orderBy(OrderItem... items) {
+        return new CompositeQueryImpl(terms(), ops(), new OrderByImpl(List.of(items)), limitOffset());
     }
 
     /**
@@ -76,8 +98,8 @@ public record CompositeQuery(List<Query> terms, List<Op> ops, OrderBy orderBy, L
      * @param limit a limit to add to the OrderBy statement.
      * @return A new instance of the composite query with the provided limit. All the rest of the fields are preserved.
      */
-    public CompositeQuery limit(Long limit) {
-        return new CompositeQuery(terms, ops, orderBy, LimitOffset.of(limit, offset()));
+    default CompositeQuery limit(Long limit) {
+        return new CompositeQueryImpl(terms(), ops(), orderBy(), LimitOffset.of(limit, limitOffset() == null ? null : limitOffset().offset()));
     }
 
     /**
@@ -86,45 +108,7 @@ public record CompositeQuery(List<Query> terms, List<Op> ops, OrderBy orderBy, L
      * @param offset an offset to add to the OrderBy statement.
      * @return A new instance of the composite query with the provided offset. All the rest of the fields are preserved.
      */
-    public CompositeQuery offset(Long offset) {
-        return new CompositeQuery(terms, ops, orderBy, LimitOffset.of(limit(), offset));
-    }
-
-    public enum Kind {
-        Union,
-        Intersect,
-        Except
-    }
-
-    public record Op(Kind kind, boolean all) {
-        public Op(Kind kind, boolean all) {
-            this.kind = Objects.requireNonNull(kind, "kind");
-            this.all = all;
-        }
-
-        public static Op union() {
-            return new Op(Kind.Union, false);
-        }
-
-        public static Op unionAll() {
-            return new Op(Kind.Union, true);
-        }
-
-        public static Op intersect() {
-            return new Op(Kind.Intersect, false);
-        }
-
-        public static Op intersectAll() {
-            return new Op(Kind.Intersect, true);
-        }
-
-        public static Op except() {
-            return new Op(Kind.Except, false);
-        }
-
-        public static Op exceptAll() {
-            return new Op(Kind.Except, true);
-        }
+    default CompositeQuery offset(Long offset) {
+        return new CompositeQueryImpl(terms(), ops(), orderBy(), LimitOffset.of(limitOffset() == null ? null : limitOffset().limit(), offset));
     }
 }
-

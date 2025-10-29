@@ -1,40 +1,27 @@
 package io.sqm.core;
 
+import io.sqm.core.internal.LimitOffsetImpl;
+
 /**
- * LIMIT/OFFSET as a value object. Nulls mean “not set”.
+ * LIMIT/OFFSET pair (or OFFSET/FETCH mapped to these two).
  */
-public record LimitOffset(Long limit, Long offset) implements Entity {
-
-    public LimitOffset {
-        if (limit != null && limit < 0) {
-            throw new IllegalArgumentException("limit must be >= 0");
-        }
-        if (offset != null && offset < 0) {
-            throw new IllegalArgumentException("offset must be >= 0");
-        }
-        // normalize 0-length strings / etc. not needed; just keep nulls or >=0
-    }
-
+public non-sealed interface LimitOffset extends Node {
     /**
      * Convenient factory methods
      */
-    public static LimitOffset limit(long limit) {
-        return new LimitOffset(limit, null);
+    static LimitOffset limit(long limit) {
+        return new LimitOffsetImpl(limit, null);
     }
 
-    public static LimitOffset offset(long offset) {
-        return new LimitOffset(null, offset);
+    static LimitOffset offset(long offset) {
+        return new LimitOffsetImpl(null, offset);
     }
 
-    public static LimitOffset of(Long limit, Long offset) {
-        return new LimitOffset(limit, offset);
+    static LimitOffset of(Long limit, Long offset) {
+        return new LimitOffsetImpl(limit, offset);
     }
 
-    public boolean hasLimit() {
-        return limit != null;
-    }
+    Long limit();   // null if absent
 
-    public boolean hasOffset() {
-        return offset != null;
-    }
+    Long offset();  // null if absent
 }

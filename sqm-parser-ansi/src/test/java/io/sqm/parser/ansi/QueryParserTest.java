@@ -98,7 +98,7 @@ class QueryParserTest {
             WITH RECURSIVE t(n) AS (
                SELECT 1
                UNION ALL
-               SELECT n FROM t WHERE n < 10
+               (SELECT n FROM t WHERE n < 10)
             )
             SELECT * FROM t
             """);
@@ -122,7 +122,7 @@ class QueryParserTest {
             // If your Query exposes a getter for FROM, assert it:
             // assertNull(q.from(), "FROM must be null for SELECT 1");
             // At least check we have one projection:
-            Assertions.assertFalse(q.columns().isEmpty(), "SELECT list should not be empty");
+            Assertions.assertFalse(q.select().isEmpty(), "SELECT list should not be empty");
         }
 
         @Test
@@ -155,8 +155,8 @@ class QueryParserTest {
             var q = (SelectQuery) parseOk(sql);
 
             // Spot-check a few stable properties:
-            Assertions.assertEquals(3, q.columns().size(), "3 select items expected");
-            Assertions.assertNotNull(q.table(), "FROM should be present");
+            Assertions.assertEquals(3, q.select().size(), "3 select items expected");
+            Assertions.assertNotNull(q.from(), "FROM should be present");
             Assertions.assertFalse(q.joins().isEmpty(), "At least one JOIN expected");
             Assertions.assertNotNull(q.where(), "WHERE should be parsed");
             Assertions.assertFalse(q.groupBy().items().isEmpty(), "GROUP BY items expected");
@@ -223,7 +223,7 @@ class QueryParserTest {
         void selectListTopLevelCommas() {
             var sql = "SELECT func(a, b), (x), y";
             var q = (SelectQuery) parseOk(sql);
-            Assertions.assertEquals(3, q.columns().size(), "Three top-level select items expected");
+            Assertions.assertEquals(3, q.select().size(), "Three top-level select items expected");
         }
     }
 
