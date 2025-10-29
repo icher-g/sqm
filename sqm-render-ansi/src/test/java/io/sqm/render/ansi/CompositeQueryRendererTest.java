@@ -1,14 +1,16 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.*;
+import io.sqm.core.internal.CompositeQueryImpl;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
-import static io.sqm.core.CompositeQuery.Op.*;
+import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CompositeQueryRendererTest {
@@ -16,9 +18,8 @@ class CompositeQueryRendererTest {
     /* ===== helpers ===== */
 
     private static SelectQuery sel(String table, String alias, String... cols) {
-        var q = new SelectQuery();
-        for (String c : cols) q.select(Column.of(c).from(alias));
-        return q.from(Table.of(table).as(alias));
+        return select(Arrays.stream(cols).map(c -> col(alias, c)).toArray(ColumnExpr[]::new))
+            .from(tbl(table).as(alias));
     }
 
     private static String render(CompositeQuery cq) {
@@ -34,8 +35,8 @@ class CompositeQueryRendererTest {
         var t1 = sel("users", "u", "id", "name");
         var t2 = sel("archived_users", "a", "id", "name");
 
-        var cq = new CompositeQuery(List.of(t1, t2), List.of(unionAll()))
-            .orderBy(Order.by(Column.of("id").from("1")).asc()) // assuming ordinal or expr handled by your Order renderer
+        var cq = t1.unionAll(t2)
+            .orderBy(order(col("1", "id")).asc())
             .limit(10L);
 
         var sql = render(cq);
@@ -53,11 +54,7 @@ class CompositeQueryRendererTest {
         var t2 = sel("t2", "t2", "id");
         var t3 = sel("t3", "t3", "id");
 
-        var cq = new CompositeQuery(
-            List.of(t1, t2, t3),
-            List.of(union(), intersect())
-        ).offset(20L).limit(5L);
-
+        var cq = t1.union(t2).intersect(t3).offset(20L).limit(5L);
         var sql = render(cq);
 
         assertTrue(sql.contains(") UNION ("),
@@ -74,7 +71,7 @@ class CompositeQueryRendererTest {
         var left = sel("a", "a", "k");
         var right = sel("b", "b", "k");
 
-        var cq = new CompositeQuery(List.of(left, right), List.of(exceptAll()));
+        var cq = left.exceptAll(right);
 
         var sql = render(cq);
         assertTrue(sql.contains(") EXCEPT ALL ("), "Expected EXCEPT ALL");
@@ -86,12 +83,9 @@ class CompositeQueryRendererTest {
     @DisplayName("Term with ORDER BY -> throws (ANSI forbids per-term ORDER)")
     void termWithOrderBy_throws() {
         var t1 = sel("users", "u", "id");
-        var t2 = sel("users2", "u2", "id").orderBy(Order.by(Column.of("id").from("u2")).asc());
+        var t2 = sel("users2", "u2", "id").orderBy(order(col("u2", "id")).asc());
 
-        var cq = new CompositeQuery(List.of(t1, t2), List.of(union()));
-
-        var ex = assertThrows(UnsupportedOperationException.class,
-            () -> render(cq));
+        var ex = assertThrows(UnsupportedOperationException.class, () -> t1.union(t2));
         assertTrue(ex.getMessage().toLowerCase().contains("operands"));
         assertTrue(ex.getMessage().toLowerCase().contains("order"));
     }
@@ -101,7 +95,7 @@ class CompositeQueryRendererTest {
     void badConstructorSizes_throws() {
         var t1 = sel("t1", "t1", "id");
         var ex = assertThrows(IllegalArgumentException.class,
-            () -> new CompositeQuery(List.of(t1), List.of(union())));
+            () -> new CompositeQueryImpl(List.of(t1), List.of(SetOperator.UNION), null, null));
         assertTrue(ex.getMessage().contains("terms.size()"));
     }
 }

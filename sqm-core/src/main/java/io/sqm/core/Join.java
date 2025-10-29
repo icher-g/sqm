@@ -1,75 +1,124 @@
 package io.sqm.core;
 
+import io.sqm.core.internal.CrossJoinImpl;
+import io.sqm.core.internal.NaturalJoinImpl;
+import io.sqm.core.internal.OnJoinImpl;
+import io.sqm.core.internal.UsingJoinImpl;
+
+import java.util.List;
+
 /**
- * A base interface for all join implementations.
+ * A single JOIN step that attaches a right-side TableRef to the current FROM-chain.
+ * For CROSS/NATURAL joins, on() may be null. For USING, use usingColumns().
  */
-public interface Join extends Entity {
+public sealed interface Join extends Node permits CrossJoin, NaturalJoin, OnJoin, UsingJoin {
+
     /**
-     * Creates an {@link JoinType#Inner} join with the provided table.
+     * Creates an inner join with the provided table.
      *
-     * @param table a table to join with.
-     * @return A newly created instance of a join.
+     * @param right a table to join.
+     * @return A newly created instance of INNER JOIN with the provided table.
      */
-    static TableJoin inner(Table table) {
-        return new TableJoin(JoinType.Inner, table, null);
+    static OnJoin join(TableRef right) {
+        return new OnJoinImpl(right, JoinKind.INNER, null);
     }
 
     /**
-     * Creates a {@link JoinType#Left} join with the provided table.
+     * Creates a left join with the provided table.
      *
-     * @param table a table to join with.
-     * @return A newly created instance of a join.
+     * @param right a table to join.
+     * @return A newly created instance of LEFT JOIN with the provided table.
      */
-    static TableJoin left(Table table) {
-        return new TableJoin(JoinType.Left, table, null);
+    static OnJoin left(TableRef right) {
+        return new OnJoinImpl(right, JoinKind.LEFT, null);
     }
 
     /**
-     * Creates a {@link JoinType#Right} join with the provided table.
+     * Creates a right join with the provided table.
      *
-     * @param table a table to join with.
-     * @return A newly created instance of a join.
+     * @param right a table to join.
+     * @return A newly created instance of RIGHT JOIN with the provided table.
      */
-    static TableJoin right(Table table) {
-        return new TableJoin(JoinType.Right, table, null);
+    static OnJoin right(TableRef right) {
+        return new OnJoinImpl(right, JoinKind.RIGHT, null);
     }
 
     /**
-     * Creates a {@link JoinType#Full} join with the provided table.
+     * Creates a full join with the provided table.
      *
-     * @param table a table to join with.
-     * @return A newly created instance of a join.
+     * @param right a table to join.
+     * @return A newly created instance of FULL JOIN with the provided table.
      */
-    static TableJoin full(Table table) {
-        return new TableJoin(JoinType.Full, table, null);
+    static OnJoin full(TableRef right) {
+        return new OnJoinImpl(right, JoinKind.FULL, null);
     }
 
     /**
-     * Creates a {@link JoinType#Cross} join with the provided table.
+     * Creates a cross join with the provided table.
      *
-     * @param table a table to join with.
-     * @return A newly created instance of a join.
+     * @param right a table to join.
+     * @return A newly created instance of CROSS JOIN with the provided table.
      */
-    static TableJoin cross(Table table) {
-        return new TableJoin(JoinType.Cross, table, null);
+    static CrossJoin cross(TableRef right) {
+        return new CrossJoinImpl(right);
     }
 
     /**
-     * Creates a join represented by string expr. This should be used only if there is no other implementations of the join that
-     * meet the requirements.
+     * Creates a using join with the provided table.
      *
-     * @param exp a string representation of the join.
-     * @return A newly created instance of a join.
+     * @param right        a table to join.
+     * @param usingColumns a list of columns to be used for joining.
+     * @return A newly created instance of USING JOIN with the provided table and a list of columns.
      */
-    static ExpressionJoin expr(String exp) {
-        return new ExpressionJoin(exp);
+    static UsingJoin using(TableRef right, List<String> usingColumns) {
+        return new UsingJoinImpl(right, usingColumns);
     }
 
-    enum JoinType {
-        Inner,
-        Left,
-        Right,
-        Full,
-        Cross
+    /**
+     * Creates a natural join with the provided table.
+     *
+     * @param right a table to join.
+     * @return A newly created instance of NATURAL JOIN with the provided table.
+     */
+    static NaturalJoin natural(TableRef right) {
+        return new NaturalJoinImpl(right);
     }
+
+    /**
+     * Casts this to {@link OnJoin}.
+     *
+     * @return {@link OnJoin}.
+     */
+    default OnJoin asOn() {
+        return (OnJoin) this;
+    }
+
+    /**
+     * Casts this to {@link CrossJoin}.
+     *
+     * @return {@link CrossJoin}.
+     */
+    default CrossJoin asCross() {
+        return (CrossJoin) this;
+    }
+
+    /**
+     * Casts this to {@link UsingJoin}.
+     *
+     * @return {@link UsingJoin}.
+     */
+    default UsingJoin asUsing() {
+        return (UsingJoin) this;
+    }
+
+    /**
+     * Casts this to {@link NaturalJoin}.
+     *
+     * @return {@link NaturalJoin}.
+     */
+    default NaturalJoin asNatural() {
+        return (NaturalJoin) this;
+    }
+
+    TableRef right();
 }

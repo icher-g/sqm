@@ -1,7 +1,10 @@
 package io.sqm.parser.core;
 
-import java.util.*;
-import java.util.regex.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static io.sqm.parser.core.TokenType.*;
 
@@ -9,11 +12,10 @@ import static io.sqm.parser.core.TokenType.*;
  * This class is used to split the string into a list of tokens.
  */
 public final class Lexer {
-    private final String s;
-    private int pos = 0;
-    private final int len;
-
     private static final Pattern NUM = Pattern.compile("(?:\\d+\\.\\d*|\\d*\\.\\d+|\\d+)(?:[eE][+-]?\\d+)?");
+    private final String s;
+    private final int len;
+    private int pos = 0;
 
     public Lexer(String s) {
         this.s = s;
@@ -22,6 +24,7 @@ public final class Lexer {
 
     /**
      * Converts a string into a list of tokens.
+     *
      * @param s a string to convert.
      * @return a list of tokens.
      */
@@ -35,8 +38,84 @@ public final class Lexer {
         return out;
     }
 
+    private static boolean isIdentifierStart(char c) {
+        return Character.isLetter(c) || c == '_' || c == '$';
+    }
+
+    private static boolean isIdentifierPart(char c) {
+        return Character.isLetterOrDigit(c) || c == '_' || c == '$';
+    }
+
+    private static TokenType keywordOf(String keyword) {
+        String k = keyword.toUpperCase(Locale.ROOT);
+        return switch (k) {
+            case "AND" -> AND;
+            case "OR" -> OR;
+            case "NOT" -> NOT;
+            case "IN" -> IN;
+            case "LIKE" -> LIKE;
+            case "BETWEEN" -> BETWEEN;
+            case "SYMMETRIC" -> SYMMETRIC;
+            case "IS" -> IS;
+            case "NULL" -> NULL;
+            case "TRUE" -> TRUE;
+            case "FALSE" -> FALSE;
+            case "JOIN" -> JOIN;
+            case "INNER" -> INNER;
+            case "LEFT" -> LEFT;
+            case "RIGHT" -> RIGHT;
+            case "FULL" -> FULL;
+            case "OUTER" -> OUTER;
+            case "CROSS" -> CROSS;
+            case "USING" -> USING;
+            case "NATURAL" -> NATURAL;
+            case "ON" -> ON;
+            case "AS" -> AS;
+            case "DISTINCT" -> DISTINCT;
+            case "EXISTS" -> EXISTS;
+            case "ESCAPE" -> ESCAPE;
+            case "ANY" -> ANY;
+            case "ASC" -> ASC;
+            case "DESC" -> DESC;
+            case "NULLS" -> NULLS;
+            case "FIRST" -> FIRST;
+            case "LAST" -> LAST;
+            case "DEFAULT" -> DEFAULT;
+            case "COLLATE" -> COLLATE;
+            case "CASE" -> CASE;
+            case "WHEN" -> WHEN;
+            case "THEN" -> THEN;
+            case "ELSE" -> ELSE;
+            case "END" -> END;
+            case "WITH" -> WITH;
+            case "RECURSIVE" -> RECURSIVE;
+            case "SELECT" -> SELECT;
+            case "FROM" -> FROM;
+            case "WHERE" -> WHERE;
+            case "GROUP" -> GROUP;
+            case "HAVING" -> HAVING;
+            case "ORDER" -> ORDER;
+            case "LIMIT" -> LIMIT;
+            case "OFFSET" -> OFFSET;
+            case "FETCH" -> FETCH;
+            case "NEXT" -> NEXT;
+            case "ROW" -> ROW;
+            case "ROWS" -> ROWS;
+            case "ONLY" -> ONLY;
+            case "BY" -> BY;
+            case "TOP" -> TOP;
+            case "UNION" -> UNION;
+            case "INTERSECT" -> INTERSECT;
+            case "EXCEPT" -> EXCEPT;
+            case "ALL" -> ALL;
+            case "VALUES" -> VALUES;
+            default -> null;
+        };
+    }
+
     /**
      * Gets a next token.
+     *
      * @return a token.
      */
     public Token next() {
@@ -198,74 +277,6 @@ public final class Lexer {
 
     private char peek() {
         return (pos + 1 < len) ? s.charAt(pos + 1) : '\0';
-    }
-
-    private static boolean isIdentifierStart(char c) {
-        return Character.isLetter(c) || c == '_' || c == '$';
-    }
-
-    private static boolean isIdentifierPart(char c) {
-        return Character.isLetterOrDigit(c) || c == '_' || c == '$';
-    }
-
-    private static TokenType keywordOf(String keyword) {
-        String k = keyword.toUpperCase(Locale.ROOT);
-        return switch (k) {
-            case "AND" -> AND;
-            case "OR" -> OR;
-            case "NOT" -> NOT;
-            case "IN" -> IN;
-            case "LIKE" -> LIKE;
-            case "BETWEEN" -> BETWEEN;
-            case "IS" -> IS;
-            case "NULL" -> NULL;
-            case "TRUE" -> TRUE;
-            case "FALSE" -> FALSE;
-            case "JOIN" -> JOIN;
-            case "INNER" -> INNER;
-            case "LEFT" -> LEFT;
-            case "RIGHT" -> RIGHT;
-            case "FULL" -> FULL;
-            case "OUTER" -> OUTER;
-            case "CROSS" -> CROSS;
-            case "ON" -> ON;
-            case "AS" -> AS;
-            case "DISTINCT" -> DISTINCT;
-            case "ASC" -> ASC;
-            case "DESC" -> DESC;
-            case "NULLS" -> NULLS;
-            case "FIRST" -> FIRST;
-            case "LAST" -> LAST;
-            case "DEFAULT" -> DEFAULT;
-            case "COLLATE" -> COLLATE;
-            case "CASE" -> CASE;
-            case "WHEN" -> WHEN;
-            case "THEN" -> THEN;
-            case "ELSE" -> ELSE;
-            case "END" -> END;
-            case "WITH" -> WITH;
-            case "RECURSIVE" -> RECURSIVE;
-            case "SELECT" -> SELECT;
-            case "FROM" -> FROM;
-            case "WHERE" -> WHERE;
-            case "GROUP" -> GROUP;
-            case "HAVING" -> HAVING;
-            case "ORDER" -> ORDER;
-            case "LIMIT" -> LIMIT;
-            case "OFFSET" -> OFFSET;
-            case "FETCH" -> FETCH;
-            case "NEXT" -> NEXT;
-            case "ROW" -> ROW;
-            case "ROWS" -> ROWS;
-            case "ONLY" -> ONLY;
-            case "BY" -> BY;
-            case "TOP" -> TOP;
-            case "UNION" -> UNION;
-            case "INTERSECT" -> INTERSECT;
-            case "EXCEPT" -> EXCEPT;
-            case "ALL" -> ALL;
-            default -> null;
-        };
     }
 
     private Token readQuotedIdentifier() {

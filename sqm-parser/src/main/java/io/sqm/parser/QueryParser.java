@@ -9,29 +9,37 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-/**
- * Full query parser.
- */
-public final class QueryParser implements Parser<Query> {
-
-    @Override
-    public Class<Query> targetType() {
-        return Query.class;
-    }
-
+public class QueryParser implements Parser<Query> {
+    /**
+     * Parses the spec represented by the {@link Cursor} instance.
+     *
+     * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.
+     * @param ctx a parser context containing parsers and lookups.
+     * @return a parsing result.
+     */
     @Override
     public ParseResult<Query> parse(Cursor cur, ParseContext ctx) {
         if (ctx.lookups().looksLikeWithQuery(cur)) {
-            var wr = ctx.parse(WithQuery.class, cur);
-            return finalize(cur, ctx, wr);
+            var res = ctx.parse(WithQuery.class, cur);
+            return finalize(cur, ctx, res);
         }
 
         if (ctx.lookups().looksLikeCompositeQuery(cur)) {
-            var cr = ctx.parse(CompositeQuery.class, cur);
-            return finalize(cur, ctx, cr);
+            var res = ctx.parse(CompositeQuery.class, cur);
+            return finalize(cur, ctx, res);
         }
 
-        var sr = ctx.parse(SelectQuery.class, cur);
-        return finalize(cur, ctx, sr);
+        var res = ctx.parse(SelectQuery.class, cur);
+        return finalize(cur, ctx, res);
+    }
+
+    /**
+     * Gets the target type this handler can handle.
+     *
+     * @return an entity type to be handled by the handler.
+     */
+    @Override
+    public Class<Query> targetType() {
+        return Query.class;
     }
 }

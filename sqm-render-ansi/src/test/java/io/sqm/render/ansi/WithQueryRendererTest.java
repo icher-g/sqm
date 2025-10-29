@@ -55,24 +55,21 @@ class WithQueryRendererTest {
         // CTE #1: CteQuery with aliases
         var cteUsers = cte("cte_users")
             .columnAliases("id", "name")
-            .select(query()
-                .select(col("u", "id"), col("u", "name"))
-                .from(tbl("users").as("u"))
+            .select(
+                select(col("u", "id"), col("u", "name")).from(tbl("users").as("u"))
             );
 
         // CTE #2: plain Query used as CTE (no column aliases)
         var cteOrders = cte("cte_orders")
-            .select(query()
-                .select(col("o", "user_id"), col("o", "amount"))
-                .from(tbl("orders").as("o"))
+            .select(
+                select(col("o", "user_id"), col("o", "amount")).from(tbl("orders").as("o"))
             );
 
         // WITH ... (cte_users, cte_orders)  <— CTEs live in WithQuery.getQueries()
         // Outer body is the WithQuery itself (inherited Query fields)
         var q = with(cteUsers, cteOrders)
-            .select(query()
-                .select(col("x", "id"))
-                .from(tbl("cte_users").as("x"))
+            .select(
+                select(col("x", "id")).from(tbl("cte_users").as("x"))
             );
 
         var sql = renderWith(q);
@@ -95,16 +92,14 @@ class WithQueryRendererTest {
     void with_recursive_prefix_ok() {
         var nums = cte("nums")
             .columnAliases("n")
-            .select(query()
-                .select(col("s", "n"))
-                .from(tbl("seed_numbers").as("s"))
+            .select(
+                select(col("s", "n")).from(tbl("seed_numbers").as("s"))
             );
 
         var q = with(nums)
             .recursive(true)
-            .select(query()
-                .select(col("t", "n"))
-                .from(tbl("nums").as("t"))
+            .select(
+                select(col("t", "n")).from(tbl("nums").as("t"))
             );
 
         var sql = normalize(renderWith(q));
@@ -117,20 +112,18 @@ class WithQueryRendererTest {
     @DisplayName("WITH with only CteQuery CTEs (no plain Query CTEs)")
     void with_onlyCteQueries_ok() {
         var c1 = cte("c1")
-            .select(query()
-                .select(col("a", "id"))
-                .from(tbl("users").as("a"))
+            .select(
+                select(col("a", "id")).from(tbl("users").as("a"))
             );
 
         var c2 = cte("c2")
-            .select(query()
-                .select(col("b", "user_id"))
-                .from(tbl("orders").as("b"))
+            .select(
+                select(col("b", "user_id")).from(tbl("orders").as("b"))
             );
 
         var q = with(c1, c2)
-            .select(query()
-                .select(col("b", "user_id")).from(tbl("c2").as("b"))
+            .select(
+                select(col("b", "user_id")).from(tbl("c2").as("b"))
             );
 
         var sql = normalize(renderWith(q));
@@ -144,8 +137,8 @@ class WithQueryRendererTest {
     @DisplayName("Empty CTE list -> throws")
     void with_emptyCtes_throws() {
         var q = with()
-            .select(query()
-                .select(col("t", "id")).from(tbl("users", "t"))
+            .select(
+                select(col("t", "id")).from(tbl("users", "t"))
             );
         var ex = assertThrows(IllegalArgumentException.class, () -> renderWith(q));
         assertTrue(ex.getMessage().toLowerCase().contains("with requires at least one query"));
@@ -155,15 +148,13 @@ class WithQueryRendererTest {
     @DisplayName("CTE without name should lead to a clear failure")
     void cte_without_name_fails() {
         var nameless = cte(null)
-            .select(query()
-                .select(col("u", "id"))
-                .from(tbl("users", "u"))
+            .select(
+                select(col("u", "id")).from(tbl("users", "u"))
             );
 
         var q = with(nameless)
-            .select(query()
-                .select(col("u", "id"))
-                .from(tbl("users", "u"))
+            .select(
+                select(col("u", "id")).from(tbl("users", "u"))
             );
 
         // Depending on your writer/renderer, this may NPE or be validated elsewhere.

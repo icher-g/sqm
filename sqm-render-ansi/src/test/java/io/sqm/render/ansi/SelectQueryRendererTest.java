@@ -1,17 +1,11 @@
 package io.sqm.render.ansi;
 
-import io.sqm.core.SelectQuery;
 import io.sqm.render.DefaultRenderContext;
-import io.sqm.render.DefaultSqlWriter;
-import io.sqm.render.SqlWriter;
-import io.sqm.render.ansi.query.SelectQueryRenderer;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,13 +19,6 @@ public class SelectQueryRendererTest {
     // -----------------------
     // Test plumbing / helpers
     // -----------------------
-
-    private static String toSql(Renderer<SelectQuery> r, SelectQuery q, RenderContext ctx) {
-        SqlWriter w = new DefaultSqlWriter(ctx);
-        r.render(q, ctx, w);
-        return w.toText(List.of()).sql(); // your SqlWriter usually returns SqlText; adapt if needed
-    }
-
     private static PaginationStyle limitOffset() {
         return new PaginationStyle() {
             @Override
@@ -163,16 +150,14 @@ public class SelectQueryRendererTest {
         @DisplayName("LIMIT + OFFSET -> tail 'LIMIT n OFFSET m'")
         void limitAndOffset() {
             var ctx = ctxWith(limitOffset());
-            var r = new SelectQueryRenderer();
 
-            var q = query()
-                .select(col("t1", "c1"))
+            var q = select(col("t1", "c1"))
                 .from(tbl("t1"))
-                .orderBy(asc(col("t1", "c1")))
+                .orderBy(order("t1", "c1").asc())
                 .limit(10L)
                 .offset(5L);
 
-            String sql = toSql(r, q, ctx);
+            String sql = ctx.render(q).sql();
 
             assertTrue(sql.contains("LIMIT 10"), "should contain LIMIT 10");
             assertTrue(sql.contains("OFFSET 5"), "should contain OFFSET 5");
@@ -183,14 +168,12 @@ public class SelectQueryRendererTest {
         @DisplayName("LIMIT only -> tail 'LIMIT n'")
         void limitOnly() {
             var ctx = ctxWith(limitOffset());
-            var r = new SelectQueryRenderer();
 
-            var q = query()
-                .select(col("t", "c"))
+            var q = select(col("t", "c"))
                 .from(tbl("t"))
                 .limit(3L);
 
-            String sql = toSql(r, q, ctx);
+            String sql = ctx.render(q).sql();
             assertTrue(sql.endsWith("LIMIT 3") || sql.contains("\nLIMIT 3"),
                 "expected LIMIT 3 tail");
         }
@@ -199,14 +182,12 @@ public class SelectQueryRendererTest {
         @DisplayName("OFFSET only -> tail 'OFFSET m'")
         void offsetOnly() {
             var ctx = ctxWith(limitOffset());
-            var r = new SelectQueryRenderer();
 
-            var q = query()
-                .select(col("t", "c"))
+            var q = select(col("t", "c"))
                 .from(tbl("t"))
                 .offset(7L);
 
-            String sql = toSql(r, q, ctx);
+            String sql = ctx.render(q).sql();
             assertTrue(sql.endsWith("OFFSET 7") || sql.contains("\nOFFSET 7"),
                 "expected OFFSET 7 tail");
         }
@@ -219,16 +200,14 @@ public class SelectQueryRendererTest {
         @DisplayName("ORDER BY present -> 'ORDER BY … OFFSET m ROWS FETCH NEXT n ROWS ONLY'")
         void offsetFetch_ok() {
             var ctx = ctxWith(offsetFetch());
-            var r = new SelectQueryRenderer();
 
-            var q = query()
-                .select(col("t1", "c1"))
+            var q = select(col("t1", "c1"))
                 .from(tbl("t1"))
-                .orderBy(asc(col("t1", "c1")))
+                .orderBy(order("t1", "c1").asc())
                 .limit(10L)
                 .offset(5L);
 
-            String sql = toSql(r, q, ctx);
+            String sql = ctx.render(q).sql();
             assertTrue(sql.contains("ORDER BY"), "must include ORDER BY");
             assertTrue(sql.contains("OFFSET 5 ROWS"), "must include OFFSET 5 ROWS");
             assertTrue(sql.contains("FETCH NEXT 10 ROWS ONLY"), "must include FETCH NEXT 10 ROWS ONLY");
@@ -239,15 +218,13 @@ public class SelectQueryRendererTest {
         @DisplayName("Only OFFSET -> 'ORDER BY … OFFSET m ROWS'")
         void onlyOffset_ok() {
             var ctx = ctxWith(offsetFetch());
-            var r = new SelectQueryRenderer();
 
-            var q = query()
-                .select(col("t", "c"))
+            var q = select(col("t", "c"))
                 .from(tbl("t"))
-                .orderBy(asc(col("t", "c")))
+                .orderBy(order("t", "c").asc())
                 .offset(12L);
 
-            String sql = toSql(r, q, ctx);
+            String sql = ctx.render(q).sql();
             assertTrue(sql.contains("ORDER BY"), "must include ORDER BY");
             assertTrue(sql.contains("OFFSET 12 ROWS"), "must include OFFSET 12 ROWS");
             assertFalse(sql.contains("FETCH NEXT"), "should not include FETCH NEXT when limit is absent");
@@ -262,14 +239,12 @@ public class SelectQueryRendererTest {
         @DisplayName("LIMIT -> 'SELECT TOP n …' injected in head")
         void top_in_head() {
             var ctx = ctxWith(topOnly());
-            var r = new SelectQueryRenderer();
 
-            var q = query()
-                .select(col("t", "c"))
+            var q = select(col("t", "c"))
                 .from(tbl("t"))
                 .limit(4L);
 
-            String sql = toSql(r, q, ctx);
+            String sql = ctx.render(q).sql();
             // Allow both "SELECT TOP 4" and "SELECT DISTINCT TOP 4" if user sets distinct elsewhere.
             assertTrue(sql.startsWith("SELECT TOP 4") || sql.startsWith("SELECT DISTINCT TOP 4"), "TOP should be injected right after SELECT[/DISTINCT]");
             assertFalse(sql.contains("OFFSET"), "TOP style should not produce OFFSET");
@@ -279,15 +254,13 @@ public class SelectQueryRendererTest {
         @DisplayName("OFFSET with TOP style -> throws UnsupportedOperationException")
         void top_with_offset_throws() {
             var ctx = ctxWith(topOnly());
-            var r = new SelectQueryRenderer();
 
-            var q = query()
-                .select(col("t", "c"))
+            var q = select(col("t", "c"))
                 .from(tbl("t"))
                 .limit(4L)
                 .offset(2L);
 
-            UnsupportedOperationException ex = assertThrows(UnsupportedOperationException.class, () -> toSql(r, q, ctx));
+            UnsupportedOperationException ex = assertThrows(UnsupportedOperationException.class, () -> ctx.render(q));
             assertTrue(ex.getMessage().toLowerCase().contains("offset"), "message should mention OFFSET not supported");
         }
     }

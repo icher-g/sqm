@@ -1,8 +1,6 @@
 package io.sqm.core;
 
-import io.sqm.core.traits.HasBody;
-import io.sqm.core.traits.HasCtes;
-import io.sqm.core.traits.HasRecursive;
+import io.sqm.core.internal.WithQueryImpl;
 
 import java.util.List;
 
@@ -24,17 +22,51 @@ import java.util.List;
  *     }
  * </pre>
  */
-public record WithQuery(Query body, List<CteQuery> ctes, boolean recursive) implements Query, HasBody, HasCtes, HasRecursive {
+public non-sealed interface WithQuery extends Query {
 
     /**
-     * Adds a select statement to the WITH query.
+     * Creates a WITH query statement with the list of CTE sub queries and a body.
      *
-     * @param body a select statement.
-     * @return A new instance of {@link WithQuery} with the select statement. All other fields are preserved.
+     * @param ctes a list of CTE sub queries.
+     * @param body a body.
+     * @return A newly created WITH query.
      */
-    public WithQuery select(Query body) {
-        return new WithQuery(body, ctes, recursive);
+    static WithQuery of(List<CteDef> ctes, Query body) {
+        return new WithQueryImpl(ctes, body, false);
     }
+
+    /**
+     * Creates a WITH query statement with the list of CTE sub queries and a body.
+     *
+     * @param ctes a list of CTE sub queries.
+     * @param body a body.
+     * @param recursive indicates whether the WITH statement supports recursive calls within the CTE queries.
+     * @return A newly created WITH query.
+     */
+    static WithQuery of(List<CteDef> ctes, Query body, boolean recursive) {
+        return new WithQueryImpl(ctes, body, recursive);
+    }
+
+    /**
+     * Gets a list of CTE queries.
+     *
+     * @return a list of CTE queries.
+     */
+    List<CteDef> ctes();
+
+    /**
+     * Gets a body used at the end of the WITH statement.
+     *
+     * @return a WITH body query.
+     */
+    Query body();
+
+    /**
+     * Indicates whether the WITH statement supports recursive calls within the CTE queries.
+     *
+     * @return True if the recursive calls are supported and False otherwise.
+     */
+    boolean recursive();
 
     /**
      * Adds a recursive indication to the WITH query.
@@ -42,7 +74,17 @@ public record WithQuery(Query body, List<CteQuery> ctes, boolean recursive) impl
      * @param recursive indicates whether the WITH statement is recursive or not.
      * @return A new instance of {@link WithQuery} with the select statement. All other fields are preserved.
      */
-    public WithQuery recursive(boolean recursive) {
-        return new WithQuery(body, ctes, recursive);
+    default WithQuery recursive(boolean recursive) {
+        return new WithQueryImpl(ctes(), body(), recursive);
+    }
+
+    /**
+     * Adds SELECT statement to WITH query.
+     *
+     * @param body a SELECT statement.
+     * @return this.
+     */
+    default WithQuery select(Query body) {
+        return new WithQueryImpl(ctes(), body, recursive());
     }
 }

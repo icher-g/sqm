@@ -1,6 +1,6 @@
 package io.sqm.parser.spi;
 
-import io.sqm.core.Entity;
+import io.sqm.core.Node;
 import io.sqm.parser.DefaultParseContext;
 import io.sqm.parser.core.Cursor;
 
@@ -58,7 +58,7 @@ public interface ParseContext {
      * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.
      * @return a parsing result.
      */
-    default <T extends Entity> ParseResult<T> parse(Class<T> type, Cursor cur) {
+    default <T extends Node> ParseResult<T> parse(Class<T> type, Cursor cur) {
         increaseCallstack();
         try {
             var parser = parsers().require(type);
@@ -74,7 +74,7 @@ public interface ParseContext {
      * @param spec a spec to be parsed.
      * @return a parsing result.
      */
-    default <T extends Entity> ParseResult<T> parse(Class<T> type, String spec) {
+    default <T extends Node> ParseResult<T> parse(Class<T> type, String spec) {
         var parser = parsers().require(type);
         return parser.parse(spec, this);
     }

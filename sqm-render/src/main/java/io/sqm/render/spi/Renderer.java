@@ -1,6 +1,6 @@
 package io.sqm.render.spi;
 
-import io.sqm.core.Entity;
+import io.sqm.core.Node;
 import io.sqm.core.repos.Handler;
 import io.sqm.render.SqlWriter;
 
@@ -9,13 +9,13 @@ import io.sqm.render.SqlWriter;
  *
  * @param <T>
  */
-public interface Renderer<T extends Entity> extends Handler<T> {
+public interface Renderer<T extends Node> extends Handler<T> {
     /**
-     * Renders the entity into an {@link SqlWriter}.
+     * Renders the node into an {@link SqlWriter}.
      *
-     * @param entity an entity to render.
-     * @param ctx    a render context.
-     * @param w      a writer.
+     * @param node a node to render.
+     * @param ctx  a render context.
+     * @param w    a writer.
      */
-    void render(T entity, RenderContext ctx, SqlWriter w);
+    void render(T node, RenderContext ctx, SqlWriter w);
 }

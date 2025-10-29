@@ -1,18 +1,12 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.CompositeFilter;
-import io.sqm.core.Filter;
-import io.sqm.core.Join;
-import io.sqm.core.TableJoin;
-import io.sqm.core.views.Tables;
+import io.sqm.core.*;
 import io.sqm.parser.JoinParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.Optional;
 
 class JoinParserTest {
 
@@ -26,13 +20,13 @@ class JoinParserTest {
 
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         Join j = r.value();
-        Assertions.assertInstanceOf(TableJoin.class, j);
-        TableJoin tj = (TableJoin) j;
-        Assertions.assertEquals(Join.JoinType.Inner, tj.joinType());
-        Assertions.assertEquals(Optional.of("products"), Tables.name(tj.table()));
-        Assertions.assertEquals(Optional.of("p"), Tables.alias(tj.table()));
+        Assertions.assertInstanceOf(OnJoin.class, j);
+        OnJoin tj = (OnJoin) j;
+        Assertions.assertEquals(JoinKind.INNER, tj.kind());
+        Assertions.assertEquals("products", tj.right().asTable().name());
+        Assertions.assertEquals("p", tj.right().alias());
 
-        Filter on = tj.on();
+        Predicate on = tj.on();
         Assertions.assertNotNull(on, "ON filter expected");
     }
 
@@ -43,15 +37,15 @@ class JoinParserTest {
         var r = p.parse("LEFT OUTER JOIN warehouses AS w ON w.product_id = p.id AND w.stock > 0", ctx);
 
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
-        TableJoin j = (TableJoin) r.value();
-        Assertions.assertEquals(Join.JoinType.Left, j.joinType());
-        Assertions.assertEquals(Optional.of("warehouses"), Tables.name(j.table()));
-        Assertions.assertEquals(Optional.of("w"), Tables.alias(j.table()));
+        OnJoin j = (OnJoin) r.value();
+        Assertions.assertEquals(JoinKind.LEFT, j.kind());
+        Assertions.assertEquals("warehouses", j.right().asTable().name());
+        Assertions.assertEquals("w", j.right().alias());
 
-        Assertions.assertInstanceOf(CompositeFilter.class, j.on(), "Expected a composite AND");
-        var and = (CompositeFilter) j.on();
-        Assertions.assertEquals(CompositeFilter.Operator.And, and.op());
-        Assertions.assertEquals(2, and.filters().size(), "AND should contain two predicates");
+        Assertions.assertInstanceOf(AndPredicate.class, j.on(), "Expected a composite AND");
+        var and = (AndPredicate) j.on();
+        Assertions.assertInstanceOf(ComparisonPredicate.class, and.lhs());
+        Assertions.assertInstanceOf(ComparisonPredicate.class, and.rhs());
     }
 
     @Test
@@ -61,11 +55,9 @@ class JoinParserTest {
         var r = p.parse("CROSS JOIN regions r", ctx);
 
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
-        TableJoin j = (TableJoin) r.value();
-        Assertions.assertEquals(Join.JoinType.Cross, j.joinType());
-        Assertions.assertEquals(Optional.of("regions"), Tables.name(j.table()));
-        Assertions.assertEquals(Optional.of("r"), Tables.alias(j.table()));
-        Assertions.assertNull(j.on(), "CROSS JOIN should not have ON filter");
+        CrossJoin j = (CrossJoin) r.value();
+        Assertions.assertEquals("regions", j.right().asTable().name());
+        Assertions.assertEquals("r", j.right().alias());
     }
 
     @Test
@@ -75,11 +67,11 @@ class JoinParserTest {
         var r = p.parse("JOIN sales.products AS sp ON sp.id = p.id", ctx);
 
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
-        TableJoin j = (TableJoin) r.value();
-        Assertions.assertEquals(Join.JoinType.Inner, j.joinType());
-        Assertions.assertEquals(Optional.of("sales"), Tables.schema(j.table()));
-        Assertions.assertEquals(Optional.of("products"), Tables.name(j.table()));
-        Assertions.assertEquals(Optional.of("sp"), Tables.alias(j.table()));
+        OnJoin j = (OnJoin) r.value();
+        Assertions.assertEquals(JoinKind.INNER, j.kind());
+        Assertions.assertEquals("sales", j.right().asTable().schema());
+        Assertions.assertEquals("products", j.right().asTable().name());
+        Assertions.assertEquals("sp", j.right().alias());
     }
 
     @Test
@@ -89,23 +81,10 @@ class JoinParserTest {
         var r = p.parse("RIGHT JOIN t2 ON t2.k = t1.k", ctx);
 
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
-        TableJoin j = (TableJoin) r.value();
-        Assertions.assertEquals(Join.JoinType.Right, j.joinType());
-        Assertions.assertEquals(Optional.of("t2"), Tables.name(j.table()));
-        Assertions.assertEquals(Optional.empty(), Tables.schema(j.table()));
+        OnJoin j = (OnJoin) r.value();
+        Assertions.assertEquals(JoinKind.RIGHT, j.kind());
+        Assertions.assertEquals("t2", j.right().asTable().name());
+        Assertions.assertNull(j.right().asTable().schema());
         Assertions.assertNotNull(j.on());
-    }
-
-    @Test
-    @DisplayName("JOIN without ON is allowed (except when ON is required by your policy)")
-    void allow_join_without_on() {
-        var p = new JoinParser();
-        var r = p.parse("JOIN t a", ctx);
-        Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
-        TableJoin j = (TableJoin) r.value();
-        Assertions.assertEquals(Join.JoinType.Inner, j.joinType());
-        Assertions.assertEquals(Optional.of("t"), Tables.name(j.table()));
-        Assertions.assertEquals(Optional.of("a"), Tables.alias(j.table()));
-        Assertions.assertNull(j.on());
     }
 }

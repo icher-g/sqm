@@ -1,13 +1,9 @@
 package io.sqm.json;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.sqm.core.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,71 +20,80 @@ public class MixInsSmokeTest {
     @Test
     @DisplayName("Factory builds an ObjectMapper with all MixIns attached")
     void buildsMapper() {
-        ObjectMapper m = SqmMapperFactory.createDefault();
+        ObjectMapper m = SqmJsonMixins.createDefault();
         assertNotNull(m);
     }
 
     @Test
     @DisplayName("FunctionColumn args: polymorphic deserialization by NAME (e.g., 'column', 'literal')")
     void functionArgs_polymorphic_roundTrip() throws Exception {
-        ObjectMapper m = SqmMapperFactory.createDefault();
+        ObjectMapper m = SqmJsonMixins.createPretty();
 
         // This JSON assumes your FunctionColumnArgMixIn uses @JsonTypeInfo(use = NAME, property = "type")
         // and @JsonSubTypes names like: column, literal, star, expr (modify if yours differ).
         String json =
-                """
-                        {
-                          "kind": "func",
-                          "name": "lower",
-                          "distinct": false,
-                          "alias": "l",
-                          "args": [
-                            { "kind": "column",  "name": "name", "table": "t" },
-                            { "kind": "literal", "value": "X" }
-                          ]
-                        }
-                        """;
+            """
+                {
+                  "kind" : "expr",
+                  "expr" : {
+                    "kind" : "function",
+                    "name" : "lower",
+                    "args" : [ {
+                      "kind" : "arg_column",
+                      "ref" : {
+                        "kind" : "column",
+                        "tableAlias" : "t",
+                        "name" : "name"
+                      }
+                    }, {
+                      "kind" : "arg_literal",
+                      "value" : "X"
+                    } ],
+                    "distinctArg" : false
+                  },
+                  "alias" : "l"
+                }""";
 
-        // 1) Can deserialize into FunctionColumn
-        FunctionColumn fc =
-                m.readValue(json, FunctionColumn.class);
+        // 1) Can deserialize into FunctionExpr
+        var esi = m.readValue(json, ExprSelectItem.class);
+        var fe = esi.expr().asFunc();
 
-        assertEquals("lower", fc.name());
-        assertEquals("l", fc.alias());
-        assertNotNull(fc.args());
-        assertEquals(2, fc.args().size());
+        assertEquals("lower", fe.name());
+        assertEquals("l", esi.alias());
+        assertNotNull(fe.args());
+        assertEquals(2, fe.args().size());
 
         // 2) The Arg items are concrete subtypes; assert by class simple names to avoid package coupling
-        var a0 = fc.args().get(0);
-        var a1 = fc.args().get(1);
-        var subtypeNames = List.of(a0.getClass().getSimpleName(), a1.getClass().getSimpleName());
-        // Expect something like ColumnArg & LiteralArg
-        assertTrue(subtypeNames.stream().anyMatch(s -> s.toLowerCase().contains("column")));
-        assertTrue(subtypeNames.stream().anyMatch(s -> s.toLowerCase().contains("literal")));
+        var a0 = fe.args().get(0);
+        var a1 = fe.args().get(1);
+        assertInstanceOf(FunctionExpr.Arg.Column.class, a0);
+        assertInstanceOf(FunctionExpr.Arg.Literal.class, a1);
 
         // 3) Round-trip back to JSON and ensure type tags are preserved
-        String back = m.writeValueAsString(fc);
-        assertTrue(back.contains("\"kind\":\"column\""));
-        assertTrue(back.contains("\"kind\":\"literal\""));
+        String back = m.writeValueAsString(esi);
+        assertEquals(json.stripIndent(), back.stripIndent());
     }
 
     @Test
     @DisplayName("Column MixIn: serialize a simple concrete Column")
     void column_serialization_minimal() throws Exception {
-        ObjectMapper m = SqmMapperFactory.createDefault();
+        ObjectMapper m = SqmJsonMixins.createDefault();
 
         // Minimal JSON for a Named/Reference column (adapt the shape to your ColumnMixIn)
         String json =
-                """
-                        {
-                          "kind": "named",
-                          "name": "u.name",
-                          "alias": "n"
-                        }
-                        """;
+            """
+                {
+                "kind" : "expr",
+                  "expr" : {
+                    "kind": "column",
+                    "name": "u.name"
+                  },
+                  "alias": "n"
+                }
+                """;
 
-        Column c =
-                m.readValue(json, Column.class);
+        var esi = m.readValue(json, ExprSelectItem.class);
+        var c = esi.expr().asColumn();
 
         assertNotNull(c);
         String out = m.writeValueAsString(c);
@@ -97,109 +102,141 @@ public class MixInsSmokeTest {
     }
 
     @Test
-    @DisplayName("Filter MixIn: minimal polymorphic read/write")
-    void filter_serialization_minimal() throws Exception {
-        ObjectMapper m = SqmMapperFactory.createDefault();
+    @DisplayName("Predicate MixIn: minimal polymorphic read/write")
+    void predicate_serialization_minimal() throws Exception {
+        ObjectMapper m = SqmJsonMixins.createPretty();
 
         // Minimal JSON for a binary filter column = literal (adjust to your FilterMixIn schema)
         String json =
-                """
-                        {
-                          "kind": "column",
-                          "column": { "kind": "named", "name": "u.id" },
-                          "op": "Eq",
-                          "values": { "kind": "single", "value": 123 }
-                        }
-                        """;
+            """
+                {
+                  "kind" : "comparison",
+                  "lhs" : {
+                    "kind" : "column",
+                    "tableAlias" : "u",
+                    "name" : "id"
+                  },
+                  "operator" : "EQ",
+                  "rhs" : {
+                    "kind" : "literal",
+                    "value" : 123
+                  }
+                }""";
 
-        Filter f =
-                m.readValue(json, Filter.class);
+        var f = m.readValue(json, Predicate.class);
 
         assertNotNull(f);
+        assertInstanceOf(ComparisonPredicate.class, f);
+        assertInstanceOf(ColumnExpr.class, f.asComparison().lhs());
+        assertInstanceOf(LiteralExpr.class, f.asComparison().rhs());
+
         String out = m.writeValueAsString(f);
-        assertTrue(out.contains("\"kind\""));
-        assertTrue(out.contains("\"op\""));
+        assertEquals(json.stripIndent(), out.stripIndent());
     }
 
     @Test
     @DisplayName("Join MixIn: minimal read/write")
     void join_serialization_minimal() throws Exception {
-        ObjectMapper m = SqmMapperFactory.createDefault();
+        ObjectMapper m = SqmJsonMixins.createPretty();
 
         // Minimal JSON for a table join (adjust keys to your JoinMixIn)
         String json =
-                """
-                        {
-                          "kind": "table",
-                          "joinType": "Inner",
-                          "table": { "kind": "named", "name": "users", "alias": "u" },
-                          "on": {
-                            "kind": "column",
-                            "column":  { "kind": "named", "name": "u.id" },
-                            "op": "Eq",
-                            "values": {
-                                "kind": "column",
-                                "column": { "kind": "named", "name": "user_id", "table": "o" }
-                            }
-                          }
-                        }
-                        """;
+            """
+                {
+                  "kind" : "on",
+                  "right" : {
+                    "kind": "table",
+                    "name": "users",
+                    "alias": "u"
+                  },
+                  "kind" : "INNER",
+                  "on" : {
+                    "kind": "comparison",
+                    "lhs":  {
+                      "kind" : "column",
+                        "tableAlias" : "u",
+                        "name" : "id"
+                    },
+                    "operator": "EQ",
+                    "rhs": {
+                        "kind" : "column",
+                        "tableAlias" : "o",
+                        "name" : "user_id"
+                    }
+                  }
+                }
+                """;
 
-        Join j =
-                m.readValue(json, Join.class);
+        var j = m.readValue(json, Join.class);
 
         assertNotNull(j);
-        assertTrue(m.writeValueAsString(j).contains("\"joinType\""));
+        assertInstanceOf(OnJoin.class, j);
+        assertInstanceOf(Table.class, j.right());
+        assertInstanceOf(ComparisonPredicate.class, j.asOn().on());
+        assertEquals("users", j.right().asTable().name());
+        assertEquals("u", j.right().alias());
+        assertEquals("id", j.asOn().on().asComparison().lhs().asColumn().name());
+        assertEquals("user_id", j.asOn().on().asComparison().rhs().asColumn().name());
     }
 
     @Test
     @DisplayName("Table MixIn: minimal read/write for NamedTable")
     void table_serialization_minimal() throws Exception {
-        ObjectMapper m = SqmMapperFactory.createDefault();
+        ObjectMapper m = SqmJsonMixins.createDefault();
 
         String json =
-                """
-                        {
-                          "kind": "named",
-                          "name": "users",
-                          "schema": "public",
-                          "alias": "u"
-                        }
-                        """;
+            """
+                {
+                  "kind": "table",
+                  "name": "users",
+                  "schema": "public",
+                  "alias": "u"
+                }
+                """;
 
-        Table t =
-                m.readValue(json, Table.class);
+        var t = m.readValue(json, Table.class);
 
         assertNotNull(t);
         assertTrue(m.writeValueAsString(t).contains("\"name\":\"users\""));
     }
 
     @Test
-    @DisplayName("Values MixIn: minimal read/write for tuples/list")
-    void values_serialization_minimal() throws Exception {
-        ObjectMapper m = SqmMapperFactory.createDefault();
+    @DisplayName("ValueSet MixIn: minimal read/write for tuples/list")
+    void value_set_serialization_minimal() throws Exception {
+        ObjectMapper m = SqmJsonMixins.createPretty();
 
-        // Example for tuples [[ "x", 1 ], ["y", 2 ]] — adjust to your ValuesMixIn schema
         String json =
-                """
-                        {
-                          "kind": "tuples",
-                          "rows": [
-                            ["x", 1],
-                            ["y", 2]
-                          ]
-                        }
-                        """;
+            """
+                {
+                  "kind" : "row_list",
+                  "rows" : [ {
+                    "kind" : "row",
+                    "items" : [ {
+                      "kind" : "literal",
+                      "value" : "x"
+                    }, {
+                      "kind" : "literal",
+                      "value" : 1
+                    } ]
+                  }, {
+                    "kind" : "row",
+                    "items" : [ {
+                      "kind" : "literal",
+                      "value" : "y"
+                    }, {
+                      "kind" : "literal",
+                      "value" : 2
+                    } ]
+                  } ]
+                }""";
 
-        Values v =
-                m.readValue(json, Values.class);
+        var v = m.readValue(json, RowListExpr.class);
 
         assertNotNull(v);
-        String out = m.writeValueAsString(v);
+        assertInstanceOf(RowListExpr.class, v);
+        assertEquals(2, v.rows().size());
 
-        // Re-read back to a generic map to sanity-check structure survived
-        Map<String, Object> map = m.readValue(out, new TypeReference<>() {
-        });
-        assertEquals("tuples", map.get("kind"));
+        String out = m.writeValueAsString(v);
+        assertEquals(json.stripIndent(), out.stripIndent());
     }
 }

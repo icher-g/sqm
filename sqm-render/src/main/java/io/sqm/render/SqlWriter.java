@@ -1,6 +1,6 @@
 package io.sqm.render;
 
-import io.sqm.core.Entity;
+import io.sqm.core.Node;
 import io.sqm.render.spi.Renderer;
 
 import java.util.List;
@@ -18,13 +18,84 @@ public interface SqlWriter {
     SqlWriter append(String s);
 
     /**
-     * Appends an entity to the query. The entity will be rendered with the {@link Renderer} interface.
+     * Appends a node to the query. The node will be rendered with the {@link Renderer} interface.
      *
-     * @param entity an entity to append.
-     * @param <T>    the type of the Entity.
+     * @param node a node to append.
+     * @param <T>  the type of the Entity.
      * @return this.
      */
-    <T extends Entity> SqlWriter append(T entity);
+    <T extends Node> SqlWriter append(T node);
+
+    /**
+     * Appends a node to the query inside the parentheses. The node will be rendered with the {@link Renderer} interface.
+     *
+     * @param node    a node to append.
+     * @param enclose indicates that the node needs to be wrapped with the parenthesis.
+     * @param <T>     the type of the Entity.
+     * @return this.
+     */
+    default <T extends Node> SqlWriter append(T node, boolean enclose) {
+        return append(node, enclose, false);
+    }
+
+    /**
+     * Appends a node to the query inside the parentheses. The node will be rendered with the {@link Renderer} interface.
+     *
+     * @param node      a node to append.
+     * @param enclose   indicates that the node needs to be wrapped with the parenthesis.
+     * @param multiline indicates if the new line needs to be added after and before the parenthesis.
+     * @param <T>       the type of the Entity.
+     * @return this.
+     */
+    default <T extends Node> SqlWriter append(T node, boolean enclose, boolean multiline) {
+        if (enclose) {
+            append("(");
+            if (multiline) {
+                newline().indent();
+            }
+        }
+
+        append(node);
+
+        if (enclose) {
+            if (multiline) {
+                outdent().newline();
+            }
+            append(")");
+        }
+        return this;
+    }
+
+    /**
+     * Appends a list of entities rendered with the {@link Renderer} separated by comma.
+     *
+     * @param parts a list of entities to append.
+     * @param <T>   the entity type.
+     * @return this.
+     */
+    default <T extends Node> SqlWriter comma(List<T> parts) {
+        return comma(parts, false);
+    }
+
+    /**
+     * Appends a list of entities rendered with the {@link Renderer} separated by comma.
+     *
+     * @param parts   a list of entities to append.
+     * @param enclose indicates that each part needs to be wrapped with the parenthesis.
+     * @param <T>     the entity type.
+     * @return this.
+     */
+    default <T extends Node> SqlWriter comma(List<T> parts, boolean enclose) {
+        if (parts == null || parts.isEmpty()) return this;
+        for (int i = 0; i < parts.size(); i++) {
+            if (i > 0) {
+                append(",");
+                append(" ");
+            }
+            append(parts.get(i), enclose);
+        }
+        return this;
+    }
 
     /**
      * Indicates whether the call to {@link SqlWriter#newline()} should be ignored and new line should not be added.
@@ -60,15 +131,6 @@ public interface SqlWriter {
      * @return this.
      */
     SqlWriter outdent();
-
-    /**
-     * Appends a list of entities rendered with the {@link Renderer} separated by comma.
-     *
-     * @param parts a list of entities to append.
-     * @param <T>   the entity type.
-     * @return this.
-     */
-    <T extends Entity> SqlWriter comma(List<T> parts);
 
     /**
      * Gets a written SQL string together with the list of parameters if there are any.

@@ -1,6 +1,9 @@
 package io.sqm.parser.core;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Cursor for token list that maintains current position.
@@ -158,6 +161,9 @@ public final class Cursor {
      * @return True if the token type matches the provided one.
      */
     public boolean match(TokenType type, int lookahead) {
+        if (lookahead >= tokens.size()) {
+            return false;
+        }
         return peek(lookahead).type() == type;
     }
 
@@ -168,8 +174,17 @@ public final class Cursor {
      * @return True if one of the provided token types matches the current.
      */
     public boolean matchAny(TokenType... types) {
-        var type = peek().type();
-        return Arrays.stream(types).anyMatch(tt -> type == tt);
+        return matchAny(Set.of(types), 0);
+    }
+
+    /**
+     * Validates if current token type matches on of the provided token types.
+     *
+     * @param types the types to match.
+     * @return True if one of the provided token types matches the current.
+     */
+    public boolean matchAny(Set<TokenType> types) {
+        return matchAny(types, 0);
     }
 
     /**
@@ -180,8 +195,22 @@ public final class Cursor {
      * @return True if one of the provided token types matches the current + lookahead.
      */
     public boolean matchAny(int lookahead, TokenType... types) {
+        return matchAny(Set.of(types), lookahead);
+    }
+
+    /**
+     * Validates if current token type with respect to a lookahead position matches one of the provided token types.
+     *
+     * @param types     the types to match.
+     * @param lookahead the lookahead position.
+     * @return True if one of the provided token types matches the current + lookahead.
+     */
+    public boolean matchAny(Set<TokenType> types, int lookahead) {
+        if (lookahead >= tokens.size()) {
+            return false;
+        }
         var type = peek(lookahead).type();
-        return Arrays.stream(types).anyMatch(tt -> type == tt);
+        return types.contains(type);
     }
 
     /**
@@ -230,6 +259,17 @@ public final class Cursor {
      */
     public int find(TokenType... types) {
         return find(Set.of(types));
+    }
+
+    /**
+     * Find the index of the first token type at top-level (parenDepth == 0), scanning from 'current position'.
+     *
+     * @param types     a list of types to look for any of them.
+     * @param lookahead a number of token to skip at the beginning.
+     * @return size if not found.
+     */
+    public int find(int lookahead, TokenType... types) {
+        return find(Set.of(types), lookahead);
     }
 
     /**
