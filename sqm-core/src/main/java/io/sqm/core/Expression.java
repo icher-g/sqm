@@ -7,6 +7,7 @@ import io.sqm.core.internal.FuncStarArg;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Any value-producing node (scalar or boolean).
@@ -32,6 +33,17 @@ public sealed interface Expression extends Node
      */
     static ColumnExpr column(String name) {
         return ColumnExpr.of(name);
+    }
+
+    /**
+     * Creates a column reference expression.
+     *
+     * @param name  a name of the column.
+     * @param table a table this column belongs to.
+     * @return A newly created instance of the column reference.
+     */
+    static ColumnExpr column(String table, String name) {
+        return ColumnExpr.of(table, name);
     }
 
     /**
@@ -168,66 +180,66 @@ public sealed interface Expression extends Node
     }
 
     /**
-     * Casts current expression to {@link CaseExpr}.
+     * Casts current expression to {@link CaseExpr} if possible.
      *
-     * @return {@link CaseExpr}.
+     * @return an {@link Optional}<{@link CaseExpr}>.
      */
-    default CaseExpr asCase() {
-        return this instanceof CaseExpr e ? e : null;
+    default Optional<CaseExpr> asCase() {
+        return this instanceof CaseExpr e ? Optional.of(e) : Optional.empty();
     }
 
     /**
-     * Casts current expression to {@link ColumnExpr}.
+     * Casts current expression to {@link ColumnExpr} if possible.
      *
-     * @return {@link ColumnExpr}.
+     * @return an {@link Optional}<{@link ColumnExpr}>.
      */
-    default ColumnExpr asColumn() {
-        return this instanceof ColumnExpr e ? e : null;
+    default Optional<ColumnExpr> asColumn() {
+        return this instanceof ColumnExpr e ? Optional.of(e) : Optional.empty();
     }
 
     /**
-     * Casts current expression to {@link FunctionExpr}.
+     * Casts current expression to {@link FunctionExpr} if possible.
      *
-     * @return {@link FunctionExpr}.
+     * @return an {@link Optional}<{@link FunctionExpr}>.
      */
-    default FunctionExpr asFunc() {
-        return this instanceof FunctionExpr e ? e : null;
+    default Optional<FunctionExpr> asFunc() {
+        return this instanceof FunctionExpr e ? Optional.of(e) : Optional.empty();
     }
 
     /**
-     * Casts current expression to {@link FunctionExpr.Arg}.
+     * Casts current expression to {@link FunctionExpr.Arg} if possible.
      *
-     * @return {@link FunctionExpr.Arg}.
+     * @return an {@link Optional}<{@link FunctionExpr.Arg}>.
      */
-    default FunctionExpr.Arg asFuncArg() {
-        return this instanceof FunctionExpr.Arg a ? a : null;
+    default Optional<FunctionExpr.Arg> asFuncArg() {
+        return this instanceof FunctionExpr.Arg a ? Optional.of(a) : Optional.empty();
     }
 
     /**
-     * Casts current expression to {@link LiteralExpr}.
+     * Casts current expression to {@link LiteralExpr} if possible.
      *
-     * @return {@link LiteralExpr}.
+     * @return an {@link Optional}<{@link LiteralExpr}>.
      */
-    default LiteralExpr asLiteral() {
-        return this instanceof LiteralExpr e ? e : null;
+    default Optional<LiteralExpr> asLiteral() {
+        return this instanceof LiteralExpr e ? Optional.of(e) : Optional.empty();
     }
 
     /**
-     * Casts current expression to {@link Predicate}.
+     * Casts current expression to {@link Predicate} if possible.
      *
-     * @return {@link Predicate}.
+     * @return an {@link Optional}<{@link Predicate}>.
      */
-    default Predicate asPredicate() {
-        return this instanceof Predicate p ? p : null;
+    default Optional<Predicate> asPredicate() {
+        return this instanceof Predicate p ? Optional.of(p) : Optional.empty();
     }
 
     /**
-     * Casts current expression to {@link ValueSet}.
+     * Casts current expression to {@link ValueSet} if possible.
      *
-     * @return {@link ValueSet}.
+     * @return an {@link Optional}<{@link ValueSet}>.
      */
-    default ValueSet asValues() {
-        return this instanceof ValueSet v ? v : null;
+    default Optional<ValueSet> asValues() {
+        return this instanceof ValueSet v ? Optional.of(v) : Optional.empty();
     }
 
     /**

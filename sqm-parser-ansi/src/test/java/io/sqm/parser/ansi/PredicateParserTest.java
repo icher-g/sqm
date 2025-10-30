@@ -46,8 +46,8 @@ class PredicateParserTest {
         assertOk(r);
         var f = assertIs(InPredicate.class, r.value());
         var v = assertIs(RowExpr.class, f.rhs());
-        Assertions.assertEquals(List.of(1L, 2L, 3L), v.items().stream().map(i -> i.asLiteral().value()).toList()); // longs if your parser maps integers to Long
-        Assertions.assertEquals("category", f.lhs().asColumn().name());
+        Assertions.assertEquals(List.of(1L, 2L, 3L), v.items().stream().map(i -> i.asLiteral().map(LiteralExpr::value).orElseThrow()).toList()); // longs if your parser maps integers to Long
+        Assertions.assertEquals("category", f.lhs().asColumn().map(ColumnExpr::name).orElseThrow());
     }
 
     @Test
@@ -58,8 +58,8 @@ class PredicateParserTest {
         var f = assertIs(InPredicate.class, r.value());
         Assertions.assertTrue(f.negated());
         var v = assertIs(RowExpr.class, f.rhs());
-        Assertions.assertEquals(List.of("A", "B"), v.items().stream().map(i -> i.asLiteral().value()).toList());
-        Assertions.assertEquals("status", f.lhs().asColumn().name());
+        Assertions.assertEquals(List.of("A", "B"), v.items().stream().map(i -> i.asLiteral().map(LiteralExpr::value).orElseThrow()).toList());
+        Assertions.assertEquals("status", f.lhs().asColumn().map(ColumnExpr::name).orElseThrow());
     }
 
     @Test
@@ -70,7 +70,7 @@ class PredicateParserTest {
         var f = assertIs(LikePredicate.class, r.value());
         var v = assertIs(LiteralExpr.class, f.pattern());
         Assertions.assertEquals("%abc%", v.value());
-        Assertions.assertEquals("name", f.value().asColumn().name());
+        Assertions.assertEquals("name", f.value().asColumn().map(ColumnExpr::name).orElseThrow());
     }
 
     /* ----------------------------- tuple IN --------------------------------- */
@@ -85,7 +85,7 @@ class PredicateParserTest {
         var u = assertIs(LiteralExpr.class, f.upper());
         Assertions.assertEquals(10L, l.value());
         Assertions.assertEquals(20L, u.value());
-        Assertions.assertEquals("price", f.value().asColumn().name());
+        Assertions.assertEquals("price", f.value().asColumn().map(ColumnExpr::name).orElseThrow());
     }
 
     /* --------------------- boolean composition & precedence ------------------ */
@@ -108,7 +108,7 @@ class PredicateParserTest {
         Assertions.assertEquals(operator, f.operator());
         var v = assertIs(LiteralExpr.class, f.rhs());
         Assertions.assertEquals(expected, v.value());
-        Assertions.assertEquals("qty", f.lhs().asColumn().name());
+        Assertions.assertEquals("qty", f.lhs().asColumn().map(ColumnExpr::name).orElseThrow());
     }
 
     @Test
@@ -117,15 +117,16 @@ class PredicateParserTest {
         var r = parser.parse("(a, b) IN ((1,2), (3,4))", ctx);
         assertOk(r);
         var f = assertIs(InPredicate.class, r.value());
-        var c0 = f.lhs().asValues().asRow().items().get(0);
-        var c1 = f.lhs().asValues().asRow().items().get(1);
-        Assertions.assertEquals(2, f.lhs().asValues().asRow().items().size());
-        Assertions.assertEquals("a", c0.asColumn().name());
-        Assertions.assertEquals("b", c1.asColumn().name());
+        var items = f.lhs().asValues().map(v -> v.asRow().map(RowExpr::items).orElseThrow()).orElseThrow();
+        var c0 = items.get(0);
+        var c1 = items.get(1);
+        Assertions.assertEquals(2, items.size());
+        Assertions.assertEquals("a", c0.asColumn().map(ColumnExpr::name).orElseThrow());
+        Assertions.assertEquals("b", c1.asColumn().map(ColumnExpr::name).orElseThrow());
 
         var v = assertIs(RowListExpr.class, f.rhs());
         Assertions.assertEquals(List.of(List.of(1L, 2L), List.of(3L, 4L)),
-            v.rows().stream().map(row -> row.items().stream().map(i -> i.asLiteral().value()).toList()).toList());
+            v.rows().stream().map(row -> row.items().stream().map(i -> i.asLiteral().map(LiteralExpr::value).orElseThrow()).toList()).toList());
     }
 
     /* ------------------------------ literals -------------------------------- */
@@ -177,15 +178,21 @@ class PredicateParserTest {
     void boolean_and_null_literals() {
         var r1 = parser.parse("active = TRUE", ctx);
         assertOk(r1);
-        Assertions.assertEquals(Boolean.TRUE, r1.value().asPredicate().asComparison().rhs().asLiteral().value());
+        Assertions.assertEquals(Boolean.TRUE, r1.value()
+            .asPredicate().map(p -> p.asComparison().map(ComparisonPredicate::rhs)).orElseThrow().orElseThrow()
+            .asLiteral().map(LiteralExpr::value).orElseThrow());
 
         var r2 = parser.parse("deleted = FALSE", ctx);
         assertOk(r2);
-        Assertions.assertEquals(Boolean.FALSE, r2.value().asPredicate().asComparison().rhs().asLiteral().value());
+        Assertions.assertEquals(Boolean.FALSE, r2.value()
+            .asPredicate().map(p -> p.asComparison().map(ComparisonPredicate::rhs)).orElseThrow().orElseThrow()
+            .asLiteral().map(LiteralExpr::value).orElseThrow());
 
         var r3 = parser.parse("note = NULL", ctx);
         assertOk(r3);
-        Assertions.assertNull(r3.value().asPredicate().asComparison().rhs().asLiteral().value());
+        Assertions.assertNull(r3.value()
+            .asPredicate().map(p -> p.asComparison().map(ComparisonPredicate::rhs)).orElseThrow().orElseThrow()
+            .asLiteral().map(LiteralExpr::value).orElse(null));
     }
 
     @Test
@@ -202,8 +209,8 @@ class PredicateParserTest {
         var r = parser.parse("(a) IN ((1))", ctx);
         Assertions.assertTrue(r.ok());
         Assertions.assertInstanceOf(InPredicate.class, r.value());
-        Assertions.assertInstanceOf(RowExpr.class, r.value().asIn().lhs());
-        Assertions.assertInstanceOf(RowListExpr.class, r.value().asIn().rhs());
+        Assertions.assertInstanceOf(RowExpr.class, r.value().asIn().map(InPredicate::lhs).orElseThrow());
+        Assertions.assertInstanceOf(RowListExpr.class, r.value().asIn().map(InPredicate::rhs).orElseThrow());
     }
 
     @Test

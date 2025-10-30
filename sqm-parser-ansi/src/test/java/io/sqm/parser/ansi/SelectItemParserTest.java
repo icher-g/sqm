@@ -21,7 +21,7 @@ class SelectItemParserTest {
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         ExprSelectItem item = r.value();
         Assertions.assertInstanceOf(ColumnExpr.class, item.expr());
-        ColumnExpr n = item.expr().asColumn();
+        ColumnExpr n = item.expr().asColumn().orElseThrow();
         Assertions.assertEquals("c1", n.name());
         Assertions.assertNull(item.alias());
         Assertions.assertNull(n.tableAlias());
@@ -32,7 +32,7 @@ class SelectItemParserTest {
     void table_name_as_alias() {
         var r = parser.parse("t1.c1 AS a1", ctx);
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
-        var n = r.value().expr().asColumn();
+        var n = r.value().expr().asColumn().orElseThrow();
         Assertions.assertEquals("t1", n.tableAlias());
         Assertions.assertEquals("c1", n.name());
         Assertions.assertEquals("a1", r.value().alias());
@@ -43,7 +43,7 @@ class SelectItemParserTest {
     void named_with_bare_alias() {
         var r = parser.parse("t1.c1 a1", ctx);
         Assertions.assertTrue(r.ok());
-        var n = r.value().expr().asColumn();
+        var n = r.value().expr().asColumn().orElseThrow();
         Assertions.assertEquals("t1", n.tableAlias());
         Assertions.assertEquals("c1", n.name());
         Assertions.assertEquals("a1", r.value().alias());
@@ -61,7 +61,7 @@ class SelectItemParserTest {
     void func_with_alias() {
         var r = parser.parse("lower(name) lname", ctx);
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
-        var f = r.value().expr().asFunc();
+        var f = r.value().expr().asFunc().orElseThrow();
         Assertions.assertEquals("lower", f.name());
         Assertions.assertEquals("lname", r.value().alias());
         Assertions.assertNull(f.distinctArg());
@@ -78,7 +78,7 @@ class SelectItemParserTest {
     void func_distinct_and_qualified() {
         var r = parser.parse("COUNT(DISTINCT t.id) AS c", ctx);
         Assertions.assertTrue(r.ok());
-        var f = r.value().expr().asFunc();
+        var f = r.value().expr().asFunc().orElseThrow();
         Assertions.assertEquals("COUNT", f.name());
         Assertions.assertTrue(f.distinctArg());
         Assertions.assertEquals("c", r.value().alias());
@@ -93,7 +93,7 @@ class SelectItemParserTest {
     void func_nested_and_literals() {
         var r = parser.parse("substr(upper(name), 1, '2')", ctx);
         Assertions.assertTrue(r.ok());
-        var f = r.value().expr().asFunc();
+        var f = r.value().expr().asFunc().orElseThrow();
         Assertions.assertEquals("substr", f.name());
         Assertions.assertEquals(3, f.args().size());
         Assertions.assertInstanceOf(FunctionExpr.Arg.Function.class, f.args().get(0));
@@ -109,7 +109,7 @@ class SelectItemParserTest {
         var pr = parser.parse("t.col as c", ctx);
         Assertions.assertTrue(pr.ok(), () -> "parse failed: " + pr.errorMessage());
         Assertions.assertInstanceOf(ColumnExpr.class, pr.value().expr());
-        var nc = pr.value().expr().asColumn();
+        var nc = pr.value().expr().asColumn().orElseThrow();
         Assertions.assertEquals("col", nc.name());
         Assertions.assertEquals("t", nc.tableAlias());
         Assertions.assertEquals("c", pr.value().alias());
@@ -127,7 +127,7 @@ class SelectItemParserTest {
             Assertions.assertTrue(pr.ok(), () -> "parse failed: " + pr.errorMessage());
 
             var col = pr.value();
-            var cc = col.expr().asCase();
+            var cc = col.expr().asCase().orElseThrow();
 
             Assertions.assertEquals("sign", col.alias());
             Assertions.assertEquals(1, cc.whens().size());
@@ -153,7 +153,7 @@ class SelectItemParserTest {
             var pr = parser.parse(sql, ctx);
             Assertions.assertTrue(pr.ok(), () -> "parse failed: " + pr.errorMessage());
 
-            var cc = pr.value().expr().asCase();
+            var cc = pr.value().expr().asCase().orElseThrow();
             Assertions.assertEquals("result", pr.value().alias());
             Assertions.assertEquals(2, cc.whens().size());
             Assertions.assertNull(cc.elseExpr(), "ELSE is optional and should be null here");
@@ -169,12 +169,12 @@ class SelectItemParserTest {
             var pr = parser.parse(sql, ctx);
             Assertions.assertTrue(pr.ok(), () -> "parse failed: " + pr.errorMessage());
 
-            var cc = pr.value().expr().asCase();
+            var cc = pr.value().expr().asCase().orElseThrow();
             Assertions.assertNull(pr.value().alias());
             Assertions.assertEquals(1, cc.whens().size());
             var thenExpr = cc.whens().get(0).then();
             Assertions.assertInstanceOf(ColumnExpr.class, thenExpr, "THEN t2.name should be parsed as a NamedColumn");
-            var nc = thenExpr.asColumn();
+            var nc = thenExpr.asColumn().orElseThrow();
             Assertions.assertEquals("name", nc.name());
             Assertions.assertEquals("t2", nc.tableAlias());
         }
@@ -190,13 +190,13 @@ class SelectItemParserTest {
             var pr = parser.parse(sql, ctx);
             Assertions.assertTrue(pr.ok(), () -> "parse failed: " + pr.errorMessage());
 
-            var outer = pr.value().expr().asCase();
+            var outer = pr.value().expr().asCase().orElseThrow();
             Assertions.assertEquals("alias1", pr.value().alias());
             Assertions.assertEquals(1, outer.whens().size());
 
             var inner = outer.whens().get(0).then();
             Assertions.assertInstanceOf(CaseExpr.class, inner, "THEN should contain a nested CASE");
-            var innerCase = inner.asCase();
+            var innerCase = inner.asCase().orElseThrow();
             Assertions.assertEquals(1, innerCase.whens().size());
             Assertions.assertNotNull(innerCase.elseExpr());
         }
@@ -208,7 +208,7 @@ class SelectItemParserTest {
             var pr = parser.parse(sql, ctx);
             Assertions.assertTrue(pr.ok(), () -> "parse failed: " + pr.errorMessage());
 
-            var cc = pr.value().expr().asCase();
+            var cc = pr.value().expr().asCase().orElseThrow();
             Assertions.assertEquals("is_active", pr.value().alias());
             Assertions.assertInstanceOf(LiteralExpr.class, cc.whens().get(0).then());
             Assertions.assertInstanceOf(LiteralExpr.class, cc.elseExpr());

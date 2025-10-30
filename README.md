@@ -11,7 +11,7 @@ It enables **bidirectional transformations** between SQL, JSON, and DSL forms �
 
 ## ✨ Features
 
-- 🧩 **Structured model** — fully object-oriented representation of SQL (Query, Table, Column, Filter, Join, etc.)
+- 🧩 **Structured model** — fully object-oriented representation of SQL (Query, Table, Column, Predicate, Join, etc.)
 - 🔁 **Bidirectional flow** — parse SQL → model → render SQL again (and JSON/DSL support)
 - 🧠 **Dialect-aware rendering** — ANSI core + SQL Server, PostgreSQL, etc.
 - 🧪 **Extensive test coverage** — golden-file round-trip tests and property-based validation
@@ -245,5 +245,4 @@ See [LICENSE](LICENSE) for details.
 
 ### 🧠 About
 
-**SQM (Structured Query Model)** is developed and maintained by [icher-g](https://github.com/icher-g).  
-It evolved from the original `sql-model` project, renamed to avoid conflicts with the Python `SQLModel` library and to better represent its purpose.
+**SQM (Structured Query Model)** is developed and maintained by [icher-g](https://github.com/icher-g).

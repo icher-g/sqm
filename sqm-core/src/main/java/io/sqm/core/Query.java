@@ -5,6 +5,7 @@ import io.sqm.core.internal.QueryTableImpl;
 import io.sqm.core.internal.WithQueryImpl;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Represents a base interface for all queries.
@@ -55,9 +56,9 @@ public sealed interface Query extends Node permits CompositeQuery, SelectQuery, 
     /**
      * Creates a composite query from a list of sub queries and a list of operators.
      *
-     * @param terms a list of sub queries. size >= 1.
-     * @param ops   a list of operators. size == terms.size()-1.
-     * @param orderBy an OrderBy statement. Can be NULL.
+     * @param terms       a list of sub queries. size >= 1.
+     * @param ops         a list of operators. size == terms.size()-1.
+     * @param orderBy     an OrderBy statement. Can be NULL.
      * @param limitOffset a limit and offest definition.
      * @return A newly created composite query.
      */
@@ -89,8 +90,8 @@ public sealed interface Query extends Node permits CompositeQuery, SelectQuery, 
     /**
      * Creates a CTE definition with the provided name.
      *
-     * @param name the CTE name.
-     * @param body a sub query wrapped by the CTE.
+     * @param name          the CTE name.
+     * @param body          a sub query wrapped by the CTE.
      * @param columnAliases a list of column aliases.
      * @return A newly created CTE definition.
      */
@@ -112,8 +113,8 @@ public sealed interface Query extends Node permits CompositeQuery, SelectQuery, 
     /**
      * Creates a WITH query statement with the list of CTE sub queries and a body.
      *
-     * @param ctes a list of CTE sub queries.
-     * @param body a body.
+     * @param ctes      a list of CTE sub queries.
+     * @param body      a body.
      * @param recursive indicates whether the WITH statement supports recursive calls within the CTE queries.
      * @return A newly created WITH query.
      */
@@ -223,5 +224,32 @@ public sealed interface Query extends Node permits CompositeQuery, SelectQuery, 
      */
     default CompositeQuery exceptAll(Query other) {
         return CompositeQuery.of(List.of(this, other), List.of(SetOperator.EXCEPT_ALL));
+    }
+
+    /**
+     * Casts current query instance to a {@link SelectQuery} if possible.
+     *
+     * @return {@link Optional}<{@link SelectQuery}>.
+     */
+    default Optional<SelectQuery> asSelect() {
+        return this instanceof SelectQuery q ? Optional.of(q) : Optional.empty();
+    }
+
+    /**
+     * Casts current query instance to a {@link WithQuery} if possible.
+     *
+     * @return {@link Optional}<{@link WithQuery}>.
+     */
+    default Optional<WithQuery> asWith() {
+        return this instanceof WithQuery q ? Optional.of(q) : Optional.empty();
+    }
+
+    /**
+     * Casts current query instance to a {@link CompositeQuery} if possible.
+     *
+     * @return {@link Optional}<{@link CompositeQuery}>.
+     */
+    default Optional<CompositeQuery> asComposite() {
+        return this instanceof CompositeQuery q ? Optional.of(q) : Optional.empty();
     }
 }

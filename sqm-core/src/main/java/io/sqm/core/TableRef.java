@@ -1,5 +1,7 @@
 package io.sqm.core;
 
+import java.util.Optional;
+
 /**
  * Anything that can appear in FROM/JOIN: table, subquery, VALUES, etc.
  */
@@ -15,7 +17,7 @@ public sealed interface TableRef extends Node permits QueryTable, Table, ValuesT
     }
 
     /**
-     * Creates a table with the provided name. All other fields are set to NULL.
+     * Creates a table with the provided name.
      *
      * @param name   the name of the table. This is not qualified name.
      * @param schema a table schema.
@@ -65,29 +67,29 @@ public sealed interface TableRef extends Node permits QueryTable, Table, ValuesT
     String alias();
 
     /**
-     * Casts current table reference to {@link Table}.
+     * Casts current table reference to {@link Table} is possible.
      *
-     * @return {@link Table}.
+     * @return {@link Optional}<{@link Table}>.
      */
-    default Table asTable() {
-        return (Table) this;
+    default Optional<Table> asTable() {
+        return this instanceof Table t ? Optional.of(t) : Optional.empty();
     }
 
     /**
-     * Casts current table reference to {@link QueryTable}.
+     * Casts current table reference to {@link QueryTable} is possible.
      *
-     * @return {@link QueryTable}.
+     * @return {@link Optional}<{@link QueryTable}>.
      */
-    default QueryTable asQuery() {
-        return (QueryTable) this;
+    default Optional<QueryTable> asQuery() {
+        return this instanceof QueryTable t ? Optional.of(t) : Optional.empty();
     }
 
     /**
-     * Casts current table reference to {@link ValuesTable}.
+     * Casts current table reference to {@link ValuesTable} is possible.
      *
-     * @return {@link ValuesTable}.
+     * @return {@link Optional}<{@link ValuesTable}>.
      */
-    default ValuesTable asValues() {
-        return (ValuesTable) this;
+    default Optional<ValuesTable> asValues() {
+        return this instanceof ValuesTable t ? Optional.of(t) : Optional.empty();
     }
 }

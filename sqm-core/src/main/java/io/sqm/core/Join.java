@@ -1,11 +1,10 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.CrossJoinImpl;
 import io.sqm.core.internal.NaturalJoinImpl;
 import io.sqm.core.internal.OnJoinImpl;
-import io.sqm.core.internal.UsingJoinImpl;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A single JOIN step that attaches a right-side TableRef to the current FROM-chain.
@@ -60,7 +59,39 @@ public sealed interface Join extends Node permits CrossJoin, NaturalJoin, OnJoin
      * @return A newly created instance of CROSS JOIN with the provided table.
      */
     static CrossJoin cross(TableRef right) {
-        return new CrossJoinImpl(right);
+        return CrossJoin.of(right);
+    }
+
+    /**
+     * Creates cross join with the provided table name.
+     *
+     * @param table the name of the table. This is not qualified name.
+     * @return A newly created instance of the table.
+     */
+    static CrossJoin cross(String table) {
+        return CrossJoin.of(table);
+    }
+
+    /**
+     * Creates cross join with the provided table schema and name.
+     *
+     * @param schema a table schema.
+     * @param table  the name of the table. This is not qualified name.
+     * @return A newly created instance of the table.
+     */
+    static CrossJoin cross(String schema, String table) {
+        return CrossJoin.of(schema, table);
+    }
+
+    /**
+     * Creates a cross join with the provided table.
+     *
+     * @param right        a table to join.
+     * @param usingColumns a list of columns to be used for joining.
+     * @return A newly created instance of CROSS JOIN with the provided table.
+     */
+    static UsingJoin using(TableRef right, String... usingColumns) {
+        return UsingJoin.of(right, usingColumns);
     }
 
     /**
@@ -71,7 +102,7 @@ public sealed interface Join extends Node permits CrossJoin, NaturalJoin, OnJoin
      * @return A newly created instance of USING JOIN with the provided table and a list of columns.
      */
     static UsingJoin using(TableRef right, List<String> usingColumns) {
-        return new UsingJoinImpl(right, usingColumns);
+        return UsingJoin.of(right, usingColumns);
     }
 
     /**
@@ -85,39 +116,60 @@ public sealed interface Join extends Node permits CrossJoin, NaturalJoin, OnJoin
     }
 
     /**
-     * Casts this to {@link OnJoin}.
+     * Creates cross join with the provided table name.
      *
-     * @return {@link OnJoin}.
+     * @param table the name of the table. This is not qualified name.
+     * @return A newly created instance of the table.
      */
-    default OnJoin asOn() {
-        return (OnJoin) this;
+    static NaturalJoin natural(String table) {
+        return new NaturalJoinImpl(TableRef.table(table));
     }
 
     /**
-     * Casts this to {@link CrossJoin}.
+     * Creates cross join with the provided table schema and name.
      *
-     * @return {@link CrossJoin}.
+     * @param schema a table schema.
+     * @param table  the name of the table. This is not qualified name.
+     * @return A newly created instance of the table.
      */
-    default CrossJoin asCross() {
-        return (CrossJoin) this;
+    static NaturalJoin natural(String schema, String table) {
+        return new NaturalJoinImpl(TableRef.table(schema, table));
     }
 
     /**
-     * Casts this to {@link UsingJoin}.
+     * Casts this to {@link OnJoin} if possible.
      *
-     * @return {@link UsingJoin}.
+     * @return an {@link Optional}<{@link OnJoin}>.
      */
-    default UsingJoin asUsing() {
-        return (UsingJoin) this;
+    default Optional<OnJoin> asOn() {
+        return this instanceof OnJoin j ? Optional.of(j) : Optional.empty();
     }
 
     /**
-     * Casts this to {@link NaturalJoin}.
+     * Casts this to {@link CrossJoin} if possible.
      *
-     * @return {@link NaturalJoin}.
+     * @return an {@link Optional}<{@link CrossJoin}>.
      */
-    default NaturalJoin asNatural() {
-        return (NaturalJoin) this;
+    default Optional<CrossJoin> asCross() {
+        return this instanceof CrossJoin j ? Optional.of(j) : Optional.empty();
+    }
+
+    /**
+     * Casts this to {@link UsingJoin} if possible.
+     *
+     * @return an {@link Optional}<{@link UsingJoin}>.
+     */
+    default Optional<UsingJoin> asUsing() {
+        return this instanceof UsingJoin j ? Optional.of(j) : Optional.empty();
+    }
+
+    /**
+     * Casts this to {@link NaturalJoin} if possible.
+     *
+     * @return an {@link Optional}<{@link NaturalJoin}>.
+     */
+    default Optional<NaturalJoin> asNatural() {
+        return this instanceof NaturalJoin j ? Optional.of(j) : Optional.empty();
     }
 
     TableRef right();
