@@ -56,7 +56,7 @@ public class MixInsSmokeTest {
 
         // 1) Can deserialize into FunctionExpr
         var esi = m.readValue(json, ExprSelectItem.class);
-        var fe = esi.expr().asFunc();
+        var fe = esi.expr().asFunc().orElseThrow();
 
         assertEquals("lower", fe.name());
         assertEquals("l", esi.alias());
@@ -93,7 +93,7 @@ public class MixInsSmokeTest {
                 """;
 
         var esi = m.readValue(json, ExprSelectItem.class);
-        var c = esi.expr().asColumn();
+        var c = esi.expr().asColumn().orElseThrow();
 
         assertNotNull(c);
         String out = m.writeValueAsString(c);
@@ -126,9 +126,10 @@ public class MixInsSmokeTest {
         var f = m.readValue(json, Predicate.class);
 
         assertNotNull(f);
+        var p = f.asComparison().orElseThrow();
         assertInstanceOf(ComparisonPredicate.class, f);
-        assertInstanceOf(ColumnExpr.class, f.asComparison().lhs());
-        assertInstanceOf(LiteralExpr.class, f.asComparison().rhs());
+        assertInstanceOf(ColumnExpr.class, p.lhs());
+        assertInstanceOf(LiteralExpr.class, p.rhs());
 
         String out = m.writeValueAsString(f);
         assertEquals(json.stripIndent(), out.stripIndent());
@@ -172,11 +173,12 @@ public class MixInsSmokeTest {
         assertNotNull(j);
         assertInstanceOf(OnJoin.class, j);
         assertInstanceOf(Table.class, j.right());
-        assertInstanceOf(ComparisonPredicate.class, j.asOn().on());
-        assertEquals("users", j.right().asTable().name());
+        var p = j.asOn().map(o -> o.on().asComparison().orElseThrow()).orElseThrow();
+        assertInstanceOf(ComparisonPredicate.class, p);
+        assertEquals("users", j.right().asTable().map(Table::name).orElseThrow());
         assertEquals("u", j.right().alias());
-        assertEquals("id", j.asOn().on().asComparison().lhs().asColumn().name());
-        assertEquals("user_id", j.asOn().on().asComparison().rhs().asColumn().name());
+        assertEquals("id", p.lhs().asColumn().map(ColumnExpr::name).orElseThrow());
+        assertEquals("user_id", p.rhs().asColumn().map(ColumnExpr::name).orElseThrow());
     }
 
     @Test

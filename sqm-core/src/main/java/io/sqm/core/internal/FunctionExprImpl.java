@@ -20,4 +20,7 @@ import java.util.List;
  * @param distinctArg indicates whether DISTINCT should be added before the list of arguments in the function call. {@code COUNT(DISTINCT t.id) AS c}.
  */
 public record FunctionExprImpl(String name, List<Arg> args, Boolean distinctArg) implements FunctionExpr {
+    public FunctionExprImpl {
+        args = List.copyOf(args);
+    }
 }

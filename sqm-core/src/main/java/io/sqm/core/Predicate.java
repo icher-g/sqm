@@ -1,5 +1,7 @@
 package io.sqm.core;
 
+import java.util.Optional;
+
 /**
  * Boolean-valued expression: usable in WHERE, HAVING, and JOIN ... ON.
  */
@@ -56,83 +58,83 @@ public sealed interface Predicate extends Expression
     }
 
     /**
-     * Casts current expression to {@link AnyAllPredicate}.
+     * Casts current expression to {@link AnyAllPredicate} if possible.
      *
-     * @return {@link AnyAllPredicate}.
+     * @return {@link Optional}<{@link AnyAllPredicate}>.
      */
-    default AnyAllPredicate asAnyAll() {
-        return this instanceof AnyAllPredicate p ? p : null;
+    default Optional<AnyAllPredicate> asAnyAll() {
+        return this instanceof AnyAllPredicate p ? Optional.of(p) : Optional.empty();
     }
 
     /**
-     * Casts current expression to {@link BetweenPredicate}.
+     * Casts current expression to {@link BetweenPredicate} if possible.
      *
-     * @return {@link BetweenPredicate}.
+     * @return {@link Optional}<{@link BetweenPredicate}>.
      */
-    default BetweenPredicate asBetween() {
-        return this instanceof BetweenPredicate p ? p : null;
+    default Optional<BetweenPredicate> asBetween() {
+        return this instanceof BetweenPredicate p ? Optional.of(p) : Optional.empty();
     }
 
     /**
-     * Casts current expression to {@link ComparisonPredicate}.
+     * Casts current expression to {@link ComparisonPredicate} if possible.
      *
-     * @return {@link ComparisonPredicate}.
+     * @return {@link Optional}<{@link ComparisonPredicate}>.
      */
-    default ComparisonPredicate asComparison() {
-        return this instanceof ComparisonPredicate p ? p : null;
+    default Optional<ComparisonPredicate> asComparison() {
+        return this instanceof ComparisonPredicate p ? Optional.of(p) : Optional.empty();
     }
 
     /**
-     * Casts current expression to {@link CompositePredicate}.
+     * Casts current expression to {@link CompositePredicate} if possible.
      *
-     * @return {@link CompositePredicate}.
+     * @return {@link Optional}<{@link CompositePredicate}>.
      */
-    default CompositePredicate asComposite() {
-        return this instanceof CompositePredicate p ? p : null;
+    default Optional<CompositePredicate> asComposite() {
+        return this instanceof CompositePredicate p ? Optional.of(p) : Optional.empty();
     }
 
     /**
-     * Casts current expression to {@link ExistsPredicate}.
+     * Casts current expression to {@link ExistsPredicate} if possible.
      *
-     * @return {@link ExistsPredicate}.
+     * @return {@link Optional}<{@link ExistsPredicate}>.
      */
-    default ExistsPredicate asExists() {
-        return this instanceof ExistsPredicate p ? p : null;
+    default Optional<ExistsPredicate> asExists() {
+        return this instanceof ExistsPredicate p ? Optional.of(p) : Optional.empty();
     }
 
     /**
-     * Casts current expression to {@link InPredicate}.
+     * Casts current expression to {@link InPredicate} if possible.
      *
-     * @return {@link InPredicate}.
+     * @return {@link Optional}<{@link InPredicate}>.
      */
-    default InPredicate asIn() {
-        return this instanceof InPredicate p ? p : null;
+    default Optional<InPredicate> asIn() {
+        return this instanceof InPredicate p ? Optional.of(p) : Optional.empty();
     }
 
     /**
-     * Casts current expression to {@link IsNullPredicate}.
+     * Casts current expression to {@link IsNullPredicate} if possible.
      *
-     * @return {@link IsNullPredicate}.
+     * @return {@link Optional}<{@link IsNullPredicate}>.
      */
-    default IsNullPredicate asIsNull() {
-        return this instanceof IsNullPredicate p ? p : null;
+    default Optional<IsNullPredicate> asIsNull() {
+        return this instanceof IsNullPredicate p ? Optional.of(p) : Optional.empty();
     }
 
     /**
-     * Casts current expression to {@link LikePredicate}.
+     * Casts current expression to {@link LikePredicate} if possible.
      *
-     * @return {@link LikePredicate}.
+     * @return {@link Optional}<{@link LikePredicate}>.
      */
-    default LikePredicate asLike() {
-        return this instanceof LikePredicate p ? p : null;
+    default Optional<LikePredicate> asLike() {
+        return this instanceof LikePredicate p ? Optional.of(p) : Optional.empty();
     }
 
     /**
-     * Casts current expression to {@link NotPredicate}.
+     * Casts current expression to {@link NotPredicate} if possible.
      *
-     * @return {@link NotPredicate}.
+     * @return {@link Optional}<{@link NotPredicate}>.
      */
-    default NotPredicate asNot() {
-        return this instanceof NotPredicate p ? p : null;
+    default Optional<NotPredicate> asNot() {
+        return this instanceof NotPredicate p ? Optional.of(p) : Optional.empty();
     }
 }
