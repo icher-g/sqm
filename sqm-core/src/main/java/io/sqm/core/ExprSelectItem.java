@@ -1,6 +1,7 @@
 package io.sqm.core;
 
 import io.sqm.core.internal.ExprSelectItemImpl;
+import io.sqm.core.walk.NodeVisitor;
 
 /**
  * Represents a wrapped expression in a SELECT statement.
@@ -45,5 +46,18 @@ public non-sealed interface ExprSelectItem extends SelectItem {
      */
     default ExprSelectItem as(String alias) {
         return new ExprSelectItemImpl(expr(), alias);
+    }
+
+    /**
+     * Accepts a {@link NodeVisitor} and dispatches control to the
+     * visitor method corresponding to the concrete subtype
+     *
+     * @param v   the visitor instance to accept (must not be {@code null})
+     * @param <R> the result type returned by the visitor
+     * @return the result produced by the visitor
+     */
+    @Override
+    default <R> R accept(NodeVisitor<R> v) {
+        return v.visitExprSelectItem(this);
     }
 }

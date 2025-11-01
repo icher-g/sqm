@@ -2,6 +2,7 @@ package io.sqm.core;
 
 import io.sqm.core.internal.CompositeQueryImpl;
 import io.sqm.core.internal.OrderByImpl;
+import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
 
@@ -110,5 +111,18 @@ public non-sealed interface CompositeQuery extends Query {
      */
     default CompositeQuery offset(Long offset) {
         return new CompositeQueryImpl(terms(), ops(), orderBy(), LimitOffset.of(limitOffset() == null ? null : limitOffset().limit(), offset));
+    }
+
+    /**
+     * Accepts a {@link NodeVisitor} and dispatches control to the
+     * visitor method corresponding to the concrete subtype
+     *
+     * @param v   the visitor instance to accept (must not be {@code null})
+     * @param <R> the result type returned by the visitor
+     * @return the result produced by the visitor
+     */
+    @Override
+    default <R> R accept(NodeVisitor<R> v) {
+        return v.visitCompositeQuery(this);
     }
 }

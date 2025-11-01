@@ -98,6 +98,7 @@ ORDER BY cnt DESC
 OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY
 ```
 ---
+
 ### Parse SQL into a Model
 
 ```java
@@ -149,6 +150,52 @@ Output example:
       "name" : "user_id"
     }
   }
+}
+```
+
+---
+
+### Collectors
+
+#### Implement a Collector with the Help of Visitor Pattern
+
+```java
+private static class QueryColumnCollector extends RecursiveNodeVisitor<Void> {
+
+    private final Set<String> columns = new LinkedHashSet<>();
+
+    @Override
+    protected Void defaultResult() {
+        return null;
+    }
+
+    public Set<String> getColumns() {
+        return columns;
+    }
+
+    @Override
+    public Void visitColumnExpr(ColumnExpr c) {
+        columns.add(c.tableAlias() == null ? c.name() : c.tableAlias() + "." + c.name());
+        return super.visitColumnExpr(c);
+    }
+}
+```
+
+---
+
+### Transformers
+
+#### Implement a Column Name Transformer
+
+```java
+public static class RenameColumnTransformer extends RecursiveNodeTransformer {
+    @Override
+    public Node visitColumnExpr(ColumnExpr c) {
+        if ("u".equals(c.tableAlias()) && "id".equals(c.name())) {
+            return ColumnExpr.of("u", "user_id");
+        }
+        return c;
+    }
 }
 ```
 
@@ -222,7 +269,7 @@ mvn test
 - [ ] Add support for parsing SELECT from sub query (SELECT * FROM (SELECT * FROM))
 - [ ] Arithmetic operations in SQL statements (SELECT salary + bonus AS total_income)
 - [ ] Add support for INSERT | UPDATE | DELETE | MERGE
-- [ ] PostgreSQL renderer & parser
+- [ ] PostgresSQL renderer & parser
 - [ ] SQL Server renderer & parser
 - [ ] Query optimizer & rewrite utilities
 

@@ -6,7 +6,7 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.RenderContext;
 
-public final class Example02_ParseAndRender {
+public final class Query_ParseAndRender {
     public static void main(String[] args) {
         String sql = """
             SELECT u.user_name, o.status, COUNT(*) AS cnt

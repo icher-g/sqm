@@ -17,4 +17,8 @@ import java.util.List;
  * @param items a list of row values.
  */
 public record RowExprImpl(List<Expression> items) implements RowExpr {
+
+    public RowExprImpl {
+        items = List.copyOf(items);
+    }
 }

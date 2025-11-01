@@ -1,6 +1,7 @@
 package io.sqm.core;
 
 import io.sqm.core.internal.GroupItemImpl;
+import io.sqm.core.walk.NodeVisitor;
 
 import java.util.Objects;
 
@@ -39,5 +40,18 @@ public non-sealed interface GroupItem extends Node {
      */
     default boolean isOrdinal() {
         return ordinal() != null;
+    }
+
+    /**
+     * Accepts a {@link NodeVisitor} and dispatches control to the
+     * visitor method corresponding to the concrete subtype
+     *
+     * @param v   the visitor instance to accept (must not be {@code null})
+     * @param <R> the result type returned by the visitor
+     * @return the result produced by the visitor
+     */
+    @Override
+    default <R> R accept(NodeVisitor<R> v) {
+        return v.visitGroupItem(this);
     }
 }

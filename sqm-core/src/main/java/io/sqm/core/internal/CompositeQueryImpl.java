@@ -37,5 +37,8 @@ public record CompositeQueryImpl(List<Query> terms, List<SetOperator> ops, Order
                 }
             }
         }
+
+        terms = List.copyOf(terms);
+        ops = List.copyOf(ops);
     }
 }

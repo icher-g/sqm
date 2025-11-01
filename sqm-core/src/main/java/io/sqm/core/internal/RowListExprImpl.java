@@ -18,4 +18,8 @@ import java.util.List;
  * @param rows a list of rows.
  */
 public record RowListExprImpl(List<RowExpr> rows) implements RowListExpr {
+
+    public RowListExprImpl {
+        rows = List.copyOf(rows);
+    }
 }
