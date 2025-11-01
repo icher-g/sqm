@@ -13,4 +13,8 @@ import java.util.List;
  * @param alias       table alias or null if none
  */
 public record ValuesTableImpl(RowListExpr rows, List<String> columnNames, String alias) implements ValuesTable {
+
+    public ValuesTableImpl {
+        columnNames = List.copyOf(columnNames);
+    }
 }

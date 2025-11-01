@@ -29,4 +29,8 @@ import java.util.List;
  * @param recursive indicates whether the WITH statement supports recursive calls within the CTE queries.
  */
 public record WithQueryImpl(List<CteDef> ctes, Query body, boolean recursive) implements WithQuery {
+
+    public WithQueryImpl {
+        ctes = List.copyOf(ctes);
+    }
 }

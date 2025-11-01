@@ -1,6 +1,7 @@
 package io.sqm.core;
 
 import io.sqm.core.internal.OrderItemImpl;
+import io.sqm.core.walk.NodeVisitor;
 
 /**
  * Represents an order by item.
@@ -137,5 +138,18 @@ public non-sealed interface OrderItem extends Node {
      */
     default OrderItem collate(String collate) {
         return new OrderItemImpl(expr(), ordinal(), direction(), nulls(), collate);
+    }
+
+    /**
+     * Accepts a {@link NodeVisitor} and dispatches control to the
+     * visitor method corresponding to the concrete subtype
+     *
+     * @param v   the visitor instance to accept (must not be {@code null})
+     * @param <R> the result type returned by the visitor
+     * @return the result produced by the visitor
+     */
+    @Override
+    default <R> R accept(NodeVisitor<R> v) {
+        return v.visitOrderItem(this);
     }
 }

@@ -6,7 +6,7 @@ import io.sqm.render.spi.RenderContext;
 
 import static io.sqm.dsl.Dsl.*;
 
-public final class Example01_SelectJoinGroup {
+public final class Query_BuildSimpleQueryWithDSL {
     public static void main(String[] args) {
         Query q = select(
             sel("u", "user_name"),

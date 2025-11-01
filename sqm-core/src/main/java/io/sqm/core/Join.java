@@ -10,7 +10,7 @@ import java.util.Optional;
  * A single JOIN step that attaches a right-side TableRef to the current FROM-chain.
  * For CROSS/NATURAL joins, on() may be null. For USING, use usingColumns().
  */
-public sealed interface Join extends Node permits CrossJoin, NaturalJoin, OnJoin, UsingJoin {
+public sealed interface Join extends FromItem permits CrossJoin, NaturalJoin, OnJoin, UsingJoin {
 
     /**
      * Creates an inner join with the provided table.

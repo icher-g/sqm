@@ -11,4 +11,8 @@ import java.util.List;
  * @param items a list of order by items.
  */
 public record OrderByImpl(List<OrderItem> items) implements OrderBy {
+
+    public OrderByImpl {
+        items = List.copyOf(items);
+    }
 }

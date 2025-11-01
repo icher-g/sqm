@@ -53,15 +53,16 @@ Node
    ├─ SelectQuery
    └─ WithQuery
 └─ CteDef
-└─ Join
-   ├─ CrossJoin
-   ├─ NaturalJoin
-   ├─ OnJoin
-   └─ UsingJoin
-└─ TableRef
-   ├─ QueryTable
-   ├─ Table
-   └─ ValuesTable
+└─ FromItem
+   └─ Join
+      ├─ CrossJoin
+      ├─ NaturalJoin
+      ├─ OnJoin
+      └─ UsingJoin
+   └─ TableRef
+      ├─ QueryTable
+      ├─ Table
+      └─ ValuesTable
 └─ GroupBy
 └─ GroupItem
 └─ OrderBy
@@ -128,13 +129,15 @@ Query <|-- WithQuery
 
 Node <|-- CteDef
 
-Node <|-- Join
+Node <|-- FromItem
+
+FromItem <|-- Join
 Join <|-- CrossJoin
 Join <|-- NaturalJoin
 Join <|-- OnJoin
 Join <|-- UsingJoin
 
-Node <|-- TableRef
+FromItem <|-- TableRef
 TableRef <|-- QueryTable
 TableRef <|-- Table
 TableRef <|-- ValuesTable

@@ -1,6 +1,7 @@
 package io.sqm.core;
 
 import io.sqm.core.internal.ComparisonPredicateImpl;
+import io.sqm.core.walk.NodeVisitor;
 
 /**
  * Represents a comparison predicate.
@@ -47,4 +48,17 @@ public non-sealed interface ComparisonPredicate extends Predicate {
      * @return an expression on the right side of the predicate.
      */
     Expression rhs();
+
+    /**
+     * Accepts a {@link NodeVisitor} and dispatches control to the
+     * visitor method corresponding to the concrete subtype
+     *
+     * @param v   the visitor instance to accept (must not be {@code null})
+     * @param <R> the result type returned by the visitor
+     * @return the result produced by the visitor
+     */
+    @Override
+    default <R> R accept(NodeVisitor<R> v) {
+        return v.visitComparisonPredicate(this);
+    }
 }
