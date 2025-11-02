@@ -1,6 +1,6 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.FunctionExprImpl;
+import io.sqm.core.internal.*;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
@@ -85,8 +85,73 @@ public non-sealed interface FunctionExpr extends Expression {
         return new FunctionExprImpl(name(), args(), distinctArg);
     }
 
+    /**
+     * Accepts a {@link NodeVisitor} and dispatches control to the
+     * visitor method corresponding to the concrete subtype
+     *
+     * @param v   the visitor instance to accept (must not be {@code null})
+     * @param <R> the result type returned by the visitor
+     * @return the result produced by the visitor
+     */
+    @Override
+    default <R> R accept(NodeVisitor<R> v) {
+        return v.visitFunctionExpr(this);
+    }
+
     /* -------- Function arguments (structured) -------- */
     sealed interface Arg extends Expression permits FunctionExpr.Arg.Column, FunctionExpr.Arg.Literal, FunctionExpr.Arg.Function, FunctionExpr.Arg.Star {
+        /**
+         * Creates column function argument.
+         *
+         * @param c a column reference.
+         * @return a column argument.
+         */
+        static Column column(ColumnExpr c) {
+            return new FuncColumnArg(c);
+        }
+
+        /**
+         * Creates literal function argument.
+         *
+         * @param v a literal value.
+         * @return a literal argument.
+         */
+        static Literal literal(Object v) {
+            return new FuncLiteralArg(v);
+        }
+
+        /**
+         * Create function call argument.
+         *
+         * @param f a nested function call.
+         * @return a function call argument.
+         */
+        static Function func(FunctionExpr f) {
+            return new FuncCallArg(f);
+        }
+
+        /**
+         * Creates a '*' argument.
+         *
+         * @return a star argument.
+         */
+        static Star star() {
+            return new FuncStarArg();
+        }
+
+        /**
+         * Accepts a {@link NodeVisitor} and dispatches control to the
+         * visitor method corresponding to the concrete subtype
+         *
+         * @param v   the visitor instance to accept (must not be {@code null})
+         * @param <R> the result type returned by the visitor
+         * @return the result produced by the visitor
+         */
+        @Override
+        default <R> R accept(NodeVisitor<R> v) {
+            return v.visitFunctionArgExpr(this);
+        }
+
         /**
          * Column reference argument: t.c or just c.
          */
@@ -113,31 +178,5 @@ public non-sealed interface FunctionExpr extends Expression {
          */
         non-sealed interface Star extends FunctionExpr.Arg {
         }
-
-        /**
-         * Accepts a {@link NodeVisitor} and dispatches control to the
-         * visitor method corresponding to the concrete subtype
-         *
-         * @param v   the visitor instance to accept (must not be {@code null})
-         * @param <R> the result type returned by the visitor
-         * @return the result produced by the visitor
-         */
-        @Override
-        default <R> R accept(NodeVisitor<R> v) {
-            return v.visitFunctionArgExpr(this);
-        }
-    }
-
-    /**
-     * Accepts a {@link NodeVisitor} and dispatches control to the
-     * visitor method corresponding to the concrete subtype
-     *
-     * @param v   the visitor instance to accept (must not be {@code null})
-     * @param <R> the result type returned by the visitor
-     * @return the result produced by the visitor
-     */
-    @Override
-    default <R> R accept(NodeVisitor<R> v) {
-        return v.visitFunctionExpr(this);
     }
 }
