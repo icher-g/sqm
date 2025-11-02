@@ -95,6 +95,20 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
      */
     @Override
     public Node visitFunctionArgExpr(FunctionExpr.Arg a) {
+        if (a instanceof FunctionExpr.Arg.Column c) {
+            var column = apply(c.ref());
+            if (column != c.ref()) {
+                return FunctionExpr.Arg.column(column);
+            }
+            return c;
+        }
+        if (a instanceof FunctionExpr.Arg.Function f) {
+            var func = apply(f.call());
+            if (func != f.call()) {
+                return FunctionExpr.Arg.func(func);
+            }
+            return f;
+        }
         return a;
     }
 

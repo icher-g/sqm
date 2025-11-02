@@ -1,8 +1,10 @@
 package io.sqm.examples;
 
 import io.sqm.core.ColumnExpr;
+import io.sqm.core.Join;
 import io.sqm.core.Node;
 import io.sqm.core.Query;
+import io.sqm.core.match.Opts;
 import io.sqm.core.transform.RecursiveNodeTransformer;
 
 import static io.sqm.dsl.Dsl.*;
@@ -16,18 +18,27 @@ public class Transform_RenameColumnTransformer {
             )
             .from(tbl("orders").as("o"))
             .join(
-                inner(tbl("users").as("u"))
-                    .on(col("u", "id").eq(col("o", "user_id")))
+                inner(tbl("users").as("u")).on(col("u", "id").eq(col("o", "user_id")))
             )
             .where(col("o", "status").in("A", "B"))
             .groupBy(group("u", "user_name"), group("o", "status"))
             .having(func("count", starArg()).gt(10));
 
         var transformer = new Transform_RenameColumnTransformer.RenameColumnTransformer();
-        var transformedQuery = (Query)query.accept(transformer);
+        var transformedQuery = (Query) query.accept(transformer);
 
         // print the u.id new column name used in join statement.
-        transformedQuery.asSelect().flatMap(s -> s.joins().get(0).asOn().flatMap(j -> j.on().asComparison().flatMap(p -> p.lhs().asColumn()))).ifPresent(c -> System.out.println(c.name()));
+        var name =
+            Opts.start(transformedQuery)
+                .then(Query::asSelect)                                      // Query -> Optional<SelectQuery>
+                .then(s -> s.joins().stream().findFirst())       // SelectQuery -> Optional<Join>
+                .then(Join::asOn)                                           // Join -> Optional<OnJoin>
+                .then(on -> on.on().asComparison())                  // OnJoin -> Optional<ComparisonPredicate>
+                .then(cmp -> cmp.lhs().asColumn())        // ComparisonPredicate -> Optional<ColumnExpr>
+                .map(ColumnExpr::name);                                     // Optional<String>
+
+        name.ifPresent(System.out::println);
+
     }
 
     public static class RenameColumnTransformer extends RecursiveNodeTransformer {
