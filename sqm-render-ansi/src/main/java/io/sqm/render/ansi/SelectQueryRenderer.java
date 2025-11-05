@@ -57,8 +57,7 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
 
         // GROUP BY
         if (node.groupBy() != null) {
-            w.newline().append("GROUP BY").space();
-            w.append(node.groupBy());
+            w.newline().append(node.groupBy());
         }
 
         // HAVING
@@ -67,10 +66,16 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
             w.append(node.having());
         }
 
+        // WINDOW
+        if (node.windows() != null) {
+            for (var window : node.windows()) {
+                w.newline().append(window);
+            }
+        }
+
         // ORDER BY
         if (node.orderBy() != null) {
-            w.newline().append("ORDER BY").space();
-            w.append(node.orderBy());
+            w.newline().append(node.orderBy());
         }
 
         Long limit = node.limit();

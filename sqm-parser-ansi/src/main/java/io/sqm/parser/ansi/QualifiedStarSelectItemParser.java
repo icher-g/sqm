@@ -21,7 +21,7 @@ public class QualifiedStarSelectItemParser implements Parser<QualifiedStarSelect
         var t = cur.expect("Expected identifier", TokenType.IDENT);
         cur.expect("Expected '.'", TokenType.DOT);
         cur.expect("Expected '*'", TokenType.STAR);
-        return ok(SelectItem.star(t.lexeme()));
+        return finalize(cur, ctx, SelectItem.star(t.lexeme()));
     }
 
     /**

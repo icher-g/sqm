@@ -1,21 +1,15 @@
-# SQM Model Hierarchy
+# SQM Model Hierarchy (Updated)
 
-This document describes the **core model hierarchy** of SQM (Structured Query Model).  
-The model represents a structured, type-safe **Abstract Syntax Tree (AST)** for SQL.  
-It serves as the shared data model across the **DSL**, **Parser**, and **Renderer** modules.
+The SQM (Structured Query Model) provides a composable, immutable AST representation of SQL queries.  
+This document preserves the detailed descriptions from the previous version and **adds the textual hierarchy first**, followed by the **Mermaid class diagram** and explanatory sections.
 
----
-
-## 📘 Overview
-
-Each node implements or derives from the root interface `Node`.  
-Specialized subtypes model SQL constructs such as expressions, predicates, joins, and queries.
+_Last updated: 2025-11-05_
 
 ---
 
-## 🧱 Text Hierarchy
+## Textual Hierarchy (source of truth)
 
-```text
+```
 Node
 └─ Expression
    ├─ CaseExpr
@@ -65,6 +59,20 @@ Node
       └─ ValuesTable
 └─ GroupBy
 └─ GroupItem
+└─ WindowDef
+└─ BoundSpec
+   ├─ BoundSpec.UnboundedPreceding
+   ├─ BoundSpec.Preceding
+   ├─ BoundSpec.CurrentRow
+   ├─ BoundSpec.Following      
+   └─ BoundSpec.UnboundedFollowing
+└─ FrameSpec
+   ├─ FrameSpec.Single      
+   └─ FrameSpec.Between
+└─ OverSpec
+   ├─ OverSpec.Ref      
+   └─ OverSpec.Def
+└─ PartitionBy
 └─ OrderBy
 └─ OrderItem
 └─ WhenThen
@@ -73,179 +81,296 @@ Node
 
 ---
 
-## 🧩 Mermaid Class Diagram
+## Mermaid Class Diagram
 
-> 💡 This diagram is rendered automatically on GitHub and in IDEs that support Mermaid.  
-> It visually represents inheritance and composition relationships in the model.
+> Mermaid identifiers cannot contain dots.  
+> For readability we display the original names in quotes and map them to underscored aliases.
 
 ```mermaid
 classDiagram
-class Node
+    class Node
 
-Node <|-- Expression
-Expression <|-- CaseExpr
-Expression <|-- ColumnExpr
-Expression <|-- FunctionExpr
-Expression <|-- LiteralExpr
-Expression <|-- Predicate
-Expression <|-- ValueSet
+    %% Top-level subclasses of Node
+    Node <|-- Expression
+    Node <|-- SelectItem
+    Node <|-- Query
+    Node <|-- CteDef
+    Node <|-- FromItem
+    Node <|-- GroupBy
+    Node <|-- GroupItem
+    Node <|-- WindowDef
+    Node <|-- BoundSpec
+    Node <|-- FrameSpec
+    Node <|-- OverSpec
+    Node <|-- PartitionBy
+    Node <|-- OrderBy
+    Node <|-- OrderItem
+    Node <|-- WhenThen
+    Node <|-- LimitOffset
 
-class FunctionExpr
-class FunctionExpr_Arg as FuncArg
-FunctionExpr *-- FuncArg
-FuncArg <|-- FunctionExpr_Arg_Column
-FuncArg <|-- FunctionExpr_Arg_Literal
-FuncArg <|-- FunctionExpr_Arg_Function
-FuncArg <|-- FunctionExpr_Arg_Star
+    %% ===================== Expressions =====================
+    class Expression
+    Expression <|-- CaseExpr
+    Expression <|-- ColumnExpr
+    Expression <|-- FunctionExpr
+    Expression <|-- LiteralExpr
+    Expression <|-- Predicate
+    Expression <|-- ValueSet
 
-class Predicate
-Predicate <|-- AnyAllPredicate
-Predicate <|-- BetweenPredicate
-Predicate <|-- ComparisonPredicate
-Predicate <|-- ExistsPredicate
-Predicate <|-- InPredicate
-Predicate <|-- IsNullPredicate
-Predicate <|-- LikePredicate
-Predicate <|-- NotPredicate
-Predicate <|-- CompositePredicate
-Predicate <|-- UnaryPredicate
-CompositePredicate <|-- AndPredicate
-CompositePredicate <|-- OrPredicate
+    %% FunctionExpr.Args
+    class "FunctionExpr.Arg" as FunctionExpr_Arg
+    class "FunctionExpr.Arg.Column" as FunctionExpr_Arg_Column
+    class "FunctionExpr.Arg.Literal" as FunctionExpr_Arg_Literal
+    class "FunctionExpr.Arg.Function" as FunctionExpr_Arg_Function
+    class "FunctionExpr.Arg.Star" as FunctionExpr_Arg_Star
 
-class ValueSet
-ValueSet <|-- RowExpr
-ValueSet <|-- QueryExpr
-ValueSet <|-- RowListExpr
+    FunctionExpr <|-- FunctionExpr_Arg
+    FunctionExpr_Arg <|-- FunctionExpr_Arg_Column
+    FunctionExpr_Arg <|-- FunctionExpr_Arg_Literal
+    FunctionExpr_Arg <|-- FunctionExpr_Arg_Function
+    FunctionExpr_Arg <|-- FunctionExpr_Arg_Star
 
-Node <|-- SelectItem
-SelectItem <|-- ExprSelectItem
-SelectItem <|-- StarSelectItem
-SelectItem <|-- QualifiedStarSelectItem
+    %% Predicates
+    class Predicate
+    Predicate <|-- AnyAllPredicate
+    Predicate <|-- BetweenPredicate
+    Predicate <|-- ComparisonPredicate
+    Predicate <|-- ExistsPredicate
+    Predicate <|-- InPredicate
+    Predicate <|-- IsNullPredicate
+    Predicate <|-- LikePredicate
+    Predicate <|-- NotPredicate
+    Predicate <|-- CompositePredicate
+    Predicate <|-- UnaryPredicate
 
-Node <|-- Query
-Query <|-- CompositeQuery
-Query <|-- SelectQuery
-Query <|-- WithQuery
+    class AndPredicate
+    class OrPredicate
+    CompositePredicate <|-- AndPredicate
+    CompositePredicate <|-- OrPredicate
 
-Node <|-- CteDef
+    %% ValueSet
+    class ValueSet
+    ValueSet <|-- RowExpr
+    ValueSet <|-- QueryExpr
+    ValueSet <|-- RowListExpr
 
-Node <|-- FromItem
+    %% ===================== Select Items =====================
+    class SelectItem
+    SelectItem <|-- ExprSelectItem
+    SelectItem <|-- StarSelectItem
+    SelectItem <|-- QualifiedStarSelectItem
 
-FromItem <|-- Join
-Join <|-- CrossJoin
-Join <|-- NaturalJoin
-Join <|-- OnJoin
-Join <|-- UsingJoin
+    %% ===================== Queries =====================
+    class Query
+    Query <|-- CompositeQuery
+    Query <|-- SelectQuery
+    Query <|-- WithQuery
 
-FromItem <|-- TableRef
-TableRef <|-- QueryTable
-TableRef <|-- Table
-TableRef <|-- ValuesTable
+    %% ===================== From items and joins =====================
+    class FromItem
+    class Join
+    class TableRef
+    FromItem <|-- Join
+    FromItem <|-- TableRef
 
-Node <|-- GroupBy
-Node <|-- GroupItem
-Node <|-- OrderBy
-Node <|-- OrderItem
-Node <|-- WhenThen
-Node <|-- LimitOffset
+    class CrossJoin
+    class NaturalJoin
+    class OnJoin
+    class UsingJoin
+    Join <|-- CrossJoin
+    Join <|-- NaturalJoin
+    Join <|-- OnJoin
+    Join <|-- UsingJoin
+
+    class QueryTable
+    class Table
+    class ValuesTable
+    TableRef <|-- QueryTable
+    TableRef <|-- Table
+    TableRef <|-- ValuesTable
+
+    %% ===================== Windowing =====================
+    class OverSpec
+    class "OverSpec.Ref" as OverSpec_Ref
+    class "OverSpec.Def" as OverSpec_Def
+    OverSpec <|-- OverSpec_Ref
+    OverSpec <|-- OverSpec_Def
+
+    class FrameSpec
+    class "FrameSpec.Single" as FrameSpec_Single
+    class "FrameSpec.Between" as FrameSpec_Between
+    FrameSpec <|-- FrameSpec_Single
+    FrameSpec <|-- FrameSpec_Between
+
+    class BoundSpec
+    class "BoundSpec.UnboundedPreceding" as BoundSpec_UnboundedPreceding
+    class "BoundSpec.Preceding" as BoundSpec_Preceding
+    class "BoundSpec.CurrentRow" as BoundSpec_CurrentRow
+    class "BoundSpec.Following" as BoundSpec_Following
+    class "BoundSpec.UnboundedFollowing" as BoundSpec_UnboundedFollowing
+    BoundSpec <|-- BoundSpec_UnboundedPreceding
+    BoundSpec <|-- BoundSpec_Preceding
+    BoundSpec <|-- BoundSpec_CurrentRow
+    BoundSpec <|-- BoundSpec_Following
+    BoundSpec <|-- BoundSpec_UnboundedFollowing
+
+    %% Partition & Order
+    class PartitionBy
+    class OrderBy
+    class OrderItem
 ```
 
 ---
 
-## 🧾 Descriptions
-
-### Core
-| Type | Description |
-|------|--------------|
-| **Node** | Root interface for all AST elements. Every model element extends this. |
+## 🧩 Key Concepts
 
 ### Expressions
-| Type | Description |
-|------|--------------|
-| **Expression** | Base for all SQL expressions. |
-| **CaseExpr** | Represents a `CASE WHEN` expression. |
-| **ColumnExpr** | Reference to a column, optionally qualified by table alias. |
-| **FunctionExpr** | Represents a function call (e.g. `LOWER(name)` or `COUNT(*)`). |
-| **FunctionExpr.Arg** | A generic argument of a function. |
-| **FunctionExpr.Arg.Column** | A column reference used as function argument. |
-| **FunctionExpr.Arg.Literal** | A literal value used as argument. |
-| **FunctionExpr.Arg.Function** | A nested function call as argument. |
-| **FunctionExpr.Arg.Star** | Represents a `*` argument (e.g. `COUNT(*)`). |
-| **LiteralExpr** | Literal constant such as number or string. |
+Represent value-producing nodes, including literals, columns, functions, and predicates.
+
+| Type           | Description                                                                                                |
+|----------------|------------------------------------------------------------------------------------------------------------|
+| `ColumnExpr`   | Column reference, possibly qualified by table alias.                                                       |
+| `LiteralExpr`  | Constant literal (string, numeric, boolean, etc.).                                                         |
+| `CaseExpr`     | SQL `CASE WHEN ... THEN ... END` expression.                                                               |
+| `FunctionExpr` | Function call (aggregate, scalar, or analytic). Supports `DISTINCT`, `FILTER`, `WITHIN GROUP`, and `OVER`. |
+| `Predicate`    | Boolean-valued expressions for conditions and comparisons.                                                 |
+| `ValueSet`     | Tuple, subquery, or row list used in expressions like `IN` or `VALUES`.                                    |
+
+---
+
+### Function Arguments
+Modeled under `FunctionExpr.Arg`:
+
+| Variant        | Description                        |
+|----------------|------------------------------------|
+| `Arg.Column`   | Column reference used as argument. |
+| `Arg.Literal`  | Literal value.                     |
+| `Arg.Function` | Nested function call as argument.  |
+| `Arg.Star`     | `*` argument (e.g., `COUNT(*)`).   |
+
+---
 
 ### Predicates
-| Type | Description |
-|------|--------------|
-| **Predicate** | Base type for Boolean expressions. |
-| **AnyAllPredicate** | `expr op ANY/ALL (subquery)` form. |
-| **BetweenPredicate** | `expr BETWEEN lower AND upper`. |
-| **ComparisonPredicate** | Binary comparison (`=`, `<`, `>`, etc.). |
-| **ExistsPredicate** | `EXISTS (subquery)` condition. |
-| **InPredicate** | `expr IN (value set or subquery)`. |
-| **IsNullPredicate** | `expr IS [NOT] NULL`. |
-| **LikePredicate** | `expr [NOT] LIKE pattern [ESCAPE ...]`. |
-| **NotPredicate** | Logical negation (`NOT ...`). |
-| **CompositePredicate** | Logical combination of predicates (e.g. `AND`, `OR`). |
-| **AndPredicate** | Logical conjunction (`A AND B`). |
-| **OrPredicate** | Logical disjunction (`A OR B`). |
-| **UnaryPredicate** | A single-operand predicate (for extensibility). |
 
-### Value Sets
-| Type | Description |
-|------|--------------|
-| **ValueSet** | Base for multi-valued expressions like rows or subqueries. |
-| **RowExpr** | Tuple/row constructor `(a, b, c)`. |
-| **QueryExpr** | A scalar or multi-row subquery used as expression. |
-| **RowListExpr** | A list of row expressions, e.g. `VALUES ((1,2), (3,4))`. |
+Support for common SQL predicate forms:
 
-### Query & Select
-| Type | Description |
-|------|--------------|
-| **Query** | Root for all query forms. |
-| **CompositeQuery** | Combines multiple queries via `UNION`, `INTERSECT`, or `EXCEPT`. |
-| **SelectQuery** | Standard `SELECT` query. |
-| **WithQuery** | Query preceded by one or more `WITH` (CTE) definitions. |
-| **CteDef** | A single Common Table Expression definition. |
-| **SelectItem** | Represents one item in the `SELECT` list. |
-| **ExprSelectItem** | Expression-based select item, possibly with alias. |
-| **StarSelectItem** | Plain `*` selection. |
-| **QualifiedStarSelectItem** | `tableAlias.*` selection. |
-
-### Tables & Joins
-| Type | Description |
-|------|--------------|
-| **TableRef** | Base for all table references in `FROM` clause. |
-| **Table** | A regular named table. |
-| **QueryTable** | A subquery used as table. |
-| **ValuesTable** | `VALUES` construct used as table. |
-| **Join** | Base for join operations. |
-| **CrossJoin** | `CROSS JOIN` (Cartesian product). |
-| **NaturalJoin** | `NATURAL JOIN`, automatic column match. |
-| **OnJoin** | Join with `ON` predicate. |
-| **UsingJoin** | Join with `USING (col1, col2, ...)`. |
-
-### Grouping & Ordering
-| Type | Description |
-|------|--------------|
-| **GroupBy** | Represents `GROUP BY` clause. |
-| **GroupItem** | A single grouping element. |
-| **OrderBy** | Represents `ORDER BY` clause. |
-| **OrderItem** | A single ordering element. |
-
-### Other
-| Type | Description |
-|------|--------------|
-| **WhenThen** | A single branch in a `CASE` expression. |
-| **LimitOffset** | Represents `LIMIT` / `OFFSET` clause. |
+| Predicate Type        | Example                         |
+|-----------------------|---------------------------------|
+| `ComparisonPredicate` | `a = b`                         |
+| `BetweenPredicate`    | `a BETWEEN b AND c`             |
+| `InPredicate`         | `a IN (1, 2, 3)`                |
+| `LikePredicate`       | `name LIKE 'X%'`                |
+| `IsNullPredicate`     | `a IS NULL`                     |
+| `ExistsPredicate`     | `EXISTS (subquery)`             |
+| `AnyAllPredicate`     | `a > ANY (subquery)`            |
+| `CompositePredicate`  | Logical connectors: `AND`, `OR` |
+| `NotPredicate`        | Logical negation: `NOT expr`    |
 
 ---
 
-## 🧠 Notes
+### Windowing and Analytic Functions
 
-- All interfaces reside in `io.sqm.core` or subpackages.
-- Implementations (records or classes) live under `io.sqm.core.internal`.
-- The hierarchy is designed for immutability, composability, and easy serialization.
+#### WindowDef
+Defines a named window inside a `SELECT`’s `WINDOW` clause:
+```sql
+WINDOW w AS (PARTITION BY dept ORDER BY salary DESC)
+```
+
+#### OverSpec
+Defines how a window function is evaluated:
+
+| Variant        | Example                                    | Description                |
+|----------------|--------------------------------------------|----------------------------|
+| `OverSpec.Ref` | `OVER w`                                   | References a named window. |
+| `OverSpec.Def` | `OVER (PARTITION BY dept ORDER BY salary)` | Inline specification.      |
+
+#### PartitionBy
+Represents a `PARTITION BY` clause inside a window specification:
+```sql
+PARTITION BY dept, region
+```
+
+#### FrameSpec
+Defines the row or range frame visible to the function:
+
+| Variant             | Example                                    | Meaning             |
+|---------------------|--------------------------------------------|---------------------|
+| `FrameSpec.Single`  | `ROWS 5 PRECEDING`                         | Single-bound frame. |
+| `FrameSpec.Between` | `ROWS BETWEEN 5 PRECEDING AND CURRENT ROW` | Two-bound frame.    |
+
+#### BoundSpec
+Specifies the frame boundary:
+
+| Variant              | SQL Example           |
+|----------------------|-----------------------|
+| `UnboundedPreceding` | `UNBOUNDED PRECEDING` |
+| `Preceding`          | `5 PRECEDING`         |
+| `CurrentRow`         | `CURRENT ROW`         |
+| `Following`          | `2 FOLLOWING`         |
+| `UnboundedFollowing` | `UNBOUNDED FOLLOWING` |
+
+> Note: `ORDER BY` inside `OVER(...)` / `WINDOW ... AS (...)` supports `ASC` / `DESC` and (by ANSI 2011) `NULLS FIRST` / `NULLS LAST`. Dialect flags in renderers can restrict emission accordingly.
 
 ---
 
-_Last updated: 2025-10-29_
+### Grouping and Ordering
+
+| Node        | Example                                                           | Description               |
+|-------------|-------------------------------------------------------------------|---------------------------|
+| `GroupBy`   | `GROUP BY dept, region`                                           | Defines grouping columns. |
+| `GroupItem` | Single grouping element.                                          |
+| `OrderBy`   | `ORDER BY salary DESC`                                            | Ordering clause.          |
+| `OrderItem` | Represents an ordering expression, direction, and nulls ordering. |
+
+---
+
+### Queries
+
+| Node             | Description                                        |
+|------------------|----------------------------------------------------|
+| `SelectQuery`    | Represents a `SELECT ... FROM ...` query.          |
+| `CompositeQuery` | Combines queries (`UNION`, `INTERSECT`, `EXCEPT`). |
+| `WithQuery`      | CTE query: `WITH ... AS (...) SELECT ...`.         |
+
+---
+
+### From Items and Joins
+
+| Node          | Example                                  | Description                       |
+|---------------|------------------------------------------|-----------------------------------|
+| `Table`       | `FROM employees`                         | Base table reference.             |
+| `ValuesTable` | `(VALUES (1, 'A'), (2, 'B')) AS v(x, y)` | Inline values table.              |
+| `QueryTable`  | `(SELECT ...) AS t`                      | Subquery as table.                |
+| `Join`        | `a JOIN b ON a.id = b.id`                | Generic join abstraction.         |
+| `OnJoin`      | `JOIN ... ON condition`                  | Conditional join.                 |
+| `UsingJoin`   | `JOIN ... USING (col)`                   | Join using common columns.        |
+| `CrossJoin`   | `CROSS JOIN`                             | Cartesian product.                |
+| `NaturalJoin` | `NATURAL JOIN`                           | Automatic join by shared columns. |
+
+---
+
+### Other Structural Nodes
+
+| Node          | Purpose                                                     |
+|---------------|-------------------------------------------------------------|
+| `CteDef`      | CTE definition within a `WITH` clause.                      |
+| `WhenThen`    | A single `WHEN ... THEN ...` branch in a `CASE` expression. |
+| `LimitOffset` | Pagination clause for limiting and skipping rows.           |
+
+---
+
+## Example (complete)
+
+```sql
+SELECT
+    dept,
+    RANK() OVER w AS dept_rank,
+    SUM(salary) OVER (w ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_sum
+FROM employees
+WINDOW w AS (PARTITION BY dept ORDER BY salary DESC);
+```
+
+---
+
+**Status:** Updated (includes `OverSpec`, `FrameSpec`, `BoundSpec`, `WindowDef`, and `PartitionBy`)  
+**Module:** `sqm-core`

@@ -41,7 +41,7 @@ public class CteDefParser implements Parser<CteDef> {
         }
 
         cur.expect("Expected ')' after CTE subquery", TokenType.RPAREN);
-        return ok(Query.cte(name.lexeme(), body.value(), aliases));
+        return finalize(cur, ctx, Query.cte(name.lexeme(), body.value(), aliases));
     }
 
     /**

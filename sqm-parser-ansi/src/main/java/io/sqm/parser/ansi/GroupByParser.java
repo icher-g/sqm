@@ -23,17 +23,16 @@ public class GroupByParser implements Parser<GroupBy> {
     public ParseResult<GroupBy> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected GROUP", TokenType.GROUP);
         cur.expect("Expected BY after GROUP", TokenType.BY);
-
         List<GroupItem> items = new ArrayList<>();
-        while (!cur.matchAny(Terminators.GROUP_BY)) {
+        do {
             var gr = ctx.parse(GroupItem.class, cur);
             if (gr.isError()) {
                 return error(gr);
             }
             items.add(gr.value());
-            cur.consumeIf(TokenType.COMMA);
         }
-        return ok(GroupBy.of(items));
+        while (cur.consumeIf(TokenType.COMMA));
+        return finalize(cur, ctx, GroupBy.of(items));
     }
 
     /**

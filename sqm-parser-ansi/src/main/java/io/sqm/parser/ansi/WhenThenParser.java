@@ -34,7 +34,7 @@ public class WhenThenParser implements Parser<WhenThen> {
         if (thenResult.isError()) {
             return error(thenResult);
         }
-        return ok(WhenThen.of(fr.value(), thenResult.value()));
+        return finalize(cur, ctx, WhenThen.of(fr.value(), thenResult.value()));
     }
 
     /**

@@ -3,7 +3,7 @@ package io.sqm.core;
 import java.util.Optional;
 
 /**
- * Marker for value-set expressions (e.g., IN (1,2,3), (a,b) IN ((1,2),(3,4)), IN (SELECT ...)).
+ * Marker for value-set expressions (expr.g., IN (1,2,3), (a,b) IN ((1,2),(3,4)), IN (SELECT ...)).
  */
 public sealed interface ValueSet extends Expression permits RowExpr, QueryExpr, RowListExpr {
 

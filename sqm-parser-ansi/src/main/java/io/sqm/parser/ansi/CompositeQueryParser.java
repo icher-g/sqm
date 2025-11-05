@@ -74,7 +74,7 @@ public class CompositeQueryParser implements Parser<CompositeQuery> {
             return error(lor);
         }
 
-        return ok(Query.compose(terms, ops, orderBy, lor.value()));
+        return finalize(cur, ctx, Query.compose(terms, ops, orderBy, lor.value()));
     }
 
     /**

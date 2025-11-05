@@ -23,17 +23,16 @@ public class OrderByParser implements Parser<OrderBy> {
     public ParseResult<OrderBy> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected ORDER", TokenType.ORDER);
         cur.expect("Expected BY after ORDER", TokenType.BY);
-
         List<OrderItem> items = new ArrayList<>();
-        while (!cur.matchAny(Terminators.ORDER_BY)) {
+        do {
             var or = ctx.parse(OrderItem.class, cur);
             if (or.isError()) {
                 return error(or);
             }
             items.add(or.value());
-            cur.consumeIf(TokenType.COMMA);
         }
-        return ParseResult.ok(OrderBy.of(items));
+        while (cur.consumeIf(TokenType.COMMA));
+        return finalize(cur, ctx, OrderBy.of(items));
     }
 
     /**

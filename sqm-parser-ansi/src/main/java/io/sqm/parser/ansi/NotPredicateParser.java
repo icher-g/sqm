@@ -27,7 +27,7 @@ public class NotPredicateParser implements Parser<NotPredicate> {
         }
 
         cur.expect("Expected )", TokenType.RPAREN);
-        return ok(NotPredicate.of(res.value()));
+        return finalize(cur, ctx, NotPredicate.of(res.value()));
     }
 
     /**

@@ -1,9 +1,7 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.FuncCallArg;
-import io.sqm.core.internal.FuncColumnArg;
-import io.sqm.core.internal.FuncLiteralArg;
 import io.sqm.core.internal.FuncStarArg;
+import io.sqm.core.internal.FunctionArgExpr;
 
 import java.util.Arrays;
 import java.util.List;
@@ -58,45 +56,13 @@ public sealed interface Expression extends Node
     }
 
     /**
-     * Creates a function call expression.
+     * Creates a function argument that wraps an expression.
      *
-     * @param name        a function name
-     * @param distinctArg indicates whether DISTINCT should be added before the list of arguments in the function call. {@code COUNT(DISTINCT t.id) AS c}
-     * @param args        an array of function arguments.
-     * @return A newly created instance of a function call expression.
-     */
-    static FunctionExpr func(String name, boolean distinctArg, FunctionExpr.Arg... args) {
-        return FunctionExpr.of(name, distinctArg, args);
-    }
-
-    /**
-     * Creates a function argument that wraps a column reference.
-     *
-     * @param column a column reference to wrap.
+     * @param expr an expression to wrap.
      * @return A newly created instance of a function argument.
      */
-    static FunctionExpr.Arg.Column funcArg(ColumnExpr column) {
-        return new FuncColumnArg(column);
-    }
-
-    /**
-     * Creates a function argument that wraps a literal value.
-     *
-     * @param value a literal value.
-     * @return A newly created instance of a function argument.
-     */
-    static FunctionExpr.Arg.Literal funcArg(Object value) {
-        return new FuncLiteralArg(value);
-    }
-
-    /**
-     * Creates a function argument that wraps another function call.
-     *
-     * @param call a function call.
-     * @return A newly created instance of a function argument.
-     */
-    static FunctionExpr.Arg.Function funcArg(FunctionExpr call) {
-        return new FuncCallArg(call);
+    static FunctionExpr.Arg.ExprArg funcArg(Expression expr) {
+        return new FunctionArgExpr(expr);
     }
 
     /**
@@ -104,7 +70,7 @@ public sealed interface Expression extends Node
      *
      * @return A newly created instance of a function argument.
      */
-    static FunctionExpr.Arg.Star starArg() {
+    static FunctionExpr.Arg.StarArg starArg() {
         return new FuncStarArg();
     }
 
@@ -213,6 +179,24 @@ public sealed interface Expression extends Node
      */
     default Optional<FunctionExpr.Arg> asFuncArg() {
         return this instanceof FunctionExpr.Arg a ? Optional.of(a) : Optional.empty();
+    }
+
+    /**
+     * Casts current expression to {@link FunctionExpr.Arg.ExprArg} if possible.
+     *
+     * @return an {@link Optional}<{@link FunctionExpr.Arg.ExprArg}>.
+     */
+    default Optional<FunctionExpr.Arg.ExprArg> asExprArg() {
+        return this instanceof FunctionExpr.Arg.ExprArg a ? Optional.of(a) : Optional.empty();
+    }
+
+    /**
+     * Casts current expression to {@link FunctionExpr.Arg.StarArg} if possible.
+     *
+     * @return an {@link Optional}<{@link FunctionExpr.Arg.StarArg}>.
+     */
+    default Optional<FunctionExpr.Arg.StarArg> asStarArg() {
+        return this instanceof FunctionExpr.Arg.StarArg a ? Optional.of(a) : Optional.empty();
     }
 
     /**

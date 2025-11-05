@@ -1,14 +1,13 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.ColumnExpr;
-import io.sqm.core.Expression;
-import io.sqm.core.FunctionExpr;
+import io.sqm.core.FrameSpec;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-public class FuncColumnArgParser implements Parser<FunctionExpr.Arg.Column> {
+public class FrameSpecParser implements Parser<FrameSpec> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -17,12 +16,13 @@ public class FuncColumnArgParser implements Parser<FunctionExpr.Arg.Column> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<FunctionExpr.Arg.Column> parse(Cursor cur, ParseContext ctx) {
-        var column = ctx.parse(ColumnExpr.class, cur);
-        if (column.isError()) {
-            return error(column);
+    public ParseResult<FrameSpec> parse(Cursor cur, ParseContext ctx) {
+        if (cur.match(TokenType.BETWEEN, 1)) {
+            var fr = ctx.parse(FrameSpec.Between.class, cur);
+            return finalize(cur, ctx, fr);
         }
-        return ok(Expression.funcArg(column.value()));
+        var fr = ctx.parse(FrameSpec.Single.class, cur);
+        return finalize(cur, ctx, fr);
     }
 
     /**
@@ -31,7 +31,7 @@ public class FuncColumnArgParser implements Parser<FunctionExpr.Arg.Column> {
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<FunctionExpr.Arg.Column> targetType() {
-        return FunctionExpr.Arg.Column.class;
+    public Class<FrameSpec> targetType() {
+        return FrameSpec.class;
     }
 }

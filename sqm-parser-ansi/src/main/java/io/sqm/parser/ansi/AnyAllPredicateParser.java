@@ -47,7 +47,7 @@ public class AnyAllPredicateParser implements Parser<AnyAllPredicate> {
         }
 
         cur.expect("Expected )", TokenType.RPAREN);
-        return ok(AnyAllPredicate.of(expr.value(), operator, query.value(), quantifier));
+        return finalize(cur, ctx, AnyAllPredicate.of(expr.value(), operator, query.value(), quantifier));
     }
 
     /**

@@ -28,7 +28,7 @@ public class ExistsPredicateParser implements Parser<ExistsPredicate> {
         }
 
         cur.expect("Expected )", TokenType.RPAREN);
-        return ok(ExistsPredicate.of(res.value(), negated));
+        return finalize(cur, ctx, ExistsPredicate.of(res.value(), negated));
     }
 
     /**

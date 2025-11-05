@@ -35,7 +35,7 @@ public non-sealed interface ValuesTable extends TableRef {
     /**
      * Optional derived column list; may be null or empty.
      */
-    List<String> columnNames();
+    List<String> as();
 
     /**
      * Adds column names to the alias.
@@ -44,8 +44,19 @@ public non-sealed interface ValuesTable extends TableRef {
      * @param columnNames a list of column names to add.
      * @return this.
      */
-    default ValuesTable columnNames(List<String> columnNames) {
+    default ValuesTable as(List<String> columnNames) {
         return new ValuesTableImpl(rows(), Objects.requireNonNull(columnNames), alias());
+    }
+
+    /**
+     * Adds column names to the alias.
+     * Note: column names without {@link ValuesTable#alias()} are ignored.
+     *
+     * @param columnNames a list of column names to add.
+     * @return this.
+     */
+    default ValuesTable as(String... columnNames) {
+        return new ValuesTableImpl(rows(), List.of(columnNames), alias());
     }
 
     /**
@@ -55,7 +66,7 @@ public non-sealed interface ValuesTable extends TableRef {
      * @return A newly created values table with the provide alias. All other fields are preserved.
      */
     default ValuesTable as(String alias) {
-        return new ValuesTableImpl(rows(), columnNames(), Objects.requireNonNull(alias));
+        return new ValuesTableImpl(rows(), as(), Objects.requireNonNull(alias));
     }
 
     /**

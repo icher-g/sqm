@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 /**
  * Verifies that a no-op transformer preserves object identity for the whole subtree.
- * (I.e., if nothing changes, the same instances are returned.)
+ * (I.expr., if nothing changes, the same instances are returned.)
  */
 public class NoopPreservesIdentityTest {
 
@@ -19,7 +19,7 @@ public class NoopPreservesIdentityTest {
     void unchangedTree_returnsSameInstances() {
         ColumnExpr colUid = ColumnExpr.of("u", "id");
         ColumnExpr colName = ColumnExpr.of(null, "name");
-        FunctionExpr lower = FunctionExpr.of("lower", FunctionExpr.Arg.column(colName));
+        FunctionExpr lower = FunctionExpr.of("lower", FunctionExpr.Arg.expr(colName));
         RowExpr row = RowExpr.of(List.of(colUid, lower));
 
         NoopTransformer t = new NoopTransformer();

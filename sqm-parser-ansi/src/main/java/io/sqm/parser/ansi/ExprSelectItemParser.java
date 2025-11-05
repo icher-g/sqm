@@ -23,7 +23,7 @@ public class ExprSelectItemParser implements Parser<ExprSelectItem> {
             return error(expr);
         }
         var alias = parseAlias(cur);
-        return ok(SelectItem.expr(expr.value()).as(alias));
+        return finalize(cur, ctx, SelectItem.expr(expr.value()).as(alias));
     }
 
     /**

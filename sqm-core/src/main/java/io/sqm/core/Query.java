@@ -123,50 +123,6 @@ public sealed interface Query extends Node permits CompositeQuery, SelectQuery, 
     }
 
     /**
-     * Creates EXISTS predicate.
-     * <p>For example:</p>
-     * <pre>
-     *     {@code
-     *     SELECT *
-     *     FROM customers c
-     *     WHERE EXISTS (
-     *         SELECT 1
-     *         FROM orders o
-     *         WHERE o.customer_id = c.id
-     *     );
-     *     }
-     * </pre>
-     *
-     * @param subquery a sub query which resul to check.
-     * @return A newly created EXISTS predicate.
-     */
-    static ExistsPredicate exists(Query subquery) {
-        return ExistsPredicate.of(subquery, false);
-    }
-
-    /**
-     * Creates NOT EXISTS predicate.
-     * <p>For example:</p>
-     * <pre>
-     *     {@code
-     *     SELECT *
-     *     FROM customers c
-     *     WHERE NOT EXISTS (
-     *         SELECT 1
-     *         FROM orders o
-     *         WHERE o.customer_id = c.id
-     *     );
-     *     }
-     * </pre>
-     *
-     * @param subquery a sub query which resul to check.
-     * @return A newly created NOT EXISTS predicate.
-     */
-    static ExistsPredicate notExists(Query subquery) {
-        return ExistsPredicate.of(subquery, true);
-    }
-
-    /**
      * Creates a UNION composite query based on the current query and the provided other query.
      *
      * @param other the other query.

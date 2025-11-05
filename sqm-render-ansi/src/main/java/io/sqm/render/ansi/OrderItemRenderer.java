@@ -42,7 +42,7 @@ public class OrderItemRenderer implements Renderer<OrderItem> {
                 var effectiveDir = (dir != null) ? dir : Direction.ASC;
                 n = ns.defaultFor(effectiveDir);
             }
-            var keyword = ns.keyword(n); // e.g., "NULLS FIRST" / "NULLS LAST"
+            var keyword = ns.keyword(n); // expr.g., "NULLS FIRST" / "NULLS LAST"
             if (keyword != null && !keyword.isBlank()) {
                 w.space().append(keyword);
             }

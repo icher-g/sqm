@@ -255,7 +255,7 @@ class OrderItemRendererTest {
     }
 
     @Test
-    @DisplayName("COLLATE uses quoter.quoteIfNeeded (e.g., hyphen -> quoted)")
+    @DisplayName("COLLATE uses quoter.quoteIfNeeded (expr.g., hyphen -> quoted)")
     void collate_uses_quoter_quote_if_needed() {
         var d = dialect(quotingHyphenQuoter(), explicitNulls());
         var rc = ctx(d);

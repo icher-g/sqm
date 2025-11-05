@@ -47,7 +47,7 @@ public interface Parser<T extends Node> extends Handler<T> {
      */
     default Object parseNumber(String lexeme) {
         try {
-            if (lexeme.contains(".") || lexeme.contains("e") || lexeme.contains("E")) {
+            if (lexeme.contains(".") || lexeme.contains("expr") || lexeme.contains("E")) {
                 return Double.valueOf(lexeme);
             }
             return Long.valueOf(lexeme);
@@ -108,6 +108,22 @@ public interface Parser<T extends Node> extends Handler<T> {
             return error("Expected EOF but found: " + cur.peek().lexeme(), cur.fullPos());
         }
         return ok(pr.value());
+    }
+
+    /**
+     * Finalizes the parsing by applying some validations. Checks if the provided {@link ParseResult} is valid and if the cursor is on the EOF token.
+     * If everything ok the valid {@link ParseResult} instance.
+     *
+     * @param cur a cursor.
+     * @param ctx a parsing context.
+     * @param v   a parsed value.
+     * @return a valid or invalid parsing result depending on the validation result.
+     */
+    default <R> ParseResult<R> finalize(Cursor cur, ParseContext ctx, R v) {
+        if (ctx.callstack() == 0 && !cur.isEof()) {
+            return error("Expected EOF but found: " + cur.peek().lexeme(), cur.fullPos());
+        }
+        return ok(v);
     }
 
     /**

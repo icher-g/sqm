@@ -15,7 +15,7 @@ public non-sealed interface GroupItem extends Node {
      * @param expr a colum to group by
      * @return A newly created instance of a group item.
      */
-    static GroupItem by(Expression expr) {
+    static GroupItem of(Expression expr) {
         return new GroupItemImpl(Objects.requireNonNull(expr), null);
     }
 
@@ -25,7 +25,7 @@ public non-sealed interface GroupItem extends Node {
      * @param ordinal an ordinal to group by.
      * @return A newly created instance of a group item.
      */
-    static GroupItem by(int ordinal) {
+    static GroupItem of(int ordinal) {
         return new GroupItemImpl(null, ordinal);
     }
 

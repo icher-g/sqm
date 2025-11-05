@@ -1,11 +1,12 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.FunctionExpr;
+import io.sqm.core.OverSpec;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
-public class FunctionCallRenderer implements Renderer<FunctionExpr> {
+public class FunctionExprRenderer implements Renderer<FunctionExpr> {
     /**
      * Renders the node into an {@link SqlWriter}.
      *
@@ -34,6 +35,24 @@ public class FunctionCallRenderer implements Renderer<FunctionExpr> {
         // Render arguments list
         w.comma(node.args());
         w.append(")");
+
+        if (node.withinGroup() != null) {
+            w.space().append("WITHIN GROUP").space().append("(");
+            w.append(node.withinGroup());
+            w.append(")");
+        }
+
+        if (node.filter() != null) {
+            w.space().append("FILTER").space().append("(");
+            w.append("WHERE").space();
+            w.append(node.filter());
+            w.append(")");
+        }
+
+        if (node.over() != null) {
+            w.space().append("OVER").space();
+            w.append(node.over(), node.over() instanceof OverSpec.Def, false);
+        }
     }
 
     /**

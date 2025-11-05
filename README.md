@@ -496,12 +496,13 @@ mvn test
 ## 🧭 Roadmap
 
 - [ ] Add support for parsing parameters in query (WHERE q = ?)
-- [ ] Add support for parsing SELECT from sub query (SELECT * FROM (SELECT * FROM))
 - [ ] Arithmetic operations in SQL statements (SELECT salary + bonus AS total_income)
 - [ ] Add support for INSERT | UPDATE | DELETE | MERGE
 - [ ] PostgresSQL renderer & parser
 - [ ] SQL Server renderer & parser
-- [ ] Query optimizer & rewrite utilities
+- [ ] Add support for additional modifiers in function
+- [ ] Query optimizer
+- [ ] Query validator
 
 ---
 

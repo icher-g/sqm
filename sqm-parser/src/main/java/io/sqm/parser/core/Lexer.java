@@ -1,8 +1,6 @@
 package io.sqm.parser.core;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,7 +10,87 @@ import static io.sqm.parser.core.TokenType.*;
  * This class is used to split the string into a list of tokens.
  */
 public final class Lexer {
+    private static final Map<String, TokenType> KEYWORDS = new HashMap<>();
     private static final Pattern NUM = Pattern.compile("(?:\\d+\\.\\d*|\\d*\\.\\d+|\\d+)(?:[eE][+-]?\\d+)?");
+
+    static {
+        KEYWORDS.put("AND", AND);
+        KEYWORDS.put("OR", OR);
+        KEYWORDS.put("NOT", NOT);
+        KEYWORDS.put("IN", IN);
+        KEYWORDS.put("LIKE", LIKE);
+        KEYWORDS.put("BETWEEN", BETWEEN);
+        KEYWORDS.put("SYMMETRIC", SYMMETRIC);
+        KEYWORDS.put("IS", IS);
+        KEYWORDS.put("NULL", NULL);
+        KEYWORDS.put("TRUE", TRUE);
+        KEYWORDS.put("FALSE", FALSE);
+        KEYWORDS.put("JOIN", JOIN);
+        KEYWORDS.put("INNER", INNER);
+        KEYWORDS.put("LEFT", LEFT);
+        KEYWORDS.put("RIGHT", RIGHT);
+        KEYWORDS.put("FULL", FULL);
+        KEYWORDS.put("OUTER", OUTER);
+        KEYWORDS.put("CROSS", CROSS);
+        KEYWORDS.put("USING", USING);
+        KEYWORDS.put("NATURAL", NATURAL);
+        KEYWORDS.put("ON", ON);
+        KEYWORDS.put("AS", AS);
+        KEYWORDS.put("DISTINCT", DISTINCT);
+        KEYWORDS.put("EXISTS", EXISTS);
+        KEYWORDS.put("ESCAPE", ESCAPE);
+        KEYWORDS.put("ANY", ANY);
+        KEYWORDS.put("ASC", ASC);
+        KEYWORDS.put("DESC", DESC);
+        KEYWORDS.put("NULLS", NULLS);
+        KEYWORDS.put("FIRST", FIRST);
+        KEYWORDS.put("LAST", LAST);
+        KEYWORDS.put("DEFAULT", DEFAULT);
+        KEYWORDS.put("COLLATE", COLLATE);
+        KEYWORDS.put("CASE", CASE);
+        KEYWORDS.put("WHEN", WHEN);
+        KEYWORDS.put("THEN", THEN);
+        KEYWORDS.put("ELSE", ELSE);
+        KEYWORDS.put("END", END);
+        KEYWORDS.put("WITH", WITH);
+        KEYWORDS.put("RECURSIVE", RECURSIVE);
+        KEYWORDS.put("SELECT", SELECT);
+        KEYWORDS.put("FROM", FROM);
+        KEYWORDS.put("WHERE", WHERE);
+        KEYWORDS.put("GROUP", GROUP);
+        KEYWORDS.put("HAVING", HAVING);
+        KEYWORDS.put("ORDER", ORDER);
+        KEYWORDS.put("LIMIT", LIMIT);
+        KEYWORDS.put("OFFSET", OFFSET);
+        KEYWORDS.put("FETCH", FETCH);
+        KEYWORDS.put("NEXT", NEXT);
+        KEYWORDS.put("ROW", ROW);
+        KEYWORDS.put("ROWS", ROWS);
+        KEYWORDS.put("ONLY", ONLY);
+        KEYWORDS.put("BY", BY);
+        KEYWORDS.put("TOP", TOP);
+        KEYWORDS.put("UNION", UNION);
+        KEYWORDS.put("INTERSECT", INTERSECT);
+        KEYWORDS.put("EXCEPT", EXCEPT);
+        KEYWORDS.put("ALL", ALL);
+        KEYWORDS.put("VALUES", VALUES);
+        KEYWORDS.put("WINDOW", WINDOW);
+        KEYWORDS.put("OVER", OVER);
+        KEYWORDS.put("PARTITION", PARTITION);
+        KEYWORDS.put("RANGE", RANGE);
+        KEYWORDS.put("GROUPS", GROUPS);
+        KEYWORDS.put("UNBOUNDED", UNBOUNDED);
+        KEYWORDS.put("PRECEDING", PRECEDING);
+        KEYWORDS.put("FOLLOWING", FOLLOWING);
+        KEYWORDS.put("CURRENT", CURRENT);
+        KEYWORDS.put("EXCLUDE", EXCLUDE);
+        KEYWORDS.put("TIES", TIES);
+        KEYWORDS.put("NO", NO);
+        KEYWORDS.put("OTHERS", OTHERS);
+        KEYWORDS.put("WITHIN", WITHIN);
+        KEYWORDS.put("FILTER", FILTER);
+    }
+
     private final String s;
     private final int len;
     private int pos = 0;
@@ -48,69 +126,7 @@ public final class Lexer {
 
     private static TokenType keywordOf(String keyword) {
         String k = keyword.toUpperCase(Locale.ROOT);
-        return switch (k) {
-            case "AND" -> AND;
-            case "OR" -> OR;
-            case "NOT" -> NOT;
-            case "IN" -> IN;
-            case "LIKE" -> LIKE;
-            case "BETWEEN" -> BETWEEN;
-            case "SYMMETRIC" -> SYMMETRIC;
-            case "IS" -> IS;
-            case "NULL" -> NULL;
-            case "TRUE" -> TRUE;
-            case "FALSE" -> FALSE;
-            case "JOIN" -> JOIN;
-            case "INNER" -> INNER;
-            case "LEFT" -> LEFT;
-            case "RIGHT" -> RIGHT;
-            case "FULL" -> FULL;
-            case "OUTER" -> OUTER;
-            case "CROSS" -> CROSS;
-            case "USING" -> USING;
-            case "NATURAL" -> NATURAL;
-            case "ON" -> ON;
-            case "AS" -> AS;
-            case "DISTINCT" -> DISTINCT;
-            case "EXISTS" -> EXISTS;
-            case "ESCAPE" -> ESCAPE;
-            case "ANY" -> ANY;
-            case "ASC" -> ASC;
-            case "DESC" -> DESC;
-            case "NULLS" -> NULLS;
-            case "FIRST" -> FIRST;
-            case "LAST" -> LAST;
-            case "DEFAULT" -> DEFAULT;
-            case "COLLATE" -> COLLATE;
-            case "CASE" -> CASE;
-            case "WHEN" -> WHEN;
-            case "THEN" -> THEN;
-            case "ELSE" -> ELSE;
-            case "END" -> END;
-            case "WITH" -> WITH;
-            case "RECURSIVE" -> RECURSIVE;
-            case "SELECT" -> SELECT;
-            case "FROM" -> FROM;
-            case "WHERE" -> WHERE;
-            case "GROUP" -> GROUP;
-            case "HAVING" -> HAVING;
-            case "ORDER" -> ORDER;
-            case "LIMIT" -> LIMIT;
-            case "OFFSET" -> OFFSET;
-            case "FETCH" -> FETCH;
-            case "NEXT" -> NEXT;
-            case "ROW" -> ROW;
-            case "ROWS" -> ROWS;
-            case "ONLY" -> ONLY;
-            case "BY" -> BY;
-            case "TOP" -> TOP;
-            case "UNION" -> UNION;
-            case "INTERSECT" -> INTERSECT;
-            case "EXCEPT" -> EXCEPT;
-            case "ALL" -> ALL;
-            case "VALUES" -> VALUES;
-            default -> null;
-        };
+        return KEYWORDS.get(k);
     }
 
     /**
@@ -245,7 +261,8 @@ public final class Lexer {
                     continue;
                 }
                 return new Token(STRING, sb.toString(), start);
-            } else sb.append(c);
+            }
+            else sb.append(c);
         }
         throw new ParserException("Unterminated string literal", start);
     }

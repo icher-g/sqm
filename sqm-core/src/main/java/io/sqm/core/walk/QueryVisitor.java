@@ -9,7 +9,7 @@ import io.sqm.core.WithQuery;
  * Visitor for traversing the different kinds of {@link Query} nodes.
  * <p>
  * This interface defines the entry points for the {@code SELECT},
- * composite set operation (e.g. {@code UNION}, {@code INTERSECT}),
+ * composite set operation (expr.g. {@code UNION}, {@code INTERSECT}),
  * and {@code WITH} query forms.
  * <p>
  * Implementations can perform read-only analysis, validation, or transformation

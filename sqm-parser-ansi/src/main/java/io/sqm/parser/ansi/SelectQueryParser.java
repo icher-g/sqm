@@ -87,6 +87,18 @@ public class SelectQueryParser implements Parser<SelectQuery> {
             q.having(hr.value());
         }
 
+        // WINDOW
+        while (cur.consumeIf(TokenType.WINDOW)) {
+            do {
+                var wr = ctx.parse(WindowDef.class, cur);
+                if (wr.isError()) {
+                    return error(wr);
+                }
+                q.window(wr.value());
+            }
+            while (cur.consumeIf(TokenType.COMMA)); // WINDOW w1 AS (PARTITION BY dept ORDER BY salary DESC), w2 AS (ORDER BY salary DESC);
+        }
+
         // ORDER BY (optional)
         if (cur.match(TokenType.ORDER) && cur.match(TokenType.BY, 1)) {
             var obr = ctx.parse(OrderBy.class, cur);
@@ -108,7 +120,7 @@ public class SelectQueryParser implements Parser<SelectQuery> {
             q.offset(lor.value().offset());
         }
 
-        return ok(q);
+        return finalize(cur, ctx, q);
     }
 
     /**

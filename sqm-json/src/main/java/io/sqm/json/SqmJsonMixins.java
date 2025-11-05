@@ -56,6 +56,11 @@ public final class SqmJsonMixins {
         // Grouping / ordering
         mapper.addMixIn(GroupItem.class, GroupItemMixin.class);
 
+        // Window
+        mapper.addMixIn(BoundSpec.class, BoundSpecMixin.class);
+        mapper.addMixIn(FrameSpec.class, FrameSpecMixin.class);
+        mapper.addMixIn(OverSpec.class, OverSpecMixin.class);
+
         return mapper;
     }
 

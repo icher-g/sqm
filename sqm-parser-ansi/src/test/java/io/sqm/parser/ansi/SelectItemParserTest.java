@@ -67,10 +67,10 @@ class SelectItemParserTest {
         Assertions.assertNull(f.distinctArg());
         Assertions.assertEquals(1, f.args().size());
         var a0 = f.args().get(0);
-        Assertions.assertInstanceOf(FunctionExpr.Arg.Column.class, a0);
-        var c0 = (FunctionExpr.Arg.Column) a0;
-        Assertions.assertNull(c0.ref().tableAlias());
-        Assertions.assertEquals("name", c0.ref().name());
+        Assertions.assertInstanceOf(FunctionExpr.Arg.ExprArg.class, a0);
+        var c0 = ((FunctionExpr.Arg.ExprArg) a0).expr().asColumn().orElseThrow();
+        Assertions.assertNull(c0.tableAlias());
+        Assertions.assertEquals("name", c0.name());
     }
 
     @Test
@@ -83,9 +83,9 @@ class SelectItemParserTest {
         Assertions.assertTrue(f.distinctArg());
         Assertions.assertEquals("c", r.value().alias());
         Assertions.assertEquals(1, f.args().size());
-        var cr = (FunctionExpr.Arg.Column) f.args().get(0);
-        Assertions.assertEquals("t", cr.ref().tableAlias());
-        Assertions.assertEquals("id", cr.ref().name());
+        var cr = f.args().get(0).asExprArg().orElseThrow().expr().asColumn().orElseThrow();
+        Assertions.assertEquals("t", cr.tableAlias());
+        Assertions.assertEquals("id", cr.name());
     }
 
     @Test
@@ -96,11 +96,11 @@ class SelectItemParserTest {
         var f = r.value().expr().asFunc().orElseThrow();
         Assertions.assertEquals("substr", f.name());
         Assertions.assertEquals(3, f.args().size());
-        Assertions.assertInstanceOf(FunctionExpr.Arg.Function.class, f.args().get(0));
-        Assertions.assertInstanceOf(FunctionExpr.Arg.Literal.class, f.args().get(1));
-        Assertions.assertInstanceOf(FunctionExpr.Arg.Literal.class, f.args().get(2));
-        var nested = (FunctionExpr.Arg.Function) f.args().get(0);
-        Assertions.assertEquals("upper", nested.call().name());
+        Assertions.assertInstanceOf(FunctionExpr.class, f.args().get(0).asExprArg().orElseThrow().expr());
+        Assertions.assertInstanceOf(LiteralExpr.class, f.args().get(1).asExprArg().orElseThrow().expr());
+        Assertions.assertInstanceOf(LiteralExpr.class, f.args().get(2).asExprArg().orElseThrow().expr());
+        var nested = (FunctionExpr) f.args().get(0).asExprArg().orElseThrow().expr();
+        Assertions.assertEquals("upper", nested.name());
     }
 
     @Test

@@ -56,7 +56,7 @@ public class OnJoinParser implements Parser<OnJoin> {
         }
 
         // 6) Build the Join
-        return ok(OnJoin.of(table.value(), kind, on.value()));
+        return finalize(cur, ctx, OnJoin.of(table.value(), kind, on.value()));
     }
 
     /**

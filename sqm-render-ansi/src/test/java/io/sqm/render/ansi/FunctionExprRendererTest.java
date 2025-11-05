@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FunctionExprRendererTest {
 
@@ -17,6 +18,10 @@ class FunctionExprRendererTest {
     private String render(Node node) {
         RenderContext ctx = RenderContext.of(new AnsiDialect());
         return ctx.render(node).sql();
+    }
+
+    static String norm(String s) {
+        return s.replaceAll("\\s+", " ").trim();
     }
 
     @Test
@@ -40,8 +45,7 @@ class FunctionExprRendererTest {
     void distinct_singleColumn() {
         var fc = func(
             "count",
-            true,
-            arg(col("t", "id")));
+            arg(col("t", "id"))).distinct(true);
         var sql = render(fc);
         assertEquals("count(DISTINCT t.id)", sql);
     }
@@ -75,11 +79,11 @@ class FunctionExprRendererTest {
     void literals_various() {
         var fc = func(
             "coalesce",
-            arg(NULL),              // NULL
-            arg(true),        // TRUE
-            arg(42),          // number
-            arg(3.14),        // decimal
-            arg("O'Reilly")   // string with quote to be doubled
+            arg(lit(NULL)),              // NULL
+            arg(lit(true)),        // TRUE
+            arg(lit(42)),          // number
+            arg(lit(3.14)),        // decimal
+            arg(lit("O'Reilly"))   // string with quote to be doubled
         );
         var sql = render(fc);
         assertEquals("coalesce(NULL, TRUE, 42, 3.14, 'O''Reilly')", sql);
@@ -90,9 +94,9 @@ class FunctionExprRendererTest {
     void concat_withLiterals() {
         var fc = func(
             "concat",
-            arg("Hello"),
-            arg(", "),
-            arg("World")
+            arg(lit("Hello")),
+            arg(lit(", ")),
+            arg(lit("World"))
         ).as("greeting");
         var sql = render(fc);
         assertEquals("concat('Hello', ', ', 'World') AS greeting", sql);
@@ -111,9 +115,8 @@ class FunctionExprRendererTest {
     void distinct_multipleArgs() {
         var fc = func(
             "some_func",
-            true,
             arg(col("t", "a")),
-            arg(col("t", "b")));
+            arg(col("t", "b"))).distinct(true);
         var sql = render(fc);
         // DISTINCT prefix is applied once before the full comma-separated list
         assertEquals("some_func(DISTINCT t.a, t.b)", sql);
@@ -122,9 +125,59 @@ class FunctionExprRendererTest {
     @Test
     @DisplayName("Nested function as argument")
     void nestedFuncArg() {
-        var inner = func("nullif", arg("x"), arg("y"));
-        var outer = func("coalesce", arg(inner), arg("fallback"));
+        var inner = func("nullif", arg(lit("x")), arg(lit("y")));
+        var outer = func("coalesce", arg(inner), arg(lit("fallback")));
         var sql = render(outer);
         assertEquals("coalesce(nullif('x', 'y'), 'fallback')", sql);
+    }
+
+    @Test
+    void lower_of_case_expr_renders_correctly() {
+        var q = select(
+            sel(func("lower", arg(
+                kase(when(col("u","flag").gt(0)).then(col("u","name")))
+            ))).as("ln")
+        ).from(tbl("users").as("u"));
+
+        String sql = render(q);
+        assertTrue(sql.toLowerCase().contains("lower(case when u.flag > 0 then u.name end)"),
+            "Expected LOWER(CASE WHEN u.flag > 0 THEN u.name END), got: " + sql);
+    }
+
+    @Test
+    void coalesce_with_scalar_subquery_argument_renders() {
+        var sub = select(sel(func("max", arg(col("t","v"))))).from(tbl("t"));
+
+        var q = select(
+            sel(func("coalesce", arg(expr(sub)), arg(lit(0)))).as("mx")
+        ).from(tbl("dual"));
+
+        String sql = norm(render(q).stripIndent().toLowerCase());
+        assertTrue(sql.matches(".*coalesce\\s*\\(\\s*\\(\\s*select\\b.*max\\s*\\(t\\.v\\)\\s*from\\s*t\\s*\\)\\s*,\\s*0\\s*\\).*"),
+            "Expected COALESCE((SELECT MAX(t.v) FROM t), 0), got: " + sql);
+    }
+
+    @Test
+    void count_star_renders() {
+        var q = select(
+            sel(func("count", starArg())).as("cnt")
+        ).from(tbl("users"));
+
+        String sql = norm(render(q)).toLowerCase();
+        assertTrue(sql.contains("count(*)"), "Expected COUNT(*), got: " + sql);
+    }
+
+    @Test
+    void coalesce_lower_col_and_literal_renders() {
+        var q = select(
+            sel(func("coalesce",
+                arg(func("lower", arg(col("u","name")))),
+                arg(lit("N/A"))
+            )).as("val")
+        ).from(tbl("users").as("u"));
+
+        String sql = norm(render(q)).toLowerCase();
+        assertTrue(sql.contains("coalesce(lower(u.name), 'n/a')"),
+            "Expected COALESCE(LOWER(u.name), 'N/A'), got: " + sql);
     }
 }

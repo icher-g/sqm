@@ -2,13 +2,12 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.Expression;
 import io.sqm.core.FunctionExpr;
-import io.sqm.core.LiteralExpr;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-public class FuncLiteralArgParser implements Parser<FunctionExpr.Arg.Literal> {
+public class FuncExprArgParser implements Parser<FunctionExpr.Arg.ExprArg> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -17,12 +16,12 @@ public class FuncLiteralArgParser implements Parser<FunctionExpr.Arg.Literal> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<FunctionExpr.Arg.Literal> parse(Cursor cur, ParseContext ctx) {
-        var literal = ctx.parse(LiteralExpr.class, cur);
-        if (literal.isError()) {
-            return error(literal);
+    public ParseResult<FunctionExpr.Arg.ExprArg> parse(Cursor cur, ParseContext ctx) {
+        var arg = ctx.parse(Expression.class, cur);
+        if (arg.isError()) {
+            return error(arg); // <— no alias, no EOF check here
         }
-        return ok(Expression.funcArg(literal.value().value()));
+        return finalize(cur, ctx, Expression.funcArg(arg.value()));
     }
 
     /**
@@ -31,7 +30,7 @@ public class FuncLiteralArgParser implements Parser<FunctionExpr.Arg.Literal> {
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<FunctionExpr.Arg.Literal> targetType() {
-        return FunctionExpr.Arg.Literal.class;
+    public Class<FunctionExpr.Arg.ExprArg> targetType() {
+        return FunctionExpr.Arg.ExprArg.class;
     }
 }

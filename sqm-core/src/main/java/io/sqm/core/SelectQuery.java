@@ -45,8 +45,8 @@ public non-sealed interface SelectQuery extends Query {
      */
     default SelectQuery select(Expression... expressions) {
         return select(Arrays.stream(expressions)
-            .map(e -> (SelectItem) SelectItem.expr(e))
-            .toList());
+                            .map(e -> (SelectItem) SelectItem.expr(e))
+                            .toList());
     }
 
     /**
@@ -221,6 +221,46 @@ public non-sealed interface SelectQuery extends Query {
      * @return this.
      */
     SelectQuery offset(long offset);
+
+    /**
+     * Gets a list of WINDOW specifications if there is any or NULL otherwise.
+     * <p>Example of WINDOW specification:</p>
+     * <pre>
+     *     {@code
+     *      SELECT
+     *          dept,
+     *          emp_name,
+     *          salary,
+     *          RANK() OVER w1        AS dept_rank,
+     *          AVG(salary) OVER w2   AS overall_avg
+     *      FROM employees
+     *      WINDOW
+     *          w1 AS (PARTITION BY dept ORDER BY salary DESC),
+     *          w2 AS (ORDER BY salary DESC);
+     *     }
+     * </pre>
+     *
+     * @return a list of WINDOW specifications or NULL>
+     */
+    List<WindowDef> windows();
+
+    /**
+     * Adds WINDOW specification(s) to a query.
+     *
+     * @param windows a WINDOW specification(s).
+     * @return this.
+     */
+    default SelectQuery window(WindowDef... windows) {
+        return window(List.of(windows));
+    }
+
+    /**
+     * Adds WINDOW specifications to a query.
+     *
+     * @param windows a WINDOW specifications.
+     * @return this.
+     */
+    SelectQuery window(List<WindowDef> windows);
 
     /**
      * Accepts a {@link NodeVisitor} and dispatches control to the

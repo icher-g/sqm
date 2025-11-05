@@ -31,7 +31,7 @@ public class ComparisonPredicateParser implements Parser<ComparisonPredicate> {
         if (rhs.isError()) {
             return error(rhs);
         }
-        return ok(ComparisonPredicate.of(lhs.value(), operator, rhs.value()));
+        return finalize(cur, ctx, ComparisonPredicate.of(lhs.value(), operator, rhs.value()));
     }
 
     /**

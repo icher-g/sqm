@@ -33,7 +33,7 @@ public class RowExprParser implements Parser<RowExpr> {
         } while (cur.consumeIf(TokenType.COMMA));
 
         cur.expect("Expected )", TokenType.RPAREN);
-        return ok(RowExpr.of(list));
+        return finalize(cur, ctx, RowExpr.of(list));
     }
 
     /**

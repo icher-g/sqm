@@ -27,7 +27,7 @@ public class DeepTransformationRebuildTest {
         ColumnExpr colName = ColumnExpr.of(null, "name");
 
         // lower(u.id)
-        FunctionExpr lower = FunctionExpr.of("lower", FunctionExpr.Arg.column(colUid));
+        FunctionExpr lower = FunctionExpr.of("lower", FunctionExpr.Arg.expr(colUid));
         // Row: [ name, lower(u.id) ]
         RowExpr row = RowExpr.of(List.of(colName, lower));
 
@@ -41,7 +41,7 @@ public class DeepTransformationRebuildTest {
         FunctionExpr outFn = (FunctionExpr) out.items().get(1);
         assertEquals("lower", outFn.name());
 
-        ColumnExpr outArgCol = ((FunctionExpr.Arg.Column) outFn.args().get(0)).ref();
+        ColumnExpr outArgCol = ((FunctionExpr.Arg.ExprArg) outFn.args().get(0)).expr().asColumn().orElseThrow();
         assertEquals("u", outArgCol.tableAlias());
         assertEquals("user_id", outArgCol.name(), "Deep-renamed column should be applied");
     }

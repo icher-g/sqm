@@ -32,7 +32,7 @@ public class TraversalOrderTest {
         ColumnExpr colUid = ColumnExpr.of("u", "id");
         ColumnExpr colName = ColumnExpr.of(null, "name");
 
-        FunctionExpr.Arg colArg = FunctionExpr.Arg.column(colUid);
+        FunctionExpr.Arg colArg = FunctionExpr.Arg.expr(colUid);
         FunctionExpr lower = FunctionExpr.of("lower", colArg);
 
         RowExpr row = RowExpr.of(List.of(lower, colName));
@@ -40,7 +40,7 @@ public class TraversalOrderTest {
         TracingVisitor v = new TracingVisitor();
         row.accept(v);
 
-        // Adjust the expected order if your visitor visits additional nodes (e.g., args wrappers)
+        // Adjust the expected order if your visitor visits additional nodes (expr.g., args wrappers)
         List<String> expectedStart = List.of(
             "RowExpr",
             "FunctionExpr:lower",

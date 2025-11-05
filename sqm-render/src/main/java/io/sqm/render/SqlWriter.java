@@ -99,10 +99,13 @@ public interface SqlWriter {
 
     /**
      * Indicates whether the call to {@link SqlWriter#newline()} should be ignored and new line should not be added.
-     *
-     * @param ignore True to ignore appending new lines and False to revert the change.
      */
-    void ignoreNewLine(boolean ignore);
+    void singleLine();
+
+    /**
+     * Indicates whether the call to {@link SqlWriter#newline()} should add a new line to the writer.
+     */
+    void multiLine();
 
     /**
      * Appends a space to the query.
