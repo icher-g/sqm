@@ -48,7 +48,7 @@ import io.sqm.core.WhenThen;
  * }</pre>
  *
  * @param <R> the return type produced by this visitor, which allows both
- *            data-producing visitors (e.g., {@code String}, {@code Boolean})
+ *            data-producing visitors (expr.g., {@code String}, {@code Boolean})
  *            and side-effect visitors (using {@code Void})
  * @see WhenThen
  * @see CteDef

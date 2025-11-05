@@ -156,7 +156,7 @@ class OrderItemParserTest {
         void unexpected_trailing_token() {
             ParseResult<OrderItem> res = parser.parse("c ASC EXTRA", ctx);
             Assertions.assertFalse(res.ok());
-            Assertions.assertTrue(Objects.requireNonNull(res.errorMessage()).startsWith("Unexpected token in ORDER BY item"),
+            Assertions.assertTrue(Objects.requireNonNull(res.errorMessage()).startsWith("Expected EOF but found: EXTRA"),
                 "should mention unexpected token");
         }
     }

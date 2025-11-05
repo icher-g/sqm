@@ -26,7 +26,7 @@ public class CrossJoinParser implements Parser<CrossJoin> {
         if (table.isError()) {
             return error(table);
         }
-        return ok(Join.cross(table.value()));
+        return finalize(cur, ctx, Join.cross(table.value()));
     }
 
     /**

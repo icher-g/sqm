@@ -21,7 +21,7 @@ public class SelectiveColumnRenameTest {
     void renamesOnlyTargetColumn_andKeepsOthers() {
         ColumnExpr colUid = ColumnExpr.of("u", "id");
         ColumnExpr colName = ColumnExpr.of(null, "name");
-        FunctionExpr lower = FunctionExpr.of("lower", FunctionExpr.Arg.column(colName));
+        FunctionExpr lower = FunctionExpr.of("lower", FunctionExpr.Arg.expr(colName));
         RowExpr row = RowExpr.of(List.of(colUid, lower));
 
         RenameColumnTransformer t = new RenameColumnTransformer();
@@ -37,7 +37,7 @@ public class SelectiveColumnRenameTest {
         FunctionExpr outFn = (FunctionExpr) out.items().get(1);
         assertEquals("lower", outFn.name(), "Function name should remain the same");
         // The arg is a column(name), which should remain unchanged
-        ColumnExpr argCol = ((FunctionExpr.Arg.Column) outFn.args().get(0)).ref();
+        ColumnExpr argCol = ((FunctionExpr.Arg.ExprArg) outFn.args().get(0)).expr().asColumn().orElseThrow();
         assertNull(argCol.tableAlias());
         assertEquals("name", argCol.name(), "Non-target column should remain unchanged");
 

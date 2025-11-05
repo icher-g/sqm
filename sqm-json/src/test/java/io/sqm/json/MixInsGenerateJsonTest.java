@@ -17,15 +17,14 @@ public class MixInsGenerateJsonTest {
     void functionColumn_withArgs_serializesWithTypeTags() throws Exception {
         var fc = func(
             "lower",
-            funcArg(col("name", "u")), funcArg("X")
+            funcArg(col("name", "u")), funcArg(lit("X"))
         ).as("l");
 
         String json = mapper.writeValueAsString(fc);
 
         // Should contain polymorphic Arg markers
         assertTrue(json.contains("\"kind\" : \"function\""));
-        assertTrue(json.contains("\"arg_column\""));
-        assertTrue(json.contains("\"arg_literal\""));
+        assertTrue(json.contains("\"arg_expr\""));
         assertTrue(json.contains("\"name\" : \"lower\""));
         assertTrue(json.contains("\"alias\" : \"l\""));
 

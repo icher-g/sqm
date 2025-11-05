@@ -1,6 +1,9 @@
 package io.sqm.core.internal;
 
 import io.sqm.core.FunctionExpr;
+import io.sqm.core.OrderBy;
+import io.sqm.core.OverSpec;
+import io.sqm.core.Predicate;
 
 import java.util.List;
 
@@ -12,14 +15,19 @@ import java.util.List;
  *     COUNT(*);
  *     UPPER(products.name)
  *     COUNT(DISTINCT t.id) AS c
+ *     AVG(sales) FILTER (WHERE region = 'EU') OVER (PARTITION BY year)
+ *     MODE() WITHIN GROUP (ORDER BY value)
  *     }
  * </pre>
  *
  * @param name        the name of the function.
  * @param args        a list of arguments. Can be NULL or empty if there are no arguments.
  * @param distinctArg indicates whether DISTINCT should be added before the list of arguments in the function call. {@code COUNT(DISTINCT t.id) AS c}.
+ * @param withinGroup defines an ordered-set aggregates.
+ * @param filter      a filter used to filter rows only for aggregates.
+ * @param over        an OVER specification.
  */
-public record FunctionExprImpl(String name, List<Arg> args, Boolean distinctArg) implements FunctionExpr {
+public record FunctionExprImpl(String name, List<Arg> args, Boolean distinctArg, OrderBy withinGroup, Predicate filter, OverSpec over) implements FunctionExpr {
     public FunctionExprImpl {
         args = List.copyOf(args);
     }

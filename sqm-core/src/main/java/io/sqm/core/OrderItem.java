@@ -21,7 +21,7 @@ public non-sealed interface OrderItem extends Node {
      * @param expr an expr to be used in an OrderBy clause.
      * @return A newly created instance of an order by item.
      */
-    static OrderItem by(Expression expr) {
+    static OrderItem of(Expression expr) {
         return new OrderItemImpl(expr, null, null, null, null);
     }
 
@@ -31,7 +31,7 @@ public non-sealed interface OrderItem extends Node {
      * @param ordinal an ordinal to be used in an ORDER BY clause.
      * @return A newly created instance of an order by item.
      */
-    static OrderItem by(int ordinal) {
+    static OrderItem of(int ordinal) {
         return new OrderItemImpl(null, ordinal, null, null, null);
     }
 
@@ -44,7 +44,7 @@ public non-sealed interface OrderItem extends Node {
      * @param collate   collation name; may be null.
      * @return A newly created instance of an order by item.
      */
-    static OrderItem by(Expression expr, Direction direction, Nulls nulls, String collate) {
+    static OrderItem of(Expression expr, Direction direction, Nulls nulls, String collate) {
         return new OrderItemImpl(expr, null, direction, nulls, collate);
     }
 
@@ -57,7 +57,7 @@ public non-sealed interface OrderItem extends Node {
      * @param collate   collation name; may be null.
      * @return A newly created instance of an order by item.
      */
-    static OrderItem by(Integer ordinal, Direction direction, Nulls nulls, String collate) {
+    static OrderItem of(Integer ordinal, Direction direction, Nulls nulls, String collate) {
         return new OrderItemImpl(null, ordinal, direction, nulls, collate);
     }
 

@@ -40,7 +40,7 @@ public class TableParser implements Parser<Table> {
         String name = parts.get(parts.size() - 1);
         String schema = parts.size() > 1 ? String.join(".", parts.subList(0, parts.size() - 1)) : null;
 
-        return ok(TableRef.table(schema, name).as(alias));
+        return finalize(cur, ctx, TableRef.table(schema, name).as(alias));
     }
 
     /**

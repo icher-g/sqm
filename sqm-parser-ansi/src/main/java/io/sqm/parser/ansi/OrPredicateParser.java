@@ -50,6 +50,6 @@ public class OrPredicateParser implements Parser<OrPredicate> {
         if (rhs.isError()) {
             return error(rhs);
         }
-        return ok(OrPredicate.of(lhs.value(), rhs.value()));
+        return finalize(cur, ctx, OrPredicate.of(lhs.value(), rhs.value()));
     }
 }

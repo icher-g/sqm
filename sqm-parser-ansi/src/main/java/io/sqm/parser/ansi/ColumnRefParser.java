@@ -25,7 +25,7 @@ public class ColumnRefParser implements Parser<ColumnExpr> {
             table = name;
             name = cur.advance().lexeme();
         }
-        return ok(ColumnExpr.of(table, name));
+        return finalize(cur, ctx, ColumnExpr.of(table, name));
     }
 
     /**

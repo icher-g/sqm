@@ -30,19 +30,19 @@ public class GroupItemParser implements Parser<GroupItem> {
         // Positional GROUP BY: "1", "2", ...
         // SQL allows positive 1-based ordinals.
         if (isPositiveInteger(cur.peek().lexeme())) {
-            int pos = Integer.parseInt(cur.peek().lexeme());
+            int pos = Integer.parseInt(cur.advance().lexeme());
             if (pos <= 0) {
-                return ParseResult.error("GROUP BY position must be a positive integer", pos);
+                return error("GROUP BY position must be a positive integer", pos);
             }
-            return ParseResult.ok(GroupItem.by(pos));
+            return finalize(cur, ctx, GroupItem.of(pos));
         }
 
         // Otherwise: delegate to the column parser
         var result = ctx.parse(ColumnExpr.class, cur);
         if (result.isError()) {
-            return ParseResult.error(result);
+            return error(result);
         }
-        return ParseResult.ok(GroupItem.by(result.value()));
+        return finalize(cur, ctx, GroupItem.of(result.value()));
     }
 
     /**

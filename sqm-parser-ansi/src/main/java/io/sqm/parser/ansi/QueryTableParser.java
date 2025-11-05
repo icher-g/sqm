@@ -28,7 +28,7 @@ public class QueryTableParser implements Parser<QueryTable> {
         cur.expect("Expected )", TokenType.RPAREN);
 
         var alias = parseAlias(cur);
-        return ok(Query.table(query.value()).as(alias));
+        return finalize(cur, ctx, Query.table(query.value()).as(alias));
     }
 
     /**

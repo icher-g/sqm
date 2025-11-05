@@ -8,7 +8,7 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-public class FuncStarArgParser implements Parser<FunctionExpr.Arg.Star> {
+public class FuncStarArgParser implements Parser<FunctionExpr.Arg.StarArg> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -17,9 +17,9 @@ public class FuncStarArgParser implements Parser<FunctionExpr.Arg.Star> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<FunctionExpr.Arg.Star> parse(Cursor cur, ParseContext ctx) {
+    public ParseResult<FunctionExpr.Arg.StarArg> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expect '*'", TokenType.STAR);
-        return ok(Expression.starArg());
+        return finalize(cur, ctx, Expression.starArg());
     }
 
     /**
@@ -28,7 +28,7 @@ public class FuncStarArgParser implements Parser<FunctionExpr.Arg.Star> {
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<FunctionExpr.Arg.Star> targetType() {
-        return FunctionExpr.Arg.Star.class;
+    public Class<FunctionExpr.Arg.StarArg> targetType() {
+        return FunctionExpr.Arg.StarArg.class;
     }
 }

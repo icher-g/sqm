@@ -93,7 +93,7 @@ class GroupItemParserTest {
     }
 
     @Test
-    @DisplayName("Garbage (e.g., '-') -> error propagated from column parser")
+    @DisplayName("Garbage (expr.g., '-') -> error propagated from column parser")
     void garbage_error() {
         ParseResult<GroupItem> res = parser.parse("-", ctx);
         Assertions.assertFalse(res.ok(), "dash is not a valid ordinal or column");

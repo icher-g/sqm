@@ -10,7 +10,7 @@ import java.util.function.Function;
 /**
  * Pattern-style matcher for {@link Query} subtypes.
  * <p>
- * Register handlers for query kinds (e.g., {@link SelectQuery}, {@link WithQuery}),
+ * Register handlers for query kinds (expr.g., {@link SelectQuery}, {@link WithQuery}),
  * then resolve with a terminal method from {@link Match}.
  *
  * @param <R> the result type produced by the match

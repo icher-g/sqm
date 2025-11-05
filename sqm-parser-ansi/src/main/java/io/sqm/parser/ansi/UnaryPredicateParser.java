@@ -20,17 +20,17 @@ public class UnaryPredicateParser implements Parser<UnaryPredicate> {
     @Override
     public ParseResult<UnaryPredicate> parse(Cursor cur, ParseContext ctx) {
         if (cur.consumeIf(TokenType.TRUE)) {
-            return ok(UnaryPredicate.of(Expression.literal(true)));
+            return finalize(cur, ctx, UnaryPredicate.of(Expression.literal(true)));
         }
         if (cur.consumeIf(TokenType.FALSE)) {
-            return ok(UnaryPredicate.of(Expression.literal(false)));
+            return finalize(cur, ctx, UnaryPredicate.of(Expression.literal(false)));
         }
 
         var column = ctx.parse(ColumnExpr.class, cur);
         if (column.isError()) {
             return error(column);
         }
-        return ok(UnaryPredicate.of(column.value()));
+        return finalize(cur, ctx, UnaryPredicate.of(column.value()));
     }
 
     /**

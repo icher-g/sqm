@@ -15,6 +15,7 @@ public class GroupByRenderer implements Renderer<GroupBy> {
      */
     @Override
     public void render(GroupBy node, RenderContext ctx, SqlWriter w) {
+        w.append("GROUP BY").space();
         w.comma(node.items());
     }
 

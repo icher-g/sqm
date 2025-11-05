@@ -1,13 +1,13 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.Expression;
-import io.sqm.core.FunctionExpr;
+import io.sqm.core.BoundSpec;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-public class FuncCallArgParser implements Parser<FunctionExpr.Arg.Function> {
+public class BoundSpecUnboundedFollowingParser implements Parser<BoundSpec.UnboundedFollowing> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -16,12 +16,10 @@ public class FuncCallArgParser implements Parser<FunctionExpr.Arg.Function> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<FunctionExpr.Arg.Function> parse(Cursor cur, ParseContext ctx) {
-        var funcCall = ctx.parse(FunctionExpr.class, cur);
-        if (funcCall.isError()) {
-            return error(funcCall); // <— no alias, no EOF check here
-        }
-        return ok(Expression.funcArg(funcCall.value()));
+    public ParseResult<BoundSpec.UnboundedFollowing> parse(Cursor cur, ParseContext ctx) {
+        cur.expect("Expected UNBOUNDED", TokenType.UNBOUNDED);
+        cur.expect("Expected FOLLOWING after UNBOUNDED", TokenType.FOLLOWING);
+        return finalize(cur, ctx, BoundSpec.unboundedFollowing());
     }
 
     /**
@@ -30,7 +28,7 @@ public class FuncCallArgParser implements Parser<FunctionExpr.Arg.Function> {
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<FunctionExpr.Arg.Function> targetType() {
-        return FunctionExpr.Arg.Function.class;
+    public Class<BoundSpec.UnboundedFollowing> targetType() {
+        return BoundSpec.UnboundedFollowing.class;
     }
 }

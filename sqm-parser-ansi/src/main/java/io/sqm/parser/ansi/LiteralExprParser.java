@@ -18,22 +18,22 @@ public class LiteralExprParser implements Parser<LiteralExpr> {
     @Override
     public ParseResult<LiteralExpr> parse(Cursor cur, ParseContext ctx) {
         if (cur.match(TokenType.STRING)) {
-            return ok(LiteralExpr.of(cur.advance().lexeme()));
+            return finalize(cur, ctx, LiteralExpr.of(cur.advance().lexeme()));
         }
         if (cur.match(TokenType.NUMBER)) {
-            return ok(LiteralExpr.of(parseNumber(cur.advance().lexeme())));
+            return finalize(cur, ctx, LiteralExpr.of(parseNumber(cur.advance().lexeme())));
         }
         if (cur.match(TokenType.NULL)) {
             cur.advance(); // skip the literal itself
-            return ok(LiteralExpr.of(null));
+            return finalize(cur, ctx, LiteralExpr.of(null));
         }
         if (cur.match(TokenType.TRUE)) {
             cur.advance(); // skip the literal itself
-            return ok(LiteralExpr.of(Boolean.TRUE));
+            return finalize(cur, ctx, LiteralExpr.of(Boolean.TRUE));
         }
         if (cur.match(TokenType.FALSE)) {
             cur.advance(); // skip the literal itself
-            return ok(LiteralExpr.of(Boolean.FALSE));
+            return finalize(cur, ctx, LiteralExpr.of(Boolean.FALSE));
         }
         return error("Unsupported literal token: " + cur.peek().lexeme(), cur.fullPos());
     }

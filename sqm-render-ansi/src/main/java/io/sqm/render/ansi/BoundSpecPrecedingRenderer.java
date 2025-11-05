@@ -1,11 +1,11 @@
 package io.sqm.render.ansi;
 
-import io.sqm.core.FunctionExpr;
+import io.sqm.core.BoundSpec;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
-public class FuncLiteralArgRenderer implements Renderer<FunctionExpr.Arg.Literal> {
+public class BoundSpecPrecedingRenderer implements Renderer<BoundSpec.Preceding> {
     /**
      * Renders the node into an {@link SqlWriter}.
      *
@@ -14,8 +14,8 @@ public class FuncLiteralArgRenderer implements Renderer<FunctionExpr.Arg.Literal
      * @param w    a writer.
      */
     @Override
-    public void render(FunctionExpr.Arg.Literal node, RenderContext ctx, SqlWriter w) {
-        w.append(ctx.bindOrFormat(node.value()));
+    public void render(BoundSpec.Preceding node, RenderContext ctx, SqlWriter w) {
+        w.append(node.expr()).space().append("PRECEDING");
     }
 
     /**
@@ -24,7 +24,7 @@ public class FuncLiteralArgRenderer implements Renderer<FunctionExpr.Arg.Literal
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<FunctionExpr.Arg.Literal> targetType() {
-        return FunctionExpr.Arg.Literal.class;
+    public Class<BoundSpec.Preceding> targetType() {
+        return BoundSpec.Preceding.class;
     }
 }

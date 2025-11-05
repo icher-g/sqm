@@ -27,7 +27,7 @@ public class IsNullPredicateParser implements Parser<IsNullPredicate> {
         var negated = cur.consumeIf(TokenType.NOT);
         cur.expect("Expected NULL", TokenType.NULL);
 
-        return ok(IsNullPredicate.of(value.value(), negated));
+        return finalize(cur, ctx, IsNullPredicate.of(value.value(), negated));
     }
 
     /**

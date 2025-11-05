@@ -19,7 +19,7 @@ public class StarSelectItemParser implements Parser<StarSelectItem> {
     @Override
     public ParseResult<StarSelectItem> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected '*'", TokenType.STAR);
-        return ok(SelectItem.star());
+        return finalize(cur, ctx, SelectItem.star());
     }
 
     /**

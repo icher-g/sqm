@@ -30,7 +30,7 @@ class QueryTableRendererTest {
 
     /**
      * Create a minimal Query suitable for nesting as a subquery.
-     * Adjust to your real builders/helpers (e.g., Query.builder()...).
+     * Adjust to your real builders/helpers (expr.g., Query.builder()...).
      */
     private SelectQuery makeSimpleQuery() {
         return select(col("u", "id"), col("u", "name"))
@@ -71,10 +71,10 @@ class QueryTableRendererTest {
     }
 
     @Test
-    @DisplayName("Alias is quoted when needed (e.g., keyword alias)")
+    @DisplayName("Alias is quoted when needed (expr.g., keyword alias)")
     void alias_is_quoted_if_needed() {
         var inner = makeSimpleQuery();
-        // Force fallback via explicit alias that is a keyword (e.g., SELECT) to check quoting
+        // Force fallback via explicit alias that is a keyword (expr.g., SELECT) to check quoting
         var qt = tbl(inner).as("select");
 
         var sql = render(qt);

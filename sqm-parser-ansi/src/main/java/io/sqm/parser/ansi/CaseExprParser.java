@@ -49,7 +49,7 @@ public class CaseExprParser implements Parser<CaseExpr> {
         // END
         cur.expect("Expected END to close CASE", TokenType.END);
 
-        return ok(CaseExpr.of(whens, elseValue));
+        return finalize(cur, ctx, CaseExpr.of(whens, elseValue));
     }
 
     /**

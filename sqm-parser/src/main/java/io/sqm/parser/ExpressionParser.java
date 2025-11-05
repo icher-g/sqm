@@ -32,6 +32,16 @@ public class ExpressionParser implements Parser<Expression> {
             return finalize(cur, ctx, res);
         }
 
+        if (ctx.lookups().looksLikeRowListExpr(cur)) {
+            var res = ctx.parse(RowListExpr.class, cur);
+            return finalize(cur, ctx, res);
+        }
+
+        if (ctx.lookups().looksLikeQueryExpr(cur)) {
+            var res = ctx.parse(QueryExpr.class, cur);
+            return finalize(cur, ctx, res);
+        }
+
         if (ctx.lookups().looksLikeColumnRef(cur)) {
             var res = ctx.parse(ColumnExpr.class, cur);
             return finalize(cur, ctx, res);

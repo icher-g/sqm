@@ -37,7 +37,7 @@ public class BetweenPredicateParser implements Parser<BetweenPredicate> {
         if (upper.isError()) {
             return error(upper);
         }
-        return ok(BetweenPredicate.of(value.value(), lower.value(), upper.value(), symmetric));
+        return finalize(cur, ctx, BetweenPredicate.of(value.value(), lower.value(), upper.value(), symmetric));
     }
 
     /**

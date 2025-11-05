@@ -25,7 +25,7 @@ public class MixInsSmokeTest {
     }
 
     @Test
-    @DisplayName("FunctionColumn args: polymorphic deserialization by NAME (e.g., 'column', 'literal')")
+    @DisplayName("FunctionColumn args: polymorphic deserialization by NAME (expr.g., 'column', 'literal')")
     void functionArgs_polymorphic_roundTrip() throws Exception {
         ObjectMapper m = SqmJsonMixins.createPretty();
 
@@ -39,15 +39,18 @@ public class MixInsSmokeTest {
                     "kind" : "function",
                     "name" : "lower",
                     "args" : [ {
-                      "kind" : "arg_column",
-                      "ref" : {
+                      "kind" : "arg_expr",
+                      "expr" : {
                         "kind" : "column",
                         "tableAlias" : "t",
                         "name" : "name"
                       }
                     }, {
-                      "kind" : "arg_literal",
-                      "value" : "X"
+                      "kind" : "arg_expr",
+                      "expr" : {
+                        "kind" : "literal",
+                        "value" : "X"
+                      }
                     } ],
                     "distinctArg" : false
                   },
@@ -66,8 +69,10 @@ public class MixInsSmokeTest {
         // 2) The Arg items are concrete subtypes; assert by class simple names to avoid package coupling
         var a0 = fe.args().get(0);
         var a1 = fe.args().get(1);
-        assertInstanceOf(FunctionExpr.Arg.Column.class, a0);
-        assertInstanceOf(FunctionExpr.Arg.Literal.class, a1);
+        assertInstanceOf(FunctionExpr.Arg.ExprArg.class, a0);
+        assertInstanceOf(FunctionExpr.Arg.ExprArg.class, a1);
+        assertInstanceOf(ColumnExpr.class, a0.asExprArg().orElseThrow().expr());
+        assertInstanceOf(LiteralExpr.class, a1.asExprArg().orElseThrow().expr());
 
         // 3) Round-trip back to JSON and ensure type tags are preserved
         String back = m.writeValueAsString(esi);

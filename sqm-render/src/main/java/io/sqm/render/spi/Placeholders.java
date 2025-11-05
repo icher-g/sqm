@@ -5,7 +5,7 @@ package io.sqm.render.spi;
  */
 public interface Placeholders {
     /**
-     * Plain positional marker (e.g., "?" or "$1" if ordinal is used).
+     * Plain positional marker (expr.g., "?" or "$1" if ordinal is used).
      */
     String marker();
 
@@ -17,7 +17,7 @@ public interface Placeholders {
     }
 
     /**
-     * Ordinal placeholder for 1-based position (e.g., "$1").
+     * Ordinal placeholder for 1-based position (expr.g., "$1").
      */
     default String ordinal(int position) {
         throw new UnsupportedOperationException("Ordinal placeholders not supported by this dialect");
@@ -31,7 +31,7 @@ public interface Placeholders {
     }
 
     /**
-     * Named placeholder token (e.g., ":name").
+     * Named placeholder token (expr.g., ":name").
      */
     default String named(String name) {
         throw new UnsupportedOperationException("Named placeholders not supported by this dialect");

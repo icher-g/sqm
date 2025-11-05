@@ -13,7 +13,7 @@ public class DefaultSqlWriter implements SqlWriter {
     private final StringBuilder sb = new StringBuilder();
     private final RenderContext ctx;
     private final int indentSize;
-    private boolean ignoreNewLine = false;
+    private int singleLine = 0;
     private int indentLevel = 0;
     private boolean atLineStart = true;
 
@@ -43,8 +43,13 @@ public class DefaultSqlWriter implements SqlWriter {
     }
 
     @Override
-    public void ignoreNewLine(boolean ignore) {
-        ignoreNewLine = ignore;
+    public void singleLine() {
+        singleLine++;
+    }
+
+    @Override
+    public void multiLine() {
+        if (singleLine > 0) singleLine--;
     }
 
     @Override
@@ -64,10 +69,11 @@ public class DefaultSqlWriter implements SqlWriter {
 
     @Override
     public SqlWriter newline() {
-        if (!ignoreNewLine) {
+        if (singleLine == 0) {
             sb.append('\n');
             atLineStart = true;
-        } else {
+        }
+        else {
             space();
         }
         return this;
@@ -75,7 +81,7 @@ public class DefaultSqlWriter implements SqlWriter {
 
     @Override
     public SqlWriter indent() {
-        if (!ignoreNewLine) {
+        if (singleLine == 0) {
             indentLevel++;
         }
         return this;

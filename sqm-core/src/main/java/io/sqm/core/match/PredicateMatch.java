@@ -7,7 +7,7 @@ import java.util.function.Function;
 /**
  * Pattern-style matcher for {@link Predicate} subtypes.
  * <p>
- * Register handlers for concrete predicate kinds (e.g., {@code BETWEEN}, {@code IN}),
+ * Register handlers for concrete predicate kinds (expr.g., {@code BETWEEN}, {@code IN}),
  * then resolve with a terminal method from {@link Match}.
  *
  * @param <R> the result type produced by the match

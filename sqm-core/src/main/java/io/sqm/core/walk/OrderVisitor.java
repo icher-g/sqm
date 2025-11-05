@@ -35,7 +35,7 @@ public interface OrderVisitor<R> {
 
     /**
      * Visits a single {@link OrderItem}, representing one
-     * ordering expression (e.g. {@code col DESC NULLS LAST})
+     * ordering expression (expr.g. {@code col DESC NULLS LAST})
      * within an {@code ORDER BY} clause.
      *
      * @param i the order item being visited (never {@code null})

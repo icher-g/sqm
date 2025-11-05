@@ -1,6 +1,9 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.FunctionExpr;
+import io.sqm.core.OrderBy;
+import io.sqm.core.OverSpec;
+import io.sqm.core.Predicate;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
@@ -33,18 +36,53 @@ public class FunctionExprParser implements Parser<FunctionExpr> {
         final Boolean distinct = cur.consumeIf(TokenType.DISTINCT) ? true : null;
         final List<FunctionExpr.Arg> args = new ArrayList<>();
 
-        do {
-            var vr = ctx.parse(FunctionExpr.Arg.class, cur);
-            if (vr.isError()) {
-                return error(vr);
-            }
-            args.add(vr.value());
-        } while (cur.consumeIf(TokenType.COMMA));
+        if (!cur.match(TokenType.RPAREN)) {
+            do {
+                var vr = ctx.parse(FunctionExpr.Arg.class, cur);
+                if (vr.isError()) {
+                    return error(vr);
+                }
+                args.add(vr.value());
+            } while (cur.consumeIf(TokenType.COMMA));
+        }
 
         // ')'
         cur.expect("Expected ')' to close function", TokenType.RPAREN);
 
-        return ok(FunctionExpr.of(name.toString(), distinct, args));
+        OrderBy withinGroup = null;
+        if (cur.consumeIf(TokenType.WITHIN)) {
+            cur.expect("Expected GROUP after WITHIN", TokenType.GROUP);
+            cur.expect("Expected '(' after WITHIN GROUP", TokenType.LPAREN);
+            var obr = ctx.parse(OrderBy.class, cur);
+            if (obr.isError()) {
+                return error(obr);
+            }
+            cur.expect("Expected ')' to close statement", TokenType.RPAREN);
+            withinGroup = obr.value();
+        }
+
+        Predicate filter = null;
+        if (cur.consumeIf(TokenType.FILTER)) {
+            cur.expect("Expected '(' after FILTER", TokenType.LPAREN);
+            cur.expect("Expected WHERE in a FILTER", TokenType.WHERE);
+            var pr = ctx.parse(Predicate.class, cur);
+            if (pr.isError()) {
+                return error(pr);
+            }
+            cur.expect("Expected ')' to close statement", TokenType.RPAREN);
+            filter = pr.value();
+        }
+
+        OverSpec over = null;
+        if (cur.match(TokenType.OVER)) {
+            var or = ctx.parse(OverSpec.class, cur);
+            if (or.isError()) {
+                return error(or);
+            }
+            over = or.value();
+        }
+
+        return finalize(cur, ctx, FunctionExpr.of(name.toString(), args, distinct, withinGroup, filter, over));
     }
 
     /**

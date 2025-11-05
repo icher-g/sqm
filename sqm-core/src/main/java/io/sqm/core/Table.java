@@ -6,7 +6,7 @@ import io.sqm.core.walk.NodeVisitor;
 import java.util.Objects;
 
 /**
- * A catalog/schema-qualified named table: e.g. schema.table
+ * A catalog/schema-qualified named table: expr.g. schema.table
  */
 public non-sealed interface Table extends TableRef {
     /**

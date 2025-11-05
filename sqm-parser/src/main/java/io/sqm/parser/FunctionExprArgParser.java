@@ -16,22 +16,12 @@ public class FunctionExprArgParser implements Parser<FunctionExpr.Arg> {
      */
     @Override
     public ParseResult<FunctionExpr.Arg> parse(Cursor cur, ParseContext ctx) {
-        if (ctx.lookups().looksLikeFunctionCall(cur)) {
-            var res = ctx.parse(FunctionExpr.Arg.Function.class, cur);
-            return finalize(cur, ctx, res);
-        }
-
         if (ctx.lookups().looksLikeStar(cur)) {
-            var res = ctx.parse(FunctionExpr.Arg.Star.class, cur);
+            var res = ctx.parse(FunctionExpr.Arg.StarArg.class, cur);
             return finalize(cur, ctx, res);
         }
 
-        if (ctx.lookups().looksLikeColumnRef(cur)) {
-            var res = ctx.parse(FunctionExpr.Arg.Column.class, cur);
-            return finalize(cur, ctx, res);
-        }
-
-        var res = ctx.parse(FunctionExpr.Arg.Literal.class, cur);
+        var res = ctx.parse(FunctionExpr.Arg.ExprArg.class, cur);
         return finalize(cur, ctx, res);
     }
 

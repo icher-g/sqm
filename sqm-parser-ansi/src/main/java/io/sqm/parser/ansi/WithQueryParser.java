@@ -39,7 +39,7 @@ public class WithQueryParser implements Parser<WithQuery> {
         if (body.isError()) {
             return error(body);
         }
-        return ok(Query.with(ctes, body.value(), recursive));
+        return finalize(cur, ctx, Query.with(ctes, body.value(), recursive));
     }
 
     /**

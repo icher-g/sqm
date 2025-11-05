@@ -21,16 +21,16 @@ import java.util.List;
  *        -- Recursive CTE (self-reference to `chain`)
  *        chain AS (
  *          -- Anchor: start from roots
- *          SELECT e.id, e.manager_id, 1 AS lvl
- *          FROM employees e
- *          JOIN roots r ON e.id = r.id
+ *          SELECT expr.id, expr.manager_id, 1 AS lvl
+ *          FROM employees expr
+ *          JOIN roots r ON expr.id = r.id
  *
  *          UNION ALL
  *
  *          -- Recursive step: walk down the tree
- *          SELECT e.id, e.manager_id, c.lvl + 1
- *          FROM employees e
- *          JOIN chain c ON e.manager_id = c.id
+ *          SELECT expr.id, expr.manager_id, c.lvl + 1
+ *          FROM employees expr
+ *          JOIN chain c ON expr.manager_id = c.id
  *        )
  *
  *      SELECT id, manager_id, lvl

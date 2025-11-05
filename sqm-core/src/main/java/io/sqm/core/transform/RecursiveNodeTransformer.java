@@ -37,7 +37,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             if (transformed != item) {
                 changed = true;
                 transformedItems.add(transformed);
-            } else {
+            }
+            else {
                 transformedItems.add(item);
             }
         }
@@ -81,8 +82,15 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     @Override
     public Node visitFunctionExpr(FunctionExpr f) {
         List<FunctionExpr.Arg> args = new ArrayList<>();
-        if (apply(f.args(), args)) {
-            return FunctionExpr.of(f.name(), f.distinctArg(), args);
+        boolean changed = apply(f.args(), args);
+        var withinGroup = apply(f.withinGroup());
+        changed |= withinGroup != f.withinGroup();
+        var filter = apply(f.filter());
+        changed |= filter != f.filter();
+        var over = apply(f.over());
+        changed |= over != f.over();
+        if (changed) {
+            return FunctionExpr.of(f.name(), args, f.distinctArg(), withinGroup, filter, over);
         }
         return f;
     }
@@ -95,19 +103,12 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
      */
     @Override
     public Node visitFunctionArgExpr(FunctionExpr.Arg a) {
-        if (a instanceof FunctionExpr.Arg.Column c) {
-            var column = apply(c.ref());
-            if (column != c.ref()) {
-                return FunctionExpr.Arg.column(column);
+        if (a instanceof FunctionExpr.Arg.ExprArg e) {
+            var expr = apply(e.expr());
+            if (expr != e.expr()) {
+                return FunctionExpr.Arg.expr(expr);
             }
-            return c;
-        }
-        if (a instanceof FunctionExpr.Arg.Function f) {
-            var func = apply(f.call());
-            if (func != f.call()) {
-                return FunctionExpr.Arg.func(func);
-            }
-            return f;
+            return e;
         }
         return a;
     }
@@ -335,7 +336,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitGroupItem(GroupItem i) {
         var expr = apply(i.expr());
         if (expr != i.expr()) {
-            return GroupItem.by(expr);
+            return GroupItem.of(expr);
         }
         return i;
     }
@@ -361,7 +362,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
 
     /**
      * Visits a single {@link OrderItem}, representing one
-     * ordering expression (e.g. {@code col DESC NULLS LAST})
+     * ordering expression (expr.g. {@code col DESC NULLS LAST})
      * within an {@code ORDER BY} clause.
      *
      * @param i the order item being visited (never {@code null})
@@ -371,7 +372,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitOrderItem(OrderItem i) {
         var expr = apply(i.expr());
         if (expr != i.expr()) {
-            return OrderItem.by(expr, i.direction(), i.nulls(), i.collate());
+            return OrderItem.of(expr, i.direction(), i.nulls(), i.collate());
         }
         return i;
     }
@@ -592,11 +593,11 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         changed |= limitOffset != queryLimitOffset;
         if (changed) {
             var query = SelectQuery.of()
-                .select(items)
-                .from(from)
-                .join(joins)
-                .where(where)
-                .having(having);
+                                   .select(items)
+                                   .from(from)
+                                   .join(joins)
+                                   .where(where)
+                                   .having(having);
 
             if (groupBy != null) {
                 query.groupBy(groupBy.items());
@@ -672,5 +673,95 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             return CteDef.of(c.name(), body, c.columnAliases());
         }
         return c;
+    }
+
+    @Override
+    public Node visitWindowDef(WindowDef w) {
+        var spec = apply(w.spec());
+        if (spec != w.spec()) {
+            return WindowDef.of(w.name(), spec);
+        }
+        return w;
+    }
+
+    @Override
+    public Node visitOverRef(OverSpec.Ref r) {
+        return r;
+    }
+
+    @Override
+    public Node visitOverDef(OverSpec.Def d) {
+        var partitionBy = apply(d.partitionBy());
+        var orderBy = apply(d.orderBy());
+        var frame = apply(d.frame());
+        if (partitionBy != d.partitionBy() || orderBy != d.orderBy() || frame != d.frame()) {
+            if (d.baseWindow() == null) {
+                return OverSpec.def(partitionBy, orderBy, frame, d.exclude());
+            }
+            return OverSpec.def(d.baseWindow(), orderBy, frame, d.exclude());
+        }
+        return d;
+    }
+
+    @Override
+    public Node visitPartitionBy(PartitionBy p) {
+        List<Expression> items = new ArrayList<>();
+        if (apply(p.items(), items)) {
+            return PartitionBy.of(items);
+        }
+        return p;
+    }
+
+    @Override
+    public Node visitFrameSingle(FrameSpec.Single f) {
+        var bound = apply(f.bound());
+        if (bound != f.bound()) {
+            return FrameSpec.single(f.unit(), bound);
+        }
+        return f;
+    }
+
+    @Override
+    public Node visitFrameBetween(FrameSpec.Between f) {
+        var start = apply(f.start());
+        var end = apply(f.end());
+        if (start != f.start() || end != f.end()) {
+            return FrameSpec.between(f.unit(), start, end);
+        }
+        return f;
+    }
+
+    // bounds
+    @Override
+    public Node visitBoundUnboundedPreceding(BoundSpec.UnboundedPreceding b) {
+        return b;
+    }
+
+    @Override
+    public Node visitBoundPreceding(BoundSpec.Preceding b) {
+        var expr = apply(b.expr());
+        if (expr != b.expr()) {
+            return BoundSpec.preceding(expr);
+        }
+        return b;
+    }
+
+    @Override
+    public Node visitBoundCurrentRow(BoundSpec.CurrentRow b) {
+        return b;
+    }
+
+    @Override
+    public Node visitBoundFollowing(BoundSpec.Following b) {
+        var expr = apply(b.expr());
+        if (expr != b.expr()) {
+            return BoundSpec.following(expr);
+        }
+        return b;
+    }
+
+    @Override
+    public Node visitBoundUnboundedFollowing(BoundSpec.UnboundedFollowing b) {
+        return b;
     }
 }

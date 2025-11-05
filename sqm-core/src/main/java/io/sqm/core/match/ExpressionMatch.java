@@ -7,8 +7,8 @@ import java.util.function.Function;
 /**
  * Pattern-style matcher for {@link Expression} subtypes.
  * <p>
- * Register one or more subtype handlers (e.g., {@link #column(Function)} or {@link #func(Function)}),
- * then finish with a terminal operation (e.g., {@link #otherwise(Function)}).
+ * Register one or more subtype handlers (expr.g., {@link #column(Function)} or {@link #func(Function)}),
+ * then finish with a terminal operation (expr.g., {@link #otherwise(Function)}).
  *
  * @param <R> the result type produced by the match
  */
@@ -19,7 +19,7 @@ public interface ExpressionMatch<R> extends Match<Expression, R> {
      *
      * @param e   the expression to match on (may be any concrete {@code Expression} subtype)
      * @param <R> the result type produced by the match
-     * @return a new {@code ExpressionMatch} for {@code e}
+     * @return a new {@code ExpressionMatch} for {@code expr}
      */
     static <R> ExpressionMatch<R> match(Expression e) {
         return new ExpressionMatchImpl<>(e);

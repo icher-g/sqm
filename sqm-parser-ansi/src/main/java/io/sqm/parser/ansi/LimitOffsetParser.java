@@ -60,7 +60,7 @@ public class LimitOffsetParser implements Parser<LimitOffset> {
             }
         }
 
-        return ok(LimitOffset.of(limit, offset));
+        return finalize(cur, ctx, LimitOffset.of(limit, offset));
     }
 
     /**

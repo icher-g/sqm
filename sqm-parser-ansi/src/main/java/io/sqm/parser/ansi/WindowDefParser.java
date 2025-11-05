@@ -1,0 +1,41 @@
+package io.sqm.parser.ansi;
+
+import io.sqm.core.OverSpec;
+import io.sqm.core.WindowDef;
+import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.TokenType;
+import io.sqm.parser.spi.ParseContext;
+import io.sqm.parser.spi.ParseResult;
+import io.sqm.parser.spi.Parser;
+
+public class WindowDefParser implements Parser<WindowDef> {
+    /**
+     * Parses the spec represented by the {@link Cursor} instance.
+     *
+     * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.
+     * @param ctx a parser context containing parsers and lookups.
+     * @return a parsing result.
+     */
+    @Override
+    public ParseResult<WindowDef> parse(Cursor cur, ParseContext ctx) {
+        var name = cur.expect("Expected window identifier", TokenType.IDENT);
+        cur.expect("Expected AS", TokenType.AS);
+        cur.expect("Expected ( after AS", TokenType.LPAREN);
+        var spec = ctx.parse(OverSpec.Def.class, cur);
+        if (spec.isError()) {
+            return error(spec);
+        }
+        cur.expect("Expected )", TokenType.RPAREN);
+        return finalize(cur, ctx, WindowDef.of(name.lexeme(), spec.value()));
+    }
+
+    /**
+     * Gets the target type this handler can handle.
+     *
+     * @return an entity type to be handled by the handler.
+     */
+    @Override
+    public Class<WindowDef> targetType() {
+        return WindowDef.class;
+    }
+}

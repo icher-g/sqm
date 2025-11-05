@@ -23,6 +23,9 @@ public enum TokenType {
     // join-specific (kept, since core is shared; harmless for filters)
     JOIN, INNER, LEFT, RIGHT, FULL, OUTER, CROSS, USING, NATURAL, ON, AS,
 
+    // window, over
+    WINDOW, OVER, PARTITION, RANGE, GROUPS, UNBOUNDED, PRECEDING, FOLLOWING, CURRENT, TIES, NO, OTHERS, WITHIN, FILTER, EXCLUDE,
+
     // order by specific
     ASC, DESC, NULLS, FIRST, LAST, DEFAULT, COLLATE,
 

@@ -42,10 +42,8 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
      */
     @Override
     public R visitFunctionArgExpr(FunctionExpr.Arg a) {
-        if (a instanceof FunctionExpr.Arg.Function f) {
-            accept(f.call());
-        } else if (a instanceof FunctionExpr.Arg.Column c) {
-            accept(c.ref());
+        if (a instanceof FunctionExpr.Arg.ExprArg e) {
+            accept(e.expr());
         }
         return defaultResult();
     }
@@ -430,7 +428,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
 
     /**
      * Visits a single {@link OrderItem}, representing one
-     * ordering expression (e.g. {@code col DESC NULLS LAST})
+     * ordering expression (expr.g. {@code col DESC NULLS LAST})
      * within an {@code ORDER BY} clause.
      *
      * @param i the order item being visited (never {@code null})
@@ -514,6 +512,73 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitCte(CteDef c) {
         accept(c.body());
+        return defaultResult();
+    }
+
+    @Override
+    public R visitWindowDef(WindowDef w) {
+        // WINDOW w AS ( <OverSpec.Def> )
+        accept(w.spec());                  // dive into OverSpec.Def
+        return defaultResult();
+    }
+
+    @Override
+    public R visitOverRef(OverSpec.Ref r) {
+        return defaultResult();
+    }
+
+    @Override
+    public R visitOverDef(OverSpec.Def d) {
+        accept(d.partitionBy());
+        accept(d.orderBy());
+        accept(d.frame());
+        return defaultResult();
+    }
+
+    @Override
+    public R visitPartitionBy(PartitionBy p) {
+        p.items().forEach(this::accept);
+        return defaultResult();
+    }
+
+    @Override
+    public R visitFrameSingle(FrameSpec.Single f) {
+        accept(f.bound());
+        return defaultResult();
+    }
+
+    @Override
+    public R visitFrameBetween(FrameSpec.Between f) {
+        accept(f.start());
+        accept(f.end());
+        return defaultResult();
+    }
+
+    // bounds
+    @Override
+    public R visitBoundUnboundedPreceding(BoundSpec.UnboundedPreceding b) {
+        return defaultResult();
+    }
+
+    @Override
+    public R visitBoundPreceding(BoundSpec.Preceding b) {
+        accept(b.expr());
+        return defaultResult();
+    }
+
+    @Override
+    public R visitBoundCurrentRow(BoundSpec.CurrentRow b) {
+        return defaultResult();
+    }
+
+    @Override
+    public R visitBoundFollowing(BoundSpec.Following b) {
+        accept(b.expr());
+        return defaultResult();
+    }
+
+    @Override
+    public R visitBoundUnboundedFollowing(BoundSpec.UnboundedFollowing b) {
         return defaultResult();
     }
 }

@@ -40,7 +40,7 @@ public class UsingJoinParser implements Parser<UsingJoin> {
         } while (cur.consumeIf(TokenType.COMMA));
 
         cur.expect("Expected )", TokenType.RPAREN);
-        return ok(Join.using(table.value(), columns));
+        return finalize(cur, ctx, Join.using(table.value(), columns));
     }
 
     /**

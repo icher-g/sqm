@@ -26,7 +26,7 @@ public class NaturalJoinParser implements Parser<NaturalJoin> {
         if (table.isError()) {
             return error(table);
         }
-        return ok(Join.natural(table.value()));
+        return finalize(cur, ctx, Join.natural(table.value()));
     }
 
     /**

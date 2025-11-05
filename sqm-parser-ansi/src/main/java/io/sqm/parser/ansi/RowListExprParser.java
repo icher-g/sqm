@@ -34,7 +34,7 @@ public class RowListExprParser implements Parser<RowListExpr> {
         } while (cur.consumeIf(TokenType.COMMA));
 
         cur.expect("Expected )", TokenType.RPAREN);
-        return ok(RowListExpr.of(rows));
+        return finalize(cur, ctx, RowListExpr.of(rows));
     }
 
     /**

@@ -1,11 +1,11 @@
 package io.sqm.render.ansi;
 
-import io.sqm.core.FunctionExpr;
+import io.sqm.core.WindowDef;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
-public class FuncColumnArgRenderer implements Renderer<FunctionExpr.Arg.Column> {
+public class WindowDefRenderer implements Renderer<WindowDef> {
     /**
      * Renders the node into an {@link SqlWriter}.
      *
@@ -14,8 +14,10 @@ public class FuncColumnArgRenderer implements Renderer<FunctionExpr.Arg.Column> 
      * @param w    a writer.
      */
     @Override
-    public void render(FunctionExpr.Arg.Column node, RenderContext ctx, SqlWriter w) {
-        w.append(node.ref());
+    public void render(WindowDef node, RenderContext ctx, SqlWriter w) {
+        w.append("WINDOW").space();
+        w.append(node.name()).space().append("AS").space();
+        w.append(node.spec(), true, false);
     }
 
     /**
@@ -24,7 +26,7 @@ public class FuncColumnArgRenderer implements Renderer<FunctionExpr.Arg.Column> 
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<FunctionExpr.Arg.Column> targetType() {
-        return FunctionExpr.Arg.Column.class;
+    public Class<WindowDef> targetType() {
+        return WindowDef.class;
     }
 }

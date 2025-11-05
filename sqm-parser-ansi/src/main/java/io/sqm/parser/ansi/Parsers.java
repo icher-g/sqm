@@ -61,10 +61,22 @@ public final class Parsers {
             .register(new OrderItemParser())
             .register(new WhenThenParser())
             .register(new LimitOffsetParser())
-            .register(new FuncCallArgParser())
-            .register(new FuncColumnArgParser())
-            .register(new FuncLiteralArgParser())
+            .register(new FuncExprArgParser())
             .register(new FuncStarArgParser())
-            .register(new FunctionExprArgParser());
+            .register(new FunctionExprArgParser())
+            .register(new BoundSpecParser())
+            .register(new BoundSpecCurrentRowParser())
+            .register(new BoundSpecPrecedingParser())
+            .register(new BoundSpecFollowingParser())
+            .register(new BoundSpecUnboundedFollowingParser())
+            .register(new BoundSpecUnboundedPrecedingParser())
+            .register(new FrameSpecParser())
+            .register(new FrameSpecSingleParser())
+            .register(new FrameSpecBetweenParser())
+            .register(new OverSpecParser())
+            .register(new OverSpecDefParser())
+            .register(new OverSpecRefParser())
+            .register(new PartitionByParser())
+            .register(new WindowDefParser());
     }
 }

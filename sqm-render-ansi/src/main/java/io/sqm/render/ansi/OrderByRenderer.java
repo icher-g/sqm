@@ -15,6 +15,7 @@ public class OrderByRenderer implements Renderer<OrderBy> {
      */
     @Override
     public void render(OrderBy node, RenderContext ctx, SqlWriter w) {
+        w.append("ORDER BY").space();
         w.comma(node.items());
     }
 

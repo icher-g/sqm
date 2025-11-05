@@ -31,7 +31,7 @@ public final class Renderers {
             .register(new CteDefRenderer())
             .register(new ExistsPredicateRenderer())
             .register(new ExprSelectItemRenderer())
-            .register(new FunctionCallRenderer())
+            .register(new FunctionExprRenderer())
             .register(new GroupByRenderer())
             .register(new GroupItemRenderer())
             .register(new InPredicateRenderer())
@@ -55,9 +55,18 @@ public final class Renderers {
             .register(new ValuesTableRenderer())
             .register(new WhenThenRenderer())
             .register(new WithQueryRenderer())
-            .register(new FuncCallArgRenderer())
-            .register(new FuncColumnArgRenderer())
-            .register(new FuncLiteralArgRenderer())
-            .register(new FuncStarArgRenderer());
+            .register(new FuncExprArgRenderer())
+            .register(new FuncStarArgRenderer())
+            .register(new WindowDefRenderer())
+            .register(new OverSpecDefRenderer())
+            .register(new PartitionByRenderer())
+            .register(new FrameSpecSingleRenderer())
+            .register(new FrameSpecBetweenRenderer())
+            .register(new OverSpecRefRenderer())
+            .register(new BoundSpecUnboundedPrecedingRenderer())
+            .register(new BoundSpecPrecedingRenderer())
+            .register(new BoundSpecCurrentRowRenderer())
+            .register(new BoundSpecFollowingRenderer())
+            .register(new BoundSpecUnboundedFollowingRenderer());
     }
 }

@@ -11,7 +11,7 @@ public final class Expressions {
      *
      * @param e   the expression to match on (may be any concrete {@code Expression} subtype)
      * @param <R> the result type produced by the match
-     * @return a new {@code ExpressionMatch} for {@code e}
+     * @return a new {@code ExpressionMatch} for {@code expr}
      */
     static <R> ExpressionMatch<R> match(Expression e) {
         return ExpressionMatch.match(e);

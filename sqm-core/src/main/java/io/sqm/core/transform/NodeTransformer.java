@@ -14,7 +14,7 @@ import io.sqm.core.walk.NodeVisitor;
  *
  * <p>
  * The default {@link #transform(Node)} helper performs a null-safe entry point:
- * it dispatches to {@code e.accept(this)} when the expression is non-null.
+ * it dispatches to {@code expr.accept(this)} when the expression is non-null.
  * </p>
  *
  * <h3>Example</h3>

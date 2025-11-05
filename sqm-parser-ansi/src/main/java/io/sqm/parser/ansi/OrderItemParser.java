@@ -10,6 +10,8 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import java.util.Set;
+
 public class OrderItemParser implements Parser<OrderItem> {
 
     private static String unquoteIfQuoted(String s) {
@@ -50,7 +52,8 @@ public class OrderItemParser implements Parser<OrderItem> {
                 return ParseResult.error("GROUP BY position must be a positive integer", pos);
             }
             ordinal = pos;
-        } else {
+        }
+        else {
             // Otherwise: delegate to the column parser
             var result = ctx.parse(Expression.class, cur);
             if (result.isError()) {
@@ -64,7 +67,9 @@ public class OrderItemParser implements Parser<OrderItem> {
         Nulls nulls = null;
         String collate = null;
 
-        while (!cur.matchAny(Terminators.ORDER_BY)) {
+        var tokens = Set.of(TokenType.ASC, TokenType.DESC, TokenType.NULLS, TokenType.COLLATE);
+
+        while (cur.matchAny(tokens)) {
             if (cur.consumeIf(TokenType.ASC)) {
                 if (direction != null) {
                     return error("Direction specified more than once", cur.fullPos());
@@ -94,17 +99,13 @@ public class OrderItemParser implements Parser<OrderItem> {
                 }
                 var t = cur.expect("Expected collation name after COLLATE", TokenType.IDENT);
                 collate = unquoteIfQuoted(t.lexeme());
-                continue;
             }
-
-            // If anything non-whitespace / non-EOF remains -> error.
-            return error("Unexpected token in ORDER BY item: " + cur.peek().lexeme(), cur.fullPos());
         }
 
         if (expr != null) {
-            return ok(OrderItem.by(expr, direction, nulls, collate));
+            return finalize(cur, ctx, OrderItem.of(expr, direction, nulls, collate));
         }
-        return ok(OrderItem.by(ordinal, direction, nulls, collate));
+        return finalize(cur, ctx, OrderItem.of(ordinal, direction, nulls, collate));
     }
 
     /**

@@ -50,6 +50,6 @@ public class AndPredicateParser implements Parser<AndPredicate> {
         if (rhs.isError()) {
             return error(rhs);
         }
-        return ok(AndPredicate.of(lhs.value(), rhs.value()));
+        return finalize(cur, ctx, AndPredicate.of(lhs.value(), rhs.value()));
     }
 }

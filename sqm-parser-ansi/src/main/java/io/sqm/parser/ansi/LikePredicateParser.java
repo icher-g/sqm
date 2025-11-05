@@ -40,7 +40,7 @@ public class LikePredicateParser implements Parser<LikePredicate> {
             escape = result.value();
         }
 
-        return ok(LikePredicate.of(expr.value(), pattern.value(), escape, negated));
+        return finalize(cur, ctx, LikePredicate.of(expr.value(), pattern.value(), escape, negated));
     }
 
     /**

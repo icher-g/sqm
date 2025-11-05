@@ -22,7 +22,7 @@ public class ColumnCollectorVisitorTest {
         ColumnExpr colUid = ColumnExpr.of("u", "id");
         ColumnExpr colName = ColumnExpr.of(null, "name");
 
-        FunctionExpr lower = FunctionExpr.of("lower", FunctionExpr.Arg.column(colName));
+        FunctionExpr lower = FunctionExpr.of("lower", FunctionExpr.Arg.expr(colName));
         RowExpr row = RowExpr.of(List.of(colUid, lower));
 
         ColumnCollector collector = new ColumnCollector();

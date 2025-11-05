@@ -1,11 +1,11 @@
 package io.sqm.render.ansi;
 
-import io.sqm.core.FunctionExpr;
+import io.sqm.core.BoundSpec;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
-public class FuncCallArgRenderer implements Renderer<FunctionExpr.Arg.Function> {
+public class BoundSpecUnboundedFollowingRenderer implements Renderer<BoundSpec.UnboundedFollowing> {
     /**
      * Renders the node into an {@link SqlWriter}.
      *
@@ -14,8 +14,8 @@ public class FuncCallArgRenderer implements Renderer<FunctionExpr.Arg.Function> 
      * @param w    a writer.
      */
     @Override
-    public void render(FunctionExpr.Arg.Function node, RenderContext ctx, SqlWriter w) {
-        w.append(node.call());
+    public void render(BoundSpec.UnboundedFollowing node, RenderContext ctx, SqlWriter w) {
+        w.append("UNBOUNDED FOLLOWING");
     }
 
     /**
@@ -24,7 +24,7 @@ public class FuncCallArgRenderer implements Renderer<FunctionExpr.Arg.Function> 
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<FunctionExpr.Arg.Function> targetType() {
-        return FunctionExpr.Arg.Function.class;
+    public Class<BoundSpec.UnboundedFollowing> targetType() {
+        return BoundSpec.UnboundedFollowing.class;
     }
 }

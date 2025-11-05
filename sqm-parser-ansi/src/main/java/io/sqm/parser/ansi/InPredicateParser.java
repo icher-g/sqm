@@ -31,7 +31,7 @@ public class InPredicateParser implements Parser<InPredicate> {
         if (values.isError()) {
             return error(values);
         }
-        return ok(InPredicate.of(expr.value(), values.value(), negated));
+        return finalize(cur, ctx, InPredicate.of(expr.value(), values.value(), negated));
     }
 
     /**

@@ -4,11 +4,13 @@ import io.sqm.core.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class SelectQueryImpl implements SelectQuery {
 
     private final List<SelectItem> items;
     private final List<Join> joins;
+    private final List<WindowDef> windows;
     private GroupBy groupBy;
     private OrderBy orderBy;
     private TableRef tableRef;
@@ -20,6 +22,7 @@ public class SelectQueryImpl implements SelectQuery {
     public SelectQueryImpl() {
         this.items = new ArrayList<>();
         this.joins = new ArrayList<>();
+        this.windows = new ArrayList<>();
     }
 
     /**
@@ -240,5 +243,73 @@ public class SelectQueryImpl implements SelectQuery {
     public SelectQuery offset(long offset) {
         this.limitOffset = LimitOffset.of(limit(), offset);
         return this;
+    }
+
+    /**
+     * Gets a list of WINDOW specifications if there is any or NULL otherwise.
+     * <p>Example of WINDOW specification:</p>
+     * <pre>
+     *     {@code
+     *      SELECT
+     *          dept,
+     *          emp_name,
+     *          salary,
+     *          RANK() OVER w1        AS dept_rank,
+     *          AVG(salary) OVER w2   AS overall_avg
+     *      FROM employees
+     *      WINDOW
+     *          w1 AS (PARTITION BY dept ORDER BY salary DESC),
+     *          w2 AS (ORDER BY salary DESC);
+     *     }
+     * </pre>
+     *
+     * @return a list of WINDOW specifications or NULL>
+     */
+    @Override
+    public List<WindowDef> windows() {
+        return windows;
+    }
+
+    /**
+     * Adds WINDOW specifications to a query.
+     *
+     * @param windows a WINDOW specifications.
+     * @return this.
+     */
+    @Override
+    public SelectQuery window(List<WindowDef> windows) {
+        this.windows.addAll(windows);
+        return this;
+    }
+
+    @Override
+    public final boolean equals(Object o) {
+        if (!(o instanceof SelectQueryImpl that)) return false;
+
+        return items.equals(that.items) &&
+            joins.equals(that.joins) &&
+            windows.equals(that.windows) &&
+            Objects.equals(groupBy, that.groupBy) &&
+            Objects.equals(orderBy, that.orderBy) &&
+            Objects.equals(tableRef, that.tableRef) &&
+            Objects.equals(where, that.where) &&
+            Objects.equals(having, that.having) &&
+            Objects.equals(distinct, that.distinct) &&
+            Objects.equals(limitOffset, that.limitOffset);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = items.hashCode();
+        result = 31 * result + joins.hashCode();
+        result = 31 * result + windows.hashCode();
+        result = 31 * result + Objects.hashCode(groupBy);
+        result = 31 * result + Objects.hashCode(orderBy);
+        result = 31 * result + Objects.hashCode(tableRef);
+        result = 31 * result + Objects.hashCode(where);
+        result = 31 * result + Objects.hashCode(having);
+        result = 31 * result + Objects.hashCode(distinct);
+        result = 31 * result + Objects.hashCode(limitOffset);
+        return result;
     }
 }
