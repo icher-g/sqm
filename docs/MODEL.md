@@ -1,7 +1,7 @@
 # SQM Model Hierarchy (Updated)
 
 The SQM (Structured Query Model) provides a composable, immutable AST representation of SQL queries.  
-This document preserves the detailed descriptions from the previous version and **adds the textual hierarchy first**, followed by the **Mermaid class diagram** and explanatory sections.
+This document preserves the detailed descriptions and **adds the textual hierarchy first**, followed by the **Mermaid class diagram** and explanatory sections.
 
 _Last updated: 2025-11-05_
 
@@ -83,8 +83,7 @@ Node
 
 ## Mermaid Class Diagram
 
-> Mermaid identifiers cannot contain dots.  
-> For readability we display the original names in quotes and map them to underscored aliases.
+> Mermaid identifiers cannot contain dots; underscored names are used instead.
 
 ```mermaid
 classDiagram
@@ -118,11 +117,11 @@ classDiagram
     Expression <|-- ValueSet
 
     %% FunctionExpr.Args
-    class "FunctionExpr.Arg" as FunctionExpr_Arg
-    class "FunctionExpr.Arg.Column" as FunctionExpr_Arg_Column
-    class "FunctionExpr.Arg.Literal" as FunctionExpr_Arg_Literal
-    class "FunctionExpr.Arg.Function" as FunctionExpr_Arg_Function
-    class "FunctionExpr.Arg.Star" as FunctionExpr_Arg_Star
+    class FunctionExpr_Arg
+    class FunctionExpr_Arg_Column
+    class FunctionExpr_Arg_Literal
+    class FunctionExpr_Arg_Function
+    class FunctionExpr_Arg_Star
 
     FunctionExpr <|-- FunctionExpr_Arg
     FunctionExpr_Arg <|-- FunctionExpr_Arg_Column
@@ -191,23 +190,23 @@ classDiagram
 
     %% ===================== Windowing =====================
     class OverSpec
-    class "OverSpec.Ref" as OverSpec_Ref
-    class "OverSpec.Def" as OverSpec_Def
+    class OverSpec_Ref
+    class OverSpec_Def
     OverSpec <|-- OverSpec_Ref
     OverSpec <|-- OverSpec_Def
 
     class FrameSpec
-    class "FrameSpec.Single" as FrameSpec_Single
-    class "FrameSpec.Between" as FrameSpec_Between
+    class FrameSpec_Single
+    class FrameSpec_Between
     FrameSpec <|-- FrameSpec_Single
     FrameSpec <|-- FrameSpec_Between
 
     class BoundSpec
-    class "BoundSpec.UnboundedPreceding" as BoundSpec_UnboundedPreceding
-    class "BoundSpec.Preceding" as BoundSpec_Preceding
-    class "BoundSpec.CurrentRow" as BoundSpec_CurrentRow
-    class "BoundSpec.Following" as BoundSpec_Following
-    class "BoundSpec.UnboundedFollowing" as BoundSpec_UnboundedFollowing
+    class BoundSpec_UnboundedPreceding
+    class BoundSpec_Preceding
+    class BoundSpec_CurrentRow
+    class BoundSpec_Following
+    class BoundSpec_UnboundedFollowing
     BoundSpec <|-- BoundSpec_UnboundedPreceding
     BoundSpec <|-- BoundSpec_Preceding
     BoundSpec <|-- BoundSpec_CurrentRow
