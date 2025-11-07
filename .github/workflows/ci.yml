@@ -20,8 +20,16 @@ jobs:
 
       # Run tests; your parent POM already runs jacoco:prepare-agent and jacoco:report at verify
       - name: Build & Test
-        run: mvn -B -DskipITs verify
-      
+        run: mvn -B verify
+
+      - name: List coverage files (debug)
+        run: |
+          echo "=== Per-module reports ==="
+          find . -path "*/target/site/jacoco/jacoco.xml" -type f -print
+          echo "=== Aggregate report ==="
+          ls -l target/site/jacoco-aggregate || true
+          [ -f target/site/jacoco-aggregate/jacoco.xml ] && head -n 20 target/site/jacoco-aggregate/jacoco.xml || true
+
       - name: Upload JaCoCo HTML (aggregate)
         uses: actions/upload-artifact@v4
         with:
@@ -29,7 +37,7 @@ jobs:
           path: target/site/jacoco-aggregate/**
           if-no-files-found: error
           retention-days: 7
-      
+
       - name: Coverage summary (aggregate)
         id: coverage
         uses: irongut/CodeCoverageSummary@v1.3.0
