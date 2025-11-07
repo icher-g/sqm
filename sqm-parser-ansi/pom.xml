@@ -8,14 +8,8 @@
         <artifactId>sqm-parent</artifactId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
-
     <artifactId>sqm-parser-ansi</artifactId>
     <name>SQM (parser-ANSI)</name>
-
-    <properties>
-        <maven.deploy.skip>false</maven.deploy.skip>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>io.sqm</groupId>
@@ -41,5 +35,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
