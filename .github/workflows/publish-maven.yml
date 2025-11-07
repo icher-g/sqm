@@ -2,6 +2,7 @@ name: publish-maven
 on:
   push:
     tags: ['v*']   # tag like v0.1.0 to release
+  workflow_dispatch: {}
 permissions:
   contents: read
   packages: write
