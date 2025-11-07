@@ -4,12 +4,16 @@ import io.sqm.core.ColumnExpr;
 import io.sqm.core.FunctionExpr;
 import io.sqm.core.Node;
 import io.sqm.core.RowExpr;
+import io.sqm.core.walk.RecursiveNodeVisitor;
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static io.sqm.core.Join.using;
+import static io.sqm.dsl.Dsl.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Ensures that a deep change (rename inside a function argument) is applied and
@@ -46,6 +50,48 @@ public class DeepTransformationRebuildTest {
         assertEquals("user_id", outArgCol.name(), "Deep-renamed column should be applied");
     }
 
+    @Test
+    void changeAllColumnExpressions_InQuery() {
+        var q =
+            select(
+                sel(kase(when(col("u", "name").gt(10)).then(col("o", "name")))),
+                sel(col("o", "status")),
+                func("count", arg(col("u", "id"))).as("cnt"),
+                func("lower", arg(func("sub", arg(col("u", "desc"))))).as("lwr"),
+                star(),
+                star("o")
+            )
+                .from(tbl("orders").as("o"))
+                .join(inner(tbl("users").as("u")).on(col("u", "sid").eq(col("o", "user_id"))))
+                .join(natural(tbl("regions").as("r")))
+                .join(cross(tbl("x").as("x1")))
+                .join(using(tbl("y").as("y1"), "k1", "k2"))
+                .where(
+                    col("o", "state")
+                        .in("A", "B")
+                        .and(
+                            func("count", arg(col("u", "id"))).gt(10)
+                        )
+                        .and(
+                            col("o", "flag")
+                                .isNull()
+                                .or(col("o", "code").like("%ZZ%"))
+                        )
+                )
+                .groupBy(group("u", "user_name"), group("o", "user_status"))
+                .having(func("count", arg(col("u", "test"))).gt(10))
+                .orderBy(order(col("o", "status")).desc())
+                .limit(100)
+                .offset(10);
+
+
+        var transformer = new RenameAnyColumn();
+        var newQuery = q.accept(transformer);
+        var collector = new ColumnCollector();
+        newQuery.accept(collector);
+        assertTrue(collector.getColumns().stream().allMatch(c -> c.startsWith("dbo.")));
+    }
+
     static class RenameInsideFunction extends RecursiveNodeTransformer {
         @Override
         public Node visitColumnExpr(ColumnExpr c) {
@@ -53,6 +99,32 @@ public class DeepTransformationRebuildTest {
                 return ColumnExpr.of("u", "user_id");
             }
             return c;
+        }
+    }
+
+    static class RenameAnyColumn extends RecursiveNodeTransformer {
+        @Override
+        public Node visitColumnExpr(ColumnExpr c) {
+            return ColumnExpr.of("dbo." + c.tableAlias(), c.name());
+        }
+    }
+
+    static class ColumnCollector extends RecursiveNodeVisitor<Void> {
+        private final Set<String> cols = new LinkedHashSet<>();
+
+        public Set<String> getColumns() {
+            return cols;
+        }
+
+        @Override
+        protected Void defaultResult() {
+            return null;
+        }
+
+        @Override
+        public Void visitColumnExpr(ColumnExpr c) {
+            cols.add(c.tableAlias() == null ? c.name() : c.tableAlias() + "." + c.name());
+            return super.visitColumnExpr(c); // continue recursion if there are nested nodes (usually none for columns)
         }
     }
 }
