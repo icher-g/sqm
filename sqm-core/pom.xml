@@ -10,6 +10,9 @@
     </parent>
     <artifactId>sqm-core</artifactId>
     <name>SQM (core)</name>
+    <properties>
+        <maven.deploy.skip>false</maven.deploy.skip>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
