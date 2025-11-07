@@ -56,6 +56,7 @@
                     <configuration>
                         <!-- CRITICAL: include the argLine that JaCoCo sets -->
                         <argLine>${jacocoArgLine}</argLine>
+                        <useModulePath>false</useModulePath>
                     </configuration>
                 </plugin>
                 <!-- Failsafe: integration tests (if you use them) -->
@@ -65,6 +66,7 @@
                     <version>3.2.5</version>
                     <configuration>
                         <argLine>${jacocoArgLine}</argLine>
+                        <useModulePath>false</useModulePath>
                     </configuration>
                 </plugin>
             </plugins>
