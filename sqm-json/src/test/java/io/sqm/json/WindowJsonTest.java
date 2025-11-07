@@ -154,7 +154,7 @@ public class WindowJsonTest {
     @Test
     void aggregate_with_filter_and_over_partition_json() throws Exception {
         // COUNT(DISTINCT user_id) FILTER (WHERE active) OVER (PARTITION BY dept)
-        var fx = func("count", arg(col("user_id"))).distinct(true)
+        var fx = func("count", arg(col("user_id"))).distinct()
                                                    .filter(col("active").eq(lit(true)))
                                                    .over(over(partition(col("dept"))));
 

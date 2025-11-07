@@ -15,7 +15,7 @@ public class RecursiveNodeVisitorEdgeNodesTraversalTest {
 
         var withBody = select(sel(col("c"))).from(tbl("cte_source"));
         var withQuery = with(cte("w", withBody))
-            .select(select(sel(col("w", "c"))).from(tbl(select(sel(lit(1)))
+            .body(select(sel(col("w", "c"))).from(tbl(select(sel(lit(1)))
                 .from(tbl("dual"))).as("w")));
 
         var union =
@@ -35,7 +35,7 @@ public class RecursiveNodeVisitorEdgeNodesTraversalTest {
             .from(tbl(rows(
                 row(lit(1), lit("X")),
                 row(lit(2), lit("Y")))
-            ).as("vt", "id", "name"))
+            ).columnAliases("vt", "id", "name"))
             .where(exists(select(sel(lit(1))).from(tbl("dual")))
                 .and(not(col("m", "n").isNull()))
                 .and(unary(col("r", "ok"))))

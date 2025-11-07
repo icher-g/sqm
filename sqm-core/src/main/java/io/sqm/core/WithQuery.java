@@ -85,7 +85,7 @@ public non-sealed interface WithQuery extends Query {
      * @param body a SELECT statement.
      * @return this.
      */
-    default WithQuery select(Query body) {
+    default WithQuery body(Query body) {
         return new WithQueryImpl(ctes(), body, recursive());
     }
 

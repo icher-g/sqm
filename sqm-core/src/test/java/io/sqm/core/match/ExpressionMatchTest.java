@@ -13,8 +13,8 @@ public class ExpressionMatchTest {
     @Test
     void kase_forSpecificSubtype_isChosen() {
         var col = ColumnExpr.of("c");
-        var out = Expressions
-                      .<String>match(col)
+        var out = Match
+                      .<String>expressions(col)
                       .func(f -> "FUNC")
                       .column(c -> "COL")
                       .otherwise(e -> "OTHER");

@@ -45,7 +45,7 @@ class FunctionExprRendererTest {
     void distinct_singleColumn() {
         var fc = func(
             "count",
-            arg(col("t", "id"))).distinct(true);
+            arg(col("t", "id"))).distinct();
         var sql = render(fc);
         assertEquals("count(DISTINCT t.id)", sql);
     }
@@ -116,7 +116,7 @@ class FunctionExprRendererTest {
         var fc = func(
             "some_func",
             arg(col("t", "a")),
-            arg(col("t", "b"))).distinct(true);
+            arg(col("t", "b"))).distinct();
         var sql = render(fc);
         // DISTINCT prefix is applied once before the full comma-separated list
         assertEquals("some_func(DISTINCT t.a, t.b)", sql);

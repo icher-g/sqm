@@ -25,12 +25,12 @@ public non-sealed interface WhenThen extends Node {
     }
 
     /**
-     * Creates a WHEN...THEN statement.
+     * Creates a WHEN statement.
      *
      * @param when a WHEN predicate.
-     * @return A newly created instance of the WHEN...THEN statement.
+     * @return A newly created instance of the WHEN...THEN statement with only WHEN part.
      */
-    static WhenThen of(Predicate when) {
+    static WhenThen when(Predicate when) {
         return new WhenThenImpl(when, null);
     }
 

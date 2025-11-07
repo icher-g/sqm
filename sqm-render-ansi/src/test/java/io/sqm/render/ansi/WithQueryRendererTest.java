@@ -55,20 +55,20 @@ class WithQueryRendererTest {
         // CTE #1: CteQuery with aliases
         var cteUsers = cte("cte_users")
             .columnAliases("id", "name")
-            .select(
+            .body(
                 select(col("u", "id"), col("u", "name")).from(tbl("users").as("u"))
             );
 
         // CTE #2: plain Query used as CTE (no column aliases)
         var cteOrders = cte("cte_orders")
-            .select(
+            .body(
                 select(col("o", "user_id"), col("o", "amount")).from(tbl("orders").as("o"))
             );
 
         // WITH ... (cte_users, cte_orders)  <— CTEs live in WithQuery.getQueries()
         // Outer body is the WithQuery itself (inherited Query fields)
         var q = with(cteUsers, cteOrders)
-            .select(
+            .body(
                 select(col("x", "id")).from(tbl("cte_users").as("x"))
             );
 
@@ -92,13 +92,13 @@ class WithQueryRendererTest {
     void with_recursive_prefix_ok() {
         var nums = cte("nums")
             .columnAliases("n")
-            .select(
+            .body(
                 select(col("s", "n")).from(tbl("seed_numbers").as("s"))
             );
 
         var q = with(nums)
             .recursive(true)
-            .select(
+            .body(
                 select(col("t", "n")).from(tbl("nums").as("t"))
             );
 
@@ -112,17 +112,17 @@ class WithQueryRendererTest {
     @DisplayName("WITH with only CteQuery CTEs (no plain Query CTEs)")
     void with_onlyCteQueries_ok() {
         var c1 = cte("c1")
-            .select(
+            .body(
                 select(col("a", "id")).from(tbl("users").as("a"))
             );
 
         var c2 = cte("c2")
-            .select(
+            .body(
                 select(col("b", "user_id")).from(tbl("orders").as("b"))
             );
 
         var q = with(c1, c2)
-            .select(
+            .body(
                 select(col("b", "user_id")).from(tbl("c2").as("b"))
             );
 
@@ -137,7 +137,7 @@ class WithQueryRendererTest {
     @DisplayName("Empty CTE list -> throws")
     void with_emptyCtes_throws() {
         var q = with()
-            .select(
+            .body(
                 select(col("t", "id")).from(tbl("users", "t"))
             );
         var ex = assertThrows(IllegalArgumentException.class, () -> renderWith(q));
@@ -148,12 +148,12 @@ class WithQueryRendererTest {
     @DisplayName("CTE without name should lead to a clear failure")
     void cte_without_name_fails() {
         var nameless = cte(null)
-            .select(
+            .body(
                 select(col("u", "id")).from(tbl("users", "u"))
             );
 
         var q = with(nameless)
-            .select(
+            .body(
                 select(col("u", "id")).from(tbl("users", "u"))
             );
 

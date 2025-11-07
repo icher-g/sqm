@@ -1,7 +1,6 @@
 package io.sqm.core;
 
 import io.sqm.core.internal.CteDefImpl;
-import io.sqm.core.internal.QueryTableImpl;
 import io.sqm.core.internal.WithQueryImpl;
 
 import java.util.List;
@@ -11,17 +10,6 @@ import java.util.Optional;
  * Represents a base interface for all queries.
  */
 public sealed interface Query extends Node permits CompositeQuery, SelectQuery, WithQuery {
-
-    /**
-     * Wraps a query as a table for use in FROM statement.
-     *
-     * @param query a query to wrap.
-     * @return A newly created instance of a wrapped query.
-     */
-    static QueryTable table(Query query) {
-        return new QueryTableImpl(query, null);
-    }
-
     /**
      * Creates SELECT query with a list of items.
      *

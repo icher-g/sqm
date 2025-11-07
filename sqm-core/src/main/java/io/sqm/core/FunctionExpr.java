@@ -116,11 +116,10 @@ public non-sealed interface FunctionExpr extends Expression {
     /**
      * Adds DISTINCT indication to an expression.
      *
-     * @param distinctArg an indication.
      * @return A newly created instance of the function call expression with the added indication. All other fields are preserved.
      */
-    default FunctionExpr distinct(boolean distinctArg) {
-        return new FunctionExprImpl(name(), args(), distinctArg, withinGroup(), filter(), over());
+    default FunctionExpr distinct() {
+        return new FunctionExprImpl(name(), args(), true, withinGroup(), filter(), over());
     }
 
     /**

@@ -16,6 +16,16 @@ public non-sealed interface OrderBy extends Node {
      * @param items a list of order by items.
      * @return a new instance of ORDER BY statement.
      */
+    static OrderBy of(OrderItem... items) {
+        return new OrderByImpl(List.of(items));
+    }
+
+    /**
+     * Creates ORDER BY statement.
+     *
+     * @param items a list of order by items.
+     * @return a new instance of ORDER BY statement.
+     */
     static OrderBy of(List<OrderItem> items) {
         return new OrderByImpl(items);
     }

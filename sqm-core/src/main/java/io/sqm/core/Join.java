@@ -1,7 +1,6 @@
 package io.sqm.core;
 
 import io.sqm.core.internal.NaturalJoinImpl;
-import io.sqm.core.internal.OnJoinImpl;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +18,7 @@ public sealed interface Join extends FromItem permits CrossJoin, NaturalJoin, On
      * @return A newly created instance of INNER JOIN with the provided table.
      */
     static OnJoin join(TableRef right) {
-        return new OnJoinImpl(right, JoinKind.INNER, null);
+        return OnJoin.of(right, JoinKind.INNER, null);
     }
 
     /**
@@ -29,7 +28,7 @@ public sealed interface Join extends FromItem permits CrossJoin, NaturalJoin, On
      * @return A newly created instance of LEFT JOIN with the provided table.
      */
     static OnJoin left(TableRef right) {
-        return new OnJoinImpl(right, JoinKind.LEFT, null);
+        return OnJoin.of(right, JoinKind.LEFT, null);
     }
 
     /**
@@ -39,7 +38,7 @@ public sealed interface Join extends FromItem permits CrossJoin, NaturalJoin, On
      * @return A newly created instance of RIGHT JOIN with the provided table.
      */
     static OnJoin right(TableRef right) {
-        return new OnJoinImpl(right, JoinKind.RIGHT, null);
+        return OnJoin.of(right, JoinKind.RIGHT, null);
     }
 
     /**
@@ -49,7 +48,7 @@ public sealed interface Join extends FromItem permits CrossJoin, NaturalJoin, On
      * @return A newly created instance of FULL JOIN with the provided table.
      */
     static OnJoin full(TableRef right) {
-        return new OnJoinImpl(right, JoinKind.FULL, null);
+        return OnJoin.of(right, JoinKind.FULL, null);
     }
 
     /**
