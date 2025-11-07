@@ -22,6 +22,17 @@
             </snapshots>
         </repository>
     </distributionManagement>
+         <dependencyManagement>
+           <dependencies>
+             <dependency>
+               <groupId>org.junit</groupId>
+               <artifactId>junit-bom</artifactId>
+               <version>5.10.2</version>
+               <type>pom</type>
+               <scope>import</scope>
+             </dependency>
+           </dependencies>
+         </dependencyManagement>
     <modules>
         <module>sqm-core</module>
         <module>sqm-render</module>
@@ -56,6 +67,11 @@
                     <configuration>
                         <!-- CRITICAL: include the argLine that JaCoCo sets -->
                         <argLine>${jacocoArgLine}</argLine>
+                          <includes>
+                            <include>**/*Test.java</include>
+                            <include>**/*Tests.java</include>
+                            <include>**/*IT.java</include> <!-- if you name some like this -->
+                          </includes>
                         <useModulePath>false</useModulePath>
                     </configuration>
                 </plugin>
