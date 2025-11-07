@@ -52,30 +52,56 @@
         </pluginManagement>
         <plugins>
             <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.14</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                        <!-- Optional but useful: only instrument your code -->
-                        <configuration>
-                            <includes>
-                                <include>io/sqm/**</include>
-                            </includes>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+               <groupId>org.jacoco</groupId>
+               <artifactId>jacoco-maven-plugin</artifactId>
+               <version>0.8.14</version>
+         
+               <executions>
+                 <!-- Attach agent before tests -->
+                 <execution>
+                   <goals>
+                     <goal>prepare-agent</goal>
+                   </goals>
+                   <configuration>
+                     <includes>
+                       <include>io/sqm/**</include>
+                     </includes>
+                   </configuration>
+                 </execution>
+         
+                 <!-- Per-module reports (optional but fine to keep) -->
+                 <execution>
+                   <id>report</id>
+                   <phase>verify</phase>
+                   <goals>
+                     <goal>report</goal>
+                   </goals>
+                   <configuration>
+                     <!-- Ensure XML is actually produced -->
+                     <reports>
+                       <xml>true</xml>
+                       <html>true</html>
+                       <csv>false</csv>
+                     </reports>
+                   </configuration>
+                 </execution>
+         
+                 <!-- 🔶 Aggregate report across all modules -->
+                 <execution>
+                   <id>report-aggregate</id>
+                   <phase>verify</phase>
+                   <goals>
+                     <goal>report-aggregate</goal>
+                   </goals>
+                   <configuration>
+                     <reports>
+                       <xml>true</xml>
+                       <html>true</html>
+                     </reports>
+                   </configuration>
+                 </execution>
+               </executions>
+             </plugin>
         </plugins>
     </build>
 </project>
