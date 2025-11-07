@@ -62,12 +62,11 @@
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
-                        <configuration>
-                            <!-- instrument only your code -->
+                        <!-- <configuration>
                             <includes>
                                 <include>io/sqm/**</include>
                             </includes>
-                        </configuration>
+                        </configuration> -->
                     </execution>
                     <!-- Per-module HTML/XML reports (optional, but fine) -->
                     <execution>
