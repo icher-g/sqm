@@ -8,6 +8,20 @@
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>SQM (parent)</name>
+    <url>https://github.com/icher-g/sqm</url>
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/icher-g/sqm</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </distributionManagement>
     <modules>
         <module>sqm-core</module>
         <module>sqm-render</module>

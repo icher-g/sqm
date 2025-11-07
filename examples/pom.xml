@@ -12,6 +12,9 @@
     <artifactId>examples</artifactId>
     <name>sqm :: examples</name>
     <packaging>jar</packaging>
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
 
     <dependencies>
         <!-- Depend on the modules that expose your model, DSL, renderers, parser, json mixins, etc. -->

@@ -1,0 +1,30 @@
+name: publish-maven
+on:
+  push:
+    tags: ['v*']   # tag like v0.1.0 to release
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: 'maven'
+          server-id: github            # <- matches <id> in distributionManagement
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Set version from tag
+        run: mvn -B versions:set -DnewVersion=${GITHUB_REF_NAME#v}
+
+      - name: Deploy to GitHub Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mvn -B -DskipTests deploy
