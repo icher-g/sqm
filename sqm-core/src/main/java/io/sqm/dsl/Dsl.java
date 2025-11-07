@@ -62,7 +62,7 @@ public final class Dsl {
      * @return a table that wraps a query.
      */
     public static QueryTable tbl(Query query) {
-        return Query.table(query);
+        return TableRef.query(query);
     }
 
     /**
@@ -233,7 +233,7 @@ public final class Dsl {
      * @return a WhenThen object.
      */
     public static WhenThen when(Predicate condition) {
-        return WhenThen.of(condition);
+        return WhenThen.when(condition);
     }
 
     /* ========================= Filters (Column RHS values) ========================= */

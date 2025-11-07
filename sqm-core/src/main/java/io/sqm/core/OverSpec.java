@@ -4,6 +4,8 @@ import io.sqm.core.internal.OverSpecDef;
 import io.sqm.core.internal.OverSpecRef;
 import io.sqm.core.walk.NodeVisitor;
 
+import java.util.Optional;
+
 /**
  * Represent an OVER statement in a function call.
  * <p>Example:</p>
@@ -63,6 +65,24 @@ public sealed interface OverSpec extends Node permits OverSpec.Ref, OverSpec.Def
      */
     static Def def(String baseWindow, OrderBy orderBy, FrameSpec frame, Exclude exclude) {
         return new OverSpecDef(baseWindow, null, orderBy, frame, exclude);
+    }
+
+    /**
+     * Casts this to {@link Ref}.
+     *
+     * @return an {@link Optional}<{@link Ref}> if the cast is successful or {@link Optional#empty()} otherwise.
+     */
+    default Optional<Ref> asRef() {
+        return this instanceof Ref r ? Optional.of(r) : Optional.empty();
+    }
+
+    /**
+     * Casts this to {@link Def}.
+     *
+     * @return an {@link Optional}<{@link Def}> if the cast is successful or {@link Optional#empty()} otherwise.
+     */
+    default Optional<Def> asDef() {
+        return this instanceof Def d ? Optional.of(d) : Optional.empty();
     }
 
     // EXCLUDE { CURRENT ROW | GROUP | TIES | NO OTHERS }

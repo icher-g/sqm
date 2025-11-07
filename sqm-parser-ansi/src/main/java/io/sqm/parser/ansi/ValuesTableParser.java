@@ -49,7 +49,7 @@ public class ValuesTableParser implements Parser<ValuesTable> {
             }
         }
 
-        return finalize(cur, ctx, TableRef.values(rows.value()).as(alias).as(columnNames));
+        return finalize(cur, ctx, TableRef.values(rows.value()).as(alias).columnAliases(columnNames));
     }
 
     /**

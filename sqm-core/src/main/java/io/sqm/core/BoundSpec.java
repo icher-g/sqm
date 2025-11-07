@@ -3,6 +3,8 @@ package io.sqm.core;
 import io.sqm.core.internal.*;
 import io.sqm.core.walk.NodeVisitor;
 
+import java.util.Optional;
+
 /**
  * Determines which rows are visible to the function for each current row.
  * Frame bounds like UNBOUNDED PRECEDING, 5 PRECEDING, CURRENT ROW, etc.
@@ -54,6 +56,51 @@ public sealed interface BoundSpec extends Node permits BoundSpec.UnboundedPreced
      */
     static UnboundedFollowing unboundedFollowing() {
         return new BoundSpecUnboundedFollowing();
+    }
+
+    /**
+     * Casts this to {@link BoundSpec.Preceding}.
+     *
+     * @return an {@link Optional}<{@link BoundSpec.Preceding}> if the cast is successful or {@link Optional#empty()} otherwise.
+     */
+    default Optional<BoundSpec.Preceding> asPreceding() {
+        return this instanceof BoundSpec.Preceding b ? Optional.of(b) : Optional.empty();
+    }
+
+    /**
+     * Casts this to {@link BoundSpec.Following}.
+     *
+     * @return an {@link Optional}<{@link BoundSpec.Following}> if the cast is successful or {@link Optional#empty()} otherwise.
+     */
+    default Optional<BoundSpec.Following> asFollowing() {
+        return this instanceof BoundSpec.Following b ? Optional.of(b) : Optional.empty();
+    }
+
+    /**
+     * Casts this to {@link BoundSpec.CurrentRow}.
+     *
+     * @return an {@link Optional}<{@link BoundSpec.CurrentRow}> if the cast is successful or {@link Optional#empty()} otherwise.
+     */
+    default Optional<BoundSpec.CurrentRow> asCurrentRow() {
+        return this instanceof BoundSpec.CurrentRow b ? Optional.of(b) : Optional.empty();
+    }
+
+    /**
+     * Casts this to {@link BoundSpec.UnboundedPreceding}.
+     *
+     * @return an {@link Optional}<{@link BoundSpec.UnboundedPreceding}> if the cast is successful or {@link Optional#empty()} otherwise.
+     */
+    default Optional<BoundSpec.UnboundedPreceding> asUnboundedPreceding() {
+        return this instanceof BoundSpec.UnboundedPreceding b ? Optional.of(b) : Optional.empty();
+    }
+
+    /**
+     * Casts this to {@link BoundSpec.UnboundedFollowing}.
+     *
+     * @return an {@link Optional}<{@link BoundSpec.UnboundedFollowing}> if the cast is successful or {@link Optional#empty()} otherwise.
+     */
+    default Optional<BoundSpec.UnboundedFollowing> asUnboundedFollowing() {
+        return this instanceof BoundSpec.UnboundedFollowing b ? Optional.of(b) : Optional.empty();
     }
 
     /**

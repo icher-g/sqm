@@ -112,7 +112,7 @@ public non-sealed interface CteDef extends Node {
      * @param body a SELECT statement.
      * @return this.
      */
-    default CteDef select(Query body) {
+    default CteDef body(Query body) {
         return new CteDefImpl(name(), body, columnAliases());
     }
 

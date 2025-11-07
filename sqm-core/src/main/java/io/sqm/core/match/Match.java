@@ -1,5 +1,7 @@
 package io.sqm.core.match;
 
+import io.sqm.core.*;
+
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -16,6 +18,104 @@ import java.util.function.Supplier;
  * @param <R> the result type returned by the matching operation
  */
 public interface Match<T, R> {
+    /**
+     * Creates a new matcher for the given {@link Join}.
+     *
+     * @param j   the join to match on
+     * @param <R> the result type
+     * @return a new {@code JoinMatch} for {@code j}
+     */
+    static <R> JoinMatch<R> joins(Join j) {
+        return JoinMatch.match(j);
+    }
+
+    /**
+     * Creates a new matcher for the given {@link Predicate}.
+     *
+     * @param p   the predicate to match on
+     * @param <R> the result type
+     * @return a new {@code PredicateMatch} for {@code p}
+     */
+    static <R> PredicateMatch<R> predicates(Predicate p) {
+        return PredicateMatch.match(p);
+    }
+
+    /**
+     * Creates a new matcher for the given {@link Query}.
+     *
+     * @param q   the query to match on
+     * @param <R> the result type
+     * @return a new {@code QueryMatch} for {@code q}
+     */
+    static <R> QueryMatch<R> queries(Query q) {
+        return QueryMatch.match(q);
+    }
+
+    /**
+     * Creates a new matcher for the given {@link SelectItem}.
+     *
+     * @param i   the select item to match on
+     * @param <R> the result type
+     * @return a new {@code SelectItemMatch} for {@code i}
+     */
+    static <R> SelectItemMatch<R> selectItems(SelectItem i) {
+        return SelectItemMatch.match(i);
+    }
+
+    /**
+     * Creates a new matcher for the given {@link TableRef}.
+     *
+     * @param t   the table reference to match on
+     * @param <R> the result type
+     * @return a new {@code TableMatch} for {@code t}
+     */
+    static <R> TableMatch<R> tables(TableRef t) {
+        return TableMatch.match(t);
+    }
+
+    /**
+     * Creates a new matcher for the given {@link Expression}.
+     *
+     * @param e   the expression to match on (may be any concrete {@code Expression} subtype)
+     * @param <R> the result type produced by the match
+     * @return a new {@code ExpressionMatch} for {@code expr}
+     */
+    static <R> ExpressionMatch<R> expressions(Expression e) {
+        return ExpressionMatch.match(e);
+    }
+
+    /**
+     * Creates a new matcher for the given {@link BoundSpec}.
+     *
+     * @param bs  the bound spec to match on
+     * @param <R> the result type
+     * @return a new {@code BoundSpecMatch} for {@code fs}
+     */
+    static <R> BoundSpecMatch<R> bounds(BoundSpec bs) {
+        return new BoundSpecMatchImpl<>(bs);
+    }
+
+    /**
+     * Creates a new matcher for the given {@link FrameSpec}.
+     *
+     * @param fs  the frame spec to match on
+     * @param <R> the result type
+     * @return a new {@code FrameSpecMatch} for {@code fs}
+     */
+    static <R> FrameSpecMatch<R> frames(FrameSpec fs) {
+        return new FrameSpecMatchImpl<>(fs);
+    }
+
+    /**
+     * Creates a new matcher for the given {@link OverSpec}.
+     *
+     * @param os  the over spec to match on
+     * @param <R> the result type
+     * @return a new {@code OverSpecMatch} for {@code os}
+     */
+    static <R> OverSpecMatch<R> overs(OverSpec os) {
+        return new OverSpecMatchImpl<>(os);
+    }
 
     /**
      * Throws any {@link Throwable} without declaring or wrapping it.

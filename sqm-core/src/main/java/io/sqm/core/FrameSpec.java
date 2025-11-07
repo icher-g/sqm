@@ -4,6 +4,8 @@ import io.sqm.core.internal.FrameSpecBetween;
 import io.sqm.core.internal.FrameSpecSingle;
 import io.sqm.core.walk.NodeVisitor;
 
+import java.util.Optional;
+
 public sealed interface FrameSpec extends Node permits FrameSpec.Single, FrameSpec.Between {
     /**
      * Creates a single frame.
@@ -39,6 +41,24 @@ public sealed interface FrameSpec extends Node permits FrameSpec.Single, FrameSp
      */
     static Between between(Unit unit, BoundSpec start, BoundSpec end) {
         return new FrameSpecBetween(unit, start, end);
+    }
+
+    /**
+     * Casts this to {@link FrameSpec.Single}.
+     *
+     * @return an {@link Optional}<{@link FrameSpec.Single}> if the cast is successful or {@link Optional#empty()} otherwise.
+     */
+    default Optional<FrameSpec.Single> asSingle() {
+        return this instanceof FrameSpec.Single f ? Optional.of(f) : Optional.empty();
+    }
+
+    /**
+     * Casts this to {@link FrameSpec.Between}.
+     *
+     * @return an {@link Optional}<{@link FrameSpec.Between}> if the cast is successful or {@link Optional#empty()} otherwise.
+     */
+    default Optional<FrameSpec.Between> asBetween() {
+        return this instanceof FrameSpec.Between f ? Optional.of(f) : Optional.empty();
     }
 
     Unit unit(); // ROWS | RANGE | GROUPS

@@ -2,6 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.Query;
 import io.sqm.core.QueryTable;
+import io.sqm.core.TableRef;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
@@ -28,7 +29,7 @@ public class QueryTableParser implements Parser<QueryTable> {
         cur.expect("Expected )", TokenType.RPAREN);
 
         var alias = parseAlias(cur);
-        return finalize(cur, ctx, Query.table(query.value()).as(alias));
+        return finalize(cur, ctx, TableRef.query(query.value()).as(alias));
     }
 
     /**

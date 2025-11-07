@@ -148,7 +148,7 @@ public class WindowRenderingTest {
         // FROM users
         var countDistinctActive =
             func("COUNT", arg(col("user_id")))
-                .distinct(true)
+                .distinct()
                 .filter(col("active").eq(lit(true)))
                 .over(over(partition(col("dept"))));
 
