@@ -59,7 +59,59 @@
                         <skip>true</skip> <!-- only applies if re-declared -->
                     </configuration>
                 </plugin>
+                <!-- Surefire: unit tests -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.2.5</version>
+                    <configuration>
+                        <!-- CRITICAL: include the argLine that JaCoCo sets -->
+                        <argLine>${jacocoArgLine}</argLine>
+                        <useModulePath>false</useModulePath>
+                    </configuration>
+                </plugin>
+                <!-- Failsafe: integration tests (if you use them) -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>3.2.5</version>
+                    <configuration>
+                        <argLine>${jacocoArgLine}</argLine>
+                        <useModulePath>false</useModulePath>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.14</version>
+                <executions>
+                    <!-- Attach the agent so surefire tests record coverage in each child -->
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Write the agent options into THIS property -->
+                            <propertyName>jacocoArgLine</propertyName>
+                            <includes>
+                                <include>io/sqm/**</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                    <!-- Per-module HTML/XML reports (optional, but fine) -->
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+             </plugin>
+        </plugins>
     </build>
 </project>
