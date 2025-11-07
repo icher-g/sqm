@@ -1,8 +1,8 @@
 # SQM — Structured Query Model for Java
 
-[![Build](https://github.com/cherlabs/sqm/actions/workflows/ci.yml/badge.svg)](https://github.com/cherlabs/sqm/actions)
+[![Build](https://github.com/icher-g/sqm/actions/workflows/publish-maven.yml/badge.svg?branch=main)](https://github.com/icher-g/sqm/actions/workflows/publish-maven.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Maven Central](https://img.shields.io/maven-central/v/io.icher-g/sqm.svg)](https://central.sonatype.com/artifact/io.cherlabs/sqm)
+[![Packages](https://img.shields.io/badge/Maven-GitHub%20Packages-blue)](https://github.com/icher-g/sqm/packages)
 
 **SQM (Structured Query Model)** is a lightweight Java library for modeling SQL queries as composable, strongly-typed objects.  
 It enables **bidirectional transformations** between SQL, JSON, and DSL forms — making it ideal for query generation, analysis, rewriting, and serialization across dialects.
