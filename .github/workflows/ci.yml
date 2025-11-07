@@ -22,27 +22,21 @@ jobs:
       - name: Build & Test
         run: mvn -B verify
 
-      - name: List coverage files (debug)
-        run: |
-          echo "=== Per-module reports ==="
-          find . -path "*/target/site/jacoco/jacoco.xml" -type f -print
-          echo "=== Aggregate report ==="
-          ls -l target/site/jacoco-aggregate || true
-          [ -f target/site/jacoco-aggregate/jacoco.xml ] && head -n 20 target/site/jacoco-aggregate/jacoco.xml || true
-
-      - name: Upload JaCoCo HTML (aggregate)
+      # Upload all per-module HTML for download
+      - name: Upload JaCoCo HTML (per-modules)
         uses: actions/upload-artifact@v4
         with:
-          name: jacoco-aggregate
-          path: target/site/jacoco-aggregate/**
-          if-no-files-found: error
+          name: jacoco-modules
+          path: '**/target/site/jacoco/*'
+          if-no-files-found: warn
           retention-days: 7
 
-      - name: Coverage summary (aggregate)
+      # Summarize coverage across all modules
+      - name: Coverage summary (aggregate from module XMLs)
         id: coverage
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          filename: target/site/jacoco-aggregate/jacoco.xml
+          filename: '**/target/site/jacoco/jacoco.xml'  # glob over all modules
           format: markdown
           output: both
           badge: true
