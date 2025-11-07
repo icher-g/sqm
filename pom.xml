@@ -53,19 +53,19 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.2.5</version>
-<!--                    <configuration>-->
-<!--                        &lt;!&ndash; CRITICAL: include the argLine that JaCoCo sets &ndash;&gt;-->
-<!--                        <argLine>${jacocoArgLine}</argLine>-->
-<!--                    </configuration>-->
+                    <configuration>
+                        <!-- CRITICAL: include the argLine that JaCoCo sets -->
+                        <argLine>${jacocoArgLine}</argLine>
+                    </configuration>
                 </plugin>
                 <!-- Failsafe: integration tests (if you use them) -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>3.2.5</version>
-<!--                    <configuration>-->
-<!--                        <argLine>${jacocoArgLine}</argLine>-->
-<!--                    </configuration>-->
+                    <configuration>
+                        <argLine>${jacocoArgLine}</argLine>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -81,10 +81,10 @@
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
-<!--                        <configuration>-->
-<!--                            &lt;!&ndash; Write the agent options into THIS property &ndash;&gt;-->
-<!--                            <propertyName>jacocoArgLine</propertyName>-->
-<!--                        </configuration>-->
+                        <configuration>
+                            <!-- Write the agent options into THIS property -->
+                            <propertyName>jacocoArgLine</propertyName>
+                        </configuration>
                         <!-- <configuration>
                             <includes>
                                 <include>io/sqm/**</include>
