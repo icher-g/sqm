@@ -21,27 +21,25 @@ jobs:
       # Run tests; your parent POM already runs jacoco:prepare-agent and jacoco:report at verify
       - name: Build & Test
         run: mvn -B -DskipITs verify
-
-      # Upload the HTML report so reviewers can open it
-      - name: Upload JaCoCo HTML report
+      
+      - name: Upload JaCoCo HTML (aggregate)
         uses: actions/upload-artifact@v4
         with:
-          name: jacoco-report
-          path: '**/target/site/jacoco/*'
-          if-no-files-found: warn
+          name: jacoco-aggregate
+          path: target/site/jacoco-aggregate/**
+          if-no-files-found: error
           retention-days: 7
-
-      # Create a concise coverage summary from jacoco.xml and add it to the job summary + PR
-      - name: Generate coverage summary
+      
+      - name: Coverage summary (aggregate)
         id: coverage
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          filename: '**/target/site/jacoco/jacoco.xml'
-          format: 'markdown'
-          output: 'both'        # job summary + step output
+          filename: target/site/jacoco-aggregate/jacoco.xml
+          format: markdown
+          output: both
           badge: true
           indicators: true
-          thresholds: '70 90'   # <70% red, <90% yellow, >=90% green
+          thresholds: '70 90'
 
       - name: Add coverage comment to PR
         if: ${{ github.event_name == 'pull_request' }}
