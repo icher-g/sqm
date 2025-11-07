@@ -1,8 +1,16 @@
 name: publish-maven
+
 on:
   push:
-    tags: ['v*']   # tag like v0.1.0 to release
-  workflow_dispatch: {}
+    tags: ['v*']         # auto-run when you push tags like v0.1.0
+  workflow_dispatch:      # manual run from the Actions tab
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 0.2.1)'
+        required: true
+        type: string
+        default: '0.1.0'
+
 permissions:
   contents: read
   packages: write
@@ -18,12 +26,33 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: 'maven'
-          server-id: github            # <- matches <id> in distributionManagement
+          server-id: github
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
 
-      - name: Set version from tag
-        run: mvn -B versions:set -DnewVersion=${GITHUB_REF_NAME#v}
+      # Determine VERSION from tag (push) or from input (manual)
+      - name: Compute version
+        id: v
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            # strip leading 'v' from tag (e.g., v1.2.3 -> 1.2.3)
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # Optional: validate version format (semver-ish)
+      - name: Validate version
+        run: |
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z]+)?$'; then
+            echo "Invalid version: $VERSION"
+            exit 1
+          fi
+
+      - name: Set Maven project version
+        run: mvn -B versions:set -DnewVersion="$VERSION"
 
       - name: Deploy to GitHub Packages
         env:
