@@ -12,6 +12,10 @@
     <artifactId>sqm-json</artifactId>
     <name>SQM (json)</name>
 
+    <properties>
+        <maven.deploy.skip>false</maven.deploy.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>io.sqm</groupId>

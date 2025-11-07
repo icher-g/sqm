@@ -10,6 +10,9 @@
     </parent>
     <artifactId>sqm-render</artifactId>
     <name>SQM (render)</name>
+    <properties>
+        <maven.deploy.skip>false</maven.deploy.skip>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>io.sqm</groupId>
