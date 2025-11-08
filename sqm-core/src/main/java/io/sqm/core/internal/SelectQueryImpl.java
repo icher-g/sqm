@@ -284,18 +284,19 @@ public class SelectQueryImpl implements SelectQuery {
 
     @Override
     public final boolean equals(Object o) {
-        if (!(o instanceof SelectQueryImpl that)) return false;
+        if (!(o instanceof SelectQuery that)) return false;
 
-        return items.equals(that.items) &&
-            joins.equals(that.joins) &&
-            windows.equals(that.windows) &&
-            Objects.equals(groupBy, that.groupBy) &&
-            Objects.equals(orderBy, that.orderBy) &&
-            Objects.equals(tableRef, that.tableRef) &&
-            Objects.equals(where, that.where) &&
-            Objects.equals(having, that.having) &&
-            Objects.equals(distinct, that.distinct) &&
-            Objects.equals(limitOffset, that.limitOffset);
+        return items.equals(that.select()) &&
+            joins.equals(that.joins()) &&
+            windows.equals(that.windows()) &&
+            Objects.equals(groupBy, that.groupBy()) &&
+            Objects.equals(orderBy, that.orderBy()) &&
+            Objects.equals(tableRef, that.from()) &&
+            Objects.equals(where, that.where()) &&
+            Objects.equals(having, that.having()) &&
+            Objects.equals(distinct, that.distinct()) &&
+            Objects.equals(limit(), that.limit()) &&
+            Objects.equals(offset(), that.offset());
     }
 
     @Override

@@ -29,6 +29,16 @@ public non-sealed interface WithQuery extends Query {
      * Creates a WITH query statement with the list of CTE sub queries and a body.
      *
      * @param ctes a list of CTE sub queries.
+     * @return A newly created WITH query.
+     */
+    static WithQuery of(CteDef... ctes) {
+        return new WithQueryImpl(List.of(ctes), null, false);
+    }
+
+    /**
+     * Creates a WITH query statement with the list of CTE sub queries and a body.
+     *
+     * @param ctes a list of CTE sub queries.
      * @param body a body.
      * @return A newly created WITH query.
      */

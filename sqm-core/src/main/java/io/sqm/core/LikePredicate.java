@@ -22,6 +22,18 @@ public non-sealed interface LikePredicate extends Predicate {
      *
      * @param value   an expression to compare.
      * @param pattern a pattern to use in the predicate.
+     * @param negated indicates whether this is LIKE or NOT LIKE predicate.
+     * @return a new instance of the LIKE operator.
+     */
+    static LikePredicate of(Expression value, Expression pattern, boolean negated) {
+        return new LikePredicateImpl(value, pattern, null, negated);
+    }
+
+    /**
+     * Creates a LIKE operator.
+     *
+     * @param value   an expression to compare.
+     * @param pattern a pattern to use in the predicate.
      * @param escape  an escape expression is used. This value can be NULL.
      * @param negated indicates whether this is LIKE or NOT LIKE predicate.
      * @return a new instance of the LIKE operator.

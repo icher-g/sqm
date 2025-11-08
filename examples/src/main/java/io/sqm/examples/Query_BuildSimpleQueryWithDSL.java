@@ -9,8 +9,8 @@ import static io.sqm.dsl.Dsl.*;
 public final class Query_BuildSimpleQueryWithDSL {
     public static void main(String[] args) {
         Query q = select(
-            sel("u", "user_name"),
-            sel("o", "status"),
+            col("u", "user_name"),
+            col("o", "status"),
             func("count", starArg()).as("cnt")
         )
         .from(tbl("orders").as("o"))

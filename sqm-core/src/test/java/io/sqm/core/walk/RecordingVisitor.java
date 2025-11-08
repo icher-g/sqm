@@ -260,4 +260,70 @@ public class RecordingVisitor extends RecursiveNodeVisitor<Void> {
         mark(c);
         return super.visitCte(c);
     }
+
+    @Override
+    public Void visitPartitionBy(PartitionBy p) {
+        mark(p);
+        return super.visitPartitionBy(p);
+    }
+
+    @Override
+    public Void visitBoundCurrentRow(BoundSpec.CurrentRow b) {
+        mark(b);
+        return super.visitBoundCurrentRow(b);
+    }
+
+    @Override
+    public Void visitBoundFollowing(BoundSpec.Following b) {
+        mark(b);
+        return super.visitBoundFollowing(b);
+    }
+
+    @Override
+    public Void visitBoundPreceding(BoundSpec.Preceding b) {
+        mark(b);
+        return super.visitBoundPreceding(b);
+    }
+
+    @Override
+    public Void visitBoundUnboundedFollowing(BoundSpec.UnboundedFollowing b) {
+        mark(b);
+        return super.visitBoundUnboundedFollowing(b);
+    }
+
+    @Override
+    public Void visitFrameBetween(FrameSpec.Between f) {
+        mark(f);
+        return super.visitFrameBetween(f);
+    }
+
+    @Override
+    public Void visitFrameSingle(FrameSpec.Single f) {
+        mark(f);
+        return super.visitFrameSingle(f);
+    }
+
+    @Override
+    public Void visitBoundUnboundedPreceding(BoundSpec.UnboundedPreceding b) {
+        mark(b);
+        return super.visitBoundUnboundedPreceding(b);
+    }
+
+    @Override
+    public Void visitOverDef(OverSpec.Def d) {
+        mark(d);
+        return super.visitOverDef(d);
+    }
+
+    @Override
+    public Void visitWindowDef(WindowDef w) {
+        mark(w);
+        return super.visitWindowDef(w);
+    }
+
+    @Override
+    public Void visitOverRef(OverSpec.Ref r) {
+        mark(r);
+        return super.visitOverRef(r);
+    }
 }

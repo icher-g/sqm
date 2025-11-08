@@ -41,7 +41,7 @@ public class PredicateMatchTest {
 
     @Test
     void fallback_helpers_behave() {
-        ExistsPredicate exists = exists(select(sel(lit(1))));
+        ExistsPredicate exists = exists(select(lit(1)));
 
         String v = PredicateMatch
             .<String>match(exists)

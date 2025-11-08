@@ -35,7 +35,7 @@ public class JoinAndTableMatchTest {
                         .otherwise(x -> "OTHER");
         assertEquals("TABLE", r1);
 
-        QueryTable qt = TableRef.query(select(sel(lit(1))));
+        QueryTable qt = TableRef.query(select(lit(1)));
         String r2 = TableMatch
                         .<String>match(qt)
                         .table(t -> "TABLE")

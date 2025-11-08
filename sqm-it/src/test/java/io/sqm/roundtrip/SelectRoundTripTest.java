@@ -12,8 +12,8 @@ public class SelectRoundTripTest {
     void simple_select_from_where_group_having() {
         Query original =
             select(
-                sel(col("u", "user_name")),
-                sel(col("o", "status")),
+                col("u", "user_name"),
+                col("o", "status"),
                 func("count", starArg()).as("cnt"))
             .from(tbl("orders").as("o"))
             .join(inner(tbl("users").as("u"))

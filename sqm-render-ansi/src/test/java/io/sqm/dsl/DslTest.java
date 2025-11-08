@@ -72,7 +72,7 @@ public class DslTest {
     @Test
     @DisplayName("3) Aggregation + GROUP BY + HAVING")
     void groupByHaving() {
-        var q = select(func("count", starArg()).as("cnt"), sel(col("o", "status")))
+        var q = select(func("count", starArg()).as("cnt"), col("o", "status"))
             .from(tbl("orders").as("o"))
             .groupBy(group(col("o", "status")))
             .having(func("count", starArg()).gt(10));
@@ -111,7 +111,7 @@ public class DslTest {
     @DisplayName("5) CASE expr in SELECT list")
     void caseExpression() {
         var q = select(
-            sel(col("p", "id")),
+            col("p", "id"),
             kase(
                 when(col("p", "status").eq("A")).then(lit("Active")),
                 when(col("p", "status").eq("I")).then(lit("Inactive"))

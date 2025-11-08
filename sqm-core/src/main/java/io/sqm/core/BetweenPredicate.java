@@ -21,6 +21,18 @@ public non-sealed interface BetweenPredicate extends Predicate {
      * @param value     a value.
      * @param lower     a lower boundary.
      * @param upper     an upper boundary.
+     * @return a new instance of BETWEEN operator.
+     */
+    static BetweenPredicate of(Expression value, Expression lower, Expression upper) {
+        return new BetweenPredicateImpl(value, lower, upper, false);
+    }
+
+    /**
+     * Creates a BETWEEN operator.
+     *
+     * @param value     a value.
+     * @param lower     a lower boundary.
+     * @param upper     an upper boundary.
      * @param symmetric indicates whether the order of the boundaries matters or not. True means the boundaries do not matter.
      * @return a new instance of BETWEEN operator.
      */

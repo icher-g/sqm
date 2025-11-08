@@ -11,32 +11,32 @@ public class RecursiveNodeVisitorEdgeNodesTraversalTest {
 
     @Test
     void edgeNodes_areVisited() {
-        var sub = select(sel(func("max", arg(col("t", "v"))))).from(tbl("t"));
+        var sub = select(func("max", arg(col("t", "v")))).from(tbl("t"));
 
-        var withBody = select(sel(col("c"))).from(tbl("cte_source"));
-        var withQuery = with(cte("w", withBody))
-            .body(select(sel(col("w", "c"))).from(tbl(select(sel(lit(1)))
+        var cteBody = select(col("c")).from(tbl("cte_source"));
+        var withQuery = with(cte("w", cteBody))
+            .body(select(col("w", "c")).from(tbl(select(lit(1))
                 .from(tbl("dual"))).as("w")));
 
         var union =
-            select(sel(col("a")))
+            select(col("a"))
                 .from(tbl("A"))
                 .where(col("a").between(1, 10))
                 .unionAll(
-                    select(sel(col("b")))
+                    select(col("b"))
                         .from(tbl("B"))
-                        .where(col("b").eq(select(sel(col("x"))).from(tbl("X")))))
+                        .where(col("b").eq(select(col("x")).from(tbl("X")))))
                 .orderBy(order(col("b")).asc())
                 .limit(5L);
 
         var q = select(
-            sel(func("coalesce", arg(col("m", "n")), arg(expr(sub)))),
-            sel(row(col("r", "c1"), col("r", "c2"))))
+            func("coalesce", arg(col("m", "n")), arg(expr(sub))),
+            row(col("r", "c1"), col("r", "c2")))
             .from(tbl(rows(
                 row(lit(1), lit("X")),
                 row(lit(2), lit("Y")))
             ).columnAliases("vt", "id", "name"))
-            .where(exists(select(sel(lit(1))).from(tbl("dual")))
+            .where(exists(select(lit(1)).from(tbl("dual")))
                 .and(not(col("m", "n").isNull()))
                 .and(unary(col("r", "ok"))))
             .orderBy(order(col("m", "n")).asc());

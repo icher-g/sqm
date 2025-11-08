@@ -3,7 +3,7 @@ package io.sqm.core;
 import io.sqm.core.internal.SelectQueryImpl;
 import io.sqm.core.walk.NodeVisitor;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,23 +30,20 @@ public non-sealed interface SelectQuery extends Query {
     /**
      * Adds items to the SELECT statement.
      *
-     * @param items an array of items.
+     * @param nodes an array of SELECT items.
      * @return this.
      */
-    default SelectQuery select(SelectItem... items) {
-        return select(List.of(items));
-    }
-
-    /**
-     * Adds expressions to the SELECT statement.
-     *
-     * @param expressions an array of expressions.
-     * @return this.
-     */
-    default SelectQuery select(Expression... expressions) {
-        return select(Arrays.stream(expressions)
-                            .map(e -> (SelectItem) SelectItem.expr(e))
-                            .toList());
+    default SelectQuery select(Node... nodes) {
+        var items = new ArrayList<SelectItem>();
+        for (var expr : nodes) {
+            switch (expr) {
+                case Expression expression -> items.add(expression.toSelectItem());
+                case SelectItem selectItem -> items.add(selectItem);
+                case Query query -> items.add(Expression.subquery(query).toSelectItem());
+                default -> throw new IllegalStateException("The provided node is not supported in the SELECT clause: " + expr);
+            }
+        }
+        return select(items);
     }
 
     /**
@@ -153,6 +150,46 @@ public non-sealed interface SelectQuery extends Query {
     SelectQuery having(Predicate predicate);
 
     /**
+     * Gets a list of WINDOW specifications if there is any or NULL otherwise.
+     * <p>Example of WINDOW specification:</p>
+     * <pre>
+     *     {@code
+     *      SELECT
+     *          dept,
+     *          emp_name,
+     *          salary,
+     *          RANK() OVER w1        AS dept_rank,
+     *          AVG(salary) OVER w2   AS overall_avg
+     *      FROM employees
+     *      WINDOW
+     *          w1 AS (PARTITION BY dept ORDER BY salary DESC),
+     *          w2 AS (ORDER BY salary DESC);
+     *     }
+     * </pre>
+     *
+     * @return a list of WINDOW specifications or NULL>
+     */
+    List<WindowDef> windows();
+
+    /**
+     * Adds WINDOW specification(s) to a query.
+     *
+     * @param windows a WINDOW specification(s).
+     * @return this.
+     */
+    default SelectQuery window(WindowDef... windows) {
+        return window(List.of(windows));
+    }
+
+    /**
+     * Adds WINDOW specifications to a query.
+     *
+     * @param windows a WINDOW specifications.
+     * @return this.
+     */
+    SelectQuery window(List<WindowDef> windows);
+
+    /**
      * Gets a list of order by items.
      *
      * @return a list of oder by items.
@@ -221,46 +258,6 @@ public non-sealed interface SelectQuery extends Query {
      * @return this.
      */
     SelectQuery offset(long offset);
-
-    /**
-     * Gets a list of WINDOW specifications if there is any or NULL otherwise.
-     * <p>Example of WINDOW specification:</p>
-     * <pre>
-     *     {@code
-     *      SELECT
-     *          dept,
-     *          emp_name,
-     *          salary,
-     *          RANK() OVER w1        AS dept_rank,
-     *          AVG(salary) OVER w2   AS overall_avg
-     *      FROM employees
-     *      WINDOW
-     *          w1 AS (PARTITION BY dept ORDER BY salary DESC),
-     *          w2 AS (ORDER BY salary DESC);
-     *     }
-     * </pre>
-     *
-     * @return a list of WINDOW specifications or NULL>
-     */
-    List<WindowDef> windows();
-
-    /**
-     * Adds WINDOW specification(s) to a query.
-     *
-     * @param windows a WINDOW specification(s).
-     * @return this.
-     */
-    default SelectQuery window(WindowDef... windows) {
-        return window(List.of(windows));
-    }
-
-    /**
-     * Adds WINDOW specifications to a query.
-     *
-     * @param windows a WINDOW specifications.
-     * @return this.
-     */
-    SelectQuery window(List<WindowDef> windows);
 
     /**
      * Accepts a {@link NodeVisitor} and dispatches control to the

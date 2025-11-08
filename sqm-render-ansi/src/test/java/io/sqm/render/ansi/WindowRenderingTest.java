@@ -21,8 +21,8 @@ public class WindowRenderingTest {
         // FROM employees
         // WINDOW w AS (PARTITION BY dept ORDER BY salary DESC)
         var q = select(
-            sel(col("emp_name")),
-            sel(func("RANK").over("w")).as("r")
+            col("emp_name"),
+            func("RANK").over("w").as("r")
         )
             .from(tbl("employees"))
             .window(
@@ -44,15 +44,14 @@ public class WindowRenderingTest {
         // SELECT acct_id, ts, SUM(amount) OVER (PARTITION BY acct_id ORDER BY ts ASC ROWS 5 PRECEDING) AS s
         // FROM tx
         var q = select(
-            sel(col("acct_id")),
-            sel(col("ts")),
-            sel(func("SUM", arg(col("amount")))
+            col("acct_id"),
+            col("ts"),
+            func("SUM", arg(col("amount")))
                 .over(
                     partition(col("acct_id")),
                     orderBy(order(col("ts")).asc()),
                     rows(preceding(5))
-                )
-            ).as("s")
+                ).as("s")
         )
             .from(tbl("tx"));
 
@@ -68,15 +67,15 @@ public class WindowRenderingTest {
         // SELECT grp, score, RANK() OVER (PARTITION BY grp ORDER BY score DESC GROUPS BETWEEN 1 PRECEDING AND 1 FOLLOWING EXCLUDE TIES) AS rk
         // FROM scores
         var q = select(
-            sel(col("grp")),
-            sel(col("score")),
-            sel(func("RANK")
+            col("grp"),
+            col("score"),
+            func("RANK")
                 .over(
                     partition(col("grp")),
                     orderBy(order(col("score")).desc()),
                     groups(preceding(1), following(1)),
                     excludeTies()
-                )).as("rk")
+                ).as("rk")
         )
             .from(tbl("scores"));
 
@@ -93,10 +92,10 @@ public class WindowRenderingTest {
         // FROM employees
         // WINDOW w AS (PARTITION BY dept ORDER BY salary DESC)
         var q = select(
-            sel(col("dept")),
-            sel(col("emp_name")),
-            sel(func("SUM", arg(col("salary")))
-                .over("w", rows(unboundedPreceding(), currentRow()))
+            col("dept"),
+            col("emp_name"),
+            func("SUM", arg(col("salary")))
+                .over("w", rows(unboundedPreceding(), currentRow())
             ).as("run_sum")
         )
             .from(tbl("employees"))
@@ -123,9 +122,9 @@ public class WindowRenderingTest {
         //   w1 AS (PARTITION BY k ORDER BY ts),
         //   w2 AS (ORDER BY v)
         var q = select(
-            sel(col("x")),
-            sel(func("ROW_NUMBER").over("w1")).as("rn"),
-            sel(func("AVG", arg(col("v"))).over("w2")).as("avg_all")
+            col("x"),
+            func("ROW_NUMBER").over("w1").as("rn"),
+            func("AVG", arg(col("v"))).over("w2").as("avg_all")
         )
             .from(tbl("t"))
             .window(
@@ -153,8 +152,8 @@ public class WindowRenderingTest {
                 .over(over(partition(col("dept"))));
 
         var q = select(
-            sel(col("dept")),
-            sel(countDistinctActive).as("active_users")
+            col("dept"),
+            countDistinctActive.as("active_users")
         )
             .from(tbl("users"));
 
@@ -173,8 +172,8 @@ public class WindowRenderingTest {
         // WINDOW w AS (ORDER BY val)
         // ORDER BY val
         var q = select(
-            sel(col("val")),
-            sel(func("RANK").over("w")).as("rk")
+            col("val"),
+            func("RANK").over("w").as("rk")
         )
             .from(tbl("t"))
             .window(window("w", partition(), orderBy(order(col("val")).asc())))

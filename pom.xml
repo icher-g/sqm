@@ -44,7 +44,7 @@
         <module>sqm-parser-ansi</module>
     </modules>
     <properties>
-        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.2</junit.version>
         <spring.version>6.2.7</spring.version>

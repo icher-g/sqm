@@ -13,7 +13,7 @@ public class QueryMatchTest {
 
     @Test
     void select_vs_composite_vs_with() {
-        SelectQuery select = select(sel(lit(1)));
+        SelectQuery select = select(lit(1));
 
         String out = QueryMatch
                          .<String>match(select)
@@ -27,7 +27,7 @@ public class QueryMatchTest {
 
     @Test
     void orElseThrow_behaves() {
-        CompositeQuery comp = select(sel(lit(1))).union(select(sel(lit(2))));
+        CompositeQuery comp = select(lit(1)).union(select(lit(2)));
 
         assertThrows(UnsupportedOperationException.class, () ->
                                                               QueryMatch

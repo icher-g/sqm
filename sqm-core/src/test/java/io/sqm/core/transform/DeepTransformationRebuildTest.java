@@ -45,7 +45,7 @@ public class DeepTransformationRebuildTest {
         FunctionExpr outFn = (FunctionExpr) out.items().get(1);
         assertEquals("lower", outFn.name());
 
-        ColumnExpr outArgCol = ((FunctionExpr.Arg.ExprArg) outFn.args().get(0)).expr().asColumn().orElseThrow();
+        ColumnExpr outArgCol = ((FunctionExpr.Arg.ExprArg) outFn.args().getFirst()).expr().asColumn().orElseThrow();
         assertEquals("u", outArgCol.tableAlias());
         assertEquals("user_id", outArgCol.name(), "Deep-renamed column should be applied");
     }
@@ -54,8 +54,8 @@ public class DeepTransformationRebuildTest {
     void changeAllColumnExpressions_InQuery() {
         var q =
             select(
-                sel(kase(when(col("u", "name").gt(10)).then(col("o", "name")))),
-                sel(col("o", "status")),
+                kase(when(col("u", "name").gt(10)).then(col("o", "name"))),
+                col("o", "status"),
                 func("count", arg(col("u", "id"))).as("cnt"),
                 func("lower", arg(func("sub", arg(col("u", "desc"))))).as("lwr"),
                 star(),
