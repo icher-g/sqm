@@ -24,21 +24,11 @@ jobs:
         run: mvn -B verify
 
       # Upload all per-module HTML for download
-      - name: Upload JaCoCo HTML (per-modules)
-        uses: actions/upload-artifact@v4
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
         with:
-          name: jacoco-modules
-          path: '**/target/site/jacoco/*'
-          if-no-files-found: warn
-          retention-days: 7
+          files: '**/target/site/jacoco/jacoco.xml'
+          flags: unittests
+          fail_ci_if_error: true
 
-      - name: Jacoco PR Coverage
-        uses: madrapps/jacoco-report@v1.6.1
-        with:
-          paths: |
-            **/target/site/jacoco/jacoco.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: 'Code Coverage'
-          update-comment: true
-          min-coverage-overall: 0
 
