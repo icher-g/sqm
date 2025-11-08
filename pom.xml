@@ -65,18 +65,15 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.2.5</version>
                     <configuration>
-                        <!-- CRITICAL: include the argLine that JaCoCo sets -->
-                        <argLine>${jacocoArgLine}</argLine>
                         <useModulePath>false</useModulePath>
                     </configuration>
                 </plugin>
-                <!-- Failsafe: integration tests (if you use them) -->
+                <!-- Failsafe: integration tests -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>3.2.5</version>
                     <configuration>
-                        <argLine>${jacocoArgLine}</argLine>
                         <useModulePath>false</useModulePath>
                     </configuration>
                 </plugin>
@@ -96,7 +93,6 @@
                         </goals>
                         <configuration>
                             <!-- Write the agent options into THIS property -->
-                            <propertyName>jacocoArgLine</propertyName>
                             <includes>
                                 <include>io/sqm/**</include>
                             </includes>
