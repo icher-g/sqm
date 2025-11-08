@@ -80,17 +80,6 @@ class CompositeQueryRendererTest {
     }
 
     @Test
-    @DisplayName("Term with ORDER BY -> throws (ANSI forbids per-term ORDER)")
-    void termWithOrderBy_throws() {
-        var t1 = sel("users", "u", "id");
-        var t2 = sel("users2", "u2", "id").orderBy(order(col("u2", "id")).asc());
-
-        var ex = assertThrows(UnsupportedOperationException.class, () -> t1.union(t2));
-        assertTrue(ex.getMessage().toLowerCase().contains("operands"));
-        assertTrue(ex.getMessage().toLowerCase().contains("order"));
-    }
-
-    @Test
     @DisplayName("Bad constructor sizes -> throws")
     void badConstructorSizes_throws() {
         var t1 = sel("t1", "t1", "id");

@@ -448,7 +448,7 @@ public sealed interface Expression extends Node
      * @return A newly created instance of the LIKE predicate.
      */
     default LikePredicate like(Expression pattern) {
-        return LikePredicate.of(this, pattern, null, true);
+        return LikePredicate.of(this, pattern, true);
     }
 
     /**
@@ -458,7 +458,7 @@ public sealed interface Expression extends Node
      * @return A newly created instance of the LIKE predicate.
      */
     default LikePredicate like(String pattern) {
-        return LikePredicate.of(this, literal(pattern), null, false);
+        return LikePredicate.of(this, literal(pattern), false);
     }
 
     /**
@@ -468,7 +468,7 @@ public sealed interface Expression extends Node
      * @return A newly created instance of the NOT LIKE predicate.
      */
     default LikePredicate notLike(Expression pattern) {
-        return LikePredicate.of(this, pattern, null, true);
+        return LikePredicate.of(this, pattern, true);
     }
 
     /**
@@ -478,7 +478,7 @@ public sealed interface Expression extends Node
      * @return A newly created instance of the NOT LIKE predicate.
      */
     default LikePredicate notLike(String pattern) {
-        return LikePredicate.of(this, literal(pattern), null, true);
+        return LikePredicate.of(this, literal(pattern), true);
     }
 
     /**

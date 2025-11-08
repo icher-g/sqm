@@ -11,23 +11,13 @@ import java.util.Optional;
  */
 public sealed interface Query extends Node permits CompositeQuery, SelectQuery, WithQuery {
     /**
-     * Creates SELECT query with a list of items.
-     *
-     * @param items a list of items.
-     * @return A newly created instance of SELECT query.
-     */
-    static SelectQuery select(SelectItem... items) {
-        return SelectQuery.of().select(items);
-    }
-
-    /**
      * Creates SELECT query with a list of expressions.
      *
-     * @param expressions an array of expressions.
+     * @param nodes an array of expressions.
      * @return this.
      */
-    static SelectQuery select(Expression... expressions) {
-        return SelectQuery.of().select(expressions);
+    static SelectQuery select(Node... nodes) {
+        return SelectQuery.of().select(nodes);
     }
 
     /**
@@ -85,6 +75,16 @@ public sealed interface Query extends Node permits CompositeQuery, SelectQuery, 
      */
     static CteDef cte(String name, Query body, List<String> columnAliases) {
         return new CteDefImpl(name, body, columnAliases);
+    }
+
+    /**
+     * Creates a WITH query statement with the list of CTE sub queries and a body.
+     *
+     * @param ctes a list of CTE sub queries.
+     * @return A newly created WITH query.
+     */
+    static WithQuery with(CteDef... ctes) {
+        return WithQuery.of(ctes);
     }
 
     /**

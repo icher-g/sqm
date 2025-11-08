@@ -586,6 +586,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         changed |= groupBy != q.groupBy();
         var having = apply(q.having());
         changed |= having != q.having();
+        List<WindowDef> windows = new ArrayList<>();
+        changed |= apply(q.windows(), windows);
         var orderBy = apply(q.orderBy());
         changed |= orderBy != q.orderBy();
         var queryLimitOffset = LimitOffset.of(q.limit(), q.offset());
@@ -597,7 +599,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
                                    .from(from)
                                    .join(joins)
                                    .where(where)
-                                   .having(having);
+                                   .having(having)
+                                   .window(windows);
 
             if (groupBy != null) {
                 query.groupBy(groupBy.items());

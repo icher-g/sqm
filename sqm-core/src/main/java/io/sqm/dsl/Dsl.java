@@ -103,37 +103,6 @@ public final class Dsl {
     /* ========================= Select Items ====================== */
 
     /**
-     * Creates a select item from a column with the provided name.
-     *
-     * @param name a column name.
-     * @return a column.
-     */
-    public static ExprSelectItem sel(String name) {
-        return sel(ColumnExpr.of(name));
-    }
-
-    /**
-     * Creates a select item from a column with the provided table and name.
-     *
-     * @param table a column table.
-     * @param name  a column name.
-     * @return a column.
-     */
-    public static ExprSelectItem sel(String table, String name) {
-        return sel(ColumnExpr.of(table, name));
-    }
-
-    /**
-     * Creates SELECT item from expression.
-     *
-     * @param expr an expression.
-     * @return SELECT item.
-     */
-    public static ExprSelectItem sel(Expression expr) {
-        return SelectItem.expr(expr);
-    }
-
-    /**
      * Crates a '*' item for SELECT statement.
      *
      * @return select item.
@@ -557,7 +526,7 @@ public final class Dsl {
      * @param windowName the name of the referenced window
      * @return an {@link OverSpec.Ref}
      */
-    public static OverSpec over(String windowName) {
+    public static OverSpec.Ref over(String windowName) {
         return OverSpec.ref(windowName);
     }
 
@@ -571,7 +540,7 @@ public final class Dsl {
      * @param partitionBy the partition-by specification
      * @return an {@link OverSpec.Def}
      */
-    public static OverSpec over(PartitionBy partitionBy) {
+    public static OverSpec.Def over(PartitionBy partitionBy) {
         return OverSpec.def(partitionBy, null, null, null);
     }
 
@@ -586,7 +555,7 @@ public final class Dsl {
      * @param orderBy     the order-by specification
      * @return an {@link OverSpec.Def}
      */
-    public static OverSpec over(PartitionBy partitionBy, OrderBy orderBy) {
+    public static OverSpec.Def over(PartitionBy partitionBy, OrderBy orderBy) {
         return OverSpec.def(partitionBy, orderBy, null, null);
     }
 
@@ -602,7 +571,7 @@ public final class Dsl {
      * @param frame       the frame specification
      * @return an {@link OverSpec.Def}
      */
-    public static OverSpec over(PartitionBy partitionBy, OrderBy orderBy, FrameSpec frame) {
+    public static OverSpec.Def over(PartitionBy partitionBy, OrderBy orderBy, FrameSpec frame) {
         return OverSpec.def(partitionBy, orderBy, frame, null);
     }
 
@@ -617,7 +586,7 @@ public final class Dsl {
      * @param frame       the frame specification
      * @return an {@link OverSpec.Def}
      */
-    public static OverSpec over(PartitionBy partitionBy, FrameSpec frame) {
+    public static OverSpec.Def over(PartitionBy partitionBy, FrameSpec frame) {
         return OverSpec.def(partitionBy, null, frame, null);
     }
 
@@ -634,7 +603,7 @@ public final class Dsl {
      * @param exclude     the exclusion clause
      * @return an {@link OverSpec.Def}
      */
-    public static OverSpec over(PartitionBy partitionBy, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude) {
+    public static OverSpec.Def over(PartitionBy partitionBy, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude) {
         return OverSpec.def(partitionBy, orderBy, frame, exclude);
     }
 
@@ -649,7 +618,7 @@ public final class Dsl {
      * @param orderBy    an additional order-by clause
      * @return an {@link OverSpec.Def}
      */
-    public static OverSpec over(String baseWindow, OrderBy orderBy) {
+    public static OverSpec.Def over(String baseWindow, OrderBy orderBy) {
         return OverSpec.def(baseWindow, orderBy, null, null);
     }
 
@@ -665,7 +634,7 @@ public final class Dsl {
      * @param frame      the frame specification
      * @return an {@link OverSpec.Def}
      */
-    public static OverSpec over(String baseWindow, OrderBy orderBy, FrameSpec frame) {
+    public static OverSpec.Def over(String baseWindow, OrderBy orderBy, FrameSpec frame) {
         return OverSpec.def(baseWindow, orderBy, frame, null);
     }
 
@@ -680,7 +649,7 @@ public final class Dsl {
      * @param frame      the frame specification
      * @return an {@link OverSpec.Def}
      */
-    public static OverSpec over(String baseWindow, FrameSpec frame) {
+    public static OverSpec.Def over(String baseWindow, FrameSpec frame) {
         return OverSpec.def(baseWindow, null, frame, null);
     }
 
@@ -697,7 +666,7 @@ public final class Dsl {
      * @param exclude    the exclusion clause
      * @return an {@link OverSpec.Def}
      */
-    public static OverSpec over(String baseWindow, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude) {
+    public static OverSpec.Def over(String baseWindow, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude) {
         return OverSpec.def(baseWindow, orderBy, frame, exclude);
     }
 
@@ -1012,23 +981,13 @@ public final class Dsl {
     }
 
     /**
-     * Creates a {@link SelectQuery} with the list of items.
-     *
-     * @param items a list of items to select.
-     * @return a query.
-     */
-    public static SelectQuery select(SelectItem... items) {
-        return Query.select(items);
-    }
-
-    /**
      * Creates a {@link SelectQuery} with the list of expressions.
      *
-     * @param expressions a list of expressions to select.
+     * @param nodes a list of expressions to select.
      * @return a query.
      */
-    public static SelectQuery select(Expression... expressions) {
-        return Query.select(expressions);
+    public static SelectQuery select(Node... nodes) {
+        return Query.select(nodes);
     }
 
     /**
@@ -1038,7 +997,7 @@ public final class Dsl {
      * @return a WITH query.
      */
     public static WithQuery with(CteDef... ctes) {
-        return Query.with(List.of(ctes), null);
+        return Query.with(ctes);
     }
 
     /**

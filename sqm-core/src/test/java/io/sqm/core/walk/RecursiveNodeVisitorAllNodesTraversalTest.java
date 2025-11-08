@@ -1,6 +1,7 @@
 package io.sqm.core.walk;
 
 import io.sqm.core.ColumnExpr;
+import io.sqm.core.ComparisonOperator;
 import io.sqm.core.Query;
 import org.junit.jupiter.api.Test;
 
@@ -18,10 +19,16 @@ public class RecursiveNodeVisitorAllNodesTraversalTest {
     void selectQuery_covers_most_nodes() {
         var q =
             select(
-                sel(kase(when(col("u", "name").gt(10)).then(col("o", "name")))),
-                sel(col("o", "status")),
-                func("count", arg(col("u", "id"))).as("cnt"),
-                func("lower", arg(func("sub", arg(col("u", "desc"))))).as("lwr"),
+                kase(when(col("u", "name").gt(10)).then(col("o", "name"))),
+                col("o", "status"),
+                func("count", arg(col("u", "id")))
+                    .over(
+                        partition(col("acct_id")),
+                        orderBy(order(col("ts")).asc()),
+                        rows(preceding(5))
+                    ).as("cnt"),
+                func("lower", arg(func("sub", arg(col("u", "desc")))))
+                    .over("w").as("lwr"),
                 star(),
                 star("o")
             )
@@ -37,13 +44,19 @@ public class RecursiveNodeVisitorAllNodesTraversalTest {
                             func("count", arg(col("u", "id"))).gt(10)
                         )
                         .and(
-                            col("o", "flag")
-                                .isNull()
-                                .or(col("o", "code").like("%ZZ%"))
+                            col("o", "flag").isNull()
+                                            .or(col("o", "code").like("%ZZ%"))
+                                            .or(col("o", "user").all(ComparisonOperator.EQ, select(lit(1))))
                         )
                 )
                 .groupBy(group("u", "user_name"), group("o", "user_status"))
                 .having(func("count", arg(col("u", "test"))).gt(10))
+                .window(
+                    window("w", over(partition(col("acct_id")), rows(preceding(1), following(1)))),
+                    window("w", over(partition(col("acct_id")), rows(currentRow()))),
+                    window("w", over(partition(col("acct_id")), rows(unboundedFollowing()))),
+                    window("w", over(partition(col("acct_id")), rows(unboundedPreceding())))
+                )
                 .orderBy(order(col("o", "status")).desc())
                 .limit(100)
                 .offset(10);
@@ -56,9 +69,9 @@ public class RecursiveNodeVisitorAllNodesTraversalTest {
             "ExprSelectItem", "StarSelectItem", "QualifiedStarSelectItem",
             "CaseExpr", "WhenThen",
             "ColumnExpr",
-            "FunctionExpr",
+            "FunctionExpr", "PartitionBy", "Def", "Ref", "Preceding", "WindowDef", "Following", "CurrentRow", "UnboundedFollowing", "UnboundedPreceding",
             "LiteralExpr",
-            "InPredicate", "AndPredicate", "OrPredicate",
+            "InPredicate", "AndPredicate", "OrPredicate", "AnyAllPredicate",
             "ComparisonPredicate", "IsNullPredicate", "LikePredicate",
             "GroupBy", "GroupItem",
             "OrderBy", "OrderItem",
@@ -82,8 +95,8 @@ public class RecursiveNodeVisitorAllNodesTraversalTest {
     void visitColumnExpr_shouldBeCalled_fromExpressionLeafNodes() {
         Query q =
             select(
-                sel(kase(when(col("u", "name").gt(10)).then(col("o", "name")))),
-                sel(col("o", "status")),
+                kase(when(col("u", "name").gt(10)).then(col("o", "name"))),
+                col("o", "status"),
                 func("count", arg(col("u", "id"))).as("cnt"),
                 func("lower", arg(func("sub", arg(col("u", "desc"))))).as("lwr")
             )

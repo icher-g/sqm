@@ -12,16 +12,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FunctionExprRendererTest {
 
+    static String norm(String s) {
+        return s.replaceAll("\\s+", " ").trim();
+    }
+
     /**
      * Helper to render a function column and return the SQL string.
      */
     private String render(Node node) {
         RenderContext ctx = RenderContext.of(new AnsiDialect());
         return ctx.render(node).sql();
-    }
-
-    static String norm(String s) {
-        return s.replaceAll("\\s+", " ").trim();
     }
 
     @Test
@@ -134,9 +134,9 @@ class FunctionExprRendererTest {
     @Test
     void lower_of_case_expr_renders_correctly() {
         var q = select(
-            sel(func("lower", arg(
-                kase(when(col("u","flag").gt(0)).then(col("u","name")))
-            ))).as("ln")
+            func("lower", arg(
+                kase(when(col("u", "flag").gt(0)).then(col("u", "name")))
+            )).as("ln")
         ).from(tbl("users").as("u"));
 
         String sql = render(q);
@@ -146,10 +146,10 @@ class FunctionExprRendererTest {
 
     @Test
     void coalesce_with_scalar_subquery_argument_renders() {
-        var sub = select(sel(func("max", arg(col("t","v"))))).from(tbl("t"));
+        var sub = select(func("max", arg(col("t", "v")))).from(tbl("t"));
 
         var q = select(
-            sel(func("coalesce", arg(expr(sub)), arg(lit(0)))).as("mx")
+            func("coalesce", arg(expr(sub)), arg(lit(0))).as("mx")
         ).from(tbl("dual"));
 
         String sql = norm(render(q).stripIndent().toLowerCase());
@@ -160,7 +160,7 @@ class FunctionExprRendererTest {
     @Test
     void count_star_renders() {
         var q = select(
-            sel(func("count", starArg())).as("cnt")
+            func("count", starArg()).as("cnt")
         ).from(tbl("users"));
 
         String sql = norm(render(q)).toLowerCase();
@@ -170,10 +170,10 @@ class FunctionExprRendererTest {
     @Test
     void coalesce_lower_col_and_literal_renders() {
         var q = select(
-            sel(func("coalesce",
-                arg(func("lower", arg(col("u","name")))),
+            func("coalesce",
+                arg(func("lower", arg(col("u", "name")))),
                 arg(lit("N/A"))
-            )).as("val")
+            ).as("val")
         ).from(tbl("users").as("u"));
 
         String sql = norm(render(q)).toLowerCase();

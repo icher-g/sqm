@@ -32,8 +32,8 @@ public class WindowJsonTest {
         // FROM employees
         // WINDOW w AS (PARTITION BY dept ORDER BY salary DESC)
         var q = select(
-            sel(col("emp_name")),
-            sel(func("rank").over("w")).as("r")
+            col("emp_name"),
+            func("rank").over("w").as("r")
         )
             .from(tbl("employees"))
             .window(
@@ -119,10 +119,10 @@ public class WindowJsonTest {
         // WINDOW w AS (PARTITION BY dept ORDER BY salary DESC)
         // SUM(salary) OVER (w ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
         var q = select(
-            sel(col("dept")),
-            sel(col("emp_name")),
-            sel(func("sum", arg(col("salary")))
-                .over(over("w", rows(unboundedPreceding(), currentRow())))
+            col("dept"),
+            col("emp_name"),
+            func("sum", arg(col("salary")))
+                .over(over("w", rows(unboundedPreceding(), currentRow()))
             ).as("run_sum")
         )
             .from(tbl("employees"))
