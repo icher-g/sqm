@@ -1,6 +1,6 @@
 package io.sqm.core;
 
-import java.util.Optional;
+import io.sqm.core.match.TableRefMatch;
 
 /**
  * Anything that can appear in FROM/JOIN: table, subquery, VALUES, etc.
@@ -60,36 +60,19 @@ public sealed interface TableRef extends FromItem permits QueryTable, Table, Val
     }
 
     /**
+     * Creates a new matcher for the current {@link TableRef}.
+     *
+     * @param <R> the result type
+     * @return a new {@code TableMatch}.
+     */
+    default <R> TableRefMatch<R> matchTableRef() {
+        return TableRefMatch.match(this);
+    }
+
+    /**
      * Gets table alias or null if none.
      *
      * @return a table alias.
      */
     String alias();
-
-    /**
-     * Casts current table reference to {@link Table} is possible.
-     *
-     * @return {@link Optional}<{@link Table}>.
-     */
-    default Optional<Table> asTable() {
-        return this instanceof Table t ? Optional.of(t) : Optional.empty();
-    }
-
-    /**
-     * Casts current table reference to {@link QueryTable} is possible.
-     *
-     * @return {@link Optional}<{@link QueryTable}>.
-     */
-    default Optional<QueryTable> asQuery() {
-        return this instanceof QueryTable t ? Optional.of(t) : Optional.empty();
-    }
-
-    /**
-     * Casts current table reference to {@link ValuesTable} is possible.
-     *
-     * @return {@link Optional}<{@link ValuesTable}>.
-     */
-    default Optional<ValuesTable> asValues() {
-        return this instanceof ValuesTable t ? Optional.of(t) : Optional.empty();
-    }
 }

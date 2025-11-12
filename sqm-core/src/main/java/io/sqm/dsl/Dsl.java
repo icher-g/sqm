@@ -321,7 +321,18 @@ public final class Dsl {
      * @param usingColumns a list of columns to be used for joining.
      * @return A newly created instance of USING JOIN with the provided table and a list of columns.
      */
-    public static UsingJoin cross(TableRef table, List<String> usingColumns) {
+    public static UsingJoin using(TableRef table, String... usingColumns) {
+        return Join.using(table, usingColumns);
+    }
+
+    /**
+     * Creates a using join with the provided table.
+     *
+     * @param table        a table to join.
+     * @param usingColumns a list of columns to be used for joining.
+     * @return A newly created instance of USING JOIN with the provided table and a list of columns.
+     */
+    public static UsingJoin using(TableRef table, List<String> usingColumns) {
         return Join.using(table, usingColumns);
     }
 
@@ -412,6 +423,12 @@ public final class Dsl {
         return OrderItem.of(col);
     }
 
+    /**
+     * Creates OrderBy statement from the list of provided items.
+     *
+     * @param items a list of OrderBy items.
+     * @return an OrderBy statement.
+     */
     public static OrderBy orderBy(OrderItem... items) {
         return OrderBy.of(List.of(items));
     }
@@ -431,21 +448,6 @@ public final class Dsl {
      */
     public static WindowDef window(String name, OverSpec.Def spec) {
         return WindowDef.of(name, spec);
-    }
-
-    /**
-     * Creates a named window definition based on another window.
-     * <p>Example SQL:</p>
-     * <pre>
-     * WINDOW w2 AS (w1)
-     * </pre>
-     *
-     * @param name the window name
-     * @param base the name of the base window being referenced
-     * @return a new {@link WindowDef}
-     */
-    public static WindowDef window(String name, String base) {
-        return WindowDef.of(name, OverSpec.def(base, null, null, null));
     }
 
     /**

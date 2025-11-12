@@ -170,18 +170,15 @@ Collectors typically extend `RecursiveNodeVisitor<R>` and accumulate results int
 
 ```java
 private static class QueryColumnCollector extends RecursiveNodeVisitor<Void> {
-
     private final Set<String> columns = new LinkedHashSet<>();
 
     @Override
     protected Void defaultResult() {
         return null;
     }
-
     public Set<String> getColumns() {
         return columns;
     }
-
     @Override
     public Void visitColumnExpr(ColumnExpr c) {
         columns.add(c.tableAlias() == null ? c.name() : c.tableAlias() + "." + c.name());
@@ -253,99 +250,6 @@ You only override methods for nodes you wish to modify — all others are traver
 - Extract metadata for validation or analysis.  
 - Implement automatic query normalization or anonymization.
 
-
----
-
-### 🧭 Safe Optional Chaining with `Opts`
-
-When navigating deep node hierarchies, it’s common to perform multiple safe casts such as  
-`asSelect() → asOn() → asComparison() → asColumn()`.  
-Without help, this leads to nested `flatMap` calls or verbose `ifPresent` blocks.
-
-The `Opts` helper provides a **fluent, type-safe** way to chain these lookups.
-
-```java
-var name =
-    Opts.start(transformedQuery)
-        .then(Query::asSelect)
-        .then(s -> s.joins().stream().findFirst())
-        .then(Join::asOn)
-        .then(on -> on.on().asComparison())
-        .then(cmp -> cmp.lhs().asColumn())
-        .map(ColumnExpr::name);
-
-name.ifPresent(System.out::println);
-```
-
----
-
-#### 💡 Key Ideas
-
-| Concept             | Description                                                     |
-|---------------------|-----------------------------------------------------------------|
-| `Opts.start(value)` | Begins the chain with any object (may be `null`).               |
-| `then(f)`           | Applies a function that returns `Optional<U>` (like `flatMap`). |
-| `thenMap(f)`        | Applies a function that returns a plain value `U` (like `map`). |
-| `map(f)`            | Terminal mapping step, returns `Optional<U>`.                   |
-| `toOptional()`      | Ends the chain and exposes the underlying `Optional<T>`.        |
-
----
-
-#### ✅ Example
-
-Compare the same logic using standard `Optional` chaining vs `Opts`:
-
-##### Without `Opts`
-
-```java
-transformedQuery
-    .asSelect()
-    .flatMap(s -> s.joins().stream().findFirst())
-    .flatMap(j -> j.asOn())
-    .flatMap(on -> on.on().asComparison())
-    .flatMap(cmp -> cmp.lhs().asColumn())
-    .map(ColumnExpr::name)
-    .ifPresent(System.out::println);
-```
-
-##### With `Opts`
-
-```java
-Opts.start(transformedQuery)
-    .then(Query::asSelect)
-    .then(s -> s.joins().stream().findFirst())
-    .then(Join::asOn)
-    .then(on -> on.on().asComparison())
-    .then(cmp -> cmp.lhs().asColumn())
-    .map(ColumnExpr::name)
-    .ifPresent(System.out::println);
-```
-
-Both are functionally equivalent, but `Opts` allows more readable, linear traversal — especially in SQM’s deep polymorphic hierarchies.
-
----
-
-#### ⚙️ Implementation Summary
-
-`Opts` wraps each intermediate result in a lightweight `Chain<T>`:
-
-```java
-Opts.start(query)
-    .then(Query::asSelect)        // Optional<SelectQuery>
-    .thenMap(SelectQuery::joins)  // List<Join>
-    .toOptional();                // Optional<List<Join>>
-```
-
-Each transformation step returns a new `Chain<U>`, and all nulls or empty results are handled automatically.
-
----
-
-#### 🧩 Use Cases
-
-- Safe traversal of nested SQM nodes without explicit null checks.  
-- Building compact inspection or debugging utilities.  
-- Replacing repetitive `flatMap` pipelines with a clean fluent syntax.
-
 ---
 
 ### Match API
@@ -359,7 +263,8 @@ A `Match<R>` represents a lazy evaluation of matching arms (handlers) against a 
 The core idea:
 
 ```java
-var result = Queries.match(query)
+var result = Match
+    .<String>queries(query)
     .select(q -> renderSelect(q))
     .with(w -> renderWith(w))
     .composite(c -> renderComposite(c))
@@ -390,11 +295,13 @@ Each major SQM node type has its own specialized matcher interface:
 * **`PredicateMatch<R>`** — matches predicate kinds (`BetweenPredicate`, `InPredicate`, `LikePredicate`, etc.).
 * **`SelectItemMatch<R>`** — matches select item types (`ExprSelectItem`, `StarSelectItem`, `QualifiedStarSelectItem`).
 * **`TableMatch<R>`** — matches table reference types (`Table`, `QueryTable`, `ValuesTable`).
+* etc.
 
 Each provides fluent methods corresponding to their subtype structure. For example:
 
 ```java
-String result = Predicates.match(predicate)
+String result = Match
+    .<String>predicates(predicate)
     .comparison(p -> renderComparison(p))
     .in(p -> renderIn(p))
     .isNull(p -> renderIsNull(p))
@@ -411,7 +318,8 @@ String result = Predicates.match(predicate)
 #### Example
 
 ```java
-String sql = Expressions.match(expr)
+String sql = Match
+    .<String>expressions(expr)
     .column(c -> c.tableAlias() == null ? c.name() : c.tableAlias() + "." + c.name())
     .literal(l -> String.valueOf(l.value()))
     .func(f -> f.name() + "(...)" )
@@ -420,15 +328,31 @@ String sql = Expressions.match(expr)
 
 This example demonstrates how the `Match` API cleanly separates handling logic per subtype without requiring explicit type checks.
 
----
+#### Example Accessing Specific Field
 
-**See also:**
+```text
+SELECT u.user_name, o.status, count(*) AS cnt
+FROM orders AS o
+INNER JOIN users AS u ON u.id = o.user_id
+```
 
-* `QueryMatch` — for matching query types.
-* `PredicateMatch` — for predicate structures.
-* `ExpressionMatch` — for handling all expression nodes.
+```java
+// get the name of the column in a join.
+var columnName = q.matchQuery()
+    .select(s -> s.joins().getFirst().matchJoin()
+        .on(j -> j.on().matchPredicate()
+            .comparison(cmp -> cmp.rhs().matchExpression()
+                .column(c -> c.name())
+                .orElse(null) // each match needs to provide alternative.
+            )
+            .orElse(null)
+        )
+        .orElse(null)
+    )
+    .orElse(null);
+```
 
-Together, these interfaces provide a unified, type-safe approach for navigating and transforming the SQM model.
+In this example a specific node is accessed via matchX() methods.
 
 ---
 

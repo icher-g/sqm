@@ -236,8 +236,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
      */
     @Override
     public Node visitValuesTable(ValuesTable t) {
-        var rows = apply(t.rows());
-        if (rows != t.rows()) {
+        var rows = apply(t.values());
+        if (rows != t.values()) {
             return ValuesTable.of(rows);
         }
         return t;
@@ -285,7 +285,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitNaturalJoin(NaturalJoin j) {
         var table = apply(j.right());
         if (table != j.right()) {
-            return CrossJoin.of(table);
+            return NaturalJoin.of(table);
         }
         return j;
     }
@@ -300,7 +300,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitUsingJoin(UsingJoin j) {
         var table = apply(j.right());
         if (table != j.right()) {
-            return CrossJoin.of(table);
+            return UsingJoin.of(table, j.usingColumns());
         }
         return j;
     }
@@ -575,7 +575,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     @Override
     public Node visitSelectQuery(SelectQuery q) {
         List<SelectItem> items = new ArrayList<>();
-        boolean changed = apply(q.select(), items);
+        boolean changed = apply(q.items(), items);
         var from = apply(q.from());
         changed |= from != q.from();
         List<Join> joins = new ArrayList<>();
@@ -609,10 +609,10 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
                 query.orderBy(orderBy.items());
             }
             if (limitOffset.limit() != null) {
-                q.limit(limitOffset.limit());
+                query.limit(limitOffset.limit());
             }
             if (limitOffset.offset() != null) {
-                q.offset(limitOffset.offset());
+                query.offset(limitOffset.offset());
             }
             return query;
         }

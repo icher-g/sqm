@@ -49,73 +49,109 @@ class FunctionExprTest {
         assertInstanceOf(OverSpec.Ref.class, f.over(OverSpec.ref("w")).over());
         // check all variations of: over(PartitionBy partitionBy, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude)
         var over = f.over(PartitionBy.of(Expression.literal(1))).over();
-        assertTrue(over.asDef().isPresent());
-        assertNotNull(over.asDef().orElseThrow().partitionBy());
-        assertEquals(1, over.asDef().orElseThrow().partitionBy().items().size());
+        assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
+        assertNotNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
+        assertEquals(1, over.matchOverSpec().def(d -> d.partitionBy().items().size()).orElse(0));
         over = f.over(PartitionBy.of(Expression.literal(1)), OrderBy.of(OrderItem.of(1))).over();
-        assertTrue(over.asDef().isPresent());
-        assertNotNull(over.asDef().orElseThrow().partitionBy());
-        assertEquals(1, over.asDef().orElseThrow().partitionBy().items().size());
-        assertNotNull(over.asDef().orElseThrow().orderBy());
-        assertEquals(1, over.asDef().orElseThrow().orderBy().items().size());
+        assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
+        assertNotNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
+        assertEquals(1, over.matchOverSpec().def(d -> d.partitionBy().items().size()).orElse(0));
+        assertNotNull(over.matchOverSpec().def(d -> d.orderBy()));
+        assertEquals(1, over.matchOverSpec().def(d -> d.orderBy().items().size()).orElse(0));
         over = f.over(PartitionBy.of(Expression.literal(1)), FrameSpec.single(FrameSpec.Unit.ROWS, BoundSpec.currentRow())).over();
-        assertTrue(over.asDef().isPresent());
-        assertNotNull(over.asDef().orElseThrow().partitionBy());
-        assertEquals(1, over.asDef().orElseThrow().partitionBy().items().size());
-        assertNotNull(over.asDef().orElseThrow().frame());
-        assertEquals(FrameSpec.Unit.ROWS, over.asDef().orElseThrow().frame().unit());
-        assertInstanceOf(BoundSpec.CurrentRow.class, over.asDef().orElseThrow().frame().asSingle().orElseThrow().bound());
+        assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
+        assertNotNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
+        assertEquals(1, over.matchOverSpec().def(d -> d.partitionBy().items().size()).orElse(0));
+        assertNotNull(over.matchOverSpec().def(d -> d.frame()).orElse(null));
+        assertEquals(FrameSpec.Unit.ROWS, over.matchOverSpec().def(d -> d.frame().unit()).orElse(null));
+        assertInstanceOf(BoundSpec.CurrentRow.class, over.matchOverSpec()
+            .def(def -> def.frame().matchFrameSpec()
+                .single(s -> s.bound())
+                .orElse(null)
+            )
+            .orElse(null)
+        );
         over = f.over(PartitionBy.of(Expression.literal(1)), OrderBy.of(OrderItem.of(1)), FrameSpec.single(FrameSpec.Unit.ROWS, BoundSpec.currentRow())).over();
-        assertTrue(over.asDef().isPresent());
-        assertNotNull(over.asDef().orElseThrow().partitionBy());
-        assertEquals(1, over.asDef().orElseThrow().partitionBy().items().size());
-        assertNotNull(over.asDef().orElseThrow().orderBy());
-        assertEquals(1, over.asDef().orElseThrow().orderBy().items().size());
-        assertNotNull(over.asDef().orElseThrow().frame());
-        assertEquals(FrameSpec.Unit.ROWS, over.asDef().orElseThrow().frame().unit());
-        assertInstanceOf(BoundSpec.CurrentRow.class, over.asDef().orElseThrow().frame().asSingle().orElseThrow().bound());
+        assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
+        assertNotNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
+        assertEquals(1, over.matchOverSpec().def(d -> d.partitionBy().items().size()).orElse(0));
+        assertNotNull(over.matchOverSpec().def(d -> d.orderBy()));
+        assertEquals(1, over.matchOverSpec().def(d -> d.orderBy().items().size()).orElse(0));
+        assertNotNull(over.matchOverSpec().def(d -> d.frame()).orElse(null));
+        assertEquals(FrameSpec.Unit.ROWS, over.matchOverSpec().def(d -> d.frame().unit()).orElse(null));
+        assertInstanceOf(BoundSpec.CurrentRow.class, over.matchOverSpec()
+            .def(def -> def.frame().matchFrameSpec()
+                .single(s -> s.bound())
+                .orElse(null)
+            )
+            .orElse(null)
+        );
         over = f.over(PartitionBy.of(Expression.literal(1)), OrderBy.of(OrderItem.of(1)), FrameSpec.single(FrameSpec.Unit.ROWS, BoundSpec.currentRow()), OverSpec.Exclude.CURRENT_ROW).over();
-        assertTrue(over.asDef().isPresent());
-        assertNotNull(over.asDef().orElseThrow().partitionBy());
-        assertEquals(1, over.asDef().orElseThrow().partitionBy().items().size());
-        assertNotNull(over.asDef().orElseThrow().orderBy());
-        assertEquals(1, over.asDef().orElseThrow().orderBy().items().size());
-        assertNotNull(over.asDef().orElseThrow().frame());
-        assertEquals(FrameSpec.Unit.ROWS, over.asDef().orElseThrow().frame().unit());
-        assertInstanceOf(BoundSpec.CurrentRow.class, over.asDef().orElseThrow().frame().asSingle().orElseThrow().bound());
-        assertEquals(OverSpec.Exclude.CURRENT_ROW, over.asDef().orElseThrow().exclude());
+        assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
+        assertNotNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
+        assertEquals(1, over.matchOverSpec().def(d -> d.partitionBy().items().size()).orElse(0));
+        assertNotNull(over.matchOverSpec().def(d -> d.orderBy()));
+        assertEquals(1, over.matchOverSpec().def(d -> d.orderBy().items().size()).orElse(0));
+        assertNotNull(over.matchOverSpec().def(d -> d.frame()).orElse(null));
+        assertEquals(FrameSpec.Unit.ROWS, over.matchOverSpec().def(d -> d.frame().unit()).orElse(null));
+        assertInstanceOf(BoundSpec.CurrentRow.class, over.matchOverSpec()
+            .def(def -> def.frame().matchFrameSpec()
+                .single(s -> s.bound())
+                .orElse(null)
+            )
+            .orElse(null)
+        );
+        assertEquals(OverSpec.Exclude.CURRENT_ROW, over.matchOverSpec().def(def -> def.exclude()).orElse(null));
         // check all variations of: over(String baseWindow, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude)
         over = f.over("w", OrderBy.of(OrderItem.of(1))).over();
-        assertTrue(over.asDef().isPresent());
-        assertNull(over.asDef().orElseThrow().partitionBy());
-        assertEquals("w", over.asDef().orElseThrow().baseWindow());
-        assertNotNull(over.asDef().orElseThrow().orderBy());
-        assertEquals(1, over.asDef().orElseThrow().orderBy().items().size());
+        assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
+        assertNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
+        assertEquals("w", over.matchOverSpec().def(def -> def.baseWindow()).orElse(null));
+        assertNotNull(over.matchOverSpec().def(d -> d.orderBy()));
+        assertEquals(1, over.matchOverSpec().def(d -> d.orderBy().items().size()).orElse(0));
         over = f.over("w", FrameSpec.single(FrameSpec.Unit.ROWS, BoundSpec.currentRow())).over();
-        assertTrue(over.asDef().isPresent());
-        assertNull(over.asDef().orElseThrow().partitionBy());
-        assertEquals("w", over.asDef().orElseThrow().baseWindow());
-        assertNotNull(over.asDef().orElseThrow().frame());
-        assertEquals(FrameSpec.Unit.ROWS, over.asDef().orElseThrow().frame().unit());
-        assertInstanceOf(BoundSpec.CurrentRow.class, over.asDef().orElseThrow().frame().asSingle().orElseThrow().bound());
+        assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
+        assertNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
+        assertEquals("w", over.matchOverSpec().def(def -> def.baseWindow()).orElse(null));
+        assertNotNull(over.matchOverSpec().def(d -> d.frame()).orElse(null));
+        assertEquals(FrameSpec.Unit.ROWS, over.matchOverSpec().def(d -> d.frame().unit()).orElse(null));
+        assertInstanceOf(BoundSpec.CurrentRow.class, over.matchOverSpec()
+            .def(def -> def.frame().matchFrameSpec()
+                .single(s -> s.bound())
+                .orElse(null)
+            )
+            .orElse(null)
+        );
         over = f.over("w", OrderBy.of(OrderItem.of(1)), FrameSpec.single(FrameSpec.Unit.ROWS, BoundSpec.currentRow())).over();
-        assertTrue(over.asDef().isPresent());
-        assertNull(over.asDef().orElseThrow().partitionBy());
-        assertEquals("w", over.asDef().orElseThrow().baseWindow());
-        assertNotNull(over.asDef().orElseThrow().orderBy());
-        assertEquals(1, over.asDef().orElseThrow().orderBy().items().size());
-        assertNotNull(over.asDef().orElseThrow().frame());
-        assertEquals(FrameSpec.Unit.ROWS, over.asDef().orElseThrow().frame().unit());
-        assertInstanceOf(BoundSpec.CurrentRow.class, over.asDef().orElseThrow().frame().asSingle().orElseThrow().bound());
+        assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
+        assertNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
+        assertEquals("w", over.matchOverSpec().def(def -> def.baseWindow()).orElse(null));
+        assertNotNull(over.matchOverSpec().def(d -> d.orderBy()));
+        assertEquals(1, over.matchOverSpec().def(d -> d.orderBy().items().size()).orElse(0));
+        assertNotNull(over.matchOverSpec().def(d -> d.frame()).orElse(null));
+        assertEquals(FrameSpec.Unit.ROWS, over.matchOverSpec().def(d -> d.frame().unit()).orElse(null));
+        assertInstanceOf(BoundSpec.CurrentRow.class, over.matchOverSpec()
+            .def(def -> def.frame().matchFrameSpec()
+                .single(s -> s.bound())
+                .orElse(null)
+            )
+            .orElse(null)
+        );
         over = f.over("w", OrderBy.of(OrderItem.of(1)), FrameSpec.single(FrameSpec.Unit.ROWS, BoundSpec.currentRow()), OverSpec.Exclude.CURRENT_ROW).over();
-        assertTrue(over.asDef().isPresent());
-        assertNull(over.asDef().orElseThrow().partitionBy());
-        assertEquals("w", over.asDef().orElseThrow().baseWindow());
-        assertNotNull(over.asDef().orElseThrow().orderBy());
-        assertEquals(1, over.asDef().orElseThrow().orderBy().items().size());
-        assertNotNull(over.asDef().orElseThrow().frame());
-        assertEquals(FrameSpec.Unit.ROWS, over.asDef().orElseThrow().frame().unit());
-        assertInstanceOf(BoundSpec.CurrentRow.class, over.asDef().orElseThrow().frame().asSingle().orElseThrow().bound());
-        assertEquals(OverSpec.Exclude.CURRENT_ROW, over.asDef().orElseThrow().exclude());
+        assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
+        assertNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
+        assertEquals("w", over.matchOverSpec().def(def -> def.baseWindow()).orElse(null));
+        assertNotNull(over.matchOverSpec().def(d -> d.orderBy()));
+        assertEquals(1, over.matchOverSpec().def(d -> d.orderBy().items().size()).orElse(0));
+        assertNotNull(over.matchOverSpec().def(d -> d.frame()).orElse(null));
+        assertEquals(FrameSpec.Unit.ROWS, over.matchOverSpec().def(d -> d.frame().unit()).orElse(null));
+        assertInstanceOf(BoundSpec.CurrentRow.class, over.matchOverSpec()
+            .def(def -> def.frame().matchFrameSpec()
+                .single(s -> s.bound())
+                .orElse(null)
+            )
+            .orElse(null)
+        );
+        assertEquals(OverSpec.Exclude.CURRENT_ROW, over.matchOverSpec().def(def -> def.exclude()).orElse(null));
     }
 }

@@ -2,9 +2,9 @@ package io.sqm.core;
 
 import io.sqm.core.internal.CteDefImpl;
 import io.sqm.core.internal.WithQueryImpl;
+import io.sqm.core.match.QueryMatch;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Represents a base interface for all queries.
@@ -171,29 +171,12 @@ public sealed interface Query extends Node permits CompositeQuery, SelectQuery, 
     }
 
     /**
-     * Casts current query instance to a {@link SelectQuery} if possible.
+     * Creates a new matcher for the current {@link Query}.
      *
-     * @return {@link Optional}<{@link SelectQuery}>.
+     * @param <R> the result type
+     * @return a new {@code QueryMatch}.
      */
-    default Optional<SelectQuery> asSelect() {
-        return this instanceof SelectQuery q ? Optional.of(q) : Optional.empty();
-    }
-
-    /**
-     * Casts current query instance to a {@link WithQuery} if possible.
-     *
-     * @return {@link Optional}<{@link WithQuery}>.
-     */
-    default Optional<WithQuery> asWith() {
-        return this instanceof WithQuery q ? Optional.of(q) : Optional.empty();
-    }
-
-    /**
-     * Casts current query instance to a {@link CompositeQuery} if possible.
-     *
-     * @return {@link Optional}<{@link CompositeQuery}>.
-     */
-    default Optional<CompositeQuery> asComposite() {
-        return this instanceof CompositeQuery q ? Optional.of(q) : Optional.empty();
+    default <R> QueryMatch<R> matchQuery() {
+        return QueryMatch.match(this);
     }
 }

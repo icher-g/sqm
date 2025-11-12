@@ -30,14 +30,14 @@ public class SelectiveColumnRenameTest {
         // Row is rebuilt if any child changed; check structural expectations
         assertEquals(2, out.items().size(), "Row must still have two items");
 
-        ColumnExpr outCol0 = (ColumnExpr) out.items().get(0);
+        ColumnExpr outCol0 = (ColumnExpr) out.items().getFirst();
         assertEquals("u", outCol0.tableAlias());
         assertEquals("user_id", outCol0.name(), "First item should be renamed");
 
         FunctionExpr outFn = (FunctionExpr) out.items().get(1);
         assertEquals("lower", outFn.name(), "Function name should remain the same");
         // The arg is a column(name), which should remain unchanged
-        ColumnExpr argCol = ((FunctionExpr.Arg.ExprArg) outFn.args().get(0)).expr().asColumn().orElseThrow();
+        ColumnExpr argCol = ((FunctionExpr.Arg.ExprArg) outFn.args().getFirst()).expr().<ColumnExpr>matchExpression().column(c -> c).orElse(null);
         assertNull(argCol.tableAlias());
         assertEquals("name", argCol.name(), "Non-target column should remain unchanged");
 

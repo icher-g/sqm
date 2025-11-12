@@ -22,16 +22,16 @@ class FrameSpecTest {
     }
 
     @Test
-    void asSingle() {
+    void maybeSingle() {
         FrameSpec frame = FrameSpec.single(FrameSpec.Unit.ROWS, BoundSpec.currentRow());
-        assertTrue(frame.asSingle().isPresent());
-        assertFalse(FrameSpec.between(FrameSpec.Unit.ROWS, BoundSpec.unboundedPreceding(), BoundSpec.unboundedFollowing()).asSingle().isPresent());
+        assertTrue(frame.<Boolean>matchFrameSpec().single(s -> true).orElse(false));
+        assertFalse(FrameSpec.between(FrameSpec.Unit.ROWS, BoundSpec.unboundedPreceding(), BoundSpec.unboundedFollowing()).<Boolean>matchFrameSpec().single(s -> true).orElse(false));
     }
 
     @Test
-    void asBetween() {
+    void maybeBetween() {
         FrameSpec frame = FrameSpec.between(FrameSpec.Unit.ROWS, BoundSpec.unboundedPreceding(), BoundSpec.unboundedFollowing());
-        assertTrue(frame.asBetween().isPresent());
-        assertFalse(FrameSpec.single(FrameSpec.Unit.ROWS, BoundSpec.currentRow()).asBetween().isPresent());
+        assertTrue(frame.<Boolean>matchFrameSpec().between(s -> true).orElse(false));
+        assertFalse(FrameSpec.single(FrameSpec.Unit.ROWS, BoundSpec.currentRow()).<Boolean>matchFrameSpec().between(s -> true).orElse(false));
     }
 }

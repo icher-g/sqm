@@ -52,7 +52,7 @@ public class WindowJsonTest {
         assertTrue(overNodeText.contains("Ref"), "Expected OverSpec.Ref in JSON: " + overNodeText);
 
         // Ensure the reference survived
-        var si = (ExprSelectItem) back.select().get(1);
+        var si = (ExprSelectItem) back.items().get(1);
         var fn = (FunctionExpr) si.expr();
         assertNotNull(fn.over());
         assertInstanceOf(OverSpec.Ref.class, fn.over());
@@ -142,7 +142,7 @@ public class WindowJsonTest {
         assertTrue(overJson.contains("currentRow") || overJson.contains("CURRENT")); // depending on mixin naming
 
         // AST checks
-        var si = (ExprSelectItem) back.select().get(2);
+        var si = (ExprSelectItem) back.items().get(2);
         var fn = (FunctionExpr) si.expr();
         var def = (OverSpec.Def) fn.over();
         assertEquals("w", def.baseWindow());

@@ -1,9 +1,6 @@
 package io.sqm.core.transform;
 
-import io.sqm.core.ColumnExpr;
-import io.sqm.core.FunctionExpr;
-import io.sqm.core.Node;
-import io.sqm.core.RowExpr;
+import io.sqm.core.*;
 import io.sqm.core.walk.RecursiveNodeVisitor;
 import org.junit.jupiter.api.Test;
 
@@ -45,7 +42,7 @@ public class DeepTransformationRebuildTest {
         FunctionExpr outFn = (FunctionExpr) out.items().get(1);
         assertEquals("lower", outFn.name());
 
-        ColumnExpr outArgCol = ((FunctionExpr.Arg.ExprArg) outFn.args().getFirst()).expr().asColumn().orElseThrow();
+        ColumnExpr outArgCol = ((FunctionExpr.Arg.ExprArg) outFn.args().getFirst()).expr().<ColumnExpr>matchExpression().column(c -> c).orElse(null);
         assertEquals("u", outArgCol.tableAlias());
         assertEquals("user_id", outArgCol.name(), "Deep-renamed column should be applied");
     }
@@ -56,8 +53,14 @@ public class DeepTransformationRebuildTest {
             select(
                 kase(when(col("u", "name").gt(10)).then(col("o", "name"))),
                 col("o", "status"),
-                func("count", arg(col("u", "id"))).as("cnt"),
-                func("lower", arg(func("sub", arg(col("u", "desc"))))).as("lwr"),
+                func("count", arg(col("u", "id")))
+                    .over(
+                        partition(col("acct_id")),
+                        orderBy(order(col("ts")).asc()),
+                        rows(preceding(5))
+                    ).as("cnt"),
+                func("lower", arg(func("sub", arg(col("u", "desc")))))
+                    .over("w").as("lwr"),
                 star(),
                 star("o")
             )
@@ -73,17 +76,22 @@ public class DeepTransformationRebuildTest {
                             func("count", arg(col("u", "id"))).gt(10)
                         )
                         .and(
-                            col("o", "flag")
-                                .isNull()
-                                .or(col("o", "code").like("%ZZ%"))
+                            col("o", "flag").isNull()
+                                            .or(col("o", "code").like("%ZZ%"))
+                                            .or(col("o", "user").all(ComparisonOperator.EQ, select(lit(1))))
                         )
                 )
                 .groupBy(group("u", "user_name"), group("o", "user_status"))
                 .having(func("count", arg(col("u", "test"))).gt(10))
+                .window(
+                    window("w", over(partition(col("acct_id")), rows(preceding(1), following(1)))),
+                    window("w", over(partition(col("acct_id")), rows(currentRow()))),
+                    window("w", over(partition(col("acct_id")), rows(unboundedFollowing()))),
+                    window("w", over(partition(col("acct_id")), rows(unboundedPreceding())))
+                )
                 .orderBy(order(col("o", "status")).desc())
                 .limit(100)
                 .offset(10);
-
 
         var transformer = new RenameAnyColumn();
         var newQuery = q.accept(transformer);

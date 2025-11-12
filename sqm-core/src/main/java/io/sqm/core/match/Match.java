@@ -25,7 +25,7 @@ public interface Match<T, R> {
      * @param <R> the result type
      * @return a new {@code JoinMatch} for {@code j}
      */
-    static <R> JoinMatch<R> joins(Join j) {
+    static <R> JoinMatch<R> join(Join j) {
         return JoinMatch.match(j);
     }
 
@@ -36,7 +36,7 @@ public interface Match<T, R> {
      * @param <R> the result type
      * @return a new {@code PredicateMatch} for {@code p}
      */
-    static <R> PredicateMatch<R> predicates(Predicate p) {
+    static <R> PredicateMatch<R> predicate(Predicate p) {
         return PredicateMatch.match(p);
     }
 
@@ -47,7 +47,7 @@ public interface Match<T, R> {
      * @param <R> the result type
      * @return a new {@code QueryMatch} for {@code q}
      */
-    static <R> QueryMatch<R> queries(Query q) {
+    static <R> QueryMatch<R> query(Query q) {
         return QueryMatch.match(q);
     }
 
@@ -58,7 +58,7 @@ public interface Match<T, R> {
      * @param <R> the result type
      * @return a new {@code SelectItemMatch} for {@code i}
      */
-    static <R> SelectItemMatch<R> selectItems(SelectItem i) {
+    static <R> SelectItemMatch<R> selectItem(SelectItem i) {
         return SelectItemMatch.match(i);
     }
 
@@ -69,19 +69,41 @@ public interface Match<T, R> {
      * @param <R> the result type
      * @return a new {@code TableMatch} for {@code t}
      */
-    static <R> TableMatch<R> tables(TableRef t) {
-        return TableMatch.match(t);
+    static <R> TableRefMatch<R> tableRef(TableRef t) {
+        return TableRefMatch.match(t);
     }
 
     /**
      * Creates a new matcher for the given {@link Expression}.
      *
-     * @param e   the expression to match on (may be any concrete {@code Expression} subtype)
+     * @param e   the expression to match on (maybe any concrete {@code Expression} subtype)
      * @param <R> the result type produced by the match
      * @return a new {@code ExpressionMatch} for {@code expr}
      */
-    static <R> ExpressionMatch<R> expressions(Expression e) {
+    static <R> ExpressionMatch<R> expression(Expression e) {
         return ExpressionMatch.match(e);
+    }
+
+    /**
+     * Creates a new matcher for the given {@link FunctionExpr.Arg}.
+     *
+     * @param a   the function argument to match on (maybe any concrete {@code FunctionExpr.Arg} subtype)
+     * @param <R> the result type produced by the match
+     * @return a new {@code FunctionExprArgMatch} for {@code a}
+     */
+    static <R> FunctionExprArgMatch<R> funcArg(FunctionExpr.Arg a) {
+        return new FunctionExprArgMatchImpl<>(a);
+    }
+
+    /**
+     * Creates a new matcher for the given {@link ValueSet}.
+     *
+     * @param vs  the value set to match on (maybe any concrete {@code ValueSet} subtype)
+     * @param <R> the result type produced by the match
+     * @return a new {@code ValueSetMatch} for {@code vs}
+     */
+    static <R> ValueSetMatch<R> valueSet(ValueSet vs) {
+        return ValueSetMatch.match(vs);
     }
 
     /**
@@ -91,8 +113,8 @@ public interface Match<T, R> {
      * @param <R> the result type
      * @return a new {@code BoundSpecMatch} for {@code fs}
      */
-    static <R> BoundSpecMatch<R> bounds(BoundSpec bs) {
-        return new BoundSpecMatchImpl<>(bs);
+    static <R> BoundSpecMatch<R> boundSpec(BoundSpec bs) {
+        return BoundSpecMatch.match(bs);
     }
 
     /**
@@ -102,8 +124,8 @@ public interface Match<T, R> {
      * @param <R> the result type
      * @return a new {@code FrameSpecMatch} for {@code fs}
      */
-    static <R> FrameSpecMatch<R> frames(FrameSpec fs) {
-        return new FrameSpecMatchImpl<>(fs);
+    static <R> FrameSpecMatch<R> frameSpec(FrameSpec fs) {
+        return FrameSpecMatch.match(fs);
     }
 
     /**
@@ -113,8 +135,8 @@ public interface Match<T, R> {
      * @param <R> the result type
      * @return a new {@code OverSpecMatch} for {@code os}
      */
-    static <R> OverSpecMatch<R> overs(OverSpec os) {
-        return new OverSpecMatchImpl<>(os);
+    static <R> OverSpecMatch<R> overSpec(OverSpec os) {
+        return OverSpecMatch.match(os);
     }
 
     /**
@@ -187,9 +209,8 @@ public interface Match<T, R> {
      * @param ex  supplier that provides an exception to throw
      * @param <X> the type of the exception to throw
      * @return never returns normally
-     * @throws X if no match occurred
      */
-    default <X extends Throwable> R orElseThrow(Supplier<X> ex) throws X {
+    default <X extends Throwable> R orElseThrow(Supplier<X> ex) {
         return otherwise(j -> sneakyThrow(ex.get()));
     }
 }

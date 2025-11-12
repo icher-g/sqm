@@ -145,7 +145,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
      */
     @Override
     public R visitValuesTable(ValuesTable t) {
-        t.rows().accept(this);
+        t.values().accept(this);
         return defaultResult();
     }
 
@@ -492,7 +492,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
      */
     @Override
     public R visitSelectQuery(SelectQuery q) {
-        q.select().forEach(this::accept);
+        q.items().forEach(this::accept);
         accept(q.from());
         q.joins().forEach(this::accept);
         accept(q.where());

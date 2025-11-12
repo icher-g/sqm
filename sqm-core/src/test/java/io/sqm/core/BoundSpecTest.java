@@ -15,7 +15,7 @@ class BoundSpecTest {
     void preceding() {
         var preceding = BoundSpec.preceding(Expression.literal(1));
         assertInstanceOf(BoundSpec.Preceding.class, preceding);
-        assertEquals(1, preceding.expr().asLiteral().orElseThrow().value());
+        assertEquals(1, preceding.expr().matchExpression().literal(l -> l.value()).orElse(null));
     }
 
     @Test
@@ -27,7 +27,7 @@ class BoundSpecTest {
     void following() {
         var following = BoundSpec.following(Expression.literal(1));
         assertInstanceOf(BoundSpec.Following.class, following);
-        assertEquals(1, following.expr().asLiteral().orElseThrow().value());
+        assertEquals(1, following.expr().matchExpression().literal(l -> l.value()).orElse(null));
     }
 
     @Test
@@ -36,34 +36,34 @@ class BoundSpecTest {
     }
 
     @Test
-    void asPreceding() {
+    void maybePreceding() {
         BoundSpec spec = BoundSpec.preceding(Expression.literal(1));
-        assertTrue(spec.asPreceding().isPresent());
-        assertFalse(BoundSpec.unboundedFollowing().asPreceding().isPresent());
+        assertTrue(spec.<Boolean>matchBoundSpec().preceding(p -> true).orElse(false));
+        assertFalse(BoundSpec.unboundedFollowing().<Boolean>matchBoundSpec().preceding(p -> true).orElse(false));
     }
 
     @Test
-    void asFollowing() {
+    void maybeFollowing() {
         BoundSpec spec = BoundSpec.following(Expression.literal(1));
-        assertTrue(spec.asFollowing().isPresent());
-        assertFalse(BoundSpec.unboundedFollowing().asFollowing().isPresent());
+        assertTrue(spec.<Boolean>matchBoundSpec().following(p -> true).orElse(false));
+        assertFalse(BoundSpec.unboundedFollowing().<Boolean>matchBoundSpec().following(p -> true).orElse(false));
     }
 
     @Test
-    void asCurrentRow() {
-        assertTrue(BoundSpec.currentRow().asCurrentRow().isPresent());
-        assertFalse(BoundSpec.unboundedFollowing().asCurrentRow().isPresent());
+    void maybeCurrentRow() {
+        assertTrue(BoundSpec.currentRow().<Boolean>matchBoundSpec().currentRow(p -> true).orElse(false));
+        assertFalse(BoundSpec.unboundedFollowing().<Boolean>matchBoundSpec().currentRow(p -> true).orElse(false));
     }
 
     @Test
-    void asUnboundedPreceding() {
-        assertTrue(BoundSpec.unboundedPreceding().asUnboundedPreceding().isPresent());
-        assertFalse(BoundSpec.unboundedFollowing().asUnboundedPreceding().isPresent());
+    void maybeUnboundedPreceding() {
+        assertTrue(BoundSpec.unboundedPreceding().<Boolean>matchBoundSpec().unboundedPreceding(p -> true).orElse(false));
+        assertFalse(BoundSpec.unboundedFollowing().<Boolean>matchBoundSpec().unboundedPreceding(p -> true).orElse(false));
     }
 
     @Test
-    void asUnboundedFollowing() {
-        assertTrue(BoundSpec.unboundedFollowing().asUnboundedFollowing().isPresent());
-        assertFalse(BoundSpec.unboundedPreceding().asUnboundedFollowing().isPresent());
+    void maybeUnboundedFollowing() {
+        assertTrue(BoundSpec.unboundedFollowing().<Boolean>matchBoundSpec().unboundedFollowing(p -> true).orElse(false));
+        assertFalse(BoundSpec.unboundedPreceding().<Boolean>matchBoundSpec().unboundedFollowing(p -> true).orElse(false));
     }
 }

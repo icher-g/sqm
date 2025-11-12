@@ -88,70 +88,6 @@ class ExpressionTest {
     }
 
     @Test
-    void asCase() {
-        var whenThen = WhenThen.when(Expression.column("c1").eq(Expression.column("c2"))).then(Expression.literal(true));
-        Expression expr = Expression.kase(whenThen);
-        assertTrue(expr.asCase().isPresent());
-        assertFalse(Expression.column("c").asCase().isPresent());
-    }
-
-    @Test
-    void asColumn() {
-        Expression expr = Expression.column("c");
-        assertTrue(expr.asColumn().isPresent());
-        assertFalse(Expression.literal("c").asColumn().isPresent());
-    }
-
-    @Test
-    void asFunc() {
-        Expression expr = Expression.func("f", Expression.funcArg(Expression.literal(1)));
-        assertTrue(expr.asFunc().isPresent());
-        assertFalse(Expression.literal("c").asFunc().isPresent());
-    }
-
-    @Test
-    void asFuncArg() {
-        Expression expr = Expression.funcArg(Expression.literal(1));
-        assertTrue(expr.asFuncArg().isPresent());
-        assertFalse(Expression.literal("c").asFuncArg().isPresent());
-    }
-
-    @Test
-    void asExprArg() {
-        Expression expr = Expression.funcArg(Expression.literal(1));
-        assertTrue(expr.asExprArg().isPresent());
-        assertFalse(Expression.literal("c").asExprArg().isPresent());
-    }
-
-    @Test
-    void asStarArg() {
-        Expression expr = Expression.starArg();
-        assertTrue(expr.asStarArg().isPresent());
-        assertFalse(Expression.literal("c").asStarArg().isPresent());
-    }
-
-    @Test
-    void asLiteral() {
-        Expression expr = Expression.literal(1);
-        assertTrue(expr.asLiteral().isPresent());
-        assertFalse(Expression.column("c").asLiteral().isPresent());
-    }
-
-    @Test
-    void asPredicate() {
-        Expression expr = Expression.literal(1).eq(Expression.literal(1));
-        assertTrue(expr.asPredicate().isPresent());
-        assertFalse(Expression.literal("c").asPredicate().isPresent());
-    }
-
-    @Test
-    void asValues() {
-        Expression expr = Expression.row(1, 2);
-        assertTrue(expr.asValues().isPresent());
-        assertFalse(Expression.literal("c").asValues().isPresent());
-    }
-
-    @Test
     void as() {
         assertInstanceOf(SelectItem.class, Expression.literal(1).as("const"));
     }
@@ -253,5 +189,12 @@ class ExpressionTest {
         var all = Expression.column("c").all(ComparisonOperator.EQ, Query.select(Expression.literal(1)));
         assertInstanceOf(AnyAllPredicate.class, all);
         assertEquals(Quantifier.ALL, all.quantifier());
+    }
+
+    @Test
+    void unary() {
+        Predicate unary = Expression.literal(true).unary();
+        assertInstanceOf(UnaryPredicate.class, unary);
+        assertTrue(unary.<Boolean>matchPredicate().unary(u -> true).orElse(false));
     }
 }
