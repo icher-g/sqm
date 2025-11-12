@@ -34,46 +34,47 @@ jobs:
         id: ver
         shell: bash
         run: |
-          echo "ref_type=${{ github.ref_type }}"
-          echo "ref_name=${GITHUB_REF_NAME}"
-
           if [ "${{ github.ref_type }}" = "tag" ]; then
-            # Tag case, e.g. refs/tags/v1.2.3
-            VERSION="${GITHUB_REF_NAME#v}"     # strip leading 'v' if present
-            VERSION="${VERSION#V}"             # strip leading 'V' if present
+            VERSION="${GITHUB_REF_NAME#v}"; VERSION="${VERSION#V}"
           elif [ -n "${{ github.event.inputs.version }}" ]; then
-            # Manual input; accept either 1.2.3 or v1.2.3
-            RAW="${{ github.event.inputs.version }}"
-            RAW="$(echo "$RAW" | tr -d '[:space:]')"   # trim spaces
-            VERSION="${RAW#v}"
-            VERSION="${VERSION#V}"
+            RAW="${{ github.event.inputs.version }}"; RAW="${RAW//[[:space:]]/}"
+            VERSION="${RAW#v}"; VERSION="${VERSION#V}"
           else
-            # Push to main: derive from pom; ensure SNAPSHOT
             BASE=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version | tail -n1)
-            case "$BASE" in
-              *-SNAPSHOT) VERSION="$BASE" ;;
-              *)          VERSION="${BASE}-SNAPSHOT" ;;
-            esac
+            [[ "$BASE" == *-SNAPSHOT ]] && VERSION="$BASE" || VERSION="${BASE}-SNAPSHOT"
           fi
-
-          echo "Computed VERSION=$VERSION"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Computed VERSION=$VERSION"
 
-      - name: Validate version (SemVer-ish)
+      - name: Validate version
         shell: bash
         run: |
-          # Accept MAJOR.MINOR.PATCH with optional -prerelease (incl. SNAPSHOT) and optional +build
           if ! echo "$VERSION" | grep -Eq '^[0-9]+(\.[0-9]+){2}([.-][0-9A-Za-z][0-9A-Za-z.-]*)?(\+[0-9A-Za-z.-]+)?$'; then
-            echo "Invalid version: $VERSION"
-            exit 1
+            echo "Invalid version: $VERSION"; exit 1
           fi
-          echo "Version looks valid."
+
+      - name: Show POM distributionManagement (debug)
+        run: |
+          echo "repoUrl=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.distributionManagement.repository.url || true)"
+          echo "repoId=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.distributionManagement.repository.id || true)"
 
       - name: Set Maven project version (all modules)
         run: mvn -B -ntp -DprocessAllModules -DgenerateBackupPoms=false versions:set -DnewVersion="$VERSION"
 
-      - name: Deploy to GitHub Packages
+      - name: Build (install to local repo)
+        run: mvn -B -ntp -DskipTests install
+
+      - name: Deploy to GitHub Packages (force target, log uploads)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: mvn -B -ntp -DskipTests deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Force the exact target regardless of POM misconfig
+          mvn -B -ntp -DskipTests \
+            -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/icher-g/sqm \
+            deploy | tee deploy.log
+
+          echo "---- Upload lines ----"
+          grep -E "Uploading to github:|Uploaded: .*/maven.pkg.github.com/" deploy.log || {
+            echo "ERROR: No upload lines found. Deploy likely skipped."; exit 1; }
