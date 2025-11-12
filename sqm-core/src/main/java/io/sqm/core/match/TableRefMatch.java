@@ -15,7 +15,7 @@ import java.util.function.Function;
  *
  * @param <R> the result type produced by the match
  */
-public interface TableMatch<R> extends Match<TableRef, R> {
+public interface TableRefMatch<R> extends Match<TableRef, R> {
 
     /**
      * Creates a new matcher for the given {@link TableRef}.
@@ -24,8 +24,8 @@ public interface TableMatch<R> extends Match<TableRef, R> {
      * @param <R> the result type
      * @return a new {@code TableMatch} for {@code t}
      */
-    static <R> TableMatch<R> match(TableRef t) {
-        return new TableMatchImpl<>(t);
+    static <R> TableRefMatch<R> match(TableRef t) {
+        return new TableRefMatchImpl<>(t);
     }
 
     /**
@@ -34,7 +34,7 @@ public interface TableMatch<R> extends Match<TableRef, R> {
      * @param f handler for {@code Table}
      * @return {@code this} for fluent chaining
      */
-    TableMatch<R> table(Function<Table, R> f);
+    TableRefMatch<R> table(Function<Table, R> f);
 
     /**
      * Registers a handler for a {@link QueryTable} (subquery-in-FROM).
@@ -42,7 +42,7 @@ public interface TableMatch<R> extends Match<TableRef, R> {
      * @param f handler for {@code QueryTable}
      * @return {@code this} for fluent chaining
      */
-    TableMatch<R> query(Function<QueryTable, R> f);
+    TableRefMatch<R> query(Function<QueryTable, R> f);
 
     /**
      * Registers a handler for a {@link ValuesTable} ({@code VALUES (...)} in {@code FROM}).
@@ -50,7 +50,7 @@ public interface TableMatch<R> extends Match<TableRef, R> {
      * @param f handler for {@code ValuesTable}
      * @return {@code this} for fluent chaining
      */
-    TableMatch<R> values(Function<ValuesTable, R> f);
+    TableRefMatch<R> values(Function<ValuesTable, R> f);
 }
 
 

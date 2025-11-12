@@ -50,8 +50,8 @@ class QueryParserTest {
 
         Assertions.assertFalse(cq.recursive());
         Assertions.assertEquals(1, cq.ctes().size());
-        Assertions.assertEquals("t", cq.ctes().get(0).name());
-        Assertions.assertEquals(0, cq.ctes().get(0).columnAliases().size()); // no explicit alias list
+        Assertions.assertEquals("t", cq.ctes().getFirst().name());
+        Assertions.assertEquals(0, cq.ctes().getFirst().columnAliases().size()); // no explicit alias list
     }
 
     @Test
@@ -66,10 +66,10 @@ class QueryParserTest {
 
         var cq = (WithQuery) q;
         Assertions.assertEquals(1, cq.ctes().size());
-        var cte = cq.ctes().get(0);
+        var cte = cq.ctes().getFirst();
 
         Assertions.assertEquals("u_cte", cte.name());
-        var columnAliases = cq.ctes().get(0).columnAliases();
+        var columnAliases = cq.ctes().getFirst().columnAliases();
         Assertions.assertNotNull(columnAliases);
         Assertions.assertEquals(2, columnAliases.size());
         Assertions.assertEquals("id", columnAliases.get(0));
@@ -106,8 +106,8 @@ class QueryParserTest {
         var cq = (WithQuery) q;
         Assertions.assertTrue(cq.recursive());
         Assertions.assertEquals(1, cq.ctes().size());
-        Assertions.assertEquals("t", cq.ctes().get(0).name());
-        Assertions.assertEquals(List.of("n"), cq.ctes().get(0).columnAliases());
+        Assertions.assertEquals("t", cq.ctes().getFirst().name());
+        Assertions.assertEquals(List.of("n"), cq.ctes().getFirst().columnAliases());
     }
 
     @Nested
@@ -122,7 +122,7 @@ class QueryParserTest {
             // If your Query exposes a getter for FROM, assert it:
             // assertNull(q.from(), "FROM must be null for SELECT 1");
             // At least check we have one projection:
-            Assertions.assertFalse(q.select().isEmpty(), "SELECT list should not be empty");
+            Assertions.assertFalse(q.items().isEmpty(), "SELECT list should not be empty");
         }
 
         @Test
@@ -155,7 +155,7 @@ class QueryParserTest {
             var q = (SelectQuery) parseOk(sql);
 
             // Spot-check a few stable properties:
-            Assertions.assertEquals(3, q.select().size(), "3 select items expected");
+            Assertions.assertEquals(3, q.items().size(), "3 select items expected");
             Assertions.assertNotNull(q.from(), "FROM should be present");
             Assertions.assertFalse(q.joins().isEmpty(), "At least one JOIN expected");
             Assertions.assertNotNull(q.where(), "WHERE should be parsed");
@@ -223,7 +223,7 @@ class QueryParserTest {
         void selectListTopLevelCommas() {
             var sql = "SELECT func(a, b), (x), y";
             var q = (SelectQuery) parseOk(sql);
-            Assertions.assertEquals(3, q.select().size(), "Three top-level select items expected");
+            Assertions.assertEquals(3, q.items().size(), "Three top-level select items expected");
         }
     }
 

@@ -30,7 +30,7 @@ public non-sealed interface ValuesTable extends TableRef {
     /**
      * Rows of expressions; all rows must have the same arity.
      */
-    RowListExpr rows();
+    RowListExpr values();
 
     /**
      * Optional derived column list; may be null or empty.
@@ -45,7 +45,7 @@ public non-sealed interface ValuesTable extends TableRef {
      * @return this.
      */
     default ValuesTable columnAliases(List<String> columnAliases) {
-        return new ValuesTableImpl(rows(), Objects.requireNonNull(columnAliases), alias());
+        return new ValuesTableImpl(values(), Objects.requireNonNull(columnAliases), alias());
     }
 
     /**
@@ -56,7 +56,7 @@ public non-sealed interface ValuesTable extends TableRef {
      * @return this.
      */
     default ValuesTable columnAliases(String... columnAliases) {
-        return new ValuesTableImpl(rows(), List.of(columnAliases), alias());
+        return new ValuesTableImpl(values(), List.of(columnAliases), alias());
     }
 
     /**
@@ -66,7 +66,7 @@ public non-sealed interface ValuesTable extends TableRef {
      * @return A newly created values table with the provide alias. All other fields are preserved.
      */
     default ValuesTable as(String alias) {
-        return new ValuesTableImpl(rows(), columnAliases(), Objects.requireNonNull(alias));
+        return new ValuesTableImpl(values(), columnAliases(), Objects.requireNonNull(alias));
     }
 
     /**

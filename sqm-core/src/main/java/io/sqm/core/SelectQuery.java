@@ -25,7 +25,7 @@ public non-sealed interface SelectQuery extends Query {
      *
      * @return a list of select items.
      */
-    List<SelectItem> select();
+    List<SelectItem> items();
 
     /**
      * Adds items to the SELECT statement.

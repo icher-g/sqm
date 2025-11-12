@@ -10,12 +10,12 @@ class NaturalJoinTest {
     void of() {
         var join = NaturalJoin.of(TableRef.table("t"));
         assertNotNull(join.right());
-        assertTrue(join.right().asTable().isPresent());
-        assertEquals("t", join.right().asTable().orElseThrow().name());
+        assertTrue(join.right().<Boolean>matchTableRef().table(t -> true).orElse(false));
+        assertEquals("t", join.right().matchTableRef().table(t -> t.name()).orElse(null));
         join = NaturalJoin.of("dbo", "t");
         assertNotNull(join.right());
-        assertTrue(join.right().asTable().isPresent());
-        assertEquals("t", join.right().asTable().orElseThrow().name());
-        assertEquals("dbo", join.right().asTable().orElseThrow().schema());
+        assertTrue(join.right().<Boolean>matchTableRef().table(t -> true).orElse(false));
+        assertEquals("t", join.right().matchTableRef().table(t -> t.name()).orElse(null));
+        assertEquals("dbo", join.right().matchTableRef().table(t -> t.schema()).orElse(null));
     }
 }

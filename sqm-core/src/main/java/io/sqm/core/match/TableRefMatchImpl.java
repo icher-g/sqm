@@ -7,13 +7,13 @@ import io.sqm.core.ValuesTable;
 
 import java.util.function.Function;
 
-public class TableMatchImpl<R> implements TableMatch<R> {
+public class TableRefMatchImpl<R> implements TableRefMatch<R> {
 
     private final TableRef table;
     private boolean matched = false;
     private R result;
 
-    public TableMatchImpl(TableRef table) {
+    public TableRefMatchImpl(TableRef table) {
         this.table = table;
     }
 
@@ -24,7 +24,7 @@ public class TableMatchImpl<R> implements TableMatch<R> {
      * @return {@code this} for fluent chaining
      */
     @Override
-    public TableMatch<R> table(Function<Table, R> f) {
+    public TableRefMatch<R> table(Function<Table, R> f) {
         if (!matched && table instanceof Table t) {
             result = f.apply(t);
             matched = true;
@@ -39,7 +39,7 @@ public class TableMatchImpl<R> implements TableMatch<R> {
      * @return {@code this} for fluent chaining
      */
     @Override
-    public TableMatch<R> query(Function<QueryTable, R> f) {
+    public TableRefMatch<R> query(Function<QueryTable, R> f) {
         if (!matched && table instanceof QueryTable t) {
             result = f.apply(t);
             matched = true;
@@ -54,7 +54,7 @@ public class TableMatchImpl<R> implements TableMatch<R> {
      * @return {@code this} for fluent chaining
      */
     @Override
-    public TableMatch<R> values(Function<ValuesTable, R> f) {
+    public TableRefMatch<R> values(Function<ValuesTable, R> f) {
         if (!matched && table instanceof ValuesTable t) {
             result = f.apply(t);
             matched = true;

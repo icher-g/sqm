@@ -31,7 +31,7 @@ public class SelectQueryImpl implements SelectQuery {
      * @return a list of select items.
      */
     @Override
-    public List<SelectItem> select() {
+    public List<SelectItem> items() {
         return items;
     }
 
@@ -286,7 +286,7 @@ public class SelectQueryImpl implements SelectQuery {
     public final boolean equals(Object o) {
         if (!(o instanceof SelectQuery that)) return false;
 
-        return items.equals(that.select()) &&
+        return items.equals(that.items()) &&
             joins.equals(that.joins()) &&
             windows.equals(that.windows()) &&
             Objects.equals(groupBy, that.groupBy()) &&

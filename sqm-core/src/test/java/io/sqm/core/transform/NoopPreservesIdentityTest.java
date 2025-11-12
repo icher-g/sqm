@@ -30,7 +30,7 @@ public class NoopPreservesIdentityTest {
         FunctionExpr outFn = (FunctionExpr) out.items().get(1);
         assertSame(lower, outFn, "FunctionExpr instance should be preserved");
         // Assuming args() returns an immutable list with same Arg instances
-        assertSame(lower.args().get(0), outFn.args().get(0), "Function arg should be preserved");
+        assertSame(lower.args().getFirst(), outFn.args().getFirst(), "Function arg should be preserved");
     }
 
     static class NoopTransformer extends RecursiveNodeTransformer {

@@ -2,9 +2,8 @@ package io.sqm.core;
 
 import io.sqm.core.internal.OverSpecDef;
 import io.sqm.core.internal.OverSpecRef;
+import io.sqm.core.match.OverSpecMatch;
 import io.sqm.core.walk.NodeVisitor;
-
-import java.util.Optional;
 
 /**
  * Represent an OVER statement in a function call.
@@ -68,21 +67,13 @@ public sealed interface OverSpec extends Node permits OverSpec.Ref, OverSpec.Def
     }
 
     /**
-     * Casts this to {@link Ref}.
+     * Creates a new matcher for the current {@link OverSpec}.
      *
-     * @return an {@link Optional}<{@link Ref}> if the cast is successful or {@link Optional#empty()} otherwise.
+     * @param <R> the result type
+     * @return a new {@code OverSpecMatch}.
      */
-    default Optional<Ref> asRef() {
-        return this instanceof Ref r ? Optional.of(r) : Optional.empty();
-    }
-
-    /**
-     * Casts this to {@link Def}.
-     *
-     * @return an {@link Optional}<{@link Def}> if the cast is successful or {@link Optional#empty()} otherwise.
-     */
-    default Optional<Def> asDef() {
-        return this instanceof Def d ? Optional.of(d) : Optional.empty();
+    default <R> OverSpecMatch<R> matchOverSpec() {
+        return OverSpecMatch.match(this);
     }
 
     // EXCLUDE { CURRENT ROW | GROUP | TIES | NO OTHERS }

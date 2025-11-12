@@ -13,9 +13,24 @@ class JoinTest {
         Predicate p = Expression.column("c").gt(1);
         Join join = Join.join(TableRef.table("t")).on(p);
         assertInstanceOf(OnJoin.class, join);
-        assertEquals(JoinKind.INNER, join.asOn().orElseThrow().kind());
-        assertEquals("t", join.asOn().orElseThrow().right().asTable().orElseThrow().name());
-        assertEquals("c", join.asOn().orElseThrow().on().asComparison().orElseThrow().lhs().asColumn().orElseThrow().name());
+        assertEquals(JoinKind.INNER, join.matchJoin().on(o -> o.kind()).orElse(null));
+        assertEquals("t", join.matchJoin()
+            .on(o -> o.right().matchTableRef()
+                .table(t -> t.name())
+                .orElse(null)
+            )
+            .orElse(null)
+        );
+        assertEquals("c", join.matchJoin()
+            .on(o -> o.on().matchPredicate()
+                .comparison(cmp -> cmp.lhs().matchExpression()
+                    .column(c -> c.name())
+                    .orElse(null)
+                )
+                .orElse(null)
+            )
+            .orElse(null)
+        );
     }
 
     @Test
@@ -23,9 +38,24 @@ class JoinTest {
         Predicate p = Expression.column("c").gt(1);
         Join join = Join.left(TableRef.table("t")).on(p);
         assertInstanceOf(OnJoin.class, join);
-        assertEquals(JoinKind.LEFT, join.asOn().orElseThrow().kind());
-        assertEquals("t", join.asOn().orElseThrow().right().asTable().orElseThrow().name());
-        assertEquals("c", join.asOn().orElseThrow().on().asComparison().orElseThrow().lhs().asColumn().orElseThrow().name());
+        assertEquals(JoinKind.LEFT, join.matchJoin().on(o -> o.kind()).orElse(null));
+        assertEquals("t", join.matchJoin()
+            .on(o -> o.right().matchTableRef()
+                .table(t -> t.name())
+                .orElse(null)
+            )
+            .orElse(null)
+        );
+        assertEquals("c", join.matchJoin()
+            .on(o -> o.on().matchPredicate()
+                .comparison(cmp -> cmp.lhs().matchExpression()
+                    .column(c -> c.name())
+                    .orElse(null)
+                )
+                .orElse(null)
+            )
+            .orElse(null)
+        );
     }
 
     @Test
@@ -33,9 +63,24 @@ class JoinTest {
         Predicate p = Expression.column("c").gt(1);
         Join join = Join.right(TableRef.table("t")).on(p);
         assertInstanceOf(OnJoin.class, join);
-        assertEquals(JoinKind.RIGHT, join.asOn().orElseThrow().kind());
-        assertEquals("t", join.asOn().orElseThrow().right().asTable().orElseThrow().name());
-        assertEquals("c", join.asOn().orElseThrow().on().asComparison().orElseThrow().lhs().asColumn().orElseThrow().name());
+        assertEquals(JoinKind.RIGHT, join.matchJoin().on(o -> o.kind()).orElse(null));
+        assertEquals("t", join.matchJoin()
+            .on(o -> o.right().matchTableRef()
+                .table(t -> t.name())
+                .orElse(null)
+            )
+            .orElse(null)
+        );
+        assertEquals("c", join.matchJoin()
+            .on(o -> o.on().matchPredicate()
+                .comparison(cmp -> cmp.lhs().matchExpression()
+                    .column(c -> c.name())
+                    .orElse(null)
+                )
+                .orElse(null)
+            )
+            .orElse(null)
+        );
     }
 
     @Test
@@ -43,9 +88,24 @@ class JoinTest {
         Predicate p = Expression.column("c").gt(1);
         Join join = Join.full(TableRef.table("t")).on(p);
         assertInstanceOf(OnJoin.class, join);
-        assertEquals(JoinKind.FULL, join.asOn().orElseThrow().kind());
-        assertEquals("t", join.asOn().orElseThrow().right().asTable().orElseThrow().name());
-        assertEquals("c", join.asOn().orElseThrow().on().asComparison().orElseThrow().lhs().asColumn().orElseThrow().name());
+        assertEquals(JoinKind.FULL, join.matchJoin().on(o -> o.kind()).orElse(null));
+        assertEquals("t", join.matchJoin()
+            .on(o -> o.right().matchTableRef()
+                .table(t -> t.name())
+                .orElse(null)
+            )
+            .orElse(null)
+        );
+        assertEquals("c", join.matchJoin()
+            .on(o -> o.on().matchPredicate()
+                .comparison(cmp -> cmp.lhs().matchExpression()
+                    .column(c -> c.name())
+                    .orElse(null)
+                )
+                .orElse(null)
+            )
+            .orElse(null)
+        );
     }
 
     @Test
@@ -69,26 +129,26 @@ class JoinTest {
     }
 
     @Test
-    void asOn() {
-        assertTrue(Join.right(TableRef.table("t")).asOn().isPresent());
-        assertFalse(Join.cross("t").asOn().isPresent());
+    void maybeOn() {
+        assertTrue(Join.right(TableRef.table("t")).<Boolean>matchJoin().on(o -> true).orElse(false));
+        assertFalse(Join.cross("t").<Boolean>matchJoin().on(o -> true).orElse(false));
     }
 
     @Test
-    void asCross() {
-        assertFalse(Join.right(TableRef.table("t")).asCross().isPresent());
-        assertTrue(Join.cross("t").asCross().isPresent());
+    void maybeCross() {
+        assertFalse(Join.right(TableRef.table("t")).<Boolean>matchJoin().cross(j -> true).orElse(false));
+        assertTrue(Join.cross("t").<Boolean>matchJoin().cross(j -> true).orElse(false));
     }
 
     @Test
-    void asUsing() {
-        assertFalse(Join.right(TableRef.table("t")).asUsing().isPresent());
-        assertTrue(Join.using(TableRef.table("t")).asUsing().isPresent());
+    void maybeUsing() {
+        assertFalse(Join.right(TableRef.table("t")).<Boolean>matchJoin().using(j -> true).orElse(false));
+        assertTrue(Join.using(TableRef.table("t")).<Boolean>matchJoin().using(j -> true).orElse(false));
     }
 
     @Test
-    void asNatural() {
-        assertFalse(Join.right(TableRef.table("t")).asNatural().isPresent());
-        assertTrue(Join.natural(TableRef.table("t")).asNatural().isPresent());
+    void maybeNatural() {
+        assertFalse(Join.right(TableRef.table("t")).<Boolean>matchJoin().natural(j -> true).orElse(false));
+        assertTrue(Join.natural(TableRef.table("t")).<Boolean>matchJoin().natural(j -> true).orElse(false));
     }
 }

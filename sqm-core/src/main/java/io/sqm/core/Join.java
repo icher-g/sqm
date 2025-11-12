@@ -1,9 +1,9 @@
 package io.sqm.core;
 
 import io.sqm.core.internal.NaturalJoinImpl;
+import io.sqm.core.match.JoinMatch;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * A single JOIN step that attaches a right-side TableRef to the current FROM-chain.
@@ -136,39 +136,13 @@ public sealed interface Join extends FromItem permits CrossJoin, NaturalJoin, On
     }
 
     /**
-     * Casts this to {@link OnJoin} if possible.
+     * Creates a new matcher for the current {@link Join}.
      *
-     * @return an {@link Optional}<{@link OnJoin}>.
+     * @param <R> the result type
+     * @return a new {@code JoinMatch}.
      */
-    default Optional<OnJoin> asOn() {
-        return this instanceof OnJoin j ? Optional.of(j) : Optional.empty();
-    }
-
-    /**
-     * Casts this to {@link CrossJoin} if possible.
-     *
-     * @return an {@link Optional}<{@link CrossJoin}>.
-     */
-    default Optional<CrossJoin> asCross() {
-        return this instanceof CrossJoin j ? Optional.of(j) : Optional.empty();
-    }
-
-    /**
-     * Casts this to {@link UsingJoin} if possible.
-     *
-     * @return an {@link Optional}<{@link UsingJoin}>.
-     */
-    default Optional<UsingJoin> asUsing() {
-        return this instanceof UsingJoin j ? Optional.of(j) : Optional.empty();
-    }
-
-    /**
-     * Casts this to {@link NaturalJoin} if possible.
-     *
-     * @return an {@link Optional}<{@link NaturalJoin}>.
-     */
-    default Optional<NaturalJoin> asNatural() {
-        return this instanceof NaturalJoin j ? Optional.of(j) : Optional.empty();
+    default <R> JoinMatch<R> matchJoin() {
+        return JoinMatch.match(this);
     }
 
     TableRef right();

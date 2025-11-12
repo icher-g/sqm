@@ -23,7 +23,7 @@ public class WindowParsingTest {
         var ctx = ParseContext.of(new AnsiSpecs());
         var res = ctx.parse(SelectQuery.class, sql);
         if (res.isError()) {
-            var p = res.problems().get(0);
+            var p = res.problems().getFirst();
             throw new ParserException(p.message(), p.pos());
         }
         return res.value();
@@ -45,10 +45,10 @@ public class WindowParsingTest {
         // Shape: WINDOW clause exists with a single WindowDef named "w"
         List<WindowDef> windows = q.windows();
         assertEquals(1, windows.size());
-        assertEquals("w", windows.get(0).name());
+        assertEquals("w", windows.getFirst().name());
 
         // The RANK() uses OVER w (reference)
-        var over = overFromSelectItem(q.select().get(1));
+        var over = overFromSelectItem(q.items().get(1));
         assertInstanceOf(OverSpec.Ref.class, over);
         assertEquals("w", ((OverSpec.Ref) over).windowName());
     }
@@ -63,7 +63,7 @@ public class WindowParsingTest {
 
         var q = parseSelect(sql);
 
-        var over = overFromSelectItem(q.select().get(2));
+        var over = overFromSelectItem(q.items().get(2));
         assertInstanceOf(OverSpec.Def.class, over);
         var def = (OverSpec.Def) over;
 
@@ -92,7 +92,7 @@ public class WindowParsingTest {
 
         var q = parseSelect(sql);
 
-        var over = overFromSelectItem(q.select().get(2));
+        var over = overFromSelectItem(q.items().get(2));
         var def = (OverSpec.Def) over;
 
         // Frame = Between (GROUPS BETWEEN 1 PRECEDING AND 1 FOLLOWING)
@@ -121,9 +121,9 @@ public class WindowParsingTest {
 
         // WindowDef "w" exists
         assertEquals(1, q.windows().size());
-        assertEquals("w", q.windows().get(0).name());
+        assertEquals("w", q.windows().getFirst().name());
 
-        var over = overFromSelectItem(q.select().get(2));
+        var over = overFromSelectItem(q.items().get(2));
         var def = (OverSpec.Def) over;
 
         // Base name present (extending w)
@@ -152,8 +152,8 @@ public class WindowParsingTest {
         assertEquals("w1", q.windows().get(0).name());
         assertEquals("w2", q.windows().get(1).name());
 
-        var over1 = overFromSelectItem(q.select().get(1));
-        var over2 = overFromSelectItem(q.select().get(2));
+        var over1 = overFromSelectItem(q.items().get(1));
+        var over2 = overFromSelectItem(q.items().get(2));
         assertInstanceOf(OverSpec.Ref.class, over1);
         assertInstanceOf(OverSpec.Ref.class, over2);
     }
@@ -168,7 +168,7 @@ public class WindowParsingTest {
 
         var q = parseSelect(sql);
 
-        var si = (ExprSelectItem) q.select().get(1);
+        var si = (ExprSelectItem) q.items().get(1);
         var fn = (FunctionExpr) si.expr();
 
         // DISTINCT + FILTER recognized by parser (not window-specific, but part of this shape)

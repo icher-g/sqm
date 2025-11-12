@@ -2,10 +2,10 @@ package io.sqm.core;
 
 import io.sqm.core.internal.FuncStarArg;
 import io.sqm.core.internal.FunctionArgExpr;
+import io.sqm.core.match.ExpressionMatch;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Any value-producing node (scalar or boolean).
@@ -143,87 +143,6 @@ public sealed interface Expression extends Node
      */
     static RowListExpr rows(RowExpr... rows) {
         return RowListExpr.of(List.of(rows));
-    }
-
-    /**
-     * Casts current expression to {@link CaseExpr} if possible.
-     *
-     * @return an {@link Optional}<{@link CaseExpr}>.
-     */
-    default Optional<CaseExpr> asCase() {
-        return this instanceof CaseExpr e ? Optional.of(e) : Optional.empty();
-    }
-
-    /**
-     * Casts current expression to {@link ColumnExpr} if possible.
-     *
-     * @return an {@link Optional}<{@link ColumnExpr}>.
-     */
-    default Optional<ColumnExpr> asColumn() {
-        return this instanceof ColumnExpr e ? Optional.of(e) : Optional.empty();
-    }
-
-    /**
-     * Casts current expression to {@link FunctionExpr} if possible.
-     *
-     * @return an {@link Optional}<{@link FunctionExpr}>.
-     */
-    default Optional<FunctionExpr> asFunc() {
-        return this instanceof FunctionExpr e ? Optional.of(e) : Optional.empty();
-    }
-
-    /**
-     * Casts current expression to {@link FunctionExpr.Arg} if possible.
-     *
-     * @return an {@link Optional}<{@link FunctionExpr.Arg}>.
-     */
-    default Optional<FunctionExpr.Arg> asFuncArg() {
-        return this instanceof FunctionExpr.Arg a ? Optional.of(a) : Optional.empty();
-    }
-
-    /**
-     * Casts current expression to {@link FunctionExpr.Arg.ExprArg} if possible.
-     *
-     * @return an {@link Optional}<{@link FunctionExpr.Arg.ExprArg}>.
-     */
-    default Optional<FunctionExpr.Arg.ExprArg> asExprArg() {
-        return this instanceof FunctionExpr.Arg.ExprArg a ? Optional.of(a) : Optional.empty();
-    }
-
-    /**
-     * Casts current expression to {@link FunctionExpr.Arg.StarArg} if possible.
-     *
-     * @return an {@link Optional}<{@link FunctionExpr.Arg.StarArg}>.
-     */
-    default Optional<FunctionExpr.Arg.StarArg> asStarArg() {
-        return this instanceof FunctionExpr.Arg.StarArg a ? Optional.of(a) : Optional.empty();
-    }
-
-    /**
-     * Casts current expression to {@link LiteralExpr} if possible.
-     *
-     * @return an {@link Optional}<{@link LiteralExpr}>.
-     */
-    default Optional<LiteralExpr> asLiteral() {
-        return this instanceof LiteralExpr e ? Optional.of(e) : Optional.empty();
-    }
-
-    /**
-     * Casts current expression to {@link Predicate} if possible.
-     *
-     * @return an {@link Optional}<{@link Predicate}>.
-     */
-    default Optional<Predicate> asPredicate() {
-        return this instanceof Predicate p ? Optional.of(p) : Optional.empty();
-    }
-
-    /**
-     * Casts current expression to {@link ValueSet} if possible.
-     *
-     * @return an {@link Optional}<{@link ValueSet}>.
-     */
-    default Optional<ValueSet> asValues() {
-        return this instanceof ValueSet v ? Optional.of(v) : Optional.empty();
     }
 
     /**
@@ -531,5 +450,31 @@ public sealed interface Expression extends Node
      */
     default AnyAllPredicate all(ComparisonOperator operator, Query subquery) {
         return AnyAllPredicate.of(this, operator, subquery, Quantifier.ALL);
+    }
+
+    /**
+     * Creates a unary predicate.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     WHERE true
+     *     WHERE active
+     *     }
+     * </pre>
+     *
+     * @return unary operator based on current expression.
+     */
+    default UnaryPredicate unary() {
+        return UnaryPredicate.of(this);
+    }
+
+    /**
+     * Creates a new matcher for the current {@link Expression}.
+     *
+     * @param <R> the result type produced by the match
+     * @return a new {@code ExpressionMatch} for current expression.
+     */
+    default <R> ExpressionMatch<R> matchExpression() {
+        return ExpressionMatch.match(this);
     }
 }

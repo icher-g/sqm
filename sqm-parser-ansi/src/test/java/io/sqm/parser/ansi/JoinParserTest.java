@@ -23,7 +23,7 @@ class JoinParserTest {
         Assertions.assertInstanceOf(OnJoin.class, j);
         OnJoin tj = (OnJoin) j;
         Assertions.assertEquals(JoinKind.INNER, tj.kind());
-        Assertions.assertEquals("products", tj.right().asTable().map(Table::name).orElseThrow());
+        Assertions.assertEquals("products", tj.right().matchTableRef().table(t -> t.name()).orElse(null));
         Assertions.assertEquals("p", tj.right().alias());
 
         Predicate on = tj.on();
@@ -39,7 +39,7 @@ class JoinParserTest {
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         OnJoin j = (OnJoin) r.value();
         Assertions.assertEquals(JoinKind.LEFT, j.kind());
-        Assertions.assertEquals("warehouses", j.right().asTable().map(Table::name).orElseThrow());
+        Assertions.assertEquals("warehouses", j.right().matchTableRef().table(t -> t.name()).orElse(null));
         Assertions.assertEquals("w", j.right().alias());
 
         Assertions.assertInstanceOf(AndPredicate.class, j.on(), "Expected a composite AND");
@@ -56,7 +56,7 @@ class JoinParserTest {
 
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         CrossJoin j = (CrossJoin) r.value();
-        Assertions.assertEquals("regions", j.right().asTable().map(Table::name).orElseThrow());
+        Assertions.assertEquals("regions", j.right().matchTableRef().table(t -> t.name()).orElse(null));
         Assertions.assertEquals("r", j.right().alias());
     }
 
@@ -69,8 +69,8 @@ class JoinParserTest {
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         OnJoin j = (OnJoin) r.value();
         Assertions.assertEquals(JoinKind.INNER, j.kind());
-        Assertions.assertEquals("sales", j.right().asTable().map(Table::schema).orElseThrow());
-        Assertions.assertEquals("products", j.right().asTable().map(Table::name).orElseThrow());
+        Assertions.assertEquals("sales", j.right().matchTableRef().table(t -> t.schema()).orElse(null));
+        Assertions.assertEquals("products", j.right().matchTableRef().table(t -> t.name()).orElse(null));
         Assertions.assertEquals("sp", j.right().alias());
     }
 
@@ -83,8 +83,8 @@ class JoinParserTest {
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         OnJoin j = (OnJoin) r.value();
         Assertions.assertEquals(JoinKind.RIGHT, j.kind());
-        Assertions.assertEquals("t2", j.right().asTable().map(Table::name).orElseThrow());
-        Assertions.assertNull(j.right().asTable().map(Table::schema).orElse(null));
+        Assertions.assertEquals("t2", j.right().matchTableRef().table(t -> t.name()).orElse(null));
+        Assertions.assertNull(j.right().matchTableRef().table(t -> t.schema()).orElse(null));
         Assertions.assertNotNull(j.on());
     }
 }

@@ -16,7 +16,7 @@ class OrderItemTest {
         assertEquals("collate", item.collate());
         item = OrderItem.of(Expression.literal(1), Direction.ASC, Nulls.FIRST, "collate");
         assertInstanceOf(OrderItem.class, item);
-        assertEquals(1, item.expr().asLiteral().orElseThrow().value());
+        assertEquals(1, item.expr().matchExpression().literal(l -> l.value()).orElse(null));
         assertEquals(Direction.ASC, item.direction());
         assertEquals(Nulls.FIRST, item.nulls());
         assertEquals("collate", item.collate());

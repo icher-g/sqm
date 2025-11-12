@@ -59,66 +59,64 @@ class PredicateTest {
     void asAnyAll() {
         Predicate any = Expression.column("c").any(ComparisonOperator.EQ, Query.select(Expression.literal(1)));
         Predicate all = Expression.column("c").all(ComparisonOperator.EQ, Query.select(Expression.literal(1)));
-        assertTrue(any.asAnyAll().isPresent());
-        assertTrue(all.asAnyAll().isPresent());
-        assertFalse(Expression.column("c").eq(1).asAnyAll().isPresent());
+        assertTrue(any.<Boolean>matchPredicate().anyAll(p -> true).orElse(false));
+        assertTrue(all.<Boolean>matchPredicate().anyAll(p -> true).orElse(false));
+        assertFalse(Expression.column("c").eq(1).<Boolean>matchPredicate().anyAll(p -> true).orElse(false));
     }
 
     @Test
     void asBetween() {
         Predicate p = Expression.column("c").between(1, 10);
-        assertTrue(p.asBetween().isPresent());
-        assertFalse(Expression.column("c").eq(1).asBetween().isPresent());
+        assertTrue(p.<Boolean>matchPredicate().between(b -> true).orElse(false));
+        assertFalse(Expression.column("c").eq(1).<Boolean>matchPredicate().between(b -> true).orElse(false));
     }
 
     @Test
     void asComparison() {
         Predicate p = Expression.column("c").eq(1);
-        assertTrue(p.asComparison().isPresent());
-        assertFalse(Expression.column("c").between(1, 10).asComparison().isPresent());
-    }
-
-    @Test
-    void asComposite() {
-        Predicate p1 = Expression.column("c1").eq(1);
-        Predicate p2 = Expression.column("c2").eq(1);
-        Predicate and = p1.and(p2);
-        assertTrue(and.asComposite().isPresent());
-        assertFalse(p1.asComposite().isPresent());
+        assertTrue(p.<Boolean>matchPredicate().comparison(c -> true).orElse(false));
+        assertFalse(Expression.column("c").between(1, 10).<Boolean>matchPredicate().comparison(c -> true).orElse(false));
     }
 
     @Test
     void asExists() {
         Predicate exists = Predicate.notExists(Query.select(Expression.literal(1)));
-        assertTrue(exists.asExists().isPresent());
-        assertFalse(Expression.column("c1").eq(1).asExists().isPresent());
+        assertTrue(exists.<Boolean>matchPredicate().exists(e -> true).orElse(false));
+        assertFalse(Expression.column("c1").eq(1).<Boolean>matchPredicate().exists(e -> true).orElse(false));
     }
 
     @Test
     void asIn() {
         Predicate p = Expression.column("c").in(1, 2, 3);
-        assertTrue(p.asIn().isPresent());
-        assertFalse(Expression.column("c1").eq(1).asIn().isPresent());
+        assertTrue(p.<Boolean>matchPredicate().in(e -> true).orElse(false));
+        assertFalse(Expression.column("c1").eq(1).<Boolean>matchPredicate().in(e -> true).orElse(false));
     }
 
     @Test
     void asIsNull() {
         Predicate p = Expression.column("c").isNull();
-        assertTrue(p.asIsNull().isPresent());
-        assertFalse(Expression.column("c1").eq(1).asIsNull().isPresent());
+        assertTrue(p.<Boolean>matchPredicate().isNull(e -> true).orElse(false));
+        assertFalse(Expression.column("c1").eq(1).<Boolean>matchPredicate().isNull(e -> true).orElse(false));
     }
 
     @Test
     void asLike() {
         Predicate p = Expression.column("c").like("%abc");
-        assertTrue(p.asLike().isPresent());
-        assertFalse(Expression.column("c1").eq(1).asLike().isPresent());
+        assertTrue(p.<Boolean>matchPredicate().like(e -> true).orElse(false));
+        assertFalse(Expression.column("c1").eq(1).<Boolean>matchPredicate().like(e -> true).orElse(false));
     }
 
     @Test
     void asNot() {
         Predicate p = Expression.column("c").eq(1).not();
-        assertTrue(p.asNot().isPresent());
-        assertFalse(Expression.column("c1").eq(1).asNot().isPresent());
+        assertTrue(p.<Boolean>matchPredicate().not(e -> true).orElse(false));
+        assertFalse(Expression.column("c1").eq(1).<Boolean>matchPredicate().not(e -> true).orElse(false));
+    }
+
+    @Test
+    void asUnary() {
+        Predicate p = Expression.literal(true).unary();
+        assertTrue(p.<Boolean>matchPredicate().unary(e -> true).orElse(false));
+        assertFalse(Expression.column("c1").eq(1).<Boolean>matchPredicate().unary(e -> true).orElse(false));
     }
 }

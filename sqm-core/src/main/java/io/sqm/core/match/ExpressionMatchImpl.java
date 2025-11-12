@@ -90,45 +90,30 @@ public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
     }
 
     /**
-     * Registers a handler to be applied when the subject is a {@link RowExpr}.
+     * Registers a handler to be applied when the subject is a {@link ValueSet}.
      *
-     * @param f handler for {@code RowExpr}
+     * @param f handler for {@code ValueSet}
      * @return {@code this} for fluent chaining
      */
     @Override
-    public ExpressionMatch<R> row(Function<RowExpr, R> f) {
-        if (!matched && expr instanceof RowExpr rowExpr) {
-            result = f.apply(rowExpr);
+    public ExpressionMatch<R> valueSet(Function<ValueSet, R> f) {
+        if (!matched && expr instanceof ValueSet valueSet) {
+            result = f.apply(valueSet);
             matched = true;
         }
         return this;
     }
 
     /**
-     * Registers a handler to be applied when the subject is a {@link RowListExpr}.
+     * Registers a handler to be applied when the subject is a {@link Predicate}.
      *
-     * @param f handler for {@code RowListExpr}
+     * @param f handler for {@code Predicate}
      * @return {@code this} for fluent chaining
      */
     @Override
-    public ExpressionMatch<R> rows(Function<RowListExpr, R> f) {
-        if (!matched && expr instanceof RowListExpr rowListExpr) {
-            result = f.apply(rowListExpr);
-            matched = true;
-        }
-        return this;
-    }
-
-    /**
-     * Registers a handler to be applied when the subject is a {@link QueryExpr}.
-     *
-     * @param f handler for {@code QueryExpr}
-     * @return {@code this} for fluent chaining
-     */
-    @Override
-    public ExpressionMatch<R> query(Function<QueryExpr, R> f) {
-        if (!matched && expr instanceof QueryExpr queryExpr) {
-            result = f.apply(queryExpr);
+    public ExpressionMatch<R> predicate(Function<Predicate, R> f) {
+        if (!matched && expr instanceof Predicate predicate) {
+            result = f.apply(predicate);
             matched = true;
         }
         return this;

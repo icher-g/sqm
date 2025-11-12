@@ -2,9 +2,8 @@ package io.sqm.core;
 
 import io.sqm.core.internal.FrameSpecBetween;
 import io.sqm.core.internal.FrameSpecSingle;
+import io.sqm.core.match.FrameSpecMatch;
 import io.sqm.core.walk.NodeVisitor;
-
-import java.util.Optional;
 
 public sealed interface FrameSpec extends Node permits FrameSpec.Single, FrameSpec.Between {
     /**
@@ -44,21 +43,13 @@ public sealed interface FrameSpec extends Node permits FrameSpec.Single, FrameSp
     }
 
     /**
-     * Casts this to {@link FrameSpec.Single}.
+     * Creates a new matcher for the current {@link FrameSpec}.
      *
-     * @return an {@link Optional}<{@link FrameSpec.Single}> if the cast is successful or {@link Optional#empty()} otherwise.
+     * @param <R> the result type
+     * @return a new {@code FrameSpecMatch}.
      */
-    default Optional<FrameSpec.Single> asSingle() {
-        return this instanceof FrameSpec.Single f ? Optional.of(f) : Optional.empty();
-    }
-
-    /**
-     * Casts this to {@link FrameSpec.Between}.
-     *
-     * @return an {@link Optional}<{@link FrameSpec.Between}> if the cast is successful or {@link Optional#empty()} otherwise.
-     */
-    default Optional<FrameSpec.Between> asBetween() {
-        return this instanceof FrameSpec.Between f ? Optional.of(f) : Optional.empty();
+    default <R> FrameSpecMatch<R> matchFrameSpec() {
+        return FrameSpecMatch.match(this);
     }
 
     Unit unit(); // ROWS | RANGE | GROUPS

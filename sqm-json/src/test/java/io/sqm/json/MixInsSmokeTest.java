@@ -59,7 +59,7 @@ public class MixInsSmokeTest {
 
         // 1) Can deserialize into FunctionExpr
         var esi = m.readValue(json, ExprSelectItem.class);
-        var fe = esi.expr().asFunc().orElseThrow();
+        var fe = esi.expr().<FunctionExpr>matchExpression().func(f -> f).orElse(null);
 
         assertEquals("lower", fe.name());
         assertEquals("l", esi.alias());
@@ -71,8 +71,20 @@ public class MixInsSmokeTest {
         var a1 = fe.args().get(1);
         assertInstanceOf(FunctionExpr.Arg.ExprArg.class, a0);
         assertInstanceOf(FunctionExpr.Arg.ExprArg.class, a1);
-        assertInstanceOf(ColumnExpr.class, a0.asExprArg().orElseThrow().expr());
-        assertInstanceOf(LiteralExpr.class, a1.asExprArg().orElseThrow().expr());
+        assertInstanceOf(ColumnExpr.class, a0.matchExpression()
+            .funcArg(f -> f.matchArg()
+                .exprArg(a -> a.expr())
+                .orElse(null)
+            )
+            .orElse(null)
+        );
+        assertInstanceOf(LiteralExpr.class, a1.matchExpression()
+            .funcArg(f -> f.matchArg()
+                .exprArg(a -> a.expr())
+                .orElse(null)
+            )
+            .orElse(null)
+        );
 
         // 3) Round-trip back to JSON and ensure type tags are preserved
         String back = m.writeValueAsString(esi);
@@ -98,7 +110,7 @@ public class MixInsSmokeTest {
                 """;
 
         var esi = m.readValue(json, ExprSelectItem.class);
-        var c = esi.expr().asColumn().orElseThrow();
+        var c = esi.expr().<ColumnExpr>matchExpression().column(col -> col).orElse(null);
 
         assertNotNull(c);
         String out = m.writeValueAsString(c);
@@ -131,7 +143,7 @@ public class MixInsSmokeTest {
         var f = m.readValue(json, Predicate.class);
 
         assertNotNull(f);
-        var p = f.asComparison().orElseThrow();
+        var p = f.<ComparisonPredicate>matchPredicate().comparison(cmp -> cmp).orElse(null);
         assertInstanceOf(ComparisonPredicate.class, f);
         assertInstanceOf(ColumnExpr.class, p.lhs());
         assertInstanceOf(LiteralExpr.class, p.rhs());
@@ -178,12 +190,17 @@ public class MixInsSmokeTest {
         assertNotNull(j);
         assertInstanceOf(OnJoin.class, j);
         assertInstanceOf(Table.class, j.right());
-        var p = j.asOn().map(o -> o.on().asComparison().orElseThrow()).orElseThrow();
+        var p = j.<ComparisonPredicate>matchJoin()
+            .on(o -> o.on().<ComparisonPredicate>matchPredicate()
+                .comparison(cmp -> cmp)
+                .orElse(null)
+            )
+            .orElse(null);
         assertInstanceOf(ComparisonPredicate.class, p);
-        assertEquals("users", j.right().asTable().map(Table::name).orElseThrow());
+        assertEquals("users", j.right().matchTableRef().table(t -> t.name()).orElse(null));
         assertEquals("u", j.right().alias());
-        assertEquals("id", p.lhs().asColumn().map(ColumnExpr::name).orElseThrow());
-        assertEquals("user_id", p.rhs().asColumn().map(ColumnExpr::name).orElseThrow());
+        assertEquals("id", p.lhs().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("user_id", p.rhs().matchExpression().column(c -> c.name()).orElse(null));
     }
 
     @Test

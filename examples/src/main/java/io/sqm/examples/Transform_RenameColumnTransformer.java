@@ -1,10 +1,8 @@
 package io.sqm.examples;
 
 import io.sqm.core.ColumnExpr;
-import io.sqm.core.Join;
 import io.sqm.core.Node;
 import io.sqm.core.Query;
-import io.sqm.core.match.Opts;
 import io.sqm.core.transform.RecursiveNodeTransformer;
 
 import static io.sqm.dsl.Dsl.*;
@@ -12,10 +10,10 @@ import static io.sqm.dsl.Dsl.*;
 public class Transform_RenameColumnTransformer {
     public static void main(String[] args) {
         Query query = select(
-                col("u", "user_name").toSelectItem(),
-                col("o", "status").toSelectItem(),
-                func("count", starArg()).as("cnt")
-            )
+            col("u", "user_name").toSelectItem(),
+            col("o", "status").toSelectItem(),
+            func("count", starArg()).as("cnt")
+        )
             .from(tbl("orders").as("o"))
             .join(
                 inner(tbl("users").as("u")).on(col("u", "id").eq(col("o", "user_id")))
@@ -28,17 +26,20 @@ public class Transform_RenameColumnTransformer {
         var transformedQuery = (Query) query.accept(transformer);
 
         // print the u.id new column name used in join statement.
-        var name =
-            Opts.start(transformedQuery)
-                .then(Query::asSelect)                                      // Query -> Optional<SelectQuery>
-                .then(s -> s.joins().stream().findFirst())       // SelectQuery -> Optional<Join>
-                .then(Join::asOn)                                           // Join -> Optional<OnJoin>
-                .then(on -> on.on().asComparison())                  // OnJoin -> Optional<ComparisonPredicate>
-                .then(cmp -> cmp.lhs().asColumn())        // ComparisonPredicate -> Optional<ColumnExpr>
-                .map(ColumnExpr::name);                                     // Optional<String>
+        var name = transformedQuery.matchQuery()
+            .select(s -> s.joins().getFirst().matchJoin()
+                .on(j -> j.on().matchPredicate()
+                    .comparison(cmp -> cmp.lhs().matchExpression()
+                        .column(c -> c.name())
+                        .orElse(null)
+                    )
+                    .orElse(null)
+                )
+                .orElse(null)
+            )
+            .orElse(null);
 
-        name.ifPresent(System.out::println);
-
+        System.out.println(name);
     }
 
     public static class RenameColumnTransformer extends RecursiveNodeTransformer {

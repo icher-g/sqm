@@ -3,6 +3,7 @@ package io.sqm.core;
 import io.sqm.core.internal.FuncStarArg;
 import io.sqm.core.internal.FunctionArgExpr;
 import io.sqm.core.internal.FunctionExprImpl;
+import io.sqm.core.match.FunctionExprArgMatch;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
@@ -393,6 +394,16 @@ public non-sealed interface FunctionExpr extends Expression {
         @Override
         default <R> R accept(NodeVisitor<R> v) {
             return v.visitFunctionArgExpr(this);
+        }
+
+        /**
+         * Creates a new matcher for the current {@link FunctionExpr.Arg}.
+         *
+         * @param <R> the result type produced by the match
+         * @return a new {@code FunctionExprArgMatch} for current argument.
+         */
+        default <R> FunctionExprArgMatch<R> matchArg() {
+            return FunctionExprArgMatch.match(this);
         }
 
         /**

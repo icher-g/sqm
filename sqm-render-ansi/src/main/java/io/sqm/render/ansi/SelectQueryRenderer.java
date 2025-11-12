@@ -33,7 +33,7 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
         }
 
         w.space();
-        w.comma(node.select()); // each column rendered via its own registered renderer
+        w.comma(node.items()); // each column rendered via its own registered renderer
 
         // FROM
         if (node.from() != null) {

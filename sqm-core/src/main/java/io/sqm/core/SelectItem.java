@@ -3,8 +3,7 @@ package io.sqm.core;
 import io.sqm.core.internal.ExprSelectItemImpl;
 import io.sqm.core.internal.QualifiedStarSelectItemImpl;
 import io.sqm.core.internal.StarSelectItemImpl;
-
-import java.util.Optional;
+import io.sqm.core.match.SelectItemMatch;
 
 /**
  * A single item in the SELECT list.
@@ -42,29 +41,12 @@ public sealed interface SelectItem extends Node
     }
 
     /**
-     * Casts current instance of select item to {@link ExprSelectItem} if possible.
+     * Creates a new matcher for the current {@link SelectItem}.
      *
-     * @return an {@link Optional}<{@link ExprSelectItem}>.
+     * @param <R> the result type
+     * @return a new {@code SelectItemMatch}.
      */
-    default Optional<ExprSelectItem> asExpr() {
-        return this instanceof ExprSelectItem e ? Optional.of(e) : Optional.empty();
-    }
-
-    /**
-     * Casts current instance of select item to {@link StarSelectItem} if possible.
-     *
-     * @return an {@link Optional}<{@link StarSelectItem}>.
-     */
-    default Optional<StarSelectItem> asStar() {
-        return this instanceof StarSelectItem e ? Optional.of(e) : Optional.empty();
-    }
-
-    /**
-     * Casts current instance of select item to {@link QualifiedStarSelectItem} if possible.
-     *
-     * @return an {@link Optional}<{@link QualifiedStarSelectItem}>.
-     */
-    default Optional<QualifiedStarSelectItem> asQualifiedStar() {
-        return this instanceof QualifiedStarSelectItem e ? Optional.of(e) : Optional.empty();
+    default <R> SelectItemMatch<R> matchSelectItem() {
+        return SelectItemMatch.match(this);
     }
 }

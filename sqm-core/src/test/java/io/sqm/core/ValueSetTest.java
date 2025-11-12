@@ -2,28 +2,29 @@ package io.sqm.core;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ValueSetTest {
 
     @Test
-    void asQuery() {
+    void maybeQuery() {
         ValueSet query = Expression.subquery(Query.select(Expression.literal(1)));
-        assertTrue(query.asQuery().isPresent());
-        assertFalse(Expression.row(1, 2, 3).asQuery().isPresent());
+        assertTrue(query.<Boolean>matchValueSet().query(s -> true).orElse(false));
+        assertFalse(Expression.row(1, 2, 3).<Boolean>matchValueSet().query(s -> true).orElse(false));
     }
 
     @Test
-    void asRow() {
+    void maybeRow() {
         ValueSet row = Expression.row(1, 2, 3);
-        assertTrue(row.asRow().isPresent());
-        assertFalse(Expression.subquery(Query.select(Expression.literal(1))).asRow().isPresent());
+        assertTrue(row.<Boolean>matchValueSet().row(s -> true).orElse(false));
+        assertFalse(Expression.subquery(Query.select(Expression.literal(1))).<Boolean>matchValueSet().row(s -> true).orElse(false));
     }
 
     @Test
-    void asRows() {
+    void maybeRows() {
         ValueSet rows = Expression.rows(Expression.row(1, 2, 3));
-        assertTrue(rows.asRows().isPresent());
-        assertFalse(Expression.row(1, 2, 3).asRows().isPresent());
+        assertTrue(rows.<Boolean>matchValueSet().rows(s -> true).orElse(false));
+        assertFalse(Expression.row(1, 2, 3).<Boolean>matchValueSet().rows(s -> true).orElse(false));
     }
 }

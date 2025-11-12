@@ -16,7 +16,7 @@ public class ValuesTableRenderer implements Renderer<ValuesTable> {
     @Override
     public void render(ValuesTable node, RenderContext ctx, SqlWriter w) {
         // (VALUES (1, 'A'), (2, 'B')) AS v(id, name)
-        w.append("(").append("VALUES").space().append(node.rows()).append(")");
+        w.append("(").append("VALUES").space().append(node.values()).append(")");
 
         if (node.alias() != null) {
             w.space().append("AS").space().append(node.alias());

@@ -17,9 +17,9 @@ public interface ExpressionMatch<R> extends Match<Expression, R> {
     /**
      * Creates a new matcher for the given {@link Expression}.
      *
-     * @param e   the expression to match on (may be any concrete {@code Expression} subtype)
+     * @param e   the expression to match on (maybe any concrete {@code Expression} subtype)
      * @param <R> the result type produced by the match
-     * @return a new {@code ExpressionMatch} for {@code expr}
+     * @return a new {@code ExpressionMatch} for {@code e}
      */
     static <R> ExpressionMatch<R> match(Expression e) {
         return new ExpressionMatchImpl<>(e);
@@ -66,28 +66,20 @@ public interface ExpressionMatch<R> extends Match<Expression, R> {
     ExpressionMatch<R> literal(Function<LiteralExpr, R> f);
 
     /**
-     * Registers a handler to be applied when the subject is a {@link RowExpr}.
+     * Registers a handler to be applied when the subject is a {@link ValueSet}.
      *
-     * @param f handler for {@code RowExpr}
+     * @param f handler for {@code ValueSet}
      * @return {@code this} for fluent chaining
      */
-    ExpressionMatch<R> row(Function<RowExpr, R> f);
+    ExpressionMatch<R> valueSet(Function<ValueSet, R> f);
 
     /**
-     * Registers a handler to be applied when the subject is a {@link RowListExpr}.
+     * Registers a handler to be applied when the subject is a {@link Predicate}.
      *
-     * @param f handler for {@code RowListExpr}
+     * @param f handler for {@code Predicate}
      * @return {@code this} for fluent chaining
      */
-    ExpressionMatch<R> rows(Function<RowListExpr, R> f);
-
-    /**
-     * Registers a handler to be applied when the subject is a {@link QueryExpr}.
-     *
-     * @param f handler for {@code QueryExpr}
-     * @return {@code this} for fluent chaining
-     */
-    ExpressionMatch<R> query(Function<QueryExpr, R> f);
+    ExpressionMatch<R> predicate(Function<Predicate, R> f);
 }
 
 

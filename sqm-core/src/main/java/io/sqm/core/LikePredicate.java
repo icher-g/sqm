@@ -76,6 +76,16 @@ public non-sealed interface LikePredicate extends Predicate {
      * @param escape the escape expression to use.
      * @return this.
      */
+    default LikePredicate escape(String escape) {
+        return new LikePredicateImpl(value(), pattern(), Expression.literal(escape), negated());
+    }
+
+    /**
+     * Creates a new instance of the predicate with the escape expression.
+     *
+     * @param escape the escape expression to use.
+     * @return this.
+     */
     default LikePredicate escape(Expression escape) {
         return new LikePredicateImpl(value(), pattern(), escape, negated());
     }
