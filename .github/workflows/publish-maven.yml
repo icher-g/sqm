@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (e.g. 0.3.0 or 0.3.1-SNAPSHOT)'
+        description: 'Version to publish (e.g.v0.3.0, v0.3.0-rc1, v0.3.0-rc.1+meta, v0.3.0-SNAPSHOT)'
         required: false
         type: string
 
@@ -30,41 +30,45 @@ jobs:
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
 
-      # Figure out VERSION:
-      # - tags:  v1.2.3           -> 1.2.3
-      # - manual: input if given  -> <input>
-      # - push to main: use pom version; if not SNAPSHOT, append -SNAPSHOT
       - name: Compute version
         id: ver
         shell: bash
         run: |
+          echo "ref_type=${{ github.ref_type }}"
+          echo "ref_name=${GITHUB_REF_NAME}"
           if [ "${{ github.ref_type }}" = "tag" ]; then
-            VERSION="${GITHUB_REF_NAME#v}"
+            VERSION="${GITHUB_REF_NAME#v}"   # strip leading 'v'
           elif [ -n "${{ github.event.inputs.version }}" ]; then
             VERSION="${{ github.event.inputs.version }}"
           else
-            # read pom version
             BASE=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version)
-            if [[ "$BASE" == *-SNAPSHOT ]]; then
-              VERSION="$BASE"
-            else
-              VERSION="${BASE}-SNAPSHOT"
-            fi
+            # fallback: trim possible noise
+            BASE=$(printf "%s" "$BASE" | tail -n1)
+            case "$BASE" in
+              *-SNAPSHOT) VERSION="$BASE" ;;
+              *)          VERSION="${BASE}-SNAPSHOT" ;;
+            esac
           fi
-          echo "VERSION=$VERSION" | tee -a "$GITHUB_ENV"
+          echo "Computed VERSION=$VERSION"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Validate version
+      - name: Validate version (SemVer-ish)
+        shell: bash
         run: |
-          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-SNAPSHOT|[.-][0-9A-Za-z]+)?$'; then
+          # Accept: MAJOR.MINOR.PATCH
+          # Optional: -pre.release.with.dots or -SNAPSHOT
+          # Optional: +build.meta
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+(\.[0-9]+){2}([.-][0-9A-Za-z][0-9A-Za-z.-]*)?(\+[0-9A-Za-z.-]+)?$'; then
             echo "Invalid version: $VERSION"
             exit 1
           fi
+          echo "Version looks valid."
 
-      - name: Set Maven project version
-        run: mvn -B versions:set -DnewVersion="$VERSION"
+      - name: Set Maven project version (all modules)
+        run: mvn -B -ntp -DprocessAllModules -DgenerateBackupPoms=false versions:set -DnewVersion="$VERSION"
 
       - name: Deploy to GitHub Packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: mvn -B -DskipTests deploy
+        run: mvn -B -ntp -DskipTests deploy
