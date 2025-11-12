@@ -264,7 +264,7 @@ The core idea:
 
 ```java
 var result = Match
-    .<String>queries(query)
+    .<String>query(query)
     .select(q -> renderSelect(q))
     .with(w -> renderWith(w))
     .composite(c -> renderComposite(c))
@@ -301,7 +301,7 @@ Each provides fluent methods corresponding to their subtype structure. For examp
 
 ```java
 String result = Match
-    .<String>predicates(predicate)
+    .<String>predicate(predicate)
     .comparison(p -> renderComparison(p))
     .in(p -> renderIn(p))
     .isNull(p -> renderIsNull(p))
@@ -315,11 +315,11 @@ String result = Match
 * Provides a single, expressive entry point per hierarchy.
 * Integrates cleanly with functional style and lambda expressions.
 
-#### Example
+#### Expression Match Example
 
 ```java
 String sql = Match
-    .<String>expressions(expr)
+    .<String>expression(expr)
     .column(c -> c.tableAlias() == null ? c.name() : c.tableAlias() + "." + c.name())
     .literal(l -> String.valueOf(l.value()))
     .func(f -> f.name() + "(...)" )
@@ -328,7 +328,7 @@ String sql = Match
 
 This example demonstrates how the `Match` API cleanly separates handling logic per subtype without requiring explicit type checks.
 
-#### Example Accessing Specific Field
+#### Accessing Specific Field Example
 
 ```text
 SELECT u.user_name, o.status, count(*) AS cnt
@@ -338,6 +338,7 @@ INNER JOIN users AS u ON u.id = o.user_id
 
 ```java
 // get the name of the column in a join.
+// here the Match class is called internally on each sub type.
 var columnName = q.matchQuery()
     .select(s -> s.joins().getFirst().matchJoin()
         .on(j -> j.on().matchPredicate()
@@ -352,7 +353,7 @@ var columnName = q.matchQuery()
     .orElse(null);
 ```
 
-In this example a specific node is accessed via matchX() methods.
+In this example a specific node is accessed via matchX() methods. Each matchX() method calls Match.x() internally.
 
 ---
 
@@ -423,9 +424,7 @@ mvn test
 - [ ] Add support for parsing parameters in query (WHERE q = ?)
 - [ ] Arithmetic operations in SQL statements (SELECT salary + bonus AS total_income)
 - [ ] Add support for INSERT | UPDATE | DELETE | MERGE
-- [ ] PostgresSQL renderer & parser
-- [ ] SQL Server renderer & parser
-- [ ] Add support for additional modifiers in function
+- [ ] PostgresSQL support: update model, add renderer / parser
 - [ ] Query optimizer
 - [ ] Query validator
 
