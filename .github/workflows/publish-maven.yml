@@ -70,11 +70,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Force the exact target regardless of POM misconfig
+
           mvn -B -ntp -DskipTests \
             -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/icher-g/sqm \
             deploy | tee deploy.log
 
-          echo "---- Upload lines ----"
-          grep -E "Uploading to github:|Uploaded: .*/maven.pkg.github.com/" deploy.log || {
-            echo "ERROR: No upload lines found. Deploy likely skipped."; exit 1; }
+          echo "---- Interesting lines from deploy ----"
+          # Show uploads and any HTTP errors
+          grep -E "Uploading to .*(maven\.pkg\.github\.com|github)|Uploaded: .*maven\.pkg\.github\.com|Return code is: (401|403|404|409)" deploy.log || true
+
+          # If we saw an HTTP error, fail
+          if grep -E "Return code is: (401|403|404|409)" deploy.log >/dev/null; then
+            echo "ERROR: HTTP error during deploy (see lines above)"; exit 1
+          fi
+
+          # Ensure at least one upload line existed
+          if ! grep -E "Uploading to .*(maven\.pkg\.github\.com|github)|Uploaded: .*maven\.pkg\.github\.com" deploy.log >/dev/null; then
+            echo "ERROR: No upload lines found. Deploy likely skipped."; exit 1
+          fi
+
