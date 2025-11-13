@@ -29,9 +29,19 @@ public non-sealed interface GroupItem extends Node {
         return new GroupItemImpl(null, ordinal);
     }
 
-    Expression expr(); // may be null if ordinal is used
+    /**
+     * Gets a group item expression. May be null if ordinal is used.
+     *
+     * @return an expression if used or NULL otherwise.
+     */
+    Expression expr();
 
-    Integer ordinal();       // 1-based; may be null if expression is used
+    /**
+     * 1-based; may be null if expression is used
+     *
+     * @return an ordinal if used or NULL otherwise.
+     */
+    Integer ordinal();
 
     /**
      * Indicates if the {@link GroupItem} is represented by ordinal.

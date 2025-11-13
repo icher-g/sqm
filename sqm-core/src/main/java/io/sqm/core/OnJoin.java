@@ -29,6 +29,8 @@ public non-sealed interface OnJoin extends Join {
 
     /**
      * ON predicate;
+     *
+     * @return the ON predicate.
      */
     Predicate on();
 

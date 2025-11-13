@@ -5,6 +5,15 @@ import io.sqm.core.internal.FrameSpecSingle;
 import io.sqm.core.match.FrameSpecMatch;
 import io.sqm.core.walk.NodeVisitor;
 
+/**
+ * An interface to define the frame specification in an OVER statement.
+ * <p>Example:</p>
+ * <pre>
+ *     {@code
+ *     SUM(salary) OVER (w1 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_sum
+ *     }
+ * </pre>
+ */
 public sealed interface FrameSpec extends Node permits FrameSpec.Single, FrameSpec.Between {
     /**
      * Creates a single frame.
@@ -52,12 +61,33 @@ public sealed interface FrameSpec extends Node permits FrameSpec.Single, FrameSp
         return FrameSpecMatch.match(this);
     }
 
-    Unit unit(); // ROWS | RANGE | GROUPS
-
-    enum Unit {ROWS, RANGE, GROUPS}
+    /**
+     * Gets a {@link Unit} used in the current frame specification.
+     *
+     * @return a unit.
+     */
+    Unit unit();
 
     /**
-     * ROWS <bound>  (shorthand for BETWEEN <bound> AND CURRENT ROW in many engines is NOT standard; keep explicit)
+     * Defines the unit type.
+     */
+    enum Unit {
+        /**
+         * Rows
+         */
+        ROWS,
+        /**
+         * Range
+         */
+        RANGE,
+        /**
+         * Groups
+         */
+        GROUPS
+    }
+
+    /**
+     * ROWS bound  (shorthand for BETWEEN bound AND CURRENT ROW in many engines is NOT standard)
      */
     non-sealed interface Single extends FrameSpec {
 
@@ -94,7 +124,7 @@ public sealed interface FrameSpec extends Node permits FrameSpec.Single, FrameSp
     }
 
     /**
-     * ROWS BETWEEN <start> AND <end>
+     * ROWS BETWEEN start AND end
      */
     non-sealed interface Between extends FrameSpec {
 

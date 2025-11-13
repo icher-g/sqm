@@ -4,6 +4,11 @@ import io.sqm.core.FunctionExpr;
 
 import java.util.function.Function;
 
+/**
+ * A matcher for function arguments.
+ *
+ * @param <R> a return type of the matcher.
+ */
 public interface FunctionExprArgMatch<R> extends Match<FunctionExpr.Arg, R> {
     /**
      * Creates a new matcher for the given {@link FunctionExpr.Arg}.

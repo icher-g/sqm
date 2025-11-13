@@ -4,12 +4,22 @@ import io.sqm.core.BoundSpec;
 
 import java.util.function.Function;
 
+/**
+ * An implementation class for {@link BoundSpecMatch<R>} interface.
+ *
+ * @param <R> a return type.
+ */
 public class BoundSpecMatchImpl<R> implements BoundSpecMatch<R> {
 
     private final BoundSpec boundSpec;
     private boolean matched = false;
     private R result;
 
+    /**
+     * Initializes a new instance of the class with the provided {@link BoundSpec}.
+     *
+     * @param boundSpec a bound definition.
+     */
     public BoundSpecMatchImpl(BoundSpec boundSpec) {
         this.boundSpec = boundSpec;
     }

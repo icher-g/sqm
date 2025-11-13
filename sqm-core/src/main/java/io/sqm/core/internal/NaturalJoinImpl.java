@@ -15,7 +15,7 @@ import io.sqm.core.TableRef;
  *     }
  * </pre>
  *
- * @param right
+ * @param right the right side of the join.
  */
 public record NaturalJoinImpl(TableRef right) implements NaturalJoin {
 }

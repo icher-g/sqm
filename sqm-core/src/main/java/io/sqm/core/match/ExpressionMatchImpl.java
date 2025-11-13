@@ -4,12 +4,25 @@ import io.sqm.core.*;
 
 import java.util.function.Function;
 
+/**
+ * Pattern-style matcher for {@link Expression} subtypes.
+ * <p>
+ * Register one or more subtype handlers (expr.g., {@link #column(Function)} or {@link #func(Function)}),
+ * then finish with a terminal operation (expr.g., {@link #otherwise(Function)}).
+ *
+ * @param <R> the result type produced by the match
+ */
 public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
 
     private final Expression expr;
     private boolean matched = false;
     private R result;
 
+    /**
+     * Initializes {@link ExpressionMatchImpl}.
+     *
+     * @param expr an expression to match.
+     */
     public ExpressionMatchImpl(Expression expr) {
         this.expr = expr;
     }

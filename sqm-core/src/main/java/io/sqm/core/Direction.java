@@ -1,3 +1,15 @@
 package io.sqm.core;
 
-public enum Direction { ASC, DESC }
+/**
+ * The order direction in the ORDER BY clause.
+ */
+public enum Direction {
+    /**
+     * Ascending order
+     */
+    ASC,
+    /**
+     * Descending order
+     */
+    DESC
+}

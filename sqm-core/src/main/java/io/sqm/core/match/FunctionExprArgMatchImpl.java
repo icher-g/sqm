@@ -4,12 +4,22 @@ import io.sqm.core.FunctionExpr;
 
 import java.util.function.Function;
 
+/**
+ * A matcher for function arguments.
+ *
+ * @param <R> a return type of the matcher.
+ */
 public class FunctionExprArgMatchImpl<R> implements FunctionExprArgMatch<R> {
 
     private final FunctionExpr.Arg arg;
     private boolean matched = false;
     private R result;
 
+    /**
+     * Initializes a new instance of {@link FunctionExprArgMatch}
+     *
+     * @param arg a function argument to match.
+     */
     public FunctionExprArgMatchImpl(FunctionExpr.Arg arg) {
         this.arg = arg;
     }

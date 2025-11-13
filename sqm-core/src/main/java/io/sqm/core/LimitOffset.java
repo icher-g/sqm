@@ -8,23 +8,48 @@ import io.sqm.core.walk.NodeVisitor;
  */
 public non-sealed interface LimitOffset extends Node {
     /**
-     * Convenient factory methods
+     * Initializes the class with provided limit.
+     *
+     * @param limit a limit to use.
      */
     static LimitOffset limit(long limit) {
         return new LimitOffsetImpl(limit, null);
     }
 
+    /**
+     * Creates a {@link LimitOffset} with the provided offset.
+     *
+     * @param offset an offset to use.
+     * @return new instance of {@link LimitOffset}.
+     */
     static LimitOffset offset(long offset) {
         return new LimitOffsetImpl(null, offset);
     }
 
+    /**
+     * Creates a {@link LimitOffset} with the provided limit and offset.
+     *
+     * @param limit  a limit to use.
+     * @param offset an offset to use.
+     * @return new instance of {@link LimitOffset}.
+     */
     static LimitOffset of(Long limit, Long offset) {
         return new LimitOffsetImpl(limit, offset);
     }
 
-    Long limit();   // null if absent
+    /**
+     * Gets a limit. null if absent.
+     *
+     * @return a limit.
+     */
+    Long limit();
 
-    Long offset();  // null if absent
+    /**
+     * Gets an offset. null if absent.
+     *
+     * @return an offset.
+     */
+    Long offset();
 
     /**
      * Accepts a {@link NodeVisitor} and dispatches control to the
