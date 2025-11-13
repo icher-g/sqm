@@ -78,9 +78,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mvn -B -ntp -DskipTests \
-            -Dmaven.deploy.skip=false \
-            -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/icher-g/sqm \
-            -pl :sqm-core,:sqm-parser,:sqm-render-ansi,:sqm-json,:sqm-parser-ansi -am \
-            deploy
+          mvn -B -ntp -DskipTests deploy
 
