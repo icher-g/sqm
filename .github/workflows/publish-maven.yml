@@ -64,28 +64,23 @@ jobs:
       - name: Build (install to local repo)
         run: mvn -B -ntp -DskipTests install
 
-      - name: Deploy to GitHub Packages (force target, log uploads)
+      - name: Debug deploy flags / target
+        run: |
+          echo "maven.deploy.skip = $(mvn -q -DforceStdout help:evaluate -Dexpression=maven.deploy.skip || echo '<undefined>')"
+          echo "distMgmt.repoId   = $(mvn -q -DforceStdout help:evaluate -Dexpression=project.distributionManagement.repository.id || true)"
+          echo "distMgmt.repoUrl  = $(mvn -q -DforceStdout help:evaluate -Dexpression=project.distributionManagement.repository.url || true)"
+
+      - name: Build (install to local)
+        run: mvn -B -ntp -DskipTests install
+
+      # ⬇️ Force deploy to GPR, deploy only publishable modules
+      - name: Deploy to GitHub Packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
         run: |
-          set -euo pipefail
-
           mvn -B -ntp -DskipTests \
+            -Dmaven.deploy.skip=false \
             -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/icher-g/sqm \
-            deploy | tee deploy.log
-
-          echo "---- Interesting lines from deploy ----"
-          # Show uploads and any HTTP errors
-          grep -E "Uploading to .*(maven\.pkg\.github\.com|github)|Uploaded: .*maven\.pkg\.github\.com|Return code is: (401|403|404|409)" deploy.log || true
-
-          # If we saw an HTTP error, fail
-          if grep -E "Return code is: (401|403|404|409)" deploy.log >/dev/null; then
-            echo "ERROR: HTTP error during deploy (see lines above)"; exit 1
-          fi
-
-          # Ensure at least one upload line existed
-          if ! grep -E "Uploading to .*(maven\.pkg\.github\.com|github)|Uploaded: .*maven\.pkg\.github\.com" deploy.log >/dev/null; then
-            echo "ERROR: No upload lines found. Deploy likely skipped."; exit 1
-          fi
+            -pl :sqm-core,:sqm-parser,:sqm-render-ansi,:sqm-json,:sqm-parser-ansi -am \
+            deploy
 
