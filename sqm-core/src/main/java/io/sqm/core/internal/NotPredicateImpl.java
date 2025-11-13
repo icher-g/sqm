@@ -11,6 +11,8 @@ import io.sqm.core.Predicate;
  *     NOT EXISTS(SELECT * FROM t WHERE t.name = 'a')
  *     }
  * </pre>
+ *
+ * @param inner an inner predicate.
  */
 public record NotPredicateImpl(Predicate inner) implements NotPredicate {
 }

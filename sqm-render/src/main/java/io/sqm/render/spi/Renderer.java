@@ -7,7 +7,7 @@ import io.sqm.render.SqlWriter;
 /**
  * A base interface for all renderers.
  *
- * @param <T>
+ * @param <T> the type of the node to render.
  */
 public interface Renderer<T extends Node> extends Handler<T> {
     /**

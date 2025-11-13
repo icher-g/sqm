@@ -362,7 +362,9 @@ public non-sealed interface FunctionExpr extends Expression {
         return v.visitFunctionExpr(this);
     }
 
-    /* -------- Function arguments (structured) -------- */
+    /**
+     * Represents a base interface for function argument.
+     */
     sealed interface Arg extends Expression permits Arg.ExprArg, Arg.StarArg {
         /**
          * Creates column function argument.
@@ -410,6 +412,11 @@ public non-sealed interface FunctionExpr extends Expression {
          * Column reference argument: t.c or just c.
          */
         non-sealed interface ExprArg extends FunctionExpr.Arg {
+            /**
+             * Gets an inner expression.
+             *
+             * @return an inner expression.
+             */
             Expression expr();
         }
 

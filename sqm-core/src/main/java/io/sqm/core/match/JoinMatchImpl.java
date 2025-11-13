@@ -4,12 +4,24 @@ import io.sqm.core.*;
 
 import java.util.function.Function;
 
+/**
+ * Pattern-style matcher for {@link Join} subtypes.
+ * <p>
+ * Register handlers for specific join kinds, then resolve with a terminal method from {@link Match}.
+ *
+ * @param <R> the result type produced by the match
+ */
 public class JoinMatchImpl<R> implements JoinMatch<R> {
 
     private final Join join;
     private boolean matched = false;
     private R result;
 
+    /**
+     * Initializes a new instance of {@link JoinMatch}.
+     *
+     * @param join a join to match.
+     */
     public JoinMatchImpl(Join join) {
         this.join = join;
     }

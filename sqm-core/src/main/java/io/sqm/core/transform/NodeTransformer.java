@@ -17,7 +17,7 @@ import io.sqm.core.walk.NodeVisitor;
  * it dispatches to {@code expr.accept(this)} when the expression is non-null.
  * </p>
  *
- * <h3>Example</h3>
+ * <p>Example</p>
  * <pre>{@code
  * public final class RenameColumnTransformer implements NodeTransformer {
  *     @Override

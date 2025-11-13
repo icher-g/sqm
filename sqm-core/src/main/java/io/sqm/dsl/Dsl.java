@@ -9,7 +9,7 @@ import java.util.List;
  * without touching parsers. Keep names short and predictable.
  * <p>
  * Usage (static import io.sqm.dsl.DSL.*):
- * <p>
+ * </p>
  * <pre>
  * {@code
  *   Query q = q()
@@ -25,6 +25,9 @@ import java.util.List;
  * </pre>
  */
 public final class Dsl {
+    /**
+     * Defines a NULL object.
+     */
     public final static Object NULL = null;
 
     private Dsl() {
@@ -114,6 +117,7 @@ public final class Dsl {
     /**
      * Crates a qualified '*' item for SELECT statement: t.*
      *
+     * @param qualifier a star qualifier.
      * @return select item.
      */
     public static QualifiedStarSelectItem star(String qualifier) {

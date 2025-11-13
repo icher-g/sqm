@@ -4,7 +4,7 @@ import io.sqm.core.BoundSpec;
 import io.sqm.core.FrameSpec;
 
 /**
- * ROWS <bound>  (shorthand for BETWEEN <bound> AND CURRENT ROW in many engines is NOT standard; keep explicit)
+ * ROWS bound  (shorthand for BETWEEN bound AND CURRENT ROW in many engines is NOT standard; keep explicit)
  *
  * @param unit  a frame unit.
  * @param bound a frame bound.

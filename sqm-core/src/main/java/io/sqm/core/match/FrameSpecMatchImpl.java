@@ -4,12 +4,24 @@ import io.sqm.core.FrameSpec;
 
 import java.util.function.Function;
 
+/**
+ * Pattern-style matcher for {@link FrameSpec} subtypes.
+ * <p>
+ * Register handlers for specific frame spec derives, then resolve with a terminal method from {@link Match}.
+ *
+ * @param <R> the result type produced by the match
+ */
 public class FrameSpecMatchImpl<R> implements FrameSpecMatch<R> {
 
     private final FrameSpec frameSpec;
     private boolean matched = false;
     private R result;
 
+    /**
+     * Initializes a new instance of {@link FrameSpecMatch}.
+     *
+     * @param frameSpec a frame specification to match.
+     */
     public FrameSpecMatchImpl(FrameSpec frameSpec) {
         this.frameSpec = frameSpec;
     }

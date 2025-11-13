@@ -23,7 +23,7 @@ import io.sqm.core.WhenThen;
  *       nodes as part of query optimization or normalization.</li>
  * </ul>
  *
- * <h3>Example</h3>
+ * <p>Example</p>
  * <pre>{@code
  * public final class CollectCteNames implements StatementVisitor<Void> {
  *

@@ -1,5 +1,23 @@
 package io.sqm.core;
 
+/**
+ * Defines the join type.
+ */
 public enum JoinKind {
-    INNER, LEFT, RIGHT, FULL
+    /**
+     * Inner join
+     */
+    INNER,
+    /**
+     * Left join
+     */
+    LEFT,
+    /**
+     * Right join
+     */
+    RIGHT,
+    /**
+     * Full join
+     */
+    FULL
 }

@@ -145,5 +145,10 @@ public sealed interface Join extends FromItem permits CrossJoin, NaturalJoin, On
         return JoinMatch.match(this);
     }
 
+    /**
+     * Gets the right side of the join. A table like expression.
+     *
+     * @return a table like expression.
+     */
     TableRef right();
 }

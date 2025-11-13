@@ -6,7 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * An abstract class providing default implementation for recursive transformation.
+ * Derived class can override only relevant methods and don't need to implement transformation of all nodes.
  */
 public abstract class RecursiveNodeTransformer implements NodeTransformer {
 
@@ -595,12 +596,12 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         changed |= limitOffset != queryLimitOffset;
         if (changed) {
             var query = SelectQuery.of()
-                                   .select(items)
-                                   .from(from)
-                                   .join(joins)
-                                   .where(where)
-                                   .having(having)
-                                   .window(windows);
+                .select(items)
+                .from(from)
+                .join(joins)
+                .where(where)
+                .having(having)
+                .window(windows);
 
             if (groupBy != null) {
                 query.groupBy(groupBy.items());
