@@ -449,10 +449,9 @@ This mode is used for JDBC-style parameter binding and safety.
 ```java
 var q = select(col("a"), col("b"))
     .from(tbl("t"))
-    .where(and(
-        col("a").eq(lit(10)),
-        col("b").eq(lit("x"))
-    ));
+    .where(
+        col("a").eq(10).and(col("b").eq("x"))
+    );
 
 var opts = RenderOptions.of(ParameterizationMode.Bind);
 
