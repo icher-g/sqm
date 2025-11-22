@@ -67,6 +67,9 @@ public final class Renderers {
             .register(new BoundSpecPrecedingRenderer())
             .register(new BoundSpecCurrentRowRenderer())
             .register(new BoundSpecFollowingRenderer())
-            .register(new BoundSpecUnboundedFollowingRenderer());
+            .register(new BoundSpecUnboundedFollowingRenderer())
+            .register(new NamedParamExprRenderer())
+            .register(new OrdinalParamExprRenderer())
+            .register(new AnonymousParamExprRenderer());
     }
 }

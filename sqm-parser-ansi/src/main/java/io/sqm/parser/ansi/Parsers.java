@@ -77,6 +77,7 @@ public final class Parsers {
             .register(new OverSpecDefParser())
             .register(new OverSpecRefParser())
             .register(new PartitionByParser())
-            .register(new WindowDefParser());
+            .register(new WindowDefParser())
+            .register(new ParamExprParser());
     }
 }

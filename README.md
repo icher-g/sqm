@@ -357,6 +357,126 @@ In this example a specific node is accessed via matchX() methods. Each matchX() 
 
 ---
 
+### Parameters & Binding
+
+SQM provides a unified model for representing parameters inside SQL queries and a flexible rendering pipeline that determines how these parameters appear in the final SQL string.  
+The core idea is that parameterization is **dialect-independent** at the model level and **dialect-dependent** at render time.
+
+The parameterization workflow consists of three parts:
+
+1. **Parameter Expressions in the AST** (`OrdinalParamExpr`, `NamedParamExpr`, `AnonymousParamExpr`)
+2. **Parameterization Mode** (`ParameterizationMode`)
+
+---
+
+#### Parameter Types in the Model
+
+##### **1. Literals**
+Any value embedded directly in the AST:
+
+```java
+col("age").gt(lit(21))
+```
+
+Depending on the parameterization mode, literals may be:
+- kept inline (default rendering), or
+- converted into bind parameters (Bind mode)
+
+---
+
+##### **2. Named Parameters**
+Explicit parameters such as:
+
+```sql
+WHERE a = :name
+```
+
+Represented by:
+
+```java
+NamedParamExpr.of("name")
+```
+
+---
+
+##### **3. Anonymous Parameters**
+Parameters without names — the typical `?` placeholder:
+
+```sql
+WHERE a = ?
+```
+
+Represented internally by:
+
+```java
+AnonymousParamExpr.of()
+```
+
+These are typically introduced automatically by the renderer or during parameterization.
+
+---
+
+#### Parameterization Modes
+
+Controlled by:
+
+```java
+RenderOptions(parameterizationMode)
+```
+
+SQM supports two main strategies:
+
+##### **1. `Inline`**
+(Default)  
+Literals stay inline; named parameters are kept as `:name`.
+
+```sql
+WHERE age > 21
+WHERE a = :x AND b = :y
+```
+
+##### **2. `Bind`**
+All literals are converted to `?` placeholders, and a `SqlText` is produced with a fully ordered parameter list.
+
+This mode is used for JDBC-style parameter binding and safety.
+
+---
+
+#### Rendering Example
+
+##### Code
+
+```java
+var q = select(col("a"), col("b"))
+    .from(tbl("t"))
+    .where(and(
+        col("a").eq(lit(10)),
+        col("b").eq(lit("x"))
+    ));
+
+var opts = RenderOptions.of(ParameterizationMode.Bind);
+
+SqlText t = ctx.render(q, opts);
+```
+
+##### Output
+
+**SQL**
+
+```sql
+SELECT a, b
+FROM t
+WHERE a = ? AND b = ?
+```
+
+**Parameters:**
+
+```
+[10, "x"]
+```
+
+---
+
 ## 🧩 Core Modules
 
 | Module              | Description                      |

@@ -48,11 +48,6 @@ class OrderItemRendererTest {
             }
 
             @Override
-            public Placeholders placeholders() {
-                return null;
-            }
-
-            @Override
             public Operators operators() {
                 return null;
             }
@@ -77,20 +72,6 @@ class OrderItemRendererTest {
                 return Renderers.ansi();
             }
             // other SqlDialect members (operators, pagination, etc.) are not used here
-        };
-    }
-
-    private static RenderContext ctx(SqlDialect d) {
-        return new RenderContext() {
-            @Override
-            public SqlDialect dialect() {
-                return d;
-            }
-
-            @Override
-            public ParamSink params() {
-                return null;
-            }
         };
     }
 
@@ -196,7 +177,7 @@ class OrderItemRendererTest {
     @DisplayName("Renders: expr COLLATE ... ASC NULLS FIRST (explicit-null dialect)")
     void collate_dir_nulls_order_explicit() {
         var d = dialect(passThruQuoter(), explicitNulls());
-        var rc = ctx(d);
+        var rc = RenderContext.of(d);
 
         var item = order(col("t", "c")).asc().nulls(Nulls.FIRST).collate("de_CH");
         String sql = renderToSql(renderer, item, rc);
@@ -217,7 +198,7 @@ class OrderItemRendererTest {
     @DisplayName("Nulls DEFAULT maps via dialect defaultFor(direction)")
     void nulls_default_mapped_by_dialect() {
         var d = dialect(passThruQuoter(), explicitNulls());
-        var rc = ctx(d);
+        var rc = RenderContext.of(d);
 
         // DEFAULT + DESC -> dialect says FIRST
         var item = order(col("t", "c")).desc().nulls(Nulls.DEFAULT);
@@ -231,7 +212,7 @@ class OrderItemRendererTest {
     @DisplayName("Nulls DEFAULT with no direction -> treated as ASC for default mapping")
     void nulls_default_no_direction_treated_as_asc() {
         var d = dialect(passThruQuoter(), explicitNulls());
-        var rc = ctx(d);
+        var rc = RenderContext.of(d);
 
         // no direction -> renderer treats as ASC for default mapping -> LAST
         var item = order(col("t", "c")).nulls(Nulls.DEFAULT);
@@ -245,7 +226,7 @@ class OrderItemRendererTest {
     @DisplayName("Dialect without explicit NULLS -> ignore nulls clause")
     void nulls_ignored_when_not_supported() {
         var d = dialect(passThruQuoter(), noExplicitNulls());
-        var rc = ctx(d);
+        var rc = RenderContext.of(d);
 
         var item = order(col("t", "c")).asc().nulls(Nulls.FIRST);
         String sql = renderToSql(renderer, item, rc);
@@ -258,7 +239,7 @@ class OrderItemRendererTest {
     @DisplayName("COLLATE uses quoter.quoteIfNeeded (expr.g., hyphen -> quoted)")
     void collate_uses_quoter_quote_if_needed() {
         var d = dialect(quotingHyphenQuoter(), explicitNulls());
-        var rc = ctx(d);
+        var rc = RenderContext.of(d);
 
         var item = order(col("t", "c")).collate("de-CH");
         String sql = renderToSql(renderer, item, rc);

@@ -114,6 +114,61 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         return a;
     }
 
+    /**
+     * Visits an {@link AnonymousParamExpr} node.
+     * <p>
+     * The default implementation returns the parameter unchanged, indicating
+     * that this transformer does not alter anonymous parameters.
+     * Subclasses may override this method to rewrite the parameter, assign
+     * new positions, normalize parameter usage, or collect metadata.
+     *
+     * @param p the anonymous positional parameter expression
+     * @return the transformed node, or {@code p} if no changes are required
+     */
+    @Override
+    public Node visitAnonymousParamExpr(AnonymousParamExpr p) {
+        return p;
+    }
+
+    /**
+     * Visits a {@link NamedParamExpr} node.
+     * <p>
+     * The default implementation returns the parameter unchanged.
+     * Transformers that normalize parameters (e.g., converting named
+     * parameters into anonymous ones) may override this method to replace the
+     * parameter with a different {@link ParamExpr} instance or update internal
+     * lookup tables.
+     *
+     * @param p the named parameter expression
+     * @return the transformed node, or {@code p} if no changes are required
+     */
+    @Override
+    public Node visitNamedParamExpr(NamedParamExpr p) {
+        return p;
+    }
+
+    /**
+     * Visits an {@link OrdinalParamExpr} node.
+     * <p>
+     * This implementation returns the parameter unchanged.
+     * Transformers may override this method if they need to rewrite ordinal
+     * parameters (for example, to normalize index values or convert ordinal
+     * parameters to anonymous parameters when preparing for ANSI rendering).
+     *
+     * @param p the ordinal positional parameter expression
+     * @return the transformed node, or {@code p} if no changes are required
+     */
+    @Override
+    public Node visitOrdinalParamExpr(OrdinalParamExpr p) {
+        return p;
+    }
+
+    /**
+     * Visits {@link LiteralExpr} node representing a literal.
+     *
+     * @param l the literal expression
+     * @return a result produced by the visitor.
+     */
     @Override
     public Node visitLiteralExpr(LiteralExpr l) {
         return l;

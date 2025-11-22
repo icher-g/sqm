@@ -16,6 +16,12 @@ public class ExpressionParser implements Parser<Expression> {
      */
     @Override
     public ParseResult<Expression> parse(Cursor cur, ParseContext ctx) {
+
+        if (ctx.lookups().looksLikeParam(cur)) {
+            var res = ctx.parse(ParamExpr.class, cur);
+            return finalize(cur, ctx, res);
+        }
+
         if (ctx.lookups().looksLikeCaseExpr(cur)) {
             var res = ctx.parse(CaseExpr.class, cur);
             return finalize(cur, ctx, res);

@@ -21,7 +21,7 @@ public class ValuesTableRenderer implements Renderer<ValuesTable> {
         if (node.alias() != null) {
             w.space().append("AS").space().append(node.alias());
             if (node.columnAliases() != null) {
-                w.append("(").append(ctx.bindOrFormat(node.columnAliases())).append(")");
+                w.append("(").append(ctx.dialect().formatter().format(node.columnAliases())).append(")");
             }
         }
     }

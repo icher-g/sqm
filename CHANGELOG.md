@@ -20,7 +20,7 @@
 - PostgreSQL dialect pending.
 
 ### Roadmap
-- [ ] Parse query parameters (`WHERE col = ?`)
+- [X] Parse query parameters (`WHERE col = ?`)
 - [ ] Support arithmetic in SQL (`SELECT salary + bonus`)
 - [ ] Add DML operations
 - [ ] PostgreSQL dialect renderer/parser

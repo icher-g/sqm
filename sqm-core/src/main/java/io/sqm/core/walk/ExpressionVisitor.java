@@ -46,6 +46,33 @@ public interface ExpressionVisitor<R> {
     R visitFunctionArgExpr(FunctionExpr.Arg a);
 
     /**
+     * Visits an {@link AnonymousParamExpr}, representing an anonymous positional
+     * parameter such as {@code ?}.
+     *
+     * @param p the anonymous parameter expression
+     * @return the result of the visit
+     */
+    R visitAnonymousParamExpr(AnonymousParamExpr p);
+
+    /**
+     * Visits a {@link NamedParamExpr}, representing a parameter identified by a
+     * canonical name such as {@code :id} or {@code @tenant}.
+     *
+     * @param p the named parameter expression
+     * @return the result of the visit
+     */
+    R visitNamedParamExpr(NamedParamExpr p);
+
+    /**
+     * Visits an {@link OrdinalParamExpr}, representing a positional parameter
+     * with an explicit index such as {@code $1} or {@code ?2}.
+     *
+     * @param p the ordinal parameter expression
+     * @return the result of the visit
+     */
+    R visitOrdinalParamExpr(OrdinalParamExpr p);
+
+    /**
      * Visits a {@link LiteralExpr} node representing a literal value.
      *
      * @param l the literal expression

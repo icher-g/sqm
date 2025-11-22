@@ -1,4 +1,4 @@
-package io.sqm.roundtrip;
+package io.sqm.it;
 
 import io.sqm.core.Query;
 import org.junit.jupiter.api.Test;
@@ -22,11 +22,11 @@ public class SelectRoundTripTest {
             .groupBy(group("u", "user_name"), group("o", "status"))
             .having(func("count", starArg()).gt(10));
 
-        String sql = RoundTripTestUtil.renderAnsi(original);
-        Query reparsed = RoundTripTestUtil.parse(sql);
+        String sql = Utils.renderAnsi(original);
+        Query reparsed = Utils.parse(sql);
 
-        String expected = RoundTripTestUtil.canonicalJson(original);
-        String actual = RoundTripTestUtil.canonicalJson(reparsed);
+        String expected = Utils.canonicalJson(original);
+        String actual = Utils.canonicalJson(reparsed);
         assertEquals(expected, actual);
     }
 
@@ -39,9 +39,9 @@ public class SelectRoundTripTest {
             .limit(10)
             .offset(20);
 
-        String sql = RoundTripTestUtil.renderAnsi(original);
-        Query reparsed = RoundTripTestUtil.parse(sql);
+        String sql = Utils.renderAnsi(original);
+        Query reparsed = Utils.parse(sql);
 
-        assertEquals(RoundTripTestUtil.canonicalJson(reparsed), RoundTripTestUtil.canonicalJson(original));
+        assertEquals(Utils.canonicalJson(reparsed), Utils.canonicalJson(original));
     }
 }

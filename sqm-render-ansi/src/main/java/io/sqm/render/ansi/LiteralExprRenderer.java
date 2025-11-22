@@ -15,7 +15,7 @@ public class LiteralExprRenderer implements Renderer<LiteralExpr> {
      */
     @Override
     public void render(LiteralExpr node, RenderContext ctx, SqlWriter w) {
-        w.append(ctx.bindOrFormat(node.value()));
+        w.append(ctx.dialect().formatter().format(node.value()));
     }
 
     /**

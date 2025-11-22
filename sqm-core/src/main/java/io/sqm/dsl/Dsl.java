@@ -176,6 +176,37 @@ public final class Dsl {
         return Expression.starArg();
     }
 
+    /* ========================= Parameters ========================= */
+
+    /**
+     * Creates a new anonymous positional parameter with the given position.
+     *
+     * @return an anonymous positional parameter
+     */
+    public static AnonymousParamExpr param() {
+        return AnonymousParamExpr.of();
+    }
+
+    /**
+     * Creates a new ordinal parameter with the given index.
+     *
+     * @param index 1-based index of the parameter
+     * @return a new ordinal parameter expression
+     */
+    public static OrdinalParamExpr param(int index) {
+        return OrdinalParamExpr.of(index);
+    }
+
+    /**
+     * Creates a new named parameter with the given canonical name.
+     *
+     * @param name parameter name without prefix
+     * @return a named parameter expression
+     */
+    public static NamedParamExpr param(String name) {
+        return NamedParamExpr.of(name);
+    }
+
     /* ========================= CASE ========================= */
 
     /**

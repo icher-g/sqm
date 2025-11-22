@@ -20,6 +20,10 @@ Node
    │     ├─ FunctionExpr.Arg.Literal
    │     ├─ FunctionExpr.Arg.Function
    │     └─ FunctionExpr.Arg.Star
+   ├─ ParamExpr
+   │  ├─ AnonymousParamExpr
+   │  ├─ NamedParamExpr
+   │  ├─ OrdinalParamExpr
    ├─ LiteralExpr
    ├─ Predicate
    │  ├─ AnyAllPredicate
@@ -112,6 +116,7 @@ classDiagram
     Expression <|-- CaseExpr
     Expression <|-- ColumnExpr
     Expression <|-- FunctionExpr
+    Expression <|-- ParamExpr
     Expression <|-- LiteralExpr
     Expression <|-- Predicate
     Expression <|-- ValueSet
@@ -128,6 +133,11 @@ classDiagram
     FunctionExpr_Arg <|-- FunctionExpr_Arg_Literal
     FunctionExpr_Arg <|-- FunctionExpr_Arg_Function
     FunctionExpr_Arg <|-- FunctionExpr_Arg_Star
+    
+    %% Params
+    ParamExpr <|-- AnonymousParamExpr
+    ParamExpr <|-- NamedParamExpr
+    ParamExpr <|-- OrdinalParamExpr
 
     %% Predicates
     class Predicate
@@ -232,6 +242,7 @@ Represent value-producing nodes, including literals, columns, functions, and pre
 | `LiteralExpr`  | Constant literal (string, numeric, boolean, etc.).                                                         |
 | `CaseExpr`     | SQL `CASE WHEN ... THEN ... END` expression.                                                               |
 | `FunctionExpr` | Function call (aggregate, scalar, or analytic). Supports `DISTINCT`, `FILTER`, `WITHIN GROUP`, and `OVER`. |
+| `ParamExpr`    | A bind parameter in a SQL statement.                                                                       |
 | `Predicate`    | Boolean-valued expressions for conditions and comparisons.                                                 |
 | `ValueSet`     | Tuple, subquery, or row list used in expressions like `IN` or `VALUES`.                                    |
 
@@ -246,6 +257,17 @@ Modeled under `FunctionExpr.Arg`:
 | `Arg.Literal`  | Literal value.                     |
 | `Arg.Function` | Nested function call as argument.  |
 | `Arg.Star`     | `*` argument (e.g., `COUNT(*)`).   |
+
+---
+
+### Parameters
+Modeled under `ParamExpr`:
+
+| Variant              | Description                                                             |
+|----------------------|-------------------------------------------------------------------------|
+| `AnonymousParamExpr` | An anonymous positional parameter, typically represented as `?` in SQL. |
+| `NamedParamExpr`     | A parameter identified by a symbolic name rather than a numeric index.  |
+| `OrdinalParamExpr`   | A parameter that carries an explicit ordinal index.                     |
 
 ---
 
@@ -371,5 +393,5 @@ WINDOW w AS (PARTITION BY dept ORDER BY salary DESC);
 
 ---
 
-**Status:** Updated (includes `OverSpec`, `FrameSpec`, `BoundSpec`, `WindowDef`, and `PartitionBy`)  
+**Status:** Updated (includes `ParamExpr`)  
 **Module:** `sqm-core`

@@ -11,6 +11,7 @@ public non-sealed interface LimitOffset extends Node {
      * Initializes the class with provided limit.
      *
      * @param limit a limit to use.
+     * @return new instance of {@link LimitOffset}.
      */
     static LimitOffset limit(long limit) {
         return new LimitOffsetImpl(limit, null);
