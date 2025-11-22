@@ -5,8 +5,10 @@ package io.sqm.parser.core;
  */
 public enum TokenType {
     // literals & names
-    IDENT, NUMBER, STRING, PARAM_QMARK, // ?
-    PARAM_NAMED,       // :name or @name
+    IDENT, NUMBER, STRING,
+    PARAM_QMARK,    // ? - anonymous parameter
+    PARAM_POS,      // $1 - positional parameter
+    PARAM_NAMED,    // :name or @name - named parameter
 
     // punctuation
     DOT, COMMA, LPAREN, RPAREN,

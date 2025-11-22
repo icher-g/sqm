@@ -76,8 +76,27 @@ public sealed interface OverSpec extends Node permits OverSpec.Ref, OverSpec.Def
         return OverSpecMatch.match(this);
     }
 
-    // EXCLUDE { CURRENT ROW | GROUP | TIES | NO OTHERS }
-    enum Exclude {CURRENT_ROW, GROUP, TIES, NO_OTHERS}
+    /**
+     * EXCLUDE { CURRENT ROW | GROUP | TIES | NO OTHERS }
+     */
+    enum Exclude {
+        /**
+         * EXCLUDE CURRENT ROW
+         */
+        CURRENT_ROW,
+        /**
+         * EXCLUDE GROUP
+         */
+        GROUP,
+        /**
+         * EXCLUDE TIES
+         */
+        TIES,
+        /**
+         * EXCLUDE NO OTHERS
+         */
+        NO_OTHERS
+    }
 
     /**
      * OVER ( ... ) — inline window specification.

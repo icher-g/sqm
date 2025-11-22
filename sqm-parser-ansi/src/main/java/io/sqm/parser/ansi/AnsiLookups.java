@@ -714,6 +714,18 @@ public class AnsiLookups implements Lookups {
         return false;
     }
 
+    /**
+     * Determines whether the tokens indicate a query parameter: {@code $1, :name, ?}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if a query parameter appears ahead, {@code false} otherwise
+     */
+    @Override
+    public boolean looksLikeParam(Cursor cur, Lookahead pos) {
+        return cur.matchAny(TokenType.PARAM_NAMED, TokenType.PARAM_QMARK, TokenType.PARAM_POS);
+    }
+
     private boolean looksLikeComparisonOperator(Cursor cur, Lookahead pos) {
         if (cur.matchAny(Indicators.COMPARISON_OPERATOR, pos.current())) {
             pos.increment();

@@ -1,4 +1,4 @@
-package io.sqm.roundtrip;
+package io.sqm.it;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -9,12 +9,12 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.RenderContext;
 
-public final class RoundTripTestUtil {
+public final class Utils {
     private static final ObjectMapper MAPPER = SqmJsonMixins.createDefault()
         .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
         .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
 
-    private RoundTripTestUtil() {
+    private Utils() {
     }
 
     public static String renderAnsi(Query q) {

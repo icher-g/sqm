@@ -88,6 +88,51 @@ public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
     }
 
     /**
+     * Registers a handler to be applied when the subject is a {@link AnonymousParamExpr}.
+     *
+     * @param f handler for {@code AnonymousParamExpr}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public ExpressionMatch<R> paramAnonymous(Function<AnonymousParamExpr, R> f) {
+        if (!matched && expr instanceof AnonymousParamExpr e) {
+            result = f.apply(e);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link NamedParamExpr}.
+     *
+     * @param f handler for {@code NamedParamExpr}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public ExpressionMatch<R> paramNamed(Function<NamedParamExpr, R> f) {
+        if (!matched && expr instanceof NamedParamExpr e) {
+            result = f.apply(e);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link OrdinalParamExpr}.
+     *
+     * @param f handler for {@code OrdinalParamExpr}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public ExpressionMatch<R> paramOrdinal(Function<OrdinalParamExpr, R> f) {
+        if (!matched && expr instanceof OrdinalParamExpr e) {
+            result = f.apply(e);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
      * Registers a handler to be applied when the subject is a {@link LiteralExpr}.
      *
      * @param f handler for {@code LiteralExpr}

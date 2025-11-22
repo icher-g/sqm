@@ -4,6 +4,13 @@ import io.sqm.core.OverSpec;
 
 import java.util.function.Function;
 
+/**
+ * Pattern-style matcher for {@link OverSpec} subtypes.
+ * <p>
+ * Register handlers for specific over spec derives, then resolve with a terminal method from {@link Match}.
+ *
+ * @param <R> the result type produced by the match
+ */
 public class OverSpecMatchImpl<R> implements OverSpecMatch<R> {
 
     private final OverSpec overSpec;

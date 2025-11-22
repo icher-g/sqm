@@ -100,11 +100,6 @@ public class SelectQueryRendererTest {
                     }
 
                     @Override
-                    public Placeholders placeholders() {
-                        return dialect.placeholders();
-                    }
-
-                    @Override
                     public Operators operators() {
                         return dialect.operators();
                     }
@@ -129,11 +124,6 @@ public class SelectQueryRendererTest {
                         return dialect.renderers();
                     }
                 };
-            }
-
-            @Override
-            public ParamSink params() {
-                return ctx.params();
             }
         };
     }

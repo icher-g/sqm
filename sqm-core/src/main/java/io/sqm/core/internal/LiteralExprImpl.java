@@ -10,6 +10,11 @@ import io.sqm.core.LiteralExpr;
  */
 public record LiteralExprImpl(Object value) implements LiteralExpr {
 
+    /**
+     * Validates that value is not an Expression.
+     *
+     * @param value a value to check.
+     */
     public LiteralExprImpl {
         if (value instanceof Expression)
             throw new IllegalArgumentException("literal cannot be expression.");

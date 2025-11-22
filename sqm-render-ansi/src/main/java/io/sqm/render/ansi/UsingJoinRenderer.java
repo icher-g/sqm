@@ -17,7 +17,7 @@ public class UsingJoinRenderer implements Renderer<UsingJoin> {
     public void render(UsingJoin node, RenderContext ctx, SqlWriter w) {
         w.append("USING").space()
             .append("(")
-            .append(ctx.bindOrFormat(node.usingColumns()))
+            .append(ctx.dialect().formatter().format(node.usingColumns()))
             .append(")");
     }
 

@@ -5,8 +5,8 @@ import io.sqm.render.DefaultSqlWriter;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.ParameterizationMode;
-import io.sqm.render.spi.PlaceholderPreference;
 import io.sqm.render.spi.RenderContext;
+import io.sqm.render.spi.RenderOptions;
 import io.sqm.render.spi.Renderer;
 import org.junit.jupiter.api.Test;
 
@@ -21,8 +21,7 @@ class AndPredicateRendererTest extends BaseValuesRendererTest {
 
     @Test
     void collects_params_in_traversal_order() {
-        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.Positional, ParameterizationMode.Bind);
-        SqlWriter w = new DefaultSqlWriter(ctx);
+        var ctx = RenderContext.of(new AnsiDialect());
 
         var c1 = col("age").inTable("u");
         var c2 = col("name").inTable("u");
@@ -31,12 +30,12 @@ class AndPredicateRendererTest extends BaseValuesRendererTest {
         var f2 = c2.like("Igor%");
         var cf = f1.and(f2);
 
-        renderer.render(cf, ctx, w);
+        var res = ctx.render(cf, RenderOptions.of(ParameterizationMode.Bind));
 
         // WHERE (<sql1>)\nAND (<sql2>)
         var expectedSql = "u.age > ? AND u.name LIKE ?".trim();
 
-        assertSqlAndParams(w, ctx.params().snapshot(), expectedSql, List.of(20, "Igor%"));
+        assertSqlAndParams(res, expectedSql, List.of(20, "Igor%"));
     }
 
     @Test

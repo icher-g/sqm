@@ -136,9 +136,9 @@ public interface SqlWriter {
     SqlWriter outdent();
 
     /**
-     * Gets a written SQL string together with the list of parameters if there are any.
+     * Gets a written SQL string together with the list of params if there are any.
      *
-     * @param params a list of parameters to add to the result.
+     * @param params a list of params to add to the result.
      * @return an {@link SqlText}.
      */
     SqlText toText(List<Object> params);

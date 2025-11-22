@@ -1,11 +1,9 @@
 package io.sqm.render.ansi;
 
-import io.sqm.core.RowListExpr;
-import io.sqm.render.DefaultSqlWriter;
-import io.sqm.render.SqlWriter;
+import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.ParameterizationMode;
-import io.sqm.render.spi.PlaceholderPreference;
-import io.sqm.render.spi.Renderer;
+import io.sqm.render.spi.RenderContext;
+import io.sqm.render.spi.RenderOptions;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,22 +13,19 @@ import static io.sqm.dsl.Dsl.rows;
 
 class RowListExprRendererTest extends BaseValuesRendererTest {
 
-    private final Renderer<RowListExpr> renderer = new RowListExprRenderer();
-
     @Test
     void inline_tuples_literals() {
-        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.Positional, ParameterizationMode.Inline);
-        SqlWriter w = new DefaultSqlWriter(ctx);
+        var ctx = RenderContext.of(new AnsiDialect());
 
         var tuples = rows(
             row(1, "a"),
             row(2, "b"),
             row(3, "c")
         );
-        renderer.render(tuples, ctx, w);
+        var res = ctx.render(tuples);
 
         assertSqlAndParams(
-            w, ctx.params().snapshot(),
+            res,
             "(1, 'a'), (2, 'b'), (3, 'c')",
             List.of()
         );
@@ -38,17 +33,16 @@ class RowListExprRendererTest extends BaseValuesRendererTest {
 
     @Test
     void param_positional_tuples() {
-        var ctx = new TestRenderContext(ansiDialect, PlaceholderPreference.Positional, ParameterizationMode.Bind);
-        SqlWriter w = new DefaultSqlWriter(ctx);
+        var ctx = RenderContext.of(new AnsiDialect());
 
         var tuples = rows(
             row("x", 10),
             row("y", 20)
         );
-        renderer.render(tuples, ctx, w);
+        var res = ctx.render(tuples, RenderOptions.of(ParameterizationMode.Bind));
 
         assertSqlAndParams(
-            w, ctx.params().snapshot(),
+            res,
             "(?, ?), (?, ?)",
             List.of("x", 10, "y", 20)
         );

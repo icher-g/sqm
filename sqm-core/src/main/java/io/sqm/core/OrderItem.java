@@ -99,6 +99,8 @@ public non-sealed interface OrderItem extends Node {
 
     /**
      * Optional collation name; may be null.
+     *
+     * @return collate string.
      */
     String collate();
 

@@ -58,6 +58,30 @@ public interface ExpressionMatch<R> extends Match<Expression, R> {
     ExpressionMatch<R> funcArg(Function<FunctionExpr.Arg, R> f);
 
     /**
+     * Registers a handler to be applied when the subject is a {@link AnonymousParamExpr}.
+     *
+     * @param f handler for {@code AnonymousParamExpr}
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> paramAnonymous(Function<AnonymousParamExpr, R> f);
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link NamedParamExpr}.
+     *
+     * @param f handler for {@code NamedParamExpr}
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> paramNamed(Function<NamedParamExpr, R> f);
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link OrdinalParamExpr}.
+     *
+     * @param f handler for {@code OrdinalParamExpr}
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> paramOrdinal(Function<OrdinalParamExpr, R> f);
+
+    /**
      * Registers a handler to be applied when the subject is a {@link LiteralExpr}.
      *
      * @param f handler for {@code LiteralExpr}

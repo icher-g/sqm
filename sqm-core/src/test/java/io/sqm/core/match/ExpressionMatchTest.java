@@ -70,6 +70,8 @@ public class ExpressionMatchTest {
         var expr = funcArg(literal(1));
         String out = Match
             .<String>expression(expr)
+            .valueSet(v -> "V")
+            .predicate(p -> "P")
             .funcArg(a -> "FA")
             .column(c -> "C")
             .literal(l -> "L")
@@ -89,6 +91,8 @@ public class ExpressionMatchTest {
             .func(f -> "F")
             .kase(k -> "K")
             .literal(l -> "L")
+            .valueSet(v -> "V")
+            .predicate(p -> "P")
             .funcArg(a -> "FA")
             .orElseGet(() -> "ELSE");
 
@@ -162,5 +166,72 @@ public class ExpressionMatchTest {
             .orElseThrow(() -> new IllegalArgumentException(""));
 
         assertEquals("K", out);
+    }
+
+    @Test
+    void match_param() {
+        var expr1 = param();
+        String out1 = Match
+            .<String>expression(expr1)
+            .paramAnonymous(p -> "A")
+            .paramNamed(p -> "N")
+            .paramOrdinal(p -> "O")
+            .orElse("ELSE");
+
+        assertEquals("A", out1);
+
+        var expr2 = param(1);
+        String out2 = Match
+            .<String>expression(expr2)
+            .paramNamed(p -> "N")
+            .paramOrdinal(p -> "O")
+            .paramAnonymous(p -> "A")
+            .orElse("ELSE");
+
+        assertEquals("O", out2);
+
+        var expr3 = param("n");
+        String out3 = Match
+            .<String>expression(expr3)
+            .paramAnonymous(p -> "A")
+            .paramOrdinal(p -> "O")
+            .paramNamed(p -> "N")
+            .orElse("ELSE");
+
+        assertEquals("N", out3);
+
+        var expr4 = lit("n");
+        String out4 = Match
+            .<String>expression(expr4)
+            .paramAnonymous(p -> "A")
+            .paramNamed(p -> "N")
+            .paramOrdinal(p -> "O")
+            .orElse("ELSE");
+
+        assertEquals("ELSE", out4);
+    }
+
+    @Test
+    void match_valueSet() {
+        var expr = row(1, 2);
+        String out = Match
+            .<String>expression(expr)
+            .valueSet(v -> "V")
+            .predicate(p -> "P")
+            .orElse("ELSE");
+
+        assertEquals("V", out);
+    }
+
+    @Test
+    void match_predicate() {
+        var expr = col("c").eq(1);
+        String out = Match
+            .<String>expression(expr)
+            .valueSet(v -> "V")
+            .predicate(p -> "P")
+            .orElse("ELSE");
+
+        assertEquals("P", out);
     }
 }

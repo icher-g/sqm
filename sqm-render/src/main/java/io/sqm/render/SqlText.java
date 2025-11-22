@@ -14,9 +14,9 @@ public interface SqlText {
     String sql();
 
     /**
-     * A list of parameters.
+     * A list of params.
      *
-     * @return a list of parameters.
+     * @return a list of params.
      */
     List<Object> params();
 }

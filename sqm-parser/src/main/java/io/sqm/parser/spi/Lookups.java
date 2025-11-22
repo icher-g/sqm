@@ -709,4 +709,23 @@ public interface Lookups {
      * @return {@code true} if an {@code ON} clause appears ahead, {@code false} otherwise
      */
     boolean looksLikeOnJoin(Cursor cur, Lookahead pos);
+
+    /**
+     * Determines whether the tokens indicate a query parameter: {@code $1, :name, ?}.
+     *
+     * @param cur the current token cursor
+     * @return {@code true} if a query parameter appears ahead, {@code false} otherwise
+     */
+    default boolean looksLikeParam(Cursor cur) {
+        return looksLikeParam(cur, Lookahead.initial());
+    }
+
+    /**
+     * Determines whether the tokens indicate a query parameter: {@code $1, :name, ?}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if a query parameter appears ahead, {@code false} otherwise
+     */
+    boolean looksLikeParam(Cursor cur, Lookahead pos);
 }

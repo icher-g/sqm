@@ -151,13 +151,28 @@ public final class Lexer {
             return new Token(PARAM_QMARK, "?", start);
         }
 
+        if (c == '$') {
+            int j = pos + 1;
+            if (Character.isDigit(s.charAt(j))) {
+                Matcher m = NUM.matcher(s).region(j, len);
+                if (m.lookingAt()) {
+                    String num = m.group();
+                    pos = j + num.length();
+                    return new Token(PARAM_POS, num, start);
+                }
+            }
+        }
+
         if (c == ':' || c == '@') {
             int j = pos + 1;
             while (j < len && isIdentifierPart(s.charAt(j))) j++;
             if (j > pos + 1) {
-                String name = s.substring(pos, j);
-                pos = j;
-                return new Token(PARAM_NAMED, name, start);
+                String name = s.substring(pos + 1, j);
+                // parameter cannot start with a digit.
+                if (!Character.isDigit(name.charAt(0))) {
+                    pos = j;
+                    return new Token(PARAM_NAMED, name, start);
+                }
             }
         }
 
