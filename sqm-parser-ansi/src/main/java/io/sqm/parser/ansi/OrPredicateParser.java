@@ -1,5 +1,6 @@
 package io.sqm.parser.ansi;
 
+import io.sqm.core.AndPredicate;
 import io.sqm.core.OrPredicate;
 import io.sqm.core.Predicate;
 import io.sqm.parser.core.Cursor;
@@ -8,7 +9,10 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-public class OrPredicateParser implements Parser<OrPredicate> {
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
+public class OrPredicateParser implements Parser<Predicate> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -17,13 +21,21 @@ public class OrPredicateParser implements Parser<OrPredicate> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<OrPredicate> parse(Cursor cur, ParseContext ctx) {
-        if (cur.consumeIf(TokenType.LPAREN)) {
-            var res = parseOr(cur, ctx);
-            cur.expect("Expected )", TokenType.RPAREN);
-            return res;
+    public ParseResult<? extends Predicate> parse(Cursor cur, ParseContext ctx) {
+        ParseResult<? extends Predicate> lhs = ctx.parse(AndPredicate.class, cur);
+        if (lhs.isError()) {
+            return error(lhs);
         }
-        return parseOr(cur, ctx);
+
+        while (cur.consumeIf(TokenType.OR)) {
+            var rhs = ctx.parse(AndPredicate.class, cur);
+            if (rhs.isError()) {
+                return error(rhs);
+            }
+            lhs = ok(OrPredicate.of(lhs.value(), rhs.value()));
+        }
+
+        return lhs;
     }
 
     /**
@@ -34,22 +46,5 @@ public class OrPredicateParser implements Parser<OrPredicate> {
     @Override
     public Class<OrPredicate> targetType() {
         return OrPredicate.class;
-    }
-
-    private ParseResult<OrPredicate> parseOr(Cursor cur, ParseContext ctx) {
-        // extract the expression before the OR operator to avoid recursive parsing.
-        var exprCur = cur.advance(cur.find(TokenType.OR));
-        var lhs = ctx.parse(Predicate.class, exprCur);
-        if (lhs.isError()) {
-            return error(lhs);
-        }
-
-        cur.expect("Expected OR", TokenType.OR);
-
-        var rhs = ctx.parse(Predicate.class, cur);
-        if (rhs.isError()) {
-            return error(rhs);
-        }
-        return finalize(cur, ctx, OrPredicate.of(lhs.value(), rhs.value()));
     }
 }

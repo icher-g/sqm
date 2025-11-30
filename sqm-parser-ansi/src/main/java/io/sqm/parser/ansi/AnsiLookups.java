@@ -125,7 +125,7 @@ public class AnsiLookups implements Lookups {
     @Override
     public boolean looksLikeComparisonPredicate(Cursor cur, Lookahead pos) {
         var p = Lookahead.at(pos.current());
-        if ((looksLikeIdentifier(cur, p) || looksLikeFunctionCall(cur, p)) && looksLikeComparisonOperator(cur, p)) {
+        if ((looksLikeArithmeticOperation(cur, p) || looksLikeFunctionCall(cur, p) || looksLikeIdentifier(cur, p)) && looksLikeComparisonOperator(cur, p)) {
             pos.increment(p.current() - pos.current());
             return true;
         }
@@ -297,7 +297,8 @@ public class AnsiLookups implements Lookups {
     @Override
     public boolean looksLikeExpression(Cursor cur, Lookahead pos) {
         return looksLikeCaseExpr(cur, pos) || looksLikeColumnRef(cur, pos) || looksLikeFunctionCall(cur, pos) ||
-            looksLikeLiteralExpr(cur, pos) || looksLikePredicate(cur, pos) || looksLikeValueSet(cur, pos);
+            looksLikeLiteralExpr(cur, pos) || looksLikePredicate(cur, pos) || looksLikeValueSet(cur, pos) ||
+            looksLikeParam(cur, pos) || looksLikeQueryExpr(cur, pos);
     }
 
     /**
@@ -309,7 +310,8 @@ public class AnsiLookups implements Lookups {
     @Override
     public boolean looksLikeCaseExpr(Cursor cur, Lookahead pos) {
         if (cur.match(TokenType.CASE)) {
-            pos.increment();
+            var i = cur.find(pos.current(), TokenType.END);
+            pos.increment(i - pos.current());
             return true;
         }
         return false;
@@ -365,8 +367,11 @@ public class AnsiLookups implements Lookups {
         }
         var p = Lookahead.at(pos.current() + 1); // LPAREN
         if (looksLikeQuery(cur, p)) {
-            pos.increment(p.current() - pos.current());
-            return true;
+            var i = cur.find(p.current(), TokenType.RPAREN);
+            if (i < cur.size()) {
+                pos.increment(i - pos.current());
+                return true;
+            }
         }
         return false;
     }
@@ -662,7 +667,7 @@ public class AnsiLookups implements Lookups {
      */
     @Override
     public boolean looksLikeCrossJoin(Cursor cur, Lookahead pos) {
-        if (cur.match(TokenType.CROSS)) {
+        if (cur.match(TokenType.CROSS, pos.current())) {
             pos.increment();
             return true;
         }
@@ -677,7 +682,7 @@ public class AnsiLookups implements Lookups {
      */
     @Override
     public boolean looksLikeNaturalJoin(Cursor cur, Lookahead pos) {
-        if (cur.match(TokenType.NATURAL)) {
+        if (cur.match(TokenType.NATURAL, pos.current())) {
             pos.increment();
             return true;
         }
@@ -692,7 +697,7 @@ public class AnsiLookups implements Lookups {
      */
     @Override
     public boolean looksLikeUsingJoin(Cursor cur, Lookahead pos) {
-        if (cur.match(TokenType.USING)) {
+        if (cur.match(TokenType.USING, pos.current())) {
             pos.increment();
             return true;
         }
@@ -723,7 +728,184 @@ public class AnsiLookups implements Lookups {
      */
     @Override
     public boolean looksLikeParam(Cursor cur, Lookahead pos) {
-        return cur.matchAny(TokenType.PARAM_NAMED, TokenType.PARAM_QMARK, TokenType.PARAM_POS);
+        return looksLikeAnonymousParam(cur, pos) || looksLikeNamedParam(cur, pos) || looksLikeOrdinalParam(cur, pos);
+    }
+
+    /**
+     * Determines whether the tokens indicate a query parameter: {@code ?}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if a query parameter appears ahead, {@code false} otherwise
+     */
+    @Override
+    public boolean looksLikeAnonymousParam(Cursor cur, Lookahead pos) {
+        if (cur.match(TokenType.PARAM_QMARK, pos.current())) {
+            pos.increment();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Determines whether the tokens indicate a query parameter: {@code :name}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if a query parameter appears ahead, {@code false} otherwise
+     */
+    @Override
+    public boolean looksLikeNamedParam(Cursor cur, Lookahead pos) {
+        if (cur.match(TokenType.PARAM_NAMED, pos.current())) {
+            pos.increment();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Determines whether the tokens indicate a query parameter: {@code $1}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if a query parameter appears ahead, {@code false} otherwise
+     */
+    @Override
+    public boolean looksLikeOrdinalParam(Cursor cur, Lookahead pos) {
+        if (cur.match(TokenType.PARAM_POS, pos.current())) {
+            pos.increment();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operation: {@code +, -, *, /, %}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    @Override
+    public boolean looksLikeArithmeticOperation(Cursor cur, Lookahead pos) {
+        var p = Lookahead.at(pos.current());
+        if (looksLikeMod(cur, p)) {
+            return true;
+        }
+        if (!looksLikeArithmeticExpr(cur, p)) {
+            return false;
+        }
+        // do not use p as it could skip the '('. look for the operator inside the context.
+        // (a + b) should not be found if the cursor is outside the parenthesis.
+        return cur.find(pos.current(), TokenType.PLUS, TokenType.MINUS, TokenType.STAR, TokenType.SLASH) < cur.size();
+    }
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code +}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    @Override
+    public boolean looksLikeAdd(Cursor cur, Lookahead pos) {
+        var p = Lookahead.at(pos.current());
+        if (looksLikeArithmeticExpr(cur, p)) {
+            // do not use p as it could skip the '('. look for the operator inside the context.
+            // (a + b) should not be found if the cursor is outside the parenthesis.
+            return cur.find(pos.current(), TokenType.PLUS) < cur.size();
+        }
+        return false;
+    }
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code -}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    @Override
+    public boolean looksLikeSub(Cursor cur, Lookahead pos) {
+        var p = Lookahead.at(pos.current());
+        if (looksLikeArithmeticExpr(cur, p)) {
+            // do not use p as it could skip the '('. look for the operator inside the context.
+            // (a - b) should not be found if the cursor is outside the parenthesis.
+            int skip = 0;
+            if (cur.match(TokenType.MINUS, pos.current())) {
+                skip = 1; // this is negative expression, look for the next -.
+            }
+            return cur.find(pos.current() + skip, TokenType.MINUS) < cur.size();
+        }
+        return false;
+    }
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code *}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    @Override
+    public boolean looksLikeMul(Cursor cur, Lookahead pos) {
+        var p = Lookahead.at(pos.current());
+        if (looksLikeArithmeticExpr(cur, p)) {
+            // do not use p as it could skip the '('. look for the operator inside the context.
+            // (a * b) should not be found if the cursor is outside the parenthesis.
+            return cur.find(pos.current(), TokenType.STAR) < cur.size();
+        }
+        return false;
+    }
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code /}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    @Override
+    public boolean looksLikeDiv(Cursor cur, Lookahead pos) {
+        var p = Lookahead.at(pos.current());
+        if (looksLikeArithmeticExpr(cur, p)) {
+            // do not use p as it could skip the '('. look for the operator inside the context.
+            // (a / b) should not be found if the cursor is outside the parenthesis.
+            return cur.find(pos.current(), TokenType.SLASH) < cur.size();
+        }
+        return false;
+    }
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code %}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    @Override
+    public boolean looksLikeMod(Cursor cur, Lookahead pos) {
+        if (cur.match(TokenType.PERCENT, pos.current()) || (cur.match(TokenType.IDENT, pos.current()) && cur.peek(pos.current()).lexeme().equalsIgnoreCase("mod"))) {
+            pos.increment();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code -1}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    @Override
+    public boolean looksLikeNeg(Cursor cur, Lookahead pos) {
+        if (cur.match(TokenType.MINUS, pos.current())) {
+            pos.increment();
+            return true;
+        }
+        return false;
     }
 
     private boolean looksLikeComparisonOperator(Cursor cur, Lookahead pos) {
@@ -746,17 +928,6 @@ public class AnsiLookups implements Lookups {
     }
 
     private boolean looksLikePrimaryPredicate(Cursor cur, Lookahead pos) {
-        // Parenthesized predicate: ( predicate )
-        {
-//            Lookahead p = new Lookahead(pos.current());
-//            if (cur.match(TokenType.LPAREN, p.current())) {
-//                p.increment();
-//                if (looksLikePredicate(cur, p)) {
-//                    pos.increment(p.current() - pos.current());
-//                    return true;
-//                }
-//            }
-        }
 
         // Unary NOT binds tightly: NOT <primary>
         {
@@ -778,5 +949,15 @@ public class AnsiLookups implements Lookups {
         if (looksLikeInPredicate(cur, pos)) return true;
         if (looksLikeIsNullPredicate(cur, pos)) return true;
         return looksLikeLikePredicate(cur, pos);
+    }
+
+    private boolean looksLikeArithmeticExpr(Cursor cur, Lookahead pos) {
+        var p = skipParenthesis(cur, Lookahead.at(pos.current()));
+        if (looksLikeCaseExpr(cur, p) || looksLikeColumnRef(cur, p) || looksLikeFunctionCall(cur, p) || looksLikeLiteralExpr(cur, p) ||
+            looksLikeQueryExpr(cur, p) || looksLikeNeg(cur, p)) {
+            pos.increment(p.current() - pos.current());
+            return true;
+        }
+        return false;
     }
 }

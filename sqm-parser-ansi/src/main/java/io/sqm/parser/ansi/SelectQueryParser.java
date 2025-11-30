@@ -10,6 +10,9 @@ import io.sqm.parser.spi.Parser;
 import java.util.ArrayList;
 import java.util.List;
 
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class SelectQueryParser implements Parser<SelectQuery> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -103,7 +106,7 @@ public class SelectQueryParser implements Parser<SelectQuery> {
         if (cur.match(TokenType.ORDER) && cur.match(TokenType.BY, 1)) {
             var obr = ctx.parse(OrderBy.class, cur);
             if (obr.isError()) {
-                return ParseResult.error(obr.errorMessage(), obr.problems().get(0).pos());
+                return error(obr);
             }
             q.orderBy(obr.value().items());
         }
@@ -120,7 +123,7 @@ public class SelectQueryParser implements Parser<SelectQuery> {
             q.offset(lor.value().offset());
         }
 
-        return finalize(cur, ctx, q);
+        return ok(q);
     }
 
     /**

@@ -4,11 +4,14 @@ import io.sqm.core.Query;
 import io.sqm.core.QueryExpr;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
+import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
-import io.sqm.parser.spi.Parser;
 
-public class QueryExprParser implements Parser<QueryExpr> {
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
+public class QueryExprParser implements MatchableParser<QueryExpr> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -24,7 +27,7 @@ public class QueryExprParser implements Parser<QueryExpr> {
             return error(query);
         }
         cur.expect("Expected )", TokenType.RPAREN);
-        return finalize(cur, ctx, QueryExpr.of(query.value()));
+        return ok(QueryExpr.of(query.value()));
     }
 
     /**
@@ -35,5 +38,23 @@ public class QueryExprParser implements Parser<QueryExpr> {
     @Override
     public Class<QueryExpr> targetType() {
         return QueryExpr.class;
+    }
+
+    /**
+     * Performs a look-ahead test to determine whether this parser is applicable
+     * at the current cursor position.
+     * <p>
+     * The method must <strong>not</strong> advance the cursor or modify any parsing
+     * context state. Its sole responsibility is to check whether the upcoming
+     * tokens syntactically correspond to the construct handled by this parser.
+     *
+     * @param cur the current cursor pointing to the next token to be parsed
+     * @param ctx the parsing context providing configuration, helpers and nested parsing
+     * @return {@code true} if this parser should be used to parse the upcoming
+     * construct, {@code false} otherwise
+     */
+    @Override
+    public boolean match(Cursor cur, ParseContext ctx) {
+        return cur.match(TokenType.LPAREN) && cur.match(TokenType.SELECT, 1);
     }
 }

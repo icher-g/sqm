@@ -539,6 +539,13 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         return defaultResult();
     }
 
+    /**
+     * Visits a single {@link WhenThen} clause within a {@link io.sqm.core.Expression}
+     * such as a {@code CASE WHEN ... THEN ...} construct.
+     *
+     * @param w the {@link WhenThen} clause being visited
+     * @return a result specific to the visitor implementation
+     */
     @Override
     public R visitWhenThen(WhenThen w) {
         accept(w.when());
@@ -546,12 +553,31 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         return defaultResult();
     }
 
+    /**
+     * Visits a {@link CteDef} (Common Table Expression definition) node used in
+     * {@code WITH} queries to define reusable subqueries.
+     *
+     * @param c the CTE definition being visited
+     * @return a result specific to the visitor implementation
+     */
     @Override
     public R visitCte(CteDef c) {
         accept(c.body());
         return defaultResult();
     }
 
+    /**
+     * Visits a {@link WindowDef} node representing a named window defined in the
+     * {@code WINDOW} clause of a {@code SELECT} statement.
+     * <p>Example SQL:</p>
+     * <pre>
+     * SELECT RANK() OVER w FROM employees
+     * WINDOW w AS (PARTITION BY dept ORDER BY salary DESC)
+     * </pre>
+     *
+     * @param w the window definition
+     * @return a result of type {@code R}
+     */
     @Override
     public R visitWindowDef(WindowDef w) {
         // WINDOW w AS ( <OverSpec.Def> )
@@ -559,11 +585,33 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         return defaultResult();
     }
 
+    /**
+     * Visits an {@link OverSpec.Ref} node representing a reference to a named window,
+     * as in {@code OVER w}.
+     * <p>Example SQL:</p>
+     * <pre>
+     * RANK() OVER w
+     * </pre>
+     *
+     * @param r the {@code OVER} reference
+     * @return a result of type {@code R}
+     */
     @Override
     public R visitOverRef(OverSpec.Ref r) {
         return defaultResult();
     }
 
+    /**
+     * Visits an {@link OverSpec.Def} node representing an inline {@code OVER(...)}
+     * specification attached to a window function.
+     * <p>Example SQL:</p>
+     * <pre>
+     * SUM(amount) OVER (PARTITION BY dept ORDER BY ts)
+     * </pre>
+     *
+     * @param d the {@code OVER} specification
+     * @return a result of type {@code R}
+     */
     @Override
     public R visitOverDef(OverSpec.Def d) {
         accept(d.partitionBy());
@@ -572,18 +620,44 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         return defaultResult();
     }
 
+    /**
+     * Visits an {@link PartitionBy} node representing a {@code PARTITION BY}
+     * specification attached to a window function.
+     * <p>Example SQL:</p>
+     * <pre>
+     * SUM(amount) OVER (PARTITION BY dept ORDER BY ts)
+     * </pre>
+     *
+     * @param p the {@code PARTITION BY} specification
+     * @return a result of type {@code R}
+     */
     @Override
     public R visitPartitionBy(PartitionBy p) {
         p.items().forEach(this::accept);
         return defaultResult();
     }
 
+    /**
+     * Visits a {@link FrameSpec.Single} node representing a single-bound
+     * window frame, such as {@code ROWS 5 PRECEDING} or {@code RANGE UNBOUNDED PRECEDING}.
+     *
+     * @param f the single-bound frame specification
+     * @return a result of type {@code R}
+     */
     @Override
     public R visitFrameSingle(FrameSpec.Single f) {
         accept(f.bound());
         return defaultResult();
     }
 
+    /**
+     * Visits a {@link FrameSpec.Between} node representing a bounded window
+     * frame defined with {@code BETWEEN ... AND ...}, such as:
+     * {@code ROWS BETWEEN 2 PRECEDING AND CURRENT ROW}.
+     *
+     * @param f the between-bound frame specification
+     * @return a result of type {@code R}
+     */
     @Override
     public R visitFrameBetween(FrameSpec.Between f) {
         accept(f.start());
@@ -591,31 +665,158 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         return defaultResult();
     }
 
-    // bounds
+    /**
+     * Visits a {@link BoundSpec.UnboundedPreceding} node representing the
+     * {@code UNBOUNDED PRECEDING} frame boundary.
+     *
+     * @param b the frame boundary
+     * @return a result of type {@code R}
+     */
     @Override
     public R visitBoundUnboundedPreceding(BoundSpec.UnboundedPreceding b) {
         return defaultResult();
     }
 
+    /**
+     * Visits a {@link BoundSpec.Preceding} node representing a frame boundary
+     * defined as {@code n PRECEDING}, where {@code n} is typically a numeric expression.
+     *
+     * @param b the frame boundary
+     * @return a result of type {@code R}
+     */
     @Override
     public R visitBoundPreceding(BoundSpec.Preceding b) {
         accept(b.expr());
         return defaultResult();
     }
 
+    /**
+     * Visits a {@link BoundSpec.CurrentRow} node representing the
+     * {@code CURRENT ROW} frame boundary.
+     *
+     * @param b the frame boundary
+     * @return a result of type {@code R}
+     */
     @Override
     public R visitBoundCurrentRow(BoundSpec.CurrentRow b) {
         return defaultResult();
     }
 
+    /**
+     * Visits a {@link BoundSpec.Following} node representing a frame boundary
+     * defined as {@code n FOLLOWING}, where {@code n} is typically a numeric expression.
+     *
+     * @param b the frame boundary
+     * @return a result of type {@code R}
+     */
     @Override
     public R visitBoundFollowing(BoundSpec.Following b) {
         accept(b.expr());
         return defaultResult();
     }
 
+    /**
+     * Visits a {@link BoundSpec.UnboundedFollowing} node representing the
+     * {@code UNBOUNDED FOLLOWING} frame boundary.
+     *
+     * @param b the frame boundary
+     * @return a result of type {@code R}
+     */
     @Override
     public R visitBoundUnboundedFollowing(BoundSpec.UnboundedFollowing b) {
+        return defaultResult();
+    }
+
+    /**
+     * Recursively visits an {@link AddArithmeticExpr} node by first visiting
+     * its left-hand side and right-hand side operands, and then returning the
+     * default visitor result.
+     *
+     * <p>This method provides a standard depth-first traversal for addition
+     * expressions. Subclasses may override this method to implement specialized
+     * behavior but should generally invoke {@code accept()} on the operands to
+     * ensure full traversal.</p>
+     *
+     * @param expr the addition expression to visit, never {@code null}
+     * @return the value returned by {@link #defaultResult()}
+     */
+    @Override
+    public R visitAddArithmeticExpr(AddArithmeticExpr expr) {
+        accept(expr.lhs());
+        accept(expr.rhs());
+        return defaultResult();
+    }
+
+    /**
+     * Recursively visits a {@link SubArithmeticExpr} node by first visiting
+     * its left-hand side and right-hand side operands, and then returning the
+     * default visitor result.
+     *
+     * @param expr the subtraction expression to visit, never {@code null}
+     * @return the value returned by {@link #defaultResult()}
+     */
+    @Override
+    public R visitSubArithmeticExpr(SubArithmeticExpr expr) {
+        accept(expr.lhs());
+        accept(expr.rhs());
+        return defaultResult();
+    }
+
+    /**
+     * Recursively visits a {@link MulArithmeticExpr} node by first visiting
+     * its left-hand side and right-hand side operands, and then returning the
+     * default visitor result.
+     *
+     * @param expr the multiplication expression to visit, never {@code null}
+     * @return the value returned by {@link #defaultResult()}
+     */
+    @Override
+    public R visitMulArithmeticExpr(MulArithmeticExpr expr) {
+        accept(expr.lhs());
+        accept(expr.rhs());
+        return defaultResult();
+    }
+
+    /**
+     * Recursively visits a {@link DivArithmeticExpr} node by first visiting
+     * its left-hand side and right-hand side operands, and then returning the
+     * default visitor result.
+     *
+     * @param expr the division expression to visit, never {@code null}
+     * @return the value returned by {@link #defaultResult()}
+     */
+    @Override
+    public R visitDivArithmeticExpr(DivArithmeticExpr expr) {
+        accept(expr.lhs());
+        accept(expr.rhs());
+        return defaultResult();
+    }
+
+    /**
+     * Recursively visits a {@link ModArithmeticExpr} node by first visiting
+     * its left-hand side and right-hand side operands, and then returning the
+     * default visitor result.
+     *
+     * @param expr the modulo expression to visit, never {@code null}
+     * @return the value returned by {@link #defaultResult()}
+     */
+    @Override
+    public R visitModArithmeticExpr(ModArithmeticExpr expr) {
+        accept(expr.lhs());
+        accept(expr.rhs());
+        return defaultResult();
+    }
+
+    /**
+     * Recursively visits a {@link NegativeArithmeticExpr} node by first visiting
+     * the negated operand, and then returning the default visitor result.
+     *
+     * @param expr the negation expression to visit, never {@code null}
+     * @return the value returned by {@link #defaultResult()}
+     */
+    @Override
+    public R visitNegativeArithmeticExpr(NegativeArithmeticExpr expr) {
+        accept(expr.expr());
         return defaultResult();
     }
 }

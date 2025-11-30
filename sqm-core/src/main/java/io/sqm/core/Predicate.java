@@ -1,5 +1,6 @@
 package io.sqm.core;
 
+import io.sqm.core.match.Match;
 import io.sqm.core.match.PredicateMatch;
 
 /**
@@ -108,6 +109,6 @@ public sealed interface Predicate extends Expression
      * @return a new {@code PredicateMatch}.
      */
     default <R> PredicateMatch<R> matchPredicate() {
-        return PredicateMatch.match(this);
+        return Match.predicate(this);
     }
 }

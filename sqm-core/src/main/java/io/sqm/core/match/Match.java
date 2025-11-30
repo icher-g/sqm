@@ -78,10 +78,32 @@ public interface Match<T, R> {
      *
      * @param e   the expression to match on (maybe any concrete {@code Expression} subtype)
      * @param <R> the result type produced by the match
-     * @return a new {@code ExpressionMatch} for {@code expr}
+     * @return a new {@code ExpressionMatch} for {@code e}
      */
     static <R> ExpressionMatch<R> expression(Expression e) {
         return ExpressionMatch.match(e);
+    }
+
+    /**
+     * Creates a new matcher for the given {@link ParamExpr}.
+     *
+     * @param e   the expression to match on (maybe any concrete {@code ParamExpr} subtype)
+     * @param <R> the result type produced by the match
+     * @return a new {@code ParamsMatch} for {@code e}
+     */
+    static <R> ParamsMatch<R> param(ParamExpr e) {
+        return ParamsMatch.match(e);
+    }
+
+    /**
+     * Creates a new matcher for the given {@link ArithmeticExpr}.
+     *
+     * @param e   the expression to match on (maybe any concrete {@code ArithmeticExpr} subtype)
+     * @param <R> the result type produced by the match
+     * @return a new {@code ArithmeticMatch} for {@code e}
+     */
+    static <R> ArithmeticMatch<R> arithmetic(ArithmeticExpr e) {
+        return ArithmeticMatch.match(e);
     }
 
     /**

@@ -2,9 +2,12 @@ package io.sqm.parser;
 
 import io.sqm.core.*;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.spi.MatchResult;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
+
+import static io.sqm.parser.spi.ParseResult.error;
 
 public class JoinParser implements Parser<Join> {
     /**
@@ -15,24 +18,28 @@ public class JoinParser implements Parser<Join> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<Join> parse(Cursor cur, ParseContext ctx) {
-        if (ctx.lookups().looksLikeCrossJoin(cur)) {
-            var res = ctx.parse(CrossJoin.class, cur);
-            return finalize(cur, ctx, res);
+    public ParseResult<? extends Join> parse(Cursor cur, ParseContext ctx) {
+        MatchResult<? extends Join> matched = ctx.parseIfMatch(CrossJoin.class, cur);
+        if (matched.match()) {
+            return matched.result();
         }
 
-        if (ctx.lookups().looksLikeNaturalJoin(cur)) {
-            var res = ctx.parse(NaturalJoin.class, cur);
-            return finalize(cur, ctx, res);
+        matched = ctx.parseIfMatch(NaturalJoin.class, cur);
+        if (matched.match()) {
+            return matched.result();
         }
 
-        if (ctx.lookups().looksLikeUsingJoin(cur)) {
-            var res = ctx.parse(UsingJoin.class, cur);
-            return finalize(cur, ctx, res);
+        matched = ctx.parseIfMatch(UsingJoin.class, cur);
+        if (matched.match()) {
+            return matched.result();
         }
 
-        var res = ctx.parse(OnJoin.class, cur);
-        return finalize(cur, ctx, res);
+        matched = ctx.parseIfMatch(OnJoin.class, cur);
+        if (matched.match()) {
+            return matched.result();
+        }
+
+        return error("The specified join type: " + cur.peek().lexeme() + " is not supported.", cur.fullPos());
     }
 
     /**

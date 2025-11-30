@@ -6,11 +6,14 @@ import io.sqm.core.Predicate;
 import io.sqm.core.TableRef;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
+import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
-import io.sqm.parser.spi.Parser;
 
-public class OnJoinParser implements Parser<OnJoin> {
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
+public class OnJoinParser implements MatchableParser<OnJoin> {
 
     private static JoinKind mapJoinType(TokenType tt) {
         return switch (tt) {
@@ -56,7 +59,7 @@ public class OnJoinParser implements Parser<OnJoin> {
         }
 
         // 6) Build the Join
-        return finalize(cur, ctx, OnJoin.of(table.value(), kind, on.value()));
+        return ok(OnJoin.of(table.value(), kind, on.value()));
     }
 
     /**
@@ -67,5 +70,23 @@ public class OnJoinParser implements Parser<OnJoin> {
     @Override
     public Class<OnJoin> targetType() {
         return OnJoin.class;
+    }
+
+    /**
+     * Performs a look-ahead test to determine whether this parser is applicable
+     * at the current cursor position.
+     * <p>
+     * Implementations must <strong>not</strong> advance the cursor or modify
+     * the {@link ParseContext}. Their sole responsibility is to inspect the
+     * upcoming tokens and decide if this parser is responsible for them.
+     *
+     * @param cur the cursor pointing at the current token
+     * @param ctx the parsing context providing configuration and utilities
+     * @return {@code true} if this parser should be used to parse the upcoming
+     * input, {@code false} otherwise
+     */
+    @Override
+    public boolean match(Cursor cur, ParseContext ctx) {
+        return cur.matchAny(TokenType.INNER, TokenType.LEFT, TokenType.RIGHT, TokenType.FULL, TokenType.CROSS, TokenType.JOIN);
     }
 }

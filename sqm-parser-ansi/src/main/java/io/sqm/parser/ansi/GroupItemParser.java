@@ -7,6 +7,9 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class GroupItemParser implements Parser<GroupItem> {
 
     private static boolean isPositiveInteger(String s) {
@@ -34,7 +37,7 @@ public class GroupItemParser implements Parser<GroupItem> {
             if (pos <= 0) {
                 return error("GROUP BY position must be a positive integer", pos);
             }
-            return finalize(cur, ctx, GroupItem.of(pos));
+            return ok(GroupItem.of(pos));
         }
 
         // Otherwise: delegate to the column parser
@@ -42,7 +45,7 @@ public class GroupItemParser implements Parser<GroupItem> {
         if (result.isError()) {
             return error(result);
         }
-        return finalize(cur, ctx, GroupItem.of(result.value()));
+        return ok(GroupItem.of(result.value()));
     }
 
     /**

@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.AndPredicate;
+import io.sqm.core.NotPredicate;
 import io.sqm.core.Predicate;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -8,7 +9,9 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-public class AndPredicateParser implements Parser<AndPredicate> {
+import static io.sqm.parser.spi.ParseResult.ok;
+
+public class AndPredicateParser implements Parser<Predicate> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -17,13 +20,21 @@ public class AndPredicateParser implements Parser<AndPredicate> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<AndPredicate> parse(Cursor cur, ParseContext ctx) {
-        if (cur.consumeIf(TokenType.LPAREN)) {
-            var res = parseAnd(cur, ctx);
-            cur.expect("Expected )", TokenType.RPAREN);
-            return res;
+    public ParseResult<? extends Predicate> parse(Cursor cur, ParseContext ctx) {
+        ParseResult<? extends Predicate> lhs = ctx.parse(NotPredicate.class, cur);
+        if (lhs.isError()) {
+            return lhs;
         }
-        return parseAnd(cur, ctx);
+
+        while (cur.consumeIf(TokenType.AND)) {
+            var rhs = ctx.parse(NotPredicate.class, cur);
+            if (rhs.isError()) {
+                return rhs;
+            }
+            lhs = ok(AndPredicate.of(lhs.value(), rhs.value()));
+        }
+
+        return lhs;
     }
 
     /**
@@ -34,22 +45,5 @@ public class AndPredicateParser implements Parser<AndPredicate> {
     @Override
     public Class<AndPredicate> targetType() {
         return AndPredicate.class;
-    }
-
-    private ParseResult<AndPredicate> parseAnd(Cursor cur, ParseContext ctx) {
-        // extract the expression before the AND operator to avoid recursive parsing.
-        var exprCur = cur.advance(cur.find(TokenType.AND));
-        var lhs = ctx.parse(Predicate.class, exprCur);
-        if (lhs.isError()) {
-            return error(lhs);
-        }
-
-        cur.expect("Expected AND", TokenType.AND);
-
-        var rhs = ctx.parse(Predicate.class, cur);
-        if (rhs.isError()) {
-            return error(rhs);
-        }
-        return finalize(cur, ctx, AndPredicate.of(lhs.value(), rhs.value()));
     }
 }

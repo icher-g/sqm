@@ -70,6 +70,12 @@ public final class Renderers {
             .register(new BoundSpecUnboundedFollowingRenderer())
             .register(new NamedParamExprRenderer())
             .register(new OrdinalParamExprRenderer())
-            .register(new AnonymousParamExprRenderer());
+            .register(new AnonymousParamExprRenderer())
+            .register(new AddArithmeticExprRenderer())
+            .register(new DivArithmeticExprRenderer())
+            .register(new MulArithmeticExprRenderer())
+            .register(new SubArithmeticExprRenderer())
+            .register(new ModArithmeticExprRenderer())
+            .register(new NegativeArithmeticExprRenderer());
     }
 }

@@ -84,7 +84,7 @@ public record ParseResult<T>(T value, List<ParseProblem> problems) {
         if (problems.isEmpty()) {
             return null;
         }
-        var p = problems.get(0);
+        var p = problems.getFirst();
         return p.pos() == -1 ? p.message() : p.message() + " at " + p.pos();
     }
 

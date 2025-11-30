@@ -5,6 +5,7 @@ import io.sqm.core.QualifiedStarSelectItem;
 import io.sqm.core.SelectItem;
 import io.sqm.core.StarSelectItem;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.spi.MatchResult;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
@@ -18,19 +19,19 @@ public class SelectItemParser implements Parser<SelectItem> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<SelectItem> parse(Cursor cur, ParseContext ctx) {
-        if (ctx.lookups().looksLikeStar(cur)) {
-            var res = ctx.parse(StarSelectItem.class, cur);
-            return finalize(cur, ctx, res);
+    public ParseResult<? extends SelectItem> parse(Cursor cur, ParseContext ctx) {
+        MatchResult<? extends SelectItem> matched = ctx.parseIfMatch(StarSelectItem.class, cur);
+        if (matched.match()) {
+            return matched.result();
         }
 
-        if (ctx.lookups().looksLikeQualifiedStar(cur)) {
-            var res = ctx.parse(QualifiedStarSelectItem.class, cur);
-            return finalize(cur, ctx, res);
+        matched = ctx.parseIfMatch(QualifiedStarSelectItem.class, cur);
+        if (matched.match()) {
+            return matched.result();
         }
 
-        var res = ctx.parse(ExprSelectItem.class, cur);
-        return finalize(cur, ctx, res);
+        // try to parse expression.
+        return ctx.parse(ExprSelectItem.class, cur);
     }
 
     /**

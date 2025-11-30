@@ -8,6 +8,9 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class ExprSelectItemParser implements Parser<ExprSelectItem> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -23,7 +26,7 @@ public class ExprSelectItemParser implements Parser<ExprSelectItem> {
             return error(expr);
         }
         var alias = parseAlias(cur);
-        return finalize(cur, ctx, SelectItem.expr(expr.value()).as(alias));
+        return ok(SelectItem.expr(expr.value()).as(alias));
     }
 
     /**

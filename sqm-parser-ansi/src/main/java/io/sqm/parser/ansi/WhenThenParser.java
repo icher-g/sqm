@@ -9,6 +9,9 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class WhenThenParser implements Parser<WhenThen> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -34,7 +37,7 @@ public class WhenThenParser implements Parser<WhenThen> {
         if (thenResult.isError()) {
             return error(thenResult);
         }
-        return finalize(cur, ctx, WhenThen.of(fr.value(), thenResult.value()));
+        return ok(WhenThen.of(fr.value(), thenResult.value()));
     }
 
     /**

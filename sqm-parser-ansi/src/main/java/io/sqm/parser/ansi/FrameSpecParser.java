@@ -16,13 +16,11 @@ public class FrameSpecParser implements Parser<FrameSpec> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<FrameSpec> parse(Cursor cur, ParseContext ctx) {
+    public ParseResult<? extends FrameSpec> parse(Cursor cur, ParseContext ctx) {
         if (cur.match(TokenType.BETWEEN, 1)) {
-            var fr = ctx.parse(FrameSpec.Between.class, cur);
-            return finalize(cur, ctx, fr);
+            return ctx.parse(FrameSpec.Between.class, cur);
         }
-        var fr = ctx.parse(FrameSpec.Single.class, cur);
-        return finalize(cur, ctx, fr);
+        return ctx.parse(FrameSpec.Single.class, cur);
     }
 
     /**

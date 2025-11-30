@@ -14,7 +14,7 @@ public enum TokenType {
     DOT, COMMA, LPAREN, RPAREN,
 
     // arithmetic
-    PLUS, MINUS, STAR, SLASH, CARET,
+    PLUS, MINUS, STAR, SLASH, CARET, PERCENT,
 
     // comparison
     EQ, NEQ1, NEQ2, LT, LTE, GT, GTE,

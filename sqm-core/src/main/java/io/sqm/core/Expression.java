@@ -11,7 +11,7 @@ import java.util.List;
  * Any value-producing node (scalar or boolean).
  */
 public sealed interface Expression extends Node
-    permits CaseExpr, ColumnExpr, FunctionExpr, FunctionExpr.Arg, LiteralExpr, ParamExpr, Predicate, ValueSet {
+    permits ArithmeticExpr, CaseExpr, ColumnExpr, FunctionExpr, FunctionExpr.Arg, LiteralExpr, ParamExpr, Predicate, ValueSet {
 
     /**
      * Creates a literal expression.
@@ -176,6 +176,87 @@ public sealed interface Expression extends Node
      */
     default SelectItem toSelectItem() {
         return SelectItem.expr(this).as(null);
+    }
+
+    /**
+     * Creates an arithmetic addition expression of the form {@code this + rhs}.
+     *
+     * <p>The returned expression represents SQL addition and is equivalent to
+     * applying the {@link AddArithmeticExpr} operator to the current expression
+     * as the left-hand side operand.</p>
+     *
+     * @param rhs the right-hand side operand, must not be {@code null}
+     * @return a new {@link AddArithmeticExpr} representing {@code this + rhs}
+     */
+    default AddArithmeticExpr add(Expression rhs) {
+        return AddArithmeticExpr.of(this, rhs);
+    }
+
+    /**
+     * Creates an arithmetic subtraction expression of the form {@code this - rhs}.
+     *
+     * <p>The returned expression represents SQL subtraction and is equivalent to
+     * applying the {@link SubArithmeticExpr} operator to the current expression
+     * as the left-hand side operand.</p>
+     *
+     * @param rhs the right-hand side operand, must not be {@code null}
+     * @return a new {@link SubArithmeticExpr} representing {@code this - rhs}
+     */
+    default SubArithmeticExpr sub(Expression rhs) {
+        return SubArithmeticExpr.of(this, rhs);
+    }
+
+    /**
+     * Creates an arithmetic multiplication expression of the form {@code this * rhs}.
+     *
+     * <p>The returned expression represents SQL multiplication and is equivalent to
+     * applying the {@link MulArithmeticExpr} operator to the current expression
+     * as the left-hand side operand.</p>
+     *
+     * @param rhs the right-hand side operand, must not be {@code null}
+     * @return a new {@link MulArithmeticExpr} representing {@code this * rhs}
+     */
+    default MulArithmeticExpr mul(Expression rhs) {
+        return MulArithmeticExpr.of(this, rhs);
+    }
+
+    /**
+     * Creates an arithmetic division expression of the form {@code this / rhs}.
+     *
+     * <p>The returned expression represents SQL division and is equivalent to
+     * applying the {@link DivArithmeticExpr} operator to the current expression
+     * as the left-hand side operand.</p>
+     *
+     * @param rhs the right-hand side operand, must not be {@code null}
+     * @return a new {@link DivArithmeticExpr} representing {@code this / rhs}
+     */
+    default DivArithmeticExpr div(Expression rhs) {
+        return DivArithmeticExpr.of(this, rhs);
+    }
+
+    /**
+     * Creates an arithmetic modulo expression of the form {@code this % rhs}.
+     *
+     * <p>The exact SQL representation of the modulo operator may depend on the
+     * rendering dialect, but the logical structure remains {@code lhs % rhs}.</p>
+     *
+     * @param rhs the right-hand side operand, must not be {@code null}
+     * @return a new {@link ModArithmeticExpr} representing {@code this % rhs}
+     */
+    default ModArithmeticExpr mod(Expression rhs) {
+        return ModArithmeticExpr.of(this, rhs);
+    }
+
+    /**
+     * Creates a unary negation expression of the form {@code -this}.
+     *
+     * <p>This corresponds to numeric negation in SQL and produces a
+     * {@link NegativeArithmeticExpr} that negates the current expression.</p>
+     *
+     * @return a new {@link NegativeArithmeticExpr} representing {@code -this}
+     */
+    default NegativeArithmeticExpr neg() {
+        return NegativeArithmeticExpr.of(this);
     }
 
     /**
@@ -346,7 +427,7 @@ public sealed interface Expression extends Node
      * @return A newly created instance of the BETWEEN predicate.
      */
     default BetweenPredicate between(Expression lower, Expression upper) {
-        return BetweenPredicate.of(this, lower, upper, false);
+        return BetweenPredicate.of(this, lower, upper, false, false);
     }
 
     /**
@@ -357,7 +438,7 @@ public sealed interface Expression extends Node
      * @return A newly created instance of the BETWEEN predicate.
      */
     default BetweenPredicate between(Object lower, Object upper) {
-        return BetweenPredicate.of(this, literal(lower), literal(upper), false);
+        return BetweenPredicate.of(this, literal(lower), literal(upper), false, false);
     }
 
     /**

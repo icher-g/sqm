@@ -7,6 +7,9 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class LimitOffsetParser implements Parser<LimitOffset> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -60,7 +63,7 @@ public class LimitOffsetParser implements Parser<LimitOffset> {
             }
         }
 
-        return finalize(cur, ctx, LimitOffset.of(limit, offset));
+        return ok(LimitOffset.of(limit, offset));
     }
 
     /**

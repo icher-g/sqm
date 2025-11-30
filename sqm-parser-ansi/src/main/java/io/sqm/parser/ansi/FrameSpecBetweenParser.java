@@ -8,6 +8,9 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class FrameSpecBetweenParser implements Parser<FrameSpec.Between> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -30,7 +33,7 @@ public class FrameSpecBetweenParser implements Parser<FrameSpec.Between> {
         if (end.isError()) {
             return error(end);
         }
-        return finalize(cur, ctx, FrameSpec.between(unit, start.value(), end.value()));
+        return ok(FrameSpec.between(unit, start.value(), end.value()));
     }
 
     /**

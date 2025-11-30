@@ -7,6 +7,8 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class BoundSpecCurrentRowParser implements Parser<BoundSpec.CurrentRow> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -19,7 +21,7 @@ public class BoundSpecCurrentRowParser implements Parser<BoundSpec.CurrentRow> {
     public ParseResult<BoundSpec.CurrentRow> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected CURRENT", TokenType.CURRENT);
         cur.expect("Expected ROW after CURRENT", TokenType.ROW);
-        return finalize(cur, ctx, BoundSpec.currentRow());
+        return ok(BoundSpec.currentRow());
     }
 
     /**

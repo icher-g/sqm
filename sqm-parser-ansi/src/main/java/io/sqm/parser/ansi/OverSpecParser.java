@@ -7,6 +7,8 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.spi.ParseResult.error;
+
 public class OverSpecParser implements Parser<OverSpec> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -16,11 +18,10 @@ public class OverSpecParser implements Parser<OverSpec> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<OverSpec> parse(Cursor cur, ParseContext ctx) {
+    public ParseResult<? extends OverSpec> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected OVER", TokenType.OVER);
         if (cur.match(TokenType.IDENT)) {
-            var or = ctx.parse(OverSpec.Ref.class, cur);
-            return finalize(cur, ctx, or);
+            return ctx.parse(OverSpec.Ref.class, cur);
         }
         else {
             cur.expect("Expected '(' after OVER", TokenType.LPAREN);
@@ -29,7 +30,7 @@ public class OverSpecParser implements Parser<OverSpec> {
                 return error(or);
             }
             cur.expect("Expected ')' to close statement", TokenType.RPAREN);
-            return finalize(cur, ctx, or.value());
+            return or;
         }
     }
 

@@ -2,13 +2,24 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.NotPredicate;
 import io.sqm.core.Predicate;
+import io.sqm.parser.AtomicPredicateParser;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-public class NotPredicateParser implements Parser<NotPredicate> {
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
+public class NotPredicateParser implements Parser<Predicate> {
+
+    private final AtomicPredicateParser atomicPredicateParser;
+
+    public NotPredicateParser(AtomicPredicateParser atomicPredicateParser) {
+        this.atomicPredicateParser = atomicPredicateParser;
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -17,17 +28,20 @@ public class NotPredicateParser implements Parser<NotPredicate> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<NotPredicate> parse(Cursor cur, ParseContext ctx) {
-        cur.expect("Expected NOT", TokenType.NOT);
-        cur.expect("Expected (", TokenType.LPAREN);
+    public ParseResult<? extends Predicate> parse(Cursor cur, ParseContext ctx) {
+        if (cur.match(TokenType.NOT) && cur.match(TokenType.LPAREN, 1)) {
+            cur.expect("Expected NOT", TokenType.NOT);
+            cur.expect("Expected (", TokenType.LPAREN);
 
-        var res = ctx.parse(Predicate.class, cur);
-        if (res.isError()) {
-            return error(res);
+            var result = ctx.parse(Predicate.class, cur);
+            if (result.isError()) {
+                return error(result);
+            }
+
+            cur.expect("Expected )", TokenType.RPAREN);
+            return ok(NotPredicate.of(result.value()));
         }
-
-        cur.expect("Expected )", TokenType.RPAREN);
-        return finalize(cur, ctx, NotPredicate.of(res.value()));
+        return atomicPredicateParser.parse(cur, ctx);
     }
 
     /**

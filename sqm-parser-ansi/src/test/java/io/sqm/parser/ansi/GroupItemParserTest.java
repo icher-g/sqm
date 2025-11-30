@@ -16,12 +16,16 @@ class GroupItemParserTest {
     private final ParseContext ctx = ParseContext.of(new AnsiSpecs());
     private final GroupItemParser parser = new GroupItemParser();
 
+    private ParseResult<? extends GroupItem> parse(String sql) {
+        return ctx.parse(parser, sql);
+    }
+
     // ---------- Positional (GROUP BY 1, 2, ...) ----------
 
     @Test
     @DisplayName("Ordinal: '1' -> position=1")
     void ordinal_simple() {
-        ParseResult<GroupItem> res = parser.parse("1", ctx);
+        var res = parse("1");
         Assertions.assertTrue(res.ok(), () -> "expected ok, got error: " + res.errorMessage());
         Assertions.assertNull(res.value().expr(), "column must be null for positional group item");
         Assertions.assertEquals(1, res.value().ordinal());
@@ -30,7 +34,7 @@ class GroupItemParserTest {
     @Test
     @DisplayName("Ordinal with spaces: '  2  ' -> position=2")
     void ordinal_trimmed() {
-        ParseResult<GroupItem> res = parser.parse("  2  ", ctx);
+        var res = parse("  2  ");
         Assertions.assertTrue(res.ok());
         Assertions.assertNull(res.value().expr());
         Assertions.assertEquals(2, res.value().ordinal());
@@ -39,7 +43,7 @@ class GroupItemParserTest {
     @Test
     @DisplayName("Ordinal zero: '0' -> error (must be positive)")
     void ordinal_zero_error() {
-        ParseResult<GroupItem> res = parser.parse("0", ctx);
+        var res = parse("0");
         Assertions.assertFalse(res.ok());
         Assertions.assertTrue(Objects.requireNonNull(res.errorMessage()).toLowerCase().contains("positive"), "error should mention positive integer");
     }
@@ -49,7 +53,7 @@ class GroupItemParserTest {
     @Test
     @DisplayName("Column: 'c' -> ColumnExpr.of(\"c\")")
     void column_simple() {
-        ParseResult<GroupItem> res = parser.parse("c", ctx);
+        var res = parse("c");
         Assertions.assertTrue(res.ok(), () -> "expected ok, got error: " + res.errorMessage());
 
         GroupItem gi = res.value();
@@ -63,7 +67,7 @@ class GroupItemParserTest {
     @Test
     @DisplayName("Qualified: 't.c' -> Column.of(\"c\").from(\"t\")")
     void column_qualified() {
-        ParseResult<GroupItem> res = parser.parse("t.c", ctx);
+        var res = parse("t.c");
         Assertions.assertTrue(res.ok(), () -> "expected ok, got error: " + res.errorMessage());
 
         Expression expected = ColumnExpr.of("c").inTable("t");
@@ -74,7 +78,7 @@ class GroupItemParserTest {
     @Test
     @DisplayName("Quoted qualified: '\"T\".\"Name\"' -> Column.of(\"Name\").from(\"T\")")
     void column_quotedQualified() {
-        ParseResult<GroupItem> res = parser.parse("\"T\".\"Name\"", ctx);
+        var res = parse("\"T\".\"Name\"");
         Assertions.assertTrue(res.ok(), () -> "expected ok, got error: " + res.errorMessage());
 
         Expression expected = ColumnExpr.of("Name").inTable("T");
@@ -87,7 +91,7 @@ class GroupItemParserTest {
     @Test
     @DisplayName("Blank -> error: Missing expr")
     void blank_error() {
-        ParseResult<GroupItem> res = parser.parse("   ", ctx);
+        var res = parse("   ");
         Assertions.assertFalse(res.ok());
         Assertions.assertTrue(Objects.requireNonNull(res.errorMessage()).toLowerCase().contains("spec cannot be blank"), "should mention missing expr");
     }
@@ -95,7 +99,7 @@ class GroupItemParserTest {
     @Test
     @DisplayName("Garbage (expr.g., '-') -> error propagated from column parser")
     void garbage_error() {
-        ParseResult<GroupItem> res = parser.parse("-", ctx);
+        var res = parse("-");
         Assertions.assertFalse(res.ok(), "dash is not a valid ordinal or column");
         Assertions.assertNotNull(res.errorMessage());
         Assertions.assertFalse(Objects.requireNonNull(res.errorMessage()).isBlank());

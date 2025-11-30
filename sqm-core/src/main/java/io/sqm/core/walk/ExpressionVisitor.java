@@ -106,5 +106,78 @@ public interface ExpressionVisitor<R> {
      * @return a result produced by the visitor
      */
     R visitRowListExpr(RowListExpr v);
+
+    /**
+     * Visits an {@link AddArithmeticExpr} node.
+     *
+     * <p>This method is invoked when the visitor encounters a binary addition
+     * expression of the form {@code lhs + rhs}. Implementations may perform
+     * processing, transformation, or traversal of the node and its operands.</p>
+     *
+     * @param expr the addition expression being visited, never {@code null}
+     * @return a visitor-defined result
+     */
+    R visitAddArithmeticExpr(AddArithmeticExpr expr);
+
+    /**
+     * Visits a {@link SubArithmeticExpr} node.
+     *
+     * <p>This method is invoked when the visitor encounters a binary subtraction
+     * expression of the form {@code lhs - rhs}. Implementations may perform
+     * processing, transformation, or traversal of the node and its operands.</p>
+     *
+     * @param expr the subtraction expression being visited, never {@code null}
+     * @return a visitor-defined result
+     */
+    R visitSubArithmeticExpr(SubArithmeticExpr expr);
+
+    /**
+     * Visits a {@link MulArithmeticExpr} node.
+     *
+     * <p>This method is invoked when the visitor encounters a binary multiplication
+     * expression of the form {@code lhs * rhs}. Implementations may perform
+     * processing, transformation, or traversal of the node and its operands.</p>
+     *
+     * @param expr the multiplication expression being visited, never {@code null}
+     * @return a visitor-defined result
+     */
+    R visitMulArithmeticExpr(MulArithmeticExpr expr);
+
+    /**
+     * Visits a {@link DivArithmeticExpr} node.
+     *
+     * <p>This method is invoked when the visitor encounters a binary division
+     * expression of the form {@code lhs / rhs}. Implementations may perform
+     * processing, transformation, or traversal of the node and its operands.</p>
+     *
+     * @param expr the division expression being visited, never {@code null}
+     * @return a visitor-defined result
+     */
+    R visitDivArithmeticExpr(DivArithmeticExpr expr);
+
+    /**
+     * Visits a {@link ModArithmeticExpr} node.
+     *
+     * <p>This method is invoked when the visitor encounters a binary modulo
+     * expression of the form {@code lhs % rhs}. Implementations may perform
+     * processing, transformation, or traversal of the node and its operands.
+     * Note that the rendered SQL form of the modulo operator may vary by dialect.</p>
+     *
+     * @param expr the modulo expression being visited, never {@code null}
+     * @return a visitor-defined result
+     */
+    R visitModArithmeticExpr(ModArithmeticExpr expr);
+
+    /**
+     * Visits a {@link NegativeArithmeticExpr} node.
+     *
+     * <p>This method is invoked when the visitor encounters a unary negation
+     * expression of the form {@code -expr}. Implementations may perform
+     * processing, transformation, or traversal of the negated operand.</p>
+     *
+     * @param expr the negation expression being visited, never {@code null}
+     * @return a visitor-defined result
+     */
+    R visitNegativeArithmeticExpr(NegativeArithmeticExpr expr);
 }
 

@@ -1,8 +1,8 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.*;
+import io.sqm.parser.AtomicQueryParser;
 import io.sqm.parser.core.Cursor;
-import io.sqm.parser.core.Token;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
@@ -11,7 +11,17 @@ import io.sqm.parser.spi.Parser;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CompositeQueryParser implements Parser<CompositeQuery> {
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
+public class CompositeQueryParser implements Parser<Query> {
+
+    private final AtomicQueryParser atomicQueryParser;
+
+    public CompositeQueryParser(AtomicQueryParser atomicQueryParser) {
+        this.atomicQueryParser = atomicQueryParser;
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -20,23 +30,24 @@ public class CompositeQueryParser implements Parser<CompositeQuery> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<CompositeQuery> parse(Cursor cur, ParseContext ctx) {
+    public ParseResult<? extends Query> parse(Cursor cur, ParseContext ctx) {
         List<Query> terms = new ArrayList<>();
         List<SetOperator> ops = new ArrayList<>();
 
-        Token t;
         do {
-            // extract a sub query to avoid recursive parsing.
-            var queryCur = cur.advance(cur.find(Terminators.COMPOSITE_QUERY));
-            queryCur.consumeIf(TokenType.LPAREN); // remove '(' if wrapped.
-            var term = ctx.parse(Query.class, queryCur);
+            var term = atomicQueryParser.parse(cur, ctx);
             if (term.isError()) {
                 return error(term);
             }
             terms.add(term.value());
-            t = cur.isEof() || cur.match(TokenType.RPAREN) ? cur.peek() : cur.advance();
+
+            if (!cur.matchAny(Indicators.COMPOSITE_QUERY)) {
+                break;
+            }
+
+            var token = cur.advance();
             var isAll = cur.consumeIf(TokenType.ALL);
-            switch (t.type()) {
+            switch (token.type()) {
                 case UNION -> {
                     if (isAll)
                         ops.add(SetOperator.UNION_ALL);
@@ -56,7 +67,13 @@ public class CompositeQueryParser implements Parser<CompositeQuery> {
                         ops.add(SetOperator.EXCEPT);
                 }
             }
-        } while (Indicators.COMPOSITE_QUERY.contains(t.type()));
+        }
+        while (true);
+
+        // terms.size() == 1 means this is a simple SELECT query.
+        if (terms.size() == 1) {
+            return ok(terms.getFirst());
+        }
 
         // ORDER BY (optional)
         OrderBy orderBy = null;
@@ -74,7 +91,7 @@ public class CompositeQueryParser implements Parser<CompositeQuery> {
             return error(lor);
         }
 
-        return finalize(cur, ctx, Query.compose(terms, ops, orderBy, lor.value()));
+        return ok(Query.compose(terms, ops, orderBy, lor.value()));
     }
 
     /**

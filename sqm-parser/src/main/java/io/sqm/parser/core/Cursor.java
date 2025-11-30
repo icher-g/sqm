@@ -17,7 +17,6 @@ public final class Cursor {
     private final int basePos;
     private int pos;
 
-
     /**
      * Creates Cursor from the list of tokens.
      *
@@ -35,13 +34,24 @@ public final class Cursor {
      */
     public Cursor(List<Token> tokens, int basePos) {
         var copy = new ArrayList<>(tokens);
-        if (copy.isEmpty() || copy.get(copy.size() - 1).type() != TokenType.EOF) {
-            int pos = copy.isEmpty() ? 0 : copy.get(copy.size() - 1).pos();
+        if (copy.isEmpty() || copy.getLast().type() != TokenType.EOF) {
+            int pos = copy.isEmpty() ? 0 : copy.getLast().pos();
             copy.add(new Token(TokenType.EOF, "", pos));
         }
         this.tokens = copy;
         this.basePos = basePos;
         this.pos = 0;
+    }
+
+    /**
+     * Creates a new instance of {@link Cursor} from the provided specification.
+     *
+     * @param spec a specification.
+     * @return a new instance of {@link Cursor}.
+     */
+    public static Cursor of(String spec) {
+        var ts = Lexer.lexAll(spec);
+        return new Cursor(ts);
     }
 
     /**
@@ -51,6 +61,24 @@ public final class Cursor {
      */
     public int size() {
         return tokens.size();
+    }
+
+    /**
+     * Gets the current cursor position.
+     *
+     * @return a current cursor position.
+     */
+    public int mark() {
+        return pos;
+    }
+
+    /**
+     * Restores current position of the cursor.
+     *
+     * @param mark a position to restore to.
+     */
+    public void restore(int mark) {
+        this.pos = mark;
     }
 
     /**
@@ -279,7 +307,7 @@ public final class Cursor {
      * @return size if not found.
      */
     public int find(Set<TokenType> types) {
-        return find(types, Set.of(TokenType.LPAREN), Set.of(TokenType.RPAREN), 0);
+        return find(types, 0);
     }
 
     /**
@@ -290,27 +318,63 @@ public final class Cursor {
      * @return size if not found.
      */
     public int find(Set<TokenType> types, int lookahead) {
-        return find(types, Set.of(TokenType.LPAREN), Set.of(TokenType.RPAREN), lookahead);
+        return find(types, Set.of(TokenType.LPAREN), Set.of(TokenType.RPAREN), Set.of(TokenType.EOF), lookahead);
     }
 
     /**
      * Find the index of the first token type at top-level (parenDepth == 0), scanning from 'current position'.
      *
-     * @param types     a list of types to look for any of them.
-     * @param startSkip a token type to start skipping if met. By default, it is {@link TokenType#LPAREN}.
-     * @param endSkip   a token type to stop skipping if met. By default, it is {@link TokenType#RPAREN}.
-     * @param lookahead a number of token to skip at the beginning.
+     * @param types      a list of types to look for any of them.
+     * @param stopLookup a token type(s) to stop the lookup if met. By default, it is {@link TokenType#EOF}.
      * @return size if not found.
      */
-    public int find(Set<TokenType> types, Set<TokenType> startSkip, Set<TokenType> endSkip, int lookahead) {
+    public int find(Set<TokenType> types, Set<TokenType> stopLookup) {
+        return find(types, stopLookup, 0);
+    }
+
+    /**
+     * Find the index of the first token type at top-level (parenDepth == 0), scanning from 'current position'.
+     *
+     * @param types      a list of types to look for any of them.
+     * @param stopLookup a token type(s) to stop the lookup if met. By default, it is {@link TokenType#EOF}.
+     * @param lookahead  a number of token to skip at the beginning.
+     * @return size if not found.
+     */
+    public int find(Set<TokenType> types, Set<TokenType> stopLookup, int lookahead) {
+        return find(types, Set.of(TokenType.LPAREN), Set.of(TokenType.RPAREN), stopLookup, lookahead);
+    }
+
+    /**
+     * Find the index of the first token type at top-level (parenDepth == 0), scanning from 'current position'.
+     *
+     * @param types      a list of types to look for any of them.
+     * @param startSkip  a token type(s) to start skipping if met. By default, it is {@link TokenType#LPAREN}.
+     * @param endSkip    a token type(s) to stop skipping if met. By default, it is {@link TokenType#RPAREN}.
+     * @param stopLookup a token type(s) to stop the lookup if met. By default, it is {@link TokenType#EOF}.
+     * @param lookahead  a number of token to skip at the beginning.
+     * @return size if not found.
+     */
+    public int find(Set<TokenType> types, Set<TokenType> startSkip, Set<TokenType> endSkip, Set<TokenType> stopLookup, int lookahead) {
         int depth = 0;
 
         for (int i = pos + lookahead; i < tokens.size(); i++) {
             var t = tokens.get(i);
 
-            if (startSkip.contains(t.type())) depth++;
-            else if (depth > 0 && endSkip.contains(t.type())) depth = Math.max(0, depth - 1);
-            else if (depth == 0 && types.contains(t.type())) {
+            if (stopLookup.contains(t.type())) {
+                break;
+            }
+
+            if (startSkip.contains(t.type())) {
+                depth++;
+                continue;
+            }
+
+            if (depth > 0 && endSkip.contains(t.type())) {
+                depth = Math.max(0, depth - 1);
+                continue;
+            }
+
+            if (depth == 0 && types.contains(t.type())) {
                 return i;
             }
         }

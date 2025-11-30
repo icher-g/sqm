@@ -8,6 +8,9 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class BoundSpecPrecedingParser implements Parser<BoundSpec.Preceding> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -23,7 +26,7 @@ public class BoundSpecPrecedingParser implements Parser<BoundSpec.Preceding> {
             return error(er);
         }
         cur.expect("Expected PRECEDING after expression", TokenType.PRECEDING);
-        return finalize(cur, ctx, BoundSpec.preceding(er.value()));
+        return ok(BoundSpec.preceding(er.value()));
     }
 
     /**

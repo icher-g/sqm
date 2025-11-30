@@ -4,14 +4,16 @@ import io.sqm.core.Table;
 import io.sqm.core.TableRef;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
+import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
-import io.sqm.parser.spi.Parser;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TableParser implements Parser<Table> {
+import static io.sqm.parser.spi.ParseResult.ok;
+
+public class TableParser implements MatchableParser<Table> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -37,10 +39,10 @@ public class TableParser implements Parser<Table> {
         String alias = parseAlias(cur);
 
         // Map parts → schema + name
-        String name = parts.get(parts.size() - 1);
+        String name = parts.getLast();
         String schema = parts.size() > 1 ? String.join(".", parts.subList(0, parts.size() - 1)) : null;
 
-        return finalize(cur, ctx, TableRef.table(schema, name).as(alias));
+        return ok(TableRef.table(schema, name).as(alias));
     }
 
     /**
@@ -51,5 +53,33 @@ public class TableParser implements Parser<Table> {
     @Override
     public Class<Table> targetType() {
         return Table.class;
+    }
+
+    /**
+     * Performs a look-ahead test to determine whether this parser is applicable
+     * at the current cursor position.
+     * <p>
+     * Implementations must <strong>not</strong> advance the cursor or modify
+     * the {@link ParseContext}. Their sole responsibility is to inspect the
+     * upcoming tokens and decide if this parser is responsible for them.
+     *
+     * @param cur the cursor pointing at the current token
+     * @param ctx the parsing context providing configuration and utilities
+     * @return {@code true} if this parser should be used to parse the upcoming
+     * input, {@code false} otherwise
+     */
+    @Override
+    public boolean match(Cursor cur, ParseContext ctx) {
+        if (cur.match(TokenType.IDENT)) {
+            int i = 1;
+            while (cur.match(TokenType.DOT, i)) {
+                if (!cur.match(TokenType.IDENT, i + 1)) {
+                    return false;
+                }
+                i += 2;
+            }
+            return true;
+        }
+        return false;
     }
 }

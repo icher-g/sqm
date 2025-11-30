@@ -15,10 +15,13 @@ public final class Parsers {
     }
 
     private static ParsersRepository registerDefaults(ParsersRepository r) {
+        var atomicExprParser = new AtomicExprParser();
+        var atomicPredicateParser = new AtomicPredicateParser();
+        var atomicQueryParser = new AtomicQueryParser();
         return r
             .register(new QueryParser())
             .register(new WithQueryParser())
-            .register(new CompositeQueryParser())
+            .register(new CompositeQueryParser(atomicQueryParser))
             .register(new SelectQueryParser())
             .register(new CteDefParser())
             .register(new ExpressionParser())
@@ -26,10 +29,10 @@ public final class Parsers {
             .register(new FunctionExprParser())
             .register(new PredicateParser())
             .register(new ValueSetParser())
-            .register(new ColumnRefParser())
+            .register(new ColumnExprParser())
             .register(new LiteralExprParser())
             .register(new ExistsPredicateParser())
-            .register(new NotPredicateParser())
+            .register(new NotPredicateParser(atomicPredicateParser))
             .register(new BetweenPredicateParser())
             .register(new IsNullPredicateParser())
             .register(new InPredicateParser())
@@ -78,6 +81,18 @@ public final class Parsers {
             .register(new OverSpecRefParser())
             .register(new PartitionByParser())
             .register(new WindowDefParser())
-            .register(new ParamExprParser());
+            .register(new ParamExprParser())
+            .register(new AnonymousParamExprParser())
+            .register(new NamedParamExprParser())
+            .register(new OrdinalParamExprParser())
+            .register(new ArithmeticExprParser())
+            .register(new NegativeArithmeticExprParser(atomicExprParser))
+            .register(new ModArithmeticExprParser(atomicExprParser))
+            .register(new AddArithmeticExprParser())
+            .register(new SubArithmeticExprParser())
+            .register(new MulArithmeticExprParser(atomicExprParser))
+            .register(new DivArithmeticExprParser(atomicExprParser))
+            .register(new MultiplicativeArithmeticExprParser(atomicExprParser))
+            .register(new AdditiveArithmeticExprParser());
     }
 }

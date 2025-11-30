@@ -4,14 +4,17 @@ import io.sqm.core.RowExpr;
 import io.sqm.core.RowListExpr;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
+import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
-import io.sqm.parser.spi.Parser;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class RowListExprParser implements Parser<RowListExpr> {
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
+public class RowListExprParser implements MatchableParser<RowListExpr> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -34,7 +37,7 @@ public class RowListExprParser implements Parser<RowListExpr> {
         } while (cur.consumeIf(TokenType.COMMA));
 
         cur.expect("Expected )", TokenType.RPAREN);
-        return finalize(cur, ctx, RowListExpr.of(rows));
+        return ok(RowListExpr.of(rows));
     }
 
     /**
@@ -45,5 +48,30 @@ public class RowListExprParser implements Parser<RowListExpr> {
     @Override
     public Class<RowListExpr> targetType() {
         return RowListExpr.class;
+    }
+
+    /**
+     * Performs a look-ahead test to determine whether this parser is applicable
+     * at the current cursor position.
+     * <p>
+     * The method must <strong>not</strong> advance the cursor or modify any parsing
+     * context state. Its sole responsibility is to check whether the upcoming
+     * tokens syntactically correspond to the construct handled by this parser.
+     *
+     * @param cur the current cursor pointing to the next token to be parsed
+     * @param ctx the parsing context providing configuration, helpers and nested parsing
+     * @return {@code true} if this parser should be used to parse the upcoming
+     * construct, {@code false} otherwise
+     */
+    @Override
+    public boolean match(Cursor cur, ParseContext ctx) {
+        // match ((1, or (('a', --> ((1,2),(3,4))
+        if (!cur.match(TokenType.LPAREN)) {
+            return false;
+        }
+        if (!cur.match(TokenType.LPAREN, 1)) {
+            return false;
+        }
+        return cur.matchAny(2, TokenType.NUMBER, TokenType.STRING);
     }
 }

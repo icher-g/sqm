@@ -1,11 +1,16 @@
 package io.sqm.parser;
 
+import io.sqm.core.AnonymousParamExpr;
+import io.sqm.core.NamedParamExpr;
+import io.sqm.core.OrdinalParamExpr;
 import io.sqm.core.ParamExpr;
 import io.sqm.parser.core.Cursor;
-import io.sqm.parser.core.TokenType;
+import io.sqm.parser.spi.MatchResult;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
+
+import static io.sqm.parser.spi.ParseResult.error;
 
 public class ParamExprParser implements Parser<ParamExpr> {
     /**
@@ -16,17 +21,23 @@ public class ParamExprParser implements Parser<ParamExpr> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<ParamExpr> parse(Cursor cur, ParseContext ctx) {
-        if (cur.consumeIf(TokenType.PARAM_QMARK)) {
-            return finalize(cur, ctx, ParamExpr.anonymous());
+    public ParseResult<? extends ParamExpr> parse(Cursor cur, ParseContext ctx) {
+        MatchResult<? extends ParamExpr> matched = ctx.parseIfMatch(AnonymousParamExpr.class, cur);
+        if (matched.match()) {
+            return matched.result();
         }
-        if (cur.match(TokenType.PARAM_NAMED)) {
-            return finalize(cur, ctx, ParamExpr.named(cur.advance().lexeme()));
+
+        matched = ctx.parseIfMatch(NamedParamExpr.class, cur);
+        if (matched.match()) {
+            return matched.result();
         }
-        if (cur.match(TokenType.PARAM_POS)) {
-            return finalize(cur, ctx, ParamExpr.ordinal(Integer.parseInt(cur.advance().lexeme())));
+
+        matched = ctx.parseIfMatch(OrdinalParamExpr.class, cur);
+        if (matched.match()) {
+            return matched.result();
         }
-        throw new IllegalArgumentException("The specified parameter: " + cur.peek().lexeme() + " is not supported.");
+
+        return error("The specified parameter: " + cur.peek().lexeme() + " is not supported.", cur.fullPos());
     }
 
     /**

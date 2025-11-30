@@ -31,6 +31,7 @@ public class PredicateContractsTest {
             Expression.column("c"),
             Expression.literal(1),
             Expression.literal(10),
+            false,
             false);
 
         assertEquals("c", p.value().matchExpression().column(l -> l.name()).orElse(null));

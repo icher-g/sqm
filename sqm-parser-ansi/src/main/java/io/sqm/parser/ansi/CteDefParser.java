@@ -10,6 +10,9 @@ import io.sqm.parser.spi.Parser;
 
 import java.util.ArrayList;
 
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class CteDefParser implements Parser<CteDef> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -41,7 +44,7 @@ public class CteDefParser implements Parser<CteDef> {
         }
 
         cur.expect("Expected ')' after CTE subquery", TokenType.RPAREN);
-        return finalize(cur, ctx, Query.cte(name.lexeme(), body.value(), aliases));
+        return ok(Query.cte(name.lexeme(), body.value(), aliases));
     }
 
     /**
