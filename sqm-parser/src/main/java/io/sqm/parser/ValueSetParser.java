@@ -5,6 +5,7 @@ import io.sqm.core.RowExpr;
 import io.sqm.core.RowListExpr;
 import io.sqm.core.ValueSet;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.spi.MatchResult;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
@@ -18,23 +19,18 @@ public class ValueSetParser implements Parser<ValueSet> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<ValueSet> parse(Cursor cur, ParseContext ctx) {
-        if (ctx.lookups().looksLikeQueryExpr(cur)) {
-            var res = ctx.parse(QueryExpr.class, cur);
-            return finalize(cur, ctx, res);
+    public ParseResult<? extends ValueSet> parse(Cursor cur, ParseContext ctx) {
+        MatchResult<? extends ValueSet> matched = ctx.parseIfMatch(QueryExpr.class, cur);
+        if (matched.match()) {
+            return matched.result();
         }
 
-        if (ctx.lookups().looksLikeRowExpr(cur)) {
-            var res = ctx.parse(RowExpr.class, cur);
-            return finalize(cur, ctx, res);
+        matched = ctx.parseIfMatch(RowListExpr.class, cur);
+        if (matched.match()) {
+            return matched.result();
         }
 
-        if (ctx.lookups().looksLikeRowListExpr(cur)) {
-            var res = ctx.parse(RowListExpr.class, cur);
-            return finalize(cur, ctx, res);
-        }
-
-        return error("Unsupported value set token: " + cur.peek().lexeme(), cur.fullPos());
+        return ctx.parse(RowExpr.class, cur);
     }
 
     /**

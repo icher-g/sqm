@@ -11,6 +11,9 @@ import io.sqm.parser.spi.Parser;
 import java.util.ArrayList;
 import java.util.List;
 
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class GroupByParser implements Parser<GroupBy> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -32,7 +35,7 @@ public class GroupByParser implements Parser<GroupBy> {
             items.add(gr.value());
         }
         while (cur.consumeIf(TokenType.COMMA));
-        return finalize(cur, ctx, GroupBy.of(items));
+        return ok(GroupBy.of(items));
     }
 
     /**

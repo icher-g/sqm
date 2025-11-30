@@ -7,6 +7,8 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class BoundSpecUnboundedFollowingParser implements Parser<BoundSpec.UnboundedFollowing> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -19,7 +21,7 @@ public class BoundSpecUnboundedFollowingParser implements Parser<BoundSpec.Unbou
     public ParseResult<BoundSpec.UnboundedFollowing> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected UNBOUNDED", TokenType.UNBOUNDED);
         cur.expect("Expected FOLLOWING after UNBOUNDED", TokenType.FOLLOWING);
-        return finalize(cur, ctx, BoundSpec.unboundedFollowing());
+        return ok(BoundSpec.unboundedFollowing());
     }
 
     /**

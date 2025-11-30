@@ -1,6 +1,7 @@
 package io.sqm.core.match;
 
 import io.sqm.core.*;
+import io.sqm.core.walk.NodeVisitor;
 
 import java.util.function.Function;
 
@@ -88,44 +89,14 @@ public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
     }
 
     /**
-     * Registers a handler to be applied when the subject is a {@link AnonymousParamExpr}.
+     * Registers a handler to be applied when the subject is a {@link ParamExpr}.
      *
-     * @param f handler for {@code AnonymousParamExpr}
+     * @param f handler for {@code ParamExpr}
      * @return {@code this} for fluent chaining
      */
     @Override
-    public ExpressionMatch<R> paramAnonymous(Function<AnonymousParamExpr, R> f) {
-        if (!matched && expr instanceof AnonymousParamExpr e) {
-            result = f.apply(e);
-            matched = true;
-        }
-        return this;
-    }
-
-    /**
-     * Registers a handler to be applied when the subject is a {@link NamedParamExpr}.
-     *
-     * @param f handler for {@code NamedParamExpr}
-     * @return {@code this} for fluent chaining
-     */
-    @Override
-    public ExpressionMatch<R> paramNamed(Function<NamedParamExpr, R> f) {
-        if (!matched && expr instanceof NamedParamExpr e) {
-            result = f.apply(e);
-            matched = true;
-        }
-        return this;
-    }
-
-    /**
-     * Registers a handler to be applied when the subject is a {@link OrdinalParamExpr}.
-     *
-     * @param f handler for {@code OrdinalParamExpr}
-     * @return {@code this} for fluent chaining
-     */
-    @Override
-    public ExpressionMatch<R> paramOrdinal(Function<OrdinalParamExpr, R> f) {
-        if (!matched && expr instanceof OrdinalParamExpr e) {
+    public ExpressionMatch<R> param(Function<ParamExpr, R> f) {
+        if (!matched && expr instanceof ParamExpr e) {
             result = f.apply(e);
             matched = true;
         }
@@ -172,6 +143,33 @@ public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
     public ExpressionMatch<R> predicate(Function<Predicate, R> f) {
         if (!matched && expr instanceof Predicate predicate) {
             result = f.apply(predicate);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Matches any arithmetic expression, including binary operations
+     * ({@code +}, {@code -}, {@code *}, {@code /}, {@code %}) and unary
+     * negation ({@code -expr}).
+     *
+     * <p>If the expression being matched is an instance of
+     * {@link ArithmeticExpr} or any of its subtypes, the supplied function
+     * is invoked with that expression and its result becomes the return value
+     * of the match operation.</p>
+     *
+     * <p>This method does not recursively inspect the operands of an
+     * arithmetic expression; it only performs type-based dispatch. For
+     * structural traversal, use a {@link NodeVisitor} or dedicated transformer.</p>
+     *
+     * @param f a function applied when the matched expression is an
+     *          {@link ArithmeticExpr}; must not be {@code null}
+     * @return this matcher instance for method chaining
+     */
+    @Override
+    public ExpressionMatch<R> arithmetic(Function<ArithmeticExpr, R> f) {
+        if (!matched && expr instanceof ArithmeticExpr arithmeticExpr) {
+            result = f.apply(arithmeticExpr);
             matched = true;
         }
         return this;

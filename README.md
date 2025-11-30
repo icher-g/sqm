@@ -476,6 +476,48 @@ WHERE a = ? AND b = ?
 
 ---
 
+### Arithmetic Expressions
+
+SQM supports arithmetic expressions as part of the SQL model.  
+Arithmetic nodes allow SQL engines and transformations to handle numeric operations in a fully structured and type-safe way.
+
+#### Supported operations
+
+**Unary**
+
+- `-a` → `NegativeArithmeticExpr`
+
+**Additive**
+
+- `a + b` → `AddArithmeticExpr`
+- `a - b` → `SubArithmeticExpr`
+
+**Multiplicative**
+
+- `a * b` → `MulArithmeticExpr`
+- `a / b` → `DivArithmeticExpr`
+- `a % b` → `ModArithmeticExpr`
+
+#### Example
+
+```java
+var expr = col("price").add(col("quantity").mul(lit(2)));
+```
+
+This produces a model equivalent to:
+
+```sql
+price + quantity * 2
+```
+
+#### Notes
+
+- Operator precedence is preserved by the parser (`* / %` before `+ -`).
+- Arithmetic expressions can be nested and combined with predicates, functions, CASE statements, and more.
+- All arithmetic nodes extend `ArithmeticExpr` and integrate seamlessly with visitors and transformations.
+
+---
+
 ## 🧩 Core Modules
 
 | Module              | Description                      |
@@ -540,8 +582,8 @@ mvn test
 
 ## 🧭 Roadmap
 
-- [ ] Add support for parsing parameters in query (WHERE q = ?)
-- [ ] Arithmetic operations in SQL statements (SELECT salary + bonus AS total_income)
+- [X] Add support for parsing parameters in query (WHERE q = ?)
+- [X] Arithmetic operations in SQL statements (SELECT salary + bonus AS total_income)
 - [ ] Add support for INSERT | UPDATE | DELETE | MERGE
 - [ ] PostgresSQL support: update model, add renderer / parser
 - [ ] Query optimizer

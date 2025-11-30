@@ -16,25 +16,20 @@ public class BoundSpecParser implements Parser<BoundSpec> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<BoundSpec> parse(Cursor cur, ParseContext ctx) {
+    public ParseResult<? extends BoundSpec> parse(Cursor cur, ParseContext ctx) {
         if (cur.match(TokenType.UNBOUNDED)) {
             if (cur.match(TokenType.PRECEDING, 1)) {
-                var r = ctx.parse(BoundSpec.UnboundedPreceding.class, cur);
-                return finalize(cur, ctx, r);
+                return ctx.parse(BoundSpec.UnboundedPreceding.class, cur);
             }
-            var r = ctx.parse(BoundSpec.UnboundedFollowing.class, cur);
-            return finalize(cur, ctx, r);
+            return ctx.parse(BoundSpec.UnboundedFollowing.class, cur);
         }
         if (cur.match(TokenType.CURRENT)) {
-            var r = ctx.parse(BoundSpec.CurrentRow.class, cur);
-            return finalize(cur, ctx, r);
+            return ctx.parse(BoundSpec.CurrentRow.class, cur);
         }
         if (cur.match(TokenType.PRECEDING, 1)) {
-            var r = ctx.parse(BoundSpec.Preceding.class, cur);
-            return finalize(cur, ctx, r);
+            return ctx.parse(BoundSpec.Preceding.class, cur);
         }
-        var r = ctx.parse(BoundSpec.Following.class, cur);
-        return finalize(cur, ctx, r);
+        return ctx.parse(BoundSpec.Following.class, cur);
     }
 
     /**

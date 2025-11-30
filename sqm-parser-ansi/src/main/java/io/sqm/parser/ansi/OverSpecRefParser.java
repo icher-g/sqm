@@ -7,6 +7,8 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class OverSpecRefParser implements Parser<OverSpec.Ref> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -18,7 +20,7 @@ public class OverSpecRefParser implements Parser<OverSpec.Ref> {
     @Override
     public ParseResult<OverSpec.Ref> parse(Cursor cur, ParseContext ctx) {
         var t = cur.expect("Expected IDENTIFIER after OVER", TokenType.IDENT);
-        return finalize(cur, ctx, OverSpec.ref(t.lexeme()));
+        return ok(OverSpec.ref(t.lexeme()));
     }
 
     /**

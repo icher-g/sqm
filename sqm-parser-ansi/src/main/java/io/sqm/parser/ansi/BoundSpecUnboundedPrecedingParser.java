@@ -7,6 +7,8 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class BoundSpecUnboundedPrecedingParser implements Parser<BoundSpec.UnboundedPreceding> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -19,7 +21,7 @@ public class BoundSpecUnboundedPrecedingParser implements Parser<BoundSpec.Unbou
     public ParseResult<BoundSpec.UnboundedPreceding> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected UNBOUNDED", TokenType.UNBOUNDED);
         cur.expect("Expected PRECEDING after UNBOUNDED", TokenType.PRECEDING);
-        return finalize(cur, ctx, BoundSpec.unboundedPreceding());
+        return ok(BoundSpec.unboundedPreceding());
     }
 
     /**

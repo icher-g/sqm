@@ -5,14 +5,17 @@ import io.sqm.core.TableRef;
 import io.sqm.core.ValuesTable;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
+import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
-import io.sqm.parser.spi.Parser;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ValuesTableParser implements Parser<ValuesTable> {
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
+public class ValuesTableParser implements MatchableParser<ValuesTable> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -34,7 +37,7 @@ public class ValuesTableParser implements Parser<ValuesTable> {
 
         cur.expect("Expected )", TokenType.RPAREN);
 
-        String alias  = null;
+        String alias = null;
         List<String> columnNames = null;
 
         if (cur.consumeIf(TokenType.AS)) {
@@ -49,7 +52,7 @@ public class ValuesTableParser implements Parser<ValuesTable> {
             }
         }
 
-        return finalize(cur, ctx, TableRef.values(rows.value()).as(alias).columnAliases(columnNames));
+        return ok(TableRef.values(rows.value()).as(alias).columnAliases(columnNames));
     }
 
     /**
@@ -60,5 +63,23 @@ public class ValuesTableParser implements Parser<ValuesTable> {
     @Override
     public Class<ValuesTable> targetType() {
         return ValuesTable.class;
+    }
+
+    /**
+     * Performs a look-ahead test to determine whether this parser is applicable
+     * at the current cursor position.
+     * <p>
+     * Implementations must <strong>not</strong> advance the cursor or modify
+     * the {@link ParseContext}. Their sole responsibility is to inspect the
+     * upcoming tokens and decide if this parser is responsible for them.
+     *
+     * @param cur the cursor pointing at the current token
+     * @param ctx the parsing context providing configuration and utilities
+     * @return {@code true} if this parser should be used to parse the upcoming
+     * input, {@code false} otherwise
+     */
+    @Override
+    public boolean match(Cursor cur, ParseContext ctx) {
+        return cur.match(TokenType.VALUES);
     }
 }

@@ -18,13 +18,13 @@ public non-sealed interface BetweenPredicate extends Predicate {
     /**
      * Creates a BETWEEN operator.
      *
-     * @param value     a value.
-     * @param lower     a lower boundary.
-     * @param upper     an upper boundary.
+     * @param value a value.
+     * @param lower a lower boundary.
+     * @param upper an upper boundary.
      * @return a new instance of BETWEEN operator.
      */
     static BetweenPredicate of(Expression value, Expression lower, Expression upper) {
-        return new BetweenPredicateImpl(value, lower, upper, false);
+        return new BetweenPredicateImpl(value, lower, upper, false, false);
     }
 
     /**
@@ -34,10 +34,11 @@ public non-sealed interface BetweenPredicate extends Predicate {
      * @param lower     a lower boundary.
      * @param upper     an upper boundary.
      * @param symmetric indicates whether the order of the boundaries matters or not. True means the boundaries do not matter.
+     * @param negated   Indicates whether this is a BETWEEN b AND c or a NOT BETWEEN b AND c predicate.
      * @return a new instance of BETWEEN operator.
      */
-    static BetweenPredicate of(Expression value, Expression lower, Expression upper, boolean symmetric) {
-        return new BetweenPredicateImpl(value, lower, upper, symmetric);
+    static BetweenPredicate of(Expression value, Expression lower, Expression upper, boolean symmetric, boolean negated) {
+        return new BetweenPredicateImpl(value, lower, upper, symmetric, negated);
     }
 
     /**
@@ -69,13 +70,30 @@ public non-sealed interface BetweenPredicate extends Predicate {
     boolean symmetric();
 
     /**
+     * Indicates whether this is a BETWEEN b AND c or a NOT BETWEEN b AND c predicate.
+     *
+     * @return True if this is a NOT BETWEEN b AND c predicate and False otherwise.
+     */
+    boolean negated();
+
+    /**
      * Adds symmetric indicator to the predicate.
      *
      * @param symmetric an indicator to add.
      * @return this.
      */
     default BetweenPredicate symmetric(boolean symmetric) {
-        return new BetweenPredicateImpl(value(), lower(), upper(), symmetric);
+        return new BetweenPredicateImpl(value(), lower(), upper(), symmetric, negated());
+    }
+
+    /**
+     * Adds negated indicator to the predicate.
+     *
+     * @param negated an indicator to add.
+     * @return this.
+     */
+    default BetweenPredicate negated(boolean negated) {
+        return new BetweenPredicateImpl(value(), lower(), upper(), symmetric(), negated);
     }
 
     /**

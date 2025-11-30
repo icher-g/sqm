@@ -12,6 +12,9 @@ import io.sqm.parser.spi.Parser;
 
 import java.util.Set;
 
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class OrderItemParser implements Parser<OrderItem> {
 
     private static String unquoteIfQuoted(String s) {
@@ -49,7 +52,7 @@ public class OrderItemParser implements Parser<OrderItem> {
         if (isPositiveInteger(cur.peek().lexeme())) {
             int pos = Integer.parseInt(cur.peek().lexeme());
             if (pos <= 0) {
-                return ParseResult.error("GROUP BY position must be a positive integer", pos);
+                return error("GROUP BY position must be a positive integer", pos);
             }
             ordinal = pos;
         }
@@ -57,7 +60,7 @@ public class OrderItemParser implements Parser<OrderItem> {
             // Otherwise: delegate to the column parser
             var result = ctx.parse(Expression.class, cur);
             if (result.isError()) {
-                return ParseResult.error(result);
+                return error(result);
             }
             expr = result.value();
         }
@@ -85,12 +88,14 @@ public class OrderItemParser implements Parser<OrderItem> {
                 continue;
             }
             if (cur.consumeIf(TokenType.NULLS)) {
-                if (nulls != null) return ParseResult.error("NULLS specified more than once", cur.fullPos());
+                if (nulls != null) return error("NULLS specified more than once", cur.fullPos());
                 var t = cur.expect("Expected FIRST | LAST | DEFAULT after NULLS", TokenType.FIRST, TokenType.LAST, TokenType.DEFAULT);
                 if (t.type() == TokenType.FIRST) nulls = Nulls.FIRST;
-                else if (t.type() == TokenType.LAST) nulls = Nulls.LAST;
-                else if (t.type() == TokenType.DEFAULT) nulls = Nulls.DEFAULT;
-                else return error("Expected FIRST | LAST | DEFAULT after NULLS", cur.fullPos());
+                else
+                    if (t.type() == TokenType.LAST) nulls = Nulls.LAST;
+                    else
+                        if (t.type() == TokenType.DEFAULT) nulls = Nulls.DEFAULT;
+                        else return error("Expected FIRST | LAST | DEFAULT after NULLS", cur.fullPos());
                 continue;
             }
             if (cur.consumeIf(TokenType.COLLATE)) {
@@ -103,9 +108,9 @@ public class OrderItemParser implements Parser<OrderItem> {
         }
 
         if (expr != null) {
-            return finalize(cur, ctx, OrderItem.of(expr, direction, nulls, collate));
+            return ok(OrderItem.of(expr, direction, nulls, collate));
         }
-        return finalize(cur, ctx, OrderItem.of(ordinal, direction, nulls, collate));
+        return ok(OrderItem.of(ordinal, direction, nulls, collate));
     }
 
     /**

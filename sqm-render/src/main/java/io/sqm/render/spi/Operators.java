@@ -4,35 +4,150 @@ package io.sqm.render.spi;
  * An interface to provide a string representation of the operators per dialect.
  */
 public interface Operators {
-    String in();            // "IN"
+    /**
+     * Gets an ANSI representation of IN operator.
+     *
+     * @return "IN"
+     */
+    String in();
 
-    String notIn();         // "NOT IN"
+    /**
+     * Gets an ANSI representation of NOT IN operator.
+     *
+     * @return "NOT IN"
+     */
+    String notIn();
 
-    String between();       // expr.g. "BETWEEN" (or emulation if not supported)
+    /**
+     * Gets an ANSI representation of BETWEEN operator.
+     *
+     * @return "BETWEEN"
+     */
+    String between();
 
-    String eq();            // "="
+    /**
+     * Gets an ANSI representation of = operator.
+     *
+     * @return "="
+     */
+    String eq();
 
-    String ne();            // "<>" or "!="
+    /**
+     * Gets an ANSI representation of != operator.
+     *
+     * @return "<>" or "!="
+     */
+    String ne();
 
-    String lt();            // "<"
+    /**
+     * Gets an ANSI representation of < operator.
+     *
+     * @return "<"
+     */
+    String lt();
 
-    String lte();           // "<="
+    /**
+     * Gets an ANSI representation of <= operator.
+     *
+     * @return "<="
+     */
+    String lte();
 
-    String gt();            // ">"
+    /**
+     * Gets an ANSI representation of > operator.
+     *
+     * @return ">"
+     */
+    String gt();
 
-    String gte();           // ">="
+    /**
+     * Gets an ANSI representation of >= operator.
+     *
+     * @return ">="
+     */
+    String gte();
 
-    String like();          // "LIKE"
+    /**
+     * Gets an ANSI representation of LIKE operator.
+     *
+     * @return "LIKE"
+     */
+    String like();
 
-    String notLike();       // "NOT LIKE"
+    /**
+     * Gets an ANSI representation of NOT LIKE operator.
+     *
+     * @return "NOT LIKE"
+     */
+    String notLike();
 
-    String isNull();        // "IS NULL"
+    /**
+     * Gets an ANSI representation of IS NULL operator.
+     *
+     * @return "IS NULL"
+     */
+    String isNull();
 
-    String isNotNull();     // "IS NOT NULL"
+    /**
+     * Gets an ANSI representation of IS NOT NULL operator.
+     *
+     * @return "IS NOT NULL"
+     */
+    String isNotNull();
 
-    String and();           // AND
+    /**
+     * Gets an ANSI representation of AND operator.
+     *
+     * @return "AND"
+     */
+    String and();
 
-    String or();            // OR
+    /**
+     * Gets an ANSI representation of OR operator.
+     *
+     * @return "OR"
+     */
+    String or();
 
-    String not();           // NOT
+    /**
+     * Gets an ANSI representation of NOT operator.
+     *
+     * @return "NOT"
+     */
+    String not();
+
+    /**
+     * Gets an ANSI representation of + operator.
+     *
+     * @return "+"
+     */
+    String add();
+
+    /**
+     * Gets an ANSI representation of - operator.
+     *
+     * @return "-"
+     */
+    String sub();
+
+    /**
+     * Gets an ANSI representation of * operator.
+     *
+     * @return "*"
+     */
+    String mul();
+
+    /**
+     * Gets an ANSI representation of / operator.
+     *
+     * @return "/"
+     */
+    String div();
+
+    /**
+     * Gets an ANSI representation of negative operator.
+     *
+     * @return "-"
+     */
+    String neg();
 }

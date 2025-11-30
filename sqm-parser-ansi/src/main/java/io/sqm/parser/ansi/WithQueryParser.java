@@ -1,5 +1,6 @@
 package io.sqm.parser.ansi;
 
+import io.sqm.core.CompositeQuery;
 import io.sqm.core.CteDef;
 import io.sqm.core.Query;
 import io.sqm.core.WithQuery;
@@ -11,6 +12,9 @@ import io.sqm.parser.spi.Parser;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
 
 public class WithQueryParser implements Parser<WithQuery> {
     /**
@@ -35,11 +39,11 @@ public class WithQueryParser implements Parser<WithQuery> {
             ctes.add(cte.value());
         } while (cur.consumeIf(TokenType.COMMA));
 
-        var body = ctx.parse(Query.class, cur);
+        var body = ctx.parse(CompositeQuery.class, cur);
         if (body.isError()) {
             return error(body);
         }
-        return finalize(cur, ctx, Query.with(ctes, body.value(), recursive));
+        return ok(Query.with(ctes, body.value(), recursive));
     }
 
     /**

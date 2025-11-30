@@ -728,4 +728,194 @@ public interface Lookups {
      * @return {@code true} if a query parameter appears ahead, {@code false} otherwise
      */
     boolean looksLikeParam(Cursor cur, Lookahead pos);
+
+    /**
+     * Determines whether the tokens indicate a query parameter: {@code ?}.
+     *
+     * @param cur the current token cursor
+     * @return {@code true} if a query parameter appears ahead, {@code false} otherwise
+     */
+    default boolean looksLikeAnonymousParam(Cursor cur) {
+        return looksLikeAnonymousParam(cur, Lookahead.initial());
+    }
+
+    /**
+     * Determines whether the tokens indicate a query parameter: {@code ?}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if a query parameter appears ahead, {@code false} otherwise
+     */
+    boolean looksLikeAnonymousParam(Cursor cur, Lookahead pos);
+
+    /**
+     * Determines whether the tokens indicate a query parameter: {@code :name}.
+     *
+     * @param cur the current token cursor
+     * @return {@code true} if a query parameter appears ahead, {@code false} otherwise
+     */
+    default boolean looksLikeNamedParam(Cursor cur) {
+        return looksLikeNamedParam(cur, Lookahead.initial());
+    }
+
+    /**
+     * Determines whether the tokens indicate a query parameter: {@code :name}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if a query parameter appears ahead, {@code false} otherwise
+     */
+    boolean looksLikeNamedParam(Cursor cur, Lookahead pos);
+
+    /**
+     * Determines whether the tokens indicate a query parameter: {@code $1}.
+     *
+     * @param cur the current token cursor
+     * @return {@code true} if a query parameter appears ahead, {@code false} otherwise
+     */
+    default boolean looksLikeOrdinalParam(Cursor cur) {
+        return looksLikeOrdinalParam(cur, Lookahead.initial());
+    }
+
+    /**
+     * Determines whether the tokens indicate a query parameter: {@code $1}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if a query parameter appears ahead, {@code false} otherwise
+     */
+    boolean looksLikeOrdinalParam(Cursor cur, Lookahead pos);
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operation: {@code +, -, *, /, %}.
+     *
+     * @param cur the current token cursor
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    default boolean looksLikeArithmeticOperation(Cursor cur) {
+        return looksLikeArithmeticOperation(cur, Lookahead.initial());
+    }
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operation: {@code +, -, *, /, %}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    boolean looksLikeArithmeticOperation(Cursor cur, Lookahead pos);
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code +}.
+     *
+     * @param cur the current token cursor
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    default boolean looksLikeAdd(Cursor cur) {
+        return looksLikeAdd(cur, Lookahead.initial());
+    }
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code +}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    boolean looksLikeAdd(Cursor cur, Lookahead pos);
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code -}.
+     *
+     * @param cur the current token cursor
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    default boolean looksLikeSub(Cursor cur) {
+        return looksLikeSub(cur, Lookahead.initial());
+    }
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code -}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    boolean looksLikeSub(Cursor cur, Lookahead pos);
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code *}.
+     *
+     * @param cur the current token cursor
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    default boolean looksLikeMul(Cursor cur) {
+        return looksLikeMul(cur, Lookahead.initial());
+    }
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code *}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    boolean looksLikeMul(Cursor cur, Lookahead pos);
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code /}.
+     *
+     * @param cur the current token cursor
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    default boolean looksLikeDiv(Cursor cur) {
+        return looksLikeDiv(cur, Lookahead.initial());
+    }
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code /}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    boolean looksLikeDiv(Cursor cur, Lookahead pos);
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code %}.
+     *
+     * @param cur the current token cursor
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    default boolean looksLikeMod(Cursor cur) {
+        return looksLikeMod(cur, Lookahead.initial());
+    }
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code %}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    boolean looksLikeMod(Cursor cur, Lookahead pos);
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code -1}.
+     *
+     * @param cur the current token cursor
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    default boolean looksLikeNeg(Cursor cur) {
+        return looksLikeNeg(cur, Lookahead.initial());
+    }
+
+    /**
+     * Determines whether the tokens indicate an arithmetic operator: {@code -1}.
+     *
+     * @param cur the current token cursor
+     * @param pos the current lookahead position.
+     * @return {@code true} if an arithmetic operator appears ahead, {@code false} otherwise
+     */
+    boolean looksLikeNeg(Cursor cur, Lookahead pos);
 }

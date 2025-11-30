@@ -19,13 +19,13 @@ public non-sealed interface ComparisonPredicate extends Predicate {
     /**
      * Creates a comparison operator.
      *
-     * @param left     a left side expression.
+     * @param lhs      a lhs side expression.
      * @param operator an operator.
-     * @param right    a right side expression.
+     * @param rhs      a rhs side expression.
      * @return an instance of a comparison operator.
      */
-    static ComparisonPredicate of(Expression left, ComparisonOperator operator, Expression right) {
-        return new ComparisonPredicateImpl(left, operator, right);
+    static ComparisonPredicate of(Expression lhs, ComparisonOperator operator, Expression rhs) {
+        return new ComparisonPredicateImpl(lhs, operator, rhs);
     }
 
     /**

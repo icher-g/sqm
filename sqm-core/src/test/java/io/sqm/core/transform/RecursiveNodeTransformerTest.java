@@ -1,6 +1,7 @@
 package io.sqm.core.transform;
 
 import io.sqm.core.*;
+import io.sqm.core.utils.Literals;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -947,5 +948,243 @@ class RecursiveNodeTransformerTest {
 
     @Test
     void visitBoundUnboundedFollowing() {
+    }
+
+    @Test
+    void visitAnonymousParamExpr() {
+        var p = param();
+        var t = new RecursiveNodeTransformer() {
+        };
+        var p2 = p.accept(t);
+        assertSame(p, p2);
+    }
+
+    @Test
+    void visitOrdinalParamExpr() {
+        var p = param(1);
+        var t = new RecursiveNodeTransformer() {
+        };
+        var p2 = p.accept(t);
+        assertSame(p, p2);
+    }
+
+    @Test
+    void visitAddArithmeticExpr() {
+        var e = lit(1).add(lit(2));
+        // this transformer is used to apply transformation on literals
+        // inside the expression. This way we can get full coverage.
+        var increaseTransformer = new RecursiveNodeTransformer() {
+            public int expected = 0;
+
+            @Override
+            public Node visitLiteralExpr(LiteralExpr l) {
+                if (l.value().equals(expected)) {
+                    return lit(Literals.add(l, lit(1)));
+                }
+                return l;
+            }
+        };
+        increaseTransformer.expected = 1; // transform only first literal
+        e = (AddArithmeticExpr) e.accept(increaseTransformer);
+        increaseTransformer.expected = 2; // transform only second literal
+        e = (AddArithmeticExpr) e.accept(increaseTransformer);
+        increaseTransformer.expected = 3; // do not transform any literal
+        e = (AddArithmeticExpr) e.accept(increaseTransformer);
+        var t = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitAddArithmeticExpr(AddArithmeticExpr expr) {
+                var r = Literals.add(expr.lhs(), expr.rhs());
+                if (r != null) {
+                    return lit(r.longValue());
+                }
+                return expr;
+            }
+        };
+        var l = e.accept(t);
+        assertInstanceOf(LiteralExpr.class, l);
+        assertEquals(5L, ((LiteralExpr) l).value());
+    }
+
+    @Test
+    void visitSubArithmeticExpr() {
+        var e = lit(5).sub(lit(2));
+        // this transformer is used to apply transformation on literals
+        // inside the expression. This way we can get full coverage.
+        var increaseTransformer = new RecursiveNodeTransformer() {
+            public int expected = 0;
+
+            @Override
+            public Node visitLiteralExpr(LiteralExpr l) {
+                if (l.value().equals(expected)) {
+                    return lit(Literals.add(l, lit(1)));
+                }
+                return l;
+            }
+        };
+        increaseTransformer.expected = 5; // transform only first literal
+        e = (SubArithmeticExpr) e.accept(increaseTransformer);
+        increaseTransformer.expected = 2; // transform only second literal
+        e = (SubArithmeticExpr) e.accept(increaseTransformer);
+        increaseTransformer.expected = 0; // do not transform any literal
+        e = (SubArithmeticExpr) e.accept(increaseTransformer);
+        var t = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitSubArithmeticExpr(SubArithmeticExpr expr) {
+                var r = Literals.sub(expr.lhs(), expr.rhs());
+                if (r != null) {
+                    return lit(r.longValue());
+                }
+                return expr;
+            }
+        };
+        var l = e.accept(t);
+        assertInstanceOf(LiteralExpr.class, l);
+        assertEquals(3L, ((LiteralExpr) l).value());
+    }
+
+    @Test
+    void visitMulArithmeticExpr() {
+        var e = lit(5).mul(lit(2));
+        // this transformer is used to apply transformation on literals
+        // inside the expression. This way we can get full coverage.
+        var increaseTransformer = new RecursiveNodeTransformer() {
+            public int expected = 0;
+
+            @Override
+            public Node visitLiteralExpr(LiteralExpr l) {
+                if (l.value().equals(expected)) {
+                    return lit(Literals.add(l, lit(1)));
+                }
+                return l;
+            }
+        };
+        increaseTransformer.expected = 5; // transform only first literal
+        e = (MulArithmeticExpr) e.accept(increaseTransformer);
+        increaseTransformer.expected = 2; // transform only second literal
+        e = (MulArithmeticExpr) e.accept(increaseTransformer);
+        increaseTransformer.expected = 0; // do not transform any literal
+        e = (MulArithmeticExpr) e.accept(increaseTransformer);
+        var t = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitMulArithmeticExpr(MulArithmeticExpr expr) {
+                var r = Literals.mul(expr.lhs(), expr.rhs());
+                if (r != null) {
+                    return lit(r.longValue());
+                }
+                return expr;
+            }
+        };
+        var l = e.accept(t);
+        assertInstanceOf(LiteralExpr.class, l);
+        assertEquals(18L, ((LiteralExpr) l).value());
+    }
+
+    @Test
+    void visitDivArithmeticExpr() {
+        var e = lit(5).div(lit(1));
+        // this transformer is used to apply transformation on literals
+        // inside the expression. This way we can get full coverage.
+        var increaseTransformer = new RecursiveNodeTransformer() {
+            public int expected = 0;
+
+            @Override
+            public Node visitLiteralExpr(LiteralExpr l) {
+                if (l.value().equals(expected)) {
+                    return lit(Literals.add(l, lit(1)));
+                }
+                return l;
+            }
+        };
+        increaseTransformer.expected = 5; // transform only first literal
+        e = (DivArithmeticExpr) e.accept(increaseTransformer);
+        increaseTransformer.expected = 1; // transform only second literal
+        e = (DivArithmeticExpr) e.accept(increaseTransformer);
+        increaseTransformer.expected = 0; // do not transform any literal
+        e = (DivArithmeticExpr) e.accept(increaseTransformer);
+        var t = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitDivArithmeticExpr(DivArithmeticExpr expr) {
+                var r = Literals.div(expr.lhs(), expr.rhs());
+                if (r != null) {
+                    return lit(r.longValue());
+                }
+                return expr;
+            }
+        };
+        var l = e.accept(t);
+        assertInstanceOf(LiteralExpr.class, l);
+        assertEquals(3L, ((LiteralExpr) l).value());
+    }
+
+    @Test
+    void visitModArithmeticExpr() {
+        var e = lit(6).mod(lit(2));
+        // this transformer is used to apply transformation on literals
+        // inside the expression. This way we can get full coverage.
+        var increaseTransformer = new RecursiveNodeTransformer() {
+            public int expected = 0;
+
+            @Override
+            public Node visitLiteralExpr(LiteralExpr l) {
+                if (l.value().equals(expected)) {
+                    return lit(Literals.add(l, lit(1)));
+                }
+                return l;
+            }
+        };
+        increaseTransformer.expected = 6; // transform only first literal
+        e = (ModArithmeticExpr) e.accept(increaseTransformer);
+        increaseTransformer.expected = 2; // transform only second literal
+        e = (ModArithmeticExpr) e.accept(increaseTransformer);
+        increaseTransformer.expected = 0; // do not transform any literal
+        e = (ModArithmeticExpr) e.accept(increaseTransformer);
+        var t = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitModArithmeticExpr(ModArithmeticExpr expr) {
+                var r = Literals.mod(expr.lhs(), expr.rhs());
+                if (r != null) {
+                    return lit(r.longValue());
+                }
+                return expr;
+            }
+        };
+        var l = e.accept(t);
+        assertInstanceOf(LiteralExpr.class, l);
+        assertEquals(1L, ((LiteralExpr) l).value());
+    }
+
+    @Test
+    void visitNegativeArithmeticExpr() {
+        var e = lit(6).neg();
+        // this transformer is used to apply transformation on literals
+        // inside the expression. This way we can get full coverage.
+        var increaseTransformer = new RecursiveNodeTransformer() {
+            public int expected = 0;
+
+            @Override
+            public Node visitLiteralExpr(LiteralExpr l) {
+                if (l.value().equals(expected)) {
+                    return lit(Literals.add(l, lit(1)));
+                }
+                return l;
+            }
+        };
+        increaseTransformer.expected = 6; // transform only first literal
+        e = (NegativeArithmeticExpr) e.accept(increaseTransformer);
+        increaseTransformer.expected = 0; // do not transform any literal
+        e = (NegativeArithmeticExpr) e.accept(increaseTransformer);
+        var t = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitNegativeArithmeticExpr(NegativeArithmeticExpr expr) {
+                var r = Literals.asNumber(expr.expr());
+                if (r != null) {
+                    return lit(-r.longValue());
+                }
+                return expr;
+            }
+        };
+        var l = e.accept(t);
+        assertInstanceOf(LiteralExpr.class, l);
+        assertEquals(-7L, ((LiteralExpr) l).value());
     }
 }

@@ -10,6 +10,9 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class OverSpecDefParser implements Parser<OverSpec.Def> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -73,9 +76,9 @@ public class OverSpecDefParser implements Parser<OverSpec.Def> {
         }
 
         if (baseWindow == null) {
-            return finalize(cur, ctx, OverSpec.def(partitionBy, orderBy, frame, exclude));
+            return ok(OverSpec.def(partitionBy, orderBy, frame, exclude));
         }
-        return finalize(cur, ctx, OverSpec.def(baseWindow, orderBy, frame, exclude));
+        return ok(OverSpec.def(baseWindow, orderBy, frame, exclude));
     }
 
     /**

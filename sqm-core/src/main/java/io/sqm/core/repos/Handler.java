@@ -13,5 +13,5 @@ public interface Handler<T extends Node> {
      *
      * @return an entity type to be handled by the handler.
      */
-    Class<T> targetType();
+    Class<? extends T> targetType();
 }

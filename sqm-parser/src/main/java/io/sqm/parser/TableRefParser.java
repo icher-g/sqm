@@ -5,9 +5,13 @@ import io.sqm.core.Table;
 import io.sqm.core.TableRef;
 import io.sqm.core.ValuesTable;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.TokenType;
+import io.sqm.parser.spi.MatchResult;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
+
+import static io.sqm.parser.spi.ParseResult.error;
 
 public class TableRefParser implements Parser<TableRef> {
     /**
@@ -18,19 +22,46 @@ public class TableRefParser implements Parser<TableRef> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<TableRef> parse(Cursor cur, ParseContext ctx) {
-        if (ctx.lookups().looksLikeQueryTable(cur)) {
-            var res = ctx.parse(QueryTable.class, cur);
-            return finalize(cur, ctx, res);
+    public ParseResult<? extends TableRef> parse(Cursor cur, ParseContext ctx) {
+        // ( ... ) – could be either a subquery or a parenthesized table ref
+        if (cur.match(TokenType.LPAREN)) {
+            MatchResult<? extends TableRef> matched = ctx.parseIfMatch(QueryTable.class, cur);
+            if (matched.match()) {
+                return matched.result();
+            }
+
+            if (cur.consumeIf(TokenType.LPAREN)) {
+                matched = ctx.parseIfMatch(ValuesTable.class, cur);
+                if (matched.match()) {
+                    if (matched.result().ok()) {
+                        cur.expect("Expected ')' after VALUES", TokenType.RPAREN);
+                    }
+                    return matched.result();
+                }
+
+                matched = ctx.parseIfMatch(Table.class, cur);
+                if (matched.match()) {
+                    if (matched.result().ok()) {
+                        cur.expect("Expected ')' after table reference", TokenType.RPAREN);
+                    }
+                    return matched.result();
+                }
+            }
+
+            return error("Unexpected table reference token: " + cur.peek().lexeme(), cur.fullPos());
         }
 
-        if (ctx.lookups().looksLikeValuesTable(cur)) {
-            var res = ctx.parse(ValuesTable.class, cur);
-            return finalize(cur, ctx, res);
+        MatchResult<? extends TableRef> matched = ctx.parseIfMatch(ValuesTable.class, cur);
+        if (matched.match()) {
+            return matched.result();
         }
 
-        var res = ctx.parse(Table.class, cur);
-        return finalize(cur, ctx, res);
+        matched = ctx.parseIfMatch(Table.class, cur);
+        if (matched.match()) {
+            return matched.result();
+        }
+
+        return error("Unexpected table reference token: " + cur.peek().lexeme(), cur.fullPos());
     }
 
     /**

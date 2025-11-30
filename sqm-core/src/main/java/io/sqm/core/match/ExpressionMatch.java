@@ -1,6 +1,7 @@
 package io.sqm.core.match;
 
 import io.sqm.core.*;
+import io.sqm.core.walk.NodeVisitor;
 
 import java.util.function.Function;
 
@@ -58,28 +59,12 @@ public interface ExpressionMatch<R> extends Match<Expression, R> {
     ExpressionMatch<R> funcArg(Function<FunctionExpr.Arg, R> f);
 
     /**
-     * Registers a handler to be applied when the subject is a {@link AnonymousParamExpr}.
+     * Registers a handler to be applied when the subject is a {@link ParamExpr}.
      *
-     * @param f handler for {@code AnonymousParamExpr}
+     * @param f handler for {@code ParamExpr}
      * @return {@code this} for fluent chaining
      */
-    ExpressionMatch<R> paramAnonymous(Function<AnonymousParamExpr, R> f);
-
-    /**
-     * Registers a handler to be applied when the subject is a {@link NamedParamExpr}.
-     *
-     * @param f handler for {@code NamedParamExpr}
-     * @return {@code this} for fluent chaining
-     */
-    ExpressionMatch<R> paramNamed(Function<NamedParamExpr, R> f);
-
-    /**
-     * Registers a handler to be applied when the subject is a {@link OrdinalParamExpr}.
-     *
-     * @param f handler for {@code OrdinalParamExpr}
-     * @return {@code this} for fluent chaining
-     */
-    ExpressionMatch<R> paramOrdinal(Function<OrdinalParamExpr, R> f);
+    ExpressionMatch<R> param(Function<ParamExpr, R> f);
 
     /**
      * Registers a handler to be applied when the subject is a {@link LiteralExpr}.
@@ -104,6 +89,26 @@ public interface ExpressionMatch<R> extends Match<Expression, R> {
      * @return {@code this} for fluent chaining
      */
     ExpressionMatch<R> predicate(Function<Predicate, R> f);
+
+    /**
+     * Matches any arithmetic expression, including binary operations
+     * ({@code +}, {@code -}, {@code *}, {@code /}, {@code %}) and unary
+     * negation ({@code -expr}).
+     *
+     * <p>If the expression being matched is an instance of
+     * {@link ArithmeticExpr} or any of its subtypes, the supplied function
+     * is invoked with that expression and its result becomes the return value
+     * of the match operation.</p>
+     *
+     * <p>This method does not recursively inspect the operands of an
+     * arithmetic expression; it only performs type-based dispatch. For
+     * structural traversal, use a {@link NodeVisitor} or dedicated transformer.</p>
+     *
+     * @param f a function applied when the matched expression is an
+     *          {@link ArithmeticExpr}; must not be {@code null}
+     * @return this matcher instance for method chaining
+     */
+    ExpressionMatch<R> arithmetic(Function<ArithmeticExpr, R> f);
 }
 
 

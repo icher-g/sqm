@@ -7,6 +7,9 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class FuncExprArgParser implements Parser<FunctionExpr.Arg.ExprArg> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -21,7 +24,7 @@ public class FuncExprArgParser implements Parser<FunctionExpr.Arg.ExprArg> {
         if (arg.isError()) {
             return error(arg); // <— no alias, no EOF check here
         }
-        return finalize(cur, ctx, Expression.funcArg(arg.value()));
+        return ok(Expression.funcArg(arg.value()));
     }
 
     /**

@@ -8,6 +8,9 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class ExistsPredicateParser implements Parser<ExistsPredicate> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -28,7 +31,7 @@ public class ExistsPredicateParser implements Parser<ExistsPredicate> {
         }
 
         cur.expect("Expected )", TokenType.RPAREN);
-        return finalize(cur, ctx, ExistsPredicate.of(res.value(), negated));
+        return ok(ExistsPredicate.of(res.value(), negated));
     }
 
     /**

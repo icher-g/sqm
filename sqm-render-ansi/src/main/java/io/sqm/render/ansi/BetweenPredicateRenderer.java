@@ -16,11 +16,12 @@ public class BetweenPredicateRenderer implements Renderer<BetweenPredicate> {
     @Override
     public void render(BetweenPredicate node, RenderContext ctx, SqlWriter w) {
         var ops = ctx.dialect().operators();
-        w.append(node.value()).space()
-            .append(ops.between()).space()
-            .append(node.lower()).space()
-            .append(ops.and()).space()
-            .append(node.upper());
+        w.append(node.value()).space();
+        if (node.negated()) w.append(ops.not()).space();
+        w.append(ops.between()).space();
+        w.append(node.lower()).space();
+        w.append(ops.and()).space();
+        w.append(node.upper());
     }
 
     /**

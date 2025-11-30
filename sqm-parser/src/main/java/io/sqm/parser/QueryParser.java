@@ -2,9 +2,9 @@ package io.sqm.parser;
 
 import io.sqm.core.CompositeQuery;
 import io.sqm.core.Query;
-import io.sqm.core.SelectQuery;
 import io.sqm.core.WithQuery;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
@@ -18,19 +18,11 @@ public class QueryParser implements Parser<Query> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<Query> parse(Cursor cur, ParseContext ctx) {
-        if (ctx.lookups().looksLikeWithQuery(cur)) {
-            var res = ctx.parse(WithQuery.class, cur);
-            return finalize(cur, ctx, res);
+    public ParseResult<? extends Query> parse(Cursor cur, ParseContext ctx) {
+        if (cur.match(TokenType.WITH)) {
+            return ctx.parse(WithQuery.class, cur);
         }
-
-        if (ctx.lookups().looksLikeCompositeQuery(cur)) {
-            var res = ctx.parse(CompositeQuery.class, cur);
-            return finalize(cur, ctx, res);
-        }
-
-        var res = ctx.parse(SelectQuery.class, cur);
-        return finalize(cur, ctx, res);
+        return ctx.parse(CompositeQuery.class, cur);
     }
 
     /**

@@ -4,14 +4,18 @@ import io.sqm.core.Expression;
 import io.sqm.core.RowExpr;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
+import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
-import io.sqm.parser.spi.Parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
-public class RowExprParser implements Parser<RowExpr> {
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
+public class RowExprParser implements MatchableParser<RowExpr> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -33,7 +37,7 @@ public class RowExprParser implements Parser<RowExpr> {
         } while (cur.consumeIf(TokenType.COMMA));
 
         cur.expect("Expected )", TokenType.RPAREN);
-        return finalize(cur, ctx, RowExpr.of(list));
+        return ok(RowExpr.of(list));
     }
 
     /**
@@ -44,5 +48,27 @@ public class RowExprParser implements Parser<RowExpr> {
     @Override
     public Class<RowExpr> targetType() {
         return RowExpr.class;
+    }
+
+    /**
+     * Performs a look-ahead test to determine whether this parser is applicable
+     * at the current cursor position.
+     * <p>
+     * The method must <strong>not</strong> advance the cursor or modify any parsing
+     * context state. Its sole responsibility is to check whether the upcoming
+     * tokens syntactically correspond to the construct handled by this parser.
+     *
+     * @param cur the current cursor pointing to the next token to be parsed
+     * @param ctx the parsing context providing configuration, helpers and nested parsing
+     * @return {@code true} if this parser should be used to parse the upcoming
+     * construct, {@code false} otherwise
+     */
+    @Override
+    public boolean match(Cursor cur, ParseContext ctx) {
+        // match (1, or ('a', --> (1,2) OR (1)
+        if (!cur.match(TokenType.LPAREN)) {
+            return false;
+        }
+        return cur.find(Set.of(TokenType.COMMA), Set.of(TokenType.RPAREN), 1) < cur.size();
     }
 }

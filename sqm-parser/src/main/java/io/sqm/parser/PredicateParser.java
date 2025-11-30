@@ -1,83 +1,60 @@
 package io.sqm.parser;
 
-import io.sqm.core.*;
+import io.sqm.core.OrPredicate;
+import io.sqm.core.Predicate;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+/**
+ * Entry-point parser for SQL {@link Predicate} expressions.
+ *
+ * <p>This parser does not itself implement predicate logic. Instead, it
+ * delegates to the {@link OrPredicate} parser, which represents the lowest
+ * precedence level of boolean expressions (handling {@code OR} chains). Higher
+ * precedence layers (such as {@code AND} and atomic predicate forms) are
+ * handled by their respective parsers, which are transitively invoked by
+ * {@code OrPredicateParser}.</p>
+ *
+ * <p>This structure mirrors a standard SQL boolean-expression grammar:</p>
+ *
+ * <pre>{@code
+ * Predicate       → OrPredicate
+ * OrPredicate     → AndPredicate ('OR' AndPredicate)*
+ * AndPredicate    → AtomicPredicate ('AND' AtomicPredicate)*
+ * AtomicPredicate → grouped | NOT predicate | EXISTS | comparisons | IN | BETWEEN | LIKE | IS ...
+ * }</pre>
+ *
+ * <p>By delegating directly to {@code OrPredicate}, this class serves as the
+ * canonical entry point for predicate parsing, providing a clean separation
+ * between:
+ *
+ * <ul>
+ *   <li>the <strong>public grammar entry</strong> ({@code Predicate}), and</li>
+ *   <li>the <strong>precedence-aware implementation</strong> (OR → AND → atomic)</li>
+ * </ul>
+ *
+ * <p>After delegation, the result is passed through {@link ParseContext#finalize} to
+ * enforce end-of-rule checks and proper cursor alignment.</p>
+ */
 public class PredicateParser implements Parser<Predicate> {
+
     /**
-     * Parses the spec represented by the {@link Cursor} instance.
+     * Parses a SQL {@link Predicate} by delegating to the {@link OrPredicate}
+     * parser, which handles full predicate precedence (OR, AND, atomic forms).
      *
-     * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.
-     * @param ctx a parser context containing parsers and lookups.
-     * @return a parsing result.
+     * @param cur the token cursor
+     * @param ctx parsing context used for recursive dispatch and error handling
+     * @return the parsed predicate, or an error result if parsing fails
      */
     @Override
-    public ParseResult<Predicate> parse(Cursor cur, ParseContext ctx) {
-        if (ctx.lookups().looksLikeAndPredicate(cur)) {
-            var res = ctx.parse(AndPredicate.class, cur);
-            return finalize(cur, ctx, res);
-        }
-
-        if (ctx.lookups().looksLikeOrPredicate(cur)) {
-            var res = ctx.parse(OrPredicate.class, cur);
-            return finalize(cur, ctx, res);
-        }
-
-        if (ctx.lookups().looksLikeNotPredicate(cur)) {
-            var res = ctx.parse(NotPredicate.class, cur);
-            return finalize(cur, ctx, res);
-        }
-
-        if (ctx.lookups().looksLikeExistsPredicate(cur)) {
-            var res = ctx.parse(ExistsPredicate.class, cur);
-            return finalize(cur, ctx, res);
-        }
-
-        if (ctx.lookups().looksLikeBetweenPredicate(cur)) {
-            var res = ctx.parse(BetweenPredicate.class, cur);
-            return finalize(cur, ctx, res);
-        }
-
-        if (ctx.lookups().looksLikeIsNullPredicate(cur)) {
-            var res = ctx.parse(IsNullPredicate.class, cur);
-            return finalize(cur, ctx, res);
-        }
-
-        if (ctx.lookups().looksLikeInPredicate(cur)) {
-            var res = ctx.parse(InPredicate.class, cur);
-            return finalize(cur, ctx, res);
-        }
-
-        if (ctx.lookups().looksLikeLikePredicate(cur)) {
-            var res = ctx.parse(LikePredicate.class, cur);
-            return finalize(cur, ctx, res);
-        }
-
-        if (ctx.lookups().looksLikeAnyAllPredicate(cur)) {
-            var res = ctx.parse(AnyAllPredicate.class, cur);
-            return finalize(cur, ctx, res);
-        }
-
-        if (ctx.lookups().looksLikeComparisonPredicate(cur)) {
-            var res = ctx.parse(ComparisonPredicate.class, cur);
-            return finalize(cur, ctx, res);
-        }
-
-        if (ctx.lookups().looksLikeUnaryPredicate(cur)) {
-            var res = ctx.parse(UnaryPredicate.class, cur);
-            return finalize(cur, ctx, res);
-        }
-
-        return error("Unsupported predicate token: " + cur.peek().lexeme(), cur.fullPos());
+    public ParseResult<? extends Predicate> parse(Cursor cur, ParseContext ctx) {
+        return ctx.parse(OrPredicate.class, cur);
     }
 
     /**
-     * Gets the target type this handler can handle.
-     *
-     * @return an entity type to be handled by the handler.
+     * Returns the model type produced by this parser — {@link Predicate}.
      */
     @Override
     public Class<Predicate> targetType() {

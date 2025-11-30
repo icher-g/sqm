@@ -11,6 +11,9 @@ import io.sqm.parser.spi.Parser;
 import java.util.ArrayList;
 import java.util.List;
 
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class PartitionByParser implements Parser<PartitionBy> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -32,7 +35,7 @@ public class PartitionByParser implements Parser<PartitionBy> {
             items.add(or.value());
         }
         while (cur.consumeIf(TokenType.COMMA));
-        return finalize(cur, ctx, PartitionBy.of(items));
+        return ok(PartitionBy.of(items));
     }
 
     /**

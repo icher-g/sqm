@@ -8,6 +8,9 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
 public class FrameSpecSingleParser implements Parser<FrameSpec.Single> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -24,7 +27,7 @@ public class FrameSpecSingleParser implements Parser<FrameSpec.Single> {
         if (bound.isError()) {
             return error(bound);
         }
-        return finalize(cur, ctx, FrameSpec.single(unit, bound.value()));
+        return ok(FrameSpec.single(unit, bound.value()));
     }
 
     /**

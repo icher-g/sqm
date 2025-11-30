@@ -202,6 +202,9 @@ public final class Lexer {
             case '/':
                 pos++;
                 return new Token(SLASH, "/", start);
+            case '%':
+                pos++;
+                return new Token(PERCENT, "%", start);
             case '^':
                 pos++;
                 return new Token(CARET, "^", start);

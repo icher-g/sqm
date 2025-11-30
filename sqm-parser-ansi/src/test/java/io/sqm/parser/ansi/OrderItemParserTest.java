@@ -17,6 +17,10 @@ class OrderItemParserTest {
     private final ParseContext ctx = ParseContext.of(new AnsiSpecs());
     private final OrderItemParser parser = new OrderItemParser();
 
+    private ParseResult<? extends OrderItem> parse(String sql) {
+        return ctx.parse(parser, sql);
+    }
+
     @Nested
     @DisplayName("Happy path")
     class HappyPath {
@@ -24,7 +28,7 @@ class OrderItemParserTest {
         @Test
         @DisplayName("Bare column -> defaults (no dir, no nulls, no collate)")
         void bareColumn_defaults() {
-            ParseResult<OrderItem> res = parser.parse("c", ctx);
+            var res = parse("c");
             Assertions.assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
             OrderItem oi = res.value();
             Assertions.assertNotNull(oi.expr());
@@ -36,7 +40,7 @@ class OrderItemParserTest {
         @Test
         @DisplayName("Qualified column + DESC")
         void qualified_with_desc() {
-            ParseResult<OrderItem> res = parser.parse("t.c DESC", ctx);
+            var res = parse("t.c DESC");
             Assertions.assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
             OrderItem oi = res.value();
             Assertions.assertNotNull(oi.expr());         // Column is parsed by ColumnSpecParser
@@ -48,7 +52,7 @@ class OrderItemParserTest {
         @Test
         @DisplayName("Function expr + ASC + NULLS LAST (case-insensitive)")
         void function_with_dir_and_nulls() {
-            ParseResult<OrderItem> res = parser.parse("lower(t.c) aSc nUlLs lAsT", ctx);
+            var res = parse("lower(t.c) aSc nUlLs lAsT");
             Assertions.assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
             OrderItem oi = res.value();
             Assertions.assertNotNull(oi.expr());         // should be FunctionColumn under the hood
@@ -60,7 +64,7 @@ class OrderItemParserTest {
         @Test
         @DisplayName("COLLATE bare identifier")
         void collate_bare() {
-            ParseResult<OrderItem> res = parser.parse("name COLLATE de_CH", ctx);
+            var res = parse("name COLLATE de_CH");
             Assertions.assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
             OrderItem oi = res.value();
             Assertions.assertNotNull(oi.expr());
@@ -72,7 +76,7 @@ class OrderItemParserTest {
         @Test
         @DisplayName("COLLATE quoted identifier")
         void collate_quoted() {
-            ParseResult<OrderItem> res = parser.parse("name COLLATE \"de-CH-x-phonebk\"", ctx);
+            var res = parse("name COLLATE \"de-CH-x-phonebk\"");
             Assertions.assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
             OrderItem oi = res.value();
             Assertions.assertEquals("de-CH-x-phonebk", oi.collate());
@@ -81,7 +85,7 @@ class OrderItemParserTest {
         @Test
         @DisplayName("All modifiers in any order")
         void all_modifiers_any_order() {
-            ParseResult<OrderItem> res = parser.parse("LOWER(\"T\".\"Name\") NULLS FIRST COLLATE \"de-CH\" DESC", ctx);
+            var res = parse("LOWER(\"T\".\"Name\") NULLS FIRST COLLATE \"de-CH\" DESC");
             Assertions.assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
             OrderItem oi = res.value();
             Assertions.assertNotNull(oi.expr());
@@ -98,7 +102,7 @@ class OrderItemParserTest {
         @Test
         @DisplayName("Empty input -> Missing column")
         void empty_missing_column() {
-            ParseResult<OrderItem> res = parser.parse("  ", ctx);
+            var res = parse("  ");
             Assertions.assertFalse(res.ok());
             Assertions.assertEquals("The spec cannot be blank.", res.errorMessage());
         }
@@ -106,7 +110,7 @@ class OrderItemParserTest {
         @Test
         @DisplayName("NULLS without value -> error")
         void nulls_without_value() {
-            ParseResult<OrderItem> res = parser.parse("c NULLS", ctx);
+            var res = parse("c NULLS");
             Assertions.assertFalse(res.ok());
             Assertions.assertEquals("Expected FIRST | LAST | DEFAULT after NULLS at 7", res.errorMessage());
         }
@@ -114,7 +118,7 @@ class OrderItemParserTest {
         @Test
         @DisplayName("NULLS invalid value -> error")
         void nulls_invalid_value() {
-            ParseResult<OrderItem> res = parser.parse("c NULLS MAYBE", ctx);
+            var res = parse("c NULLS MAYBE");
             Assertions.assertFalse(res.ok());
             Assertions.assertEquals("Expected FIRST | LAST | DEFAULT after NULLS at 8", res.errorMessage());
         }
@@ -122,7 +126,7 @@ class OrderItemParserTest {
         @Test
         @DisplayName("Duplicate direction -> error")
         void duplicate_direction() {
-            ParseResult<OrderItem> res = parser.parse("c ASC DESC", ctx);
+            var res = parse("c ASC DESC");
             Assertions.assertFalse(res.ok());
             Assertions.assertEquals("Direction specified more than once at 3", res.errorMessage());
         }
@@ -130,7 +134,7 @@ class OrderItemParserTest {
         @Test
         @DisplayName("Duplicate NULLS -> error")
         void duplicate_nulls() {
-            ParseResult<OrderItem> res = parser.parse("c NULLS FIRST NULLS LAST", ctx);
+            var res = parse("c NULLS FIRST NULLS LAST");
             Assertions.assertFalse(res.ok());
             Assertions.assertEquals("NULLS specified more than once at 4", res.errorMessage());
         }
@@ -138,7 +142,7 @@ class OrderItemParserTest {
         @Test
         @DisplayName("Duplicate COLLATE -> error")
         void duplicate_collate() {
-            ParseResult<OrderItem> res = parser.parse("c COLLATE de_CH COLLATE fr_CH", ctx);
+            var res = parse("c COLLATE de_CH COLLATE fr_CH");
             Assertions.assertFalse(res.ok());
             Assertions.assertEquals("COLLATE specified more than once at 4", res.errorMessage());
         }
@@ -146,7 +150,7 @@ class OrderItemParserTest {
         @Test
         @DisplayName("COLLATE without name -> error")
         void collate_without_name() {
-            ParseResult<OrderItem> res = parser.parse("c COLLATE", ctx);
+            var res = parse("c COLLATE");
             Assertions.assertFalse(res.ok());
             Assertions.assertEquals("Expected collation name after COLLATE at 9", res.errorMessage());
         }
@@ -154,7 +158,7 @@ class OrderItemParserTest {
         @Test
         @DisplayName("Unexpected trailing token -> error")
         void unexpected_trailing_token() {
-            ParseResult<OrderItem> res = parser.parse("c ASC EXTRA", ctx);
+            var res = parse("c ASC EXTRA");
             Assertions.assertFalse(res.ok());
             Assertions.assertTrue(Objects.requireNonNull(res.errorMessage()).startsWith("Expected EOF but found: EXTRA"),
                 "should mention unexpected token");

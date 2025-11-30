@@ -17,6 +17,7 @@ import io.sqm.core.Expression;
  * @param lower     an expression representing a low boundary.
  * @param upper     an expression representing an upper boundary.
  * @param symmetric indicates whether the order of the boundaries must be preserved or can be ignored.
+ * @param negated   Indicates whether this is a BETWEEN b AND c or a NOT BETWEEN b AND c predicate.
  */
-public record BetweenPredicateImpl(Expression value, Expression lower, Expression upper, boolean symmetric) implements BetweenPredicate {
+public record BetweenPredicateImpl(Expression value, Expression lower, Expression upper, boolean symmetric, boolean negated) implements BetweenPredicate {
 }

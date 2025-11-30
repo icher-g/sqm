@@ -2,6 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.*;
 import io.sqm.parser.spi.ParseContext;
+import io.sqm.parser.spi.ParseResult;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,10 +15,14 @@ class SelectItemParserTest {
     private final ParseContext ctx = ParseContext.of(new AnsiSpecs());
     private final ExprSelectItemParser parser = new ExprSelectItemParser();
 
+    private ParseResult<? extends ExprSelectItem> parse(String sql) {
+        return ctx.parse(parser, sql);
+    }
+
     @Test
     @DisplayName("Parses name only")
     void name_only() {
-        var r = parser.parse("c1", ctx);
+        var r = parse("c1");
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         ExprSelectItem item = r.value();
         Assertions.assertInstanceOf(ColumnExpr.class, item.expr());
@@ -30,7 +35,7 @@ class SelectItemParserTest {
     @Test
     @DisplayName("Parses table.name with alias via AS")
     void table_name_as_alias() {
-        var r = parser.parse("t1.c1 AS a1", ctx);
+        var r = parse("t1.c1 AS a1");
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         var n = r.value().expr().<ColumnExpr>matchExpression().column(c -> c).orElse(null);
         Assertions.assertEquals("t1", n.tableAlias());
@@ -41,7 +46,7 @@ class SelectItemParserTest {
     @Test
     @DisplayName("Named column with bare alias")
     void named_with_bare_alias() {
-        var r = parser.parse("t1.c1 a1", ctx);
+        var r = parse("t1.c1 a1");
         Assertions.assertTrue(r.ok());
         var n = r.value().expr().<ColumnExpr>matchExpression().column(c -> c).orElse(null);
         Assertions.assertEquals("t1", n.tableAlias());
@@ -50,16 +55,9 @@ class SelectItemParserTest {
     }
 
     @Test
-    @DisplayName("Invalid expr")
-    void invalid_expr() {
-        var r = parser.parse("(price * qty) AS total", ctx);
-        Assertions.assertFalse(r.ok());
-    }
-
-    @Test
     @DisplayName("Parses function column with alias")
     void func_with_alias() {
-        var r = parser.parse("lower(name) lname", ctx);
+        var r = parse("lower(name) lname");
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         var f = r.value().expr().<FunctionExpr>matchExpression().func(fc -> fc).orElse(null);
         Assertions.assertEquals("lower", f.name());
@@ -76,7 +74,7 @@ class SelectItemParserTest {
     @Test
     @DisplayName("Parses DISTINCT and qualified arg: COUNT(DISTINCT t.id) AS c")
     void func_distinct_and_qualified() {
-        var r = parser.parse("COUNT(DISTINCT t.id) AS c", ctx);
+        var r = parse("COUNT(DISTINCT t.id) AS c");
         Assertions.assertTrue(r.ok());
         var f = r.value().expr().<FunctionExpr>matchExpression().func(fc -> fc).orElse(null);
         Assertions.assertEquals("COUNT", f.name());
@@ -96,7 +94,7 @@ class SelectItemParserTest {
     @Test
     @DisplayName("Parses nested calls and numeric/string literals")
     void func_nested_and_literals() {
-        var r = parser.parse("substr(upper(name), 1, '2')", ctx);
+        var r = parse("substr(upper(name), 1, '2')");
         Assertions.assertTrue(r.ok());
         var f = r.value().expr().<FunctionExpr>matchExpression().func(fc -> fc).orElse(null);
         Assertions.assertEquals("substr", f.name());
@@ -111,7 +109,7 @@ class SelectItemParserTest {
     @Test
     @DisplayName("Non-CASE input still parsed (NamedColumn path)")
     void non_case_falls_back_to_named_column() {
-        var pr = parser.parse("t.col as c", ctx);
+        var pr = parse("t.col as c");
         Assertions.assertTrue(pr.ok(), () -> "parse failed: " + pr.errorMessage());
         Assertions.assertInstanceOf(ColumnExpr.class, pr.value().expr());
         var nc = pr.value().expr().<ColumnExpr>matchExpression().column(c -> c).orElse(null);
@@ -128,7 +126,7 @@ class SelectItemParserTest {
         @DisplayName("CASE with one WHEN/THEN, ELSE literal, alias with AS")
         void case_simple_with_else_and_alias_with_as() {
             var sql = "CASE WHEN t.x > 0 THEN 'pos' ELSE 'neg' END AS sign";
-            var pr = parser.parse(sql, ctx);
+            var pr = parse(sql);
             Assertions.assertTrue(pr.ok(), () -> "parse failed: " + pr.errorMessage());
 
             var col = pr.value();
@@ -155,7 +153,7 @@ class SelectItemParserTest {
                   WHEN a = 2 THEN 20
                 END result
                 """;
-            var pr = parser.parse(sql, ctx);
+            var pr = parse(sql);
             Assertions.assertTrue(pr.ok(), () -> "parse failed: " + pr.errorMessage());
 
             var cc = pr.value().expr().<CaseExpr>matchExpression().kase(k -> k).orElse(null);
@@ -171,7 +169,7 @@ class SelectItemParserTest {
         @DisplayName("CASE THEN result is a qualified column, alias omitted")
         void case_then_is_qualified_column() {
             var sql = "CASE WHEN flag THEN t2.name END";
-            var pr = parser.parse(sql, ctx);
+            var pr = parse(sql);
             Assertions.assertTrue(pr.ok(), () -> "parse failed: " + pr.errorMessage());
 
             var cc = pr.value().expr().<CaseExpr>matchExpression().kase(k -> k).orElse(null);
@@ -192,7 +190,7 @@ class SelectItemParserTest {
                   CASE WHEN y > 10 THEN 'A' ELSE 'B' END
                 ELSE 'C' END alias1
                 """;
-            var pr = parser.parse(sql, ctx);
+            var pr = parse(sql);
             Assertions.assertTrue(pr.ok(), () -> "parse failed: " + pr.errorMessage());
 
             var outer = pr.value().expr().<CaseExpr>matchExpression().kase(k -> k).orElse(null);
@@ -210,7 +208,7 @@ class SelectItemParserTest {
         @DisplayName("CASE with boolean/NULL literals in THEN/ELSE")
         void case_boolean_and_null_literals() {
             var sql = "CASE WHEN active THEN TRUE ELSE NULL END as is_active";
-            var pr = parser.parse(sql, ctx);
+            var pr = parse(sql);
             Assertions.assertTrue(pr.ok(), () -> "parse failed: " + pr.errorMessage());
 
             var cc = pr.value().expr().<CaseExpr>matchExpression().kase(k -> k).orElse(null);
@@ -228,7 +226,7 @@ class SelectItemParserTest {
         @DisplayName("CASE without WHEN → error")
         void case_without_when_errors() {
             var sql = "CASE ELSE 1 END";
-            var pr = parser.parse(sql, ctx);
+            var pr = parse(sql);
             Assertions.assertFalse(pr.ok());
             Assertions.assertTrue(Objects.requireNonNull(pr.errorMessage()).contains("at least one WHEN"), pr::errorMessage);
         }
@@ -237,7 +235,7 @@ class SelectItemParserTest {
         @DisplayName("Missing THEN after WHEN predicate → error")
         void missing_then_errors() {
             var sql = "CASE WHEN a = 1  10 ELSE 0 END";
-            var pr = parser.parse(sql, ctx);
+            var pr = parse(sql);
             Assertions.assertFalse(pr.ok());
             Assertions.assertTrue(Objects.requireNonNull(pr.errorMessage()).toLowerCase().contains("expected then"), pr::errorMessage);
         }
@@ -246,7 +244,7 @@ class SelectItemParserTest {
         @DisplayName("Missing END → error")
         void missing_end_errors() {
             var sql = "CASE WHEN a = 1 THEN 10";
-            var pr = parser.parse(sql, ctx);
+            var pr = parse(sql);
             Assertions.assertFalse(pr.ok());
             Assertions.assertTrue(Objects.requireNonNull(pr.errorMessage()).toLowerCase().contains("expected end"), pr::errorMessage);
         }

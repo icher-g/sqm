@@ -1,6 +1,7 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.InPredicate;
+import io.sqm.core.QueryExpr;
 import io.sqm.core.RowExpr;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
@@ -18,7 +19,7 @@ public class InPredicateRenderer implements Renderer<InPredicate> {
     public void render(InPredicate node, RenderContext ctx, SqlWriter w) {
         w.append(node.lhs(), node.lhs() instanceof RowExpr).space();
         w.append(node.negated() ? ctx.dialect().operators().notIn() : ctx.dialect().operators().in()).space();
-        w.append(node.rhs(), true);
+        w.append(node.rhs(), !(node.rhs() instanceof QueryExpr));
     }
 
     /**

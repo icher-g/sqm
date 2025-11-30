@@ -1,5 +1,8 @@
 package io.sqm.core;
 
+import io.sqm.core.match.Match;
+import io.sqm.core.match.ParamsMatch;
+
 /**
  * A base expression type representing a bind parameter in a SQL statement.
  * <p>
@@ -55,6 +58,16 @@ public sealed interface ParamExpr extends Expression permits AnonymousParamExpr,
      */
     static OrdinalParamExpr ordinal(int index) {
         return OrdinalParamExpr.of(index);
+    }
+
+    /**
+     * Creates a new matcher for the current {@link ParamExpr}.
+     *
+     * @param <R> the result type
+     * @return a new {@code ParamsMatch}.
+     */
+    default <R> ParamsMatch<R> matchParam() {
+        return Match.param(this);
     }
 }
 

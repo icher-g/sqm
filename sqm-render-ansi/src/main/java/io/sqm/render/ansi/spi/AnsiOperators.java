@@ -83,5 +83,30 @@ public final class AnsiOperators implements Operators {
     public String not() {
         return "NOT";
     }
+
+    @Override
+    public String add() {
+        return "+";
+    }
+
+    @Override
+    public String sub() {
+        return "-";
+    }
+
+    @Override
+    public String mul() {
+        return "*";
+    }
+
+    @Override
+    public String div() {
+        return "/";
+    }
+
+    @Override
+    public String neg() {
+        return "-";
+    }
 }
 

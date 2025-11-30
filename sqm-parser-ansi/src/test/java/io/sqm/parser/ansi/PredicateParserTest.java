@@ -39,10 +39,14 @@ class PredicateParserTest {
         return type.cast(value);
     }
 
+    private ParseResult<? extends Predicate> parse(String sql) {
+        return ctx.parse(parser, sql);
+    }
+
     @Test
     @DisplayName("category IN (1, 2, 3)")
     void in_list() {
-        var r = parser.parse("category IN (1, 2, 3)", ctx);
+        var r = parse("category IN (1, 2, 3)");
         assertOk(r);
         var f = assertIs(InPredicate.class, r.value());
         var v = assertIs(RowExpr.class, f.rhs());
@@ -53,7 +57,7 @@ class PredicateParserTest {
     @Test
     @DisplayName("status NOT IN ('A','B')")
     void not_in_list() {
-        var r = parser.parse("status NOT IN ('A','B')", ctx);
+        var r = parse("status NOT IN ('A','B')");
         assertOk(r);
         var f = assertIs(InPredicate.class, r.value());
         Assertions.assertTrue(f.negated());
@@ -65,7 +69,7 @@ class PredicateParserTest {
     @Test
     @DisplayName("name LIKE '%abc%'")
     void like_single() {
-        var r = parser.parse("name LIKE '%abc%'", ctx);
+        var r = parse("name LIKE '%abc%'");
         assertOk(r);
         var f = assertIs(LikePredicate.class, r.value());
         var v = assertIs(LiteralExpr.class, f.pattern());
@@ -78,7 +82,7 @@ class PredicateParserTest {
     @Test
     @DisplayName("price BETWEEN 10 AND 20")
     void between_range() {
-        var r = parser.parse("price BETWEEN 10 AND 20", ctx);
+        var r = parse("price BETWEEN 10 AND 20");
         assertOk(r);
         var f = assertIs(BetweenPredicate.class, r.value());
         var l = assertIs(LiteralExpr.class, f.lower());
@@ -102,7 +106,7 @@ class PredicateParserTest {
     })
     @DisplayName("Comparison operators map to ComparisonPredicate")
     void comparisons(String expr, ComparisonOperator operator, long expected) {
-        var r = parser.parse(expr, ctx);
+        var r = parse(expr);
         assertOk(r);
         var f = assertIs(ComparisonPredicate.class, r.value());
         Assertions.assertEquals(operator, f.operator());
@@ -114,7 +118,7 @@ class PredicateParserTest {
     @Test
     @DisplayName("Tuple IN: (a,b) IN ((1,2),(3,4)) builds TupleColumnFilter + Values.Tuples")
     void tuple_in() {
-        var r = parser.parse("(a, b) IN ((1,2), (3,4))", ctx);
+        var r = parse("(a, b) IN ((1,2), (3,4))");
         assertOk(r);
         var f = assertIs(InPredicate.class, r.value());
         var items = f.lhs().<List<Expression>>matchExpression()
@@ -139,7 +143,7 @@ class PredicateParserTest {
     @Test
     @DisplayName("AND has higher precedence than OR when grouped by parser (NOT > AND > OR)")
     void boolean_precedence_and_grouping() {
-        var r = parser.parse("status IN ('A','B') AND (price BETWEEN 10 AND 20 OR name NOT LIKE '%test%')", ctx);
+        var r = parse("status IN ('A','B') AND (price BETWEEN 10 AND 20 OR name NOT LIKE '%test%')");
         assertOk(r);
 
         var root = assertIs(AndPredicate.class, r.value());
@@ -154,7 +158,7 @@ class PredicateParserTest {
     @Test
     @DisplayName("NOT binds tighter than AND/OR; parentheses preserved")
     void boolean_not_precedence() {
-        var r = parser.parse("status NOT IN ('X') OR price >= 100", ctx);
+        var r = parse("status NOT IN ('X') OR price >= 100");
         assertOk(r);
 
         var or = assertIs(OrPredicate.class, r.value());
@@ -171,7 +175,7 @@ class PredicateParserTest {
     @Test
     @DisplayName("Escaped quote in string literal: 'O''Reilly'")
     void escaped_quotes() {
-        var r = parser.parse("name LIKE 'O''Reilly'", ctx);
+        var r = parse("name LIKE 'O''Reilly'");
         assertOk(r);
         var f = assertIs(LikePredicate.class, r.value());
         var v = assertIs(LiteralExpr.class, f.pattern());
@@ -181,7 +185,7 @@ class PredicateParserTest {
     @Test
     @DisplayName("Booleans and NULL literals")
     void boolean_and_null_literals() {
-        var r1 = parser.parse("active = TRUE", ctx);
+        var r1 = parse("active = TRUE");
         assertOk(r1);
         Assertions.assertEquals(Boolean.TRUE, r1.value().matchPredicate()
             .comparison(cmp -> cmp.rhs().matchExpression()
@@ -190,7 +194,7 @@ class PredicateParserTest {
             )
             .orElse(null)
         );
-        var r2 = parser.parse("deleted = FALSE", ctx);
+        var r2 = parse("deleted = FALSE");
         assertOk(r2);
         Assertions.assertEquals(Boolean.FALSE, r2.value().matchPredicate()
             .comparison(cmp -> cmp.rhs().matchExpression()
@@ -200,7 +204,7 @@ class PredicateParserTest {
             .orElse(null)
         );
 
-        var r3 = parser.parse("note = NULL", ctx);
+        var r3 = parse("note = NULL");
         assertOk(r3);
         Assertions.assertNull(r3.value().matchPredicate()
             .comparison(cmp -> cmp.rhs().matchExpression()
@@ -214,7 +218,7 @@ class PredicateParserTest {
     @Test
     @DisplayName("Unterminated string -> error")
     void unterminated_string_error() {
-        var r = parser.parse("name LIKE 'abc", ctx);
+        var r = parse("name LIKE 'abc");
         Assertions.assertFalse(r.ok());
         Assertions.assertFalse(r.problems().isEmpty());
     }
@@ -222,17 +226,17 @@ class PredicateParserTest {
     @Test
     @DisplayName("(a) IN ((1))")
     void tuple_arity_error() {
-        var r = parser.parse("(a) IN ((1))", ctx);
+        var r = parse("(a) IN ((1))");
         Assertions.assertTrue(r.ok());
         Assertions.assertInstanceOf(InPredicate.class, r.value());
-        Assertions.assertInstanceOf(RowExpr.class, r.value().matchPredicate().in(p -> p.lhs()).orElse(null));
+        Assertions.assertInstanceOf(ColumnExpr.class, r.value().matchPredicate().in(p -> p.lhs()).orElse(null));
         Assertions.assertInstanceOf(RowListExpr.class, r.value().matchPredicate().in(p -> p.rhs()).orElse(null));
     }
 
     @Test
     @DisplayName("Unexpected trailing input after a valid filter")
     void trailing_input_error() {
-        var r = parser.parse("qty = 5 garbage", ctx);
+        var r = parse("qty = 5 garbage");
         Assertions.assertFalse(r.ok());
     }
 }

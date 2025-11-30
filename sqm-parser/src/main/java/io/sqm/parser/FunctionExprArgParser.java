@@ -2,6 +2,7 @@ package io.sqm.parser;
 
 import io.sqm.core.FunctionExpr;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.spi.MatchResult;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
@@ -15,14 +16,13 @@ public class FunctionExprArgParser implements Parser<FunctionExpr.Arg> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<FunctionExpr.Arg> parse(Cursor cur, ParseContext ctx) {
-        if (ctx.lookups().looksLikeStar(cur)) {
-            var res = ctx.parse(FunctionExpr.Arg.StarArg.class, cur);
-            return finalize(cur, ctx, res);
+    public ParseResult<? extends FunctionExpr.Arg> parse(Cursor cur, ParseContext ctx) {
+        MatchResult<? extends FunctionExpr.Arg> matched = ctx.parseIfMatch(FunctionExpr.Arg.StarArg.class, cur);
+        if (matched.match()) {
+            return matched.result();
         }
-
-        var res = ctx.parse(FunctionExpr.Arg.ExprArg.class, cur);
-        return finalize(cur, ctx, res);
+        // if this is not a star try tp parse expression.
+        return ctx.parse(FunctionExpr.Arg.ExprArg.class, cur);
     }
 
     /**
