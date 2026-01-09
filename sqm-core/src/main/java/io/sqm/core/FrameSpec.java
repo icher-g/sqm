@@ -14,7 +14,7 @@ import io.sqm.core.walk.NodeVisitor;
  *     }
  * </pre>
  */
-public sealed interface FrameSpec extends Node permits FrameSpec.Single, FrameSpec.Between {
+public sealed interface FrameSpec extends Node permits DialectFrameSpec, FrameSpec.Between, FrameSpec.Single {
     /**
      * Creates a single frame.
      * <p>Example:</p>

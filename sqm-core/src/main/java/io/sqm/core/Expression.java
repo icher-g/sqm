@@ -11,7 +11,7 @@ import java.util.List;
  * Any value-producing node (scalar or boolean).
  */
 public sealed interface Expression extends Node
-    permits ArithmeticExpr, CaseExpr, ColumnExpr, FunctionExpr, FunctionExpr.Arg, LiteralExpr, ParamExpr, Predicate, ValueSet {
+    permits ArithmeticExpr, CaseExpr, ColumnExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, ParamExpr, Predicate, ValueSet {
 
     /**
      * Creates a literal expression.

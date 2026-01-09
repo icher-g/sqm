@@ -8,7 +8,7 @@ import io.sqm.core.walk.NodeVisitor;
  * Determines which rows are visible to the function for each current row.
  * Frame bounds like UNBOUNDED PRECEDING, 5 PRECEDING, CURRENT ROW, etc.
  */
-public sealed interface BoundSpec extends Node permits BoundSpec.UnboundedPreceding, BoundSpec.Preceding, BoundSpec.CurrentRow, BoundSpec.Following, BoundSpec.UnboundedFollowing {
+public sealed interface BoundSpec extends Node permits BoundSpec.CurrentRow, BoundSpec.Following, BoundSpec.Preceding, BoundSpec.UnboundedFollowing, BoundSpec.UnboundedPreceding, DialectBoundSpec {
 
     /**
      * Creates UNBOUNDED PRECEDING bound.
