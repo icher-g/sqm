@@ -20,7 +20,7 @@ import java.io.Serializable;
  * to be applied to nodes without modifying their internal structure.
  * </p>
  */
-public sealed interface Node extends Serializable permits BoundSpec, CteDef, Expression, FrameSpec, FromItem, GroupBy, GroupItem, LimitOffset, OrderBy, OrderItem, OverSpec, PartitionBy, Query, SelectItem, WhenThen, WindowDef {
+public sealed interface Node extends Serializable permits BoundSpec, CteDef, DialectNode, Expression, FrameSpec, FromItem, GroupBy, GroupItem, LimitOffset, OrderBy, OrderItem, OverSpec, PartitionBy, Query, SelectItem, WhenThen, WindowDef {
     /**
      * Accepts a {@link NodeVisitor} that performs an operation on this node.
      * <p>

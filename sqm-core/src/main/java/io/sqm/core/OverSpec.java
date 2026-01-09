@@ -16,7 +16,7 @@ import io.sqm.core.walk.NodeVisitor;
  *     }
  * </pre>
  */
-public sealed interface OverSpec extends Node permits OverSpec.Ref, OverSpec.Def {
+public sealed interface OverSpec extends Node permits DialectOverSpec, OverSpec.Def, OverSpec.Ref {
 
     /**
      * References a named window from the {@code WINDOW} clause.

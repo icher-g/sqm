@@ -5,7 +5,7 @@ import io.sqm.core.match.TableRefMatch;
 /**
  * Anything that can appear in FROM/JOIN: table, subquery, VALUES, etc.
  */
-public sealed interface TableRef extends FromItem permits QueryTable, Table, ValuesTable {
+public sealed interface TableRef extends FromItem permits DialectTableRef, QueryTable, Table, ValuesTable {
     /**
      * Creates a table with the provided name. All other fields are set to NULL.
      *

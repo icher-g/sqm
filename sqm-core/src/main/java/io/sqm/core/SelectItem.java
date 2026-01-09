@@ -9,7 +9,7 @@ import io.sqm.core.match.SelectItemMatch;
  * A single item in the SELECT list.
  */
 public sealed interface SelectItem extends Node
-    permits ExprSelectItem, StarSelectItem, QualifiedStarSelectItem {
+    permits DialectSelectItem, ExprSelectItem, QualifiedStarSelectItem, StarSelectItem {
 
     /**
      * Creates an expression wrapper for a SELECT statement.

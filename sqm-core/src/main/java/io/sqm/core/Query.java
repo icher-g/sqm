@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Represents a base interface for all queries.
  */
-public sealed interface Query extends Node permits CompositeQuery, SelectQuery, WithQuery {
+public sealed interface Query extends Node permits CompositeQuery, DialectQuery, SelectQuery, WithQuery {
     /**
      * Creates SELECT query with a list of expressions.
      *
