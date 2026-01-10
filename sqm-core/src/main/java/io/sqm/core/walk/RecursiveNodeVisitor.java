@@ -526,6 +526,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitSelectQuery(SelectQuery q) {
         q.items().forEach(this::accept);
+        accept(q.distinct());
         accept(q.from());
         q.joins().forEach(this::accept);
         accept(q.where());
@@ -817,6 +818,17 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitNegativeArithmeticExpr(NegativeArithmeticExpr expr) {
         accept(expr.expr());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link DistinctSpec} instance.
+     *
+     * @param spec DISTINCT specification to visit
+     * @return visitor-specific result
+     */
+    @Override
+    public R visitDistinctSpec(DistinctSpec spec) {
         return defaultResult();
     }
 }

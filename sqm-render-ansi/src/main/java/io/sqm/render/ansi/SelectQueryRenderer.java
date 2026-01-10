@@ -21,7 +21,7 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
     public void render(SelectQuery node, RenderContext ctx, SqlWriter w) {
         // SELECT
         w.append("SELECT");
-        if (node.distinct() != null && node.distinct()) {
+        if (node.distinct() != null) {
             w.space().append("DISTINCT");
         }
 

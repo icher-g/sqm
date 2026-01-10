@@ -53,6 +53,7 @@ Node
 │     ├─ RowExpr
 │     ├─ QueryExpr
 │     └─ RowListExpr
+├─ DistinctSpec
 ├─ SelectItem
 │  ├─ ExprSelectItem
 │  ├─ StarSelectItem
@@ -103,6 +104,7 @@ Mermaid does not support `.` in identifiers, so all dots are replaced with `_` i
 ```mermaid
 graph TD
   Node --> Expression
+  Node --> DistinctSpec
 
   Expression --> CaseExpr
   Expression --> ColumnExpr
@@ -297,6 +299,13 @@ graph TD
   RowExpr – `(a, b)`  
   QueryExpr – subquery value set  
   RowListExpr – `(1,2), (3,4)`
+
+---
+
+### DISTINCT
+
+- **DistinctSpec**  
+  Select-level DISTINCT modifier applied to a `SelectQuery`. A `null` value indicates that the query has no DISTINCT modifier. ANSI DISTINCT is represented by `AnsiDistinct`. Dialects may provide additional `DistinctSpec` implementations such as PostgreSQL `DISTINCT ON`.
 
 ---
 

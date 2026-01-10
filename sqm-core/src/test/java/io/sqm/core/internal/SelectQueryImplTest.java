@@ -11,7 +11,7 @@ class SelectQueryImplTest {
     @Test
     void testEquals() {
         var q1 = Query.select(Expression.column("c"), Expression.column("d"))
-                      .distinct(true)
+                      .distinct(DistinctSpec.TRUE)
                       .from(TableRef.table("t"))
                       .join(Join.full(TableRef.table("f")))
                       .where(Expression.column("c").eq(1))
@@ -23,7 +23,7 @@ class SelectQueryImplTest {
                       .offset(2L);
 
         var q2 = Query.select(Expression.column("c"), Expression.column("d"))
-                      .distinct(true)
+                      .distinct(DistinctSpec.TRUE)
                       .from(TableRef.table("t"))
                       .join(Join.full(TableRef.table("f")))
                       .where(Expression.column("c").eq(1))
@@ -41,7 +41,7 @@ class SelectQueryImplTest {
     @Test
     void testHashCode() {
         var q1 = Query.select(Expression.column("c"), Expression.column("d"))
-                      .distinct(true)
+                      .distinct(DistinctSpec.TRUE)
                       .from(TableRef.table("t"))
                       .join(Join.full(TableRef.table("f")))
                       .where(Expression.column("c").eq(1))
@@ -53,7 +53,7 @@ class SelectQueryImplTest {
                       .offset(2L);
 
         var q2 = Query.select(Expression.column("c"), Expression.column("d"))
-                      .distinct(true)
+                      .distinct(DistinctSpec.TRUE)
                       .from(TableRef.table("t"))
                       .join(Join.full(TableRef.table("f")))
                       .where(Expression.column("c").eq(1))

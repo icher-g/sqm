@@ -632,6 +632,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitSelectQuery(SelectQuery q) {
         List<SelectItem> items = new ArrayList<>();
         boolean changed = apply(q.items(), items);
+        var distinct = apply(q.distinct());
+        changed |= distinct != q.distinct();
         var from = apply(q.from());
         changed |= from != q.from();
         List<Join> joins = new ArrayList<>();
@@ -652,6 +654,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         if (changed) {
             var query = SelectQuery.of()
                 .select(items)
+                .distinct(distinct)
                 .from(from)
                 .join(joins)
                 .where(where)
@@ -942,5 +945,26 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             return NegativeArithmeticExpr.of(e);
         }
         return expr;
+    }
+
+    /**
+     * Transforms a {@link DistinctSpec} node.
+     *
+     * <p>The default implementation performs an identity transformation and
+     * returns the given instance unchanged.</p>
+     *
+     * <p>Subclasses may override this method to rewrite, replace, or normalize
+     * DISTINCT specifications, including dialect-specific implementations
+     * (for example, PostgreSQL {@code DISTINCT ON}).</p>
+     *
+     * <p>This method is typically invoked while transforming a {@link SelectQuery}
+     * and before processing other SELECT components.</p>
+     *
+     * @param spec DISTINCT specification to transform
+     * @return transformed {@link Node}; by default, the original {@code spec}
+     */
+    @Override
+    public Node visitDistinctSpec(DistinctSpec spec) {
+        return spec;
     }
 }

@@ -30,7 +30,7 @@ public class SelectQueryParser implements Parser<SelectQuery> {
 
         // DISTINCT
         if (cur.consumeIf(TokenType.DISTINCT)) {
-            q.distinct(true);
+            q.distinct(DistinctSpec.TRUE);
         }
 
         // SELECT list

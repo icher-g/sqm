@@ -16,7 +16,7 @@ public class SelectQueryImpl implements SelectQuery {
     private TableRef tableRef;
     private Predicate where;
     private Predicate having;
-    private Boolean distinct;
+    private DistinctSpec distinctSpec;
     private LimitOffset limitOffset;
 
     public SelectQueryImpl() {
@@ -180,24 +180,38 @@ public class SelectQueryImpl implements SelectQuery {
     }
 
     /**
-     * Indicates if a DISTINCT keyword should be added to a SELECT statement.
+     * Returns the DISTINCT specification of this SELECT query.
      *
-     * @return TRUE if a distinct needs to be added or FALSE otherwise.
+     * <p>If this method returns {@code null}, the query does not apply any DISTINCT
+     * semantics and behaves as a regular {@code SELECT}.</p>
+     *
+     * <p>If a {@link DistinctSpec} is present, its concrete implementation determines
+     * the exact behavior. ANSI renderers may treat any non-null {@link DistinctSpec}
+     * as plain {@code DISTINCT}, while dialect-specific renderers may apply more
+     * specialized semantics (for example, PostgreSQL {@code DISTINCT ON}).</p>
+     *
+     * @return DISTINCT specification, or {@code null} if not present
      */
     @Override
-    public Boolean distinct() {
-        return distinct;
+    public DistinctSpec distinct() {
+        return distinctSpec;
     }
 
     /**
-     * Sets distinct used in SELECT statement.
+     * Returns a copy of this SELECT query with the given DISTINCT specification applied.
      *
-     * @param distinct a value.
-     * @return this.
+     * <p>Passing {@code null} clears any existing DISTINCT specification.</p>
+     *
+     * <p>The concrete behavior of the DISTINCT clause is defined by the provided
+     * {@link DistinctSpec} implementation and interpreted by the target SQL dialect
+     * during rendering or validation.</p>
+     *
+     * @param spec DISTINCT specification to apply, or {@code null} to remove DISTINCT
+     * @return new {@link SelectQuery} instance with the updated DISTINCT specification
      */
     @Override
-    public SelectQuery distinct(boolean distinct) {
-        this.distinct = distinct;
+    public SelectQuery distinct(DistinctSpec spec) {
+        this.distinctSpec = spec;
         return this;
     }
 
@@ -294,7 +308,7 @@ public class SelectQueryImpl implements SelectQuery {
             Objects.equals(tableRef, that.from()) &&
             Objects.equals(where, that.where()) &&
             Objects.equals(having, that.having()) &&
-            Objects.equals(distinct, that.distinct()) &&
+            Objects.equals(distinctSpec, that.distinct()) &&
             Objects.equals(limit(), that.limit()) &&
             Objects.equals(offset(), that.offset());
     }
@@ -309,7 +323,7 @@ public class SelectQueryImpl implements SelectQuery {
         result = 31 * result + Objects.hashCode(tableRef);
         result = 31 * result + Objects.hashCode(where);
         result = 31 * result + Objects.hashCode(having);
-        result = 31 * result + Objects.hashCode(distinct);
+        result = 31 * result + Objects.hashCode(distinctSpec);
         result = 31 * result + Objects.hashCode(limitOffset);
         return result;
     }
