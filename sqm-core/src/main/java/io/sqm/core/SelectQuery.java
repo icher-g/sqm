@@ -215,19 +215,33 @@ public non-sealed interface SelectQuery extends Query {
     SelectQuery orderBy(List<OrderItem> items);
 
     /**
-     * Indicates if a DISTINCT keyword should be added to a SELECT statement.
+     * Returns the DISTINCT specification of this SELECT query.
      *
-     * @return TRUE if a distinct needs to be added or FALSE otherwise.
+     * <p>If this method returns {@code null}, the query does not apply any DISTINCT
+     * semantics and behaves as a regular {@code SELECT}.</p>
+     *
+     * <p>If a {@link DistinctSpec} is present, its concrete implementation determines
+     * the exact behavior. ANSI renderers may treat any non-null {@link DistinctSpec}
+     * as plain {@code DISTINCT}, while dialect-specific renderers may apply more
+     * specialized semantics (for example, PostgreSQL {@code DISTINCT ON}).</p>
+     *
+     * @return DISTINCT specification, or {@code null} if not present
      */
-    Boolean distinct();
+    DistinctSpec distinct();
 
     /**
-     * Sets distinct used in SELECT statement.
+     * Returns a copy of this SELECT query with the given DISTINCT specification applied.
      *
-     * @param distinct a value.
-     * @return this.
+     * <p>Passing {@code null} clears any existing DISTINCT specification.</p>
+     *
+     * <p>The concrete behavior of the DISTINCT clause is defined by the provided
+     * {@link DistinctSpec} implementation and interpreted by the target SQL dialect
+     * during rendering or validation.</p>
+     *
+     * @param spec DISTINCT specification to apply, or {@code null} to remove DISTINCT
+     * @return new {@link SelectQuery} instance with the updated DISTINCT specification
      */
-    SelectQuery distinct(boolean distinct);
+    SelectQuery distinct(DistinctSpec spec);
 
     /**
      * Gets a limit of the query if there is any or NULL otherwise.

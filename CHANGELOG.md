@@ -21,7 +21,7 @@
 
 ### Roadmap
 - [X] Parse query parameters (`WHERE col = ?`)
-- [ ] Support arithmetic in SQL (`SELECT salary + bonus`)
+- [X] Support arithmetic in SQL (`SELECT salary + bonus`)
 - [ ] Add DML operations
 - [ ] PostgreSQL dialect renderer/parser
 - [ ] Query optimizer and validator

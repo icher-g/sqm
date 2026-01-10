@@ -21,5 +21,6 @@ public interface NodeVisitor<R> extends
     PaginationVisitor<R>,
     StatementVisitor<R>,
     QueryVisitor<R>,
-    WindowVisitor<R> {
+    WindowVisitor<R>,
+    DistinctVisitor<R> {
 }

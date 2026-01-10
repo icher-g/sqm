@@ -66,6 +66,9 @@ public class CompositeQueryParser implements Parser<Query> {
                     else
                         ops.add(SetOperator.EXCEPT);
                 }
+                default -> {
+                    return error("Unexpected token in composite query: " + token.type(), token.pos());
+                }
             }
         }
         while (true);
