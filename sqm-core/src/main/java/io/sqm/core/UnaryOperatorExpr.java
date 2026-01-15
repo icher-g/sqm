@@ -16,7 +16,7 @@ import java.util.Objects;
  * <p>The operator is stored as a raw {@link String} and is rendered as-is by a dialect renderer.
  * Dialect-specific validation should be implemented in the PostgreSQL module.</p>
  *
- * <h3>Examples (PostgreSQL)</h3>
+ * <p>Examples (PostgreSQL)</p>
  * <ul>
  *   <li>{@code -amount} becomes {@code UnaryOperatorExpr.of("-", amount)}</li>
  *   <li>{@code ~mask} becomes {@code UnaryOperatorExpr.of("~", mask)}</li>
@@ -67,6 +67,9 @@ public non-sealed interface UnaryOperatorExpr extends Expression {
      * <p>
      * Nested to keep the model change self-contained. You may later move it to your standard
      * implementation package without changing the public API.
+     *
+     * @param operator operator token (for example {@code "-"} or {@code "~"})
+     * @param expr     operand expression
      */
     record Impl(String operator, Expression expr) implements UnaryOperatorExpr {
 

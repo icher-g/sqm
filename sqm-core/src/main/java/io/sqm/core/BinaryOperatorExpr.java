@@ -18,7 +18,7 @@ import java.util.Objects;
  * Dialect-specific validation (for example, allow-listing PostgreSQL operators such as {@code ->}, {@code @>}, {@code ~*})
  * should be implemented in a PostgreSQL module, not in the core model.</p>
  *
- * <h3>Examples (PostgreSQL)</h3>
+ * <p>Examples (PostgreSQL)</p>
  * <ul>
  *   <li>{@code payload -> 'user'} becomes {@code BinaryOperatorExpr.of(payload, "->", 'user')}</li>
  *   <li>{@code payload ->> 'id'} becomes {@code BinaryOperatorExpr.of(payload, "->>", 'id')}</li>
@@ -82,6 +82,10 @@ public non-sealed interface BinaryOperatorExpr extends Expression {
      * <p>
      * Nested to keep the model change self-contained. You may later move it to your standard
      * implementation package without changing the public API.
+     *
+     * @param left     left operand
+     * @param operator operator token (for example {@code "->"} or {@code "@>"})
+     * @param right    right operand
      */
     record Impl(Expression left, String operator, Expression right) implements BinaryOperatorExpr {
 

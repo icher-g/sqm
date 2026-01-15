@@ -11,7 +11,7 @@ import java.util.Objects;
  * Represents array construction syntax typically rendered as {@code ARRAY[...]} in PostgreSQL.
  * The elements are modeled as expressions, allowing literals, columns, function calls, casts, and more.
  *
- * <h3>Examples (PostgreSQL)</h3>
+ * <p>Examples (PostgreSQL)</p>
  * <ul>
  *   <li>{@code ARRAY['a', 'b']}</li>
  *   <li>{@code ARRAY[1, 2, 3]}</li>
@@ -19,13 +19,6 @@ import java.util.Objects;
  * </ul>
  */
 public non-sealed interface ArrayExpr extends Expression {
-
-    /**
-     * Array elements.
-     *
-     * @return immutable list of element expressions
-     */
-    List<Expression> elements();
 
     /**
      * Creates an array constructor expression.
@@ -48,6 +41,13 @@ public non-sealed interface ArrayExpr extends Expression {
     }
 
     /**
+     * Array elements.
+     *
+     * @return immutable list of element expressions
+     */
+    List<Expression> elements();
+
+    /**
      * Accepts a {@link NodeVisitor} and dispatches control to the
      * visitor method corresponding to the concrete subtype
      *
@@ -65,6 +65,8 @@ public non-sealed interface ArrayExpr extends Expression {
      * <p>
      * Nested to keep the model change self-contained. You may later move it to your standard
      * implementation package without changing the public API.
+     *
+     * @param elements a list of expressions.
      */
     record Impl(List<Expression> elements) implements ArrayExpr {
 

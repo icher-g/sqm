@@ -14,7 +14,7 @@ import java.util.Objects;
  * The target type is stored as a raw string to keep the core model compact and dialect-agnostic.
  * Dialect modules may validate or normalize type names.
  *
- * <h3>Examples</h3>
+ * <p>Examples</p>
  * <ul>
  *   <li>{@code CAST(amount AS bigint)}</li>
  *   <li>{@code '{"a":1}'::jsonb}</li>
@@ -68,6 +68,9 @@ public non-sealed interface CastExpr extends Expression {
      * <p>
      * Nested to keep the model change self-contained. You may later move it to your standard
      * implementation package without changing the public API.
+     *
+     * @param expr expression to cast
+     * @param type target type name (for example {@code "jsonb"} or {@code "text[]"})
      */
     record Impl(Expression expr, String type) implements CastExpr {
 

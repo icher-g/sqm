@@ -69,6 +69,8 @@ public non-sealed interface ExprPredicate extends Predicate {
      * <p>
      * Nested to keep the model change self-contained. You may later move it
      * to your standard implementation package without changing the public API.
+     *
+     * @param expr expression expected to evaluate to a boolean value
      */
     record Impl(Expression expr) implements ExprPredicate {
 
