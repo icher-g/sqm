@@ -19,7 +19,7 @@ public class AnonymousParamExprParser implements MatchableParser<AnonymousParamE
      */
     @Override
     public ParseResult<AnonymousParamExpr> parse(Cursor cur, ParseContext ctx) {
-        cur.expect("Expected ?", TokenType.PARAM_QMARK);
+        cur.expect("Expected ?", TokenType.QMARK);
         return ok(AnonymousParamExpr.of());
     }
 
@@ -48,6 +48,6 @@ public class AnonymousParamExprParser implements MatchableParser<AnonymousParamE
      */
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
-        return cur.match(TokenType.PARAM_QMARK);
+        return cur.match(TokenType.QMARK);
     }
 }

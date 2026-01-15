@@ -14,6 +14,8 @@ The entire tree is rooted at `Node`. Everything that represents a piece of a SQL
 Node
 ├─ Expression
 │  ├─ CaseExpr
+│  ├─ CastExpr
+│  ├─ ArrayExpr
 │  ├─ ColumnExpr
 │  ├─ FunctionExpr
 │  │  └─ FunctionExpr.Arg
@@ -25,6 +27,8 @@ Node
 │  │  ├─ AnonymousParamExpr
 │  │  ├─ NamedParamExpr
 │  │  └─ OrdinalParamExpr
+│  ├─ BinaryOperatorExpr
+│  ├─ UnaryOperatorExpr
 │  ├─ ArithmeticExpr
 │  │  ├─ BinaryArithmeticExpr
 │  │  │  ├─ AdditiveArithmeticExpr
@@ -41,6 +45,7 @@ Node
 │  │  ├─ BetweenPredicate
 │  │  ├─ ComparisonPredicate
 │  │  ├─ ExistsPredicate
+│  │  ├─ ExprPredicate
 │  │  ├─ InPredicate
 │  │  ├─ IsNullPredicate
 │  │  ├─ LikePredicate
@@ -107,10 +112,14 @@ graph TD
   Node --> DistinctSpec
 
   Expression --> CaseExpr
+  Expression --> CastExpr
+  Expression --> ArrayExpr
   Expression --> ColumnExpr
   Expression --> FunctionExpr
   Expression --> ParamExpr
   Expression --> ArithmeticExpr
+  Expression --> BinaryOperatorExpr
+  Expression --> UnaryOperatorExpr
   Expression --> LiteralExpr
   Expression --> Predicate
   Expression --> ValueSet
@@ -142,6 +151,7 @@ graph TD
   Predicate --> BetweenPredicate
   Predicate --> ComparisonPredicate
   Predicate --> ExistsPredicate
+  Predicate --> ExprPredicate
   Predicate --> InPredicate
   Predicate --> IsNullPredicate
   Predicate --> LikePredicate
@@ -266,6 +276,22 @@ graph TD
         - MulArithmeticExpr (`a * b`)
 - **NegativeArithmeticExpr** (`-x`)
 
+- **BinaryOperatorExpr**
+  Generic binary operator expression (`<left> <operator> <right>`). Models operator-heavy dialect constructs (for example PostgreSQL JSON/JSONB, regex, arrays, ranges) without introducing a dedicated node per operator.
+
+- **UnaryOperatorExpr**
+  Generic unary operator expression (`<operator><expr>`). Models unary operator syntax (for example arithmetic signs or PostgreSQL bitwise NOT `~`).
+
+---
+
+### Operator / type expressions
+
+- **CastExpr**
+  Type cast expression (`CAST(<expr> AS <type>)` or dialect-specific shorthand like `(<expr>)::type`). Useful for PostgreSQL typed literals such as `'{}'::jsonb` and array casts like `'{a,b}'::text[]`.
+
+- **ArrayExpr**
+  Array constructor expression (`ARRAY[<elem1>, <elem2>, ...]`). Used by PostgreSQL array operators (for example `?|`, `?&`, `&&`, `@>`, `<@`) and general array expressions.
+
 ---
 
 ### Literals
@@ -282,6 +308,7 @@ graph TD
     - BetweenPredicate
     - ComparisonPredicate
     - ExistsPredicate
+    - ExprPredicate
     - InPredicate
     - IsNullPredicate
     - LikePredicate

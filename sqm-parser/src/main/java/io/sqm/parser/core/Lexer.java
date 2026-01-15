@@ -89,6 +89,8 @@ public final class Lexer {
         KEYWORDS.put("OTHERS", OTHERS);
         KEYWORDS.put("WITHIN", WITHIN);
         KEYWORDS.put("FILTER", FILTER);
+        KEYWORDS.put("CAST", CAST);
+        KEYWORDS.put("ARRAY", ARRAY);
     }
 
     private final String s;
@@ -147,8 +149,13 @@ public final class Lexer {
 
         // parameters
         if (c == '?') {
+            char n = peek();
+            if (n == '|' || n == '&') {
+                pos += 2;
+                return new Token(OPERATOR, "?" + n, start);
+            }
             pos++;
-            return new Token(PARAM_QMARK, "?", start);
+            return new Token(QMARK, "?", start);
         }
 
         if (c == '$') {
@@ -192,49 +199,115 @@ public final class Lexer {
                 return new Token(RPAREN, ")", start);
             case '+':
                 pos++;
-                return new Token(PLUS, "+", start);
+                return new Token(OPERATOR, "+", start);
             case '-':
+                // JSON operators: -> and ->>
+                if (peek() == '>') {
+                    pos++;
+                    if (peek() == '>') {
+                        pos += 2;
+                        return new Token(OPERATOR, "->>", start);
+                    }
+                    pos++;
+                    return new Token(OPERATOR, "->", start);
+                }
                 pos++;
-                return new Token(MINUS, "-", start);
+                return new Token(OPERATOR, "-", start);
             case '*':
                 pos++;
-                return new Token(STAR, "*", start);
+                return new Token(OPERATOR, "*", start);
             case '/':
                 pos++;
-                return new Token(SLASH, "/", start);
+                return new Token(OPERATOR, "/", start);
             case '%':
                 pos++;
-                return new Token(PERCENT, "%", start);
+                return new Token(OPERATOR, "%", start);
             case '^':
                 pos++;
-                return new Token(CARET, "^", start);
+                return new Token(OPERATOR, "^", start);
+            case '#':
+                // JSON path operators: #> and #>>
+                if (peek() == '>') {
+                    pos++;
+                    if (peek() == '>') {
+                        pos += 2;
+                        return new Token(OPERATOR, "#>>", start);
+                    }
+                    pos++;
+                    return new Token(OPERATOR, "#>", start);
+                }
+                break;
+            case '@':
+                // containment operator: @>
+                if (peek() == '>') {
+                    pos += 2;
+                    return new Token(OPERATOR, "@>", start);
+                }
+                break;
+            case '|':
+                // Concatenation and array concat: ||
+                if (peek() == '|') {
+                    pos += 2;
+                    return new Token(OPERATOR, "||", start);
+                }
+                break;
+            case '&':
+                // Array overlap: &&
+                if (peek() == '&') {
+                    pos += 2;
+                    return new Token(OPERATOR, "&&", start);
+                }
+                break;
+            case '~':
+                // regex operators: ~ and ~*
+                if (peek() == '*') {
+                    pos += 2;
+                    return new Token(OPERATOR, "~*", start);
+                }
+                pos++;
+                return new Token(OPERATOR, "~", start);
             case '=':
                 pos++;
-                return new Token(EQ, "=", start);
+                return new Token(OPERATOR, "=", start);
             case '!':
                 if (peek() == '=') {
                     pos += 2;
-                    return new Token(NEQ2, "!=", start);
+                    return new Token(OPERATOR, "!=", start);
+                }
+                // regex operators: !~ and !~*
+                if (peek() == '~') {
+                    pos++;
+                    if (peek() == '*') {
+                        pos += 2;
+                        return new Token(OPERATOR, "!~*", start);
+                    }
+                    pos++;
+                    return new Token(OPERATOR, "!~", start);
                 }
                 break;
             case '<':
+                // containment operator: <@
+                if (peek() == '@') {
+                    pos += 2;
+                    return new Token(OPERATOR, "<@", start);
+                }
                 if (peek() == '>') {
                     pos += 2;
-                    return new Token(NEQ1, "<>", start);
+                    return new Token(OPERATOR, "<>", start);
                 }
                 if (peek() == '=') {
                     pos += 2;
-                    return new Token(LTE, "<=", start);
+                    return new Token(OPERATOR, "<=", start);
                 }
                 pos++;
-                return new Token(LT, "<", start);
+                return new Token(OPERATOR, "<", start);
             case '>':
                 if (peek() == '=') {
                     pos += 2;
-                    return new Token(GTE, ">=", start);
+                    return new Token(OPERATOR, ">=", start);
                 }
                 pos++;
-                return new Token(GT, ">", start);
+                return new Token(OPERATOR, ">", start);
             case '"':
                 return readQuotedIdentifier();
             case '[':

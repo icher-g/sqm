@@ -27,8 +27,4 @@ public abstract class Indicators {
     public static final Set<TokenType> JOIN = EnumSet.of(
         TokenType.JOIN, TokenType.INNER, TokenType.LEFT, TokenType.RIGHT, TokenType.FULL, TokenType.CROSS, TokenType.USING, TokenType.NATURAL
     );
-
-    public static final Set<TokenType> COMPARISON_OPERATOR = EnumSet.of(
-        TokenType.EQ, TokenType.NEQ1, TokenType.NEQ2, TokenType.LT, TokenType.LTE, TokenType.GT, TokenType.GTE
-    );
 }

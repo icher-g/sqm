@@ -93,6 +93,10 @@ public final class Parsers {
             .register(new MulArithmeticExprParser(atomicExprParser))
             .register(new DivArithmeticExprParser(atomicExprParser))
             .register(new MultiplicativeArithmeticExprParser(atomicExprParser))
-            .register(new AdditiveArithmeticExprParser());
+            .register(new AdditiveArithmeticExprParser())
+            .register(new ArrayExprParser())
+            .register(new BinaryOperatorExprParser())
+            .register(new UnaryOperatorExprParser())
+            .register(new CastExprParser());
     }
 }

@@ -4,12 +4,12 @@ import io.sqm.core.Expression;
 import io.sqm.core.MulArithmeticExpr;
 import io.sqm.parser.AtomicExprParser;
 import io.sqm.parser.core.Cursor;
-import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.InfixParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.core.OperatorTokens.isStar;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
@@ -53,7 +53,7 @@ public class MulArithmeticExprParser implements Parser<MulArithmeticExpr>, Infix
      */
     @Override
     public ParseResult<MulArithmeticExpr> parse(Expression lhs, Cursor cur, ParseContext ctx) {
-        cur.expect("Expected *", TokenType.STAR);
+        cur.expect("Expected *", t -> isStar(t));
 
         var rhs = atomicExprParser.parse(cur, ctx);
         if (rhs.isError()) {

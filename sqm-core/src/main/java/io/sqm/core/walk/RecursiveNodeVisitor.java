@@ -831,4 +831,99 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     public R visitDistinctSpec(DistinctSpec spec) {
         return defaultResult();
     }
+
+    /**
+     * Visits a {@link BinaryOperatorExpr}.
+     * <p>
+     * The visitor is applied recursively to both the left and right operand expressions.
+     * No transformation is performed by this method; it is intended for traversal,
+     * analysis, or validation purposes.
+     * <p>
+     * Subclasses may override this method to implement operator-specific behavior
+     * (for example, collecting operators or validating operand structure).
+     *
+     * @param expr binary operator expression being visited
+     * @return the visitor result produced by {@link #defaultResult()}
+     */
+    @Override
+    public R visitBinaryOperatorExpr(BinaryOperatorExpr expr) {
+        accept(expr.left());
+        accept(expr.right());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link UnaryOperatorExpr}.
+     * <p>
+     * The visitor is applied recursively to the operand expression.
+     * No transformation is performed by this method; it is intended for traversal,
+     * analysis, or validation purposes.
+     * <p>
+     * Subclasses may override this method to implement operator-specific behavior.
+     *
+     * @param expr unary operator expression being visited
+     * @return the visitor result produced by {@link #defaultResult()}
+     */
+    @Override
+    public R visitUnaryOperatorExpr(UnaryOperatorExpr expr) {
+        accept(expr.expr());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link CastExpr}.
+     * <p>
+     * The visitor is applied recursively to the operand expression.
+     * No transformation is performed by this method; it is intended for traversal,
+     * analysis, or validation purposes.
+     * <p>
+     * Subclasses may override this method to implement type-specific behavior
+     * (for example, collecting cast targets or validating type usage).
+     *
+     * @param expr cast expression being visited
+     * @return the visitor result produced by {@link #defaultResult()}
+     */
+    @Override
+    public R visitCastExpr(CastExpr expr) {
+        accept(expr.expr());
+        return defaultResult();
+    }
+
+    /**
+     * Visits an {@link ArrayExpr}.
+     * <p>
+     * The visitor is applied recursively to each array element expression.
+     * No transformation is performed by this method; it is intended for traversal,
+     * analysis, or validation purposes.
+     * <p>
+     * Subclasses may override this method to implement array-specific behavior
+     * (for example, checking element constraints or collecting statistics).
+     *
+     * @param expr array constructor expression being visited
+     * @return the visitor result produced by {@link #defaultResult()}
+     */
+    @Override
+    public R visitArrayExpr(ArrayExpr expr) {
+        expr.elements().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
+     * Visits an {@link ExprPredicate}.
+     * <p>
+     * The visitor is applied recursively to the wrapped expression.
+     * No transformation is performed by this method; it is intended for traversal,
+     * analysis, or validation purposes.
+     * <p>
+     * Subclasses may override this method to implement expression-predicate-specific behavior
+     * (for example, validating that the wrapped expression is boolean-valued in a given dialect).
+     *
+     * @param predicate expression predicate being visited
+     * @return the visitor result produced by {@link #defaultResult()}
+     */
+    @Override
+    public R visitExprPredicate(ExprPredicate predicate) {
+        accept(predicate.expr());
+        return defaultResult();
+    }
 }

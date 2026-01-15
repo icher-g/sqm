@@ -11,6 +11,7 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.core.OperatorTokens.isPercent;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
@@ -70,7 +71,7 @@ public class ModArithmeticExprParser implements Parser<ModArithmeticExpr>, Infix
      */
     @Override
     public ParseResult<ModArithmeticExpr> parse(Expression lhs, Cursor cur, ParseContext ctx) {
-        cur.expect("Expected %", TokenType.PERCENT);
+        cur.expect("Expected %", t -> isPercent(t));
 
         var rhs = atomicExprParser.parse(cur, ctx);
         if (rhs.isError()) {

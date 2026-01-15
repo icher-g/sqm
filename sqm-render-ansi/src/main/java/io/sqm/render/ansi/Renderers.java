@@ -76,6 +76,11 @@ public final class Renderers {
             .register(new MulArithmeticExprRenderer())
             .register(new SubArithmeticExprRenderer())
             .register(new ModArithmeticExprRenderer())
-            .register(new NegativeArithmeticExprRenderer());
+            .register(new NegativeArithmeticExprRenderer())
+            .register(new BinaryOperatorExprRenderer())
+            .register(new UnaryOperatorExprRenderer())
+            .register(new CastExprRenderer())
+            .register(new ArrayExprRenderer())
+            .register(new LimitOffsetRenderer());
     }
 }

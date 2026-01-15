@@ -7,10 +7,9 @@ import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
-import java.util.EnumSet;
-import java.util.Set;
-
+import static io.sqm.parser.core.OperatorTokens.isComparison;
 import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
 
 /**
  * Parses an <em>atomic predicate</em> — the highest-precedence unit of SQL
@@ -62,16 +61,6 @@ import static io.sqm.parser.spi.ParseResult.error;
  * </p>
  */
 public class AtomicPredicateParser {
-
-    /**
-     * Token types representing standard SQL comparison operators such as
-     * {@code =}, {@code <>}, {@code <}, {@code <=}, {@code >}, {@code >=}.
-     */
-    private static final Set<TokenType> COMPARISON_OPERATOR = EnumSet.of(
-        TokenType.EQ, TokenType.NEQ1, TokenType.NEQ2, TokenType.LT,
-        TokenType.LTE, TokenType.GT, TokenType.GTE
-    );
-
     /**
      * Parses the next token sequence as an atomic predicate.
      *
@@ -196,7 +185,7 @@ public class AtomicPredicateParser {
     private ParseResult<? extends Predicate> parseExpressionBasedPredicate(Cursor cur, ParseContext ctx) {
         var leftExpr = ctx.parse(Expression.class, cur);
 
-        if (cur.matchAny(COMPARISON_OPERATOR)) {
+        if (isComparison(cur.peek())) {
             if (cur.match(TokenType.ANY, 1) || cur.match(TokenType.ALL, 1)) {
                 return ctx.parse(AnyAllPredicate.class, leftExpr.value(), cur);
             }
@@ -250,6 +239,12 @@ public class AtomicPredicateParser {
             return error("Expected NULL, TRUE or FALSE after IS", cur.fullPos());
         }
 
+        // 1) Expression-based predicate fallback (dialect-agnostic)
+        if (leftExpr.value() instanceof BinaryOperatorExpr) {
+            return ok(ExprPredicate.of(leftExpr.value()));
+        }
+
+        // 2) Unary predicate fallback (boolean column / literal)
         if (leftExpr.value() instanceof LiteralExpr || leftExpr.value() instanceof ColumnExpr) {
             return ctx.parse(UnaryPredicate.class, leftExpr.value(), cur);
         }

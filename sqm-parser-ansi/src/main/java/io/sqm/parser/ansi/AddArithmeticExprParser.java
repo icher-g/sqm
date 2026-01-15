@@ -4,12 +4,12 @@ import io.sqm.core.AddArithmeticExpr;
 import io.sqm.core.Expression;
 import io.sqm.core.MultiplicativeArithmeticExpr;
 import io.sqm.parser.core.Cursor;
-import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.InfixParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.core.OperatorTokens.isPlus;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
@@ -46,7 +46,7 @@ public class AddArithmeticExprParser implements Parser<AddArithmeticExpr>, Infix
      */
     @Override
     public ParseResult<AddArithmeticExpr> parse(Expression lhs, Cursor cur, ParseContext ctx) {
-        cur.expect("Expected +", TokenType.PLUS);
+        cur.expect("Expected +", t -> isPlus(t));
 
         var rhs = ctx.parseEnclosed(MultiplicativeArithmeticExpr.class, cur);
         if (rhs.isError()) {

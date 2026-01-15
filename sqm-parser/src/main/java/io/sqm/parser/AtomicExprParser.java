@@ -1,13 +1,12 @@
 package io.sqm.parser;
 
 import io.sqm.core.*;
-import io.sqm.parser.core.Cursor;
-import io.sqm.parser.core.ParserException;
-import io.sqm.parser.core.TokenType;
+import io.sqm.parser.core.*;
 import io.sqm.parser.spi.MatchResult;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import static io.sqm.parser.core.OperatorTokens.isMinus;
 import static io.sqm.parser.spi.ParseResult.error;
 
 /**
@@ -76,8 +75,12 @@ public class AtomicExprParser {
      * or an error result if parsing fails
      */
     public ParseResult<? extends Expression> parse(Cursor cur, ParseContext ctx) {
-        if (cur.match(TokenType.MINUS)) {
+        if (isMinus(cur.peek())) {
             return ctx.parse(NegativeArithmeticExpr.class, cur);
+        }
+
+        if (isUnaryOperator(cur.peek())) {
+            return ctx.parse(UnaryOperatorExpr.class, cur);
         }
 
         // (expression)
@@ -87,6 +90,11 @@ public class AtomicExprParser {
         }
 
         MatchResult<? extends Expression> matched = ctx.parseIfMatch(CaseExpr.class, cur);
+        if (matched.match()) {
+            return matched.result();
+        }
+
+        matched = ctx.parseIfMatch(CastExpr.class, cur);
         if (matched.match()) {
             return matched.result();
         }
@@ -171,5 +179,9 @@ public class AtomicExprParser {
             cur.restore(mark);
             return null;
         }
+    }
+
+    private static boolean isUnaryOperator(Token t) {
+        return OperatorTokens.is(t, "~") || OperatorTokens.is(t, "+");
     }
 }

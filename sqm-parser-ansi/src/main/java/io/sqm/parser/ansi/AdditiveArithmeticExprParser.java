@@ -2,19 +2,15 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.*;
 import io.sqm.parser.core.Cursor;
-import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-import java.util.Set;
-
+import static io.sqm.parser.core.OperatorTokens.isMinus;
+import static io.sqm.parser.core.OperatorTokens.isPlus;
 import static io.sqm.parser.spi.ParseResult.error;
 
 public class AdditiveArithmeticExprParser implements Parser<Expression> {
-
-    private final Set<TokenType> tokens = Set.of(TokenType.MINUS, TokenType.PLUS);
-
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -26,8 +22,8 @@ public class AdditiveArithmeticExprParser implements Parser<Expression> {
     public ParseResult<? extends Expression> parse(Cursor cur, ParseContext ctx) {
         ParseResult<? extends Expression> lhs = ctx.parse(MultiplicativeArithmeticExpr.class, cur);
         if (lhs.isError()) return error(lhs);
-        while (cur.matchAny(tokens)) {
-            if (cur.match(TokenType.PLUS)) {
+        while (isPlus(cur.peek()) || isMinus(cur.peek())) {
+            if (isPlus(cur.peek())) {
                 lhs = ctx.parse(AddArithmeticExpr.class, lhs.value(), cur);
             }
             else {

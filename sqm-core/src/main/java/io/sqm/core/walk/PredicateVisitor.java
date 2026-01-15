@@ -103,5 +103,20 @@ public interface PredicateVisitor<R> {
      * @return a result produced by the visitor
      */
     R visitOrPredicate(OrPredicate p);
+
+    /**
+     * Visits an {@link ExprPredicate}.
+     * <p>
+     * The visitor is applied recursively to the wrapped expression.
+     * No transformation is performed by this method; it is intended for traversal,
+     * analysis, or validation purposes.
+     * <p>
+     * Subclasses may override this method to implement expression-predicate-specific behavior
+     * (for example, validating that the wrapped expression is boolean-valued in a given dialect).
+     *
+     * @param predicate expression predicate being visited
+     * @return a result produced by the visitor
+     */
+    R visitExprPredicate(ExprPredicate predicate);
 }
 

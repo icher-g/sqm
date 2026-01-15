@@ -3,18 +3,15 @@ package io.sqm.parser.ansi;
 import io.sqm.core.*;
 import io.sqm.parser.AtomicExprParser;
 import io.sqm.parser.core.Cursor;
-import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-import java.util.Set;
-
+import static io.sqm.parser.core.OperatorTokens.*;
 import static io.sqm.parser.spi.ParseResult.error;
 
 public class MultiplicativeArithmeticExprParser implements Parser<Expression> {
 
-    private final Set<TokenType> tokens = Set.of(TokenType.STAR, TokenType.SLASH, TokenType.PERCENT);
     private final AtomicExprParser atomicExprParser;
 
     public MultiplicativeArithmeticExprParser(AtomicExprParser atomicExprParser) {
@@ -34,12 +31,12 @@ public class MultiplicativeArithmeticExprParser implements Parser<Expression> {
         if (lhs.isError()) {
             return error(lhs);
         }
-        while (cur.matchAny(tokens)) {
-            if (cur.match(TokenType.STAR)) {
+        while (isStar(cur.peek()) || isSlash(cur.peek()) || isPercent(cur.peek())) {
+            if (isStar(cur.peek())) {
                 lhs = ctx.parse(MulArithmeticExpr.class, lhs.value(), cur);
             }
             else
-                if (cur.match(TokenType.SLASH)) {
+                if (isSlash(cur.peek())) {
                     lhs = ctx.parse(DivArithmeticExpr.class, lhs.value(), cur);
                 }
                 else {

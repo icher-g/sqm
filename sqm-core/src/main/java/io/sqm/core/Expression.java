@@ -11,7 +11,7 @@ import java.util.List;
  * Any value-producing node (scalar or boolean).
  */
 public sealed interface Expression extends Node
-    permits ArithmeticExpr, CaseExpr, ColumnExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, ParamExpr, Predicate, ValueSet {
+    permits ArithmeticExpr, ArrayExpr, BinaryOperatorExpr, CaseExpr, CastExpr, ColumnExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, ParamExpr, Predicate, UnaryOperatorExpr, ValueSet {
 
     /**
      * Creates a literal expression.
@@ -448,7 +448,7 @@ public sealed interface Expression extends Node
      * @return A newly created instance of the LIKE predicate.
      */
     default LikePredicate like(Expression pattern) {
-        return LikePredicate.of(this, pattern, true);
+        return LikePredicate.of(this, pattern, false);
     }
 
     /**
@@ -547,6 +547,50 @@ public sealed interface Expression extends Node
      */
     default UnaryPredicate unary() {
         return UnaryPredicate.of(this);
+    }
+
+    /**
+     * Creates a binary operator expression using this expression as the left operand.
+     * <pre>{@code
+     * left.op("->", right)  // renders as: left -> right
+     * }</pre>
+     *
+     * @param operator operator token
+     * @param right right operand
+     * @return binary operator expression
+     */
+    default BinaryOperatorExpr op(String operator, Expression right) {
+        return BinaryOperatorExpr.of(this, operator, right);
+    }
+
+    /**
+     * Creates a unary operator expression applying {@code operator} to this expression.
+     * <pre>{@code
+     * expr.unary("-") // renders as: -expr
+     * }</pre>
+     *
+     * @param operator operator token
+     * @return unary operator expression
+     */
+    default UnaryOperatorExpr unary(String operator) {
+        return UnaryOperatorExpr.of(operator, this);
+    }
+
+    /**
+     * Creates a cast expression that casts this expression to the given type.
+     * <p>
+     * This models {@code CAST(<expr> AS <type>)} or dialect shorthand such as PostgreSQL {@code (<expr>)::type}.
+     *
+     * <pre>{@code
+     * lit("{\"a\":1}").cast("jsonb")  // '{"a":1}'::jsonb
+     * lit("{a,b,0}").cast("text[]")   // '{a,b,0}'::text[]
+     * }</pre>
+     *
+     * @param type target type name (for example {@code "jsonb"}, {@code "text[]"}, {@code "bigint"})
+     * @return cast expression
+     */
+    default CastExpr cast(String type) {
+        return CastExpr.of(this, type);
     }
 
     /**

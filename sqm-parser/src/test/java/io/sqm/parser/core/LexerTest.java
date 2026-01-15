@@ -134,7 +134,7 @@ class LexerTest {
     void questionMarkParameterIsRecognized() {
         List<Token> tokens = Lexer.lexAll("SELECT * FROM t WHERE a = ? AND b = ?");
 
-        List<Token> params = filterTokensOfType(tokens, TokenType.PARAM_QMARK);
+        List<Token> params = filterTokensOfType(tokens, TokenType.QMARK);
         assertEquals(2, params.size());
         assertEquals("?", params.get(0).lexeme());
         assertEquals("?", params.get(1).lexeme());
@@ -185,7 +185,7 @@ class LexerTest {
 
         long positional = countTokensOfType(tokens, TokenType.PARAM_POS);
         long named = countTokensOfType(tokens, TokenType.PARAM_NAMED);
-        long question = countTokensOfType(tokens, TokenType.PARAM_QMARK);
+        long question = countTokensOfType(tokens, TokenType.QMARK);
 
         assertEquals(1, positional);
         assertEquals(2, named);       // :name, @id
@@ -201,7 +201,7 @@ class LexerTest {
         EnumSet<TokenType> paramTypes = EnumSet.of(
             TokenType.PARAM_POS,
             TokenType.PARAM_NAMED,
-            TokenType.PARAM_QMARK
+            TokenType.QMARK
         );
 
         long paramCount = tokens.stream()
