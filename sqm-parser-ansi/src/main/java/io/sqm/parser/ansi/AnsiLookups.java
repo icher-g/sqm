@@ -5,6 +5,8 @@ import io.sqm.parser.core.Lookahead;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.Lookups;
 
+import static io.sqm.parser.core.OperatorTokens.*;
+
 /**
  * A default implementation of the lookups.
  */
@@ -479,7 +481,7 @@ public class AnsiLookups implements Lookups {
      */
     @Override
     public boolean looksLikeStar(Cursor cur, Lookahead pos) {
-        if (cur.match(TokenType.STAR, pos.current())) {
+        if (isStar(cur.peek(pos.current()))) {
             pos.increment();
             return true;
         }
@@ -502,7 +504,7 @@ public class AnsiLookups implements Lookups {
             return false;
         }
         p.increment();
-        if (cur.match(TokenType.STAR, p.current())) {
+        if (isStar(cur.peek(p.current()))) {
             p.increment();
             pos.increment(p.current() - pos.current());
             return true;
@@ -740,7 +742,7 @@ public class AnsiLookups implements Lookups {
      */
     @Override
     public boolean looksLikeAnonymousParam(Cursor cur, Lookahead pos) {
-        if (cur.match(TokenType.PARAM_QMARK, pos.current())) {
+        if (cur.match(TokenType.QMARK, pos.current())) {
             pos.increment();
             return true;
         }
@@ -797,7 +799,7 @@ public class AnsiLookups implements Lookups {
         }
         // do not use p as it could skip the '('. look for the operator inside the context.
         // (a + b) should not be found if the cursor is outside the parenthesis.
-        return cur.find(pos.current(), TokenType.PLUS, TokenType.MINUS, TokenType.STAR, TokenType.SLASH) < cur.size();
+        return cur.find(t -> isArithmetic(t), pos.current()) < cur.size();
     }
 
     /**
@@ -813,7 +815,7 @@ public class AnsiLookups implements Lookups {
         if (looksLikeArithmeticExpr(cur, p)) {
             // do not use p as it could skip the '('. look for the operator inside the context.
             // (a + b) should not be found if the cursor is outside the parenthesis.
-            return cur.find(pos.current(), TokenType.PLUS) < cur.size();
+            return cur.find(t -> isPlus(t), pos.current()) < cur.size();
         }
         return false;
     }
@@ -832,10 +834,10 @@ public class AnsiLookups implements Lookups {
             // do not use p as it could skip the '('. look for the operator inside the context.
             // (a - b) should not be found if the cursor is outside the parenthesis.
             int skip = 0;
-            if (cur.match(TokenType.MINUS, pos.current())) {
+            if (isMinus(cur.peek(pos.current()))) {
                 skip = 1; // this is negative expression, look for the next -.
             }
-            return cur.find(pos.current() + skip, TokenType.MINUS) < cur.size();
+            return cur.find(t -> isMinus(t), pos.current() + skip) < cur.size();
         }
         return false;
     }
@@ -853,7 +855,7 @@ public class AnsiLookups implements Lookups {
         if (looksLikeArithmeticExpr(cur, p)) {
             // do not use p as it could skip the '('. look for the operator inside the context.
             // (a * b) should not be found if the cursor is outside the parenthesis.
-            return cur.find(pos.current(), TokenType.STAR) < cur.size();
+            return cur.find(t -> isStar(t), pos.current()) < cur.size();
         }
         return false;
     }
@@ -871,7 +873,7 @@ public class AnsiLookups implements Lookups {
         if (looksLikeArithmeticExpr(cur, p)) {
             // do not use p as it could skip the '('. look for the operator inside the context.
             // (a / b) should not be found if the cursor is outside the parenthesis.
-            return cur.find(pos.current(), TokenType.SLASH) < cur.size();
+            return cur.find(t -> isSlash(t), pos.current()) < cur.size();
         }
         return false;
     }
@@ -885,7 +887,7 @@ public class AnsiLookups implements Lookups {
      */
     @Override
     public boolean looksLikeMod(Cursor cur, Lookahead pos) {
-        if (cur.match(TokenType.PERCENT, pos.current()) || (cur.match(TokenType.IDENT, pos.current()) && cur.peek(pos.current()).lexeme().equalsIgnoreCase("mod"))) {
+        if (isPercent(cur.peek(pos.current())) || (cur.match(TokenType.IDENT, pos.current()) && cur.peek(pos.current()).lexeme().equalsIgnoreCase("mod"))) {
             pos.increment();
             return true;
         }
@@ -901,7 +903,7 @@ public class AnsiLookups implements Lookups {
      */
     @Override
     public boolean looksLikeNeg(Cursor cur, Lookahead pos) {
-        if (cur.match(TokenType.MINUS, pos.current())) {
+        if (isMinus(cur.peek(pos.current()))) {
             pos.increment();
             return true;
         }
@@ -909,7 +911,7 @@ public class AnsiLookups implements Lookups {
     }
 
     private boolean looksLikeComparisonOperator(Cursor cur, Lookahead pos) {
-        if (cur.matchAny(Indicators.COMPARISON_OPERATOR, pos.current())) {
+        if (isComparison(cur.peek(pos.current()))) {
             pos.increment();
             return true;
         }

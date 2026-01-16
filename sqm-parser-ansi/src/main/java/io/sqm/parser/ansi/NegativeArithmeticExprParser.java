@@ -9,6 +9,7 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import static io.sqm.parser.core.OperatorTokens.isMinus;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
@@ -29,7 +30,7 @@ public class NegativeArithmeticExprParser implements Parser<NegativeArithmeticEx
      */
     @Override
     public ParseResult<NegativeArithmeticExpr> parse(Cursor cur, ParseContext ctx) {
-        cur.expect("Expected - before expression", TokenType.MINUS);
+        cur.expect("Expected - before expression", t -> isMinus(t));
         ParseResult<? extends Expression> result;
         var enclosed = cur.consumeIf(TokenType.LPAREN);
         if (enclosed) {

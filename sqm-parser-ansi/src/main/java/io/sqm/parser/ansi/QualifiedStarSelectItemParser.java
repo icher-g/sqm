@@ -8,6 +8,7 @@ import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import static io.sqm.parser.core.OperatorTokens.isStar;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 public class QualifiedStarSelectItemParser implements MatchableParser<QualifiedStarSelectItem> {
@@ -22,7 +23,7 @@ public class QualifiedStarSelectItemParser implements MatchableParser<QualifiedS
     public ParseResult<QualifiedStarSelectItem> parse(Cursor cur, ParseContext ctx) {
         var t = cur.expect("Expected identifier", TokenType.IDENT);
         cur.expect("Expected '.'", TokenType.DOT);
-        cur.expect("Expected '*'", TokenType.STAR);
+        cur.expect("Expected '*'", token -> isStar(token));
         return ok(SelectItem.star(t.lexeme()));
     }
 
@@ -52,6 +53,6 @@ public class QualifiedStarSelectItemParser implements MatchableParser<QualifiedS
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
         // c.*
-        return cur.match(TokenType.IDENT) && cur.match(TokenType.DOT, 1) && cur.match(TokenType.STAR, 2);
+        return cur.match(TokenType.IDENT) && cur.match(TokenType.DOT, 1) && isStar(cur.peek(2));
     }
 }

@@ -3,11 +3,11 @@ package io.sqm.parser.ansi;
 import io.sqm.core.Expression;
 import io.sqm.core.FunctionExpr;
 import io.sqm.parser.core.Cursor;
-import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import static io.sqm.parser.core.OperatorTokens.isStar;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 public class FuncStarArgParser implements MatchableParser<FunctionExpr.Arg.StarArg> {
@@ -20,7 +20,7 @@ public class FuncStarArgParser implements MatchableParser<FunctionExpr.Arg.StarA
      */
     @Override
     public ParseResult<FunctionExpr.Arg.StarArg> parse(Cursor cur, ParseContext ctx) {
-        cur.expect("Expect '*'", TokenType.STAR);
+        cur.expect("Expect '*'", t -> isStar(t));
         return ok(Expression.starArg());
     }
 
@@ -49,6 +49,6 @@ public class FuncStarArgParser implements MatchableParser<FunctionExpr.Arg.StarA
      */
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
-        return cur.match(TokenType.STAR);
+        return isStar(cur.peek());
     }
 }

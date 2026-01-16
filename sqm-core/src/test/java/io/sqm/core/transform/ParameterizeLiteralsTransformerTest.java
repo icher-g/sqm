@@ -1,106 +1,272 @@
 package io.sqm.core.transform;
 
-import io.sqm.core.LiteralExpr;
-import io.sqm.core.NamedParamExpr;
-import io.sqm.core.Node;
-import io.sqm.core.ParamExpr;
+import io.sqm.core.*;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-
+import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for {@link ParameterizeLiteralsTransformer}.
+ * Comprehensive unit tests for {@link ParameterizeLiteralsTransformer}.
+ * Tests the transformation of literal expressions into parameterized forms.
  */
 class ParameterizeLiteralsTransformerTest {
 
-    private final ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer((i) -> NamedParamExpr.of("_p" + i));
-
     @Test
-    void singleLiteralIsReplacedByNamedParameter() {
-        // given
-        LiteralExpr literal = LiteralExpr.of("ACTIVE");
+    void parameterizeSingleLiteral() {
+        LiteralExpr literal = lit(42);
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
 
-        // when
-        Node transformed = transformer.transform(literal);
-
-        // then
-        assertInstanceOf(NamedParamExpr.class, transformed, "Literal should be replaced by NamedParamExpr");
-
-        NamedParamExpr param = (NamedParamExpr) transformed;
-        assertNotNull(param.name(), "Parameter name should not be null");
-        assertTrue(param.name().startsWith("_p"),
-            "Generated parameter name should start with _p");
-
-        Map<ParamExpr, Object> values = transformer.valuesByParam();
-        assertEquals(1, values.size(), "Exactly one literal should have been recorded");
-        assertEquals("ACTIVE", values.get(param), "Parameter should map to original literal value");
+        Node result = literal.accept(transformer);
+        assertNotNull(result);
+        assertTrue(result instanceof ParamExpr);
+        assertEquals(1, transformer.values().size());
+        assertEquals(42, transformer.values().get(0));
     }
 
     @Test
-    void multipleLiteralsProduceUniqueParameters() {
-        // given
-        LiteralExpr lit1 = LiteralExpr.of("ACTIVE");
-        LiteralExpr lit2 = LiteralExpr.of(42);
-        LiteralExpr lit3 = LiteralExpr.of(true);
+    void parameterizeSingleStringLiteral() {
+        LiteralExpr literal = lit("hello");
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
 
-        // when
-        NamedParamExpr p1 = (NamedParamExpr) transformer.transform(lit1);
-        NamedParamExpr p2 = (NamedParamExpr) transformer.transform(lit2);
-        NamedParamExpr p3 = (NamedParamExpr) transformer.transform(lit3);
-
-        // then
-        assertNotEquals(p1.name(), p2.name(), "Each literal must get a unique parameter name");
-        assertNotEquals(p1.name(), p3.name(), "Each literal must get a unique parameter name");
-        assertNotEquals(p2.name(), p3.name(), "Each literal must get a unique parameter name");
-
-        Map<ParamExpr, Object> values = transformer.valuesByParam();
-        assertEquals(3, values.size(), "All three literals should be recorded");
-
-        assertEquals("ACTIVE", values.get(p1));
-        assertEquals(42, values.get(p2));
-        assertEquals(true, values.get(p3));
+        Node result = literal.accept(transformer);
+        assertNotNull(result);
+        assertTrue(result instanceof ParamExpr);
+        assertEquals(1, transformer.values().size());
+        assertEquals("hello", transformer.values().get(0));
     }
 
     @Test
-    void existingParametersAreNotChangedOrRecorded() {
-        // given
-        NamedParamExpr existingParam = NamedParamExpr.of("id");
+    void parameterizeSingleNullLiteral() {
+        LiteralExpr literal = lit((Object) null);
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
 
-        // when
-        Node transformed = transformer.transform(existingParam);
-
-        // then
-        assertSame(existingParam, transformed,
-            "Existing ParamExpr instances should be left unchanged");
-        assertTrue(transformer.valuesByParam().isEmpty(),
-            "No literal values should be recorded when only parameters are present");
+        Node result = literal.accept(transformer);
+        assertNotNull(result);
+        assertTrue(result instanceof ParamExpr);
+        assertEquals(1, transformer.values().size());
+        assertNull(transformer.values().get(0));
     }
 
     @Test
-    void valuesByParamMapIsImmutableView() {
-        // given
-        LiteralExpr literal = LiteralExpr.of("ACTIVE");
-        transformer.transform(literal);
+    void parameterizeDoubleValue() {
+        LiteralExpr literal = lit(3.14);
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
 
-        Map<ParamExpr, Object> values = transformer.valuesByParam();
-
-        // when / then
-        assertThrows(UnsupportedOperationException.class, () -> values.clear(), "Returned map should be immutable");
+        Node result = literal.accept(transformer);
+        assertNotNull(result);
+        assertTrue(result instanceof ParamExpr);
+        assertEquals(1, transformer.values().size());
+        assertEquals(3.14, (Double) transformer.values().get(0), 0.001);
     }
 
     @Test
-    void transformMethodUsesVisitorAndReturnsSameStaticType() {
-        // This test is mostly about the generic <N extends Node> transform(N root) contract.
+    void parameterizeBooleanValue() {
+        LiteralExpr literal = lit(true);
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
 
-        // given
-        LiteralExpr literal = LiteralExpr.of(123);
+        Node result = literal.accept(transformer);
+        assertNotNull(result);
+        assertTrue(result instanceof ParamExpr);
+        assertEquals(1, transformer.values().size());
+        assertEquals(true, transformer.values().get(0));
+    }
 
-        // when
-        Node result = transformer.transform(literal);
+    @Test
+    void parameterizeMultipleLiteralsInAddition() {
+        AddArithmeticExpr expr = lit(10).add(lit(20));
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
 
-        // then
-        assertInstanceOf(NamedParamExpr.class, result, "LiteralExpr should be transformed into NamedParamExpr via transform(root)");
+        Node result = expr.accept(transformer);
+        assertNotNull(result);
+        assertTrue(result instanceof AddArithmeticExpr);
+
+        assertEquals(2, transformer.values().size());
+        assertEquals(10, transformer.values().get(0));
+        assertEquals(20, transformer.values().get(1));
+    }
+
+    @Test
+    void parameterizeMultipleLiteralsInSubtraction() {
+        SubArithmeticExpr expr = lit(100).sub(lit(50));
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
+
+        Node result = expr.accept(transformer);
+        assertNotNull(result);
+        assertTrue(result instanceof SubArithmeticExpr);
+
+        assertEquals(2, transformer.values().size());
+        assertEquals(100, transformer.values().get(0));
+        assertEquals(50, transformer.values().get(1));
+    }
+
+    @Test
+    void parameterizeComplexArithmeticExpression() {
+        // Create: (10 + 20) * (30 - 5)
+        Expression left = lit(10).add(lit(20));
+        Expression right = lit(30).sub(lit(5));
+        Expression expr = left.mul(right);
+
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
+        Node result = expr.accept(transformer);
+        assertNotNull(result);
+
+        // Should have 4 parameters
+        assertEquals(4, transformer.values().size());
+        assertEquals(10, transformer.values().get(0));
+        assertEquals(20, transformer.values().get(1));
+        assertEquals(30, transformer.values().get(2));
+        assertEquals(5, transformer.values().get(3));
+    }
+
+    @Test
+    void parameterizeLiteralInComparisonPredicate() {
+        ComparisonPredicate pred = col("id").eq(lit(42));
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
+
+        Node result = pred.accept(transformer);
+        assertNotNull(result);
+        assertTrue(result instanceof ComparisonPredicate);
+
+        assertEquals(1, transformer.values().size());
+        assertEquals(42, transformer.values().get(0));
+    }
+
+    @Test
+    void parameterizeLiteralsInMultipleComparison() {
+        // Create: col = 10 AND col2 = 'active'
+        Predicate pred1 = col("id").eq(lit(10));
+        Predicate pred2 = col("status").eq(lit("active"));
+        Predicate combined = pred1.and(pred2);
+
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
+        Node result = combined.accept(transformer);
+        assertNotNull(result);
+
+        assertEquals(2, transformer.values().size());
+        assertEquals(10, transformer.values().get(0));
+        assertEquals("active", transformer.values().get(1));
+    }
+
+    @Test
+    void parameterizeLiteralInBetweenPredicate() {
+        BetweenPredicate pred = col("age").between(lit(18), lit(65));
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
+
+        Node result = pred.accept(transformer);
+        assertNotNull(result);
+        assertTrue(result instanceof BetweenPredicate);
+
+        assertEquals(2, transformer.values().size());
+        assertEquals(18, transformer.values().get(0));
+        assertEquals(65, transformer.values().get(1));
+    }
+
+    @Test
+    void parameterizeLiteralInInPredicate() {
+        InPredicate pred = col("status").in(row(lit("active"), lit("pending")));
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
+
+        Node result = pred.accept(transformer);
+        assertNotNull(result);
+        assertTrue(result instanceof InPredicate);
+
+        assertEquals(2, transformer.values().size());
+        assertEquals("active", transformer.values().get(0));
+        assertEquals("pending", transformer.values().get(1));
+    }
+
+    @Test
+    void parameterizeLiteralInFunctionCall() {
+        FunctionExpr func = func("CONCAT", arg(col("first_name")), arg(lit(" ")), arg(col("last_name")));
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
+
+        Node result = func.accept(transformer);
+        assertNotNull(result);
+        assertTrue(result instanceof FunctionExpr);
+
+        assertEquals(1, transformer.values().size());
+        assertEquals(" ", transformer.values().get(0));
+    }
+
+    @Test
+    void parameterizeLiteralsInCaseWhen() {
+        CaseExpr caseExpr = kase(
+            when(col("status").eq(lit("active"))).then(lit(1))
+        );
+
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
+        Node result = caseExpr.accept(transformer);
+        assertNotNull(result);
+        assertTrue(result instanceof CaseExpr);
+
+        assertEquals(2, transformer.values().size());
+        assertEquals("active", transformer.values().get(0));
+        assertEquals(1, transformer.values().get(1));
+    }
+
+    @Test
+    void parameterizeLiteralsInSelectQuery() {
+        SelectQuery query = select(col("id"), lit(42).as("constant"))
+            .from(tbl("users"))
+            .where(col("age").gte(lit(18)));
+
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
+        Node result = query.accept(transformer);
+        assertNotNull(result);
+
+        assertEquals(2, transformer.values().size());
+        assertEquals(42, transformer.values().get(0));
+        assertEquals(18, transformer.values().get(1));
+    }
+
+    @Test
+    void preserveColumnExpressionStructure() {
+        ColumnExpr col = col("user_id");
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
+
+        Node result = col.accept(transformer);
+        assertNotNull(result);
+        assertTrue(result instanceof ColumnExpr);
+        assertEquals("user_id", ((ColumnExpr) result).name());
+    }
+
+    @Test
+    void parameterCreatorReceivesIncrementingIndex() {
+        java.util.List<Integer> receivedIndices = new java.util.ArrayList<>();
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> {
+            receivedIndices.add(i);
+            return param(i);
+        });
+
+        lit(1).add(lit(2)).mul(lit(3)).accept(transformer);
+
+        assertEquals(3, receivedIndices.size());
+        assertEquals(1, (int) receivedIndices.get(0));
+        assertEquals(2, (int) receivedIndices.get(1));
+        assertEquals(3, (int) receivedIndices.get(2));
+    }
+
+    @Test
+    void orderingOfParametersMatchesEncounterOrder() {
+        SelectQuery query = select(lit("a"), lit("b"), lit("c")).from(tbl("t"));
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
+
+        query.accept(transformer);
+
+        assertEquals(3, transformer.values().size());
+        assertEquals("a", transformer.values().get(0));
+        assertEquals("b", transformer.values().get(1));
+        assertEquals("c", transformer.values().get(2));
+    }
+
+    @Test
+    void valuesListIsUnmodifiable() {
+        LiteralExpr literal = lit(42);
+        ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
+        literal.accept(transformer);
+
+        var list = transformer.values();
+        assertThrows(UnsupportedOperationException.class, () -> list.add(100));
     }
 }

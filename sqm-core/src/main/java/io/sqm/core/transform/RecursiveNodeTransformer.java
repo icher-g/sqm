@@ -967,4 +967,116 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitDistinctSpec(DistinctSpec spec) {
         return spec;
     }
+
+    /**
+     * Transforms a {@link BinaryOperatorExpr}.
+     * <p>
+     * The transformer is applied recursively to both the left and right operands.
+     * If neither operand is changed by the transformation, the original
+     * {@code BinaryOperatorExpr} instance is returned to preserve structural sharing.
+     * <p>
+     * If at least one operand changes, a new {@code BinaryOperatorExpr} is created
+     * with the transformed operands and the same operator token.
+     *
+     * @param expr binary operator expression to transform
+     * @return the original expression if unchanged, otherwise a new transformed instance
+     */
+    @Override
+    public Node visitBinaryOperatorExpr(BinaryOperatorExpr expr) {
+        var left = apply(expr.left());
+        var right = apply(expr.right());
+        if (left == expr.left() && right == expr.right()) {
+            return expr;
+        }
+        return BinaryOperatorExpr.of(left, expr.operator(), right);
+    }
+
+    /**
+     * Transforms a {@link UnaryOperatorExpr}.
+     * <p>
+     * The transformer is applied recursively to the operand expression.
+     * If the operand is not changed by the transformation, the original
+     * {@code UnaryOperatorExpr} instance is returned to preserve structural sharing.
+     * <p>
+     * If the operand changes, a new {@code UnaryOperatorExpr} is created
+     * with the transformed operand and the same operator token.
+     *
+     * @param expr unary operator expression to transform
+     * @return the original expression if unchanged, otherwise a new transformed instance
+     */
+    @Override
+    public Node visitUnaryOperatorExpr(UnaryOperatorExpr expr) {
+        var operand = apply(expr.expr());
+        if (operand == expr.expr()) {
+            return expr;
+        }
+        return UnaryOperatorExpr.of(expr.operator(), operand);
+    }
+
+    /**
+     * Transforms a {@link CastExpr}.
+     * <p>
+     * The transformer is applied recursively to the operand expression.
+     * If the operand is not changed by the transformation, the original
+     * {@code CastExpr} instance is returned to preserve structural sharing.
+     * <p>
+     * If the operand changes, a new {@code CastExpr} is created with the transformed
+     * operand and the same target type.
+     *
+     * @param expr cast expression to transform
+     * @return the original expression if unchanged, otherwise a new transformed instance
+     */
+    @Override
+    public Node visitCastExpr(CastExpr expr) {
+        var operand = apply(expr.expr());
+        if (operand == expr.expr()) {
+            return expr;
+        }
+        return CastExpr.of(operand, expr.type());
+    }
+
+    /**
+     * Transforms an {@link ArrayExpr}.
+     * <p>
+     * The transformer is applied recursively to each element expression.
+     * If no element is changed by the transformation, the original {@code ArrayExpr}
+     * instance is returned to preserve structural sharing.
+     * <p>
+     * If at least one element changes, a new {@code ArrayExpr} is created with the
+     * transformed element list.
+     *
+     * @param expr array constructor expression to transform
+     * @return the original expression if unchanged, otherwise a new transformed instance
+     */
+    @Override
+    public Node visitArrayExpr(ArrayExpr expr) {
+        List<Expression> elements = new ArrayList<>(expr.elements());
+        boolean changed = apply(expr.elements(), elements);
+        if (changed) {
+            return ArrayExpr.of(elements);
+        }
+        return expr;
+    }
+
+    /**
+     * Transforms an {@link ExprPredicate}.
+     * <p>
+     * The transformer is applied recursively to the wrapped expression.
+     * If the wrapped expression is not changed by the transformation, the original
+     * {@code ExprPredicate} instance is returned to preserve structural sharing.
+     * <p>
+     * If the wrapped expression changes, a new {@code ExprPredicate} is created
+     * with the transformed expression.
+     *
+     * @param predicate expression predicate to transform
+     * @return the original predicate if unchanged, otherwise a new transformed instance
+     */
+    @Override
+    public Node visitExprPredicate(ExprPredicate predicate) {
+        var expr = apply(predicate.expr());
+        if (expr == predicate.expr()) {
+            return predicate;
+        }
+        return ExprPredicate.of(expr);
+    }
 }

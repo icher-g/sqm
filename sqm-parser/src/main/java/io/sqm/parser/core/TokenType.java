@@ -6,21 +6,18 @@ package io.sqm.parser.core;
 public enum TokenType {
     // literals & names
     IDENT, NUMBER, STRING,
-    PARAM_QMARK,    // ? - anonymous parameter
+    QMARK,          // ? - might be an anonymous parameter
     PARAM_POS,      // $1 - positional parameter
     PARAM_NAMED,    // :name or @name - named parameter
 
     // punctuation
     DOT, COMMA, LPAREN, RPAREN,
 
-    // arithmetic
-    PLUS, MINUS, STAR, SLASH, CARET, PERCENT,
-
-    // comparison
-    EQ, NEQ1, NEQ2, LT, LTE, GT, GTE,
+    // operators
+    OPERATOR,
 
     // keywords (recognized case-insensitively)
-    AND, OR, NOT, IN, LIKE, BETWEEN, SYMMETRIC, IS, NULL, TRUE, FALSE, DISTINCT, EXISTS, ESCAPE, ANY,
+    AND, OR, NOT, IN, LIKE, BETWEEN, SYMMETRIC, IS, NULL, TRUE, FALSE, DISTINCT, EXISTS, ESCAPE, ANY, CAST, ARRAY,
 
     // join-specific (kept, since core is shared; harmless for filters)
     JOIN, INNER, LEFT, RIGHT, FULL, OUTER, CROSS, USING, NATURAL, ON, AS,

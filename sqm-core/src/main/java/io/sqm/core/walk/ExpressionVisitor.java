@@ -179,5 +179,51 @@ public interface ExpressionVisitor<R> {
      * @return a visitor-defined result
      */
     R visitNegativeArithmeticExpr(NegativeArithmeticExpr expr);
+
+    /**
+     * Visits a binary operator expression (e.g. {@code a || b}, {@code x @> y}).
+     *
+     * @param expr binary operator expression
+     * @return visitor result
+     */
+    R visitBinaryOperatorExpr(BinaryOperatorExpr expr);
+
+    /**
+     * Visits a unary operator expression (e.g. {@code -x}, {@code ~x}).
+     *
+     * @param expr unary operator expression
+     * @return visitor result
+     */
+    R visitUnaryOperatorExpr(UnaryOperatorExpr expr);
+
+    /**
+     * Visits a {@link CastExpr}.
+     * <p>
+     * The visitor is applied recursively to the operand expression.
+     * No transformation is performed by this method; it is intended for traversal,
+     * analysis, or validation purposes.
+     * <p>
+     * Subclasses may override this method to implement type-specific behavior
+     * (for example, collecting cast targets or validating type usage).
+     *
+     * @param expr cast expression being visited
+     * @return visitor result
+     */
+    R visitCastExpr(CastExpr expr);
+
+    /**
+     * Visits an {@link ArrayExpr}.
+     * <p>
+     * The visitor is applied recursively to each array element expression.
+     * No transformation is performed by this method; it is intended for traversal,
+     * analysis, or validation purposes.
+     * <p>
+     * Subclasses may override this method to implement array-specific behavior
+     * (for example, checking element constraints or collecting statistics).
+     *
+     * @param expr array constructor expression being visited
+     * @return visitor result
+     */
+    R visitArrayExpr(ArrayExpr expr);
 }
 

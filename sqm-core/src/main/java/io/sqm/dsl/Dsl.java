@@ -297,6 +297,26 @@ public final class Dsl {
         return Expression.rows(List.of(rows));
     }
 
+    /**
+     * Creates an array constructor expression.
+     *
+     * @param elements array elements
+     * @return array constructor expression
+     */
+    public static ArrayExpr array(Expression... elements) {
+        return ArrayExpr.of(elements);
+    }
+
+    /**
+     * Creates an array constructor expression.
+     *
+     * @param elements array elements
+     * @return array constructor expression
+     */
+    public static ArrayExpr array(List<? extends Expression> elements) {
+        return ArrayExpr.of(List.copyOf(elements));
+    }
+
     /* ========================= Joins ========================= */
 
     /**

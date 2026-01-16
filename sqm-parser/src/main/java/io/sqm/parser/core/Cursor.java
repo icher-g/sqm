@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Cursor for token list that maintains current position.
@@ -256,6 +257,20 @@ public final class Cursor {
     }
 
     /**
+     * Advances the cursor if the match is found.
+     *
+     * @param func the custom function to match.
+     * @return True if the token was consumed or False otherwise.
+     */
+    public boolean consumeIf(Function<Token, Boolean> func) {
+        if (func.apply(peek())) {
+            pos++;
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Expect token; throw otherwise. The cursor is advanced in any case.
      *
      * @param message an error message to throw if the token is not matched.
@@ -274,6 +289,20 @@ public final class Cursor {
     public Token expect(String message, Set<TokenType> types) {
         Token token = advance();
         if (!types.contains(token.type())) {
+            throw new ParserException(message, token.pos());
+        }
+        return token;
+    }
+
+    /**
+     * Expect token; throw otherwise. The cursor is advanced in any case.
+     *
+     * @param message an error message to throw if the token is not matched.
+     * @param func    a custom validation function.
+     */
+    public Token expect(String message, Function<Token, Boolean> func) {
+        Token token = advance();
+        if (!func.apply(token)) {
             throw new ParserException(message, token.pos());
         }
         return token;
@@ -355,6 +384,64 @@ public final class Cursor {
      * @return size if not found.
      */
     public int find(Set<TokenType> types, Set<TokenType> startSkip, Set<TokenType> endSkip, Set<TokenType> stopLookup, int lookahead) {
+        return find(t -> types.contains(t.type()), startSkip, endSkip, stopLookup, lookahead);
+    }
+
+    /**
+     * Find the index of the first token type at top-level (parenDepth == 0), scanning from 'current position'.
+     *
+     * @param lookupFunc a custom lookup function.
+     * @return size if not found.
+     */
+    public int find(Function<Token, Boolean> lookupFunc) {
+        return find(lookupFunc, 0);
+    }
+
+    /**
+     * Find the index of the first token type at top-level (parenDepth == 0), scanning from 'current position'.
+     *
+     * @param lookupFunc a custom lookup function.
+     * @param lookahead  a number of token to skip at the beginning.
+     * @return size if not found.
+     */
+    public int find(Function<Token, Boolean> lookupFunc, int lookahead) {
+        return find(lookupFunc, Set.of(TokenType.LPAREN), Set.of(TokenType.RPAREN), Set.of(TokenType.EOF), lookahead);
+    }
+
+    /**
+     * Find the index of the first token type at top-level (parenDepth == 0), scanning from 'current position'.
+     *
+     * @param lookupFunc a custom lookup function.
+     * @param stopLookup a token type(s) to stop the lookup if met. By default, it is {@link TokenType#EOF}.
+     * @return size if not found.
+     */
+    public int find(Function<Token, Boolean> lookupFunc, Set<TokenType> stopLookup) {
+        return find(lookupFunc, stopLookup, 0);
+    }
+
+    /**
+     * Find the index of the first token type at top-level (parenDepth == 0), scanning from 'current position'.
+     *
+     * @param lookupFunc a custom lookup function.
+     * @param stopLookup a token type(s) to stop the lookup if met. By default, it is {@link TokenType#EOF}.
+     * @param lookahead  a number of token to skip at the beginning.
+     * @return size if not found.
+     */
+    public int find(Function<Token, Boolean> lookupFunc, Set<TokenType> stopLookup, int lookahead) {
+        return find(lookupFunc, Set.of(TokenType.LPAREN), Set.of(TokenType.RPAREN), stopLookup, lookahead);
+    }
+
+    /**
+     * Find the index of the first token type at top-level (parenDepth == 0), scanning from 'current position'.
+     *
+     * @param lookupFunc a custom lookup function.
+     * @param startSkip  a token type(s) to start skipping if met. By default, it is {@link TokenType#LPAREN}.
+     * @param endSkip    a token type(s) to stop skipping if met. By default, it is {@link TokenType#RPAREN}.
+     * @param stopLookup a token type(s) to stop the lookup if met. By default, it is {@link TokenType#EOF}.
+     * @param lookahead  a number of token to skip at the beginning.
+     * @return size if not found.
+     */
+    public int find(Function<Token, Boolean> lookupFunc, Set<TokenType> startSkip, Set<TokenType> endSkip, Set<TokenType> stopLookup, int lookahead) {
         int depth = 0;
 
         for (int i = pos + lookahead; i < tokens.size(); i++) {
@@ -374,7 +461,7 @@ public final class Cursor {
                 continue;
             }
 
-            if (depth == 0 && types.contains(t.type())) {
+            if (depth == 0 && lookupFunc.apply(t)) {
                 return i;
             }
         }

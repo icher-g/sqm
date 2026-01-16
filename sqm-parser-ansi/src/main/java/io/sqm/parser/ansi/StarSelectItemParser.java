@@ -3,11 +3,11 @@ package io.sqm.parser.ansi;
 import io.sqm.core.SelectItem;
 import io.sqm.core.StarSelectItem;
 import io.sqm.parser.core.Cursor;
-import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import static io.sqm.parser.core.OperatorTokens.isStar;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 public class StarSelectItemParser implements MatchableParser<StarSelectItem> {
@@ -20,7 +20,7 @@ public class StarSelectItemParser implements MatchableParser<StarSelectItem> {
      */
     @Override
     public ParseResult<StarSelectItem> parse(Cursor cur, ParseContext ctx) {
-        cur.expect("Expected '*'", TokenType.STAR);
+        cur.expect("Expected '*'", t -> isStar(t));
         return ok(SelectItem.star());
     }
 
@@ -49,6 +49,6 @@ public class StarSelectItemParser implements MatchableParser<StarSelectItem> {
      */
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
-        return cur.match(TokenType.STAR);
+        return isStar(cur.peek());
     }
 }
