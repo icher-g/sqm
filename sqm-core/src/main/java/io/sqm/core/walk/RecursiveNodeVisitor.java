@@ -926,4 +926,25 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         accept(predicate.expr());
         return defaultResult();
     }
+
+    /**
+     * Visits a {@link TypeName} node.
+     *
+     * <p>The default implementation does not transform the type name itself,
+     * but ensures that all modifier expressions (for example in
+     * {@code varchar(10)} or {@code numeric(10,2)}) are visited so that
+     * standard expression-level transformations (such as literal parameterization)
+     * can be applied.</p>
+     *
+     * <p>Name tokens, array dimensions, and time zone clauses are treated as
+     * syntactic elements and are therefore not traversed.</p>
+     *
+     * @param typeName the type name node
+     * @return the default visitor result
+     */
+    @Override
+    public R visitTypeName(TypeName typeName) {
+        typeName.modifiers().forEach(this::accept);
+        return defaultResult();
+    }
 }

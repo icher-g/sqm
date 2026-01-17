@@ -11,7 +11,12 @@ public enum TokenType {
     PARAM_NAMED,    // :name or @name - named parameter
 
     // punctuation
-    DOT, COMMA, LPAREN, RPAREN,
+    DOT,
+    COMMA,
+    LPAREN,   // (
+    RPAREN,   // )
+    LBRACKET, // [
+    RBRACKET, // ]
 
     // operators
     OPERATOR,

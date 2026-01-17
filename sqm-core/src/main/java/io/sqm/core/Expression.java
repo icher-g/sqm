@@ -556,7 +556,7 @@ public sealed interface Expression extends Node
      * }</pre>
      *
      * @param operator operator token
-     * @param right right operand
+     * @param right    right operand
      * @return binary operator expression
      */
     default BinaryOperatorExpr op(String operator, Expression right) {
@@ -589,7 +589,7 @@ public sealed interface Expression extends Node
      * @param type target type name (for example {@code "jsonb"}, {@code "text[]"}, {@code "bigint"})
      * @return cast expression
      */
-    default CastExpr cast(String type) {
+    default CastExpr cast(TypeName type) {
         return CastExpr.of(this, type);
     }
 

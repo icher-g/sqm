@@ -30,7 +30,7 @@ public non-sealed interface CastExpr extends Expression {
      * @param type target type name (for example {@code "jsonb"} or {@code "text[]"})
      * @return cast expression
      */
-    static CastExpr of(Expression expr, String type) {
+    static CastExpr of(Expression expr, TypeName type) {
         return new Impl(expr, type);
     }
 
@@ -48,7 +48,7 @@ public non-sealed interface CastExpr extends Expression {
      *
      * @return target type name, not blank
      */
-    String type();
+    TypeName type();
 
     /**
      * Accepts a {@link NodeVisitor} and dispatches control to the
@@ -72,14 +72,11 @@ public non-sealed interface CastExpr extends Expression {
      * @param expr expression to cast
      * @param type target type name (for example {@code "jsonb"} or {@code "text[]"})
      */
-    record Impl(Expression expr, String type) implements CastExpr {
+    record Impl(Expression expr, TypeName type) implements CastExpr {
 
         public Impl {
             Objects.requireNonNull(expr, "expr");
             Objects.requireNonNull(type, "type");
-            if (type.isBlank()) {
-                throw new IllegalArgumentException("type must not be blank");
-            }
         }
     }
 }

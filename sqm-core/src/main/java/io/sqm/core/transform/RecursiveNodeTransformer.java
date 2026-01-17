@@ -1050,7 +1050,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
      */
     @Override
     public Node visitArrayExpr(ArrayExpr expr) {
-        List<Expression> elements = new ArrayList<>(expr.elements());
+        List<Expression> elements = new ArrayList<>();
         boolean changed = apply(expr.elements(), elements);
         if (changed) {
             return ArrayExpr.of(elements);
@@ -1078,5 +1078,30 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             return predicate;
         }
         return ExprPredicate.of(expr);
+    }
+
+    /**
+     * Transforms a {@link TypeName} node.
+     *
+     * <p>The default transformation preserves the {@link TypeName} instance itself,
+     * as type names are considered syntactic elements of the SQL AST.</p>
+     *
+     * <p>Any modifier expressions (for example in {@code varchar(10)} or
+     * {@code numeric(10,2)}) are still visited to allow standard expression
+     * transformations, such as literal parameterization or expression rewriting.</p>
+     *
+     * <p>Name tokens, array dimensions, and time zone clauses are not transformed.</p>
+     *
+     * @param typeName the type name node
+     * @return the unchanged {@link TypeName} instance
+     */
+    @Override
+    public Node visitTypeName(TypeName typeName) {
+        List<Expression> modifiers = new ArrayList<>();
+        boolean changed = apply(typeName.modifiers(), modifiers);
+        if (changed) {
+            return TypeName.of(typeName.qualifiedName(), typeName.keyword().orElse(null), modifiers, typeName.arrayDims(), typeName.timeZoneSpec());
+        }
+        return typeName;
     }
 }

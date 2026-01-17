@@ -297,6 +297,8 @@ public final class Dsl {
         return Expression.rows(List.of(rows));
     }
 
+    /* ========================= Arrays ========================= */
+
     /**
      * Creates an array constructor expression.
      *
@@ -315,6 +317,28 @@ public final class Dsl {
      */
     public static ArrayExpr array(List<? extends Expression> elements) {
         return ArrayExpr.of(List.copyOf(elements));
+    }
+
+    /* ========================= TypeName ========================= */
+
+    /**
+     * Convenience factory for a qualified type name like {@code schema.type} or {@code int4}.
+     *
+     * @param parts identifier parts (dot-joined)
+     * @return a qualified {@link TypeName}
+     */
+    public static TypeName type(String... parts) {
+        return TypeName.of(List.of(parts), null, List.of(), 0, TimeZoneSpec.NONE);
+    }
+
+    /**
+     * Convenience factory for a keyword type name like {@code double precision}.
+     *
+     * @param keyword keyword tokens (space-joined)
+     * @return a keyword-based {@link TypeName}
+     */
+    public static TypeName type(TypeKeyword keyword) {
+        return TypeName.of(null, keyword, List.of(), 0, TimeZoneSpec.NONE);
     }
 
     /* ========================= Joins ========================= */
