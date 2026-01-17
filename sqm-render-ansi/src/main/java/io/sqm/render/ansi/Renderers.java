@@ -81,6 +81,7 @@ public final class Renderers {
             .register(new UnaryOperatorExprRenderer())
             .register(new CastExprRenderer())
             .register(new ArrayExprRenderer())
-            .register(new LimitOffsetRenderer());
+            .register(new LimitOffsetRenderer())
+            .register(new TypeNameRenderer());
     }
 }

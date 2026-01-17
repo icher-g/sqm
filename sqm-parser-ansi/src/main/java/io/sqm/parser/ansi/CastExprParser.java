@@ -2,6 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.CastExpr;
 import io.sqm.core.Expression;
+import io.sqm.core.TypeName;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
@@ -28,9 +29,12 @@ public class CastExprParser implements MatchableParser<CastExpr> {
             return error(operand);
         }
         cur.expect("Expected AS", TokenType.AS);
-        var type = cur.expect("Expected identifier", TokenType.IDENT);
+        var type = ctx.parse(TypeName.class, cur);
+        if (type.isError()) {
+            return error(type);
+        }
         cur.expect("Expected )", TokenType.RPAREN);
-        return ok(CastExpr.of(operand.value(), type.lexeme()));
+        return ok(CastExpr.of(operand.value(), type.value()));
     }
 
     /**

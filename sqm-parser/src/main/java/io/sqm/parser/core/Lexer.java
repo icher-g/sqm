@@ -311,7 +311,15 @@ public final class Lexer {
             case '"':
                 return readQuotedIdentifier();
             case '[':
-                return readBracketIdentifier();
+                var t = readBracketIdentifier();
+                if (t.lexeme().isBlank()) {
+                    pos--; // return back closing bracket ]
+                    return new Token(LBRACKET, "[", start);
+                }
+                return t;
+            case ']':
+                pos++;
+                return new Token(RBRACKET, "]", start);
             case '`':
                 return readBacktickIdentifier();
         }

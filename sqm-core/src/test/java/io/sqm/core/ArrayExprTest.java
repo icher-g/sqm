@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 
 import java.util.List;
 
+import static io.sqm.dsl.Dsl.type;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("ArrayExpr")
@@ -77,8 +78,8 @@ class ArrayExprTest {
     @Test
     @DisplayName("Array with cast expressions")
     void arrayWithCastExpressions() {
-        CastExpr cast1 = CastExpr.of(Expression.literal("123"), "integer");
-        CastExpr cast2 = CastExpr.of(Expression.literal("456"), "integer");
+        CastExpr cast1 = CastExpr.of(Expression.literal("123"), type("integer"));
+        CastExpr cast2 = CastExpr.of(Expression.literal("456"), type("integer"));
         ArrayExpr arr = ArrayExpr.of(cast1, cast2);
         assertEquals(2, arr.elements().size());
     }

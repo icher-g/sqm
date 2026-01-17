@@ -1,0 +1,129 @@
+package io.sqm.parser.ansi;
+
+import io.sqm.core.Expression;
+import io.sqm.core.TimeZoneSpec;
+import io.sqm.core.TypeKeyword;
+import io.sqm.core.TypeName;
+import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.ParserException;
+import io.sqm.parser.core.TokenType;
+import io.sqm.parser.spi.ParseContext;
+import io.sqm.parser.spi.ParseResult;
+import io.sqm.parser.spi.Parser;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
+public class TypeNameParser implements Parser<TypeName> {
+
+    private static final Set<String> keywords = Set.of("double", "character", "national");
+
+    private static TypeKeyword parseKeyword(String firstPart, Cursor cur) {
+        if ("double".equalsIgnoreCase(firstPart)) {
+            var t = cur.expect("Expected identifier", TokenType.IDENT);
+            if (t.lexeme().equalsIgnoreCase("precision")) {
+                return TypeKeyword.DOUBLE_PRECISION;
+            }
+            throw new ParserException("Expected precision after double", cur.fullPos());
+        }
+        if ("character".equalsIgnoreCase(firstPart)) {
+            var t = cur.expect("Expected identifier", TokenType.IDENT);
+            if (t.lexeme().equalsIgnoreCase("varying")) {
+                return TypeKeyword.CHARACTER_VARYING;
+            }
+            throw new ParserException("Expected varying after character", cur.fullPos());
+        }
+
+        var t = cur.expect("Expected identifier", TokenType.IDENT);
+        if (!t.lexeme().equalsIgnoreCase("character")) {
+            throw new ParserException("Expected character after national", cur.fullPos());
+        }
+
+        if (cur.peek().lexeme().equalsIgnoreCase("varying")) {
+            cur.advance();
+            return TypeKeyword.NATIONAL_CHARACTER_VARYING;
+        }
+        return TypeKeyword.NATIONAL_CHARACTER;
+    }
+
+    private static List<String> parseQualifiedName(String firstPart, Cursor cur) {
+        var parts = new ArrayList<String>();
+        parts.add(firstPart);
+        while (cur.consumeIf(TokenType.DOT)) {
+            var t = cur.expect("Expected identifier", TokenType.IDENT);
+            parts.add(t.lexeme());
+        }
+        return parts;
+    }
+
+    private static List<Expression> parseModifiers(Cursor cur, ParseContext ctx) {
+        List<Expression> expressions = new ArrayList<>();
+        do {
+            var result = ctx.parse(Expression.class, cur);
+            if (!result.ok()) {
+                var problem = result.problems().getFirst();
+                throw new ParserException(problem.message(), problem.pos());
+            }
+            expressions.add(result.value());
+        }
+        while (cur.consumeIf(TokenType.COMMA));
+        return expressions;
+    }
+
+    /**
+     * Parses the spec represented by the {@link Cursor} instance.
+     *
+     * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.
+     * @param ctx a parser context containing parsers and lookups.
+     * @return a parsing result.
+     */
+    @Override
+    public ParseResult<? extends TypeName> parse(Cursor cur, ParseContext ctx) {
+        var name = cur.expect("Expected identifier", TokenType.IDENT);
+
+        TypeKeyword keyword = null;
+        List<String> parts = null;
+        List<Expression> modifiers = null;
+        int arrayDims = 0;
+
+        if (keywords.contains(name.lexeme().toLowerCase(Locale.ROOT))) {
+            keyword = parseKeyword(name.lexeme(), cur);
+        }
+
+        if (cur.match(TokenType.DOT)) {
+            parts = parseQualifiedName(name.lexeme(), cur);
+        }
+
+        if (cur.consumeIf(TokenType.LPAREN)) {
+            modifiers = parseModifiers(cur, ctx);
+            cur.expect("Expected )", TokenType.RPAREN);
+        }
+
+        if (cur.match(TokenType.LBRACKET)) {
+            return error("Array type [] is not supported in ANSI parser.", cur.fullPos());
+        }
+
+        // this is a single word.
+        if (parts == null && keyword == null) {
+            parts = new ArrayList<>();
+            parts.add(name.lexeme());
+        }
+
+        return ok(TypeName.of(parts, keyword, modifiers, arrayDims, TimeZoneSpec.NONE));
+    }
+
+    /**
+     * Gets the target type this handler can handle.
+     *
+     * @return an entity type to be handled by the handler.
+     */
+    @Override
+    public Class<? extends TypeName> targetType() {
+        return TypeName.class;
+    }
+}

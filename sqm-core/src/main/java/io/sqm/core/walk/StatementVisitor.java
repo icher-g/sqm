@@ -1,6 +1,7 @@
 package io.sqm.core.walk;
 
 import io.sqm.core.CteDef;
+import io.sqm.core.TypeName;
 import io.sqm.core.WhenThen;
 
 /**
@@ -72,5 +73,13 @@ public interface StatementVisitor<R> {
      * @return a result specific to the visitor implementation
      */
     R visitCte(CteDef c);
+
+    /**
+     * Visits a {@link TypeName}.
+     *
+     * @param typeName the type name node
+     * @return visitor result
+     */
+    R visitTypeName(TypeName typeName);
 }
 

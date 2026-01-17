@@ -97,6 +97,7 @@ public final class Parsers {
             .register(new ArrayExprParser())
             .register(new BinaryOperatorExprParser())
             .register(new UnaryOperatorExprParser())
-            .register(new CastExprParser());
+            .register(new CastExprParser())
+            .register(new TypeNameParser());
     }
 }
