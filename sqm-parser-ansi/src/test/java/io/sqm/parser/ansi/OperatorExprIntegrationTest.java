@@ -84,7 +84,7 @@ class OperatorExprIntegrationTest {
 
         assertInstanceOf(CastExpr.class, b.right());
         var c = (CastExpr) b.right();
-        assertEquals("jsonb", c.type());
+        assertEquals("jsonb", c.type().qualifiedName().getFirst());
         assertInstanceOf(LiteralExpr.class, c.expr());
         assertEquals("{}", ((LiteralExpr) c.expr()).value());
     }
