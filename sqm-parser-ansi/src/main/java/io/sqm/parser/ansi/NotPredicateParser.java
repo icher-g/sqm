@@ -52,11 +52,14 @@ public class NotPredicateParser implements Parser<Predicate> {
      */
     @Override
     public ParseResult<? extends Predicate> parse(Cursor cur, ParseContext ctx) {
-        if (cur.consumeIf(TokenType.NOT)) {
+        if (cur.match(TokenType.NOT)) {
             // NOT EXISTS
-            if (cur.match(TokenType.EXISTS)) {
+            if (cur.match(TokenType.EXISTS, 1)) {
                 return ctx.parse(ExistsPredicate.class, cur);
             }
+
+            // skip NOT.
+            cur.advance();
 
             // NOT ( predicate )
             if (cur.match(TokenType.LPAREN)) {
