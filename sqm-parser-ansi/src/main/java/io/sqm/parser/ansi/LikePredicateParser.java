@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.Expression;
+import io.sqm.core.LikeMode;
 import io.sqm.core.LikePredicate;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -56,7 +57,19 @@ public class LikePredicateParser implements Parser<LikePredicate>, InfixParser<E
     @Override
     public ParseResult<LikePredicate> parse(Expression lhs, Cursor cur, ParseContext ctx) {
         var negated = cur.consumeIf(TokenType.NOT);
-        cur.expect("Expected LIKE", TokenType.LIKE);
+
+        LikeMode mode = LikeMode.LIKE;
+
+        if (!cur.consumeIf(TokenType.LIKE)) {
+            if (cur.consumeIf(TokenType.ILIKE)) {
+                mode = LikeMode.ILIKE;
+            }
+            else {
+                cur.expect("Expected SIMILAR", TokenType.SIMILAR);
+                cur.expect("Expected TO after SIMILAR", TokenType.TO);
+                mode = LikeMode.SIMILAR_TO;
+            }
+        }
 
         var pattern = ctx.parse(Expression.class, cur);
         if (pattern.isError()) {
@@ -72,6 +85,6 @@ public class LikePredicateParser implements Parser<LikePredicate>, InfixParser<E
             escape = result.value();
         }
 
-        return ok(LikePredicate.of(lhs, pattern.value(), escape, negated));
+        return ok(LikePredicate.of(mode, lhs, pattern.value(), escape, negated));
     }
 }

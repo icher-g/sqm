@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration tests for {@link BinaryOperatorExpr} / {@link UnaryOperatorExpr} parsing in query context.
  * <p>
  * These tests ensure operator expressions can appear in SELECT lists and in WHERE predicates
- * (via {@link ExprPredicate} fallback) without introducing dialect-specific decisions in the ANSI parser.
+ * (via {@link UnaryPredicate} fallback) without introducing dialect-specific decisions in the ANSI parser.
  */
 class OperatorExprIntegrationTest {
 
@@ -68,13 +68,13 @@ class OperatorExprIntegrationTest {
     }
 
     @Test
-    void parses_binary_operator_in_where_as_expr_predicate() {
+    void parses_binary_operator_in_where_as_unary_predicate() {
         var q = (SelectQuery) parseOk("SELECT * FROM t WHERE data @> CAST('{}' AS jsonb)");
 
         assertNotNull(q.where());
-        assertInstanceOf(ExprPredicate.class, q.where());
+        assertInstanceOf(UnaryPredicate.class, q.where());
 
-        var p = (ExprPredicate) q.where();
+        var p = (UnaryPredicate) q.where();
         assertInstanceOf(BinaryOperatorExpr.class, p.expr());
 
         var b = (BinaryOperatorExpr) p.expr();
@@ -87,23 +87,6 @@ class OperatorExprIntegrationTest {
         assertEquals("jsonb", c.type().qualifiedName().getFirst());
         assertInstanceOf(LiteralExpr.class, c.expr());
         assertEquals("{}", ((LiteralExpr) c.expr()).value());
-    }
-
-    @Test
-    void parses_regex_operator_in_where_as_expr_predicate() {
-        var q = (SelectQuery) parseOk("SELECT * FROM t WHERE name !~* 'abc'");
-
-        assertInstanceOf(ExprPredicate.class, q.where());
-        var p = (ExprPredicate) q.where();
-
-        assertInstanceOf(BinaryOperatorExpr.class, p.expr());
-        var b = (BinaryOperatorExpr) p.expr();
-
-        assertEquals("!~*", b.operator());
-        assertInstanceOf(ColumnExpr.class, b.left());
-        assertEquals("name", ((ColumnExpr) b.left()).name());
-        assertInstanceOf(LiteralExpr.class, b.right());
-        assertEquals("abc", ((LiteralExpr) b.right()).value());
     }
 
     @Test

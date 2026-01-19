@@ -105,18 +105,15 @@ public interface PredicateVisitor<R> {
     R visitOrPredicate(OrPredicate p);
 
     /**
-     * Visits an {@link ExprPredicate}.
-     * <p>
-     * The visitor is applied recursively to the wrapped expression.
-     * No transformation is performed by this method; it is intended for traversal,
-     * analysis, or validation purposes.
-     * <p>
-     * Subclasses may override this method to implement expression-predicate-specific behavior
-     * (for example, validating that the wrapped expression is boolean-valued in a given dialect).
+     * Visits a {@link RegexPredicate}.
      *
-     * @param predicate expression predicate being visited
-     * @return a result produced by the visitor
+     * <p>Implementations are responsible for selecting the appropriate
+     * dialect-specific regular expression matching operator based on the
+     * predicate's {@link RegexMode} and negation flag.</p>
+     *
+     * @param predicate the regex predicate being visited
+     * @return the result of visiting the predicate
      */
-    R visitExprPredicate(ExprPredicate predicate);
+    R visitRegexPredicate(RegexPredicate predicate);
 }
 

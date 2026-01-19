@@ -45,10 +45,10 @@ Node
 │  │  ├─ BetweenPredicate
 │  │  ├─ ComparisonPredicate
 │  │  ├─ ExistsPredicate
-│  │  ├─ ExprPredicate
 │  │  ├─ InPredicate
 │  │  ├─ IsNullPredicate
 │  │  ├─ LikePredicate
+│  │  ├─ RegexPredicate
 │  │  ├─ NotPredicate
 │  │  ├─ CompositePredicate
 │  │  │  ├─ AndPredicate
@@ -58,6 +58,7 @@ Node
 │     ├─ RowExpr
 │     ├─ QueryExpr
 │     └─ RowListExpr
+├─ TypeName
 ├─ DistinctSpec
 ├─ SelectItem
 │  ├─ ExprSelectItem
@@ -109,6 +110,7 @@ Mermaid does not support `.` in identifiers, so all dots are replaced with `_` i
 ```mermaid
 graph TD
   Node --> Expression
+  Node --> TypeName
   Node --> DistinctSpec
 
   Expression --> CaseExpr
@@ -151,10 +153,10 @@ graph TD
   Predicate --> BetweenPredicate
   Predicate --> ComparisonPredicate
   Predicate --> ExistsPredicate
-  Predicate --> ExprPredicate
   Predicate --> InPredicate
   Predicate --> IsNullPredicate
   Predicate --> LikePredicate
+  Predicate --> RegexPredicate
   Predicate --> NotPredicate
   Predicate --> CompositePredicate
   Predicate --> UnaryPredicate
@@ -277,20 +279,28 @@ graph TD
 - **NegativeArithmeticExpr** (`-x`)
 
 - **BinaryOperatorExpr**
-  Generic binary operator expression (`<left> <operator> <right>`). Models operator-heavy dialect constructs (for example PostgreSQL JSON/JSONB, regex, arrays, ranges) without introducing a dedicated node per operator.
+  Generic binary operator expression (`<left> <operator> <right>`). Useful for SQL constructs that are naturally expressed via operators and do not justify a dedicated node per operator.
 
 - **UnaryOperatorExpr**
-  Generic unary operator expression (`<operator><expr>`). Models unary operator syntax (for example arithmetic signs or PostgreSQL bitwise NOT `~`).
+  Generic unary operator expression (`<operator><expr>`). Useful for unary operator syntax such as arithmetic signs.
 
 ---
 
 ### Operator / type expressions
 
+- **TypeName**
+  Models a SQL type name used in type-related constructs, such as casts.
+  A type name can be represented either as a qualified identifier sequence (for example `schema.type`)
+  or as a keyword-based type (for example `DOUBLE PRECISION`).
+  Optional modifiers are supported (for example `numeric(10,2)`), as well as dialect extensions such as
+  array dimensions (`text[][]`) and time zone clauses for temporal types.
+
 - **CastExpr**
-  Type cast expression (`CAST(<expr> AS <type>)` or dialect-specific shorthand like `(<expr>)::type`). Useful for PostgreSQL typed literals such as `'{}'::jsonb` and array casts like `'{a,b}'::text[]`.
+  Type cast expression (`CAST(<expr> AS <type>)` or dialect-specific shorthand).
+  The cast target type is represented by a `TypeName`.
 
 - **ArrayExpr**
-  Array constructor expression (`ARRAY[<elem1>, <elem2>, ...]`). Used by PostgreSQL array operators (for example `?|`, `?&`, `&&`, `@>`, `<@`) and general array expressions.
+  Array constructor expression (`ARRAY[<elem1>, <elem2>, ...]`). Used for array expressions and dialect-specific array operators.
 
 ---
 
@@ -303,20 +313,22 @@ graph TD
 
 ### Predicates
 
-- **Predicate** – boolean expressions
-    - AnyAllPredicate
-    - BetweenPredicate
-    - ComparisonPredicate
-    - ExistsPredicate
-    - ExprPredicate
-    - InPredicate
-    - IsNullPredicate
-    - LikePredicate
-    - NotPredicate
-    - CompositePredicate
-        - AndPredicate
-        - OrPredicate
-    - UnaryPredicate
+- **Predicate**  
+  Base type for boolean expressions used in `WHERE`, `HAVING`, join conditions, and similar contexts.
+
+    - **ComparisonPredicate** – binary comparisons such as `=`, `<>`, `<`, `<=`, `>`, `>=`.
+    - **BetweenPredicate** – `expr [NOT] BETWEEN <lower> AND <upper>`.
+    - **InPredicate** – `expr [NOT] IN (<values>)` where the value set can be a row list or a subquery.
+    - **IsNullPredicate** – `expr IS [NOT] NULL`.
+    - **LikePredicate** – pattern matching predicate (for example `LIKE`). The matching operator is selected by a mode (for example `LIKE`, `ILIKE`, `SIMILAR TO`), and an optional `ESCAPE` expression may be provided.
+    - **RegexPredicate** – regular expression pattern matching predicate. The regular expression pattern is treated as an opaque expression and is never modified by SQM.
+    - **ExistsPredicate** – `EXISTS (<subquery>)`.
+    - **AnyAllPredicate** – quantified comparison such as `expr <op> ANY (<subquery|array>)` or `expr <op> ALL (...)`.
+    - **NotPredicate** – logical negation of another predicate.
+    - **CompositePredicate** – base type for boolean combinations.
+        - **AndPredicate** – conjunction of predicates.
+        - **OrPredicate** – disjunction of predicates.
+    - **UnaryPredicate** – predicate forms that conceptually operate on a single expression but are not covered by the other dedicated predicate nodes.
 
 ---
 
@@ -332,7 +344,7 @@ graph TD
 ### DISTINCT
 
 - **DistinctSpec**  
-  Select-level DISTINCT modifier applied to a `SelectQuery`. A `null` value indicates that the query has no DISTINCT modifier. ANSI DISTINCT is represented by `AnsiDistinct`. Dialects may provide additional `DistinctSpec` implementations such as PostgreSQL `DISTINCT ON`.
+  Select-level DISTINCT modifier applied to a `SelectQuery`. A `null` value indicates that the query has no DISTINCT modifier. ANSI DISTINCT is represented by `AnsiDistinct`. Dialects may provide additional `DistinctSpec` implementations such as dialect-specific variants of DISTINCT.
 
 ---
 

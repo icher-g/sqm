@@ -11,14 +11,13 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-import static io.sqm.parser.core.OperatorTokens.isArithmetic;
-import static io.sqm.parser.core.OperatorTokens.isComparison;
+import static io.sqm.parser.core.OperatorTokens.*;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 public class BinaryOperatorExprParser implements Parser<Expression>, InfixParser<Expression, BinaryOperatorExpr> {
     private static boolean isGenericBinaryOperator(Token t) {
-        return t.type() == TokenType.OPERATOR && !isArithmetic(t) && !isComparison(t);
+        return t.type() == TokenType.OPERATOR && !isArithmetic(t) && !isComparison(t) && !isRegex(t);
     }
 
     /**

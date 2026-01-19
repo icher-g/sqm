@@ -7,9 +7,10 @@ import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import java.util.Set;
+
 import static io.sqm.parser.core.OperatorTokens.isComparison;
 import static io.sqm.parser.spi.ParseResult.error;
-import static io.sqm.parser.spi.ParseResult.ok;
 
 /**
  * Parses an <em>atomic predicate</em> — the highest-precedence unit of SQL
@@ -61,6 +62,9 @@ import static io.sqm.parser.spi.ParseResult.ok;
  * </p>
  */
 public class AtomicPredicateParser {
+
+    private static final Set<String> regexSymbols = Set.of("~", "!~", "~*", "!~*");
+
     /**
      * Parses the next token sequence as an atomic predicate.
      *
@@ -100,9 +104,6 @@ public class AtomicPredicateParser {
 
         // NOT (...) / NOT EXISTS (...)
         if (cur.match(TokenType.NOT)) {
-            if (cur.match(TokenType.EXISTS, 1)) {
-                return ctx.parse(ExistsPredicate.class, cur);
-            }
             return ctx.parse(NotPredicate.class, cur);
         }
 
@@ -184,6 +185,9 @@ public class AtomicPredicateParser {
      */
     private ParseResult<? extends Predicate> parseExpressionBasedPredicate(Cursor cur, ParseContext ctx) {
         var leftExpr = ctx.parse(Expression.class, cur);
+        if (leftExpr.isError()) {
+            return error(leftExpr);
+        }
 
         if (isComparison(cur.peek())) {
             if (cur.match(TokenType.ANY, 1) || cur.match(TokenType.ALL, 1)) {
@@ -205,7 +209,7 @@ public class AtomicPredicateParser {
                 return ctx.parse(InPredicate.class, leftExpr.value(), cur);
             }
 
-            if (cur.match(TokenType.LIKE, 1)) {
+            if (cur.matchAny(1, TokenType.LIKE, TokenType.ILIKE, TokenType.SIMILAR)) {
                 return ctx.parse(LikePredicate.class, leftExpr.value(), cur);
             }
         }
@@ -214,7 +218,7 @@ public class AtomicPredicateParser {
             return ctx.parse(InPredicate.class, leftExpr.value(), cur);
         }
 
-        if (cur.match(TokenType.LIKE)) {
+        if (cur.matchAny(TokenType.LIKE, TokenType.ILIKE, TokenType.SIMILAR)) {
             return ctx.parse(LikePredicate.class, leftExpr.value(), cur);
         }
 
@@ -239,16 +243,11 @@ public class AtomicPredicateParser {
             return error("Expected NULL, TRUE or FALSE after IS", cur.fullPos());
         }
 
-        // 1) Expression-based predicate fallback (dialect-agnostic)
-        if (leftExpr.value() instanceof BinaryOperatorExpr) {
-            return ok(ExprPredicate.of(leftExpr.value()));
+        if (cur.match(TokenType.OPERATOR) && regexSymbols.contains(cur.peek().lexeme())) {
+            return ctx.parse(RegexPredicate.class, leftExpr.value(), cur);
         }
 
-        // 2) Unary predicate fallback (boolean column / literal)
-        if (leftExpr.value() instanceof LiteralExpr || leftExpr.value() instanceof ColumnExpr) {
-            return ctx.parse(UnaryPredicate.class, leftExpr.value(), cur);
-        }
-
-        return error("Expected predicate after expression", cur.fullPos());
+        // Unary predicate fallback (boolean expression in predicate position)
+        return ctx.parse(UnaryPredicate.class, leftExpr.value(), cur);
     }
 }

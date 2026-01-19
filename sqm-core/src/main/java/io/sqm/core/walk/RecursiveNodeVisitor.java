@@ -909,25 +909,6 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
-     * Visits an {@link ExprPredicate}.
-     * <p>
-     * The visitor is applied recursively to the wrapped expression.
-     * No transformation is performed by this method; it is intended for traversal,
-     * analysis, or validation purposes.
-     * <p>
-     * Subclasses may override this method to implement expression-predicate-specific behavior
-     * (for example, validating that the wrapped expression is boolean-valued in a given dialect).
-     *
-     * @param predicate expression predicate being visited
-     * @return the visitor result produced by {@link #defaultResult()}
-     */
-    @Override
-    public R visitExprPredicate(ExprPredicate predicate) {
-        accept(predicate.expr());
-        return defaultResult();
-    }
-
-    /**
      * Visits a {@link TypeName} node.
      *
      * <p>The default implementation does not transform the type name itself,
@@ -945,6 +926,23 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitTypeName(TypeName typeName) {
         typeName.modifiers().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link RegexPredicate}.
+     *
+     * <p>Implementations are responsible for selecting the appropriate
+     * dialect-specific regular expression matching operator based on the
+     * predicate's {@link RegexMode} and negation flag.</p>
+     *
+     * @param predicate the regex predicate being visited
+     * @return the result of visiting the predicate
+     */
+    @Override
+    public R visitRegexPredicate(RegexPredicate predicate) {
+        accept(predicate.value());
+        accept(predicate.pattern());
         return defaultResult();
     }
 }

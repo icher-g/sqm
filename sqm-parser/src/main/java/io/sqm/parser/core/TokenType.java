@@ -22,7 +22,7 @@ public enum TokenType {
     OPERATOR,
 
     // keywords (recognized case-insensitively)
-    AND, OR, NOT, IN, LIKE, BETWEEN, SYMMETRIC, IS, NULL, TRUE, FALSE, DISTINCT, EXISTS, ESCAPE, ANY, CAST, ARRAY,
+    AND, OR, NOT, IN, LIKE, ILIKE, SIMILAR, TO, BETWEEN, SYMMETRIC, IS, NULL, TRUE, FALSE, DISTINCT, EXISTS, ESCAPE, ANY, CAST, ARRAY,
 
     // join-specific (kept, since core is shared; harmless for filters)
     JOIN, INNER, LEFT, RIGHT, FULL, OUTER, CROSS, USING, NATURAL, ON, AS,

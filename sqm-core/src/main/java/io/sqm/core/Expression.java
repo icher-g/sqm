@@ -121,7 +121,7 @@ public sealed interface Expression extends Node
      * @return A newly created instance of the {@link RowExpr}.
      */
     static RowExpr row(Object... items) {
-        return RowExpr.of(Arrays.stream(items).map(i -> (Expression) literal(i)).toList());
+        return RowExpr.of(Arrays.stream(items).map(i -> i instanceof Expression ? (Expression) i : literal(i)).toList());
     }
 
     /**
@@ -479,6 +479,86 @@ public sealed interface Expression extends Node
      */
     default LikePredicate notLike(String pattern) {
         return LikePredicate.of(this, literal(pattern), true);
+    }
+
+    /**
+     * Creates ILIKE predicate for the current expression.
+     *
+     * @param pattern a pattern to use in ILIKE predicate.
+     * @return A newly created instance of the ILIKE predicate.
+     */
+    default LikePredicate ilike(Expression pattern) {
+        return LikePredicate.of(LikeMode.ILIKE, this, pattern, false);
+    }
+
+    /**
+     * Creates ILIKE predicate for the current expression.
+     *
+     * @param pattern a pattern to use in ILIKE predicate.
+     * @return A newly created instance of the ILIKE predicate.
+     */
+    default LikePredicate ilike(String pattern) {
+        return LikePredicate.of(LikeMode.ILIKE, this, literal(pattern), false);
+    }
+
+    /**
+     * Creates NOT ILIKE predicate for the current expression.
+     *
+     * @param pattern a pattern to use in NOT ILIKE predicate.
+     * @return A newly created instance of the NOT ILIKE predicate.
+     */
+    default LikePredicate notIlike(Expression pattern) {
+        return LikePredicate.of(LikeMode.ILIKE, this, pattern, true);
+    }
+
+    /**
+     * Creates NOT ILIKE predicate for the current expression.
+     *
+     * @param pattern a pattern to use in NOT ILIKE predicate.
+     * @return A newly created instance of the NOT ILIKE predicate.
+     */
+    default LikePredicate notIlike(String pattern) {
+        return LikePredicate.of(LikeMode.ILIKE, this, literal(pattern), true);
+    }
+
+    /**
+     * Creates SIMILAR TO predicate for the current expression.
+     *
+     * @param pattern a pattern to use in SIMILAR TO predicate.
+     * @return A newly created instance of the SIMILAR TO predicate.
+     */
+    default LikePredicate similarTo(Expression pattern) {
+        return LikePredicate.of(LikeMode.SIMILAR_TO, this, pattern, false);
+    }
+
+    /**
+     * Creates SIMILAR TO predicate for the current expression.
+     *
+     * @param pattern a pattern to use in SIMILAR TO predicate.
+     * @return A newly created instance of the SIMILAR TO predicate.
+     */
+    default LikePredicate similarTo(String pattern) {
+        return LikePredicate.of(LikeMode.SIMILAR_TO, this, literal(pattern), false);
+    }
+
+    /**
+     * Creates NOT SIMILAR TO predicate for the current expression.
+     *
+     * @param pattern a pattern to use in NOT SIMILAR TO predicate.
+     * @return A newly created instance of the NOT SIMILAR TO predicate.
+     */
+    default LikePredicate notSimilarTo(Expression pattern) {
+        return LikePredicate.of(LikeMode.SIMILAR_TO, this, pattern, true);
+    }
+
+    /**
+     * Creates NOT SIMILAR TO predicate for the current expression.
+     *
+     * @param pattern a pattern to use in NOT SIMILAR TO predicate.
+     * @return A newly created instance of the NOT SIMILAR TO predicate.
+     */
+    default LikePredicate notSimilarTo(String pattern) {
+        return LikePredicate.of(LikeMode.SIMILAR_TO, this, literal(pattern), true);
     }
 
     /**
