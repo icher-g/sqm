@@ -12,6 +12,7 @@ public final class OperatorTokens {
 
     private static final Set<String> COMPARISON = Set.of("=", "<>", "!=", "<", "<=", ">", ">=");
     private static final Set<String> ARITHMETIC = Set.of("+", "-", "*", "/", "%");
+    private static final Set<String> REGEX = Set.of("~", "~*", "!~", "!~*");
 
     private OperatorTokens() {
     }
@@ -47,6 +48,17 @@ public final class OperatorTokens {
      */
     public static boolean isArithmetic(Token t) {
         return t.type() == TokenType.OPERATOR && ARITHMETIC.contains(t.lexeme());
+    }
+
+    /**
+     * Returns {@code true} if the given token represents one of the regex operators:
+     * {@code ~}, {@code ~*}, {@code !~}, {@code !~*}.
+     *
+     * @param t token to test
+     * @return {@code true} if token is a regex operator
+     */
+    public static boolean isRegex(Token t) {
+        return t.type() == TokenType.OPERATOR && REGEX.contains(t.lexeme());
     }
 
     /**

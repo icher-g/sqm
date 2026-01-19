@@ -554,7 +554,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         var pattern = apply(p.pattern());
         var escape = apply(p.escape());
         if (value != p.value() || pattern != p.pattern() || escape != p.escape()) {
-            return LikePredicate.of(value, pattern, escape, p.negated());
+            return LikePredicate.of(p.mode(), value, pattern, escape, p.negated());
         }
         return p;
     }
@@ -1059,28 +1059,6 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
-     * Transforms an {@link ExprPredicate}.
-     * <p>
-     * The transformer is applied recursively to the wrapped expression.
-     * If the wrapped expression is not changed by the transformation, the original
-     * {@code ExprPredicate} instance is returned to preserve structural sharing.
-     * <p>
-     * If the wrapped expression changes, a new {@code ExprPredicate} is created
-     * with the transformed expression.
-     *
-     * @param predicate expression predicate to transform
-     * @return the original predicate if unchanged, otherwise a new transformed instance
-     */
-    @Override
-    public Node visitExprPredicate(ExprPredicate predicate) {
-        var expr = apply(predicate.expr());
-        if (expr == predicate.expr()) {
-            return predicate;
-        }
-        return ExprPredicate.of(expr);
-    }
-
-    /**
      * Transforms a {@link TypeName} node.
      *
      * <p>The default transformation preserves the {@link TypeName} instance itself,
@@ -1103,5 +1081,32 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             return TypeName.of(typeName.qualifiedName(), typeName.keyword().orElse(null), modifiers, typeName.arrayDims(), typeName.timeZoneSpec());
         }
         return typeName;
+    }
+
+    /**
+     * Visits a {@link RegexPredicate} and applies transformations to its
+     * child expressions.
+     *
+     * <p>This method recursively transforms the value and pattern expressions
+     * of the predicate. If either child expression is modified, a new
+     * {@link RegexPredicate} instance is created with the transformed
+     * components while preserving the original matching mode and negation
+     * flag.</p>
+     *
+     * <p>If no changes are produced by the transformation, the original
+     * predicate instance is returned.</p>
+     *
+     * @param p the regex predicate to visit
+     * @return the transformed predicate, or the original instance if no
+     *         changes were applied
+     */
+    @Override
+    public Node visitRegexPredicate(RegexPredicate p) {
+        var value = apply(p.value());
+        var pattern = apply(p.pattern());
+        if (value != p.value() || pattern != p.pattern()) {
+            return RegexPredicate.of(p.mode(), value, pattern, p.negated());
+        }
+        return p;
     }
 }

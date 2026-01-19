@@ -16,7 +16,12 @@ public class LikePredicateRenderer implements Renderer<LikePredicate> {
     @Override
     public void render(LikePredicate node, RenderContext ctx, SqlWriter w) {
         w.append(node.value()).space();
-        w.append(node.negated() ? ctx.dialect().operators().notLike() : ctx.dialect().operators().like()).space();
+
+        switch (node.mode()) {
+            case LIKE -> w.append(node.negated() ? ctx.dialect().operators().notLike() : ctx.dialect().operators().like()).space();
+            case ILIKE -> w.append(node.negated() ? ctx.dialect().operators().notIlike() : ctx.dialect().operators().ilike()).space();
+            case SIMILAR_TO -> w.append(node.negated() ? ctx.dialect().operators().notSimilarTo() : ctx.dialect().operators().similarTo()).space();
+        }
         w.append(node.pattern());
 
         if (node.escape() != null) {

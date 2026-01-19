@@ -59,6 +59,46 @@ public final class AnsiOperators implements Operators {
         return "NOT LIKE";
     }
 
+    /**
+     * Gets a representation of ILIKE operator.
+     *
+     * @return "ILIKE"
+     */
+    @Override
+    public String ilike() {
+        return "ILIKE";
+    }
+
+    /**
+     * Gets a representation of NOT ILIKE operator.
+     *
+     * @return "NOT ILIKE"
+     */
+    @Override
+    public String notIlike() {
+        return "NOT ILIKE";
+    }
+
+    /**
+     * Gets a representation of SIMILAR TO operator.
+     *
+     * @return "SIMILAR TO"
+     */
+    @Override
+    public String similarTo() {
+        return "SIMILAR TO";
+    }
+
+    /**
+     * Gets a representation of NOT SIMILAR TO operator.
+     *
+     * @return "NOT SIMILAR TO"
+     */
+    @Override
+    public String notSimilarTo() {
+        return "NOT SIMILAR TO";
+    }
+
     @Override
     public String isNull() {
         return "IS NULL";

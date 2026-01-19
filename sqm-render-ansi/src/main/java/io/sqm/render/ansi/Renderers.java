@@ -82,6 +82,7 @@ public final class Renderers {
             .register(new CastExprRenderer())
             .register(new ArrayExprRenderer())
             .register(new LimitOffsetRenderer())
-            .register(new TypeNameRenderer());
+            .register(new TypeNameRenderer())
+            .register(new RegexPredicateRenderer());
     }
 }

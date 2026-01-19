@@ -19,6 +19,9 @@ public final class Lexer {
         KEYWORDS.put("NOT", NOT);
         KEYWORDS.put("IN", IN);
         KEYWORDS.put("LIKE", LIKE);
+        KEYWORDS.put("ILIKE", ILIKE);
+        KEYWORDS.put("SIMILAR", SIMILAR);
+        KEYWORDS.put("TO", TO);
         KEYWORDS.put("BETWEEN", BETWEEN);
         KEYWORDS.put("SYMMETRIC", SYMMETRIC);
         KEYWORDS.put("IS", IS);

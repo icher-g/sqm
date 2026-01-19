@@ -82,6 +82,34 @@ public interface Operators {
     String notLike();
 
     /**
+     * Gets a representation of ILIKE operator.
+     *
+     * @return "ILIKE"
+     */
+    String ilike();
+
+    /**
+     * Gets a representation of NOT ILIKE operator.
+     *
+     * @return "NOT ILIKE"
+     */
+    String notIlike();
+
+    /**
+     * Gets a representation of SIMILAR TO operator.
+     *
+     * @return "SIMILAR TO"
+     */
+    String similarTo();
+
+    /**
+     * Gets a representation of NOT SIMILAR TO operator.
+     *
+     * @return "NOT SIMILAR TO"
+     */
+    String notSimilarTo();
+
+    /**
      * Gets an ANSI representation of IS NULL operator.
      *
      * @return "IS NULL"
