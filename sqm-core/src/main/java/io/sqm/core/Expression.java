@@ -121,7 +121,7 @@ public sealed interface Expression extends Node
      * @return A newly created instance of the {@link RowExpr}.
      */
     static RowExpr row(Object... items) {
-        return RowExpr.of(Arrays.stream(items).map(i -> (Expression) literal(i)).toList());
+        return RowExpr.of(Arrays.stream(items).map(i -> i instanceof Expression ? (Expression) i : literal(i)).toList());
     }
 
     /**

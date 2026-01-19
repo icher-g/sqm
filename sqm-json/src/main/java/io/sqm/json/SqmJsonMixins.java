@@ -2,6 +2,7 @@ package io.sqm.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.sqm.core.*;
 import io.sqm.json.mixins.*;
@@ -27,6 +28,8 @@ public final class SqmJsonMixins {
         // Expression family
         mapper.addMixIn(Expression.class, ExpressionMixin.class);
         mapper.addMixIn(FunctionExpr.Arg.class, FunctionArgMixin.class);
+        mapper.addMixIn(ParamExpr.class, ParamExprMixin.class);
+        mapper.addMixIn(ArithmeticExpr.class, ArithmeticExprMixin.class);
 
         // Predicate family
         mapper.addMixIn(Predicate.class, PredicateMixin.class);
@@ -69,6 +72,7 @@ public final class SqmJsonMixins {
      */
     public static ObjectMapper createDefault() {
         ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new Jdk8Module());
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 

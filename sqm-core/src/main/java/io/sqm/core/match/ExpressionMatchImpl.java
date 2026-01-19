@@ -44,6 +44,78 @@ public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
     }
 
     /**
+     * Matches a {@link CastExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * an explicit type cast.</p>
+     *
+     * @param f a mapping function applied to the matched {@link CastExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    @Override
+    public ExpressionMatch<R> cast(Function<CastExpr, R> f) {
+        if (!matched && expr instanceof CastExpr castExpr) {
+            result = f.apply(castExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Matches an {@link ArrayExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * an array constructor or array-valued expression.</p>
+     *
+     * @param f a mapping function applied to the matched {@link ArrayExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    @Override
+    public ExpressionMatch<R> array(Function<ArrayExpr, R> f) {
+        if (!matched && expr instanceof ArrayExpr arrayExpr) {
+            result = f.apply(arrayExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Matches a {@link BinaryOperatorExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * a binary operator applied to two operand expressions.</p>
+     *
+     * @param f a mapping function applied to the matched {@link BinaryOperatorExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    @Override
+    public ExpressionMatch<R> binaryOperator(Function<BinaryOperatorExpr, R> f) {
+        if (!matched && expr instanceof BinaryOperatorExpr binaryOperatorExpr) {
+            result = f.apply(binaryOperatorExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Matches a {@link UnaryOperatorExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * a unary operator applied to a single operand expression.</p>
+     *
+     * @param f a mapping function applied to the matched {@link UnaryOperatorExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    @Override
+    public ExpressionMatch<R> unaryOperator(Function<UnaryOperatorExpr, R> f) {
+        if (!matched && expr instanceof UnaryOperatorExpr unaryOperatorExpr) {
+            result = f.apply(unaryOperatorExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
      * Registers a handler to be applied when the subject is a {@link ColumnExpr}.
      *
      * @param f handler for {@code ColumnExpr}

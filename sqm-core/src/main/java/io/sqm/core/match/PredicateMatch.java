@@ -112,6 +112,17 @@ public interface PredicateMatch<R> extends Match<Predicate, R> {
      * @return {@code this} for fluent chaining
      */
     PredicateMatch<R> or(Function<OrPredicate, R> f);
+
+    /**
+     * Matches a {@link RegexPredicate}.
+     *
+     * <p>This matcher is invoked when the inspected predicate represents
+     * a regular expression matching predicate.</p>
+     *
+     * @param f a mapping function applied to the matched {@link RegexPredicate}
+     * @return a {@link PredicateMatch} representing this match branch
+     */
+    PredicateMatch<R> regex(Function<RegexPredicate, R> f);
 }
 
 

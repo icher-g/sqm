@@ -35,6 +35,50 @@ public interface ExpressionMatch<R> extends Match<Expression, R> {
     ExpressionMatch<R> kase(Function<CaseExpr, R> f);
 
     /**
+     * Matches a {@link CastExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * an explicit type cast.</p>
+     *
+     * @param f a mapping function applied to the matched {@link CastExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    ExpressionMatch<R> cast(Function<CastExpr, R> f);
+
+    /**
+     * Matches an {@link ArrayExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * an array constructor or array-valued expression.</p>
+     *
+     * @param f a mapping function applied to the matched {@link ArrayExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    ExpressionMatch<R> array(Function<ArrayExpr, R> f);
+
+    /**
+     * Matches a {@link BinaryOperatorExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * a binary operator applied to two operand expressions.</p>
+     *
+     * @param f a mapping function applied to the matched {@link BinaryOperatorExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    ExpressionMatch<R> binaryOperator(Function<BinaryOperatorExpr, R> f);
+
+    /**
+     * Matches a {@link UnaryOperatorExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * a unary operator applied to a single operand expression.</p>
+     *
+     * @param f a mapping function applied to the matched {@link UnaryOperatorExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    ExpressionMatch<R> unaryOperator(Function<UnaryOperatorExpr, R> f);
+
+    /**
      * Registers a handler to be applied when the subject is a {@link ColumnExpr}.
      *
      * @param f handler for {@code ColumnExpr}

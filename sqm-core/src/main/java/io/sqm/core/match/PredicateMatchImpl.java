@@ -180,6 +180,24 @@ public class PredicateMatchImpl<R> implements PredicateMatch<R> {
     }
 
     /**
+     * Matches a {@link RegexPredicate}.
+     *
+     * <p>This matcher is invoked when the inspected predicate represents
+     * a regular expression matching predicate.</p>
+     *
+     * @param f a mapping function applied to the matched {@link RegexPredicate}
+     * @return a {@link PredicateMatch} representing this match branch
+     */
+    @Override
+    public PredicateMatch<R> regex(Function<RegexPredicate, R> f) {
+        if (!matched && predicate instanceof RegexPredicate p) {
+            result = f.apply(p);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
      * Terminal operation for this match chain.
      * <p>
      * Executes the first matching branch that was previously registered.
