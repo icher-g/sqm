@@ -99,6 +99,7 @@ public final class Parsers {
             .register(new UnaryOperatorExprParser())
             .register(new CastExprParser())
             .register(new TypeNameParser())
-            .register(new RegexPredicateParser());
+            .register(new RegexPredicateParser())
+            .register(new IsDistinctFromPredicateParser());
     }
 }

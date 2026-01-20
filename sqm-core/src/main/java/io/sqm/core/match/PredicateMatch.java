@@ -123,6 +123,14 @@ public interface PredicateMatch<R> extends Match<Predicate, R> {
      * @return a {@link PredicateMatch} representing this match branch
      */
     PredicateMatch<R> regex(Function<RegexPredicate, R> f);
+
+    /**
+     * Matches an IS DISTINCT FROM / IS NOT DISTINCT FROM predicate.
+     *
+     * @param f a mapping function for the predicate.
+     * @return this matcher instance.
+     */
+    PredicateMatch<R> isDistinctFrom(Function<IsDistinctFromPredicate, R> f);
 }
 
 

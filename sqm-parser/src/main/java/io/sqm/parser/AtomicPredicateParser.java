@@ -228,6 +228,10 @@ public class AtomicPredicateParser {
                     return ctx.parse(IsNullPredicate.class, leftExpr.value(), cur);
                 }
 
+                if (cur.match(TokenType.DISTINCT, 2)) {
+                    return ctx.parse(IsDistinctFromPredicate.class, leftExpr.value(), cur);
+                }
+
                 if (cur.matchAny(2, TokenType.TRUE, TokenType.FALSE, TokenType.IDENT)) {
                     return ctx.parse(UnaryPredicate.class, leftExpr.value(), cur);
                 }
@@ -235,6 +239,10 @@ public class AtomicPredicateParser {
 
             if (cur.match(TokenType.NULL, 1)) {
                 return ctx.parse(IsNullPredicate.class, leftExpr.value(), cur);
+            }
+
+            if (cur.match(TokenType.DISTINCT, 1)) {
+                return ctx.parse(IsDistinctFromPredicate.class, leftExpr.value(), cur);
             }
 
             if (cur.matchAny(1, TokenType.TRUE, TokenType.FALSE, TokenType.IDENT)) {

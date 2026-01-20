@@ -83,6 +83,7 @@ public final class Renderers {
             .register(new ArrayExprRenderer())
             .register(new LimitOffsetRenderer())
             .register(new TypeNameRenderer())
-            .register(new RegexPredicateRenderer());
+            .register(new RegexPredicateRenderer())
+            .register(new IsDistinctFromPredicateRenderer());
     }
 }

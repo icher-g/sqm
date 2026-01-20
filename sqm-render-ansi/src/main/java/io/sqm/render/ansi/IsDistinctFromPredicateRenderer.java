@@ -1,0 +1,32 @@
+package io.sqm.render.ansi;
+
+import io.sqm.core.IsDistinctFromPredicate;
+import io.sqm.render.SqlWriter;
+import io.sqm.render.spi.RenderContext;
+import io.sqm.render.spi.Renderer;
+
+public class IsDistinctFromPredicateRenderer implements Renderer<IsDistinctFromPredicate> {
+    /**
+     * Renders the node into an {@link SqlWriter}.
+     *
+     * @param node a node to render.
+     * @param ctx  a render context.
+     * @param w    a writer.
+     */
+    @Override
+    public void render(IsDistinctFromPredicate node, RenderContext ctx, SqlWriter w) {
+        w.append(node.lhs()).space();
+        w.append(node.negated() ? ctx.dialect().operators().isNotDistinctFrom() : ctx.dialect().operators().isDistinctFrom()).space();
+        w.append(node.rhs());
+    }
+
+    /**
+     * Gets the target type this handler can handle.
+     *
+     * @return an entity type to be handled by the handler.
+     */
+    @Override
+    public Class<? extends IsDistinctFromPredicate> targetType() {
+        return IsDistinctFromPredicate.class;
+    }
+}

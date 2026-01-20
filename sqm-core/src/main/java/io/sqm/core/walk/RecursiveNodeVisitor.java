@@ -936,13 +936,20 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
      * dialect-specific regular expression matching operator based on the
      * predicate's {@link RegexMode} and negation flag.</p>
      *
-     * @param predicate the regex predicate being visited
+     * @param p the regex predicate being visited
      * @return the result of visiting the predicate
      */
     @Override
-    public R visitRegexPredicate(RegexPredicate predicate) {
-        accept(predicate.value());
-        accept(predicate.pattern());
+    public R visitRegexPredicate(RegexPredicate p) {
+        accept(p.value());
+        accept(p.pattern());
+        return defaultResult();
+    }
+
+    @Override
+    public R visitIsDistinctFromPredicate(IsDistinctFromPredicate p) {
+        accept(p.lhs());
+        accept(p.rhs());
         return defaultResult();
     }
 }

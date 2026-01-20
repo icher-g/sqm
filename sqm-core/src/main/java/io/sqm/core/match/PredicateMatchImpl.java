@@ -198,6 +198,21 @@ public class PredicateMatchImpl<R> implements PredicateMatch<R> {
     }
 
     /**
+     * Matches an IS DISTINCT FROM / IS NOT DISTINCT FROM predicate.
+     *
+     * @param f a mapping function for the predicate.
+     * @return this matcher instance.
+     */
+    @Override
+    public PredicateMatch<R> isDistinctFrom(Function<IsDistinctFromPredicate, R> f) {
+        if (!matched && predicate instanceof IsDistinctFromPredicate p) {
+            result = f.apply(p);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
      * Terminal operation for this match chain.
      * <p>
      * Executes the first matching branch that was previously registered.

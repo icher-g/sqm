@@ -7,7 +7,7 @@ import io.sqm.core.match.PredicateMatch;
  * Boolean-valued expression: usable in WHERE, HAVING, and JOIN ... ON.
  */
 public sealed interface Predicate extends Expression
-    permits AnyAllPredicate, BetweenPredicate, ComparisonPredicate, CompositePredicate, DialectPredicate, ExistsPredicate, InPredicate, IsNullPredicate, LikePredicate, NotPredicate, RegexPredicate, UnaryPredicate {
+    permits AnyAllPredicate, BetweenPredicate, ComparisonPredicate, CompositePredicate, DialectPredicate, ExistsPredicate, InPredicate, IsDistinctFromPredicate, IsNullPredicate, LikePredicate, NotPredicate, RegexPredicate, UnaryPredicate {
 
     /**
      * Creates a negate predicate for the provided predicate.
