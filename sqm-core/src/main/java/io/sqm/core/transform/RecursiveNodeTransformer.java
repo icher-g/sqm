@@ -1098,7 +1098,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
      *
      * @param p the regex predicate to visit
      * @return the transformed predicate, or the original instance if no
-     *         changes were applied
+     * changes were applied
      */
     @Override
     public Node visitRegexPredicate(RegexPredicate p) {
@@ -1108,5 +1108,21 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             return RegexPredicate.of(p.mode(), value, pattern, p.negated());
         }
         return p;
+    }
+
+    /**
+     * Transforms an IS DISTINCT FROM / IS NOT DISTINCT FROM predicate.
+     *
+     * @param p the predicate node (must not be null).
+     * @return the transformed node (never null).
+     */
+    @Override
+    public Node visitIsDistinctFromPredicate(IsDistinctFromPredicate p) {
+        var lhs = apply(p.lhs());
+        var rhs = apply(p.rhs());
+        if (lhs == p.lhs() && rhs == p.rhs()) {
+            return p;
+        }
+        return IsDistinctFromPredicate.of(lhs, rhs, p.negated());
     }
 }

@@ -124,6 +124,20 @@ public interface Operators {
     String isNotNull();
 
     /**
+     * Gets an ANSI representation of IS DISTINCT FROM operator.
+     *
+     * @return "IS DISTINCT FROM"
+     */
+    String isDistinctFrom();
+
+    /**
+     * Gets an ANSI representation of IS NOT DISTINCT FROM operator.
+     *
+     * @return "IS NOT DISTINCT FROM"
+     */
+    String isNotDistinctFrom();
+
+    /**
      * Gets an ANSI representation of AND operator.
      *
      * @return "AND"

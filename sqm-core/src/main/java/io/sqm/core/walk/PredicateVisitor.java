@@ -111,9 +111,17 @@ public interface PredicateVisitor<R> {
      * dialect-specific regular expression matching operator based on the
      * predicate's {@link RegexMode} and negation flag.</p>
      *
-     * @param predicate the regex predicate being visited
+     * @param p the regex predicate being visited
      * @return the result of visiting the predicate
      */
-    R visitRegexPredicate(RegexPredicate predicate);
+    R visitRegexPredicate(RegexPredicate p);
+
+    /**
+     * Visits an IS DISTINCT FROM / IS NOT DISTINCT FROM predicate.
+     *
+     * @param p the predicate node (must not be null).
+     * @return the result produced by the visitor.
+     */
+    R visitIsDistinctFromPredicate(IsDistinctFromPredicate p);
 }
 

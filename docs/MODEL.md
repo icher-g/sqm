@@ -47,6 +47,7 @@ Node
 │  │  ├─ ExistsPredicate
 │  │  ├─ InPredicate
 │  │  ├─ IsNullPredicate
+│  │  ├─ IsDistinctFromPredicate
 │  │  ├─ LikePredicate
 │  │  ├─ RegexPredicate
 │  │  ├─ NotPredicate
@@ -155,6 +156,7 @@ graph TD
   Predicate --> ExistsPredicate
   Predicate --> InPredicate
   Predicate --> IsNullPredicate
+  Predicate --> IsDistinctFromPredicate
   Predicate --> LikePredicate
   Predicate --> RegexPredicate
   Predicate --> NotPredicate
@@ -320,6 +322,7 @@ graph TD
     - **BetweenPredicate** – `expr [NOT] BETWEEN <lower> AND <upper>`.
     - **InPredicate** – `expr [NOT] IN (<values>)` where the value set can be a row list or a subquery.
     - **IsNullPredicate** – `expr IS [NOT] NULL`.
+    - **IsDistinctFromPredicate** – `expr IS [NOT] DISTINCT FROM <other_expr>`.
     - **LikePredicate** – pattern matching predicate (for example `LIKE`). The matching operator is selected by a mode (for example `LIKE`, `ILIKE`, `SIMILAR TO`), and an optional `ESCAPE` expression may be provided.
     - **RegexPredicate** – regular expression pattern matching predicate. The regular expression pattern is treated as an opaque expression and is never modified by SQM.
     - **ExistsPredicate** – `EXISTS (<subquery>)`.

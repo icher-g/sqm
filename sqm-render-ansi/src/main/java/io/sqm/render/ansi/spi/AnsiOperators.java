@@ -109,6 +109,26 @@ public final class AnsiOperators implements Operators {
         return "IS NOT NULL";
     }
 
+    /**
+     * Gets an ANSI representation of IS DISTINCT FROM operator.
+     *
+     * @return "IS DISTINCT FROM"
+     */
+    @Override
+    public String isDistinctFrom() {
+        return "IS DISTINCT FROM";
+    }
+
+    /**
+     * Gets an ANSI representation of IS NOT DISTINCT FROM operator.
+     *
+     * @return "IS NOT DISTINCT FROM"
+     */
+    @Override
+    public String isNotDistinctFrom() {
+        return "IS NOT DISTINCT FROM";
+    }
+
     @Override
     public String and() {
         return "AND";
