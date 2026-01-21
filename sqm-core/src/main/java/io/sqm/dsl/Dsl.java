@@ -78,6 +78,16 @@ public final class Dsl {
         return TableRef.values(expr);
     }
 
+    /**
+     * Wraps a function expression as a table for use in FROM statement.
+     *
+     * @param expr a function expression to wrap.
+     * @return a table that wraps a function expression.
+     */
+    public static FunctionTable tbl(FunctionExpr expr) {
+        return TableRef.function(expr);
+    }
+
     /* ========================= Columns ========================= */
 
     /**

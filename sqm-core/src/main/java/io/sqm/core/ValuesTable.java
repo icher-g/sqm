@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.ValuesTableImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
@@ -9,7 +8,7 @@ import java.util.Objects;
 /**
  * ANSI table value constructor: (VALUES (...), (...)) [AS alias(col1, col2, ...)]
  */
-public non-sealed interface ValuesTable extends TableRef {
+public non-sealed interface ValuesTable extends AliasedTableRef {
 
     /**
      * Creates a VALUES statement used as a table.
@@ -24,18 +23,13 @@ public non-sealed interface ValuesTable extends TableRef {
      * @return A newly created instance of the values table.
      */
     static ValuesTable of(RowListExpr rows) {
-        return new ValuesTableImpl(rows, null, null);
+        return new Impl(rows, null, null);
     }
 
     /**
      * Rows of expressions; all rows must have the same arity.
      */
     RowListExpr values();
-
-    /**
-     * Optional derived column list; may be null or empty.
-     */
-    List<String> columnAliases();
 
     /**
      * Adds column names to the alias.
@@ -45,7 +39,7 @@ public non-sealed interface ValuesTable extends TableRef {
      * @return this.
      */
     default ValuesTable columnAliases(List<String> columnAliases) {
-        return new ValuesTableImpl(values(), Objects.requireNonNull(columnAliases), alias());
+        return new Impl(values(), Objects.requireNonNull(columnAliases), alias());
     }
 
     /**
@@ -56,7 +50,7 @@ public non-sealed interface ValuesTable extends TableRef {
      * @return this.
      */
     default ValuesTable columnAliases(String... columnAliases) {
-        return new ValuesTableImpl(values(), List.of(columnAliases), alias());
+        return new Impl(values(), List.of(columnAliases), alias());
     }
 
     /**
@@ -66,7 +60,7 @@ public non-sealed interface ValuesTable extends TableRef {
      * @return A newly created values table with the provide alias. All other fields are preserved.
      */
     default ValuesTable as(String alias) {
-        return new ValuesTableImpl(values(), columnAliases(), Objects.requireNonNull(alias));
+        return new Impl(values(), columnAliases(), Objects.requireNonNull(alias));
     }
 
     /**
@@ -80,5 +74,19 @@ public non-sealed interface ValuesTable extends TableRef {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitValuesTable(this);
+    }
+
+    /**
+     * ANSI table value constructor: (VALUES (...), (...)) [AS alias(col1, col2, ...)]
+     *
+     * @param values        Rows of expressions; all rows must have the same arity.
+     * @param columnAliases Optional derived column list; may be null or empty.
+     * @param alias         table alias or null if none
+     */
+    record Impl(RowListExpr values, List<String> columnAliases, String alias) implements ValuesTable {
+
+        public Impl {
+            columnAliases = columnAliases == null ? null : List.copyOf(columnAliases);
+        }
     }
 }

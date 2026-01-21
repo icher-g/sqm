@@ -580,6 +580,26 @@ public sealed interface Expression extends Node
     }
 
     /**
+     * Creates IS DISTINCT FROM predicate for the current expression.
+     *
+     * @param expr an expression to compare with.
+     * @return A newly created instance of the IS DISTINCT FROM predicate.
+     */
+    default IsDistinctFromPredicate isDistinctFrom(Expression expr) {
+        return IsDistinctFromPredicate.of(this, expr, false);
+    }
+
+    /**
+     * Creates IS DISTINCT FROM predicate for the current expression.
+     *
+     * @param expr an expression to compare with.
+     * @return A newly created instance of the IS DISTINCT FROM predicate.
+     */
+    default IsDistinctFromPredicate isNotDistinctFrom(Expression expr) {
+        return IsDistinctFromPredicate.of(this, expr, true);
+    }
+
+    /**
      * Creates ANY predicate for the current expression.
      * <p>For example:</p>
      * <pre>

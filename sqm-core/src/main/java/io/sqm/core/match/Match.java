@@ -19,6 +19,17 @@ import java.util.function.Supplier;
  */
 public interface Match<T, R> {
     /**
+     * Creates a new matcher for the given {@link FromItem}.
+     *
+     * @param i   the FROM ITEM to match on
+     * @param <R> the result type
+     * @return a new {@code FromItemMatch} for {@code j}
+     */
+    static <R> FromItemMatch<R> join(FromItem i) {
+        return FromItemMatch.match(i);
+    }
+
+    /**
      * Creates a new matcher for the given {@link Join}.
      *
      * @param j   the join to match on

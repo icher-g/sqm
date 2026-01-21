@@ -198,7 +198,7 @@ public class MixInsSmokeTest {
             .orElse(null);
         assertInstanceOf(ComparisonPredicate.class, p);
         assertEquals("users", j.right().matchTableRef().table(t -> t.name()).orElse(null));
-        assertEquals("u", j.right().alias());
+        assertEquals("u", j.right().matchTableRef().table(t -> t.alias()).orElse(null));
         assertEquals("id", p.lhs().matchExpression().column(c -> c.name()).orElse(null));
         assertEquals("user_id", p.rhs().matchExpression().column(c -> c.name()).orElse(null));
     }

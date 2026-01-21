@@ -350,6 +350,22 @@ public non-sealed interface FunctionExpr extends Expression {
     }
 
     /**
+     * Treats this function expression as a table reference in a {@code FROM} clause.
+     * <p>
+     * Some SQL dialects allow set-returning functions to appear in the {@code FROM} clause,
+     * producing a virtual table. This method provides a convenient way to wrap a
+     * {@link FunctionExpr} as a {@link FunctionTable} without defining an explicit alias.
+     * <p>
+     * If the function needs access to columns from preceding FROM items, the resulting
+     * table reference may be further wrapped using {@link TableRef#lateral()}.
+     *
+     * @return a {@link FunctionTable} representing this function expression as a table
+     */
+    default FunctionTable asTable() {
+        return FunctionTable.of(this);
+    }
+
+    /**
      * Accepts a {@link NodeVisitor} and dispatches control to the
      * visitor method corresponding to the concrete subtype
      *

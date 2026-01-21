@@ -1,13 +1,13 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.ArrayExpr;
+import io.sqm.core.Lateral;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
-public class ArrayExprParser implements MatchableParser<ArrayExpr> {
+public class LateralParser implements MatchableParser<Lateral> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -16,9 +16,9 @@ public class ArrayExprParser implements MatchableParser<ArrayExpr> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<? extends ArrayExpr> parse(Cursor cur, ParseContext ctx) {
+    public ParseResult<? extends Lateral> parse(Cursor cur, ParseContext ctx) {
         throw new UnsupportedOperationException(
-            "Array expressions are not supported by ANSI SQL parser"
+            "LATERAL is not supported by ANSI SQL parser"
         );
     }
 
@@ -28,8 +28,8 @@ public class ArrayExprParser implements MatchableParser<ArrayExpr> {
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<? extends ArrayExpr> targetType() {
-        return ArrayExpr.class;
+    public Class<? extends Lateral> targetType() {
+        return Lateral.class;
     }
 
     /**
@@ -47,6 +47,6 @@ public class ArrayExprParser implements MatchableParser<ArrayExpr> {
      */
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
-        return cur.match(TokenType.ARRAY);
+        return cur.match(TokenType.LATERAL);
     }
 }

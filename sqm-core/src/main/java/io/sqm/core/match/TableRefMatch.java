@@ -1,9 +1,6 @@
 package io.sqm.core.match;
 
-import io.sqm.core.QueryTable;
-import io.sqm.core.Table;
-import io.sqm.core.TableRef;
-import io.sqm.core.ValuesTable;
+import io.sqm.core.*;
 
 import java.util.function.Function;
 
@@ -51,6 +48,25 @@ public interface TableRefMatch<R> extends Match<TableRef, R> {
      * @return {@code this} for fluent chaining
      */
     TableRefMatch<R> values(Function<ValuesTable, R> f);
+
+    /**
+     * Registers a handler for a {@link FunctionTable} ({@code f(x)} in {@code FROM}).
+     *
+     * @param f handler for {@code FunctionTable}
+     * @return {@code this} for fluent chaining
+     */
+    TableRefMatch<R> function(Function<FunctionTable, R> f);
+
+    /**
+     * Matches a {@link Lateral}.
+     * <p>
+     * This branch is selected when the FROM item is wrapped as lateral,
+     * allowing handler logic to explicitly process the wrapped item.
+     *
+     * @param f the function to apply when the item is a {@link Lateral}
+     * @return this matcher for fluent chaining
+     */
+    TableRefMatch<R> lateral(Function<Lateral, R> f);
 }
 
 
