@@ -100,6 +100,8 @@ public final class Parsers {
             .register(new CastExprParser())
             .register(new TypeNameParser())
             .register(new RegexPredicateParser())
-            .register(new IsDistinctFromPredicateParser());
+            .register(new IsDistinctFromPredicateParser())
+            .register(new LateralParser())
+            .register(new FunctionTableParser());
     }
 }

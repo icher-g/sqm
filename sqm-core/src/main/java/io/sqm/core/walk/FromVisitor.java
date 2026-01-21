@@ -38,6 +38,14 @@ public interface FromVisitor<R> {
     R visitValuesTable(ValuesTable t);
 
     /**
+     * Visits a {@link FunctionTable}, representing function call.
+     *
+     * @param t the function table being visited
+     * @return a result produced by the visitor
+     */
+    R visitFunctionTable(FunctionTable t);
+
+    /**
      * Visits an {@link OnJoin}, a join with an {@code ON} predicate and a specific join kind
      * (INNER, LEFT, RIGHT, or FULL).
      *
@@ -69,5 +77,21 @@ public interface FromVisitor<R> {
      * @return a result produced by the visitor
      */
     R visitUsingJoin(UsingJoin j);
+
+    /**
+     * Visits a {@link Lateral}.
+     * <p>
+     * A lateral FROM item is evaluated with access to columns of preceding
+     * FROM items in the same FROM clause. This enables correlated subqueries
+     * and other FROM items whose evaluation depends on earlier sources.
+     * <p>
+     * Visitors typically use this hook to apply dialect-specific behavior,
+     * such as rendering a keyword, validating support, or transforming the
+     * wrapped {@link TableRef}.
+     *
+     * @param i the lateral FROM item
+     * @return the visitor result
+     */
+    R visitLateral(Lateral i);
 }
 

@@ -300,6 +300,28 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
+     * Visits a {@link FunctionTable}, representing function call.
+     *
+     * @param t the function table being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public Node visitFunctionTable(FunctionTable t) {
+        var func = apply(t.function());
+        if (func != t.function()) {
+            var result = FunctionTable.of(func);
+            if (t.alias() != null) {
+                result = result.as(t.alias());
+            }
+            if (t.columnAliases() != null && !t.columnAliases().isEmpty()) {
+                result = result.columnAliases(t.columnAliases());
+            }
+            return result;
+        }
+        return t;
+    }
+
+    /**
      * Visits an {@link OnJoin}, a join with an {@code ON} predicate and a specific join kind
      * (INNER, LEFT, RIGHT, or FULL).
      *
@@ -1124,5 +1146,30 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             return p;
         }
         return IsDistinctFromPredicate.of(lhs, rhs, p.negated());
+    }
+
+    /**
+     * Visits a {@link Lateral} during tree traversal.
+     * <p>
+     * The default implementation performs no transformation and returns {@code null},
+     * indicating that the visitor does not modify or replace this node.
+     * <p>
+     * Subclasses may override this method to:
+     * <ul>
+     *   <li>Transform the wrapped {@link FromItem}</li>
+     *   <li>Apply dialect-specific validation or rewriting</li>
+     *   <li>Produce an alternative {@link Node} representation</li>
+     * </ul>
+     *
+     * @param i the lateral FROM item being visited
+     * @return a replacement {@link Node}, or {@code null} to indicate no change
+     */
+    @Override
+    public Node visitLateral(Lateral i) {
+        var inner = apply(i.inner());
+        if (inner == i.inner()) {
+            return i;
+        }
+        return Lateral.of(inner);
     }
 }

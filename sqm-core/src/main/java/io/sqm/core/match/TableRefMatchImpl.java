@@ -1,9 +1,6 @@
 package io.sqm.core.match;
 
-import io.sqm.core.QueryTable;
-import io.sqm.core.Table;
-import io.sqm.core.TableRef;
-import io.sqm.core.ValuesTable;
+import io.sqm.core.*;
 
 import java.util.function.Function;
 
@@ -57,6 +54,39 @@ public class TableRefMatchImpl<R> implements TableRefMatch<R> {
     public TableRefMatch<R> values(Function<ValuesTable, R> f) {
         if (!matched && table instanceof ValuesTable t) {
             result = f.apply(t);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Registers a handler for a {@link FunctionTable} ({@code f(x)} in {@code FROM}).
+     *
+     * @param f handler for {@code FunctionTable}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public TableRefMatch<R> function(Function<FunctionTable, R> f) {
+        if (!matched && table instanceof FunctionTable t) {
+            result = f.apply(t);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Matches a {@link Lateral}.
+     * <p>
+     * This branch is selected when the FROM item is wrapped as lateral,
+     * allowing handler logic to explicitly process the wrapped item.
+     *
+     * @param f the function to apply when the item is a {@link Lateral}
+     * @return this matcher for fluent chaining
+     */
+    @Override
+    public TableRefMatch<R> lateral(Function<Lateral, R> f) {
+        if (!matched && table instanceof Lateral i) {
+            result = f.apply(i);
             matched = true;
         }
         return this;

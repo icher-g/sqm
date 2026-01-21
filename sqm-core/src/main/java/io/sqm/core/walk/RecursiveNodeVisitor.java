@@ -183,6 +183,18 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
+     * Visits a {@link FunctionTable}, representing function call.
+     *
+     * @param t the function table being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitFunctionTable(FunctionTable t) {
+        accept(t.function());
+        return defaultResult();
+    }
+
+    /**
      * Visits an {@link OnJoin}, a join with an {@code ON} predicate and a specific join kind
      * (INNER, LEFT, RIGHT, or FULL).
      *
@@ -946,10 +958,36 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         return defaultResult();
     }
 
+    /**
+     * Visits an IS DISTINCT FROM / IS NOT DISTINCT FROM predicate.
+     *
+     * @param p the predicate node (must not be null).
+     * @return the result produced by the visitor.
+     */
     @Override
     public R visitIsDistinctFromPredicate(IsDistinctFromPredicate p) {
         accept(p.lhs());
         accept(p.rhs());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link Lateral}.
+     * <p>
+     * A lateral FROM item is evaluated with access to columns of preceding
+     * FROM items in the same FROM clause. This enables correlated subqueries
+     * and other FROM items whose evaluation depends on earlier sources.
+     * <p>
+     * Visitors typically use this hook to apply dialect-specific behavior,
+     * such as rendering a keyword, validating support, or transforming the
+     * wrapped {@link FromItem}.
+     *
+     * @param i the lateral FROM item
+     * @return the visitor result
+     */
+    @Override
+    public R visitLateral(Lateral i) {
+        accept(i.inner());
         return defaultResult();
     }
 }

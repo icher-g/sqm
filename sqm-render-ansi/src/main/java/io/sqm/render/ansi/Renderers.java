@@ -84,6 +84,8 @@ public final class Renderers {
             .register(new LimitOffsetRenderer())
             .register(new TypeNameRenderer())
             .register(new RegexPredicateRenderer())
-            .register(new IsDistinctFromPredicateRenderer());
+            .register(new IsDistinctFromPredicateRenderer())
+            .register(new LateralRenderer())
+            .register(new FunctionTableRenderer());
     }
 }

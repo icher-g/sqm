@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.TableImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.Objects;
@@ -16,7 +15,7 @@ public non-sealed interface Table extends TableRef {
      * @return A newly created instance of the table.
      */
     static Table of(String name) {
-        return new TableImpl(null, Objects.requireNonNull(name), null);
+        return new Impl(null, Objects.requireNonNull(name), null);
     }
 
     /**
@@ -27,7 +26,7 @@ public non-sealed interface Table extends TableRef {
      * @return A newly created instance of the table.
      */
     static Table of(String schema, String name) {
-        return new TableImpl(schema, Objects.requireNonNull(name), null);
+        return new Impl(schema, Objects.requireNonNull(name), null);
     }
 
     /**
@@ -45,13 +44,18 @@ public non-sealed interface Table extends TableRef {
     String name();
 
     /**
+     * Optional table alias.
+     */
+    String alias();
+
+    /**
      * Adds alias to the table.
      *
      * @param alias an alias to add.
      * @return A newly created table with the provide alias. All other fields are preserved.
      */
     default Table as(String alias) {
-        return new TableImpl(schema(), name(), alias);
+        return new Impl(schema(), name(), alias);
     }
 
     /**
@@ -61,7 +65,7 @@ public non-sealed interface Table extends TableRef {
      * @return A newly created table with the provided schema. All other fields are preserved.
      */
     default Table inSchema(String schema) {
-        return new TableImpl(schema, name(), alias());
+        return new Impl(schema, name(), alias());
     }
 
     /**
@@ -75,5 +79,15 @@ public non-sealed interface Table extends TableRef {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitTable(this);
+    }
+
+    /**
+     * An implementation class of the {@link Table}l
+     *
+     * @param name   the name of the table. This is not qualified name.
+     * @param schema a table schema.
+     * @param alias  a table alias.
+     */
+    record Impl(String schema, String name, String alias) implements Table {
     }
 }

@@ -5,7 +5,7 @@ import io.sqm.core.match.TableRefMatch;
 /**
  * Anything that can appear in FROM/JOIN: table, subquery, VALUES, etc.
  */
-public sealed interface TableRef extends FromItem permits DialectTableRef, QueryTable, Table, ValuesTable {
+public sealed interface TableRef extends FromItem permits AliasedTableRef, DialectTableRef, Lateral, Table {
     /**
      * Creates a table with the provided name. All other fields are set to NULL.
      *
@@ -60,6 +60,39 @@ public sealed interface TableRef extends FromItem permits DialectTableRef, Query
     }
 
     /**
+     * Creates a {@link FunctionTable} from the given function expression.
+     * <p>
+     * This factory method is a convenience for treating a {@link FunctionExpr}
+     * as a table-producing expression in a {@code FROM} clause.
+     * <p>
+     * The resulting table reference has no alias or derived column list.
+     * If correlation with preceding FROM items is required, it may be wrapped
+     * as lateral using {@link TableRef#lateral()}.
+     *
+     * @param expr the function expression that produces table rows
+     * @return a {@link FunctionTable} representing the function as a table reference
+     */
+    static FunctionTable function(FunctionExpr expr) {
+        return FunctionTable.of(expr);
+    }
+
+    /**
+     * Wraps this table reference as a lateral FROM item.
+     * <p>
+     * A lateral table reference is evaluated with access to columns of
+     * preceding FROM items in the same FROM clause, enabling correlated
+     * subqueries and table-valued expressions.
+     * <p>
+     * This is a convenience method equivalent to explicitly creating
+     * a lateral wrapper around this table reference.
+     *
+     * @return a lateral wrapper for this table reference
+     */
+    default Lateral lateral() {
+        return Lateral.of(this);
+    }
+
+    /**
      * Creates a new matcher for the current {@link TableRef}.
      *
      * @param <R> the result type
@@ -68,11 +101,4 @@ public sealed interface TableRef extends FromItem permits DialectTableRef, Query
     default <R> TableRefMatch<R> matchTableRef() {
         return TableRefMatch.match(this);
     }
-
-    /**
-     * Gets table alias or null if none.
-     *
-     * @return a table alias.
-     */
-    String alias();
 }
