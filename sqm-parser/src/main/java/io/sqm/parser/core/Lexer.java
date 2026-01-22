@@ -95,6 +95,13 @@ public final class Lexer {
         KEYWORDS.put("FILTER", FILTER);
         KEYWORDS.put("CAST", CAST);
         KEYWORDS.put("ARRAY", ARRAY);
+        KEYWORDS.put("FOR", FOR);
+        KEYWORDS.put("UPDATE", UPDATE);
+        KEYWORDS.put("SHARE", SHARE);
+        KEYWORDS.put("OF", OF);
+        KEYWORDS.put("NOWAIT", NOWAIT);
+        KEYWORDS.put("SKIP", SKIP);
+        KEYWORDS.put("LOCKED", LOCKED);
     }
 
     private final String s;

@@ -85,6 +85,11 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
         if (limit != null || offset != null) {
             limitOffsetRenderer.render(LimitOffset.of(limit, offset), ctx, w);
         }
+
+        // Locking clause (FOR UPDATE, FOR SHARE, etc.)
+        if (node.lockFor() != null) {
+            w.newline().append(node.lockFor());
+        }
     }
 
     /**

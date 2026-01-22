@@ -549,6 +549,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         if (q.limit() != null || q.offset() != null) {
             LimitOffset.of(q.limit(), q.offset()).accept(this);
         }
+        accept(q.lockFor());
         return defaultResult();
     }
 
@@ -988,6 +989,17 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitLateral(Lateral i) {
         accept(i.inner());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a PostgreSQL SELECT locking clause.
+     *
+     * @param clause locking clause node
+     * @return result produced by the visitor
+     */
+    @Override
+    public R visitLockingClause(LockingClause clause) {
         return defaultResult();
     }
 }

@@ -18,6 +18,7 @@ public class SelectQueryImpl implements SelectQuery {
     private Predicate having;
     private DistinctSpec distinctSpec;
     private LimitOffset limitOffset;
+    private LockingClause lockingClause;
 
     public SelectQueryImpl() {
         this.items = new ArrayList<>();
@@ -256,6 +257,58 @@ public class SelectQueryImpl implements SelectQuery {
     @Override
     public SelectQuery offset(long offset) {
         this.limitOffset = LimitOffset.of(limit(), offset);
+        return this;
+    }
+
+    /**
+     * Returns the locking clause associated with this SELECT query.
+     *
+     * <p>If present, the locking clause controls row-level locking behavior
+     * during query execution.</p>
+     *
+     * @return locking clause
+     */
+    @Override
+    public LockingClause lockFor() {
+        return lockingClause;
+    }
+
+    /**
+     * Adds locking clause to the SELECT.
+     *
+     * <p>The locking clause replaces any existing locking clause.</p>
+     *
+     * @param lockingClause locking clause to apply
+     * @return this.
+     */
+    @Override
+    public SelectQuery lockFor(LockingClause lockingClause) {
+        this.lockingClause = lockingClause;
+        return this;
+    }
+
+    /**
+     * Adds locking clause to the SELECT based on the provided parameters.
+     *
+     * <p>This is a convenience method equivalent to creating a
+     * {@link LockingClause} via {@link LockingClause#of(LockMode, List, boolean, boolean)}
+     * and applying it to the query.</p>
+     *
+     * <p>Example:</p>
+     * <pre>
+     * select()
+     *     .lockFor(update(), ofTables("t1", "t2"), false, true);
+     * </pre>
+     *
+     * @param mode       lock mode
+     * @param ofTables   tables affected by the lock, empty list means all tables
+     * @param nowait     whether NOWAIT is specified
+     * @param skipLocked whether SKIP LOCKED is specified
+     * @return this.
+     */
+    @Override
+    public SelectQuery lockFor(LockMode mode, List<LockTarget> ofTables, boolean nowait, boolean skipLocked) {
+        this.lockingClause = LockingClause.of(mode, ofTables, nowait, skipLocked);
         return this;
     }
 

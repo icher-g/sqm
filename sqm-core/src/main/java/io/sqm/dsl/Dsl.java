@@ -2,6 +2,7 @@ package io.sqm.dsl;
 
 import io.sqm.core.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -1029,7 +1030,7 @@ public final class Dsl {
      *     }
      * </pre>
      *
-     * @param subquery a sub query which resul to check.
+     * @param subquery a sub query which result to check.
      * @return A newly created EXISTS predicate.
      */
     public static ExistsPredicate exists(Query subquery) {
@@ -1051,7 +1052,7 @@ public final class Dsl {
      *     }
      * </pre>
      *
-     * @param subquery a sub query which resul to check.
+     * @param subquery a sub query which result to check.
      * @return A newly created NOT EXISTS predicate.
      */
     public static ExistsPredicate notExists(Query subquery) {
@@ -1147,5 +1148,79 @@ public final class Dsl {
      */
     public static CompositeQuery compose(List<Query> terms, List<SetOperator> ops) {
         return Query.compose(terms, ops);
+    }
+
+    /* ========================= Locking Clause ========================= */
+
+    /**
+     * Returns the UPDATE lock mode for SELECT locking clauses.
+     *
+     * <p>Corresponds to {@code FOR UPDATE}.</p>
+     *
+     * @return UPDATE lock mode
+     */
+    public static LockMode update() {
+        return LockMode.UPDATE;
+    }
+
+    /**
+     * Returns the NO KEY UPDATE lock mode for SELECT locking clauses.
+     *
+     * <p>Corresponds to {@code FOR NO KEY UPDATE}.</p>
+     *
+     * @return NO KEY UPDATE lock mode
+     */
+    public static LockMode noKeyUpdate() {
+        return LockMode.NO_KEY_UPDATE;
+    }
+
+    /**
+     * Returns the SHARE lock mode for SELECT locking clauses.
+     *
+     * <p>Corresponds to {@code FOR SHARE}.</p>
+     *
+     * @return SHARE lock mode
+     */
+    public static LockMode share() {
+        return LockMode.SHARE;
+    }
+
+    /**
+     * Returns the KEY SHARE lock mode for SELECT locking clauses.
+     *
+     * <p>Corresponds to {@code FOR KEY SHARE}.</p>
+     *
+     * @return KEY SHARE lock mode
+     */
+    public static LockMode keyShare() {
+        return LockMode.KEY_SHARE;
+    }
+
+    /**
+     * Creates lock targets for a FOR ... OF locking clause.
+     *
+     * <p>Each identifier must refer to a table name or table alias visible
+     * in the FROM clause.</p>
+     *
+     * <p>Example:</p>
+     * <pre>
+     * lockFor(update(), ofTables("t1", "orders"), false, false)
+     * </pre>
+     *
+     * @param identifiers table names or aliases
+     * @return list of lock targets
+     * @throws IllegalArgumentException if any identifier is null or blank
+     */
+    public static List<LockTarget> ofTables(String... identifiers) {
+        List<LockTarget> targets = new ArrayList<>(identifiers.length);
+        for (String id : identifiers) {
+            if (id == null || id.isBlank()) {
+                throw new IllegalArgumentException(
+                    "Lock target identifier cannot be null or blank"
+                );
+            }
+            targets.add(LockTarget.of(id));
+        }
+        return targets;
     }
 }
