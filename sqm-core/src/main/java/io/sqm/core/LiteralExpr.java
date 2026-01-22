@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.LiteralExprImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -14,7 +13,7 @@ public non-sealed interface LiteralExpr extends Expression {
      * @return A newly created instance of a literal expression.
      */
     static LiteralExpr of(Object value) {
-        return new LiteralExprImpl(value);
+        return new Impl(value);
     }
 
     /**
@@ -35,5 +34,23 @@ public non-sealed interface LiteralExpr extends Expression {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitLiteralExpr(this);
+    }
+
+    /**
+     * Implements a literal expression.
+     *
+     * @param value a value to be wrapped by the expression.
+     */
+    record Impl(Object value) implements LiteralExpr {
+
+        /**
+         * Validates that value is not an Expression.
+         *
+         * @param value a value to check.
+         */
+        public Impl {
+            if (value instanceof Expression)
+                throw new IllegalArgumentException("literal cannot be expression.");
+        }
     }
 }

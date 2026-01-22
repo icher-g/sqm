@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.ExistsPredicateImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -28,7 +27,7 @@ public non-sealed interface ExistsPredicate extends Predicate {
      * @return a new instance of EXISTS predicate.
      */
     static ExistsPredicate of(Query subquery, boolean negated) {
-        return new ExistsPredicateImpl(subquery, negated);
+        return new Impl(subquery, negated);
     }
 
     /**
@@ -56,5 +55,26 @@ public non-sealed interface ExistsPredicate extends Predicate {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitExistsPredicate(this);
+    }
+
+    /**
+     * A default implementation of a {@link ExistsPredicate}.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     SELECT *
+     *     FROM customers c
+     *     WHERE NOT EXISTS (
+     *         SELECT 1
+     *         FROM orders o
+     *         WHERE o.customer_id = c.id
+     *     );
+     *     }
+     * </pre>
+     *
+     * @param subquery a sub query
+     * @param negated  indicates whether this is EXISTS or NOT EXISTS predicate. False means EXISTS.
+     */
+    record Impl(Query subquery, boolean negated) implements ExistsPredicate {
     }
 }

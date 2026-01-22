@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.QualifiedStarSelectItemImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -21,7 +20,7 @@ public non-sealed interface QualifiedStarSelectItem extends SelectItem {
      * @return {@link QualifiedStarSelectItem}.
      */
     static QualifiedStarSelectItem of(String qualifier) {
-        return new QualifiedStarSelectItemImpl(qualifier);
+        return new Impl(qualifier);
     }
 
     /**
@@ -42,5 +41,19 @@ public non-sealed interface QualifiedStarSelectItem extends SelectItem {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitQualifiedStarSelectItem(this);
+    }
+
+    /**
+     * Implements a qualified '*' in a SELECT statement.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     SELECT t.*
+     *     }
+     * </pre>
+     *
+     * @param qualifier a qualifier before the '*'.
+     */
+    record Impl(String qualifier) implements QualifiedStarSelectItem {
     }
 }

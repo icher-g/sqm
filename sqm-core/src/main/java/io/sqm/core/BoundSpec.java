@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.*;
 import io.sqm.core.match.BoundSpecMatch;
 import io.sqm.core.walk.NodeVisitor;
 
@@ -16,7 +15,7 @@ public sealed interface BoundSpec extends Node permits BoundSpec.CurrentRow, Bou
      * @return a new instance of {@link UnboundedPreceding}.
      */
     static UnboundedPreceding unboundedPreceding() {
-        return new BoundSpecUnboundedPreceding();
+        return new UnboundedPreceding.Impl();
     }
 
     /**
@@ -26,7 +25,7 @@ public sealed interface BoundSpec extends Node permits BoundSpec.CurrentRow, Bou
      * @return a new instance of {@link Preceding}.
      */
     static Preceding preceding(Expression e) {
-        return new BoundSpecPreceding(e);
+        return new Preceding.Impl(e);
     }
 
     /**
@@ -35,7 +34,7 @@ public sealed interface BoundSpec extends Node permits BoundSpec.CurrentRow, Bou
      * @return a new instance of {@link CurrentRow}.
      */
     static CurrentRow currentRow() {
-        return new BoundSpecCurrentRow();
+        return new CurrentRow.Impl();
     }
 
     /**
@@ -45,7 +44,7 @@ public sealed interface BoundSpec extends Node permits BoundSpec.CurrentRow, Bou
      * @return a new instance of {@link Following}.
      */
     static Following following(Expression e) {
-        return new BoundSpecFollowing(e);
+        return new Following.Impl(e);
     }
 
     /**
@@ -54,7 +53,7 @@ public sealed interface BoundSpec extends Node permits BoundSpec.CurrentRow, Bou
      * @return a new instance of {@link UnboundedFollowing}.
      */
     static UnboundedFollowing unboundedFollowing() {
-        return new BoundSpecUnboundedFollowing();
+        return new UnboundedFollowing.Impl();
     }
 
     /**
@@ -94,6 +93,19 @@ public sealed interface BoundSpec extends Node permits BoundSpec.CurrentRow, Bou
         default <R> R accept(NodeVisitor<R> v) {
             return v.visitBoundUnboundedPreceding(this);
         }
+
+        /**
+         * Represents an UNBOUNDED PRECEDING bound.
+         * <p>For example:</p>
+         * <pre>
+         *     {@code
+         *     -- All rows up to current
+         *     SUM(salary) OVER (PARTITION BY dept ORDER BY salary DESC RANGE UNBOUNDED PRECEDING)
+         *     }
+         * </pre>
+         */
+        record Impl() implements BoundSpec.UnboundedPreceding {
+        }
     }
 
     /**
@@ -131,7 +143,22 @@ public sealed interface BoundSpec extends Node permits BoundSpec.CurrentRow, Bou
         default <R> R accept(NodeVisitor<R> v) {
             return v.visitBoundPreceding(this);
         }
-    }        // usually integer literal; keep Expression for flexibility
+
+        /**
+         * Represents a PRECEDING bound.
+         * <p>For example:</p>
+         * <pre>
+         *     {@code
+         *     -- Last 5 rows
+         *     SUM(salary) OVER (PARTITION BY dept ORDER BY salary DESC ROWS 5 PRECEDING)
+         *     }
+         * </pre>
+         *
+         * @param expr an expression.
+         */
+        record Impl(Expression expr) implements BoundSpec.Preceding {
+        }
+    }
 
     /**
      * Represents a CURRENT ROW bound.
@@ -159,6 +186,19 @@ public sealed interface BoundSpec extends Node permits BoundSpec.CurrentRow, Bou
         @Override
         default <R> R accept(NodeVisitor<R> v) {
             return v.visitBoundCurrentRow(this);
+        }
+
+        /**
+         * Represents a CURRENT ROW bound.
+         * <p>For example:</p>
+         * <pre>
+         *     {@code
+         *     -- Only current row
+         *     AVG(salary) OVER (PARTITION BY dept ORDER BY salary ROWS CURRENT ROW)
+         *     }
+         * </pre>
+         */
+        record Impl() implements BoundSpec.CurrentRow {
         }
     }
 
@@ -197,6 +237,21 @@ public sealed interface BoundSpec extends Node permits BoundSpec.CurrentRow, Bou
         default <R> R accept(NodeVisitor<R> v) {
             return v.visitBoundFollowing(this);
         }
+
+        /**
+         * Represents a FOLLOWING bound.
+         * <p>For example:</p>
+         * <pre>
+         *     {@code
+         *     -- Next 3 rows
+         *     AVG(salary) OVER (PARTITION BY dept ORDER BY salary ROWS 3 FOLLOWING)
+         *     }
+         * </pre>
+         *
+         * @param expr an expression.
+         */
+        record Impl(Expression expr) implements BoundSpec.Following {
+        }
     }
 
     /**
@@ -225,6 +280,19 @@ public sealed interface BoundSpec extends Node permits BoundSpec.CurrentRow, Bou
         @Override
         default <R> R accept(NodeVisitor<R> v) {
             return v.visitBoundUnboundedFollowing(this);
+        }
+
+        /**
+         * Represents an UNBOUNDED FOLLOWING bound.
+         * <p>For example:</p>
+         * <pre>
+         *     {@code
+         *     -- All future rows
+         *     MAX(value) OVER (ORDER BY ts RANGE UNBOUNDED FOLLOWING)
+         *     }
+         * </pre>
+         */
+        record Impl() implements BoundSpec.UnboundedFollowing {
         }
     }
 }

@@ -1,7 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.CteDefImpl;
-import io.sqm.core.internal.WithQueryImpl;
 import io.sqm.core.match.QueryMatch;
 
 import java.util.List;
@@ -74,7 +72,7 @@ public sealed interface Query extends Node permits CompositeQuery, DialectQuery,
      * @return A newly created CTE definition.
      */
     static CteDef cte(String name, Query body, List<String> columnAliases) {
-        return new CteDefImpl(name, body, columnAliases);
+        return CteDef.of(name, body, columnAliases);
     }
 
     /**
@@ -107,7 +105,7 @@ public sealed interface Query extends Node permits CompositeQuery, DialectQuery,
      * @return A newly created WITH query.
      */
     static WithQuery with(List<CteDef> ctes, Query body, boolean recursive) {
-        return new WithQueryImpl(ctes, body, recursive);
+        return WithQuery.of(ctes, body, recursive);
     }
 
     /**

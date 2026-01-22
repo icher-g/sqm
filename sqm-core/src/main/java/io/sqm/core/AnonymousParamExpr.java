@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.AnonymousParamExprImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -18,7 +17,7 @@ public non-sealed interface AnonymousParamExpr extends ParamExpr {
      * @return an anonymous positional parameter
      */
     static AnonymousParamExpr of() {
-        return new AnonymousParamExprImpl();
+        return new Impl();
     }
 
     /**
@@ -31,6 +30,16 @@ public non-sealed interface AnonymousParamExpr extends ParamExpr {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitAnonymousParamExpr(this);
+    }
+
+    /**
+     * An anonymous positional parameter, typically represented as {@code ?} in SQL.
+     * <p>
+     * Anonymous parameters do not carry an explicit index in the SQL text.
+     * Instead, a logical position is assigned by the parser based on the
+     * order in which parameters appear in the query.
+     */
+    record Impl() implements AnonymousParamExpr {
     }
 }
 

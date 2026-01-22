@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.AndPredicateImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -22,7 +21,7 @@ public non-sealed interface AndPredicate extends CompositePredicate {
      * @return A newly created instance of the AND predicate.
      */
     static AndPredicate of(Predicate lhs, Predicate rhs) {
-        return new AndPredicateImpl(lhs, rhs);
+        return new Impl(lhs, rhs);
     }
 
     /**
@@ -50,5 +49,20 @@ public non-sealed interface AndPredicate extends CompositePredicate {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitAndPredicate(this);
+    }
+
+    /**
+     * Represents an AND predicate.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     t.a > 10 AND t.b IN (1, 2, 3);
+     *     }
+     * </pre>
+     *
+     * @param lhs a left-hand-sided predicate.
+     * @param rhs a right-hand-sided predicate.
+     */
+    record Impl(Predicate lhs, Predicate rhs) implements AndPredicate {
     }
 }

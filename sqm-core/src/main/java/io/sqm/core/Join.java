@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.NaturalJoinImpl;
 import io.sqm.core.match.JoinMatch;
 
 import java.util.List;
@@ -111,7 +110,7 @@ public sealed interface Join extends FromItem permits CrossJoin, DialectJoin, Na
      * @return A newly created instance of NATURAL JOIN with the provided table.
      */
     static NaturalJoin natural(TableRef right) {
-        return new NaturalJoinImpl(right);
+        return NaturalJoin.of(right);
     }
 
     /**
@@ -121,7 +120,7 @@ public sealed interface Join extends FromItem permits CrossJoin, DialectJoin, Na
      * @return A newly created instance of the table.
      */
     static NaturalJoin natural(String table) {
-        return new NaturalJoinImpl(TableRef.table(table));
+        return NaturalJoin.of(TableRef.table(table));
     }
 
     /**
@@ -132,7 +131,7 @@ public sealed interface Join extends FromItem permits CrossJoin, DialectJoin, Na
      * @return A newly created instance of the table.
      */
     static NaturalJoin natural(String schema, String table) {
-        return new NaturalJoinImpl(TableRef.table(schema, table));
+        return NaturalJoin.of(TableRef.table(schema, table));
     }
 
     /**

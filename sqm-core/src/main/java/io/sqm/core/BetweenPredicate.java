@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.BetweenPredicateImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -24,7 +23,7 @@ public non-sealed interface BetweenPredicate extends Predicate {
      * @return a new instance of BETWEEN operator.
      */
     static BetweenPredicate of(Expression value, Expression lower, Expression upper) {
-        return new BetweenPredicateImpl(value, lower, upper, false, false);
+        return new Impl(value, lower, upper, false, false);
     }
 
     /**
@@ -38,7 +37,7 @@ public non-sealed interface BetweenPredicate extends Predicate {
      * @return a new instance of BETWEEN operator.
      */
     static BetweenPredicate of(Expression value, Expression lower, Expression upper, boolean symmetric, boolean negated) {
-        return new BetweenPredicateImpl(value, lower, upper, symmetric, negated);
+        return new Impl(value, lower, upper, symmetric, negated);
     }
 
     /**
@@ -83,7 +82,7 @@ public non-sealed interface BetweenPredicate extends Predicate {
      * @return this.
      */
     default BetweenPredicate symmetric(boolean symmetric) {
-        return new BetweenPredicateImpl(value(), lower(), upper(), symmetric, negated());
+        return new Impl(value(), lower(), upper(), symmetric, negated());
     }
 
     /**
@@ -93,7 +92,7 @@ public non-sealed interface BetweenPredicate extends Predicate {
      * @return this.
      */
     default BetweenPredicate negated(boolean negated) {
-        return new BetweenPredicateImpl(value(), lower(), upper(), symmetric(), negated);
+        return new Impl(value(), lower(), upper(), symmetric(), negated);
     }
 
     /**
@@ -107,5 +106,24 @@ public non-sealed interface BetweenPredicate extends Predicate {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitBetweenPredicate(this);
+    }
+
+    /**
+     * Implements a BETWEEN statement.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     5 BETWEEN 1 AND 10;
+     *     5 BETWEEN SYMMETRIC 10 AND 1;
+     *     }
+     * </pre>
+     *
+     * @param value     a value to compare.
+     * @param lower     an expression representing a low boundary.
+     * @param upper     an expression representing an upper boundary.
+     * @param symmetric indicates whether the order of the boundaries must be preserved or can be ignored.
+     * @param negated   Indicates whether this is a BETWEEN b AND c or a NOT BETWEEN b AND c predicate.
+     */
+    record Impl(Expression value, Expression lower, Expression upper, boolean symmetric, boolean negated) implements BetweenPredicate {
     }
 }

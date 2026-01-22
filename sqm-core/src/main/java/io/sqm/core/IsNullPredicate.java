@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.IsNullPredicateImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -16,7 +15,7 @@ public non-sealed interface IsNullPredicate extends Predicate {
      * @return a new instance of the predicate.
      */
     static IsNullPredicate of(Expression expr, boolean negated) {
-        return new IsNullPredicateImpl(expr, negated);
+        return new Impl(expr, negated);
     }
 
     /**
@@ -44,5 +43,14 @@ public non-sealed interface IsNullPredicate extends Predicate {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitIsNullPredicate(this);
+    }
+
+    /**
+     * Implements IS NULL / IS NOT NULL predicates.
+     *
+     * @param expr    an expression to be checked for NULL / NOT NULL.
+     * @param negated indicates whether this is NULL or NOT NULL predicate.
+     */
+    record Impl(Expression expr, boolean negated) implements IsNullPredicate {
     }
 }

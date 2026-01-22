@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.CteDefImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
@@ -48,7 +47,7 @@ public non-sealed interface CteDef extends Node {
      * @return A newly created CTE definition.
      */
     static CteDef of(String name) {
-        return new CteDefImpl(name, null, null);
+        return new Impl(name, null, null);
     }
 
     /**
@@ -59,7 +58,7 @@ public non-sealed interface CteDef extends Node {
      * @return A newly created CTE definition.
      */
     static CteDef of(String name, Query body) {
-        return new CteDefImpl(name, body, null);
+        return new Impl(name, body, null);
     }
 
     /**
@@ -71,7 +70,7 @@ public non-sealed interface CteDef extends Node {
      * @return A newly created CTE definition.
      */
     static CteDef of(String name, Query body, List<String> columnAliases) {
-        return new CteDefImpl(name, body, columnAliases);
+        return new Impl(name, body, columnAliases);
     }
 
     /**
@@ -113,7 +112,7 @@ public non-sealed interface CteDef extends Node {
      * @return this.
      */
     default CteDef body(Query body) {
-        return new CteDefImpl(name(), body, columnAliases());
+        return new Impl(name(), body, columnAliases());
     }
 
     /**
@@ -123,7 +122,7 @@ public non-sealed interface CteDef extends Node {
      * @return A new instance of {@link CteDef} with the list of column aliases. All other fields are preserved.
      */
     default CteDef columnAliases(List<String> columnAliases) {
-        return new CteDefImpl(name(), body(), columnAliases);
+        return new Impl(name(), body(), columnAliases);
     }
 
     /**
@@ -133,7 +132,7 @@ public non-sealed interface CteDef extends Node {
      * @return A new instance of {@link CteDef} with the list of column aliases. All other fields are preserved.
      */
     default CteDef columnAliases(String... columnAliases) {
-        return new CteDefImpl(name(), body(), List.of(columnAliases));
+        return new Impl(name(), body(), List.of(columnAliases));
     }
 
     /**
@@ -147,5 +146,46 @@ public non-sealed interface CteDef extends Node {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitCte(this);
+    }
+
+    /**
+     * A CTE definition used in a WITH statement.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *      WITH RECURSIVE
+     *        -- Non-recursive CTE (perfectly fine to mix)
+     *        roots AS (
+     *          SELECT id
+     *          FROM employees
+     *          WHERE manager_id IS NULL
+     *        ),
+     *
+     *        -- Recursive CTE (self-reference to `chain`)
+     *        chain AS (
+     *          -- Anchor: start from roots
+     *          SELECT expr.id, expr.manager_id, 1 AS lvl
+     *          FROM employees expr
+     *          JOIN roots r ON expr.id = r.id
+     *
+     *          UNION ALL
+     *
+     *          -- Recursive step: walk down the tree
+     *          SELECT expr.id, expr.manager_id, c.lvl + 1
+     *          FROM employees expr
+     *          JOIN chain c ON expr.manager_id = c.id
+     *        )
+     *
+     *      SELECT id, manager_id, lvl
+     *      FROM chain
+     *      ORDER BY lvl, id;
+     *     }
+     * </pre>
+     *
+     * @param name the name of the CTE statement.
+     * @param body a query wrapped by the current CTE.
+     * @param columnAliases a list of column aliases used in the CTE.
+     */
+    record Impl(String name, Query body, List<String> columnAliases) implements CteDef {
     }
 }

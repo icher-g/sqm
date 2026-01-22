@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.OnJoinImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -17,7 +16,7 @@ public non-sealed interface OnJoin extends Join {
      * @return a new JOIN predicate instance.
      */
     static OnJoin of(TableRef right, JoinKind kind, Predicate on) {
-        return new OnJoinImpl(right, kind, on);
+        return new Impl(right, kind, on);
     }
 
     /**
@@ -41,7 +40,7 @@ public non-sealed interface OnJoin extends Join {
      * @return A newly created instance with the provided predicate.
      */
     default Join on(Predicate predicate) {
-        return new OnJoinImpl(right(), kind(), predicate);
+        return new Impl(right(), kind(), predicate);
     }
 
     /**
@@ -55,5 +54,15 @@ public non-sealed interface OnJoin extends Join {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitOnJoin(this);
+    }
+
+    /**
+     * Implements a regular join: INNER/LEFT/RIGHT/FULL.
+     *
+     * @param right the table to join.
+     * @param kind  the join type: INNER/LEFT/RIGHT/FULL
+     * @param on    the predicate to use on the join.
+     */
+    record Impl(TableRef right, JoinKind kind, Predicate on) implements OnJoin {
     }
 }

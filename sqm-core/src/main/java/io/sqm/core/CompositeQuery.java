@@ -1,7 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.CompositeQueryImpl;
-import io.sqm.core.internal.OrderByImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
@@ -29,20 +27,20 @@ public non-sealed interface CompositeQuery extends Query {
      * @return A newly created composite query.
      */
     static CompositeQuery of(List<Query> terms, List<SetOperator> ops) {
-        return new CompositeQueryImpl(terms, ops, null, null);
+        return new Impl(terms, ops, null, null);
     }
 
     /**
      * Creates a composite query from a list of sub queries and a list of operators.
      *
-     * @param terms a list of sub queries. size >= 1.
-     * @param ops   a list of operators. size == terms.size()-1.
-     * @param orderBy an OrderBy statement. Can be NULL.
+     * @param terms       a list of sub queries. size >= 1.
+     * @param ops         a list of operators. size == terms.size()-1.
+     * @param orderBy     an OrderBy statement. Can be NULL.
      * @param limitOffset a limit and offest definition.
      * @return A newly created composite query.
      */
     static CompositeQuery of(List<Query> terms, List<SetOperator> ops, OrderBy orderBy, LimitOffset limitOffset) {
-        return new CompositeQueryImpl(terms, ops, orderBy, limitOffset);
+        return new Impl(terms, ops, orderBy, limitOffset);
     }
 
     /**
@@ -80,7 +78,7 @@ public non-sealed interface CompositeQuery extends Query {
      * @return A new instance of the composite query with the provided OrderBy items. All the rest of the fields are preserved.
      */
     default CompositeQuery orderBy(List<OrderItem> items) {
-        return new CompositeQueryImpl(terms(), ops(), new OrderByImpl(items), limitOffset());
+        return new Impl(terms(), ops(), OrderBy.of(items), limitOffset());
     }
 
     /**
@@ -90,7 +88,7 @@ public non-sealed interface CompositeQuery extends Query {
      * @return A new instance of the composite query with the provided OrderBy items. All the rest of the fields are preserved.
      */
     default CompositeQuery orderBy(OrderItem... items) {
-        return new CompositeQueryImpl(terms(), ops(), new OrderByImpl(List.of(items)), limitOffset());
+        return new Impl(terms(), ops(), OrderBy.of(List.of(items)), limitOffset());
     }
 
     /**
@@ -100,7 +98,7 @@ public non-sealed interface CompositeQuery extends Query {
      * @return A new instance of the composite query with the provided limit. All the rest of the fields are preserved.
      */
     default CompositeQuery limit(Long limit) {
-        return new CompositeQueryImpl(terms(), ops(), orderBy(), LimitOffset.of(limit, limitOffset() == null ? null : limitOffset().offset()));
+        return new Impl(terms(), ops(), orderBy(), LimitOffset.of(limit, limitOffset() == null ? null : limitOffset().offset()));
     }
 
     /**
@@ -110,7 +108,7 @@ public non-sealed interface CompositeQuery extends Query {
      * @return A new instance of the composite query with the provided offset. All the rest of the fields are preserved.
      */
     default CompositeQuery offset(Long offset) {
-        return new CompositeQueryImpl(terms(), ops(), orderBy(), LimitOffset.of(limitOffset() == null ? null : limitOffset().limit(), offset));
+        return new Impl(terms(), ops(), orderBy(), LimitOffset.of(limitOffset() == null ? null : limitOffset().limit(), offset));
     }
 
     /**
@@ -124,5 +122,42 @@ public non-sealed interface CompositeQuery extends Query {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitCompositeQuery(this);
+    }
+
+    /**
+     * Represents a composite query.
+     * <p>Example:</p>
+     * <pre>
+     *     {@code
+     *     (SELECT * FROM TABLE1)
+     *     UNION
+     *     (SELECT * FROM TABLE2)
+     *     INTERSECT
+     *     (SELECT * FROM TABLE3)
+     *     }
+     * </pre>
+     *
+     * @param terms       size >= 1
+     * @param ops         size == terms.size()-1
+     * @param orderBy     OrderBy statement
+     * @param limitOffset limit and offset definition.
+     */
+    record Impl(List<Query> terms, List<SetOperator> ops, OrderBy orderBy, LimitOffset limitOffset) implements CompositeQuery {
+
+        /**
+         * This constructor validates that the terms size matches the number of operators.
+         *
+         * @param terms       size >= 1
+         * @param ops         size == terms.size()-1
+         * @param orderBy     OrderBy statement
+         * @param limitOffset limit and offset definition.
+         */
+        public Impl {
+            if (ops.size() != terms.size() - 1) {
+                throw new IllegalArgumentException("The number of operators should be 1 less then the number of terms: ops.size == terms.size()-1.");
+            }
+            terms = List.copyOf(terms);
+            ops = List.copyOf(ops);
+        }
     }
 }

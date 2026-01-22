@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.DistinctSpecImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -17,7 +16,7 @@ public non-sealed interface DistinctSpec extends Node {
      * <p>This constant corresponds to an ANSI {@code DISTINCT} modifier
      * without any dialect-specific extensions.</p>
      */
-    DistinctSpec TRUE = new DistinctSpecImpl();
+    DistinctSpec TRUE = new Impl();
 
     /**
      * Marker constant representing absence of a DISTINCT specification.
@@ -38,5 +37,11 @@ public non-sealed interface DistinctSpec extends Node {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitDistinctSpec(this);
+    }
+
+    /**
+     * A default implementation of the {@link DistinctSpec} interface.
+     */
+    record Impl() implements DistinctSpec {
     }
 }

@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.CaseExprImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
@@ -23,7 +22,7 @@ public non-sealed interface CaseExpr extends Expression {
      * @return a newly created instance.
      */
     static CaseExpr of(WhenThen... whens) {
-        return new CaseExprImpl(List.of(whens), null);
+        return new Impl(List.of(whens), null);
     }
 
     /**
@@ -33,7 +32,7 @@ public non-sealed interface CaseExpr extends Expression {
      * @return a newly created instance.
      */
     static CaseExpr of(List<WhenThen> whens) {
-        return new CaseExprImpl(whens, null);
+        return new Impl(whens, null);
     }
 
     /**
@@ -44,7 +43,7 @@ public non-sealed interface CaseExpr extends Expression {
      * @return a newly created instance.
      */
     static CaseExpr of(List<WhenThen> whens, Expression elseExpr) {
-        return new CaseExprImpl(whens, elseExpr);
+        return new Impl(whens, elseExpr);
     }
 
     /**
@@ -54,7 +53,7 @@ public non-sealed interface CaseExpr extends Expression {
      * @return a newly created instance.
      */
     default CaseExpr elseExpr(Expression elseExpr) {
-        return new CaseExprImpl(whens(), elseExpr);
+        return new Impl(whens(), elseExpr);
     }
 
     /**
@@ -64,7 +63,7 @@ public non-sealed interface CaseExpr extends Expression {
      * @return a newly created instance.
      */
     default CaseExpr elseValue(Object value) {
-        return new CaseExprImpl(whens(), Expression.literal(value));
+        return new Impl(whens(), Expression.literal(value));
     }
 
     /**
@@ -92,5 +91,20 @@ public non-sealed interface CaseExpr extends Expression {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitCaseExpr(this);
+    }
+
+    /**
+     * Represents a CASE expression.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     CASE WHEN x = 1 THEN 10 WHEN x = 2 THEN 20 END AS result
+     *     }
+     * </pre>
+     *
+     * @param whens    a list of WHEN...THEN statements.
+     * @param elseExpr an ELSE expression.
+     */
+    record Impl(List<WhenThen> whens, Expression elseExpr) implements CaseExpr {
     }
 }

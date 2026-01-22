@@ -131,7 +131,7 @@ public class SelectQueryImpl implements SelectQuery {
      */
     @Override
     public SelectQuery groupBy(List<GroupItem> items) {
-        this.groupBy = new GroupByImpl(items);
+        this.groupBy = GroupBy.of(items);
         return this;
     }
 
@@ -175,7 +175,7 @@ public class SelectQueryImpl implements SelectQuery {
      */
     @Override
     public SelectQuery orderBy(List<OrderItem> items) {
-        this.orderBy = new OrderByImpl(items);
+        this.orderBy = OrderBy.of(items);
         return this;
     }
 

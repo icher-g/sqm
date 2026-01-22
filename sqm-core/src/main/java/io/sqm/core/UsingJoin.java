@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.UsingJoinImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
@@ -25,7 +24,7 @@ public non-sealed interface UsingJoin extends Join {
      * @return A newly created instance of CROSS JOIN with the provided table.
      */
     static UsingJoin of(TableRef right, String... usingColumns) {
-        return new UsingJoinImpl(right, List.of(usingColumns));
+        return new Impl(right, List.of(usingColumns));
     }
 
     /**
@@ -36,7 +35,7 @@ public non-sealed interface UsingJoin extends Join {
      * @return A newly created instance of CROSS JOIN with the provided table.
      */
     static UsingJoin of(TableRef right, List<String> usingColumns) {
-        return new UsingJoinImpl(right, usingColumns);
+        return new Impl(right, usingColumns);
     }
 
     /**
@@ -55,5 +54,23 @@ public non-sealed interface UsingJoin extends Join {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitUsingJoin(this);
+    }
+
+    /**
+     * Implements a USING JOIN.
+     * A USING join is a shorthand syntax for joining tables when the join column(s) have the same name in both tables.
+     * <p>Example:</p>
+     * <pre>
+     *     {@code
+     *     SELECT *
+     *     FROM employees
+     *     JOIN departments USING (department_id);
+     *     }
+     * </pre>
+     *
+     * @param right        the table to join.
+     * @param usingColumns a list of columns to join on.
+     */
+    record Impl(TableRef right, List<String> usingColumns) implements UsingJoin {
     }
 }

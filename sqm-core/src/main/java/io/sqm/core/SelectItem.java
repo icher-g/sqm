@@ -1,8 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.ExprSelectItemImpl;
-import io.sqm.core.internal.QualifiedStarSelectItemImpl;
-import io.sqm.core.internal.StarSelectItemImpl;
 import io.sqm.core.match.SelectItemMatch;
 
 /**
@@ -18,7 +15,7 @@ public sealed interface SelectItem extends Node
      * @return A newly created instance of a wrapper.
      */
     static ExprSelectItem expr(Expression expr) {
-        return new ExprSelectItemImpl(expr, null);
+        return ExprSelectItem.of(expr);
     }
 
     /**
@@ -27,7 +24,7 @@ public sealed interface SelectItem extends Node
      * @return {@link StarSelectItem}.
      */
     static StarSelectItem star() {
-        return new StarSelectItemImpl();
+        return StarSelectItem.of();
     }
 
     /**
@@ -37,7 +34,7 @@ public sealed interface SelectItem extends Node
      * @return {@link QualifiedStarSelectItem}.
      */
     static QualifiedStarSelectItem star(String qualifier) {
-        return new QualifiedStarSelectItemImpl(qualifier);
+        return QualifiedStarSelectItem.of(qualifier);
     }
 
     /**

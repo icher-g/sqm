@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.WindowDefImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -31,7 +30,7 @@ public non-sealed interface WindowDef extends Node {
      * @return new instance of the WINDOW definition.
      */
     static WindowDef of(String name, OverSpec.Def spec) {
-        return new WindowDefImpl(name, spec);
+        return new Impl(name, spec);
     }
 
     /**
@@ -63,5 +62,29 @@ public non-sealed interface WindowDef extends Node {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitWindowDef(this);
+    }
+
+    /**
+     * Implements a WINDOW specification used in OVER clause.
+     * <p>Example of WINDOW specification:</p>
+     * <pre>
+     *     {@code
+     *      SELECT
+     *          dept,
+     *          emp_name,
+     *          salary,
+     *          RANK() OVER w1        AS dept_rank,
+     *          AVG(salary) OVER w2   AS overall_avg
+     *      FROM employees
+     *      WINDOW
+     *          w1 AS (PARTITION BY dept ORDER BY salary DESC),
+     *          w2 AS (ORDER BY salary DESC);
+     *     }
+     * </pre>
+     *
+     * @param name a window name.
+     * @param spec an OVER specification.
+     */
+    record Impl(String name, OverSpec.Def spec) implements WindowDef {
     }
 }

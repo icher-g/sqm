@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.GroupItemImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.Objects;
@@ -16,7 +15,7 @@ public non-sealed interface GroupItem extends Node {
      * @return A newly created instance of a group item.
      */
     static GroupItem of(Expression expr) {
-        return new GroupItemImpl(Objects.requireNonNull(expr), null);
+        return new Impl(Objects.requireNonNull(expr), null);
     }
 
     /**
@@ -26,7 +25,7 @@ public non-sealed interface GroupItem extends Node {
      * @return A newly created instance of a group item.
      */
     static GroupItem of(int ordinal) {
-        return new GroupItemImpl(null, ordinal);
+        return new Impl(null, ordinal);
     }
 
     /**
@@ -63,5 +62,14 @@ public non-sealed interface GroupItem extends Node {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitGroupItem(this);
+    }
+
+    /**
+     * Either expression-based grouping or ordinal reference. Exactly one is non-null.
+     *
+     * @param expr    an expression.
+     * @param ordinal an ordinal.
+     */
+    record Impl(Expression expr, Integer ordinal) implements GroupItem {
     }
 }

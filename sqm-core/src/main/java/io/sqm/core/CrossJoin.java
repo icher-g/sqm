@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.CrossJoinImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -22,7 +21,7 @@ public non-sealed interface CrossJoin extends Join {
      * @return A newly created instance of CROSS JOIN with the provided table.
      */
     static CrossJoin of(TableRef right) {
-        return new CrossJoinImpl(right);
+        return new Impl(right);
     }
 
     /**
@@ -32,7 +31,7 @@ public non-sealed interface CrossJoin extends Join {
      * @return A newly created instance of the table.
      */
     static CrossJoin of(String table) {
-        return new CrossJoinImpl(TableRef.table(table));
+        return new Impl(TableRef.table(table));
     }
 
     /**
@@ -43,7 +42,7 @@ public non-sealed interface CrossJoin extends Join {
      * @return A newly created instance of the table.
      */
     static CrossJoin of(String schema, String table) {
-        return new CrossJoinImpl(TableRef.table(schema, table));
+        return new Impl(TableRef.table(schema, table));
     }
 
     /**
@@ -57,5 +56,21 @@ public non-sealed interface CrossJoin extends Join {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitCrossJoin(this);
+    }
+
+    /**
+     * Implements a CROSS JOIN. This produces the Cartesian product of both tables.
+     * <p>Example:</p>
+     * <pre>
+     *     {@code
+     *     SELECT *
+     *     FROM employees
+     *     CROSS JOIN departments;
+     *     }
+     * </pre>
+     *
+     * @param right the table to join.
+     */
+    record Impl(TableRef right) implements CrossJoin {
     }
 }

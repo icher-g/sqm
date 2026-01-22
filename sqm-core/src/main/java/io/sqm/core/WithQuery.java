@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.WithQueryImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
@@ -32,7 +31,7 @@ public non-sealed interface WithQuery extends Query {
      * @return A newly created WITH query.
      */
     static WithQuery of(CteDef... ctes) {
-        return new WithQueryImpl(List.of(ctes), null, false);
+        return new Impl(List.of(ctes), null, false);
     }
 
     /**
@@ -43,7 +42,7 @@ public non-sealed interface WithQuery extends Query {
      * @return A newly created WITH query.
      */
     static WithQuery of(List<CteDef> ctes, Query body) {
-        return new WithQueryImpl(ctes, body, false);
+        return new Impl(ctes, body, false);
     }
 
     /**
@@ -55,7 +54,7 @@ public non-sealed interface WithQuery extends Query {
      * @return A newly created WITH query.
      */
     static WithQuery of(List<CteDef> ctes, Query body, boolean recursive) {
-        return new WithQueryImpl(ctes, body, recursive);
+        return new Impl(ctes, body, recursive);
     }
 
     /**
@@ -86,7 +85,7 @@ public non-sealed interface WithQuery extends Query {
      * @return A new instance of {@link WithQuery} with the select statement. All other fields are preserved.
      */
     default WithQuery recursive(boolean recursive) {
-        return new WithQueryImpl(ctes(), body(), recursive);
+        return new Impl(ctes(), body(), recursive);
     }
 
     /**
@@ -96,7 +95,7 @@ public non-sealed interface WithQuery extends Query {
      * @return this.
      */
     default WithQuery body(Query body) {
-        return new WithQueryImpl(ctes(), body, recursive());
+        return new Impl(ctes(), body, recursive());
     }
 
     /**
@@ -110,5 +109,34 @@ public non-sealed interface WithQuery extends Query {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitWithQuery(this);
+    }
+
+    /**
+     * <p>With statement example:</p>
+     * <pre>
+     *     {@code
+     *     WITH
+     *     TABLE1 AS (
+     *         SELECT * FROM SCHEMA.TABLE1
+     *     ),
+     *     TABLE2 AS (
+     *         SELECT * FROM SCHEMA.TABLE2
+     *     )
+     *     SELECT *
+     *     FROM TABLE T
+     *     JOIN TABLE1 T1 ON ...
+     *     JOIN TABLE2 T2 ON
+     *     }
+     * </pre>
+     *
+     * @param ctes      a list of CTE queries.
+     * @param body      a body query used at the end of the WITH statement.
+     * @param recursive indicates whether the WITH statement supports recursive calls within the CTE queries.
+     */
+    record Impl(List<CteDef> ctes, Query body, boolean recursive) implements WithQuery {
+
+        public Impl {
+            ctes = List.copyOf(ctes);
+        }
     }
 }

@@ -1,8 +1,8 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.GroupByImpl;
 import io.sqm.core.walk.NodeVisitor;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -17,7 +17,7 @@ public non-sealed interface GroupBy extends Node {
      * @return a new GROUP BY statement.
      */
     static GroupBy of(List<GroupItem> items) {
-        return new GroupByImpl(items);
+        return new Impl(items);
     }
 
     /**
@@ -38,5 +38,21 @@ public non-sealed interface GroupBy extends Node {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitGroupBy(this);
+    }
+
+    /**
+     * Implements a GroupBy statement with the list of Group items.
+     *
+     * @param items a list of group by items.
+     */
+    record Impl(List<GroupItem> items) implements GroupBy {
+        /**
+         * Ensures items are unmodifiable.
+         *
+         * @param items a list of items.
+         */
+        public Impl {
+            items = Collections.unmodifiableList(items);
+        }
     }
 }

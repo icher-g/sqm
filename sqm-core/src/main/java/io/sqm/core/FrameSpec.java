@@ -1,7 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.FrameSpecBetween;
-import io.sqm.core.internal.FrameSpecSingle;
 import io.sqm.core.match.FrameSpecMatch;
 import io.sqm.core.walk.NodeVisitor;
 
@@ -30,7 +28,7 @@ public sealed interface FrameSpec extends Node permits DialectFrameSpec, FrameSp
      * @return a new instance of {@link Single} frame specification.
      */
     static Single single(Unit unit, BoundSpec bound) {
-        return new FrameSpecSingle(unit, bound);
+        return new Single.Impl(unit, bound);
     }
 
     /**
@@ -48,7 +46,7 @@ public sealed interface FrameSpec extends Node permits DialectFrameSpec, FrameSp
      * @return a new instance of {@link Between} frame specification.
      */
     static Between between(Unit unit, BoundSpec start, BoundSpec end) {
-        return new FrameSpecBetween(unit, start, end);
+        return new Between.Impl(unit, start, end);
     }
 
     /**
@@ -121,6 +119,15 @@ public sealed interface FrameSpec extends Node permits DialectFrameSpec, FrameSp
         default <R> R accept(NodeVisitor<R> v) {
             return v.visitFrameSingle(this);
         }
+
+        /**
+         * ROWS bound  (shorthand for BETWEEN bound AND CURRENT ROW in many engines is NOT standard; keep explicit)
+         *
+         * @param unit  a frame unit.
+         * @param bound a frame bound.
+         */
+        record Impl(Unit unit, BoundSpec bound) implements FrameSpec.Single {
+        }
     }
 
     /**
@@ -164,6 +171,16 @@ public sealed interface FrameSpec extends Node permits DialectFrameSpec, FrameSp
         @Override
         default <R> R accept(NodeVisitor<R> v) {
             return v.visitFrameBetween(this);
+        }
+
+        /**
+         * ROWS BETWEEN start AND end
+         *
+         * @param unit  a frame unit.
+         * @param start a frame start bound.
+         * @param end   a frame end bound.
+         */
+        record Impl(FrameSpec.Unit unit, BoundSpec start, BoundSpec end) implements FrameSpec.Between {
         }
     }
 }

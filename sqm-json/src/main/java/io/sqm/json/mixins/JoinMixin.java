@@ -6,17 +6,17 @@ package io.sqm.json.mixins;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.sqm.core.internal.CrossJoinImpl;
-import io.sqm.core.internal.NaturalJoinImpl;
-import io.sqm.core.internal.OnJoinImpl;
-import io.sqm.core.internal.UsingJoinImpl;
+import io.sqm.core.CrossJoin;
+import io.sqm.core.NaturalJoin;
+import io.sqm.core.OnJoin;
+import io.sqm.core.UsingJoin;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = CrossJoinImpl.class, name = "cross"),
-    @JsonSubTypes.Type(value = NaturalJoinImpl.class, name = "natural"),
-    @JsonSubTypes.Type(value = OnJoinImpl.class, name = "on"),
-    @JsonSubTypes.Type(value = UsingJoinImpl.class, name = "using")
+    @JsonSubTypes.Type(value = CrossJoin.Impl.class, name = "cross"),
+    @JsonSubTypes.Type(value = NaturalJoin.Impl.class, name = "natural"),
+    @JsonSubTypes.Type(value = OnJoin.Impl.class, name = "on"),
+    @JsonSubTypes.Type(value = UsingJoin.Impl.class, name = "using")
 })
 public abstract class JoinMixin extends CommonJsonMixin {
 }

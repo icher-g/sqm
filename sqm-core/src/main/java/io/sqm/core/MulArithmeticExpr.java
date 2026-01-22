@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.MulArithmeticExprImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -16,7 +15,7 @@ public non-sealed interface MulArithmeticExpr extends MultiplicativeArithmeticEx
      * @return a new {@code MulArithmeticExpr} instance
      */
     static MulArithmeticExpr of(Expression lhs, Expression rhs) {
-        return new MulArithmeticExprImpl(lhs, rhs);
+        return new Impl(lhs, rhs);
     }
 
     /**
@@ -30,6 +29,15 @@ public non-sealed interface MulArithmeticExpr extends MultiplicativeArithmeticEx
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitMulArithmeticExpr(this);
+    }
+
+    /**
+     * Represents a multiplication operation of the form {@code lhs * rhs}.
+     *
+     * @param lhs the left operand, must not be {@code null}
+     * @param rhs the right operand, must not be {@code null}
+     */
+    record Impl(Expression lhs, Expression rhs) implements MulArithmeticExpr {
     }
 }
 

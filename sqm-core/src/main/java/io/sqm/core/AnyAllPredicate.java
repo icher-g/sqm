@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.AnyAllPredicateImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -24,7 +23,7 @@ public non-sealed interface AnyAllPredicate extends Predicate {
      * @return a new instance of the predicate.
      */
     static AnyAllPredicate of(Expression lhs, ComparisonOperator operator, Query subquery, Quantifier quantifier) {
-        return new AnyAllPredicateImpl(lhs, operator, subquery, quantifier);
+        return new Impl(lhs, operator, subquery, quantifier);
     }
 
     /**
@@ -66,5 +65,22 @@ public non-sealed interface AnyAllPredicate extends Predicate {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitAnyAllPredicate(this);
+    }
+
+    /**
+     * Implementation of the ANY / ALL predicates.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     age <= ANY (SELECT age FROM users WHERE active = true)
+     *     }
+     * </pre>
+     *
+     * @param lhs        the left-hand-side of the predicate.
+     * @param operator   a comparison operator.
+     * @param subquery   a sub query that provides a set of values to compare against.
+     * @param quantifier indicates what type of predicate is this: ANY or ALL.
+     */
+    record Impl(Expression lhs, ComparisonOperator operator, Query subquery, Quantifier quantifier) implements AnyAllPredicate {
     }
 }

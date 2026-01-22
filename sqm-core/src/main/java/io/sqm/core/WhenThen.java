@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.WhenThenImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -21,7 +20,7 @@ public non-sealed interface WhenThen extends Node {
      * @return A newly created instance of the WHEN...THEN statement.
      */
     static WhenThen of(Predicate when, Expression then) {
-        return new WhenThenImpl(when, then);
+        return new Impl(when, then);
     }
 
     /**
@@ -31,7 +30,7 @@ public non-sealed interface WhenThen extends Node {
      * @return A newly created instance of the WHEN...THEN statement with only WHEN part.
      */
     static WhenThen when(Predicate when) {
-        return new WhenThenImpl(when, null);
+        return new Impl(when, null);
     }
 
     /**
@@ -55,7 +54,7 @@ public non-sealed interface WhenThen extends Node {
      * @return this.
      */
     default WhenThen then(Expression then) {
-        return new WhenThenImpl(when(), then);
+        return new Impl(when(), then);
     }
 
     /**
@@ -65,7 +64,7 @@ public non-sealed interface WhenThen extends Node {
      * @return this.
      */
     default WhenThen then(Object then) {
-        return new WhenThenImpl(when(), Expression.literal(then));
+        return new Impl(when(), Expression.literal(then));
     }
 
     /**
@@ -79,5 +78,20 @@ public non-sealed interface WhenThen extends Node {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitWhenThen(this);
+    }
+
+    /**
+     * Represents WHEN...THEN statement used in CASE expression.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     CASE WHEN x = 1 THEN 10 WHEN x = 2 THEN 20 END AS result
+     *     }
+     * </pre>
+     *
+     * @param when a WHEN predicate.
+     * @param then a THEN expression.
+     */
+    record Impl(Predicate when, Expression then) implements WhenThen {
     }
 }
