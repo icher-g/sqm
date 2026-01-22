@@ -1,8 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.FuncStarArg;
-import io.sqm.core.internal.FunctionArgExpr;
-import io.sqm.core.internal.FunctionExprImpl;
 import io.sqm.core.match.FunctionExprArgMatch;
 import io.sqm.core.walk.NodeVisitor;
 
@@ -29,7 +26,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return A newly created instance of a function call expression.
      */
     static FunctionExpr of(String name, FunctionExpr.Arg... args) {
-        return new FunctionExprImpl(Objects.requireNonNull(name), List.of(args), null, null, null, null);
+        return new Impl(Objects.requireNonNull(name), List.of(args), null, null, null, null);
     }
 
     /**
@@ -44,7 +41,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return A newly created instance of a function call expression.
      */
     static FunctionExpr of(String name, List<FunctionExpr.Arg> args, Boolean distinctArg, OrderBy withinGroup, Predicate filter, OverSpec over) {
-        return new FunctionExprImpl(Objects.requireNonNull(name), args, distinctArg, withinGroup, filter, over);
+        return new Impl(Objects.requireNonNull(name), args, distinctArg, withinGroup, filter, over);
     }
 
     /**
@@ -120,7 +117,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return A newly created instance of the function call expression with the added indication. All other fields are preserved.
      */
     default FunctionExpr distinct() {
-        return new FunctionExprImpl(name(), args(), true, withinGroup(), filter(), over());
+        return new Impl(name(), args(), true, withinGroup(), filter(), over());
     }
 
     /**
@@ -138,7 +135,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return this.
      */
     default FunctionExpr withinGroup(OrderBy withinGroup) {
-        return new FunctionExprImpl(name(), args(), distinctArg(), withinGroup, filter(), over());
+        return new Impl(name(), args(), distinctArg(), withinGroup, filter(), over());
     }
 
     /**
@@ -156,7 +153,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return this.
      */
     default FunctionExpr withinGroup(OrderItem... items) {
-        return new FunctionExprImpl(name(), args(), distinctArg(), OrderBy.of(List.of(items)), filter(), over());
+        return new Impl(name(), args(), distinctArg(), OrderBy.of(List.of(items)), filter(), over());
     }
 
     /**
@@ -174,7 +171,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return this.
      */
     default FunctionExpr filter(Predicate filter) {
-        return new FunctionExprImpl(name(), args(), distinctArg(), withinGroup(), filter, over());
+        return new Impl(name(), args(), distinctArg(), withinGroup(), filter, over());
     }
 
     /**
@@ -192,7 +189,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return this.
      */
     default FunctionExpr over(OverSpec over) {
-        return new FunctionExprImpl(name(), args(), distinctArg(), withinGroup(), filter(), over);
+        return new Impl(name(), args(), distinctArg(), withinGroup(), filter(), over);
     }
 
     /**
@@ -389,7 +386,7 @@ public non-sealed interface FunctionExpr extends Expression {
          * @return a column argument.
          */
         static ExprArg expr(Expression e) {
-            return new FunctionArgExpr(e);
+            return new ExprArg.Impl(e);
         }
 
         /**
@@ -398,7 +395,7 @@ public non-sealed interface FunctionExpr extends Expression {
          * @return a star argument.
          */
         static StarArg star() {
-            return new FuncStarArg();
+            return new StarArg.Impl();
         }
 
         /**
@@ -434,12 +431,61 @@ public non-sealed interface FunctionExpr extends Expression {
              * @return an inner expression.
              */
             Expression expr();
+
+            /**
+             * Implements a function argument that represents any expression.
+             *
+             * @param expr an expression.
+             */
+            record Impl(Expression expr) implements FunctionExpr.Arg.ExprArg {
+            }
         }
 
         /**
          * The '*' argument (expr.g., COUNT(*))
          */
         non-sealed interface StarArg extends FunctionExpr.Arg {
+            /**
+             * Implements a function argument '*'.
+             */
+            record Impl() implements FunctionExpr.Arg.StarArg {
+            }
+        }
+    }
+
+    /**
+     * Represents a function call.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     COUNT(*);
+     *     UPPER(products.name)
+     *     COUNT(DISTINCT t.id) AS c
+     *     AVG(sales) FILTER (WHERE region = 'EU') OVER (PARTITION BY year)
+     *     MODE() WITHIN GROUP (ORDER BY value)
+     *     }
+     * </pre>
+     *
+     * @param name        the name of the function.
+     * @param args        a list of arguments. Can be NULL or empty if there are no arguments.
+     * @param distinctArg indicates whether DISTINCT should be added before the list of arguments in the function call. {@code COUNT(DISTINCT t.id) AS c}.
+     * @param withinGroup defines an ordered-set aggregates.
+     * @param filter      a filter used to filter rows only for aggregates.
+     * @param over        an OVER specification.
+     */
+    record Impl(String name, List<Arg> args, Boolean distinctArg, OrderBy withinGroup, Predicate filter, OverSpec over) implements FunctionExpr {
+        /**
+         * This constructor ensures the arguments list is immutable.
+         *
+         * @param name        the name of the function.
+         * @param args        a list of arguments. Can be NULL or empty if there are no arguments.
+         * @param distinctArg indicates whether DISTINCT should be added before the list of arguments in the function call. {@code COUNT(DISTINCT t.id) AS c}.
+         * @param withinGroup defines an ordered-set aggregates.
+         * @param filter      a filter used to filter rows only for aggregates.
+         * @param over        an OVER specification.
+         */
+        public Impl {
+            args = List.copyOf(args);
         }
     }
 }

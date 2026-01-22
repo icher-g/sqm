@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.LimitOffsetImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -14,7 +13,7 @@ public non-sealed interface LimitOffset extends Node {
      * @return new instance of {@link LimitOffset}.
      */
     static LimitOffset limit(long limit) {
-        return new LimitOffsetImpl(limit, null);
+        return new Impl(limit, null);
     }
 
     /**
@@ -24,7 +23,7 @@ public non-sealed interface LimitOffset extends Node {
      * @return new instance of {@link LimitOffset}.
      */
     static LimitOffset offset(long offset) {
-        return new LimitOffsetImpl(null, offset);
+        return new Impl(null, offset);
     }
 
     /**
@@ -35,7 +34,7 @@ public non-sealed interface LimitOffset extends Node {
      * @return new instance of {@link LimitOffset}.
      */
     static LimitOffset of(Long limit, Long offset) {
-        return new LimitOffsetImpl(limit, offset);
+        return new Impl(limit, offset);
     }
 
     /**
@@ -63,5 +62,29 @@ public non-sealed interface LimitOffset extends Node {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitLimitOffset(this);
+    }
+
+    /**
+     * LIMIT/OFFSET pair (or OFFSET/FETCH mapped to these two).
+     *
+     * @param limit  a limit.
+     * @param offset an offset.
+     */
+    record Impl(Long limit, Long offset) implements LimitOffset {
+
+        /**
+         * This constructor validates limit and offset are >= 0.
+         *
+         * @param limit  a limit.
+         * @param offset an offset.
+         */
+        public Impl {
+            if (limit != null && limit < 0) {
+                throw new IllegalArgumentException("limit must be >= 0");
+            }
+            if (offset != null && offset < 0) {
+                throw new IllegalArgumentException("offset must be >= 0");
+            }
+        }
     }
 }

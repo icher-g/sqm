@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.QueryExprImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -30,7 +29,7 @@ public non-sealed interface QueryExpr extends ValueSet {
      * @return A newly created instance of a wrapped query.
      */
     static QueryExpr of(Query subquery) {
-        return new QueryExprImpl(subquery);
+        return new Impl(subquery);
     }
 
     /**
@@ -44,5 +43,22 @@ public non-sealed interface QueryExpr extends ValueSet {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitQueryExpr(this);
+    }
+
+    /**
+     * Represents a sub query expression.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     SELECT *
+     *     FROM (
+     *       SELECT * FROM t
+     *     )
+     *     }
+     * </pre>
+     *
+     * @param subquery a sub query wrapped as an expression.
+     */
+    record Impl(Query subquery) implements QueryExpr {
     }
 }

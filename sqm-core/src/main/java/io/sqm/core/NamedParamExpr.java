@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.NamedParamExprImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -19,7 +18,7 @@ public non-sealed interface NamedParamExpr extends ParamExpr {
      * @return a named parameter expression
      */
     static NamedParamExpr of(String name) {
-        return new NamedParamExprImpl(name);
+        return new Impl(name);
     }
 
     /**
@@ -39,6 +38,18 @@ public non-sealed interface NamedParamExpr extends ParamExpr {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitNamedParamExpr(this);
+    }
+
+    /**
+     * A parameter identified by a symbolic name rather than a numeric index.
+     * <p>
+     * Named parameters may appear in different syntactic forms depending on the
+     * source SQL dialect (e.g., {@code :id}, {@code @id}, {@code #{id}}).
+     * SQM stores only the canonical name without any prefix.
+     *
+     * @param name the canonical name of the parameter (e.g. {@code "id"}).
+     */
+    record Impl(String name) implements NamedParamExpr {
     }
 }
 

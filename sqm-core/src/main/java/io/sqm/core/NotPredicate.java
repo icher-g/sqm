@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.NotPredicateImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -21,7 +20,7 @@ public non-sealed interface NotPredicate extends Predicate {
      * @return a new NOT predicate.
      */
     static NotPredicate of(Predicate inner) {
-        return new NotPredicateImpl(inner);
+        return new Impl(inner);
     }
 
     /**
@@ -42,5 +41,19 @@ public non-sealed interface NotPredicate extends Predicate {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitNotPredicate(this);
+    }
+
+    /**
+     * Implements a NOT predicate.
+     * <p>Example:</p>
+     * <pre>
+     *     {@code
+     *     NOT EXISTS(SELECT * FROM t WHERE t.name = 'a')
+     *     }
+     * </pre>
+     *
+     * @param inner an inner predicate.
+     */
+    record Impl(Predicate inner) implements NotPredicate {
     }
 }

@@ -77,9 +77,12 @@ Node
 │  │  ├─ OnJoin
 │  │  └─ UsingJoin
 │  └─ TableRef
-│     ├─ QueryTable
-│     ├─ Table
-│     └─ ValuesTable
+│     ├─ AliasedTableRef
+│     │  ├─ FunctionTable
+│     │  ├─ QueryTable
+│     │  └─ ValuesTable
+│     ├─ Lateral
+│     └─ Table
 ├─ GroupBy
 ├─ GroupItem
 ├─ WindowDef
@@ -191,9 +194,13 @@ graph TD
   Join --> OnJoin
   Join --> UsingJoin
 
-  TableRef --> QueryTable
+  TableRef --> AliasedTableRef
+  TableRef --> Lateral
   TableRef --> Table
-  TableRef --> ValuesTable
+
+  AliasedTableRef --> FunctionTable
+  AliasedTableRef --> QueryTable
+  AliasedTableRef --> ValuesTable
 
   Node --> GroupBy
   Node --> GroupItem
@@ -379,9 +386,12 @@ graph TD
         - OnJoin
         - UsingJoin
     - TableRef
-        - QueryTable
-        - Table
-        - ValuesTable
+        - **AliasedTableRef** – base interface for table references that support both aliases and column aliases (derived column lists)
+            - **FunctionTable** – table-valued function call used in FROM clause (e.g., `UNNEST(array)`, `generate_series(1,10)`)
+            - **QueryTable** – derived table or subquery with optional alias and column aliases
+            - **ValuesTable** – inline `VALUES` construct with optional alias
+        - **Lateral** – wrapper for `LATERAL` keyword, enabling correlated references to preceding FROM items
+        - **Table** – base table reference (schema.table)
 
 ---
 

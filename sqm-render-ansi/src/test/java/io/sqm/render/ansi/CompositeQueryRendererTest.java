@@ -1,7 +1,6 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.*;
-import io.sqm.core.internal.CompositeQueryImpl;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;
@@ -84,7 +83,7 @@ class CompositeQueryRendererTest {
     void badConstructorSizes_throws() {
         var t1 = sel("t1", "t1", "id");
         var ex = assertThrows(IllegalArgumentException.class,
-            () -> new CompositeQueryImpl(List.of(t1), List.of(SetOperator.UNION), null, null));
+            () -> CompositeQuery.of(List.of(t1), List.of(SetOperator.UNION), null, null));
         assertTrue(ex.getMessage().contains("terms.size()"));
     }
 }

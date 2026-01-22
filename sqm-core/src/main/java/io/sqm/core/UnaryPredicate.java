@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.UnaryPredicateImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -22,7 +21,7 @@ public non-sealed interface UnaryPredicate extends Predicate {
      * @return a new instance of the unary predicate.
      */
     static UnaryPredicate of(Expression expr) {
-        return new UnaryPredicateImpl(expr);
+        return new Impl(expr);
     }
 
     Expression expr();
@@ -38,5 +37,20 @@ public non-sealed interface UnaryPredicate extends Predicate {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitUnaryPredicate(this);
+    }
+
+    /**
+     * Represents an unary predicate.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     WHERE true
+     *     WHERE active
+     *     }
+     * </pre>
+     *
+     * @param expr a boolean expression: TRUE, FALSE or a boolean column.
+     */
+    record Impl(Expression expr) implements UnaryPredicate {
     }
 }

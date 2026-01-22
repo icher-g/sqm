@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.NaturalJoinImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -23,7 +22,7 @@ public non-sealed interface NaturalJoin extends Join {
      * @return A newly created instance of CROSS JOIN with the provided table.
      */
     static NaturalJoin of(TableRef right) {
-        return new NaturalJoinImpl(right);
+        return new Impl(right);
     }
 
     /**
@@ -33,7 +32,7 @@ public non-sealed interface NaturalJoin extends Join {
      * @return A newly created instance of the table.
      */
     static NaturalJoin of(String table) {
-        return new NaturalJoinImpl(TableRef.table(table));
+        return new Impl(TableRef.table(table));
     }
 
     /**
@@ -44,7 +43,7 @@ public non-sealed interface NaturalJoin extends Join {
      * @return A newly created instance of the table.
      */
     static NaturalJoin of(String schema, String table) {
-        return new NaturalJoinImpl(TableRef.table(schema, table));
+        return new Impl(TableRef.table(schema, table));
     }
 
     /**
@@ -58,5 +57,22 @@ public non-sealed interface NaturalJoin extends Join {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitNaturalJoin(this);
+    }
+
+    /**
+     * Implements a natural join.
+     * A NATURAL JOIN is a type of join that automatically matches columns with the same name in both tables.
+     * <p>Example:</p>
+     * <pre>
+     *     {@code
+     *     SELECT *
+     *     FROM employees
+     *     NATURAL JOIN departments;
+     *     }
+     * </pre>
+     *
+     * @param right the right side of the join.
+     */
+    record Impl(TableRef right) implements NaturalJoin {
     }
 }

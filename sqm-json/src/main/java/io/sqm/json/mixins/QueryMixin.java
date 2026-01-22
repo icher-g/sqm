@@ -6,15 +6,15 @@ package io.sqm.json.mixins;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.sqm.core.internal.CompositeQueryImpl;
+import io.sqm.core.CompositeQuery;
+import io.sqm.core.WithQuery;
 import io.sqm.core.internal.SelectQueryImpl;
-import io.sqm.core.internal.WithQueryImpl;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = CompositeQueryImpl.class, name = "composite"),
+    @JsonSubTypes.Type(value = CompositeQuery.Impl.class, name = "composite"),
     @JsonSubTypes.Type(value = SelectQueryImpl.class, name = "select"),
-    @JsonSubTypes.Type(value = WithQueryImpl.class, name = "with")
+    @JsonSubTypes.Type(value = WithQuery.Impl.class, name = "with")
 })
 public abstract class QueryMixin extends CommonJsonMixin {
 }

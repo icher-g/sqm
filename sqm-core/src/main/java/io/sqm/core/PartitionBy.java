@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.PartitionByImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
@@ -24,7 +23,7 @@ public non-sealed interface PartitionBy extends Node {
      * @return a new instance of {@link PartitionBy}.
      */
     static PartitionBy of(Expression... items) {
-        return new PartitionByImpl(List.of(items));
+        return new Impl(List.of(items));
     }
 
     /**
@@ -34,7 +33,7 @@ public non-sealed interface PartitionBy extends Node {
      * @return a new instance of {@link PartitionBy}.
      */
     static PartitionBy of(List<Expression> items) {
-        return new PartitionByImpl(items);
+        return new Impl(items);
     }
 
     /**
@@ -60,5 +59,24 @@ public non-sealed interface PartitionBy extends Node {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitPartitionBy(this);
+    }
+
+    /**
+     * Implements a PARTITION BY statement used in OVER();
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     SUM(salary) OVER (PARTITION BY dept ORDER BY salary DESC RANGE UNBOUNDED PRECEDING)
+     *     AVG(salary) OVER (PARTITION BY dept ORDER BY salary ROWS CURRENT ROW)
+     *     }
+     * </pre>
+     *
+     * @param items a list of expressions used in PARTITION BY statement.
+     */
+    record Impl(List<Expression> items) implements PartitionBy {
+
+        public Impl {
+            items = List.copyOf(items);
+        }
     }
 }

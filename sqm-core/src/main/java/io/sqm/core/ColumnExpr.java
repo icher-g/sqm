@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.ColumnExprImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -25,7 +24,7 @@ public non-sealed interface ColumnExpr extends Expression {
      * @return A newly created instance of the column reference.
      */
     static ColumnExpr of(String name) {
-        return new ColumnExprImpl(null, name);
+        return new Impl(null, name);
     }
 
     /**
@@ -36,7 +35,7 @@ public non-sealed interface ColumnExpr extends Expression {
      * @return A newly created instance of the column reference.
      */
     static ColumnExpr of(String tableAlias, String name) {
-        return new ColumnExprImpl(tableAlias, name);
+        return new Impl(tableAlias, name);
     }
 
     /**
@@ -60,7 +59,7 @@ public non-sealed interface ColumnExpr extends Expression {
      * @return this.
      */
     default ColumnExpr inTable(String tableAlias) {
-        return new ColumnExprImpl(tableAlias, name());
+        return new Impl(tableAlias, name());
     }
 
     /**
@@ -74,5 +73,24 @@ public non-sealed interface ColumnExpr extends Expression {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitColumnExpr(this);
+    }
+
+    /**
+     * Implements a column reference used in WHERE / JOIN / GROUP BY / ORDER BY etc.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     ON u.id = o.user_id;
+     *     WHERE u.age > 18;
+     *     GROUP BY u.country;
+     *     HAVING COUNT(u.id) > 10;
+     *     ORDER BY u.name;
+     *     }
+     * </pre>
+     *
+     * @param tableAlias a table name/alias. Can be NULL if the table is not used.
+     * @param name       the name of the column.
+     */
+    record Impl(String tableAlias, String name) implements ColumnExpr {
     }
 }

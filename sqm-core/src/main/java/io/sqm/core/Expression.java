@@ -1,7 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.FuncStarArg;
-import io.sqm.core.internal.FunctionArgExpr;
 import io.sqm.core.match.ExpressionMatch;
 
 import java.util.Arrays;
@@ -62,7 +60,7 @@ public sealed interface Expression extends Node
      * @return A newly created instance of a function argument.
      */
     static FunctionExpr.Arg.ExprArg funcArg(Expression expr) {
-        return new FunctionArgExpr(expr);
+        return FunctionExpr.Arg.expr(expr);
     }
 
     /**
@@ -71,7 +69,7 @@ public sealed interface Expression extends Node
      * @return A newly created instance of a function argument.
      */
     static FunctionExpr.Arg.StarArg starArg() {
-        return new FuncStarArg();
+        return FunctionExpr.Arg.star();
     }
 
     /**

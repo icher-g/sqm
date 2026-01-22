@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.ExprSelectItemImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -21,7 +20,7 @@ public non-sealed interface ExprSelectItem extends SelectItem {
      * @return A newly created instance of a wrapper.
      */
     static ExprSelectItem of(Expression expr) {
-        return new ExprSelectItemImpl(expr, null);
+        return new Impl(expr, null);
     }
 
     /**
@@ -45,7 +44,7 @@ public non-sealed interface ExprSelectItem extends SelectItem {
      * @return A newly created instance with the provided alias. The {@link ExprSelectItem#expr()} field is preserved.
      */
     default ExprSelectItem as(String alias) {
-        return new ExprSelectItemImpl(expr(), alias);
+        return new Impl(expr(), alias);
     }
 
     /**
@@ -59,5 +58,20 @@ public non-sealed interface ExprSelectItem extends SelectItem {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitExprSelectItem(this);
+    }
+
+    /**
+     * Represents a wrapped expression in a SELECT statement.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     SELECT products.name AS name -- ExprSelectItem(ColumnRef("products", "name"), "name")
+     *     }
+     * </pre>
+     *
+     * @param expr an expression to wrap.
+     * @param alias an alias.
+     */
+    record Impl(Expression expr, String alias) implements ExprSelectItem {
     }
 }

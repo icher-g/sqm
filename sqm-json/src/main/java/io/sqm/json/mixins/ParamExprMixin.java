@@ -6,15 +6,15 @@ package io.sqm.json.mixins;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.sqm.core.internal.AnonymousParamExprImpl;
-import io.sqm.core.internal.NamedParamExprImpl;
-import io.sqm.core.internal.OrdinalParamExprImpl;
+import io.sqm.core.AnonymousParamExpr;
+import io.sqm.core.NamedParamExpr;
+import io.sqm.core.OrdinalParamExpr;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = AnonymousParamExprImpl.class, name = "anonymous-param"),
-    @JsonSubTypes.Type(value = NamedParamExprImpl.class, name = "named-param"),
-    @JsonSubTypes.Type(value = OrdinalParamExprImpl.class, name = "ordinal-param")
+    @JsonSubTypes.Type(value = AnonymousParamExpr.Impl.class, name = "anonymous-param"),
+    @JsonSubTypes.Type(value = NamedParamExpr.Impl.class, name = "named-param"),
+    @JsonSubTypes.Type(value = OrdinalParamExpr.Impl.class, name = "ordinal-param")
 })
 public abstract class ParamExprMixin extends CommonJsonMixin {
 }

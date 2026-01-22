@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.DivArithmeticExprImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -16,7 +15,7 @@ public non-sealed interface DivArithmeticExpr extends MultiplicativeArithmeticEx
      * @return a new {@code DivArithmeticExpr} instance
      */
     static DivArithmeticExpr of(Expression lhs, Expression rhs) {
-        return new DivArithmeticExprImpl(lhs, rhs);
+        return new Impl(lhs, rhs);
     }
 
     /**
@@ -30,6 +29,15 @@ public non-sealed interface DivArithmeticExpr extends MultiplicativeArithmeticEx
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitDivArithmeticExpr(this);
+    }
+
+    /**
+     * Represents a division operation of the form {@code lhs / rhs}.
+     *
+     * @param lhs the left operand, must not be {@code null}
+     * @param rhs the right operand, must not be {@code null}
+     */
+    record Impl(Expression lhs, Expression rhs) implements DivArithmeticExpr {
     }
 }
 

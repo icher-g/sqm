@@ -6,15 +6,15 @@ package io.sqm.json.mixins;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.sqm.core.internal.ExprSelectItemImpl;
-import io.sqm.core.internal.QualifiedStarSelectItemImpl;
-import io.sqm.core.internal.StarSelectItemImpl;
+import io.sqm.core.ExprSelectItem;
+import io.sqm.core.QualifiedStarSelectItem;
+import io.sqm.core.StarSelectItem;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = ExprSelectItemImpl.class, name = "expr"),
-    @JsonSubTypes.Type(value = StarSelectItemImpl.class, name = "star"),
-    @JsonSubTypes.Type(value = QualifiedStarSelectItemImpl.class, name = "qualified_star")
+    @JsonSubTypes.Type(value = ExprSelectItem.Impl.class, name = "expr"),
+    @JsonSubTypes.Type(value = StarSelectItem.Impl.class, name = "star"),
+    @JsonSubTypes.Type(value = QualifiedStarSelectItem.Impl.class, name = "qualified_star")
 })
 public abstract class SelectItemMixin extends CommonJsonMixin {
 }

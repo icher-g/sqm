@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.RowListExprImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
@@ -22,7 +21,7 @@ public non-sealed interface RowListExpr extends ValueSet {
      * @return A newly created instance of the {@link RowListExpr}.
      */
     static RowListExpr of(List<RowExpr> rows) {
-        return new RowListExprImpl(rows);
+        return new Impl(rows);
     }
 
     /**
@@ -43,5 +42,24 @@ public non-sealed interface RowListExpr extends ValueSet {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitRowListExpr(this);
+    }
+
+    /**
+     * Represents a list of rows — the RHS list of row-value / row-tuples.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     a IN (1, 2, 3, 4)
+     *     (a,b) IN ((1,2), (3,4))
+     *     }
+     * </pre>
+     *
+     * @param rows a list of rows.
+     */
+    record Impl(List<RowExpr> rows) implements RowListExpr {
+
+        public Impl {
+            rows = List.copyOf(rows);
+        }
     }
 }

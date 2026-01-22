@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.ComparisonPredicateImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -25,7 +24,7 @@ public non-sealed interface ComparisonPredicate extends Predicate {
      * @return an instance of a comparison operator.
      */
     static ComparisonPredicate of(Expression lhs, ComparisonOperator operator, Expression rhs) {
-        return new ComparisonPredicateImpl(lhs, operator, rhs);
+        return new Impl(lhs, operator, rhs);
     }
 
     /**
@@ -60,5 +59,28 @@ public non-sealed interface ComparisonPredicate extends Predicate {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitComparisonPredicate(this);
+    }
+
+    /**
+     * Implements the comparison predicate.
+     *
+     * @param lhs      the left-hand-sided expression.
+     * @param operator the comparison operator.
+     * @param rhs      the right-hand-sided expression.
+     */
+    record Impl(Expression lhs, ComparisonOperator operator, Expression rhs) implements ComparisonPredicate {
+
+        /**
+         * This constructor validates that rhs is a {@link ValueSet}.
+         *
+         * @param lhs      a left-hand-sided expression.
+         * @param operator a comparison operator.
+         * @param rhs      a right-hand-sided expression.
+         */
+        public Impl {
+            if (rhs instanceof ValueSet) {
+                throw new IllegalArgumentException(operator + " operator cannot be applied to a list of values.");
+            }
+        }
     }
 }

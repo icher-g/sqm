@@ -2,12 +2,12 @@ package io.sqm.json.mixins;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.sqm.core.internal.*;
+import io.sqm.core.FrameSpec;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = FrameSpecBetween.class, name = "between"),
-    @JsonSubTypes.Type(value = FrameSpecSingle.class, name = "single")
+    @JsonSubTypes.Type(value = FrameSpec.Between.Impl.class, name = "between"),
+    @JsonSubTypes.Type(value = FrameSpec.Single.Impl.class, name = "single")
 })
 public class FrameSpecMixin extends CommonJsonMixin {
 }

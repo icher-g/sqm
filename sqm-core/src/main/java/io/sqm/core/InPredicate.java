@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.InPredicateImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -17,7 +16,7 @@ public non-sealed interface InPredicate extends Predicate {
      * @return a new instance of the IN / NOT IN predicate.
      */
     static InPredicate of(Expression lhs, ValueSet rhs, boolean negated) {
-        return new InPredicateImpl(lhs, rhs, negated);
+        return new Impl(lhs, rhs, negated);
     }
 
     /**
@@ -52,5 +51,15 @@ public non-sealed interface InPredicate extends Predicate {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitInPredicate(this);
+    }
+
+    /**
+     * Implements an IN / NOT IN predicates.
+     *
+     * @param lhs     a left-hand-sided expression of the predicate.
+     * @param rhs     a values set on the right side of the predicate.
+     * @param negated indicates whether this predicate represents IN or NOT IN expression.
+     */
+    record Impl(Expression lhs, ValueSet rhs, boolean negated) implements InPredicate {
     }
 }

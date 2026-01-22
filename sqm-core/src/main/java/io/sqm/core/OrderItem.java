@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.OrderItemImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -22,7 +21,7 @@ public non-sealed interface OrderItem extends Node {
      * @return A newly created instance of an order by item.
      */
     static OrderItem of(Expression expr) {
-        return new OrderItemImpl(expr, null, null, null, null);
+        return new Impl(expr, null, null, null, null);
     }
 
     /**
@@ -32,7 +31,7 @@ public non-sealed interface OrderItem extends Node {
      * @return A newly created instance of an order by item.
      */
     static OrderItem of(int ordinal) {
-        return new OrderItemImpl(null, ordinal, null, null, null);
+        return new Impl(null, ordinal, null, null, null);
     }
 
     /**
@@ -45,7 +44,7 @@ public non-sealed interface OrderItem extends Node {
      * @return A newly created instance of an order by item.
      */
     static OrderItem of(Expression expr, Direction direction, Nulls nulls, String collate) {
-        return new OrderItemImpl(expr, null, direction, nulls, collate);
+        return new Impl(expr, null, direction, nulls, collate);
     }
 
     /**
@@ -58,7 +57,7 @@ public non-sealed interface OrderItem extends Node {
      * @return A newly created instance of an order by item.
      */
     static OrderItem of(Integer ordinal, Direction direction, Nulls nulls, String collate) {
-        return new OrderItemImpl(null, ordinal, direction, nulls, collate);
+        return new Impl(null, ordinal, direction, nulls, collate);
     }
 
     /**
@@ -110,7 +109,7 @@ public non-sealed interface OrderItem extends Node {
      * @return A new instance of the order item with the provided direction. All other fields are preserved.
      */
     default OrderItem asc() {
-        return new OrderItemImpl(expr(), ordinal(), Direction.ASC, nulls(), collate());
+        return new Impl(expr(), ordinal(), Direction.ASC, nulls(), collate());
     }
 
     /**
@@ -119,7 +118,7 @@ public non-sealed interface OrderItem extends Node {
      * @return A new instance of the order item with the provided direction. All other fields are preserved.
      */
     default OrderItem desc() {
-        return new OrderItemImpl(expr(), ordinal(), Direction.DESC, nulls(), collate());
+        return new Impl(expr(), ordinal(), Direction.DESC, nulls(), collate());
     }
 
     /**
@@ -129,7 +128,7 @@ public non-sealed interface OrderItem extends Node {
      * @return A new instance of the order item with the provided nulls. All other fields are preserved.
      */
     default OrderItem nulls(Nulls nulls) {
-        return new OrderItemImpl(expr(), ordinal(), direction(), nulls, collate());
+        return new Impl(expr(), ordinal(), direction(), nulls, collate());
     }
 
     /**
@@ -139,7 +138,7 @@ public non-sealed interface OrderItem extends Node {
      * @return A new instance of the order item with the provided collate. All other fields are preserved.
      */
     default OrderItem collate(String collate) {
-        return new OrderItemImpl(expr(), ordinal(), direction(), nulls(), collate);
+        return new Impl(expr(), ordinal(), direction(), nulls(), collate);
     }
 
     /**
@@ -153,5 +152,25 @@ public non-sealed interface OrderItem extends Node {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitOrderItem(this);
+    }
+
+    /**
+     * Represents an order by item.
+     *
+     * <p>Example:</p>
+     * <pre>
+     *     {@code
+     *     ORDER BY products.name
+     *     ORDER BY 1, 2
+     *     }
+     * </pre>
+     *
+     * @param expr      an expression to be used in ORDER BY statement. Can be null if ordinal is used.
+     * @param ordinal   an ordinal to be used in ORDER BY statement. 1-based; may be null if expression is used.
+     * @param direction an ORDER BY direction: ASC, DESC.
+     * @param nulls     the definition of how NULLs should be treated in the ORDER BY statement.
+     * @param collate   optional collation name; may be null.
+     */
+    record Impl(Expression expr, Integer ordinal, Direction direction, Nulls nulls, String collate) implements OrderItem {
     }
 }

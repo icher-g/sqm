@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.RowExprImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
@@ -29,7 +28,7 @@ public non-sealed interface RowExpr extends ValueSet {
      * @return A newly created instance of the ListExpr.
      */
     static RowExpr of(List<Expression> items) {
-        return new RowExprImpl(items);
+        return new Impl(items);
     }
 
     /**
@@ -43,5 +42,23 @@ public non-sealed interface RowExpr extends ValueSet {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitRowExpr(this);
+    }
+
+    /**
+     * Represents a row of values.
+     * <p>For example:</p>
+     * <pre>
+     *     {@code
+     *     (1,2) used in (a,b) IN ((1,2),(3,4))
+     *     }
+     * </pre>
+     *
+     * @param items a list of row values.
+     */
+    record Impl(List<Expression> items) implements RowExpr {
+
+        public Impl {
+            items = List.copyOf(items);
+        }
     }
 }

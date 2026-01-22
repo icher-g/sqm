@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.StarSelectItemImpl;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
@@ -14,7 +13,7 @@ public non-sealed interface StarSelectItem extends SelectItem {
      * @return {@link StarSelectItem}.
      */
     static StarSelectItem of() {
-        return new StarSelectItemImpl();
+        return new Impl();
     }
 
     /**
@@ -28,5 +27,11 @@ public non-sealed interface StarSelectItem extends SelectItem {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitStarSelectItem(this);
+    }
+
+    /**
+     * Implements '*' in SELECT * statement.
+     */
+    record Impl() implements StarSelectItem {
     }
 }

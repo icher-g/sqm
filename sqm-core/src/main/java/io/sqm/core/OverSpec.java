@@ -1,7 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.OverSpecDef;
-import io.sqm.core.internal.OverSpecRef;
 import io.sqm.core.match.OverSpecMatch;
 import io.sqm.core.walk.NodeVisitor;
 
@@ -29,7 +27,7 @@ public sealed interface OverSpec extends Node permits DialectOverSpec, OverSpec.
      * @return an {@link OverSpec.Ref}
      */
     static Ref ref(String windowName) {
-        return new OverSpecRef(windowName);
+        return new Ref.Impl(windowName);
     }
 
     /**
@@ -46,7 +44,7 @@ public sealed interface OverSpec extends Node permits DialectOverSpec, OverSpec.
      * @return an {@link OverSpec.Def}
      */
     static Def def(PartitionBy partitionBy, OrderBy orderBy, FrameSpec frame, Exclude exclude) {
-        return new OverSpecDef(null, partitionBy, orderBy, frame, exclude);
+        return new Def.Impl(null, partitionBy, orderBy, frame, exclude);
     }
 
     /**
@@ -63,7 +61,7 @@ public sealed interface OverSpec extends Node permits DialectOverSpec, OverSpec.
      * @return an {@link OverSpec.Def}
      */
     static Def def(String baseWindow, OrderBy orderBy, FrameSpec frame, Exclude exclude) {
-        return new OverSpecDef(baseWindow, null, orderBy, frame, exclude);
+        return new Def.Impl(baseWindow, null, orderBy, frame, exclude);
     }
 
     /**
@@ -159,6 +157,24 @@ public sealed interface OverSpec extends Node permits DialectOverSpec, OverSpec.
         default <R> R accept(NodeVisitor<R> v) {
             return v.visitOverDef(this);
         }
+
+        /**
+         * OVER ( ... ) — inline window specification.
+         * <p>Example:</p>
+         * <pre>
+         *     {@code
+         *     SUM(salary) OVER (PARTITION BY dept ORDER BY hire_date)
+         *     }
+         * </pre>
+         *
+         * @param baseWindow the base window name. {@code OVER (w ORDER BY ... ROWS ...)}
+         * @param partitionBy a {@code PARTITION BY e1, e2, ...} statement.
+         * @param orderBy an {@code ORDER BY x [ASC|DESC] [NULLS {FIRST|LAST}], ...} statement.
+         * @param frame a frame definition. {@code ROWS/RANGE/GROUPS frame (bounds + exclusion)}
+         * @param exclude an exclusion.
+         */
+        record Impl(String baseWindow, PartitionBy partitionBy, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude) implements OverSpec.Def {
+        }
     }
 
     /**
@@ -194,6 +210,20 @@ public sealed interface OverSpec extends Node permits DialectOverSpec, OverSpec.
         @Override
         default <R> R accept(NodeVisitor<R> v) {
             return v.visitOverRef(this);
+        }
+
+        /**
+         * OVER w — reference a named window from the SELECT's WINDOW clause
+         * <p>Example:</p>
+         * <pre>
+         *     {@code
+         *     AVG(salary) OVER w
+         *     }
+         * </pre>
+         *
+         * @param windowName a window name.
+         */
+        record Impl(String windowName) implements OverSpec.Ref {
         }
     }
 }

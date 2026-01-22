@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.AddArithmeticExprImpl;
 import io.sqm.core.match.ArithmeticMatch;
 import io.sqm.core.match.Match;
 import io.sqm.core.walk.NodeVisitor;
@@ -18,7 +17,7 @@ public non-sealed interface AddArithmeticExpr extends AdditiveArithmeticExpr {
      * @return a new {@code AddArithmeticExpr} instance
      */
     static AddArithmeticExpr of(Expression lhs, Expression rhs) {
-        return new AddArithmeticExprImpl(lhs, rhs);
+        return new Impl(lhs, rhs);
     }
 
     /**
@@ -42,6 +41,15 @@ public non-sealed interface AddArithmeticExpr extends AdditiveArithmeticExpr {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitAddArithmeticExpr(this);
+    }
+
+    /**
+     * Represents an addition operation of the form {@code lhs + rhs}.
+     *
+     * @param lhs the left operand, must not be {@code null}
+     * @param rhs the right operand, must not be {@code null}
+     */
+    record Impl(Expression lhs, Expression rhs) implements AddArithmeticExpr {
     }
 }
 
