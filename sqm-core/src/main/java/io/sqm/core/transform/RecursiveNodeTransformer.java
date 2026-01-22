@@ -673,6 +673,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         var queryLimitOffset = LimitOffset.of(q.limit(), q.offset());
         var limitOffset = apply(queryLimitOffset);
         changed |= limitOffset != queryLimitOffset;
+        var lockFor = apply(q.lockFor());
+        changed |= lockFor != q.lockFor();
         if (changed) {
             var query = SelectQuery.of()
                 .select(items)
@@ -694,6 +696,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             }
             if (limitOffset.offset() != null) {
                 query.offset(limitOffset.offset());
+            }
+            if (lockFor != null) {
+                query.lockFor(lockFor);
             }
             return query;
         }
@@ -1171,5 +1176,16 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             return i;
         }
         return Lateral.of(inner);
+    }
+
+    /**
+     * Visits a PostgreSQL SELECT locking clause.
+     *
+     * @param clause locking clause node
+     * @return transformed node if the transformation has been applied or an original node if nothing has changed.
+     */
+    @Override
+    public Node visitLockingClause(LockingClause clause) {
+        return clause;
     }
 }

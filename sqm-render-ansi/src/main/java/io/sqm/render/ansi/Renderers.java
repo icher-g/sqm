@@ -86,6 +86,7 @@ public final class Renderers {
             .register(new RegexPredicateRenderer())
             .register(new IsDistinctFromPredicateRenderer())
             .register(new LateralRenderer())
-            .register(new FunctionTableRenderer());
+            .register(new FunctionTableRenderer())
+            .register(new LockingClauseRenderer());
     }
 }

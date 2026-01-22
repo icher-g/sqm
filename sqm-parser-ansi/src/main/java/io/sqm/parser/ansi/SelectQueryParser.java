@@ -123,6 +123,15 @@ public class SelectQueryParser implements Parser<SelectQuery> {
             q.offset(lor.value().offset());
         }
 
+        // Locking clause (FOR UPDATE, FOR SHARE, etc.)
+        if (cur.match(TokenType.FOR)) {
+            var lockFor = ctx.parse(LockingClause.class, cur);
+            if (lockFor.isError()) {
+                return error(lockFor);
+            }
+            q.lockFor(lockFor.value());
+        }
+
         return ok(q);
     }
 

@@ -102,6 +102,7 @@ public final class Parsers {
             .register(new RegexPredicateParser())
             .register(new IsDistinctFromPredicateParser())
             .register(new LateralParser())
-            .register(new FunctionTableParser());
+            .register(new FunctionTableParser())
+            .register(new LockingClauseParser());
     }
 }

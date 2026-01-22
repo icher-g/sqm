@@ -17,6 +17,7 @@ import io.sqm.core.*;
     @JsonSubTypes.Type(value = LimitOffset.Impl.class, name = "limitOffset"),
     @JsonSubTypes.Type(value = WindowDef.Impl.class, name = "window"),
     @JsonSubTypes.Type(value = PartitionBy.Impl.class, name = "partitionBy"),
+    @JsonSubTypes.Type(value = LockingClause.Impl.class, name = "lockFor"),
 })
 public abstract class NodeMixin extends CommonJsonMixin {
 }

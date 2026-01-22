@@ -1,6 +1,7 @@
 package io.sqm.core.walk;
 
 import io.sqm.core.CteDef;
+import io.sqm.core.LockingClause;
 import io.sqm.core.TypeName;
 import io.sqm.core.WhenThen;
 
@@ -81,5 +82,13 @@ public interface StatementVisitor<R> {
      * @return visitor result
      */
     R visitTypeName(TypeName typeName);
+
+    /**
+     * Visits a PostgreSQL SELECT locking clause.
+     *
+     * @param clause locking clause node
+     * @return result produced by the visitor
+     */
+    R visitLockingClause(LockingClause clause);
 }
 

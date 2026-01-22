@@ -274,6 +274,47 @@ public non-sealed interface SelectQuery extends Query {
     SelectQuery offset(long offset);
 
     /**
+     * Returns the locking clause associated with this SELECT query.
+     *
+     * <p>If present, the locking clause controls row-level locking behavior
+     * during query execution.</p>
+     *
+     * @return locking clause
+     */
+    LockingClause lockFor();
+
+    /**
+     * Returns SELECT query with the given locking clause.
+     *
+     * <p>The locking clause replaces any existing locking clause.</p>
+     *
+     * @param lockingClause locking clause to apply
+     * @return this.
+     */
+    SelectQuery lockFor(LockingClause lockingClause);
+
+    /**
+     * Sets a locking clause based on the provided parameters.
+     *
+     * <p>This is a convenience method equivalent to creating a
+     * {@link LockingClause} via {@link LockingClause#of(LockMode, List, boolean, boolean)}
+     * and applying it to the query.</p>
+     *
+     * <p>Example:</p>
+     * <pre>
+     * select()
+     *     .lockFor(update(), ofTables("t1", "t2"), false, true);
+     * </pre>
+     *
+     * @param mode       lock mode
+     * @param ofTables   tables affected by the lock, empty list means all tables
+     * @param nowait     whether NOWAIT is specified
+     * @param skipLocked whether SKIP LOCKED is specified
+     * @return this.
+     */
+    SelectQuery lockFor(LockMode mode, List<LockTarget> ofTables, boolean nowait, boolean skipLocked);
+
+    /**
      * Accepts a {@link NodeVisitor} and dispatches control to the
      * visitor method corresponding to the concrete subtype
      *
