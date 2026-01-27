@@ -5,6 +5,7 @@ import io.sqm.core.Table;
 import io.sqm.core.TableRef;
 import io.sqm.parser.TableRefParser;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import org.junit.jupiter.api.Assertions;
@@ -15,9 +16,10 @@ class TableRefParserTest {
 
     private final ParseContext ctx = ParseContext.of(new AnsiSpecs());
     private final TableRefParser parser = new TableRefParser();
+    private final IdentifierQuoting quoting = IdentifierQuoting.of('"');
 
     private ParseResult<? extends TableRef> parse(String sql) {
-        return ctx.parse(parser, Cursor.of(sql));
+        return ctx.parse(parser, Cursor.of(sql, quoting));
     }
 
     @Test

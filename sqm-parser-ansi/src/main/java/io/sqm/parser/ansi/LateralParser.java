@@ -7,6 +7,8 @@ import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import static io.sqm.parser.spi.ParseResult.error;
+
 public class LateralParser implements MatchableParser<Lateral> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -17,9 +19,7 @@ public class LateralParser implements MatchableParser<Lateral> {
      */
     @Override
     public ParseResult<? extends Lateral> parse(Cursor cur, ParseContext ctx) {
-        throw new UnsupportedOperationException(
-            "LATERAL is not supported by ANSI SQL parser"
-        );
+        return error("LATERAL is not supported by ANSI SQL parser", -1);
     }
 
     /**

@@ -1,4 +1,4 @@
-package io.sqm.render;
+package io.sqm.render.defaults;
 
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.SqlDialect;

@@ -3,7 +3,7 @@ package io.sqm.render.ansi; // adjust to your test package
 import io.sqm.core.TimeZoneSpec;
 import io.sqm.core.TypeKeyword;
 import io.sqm.core.TypeName;
-import io.sqm.render.DefaultSqlWriter;
+import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.Test;
@@ -82,7 +82,7 @@ public class TypeNameRendererTest {
     }
 
     @Test
-    void rejectsArrayDimsInAnsiRenderer() {
+    void rendersArrayDimsInAnsiRenderer() {
         var node = TypeName.of(
             List.of("text"),
             null,
@@ -92,16 +92,13 @@ public class TypeNameRendererTest {
         );
 
         var w = new DefaultSqlWriter(RenderContext.of(new AnsiDialect()));
+        renderer.render(node, null, w);
 
-        var ex = assertThrows(UnsupportedOperationException.class,
-            () -> renderer.render(node, null, w));
-
-        // Optional: keep message assertion loose so refactors don’t break tests
-        assertTrue(ex.getMessage() == null || ex.getMessage().toLowerCase().contains("array"));
+        assertEquals("text[][]", w.toText(List.of()).sql());
     }
 
     @Test
-    void rejectsTimeZoneSpecInAnsiRenderer_withTimeZone() {
+    void rendersTimeZoneSpecInAnsiRenderer_withTimeZone() {
         var node = TypeName.of(
             List.of("timestamp"),
             null,
@@ -111,15 +108,13 @@ public class TypeNameRendererTest {
         );
 
         var w = new DefaultSqlWriter(RenderContext.of(new AnsiDialect()));
+        renderer.render(node, null, w);
 
-        var ex = assertThrows(UnsupportedOperationException.class,
-            () -> renderer.render(node, null, w));
-
-        assertTrue(ex.getMessage() == null || ex.getMessage().toLowerCase().contains("time zone"));
+        assertEquals("timestamp('3') with time zone", w.toText(List.of()).sql());
     }
 
     @Test
-    void rejectsTimeZoneSpecInAnsiRenderer_withoutTimeZone() {
+    void rendersTimeZoneSpecInAnsiRenderer_withoutTimeZone() {
         var node = TypeName.of(
             List.of("timestamp"),
             null,
@@ -129,10 +124,8 @@ public class TypeNameRendererTest {
         );
 
         var w = new DefaultSqlWriter(RenderContext.of(new AnsiDialect()));
+        renderer.render(node, null, w);
 
-        var ex = assertThrows(UnsupportedOperationException.class,
-            () -> renderer.render(node, null, w));
-
-        assertTrue(ex.getMessage() == null || ex.getMessage().toLowerCase().contains("time zone"));
+        assertEquals("timestamp without time zone", w.toText(List.of()).sql());
     }
 }

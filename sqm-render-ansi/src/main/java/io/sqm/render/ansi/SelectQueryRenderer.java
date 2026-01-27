@@ -22,7 +22,7 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
         // SELECT
         w.append("SELECT");
         if (node.distinct() != null) {
-            w.space().append("DISTINCT");
+            w.space().append(node.distinct());
         }
 
         var ps = ctx.dialect().paginationStyle();

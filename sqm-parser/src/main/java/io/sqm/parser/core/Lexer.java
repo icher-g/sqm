@@ -1,5 +1,7 @@
 package io.sqm.parser.core;
 
+import io.sqm.parser.spi.IdentifierQuoting;
+
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,6 +58,7 @@ public final class Lexer {
         KEYWORDS.put("ELSE", ELSE);
         KEYWORDS.put("END", END);
         KEYWORDS.put("WITH", WITH);
+        KEYWORDS.put("WITHOUT", WITHOUT);
         KEYWORDS.put("RECURSIVE", RECURSIVE);
         KEYWORDS.put("SELECT", SELECT);
         KEYWORDS.put("FROM", FROM);
@@ -98,19 +101,22 @@ public final class Lexer {
         KEYWORDS.put("FOR", FOR);
         KEYWORDS.put("UPDATE", UPDATE);
         KEYWORDS.put("SHARE", SHARE);
+        KEYWORDS.put("KEY", KEY);
         KEYWORDS.put("OF", OF);
         KEYWORDS.put("NOWAIT", NOWAIT);
         KEYWORDS.put("SKIP", SKIP);
         KEYWORDS.put("LOCKED", LOCKED);
     }
 
+    private final IdentifierQuoting identifierQuoting;
     private final String s;
     private final int len;
     private int pos = 0;
 
-    public Lexer(String s) {
+    public Lexer(String s, IdentifierQuoting identifierQuoting) {
         this.s = s;
         this.len = s.length();
+        this.identifierQuoting = identifierQuoting;
     }
 
     /**
@@ -119,8 +125,8 @@ public final class Lexer {
      * @param s a string to convert.
      * @return a list of tokens.
      */
-    public static List<Token> lexAll(String s) {
-        Lexer lx = new Lexer(s);
+    public static List<Token> lexAll(String s, IdentifierQuoting identifierQuoting) {
+        Lexer lx = new Lexer(s, identifierQuoting);
         List<Token> out = new ArrayList<>();
         for (Token t = lx.next(); t.type() != EOF; t = lx.next()) {
             out.add(t);
@@ -160,7 +166,7 @@ public final class Lexer {
 
         // parameters
         if (c == '?') {
-            char n = peek();
+            char n = peekNext();
             if (n == '|' || n == '&') {
                 pos += 2;
                 return new Token(OPERATOR, "?" + n, start);
@@ -169,33 +175,21 @@ public final class Lexer {
             return new Token(QMARK, "?", start);
         }
 
-        if (c == '$') {
-            int j = pos + 1;
-            if (Character.isDigit(s.charAt(j))) {
-                Matcher m = NUM.matcher(s).region(j, len);
-                if (m.lookingAt()) {
-                    String num = m.group();
-                    pos = j + num.length();
-                    return new Token(PARAM_POS, num, start);
-                }
+        // : OR :: tokens
+        if (c == ':') {
+            if (peekNext() == ':') {
+                pos += 2;
+                return new Token(DOUBLE_COLON, "::", start);
             }
-        }
-
-        if (c == ':' || c == '@') {
-            int j = pos + 1;
-            while (j < len && isIdentifierPart(s.charAt(j))) j++;
-            if (j > pos + 1) {
-                String name = s.substring(pos + 1, j);
-                // parameter cannot start with a digit.
-                if (!Character.isDigit(name.charAt(0))) {
-                    pos = j;
-                    return new Token(PARAM_NAMED, name, start);
-                }
-            }
+            pos++;
+            return new Token(COLON, ":", start);
         }
 
         // punctuation/operators
         switch (c) {
+            case '$':
+                pos++;
+                return new Token(DOLLAR, "$", start);
             case '.':
                 pos++;
                 return new Token(DOT, ".", start);
@@ -213,9 +207,9 @@ public final class Lexer {
                 return new Token(OPERATOR, "+", start);
             case '-':
                 // JSON operators: -> and ->>
-                if (peek() == '>') {
+                if (peekNext() == '>') {
                     pos++;
-                    if (peek() == '>') {
+                    if (peekNext() == '>') {
                         pos += 2;
                         return new Token(OPERATOR, "->>", start);
                     }
@@ -238,9 +232,9 @@ public final class Lexer {
                 return new Token(OPERATOR, "^", start);
             case '#':
                 // JSON path operators: #> and #>>
-                if (peek() == '>') {
+                if (peekNext() == '>') {
                     pos++;
-                    if (peek() == '>') {
+                    if (peekNext() == '>') {
                         pos += 2;
                         return new Token(OPERATOR, "#>>", start);
                     }
@@ -250,28 +244,28 @@ public final class Lexer {
                 break;
             case '@':
                 // containment operator: @>
-                if (peek() == '>') {
+                if (peekNext() == '>') {
                     pos += 2;
                     return new Token(OPERATOR, "@>", start);
                 }
                 break;
             case '|':
                 // Concatenation and array concat: ||
-                if (peek() == '|') {
+                if (peekNext() == '|') {
                     pos += 2;
                     return new Token(OPERATOR, "||", start);
                 }
                 break;
             case '&':
                 // Array overlap: &&
-                if (peek() == '&') {
+                if (peekNext() == '&') {
                     pos += 2;
                     return new Token(OPERATOR, "&&", start);
                 }
                 break;
             case '~':
                 // regex operators: ~ and ~*
-                if (peek() == '*') {
+                if (peekNext() == '*') {
                     pos += 2;
                     return new Token(OPERATOR, "~*", start);
                 }
@@ -281,14 +275,14 @@ public final class Lexer {
                 pos++;
                 return new Token(OPERATOR, "=", start);
             case '!':
-                if (peek() == '=') {
+                if (peekNext() == '=') {
                     pos += 2;
                     return new Token(OPERATOR, "!=", start);
                 }
                 // regex operators: !~ and !~*
-                if (peek() == '~') {
+                if (peekNext() == '~') {
                     pos++;
-                    if (peek() == '*') {
+                    if (peekNext() == '*') {
                         pos += 2;
                         return new Token(OPERATOR, "!~*", start);
                     }
@@ -298,41 +292,48 @@ public final class Lexer {
                 break;
             case '<':
                 // containment operator: <@
-                if (peek() == '@') {
+                if (peekNext() == '@') {
                     pos += 2;
                     return new Token(OPERATOR, "<@", start);
                 }
-                if (peek() == '>') {
+                if (peekNext() == '>') {
                     pos += 2;
                     return new Token(OPERATOR, "<>", start);
                 }
-                if (peek() == '=') {
+                if (peekNext() == '=') {
                     pos += 2;
                     return new Token(OPERATOR, "<=", start);
                 }
                 pos++;
                 return new Token(OPERATOR, "<", start);
             case '>':
-                if (peek() == '=') {
+                if (peekNext() == '=') {
                     pos += 2;
                     return new Token(OPERATOR, ">=", start);
                 }
                 pos++;
                 return new Token(OPERATOR, ">", start);
             case '"':
-                return readQuotedIdentifier();
-            case '[':
-                var t = readBracketIdentifier();
-                if (t.lexeme().isBlank()) {
-                    pos--; // return back closing bracket ]
-                    return new Token(LBRACKET, "[", start);
+                if (identifierQuoting.supports('"')) {
+                    return readQuotedIdentifier();
                 }
-                return t;
+                pos++;
+                return new Token(QUOTE, "\"", start);
+            case '[':
+                if (identifierQuoting.supports('[')) {
+                    return readBracketIdentifier();
+                }
+                pos++;
+                return new Token(LBRACKET, "[", start);
             case ']':
                 pos++;
                 return new Token(RBRACKET, "]", start);
             case '`':
-                return readBacktickIdentifier();
+                if (identifierQuoting.supports('`')) {
+                    return readBacktickIdentifier();
+                }
+                pos++;
+                return new Token(BACKTICK, "`", start);
         }
 
         // number?
@@ -402,7 +403,7 @@ public final class Lexer {
         }
     }
 
-    private char peek() {
+    private char peekNext() {
         return (pos + 1 < len) ? s.charAt(pos + 1) : '\0';
     }
 

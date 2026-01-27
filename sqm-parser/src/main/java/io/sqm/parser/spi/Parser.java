@@ -2,8 +2,15 @@ package io.sqm.parser.spi;
 
 import io.sqm.core.Node;
 import io.sqm.core.repos.Handler;
+import io.sqm.core.utils.Pair;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
 
 /**
  * A base interface for all spec parsers.
@@ -33,7 +40,7 @@ public interface Parser<T extends Node> extends Handler<T> {
      * Parses an alias if available.
      *
      * @param cur a cursor containing tokens to parse.
-     * @return an alis if exists or null otherwise.
+     * @return an alias if exists or null otherwise.
      */
     default String parseAlias(Cursor cur) {
         if (cur.consumeIf(TokenType.AS)) {
@@ -44,6 +51,45 @@ public interface Parser<T extends Node> extends Handler<T> {
         }
         // no alias
         return null;
+    }
+
+    default Pair<String, List<String>> parseColumnAliases(Cursor cur) {
+        String alias = null;
+        List<String> columnNames = null;
+
+        if (cur.consumeIf(TokenType.AS) || cur.match(TokenType.IDENT)) {
+            alias = cur.expect("Expected identifier", TokenType.IDENT).lexeme();
+            if (cur.consumeIf(TokenType.LPAREN)) {
+                columnNames = new ArrayList<>();
+                do {
+                    var column = cur.advance().lexeme();
+                    columnNames.add(column);
+                } while (cur.consumeIf(TokenType.COMMA));
+                cur.expect("Expected )", TokenType.RPAREN);
+            }
+        }
+
+        return new Pair<>(alias, columnNames);
+    }
+
+    /**
+     * Parses a list of items delimited by comma.
+     *
+     * @param clazz a type of the item.
+     * @param cur   a Cursor instance that contains a list of tokens representing the spec to be parsed.
+     * @param ctx   a parser context containing parsers and lookups.
+     * @return a list of parsed items.
+     */
+    default <C extends Node> ParseResult<? extends List<C>> parseItems(Class<C> clazz, Cursor cur, ParseContext ctx) {
+        List<C> items = new ArrayList<>();
+        do {
+            var result = ctx.parse(clazz, cur);
+            if (!result.ok()) {
+                return error(result);
+            }
+            items.add(result.value());
+        } while (cur.consumeIf(TokenType.COMMA));
+        return ok(items);
     }
 
     /**

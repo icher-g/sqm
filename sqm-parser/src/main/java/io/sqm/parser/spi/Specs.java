@@ -14,4 +14,15 @@ public interface Specs {
      * @return lookups implementation.
      */
     Lookups lookups();
+
+    /**
+     * Returns the identifier quoting rules supported by this SQL dialect.
+     * <p>
+     * The returned {@link IdentifierQuoting} defines how quoted identifiers
+     * are recognized and parsed by the lexer, including the opening and
+     * closing delimiter characters.
+     *
+     * @return the dialect-specific identifier quoting configuration.
+     */
+    IdentifierQuoting identifierQuoting();
 }

@@ -1,8 +1,8 @@
-package io.sqm.render.ansi.spi;
+package io.sqm.render.defaults;
 
 import io.sqm.render.spi.Operators;
 
-public final class AnsiOperators implements Operators {
+public class DefaultOperators implements Operators {
 
     @Override
     public String in() {

@@ -225,5 +225,38 @@ public interface ExpressionVisitor<R> {
      * @return visitor result
      */
     R visitArrayExpr(ArrayExpr expr);
+
+    /**
+     * Visits an {@link ArraySubscriptExpr}.
+     *
+     * <p>This method is invoked for expressions that access an element of an array
+     * using subscript syntax, such as {@code arr[1]}.</p>
+     *
+     * <p>Chained subscripts like {@code arr[1][2]} are represented as nested
+     * {@link ArraySubscriptExpr} nodes and will result in multiple visits,
+     * starting from the outermost expression.</p>
+     *
+     * <p>This visitor method is purely structural and does not imply any
+     * semantic validation, such as index bounds or array dimensionality.
+     * Such checks are dialect- or engine-specific and must be handled separately.</p>
+     *
+     * @param expr the array subscript expression being visited
+     * @return the result of visiting the expression
+     */
+    R visitArraySubscriptExpr(ArraySubscriptExpr expr);
+
+    /**
+     * Visits an {@link ArraySliceExpr}.
+     *
+     * <p>This method is invoked for expressions that slice an array value using
+     * syntax like {@code arr[2:5]}.</p>
+     *
+     * <p>Bounds may be omitted, for example {@code arr[:5]} or {@code arr[2:]}.
+     * The meaning of omitted bounds is dialect-specific and is not validated here.</p>
+     *
+     * @param expr the array slice expression being visited
+     * @return the result of visiting the expression
+     */
+    R visitArraySliceExpr(ArraySliceExpr expr);
 }
 

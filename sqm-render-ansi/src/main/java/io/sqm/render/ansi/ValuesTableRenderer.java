@@ -18,12 +18,7 @@ public class ValuesTableRenderer implements Renderer<ValuesTable> {
         // (VALUES (1, 'A'), (2, 'B')) AS v(id, name)
         w.append("(").append("VALUES").space().append(node.values()).append(")");
 
-        if (node.alias() != null) {
-            w.space().append("AS").space().append(node.alias());
-            if (node.columnAliases() != null) {
-                w.append("(").append(ctx.dialect().formatter().format(node.columnAliases())).append(")");
-            }
-        }
+        renderAliased(node, ctx, w);
     }
 
     /**

@@ -6,7 +6,13 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+import java.util.Locale;
+import java.util.Set;
+
 public class TypeNameRenderer implements Renderer<TypeName> {
+
+    private static final Set<String> validTimeTypes = Set.of("time", "timestamp");
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *
@@ -29,12 +35,25 @@ public class TypeNameRenderer implements Renderer<TypeName> {
             w.append(")");
         }
 
-        if (node.arrayDims() > 0) {
-            throw new UnsupportedOperationException("ANSI renderer does not support array type syntax []");
+        for (int i = 0; i < node.arrayDims(); i++) {
+            w.append("[]");
         }
 
         if (node.timeZoneSpec() != TimeZoneSpec.NONE) {
-            throw new UnsupportedOperationException("ANSI renderer does not support WITH/WITHOUT TIME ZONE type clauses");
+            if (node.qualifiedName().isEmpty()) {
+                throw new IllegalArgumentException("Timezone spec is only supported for qualified names.");
+            }
+
+            var name = node.qualifiedName().getLast().toLowerCase(Locale.ROOT);
+            if (!validTimeTypes.contains(name)) {
+                throw new IllegalArgumentException("Timezone spec is only supported for time types.");
+            }
+
+            switch (node.timeZoneSpec()) {
+                case WITH_TIME_ZONE -> w.space().append("with time zone");
+                case WITHOUT_TIME_ZONE -> w.space().append("without time zone");
+                default -> throw new IllegalStateException("Unexpected value: " + node.timeZoneSpec());
+            }
         }
     }
 

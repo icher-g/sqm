@@ -1,7 +1,7 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.InPredicate;
-import io.sqm.render.DefaultSqlWriter;
+import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.RenderContext;

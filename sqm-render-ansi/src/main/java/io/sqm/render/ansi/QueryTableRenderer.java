@@ -16,12 +16,7 @@ public class QueryTableRenderer implements Renderer<QueryTable> {
     @Override
     public void render(QueryTable node, RenderContext ctx, SqlWriter w) {
         w.append(node.query(), true, true);
-
-        var alias = node.alias();
-        if (alias != null && !alias.isBlank()) {
-            var quoter = ctx.dialect().quoter();
-            w.space().append("AS").space().append(quoter.quoteIfNeeded(alias));
-        }
+        renderAliased(node, ctx, w);
     }
 
     /**

@@ -2,6 +2,8 @@ package io.sqm.core;
 
 import io.sqm.core.walk.NodeVisitor;
 
+import java.util.List;
+
 /**
  * Select DISTINCT modifier.
  *
@@ -16,8 +18,7 @@ public non-sealed interface DistinctSpec extends Node {
      * <p>This constant corresponds to an ANSI {@code DISTINCT} modifier
      * without any dialect-specific extensions.</p>
      */
-    DistinctSpec TRUE = new Impl();
-
+    DistinctSpec TRUE = new Impl(List.of());
     /**
      * Marker constant representing absence of a DISTINCT specification.
      *
@@ -25,6 +26,29 @@ public non-sealed interface DistinctSpec extends Node {
      * any DISTINCT semantics and behaves as a regular {@code SELECT}.</p>
      */
     DistinctSpec FALSE = null;
+
+    /**
+     * Creates new instance of {@link DistinctSpec} with a list of expressions used in DISTINCT ON (a, b) clause.
+     *
+     * @param items a list of expressions.
+     * @return new instance of {@link DistinctSpec}.
+     */
+    static DistinctSpec on(List<Expression> items) {
+        return new Impl(items);
+    }
+
+    /**
+     * Used by DISTINCT ON clause.
+     * <p>
+     * DISTINCT ON keeps the first row for each unique combination
+     * of the provided expressions, where "first" is defined by ORDER BY.
+     * <p>
+     * Example:
+     * SELECT DISTINCT ON (a, b) a, b, c
+     * FROM t
+     * ORDER BY a, b, c DESC;
+     */
+    List<Expression> items();
 
     /**
      * Accepts a {@link NodeVisitor} and dispatches control to the
@@ -41,7 +65,9 @@ public non-sealed interface DistinctSpec extends Node {
 
     /**
      * A default implementation of the {@link DistinctSpec} interface.
+     *
+     * @param items a list of expressions to be used in DISTINCT ON clause. Can be empty.
      */
-    record Impl() implements DistinctSpec {
+    record Impl(List<Expression> items) implements DistinctSpec {
     }
 }

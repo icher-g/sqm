@@ -49,6 +49,17 @@ public interface ParseContext {
     Lookups lookups();
 
     /**
+     * Returns the identifier quoting rules supported by this SQL dialect.
+     * <p>
+     * The returned {@link IdentifierQuoting} defines how quoted identifiers
+     * are recognized and parsed by the lexer, including the opening and
+     * closing delimiter characters.
+     *
+     * @return the dialect-specific identifier quoting configuration.
+     */
+    IdentifierQuoting identifierQuoting();
+
+    /**
      * Returns the logical parse call stack maintained by this context.
      * <p>
      * Unlike the JVM call stack, this stack contains the sequence of AST types
@@ -82,7 +93,7 @@ public interface ParseContext {
         Cursor cur;
         try {
             parser = parsers().require(type);
-            cur = Cursor.of(spec);
+            cur = Cursor.of(spec, identifierQuoting());
         } catch (Exception e) {
             return error(e.getMessage(), -1);
         }
@@ -100,7 +111,7 @@ public interface ParseContext {
         }
         Cursor cur;
         try {
-            cur = Cursor.of(spec);
+            cur = Cursor.of(spec, identifierQuoting());
         } catch (Exception e) {
             return error(e.getMessage(), -1);
         }
@@ -235,6 +246,69 @@ public interface ParseContext {
             ? MatchResult.notMatched()
             : MatchResult.matched(finalize(cur, result));
     }
+
+    /**
+     * Attempts to parse an infix construct of the given node type, using the
+     * already-parsed left-hand side as input.
+     *
+     * <p>This method is intended for infix and postfix-style grammar constructs
+     * whose parsing depends on an existing left-hand side expression or node,
+     * such as binary operators or postfix operators (for example, PostgreSQL
+     * {@code expr::type}).</p>
+     *
+     * <p>The parser associated with {@code type} must implement both
+     * {@link MatchableParser} and {@link InfixParser}. The {@link MatchableParser}
+     * is used to determine whether the construct can be parsed at the current
+     * cursor position, and the {@link InfixParser} is then used to perform the
+     * actual parsing using the provided left-hand side.</p>
+     *
+     * <p>If the parser does not support this combination, a matched error result
+     * is returned.</p>
+     *
+     * <p>If the parser does not match at the current cursor position, this method
+     * returns {@link MatchResult#notMatched()} without consuming any input.</p>
+     *
+     * <p>Any parsing error thrown by the underlying parser is converted into a
+     * matched error result.</p>
+     *
+     * @param type the node type to be parsed
+     * @param lhs  the already-parsed left-hand side node
+     * @param cur  the cursor positioned at the potential infix operator
+     * @param <O>  the left-hand side node type
+     * @param <T>  the resulting node type
+     * @return a {@link MatchResult} indicating whether parsing was attempted and either succeeded or failed
+     */
+    @SuppressWarnings("unchecked")
+    default <O extends Node, T extends Node> MatchResult<? extends T> parseIfMatch(Class<T> type, O lhs, Cursor cur) {
+        ParseResult<? extends T> result = null;
+        callstack().push(type);
+        try {
+            var parser = parsers().require(type);
+            if (parser instanceof MatchableParser<T> matchableParser && parser instanceof InfixParser<?, ?> infixParser) {
+                if (matchableParser.match(cur, this)) {
+                    var infix = (InfixParser<O, T>) infixParser;
+                    result = infix.parse(lhs, cur, this);
+                }
+            }
+            else {
+                return MatchResult.matched(error(
+                    "Parser " + type.getSimpleName()
+                        + " does not support match(Cursor, ParseContext) or infix parse(lhs, ...)",
+                    0
+                ));
+            }
+        } catch (ParserException e) {
+            return MatchResult.matched(error(e));
+        } catch (Exception e) {
+            return MatchResult.matched(error(e.getMessage(), -1));
+        } finally {
+            callstack().pop();
+        }
+        return (result == null)
+            ? MatchResult.notMatched()
+            : MatchResult.matched(finalize(cur, result));
+    }
+
 
     /**
      * Finalizes parsing by validating the result and ensuring no trailing tokens

@@ -7,6 +7,7 @@ import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 public class NamedParamExprParser implements MatchableParser<NamedParamExpr> {
@@ -19,7 +20,11 @@ public class NamedParamExprParser implements MatchableParser<NamedParamExpr> {
      */
     @Override
     public ParseResult<NamedParamExpr> parse(Cursor cur, ParseContext ctx) {
-        var t = cur.expect("Expected :name", TokenType.PARAM_NAMED);
+        var c = cur.expect("Expected :", TokenType.COLON);
+        var t = cur.expect("Expected identifier after :", TokenType.IDENT);
+        if (!c.isImmediatelyFollowedBy(t)) { // tokens should be aligned.
+            return error("The identifier must be aligned to a :", cur.fullPos());
+        }
         return ok(NamedParamExpr.of(t.lexeme()));
     }
 
@@ -48,6 +53,6 @@ public class NamedParamExprParser implements MatchableParser<NamedParamExpr> {
      */
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
-        return cur.match(TokenType.PARAM_NAMED);
+        return cur.match(TokenType.COLON) && cur.match(TokenType.IDENT, 1) && !cur.match(TokenType.RPAREN, 2); // avoid array slicing [start:end]
     }
 }

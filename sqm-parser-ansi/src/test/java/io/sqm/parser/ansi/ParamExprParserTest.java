@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.*;
+import io.sqm.parser.core.ParserException;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,14 @@ class ParamExprParserTest {
         assertTrue(pr.ok());
         assertInstanceOf(SelectQuery.class, pr.value(), "Expected SelectQuery");
         return (SelectQuery) pr.value();
+    }
+
+    private void parseError(String sql) {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var pr = ctx.parse(Query.class, sql);
+        if (pr.isError()) {
+            throw new ParserException(pr.errorMessage(), pr.problems().getFirst().pos());
+        }
     }
 
     private ComparisonPredicate extractSingleWhereComparison(SelectQuery q) {
@@ -35,6 +44,16 @@ class ParamExprParserTest {
     }
 
     @Test
+    void notAlignedNumberToDollarShouldProduceParsingError() {
+        assertThrows(ParserException.class, () -> parseError("SELECT * FROM t WHERE a = $ 1"));
+    }
+
+    @Test
+    void notAlignedParameterNameToColonShouldProduceParsingError() {
+        assertThrows(ParserException.class, () -> parseError("SELECT * FROM t WHERE a = : name"));
+    }
+
+    @Test
     void parsesNamedParameterWithColonAsNamedExpr() {
         SelectQuery q = parseSelect("SELECT * FROM t WHERE a = :id");
         ComparisonPredicate where = extractSingleWhereComparison(q);
@@ -47,15 +66,8 @@ class ParamExprParserTest {
     }
 
     @Test
-    void parsesNamedParameterWithAtAsNamedExpr() {
-        SelectQuery q = parseSelect("SELECT * FROM t WHERE a = @user_id");
-        ComparisonPredicate where = extractSingleWhereComparison(q);
-
-        Expression right = where.rhs();
-        assertInstanceOf(NamedParamExpr.class, right);
-
-        NamedParamExpr p = (NamedParamExpr) right;
-        assertEquals("user_id", p.name());
+    void parseNamedParameterWithAtShouldFail() {
+        assertThrows(ParserException.class, () -> parseError("SELECT * FROM t WHERE a = @user_id"));
     }
 
     @Test

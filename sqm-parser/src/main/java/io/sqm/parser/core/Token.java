@@ -2,9 +2,10 @@ package io.sqm.parser.core;
 
 /**
  * Represents a token.
- * @param type a token type.
+ *
+ * @param type   a token type.
  * @param lexeme an actual text.
- * @param pos a position in the tokens list.
+ * @param pos    a position in the tokens list.
  */
 public record Token(TokenType type, String lexeme, int pos) {
     @Override
@@ -12,11 +13,38 @@ public record Token(TokenType type, String lexeme, int pos) {
         return type + (lexeme != null ? "[" + lexeme + "]" : "") + "@" + pos;
     }
 
-    public int start() {
-        return pos;
+    /**
+     * Returns {@code true} if the given token starts exactly at the end of this token,
+     * meaning the two tokens are lexically adjacent with no intervening whitespace
+     * or other characters.
+     *
+     * <p>This is typically used to recognize composite lexemes such as:
+     * <ul>
+     *   <li>{@code $1} – positional parameters</li>
+     *   <li>{@code :name} – named parameters</li>
+     *   <li>{@code ::} – PostgreSQL cast operator</li>
+     * </ul>
+     *
+     * @param next the token expected to immediately follow this token
+     * @return {@code true} if {@code next} immediately follows this token
+     */
+    public boolean isImmediatelyFollowedBy(Token next) {
+        return pos + 1 == next.pos;
     }
 
-    public int end() {
-        return pos + lexeme.length();
+    /**
+     * Returns {@code true} if the given token ends exactly at the start of this token,
+     * meaning the two tokens are lexically adjacent with no intervening whitespace
+     * or other characters.
+     *
+     * <p>This is the inverse of {@link #isImmediatelyFollowedBy(Token)} and is useful
+     * when checking whether this token forms a composite lexeme with a preceding token.
+     *
+     * @param prev the token expected to immediately precede this token
+     * @return {@code true} if {@code prev} immediately precedes this token
+     */
+    public boolean isImmediatelyPrecededBy(Token prev) {
+        return prev.pos + 1 == pos;
     }
+
 }

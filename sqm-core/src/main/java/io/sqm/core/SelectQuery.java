@@ -230,7 +230,7 @@ public non-sealed interface SelectQuery extends Query {
     DistinctSpec distinct();
 
     /**
-     * Returns a copy of this SELECT query with the given DISTINCT specification applied.
+     * Sets SELECT query with the given DISTINCT specification applied.
      *
      * <p>Passing {@code null} clears any existing DISTINCT specification.</p>
      *
@@ -239,9 +239,28 @@ public non-sealed interface SelectQuery extends Query {
      * during rendering or validation.</p>
      *
      * @param spec DISTINCT specification to apply, or {@code null} to remove DISTINCT
-     * @return new {@link SelectQuery} instance with the updated DISTINCT specification
+     * @return this.
      */
     SelectQuery distinct(DistinctSpec spec);
+
+
+    /**
+     * Sets SELECT query with the given DISTINCT ON specification provided by the list of expressions.
+     *
+     * @param items a list of expressions to be used in DISTINCT ON (e1, e2) clause.
+     * @return this.
+     */
+    default SelectQuery distinct(Expression... items) {
+        return distinct(List.of(items));
+    }
+
+    /**
+     * Sets SELECT query with the given DISTINCT ON specification provided by the list of expressions.
+     *
+     * @param items a list of expressions to be used in DISTINCT ON (e1, e2) clause.
+     * @return this.
+     */
+    SelectQuery distinct(List<Expression> items);
 
     /**
      * Gets a limit of the query if there is any or NULL otherwise.

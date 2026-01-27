@@ -13,7 +13,7 @@ import java.util.List;
  *     }
  * </pre>
  */
-public non-sealed interface RowListExpr extends ValueSet {
+public non-sealed interface RowListExpr extends RowValues {
     /**
      * Creates a list of rows expressions. {@code a IN (1, 2, 3, 4) | (a,b) IN ((1,2), (3,4))}
      *

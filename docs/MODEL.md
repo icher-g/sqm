@@ -16,6 +16,8 @@ Node
 │  ├─ CaseExpr
 │  ├─ CastExpr
 │  ├─ ArrayExpr
+│  ├─ ArraySubscriptExpr
+│  ├─ ArraySliceExpr
 │  ├─ ColumnExpr
 │  ├─ FunctionExpr
 │  │  └─ FunctionExpr.Arg
@@ -120,6 +122,8 @@ graph TD
   Expression --> CaseExpr
   Expression --> CastExpr
   Expression --> ArrayExpr
+  Expression --> ArraySubscriptExpr
+  Expression --> ArraySliceExpr
   Expression --> ColumnExpr
   Expression --> FunctionExpr
   Expression --> ParamExpr
@@ -310,6 +314,12 @@ graph TD
 
 - **ArrayExpr**
   Array constructor expression (`ARRAY[<elem1>, <elem2>, ...]`). Used for array expressions and dialect-specific array operators.
+
+- **ArraySubscriptExpr**
+  Array element access expression (`array[index]`). Represents subscript notation for accessing individual array elements. Supports chained subscripts for multidimensional arrays (e.g., `array[1][2]`).
+
+- **ArraySliceExpr**
+  Array slice expression (`array[lower:upper]`). Represents slice notation for extracting a subarray. Either bound may be omitted (e.g., `array[:5]` or `array[2:]`), with semantics determined by the SQL dialect.
 
 ---
 

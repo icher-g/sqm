@@ -217,6 +217,18 @@ public class SelectQueryImpl implements SelectQuery {
     }
 
     /**
+     * Sets SELECT query with the given DISTINCT ON specification provided by the list of expressions.
+     *
+     * @param items a list of expressions to be used in DISTINCT ON (e1, e2) clause.
+     * @return this.
+     */
+    @Override
+    public SelectQuery distinct(List<Expression> items) {
+        this.distinctSpec = DistinctSpec.on(items);
+        return this;
+    }
+
+    /**
      * Gets a limit of the query if there is any or NULL otherwise.
      *
      * @return a value of the limit.

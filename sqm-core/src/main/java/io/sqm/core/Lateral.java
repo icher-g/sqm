@@ -51,6 +51,8 @@ public non-sealed interface Lateral extends TableRef {
 
     /**
      * Default implementation.
+     *
+     * @param inner an item to wrap.
      */
     record Impl(TableRef inner) implements Lateral {
 

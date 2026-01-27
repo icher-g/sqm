@@ -4,6 +4,7 @@ import io.sqm.core.ColumnExpr;
 import io.sqm.core.IsDistinctFromPredicate;
 import io.sqm.core.LiteralExpr;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -138,7 +139,7 @@ class IsDistinctFromPredicateParserTest {
     void testInfixParsing() {
         var parser = new IsDistinctFromPredicateParser();
         var lhs = ColumnExpr.of("a");
-        var cur = Cursor.of("IS DISTINCT FROM b");
+        var cur = Cursor.of("IS DISTINCT FROM b", IdentifierQuoting.of('"'));
 
         var result = parser.parse(lhs, cur, ctx);
 
