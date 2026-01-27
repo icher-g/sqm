@@ -103,6 +103,9 @@ public final class Parsers {
             .register(new IsDistinctFromPredicateParser())
             .register(new LateralParser())
             .register(new FunctionTableParser())
-            .register(new LockingClauseParser());
+            .register(new LockingClauseParser())
+            .register(new ArraySubscriptExprParser())
+            .register(new ArraySliceExprParser())
+            .register(new DistinctSpecParser());
     }
 }

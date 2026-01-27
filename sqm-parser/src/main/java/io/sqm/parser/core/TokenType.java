@@ -7,16 +7,19 @@ public enum TokenType {
     // literals & names
     IDENT, NUMBER, STRING,
     QMARK,          // ? - might be an anonymous parameter
-    PARAM_POS,      // $1 - positional parameter
-    PARAM_NAMED,    // :name or @name - named parameter
 
     // punctuation
     DOT,
     COMMA,
-    LPAREN,   // (
-    RPAREN,   // )
-    LBRACKET, // [
-    RBRACKET, // ]
+    LPAREN,         // (
+    RPAREN,         // )
+    LBRACKET,       // [
+    RBRACKET,       // ]
+    BACKTICK,       // `
+    QUOTE,          // "
+    COLON,          // :
+    DOUBLE_COLON,   // ::
+    DOLLAR,         // $
 
     // operators
     OPERATOR,
@@ -37,11 +40,11 @@ public enum TokenType {
     CASE, WHEN, THEN, ELSE, END,
 
     // query
-    WITH, RECURSIVE, SELECT, FROM, LATERAL, WHERE, GROUP, HAVING, ORDER, LIMIT, OFFSET, FETCH, NEXT, ROW, ROWS, ONLY, BY, TOP,
+    WITH, WITHOUT, RECURSIVE, SELECT, FROM, LATERAL, WHERE, GROUP, HAVING, ORDER, LIMIT, OFFSET, FETCH, NEXT, ROW, ROWS, ONLY, BY, TOP,
     UNION, INTERSECT, EXCEPT, ALL, VALUES,
 
     // Locking clause
-    FOR, UPDATE, SHARE, OF, NOWAIT, SKIP, LOCKED,
+    FOR, UPDATE, SHARE, OF, NOWAIT, SKIP, LOCKED, KEY,
 
     EOF
 }

@@ -29,9 +29,9 @@ public non-sealed interface LockingClause extends Node {
     /**
      * Creates a locking clause instance.
      *
-     * @param mode lock mode
-     * @param ofTables lock targets specified in FOR ... OF clause, or empty for all tables
-     * @param nowait whether NOWAIT is specified
+     * @param mode       lock mode
+     * @param ofTables   lock targets specified in FOR ... OF clause, or empty for all tables
+     * @param nowait     whether NOWAIT is specified
      * @param skipLocked whether SKIP LOCKED is specified
      * @return locking clause
      */
@@ -96,6 +96,11 @@ public non-sealed interface LockingClause extends Node {
 
     /**
      * Default immutable implementation.
+     *
+     * @param mode       lock mode
+     * @param ofTables   lock targets specified in FOR ... OF clause, or empty for all tables
+     * @param nowait     whether NOWAIT is specified
+     * @param skipLocked whether SKIP LOCKED is specified
      */
     record Impl(
         LockMode mode,

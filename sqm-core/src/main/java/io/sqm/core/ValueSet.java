@@ -5,7 +5,7 @@ import io.sqm.core.match.ValueSetMatch;
 /**
  * Marker for value-set expressions (expr.g., IN (1,2,3), (a,b) IN ((1,2),(3,4)), IN (SELECT ...)).
  */
-public sealed interface ValueSet extends Expression permits RowExpr, QueryExpr, RowListExpr {
+public sealed interface ValueSet extends Expression permits QueryExpr, RowValues {
     /**
      * Creates a new matcher for the current {@link ValueSet}.
      *

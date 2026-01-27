@@ -19,10 +19,14 @@
     <file url="file://$PROJECT_DIR$/sqm-json/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-parser-ansi/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-parser-ansi/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-parser-postgresql/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-parser-postgresql/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-parser/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-parser/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-render-ansi/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-render-ansi/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-render-postgresql/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-render-postgresql/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-render/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-render/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />

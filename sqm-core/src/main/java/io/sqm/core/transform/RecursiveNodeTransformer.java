@@ -1086,6 +1086,63 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
+     * Visits an {@link ArraySubscriptExpr} and applies this visitor to its child expressions.
+     *
+     * <p>The base expression and the index expression are both visited recursively.
+     * If either child expression is transformed as a result of visiting, a new
+     * {@link ArraySubscriptExpr} instance is created with the updated children.</p>
+     *
+     * <p>If neither the base expression nor the index expression changes, the
+     * original node instance is returned to preserve structural sharing and
+     * avoid unnecessary object creation.</p>
+     *
+     * <p>This method performs a purely structural transformation and does not
+     * enforce any semantic rules related to array indexing, such as bounds
+     * checking or dimensionality validation.</p>
+     *
+     * @param expr the array subscript expression to visit
+     * @return the original expression if unchanged, or a new transformed expression
+     */
+    @Override
+    public Node visitArraySubscriptExpr(ArraySubscriptExpr expr) {
+        var baseExpr = apply(expr.base());
+        var index = apply(expr.index());
+        if (baseExpr != expr.base() || index != expr.index()) {
+            return ArraySubscriptExpr.of(baseExpr, index);
+        }
+        return expr;
+    }
+
+    /**
+     * Visits an {@link ArraySliceExpr} and applies this transformer to its child expressions.
+     *
+     * <p>The base expression is always transformed. The optional {@code from} and {@code to}
+     * bounds are transformed when present.</p>
+     *
+     * <p>If any child changes as a result of transformation, a new {@link ArraySliceExpr}
+     * instance is created. Otherwise, the original node instance is returned to preserve
+     * structural sharing and avoid unnecessary allocations.</p>
+     *
+     * <p>This method performs a structural transformation only and does not enforce
+     * dialect-specific rules for array slicing.</p>
+     *
+     * @param expr the array slice expression to visit
+     * @return the original expression if unchanged, or a new transformed expression
+     */
+    @Override
+    public Node visitArraySliceExpr(ArraySliceExpr expr) {
+        var baseExpr = apply(expr.base());
+        var fromExpr = apply(expr.from().orElse(null));
+        var toExpr = apply(expr.to().orElse(null));
+
+        boolean changed = baseExpr != expr.base() || fromExpr != expr.from().orElse(null) || toExpr != expr.to().orElse(null);
+        if (changed) {
+            return ArraySliceExpr.of(baseExpr, fromExpr, toExpr);
+        }
+        return expr;
+    }
+
+    /**
      * Transforms a {@link TypeName} node.
      *
      * <p>The default transformation preserves the {@link TypeName} instance itself,

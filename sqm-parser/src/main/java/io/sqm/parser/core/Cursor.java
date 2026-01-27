@@ -1,5 +1,7 @@
 package io.sqm.parser.core;
 
+import io.sqm.parser.spi.IdentifierQuoting;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -50,8 +52,8 @@ public final class Cursor {
      * @param spec a specification.
      * @return a new instance of {@link Cursor}.
      */
-    public static Cursor of(String spec) {
-        var ts = Lexer.lexAll(spec);
+    public static Cursor of(String spec, IdentifierQuoting identifierQuoting) {
+        var ts = Lexer.lexAll(spec, identifierQuoting);
         return new Cursor(ts);
     }
 

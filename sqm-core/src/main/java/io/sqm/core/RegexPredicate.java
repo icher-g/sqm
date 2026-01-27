@@ -94,6 +94,11 @@ public non-sealed interface RegexPredicate extends Predicate {
 
     /**
      * Default immutable implementation of {@link RegexPredicate}.
+     *
+     * @param mode    the regular expression matching mode to use
+     * @param value   the value expression being matched
+     * @param pattern the regular expression pattern expression
+     * @param negated whether the predicate is negated
      */
     record Impl(
         RegexMode mode,

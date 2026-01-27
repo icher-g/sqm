@@ -105,12 +105,16 @@ public non-sealed interface FunctionTable extends AliasedTableRef {
 
     /**
      * Default implementation.
+     *
+     * @param function      the function call
+     * @param columnAliases a list of column names to add.
+     * @param alias         an alias to add.
      */
     record Impl(FunctionExpr function, List<String> columnAliases, String alias) implements FunctionTable {
 
         public Impl {
             Objects.requireNonNull(function, "function");
-            columnAliases = columnAliases == null ? List.of() : List.copyOf(columnAliases);
+            columnAliases = columnAliases == null ? null : List.copyOf(columnAliases);
         }
     }
 }

@@ -3,6 +3,7 @@ package io.sqm.parser.ansi;
 import io.sqm.core.*;
 import io.sqm.parser.JoinParser;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import org.junit.jupiter.api.Assertions;
@@ -13,9 +14,10 @@ class JoinParserTest {
 
     private final ParseContext ctx = ParseContext.of(new AnsiSpecs());
     private final JoinParser parser = new JoinParser();
+    private final IdentifierQuoting quoting = IdentifierQuoting.of('"');
 
     private ParseResult<? extends Join> parse(String sql) {
-        return ctx.parse(parser, Cursor.of(sql));
+        return ctx.parse(parser, Cursor.of(sql, quoting));
     }
 
     @Test

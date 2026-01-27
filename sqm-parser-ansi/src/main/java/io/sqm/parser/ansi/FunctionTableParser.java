@@ -6,6 +6,8 @@ import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import static io.sqm.parser.spi.ParseResult.error;
+
 public class FunctionTableParser implements MatchableParser<FunctionTable> {
     /**
      * Performs a look-ahead test to determine whether this parser is applicable
@@ -34,9 +36,7 @@ public class FunctionTableParser implements MatchableParser<FunctionTable> {
      */
     @Override
     public ParseResult<? extends FunctionTable> parse(Cursor cur, ParseContext ctx) {
-        throw new UnsupportedOperationException(
-            "Function call in FROM statement is not supported by ANSI SQL parser"
-        );
+        return error("Function call in FROM statement is not supported by ANSI SQL parser", -1);
     }
 
     /**

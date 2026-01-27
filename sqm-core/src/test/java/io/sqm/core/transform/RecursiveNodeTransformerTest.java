@@ -218,9 +218,9 @@ class RecursiveNodeTransformerTest {
             }
         };
         var vt2 = (ValuesTable) vt.accept(rowTransformer);
-        assertNotEquals(vt.values().rows(), vt2.values().rows());
+        assertNotEquals(vt.values(), vt2.values());
         var vt3 = (ValuesTable) vt.accept(new NothingTransformer());
-        assertEquals(vt.values().rows(), vt3.values().rows());
+        assertEquals(vt.values(), vt3.values());
     }
 
     @Test

@@ -7,6 +7,7 @@ import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 public class OrdinalParamExprParser implements MatchableParser<OrdinalParamExpr> {
@@ -19,8 +20,12 @@ public class OrdinalParamExprParser implements MatchableParser<OrdinalParamExpr>
      */
     @Override
     public ParseResult<OrdinalParamExpr> parse(Cursor cur, ParseContext ctx) {
-        var t = cur.expect("Expected $1", TokenType.PARAM_POS);
-        return ok(OrdinalParamExpr.of(Integer.parseInt(t.lexeme())));
+        var d = cur.expect("Expected $", TokenType.DOLLAR);
+        var n = cur.expect("Expected number after $", TokenType.NUMBER);
+        if (!d.isImmediatelyFollowedBy(n)) { // tokens should be aligned.
+            return error("The number must be aligned to a $", cur.fullPos());
+        }
+        return ok(OrdinalParamExpr.of(Integer.parseInt(n.lexeme())));
     }
 
     /**
@@ -48,6 +53,6 @@ public class OrdinalParamExprParser implements MatchableParser<OrdinalParamExpr>
      */
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
-        return cur.match(TokenType.PARAM_POS);
+        return cur.match(TokenType.DOLLAR) && cur.match(TokenType.NUMBER, 1);
     }
 }

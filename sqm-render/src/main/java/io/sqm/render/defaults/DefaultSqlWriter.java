@@ -1,6 +1,9 @@
-package io.sqm.render;
+package io.sqm.render.defaults;
 
 import io.sqm.core.Node;
+import io.sqm.render.RenderResult;
+import io.sqm.render.SqlText;
+import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 
 import java.util.List;

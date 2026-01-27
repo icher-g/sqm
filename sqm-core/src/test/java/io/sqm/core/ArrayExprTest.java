@@ -38,7 +38,8 @@ class ArrayExprTest {
     @Test
     @DisplayName("Create empty array")
     void createEmptyArray() {
-        assertThrows(IllegalArgumentException.class, () -> ArrayExpr.of());
+        ArrayExpr arr = ArrayExpr.of();
+        assertEquals(0, arr.elements().size());
     }
 
     @Test

@@ -13,7 +13,7 @@ import java.util.List;
  *     }
  * </pre>
  */
-public non-sealed interface RowExpr extends ValueSet {
+public non-sealed interface RowExpr extends RowValues {
     /**
      * Gets a list of row values.
      *

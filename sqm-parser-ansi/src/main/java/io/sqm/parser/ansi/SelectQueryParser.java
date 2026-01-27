@@ -7,9 +7,6 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
@@ -29,21 +26,20 @@ public class SelectQueryParser implements Parser<SelectQuery> {
         var q = SelectQuery.of();
 
         // DISTINCT
-        if (cur.consumeIf(TokenType.DISTINCT)) {
-            q.distinct(DistinctSpec.TRUE);
+        if (cur.match(TokenType.DISTINCT)) {
+            var dr = ctx.parse(DistinctSpec.class, cur);
+            if (dr.isError()) {
+                return error(dr);
+            }
+            q.distinct(dr.value());
         }
 
         // SELECT list
-        List<SelectItem> items = new ArrayList<>();
-        do {
-            var cr = ctx.parse(SelectItem.class, cur);
-            if (!cr.ok()) {
-                return error(cr);
-            }
-            items.add(cr.value());
-        } while (cur.consumeIf(TokenType.COMMA));
-
-        q.select(items);
+        var items = parseItems(SelectItem.class, cur, ctx);
+        if (items.isError()) {
+            return error(items);
+        }
+        q.select(items.value());
 
         // FROM (optional)
         if (cur.consumeIf(TokenType.FROM)) {
@@ -52,6 +48,15 @@ public class SelectQueryParser implements Parser<SelectQuery> {
                 return error(tr);
             }
             q.from(tr.value());
+
+            // CROSS JOIN with ','
+            while (cur.consumeIf(TokenType.COMMA)) {
+                var cj = ctx.parse(TableRef.class, cur);
+                if (cj.isError()) {
+                    return error(cj);
+                }
+                q.join(CrossJoin.of(cj.value()));
+            }
 
             // JOINs (0..n)
             while (cur.matchAny(Indicators.JOIN)) {

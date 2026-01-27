@@ -80,6 +80,42 @@ public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
     }
 
     /**
+     * Matches an {@link ArraySubscriptExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * an array constructor or array-valued expression.</p>
+     *
+     * @param f a mapping function applied to the matched {@link ArraySubscriptExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    @Override
+    public ExpressionMatch<R> arraySubscript(Function<ArraySubscriptExpr, R> f) {
+        if (!matched && expr instanceof ArraySubscriptExpr arrayExpr) {
+            result = f.apply(arrayExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Matches an {@link ArraySliceExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * an array constructor or array-valued expression.</p>
+     *
+     * @param f a mapping function applied to the matched {@link ArraySliceExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    @Override
+    public ExpressionMatch<R> arraySlice(Function<ArraySliceExpr, R> f) {
+        if (!matched && expr instanceof ArraySliceExpr arrayExpr) {
+            result = f.apply(arrayExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
      * Matches a {@link BinaryOperatorExpr} expression.
      *
      * <p>This matcher is invoked when the inspected expression represents

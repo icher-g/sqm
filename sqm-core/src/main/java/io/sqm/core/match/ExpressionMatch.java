@@ -57,6 +57,28 @@ public interface ExpressionMatch<R> extends Match<Expression, R> {
     ExpressionMatch<R> array(Function<ArrayExpr, R> f);
 
     /**
+     * Matches an {@link ArraySubscriptExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * an array constructor or array-valued expression.</p>
+     *
+     * @param f a mapping function applied to the matched {@link ArraySubscriptExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    ExpressionMatch<R> arraySubscript(Function<ArraySubscriptExpr, R> f);
+
+    /**
+     * Matches an {@link ArraySliceExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * an array constructor or array-valued expression.</p>
+     *
+     * @param f a mapping function applied to the matched {@link ArraySliceExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    ExpressionMatch<R> arraySlice(Function<ArraySliceExpr, R> f);
+
+    /**
      * Matches a {@link BinaryOperatorExpr} expression.
      *
      * <p>This matcher is invoked when the inspected expression represents

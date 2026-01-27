@@ -145,12 +145,6 @@ public class ExpressionSubtypesJsonTest {
     }
 
     @Test
-    @DisplayName("ArrayExpr: empty array")
-    void arrayExpr_empty() {
-        assertThrows(IllegalArgumentException.class, () -> ArrayExpr.of());
-    }
-
-    @Test
     @DisplayName("ArrayExpr: mixed expression types")
     void arrayExpr_mixed() throws Exception {
         var expr = ArrayExpr.of(

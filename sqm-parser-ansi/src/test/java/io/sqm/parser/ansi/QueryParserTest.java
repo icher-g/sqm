@@ -5,6 +5,7 @@ import io.sqm.core.SelectQuery;
 import io.sqm.core.WithQuery;
 import io.sqm.parser.QueryParser;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.*;
 
@@ -18,6 +19,7 @@ class QueryParserTest {
 
     private QueryParser parser;
     private ParseContext ctx;
+    private final IdentifierQuoting quoting = IdentifierQuoting.of('"');
 
     @BeforeEach
     void setUp() {
@@ -27,14 +29,14 @@ class QueryParserTest {
     }
 
     private Query parseOk(String sql) {
-        var res = ctx.parse(parser, Cursor.of(sql));
+        var res = ctx.parse(parser, Cursor.of(sql, quoting));
         Assertions.assertTrue(res.ok(), () -> "Expected OK, got error: " + res);
         // also ensure the entire input was consumed (EOF)
         return res.value();
     }
 
     private void parseErr(String sql) {
-        var res = ctx.parse(parser, Cursor.of(sql));
+        var res = ctx.parse(parser, Cursor.of(sql, quoting));
         Assertions.assertFalse(res.ok(), () -> "Expected error, got OK with: " + res.value());
     }
 

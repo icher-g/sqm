@@ -15,6 +15,8 @@ import io.sqm.core.*;
     @JsonSubTypes.Type(value = CaseExpr.Impl.class, name = "case"),
     @JsonSubTypes.Type(value = CastExpr.Impl.class, name = "cast"),
     @JsonSubTypes.Type(value = ArrayExpr.Impl.class, name = "array"),
+    @JsonSubTypes.Type(value = ArraySubscriptExpr.Impl.class, name = "array-subscript"),
+    @JsonSubTypes.Type(value = ArraySliceExpr.Impl.class, name = "array-slice"),
     @JsonSubTypes.Type(value = ColumnExpr.Impl.class, name = "column"),
     @JsonSubTypes.Type(value = FunctionExpr.Impl.class, name = "function"),
     @JsonSubTypes.Type(value = LiteralExpr.Impl.class, name = "literal"),

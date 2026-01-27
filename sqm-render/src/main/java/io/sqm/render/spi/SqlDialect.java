@@ -1,6 +1,9 @@
 package io.sqm.render.spi;
 
 import io.sqm.core.Node;
+import io.sqm.core.OrdinalParamExpr;
+import io.sqm.core.collect.ParametersCollector;
+import io.sqm.core.transform.ParameterizeLiteralsTransformer;
 
 import java.util.List;
 
@@ -21,6 +24,19 @@ public interface SqlDialect {
      * @return a node that is safe to render for this dialect
      */
     default PreparedNode beforeRender(Node root, RenderOptions options) {
+        if (options.parameterizationMode() == ParameterizationMode.Bind) {
+            var collector = new ParametersCollector();
+            root.accept(collector);
+
+            if (collector.positional().isEmpty() && collector.named().isEmpty()) {
+                // convert all literals to params.
+                var literalsTransformer = new ParameterizeLiteralsTransformer((i) -> OrdinalParamExpr.of(i));
+                root = root.accept(literalsTransformer);
+
+                return PreparedNode.of(root, literalsTransformer.values());
+            }
+            throw new IllegalStateException("BIND parameterization mode is not supported for query that already has parameters.");
+        }
         return PreparedNode.of(root, List.of());
     }
 

@@ -87,6 +87,10 @@ public final class Renderers {
             .register(new IsDistinctFromPredicateRenderer())
             .register(new LateralRenderer())
             .register(new FunctionTableRenderer())
-            .register(new LockingClauseRenderer());
+            .register(new LockingClauseRenderer())
+            .register(new DistinctSpecRenderer())
+            .register(new ArraySubscriptExprRenderer())
+            .register(new ArraySliceExprRenderer())
+            .register(new UnaryPredicateRenderer());
     }
 }

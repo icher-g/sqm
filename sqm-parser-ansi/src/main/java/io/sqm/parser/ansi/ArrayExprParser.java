@@ -7,6 +7,8 @@ import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import static io.sqm.parser.spi.ParseResult.error;
+
 public class ArrayExprParser implements MatchableParser<ArrayExpr> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -17,9 +19,7 @@ public class ArrayExprParser implements MatchableParser<ArrayExpr> {
      */
     @Override
     public ParseResult<? extends ArrayExpr> parse(Cursor cur, ParseContext ctx) {
-        throw new UnsupportedOperationException(
-            "Array expressions are not supported by ANSI SQL parser"
-        );
+        return error("Array expressions are not supported by ANSI SQL parser", -1);
     }
 
     /**

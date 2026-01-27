@@ -3,6 +3,7 @@ package io.sqm.parser.ansi;
 import io.sqm.core.*;
 import io.sqm.parser.QueryParser;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.*;
 
@@ -18,6 +19,7 @@ class OperatorExprIntegrationTest {
 
     private ParseContext ctx;
     private QueryParser queryParser;
+    private final IdentifierQuoting quoting = IdentifierQuoting.of('"');
 
     @BeforeEach
     void setUp() {
@@ -26,13 +28,13 @@ class OperatorExprIntegrationTest {
     }
 
     private Query parseOk(String sql) {
-        var res = ctx.parse(queryParser, Cursor.of(sql));
+        var res = ctx.parse(queryParser, Cursor.of(sql, quoting));
         assertTrue(res.ok(), () -> "Expected OK, got: " + res);
         return res.value();
     }
 
     private void parseErr(String sql) {
-        var res = ctx.parse(queryParser, Cursor.of(sql));
+        var res = ctx.parse(queryParser, Cursor.of(sql, quoting));
         assertFalse(res.ok(), () -> "Expected error, got OK with: " + res.value());
     }
 

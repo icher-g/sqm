@@ -125,6 +125,33 @@ class CastExprParserTest {
     }
 
     @Test
+    void parsesCastArrayTypeInAnsiParser() {
+        var e = parseExpr("CAST(a AS text[])");
+        var cast = assertInstanceOf(CastExpr.class, e.value());
+        assertEquals("a", cast.expr().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals(java.util.List.of("text"), cast.type().qualifiedName());
+        assertEquals(1, cast.type().arrayDims());
+    }
+
+    @Test
+    void parsesCastTimeZoneClauseInAnsiParser() {
+        var e = parseExpr("CAST(a AS timestamp with time zone)");
+        var cast = assertInstanceOf(CastExpr.class, e.value());
+        assertEquals("a", cast.expr().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals(java.util.List.of("timestamp"), cast.type().qualifiedName());
+        assertEquals(TimeZoneSpec.WITH_TIME_ZONE, cast.type().timeZoneSpec());
+    }
+
+    @Test
+    void parsesCastTimeZoneClauseInAnsiParser_without() {
+        var e = parseExpr("CAST(a AS timestamp without time zone)");
+        var cast = assertInstanceOf(CastExpr.class, e.value());
+        assertEquals("a", cast.expr().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals(java.util.List.of("timestamp"), cast.type().qualifiedName());
+        assertEquals(TimeZoneSpec.WITHOUT_TIME_ZONE, cast.type().timeZoneSpec());
+    }
+
+    @Test
     void rejectsCastMissingAsKeyword() {
         assertParseError("CAST(a int)");
     }
@@ -132,21 +159,6 @@ class CastExprParserTest {
     @Test
     void rejectsCastMissingType() {
         assertParseError("CAST(a AS)");
-    }
-
-    @Test
-    void rejectsArrayTypeInAnsiParser() {
-        assertParseError("CAST(a AS text[])");
-    }
-
-    @Test
-    void rejectsTimeZoneClauseInAnsiParser() {
-        assertParseError("CAST(a AS timestamp with time zone)");
-    }
-
-    @Test
-    void rejectsTimeZoneClauseInAnsiParser_without() {
-        assertParseError("CAST(a AS timestamp without time zone)");
     }
 
     // ---------------------------------------------------------------------

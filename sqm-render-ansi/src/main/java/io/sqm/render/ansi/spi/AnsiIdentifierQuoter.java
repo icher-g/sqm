@@ -6,11 +6,15 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 public class AnsiIdentifierQuoter implements IdentifierQuoter {
+    // A pragmatic, compact reserved set (extend if you wish). Dialect owns the knowledge.
+    public static final Set<String> RESERVED = Set.of(
+        "SELECT", "FROM", "WHERE", "GROUP", "ORDER", "BY", "HAVING", "JOIN", "LEFT", "RIGHT", "FULL", "OUTER", "INNER", "ON", "AS", "AND", "OR", "NOT", "NULL",
+        "TRUE", "FALSE", "IN", "IS", "LIKE", "BETWEEN", "EXISTS", "ALL", "ANY", "UNION", "INTERSECT", "EXCEPT", "DISTINCT", "CASE", "WHEN", "THEN", "ELSE", "END",
+        "LIMIT", "OFFSET", "FETCH", "INSERT", "UPDATE", "DELETE", "CREATE", "ALTER", "DROP", "TABLE", "VIEW", "INDEX", "WITH", "RECURSIVE", "WINDOW", "OVER",
+        "PARTITION", "RANGE", "ROWS", "CROSS", "NATURAL", "USING", "VALUES", "CAST");
+
     // Unquoted identifiers must be simple and not reserved:
     private static final Pattern SIMPLE = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
-
-    // A pragmatic, compact reserved set (extend if you wish). Dialect owns the knowledge.
-    private static final Set<String> RESERVED = Set.of("SELECT", "FROM", "WHERE", "GROUP", "ORDER", "BY", "HAVING", "JOIN", "LEFT", "RIGHT", "FULL", "OUTER", "INNER", "ON", "AS", "AND", "OR", "NOT", "NULL", "TRUE", "FALSE", "IN", "IS", "LIKE", "BETWEEN", "EXISTS", "ALL", "ANY", "UNION", "INTERSECT", "EXCEPT", "DISTINCT", "CASE", "WHEN", "THEN", "ELSE", "END", "LIMIT", "OFFSET", "FETCH", "INSERT", "UPDATE", "DELETE", "CREATE", "ALTER", "DROP", "TABLE", "VIEW", "INDEX");
 
     @Override
     public String quote(String identifier) {

@@ -1,9 +1,6 @@
 package io.sqm.parser;
 
-import io.sqm.parser.spi.Lookups;
-import io.sqm.parser.spi.ParseContext;
-import io.sqm.parser.spi.ParsersRepository;
-import io.sqm.parser.spi.Specs;
+import io.sqm.parser.spi.*;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -34,6 +31,20 @@ public class DefaultParseContext implements ParseContext {
     @Override
     public Lookups lookups() {
         return specs.lookups();
+    }
+
+    /**
+     * Returns the identifier quoting rules supported by this SQL dialect.
+     * <p>
+     * The returned {@link IdentifierQuoting} defines how quoted identifiers
+     * are recognized and parsed by the lexer, including the opening and
+     * closing delimiter characters.
+     *
+     * @return the dialect-specific identifier quoting configuration.
+     */
+    @Override
+    public IdentifierQuoting identifierQuoting() {
+        return specs.identifierQuoting();
     }
 
     /**

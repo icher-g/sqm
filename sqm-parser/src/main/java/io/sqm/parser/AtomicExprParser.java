@@ -8,6 +8,7 @@ import io.sqm.parser.spi.ParseResult;
 
 import static io.sqm.parser.core.OperatorTokens.isMinus;
 import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
 
 /**
  * Parses an *atomic expression* — the smallest indivisible expression unit
@@ -48,6 +49,74 @@ import static io.sqm.parser.spi.ParseResult.error;
  */
 public class AtomicExprParser {
 
+    private static boolean isUnaryOperator(Token t) {
+        return OperatorTokens.is(t, "~") || OperatorTokens.is(t, "+");
+    }
+
+    /**
+     * Parses an expression using atomic parsing followed by postfix operator handling.
+     *
+     * <p>This method first parses a base (atomic) expression using
+     * {@link #parseAtomic(Cursor, ParseContext)}. Once a base expression has been
+     * successfully parsed, it repeatedly applies postfix parsing rules that
+     * operate on an already-parsed left-hand side.</p>
+     *
+     * <p>Postfix operators are parsed using {@link ParseContext#parseIfMatch(Class, Node, Cursor)},
+     * allowing each postfix construct to decide whether it can be applied at the
+     * current cursor position. This enables correct handling of PostgreSQL-style
+     * postfix expressions such as {@code expr::type}.</p>
+     *
+     * <p>The loop allows chaining of postfix operators, for example:
+     * {@code a::int::text}, producing nested {@link CastExpr} nodes.</p>
+     *
+     * <p>Postfix parsing is performed with higher precedence than any infix or
+     * binary operators, ensuring that expressions such as {@code a + b::int}
+     * are parsed as {@code a + (b::int)}.</p>
+     *
+     * <p>If no postfix operator matches, the base expression is returned unchanged.</p>
+     *
+     * @param cur the cursor positioned at the start of the expression
+     * @param ctx the parse context
+     * @return the parsed expression or a parse error
+     */
+    public ParseResult<? extends Expression> parse(Cursor cur, ParseContext ctx) {
+        // parse base expression
+        var left = parseAtomic(cur, ctx);
+        if (left.isError()) {
+            return left;
+        }
+
+        // parse postfix operators
+        while (true) {
+            // support of a::int::text
+            MatchResult<? extends Expression> matched = ctx.parseIfMatch(CastExpr.class, left.value(), cur);
+            if (matched.match()) {
+                left = matched.result();
+                if (left.isError()) return left;
+                continue;
+            }
+
+            // support of arr[1][2]
+            matched = ctx.parseIfMatch(ArraySubscriptExpr.class, left.value(), cur);
+            if (matched.match()) {
+                left = matched.result();
+                if (left.isError()) return left;
+                continue;
+            }
+
+            // support of arr[1:5], arr[:5], arr[1:] or arr[:]
+            matched = ctx.parseIfMatch(ArraySliceExpr.class, left.value(), cur);
+            if (matched.match()) {
+                left = matched.result();
+                if (left.isError()) return left;
+                continue;
+            }
+            break;
+        }
+
+        return ok(left.value());
+    }
+
     /**
      * Attempts to parse the next token(s) as an atomic SQL expression.
      *
@@ -74,7 +143,7 @@ public class AtomicExprParser {
      * @return a {@link ParseResult} containing the parsed atomic expression,
      * or an error result if parsing fails
      */
-    public ParseResult<? extends Expression> parse(Cursor cur, ParseContext ctx) {
+    private ParseResult<? extends Expression> parseAtomic(Cursor cur, ParseContext ctx) {
         if (isMinus(cur.peek())) {
             return ctx.parse(NegativeArithmeticExpr.class, cur);
         }
@@ -184,9 +253,5 @@ public class AtomicExprParser {
             cur.restore(mark);
             return null;
         }
-    }
-
-    private static boolean isUnaryOperator(Token t) {
-        return OperatorTokens.is(t, "~") || OperatorTokens.is(t, "+");
     }
 }

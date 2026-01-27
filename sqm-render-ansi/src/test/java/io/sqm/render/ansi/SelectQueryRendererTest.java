@@ -1,6 +1,6 @@
 package io.sqm.render.ansi;
 
-import io.sqm.render.DefaultRenderContext;
+import io.sqm.render.defaults.DefaultRenderContext;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.*;
 import org.junit.jupiter.api.DisplayName;

@@ -22,6 +22,7 @@ import static io.sqm.parser.spi.ParseResult.ok;
 public class TypeNameParser implements Parser<TypeName> {
 
     private static final Set<String> keywords = Set.of("double", "character", "national");
+    private static final Set<String> validTimeTypes = Set.of("time", "timestamp");
 
     private static TypeKeyword parseKeyword(String firstPart, Cursor cur) {
         if ("double".equalsIgnoreCase(firstPart)) {
@@ -89,6 +90,7 @@ public class TypeNameParser implements Parser<TypeName> {
         TypeKeyword keyword = null;
         List<String> parts = null;
         List<Expression> modifiers = null;
+        TimeZoneSpec timeZoneSpec = TimeZoneSpec.NONE;
         int arrayDims = 0;
 
         if (keywords.contains(name.lexeme().toLowerCase(Locale.ROOT))) {
@@ -99,22 +101,40 @@ public class TypeNameParser implements Parser<TypeName> {
             parts = parseQualifiedName(name.lexeme(), cur);
         }
 
-        if (cur.consumeIf(TokenType.LPAREN)) {
-            modifiers = parseModifiers(cur, ctx);
-            cur.expect("Expected )", TokenType.RPAREN);
-        }
-
-        if (cur.match(TokenType.LBRACKET)) {
-            return error("Array type [] is not supported in ANSI parser.", cur.fullPos());
-        }
-
         // this is a single word.
         if (parts == null && keyword == null) {
             parts = new ArrayList<>();
             parts.add(name.lexeme());
         }
 
-        return ok(TypeName.of(parts, keyword, modifiers, arrayDims, TimeZoneSpec.NONE));
+        if (cur.consumeIf(TokenType.LPAREN)) {
+            modifiers = parseModifiers(cur, ctx);
+            cur.expect("Expected )", TokenType.RPAREN);
+        }
+
+        if (cur.matchAny(TokenType.WITH, TokenType.WITHOUT)) {
+            var lexeme = cur.peek().lexeme().toLowerCase(Locale.ROOT);
+            if (!validTimeTypes.contains(name.lexeme().toLowerCase(Locale.ROOT))) {
+                return error("Only time and timestamp are supported with time zone", cur.fullPos());
+            }
+            cur.advance(); // skip with or wihtout.
+            var t = cur.expect("Expected identifier 'time'", TokenType.IDENT);
+            if (!t.lexeme().equalsIgnoreCase("time")) {
+                return error("Expected 'time' but found '" + t.lexeme() + "'", cur.fullPos());
+            }
+            t = cur.expect("Expected identifier 'zone'", TokenType.IDENT);
+            if (!t.lexeme().equalsIgnoreCase("zone")) {
+                return error("Expected 'zone' but found '" + t.lexeme() + "'", cur.fullPos());
+            }
+            timeZoneSpec = lexeme.equals("with") ? TimeZoneSpec.WITH_TIME_ZONE : TimeZoneSpec.WITHOUT_TIME_ZONE;
+        }
+
+        while (cur.consumeIf(TokenType.LBRACKET)) {
+            cur.expect("Expected ] to close the array type", TokenType.RBRACKET);
+            arrayDims++;
+        }
+
+        return ok(TypeName.of(parts, keyword, modifiers, arrayDims, timeZoneSpec));
     }
 
     /**

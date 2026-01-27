@@ -1,8 +1,8 @@
 package io.sqm.render.spi;
 
 import io.sqm.core.Node;
-import io.sqm.render.DefaultRenderContext;
-import io.sqm.render.DefaultSqlWriter;
+import io.sqm.render.defaults.DefaultRenderContext;
+import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.SqlText;
 import io.sqm.render.SqlWriter;
 

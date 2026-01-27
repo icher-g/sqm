@@ -21,6 +21,11 @@ import java.util.Objects;
 public non-sealed interface ArrayExpr extends Expression {
 
     /**
+     * An empty array.
+     */
+    ArrayExpr EMPTY = new Impl(List.of());
+
+    /**
      * Creates an array constructor expression.
      *
      * @param elements element expressions
@@ -72,9 +77,6 @@ public non-sealed interface ArrayExpr extends Expression {
 
         public Impl {
             Objects.requireNonNull(elements, "elements");
-            if (elements.isEmpty()) {
-                throw new IllegalArgumentException("elements must not be empty");
-            }
             for (var e : elements) {
                 Objects.requireNonNull(e, "elements must not contain nulls");
             }

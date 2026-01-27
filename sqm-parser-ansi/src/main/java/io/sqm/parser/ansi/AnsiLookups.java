@@ -758,8 +758,9 @@ public class AnsiLookups implements Lookups {
      */
     @Override
     public boolean looksLikeNamedParam(Cursor cur, Lookahead pos) {
-        if (cur.match(TokenType.PARAM_NAMED, pos.current())) {
-            pos.increment();
+        // match ':name' but don't match ':end]' as it is part of the array slice [start:end]
+        if (cur.match(TokenType.COLON, pos.current()) && cur.match(TokenType.IDENT, pos.current() + 1) && !cur.match(TokenType.RPAREN, pos.current() + 2)) {
+            pos.increment(2);
             return true;
         }
         return false;
@@ -774,8 +775,8 @@ public class AnsiLookups implements Lookups {
      */
     @Override
     public boolean looksLikeOrdinalParam(Cursor cur, Lookahead pos) {
-        if (cur.match(TokenType.PARAM_POS, pos.current())) {
-            pos.increment();
+        if (cur.match(TokenType.DOLLAR, pos.current()) && cur.match(TokenType.NUMBER, pos.current() + 1)) {
+            pos.increment(2);
             return true;
         }
         return false;

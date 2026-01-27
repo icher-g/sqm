@@ -9,7 +9,7 @@ import java.util.List;
  * Any value-producing node (scalar or boolean).
  */
 public sealed interface Expression extends Node
-    permits ArithmeticExpr, ArrayExpr, BinaryOperatorExpr, CaseExpr, CastExpr, ColumnExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, ParamExpr, Predicate, UnaryOperatorExpr, ValueSet {
+    permits ArithmeticExpr, ArrayExpr, ArraySliceExpr, ArraySubscriptExpr, BinaryOperatorExpr, CaseExpr, CastExpr, ColumnExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, ParamExpr, Predicate, UnaryOperatorExpr, ValueSet {
 
     /**
      * Creates a literal expression.
@@ -243,6 +243,107 @@ public sealed interface Expression extends Node
      */
     default ModArithmeticExpr mod(Expression rhs) {
         return ModArithmeticExpr.of(this, rhs);
+    }
+
+    /**
+     * Returns an array subscript expression, equivalent to {@code this[index]} in SQL.
+     *
+     * @param index the index expression
+     * @return an {@link ArraySubscriptExpr}
+     */
+    default ArraySubscriptExpr at(Expression index) {
+        return ArraySubscriptExpr.of(this, index);
+    }
+
+    /**
+     * Returns an array subscript expression with an integer literal index.
+     *
+     * @param index the 1-based index value (dialect-dependent)
+     * @return an {@link ArraySubscriptExpr}
+     */
+    default ArraySubscriptExpr at(int index) {
+        return ArraySubscriptExpr.of(this, LiteralExpr.of(index));
+    }
+
+    /**
+     * Returns an array slice expression applied to this expression.
+     *
+     * <p>This method represents PostgreSQL-style array slicing syntax
+     * {@code this[from:to]}.</p>
+     *
+     * <p>Either bound may be {@code null} to indicate an open-ended slice:</p>
+     * <ul>
+     *   <li>{@code slice(null, to)} corresponds to {@code [:to]}</li>
+     *   <li>{@code slice(from, null)} corresponds to {@code [from:]}</li>
+     *   <li>{@code slice(null, null)} corresponds to {@code [:]}</li>
+     * </ul>
+     *
+     * <p>This method performs no semantic validation. Dialect-specific rules such as
+     * index base, bound inclusivity, and slice behavior are not enforced here.</p>
+     *
+     * @param from the lower bound expression, or {@code null} if omitted
+     * @param to   the upper bound expression, or {@code null} if omitted
+     * @return an {@link ArraySliceExpr} representing the slice operation
+     */
+    default ArraySliceExpr slice(Expression from, Expression to) {
+        return ArraySliceExpr.of(this, from, to);
+    }
+
+    /**
+     * Returns an array slice expression applied to this expression using
+     * integer literal bounds.
+     *
+     * <p>This is a convenience overload for {@link #slice(Expression, Expression)}
+     * that creates integer literal expressions for the slice bounds.</p>
+     *
+     * <p>The semantics of slicing, including whether bounds are inclusive and
+     * whether indexing is 0-based or 1-based, are dialect-specific and are not
+     * enforced by this method.</p>
+     *
+     * <p>Both bounds are required. To represent open-ended slices such as
+     * {@code [:to]} or {@code [from:]}, use {@link #slice(Expression, Expression)}
+     * with {@code null} for the omitted bound.</p>
+     *
+     * @param from the lower bound index value
+     * @param to   the upper bound index value
+     * @return an {@link ArraySliceExpr} representing the slice operation
+     */
+    default ArraySliceExpr slice(int from, int to) {
+        return slice(LiteralExpr.of(from), LiteralExpr.of(to));
+    }
+
+    /**
+     * Returns an array slice expression with a lower bound and no upper bound.
+     *
+     * <p>This method represents PostgreSQL-style slicing syntax
+     * {@code this[from:]}.</p>
+     *
+     * <p>The semantics of the slice, including whether bounds are inclusive and
+     * whether indexing is 0-based or 1-based, are dialect-specific and are not
+     * enforced by this method.</p>
+     *
+     * @param from the lower bound index value
+     * @return an {@link ArraySliceExpr} representing the slice operation
+     */
+    default ArraySliceExpr sliceFrom(int from) {
+        return slice(LiteralExpr.of(from), null);
+    }
+
+    /**
+     * Returns an array slice expression with no lower bound and an upper bound.
+     *
+     * <p>This method represents PostgreSQL-style slicing syntax
+     * {@code this[:to]}.</p>
+     *
+     * <p>The semantics of the slice, including whether bounds are inclusive and
+     * whether indexing is 0-based or 1-based, are dialect-specific and are not
+     * enforced by this method.</p>
+     *
+     * @param to the upper bound index value
+     * @return an {@link ArraySliceExpr} representing the slice operation
+     */
+    default ArraySliceExpr sliceTo(int to) {
+        return slice(null, LiteralExpr.of(to));
     }
 
     /**

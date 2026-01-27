@@ -22,14 +22,14 @@ public non-sealed interface ValuesTable extends AliasedTableRef {
      * @param rows a set of values.
      * @return A newly created instance of the values table.
      */
-    static ValuesTable of(RowListExpr rows) {
+    static ValuesTable of(RowValues rows) {
         return new Impl(rows, null, null);
     }
 
     /**
      * Rows of expressions; all rows must have the same arity.
      */
-    RowListExpr values();
+    RowValues values();
 
     /**
      * Adds column names to the alias.
@@ -83,7 +83,7 @@ public non-sealed interface ValuesTable extends AliasedTableRef {
      * @param columnAliases Optional derived column list; may be null or empty.
      * @param alias         table alias or null if none
      */
-    record Impl(RowListExpr values, List<String> columnAliases, String alias) implements ValuesTable {
+    record Impl(RowValues values, List<String> columnAliases, String alias) implements ValuesTable {
 
         public Impl {
             columnAliases = columnAliases == null ? null : List.copyOf(columnAliases);

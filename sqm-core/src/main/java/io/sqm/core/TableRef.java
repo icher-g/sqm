@@ -55,7 +55,7 @@ public sealed interface TableRef extends FromItem permits AliasedTableRef, Diale
      * @param rows a set of values.
      * @return A newly created instance of the values table.
      */
-    static ValuesTable values(RowListExpr rows) {
+    static ValuesTable values(RowValues rows) {
         return ValuesTable.of(rows);
     }
 

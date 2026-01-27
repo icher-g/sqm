@@ -32,30 +32,27 @@ public class TableRefParser implements Parser<TableRef> {
                 return matched.result();
             }
 
-            if (cur.consumeIf(TokenType.LPAREN)) {
-                matched = ctx.parseIfMatch(ValuesTable.class, cur);
-                if (matched.match()) {
-                    if (matched.result().ok()) {
-                        cur.expect("Expected ')' after VALUES", TokenType.RPAREN);
-                    }
-                    return matched.result();
-                }
+            matched = ctx.parseIfMatch(ValuesTable.class, cur);
+            if (matched.match()) {
+                return matched.result();
+            }
 
-                matched = ctx.parseIfMatch(FunctionTable.class, cur);
-                if (matched.match()) {
-                    if (matched.result().ok()) {
-                        cur.expect("Expected ')' after VALUES", TokenType.RPAREN);
-                    }
-                    return matched.result();
-                }
+            cur.advance(); // skip (
 
-                matched = ctx.parseIfMatch(Table.class, cur);
-                if (matched.match()) {
-                    if (matched.result().ok()) {
-                        cur.expect("Expected ')' after table reference", TokenType.RPAREN);
-                    }
-                    return matched.result();
+            matched = ctx.parseIfMatch(FunctionTable.class, cur);
+            if (matched.match()) {
+                if (matched.result().ok()) {
+                    cur.expect("Expected ')' after VALUES", TokenType.RPAREN);
                 }
+                return matched.result();
+            }
+
+            matched = ctx.parseIfMatch(Table.class, cur);
+            if (matched.match()) {
+                if (matched.result().ok()) {
+                    cur.expect("Expected ')' after table reference", TokenType.RPAREN);
+                }
+                return matched.result();
             }
 
             return error("Unexpected table reference token: " + cur.peek().lexeme(), cur.fullPos());
