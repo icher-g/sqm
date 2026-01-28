@@ -26,7 +26,7 @@ class JoinMatchTest {
 
     @Test
     void using() {
-        var join = Join.using(tbl("t"));
+        var join = Join.inner(tbl("t")).using("a");
         String out = Match.
             <String>join(join)
             .using(u -> "U")

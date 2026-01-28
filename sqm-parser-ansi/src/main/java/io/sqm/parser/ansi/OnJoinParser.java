@@ -6,23 +6,16 @@ import io.sqm.core.Predicate;
 import io.sqm.core.TableRef;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
+import io.sqm.parser.spi.InfixParser;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import static io.sqm.parser.JoinParser.parseKind;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
-public class OnJoinParser implements MatchableParser<OnJoin> {
-
-    private static JoinKind mapJoinType(TokenType tt) {
-        return switch (tt) {
-            case LEFT -> JoinKind.LEFT;
-            case RIGHT -> JoinKind.RIGHT;
-            case FULL -> JoinKind.FULL;
-            default -> JoinKind.INNER;
-        };
-    }
+public class OnJoinParser implements MatchableParser<OnJoin>, InfixParser<TableRef, OnJoin> {
 
     /**
      * Parses the spec represented by the {@link Cursor} instance.
@@ -34,12 +27,7 @@ public class OnJoinParser implements MatchableParser<OnJoin> {
     @Override
     public ParseResult<OnJoin> parse(Cursor cur, ParseContext ctx) {
         // Optional join kind
-        JoinKind kind = JoinKind.INNER;
-
-        if (cur.matchAny(TokenType.INNER, TokenType.LEFT, TokenType.RIGHT, TokenType.FULL, TokenType.CROSS)) {
-            kind = mapJoinType(cur.advance().type());
-            cur.consumeIf(TokenType.OUTER); // LEFT/RIGHT/FULL OUTER
-        }
+        JoinKind kind = parseKind(cur);
 
         // JOIN keyword
         cur.expect("Expected JOIN", TokenType.JOIN);
@@ -50,16 +38,11 @@ public class OnJoinParser implements MatchableParser<OnJoin> {
             return error(table);
         }
 
-        // ON <expr>
-        cur.expect("Expected ON", TokenType.ON);
-
-        var on = ctx.parse(Predicate.class, cur);
-        if (on.isError()) {
-            return error(on);
+        var join = parse(table.value(), cur, ctx);
+        if (join.isError()) {
+            return error(join);
         }
-
-        // 6) Build the Join
-        return ok(OnJoin.of(table.value(), kind, on.value()));
+        return ok(join.value().ofKind(kind));
     }
 
     /**
@@ -87,6 +70,32 @@ public class OnJoinParser implements MatchableParser<OnJoin> {
      */
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
-        return cur.matchAny(TokenType.INNER, TokenType.LEFT, TokenType.RIGHT, TokenType.FULL, TokenType.CROSS, TokenType.JOIN);
+        return cur.match(TokenType.ON);
+    }
+
+    /**
+     * Parses a binary operator occurrence where the left-hand side operand
+     * has already been parsed.
+     *
+     * <p>The cursor is positioned at the operator token when this method
+     * is invoked. Implementations are responsible for consuming the operator
+     * token, parsing the right-hand side operand, and constructing the
+     * resulting node.</p>
+     *
+     * @param lhs the already parsed left-hand operand
+     * @param cur the cursor positioned at the operator token
+     * @param ctx the parse context
+     * @return the parsing result representing {@code lhs <op> rhs}
+     */
+    @Override
+    public ParseResult<OnJoin> parse(TableRef lhs, Cursor cur, ParseContext ctx) {
+        // ON <expr>
+        cur.expect("Expected ON", TokenType.ON);
+
+        var on = ctx.parse(Predicate.class, cur);
+        if (on.isError()) {
+            return error(on);
+        }
+        return ok(OnJoin.of(lhs, null, on.value()));
     }
 }

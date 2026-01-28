@@ -153,7 +153,7 @@ class FromItemMatchTest {
     void matchDifferentJoinTypes() {
         FromItem innerJoin = inner(tbl("users").as("u")).on(col("u", "id").eq(lit(1)));
         FromItem crossJoin = cross(tbl("products").as("p"));
-        FromItem usingJoin = using(tbl("orders").as("o"), "id");
+        FromItem usingJoin = inner(tbl("orders").as("o")).using("id");
 
         assertEquals("Join", FromItemMatch.<String>match(innerJoin).join(j -> "Join").orElse("Unknown"));
         assertEquals("Join", FromItemMatch.<String>match(crossJoin).join(j -> "Join").orElse("Unknown"));

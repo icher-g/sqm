@@ -147,6 +147,14 @@ class ArraySubscriptExprParserTest {
         assertInstanceOf(NegativeArithmeticExpr.class, sub.index());
     }
 
+    @Test
+    void parsesArraySubscript() {
+        var result = parseExpr("arr[1]");
+        assertTrue(result.ok());
+        var expr = result.value();
+        assertInstanceOf(ArraySubscriptExpr.class, expr);
+    }
+
     private ParseResult<? extends Expression> parseExpr(String sql) {
         return parseContext.parse(Expression.class, sql);
     }

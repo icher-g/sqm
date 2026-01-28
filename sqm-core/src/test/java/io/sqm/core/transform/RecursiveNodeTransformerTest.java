@@ -284,7 +284,7 @@ class RecursiveNodeTransformerTest {
 
     @Test
     void visitUsingJoin() {
-        var join = using(tbl("t1"));
+        var join = inner(tbl("t1")).using("a");
         var tableTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitTable(Table t) {

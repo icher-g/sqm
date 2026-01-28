@@ -2,6 +2,8 @@ package io.sqm.core;
 
 import io.sqm.core.walk.NodeVisitor;
 
+import java.util.List;
+
 /**
  * Represents a regular join: INNER/LEFT/RIGHT/FULL.
  */
@@ -39,8 +41,38 @@ public non-sealed interface OnJoin extends Join {
      * @param predicate a predicate to add.
      * @return A newly created instance with the provided predicate.
      */
-    default Join on(Predicate predicate) {
+    default OnJoin on(Predicate predicate) {
         return new Impl(right(), kind(), predicate);
+    }
+
+    /**
+     * Creates USING join with the provided list of columns. {@code USING (col1, col2, ...);}
+     *
+     * @param usingColumns a list of columns to be used in USING statement.
+     * @return A newly created instance of the USING join with the provided list of columns.
+     */
+    default UsingJoin using(String... usingColumns) {
+        return UsingJoin.of(right(), kind(), usingColumns);
+    }
+
+    /**
+     * Creates USING join with the provided list of columns. {@code USING (col1, col2, ...);}
+     *
+     * @param usingColumns a list of columns to be used in USING statement.
+     * @return A newly created instance of the USING join with the provided list of columns.
+     */
+    default UsingJoin using(List<String> usingColumns) {
+        return UsingJoin.of(right(), kind(), usingColumns);
+    }
+
+    /**
+     * Adds a kind to the current join instance.
+     *
+     * @param kind a kind to add.
+     * @return A newly created instance with the provided kind.
+     */
+    default OnJoin ofKind(JoinKind kind) {
+        return new Impl(right(), kind, on());
     }
 
     /**

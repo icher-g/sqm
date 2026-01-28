@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static io.sqm.core.Join.using;
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -36,7 +35,7 @@ public class RecursiveNodeVisitorAllNodesTraversalTest {
                 .join(inner(tbl("users").as("u")).on(col("u", "sid").eq(col("o", "user_id"))))
                 .join(natural(tbl("regions").as("r")))
                 .join(cross(tbl("x").as("x1")))
-                .join(using(tbl("y").as("y1"), "k1", "k2"))
+                .join(inner(tbl("y").as("y1")).using("k1", "k2"))
                 .where(
                     col("o", "state")
                         .in("A", "B")
@@ -45,8 +44,8 @@ public class RecursiveNodeVisitorAllNodesTraversalTest {
                         )
                         .and(
                             col("o", "flag").isNull()
-                                            .or(col("o", "code").like("%ZZ%"))
-                                            .or(col("o", "user").all(ComparisonOperator.EQ, select(lit(1))))
+                                .or(col("o", "code").like("%ZZ%"))
+                                .or(col("o", "user").all(ComparisonOperator.EQ, select(lit(1))))
                         )
                 )
                 .groupBy(group("u", "user_name"), group("o", "user_status"))

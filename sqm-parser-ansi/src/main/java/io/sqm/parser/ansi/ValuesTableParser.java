@@ -7,6 +7,9 @@ import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
@@ -25,23 +28,22 @@ public class ValuesTableParser implements MatchableParser<ValuesTable> {
         cur.expect("Expected (", TokenType.LPAREN);
         cur.expect("Expected VALUES", TokenType.VALUES);
 
-        ParseResult<? extends RowValues> rows;
+        List<RowExpr> items = new ArrayList<>();
+        do {
+            var rowExpr = ctx.parse(RowExpr.class, cur);
+            if (rowExpr.isError()) {
+                return error(rowExpr);
+            }
+            items.add(rowExpr.value());
+        }
+        while (cur.consumeIf(TokenType.COMMA));
 
-        if (cur.match(TokenType.LPAREN) && cur.match(TokenType.LPAREN, 1)) {
-            rows = ctx.parse(RowListExpr.class, cur);
-        }
-        else {
-            rows = ctx.parse(RowExpr.class, cur);
-        }
-
-        if (rows.isError()) {
-            return error(rows);
-        }
+        RowValues rows = items.size() == 1 ? items.getFirst() : RowListExpr.of(items);
 
         cur.expect("Expected )", TokenType.RPAREN);
 
         var aliases = parseColumnAliases(cur);
-        return ok(TableRef.values(rows.value()).as(aliases.first()).columnAliases(aliases.second()));
+        return ok(TableRef.values(rows).as(aliases.first()).columnAliases(aliases.second()));
     }
 
     /**
