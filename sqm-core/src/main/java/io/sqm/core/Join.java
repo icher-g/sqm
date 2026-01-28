@@ -2,8 +2,6 @@ package io.sqm.core;
 
 import io.sqm.core.match.JoinMatch;
 
-import java.util.List;
-
 /**
  * A single JOIN step that attaches a right-side TableRef to the current FROM-chain.
  * For CROSS/NATURAL joins, on() may be null. For USING, use usingColumns().
@@ -16,7 +14,7 @@ public sealed interface Join extends FromItem permits CrossJoin, DialectJoin, Na
      * @param right a table to join.
      * @return A newly created instance of INNER JOIN with the provided table.
      */
-    static OnJoin join(TableRef right) {
+    static OnJoin inner(TableRef right) {
         return OnJoin.of(right, JoinKind.INNER, null);
     }
 
@@ -79,28 +77,6 @@ public sealed interface Join extends FromItem permits CrossJoin, DialectJoin, Na
      */
     static CrossJoin cross(String schema, String table) {
         return CrossJoin.of(schema, table);
-    }
-
-    /**
-     * Creates a cross join with the provided table.
-     *
-     * @param right        a table to join.
-     * @param usingColumns a list of columns to be used for joining.
-     * @return A newly created instance of CROSS JOIN with the provided table.
-     */
-    static UsingJoin using(TableRef right, String... usingColumns) {
-        return UsingJoin.of(right, usingColumns);
-    }
-
-    /**
-     * Creates a using join with the provided table.
-     *
-     * @param right        a table to join.
-     * @param usingColumns a list of columns to be used for joining.
-     * @return A newly created instance of USING JOIN with the provided table and a list of columns.
-     */
-    static UsingJoin using(TableRef right, List<String> usingColumns) {
-        return UsingJoin.of(right, usingColumns);
     }
 
     /**

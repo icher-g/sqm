@@ -39,7 +39,7 @@ public class JoinContractsTest {
 
     @Test
     void using_join() {
-        var j = UsingJoin.of(TableRef.table("t"), "c1");
+        var j = UsingJoin.of(TableRef.table("t"), JoinKind.INNER, "c1");
         var name = j.right().matchTableRef()
                     .table(t -> t.name())
                     .orElse(null);

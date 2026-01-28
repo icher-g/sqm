@@ -11,7 +11,7 @@ public class JoinAndTableRefMatchTest {
 
     @Test
     void join_dispatches_to_genericJoin() {
-        Join join = Join.join(tbl("a"));
+        Join join = Join.inner(tbl("a"));
 
         String out = JoinMatch
             .<String>match(join)

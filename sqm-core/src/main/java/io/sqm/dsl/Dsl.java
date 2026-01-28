@@ -361,7 +361,7 @@ public final class Dsl {
      * @return a table join.
      */
     public static OnJoin inner(TableRef table) {
-        return Join.join(table);
+        return Join.inner(table);
     }
 
     /**
@@ -402,28 +402,6 @@ public final class Dsl {
      */
     public static CrossJoin cross(TableRef table) {
         return Join.cross(table);
-    }
-
-    /**
-     * Creates a using join with the provided table.
-     *
-     * @param table        a table to join.
-     * @param usingColumns a list of columns to be used for joining.
-     * @return A newly created instance of USING JOIN with the provided table and a list of columns.
-     */
-    public static UsingJoin using(TableRef table, String... usingColumns) {
-        return Join.using(table, usingColumns);
-    }
-
-    /**
-     * Creates a using join with the provided table.
-     *
-     * @param table        a table to join.
-     * @param usingColumns a list of columns to be used for joining.
-     * @return A newly created instance of USING JOIN with the provided table and a list of columns.
-     */
-    public static UsingJoin using(TableRef table, List<String> usingColumns) {
-        return Join.using(table, usingColumns);
     }
 
     /**

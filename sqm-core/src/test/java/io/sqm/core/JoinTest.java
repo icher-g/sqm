@@ -11,7 +11,7 @@ class JoinTest {
     @Test
     void inner() {
         Predicate p = Expression.column("c").gt(1);
-        Join join = Join.join(TableRef.table("t")).on(p);
+        Join join = Join.inner(TableRef.table("t")).on(p);
         assertInstanceOf(OnJoin.class, join);
         assertEquals(JoinKind.INNER, join.matchJoin().on(o -> o.kind()).orElse(null));
         assertEquals("t", join.matchJoin()
@@ -117,8 +117,8 @@ class JoinTest {
 
     @Test
     void using() {
-        assertInstanceOf(UsingJoin.class, Join.using(TableRef.table("t"), "a"));
-        assertInstanceOf(UsingJoin.class, Join.using(TableRef.table("t"), List.of("a")));
+        assertInstanceOf(UsingJoin.class, Join.inner(TableRef.table("t")).using("a"));
+        assertInstanceOf(UsingJoin.class, Join.inner(TableRef.table("t")).using(List.of("a")));
     }
 
     @Test
@@ -143,7 +143,7 @@ class JoinTest {
     @Test
     void maybeUsing() {
         assertFalse(Join.right(TableRef.table("t")).<Boolean>matchJoin().using(j -> true).orElse(false));
-        assertTrue(Join.using(TableRef.table("t")).<Boolean>matchJoin().using(j -> true).orElse(false));
+        assertTrue(Join.inner(TableRef.table("t")).using("a").<Boolean>matchJoin().using(j -> true).orElse(false));
     }
 
     @Test

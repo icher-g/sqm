@@ -20,28 +20,47 @@ public non-sealed interface UsingJoin extends Join {
      * Creates a cross join with the provided table.
      *
      * @param right        a table to join.
+     * @param kind         a join kind.
      * @param usingColumns a list of columns to be used for joining.
      * @return A newly created instance of CROSS JOIN with the provided table.
      */
-    static UsingJoin of(TableRef right, String... usingColumns) {
-        return new Impl(right, List.of(usingColumns));
+    static UsingJoin of(TableRef right, JoinKind kind, String... usingColumns) {
+        return new Impl(right, kind, List.of(usingColumns));
     }
 
     /**
      * Creates a cross join with the provided table.
      *
      * @param right        a table to join.
+     * @param kind         a join kind.
      * @param usingColumns a list of columns to be used for joining.
      * @return A newly created instance of CROSS JOIN with the provided table.
      */
-    static UsingJoin of(TableRef right, List<String> usingColumns) {
-        return new Impl(right, usingColumns);
+    static UsingJoin of(TableRef right, JoinKind kind, List<String> usingColumns) {
+        return new Impl(right, kind, usingColumns);
     }
+
+    /**
+     * Gets the join type.
+     *
+     * @return the join type.
+     */
+    JoinKind kind();
 
     /**
      * USING (col1, col2, ...);
      */
     List<String> usingColumns();
+
+    /**
+     * Adds a kind to the current join instance.
+     *
+     * @param kind a kind to add.
+     * @return A newly created instance with the provided kind.
+     */
+    default UsingJoin ofKind(JoinKind kind) {
+        return new Impl(right(), kind, usingColumns());
+    }
 
     /**
      * Accepts a {@link NodeVisitor} and dispatches control to the
@@ -69,8 +88,9 @@ public non-sealed interface UsingJoin extends Join {
      * </pre>
      *
      * @param right        the table to join.
+     * @param kind         a join kind.
      * @param usingColumns a list of columns to join on.
      */
-    record Impl(TableRef right, List<String> usingColumns) implements UsingJoin {
+    record Impl(TableRef right, JoinKind kind, List<String> usingColumns) implements UsingJoin {
     }
 }

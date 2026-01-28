@@ -1,6 +1,8 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.*;
+import io.sqm.core.ExistsPredicate;
+import io.sqm.core.NotPredicate;
+import io.sqm.core.Predicate;
 import io.sqm.parser.AtomicPredicateParser;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -74,12 +76,12 @@ public class NotPredicateParser implements Parser<Predicate> {
                 return ok(NotPredicate.of(result.value()));
             }
 
-            // NOT expression
-            var result = ctx.parse(Expression.class, cur);
-            if (result.isError()) {
-                return error(result);
+            // NOT <predicate> of NOT <expression>
+            var atomic = atomicPredicateParser.parse(cur, ctx);
+            if (atomic.isError()) {
+                return error(atomic);
             }
-            return ok(NotPredicate.of(UnaryPredicate.of(result.value())));
+            return ok(NotPredicate.of(atomic.value()));
         }
         return atomicPredicateParser.parse(cur, ctx);
     }

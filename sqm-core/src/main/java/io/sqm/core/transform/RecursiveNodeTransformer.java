@@ -378,7 +378,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitUsingJoin(UsingJoin j) {
         var table = apply(j.right());
         if (table != j.right()) {
-            return UsingJoin.of(table, j.usingColumns());
+            return UsingJoin.of(table, j.kind(), j.usingColumns());
         }
         return j;
     }
