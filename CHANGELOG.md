@@ -7,6 +7,7 @@
 - Added pattern-matching API (`matchX()` methods) for type-safe traversal and extraction.
 - Implemented **ANSI SQL parser** (`sqm-parser` module) converting SQL → SQM AST.
 - Implemented **ANSI SQL renderer** (`sqm-render-ansi` module) with dialect-based repository.
+- Implemented **PostgreSQL SQL renderer** (`sqm-render-postgresql` module).
 - Added **CTE**, **window functions**, **composite queries**, and **joins** support.
 - Added fluent **DSL builders** for programmatic query construction.
 - Provided **JSON serialization** for the model.
@@ -17,13 +18,13 @@
 - Parameters (`?`) and arithmetic operations not yet supported in parser.
 - No DML (INSERT/UPDATE/DELETE/MERGE) support yet.
 - Optimizer and validator not yet implemented.
-- PostgreSQL dialect pending.
+- PostgreSQL dialect provided in renderer module.
 
 ### Roadmap
 - [X] Parse query parameters (`WHERE col = ?`)
 - [X] Support arithmetic in SQL (`SELECT salary + bonus`)
 - [ ] Add DML operations
-- [ ] PostgreSQL dialect renderer/parser
+- [X] PostgreSQL dialect renderer
 - [ ] Query optimizer and validator
 
 ---
