@@ -4,7 +4,6 @@ import io.sqm.core.Node;
 import io.sqm.render.spi.Renderer;
 import io.sqm.render.spi.RenderersRepository;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,8 +24,7 @@ public final class DefaultRenderersRepository implements RenderersRepository {
     @Override
     @SuppressWarnings("unchecked")
     public <T extends Node> Renderer<T> get(Class<T> type) {
-        var i = Arrays.stream(type.getInterfaces()).findFirst();
-        var p = renderers.get(i.orElse(type));
+        var p = renderers.get(type);
         if (p != null) {
             return (Renderer<T>) p;
         }

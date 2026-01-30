@@ -2,6 +2,8 @@ package io.sqm.core.repos;
 
 import io.sqm.core.Node;
 
+import java.util.Arrays;
+
 /**
  * An interface of any repository that provides access to handlers.
  *
@@ -25,9 +27,8 @@ public interface HandlersRepository<K extends Handler<?>> {
      * @return a Handler.
      */
     default <T extends Node> K getFor(T instance) {
-        @SuppressWarnings("unchecked")
-        Class<T> t = (Class<T>) instance.getClass();
-        return get(t);
+        var key = getInterface(instance);
+        return get(key);
     }
 
     /**
@@ -55,9 +56,8 @@ public interface HandlersRepository<K extends Handler<?>> {
      * @throws IllegalArgumentException if no handler found.
      */
     default <T extends Node> K requireFor(T instance) {
-        @SuppressWarnings("unchecked")
-        Class<T> t = (Class<T>) instance.getClass();
-        return require(t);
+        var key = getInterface(instance);
+        return require(key);
     }
 
     /**
@@ -67,4 +67,16 @@ public interface HandlersRepository<K extends Handler<?>> {
      * @return this.
      */
     HandlersRepository<K> register(K handler);
+
+    @SuppressWarnings("unchecked")
+    private <T extends Node> Class<T> getInterface(T instance) {
+        Class<? extends T> impl = (Class<? extends T>) instance.getClass();
+
+        var opt = Arrays.stream(impl.getInterfaces())
+            .filter(Node.class::isAssignableFrom)
+            .findFirst();
+
+        var key = (Class<? extends Node>) opt.orElse(impl.asSubclass(Node.class));
+        return (Class<T>) key;
+    }
 }
