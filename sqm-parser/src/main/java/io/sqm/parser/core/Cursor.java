@@ -185,6 +185,16 @@ public final class Cursor {
     }
 
     /**
+     * Validates if current token type is the same as the provided one.
+     *
+     * @param func the custom function to match.
+     * @return True if the current token type matches the provided one.
+     */
+    public boolean match(Function<Token, Boolean> func) {
+        return func.apply(peek());
+    }
+
+    /**
      * Validates if current token type with respect to a lookahead position is the same as the provided one.
      *
      * @param type      the type to match.
@@ -196,6 +206,20 @@ public final class Cursor {
             return false;
         }
         return peek(lookahead).type() == type;
+    }
+
+    /**
+     * Validates if current token type with respect to a lookahead position is the same as the provided one.
+     *
+     * @param func the custom function to match.
+     * @param lookahead the lookahead position.
+     * @return True if the token type matches the provided one.
+     */
+    public boolean match(Function<Token, Boolean> func, int lookahead) {
+        if (lookahead >= tokens.size()) {
+            return false;
+        }
+        return func.apply(peek(lookahead));
     }
 
     /**
