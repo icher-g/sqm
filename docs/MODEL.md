@@ -42,6 +42,14 @@ Node
 │  │  │  │  └─ MulArithmeticExpr
 │  │  └─ NegativeArithmeticExpr
 │  ├─ LiteralExpr
+│  │  ├─ DateLiteralExpr
+│  │  ├─ TimeLiteralExpr
+│  │  ├─ TimestampLiteralExpr
+│  │  ├─ IntervalLiteralExpr
+│  │  ├─ BitStringLiteralExpr
+│  │  ├─ HexStringLiteralExpr
+│  │  ├─ EscapeStringLiteralExpr
+│  │  └─ DollarStringLiteralExpr
 │  ├─ Predicate
 │  │  ├─ AnyAllPredicate
 │  │  ├─ BetweenPredicate
@@ -138,6 +146,15 @@ graph TD
   Expression --> LiteralExpr
   Expression --> Predicate
   Expression --> ValueSet
+
+  LiteralExpr --> DateLiteralExpr
+  LiteralExpr --> TimeLiteralExpr
+  LiteralExpr --> TimestampLiteralExpr
+  LiteralExpr --> IntervalLiteralExpr
+  LiteralExpr --> BitStringLiteralExpr
+  LiteralExpr --> HexStringLiteralExpr
+  LiteralExpr --> EscapeStringLiteralExpr
+  LiteralExpr --> DollarStringLiteralExpr
 
   FunctionExpr --> FunctionExpr_Arg
   FunctionExpr_Arg --> FunctionExpr_Arg_Column
@@ -337,6 +354,14 @@ graph TD
 
 - **LiteralExpr**  
   Constant literal value of any supported type.
+  - **DateLiteralExpr** – `DATE '...'` literal
+  - **TimeLiteralExpr** – `TIME '...'` literal, with optional time zone spec
+  - **TimestampLiteralExpr** – `TIMESTAMP '...'` literal, with optional time zone spec
+  - **IntervalLiteralExpr** – `INTERVAL '...'` literal with optional qualifier
+  - **BitStringLiteralExpr** – `B'...'` literal
+  - **HexStringLiteralExpr** – `X'...'` literal
+  - **EscapeStringLiteralExpr** – PostgreSQL escape string literal (`E'...'`)
+  - **DollarStringLiteralExpr** – PostgreSQL dollar-quoted literal (`$$...$$`)
 
 ---
 

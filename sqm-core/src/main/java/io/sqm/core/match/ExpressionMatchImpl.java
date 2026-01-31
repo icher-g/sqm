@@ -227,6 +227,126 @@ public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
     }
 
     /**
+     * Registers a handler to be applied when the subject is a {@link DateLiteralExpr}.
+     *
+     * @param f handler for {@code DateLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public ExpressionMatch<R> dateLiteral(Function<DateLiteralExpr, R> f) {
+        if (!matched && expr instanceof DateLiteralExpr dateLiteralExpr) {
+            result = f.apply(dateLiteralExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link TimeLiteralExpr}.
+     *
+     * @param f handler for {@code TimeLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public ExpressionMatch<R> timeLiteral(Function<TimeLiteralExpr, R> f) {
+        if (!matched && expr instanceof TimeLiteralExpr timeLiteralExpr) {
+            result = f.apply(timeLiteralExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link TimestampLiteralExpr}.
+     *
+     * @param f handler for {@code TimestampLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public ExpressionMatch<R> timestampLiteral(Function<TimestampLiteralExpr, R> f) {
+        if (!matched && expr instanceof TimestampLiteralExpr timestampLiteralExpr) {
+            result = f.apply(timestampLiteralExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link IntervalLiteralExpr}.
+     *
+     * @param f handler for {@code IntervalLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public ExpressionMatch<R> intervalLiteral(Function<IntervalLiteralExpr, R> f) {
+        if (!matched && expr instanceof IntervalLiteralExpr intervalLiteralExpr) {
+            result = f.apply(intervalLiteralExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link BitStringLiteralExpr}.
+     *
+     * @param f handler for {@code BitStringLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public ExpressionMatch<R> bitStringLiteral(Function<BitStringLiteralExpr, R> f) {
+        if (!matched && expr instanceof BitStringLiteralExpr bitStringLiteralExpr) {
+            result = f.apply(bitStringLiteralExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link HexStringLiteralExpr}.
+     *
+     * @param f handler for {@code HexStringLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public ExpressionMatch<R> hexStringLiteral(Function<HexStringLiteralExpr, R> f) {
+        if (!matched && expr instanceof HexStringLiteralExpr hexStringLiteralExpr) {
+            result = f.apply(hexStringLiteralExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link EscapeStringLiteralExpr}.
+     *
+     * @param f handler for {@code EscapeStringLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public ExpressionMatch<R> escapeStringLiteral(Function<EscapeStringLiteralExpr, R> f) {
+        if (!matched && expr instanceof EscapeStringLiteralExpr escapeStringLiteralExpr) {
+            result = f.apply(escapeStringLiteralExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link DollarStringLiteralExpr}.
+     *
+     * @param f handler for {@code DollarStringLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public ExpressionMatch<R> dollarStringLiteral(Function<DollarStringLiteralExpr, R> f) {
+        if (!matched && expr instanceof DollarStringLiteralExpr dollarStringLiteralExpr) {
+            result = f.apply(dollarStringLiteralExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
      * Registers a handler to be applied when the subject is a {@link ValueSet}.
      *
      * @param f handler for {@code ValueSet}

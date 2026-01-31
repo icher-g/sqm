@@ -264,6 +264,50 @@ class LexerTest {
     }
 
     @Test
+    void lexer_handlesEscapeStringLiteral() {
+        List<Token> tokens = Lexer.lexAll("E'it\\'s'", quoting);
+        assertEquals(1, countTokensOfType(tokens, TokenType.ESCAPE_STRING));
+        assertEquals("it\\'s", tokens.getFirst().lexeme());
+    }
+
+    @Test
+    void lexer_handlesDollarQuotedStringLiteral() {
+        List<Token> tokens = Lexer.lexAll("$$hello$$ $tag$world$tag$", quoting);
+        assertEquals(2, countTokensOfType(tokens, TokenType.DOLLAR_STRING));
+        assertEquals("$$hello$$", tokens.get(0).lexeme());
+        assertEquals("$tag$world$tag$", tokens.get(1).lexeme());
+    }
+
+    @Test
+    void lexer_handlesDollarQuotedStringLiteral_withDigitsInTag() {
+        List<Token> tokens = Lexer.lexAll("$t1$ok$t1$", quoting);
+        assertEquals(1, countTokensOfType(tokens, TokenType.DOLLAR_STRING));
+        assertEquals("$t1$ok$t1$", tokens.getFirst().lexeme());
+    }
+
+    @Test
+    void lexer_doesNotTreatDigitTagAsDollarString() {
+        List<Token> tokens = Lexer.lexAll("$1$", quoting);
+        assertEquals(TokenType.DOLLAR, tokens.get(0).type());
+        assertEquals(TokenType.NUMBER, tokens.get(1).type());
+        assertEquals(TokenType.DOLLAR, tokens.get(2).type());
+    }
+
+    @Test
+    void lexer_throwsOnUnterminatedDollarString() {
+        assertThrows(ParserException.class, () -> Lexer.lexAll("$tag$unterminated", quoting));
+    }
+
+    @Test
+    void lexer_handlesBitAndHexStringLiterals() {
+        List<Token> tokens = Lexer.lexAll("B'1010' X'FF'", quoting);
+        assertEquals(TokenType.BIT_STRING, tokens.get(0).type());
+        assertEquals("1010", tokens.get(0).lexeme());
+        assertEquals(TokenType.HEX_STRING, tokens.get(1).type());
+        assertEquals("FF", tokens.get(1).lexeme());
+    }
+
+    @Test
     void lexer_throwsOnUnterminatedString() {
         assertThrows(ParserException.class, () -> Lexer.lexAll("'unterminated", quoting));
     }

@@ -5,7 +5,7 @@ package io.sqm.parser.core;
  */
 public enum TokenType {
     // literals & names
-    IDENT, NUMBER, STRING,
+    IDENT, NUMBER, STRING, ESCAPE_STRING, DOLLAR_STRING, BIT_STRING, HEX_STRING,
     QMARK,          // ? - might be an anonymous parameter
 
     // punctuation

@@ -1,15 +1,19 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.ColumnExpr;
+import io.sqm.core.DateLiteralExpr;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
-public class ColumnExprParser implements MatchableParser<ColumnExpr> {
+/**
+ * Parses ANSI {@code DATE '...'} typed literals.
+ */
+public class DateLiteralExprParser implements MatchableParser<DateLiteralExpr> {
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -18,16 +22,13 @@ public class ColumnExprParser implements MatchableParser<ColumnExpr> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<ColumnExpr> parse(Cursor cur, ParseContext ctx) {
-        var t = cur.expect("Expected identifier", TokenType.IDENT);
-        String table = null, name = t.lexeme();
-
-        // t1.c1
-        if (cur.consumeIf(TokenType.DOT) && cur.match(TokenType.IDENT)) {
-            table = name;
-            name = cur.advance().lexeme();
+    public ParseResult<DateLiteralExpr> parse(Cursor cur, ParseContext ctx) {
+        var keyword = cur.expect("Expected DATE literal", TokenType.IDENT);
+        if (!keyword.lexeme().equalsIgnoreCase("date")) {
+            return error("Expected DATE literal but found '" + keyword.lexeme() + "'", cur.fullPos());
         }
-        return ok(ColumnExpr.of(table, name));
+        var literal = cur.expect("Expected string literal after DATE", TokenType.STRING);
+        return ok(DateLiteralExpr.of(literal.lexeme()));
     }
 
     /**
@@ -36,17 +37,13 @@ public class ColumnExprParser implements MatchableParser<ColumnExpr> {
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<ColumnExpr> targetType() {
-        return ColumnExpr.class;
+    public Class<DateLiteralExpr> targetType() {
+        return DateLiteralExpr.class;
     }
 
     /**
      * Performs a look-ahead test to determine whether this parser is applicable
      * at the current cursor position.
-     * <p>
-     * The method must <strong>not</strong> advance the cursor or modify any parsing
-     * context state. Its sole responsibility is to check whether the upcoming
-     * tokens syntactically correspond to the construct handled by this parser.
      *
      * @param cur the current cursor pointing to the next token to be parsed
      * @param ctx the parsing context providing configuration, helpers and nested parsing
@@ -55,6 +52,8 @@ public class ColumnExprParser implements MatchableParser<ColumnExpr> {
      */
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
-        return ctx.lookups().looksLikeColumnRef(cur, io.sqm.parser.core.Lookahead.at(0));
+        return cur.match(TokenType.IDENT)
+            && cur.peek().lexeme().equalsIgnoreCase("date")
+            && cur.match(TokenType.STRING, 1);
     }
 }

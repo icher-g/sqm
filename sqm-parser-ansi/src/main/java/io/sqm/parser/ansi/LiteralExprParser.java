@@ -1,6 +1,6 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.LiteralExpr;
+import io.sqm.core.*;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
@@ -20,6 +20,41 @@ public class LiteralExprParser implements MatchableParser<LiteralExpr> {
      */
     @Override
     public ParseResult<LiteralExpr> parse(Cursor cur, ParseContext ctx) {
+        if (cur.match(TokenType.ESCAPE_STRING)) {
+            var result = ctx.parse(EscapeStringLiteralExpr.class, cur);
+            return result.isError() ? error(result) : ok(result.value());
+        }
+        if (cur.match(TokenType.DOLLAR_STRING)) {
+            var result = ctx.parse(DollarStringLiteralExpr.class, cur);
+            return result.isError() ? error(result) : ok(result.value());
+        }
+        if (cur.match(TokenType.BIT_STRING)) {
+            var result = ctx.parse(BitStringLiteralExpr.class, cur);
+            return result.isError() ? error(result) : ok(result.value());
+        }
+        if (cur.match(TokenType.HEX_STRING)) {
+            var result = ctx.parse(HexStringLiteralExpr.class, cur);
+            return result.isError() ? error(result) : ok(result.value());
+        }
+        if (cur.match(TokenType.IDENT)) {
+            var keyword = cur.peek().lexeme();
+            if (keyword.equalsIgnoreCase("date")) {
+                var result = ctx.parse(DateLiteralExpr.class, cur);
+                return result.isError() ? error(result) : ok(result.value());
+            }
+            if (keyword.equalsIgnoreCase("time")) {
+                var result = ctx.parse(TimeLiteralExpr.class, cur);
+                return result.isError() ? error(result) : ok(result.value());
+            }
+            if (keyword.equalsIgnoreCase("timestamp")) {
+                var result = ctx.parse(TimestampLiteralExpr.class, cur);
+                return result.isError() ? error(result) : ok(result.value());
+            }
+            if (keyword.equalsIgnoreCase("interval")) {
+                var result = ctx.parse(IntervalLiteralExpr.class, cur);
+                return result.isError() ? error(result) : ok(result.value());
+            }
+        }
         if (cur.match(TokenType.STRING)) {
             return ok(LiteralExpr.of(cur.advance().lexeme()));
         }
@@ -66,6 +101,6 @@ public class LiteralExprParser implements MatchableParser<LiteralExpr> {
      */
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
-        return cur.matchAny(TokenType.NUMBER, TokenType.STRING, TokenType.FALSE, TokenType.TRUE, TokenType.NULL);
+        return ctx.lookups().looksLikeLiteralExpr(cur);
     }
 }

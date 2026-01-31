@@ -130,6 +130,94 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
+     * Visits a {@link DateLiteralExpr} node representing a {@code DATE '...'} literal.
+     *
+     * @param l the date literal expression
+     * @return the result of the visit
+     */
+    @Override
+    public R visitDateLiteralExpr(DateLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
+     * Visits a {@link TimeLiteralExpr} node representing a {@code TIME '...'} literal.
+     *
+     * @param l the time literal expression
+     * @return the result of the visit
+     */
+    @Override
+    public R visitTimeLiteralExpr(TimeLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
+     * Visits a {@link TimestampLiteralExpr} node representing a {@code TIMESTAMP '...'} literal.
+     *
+     * @param l the timestamp literal expression
+     * @return the result of the visit
+     */
+    @Override
+    public R visitTimestampLiteralExpr(TimestampLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
+     * Visits an {@link IntervalLiteralExpr} node representing an {@code INTERVAL '...'} literal.
+     *
+     * @param l the interval literal expression
+     * @return the result of the visit
+     */
+    @Override
+    public R visitIntervalLiteralExpr(IntervalLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
+     * Visits a {@link BitStringLiteralExpr} node representing a bit string literal.
+     *
+     * @param l the bit string literal expression
+     * @return the result of the visit
+     */
+    @Override
+    public R visitBitStringLiteralExpr(BitStringLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
+     * Visits a {@link HexStringLiteralExpr} node representing a hex string literal.
+     *
+     * @param l the hex string literal expression
+     * @return the result of the visit
+     */
+    @Override
+    public R visitHexStringLiteralExpr(HexStringLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
+     * Visits a {@link EscapeStringLiteralExpr} node representing a PostgreSQL escape string literal.
+     *
+     * @param l the escape string literal expression
+     * @return the result of the visit
+     */
+    @Override
+    public R visitEscapeStringLiteralExpr(EscapeStringLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
+     * Visits a {@link DollarStringLiteralExpr} node representing a PostgreSQL dollar-quoted string literal.
+     *
+     * @param l the dollar-quoted string literal expression
+     * @return the result of the visit
+     */
+    @Override
+    public R visitDollarStringLiteralExpr(DollarStringLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
      * Visits a {@link QueryExpr} node representing a scalar subquery
      * used as an expression.
      *

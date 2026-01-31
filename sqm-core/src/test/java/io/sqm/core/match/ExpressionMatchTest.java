@@ -1,8 +1,6 @@
 package io.sqm.core.match;
 
-import io.sqm.core.ColumnExpr;
-import io.sqm.core.LiteralExpr;
-import io.sqm.core.Query;
+import io.sqm.core.*;
 import org.junit.jupiter.api.Test;
 
 import static io.sqm.core.Expression.funcArg;
@@ -97,6 +95,97 @@ public class ExpressionMatchTest {
             .orElseGet(() -> "ELSE");
 
         assertEquals("L", out);
+    }
+
+    @Test
+    void matches_typed_literals() {
+        String dateResult = Match
+            .<String>expression(DateLiteralExpr.of("2020-01-01"))
+            .dateLiteral(d -> "DATE")
+            .literal(l -> "L")
+            .orElse("ELSE");
+        assertEquals("DATE", dateResult);
+
+        String timeResult = Match
+            .<String>expression(TimeLiteralExpr.of("10:11:12", TimeZoneSpec.WITH_TIME_ZONE))
+            .timeLiteral(t -> "TIME")
+            .literal(l -> "L")
+            .orElse("ELSE");
+        assertEquals("TIME", timeResult);
+
+        String tsResult = Match
+            .<String>expression(TimestampLiteralExpr.of("2020-01-01 00:00:00"))
+            .timestampLiteral(t -> "TS")
+            .literal(l -> "L")
+            .orElse("ELSE");
+        assertEquals("TS", tsResult);
+
+        String intervalResult = Match
+            .<String>expression(IntervalLiteralExpr.of("1", "DAY"))
+            .intervalLiteral(i -> "INT")
+            .literal(l -> "L")
+            .orElse("ELSE");
+        assertEquals("INT", intervalResult);
+
+        String bitResult = Match
+            .<String>expression(BitStringLiteralExpr.of("1010"))
+            .bitStringLiteral(b -> "BIT")
+            .literal(l -> "L")
+            .orElse("ELSE");
+        assertEquals("BIT", bitResult);
+
+        String hexResult = Match
+            .<String>expression(HexStringLiteralExpr.of("FF"))
+            .hexStringLiteral(h -> "HEX")
+            .literal(l -> "L")
+            .orElse("ELSE");
+        assertEquals("HEX", hexResult);
+
+        String escapeResult = Match
+            .<String>expression(EscapeStringLiteralExpr.of("it\\'s"))
+            .escapeStringLiteral(e -> "ESC")
+            .literal(l -> "L")
+            .orElse("ELSE");
+        assertEquals("ESC", escapeResult);
+
+        String dollarResult = Match
+            .<String>expression(DollarStringLiteralExpr.of("tag", "value"))
+            .dollarStringLiteral(d -> "DOLLAR")
+            .literal(l -> "L")
+            .orElse("ELSE");
+        assertEquals("DOLLAR", dollarResult);
+    }
+
+    @Test
+    void typed_literal_matchers_do_not_override_when_already_matched() {
+        String result = Match
+            .<String>expression(DateLiteralExpr.of("2020-01-01"))
+            .dateLiteral(d -> "DATE")
+            .timeLiteral(t -> "TIME")
+            .timestampLiteral(t -> "TS")
+            .intervalLiteral(i -> "INT")
+            .bitStringLiteral(b -> "BIT")
+            .hexStringLiteral(h -> "HEX")
+            .escapeStringLiteral(e -> "ESC")
+            .dollarStringLiteral(d -> "DOLLAR")
+            .orElse("ELSE");
+        assertEquals("DATE", result);
+    }
+
+    @Test
+    void typed_literal_matchers_skip_for_non_literal_expr() {
+        String result = Match
+            .<String>expression(col("c"))
+            .dateLiteral(d -> "DATE")
+            .timeLiteral(t -> "TIME")
+            .timestampLiteral(t -> "TS")
+            .intervalLiteral(i -> "INT")
+            .bitStringLiteral(b -> "BIT")
+            .hexStringLiteral(h -> "HEX")
+            .escapeStringLiteral(e -> "ESC")
+            .dollarStringLiteral(d -> "DOLLAR")
+            .otherwise(e -> "OTHER");
+        assertEquals("OTHER", result);
     }
 
     @Test

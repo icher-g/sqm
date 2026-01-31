@@ -27,6 +27,9 @@ public class AnsiLookups implements Lookups {
      */
     @Override
     public boolean looksLikeColumnRef(Cursor cur, Lookahead pos) {
+        if (looksLikeTypedLiteral(cur, Lookahead.at(pos.current()))) {
+            return false;
+        }
         var p = Lookahead.at(pos.current());
         if (cur.match(TokenType.IDENT, p.current())) {
             p.increment();
@@ -443,11 +446,12 @@ public class AnsiLookups implements Lookups {
      */
     @Override
     public boolean looksLikeLiteralExpr(Cursor cur, Lookahead pos) {
-        if (cur.matchAny(pos.current(), TokenType.NUMBER, TokenType.STRING, TokenType.FALSE, TokenType.TRUE, TokenType.NULL)) {
+        if (cur.matchAny(pos.current(), TokenType.NUMBER, TokenType.STRING, TokenType.FALSE, TokenType.TRUE, TokenType.NULL,
+            TokenType.BIT_STRING, TokenType.HEX_STRING, TokenType.ESCAPE_STRING, TokenType.DOLLAR_STRING)) {
             pos.increment();
             return true;
         }
-        return false;
+        return looksLikeTypedLiteral(cur, pos);
     }
 
     /**
@@ -960,6 +964,47 @@ public class AnsiLookups implements Lookups {
             looksLikeQueryExpr(cur, p) || looksLikeNeg(cur, p)) {
             pos.increment(p.current() - pos.current());
             return true;
+        }
+        return false;
+    }
+
+    private boolean looksLikeTypedLiteral(Cursor cur, Lookahead pos) {
+        if (!cur.match(TokenType.IDENT, pos.current())) {
+            return false;
+        }
+        String keyword = cur.peek(pos.current()).lexeme();
+        if (keyword.equalsIgnoreCase("date")) {
+            if (cur.match(TokenType.STRING, pos.current() + 1)) {
+                pos.increment(2);
+                return true;
+            }
+            return false;
+        }
+        if (keyword.equalsIgnoreCase("time") || keyword.equalsIgnoreCase("timestamp")) {
+            int p = pos.current() + 1;
+            if (cur.matchAny(p, TokenType.WITH, TokenType.WITHOUT)) {
+                p++;
+                if (!cur.match(TokenType.IDENT, p) || !cur.peek(p).lexeme().equalsIgnoreCase("time")) {
+                    return false;
+                }
+                p++;
+                if (!cur.match(TokenType.IDENT, p) || !cur.peek(p).lexeme().equalsIgnoreCase("zone")) {
+                    return false;
+                }
+                p++;
+            }
+            if (cur.match(TokenType.STRING, p)) {
+                pos.increment(p - pos.current() + 1);
+                return true;
+            }
+            return false;
+        }
+        if (keyword.equalsIgnoreCase("interval")) {
+            if (cur.match(TokenType.STRING, pos.current() + 1)) {
+                pos.increment(2);
+                return true;
+            }
+            return false;
         }
         return false;
     }

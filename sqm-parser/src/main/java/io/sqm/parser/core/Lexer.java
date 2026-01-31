@@ -167,6 +167,20 @@ public final class Lexer {
         int start = pos;
         char c = s.charAt(pos);
 
+        // prefixed strings
+        if ((c == 'E' || c == 'e') && peekNext() == '\'') {
+            pos++; // consume prefix
+            return readStringLiteral(TokenType.ESCAPE_STRING, true);
+        }
+        if ((c == 'B' || c == 'b') && peekNext() == '\'') {
+            pos++; // consume prefix
+            return readStringLiteral(TokenType.BIT_STRING, false);
+        }
+        if ((c == 'X' || c == 'x') && peekNext() == '\'') {
+            pos++; // consume prefix
+            return readStringLiteral(TokenType.HEX_STRING, false);
+        }
+
         // strings '...'
         if (c == '\'') return readString();
 
@@ -194,6 +208,10 @@ public final class Lexer {
         // punctuation/operators
         switch (c) {
             case '$':
+                var dollarString = readDollarString();
+                if (dollarString != null) {
+                    return dollarString;
+                }
                 pos++;
                 return new Token(DOLLAR, "$", start);
             case '.':
@@ -405,22 +423,82 @@ public final class Lexer {
     }
 
     private Token readString() {
+        return readStringLiteral(STRING, false);
+    }
+
+    private Token readStringLiteral(TokenType type, boolean preserveEscapes) {
         int start = pos;
-        pos++;
+        pos++; // consume opening quote
         StringBuilder sb = new StringBuilder();
         while (pos < len) {
             char c = s.charAt(pos++);
+            if (preserveEscapes && c == '\\') {
+                if (pos >= len) {
+                    throw new ParserException("Unterminated string literal", start);
+                }
+                char next = s.charAt(pos++);
+                sb.append('\\').append(next);
+                continue;
+            }
             if (c == '\'') {
                 if (pos < len && s.charAt(pos) == '\'') {
-                    sb.append('\'');
+                    if (preserveEscapes) {
+                        sb.append("''");
+                    }
+                    else {
+                        sb.append('\'');
+                    }
                     pos++;
                     continue;
                 }
-                return new Token(STRING, sb.toString(), start);
+                return new Token(type, sb.toString(), start);
             }
-            else sb.append(c);
+            sb.append(c);
         }
         throw new ParserException("Unterminated string literal", start);
+    }
+
+    private Token readDollarString() {
+        int start = pos;
+        int tagStart = pos + 1;
+        if (tagStart >= len) {
+            return null;
+        }
+        char next = s.charAt(tagStart);
+        if (Character.isDigit(next)) {
+            return null;
+        }
+        if (next != '$' && !isDollarTagStart(next)) {
+            return null;
+        }
+        int tagEnd = tagStart;
+        if (next != '$') {
+            while (tagEnd < len && isDollarTagPart(s.charAt(tagEnd))) {
+                tagEnd++;
+            }
+            if (tagEnd >= len || s.charAt(tagEnd) != '$') {
+                return null;
+            }
+        }
+
+        String tag = s.substring(tagStart, tagEnd);
+        String delim = "$" + tag + "$";
+        int contentStart = tagEnd + 1;
+        int end = s.indexOf(delim, contentStart);
+        if (end < 0) {
+            throw new ParserException("Unterminated dollar-quoted string literal", start);
+        }
+        String raw = s.substring(start, end + delim.length());
+        pos = end + delim.length();
+        return new Token(DOLLAR_STRING, raw, start);
+    }
+
+    private static boolean isDollarTagStart(char c) {
+        return Character.isLetter(c) || c == '_';
+    }
+
+    private static boolean isDollarTagPart(char c) {
+        return Character.isLetterOrDigit(c) || c == '_';
     }
 
     private void skipWSandComments() {

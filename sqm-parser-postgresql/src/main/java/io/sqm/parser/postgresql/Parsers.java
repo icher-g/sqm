@@ -30,6 +30,9 @@ public class Parsers {
             .register(new DistinctSpecParser())
             .register(new LateralParser())
             .register(new LockingClauseParser())
-            .register(new RegexPredicateParser());
+            .register(new RegexPredicateParser())
+            .register(new EscapeStringLiteralExprParser())
+            .register(new DollarStringLiteralExprParser())
+            .register(new IntervalLiteralExprParser());
     }
 }
