@@ -56,6 +56,19 @@ class FunctionTableRendererTest {
     }
 
     @Test
+    @DisplayName("Render table function WITH ORDINALITY")
+    void rendersTableFunctionWithOrdinality() {
+        var func = func("generate_series", arg(lit(1)), arg(lit(3)));
+        var table = TableRef.function(func)
+            .withOrdinality()
+            .as("t")
+            .columnAliases(List.of("n", "ord"));
+        var sql = renderContext.render(table).sql();
+
+        assertEquals("generate_series(1, 3) WITH ORDINALITY AS t(n, ord)", normalizeWhitespace(sql));
+    }
+
+    @Test
     @DisplayName("Render unnest function")
     void rendersUnnestFunction() {
         var arr = array(lit(1), lit(2), lit(3));

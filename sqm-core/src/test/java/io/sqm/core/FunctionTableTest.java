@@ -21,6 +21,7 @@ class FunctionTableTest {
         assertEquals(func, table.function());
         assertNull(table.alias());
         assertTrue(table.columnAliases().isEmpty());
+        assertFalse(table.ordinality());
     }
 
     @Test
@@ -33,6 +34,7 @@ class FunctionTableTest {
         assertEquals(func, table.function());
         assertEquals("t", table.alias());
         assertTrue(table.columnAliases().isEmpty());
+        assertFalse(table.ordinality());
     }
 
     @Test
@@ -47,6 +49,7 @@ class FunctionTableTest {
         assertEquals(2, table.columnAliases().size());
         assertTrue(table.columnAliases().contains("id"));
         assertTrue(table.columnAliases().contains("name"));
+        assertFalse(table.ordinality());
     }
 
     @Test
@@ -56,6 +59,16 @@ class FunctionTableTest {
         var table = FunctionTable.of(func).as("series");
 
         assertEquals("series", table.alias());
+        assertEquals(func, table.function());
+    }
+
+    @Test
+    @DisplayName("Enable WITH ORDINALITY")
+    void enableWithOrdinality() {
+        var func = func("generate_series", arg(lit(1)), arg(lit(10)));
+        var table = FunctionTable.of(func).withOrdinality();
+
+        assertTrue(table.ordinality());
         assertEquals(func, table.function());
     }
 
@@ -113,6 +126,7 @@ class FunctionTableTest {
         var table1 = FunctionTable.of(func);
         var table2 = table1.as("t");
         var table3 = table2.columnAliases("num");
+        var table4 = table3.withOrdinality();
 
         assertNull(table1.alias());
         assertEquals("t", table2.alias());
@@ -120,6 +134,8 @@ class FunctionTableTest {
         assertTrue(table1.columnAliases().isEmpty());
         assertTrue(table2.columnAliases().isEmpty());
         assertFalse(table3.columnAliases().isEmpty());
+        assertFalse(table3.ordinality());
+        assertTrue(table4.ordinality());
     }
 
     @Test

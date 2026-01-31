@@ -3,6 +3,7 @@ package io.sqm.parser.postgresql;
 import io.sqm.core.FunctionExpr;
 import io.sqm.core.FunctionTable;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
@@ -43,8 +44,16 @@ public class FunctionTableParser implements MatchableParser<FunctionTable> {
             return error(funcExpr);
         }
 
+        boolean withOrdinality = false;
+        if (cur.consumeIf(TokenType.WITH)) {
+            if (!cur.consumeIf(TokenType.ORDINALITY)) {
+                return error("Expected ORDINALITY after WITH", cur.fullPos());
+            }
+            withOrdinality = true;
+        }
+
         var aliases = parseColumnAliases(cur);
-        return ok(FunctionTable.of(funcExpr.value(), aliases.second(), aliases.first()));
+        return ok(FunctionTable.of(funcExpr.value(), aliases.second(), aliases.first(), withOrdinality));
     }
 
     /**
