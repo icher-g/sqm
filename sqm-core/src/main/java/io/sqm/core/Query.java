@@ -76,6 +76,19 @@ public sealed interface Query extends Node permits CompositeQuery, DialectQuery,
     }
 
     /**
+     * Creates a CTE definition with the provided name and materialization hint.
+     *
+     * @param name            the CTE name.
+     * @param body            a sub query wrapped by the CTE.
+     * @param columnAliases   a list of column aliases.
+     * @param materialization materialization hint.
+     * @return A newly created CTE definition.
+     */
+    static CteDef cte(String name, Query body, List<String> columnAliases, CteDef.Materialization materialization) {
+        return CteDef.of(name, body, columnAliases, materialization);
+    }
+
+    /**
      * Creates a WITH query statement with the list of CTE sub queries and a body.
      *
      * @param ctes a list of CTE sub queries.

@@ -760,7 +760,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitCte(CteDef c) {
         var body = apply(c.body());
         if (body != c.body()) {
-            return CteDef.of(c.name(), body, c.columnAliases());
+            return CteDef.of(c.name(), body, c.columnAliases(), c.materialization());
         }
         return c;
     }

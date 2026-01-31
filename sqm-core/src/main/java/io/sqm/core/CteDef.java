@@ -41,13 +41,31 @@ import java.util.List;
 public non-sealed interface CteDef extends Node {
 
     /**
+     * Materialization hint for CTEs.
+     */
+    enum Materialization {
+        /**
+         * No explicit hint.
+         */
+        DEFAULT,
+        /**
+         * Forces materialization (PostgreSQL).
+         */
+        MATERIALIZED,
+        /**
+         * Prevents materialization (PostgreSQL).
+         */
+        NOT_MATERIALIZED
+    }
+
+    /**
      * Creates a CTE definition with the provided name.
      *
      * @param name the CTE name.
      * @return A newly created CTE definition.
      */
     static CteDef of(String name) {
-        return new Impl(name, null, null);
+        return of(name, null, null, Materialization.DEFAULT);
     }
 
     /**
@@ -58,7 +76,7 @@ public non-sealed interface CteDef extends Node {
      * @return A newly created CTE definition.
      */
     static CteDef of(String name, Query body) {
-        return new Impl(name, body, null);
+        return of(name, body, null, Materialization.DEFAULT);
     }
 
     /**
@@ -70,7 +88,20 @@ public non-sealed interface CteDef extends Node {
      * @return A newly created CTE definition.
      */
     static CteDef of(String name, Query body, List<String> columnAliases) {
-        return new Impl(name, body, columnAliases);
+        return of(name, body, columnAliases, Materialization.DEFAULT);
+    }
+
+    /**
+     * Creates a CTE definition with the provided name.
+     *
+     * @param name the CTE name.
+     * @param body a sub query wrapped by the CTE.
+     * @param columnAliases a list of column aliases.
+     * @param materialization materialization hint.
+     * @return A newly created CTE definition.
+     */
+    static CteDef of(String name, Query body, List<String> columnAliases, Materialization materialization) {
+        return new Impl(name, body, columnAliases, materialization);
     }
 
     /**
@@ -106,13 +137,20 @@ public non-sealed interface CteDef extends Node {
     List<String> columnAliases();
 
     /**
+     * Gets materialization hint for this CTE.
+     *
+     * @return materialization hint.
+     */
+    Materialization materialization();
+
+    /**
      * Adds SELECT statement to CTE statement.
      *
      * @param body a SELECT statement.
      * @return this.
      */
     default CteDef body(Query body) {
-        return new Impl(name(), body, columnAliases());
+        return of(name(), body, columnAliases(), materialization());
     }
 
     /**
@@ -122,7 +160,7 @@ public non-sealed interface CteDef extends Node {
      * @return A new instance of {@link CteDef} with the list of column aliases. All other fields are preserved.
      */
     default CteDef columnAliases(List<String> columnAliases) {
-        return new Impl(name(), body(), columnAliases);
+        return of(name(), body(), columnAliases, materialization());
     }
 
     /**
@@ -132,7 +170,17 @@ public non-sealed interface CteDef extends Node {
      * @return A new instance of {@link CteDef} with the list of column aliases. All other fields are preserved.
      */
     default CteDef columnAliases(String... columnAliases) {
-        return new Impl(name(), body(), List.of(columnAliases));
+        return of(name(), body(), List.of(columnAliases), materialization());
+    }
+
+    /**
+     * Adds materialization hint to the CTE.
+     *
+     * @param materialization materialization hint.
+     * @return A new instance of {@link CteDef} with the provided hint. All other fields are preserved.
+     */
+    default CteDef materialization(Materialization materialization) {
+        return of(name(), body(), columnAliases(), materialization);
     }
 
     /**
@@ -185,7 +233,8 @@ public non-sealed interface CteDef extends Node {
      * @param name the name of the CTE statement.
      * @param body a query wrapped by the current CTE.
      * @param columnAliases a list of column aliases used in the CTE.
+     * @param materialization materialization hint.
      */
-    record Impl(String name, Query body, List<String> columnAliases) implements CteDef {
+    record Impl(String name, Query body, List<String> columnAliases, Materialization materialization) implements CteDef {
     }
 }

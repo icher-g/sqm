@@ -18,6 +18,7 @@ public final class Renderers {
 
     private static RenderersRepository registerDefaults(RenderersRepository r) {
         return r
+            .register(new CteDefRenderer())
             .register(new OrderItemRenderer())
             .register(new FunctionTableRenderer())
             .register(new DistinctSpecRenderer())

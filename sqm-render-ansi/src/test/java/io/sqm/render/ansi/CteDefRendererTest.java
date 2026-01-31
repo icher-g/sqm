@@ -70,4 +70,14 @@ class CteDefRendererTest {
 
         assertThrows(RuntimeException.class, () -> render(cte));
     }
+
+    @Test
+    @DisplayName("CTE materialization is rejected by ANSI renderer")
+    void cte_materialization_rejected() {
+        var q = select(col("u", "id"))
+            .from(tbl("users").as("u"));
+        var cte = cte("u_cte", q).materialization(CteDef.Materialization.MATERIALIZED);
+
+        assertThrows(UnsupportedOperationException.class, () -> render(cte));
+    }
 }
