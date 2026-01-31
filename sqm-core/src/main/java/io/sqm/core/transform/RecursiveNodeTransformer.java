@@ -12,6 +12,12 @@ import java.util.List;
 public abstract class RecursiveNodeTransformer implements NodeTransformer {
 
     /**
+     * Creates a recursive node transformer.
+     */
+    protected RecursiveNodeTransformer() {
+    }
+
+    /**
      * Apples the transformation logic and casts the result to the same type of the node.
      *
      * @param n   the node to transform.

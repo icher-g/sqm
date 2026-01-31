@@ -135,6 +135,13 @@ public non-sealed interface WithQuery extends Query {
      */
     record Impl(List<CteDef> ctes, Query body, boolean recursive) implements WithQuery {
 
+        /**
+         * Creates a WITH query implementation.
+         *
+         * @param ctes      CTE definitions
+         * @param body      body query
+         * @param recursive recursive flag
+         */
         public Impl {
             ctes = List.copyOf(ctes);
         }

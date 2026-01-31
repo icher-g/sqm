@@ -160,6 +160,15 @@ public non-sealed interface LikePredicate extends Predicate {
         Expression escape,
         boolean negated
     ) implements LikePredicate {
+        /**
+         * Creates a LIKE predicate implementation.
+         *
+         * @param mode    pattern matching mode
+         * @param value   value expression
+         * @param pattern pattern expression
+         * @param escape  escape expression
+         * @param negated whether predicate is negated
+         */
         public Impl {
             mode = (mode == null) ? LikeMode.LIKE : mode;
         }

@@ -15,6 +15,11 @@ public class GroupItemMatchImpl<R> implements GroupItemMatch<R> {
     private boolean matched = false;
     private R result;
 
+    /**
+     * Initializes a match builder for {@link GroupItem}.
+     *
+     * @param item group item to match
+     */
     public GroupItemMatchImpl(GroupItem item) {
         this.item = item;
     }

@@ -75,6 +75,11 @@ public non-sealed interface PartitionBy extends Node {
      */
     record Impl(List<Expression> items) implements PartitionBy {
 
+        /**
+         * Creates a partition by implementation.
+         *
+         * @param items partition expressions
+         */
         public Impl {
             items = List.copyOf(items);
         }

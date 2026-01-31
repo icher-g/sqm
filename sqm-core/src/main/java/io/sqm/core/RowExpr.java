@@ -57,6 +57,11 @@ public non-sealed interface RowExpr extends RowValues {
      */
     record Impl(List<Expression> items) implements RowExpr {
 
+        /**
+         * Creates a row expression implementation.
+         *
+         * @param items row values
+         */
         public Impl {
             items = List.copyOf(items);
         }

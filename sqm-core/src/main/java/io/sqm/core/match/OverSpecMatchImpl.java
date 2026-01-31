@@ -17,6 +17,11 @@ public class OverSpecMatchImpl<R> implements OverSpecMatch<R> {
     private boolean matched = false;
     private R result;
 
+    /**
+     * Initializes a match builder for {@link OverSpec}.
+     *
+     * @param overSpec over spec to match
+     */
     public OverSpecMatchImpl(OverSpec overSpec) {
         this.overSpec = overSpec;
     }

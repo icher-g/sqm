@@ -7,12 +7,22 @@ import io.sqm.core.StarSelectItem;
 
 import java.util.function.Function;
 
+/**
+ * Default matcher implementation for {@link SelectItem}.
+ *
+ * @param <R> result type
+ */
 public class SelectItemMatchImpl<R> implements SelectItemMatch<R> {
 
     private final SelectItem item;
     private boolean matched = false;
     private R result;
 
+    /**
+     * Initializes a match builder for {@link SelectItem}.
+     *
+     * @param item select item to match
+     */
     public SelectItemMatchImpl(SelectItem item) {
         this.item = item;
     }

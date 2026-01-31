@@ -47,6 +47,8 @@ public non-sealed interface DistinctSpec extends Node {
      * SELECT DISTINCT ON (a, b) a, b, c
      * FROM t
      * ORDER BY a, b, c DESC;
+     *
+     * @return expressions used in DISTINCT ON clause
      */
     List<Expression> items();
 

@@ -10,7 +10,7 @@ public class Numbers {
     /**
      * Checks if the provided string is a positive integer.
      * @param s a string to check.
-     * @return {@code true} if the string is a positive number and {@link false} otherwise.
+     * @return {@code true} if the string is a positive number and {@code false} otherwise.
      */
     public static boolean isPositiveInteger(String s) {
         for (int i = 0, n = s.length(); i < n; i++) {

@@ -2,10 +2,32 @@ package io.sqm.core.walk;
 
 import io.sqm.core.*;
 
+/**
+ * Base visitor that walks the node tree recursively.
+ *
+ * @param <R> visitor result type
+ */
 public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
 
+    /**
+     * Creates a recursive node visitor.
+     */
+    protected RecursiveNodeVisitor() {
+    }
+
+    /**
+     * Returns the default result for visitor methods.
+     *
+     * @return default result
+     */
     protected abstract R defaultResult();
 
+    /**
+     * Accepts a node if non-null.
+     *
+     * @param n node to accept
+     * @return visitor result or {@code null} for null input
+     */
     protected R accept(Node n) {
         return n == null ? null : n.accept(this);
     }

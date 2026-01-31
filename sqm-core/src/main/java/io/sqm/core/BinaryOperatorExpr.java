@@ -89,6 +89,13 @@ public non-sealed interface BinaryOperatorExpr extends Expression {
      */
     record Impl(Expression left, String operator, Expression right) implements BinaryOperatorExpr {
 
+        /**
+         * Creates a binary operator expression implementation.
+         *
+         * @param left     left operand
+         * @param operator operator token
+         * @param right    right operand
+         */
         public Impl {
             Objects.requireNonNull(left, "left");
             Objects.requireNonNull(operator, "operator");

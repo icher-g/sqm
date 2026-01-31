@@ -73,6 +73,12 @@ public non-sealed interface UnaryOperatorExpr extends Expression {
      */
     record Impl(String operator, Expression expr) implements UnaryOperatorExpr {
 
+        /**
+         * Creates a unary operator expression implementation.
+         *
+         * @param operator operator token
+         * @param expr     operand expression
+         */
         public Impl {
             Objects.requireNonNull(operator, "operator");
             Objects.requireNonNull(expr, "expr");

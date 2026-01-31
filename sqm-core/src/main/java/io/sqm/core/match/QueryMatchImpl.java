@@ -7,12 +7,22 @@ import io.sqm.core.WithQuery;
 
 import java.util.function.Function;
 
+/**
+ * Default matcher implementation for {@link Query}.
+ *
+ * @param <R> result type
+ */
 public class QueryMatchImpl<R> implements QueryMatch<R> {
 
     private final Query query;
     private boolean matched = false;
     private R result;
 
+    /**
+     * Initializes a match builder for {@link Query}.
+     *
+     * @param query query to match
+     */
     public QueryMatchImpl(Query query) {
         this.query = query;
     }

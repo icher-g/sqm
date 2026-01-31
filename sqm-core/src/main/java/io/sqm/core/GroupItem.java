@@ -287,6 +287,11 @@ public non-sealed interface GroupItem extends Node {
      * @param items grouping items inside the set
      */
     record GroupingSetImpl(List<GroupItem> items) implements GroupingSet {
+        /**
+         * Creates a grouping set implementation.
+         *
+         * @param items grouping items inside the set
+         */
         public GroupingSetImpl {
             items = List.copyOf(items);
         }
@@ -298,6 +303,11 @@ public non-sealed interface GroupItem extends Node {
      * @param sets grouping set elements
      */
     record GroupingSetsImpl(List<GroupItem> sets) implements GroupingSets {
+        /**
+         * Creates a grouping sets implementation.
+         *
+         * @param sets grouping set elements
+         */
         public GroupingSetsImpl {
             sets = List.copyOf(sets);
         }
@@ -309,6 +319,11 @@ public non-sealed interface GroupItem extends Node {
      * @param items grouping items inside the rollup
      */
     record RollupImpl(List<GroupItem> items) implements Rollup {
+        /**
+         * Creates a rollup implementation.
+         *
+         * @param items grouping items inside the rollup
+         */
         public RollupImpl {
             items = List.copyOf(items);
         }
@@ -320,6 +335,11 @@ public non-sealed interface GroupItem extends Node {
      * @param items grouping items inside the cube
      */
     record CubeImpl(List<GroupItem> items) implements Cube {
+        /**
+         * Creates a cube implementation.
+         *
+         * @param items grouping items inside the cube
+         */
         public CubeImpl {
             items = List.copyOf(items);
         }

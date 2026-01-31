@@ -75,6 +75,11 @@ public non-sealed interface ArrayExpr extends Expression {
      */
     record Impl(List<Expression> elements) implements ArrayExpr {
 
+        /**
+         * Creates an immutable array expression.
+         *
+         * @param elements element expressions
+         */
         public Impl {
             Objects.requireNonNull(elements, "elements");
             for (var e : elements) {

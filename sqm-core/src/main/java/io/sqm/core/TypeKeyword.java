@@ -8,9 +8,13 @@ package io.sqm.core;
  */
 public enum TypeKeyword {
 
+    /** DOUBLE PRECISION type keyword. */
     DOUBLE_PRECISION("double precision"),
+    /** CHARACTER VARYING type keyword. */
     CHARACTER_VARYING("character varying"),
+    /** NATIONAL CHARACTER type keyword. */
     NATIONAL_CHARACTER("national character"),
+    /** NATIONAL CHARACTER VARYING type keyword. */
     NATIONAL_CHARACTER_VARYING("national character varying");
 
     private final String sql;
@@ -21,6 +25,8 @@ public enum TypeKeyword {
 
     /**
      * Returns the canonical SQL rendering of this keyword type.
+     *
+     * @return SQL keyword string
      */
     public String sql() {
         return sql;

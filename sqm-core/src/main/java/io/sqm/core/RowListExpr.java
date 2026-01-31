@@ -58,6 +58,11 @@ public non-sealed interface RowListExpr extends RowValues {
      */
     record Impl(List<RowExpr> rows) implements RowListExpr {
 
+        /**
+         * Creates a row list implementation.
+         *
+         * @param rows row list
+         */
         public Impl {
             rows = List.copyOf(rows);
         }

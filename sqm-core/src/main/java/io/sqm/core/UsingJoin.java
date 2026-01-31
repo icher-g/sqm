@@ -49,6 +49,8 @@ public non-sealed interface UsingJoin extends Join {
 
     /**
      * USING (col1, col2, ...);
+     *
+     * @return list of column names used in USING clause
      */
     List<String> usingColumns();
 
