@@ -464,6 +464,11 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
      */
     @Override
     public Node visitLimitOffset(LimitOffset l) {
+        var limit = apply(l.limit());
+        var offset = apply(l.offset());
+        if (limit != l.limit() || offset != l.offset()) {
+            return LimitOffset.of(limit, offset, l.limitAll());
+        }
         return l;
     }
 
@@ -670,9 +675,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         changed |= apply(q.windows(), windows);
         var orderBy = apply(q.orderBy());
         changed |= orderBy != q.orderBy();
-        var queryLimitOffset = LimitOffset.of(q.limit(), q.offset());
-        var limitOffset = apply(queryLimitOffset);
-        changed |= limitOffset != queryLimitOffset;
+        var limitOffset = apply(q.limitOffset());
+        changed |= limitOffset != q.limitOffset();
         var lockFor = apply(q.lockFor());
         changed |= lockFor != q.lockFor();
         if (changed) {
@@ -691,11 +695,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             if (orderBy != null) {
                 query.orderBy(orderBy.items());
             }
-            if (limitOffset.limit() != null) {
-                query.limit(limitOffset.limit());
-            }
-            if (limitOffset.offset() != null) {
-                query.offset(limitOffset.offset());
+            if (limitOffset != null) {
+                query.limitOffset(limitOffset);
             }
             if (lockFor != null) {
                 query.lockFor(lockFor);

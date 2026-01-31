@@ -25,8 +25,10 @@ class QueryTest {
         assertEquals(2, composedQuery.terms().size());
         assertEquals(1, composedQuery.orderBy().items().size());
         assertEquals(1, composedQuery.orderBy().items().getFirst().ordinal());
-        assertEquals(1, composedQuery.limitOffset().limit());
-        assertEquals(2, composedQuery.limitOffset().offset());
+        assertInstanceOf(LiteralExpr.class, composedQuery.limitOffset().limit());
+        assertInstanceOf(LiteralExpr.class, composedQuery.limitOffset().offset());
+        assertEquals(1L, ((LiteralExpr) composedQuery.limitOffset().limit()).value());
+        assertEquals(2L, ((LiteralExpr) composedQuery.limitOffset().offset()).value());
     }
 
     @Test

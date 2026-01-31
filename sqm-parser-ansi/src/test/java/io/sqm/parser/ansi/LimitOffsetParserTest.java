@@ -1,5 +1,6 @@
 package io.sqm.parser.ansi;
 
+import io.sqm.core.Expression;
 import io.sqm.core.LimitOffset;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,22 @@ class LimitOffsetParserTest {
     }
 
     @Test
+    void parsesOffsetWithRowsOnly() {
+        var result = ctx.parse(parser, "OFFSET 5 ROWS");
+
+        assertTrue(result.ok());
+        assertEquals(LimitOffset.of(null, 5L), result.value());
+    }
+
+    @Test
+    void parsesOffsetWithFetchWithoutRowsKeyword() {
+        var result = ctx.parse(parser, "OFFSET 5 FETCH NEXT 3 ROWS ONLY");
+
+        assertTrue(result.ok());
+        assertEquals(LimitOffset.of(3L, 5L), result.value());
+    }
+
+    @Test
     void parsesFetchOnly() {
         var result = ctx.parse(parser, "FETCH FIRST 2 ROWS ONLY");
 
@@ -38,11 +55,20 @@ class LimitOffsetParserTest {
     }
 
     @Test
-    void errorsOnLimitWithoutNumber() {
-        var result = ctx.parse(parser, "LIMIT x");
+    void parsesLimitAllWithOffset() {
+        var result = ctx.parse(parser, "LIMIT ALL OFFSET 5");
+
+        assertTrue(result.ok());
+        assertTrue(result.value().limitAll());
+        assertEquals(LimitOffset.of(null, Expression.literal(5L), true), result.value());
+    }
+
+    @Test
+    void errorsOnLimitWithoutExpression() {
+        var result = ctx.parse(parser, "LIMIT");
 
         assertTrue(result.isError());
-        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected number after LIMIT"));
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Unsupported expression token:"));
     }
 
     @Test
@@ -59,5 +85,13 @@ class LimitOffsetParserTest {
 
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected ONLY"));
+    }
+
+    @Test
+    void errorsOnLimitAllWithFetch() {
+        var result = ctx.parse(parser, "LIMIT ALL FETCH NEXT 1 ROWS ONLY");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("LIMIT ALL"));
     }
 }

@@ -7,6 +7,7 @@ import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 public class AnonymousParamExprParser implements MatchableParser<AnonymousParamExpr> {
@@ -19,8 +20,10 @@ public class AnonymousParamExprParser implements MatchableParser<AnonymousParamE
      */
     @Override
     public ParseResult<AnonymousParamExpr> parse(Cursor cur, ParseContext ctx) {
-        cur.expect("Expected ?", TokenType.QMARK);
-        return ok(AnonymousParamExpr.of());
+        if (cur.consumeIf(TokenType.QMARK)) {
+            return ok(AnonymousParamExpr.of());
+        }
+        return error("Expected ?", cur.fullPos());
     }
 
     /**

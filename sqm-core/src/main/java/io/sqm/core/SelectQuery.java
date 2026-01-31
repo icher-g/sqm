@@ -267,7 +267,22 @@ public non-sealed interface SelectQuery extends Query {
      *
      * @return a value of the limit.
      */
-    Long limit();
+    Expression limit();
+
+    /**
+     * Gets a limit/offset specification for this query.
+     *
+     * @return a limit/offset specification or {@code null} if absent.
+     */
+    LimitOffset limitOffset();
+
+    /**
+     * Sets a limit/offset specification for this query.
+     *
+     * @param limitOffset a limit/offset specification or {@code null} to clear it.
+     * @return this.
+     */
+    SelectQuery limitOffset(LimitOffset limitOffset);
 
     /**
      * Sets the query limit.
@@ -278,11 +293,19 @@ public non-sealed interface SelectQuery extends Query {
     SelectQuery limit(long limit);
 
     /**
+     * Sets the query limit expression.
+     *
+     * @param limit a limit expression.
+     * @return this.
+     */
+    SelectQuery limit(Expression limit);
+
+    /**
      * Gets an offset of the query if there is any or NULL otherwise.
      *
      * @return a value of the offset.
      */
-    Long offset();
+    Expression offset();
 
     /**
      * Sets the query offset.
@@ -291,6 +314,14 @@ public non-sealed interface SelectQuery extends Query {
      * @return this.
      */
     SelectQuery offset(long offset);
+
+    /**
+     * Sets the query offset expression.
+     *
+     * @param offset an offset expression.
+     * @return this.
+     */
+    SelectQuery offset(Expression offset);
 
     /**
      * Returns the locking clause associated with this SELECT query.

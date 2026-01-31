@@ -497,6 +497,8 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
      */
     @Override
     public R visitLimitOffset(LimitOffset l) {
+        accept(l.limit());
+        accept(l.offset());
         return defaultResult();
     }
 
@@ -546,9 +548,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         accept(q.having());
         q.windows().forEach(this::accept);
         accept(q.orderBy());
-        if (q.limit() != null || q.offset() != null) {
-            LimitOffset.of(q.limit(), q.offset()).accept(this);
-        }
+        accept(q.limitOffset());
         accept(q.lockFor());
         return defaultResult();
     }

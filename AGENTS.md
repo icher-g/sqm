@@ -1,7 +1,6 @@
 # Agent Instructions
-
-This repository does not currently have an AGENTS.md. Add project-specific guidance below so agents can
-work consistently with your expectations.
+Use this file as the primary, repo-specific instruction set for any agent working in `c:\github\sqm`.
+Agents should read it first and follow it throughout the task.
 
 ## Environment
 - OS: Windows (PowerShell)
@@ -9,6 +8,10 @@ work consistently with your expectations.
 
 ## Goals
 - Improve unit test coverage of parsers across modules (e.g., `sqm-parser*`).
+
+## Minimum Requirements
+- Every new public class or public method must include JavaDoc.
+- Every new behavior must be covered by tests; prefer unit tests close to the change.
 
 ## Conventions
 - Prefer small, focused tests that cover edge cases and error handling.

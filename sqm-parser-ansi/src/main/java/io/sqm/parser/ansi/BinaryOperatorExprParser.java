@@ -17,7 +17,11 @@ import static io.sqm.parser.spi.ParseResult.ok;
 
 public class BinaryOperatorExprParser implements Parser<Expression>, InfixParser<Expression, BinaryOperatorExpr> {
     private static boolean isGenericBinaryOperator(Token t) {
-        return t.type() == TokenType.OPERATOR && !isArithmetic(t) && !isComparison(t) && !isRegex(t);
+        return isBinaryOperatorToken(t) && !isArithmetic(t) && !isComparison(t) && !isRegex(t);
+    }
+
+    private static boolean isBinaryOperatorToken(Token t) {
+        return t.type() == TokenType.OPERATOR || t.type() == TokenType.QMARK;
     }
 
     /**
@@ -67,7 +71,7 @@ public class BinaryOperatorExprParser implements Parser<Expression>, InfixParser
      */
     @Override
     public ParseResult<BinaryOperatorExpr> parse(Expression lhs, Cursor cur, ParseContext ctx) {
-        var token = cur.expect("Expected operator", TokenType.OPERATOR);
+        var token = cur.expect("Expected operator", TokenType.OPERATOR, TokenType.QMARK);
         var rhs = ctx.parse(ArithmeticExpr.class, cur);
         if (rhs.isError()) {
             return error(rhs);

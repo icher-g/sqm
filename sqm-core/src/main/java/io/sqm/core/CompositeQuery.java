@@ -98,6 +98,17 @@ public non-sealed interface CompositeQuery extends Query {
      * @return A new instance of the composite query with the provided limit. All the rest of the fields are preserved.
      */
     default CompositeQuery limit(Long limit) {
+        Expression limitExpr = limit == null ? null : Expression.literal(limit);
+        return new Impl(terms(), ops(), orderBy(), LimitOffset.of(limitExpr, limitOffset() == null ? null : limitOffset().offset()));
+    }
+
+    /**
+     * Adds a limit to the composite query using an expression.
+     *
+     * @param limit a limit expression.
+     * @return A new instance of the composite query with the provided limit. All the rest of the fields are preserved.
+     */
+    default CompositeQuery limit(Expression limit) {
         return new Impl(terms(), ops(), orderBy(), LimitOffset.of(limit, limitOffset() == null ? null : limitOffset().offset()));
     }
 
@@ -108,6 +119,17 @@ public non-sealed interface CompositeQuery extends Query {
      * @return A new instance of the composite query with the provided offset. All the rest of the fields are preserved.
      */
     default CompositeQuery offset(Long offset) {
+        Expression offsetExpr = offset == null ? null : Expression.literal(offset);
+        return new Impl(terms(), ops(), orderBy(), LimitOffset.of(limitOffset() == null ? null : limitOffset().limit(), offsetExpr));
+    }
+
+    /**
+     * Adds an offset to the composite query using an expression.
+     *
+     * @param offset an offset expression.
+     * @return A new instance of the composite query with the provided offset. All the rest of the fields are preserved.
+     */
+    default CompositeQuery offset(Expression offset) {
         return new Impl(terms(), ops(), orderBy(), LimitOffset.of(limitOffset() == null ? null : limitOffset().limit(), offset));
     }
 

@@ -13,33 +13,49 @@ public class LimitOffsetRenderer implements Renderer<LimitOffset> {
 
     @Override
     public void render(LimitOffset node, RenderContext ctx, SqlWriter w) {
-        if (node.limit() == null && node.offset() == null) {
+        if (node.limit() == null && node.offset() == null && !node.limitAll()) {
             return;
         }
 
         var limit = node.limit();
         var offset = node.offset();
+        var limitAll = node.limitAll();
 
         var ps = ctx.dialect().paginationStyle();
         if (ps.supportsLimitOffset()) {
             // Works for PostgreSQL, MySQL (LIMIT n [OFFSET m]); SQLite also accepts this order.
-            if (limit != null) {
-                w.newline().append("LIMIT").space().append(limit.toString());
+            if (limitAll) {
+                w.newline().append("LIMIT ALL");
                 if (offset != null) {
-                    w.space().append("OFFSET").space().append(offset.toString());
+                    w.space().append("OFFSET").space().append(offset);
                 }
-            } else {
-                // Only OFFSET without LIMIT (PG/SQLite accept this; MySQL ignores OFFSET without LIMIT)
-                w.newline().append("OFFSET").space().append(offset.toString());
             }
+            else
+                if (limit != null) {
+                    w.newline().append("LIMIT").space().append(limit);
+                    if (offset != null) {
+                        w.space().append("OFFSET").space().append(offset);
+                    }
+                }
+                else {
+                    // Only OFFSET without LIMIT (PG/SQLite accept this; MySQL ignores OFFSET without LIMIT)
+                    w.newline().append("OFFSET").space().append(offset);
+                }
             return;
         }
 
         if (ps.supportsOffsetFetch()) {
-            long off = offset == null ? 0L : offset;
-            w.newline().append("OFFSET").space().append(Long.toString(off)).space().append("ROWS");
+            if (limitAll && offset == null) {
+                return;
+            }
+            if (offset != null) {
+                w.newline().append("OFFSET").space().append(offset).space().append("ROWS");
+            }
+            else {
+                w.newline().append("OFFSET").space().append("0").space().append("ROWS");
+            }
             if (limit != null) {
-                w.space().append("FETCH NEXT").space().append(limit.toString()).space().append("ROWS ONLY");
+                w.space().append("FETCH NEXT").space().append(limit).space().append("ROWS ONLY");
             }
             return;
         }

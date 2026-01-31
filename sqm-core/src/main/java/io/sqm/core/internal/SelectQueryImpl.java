@@ -234,8 +234,30 @@ public class SelectQueryImpl implements SelectQuery {
      * @return a value of the limit.
      */
     @Override
-    public Long limit() {
+    public Expression limit() {
         return limitOffset == null ? null : limitOffset.limit();
+    }
+
+    /**
+     * Gets a limit/offset specification for this query.
+     *
+     * @return a limit/offset specification or {@code null} if absent.
+     */
+    @Override
+    public LimitOffset limitOffset() {
+        return limitOffset;
+    }
+
+    /**
+     * Sets a limit/offset specification for this query.
+     *
+     * @param limitOffset a limit/offset specification or {@code null} to clear it.
+     * @return this.
+     */
+    @Override
+    public SelectQuery limitOffset(LimitOffset limitOffset) {
+        this.limitOffset = limitOffset;
+        return this;
     }
 
     /**
@@ -246,8 +268,18 @@ public class SelectQueryImpl implements SelectQuery {
      */
     @Override
     public SelectQuery limit(long limit) {
-        this.limitOffset = LimitOffset.of(limit, offset());
-        return this;
+        return limit(Expression.literal(limit));
+    }
+
+    /**
+     * Sets the query limit expression.
+     *
+     * @param limit a limit expression.
+     * @return this.
+     */
+    @Override
+    public SelectQuery limit(Expression limit) {
+        return limitOffset(LimitOffset.of(limit, offset()));
     }
 
     /**
@@ -256,7 +288,7 @@ public class SelectQueryImpl implements SelectQuery {
      * @return a value of the offset.
      */
     @Override
-    public Long offset() {
+    public Expression offset() {
         return limitOffset == null ? null : limitOffset.offset();
     }
 
@@ -268,8 +300,18 @@ public class SelectQueryImpl implements SelectQuery {
      */
     @Override
     public SelectQuery offset(long offset) {
-        this.limitOffset = LimitOffset.of(limit(), offset);
-        return this;
+        return offset(Expression.literal(offset));
+    }
+
+    /**
+     * Sets the query offset expression.
+     *
+     * @param offset an offset expression.
+     * @return this.
+     */
+    @Override
+    public SelectQuery offset(Expression offset) {
+        return limitOffset(LimitOffset.of(limit(), offset));
     }
 
     /**
@@ -374,8 +416,7 @@ public class SelectQueryImpl implements SelectQuery {
             Objects.equals(where, that.where()) &&
             Objects.equals(having, that.having()) &&
             Objects.equals(distinctSpec, that.distinct()) &&
-            Objects.equals(limit(), that.limit()) &&
-            Objects.equals(offset(), that.offset());
+            Objects.equals(limitOffset(), that.limitOffset());
     }
 
     @Override

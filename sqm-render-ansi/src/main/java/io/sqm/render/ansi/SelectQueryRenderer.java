@@ -1,6 +1,5 @@
 package io.sqm.render.ansi;
 
-import io.sqm.core.LimitOffset;
 import io.sqm.core.SelectQuery;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
@@ -26,10 +25,16 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
         }
 
         var ps = ctx.dialect().paginationStyle();
+        var limitOffset = node.limitOffset();
 
         // Inject TOP n into the head if dialect supports TOP and there's no OFFSET
-        if (ps.supportsTop() && node.limit() != null && node.offset() == null) {
-            w.space().append("TOP ").append(node.limit().toString());
+        if (ps.supportsTop()
+            && limitOffset != null
+            && limitOffset.limit() != null
+            && !limitOffset.limitAll()
+            && limitOffset.offset() == null) {
+            w.space().append("TOP ");
+            w.append(limitOffset.limit());
         }
 
         w.space();
@@ -78,12 +83,9 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
             w.newline().append(node.orderBy());
         }
 
-        Long limit = node.limit();
-        Long offset = node.offset();
-
         // Pagination tail — pick the right style
-        if (limit != null || offset != null) {
-            limitOffsetRenderer.render(LimitOffset.of(limit, offset), ctx, w);
+        if (limitOffset != null) {
+            limitOffsetRenderer.render(limitOffset, ctx, w);
         }
 
         // Locking clause (FOR UPDATE, FOR SHARE, etc.)
