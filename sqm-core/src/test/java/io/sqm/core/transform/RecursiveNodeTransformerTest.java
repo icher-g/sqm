@@ -323,6 +323,26 @@ class RecursiveNodeTransformerTest {
     }
 
     @Test
+    void visitSimpleGroupItem() {
+        var item = (GroupItem.SimpleGroupItem) group("c1");
+        var transformer = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitColumnExpr(ColumnExpr c) {
+                return col(c.name() + "x");
+            }
+        };
+
+        var transformed = (GroupItem.SimpleGroupItem) item.accept(transformer);
+        assertNotSame(item, transformed);
+        assertEquals("c1x", transformed.expr().matchExpression()
+            .column(c -> c.name())
+            .orElse(null));
+
+        var unchanged = (GroupItem.SimpleGroupItem) item.accept(new NothingTransformer());
+        assertSame(item, unchanged);
+    }
+
+    @Test
     void visitGroupingSets() {
         var item = groupingSets(
             groupingSet(group("c1")),
@@ -343,6 +363,29 @@ class RecursiveNodeTransformerTest {
         assertEquals("c1x", ((GroupItem.SimpleGroupItem) first.items().getFirst()).expr().matchExpression()
             .column(c -> c.name())
             .orElse(null));
+    }
+
+    @Test
+    void visitRollup() {
+        var rollup = rollup(group("c1"), group("c2"));
+        var transformer = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitColumnExpr(ColumnExpr c) {
+                return col(c.name() + "x");
+            }
+        };
+
+        var transformed = (GroupItem.Rollup) rollup.accept(transformer);
+        assertEquals("c1x", ((GroupItem.SimpleGroupItem) transformed.items().getFirst()).expr().matchExpression()
+            .column(c -> c.name())
+            .orElse(null));
+    }
+
+    @Test
+    void visitCube() {
+        var cube = cube(group("c1"));
+        var transformed = (GroupItem.Cube) cube.accept(new NothingTransformer());
+        assertSame(cube, transformed);
     }
 
     @Test

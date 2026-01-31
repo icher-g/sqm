@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.group;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -91,5 +92,19 @@ class GroupItemTest {
         assertEquals("GroupingSets", groupingSets.accept(visitor));
         assertEquals("Rollup", rollup.accept(visitor));
         assertEquals("Cube", cube.accept(visitor));
+    }
+
+    @Test
+    @DisplayName("Simple group items expose ordinal and expression")
+    void simpleGroupItemState() {
+        var ordinalItem = GroupItem.of(2);
+        assertTrue(ordinalItem.isOrdinal());
+        assertEquals(2, ordinalItem.ordinal());
+        assertNull(ordinalItem.expr());
+
+        var exprItem = GroupItem.of(col("a"));
+        assertFalse(exprItem.isOrdinal());
+        assertNotNull(exprItem.expr());
+        assertNull(exprItem.ordinal());
     }
 }

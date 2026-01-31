@@ -14,6 +14,7 @@ class GroupItemMatchTest {
         var item = GroupItem.of(col("a"));
 
         var result = item.matchGroupItem()
+            .groupingSets(i -> "sets")
             .simple(i -> "simple")
             .orElse("none");
 
@@ -56,5 +57,31 @@ class GroupItemMatchTest {
 
         assertEquals("rollup", rollupResult);
         assertEquals("cube", cubeResult);
+    }
+
+    @Test
+    void otherwiseReturnsFallbackWhenNoHandlerMatches() {
+        var item = (GroupItem.GroupingSet) GroupItem.groupingSet(group("a"));
+
+        var result = item.matchGroupItem()
+            .simple(i -> "simple")
+            .otherwise(i -> "fallback");
+
+        assertEquals("fallback", result);
+    }
+
+    @Test
+    void nonMatchingHandlersAreSkipped() {
+        var item = GroupItem.of(col("a"));
+
+        var result = item.matchGroupItem()
+            .groupingSet(i -> "set")
+            .groupingSets(i -> "sets")
+            .rollup(i -> "rollup")
+            .cube(i -> "cube")
+            .simple(i -> "simple")
+            .orElse("none");
+
+        assertEquals("simple", result);
     }
 }
