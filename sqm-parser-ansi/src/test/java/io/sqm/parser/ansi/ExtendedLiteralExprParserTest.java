@@ -34,12 +34,27 @@ class ExtendedLiteralExprParserTest {
     }
 
     @Test
+    void parses_time_literal_without_time_zone() {
+        var result = ctx.parse(Expression.class, "TIME '10:11:12'");
+        assertTrue(result.ok());
+        var expr = assertInstanceOf(TimeLiteralExpr.class, result.value());
+        assertEquals(TimeZoneSpec.NONE, expr.timeZoneSpec());
+        assertEquals("10:11:12", expr.value());
+    }
+
+    @Test
     void parses_timestamp_literal_without_time_zone() {
         var result = ctx.parse(Expression.class, "TIMESTAMP WITHOUT TIME ZONE '2020-01-01 00:00:00'");
         assertTrue(result.ok());
         var expr = assertInstanceOf(TimestampLiteralExpr.class, result.value());
         assertEquals(TimeZoneSpec.WITHOUT_TIME_ZONE, expr.timeZoneSpec());
         assertEquals("2020-01-01 00:00:00", expr.value());
+    }
+
+    @Test
+    void rejects_invalid_time_zone_clause() {
+        var result = ctx.parse(Expression.class, "TIME WITH ZONE '10:11:12'");
+        assertTrue(result.isError());
     }
 
     @Test

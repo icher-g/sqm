@@ -157,6 +157,38 @@ public class ExpressionMatchTest {
     }
 
     @Test
+    void typed_literal_matchers_do_not_override_when_already_matched() {
+        String result = Match
+            .<String>expression(DateLiteralExpr.of("2020-01-01"))
+            .dateLiteral(d -> "DATE")
+            .timeLiteral(t -> "TIME")
+            .timestampLiteral(t -> "TS")
+            .intervalLiteral(i -> "INT")
+            .bitStringLiteral(b -> "BIT")
+            .hexStringLiteral(h -> "HEX")
+            .escapeStringLiteral(e -> "ESC")
+            .dollarStringLiteral(d -> "DOLLAR")
+            .orElse("ELSE");
+        assertEquals("DATE", result);
+    }
+
+    @Test
+    void typed_literal_matchers_skip_for_non_literal_expr() {
+        String result = Match
+            .<String>expression(col("c"))
+            .dateLiteral(d -> "DATE")
+            .timeLiteral(t -> "TIME")
+            .timestampLiteral(t -> "TS")
+            .intervalLiteral(i -> "INT")
+            .bitStringLiteral(b -> "BIT")
+            .hexStringLiteral(h -> "HEX")
+            .escapeStringLiteral(e -> "ESC")
+            .dollarStringLiteral(d -> "DOLLAR")
+            .otherwise(e -> "OTHER");
+        assertEquals("OTHER", result);
+    }
+
+    @Test
     void matches_row() {
         var expr = row(1, 2, 3);
         String out = Match

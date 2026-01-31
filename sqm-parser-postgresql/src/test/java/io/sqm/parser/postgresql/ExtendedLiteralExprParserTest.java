@@ -52,11 +52,26 @@ class ExtendedLiteralExprParserTest {
     }
 
     @Test
+    void parses_interval_literal_with_to_qualifier() {
+        var result = ctx.parse(Expression.class, "INTERVAL '1' DAY TO SECOND");
+        assertTrue(result.ok());
+        var expr = assertInstanceOf(IntervalLiteralExpr.class, result.value());
+        assertEquals("1", expr.value());
+        assertEquals("DAY TO SECOND", expr.qualifier().orElse(null));
+    }
+
+    @Test
     void parses_interval_literal_without_qualifier() {
         var result = ctx.parse(Expression.class, "INTERVAL '1 day'");
         assertTrue(result.ok());
         var expr = assertInstanceOf(IntervalLiteralExpr.class, result.value());
         assertEquals("1 day", expr.value());
         assertTrue(expr.qualifier().isEmpty());
+    }
+
+    @Test
+    void rejects_interval_literal_with_invalid_unit() {
+        var result = ctx.parse(Expression.class, "INTERVAL '1' CENTURY");
+        assertTrue(result.isError());
     }
 }

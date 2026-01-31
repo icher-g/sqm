@@ -2,7 +2,6 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.ColumnExpr;
 import io.sqm.parser.core.Cursor;
-import io.sqm.parser.core.Lookahead;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
@@ -56,6 +55,6 @@ public class ColumnExprParser implements MatchableParser<ColumnExpr> {
      */
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
-        return ctx.lookups().looksLikeColumnRef(cur, Lookahead.at(0));
+        return ctx.lookups().looksLikeColumnRef(cur, io.sqm.parser.core.Lookahead.at(0));
     }
 }

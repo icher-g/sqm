@@ -33,6 +33,21 @@ class AnsiLookupsTest {
     }
 
     @Test
+    void typed_literals_are_not_column_refs() {
+        assertFalse(lookups.looksLikeColumnRef(cursor("DATE '2020-01-01'"), Lookahead.initial()));
+        assertFalse(lookups.looksLikeColumnRef(cursor("TIME '10:11:12'"), Lookahead.initial()));
+        assertFalse(lookups.looksLikeColumnRef(cursor("TIME WITH TIME ZONE '10:11:12'"), Lookahead.initial()));
+        assertFalse(lookups.looksLikeColumnRef(cursor("TIMESTAMP '2020-01-01 00:00:00'"), Lookahead.initial()));
+        assertFalse(lookups.looksLikeColumnRef(cursor("TIMESTAMP WITHOUT TIME ZONE '2020-01-01 00:00:00'"), Lookahead.initial()));
+        assertFalse(lookups.looksLikeColumnRef(cursor("INTERVAL '1 day'"), Lookahead.initial()));
+
+        assertTrue(lookups.looksLikeLiteralExpr(cursor("DATE '2020-01-01'"), Lookahead.initial()));
+        assertTrue(lookups.looksLikeLiteralExpr(cursor("TIME '10:11:12'"), Lookahead.initial()));
+        assertTrue(lookups.looksLikeLiteralExpr(cursor("TIMESTAMP '2020-01-01 00:00:00'"), Lookahead.initial()));
+        assertTrue(lookups.looksLikeLiteralExpr(cursor("INTERVAL '1 day'"), Lookahead.initial()));
+    }
+
+    @Test
     void detects_predicate_forms() {
         assertTrue(lookups.looksLikeComparisonPredicate(cursor("a = b"), Lookahead.initial()));
         assertTrue(lookups.looksLikeAnyAllPredicate(cursor("a = ANY"), Lookahead.initial()));

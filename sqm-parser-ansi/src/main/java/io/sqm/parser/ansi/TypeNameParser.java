@@ -117,7 +117,7 @@ public class TypeNameParser implements Parser<TypeName> {
             if (!validTimeTypes.contains(name.lexeme().toLowerCase(Locale.ROOT))) {
                 return error("Only time and timestamp are supported with time zone", cur.fullPos());
             }
-            cur.advance(); // skip with or wihtout.
+            cur.advance(); // skip with or without.
             var t = cur.expect("Expected identifier 'time'", TokenType.IDENT);
             if (!t.lexeme().equalsIgnoreCase("time")) {
                 return error("Expected 'time' but found '" + t.lexeme() + "'", cur.fullPos());
