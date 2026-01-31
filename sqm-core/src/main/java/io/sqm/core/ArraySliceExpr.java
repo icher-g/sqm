@@ -89,6 +89,13 @@ public non-sealed interface ArraySliceExpr extends Expression {
      * @param to   optional upper bound
      */
     record Impl(Expression base, Optional<Expression> from, Optional<Expression> to) implements ArraySliceExpr {
+        /**
+         * Creates an array slice expression implementation.
+         *
+         * @param base the expression being sliced
+         * @param from optional lower bound
+         * @param to   optional upper bound
+         */
         public Impl {
             Objects.requireNonNull(base, "base");
             Objects.requireNonNull(from, "from");

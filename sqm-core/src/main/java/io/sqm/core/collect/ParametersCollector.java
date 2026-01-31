@@ -38,6 +38,12 @@ import java.util.List;
 public class ParametersCollector extends RecursiveNodeVisitor<Void> {
 
     /**
+     * Creates a parameters collector.
+     */
+    public ParametersCollector() {
+    }
+
+    /**
      * Collected positional parameters, including ordinal and anonymous ones.
      */
     private final List<ParamExpr> positional = new ArrayList<>();

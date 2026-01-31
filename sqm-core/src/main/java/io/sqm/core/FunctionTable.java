@@ -68,6 +68,8 @@ public non-sealed interface FunctionTable extends AliasedTableRef {
 
     /**
      * The function call that produces rows for this table reference.
+     *
+     * @return function call expression
      */
     FunctionExpr function();
 
@@ -142,6 +144,14 @@ public non-sealed interface FunctionTable extends AliasedTableRef {
      */
     record Impl(FunctionExpr function, List<String> columnAliases, String alias, boolean ordinality) implements FunctionTable {
 
+        /**
+         * Creates a function table implementation.
+         *
+         * @param function      the function call
+         * @param columnAliases column aliases
+         * @param alias         table alias
+         * @param ordinality    whether {@code WITH ORDINALITY} is enabled
+         */
         public Impl {
             Objects.requireNonNull(function, "function");
             columnAliases = columnAliases == null ? null : List.copyOf(columnAliases);

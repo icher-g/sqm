@@ -4,12 +4,22 @@ import io.sqm.core.*;
 
 import java.util.function.Function;
 
+/**
+ * Default matcher implementation for {@link Predicate}.
+ *
+ * @param <R> result type
+ */
 public class PredicateMatchImpl<R> implements PredicateMatch<R> {
 
     private final Predicate predicate;
     private boolean matched = false;
     private R result;
 
+    /**
+     * Initializes a match builder for {@link Predicate}.
+     *
+     * @param predicate predicate to match
+     */
     public PredicateMatchImpl(Predicate predicate) {
         this.predicate = predicate;
     }

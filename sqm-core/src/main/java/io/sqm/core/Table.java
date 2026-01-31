@@ -75,6 +75,8 @@ public non-sealed interface Table extends TableRef {
 
     /**
      * Optional table alias.
+     *
+     * @return table alias or {@code null}
      */
     String alias();
 
@@ -145,6 +147,14 @@ public non-sealed interface Table extends TableRef {
      * @param inheritance table inheritance behavior.
      */
     record Impl(String schema, String name, String alias, Inheritance inheritance) implements Table {
+        /**
+         * Creates a table implementation.
+         *
+         * @param schema      table schema
+         * @param name        table name
+         * @param alias       table alias
+         * @param inheritance table inheritance behavior
+         */
         public Impl {
             if (inheritance == null) {
                 inheritance = Inheritance.DEFAULT;

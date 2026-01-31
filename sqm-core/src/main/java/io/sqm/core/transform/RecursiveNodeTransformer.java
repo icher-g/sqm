@@ -12,6 +12,12 @@ import java.util.List;
 public abstract class RecursiveNodeTransformer implements NodeTransformer {
 
     /**
+     * Creates a recursive node transformer.
+     */
+    protected RecursiveNodeTransformer() {
+    }
+
+    /**
      * Apples the transformation logic and casts the result to the same type of the node.
      *
      * @param n   the node to transform.
@@ -397,17 +403,77 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
-     * Visits a single {@link GroupItem}, representing an individual
+     * Visits a simple {@link GroupItem.SimpleGroupItem}, representing an individual
      * grouping expression within a {@code GROUP BY} clause.
      *
      * @param i the grouping item being visited (never {@code null})
      * @return a result value, or {@code null} if {@code <R>} is {@link Void}
      */
     @Override
-    public Node visitGroupItem(GroupItem i) {
+    public Node visitSimpleGroupItem(GroupItem.SimpleGroupItem i) {
         var expr = apply(i.expr());
         if (expr != i.expr()) {
             return GroupItem.of(expr);
+        }
+        return i;
+    }
+
+    /**
+     * Visits a {@link GroupItem.GroupingSets} node.
+     *
+     * @param i the grouping sets node
+     * @return transformed node
+     */
+    @Override
+    public Node visitGroupingSets(GroupItem.GroupingSets i) {
+        List<GroupItem> elements = new ArrayList<>();
+        if (apply(i.sets(), elements)) {
+            return GroupItem.groupingSets(elements);
+        }
+        return i;
+    }
+
+    /**
+     * Visits a {@link GroupItem.GroupingSet} node.
+     *
+     * @param i the grouping set node
+     * @return transformed node
+     */
+    @Override
+    public Node visitGroupingSet(GroupItem.GroupingSet i) {
+        List<GroupItem> items = new ArrayList<>();
+        if (apply(i.items(), items)) {
+            return GroupItem.groupingSet(items);
+        }
+        return i;
+    }
+
+    /**
+     * Visits a {@link GroupItem.Rollup} node.
+     *
+     * @param i the rollup node
+     * @return transformed node
+     */
+    @Override
+    public Node visitRollup(GroupItem.Rollup i) {
+        List<GroupItem> items = new ArrayList<>();
+        if (apply(i.items(), items)) {
+            return GroupItem.rollup(items);
+        }
+        return i;
+    }
+
+    /**
+     * Visits a {@link GroupItem.Cube} node.
+     *
+     * @param i the cube node
+     * @return transformed node
+     */
+    @Override
+    public Node visitCube(GroupItem.Cube i) {
+        List<GroupItem> items = new ArrayList<>();
+        if (apply(i.items(), items)) {
+            return GroupItem.cube(items);
         }
         return i;
     }

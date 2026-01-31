@@ -4,12 +4,22 @@ import io.sqm.core.*;
 
 import java.util.function.Function;
 
+/**
+ * Default matcher implementation for {@link TableRef}.
+ *
+ * @param <R> result type
+ */
 public class TableRefMatchImpl<R> implements TableRefMatch<R> {
 
     private final TableRef table;
     private boolean matched = false;
     private R result;
 
+    /**
+     * Initializes a match builder for {@link TableRef}.
+     *
+     * @param table table reference to match
+     */
     public TableRefMatchImpl(TableRef table) {
         this.table = table;
     }

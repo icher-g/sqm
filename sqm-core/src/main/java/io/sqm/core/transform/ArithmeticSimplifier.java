@@ -32,6 +32,12 @@ import io.sqm.core.utils.Literals;
 public class ArithmeticSimplifier extends RecursiveNodeTransformer {
 
     /**
+     * Creates an arithmetic simplifier.
+     */
+    public ArithmeticSimplifier() {
+    }
+
+    /**
      * Visits an {@link AddArithmeticExpr} node.
      *
      * <p>This method is invoked when the visitor encounters a binary addition

@@ -28,6 +28,8 @@ public non-sealed interface ValuesTable extends AliasedTableRef {
 
     /**
      * Rows of expressions; all rows must have the same arity.
+     *
+     * @return row values for the VALUES table
      */
     RowValues values();
 
@@ -85,6 +87,13 @@ public non-sealed interface ValuesTable extends AliasedTableRef {
      */
     record Impl(RowValues values, List<String> columnAliases, String alias) implements ValuesTable {
 
+        /**
+         * Creates a values table implementation.
+         *
+         * @param values        row values
+         * @param columnAliases optional column aliases
+         * @param alias         table alias
+         */
         public Impl {
             columnAliases = columnAliases == null ? null : List.copyOf(columnAliases);
         }

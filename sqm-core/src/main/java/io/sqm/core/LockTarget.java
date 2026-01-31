@@ -10,10 +10,21 @@ import java.util.Objects;
  */
 public record LockTarget(String identifier) {
 
+    /**
+     * Creates a lock target.
+     *
+     * @param identifier table name or alias
+     */
     public LockTarget {
         Objects.requireNonNull(identifier, "identifier");
     }
 
+    /**
+     * Creates a lock target from identifier.
+     *
+     * @param identifier table name or alias
+     * @return lock target
+     */
     public static LockTarget of(String identifier) {
         return new LockTarget(identifier);
     }

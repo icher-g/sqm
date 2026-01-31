@@ -83,6 +83,10 @@ public final class Lexer {
         KEYWORDS.put("VALUES", VALUES);
         KEYWORDS.put("MATERIALIZED", MATERIALIZED);
         KEYWORDS.put("ORDINALITY", ORDINALITY);
+        KEYWORDS.put("GROUPING", GROUPING);
+        KEYWORDS.put("SETS", SETS);
+        KEYWORDS.put("ROLLUP", ROLLUP);
+        KEYWORDS.put("CUBE", CUBE);
         KEYWORDS.put("WINDOW", WINDOW);
         KEYWORDS.put("OVER", OVER);
         KEYWORDS.put("PARTITION", PARTITION);

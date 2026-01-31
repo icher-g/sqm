@@ -6,20 +6,37 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Default mutable implementation of {@link SelectQuery}.
+ */
 public class SelectQueryImpl implements SelectQuery {
 
+    /** Selected items. */
     private final List<SelectItem> items;
+    /** Join clauses. */
     private final List<Join> joins;
+    /** Window definitions. */
     private final List<WindowDef> windows;
+    /** Group by clause. */
     private GroupBy groupBy;
+    /** Order by clause. */
     private OrderBy orderBy;
+    /** FROM table reference. */
     private TableRef tableRef;
+    /** WHERE predicate. */
     private Predicate where;
+    /** HAVING predicate. */
     private Predicate having;
+    /** DISTINCT specification. */
     private DistinctSpec distinctSpec;
+    /** LIMIT/OFFSET clause. */
     private LimitOffset limitOffset;
+    /** Locking clause. */
     private LockingClause lockingClause;
 
+    /**
+     * Creates an empty select query instance.
+     */
     public SelectQueryImpl() {
         this.items = new ArrayList<>();
         this.joins = new ArrayList<>();

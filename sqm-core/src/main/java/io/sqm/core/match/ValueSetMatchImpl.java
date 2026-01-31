@@ -7,12 +7,22 @@ import io.sqm.core.ValueSet;
 
 import java.util.function.Function;
 
+/**
+ * Default matcher implementation for {@link ValueSet}.
+ *
+ * @param <R> result type
+ */
 public class ValueSetMatchImpl<R> implements ValueSetMatch<R> {
 
     private final ValueSet valueSet;
     private boolean matched = false;
     private R result;
 
+    /**
+     * Initializes a match builder for {@link ValueSet}.
+     *
+     * @param vs value set to match
+     */
     public ValueSetMatchImpl(ValueSet vs) {
         this.valueSet = vs;
     }

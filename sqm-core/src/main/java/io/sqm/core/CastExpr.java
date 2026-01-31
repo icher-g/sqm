@@ -74,6 +74,12 @@ public non-sealed interface CastExpr extends Expression {
      */
     record Impl(Expression expr, TypeName type) implements CastExpr {
 
+        /**
+         * Creates a cast expression implementation.
+         *
+         * @param expr expression to cast
+         * @param type target type name
+         */
         public Impl {
             Objects.requireNonNull(expr, "expr");
             Objects.requireNonNull(type, "type");

@@ -14,10 +14,8 @@ import java.util.Objects;
 class GroupItemParserTest {
 
     private final ParseContext ctx = ParseContext.of(new AnsiSpecs());
-    private final GroupItemParser parser = new GroupItemParser();
-
-    private ParseResult<? extends GroupItem> parse(String sql) {
-        return ctx.parse(parser, sql);
+    private ParseResult<? extends GroupItem.SimpleGroupItem> parse(String sql) {
+        return ctx.parse(GroupItem.SimpleGroupItem.class, sql);
     }
 
     // ---------- Positional (GROUP BY 1, 2, ...) ----------
@@ -56,7 +54,7 @@ class GroupItemParserTest {
         var res = parse("c");
         Assertions.assertTrue(res.ok(), () -> "expected ok, got error: " + res.errorMessage());
 
-        GroupItem gi = res.value();
+        GroupItem.SimpleGroupItem gi = res.value();
         Assertions.assertNotNull(gi.expr(), "column must be set for column-based group item");
         Assertions.assertNull(gi.ordinal(), "position must be null for column-based group item");
 
@@ -103,5 +101,26 @@ class GroupItemParserTest {
         Assertions.assertFalse(res.ok(), "dash is not a valid ordinal or column");
         Assertions.assertNotNull(res.errorMessage());
         Assertions.assertFalse(Objects.requireNonNull(res.errorMessage()).isBlank());
+    }
+
+    @Test
+    @DisplayName("Reject GROUPING SETS in ANSI")
+    void grouping_sets_rejected() {
+        var res = parse("GROUPING SETS (a)");
+        Assertions.assertFalse(res.ok());
+    }
+
+    @Test
+    @DisplayName("Reject ROLLUP in ANSI")
+    void rollup_rejected() {
+        var res = parse("ROLLUP (a, b)");
+        Assertions.assertFalse(res.ok());
+    }
+
+    @Test
+    @DisplayName("Reject CUBE in ANSI")
+    void cube_rejected() {
+        var res = parse("CUBE (a, b)");
+        Assertions.assertFalse(res.ok());
     }
 }

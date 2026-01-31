@@ -101,6 +101,8 @@ public final class ParameterizeLiteralsTransformer extends RecursiveNodeTransfor
     /**
      * Returns an unmodifiable mapping of generated parameters to the literal
      * values they replaced, in encounter order.
+     *
+     * @return unmodifiable mapping of parameters to literal values
      */
     public Map<ParamExpr, Object> valuesByParam() {
         return Collections.unmodifiableMap(params);
@@ -109,6 +111,8 @@ public final class ParameterizeLiteralsTransformer extends RecursiveNodeTransfor
     /**
      * Returns an unmodifiable list of literal values in encounter order.
      * This is effectively the positional parameter list.
+     *
+     * @return unmodifiable list of literal values
      */
     public List<Object> values() {
         return Collections.unmodifiableList(values);

@@ -5,7 +5,7 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
-public class GroupItemRenderer implements Renderer<GroupItem> {
+public class GroupItemRenderer implements Renderer<GroupItem.SimpleGroupItem> {
     /**
      * Renders the node into an {@link SqlWriter}.
      *
@@ -14,7 +14,7 @@ public class GroupItemRenderer implements Renderer<GroupItem> {
      * @param w    a writer.
      */
     @Override
-    public void render(GroupItem node, RenderContext ctx, SqlWriter w) {
+    public void render(GroupItem.SimpleGroupItem node, RenderContext ctx, SqlWriter w) {
         if (node.isOrdinal()) {
             w.append(Integer.toString(node.ordinal()));
         } else {
@@ -28,7 +28,7 @@ public class GroupItemRenderer implements Renderer<GroupItem> {
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<GroupItem> targetType() {
-        return GroupItem.class;
+    public Class<GroupItem.SimpleGroupItem> targetType() {
+        return GroupItem.SimpleGroupItem.class;
     }
 }

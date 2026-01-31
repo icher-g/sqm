@@ -76,6 +76,12 @@ public non-sealed interface ArraySubscriptExpr extends Expression {
      * @param index the index expression
      */
     record Impl(Expression base, Expression index) implements ArraySubscriptExpr {
+        /**
+         * Creates an array subscript expression implementation.
+         *
+         * @param base the expression being indexed
+         * @param index the index expression
+         */
         public Impl {
             Objects.requireNonNull(base, "base");
             Objects.requireNonNull(index, "index");

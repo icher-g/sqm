@@ -33,6 +33,8 @@ public non-sealed interface Lateral extends TableRef {
 
     /**
      * The wrapped FROM item.
+     *
+     * @return wrapped FROM item
      */
     TableRef inner();
 
@@ -56,6 +58,11 @@ public non-sealed interface Lateral extends TableRef {
      */
     record Impl(TableRef inner) implements Lateral {
 
+        /**
+         * Creates a lateral wrapper implementation.
+         *
+         * @param inner wrapped FROM item
+         */
         public Impl {
             Objects.requireNonNull(inner, "inner");
         }

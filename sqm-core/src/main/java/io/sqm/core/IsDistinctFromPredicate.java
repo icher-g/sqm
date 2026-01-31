@@ -58,7 +58,13 @@ public non-sealed interface IsDistinctFromPredicate extends Predicate {
         return v.visitIsDistinctFromPredicate(this);
     }
 
+    /**
+     * Default implementation.
+     *
+     * @param lhs     left expression
+     * @param rhs     right expression
+     * @param negated whether predicate is negated
+     */
     record Impl(Expression lhs, Expression rhs, boolean negated) implements IsDistinctFromPredicate {
-
     }
 }

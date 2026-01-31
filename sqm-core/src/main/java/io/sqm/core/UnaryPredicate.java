@@ -24,6 +24,11 @@ public non-sealed interface UnaryPredicate extends Predicate {
         return new Impl(expr);
     }
 
+    /**
+     * Predicate expression.
+     *
+     * @return predicate expression
+     */
     Expression expr();
 
     /**

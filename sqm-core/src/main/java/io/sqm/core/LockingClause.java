@@ -109,6 +109,14 @@ public non-sealed interface LockingClause extends Node {
         boolean skipLocked
     ) implements LockingClause {
 
+        /**
+         * Creates a locking clause implementation.
+         *
+         * @param mode       lock mode
+         * @param ofTables   lock targets
+         * @param nowait     whether NOWAIT is specified
+         * @param skipLocked whether SKIP LOCKED is specified
+         */
         public Impl {
             if (nowait && skipLocked) {
                 throw new IllegalArgumentException(

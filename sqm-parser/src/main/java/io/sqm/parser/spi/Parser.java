@@ -80,8 +80,8 @@ public interface Parser<T extends Node> extends Handler<T> {
      * @param ctx   a parser context containing parsers and lookups.
      * @return a list of parsed items.
      */
-    default <C extends Node> ParseResult<? extends List<C>> parseItems(Class<C> clazz, Cursor cur, ParseContext ctx) {
-        List<C> items = new ArrayList<>();
+    default <R extends Node, C extends R> ParseResult<List<R>> parseItems(Class<C> clazz, Cursor cur, ParseContext ctx) {
+        List<R> items = new ArrayList<>();
         do {
             var result = ctx.parse(clazz, cur);
             if (!result.ok()) {

@@ -2,10 +2,32 @@ package io.sqm.core.walk;
 
 import io.sqm.core.*;
 
+/**
+ * Base visitor that walks the node tree recursively.
+ *
+ * @param <R> visitor result type
+ */
 public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
 
+    /**
+     * Creates a recursive node visitor.
+     */
+    protected RecursiveNodeVisitor() {
+    }
+
+    /**
+     * Returns the default result for visitor methods.
+     *
+     * @return default result
+     */
     protected abstract R defaultResult();
 
+    /**
+     * Accepts a node if non-null.
+     *
+     * @param n node to accept
+     * @return visitor result or {@code null} for null input
+     */
     protected R accept(Node n) {
         return n == null ? null : n.accept(this);
     }
@@ -446,15 +468,63 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
-     * Visits a single {@link GroupItem}, representing an individual
+     * Visits a simple {@link GroupItem.SimpleGroupItem}, representing an individual
      * grouping expression within a {@code GROUP BY} clause.
      *
      * @param i the grouping item being visited (never {@code null})
      * @return a result value, or {@code null} if {@code <R>} is {@link Void}
      */
     @Override
-    public R visitGroupItem(GroupItem i) {
+    public R visitSimpleGroupItem(GroupItem.SimpleGroupItem i) {
         accept(i.expr());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link GroupItem.GroupingSets} node.
+     *
+     * @param i the grouping sets node being visited (never {@code null})
+     * @return a result value, or {@code null} if {@code <R>} is {@link Void}
+     */
+    @Override
+    public R visitGroupingSets(GroupItem.GroupingSets i) {
+        i.sets().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link GroupItem.GroupingSet} node.
+     *
+     * @param i the grouping set node being visited (never {@code null})
+     * @return a result value, or {@code null} if {@code <R>} is {@link Void}
+     */
+    @Override
+    public R visitGroupingSet(GroupItem.GroupingSet i) {
+        i.items().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link GroupItem.Rollup} node.
+     *
+     * @param i the rollup node being visited (never {@code null})
+     * @return a result value, or {@code null} if {@code <R>} is {@link Void}
+     */
+    @Override
+    public R visitRollup(GroupItem.Rollup i) {
+        i.items().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link GroupItem.Cube} node.
+     *
+     * @param i the cube node being visited (never {@code null})
+     * @return a result value, or {@code null} if {@code <R>} is {@link Void}
+     */
+    @Override
+    public R visitCube(GroupItem.Cube i) {
+        i.items().forEach(this::accept);
         return defaultResult();
     }
 

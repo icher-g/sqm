@@ -8,9 +8,6 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
@@ -26,16 +23,11 @@ public class GroupByParser implements Parser<GroupBy> {
     public ParseResult<GroupBy> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected GROUP", TokenType.GROUP);
         cur.expect("Expected BY after GROUP", TokenType.BY);
-        List<GroupItem> items = new ArrayList<>();
-        do {
-            var gr = ctx.parse(GroupItem.class, cur);
-            if (gr.isError()) {
-                return error(gr);
-            }
-            items.add(gr.value());
+        var items = parseItems(GroupItem.class, cur, ctx);
+        if (items.isError()) {
+            return error(items);
         }
-        while (cur.consumeIf(TokenType.COMMA));
-        return ok(GroupBy.of(items));
+        return ok(GroupBy.of(items.value()));
     }
 
     /**
