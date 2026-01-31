@@ -1,10 +1,13 @@
-package io.sqm.render.ansi;
+package io.sqm.render.postgresql;
 
 import io.sqm.core.Table;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * PostgreSQL renderer for tables supporting ONLY and inheritance star.
+ */
 public class TableRenderer implements Renderer<Table> {
     /**
      * Renders the node into an {@link SqlWriter}.
@@ -15,16 +18,19 @@ public class TableRenderer implements Renderer<Table> {
      */
     @Override
     public void render(Table node, RenderContext ctx, SqlWriter w) {
-        if (node.inheritance() != Table.Inheritance.DEFAULT) {
-            throw new UnsupportedOperationException("Table inheritance is not supported by ANSI renderer.");
-        }
         var quoter = ctx.dialect().quoter();
         var schema = node.schema();
+        if (node.inheritance() == Table.Inheritance.ONLY) {
+            w.append("ONLY").space();
+        }
         if (schema != null && !schema.isBlank()) {
             w.append(quoter.quoteIfNeeded(schema));
             w.append(".");
         }
         w.append(quoter.quoteIfNeeded(node.name()));
+        if (node.inheritance() == Table.Inheritance.INCLUDE_DESCENDANTS) {
+            w.space().append("*");
+        }
 
         var alias = node.alias();
         if (alias != null && !alias.isBlank()) {

@@ -17,6 +17,7 @@ public class Parsers {
         return r
             .register(new CteDefParser())
             .register(new OrderItemParser())
+            .register(new TableParser())
             .register(new ArrayExprParser())
             .register(new CastExprParser())
             .register(new ArraySubscriptExprParser())
