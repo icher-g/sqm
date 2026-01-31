@@ -31,6 +31,22 @@ class LimitOffsetParserTest {
     }
 
     @Test
+    void parsesOffsetWithRowsOnly() {
+        var result = ctx.parse(parser, "OFFSET 5 ROWS");
+
+        assertTrue(result.ok());
+        assertEquals(LimitOffset.of(null, 5L), result.value());
+    }
+
+    @Test
+    void parsesOffsetWithFetchWithoutRowsKeyword() {
+        var result = ctx.parse(parser, "OFFSET 5 FETCH NEXT 3 ROWS ONLY");
+
+        assertTrue(result.ok());
+        assertEquals(LimitOffset.of(3L, 5L), result.value());
+    }
+
+    @Test
     void parsesFetchOnly() {
         var result = ctx.parse(parser, "FETCH FIRST 2 ROWS ONLY");
 

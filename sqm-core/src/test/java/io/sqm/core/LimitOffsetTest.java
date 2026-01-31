@@ -38,4 +38,34 @@ class LimitOffsetTest {
         assertEquals(lo1.hashCode(), lo2.hashCode());
         assertTrue(lo1.limitAll());
     }
+
+    @Test
+    void rejects_limit_all_with_limit_expression() {
+        var ex = assertThrows(IllegalArgumentException.class,
+            () -> LimitOffset.of(Expression.literal(1L), null, true));
+        assertTrue(ex.getMessage().contains("limitAll"));
+    }
+
+    @Test
+    void rejects_negative_literal_limit() {
+        var ex = assertThrows(IllegalArgumentException.class,
+            () -> LimitOffset.of(Expression.literal(-1L), null));
+        assertTrue(ex.getMessage().contains("limit"));
+    }
+
+    @Test
+    void rejects_negative_literal_offset() {
+        var ex = assertThrows(IllegalArgumentException.class,
+            () -> LimitOffset.of(null, Expression.literal(-1L)));
+        assertTrue(ex.getMessage().contains("offset"));
+    }
+
+    @Test
+    void equals_uses_expression_equality_for_non_literals() {
+        var lo1 = LimitOffset.of(ColumnExpr.of("a"), null);
+        var lo2 = LimitOffset.of(ColumnExpr.of("a"), null);
+
+        assertEquals(lo1, lo2);
+        assertEquals(lo1.hashCode(), lo2.hashCode());
+    }
 }
