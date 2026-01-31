@@ -1,10 +1,13 @@
-package io.sqm.render.ansi;
+package io.sqm.render.postgresql;
 
 import io.sqm.core.CteDef;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * PostgreSQL renderer for CTE definitions supporting MATERIALIZED flags.
+ */
 public class CteDefRenderer implements Renderer<CteDef> {
     /**
      * Renders the node into an {@link SqlWriter}.
@@ -33,11 +36,16 @@ public class CteDefRenderer implements Renderer<CteDef> {
             w.append(")");
         }
 
-        if (node.materialization() != CteDef.Materialization.DEFAULT) {
-            throw new UnsupportedOperationException("CTE materialization is not supported by ANSI renderer.");
+        w.space().append("AS");
+
+        if (node.materialization() == CteDef.Materialization.MATERIALIZED) {
+            w.space().append("MATERIALIZED");
+        }
+        else if (node.materialization() == CteDef.Materialization.NOT_MATERIALIZED) {
+            w.space().append("NOT MATERIALIZED");
         }
 
-        w.space().append("AS").space();
+        w.space();
         w.append(node.body(), true, true);
     }
 

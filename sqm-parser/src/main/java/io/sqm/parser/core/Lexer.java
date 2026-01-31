@@ -81,6 +81,7 @@ public final class Lexer {
         KEYWORDS.put("EXCEPT", EXCEPT);
         KEYWORDS.put("ALL", ALL);
         KEYWORDS.put("VALUES", VALUES);
+        KEYWORDS.put("MATERIALIZED", MATERIALIZED);
         KEYWORDS.put("WINDOW", WINDOW);
         KEYWORDS.put("OVER", OVER);
         KEYWORDS.put("PARTITION", PARTITION);
