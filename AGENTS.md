@@ -12,6 +12,7 @@ Agents should read it first and follow it throughout the task.
 ## Minimum Requirements
 - Every new public class or public method must include JavaDoc.
 - Every new behavior must be covered by tests; prefer unit tests close to the change.
+- Avoid instantiating `Impl` classes directly; use interface `of(...)` factories.
 
 ## Conventions
 - Prefer small, focused tests that cover edge cases and error handling.
@@ -27,3 +28,6 @@ Agents should read it first and follow it throughout the task.
 
 ## Notes
 - Update this file with more specific instructions as needed.
+- All dialect features must be modeled in `sqm-core` nodes.
+- Parsers should only accept features supported by their dialect.
+- Renderers should only render features supported by their dialect, otherwise reject.

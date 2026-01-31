@@ -156,6 +156,13 @@ class OrderItemParserTest {
         }
 
         @Test
+        @DisplayName("USING operator not supported in ANSI")
+        void using_not_supported() {
+            var res = parse("c USING <");
+            Assertions.assertFalse(res.ok());
+            Assertions.assertTrue(Objects.requireNonNull(res.errorMessage()).contains("USING operator is not supported"));
+        }
+        @Test
         @DisplayName("Unexpected trailing token -> error")
         void unexpected_trailing_token() {
             var res = parse("c ASC EXTRA");

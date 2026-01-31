@@ -33,4 +33,10 @@ class OrderItemTest {
         var item = OrderItem.of(1).collate("collate");
         assertEquals("collate", item.collate());
     }
+
+    @Test
+    void usingOperator() {
+        var item = OrderItem.of(Expression.literal(1)).using("<");
+        assertEquals("<", item.usingOperator());
+    }
 }
