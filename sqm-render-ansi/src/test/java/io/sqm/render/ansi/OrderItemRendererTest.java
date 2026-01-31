@@ -14,8 +14,7 @@ import java.util.List;
 
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.order;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for OrderItemRenderer.
@@ -249,5 +248,28 @@ class OrderItemRendererTest {
         // no dir, no nulls
         assertFalse(sql.contains(" ASC") || sql.contains(" DESC"));
         assertFalse(sql.contains("NULLS"));
+    }
+
+    @Test
+    @DisplayName("Ordinal order item renders number and direction")
+    void ordinal_renders() {
+        var d = dialect(passThruQuoter(), explicitNulls());
+        var rc = RenderContext.of(d);
+
+        var item = OrderItem.of(2).desc();
+        String sql = renderToSql(renderer, item, rc);
+
+        assertTrue(sql.startsWith("2"), "should render ordinal");
+        assertTrue(sql.contains(" DESC"), "should render direction");
+    }
+
+    @Test
+    @DisplayName("USING operator is rejected by ANSI renderer")
+    void using_operator_rejected() {
+        var d = dialect(passThruQuoter(), explicitNulls());
+        var rc = RenderContext.of(d);
+
+        var item = order(col("t", "c")).using("<").nulls(Nulls.FIRST);
+        assertThrows(UnsupportedOperationException.class, () -> renderToSql(renderer, item, rc));
     }
 }

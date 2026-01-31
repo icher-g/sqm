@@ -33,4 +33,19 @@ class OrderItemTest {
         var item = OrderItem.of(1).collate("collate");
         assertEquals("collate", item.collate());
     }
+
+    @Test
+    void usingOperator() {
+        var item = OrderItem.of(Expression.literal(1)).using("<");
+        assertEquals("<", item.usingOperator());
+    }
+
+    @Test
+    void of_with_all_fields() {
+        var item = OrderItem.of(Expression.literal(1), null, Direction.DESC, Nulls.LAST, "collate", ">");
+        assertEquals(Direction.DESC, item.direction());
+        assertEquals(Nulls.LAST, item.nulls());
+        assertEquals("collate", item.collate());
+        assertEquals(">", item.usingOperator());
+    }
 }

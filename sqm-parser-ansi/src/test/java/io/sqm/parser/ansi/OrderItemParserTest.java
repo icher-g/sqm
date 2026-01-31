@@ -50,6 +50,16 @@ class OrderItemParserTest {
         }
 
         @Test
+        @DisplayName("Ordinal order item")
+        void ordinal_item() {
+            var res = parse("1 ASC");
+            Assertions.assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
+            OrderItem oi = res.value();
+            Assertions.assertEquals(1, oi.ordinal());
+            Assertions.assertEquals(Direction.ASC, oi.direction());
+        }
+
+        @Test
         @DisplayName("Function expr + ASC + NULLS LAST (case-insensitive)")
         void function_with_dir_and_nulls() {
             var res = parse("lower(t.c) aSc nUlLs lAsT");
@@ -155,6 +165,13 @@ class OrderItemParserTest {
             Assertions.assertEquals("Expected collation name after COLLATE at 9", res.errorMessage());
         }
 
+        @Test
+        @DisplayName("USING operator not supported in ANSI")
+        void using_not_supported() {
+            var res = parse("c USING <");
+            Assertions.assertFalse(res.ok());
+            Assertions.assertTrue(Objects.requireNonNull(res.errorMessage()).contains("USING operator is not supported"));
+        }
         @Test
         @DisplayName("Unexpected trailing token -> error")
         void unexpected_trailing_token() {

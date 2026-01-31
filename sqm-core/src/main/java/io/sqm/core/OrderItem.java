@@ -21,7 +21,7 @@ public non-sealed interface OrderItem extends Node {
      * @return A newly created instance of an order by item.
      */
     static OrderItem of(Expression expr) {
-        return new Impl(expr, null, null, null, null);
+        return of(expr, null, null, null, null, null);
     }
 
     /**
@@ -31,7 +31,7 @@ public non-sealed interface OrderItem extends Node {
      * @return A newly created instance of an order by item.
      */
     static OrderItem of(int ordinal) {
-        return new Impl(null, ordinal, null, null, null);
+        return of(null, ordinal, null, null, null, null);
     }
 
     /**
@@ -44,7 +44,7 @@ public non-sealed interface OrderItem extends Node {
      * @return A newly created instance of an order by item.
      */
     static OrderItem of(Expression expr, Direction direction, Nulls nulls, String collate) {
-        return new Impl(expr, null, direction, nulls, collate);
+        return of(expr, null, direction, nulls, collate, null);
     }
 
     /**
@@ -57,7 +57,48 @@ public non-sealed interface OrderItem extends Node {
      * @return A newly created instance of an order by item.
      */
     static OrderItem of(Integer ordinal, Direction direction, Nulls nulls, String collate) {
-        return new Impl(null, ordinal, direction, nulls, collate);
+        return of(null, ordinal, direction, nulls, collate, null);
+    }
+
+    /**
+     * Creates an order by item for a provided expr with {@code USING <operator>}.
+     *
+     * @param expr          an expr to be used in an OrderBy clause.
+     * @param usingOperator an operator to be used in {@code ORDER BY ... USING <operator>}.
+     * @param nulls         the definition of how NULLs should be treated in the ORDER BY statement.
+     * @param collate       collation name; may be null.
+     * @return A newly created instance of an order by item.
+     */
+    static OrderItem of(Expression expr, String usingOperator, Nulls nulls, String collate) {
+        return of(expr, null, null, nulls, collate, usingOperator);
+    }
+
+    /**
+     * Creates an order by item for a provided ordinal with {@code USING <operator>}.
+     *
+     * @param ordinal       an ordinal to be used in an ORDER BY clause.
+     * @param usingOperator an operator to be used in {@code ORDER BY ... USING <operator>}.
+     * @param nulls         the definition of how NULLs should be treated in the ORDER BY statement.
+     * @param collate       collation name; may be null.
+     * @return A newly created instance of an order by item.
+     */
+    static OrderItem of(Integer ordinal, String usingOperator, Nulls nulls, String collate) {
+        return of(null, ordinal, null, nulls, collate, usingOperator);
+    }
+
+    /**
+     * Creates an order by item with explicit fields.
+     *
+     * @param expr          an expression to be used in ORDER BY statement. Can be null if ordinal is used.
+     * @param ordinal       an ordinal to be used in ORDER BY statement. 1-based; may be null if expression is used.
+     * @param direction     an ORDER BY direction: ASC, DESC.
+     * @param nulls         the definition of how NULLs should be treated in the ORDER BY statement.
+     * @param collate       optional collation name; may be null.
+     * @param usingOperator optional {@code USING <operator>} value; may be null.
+     * @return A newly created instance of an order by item.
+     */
+    static OrderItem of(Expression expr, Integer ordinal, Direction direction, Nulls nulls, String collate, String usingOperator) {
+        return new Impl(expr, ordinal, direction, nulls, collate, usingOperator);
     }
 
     /**
@@ -104,12 +145,19 @@ public non-sealed interface OrderItem extends Node {
     String collate();
 
     /**
+     * Optional {@code USING <operator>} operator; may be null.
+     *
+     * @return using operator string.
+     */
+    String usingOperator();
+
+    /**
      * Adds a {@link Direction#ASC} direction to an order by item.
      *
      * @return A new instance of the order item with the provided direction. All other fields are preserved.
      */
     default OrderItem asc() {
-        return new Impl(expr(), ordinal(), Direction.ASC, nulls(), collate());
+        return of(expr(), ordinal(), Direction.ASC, nulls(), collate(), usingOperator());
     }
 
     /**
@@ -118,7 +166,7 @@ public non-sealed interface OrderItem extends Node {
      * @return A new instance of the order item with the provided direction. All other fields are preserved.
      */
     default OrderItem desc() {
-        return new Impl(expr(), ordinal(), Direction.DESC, nulls(), collate());
+        return of(expr(), ordinal(), Direction.DESC, nulls(), collate(), usingOperator());
     }
 
     /**
@@ -128,7 +176,7 @@ public non-sealed interface OrderItem extends Node {
      * @return A new instance of the order item with the provided nulls. All other fields are preserved.
      */
     default OrderItem nulls(Nulls nulls) {
-        return new Impl(expr(), ordinal(), direction(), nulls, collate());
+        return of(expr(), ordinal(), direction(), nulls, collate(), usingOperator());
     }
 
     /**
@@ -138,7 +186,17 @@ public non-sealed interface OrderItem extends Node {
      * @return A new instance of the order item with the provided collate. All other fields are preserved.
      */
     default OrderItem collate(String collate) {
-        return new Impl(expr(), ordinal(), direction(), nulls(), collate);
+        return of(expr(), ordinal(), direction(), nulls(), collate, usingOperator());
+    }
+
+    /**
+     * Adds {@code USING <operator>} to an order by item.
+     *
+     * @param operator operator to be used in {@code ORDER BY ... USING <operator>}.
+     * @return A new instance of the order item with the provided operator. All other fields are preserved.
+     */
+    default OrderItem using(String operator) {
+        return of(expr(), ordinal(), direction(), nulls(), collate(), operator);
     }
 
     /**
@@ -169,8 +227,9 @@ public non-sealed interface OrderItem extends Node {
      * @param ordinal   an ordinal to be used in ORDER BY statement. 1-based; may be null if expression is used.
      * @param direction an ORDER BY direction: ASC, DESC.
      * @param nulls     the definition of how NULLs should be treated in the ORDER BY statement.
-     * @param collate   optional collation name; may be null.
+     * @param collate       optional collation name; may be null.
+     * @param usingOperator optional {@code USING <operator>} value; may be null.
      */
-    record Impl(Expression expr, Integer ordinal, Direction direction, Nulls nulls, String collate) implements OrderItem {
+    record Impl(Expression expr, Integer ordinal, Direction direction, Nulls nulls, String collate, String usingOperator) implements OrderItem {
     }
 }

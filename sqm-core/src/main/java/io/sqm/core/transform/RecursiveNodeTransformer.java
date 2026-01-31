@@ -450,7 +450,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitOrderItem(OrderItem i) {
         var expr = apply(i.expr());
         if (expr != i.expr()) {
-            return OrderItem.of(expr, i.direction(), i.nulls(), i.collate());
+            return OrderItem.of(expr, i.ordinal(), i.direction(), i.nulls(), i.collate(), i.usingOperator());
         }
         return i;
     }
