@@ -7,8 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for GroupByRenderer.
@@ -78,5 +77,45 @@ class GroupByRendererTest {
         String result = render(query);
         assertTrue(result.contains("GROUP BY"));
         assertTrue(result.contains("HAVING"));
+    }
+
+    @Test
+    @DisplayName("GROUP BY with ROLLUP is rejected in ANSI renderer")
+    void group_by_rollup_rejected() {
+        var query = select(col("dept"), func("count", arg(col("id"))))
+            .from(tbl("employees"))
+            .groupBy(rollup(group("dept"), group("status")));
+
+        assertThrows(UnsupportedOperationException.class, () -> render(query));
+    }
+
+    @Test
+    @DisplayName("GROUP BY with GROUPING SETS is rejected in ANSI renderer")
+    void group_by_grouping_sets_rejected() {
+        var query = select(col("dept"), func("count", arg(col("id"))))
+            .from(tbl("employees"))
+            .groupBy(groupingSets(group("dept"), groupingSet()));
+
+        assertThrows(UnsupportedOperationException.class, () -> render(query));
+    }
+
+    @Test
+    @DisplayName("GROUP BY with grouping set is rejected in ANSI renderer")
+    void group_by_grouping_set_rejected() {
+        var query = select(col("dept"), func("count", arg(col("id"))))
+            .from(tbl("employees"))
+            .groupBy(groupingSet(group("dept")));
+
+        assertThrows(UnsupportedOperationException.class, () -> render(query));
+    }
+
+    @Test
+    @DisplayName("GROUP BY with CUBE is rejected in ANSI renderer")
+    void group_by_cube_rejected() {
+        var query = select(col("dept"), func("count", arg(col("id"))))
+            .from(tbl("employees"))
+            .groupBy(cube(group("dept"), group("status")));
+
+        assertThrows(UnsupportedOperationException.class, () -> render(query));
     }
 }

@@ -87,6 +87,11 @@ Node
 │     └─ Table
 ├─ GroupBy
 ├─ GroupItem
+│  ├─ GroupItem.SimpleGroupItem
+│  ├─ GroupItem.GroupingSet
+│  ├─ GroupItem.GroupingSets
+│  ├─ GroupItem.Rollup
+│  └─ GroupItem.Cube
 ├─ WindowDef
 ├─ BoundSpec
 │  ├─ BoundSpec.UnboundedPreceding
@@ -208,6 +213,11 @@ graph TD
 
   Node --> GroupBy
   Node --> GroupItem
+  GroupItem --> GroupItem_SimpleGroupItem
+  GroupItem --> GroupItem_GroupingSet
+  GroupItem --> GroupItem_GroupingSets
+  GroupItem --> GroupItem_Rollup
+  GroupItem --> GroupItem_Cube
   Node --> WindowDef
 
   Node --> BoundSpec
@@ -409,6 +419,11 @@ graph TD
 
 - **GroupBy** – GROUP BY clause
 - **GroupItem** – single grouping element
+    - **GroupItem.SimpleGroupItem** – expression or ordinal group item
+    - **GroupItem.GroupingSet** – parenthesized grouping set (e.g., `(a, b)` or `()`)
+    - **GroupItem.GroupingSets** – `GROUPING SETS (...)`
+    - **GroupItem.Rollup** – `ROLLUP (...)`
+    - **GroupItem.Cube** – `CUBE (...)`
 
 ---
 

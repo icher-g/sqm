@@ -13,6 +13,14 @@ Agents should read it first and follow it throughout the task.
 - Every new public class or public method must include JavaDoc.
 - Every new behavior must be covered by tests; prefer unit tests close to the change.
 - Avoid instantiating `Impl` classes directly; use interface `of(...)` factories.
+- For any new node types, ensure:
+  - Dedicated visitor interface methods and RecursiveNodeVisitor implementations (leaf nodes only).
+  - RecursiveNodeTransformer coverage.
+  - Matchers API coverage.
+  - JSON mixins coverage.
+  - MODEL.md updated with the new node(s).
+- Each node must have a dedicated parser and renderer (even if unsupported in a dialect).
+- Each new node interface must implement its own {@code accept()} method; avoid {@code instanceof} dispatch in base nodes.
 
 ## Conventions
 - Prefer small, focused tests that cover edge cases and error handling.

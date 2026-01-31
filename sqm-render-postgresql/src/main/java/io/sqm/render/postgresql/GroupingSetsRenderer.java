@@ -1,11 +1,14 @@
-package io.sqm.render.ansi;
+package io.sqm.render.postgresql;
 
 import io.sqm.core.GroupItem;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
-public class GroupItemRenderer implements Renderer<GroupItem.SimpleGroupItem> {
+/**
+ * Renders {@code GROUPING SETS (...)} items.
+ */
+public class GroupingSetsRenderer implements Renderer<GroupItem.GroupingSets> {
     /**
      * Renders the node into an {@link SqlWriter}.
      *
@@ -14,12 +17,9 @@ public class GroupItemRenderer implements Renderer<GroupItem.SimpleGroupItem> {
      * @param w    a writer.
      */
     @Override
-    public void render(GroupItem.SimpleGroupItem node, RenderContext ctx, SqlWriter w) {
-        if (node.isOrdinal()) {
-            w.append(Integer.toString(node.ordinal()));
-        } else {
-            w.append(node.expr());
-        }
+    public void render(GroupItem.GroupingSets node, RenderContext ctx, SqlWriter w) {
+        w.append("GROUPING SETS");
+        GroupingRenderSupport.renderGroupingContainer(node.sets(), w, true);
     }
 
     /**
@@ -28,7 +28,7 @@ public class GroupItemRenderer implements Renderer<GroupItem.SimpleGroupItem> {
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<GroupItem.SimpleGroupItem> targetType() {
-        return GroupItem.SimpleGroupItem.class;
+    public Class<? extends GroupItem.GroupingSets> targetType() {
+        return GroupItem.GroupingSets.class;
     }
 }

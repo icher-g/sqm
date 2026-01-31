@@ -19,6 +19,11 @@ public final class Renderers {
     private static RenderersRepository registerDefaults(RenderersRepository r) {
         return r
             .register(new CteDefRenderer())
+            .register(new GroupingSetsRenderer())
+            .register(new GroupingSetRenderer())
+            .register(new RollupRenderer())
+            .register(new CubeRenderer())
+            .register(new GroupItemRenderer())
             .register(new OrderItemRenderer())
             .register(new TableRenderer())
             .register(new FunctionTableRenderer())

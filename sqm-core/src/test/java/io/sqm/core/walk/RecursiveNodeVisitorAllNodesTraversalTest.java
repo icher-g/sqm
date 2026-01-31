@@ -72,7 +72,7 @@ public class RecursiveNodeVisitorAllNodesTraversalTest {
             "LiteralExpr",
             "InPredicate", "AndPredicate", "OrPredicate", "AnyAllPredicate",
             "ComparisonPredicate", "IsNullPredicate", "LikePredicate",
-            "GroupBy", "GroupItem",
+            "GroupBy", "SimpleGroupItem",
             "OrderBy", "OrderItem",
             "LimitOffset",
             "OnJoin", "NaturalJoin", "CrossJoin", "UsingJoin",

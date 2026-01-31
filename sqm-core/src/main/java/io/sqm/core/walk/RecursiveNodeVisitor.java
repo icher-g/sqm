@@ -446,15 +446,63 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
-     * Visits a single {@link GroupItem}, representing an individual
+     * Visits a simple {@link GroupItem.SimpleGroupItem}, representing an individual
      * grouping expression within a {@code GROUP BY} clause.
      *
      * @param i the grouping item being visited (never {@code null})
      * @return a result value, or {@code null} if {@code <R>} is {@link Void}
      */
     @Override
-    public R visitGroupItem(GroupItem i) {
+    public R visitSimpleGroupItem(GroupItem.SimpleGroupItem i) {
         accept(i.expr());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link GroupItem.GroupingSets} node.
+     *
+     * @param i the grouping sets node being visited (never {@code null})
+     * @return a result value, or {@code null} if {@code <R>} is {@link Void}
+     */
+    @Override
+    public R visitGroupingSets(GroupItem.GroupingSets i) {
+        i.sets().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link GroupItem.GroupingSet} node.
+     *
+     * @param i the grouping set node being visited (never {@code null})
+     * @return a result value, or {@code null} if {@code <R>} is {@link Void}
+     */
+    @Override
+    public R visitGroupingSet(GroupItem.GroupingSet i) {
+        i.items().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link GroupItem.Rollup} node.
+     *
+     * @param i the rollup node being visited (never {@code null})
+     * @return a result value, or {@code null} if {@code <R>} is {@link Void}
+     */
+    @Override
+    public R visitRollup(GroupItem.Rollup i) {
+        i.items().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link GroupItem.Cube} node.
+     *
+     * @param i the cube node being visited (never {@code null})
+     * @return a result value, or {@code null} if {@code <R>} is {@link Void}
+     */
+    @Override
+    public R visitCube(GroupItem.Cube i) {
+        i.items().forEach(this::accept);
         return defaultResult();
     }
 

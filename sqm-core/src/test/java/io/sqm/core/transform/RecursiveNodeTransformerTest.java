@@ -307,10 +307,12 @@ class RecursiveNodeTransformerTest {
             }
         };
         var gb2 = (GroupBy) gb.accept(columnTransformer);
-        assertEquals(List.of("c11", "c21"), gb2.items().stream().map(i -> i.expr().matchExpression()
+        assertEquals(List.of("c11", "c21"), gb2.items().stream()
+            .map(i -> ((GroupItem.SimpleGroupItem) i).expr().matchExpression()
                 .column(c -> c.name())
                 .orElse(null)
-            ).toList()
+            )
+            .toList()
         );
         var gb3 = (GroupBy) gb.accept(new NothingTransformer());
         assertEquals(gb, gb3);
@@ -318,6 +320,29 @@ class RecursiveNodeTransformerTest {
 
     @Test
     void visitGroupItem() {
+    }
+
+    @Test
+    void visitGroupingSets() {
+        var item = groupingSets(
+            groupingSet(group("c1")),
+            groupingSet(group("c2")),
+            groupingSet()
+        );
+        var transformer = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitColumnExpr(ColumnExpr c) {
+                return col(c.name() + "x");
+            }
+        };
+
+        var transformed = (GroupItem) item.accept(transformer);
+        assertInstanceOf(GroupItem.GroupingSets.class, transformed);
+        var sets = (GroupItem.GroupingSets) transformed;
+        var first = (GroupItem.GroupingSet) sets.sets().getFirst();
+        assertEquals("c1x", ((GroupItem.SimpleGroupItem) first.items().getFirst()).expr().matchExpression()
+            .column(c -> c.name())
+            .orElse(null));
     }
 
     @Test

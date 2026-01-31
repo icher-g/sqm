@@ -208,9 +208,9 @@ public class RecordingVisitor extends RecursiveNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitGroupItem(GroupItem i) {
+    public Void visitSimpleGroupItem(GroupItem.SimpleGroupItem i) {
         mark(i);
-        return super.visitGroupItem(i);
+        return super.visitSimpleGroupItem(i);
     }
 
     @Override

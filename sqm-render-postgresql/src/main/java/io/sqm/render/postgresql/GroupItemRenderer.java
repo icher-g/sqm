@@ -1,10 +1,13 @@
-package io.sqm.render.ansi;
+package io.sqm.render.postgresql;
 
 import io.sqm.core.GroupItem;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders simple PostgreSQL GROUP BY items (expr or ordinal).
+ */
 public class GroupItemRenderer implements Renderer<GroupItem.SimpleGroupItem> {
     /**
      * Renders the node into an {@link SqlWriter}.

@@ -5,7 +5,10 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
-public class GroupItemRenderer implements Renderer<GroupItem.SimpleGroupItem> {
+/**
+ * ANSI renderer stub for grouping set items.
+ */
+public class GroupingSetRenderer implements Renderer<GroupItem.GroupingSet> {
     /**
      * Renders the node into an {@link SqlWriter}.
      *
@@ -14,12 +17,10 @@ public class GroupItemRenderer implements Renderer<GroupItem.SimpleGroupItem> {
      * @param w    a writer.
      */
     @Override
-    public void render(GroupItem.SimpleGroupItem node, RenderContext ctx, SqlWriter w) {
-        if (node.isOrdinal()) {
-            w.append(Integer.toString(node.ordinal()));
-        } else {
-            w.append(node.expr());
-        }
+    public void render(GroupItem.GroupingSet node, RenderContext ctx, SqlWriter w) {
+        throw new UnsupportedOperationException(
+            "Grouping sets are not supported by ANSI SQL renderer"
+        );
     }
 
     /**
@@ -28,7 +29,7 @@ public class GroupItemRenderer implements Renderer<GroupItem.SimpleGroupItem> {
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<GroupItem.SimpleGroupItem> targetType() {
-        return GroupItem.SimpleGroupItem.class;
+    public Class<? extends GroupItem.GroupingSet> targetType() {
+        return GroupItem.GroupingSet.class;
     }
 }

@@ -460,6 +460,46 @@ public final class Dsl {
     }
 
     /**
+     * Creates a grouping set item, for example {@code (a, b)} or {@code ()}.
+     *
+     * @param items grouping items inside the set
+     * @return a grouping set item
+     */
+    public static GroupItem groupingSet(GroupItem... items) {
+        return GroupItem.groupingSet(items);
+    }
+
+    /**
+     * Creates a {@code GROUPING SETS (...)} item.
+     *
+     * @param sets grouping set elements
+     * @return a grouping sets item
+     */
+    public static GroupItem groupingSets(GroupItem... sets) {
+        return GroupItem.groupingSets(sets);
+    }
+
+    /**
+     * Creates a {@code ROLLUP (...)} item.
+     *
+     * @param items grouping items inside the rollup
+     * @return a rollup item
+     */
+    public static GroupItem rollup(GroupItem... items) {
+        return GroupItem.rollup(items);
+    }
+
+    /**
+     * Creates a {@code CUBE (...)} item.
+     *
+     * @param items grouping items inside the cube
+     * @return a cube item
+     */
+    public static GroupItem cube(GroupItem... items) {
+        return GroupItem.cube(items);
+    }
+
+    /**
      * Creates an order by item from the provided column name.
      *
      * @param col the name of the column.

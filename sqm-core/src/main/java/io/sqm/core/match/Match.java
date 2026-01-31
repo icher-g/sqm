@@ -173,6 +173,17 @@ public interface Match<T, R> {
     }
 
     /**
+     * Creates a new matcher for the given {@link GroupItem}.
+     *
+     * @param gi  the group item to match on
+     * @param <R> the result type
+     * @return a new {@code GroupItemMatch} for {@code gi}
+     */
+    static <R> GroupItemMatch<R> groupItem(GroupItem gi) {
+        return GroupItemMatch.match(gi);
+    }
+
+    /**
      * Throws any {@link Throwable} without declaring or wrapping it.
      * <p>
      * This "sneaky throw" helper is used by {@link #orElseThrow(Supplier)}

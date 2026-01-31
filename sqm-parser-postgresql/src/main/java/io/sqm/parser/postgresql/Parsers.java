@@ -16,6 +16,10 @@ public class Parsers {
     private static ParsersRepository registerDefaults(ParsersRepository r) {
         return r
             .register(new CteDefParser())
+            .register(new GroupingSetsParser())
+            .register(new GroupingSetParser())
+            .register(new RollupParser())
+            .register(new CubeParser())
             .register(new OrderItemParser())
             .register(new TableParser())
             .register(new ArrayExprParser())
