@@ -181,6 +181,94 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
+     * Visits a {@link DateLiteralExpr} node representing a {@code DATE '...'} literal.
+     *
+     * @param l the date literal expression
+     * @return the transformed node
+     */
+    @Override
+    public Node visitDateLiteralExpr(DateLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
+     * Visits a {@link TimeLiteralExpr} node representing a {@code TIME '...'} literal.
+     *
+     * @param l the time literal expression
+     * @return the transformed node
+     */
+    @Override
+    public Node visitTimeLiteralExpr(TimeLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
+     * Visits a {@link TimestampLiteralExpr} node representing a {@code TIMESTAMP '...'} literal.
+     *
+     * @param l the timestamp literal expression
+     * @return the transformed node
+     */
+    @Override
+    public Node visitTimestampLiteralExpr(TimestampLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
+     * Visits an {@link IntervalLiteralExpr} node representing an {@code INTERVAL '...'} literal.
+     *
+     * @param l the interval literal expression
+     * @return the transformed node
+     */
+    @Override
+    public Node visitIntervalLiteralExpr(IntervalLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
+     * Visits a {@link BitStringLiteralExpr} node representing a bit string literal.
+     *
+     * @param l the bit string literal expression
+     * @return the transformed node
+     */
+    @Override
+    public Node visitBitStringLiteralExpr(BitStringLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
+     * Visits a {@link HexStringLiteralExpr} node representing a hex string literal.
+     *
+     * @param l the hex string literal expression
+     * @return the transformed node
+     */
+    @Override
+    public Node visitHexStringLiteralExpr(HexStringLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
+     * Visits a {@link EscapeStringLiteralExpr} node representing a PostgreSQL escape string literal.
+     *
+     * @param l the escape string literal expression
+     * @return the transformed node
+     */
+    @Override
+    public Node visitEscapeStringLiteralExpr(EscapeStringLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
+     * Visits a {@link DollarStringLiteralExpr} node representing a PostgreSQL dollar-quoted string literal.
+     *
+     * @param l the dollar-quoted string literal expression
+     * @return the transformed node
+     */
+    @Override
+    public Node visitDollarStringLiteralExpr(DollarStringLiteralExpr l) {
+        return visitLiteralExpr(l);
+    }
+
+    /**
      * Visits a {@link RowExpr} node representing a row value constructor
      * such as {@code (a, b, c)}.
      *

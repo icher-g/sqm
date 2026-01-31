@@ -26,7 +26,7 @@ public interface Parser<T extends Node> extends Handler<T> {
      */
     default Object parseNumber(String lexeme) {
         try {
-            if (lexeme.contains(".") || lexeme.contains("expr") || lexeme.contains("E")) {
+            if (lexeme.contains(".") || lexeme.contains("e") || lexeme.contains("E")) {
                 return Double.valueOf(lexeme);
             }
             return Long.valueOf(lexeme);

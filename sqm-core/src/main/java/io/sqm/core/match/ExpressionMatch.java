@@ -141,6 +141,70 @@ public interface ExpressionMatch<R> extends Match<Expression, R> {
     ExpressionMatch<R> literal(Function<LiteralExpr, R> f);
 
     /**
+     * Registers a handler to be applied when the subject is a {@link DateLiteralExpr}.
+     *
+     * @param f handler for {@code DateLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> dateLiteral(Function<DateLiteralExpr, R> f);
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link TimeLiteralExpr}.
+     *
+     * @param f handler for {@code TimeLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> timeLiteral(Function<TimeLiteralExpr, R> f);
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link TimestampLiteralExpr}.
+     *
+     * @param f handler for {@code TimestampLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> timestampLiteral(Function<TimestampLiteralExpr, R> f);
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link IntervalLiteralExpr}.
+     *
+     * @param f handler for {@code IntervalLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> intervalLiteral(Function<IntervalLiteralExpr, R> f);
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link BitStringLiteralExpr}.
+     *
+     * @param f handler for {@code BitStringLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> bitStringLiteral(Function<BitStringLiteralExpr, R> f);
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link HexStringLiteralExpr}.
+     *
+     * @param f handler for {@code HexStringLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> hexStringLiteral(Function<HexStringLiteralExpr, R> f);
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link EscapeStringLiteralExpr}.
+     *
+     * @param f handler for {@code EscapeStringLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> escapeStringLiteral(Function<EscapeStringLiteralExpr, R> f);
+
+    /**
+     * Registers a handler to be applied when the subject is a {@link DollarStringLiteralExpr}.
+     *
+     * @param f handler for {@code DollarStringLiteralExpr}
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> dollarStringLiteral(Function<DollarStringLiteralExpr, R> f);
+
+    /**
      * Registers a handler to be applied when the subject is a {@link ValueSet}.
      *
      * @param f handler for {@code ValueSet}

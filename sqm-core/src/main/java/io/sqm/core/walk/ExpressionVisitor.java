@@ -81,6 +81,70 @@ public interface ExpressionVisitor<R> {
     R visitLiteralExpr(LiteralExpr l);
 
     /**
+     * Visits a {@link DateLiteralExpr} node representing a {@code DATE '...'} literal.
+     *
+     * @param l the date literal expression
+     * @return a result produced by the visitor
+     */
+    R visitDateLiteralExpr(DateLiteralExpr l);
+
+    /**
+     * Visits a {@link TimeLiteralExpr} node representing a {@code TIME '...'} literal.
+     *
+     * @param l the time literal expression
+     * @return a result produced by the visitor
+     */
+    R visitTimeLiteralExpr(TimeLiteralExpr l);
+
+    /**
+     * Visits a {@link TimestampLiteralExpr} node representing a {@code TIMESTAMP '...'} literal.
+     *
+     * @param l the timestamp literal expression
+     * @return a result produced by the visitor
+     */
+    R visitTimestampLiteralExpr(TimestampLiteralExpr l);
+
+    /**
+     * Visits an {@link IntervalLiteralExpr} node representing an {@code INTERVAL '...'} literal.
+     *
+     * @param l the interval literal expression
+     * @return a result produced by the visitor
+     */
+    R visitIntervalLiteralExpr(IntervalLiteralExpr l);
+
+    /**
+     * Visits a {@link BitStringLiteralExpr} node representing a bit string literal.
+     *
+     * @param l the bit string literal expression
+     * @return a result produced by the visitor
+     */
+    R visitBitStringLiteralExpr(BitStringLiteralExpr l);
+
+    /**
+     * Visits a {@link HexStringLiteralExpr} node representing a hex string literal.
+     *
+     * @param l the hex string literal expression
+     * @return a result produced by the visitor
+     */
+    R visitHexStringLiteralExpr(HexStringLiteralExpr l);
+
+    /**
+     * Visits a {@link EscapeStringLiteralExpr} node representing a PostgreSQL escape string literal.
+     *
+     * @param l the escape string literal expression
+     * @return a result produced by the visitor
+     */
+    R visitEscapeStringLiteralExpr(EscapeStringLiteralExpr l);
+
+    /**
+     * Visits a {@link DollarStringLiteralExpr} node representing a PostgreSQL dollar-quoted string literal.
+     *
+     * @param l the dollar-quoted string literal expression
+     * @return a result produced by the visitor
+     */
+    R visitDollarStringLiteralExpr(DollarStringLiteralExpr l);
+
+    /**
      * Visits a {@link RowExpr} node representing a row value constructor
      * such as {@code (a, b, c)}.
      *

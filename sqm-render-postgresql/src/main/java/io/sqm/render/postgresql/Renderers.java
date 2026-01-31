@@ -34,6 +34,9 @@ public final class Renderers {
             .register(new RegexPredicateRenderer())
             .register(new ArrayExprRenderer())
             .register(new ArraySubscriptExprRenderer())
-            .register(new ArraySliceExprRenderer());
+            .register(new ArraySliceExprRenderer())
+            .register(new EscapeStringLiteralExprRenderer())
+            .register(new DollarStringLiteralExprRenderer())
+            .register(new IntervalLiteralExprRenderer());
     }
 }
