@@ -309,14 +309,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitFunctionTable(FunctionTable t) {
         var func = apply(t.function());
         if (func != t.function()) {
-            var result = FunctionTable.of(func);
-            if (t.alias() != null) {
-                result = result.as(t.alias());
-            }
-            if (t.columnAliases() != null && !t.columnAliases().isEmpty()) {
-                result = result.columnAliases(t.columnAliases());
-            }
-            return result;
+            return FunctionTable.of(func, t.columnAliases(), t.alias(), t.ordinality());
         }
         return t;
     }

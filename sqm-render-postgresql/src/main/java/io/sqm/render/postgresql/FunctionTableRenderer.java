@@ -16,6 +16,9 @@ public class FunctionTableRenderer implements Renderer<FunctionTable> {
     @Override
     public void render(FunctionTable node, RenderContext ctx, SqlWriter w) {
         w.append(node.function());
+        if (node.ordinality()) {
+            w.space().append("WITH ORDINALITY");
+        }
         renderAliased(node, ctx, w);
     }
 

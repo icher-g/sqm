@@ -55,6 +55,19 @@ class DslFunctionTableTest {
     }
 
     @Test
+    @DisplayName("Function table WITH ORDINALITY")
+    void functionTableWithOrdinality() {
+        var table = tbl(func("generate_series", arg(lit(1)), arg(lit(3))))
+            .withOrdinality()
+            .as("s")
+            .columnAliases("num", "ord");
+
+        assertTrue(table.ordinality());
+        assertEquals("s", table.alias());
+        assertEquals(2, table.columnAliases().size());
+    }
+
+    @Test
     @DisplayName("Lateral wrapping query table")
     void lateralWrappingQueryTable() {
         var subquery = select(col("*")).from(tbl("users"));

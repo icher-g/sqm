@@ -61,6 +61,33 @@ class FunctionTableParserTest {
     }
 
     @Test
+    @DisplayName("Parse table function WITH ORDINALITY")
+    void parsesTableFunctionWithOrdinality() {
+        var qResult = parseQuery("SELECT * FROM generate_series(1, 3) WITH ORDINALITY AS t(n, ord)");
+
+        assertTrue(qResult.ok());
+        var query = assertInstanceOf(SelectQuery.class, qResult.value());
+
+        var table = assertInstanceOf(FunctionTable.class, query.from());
+        assertTrue(table.ordinality());
+        assertEquals("t", table.alias());
+        assertEquals(2, table.columnAliases().size());
+    }
+
+    @Test
+    @DisplayName("Parse table function WITH ORDINALITY without alias")
+    void parsesTableFunctionWithOrdinalityWithoutAlias() {
+        var qResult = parseQuery("SELECT * FROM generate_series(1, 3) WITH ORDINALITY");
+
+        assertTrue(qResult.ok());
+        var query = assertInstanceOf(SelectQuery.class, qResult.value());
+
+        var table = assertInstanceOf(FunctionTable.class, query.from());
+        assertTrue(table.ordinality());
+        assertNull(table.alias());
+    }
+
+    @Test
     @DisplayName("Parse table function with implicit alias and column aliases")
     void parsesTableFunctionWithImplicitAliasAndColumns() {
         var qResult = parseQuery("SELECT * FROM generate_series(1, 10) t(n)");
@@ -139,6 +166,12 @@ class FunctionTableParserTest {
     @DisplayName("Reject table function with missing closing parenthesis")
     void rejectsTableFunctionMissingClosingParen() {
         assertParseError("SELECT * FROM generate_series(1, 10");
+    }
+
+    @Test
+    @DisplayName("Reject WITH without ORDINALITY")
+    void rejectsWithWithoutOrdinality() {
+        assertParseError("SELECT * FROM generate_series(1, 3) WITH t");
     }
 
     private ParseResult<? extends Query> parseQuery(String sql) {

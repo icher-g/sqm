@@ -27,7 +27,7 @@ public non-sealed interface FunctionTable extends AliasedTableRef {
      * @return function table reference
      */
     static FunctionTable of(FunctionExpr function) {
-        return new Impl(function, List.of(), null);
+        return of(function, List.of(), null, false);
     }
 
     /**
@@ -38,7 +38,7 @@ public non-sealed interface FunctionTable extends AliasedTableRef {
      * @return function table reference
      */
     static FunctionTable of(FunctionExpr function, String alias) {
-        return new Impl(function, List.of(), alias);
+        return of(function, List.of(), alias, false);
     }
 
     /**
@@ -50,7 +50,20 @@ public non-sealed interface FunctionTable extends AliasedTableRef {
      * @return function table reference
      */
     static FunctionTable of(FunctionExpr function, List<String> columnAliases, String alias) {
-        return new Impl(function, columnAliases, alias);
+        return of(function, columnAliases, alias, false);
+    }
+
+    /**
+     * Creates a function table reference with explicit fields.
+     *
+     * @param function       the function call
+     * @param columnAliases  the column aliases
+     * @param alias          the table alias
+     * @param ordinality whether {@code WITH ORDINALITY} is enabled
+     * @return function table reference
+     */
+    static FunctionTable of(FunctionExpr function, List<String> columnAliases, String alias, boolean ordinality) {
+        return new Impl(function, columnAliases, alias, ordinality);
     }
 
     /**
@@ -59,13 +72,20 @@ public non-sealed interface FunctionTable extends AliasedTableRef {
     FunctionExpr function();
 
     /**
+     * Indicates whether {@code WITH ORDINALITY} is enabled.
+     *
+     * @return true if the function table includes {@code WITH ORDINALITY}
+     */
+    boolean ordinality();
+
+    /**
      * Adds an alias to a function table.
      *
      * @param alias an alias to add.
      * @return this.
      */
     default FunctionTable as(String alias) {
-        return new Impl(function(), columnAliases(), alias);
+        return new Impl(function(), columnAliases(), alias, ordinality());
     }
 
     /**
@@ -76,7 +96,7 @@ public non-sealed interface FunctionTable extends AliasedTableRef {
      * @return this.
      */
     default FunctionTable columnAliases(List<String> columnAliases) {
-        return new Impl(function(), Objects.requireNonNull(columnAliases), alias());
+        return new Impl(function(), Objects.requireNonNull(columnAliases), alias(), ordinality());
     }
 
     /**
@@ -87,7 +107,16 @@ public non-sealed interface FunctionTable extends AliasedTableRef {
      * @return this.
      */
     default FunctionTable columnAliases(String... columnAliases) {
-        return new Impl(function(), List.of(columnAliases), alias());
+        return new Impl(function(), List.of(columnAliases), alias(), ordinality());
+    }
+
+    /**
+     * Enables {@code WITH ORDINALITY} for this function table.
+     *
+     * @return a new function table with {@code WITH ORDINALITY} enabled
+     */
+    default FunctionTable withOrdinality() {
+        return new Impl(function(), columnAliases(), alias(), true);
     }
 
     /**
@@ -106,11 +135,12 @@ public non-sealed interface FunctionTable extends AliasedTableRef {
     /**
      * Default implementation.
      *
-     * @param function      the function call
-     * @param columnAliases a list of column names to add.
-     * @param alias         an alias to add.
+     * @param function       the function call
+     * @param columnAliases  a list of column names to add.
+     * @param alias          an alias to add.
+     * @param ordinality whether {@code WITH ORDINALITY} is enabled
      */
-    record Impl(FunctionExpr function, List<String> columnAliases, String alias) implements FunctionTable {
+    record Impl(FunctionExpr function, List<String> columnAliases, String alias, boolean ordinality) implements FunctionTable {
 
         public Impl {
             Objects.requireNonNull(function, "function");
