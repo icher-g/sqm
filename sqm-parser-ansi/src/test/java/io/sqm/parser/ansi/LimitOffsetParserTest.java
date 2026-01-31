@@ -70,4 +70,12 @@ class LimitOffsetParserTest {
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected ONLY"));
     }
+
+    @Test
+    void errorsOnLimitAllWithFetch() {
+        var result = ctx.parse(parser, "LIMIT ALL FETCH NEXT 1 ROWS ONLY");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("LIMIT ALL"));
+    }
 }
