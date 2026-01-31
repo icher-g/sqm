@@ -36,4 +36,12 @@ class TableRendererTest {
         assertTrue(sql.contains("t *"));
         assertTrue(sql.contains("AS a"));
     }
+
+    @Test
+    @DisplayName("Renders schema-qualified table without inheritance")
+    void renders_schema_table() {
+        var sql = render(Table.of("sales", "orders").as("o"));
+        assertTrue(sql.contains("sales.orders"));
+        assertTrue(sql.contains("AS o"));
+    }
 }

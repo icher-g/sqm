@@ -42,4 +42,10 @@ class TableTest {
         table = table.includingDescendants();
         assertEquals(Table.Inheritance.INCLUDE_DESCENDANTS, table.inheritance());
     }
+
+    @Test
+    void inheritance_null_defaults() {
+        var table = Table.of("dbo", "t", "a", null);
+        assertEquals(Table.Inheritance.DEFAULT, table.inheritance());
+    }
 }

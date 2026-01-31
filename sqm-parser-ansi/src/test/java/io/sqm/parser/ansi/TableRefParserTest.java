@@ -102,6 +102,13 @@ class TableRefParserTest {
     }
 
     @Test
+    @DisplayName("Rejects inheritance star with schema")
+    void error_table_inheritance_star_with_schema() {
+        var r = parse("sales.products *");
+        Assertions.assertFalse(r.ok());
+    }
+
+    @Test
     @DisplayName("From a sub query")
     void select_from_subquery() {
         var r = parse("(SELECT * FROM t)");

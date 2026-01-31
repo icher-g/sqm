@@ -43,6 +43,17 @@ class TableRefParserTest {
     }
 
     @Test
+    @DisplayName("Parses schema table with inheritance star")
+    void parses_schema_table_inheritance_star() {
+        var r = parse("sales.products *");
+        Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
+        Table t = (Table) r.value();
+        Assertions.assertEquals(Table.Inheritance.INCLUDE_DESCENDANTS, t.inheritance());
+        Assertions.assertEquals("sales", t.schema());
+        Assertions.assertEquals("products", t.name());
+    }
+
+    @Test
     @DisplayName("Parses table inheritance star with alias")
     void parses_table_star_with_alias() {
         var r = parse("products * AS p");
@@ -50,5 +61,29 @@ class TableRefParserTest {
         Table t = (Table) r.value();
         Assertions.assertEquals(Table.Inheritance.INCLUDE_DESCENDANTS, t.inheritance());
         Assertions.assertEquals("p", t.alias());
+    }
+
+    @Test
+    @DisplayName("Parses ONLY with alias")
+    void parses_only_with_alias() {
+        var r = parse("ONLY products p");
+        Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
+        Table t = (Table) r.value();
+        Assertions.assertEquals(Table.Inheritance.ONLY, t.inheritance());
+        Assertions.assertEquals("p", t.alias());
+    }
+
+    @Test
+    @DisplayName("Rejects ONLY with inheritance star")
+    void rejects_only_with_star() {
+        var r = parse("ONLY products *");
+        Assertions.assertFalse(r.ok());
+    }
+
+    @Test
+    @DisplayName("Rejects ONLY without table name")
+    void rejects_only_without_name() {
+        var r = parse("ONLY");
+        Assertions.assertFalse(r.ok());
     }
 }
