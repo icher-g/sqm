@@ -20,6 +20,7 @@ public final class Renderers {
         return r
             .register(new CteDefRenderer())
             .register(new OrderItemRenderer())
+            .register(new TableRenderer())
             .register(new FunctionTableRenderer())
             .register(new DistinctSpecRenderer())
             .register(new CastExprRenderer())

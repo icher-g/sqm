@@ -11,9 +11,11 @@ class TableTest {
         var table = Table.of("t");
         assertEquals("t", table.name());
         assertNull(table.schema());
+        assertEquals(Table.Inheritance.DEFAULT, table.inheritance());
         table = Table.of("dbo", "t");
         assertEquals("t", table.name());
         assertEquals("dbo", table.schema());
+        assertEquals(Table.Inheritance.DEFAULT, table.inheritance());
     }
 
     @Test
@@ -31,5 +33,13 @@ class TableTest {
         table = table.inSchema("dbo");
         assertEquals("t", table.name());
         assertEquals("dbo", table.schema());
+    }
+
+    @Test
+    void inheritance_flags() {
+        var table = Table.of("t").only();
+        assertEquals(Table.Inheritance.ONLY, table.inheritance());
+        table = table.includingDescendants();
+        assertEquals(Table.Inheritance.INCLUDE_DESCENDANTS, table.inheritance());
     }
 }

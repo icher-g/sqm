@@ -9,13 +9,30 @@ import java.util.Objects;
  */
 public non-sealed interface Table extends TableRef {
     /**
+     * Table inheritance handling for PostgreSQL.
+     */
+    enum Inheritance {
+        /**
+         * Default behavior (dialect-defined).
+         */
+        DEFAULT,
+        /**
+         * Use ONLY to exclude child tables (PostgreSQL).
+         */
+        ONLY,
+        /**
+         * Explicitly include child tables via {@code table *} (PostgreSQL).
+         */
+        INCLUDE_DESCENDANTS
+    }
+    /**
      * Creates a table with the provided name. All other fields are set to NULL.
      *
      * @param name the name of the table. This is not qualified name.
      * @return A newly created instance of the table.
      */
     static Table of(String name) {
-        return new Impl(null, Objects.requireNonNull(name), null);
+        return of(null, Objects.requireNonNull(name), null, Inheritance.DEFAULT);
     }
 
     /**
@@ -26,7 +43,20 @@ public non-sealed interface Table extends TableRef {
      * @return A newly created instance of the table.
      */
     static Table of(String schema, String name) {
-        return new Impl(schema, Objects.requireNonNull(name), null);
+        return of(schema, Objects.requireNonNull(name), null, Inheritance.DEFAULT);
+    }
+
+    /**
+     * Creates a table with the provided name.
+     *
+     * @param schema      a table schema.
+     * @param name        the table name (unqualified).
+     * @param alias       optional table alias.
+     * @param inheritance inheritance behavior.
+     * @return A newly created instance of the table.
+     */
+    static Table of(String schema, String name, String alias, Inheritance inheritance) {
+        return new Impl(schema, Objects.requireNonNull(name), alias, inheritance);
     }
 
     /**
@@ -49,13 +79,20 @@ public non-sealed interface Table extends TableRef {
     String alias();
 
     /**
+     * Gets table inheritance behavior.
+     *
+     * @return inheritance behavior.
+     */
+    Inheritance inheritance();
+
+    /**
      * Adds alias to the table.
      *
      * @param alias an alias to add.
      * @return A newly created table with the provide alias. All other fields are preserved.
      */
     default Table as(String alias) {
-        return new Impl(schema(), name(), alias);
+        return of(schema(), name(), alias, inheritance());
     }
 
     /**
@@ -65,7 +102,25 @@ public non-sealed interface Table extends TableRef {
      * @return A newly created table with the provided schema. All other fields are preserved.
      */
     default Table inSchema(String schema) {
-        return new Impl(schema, name(), alias());
+        return of(schema, name(), alias(), inheritance());
+    }
+
+    /**
+     * Marks the table as {@code ONLY} (PostgreSQL).
+     *
+     * @return A new instance with ONLY inheritance.
+     */
+    default Table only() {
+        return of(schema(), name(), alias(), Inheritance.ONLY);
+    }
+
+    /**
+     * Marks the table as explicitly including descendants (PostgreSQL).
+     *
+     * @return A new instance with descendants included.
+     */
+    default Table includingDescendants() {
+        return of(schema(), name(), alias(), Inheritance.INCLUDE_DESCENDANTS);
     }
 
     /**
@@ -84,10 +139,16 @@ public non-sealed interface Table extends TableRef {
     /**
      * An implementation class of the {@link Table}l
      *
-     * @param name   the name of the table. This is not qualified name.
-     * @param schema a table schema.
-     * @param alias  a table alias.
+     * @param name        the name of the table. This is not qualified name.
+     * @param schema      a table schema.
+     * @param alias       a table alias.
+     * @param inheritance table inheritance behavior.
      */
-    record Impl(String schema, String name, String alias) implements Table {
+    record Impl(String schema, String name, String alias, Inheritance inheritance) implements Table {
+        public Impl {
+            if (inheritance == null) {
+                inheritance = Inheritance.DEFAULT;
+            }
+        }
     }
 }

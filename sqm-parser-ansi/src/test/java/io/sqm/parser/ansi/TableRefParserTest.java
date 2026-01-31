@@ -88,6 +88,20 @@ class TableRefParserTest {
     }
 
     @Test
+    @DisplayName("Rejects ONLY table in ANSI")
+    void error_only_table() {
+        var r = parse("ONLY products");
+        Assertions.assertFalse(r.ok());
+    }
+
+    @Test
+    @DisplayName("Rejects table inheritance star in ANSI")
+    void error_table_inheritance_star() {
+        var r = parse("products *");
+        Assertions.assertFalse(r.ok());
+    }
+
+    @Test
     @DisplayName("From a sub query")
     void select_from_subquery() {
         var r = parse("(SELECT * FROM t)");
