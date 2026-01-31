@@ -251,6 +251,19 @@ class OrderItemRendererTest {
     }
 
     @Test
+    @DisplayName("Ordinal order item renders number and direction")
+    void ordinal_renders() {
+        var d = dialect(passThruQuoter(), explicitNulls());
+        var rc = RenderContext.of(d);
+
+        var item = OrderItem.of(2).desc();
+        String sql = renderToSql(renderer, item, rc);
+
+        assertTrue(sql.startsWith("2"), "should render ordinal");
+        assertTrue(sql.contains(" DESC"), "should render direction");
+    }
+
+    @Test
     @DisplayName("USING operator is rejected by ANSI renderer")
     void using_operator_rejected() {
         var d = dialect(passThruQuoter(), explicitNulls());

@@ -40,4 +40,31 @@ class OrderItemRendererTest {
         assertTrue(iNulls > iUsing, "NULLS after USING");
         assertFalse(sql.contains(" ASC") || sql.contains(" DESC"));
     }
+
+    @Test
+    @DisplayName("Ordinal renders with direction and DEFAULT nulls mapping")
+    void ordinal_with_direction_and_default_nulls() {
+        var rc = RenderContext.of(new PostgresDialect());
+        var renderer = new OrderItemRenderer();
+
+        var item = io.sqm.core.OrderItem.of(3).desc().nulls(Nulls.DEFAULT);
+        String sql = renderToSql(renderer, item, rc);
+
+        assertTrue(sql.startsWith("3"), "should render ordinal");
+        assertTrue(sql.contains(" DESC"), "should render direction");
+        assertTrue(sql.contains(" NULLS FIRST"), "DEFAULT nulls should map to FIRST for DESC");
+    }
+
+    @Test
+    @DisplayName("Collate renders with quoting when needed")
+    void collate_renders_with_quoting() {
+        var rc = RenderContext.of(new PostgresDialect());
+        var renderer = new OrderItemRenderer();
+
+        var item = order(col("t", "c")).collate("de-CH");
+        String sql = renderToSql(renderer, item, rc);
+
+        assertTrue(sql.contains(" COLLATE \"de-CH\""), "collation should be quoted");
+        assertFalse(sql.contains(" USING "), "no USING expected");
+    }
 }

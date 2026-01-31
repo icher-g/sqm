@@ -1,5 +1,6 @@
 package io.sqm.parser.postgresql;
 
+import io.sqm.core.Direction;
 import io.sqm.core.Nulls;
 import io.sqm.core.OrderItem;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
@@ -46,6 +47,37 @@ class OrderItemParserTest {
             Assertions.assertEquals(1, oi.ordinal());
             Assertions.assertEquals(">", oi.usingOperator());
         }
+
+        @Test
+        @DisplayName("USING operator with question mark token")
+        void using_operator_with_qmark() {
+            var res = parse("c USING ?");
+            Assertions.assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
+            OrderItem oi = res.value();
+            Assertions.assertEquals("?", oi.usingOperator());
+        }
+
+        @Test
+        @DisplayName("Direction, nulls, and collate without USING")
+        void direction_nulls_collate() {
+            var res = parse("t.c COLLATE \"de-CH\" DESC NULLS FIRST");
+            Assertions.assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
+            OrderItem oi = res.value();
+            Assertions.assertNotNull(oi.expr());
+            Assertions.assertEquals(Direction.DESC, oi.direction());
+            Assertions.assertEquals(Nulls.FIRST, oi.nulls());
+            Assertions.assertEquals("de-CH", oi.collate());
+        }
+
+        @Test
+        @DisplayName("Ordinal with direction")
+        void ordinal_with_direction() {
+            var res = parse("2 ASC");
+            Assertions.assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
+            OrderItem oi = res.value();
+            Assertions.assertEquals(2, oi.ordinal());
+            Assertions.assertEquals(Direction.ASC, oi.direction());
+        }
     }
 
     @Nested
@@ -74,6 +106,62 @@ class OrderItemParserTest {
             var res = parse("c DESC USING <");
             Assertions.assertFalse(res.ok());
             Assertions.assertTrue(Objects.requireNonNull(res.errorMessage()).contains("USING operator cannot be combined with ASC/DESC"));
+        }
+
+        @Test
+        @DisplayName("USING specified more than once -> error")
+        void using_twice() {
+            var res = parse("c USING < USING >");
+            Assertions.assertFalse(res.ok());
+            Assertions.assertTrue(Objects.requireNonNull(res.errorMessage()).contains("USING specified more than once"));
+        }
+
+        @Test
+        @DisplayName("Duplicate direction -> error")
+        void duplicate_direction() {
+            var res = parse("c ASC DESC");
+            Assertions.assertFalse(res.ok());
+            Assertions.assertTrue(Objects.requireNonNull(res.errorMessage()).contains("Direction specified more than once"));
+        }
+
+        @Test
+        @DisplayName("Duplicate NULLS -> error")
+        void duplicate_nulls() {
+            var res = parse("c NULLS FIRST NULLS LAST");
+            Assertions.assertFalse(res.ok());
+            Assertions.assertTrue(Objects.requireNonNull(res.errorMessage()).contains("NULLS specified more than once"));
+        }
+
+        @Test
+        @DisplayName("Duplicate COLLATE -> error")
+        void duplicate_collate() {
+            var res = parse("c COLLATE de_CH COLLATE fr_CH");
+            Assertions.assertFalse(res.ok());
+            Assertions.assertTrue(Objects.requireNonNull(res.errorMessage()).contains("COLLATE specified more than once"));
+        }
+
+        @Test
+        @DisplayName("NULLS without value -> error")
+        void nulls_without_value() {
+            var res = parse("c NULLS");
+            Assertions.assertFalse(res.ok());
+            Assertions.assertTrue(Objects.requireNonNull(res.errorMessage()).contains("Expected FIRST | LAST | DEFAULT"));
+        }
+
+        @Test
+        @DisplayName("COLLATE without name -> error")
+        void collate_without_name() {
+            var res = parse("c COLLATE");
+            Assertions.assertFalse(res.ok());
+            Assertions.assertTrue(Objects.requireNonNull(res.errorMessage()).contains("Expected collation name after COLLATE"));
+        }
+
+        @Test
+        @DisplayName("Invalid ordinal -> error")
+        void invalid_ordinal() {
+            var res = parse("0");
+            Assertions.assertFalse(res.ok());
+            Assertions.assertTrue(Objects.requireNonNull(res.errorMessage()).contains("positive integer"));
         }
     }
 }

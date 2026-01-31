@@ -50,6 +50,16 @@ class OrderItemParserTest {
         }
 
         @Test
+        @DisplayName("Ordinal order item")
+        void ordinal_item() {
+            var res = parse("1 ASC");
+            Assertions.assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
+            OrderItem oi = res.value();
+            Assertions.assertEquals(1, oi.ordinal());
+            Assertions.assertEquals(Direction.ASC, oi.direction());
+        }
+
+        @Test
         @DisplayName("Function expr + ASC + NULLS LAST (case-insensitive)")
         void function_with_dir_and_nulls() {
             var res = parse("lower(t.c) aSc nUlLs lAsT");
