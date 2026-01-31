@@ -659,7 +659,8 @@ class RecursiveNodeTransformerTest {
             }
         };
         var query2 = (SelectQuery) query.accept(limitTransformer);
-        assertEquals(2L, query2.limit());
+        assertInstanceOf(LiteralExpr.class, query2.limit());
+        assertEquals(2L, ((LiteralExpr) query2.limit()).value());
     }
 
     @Test
@@ -679,7 +680,7 @@ class RecursiveNodeTransformerTest {
         var literalTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitLiteralExpr(LiteralExpr l) {
-                return lit((Integer) l.value() + 1);
+                return lit(l.value() instanceof Integer i ? i + 1 : (Long) l.value() + 1);
             }
         };
         var cq2 = (CompositeQuery) cq.accept(literalTransformer);
@@ -700,7 +701,8 @@ class RecursiveNodeTransformerTest {
             }
         };
         var cq3 = (CompositeQuery) cq.accept(limitTransformer);
-        assertEquals(2L, cq3.limitOffset().limit());
+        assertInstanceOf(LiteralExpr.class, cq3.limitOffset().limit());
+        assertEquals(2L, ((LiteralExpr) cq3.limitOffset().limit()).value());
         var cq4 = (CompositeQuery) cq.accept(new NothingTransformer());
         assertEquals(cq, cq4);
     }

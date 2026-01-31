@@ -121,11 +121,9 @@ public class SelectQueryParser implements Parser<SelectQuery> {
         if (lor.isError()) {
             return error(lor);
         }
-        if (lor.value().limit() != null) {
-            q.limit(lor.value().limit());
-        }
-        if (lor.value().offset() != null) {
-            q.offset(lor.value().offset());
+        var lo = lor.value();
+        if (lo.limit() != null || lo.offset() != null || lo.limitAll()) {
+            q.limitOffset(lo);
         }
 
         // Locking clause (FOR UPDATE, FOR SHARE, etc.)

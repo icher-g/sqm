@@ -23,7 +23,7 @@ class LimitOffsetRendererTest {
     @Test
     @DisplayName("No limit or offset renders nothing")
     void no_limit_offset() {
-        LimitOffset lo = LimitOffset.of(null, null);
+        LimitOffset lo = LimitOffset.of(null, null, false);
         String result = ctx.render(lo).sql();
         assertEquals("", result.trim());
     }

@@ -216,6 +216,11 @@ public final class Lexer {
                     pos++;
                     return new Token(OPERATOR, "->", start);
                 }
+                // range operator: -|-
+                if (pos + 2 < len && s.charAt(pos + 1) == '|' && s.charAt(pos + 2) == '-') {
+                    pos += 3;
+                    return new Token(OPERATOR, "-|-", start);
+                }
                 pos++;
                 return new Token(OPERATOR, "-", start);
             case '*':
@@ -241,12 +246,27 @@ public final class Lexer {
                     pos++;
                     return new Token(OPERATOR, "#>", start);
                 }
+                // JSONB delete path operator: #-
+                if (peekNext() == '-') {
+                    pos += 2;
+                    return new Token(OPERATOR, "#-", start);
+                }
                 break;
             case '@':
                 // containment operator: @>
                 if (peekNext() == '>') {
                     pos += 2;
                     return new Token(OPERATOR, "@>", start);
+                }
+                // jsonpath match operator: @?
+                if (peekNext() == '?') {
+                    pos += 2;
+                    return new Token(OPERATOR, "@?", start);
+                }
+                // full text / jsonpath operator: @@
+                if (peekNext() == '@') {
+                    pos += 2;
+                    return new Token(OPERATOR, "@@", start);
                 }
                 break;
             case '|':
@@ -261,6 +281,15 @@ public final class Lexer {
                 if (peekNext() == '&') {
                     pos += 2;
                     return new Token(OPERATOR, "&&", start);
+                }
+                // range operators: &< and &>
+                if (peekNext() == '<') {
+                    pos += 2;
+                    return new Token(OPERATOR, "&<", start);
+                }
+                if (peekNext() == '>') {
+                    pos += 2;
+                    return new Token(OPERATOR, "&>", start);
                 }
                 break;
             case '~':
@@ -296,6 +325,11 @@ public final class Lexer {
                     pos += 2;
                     return new Token(OPERATOR, "<@", start);
                 }
+                // range operators: << and &< (handled in '&')
+                if (peekNext() == '<') {
+                    pos += 2;
+                    return new Token(OPERATOR, "<<", start);
+                }
                 if (peekNext() == '>') {
                     pos += 2;
                     return new Token(OPERATOR, "<>", start);
@@ -307,6 +341,11 @@ public final class Lexer {
                 pos++;
                 return new Token(OPERATOR, "<", start);
             case '>':
+                // range operator: >>
+                if (peekNext() == '>') {
+                    pos += 2;
+                    return new Token(OPERATOR, ">>", start);
+                }
                 if (peekNext() == '=') {
                     pos += 2;
                     return new Token(OPERATOR, ">=", start);

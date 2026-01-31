@@ -1,5 +1,6 @@
 package io.sqm.parser.ansi;
 
+import io.sqm.core.Expression;
 import io.sqm.core.LimitOffset;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -20,33 +21,41 @@ public class LimitOffsetParser implements Parser<LimitOffset> {
      */
     @Override
     public ParseResult<LimitOffset> parse(Cursor cur, ParseContext ctx) {
-        // LIMIT (optional) — numeric only
-        Long limit = null;
+
+        Expression limit = null;
+        boolean limitAll = false;
+
+        // LIMIT (optional)
         if (cur.consumeIf(TokenType.LIMIT)) {
-            if (!cur.match(TokenType.NUMBER)) {
-                return error("Expected number after LIMIT", cur.fullPos());
+            if (cur.consumeIf(TokenType.ALL)) {
+                limitAll = true;
             }
-            var t = cur.advance();
-            limit = (long) Double.parseDouble(t.lexeme());
+            else {
+                var lr = ctx.parse(Expression.class, cur);
+                if (lr.isError()) {
+                    return error(lr);
+                }
+                limit = lr.value();
+            }
         }
 
         // ANSI FETCH (can appear with or without OFFSET)
         if (cur.consumeIf(TokenType.FETCH)) {
-            var fr = parseOptionalFetchClause(cur);
+            var fr = parseOptionalFetchClause(cur, ctx, limitAll);
             if (fr.isError()) {
                 return error(fr);
             }
             limit = fr.value();
         }
 
-        // OFFSET (optional) — numeric only
-        Long offset = null;
+        // OFFSET (optional)
+        Expression offset = null;
         if (cur.consumeIf(TokenType.OFFSET)) {
-            if (!cur.match(TokenType.NUMBER)) {
-                return error("Expected number after OFFSET", cur.fullPos());
+            var or = ctx.parse(Expression.class, cur);
+            if (or.isError()) {
+                return error(or);
             }
-            var t = cur.advance();
-            offset = (long) Double.parseDouble(t.lexeme());
+            offset = or.value();
 
             // Optional ROW / ROWS
             if (cur.match(TokenType.ROW) || cur.match(TokenType.ROWS)) {
@@ -55,7 +64,7 @@ public class LimitOffsetParser implements Parser<LimitOffset> {
 
             // Optional ANSI FETCH after OFFSET
             if (cur.consumeIf(TokenType.FETCH)) {
-                var fr = parseOptionalFetchClause(cur);
+                var fr = parseOptionalFetchClause(cur, ctx, limitAll);
                 if (fr.isError()) {
                     return error(fr);
                 }
@@ -63,7 +72,7 @@ public class LimitOffsetParser implements Parser<LimitOffset> {
             }
         }
 
-        return ok(LimitOffset.of(limit, offset));
+        return ok(LimitOffset.of(limit, offset, limitAll));
     }
 
     /**
@@ -76,18 +85,20 @@ public class LimitOffsetParser implements Parser<LimitOffset> {
         return LimitOffset.class;
     }
 
-    private ParseResult<Long> parseOptionalFetchClause(Cursor cur) {
+    private ParseResult<Expression> parseOptionalFetchClause(Cursor cur, ParseContext ctx, boolean limitAll) {
+        if (limitAll) {
+            return error("FETCH cannot be used with LIMIT ALL", cur.fullPos());
+        }
+
         // FETCH requires FIRST or NEXT
         if (!(cur.consumeIf(TokenType.FIRST) || cur.consumeIf(TokenType.NEXT))) {
             return error("Expected FIRST or NEXT after FETCH", cur.fullPos());
         }
 
-        if (!cur.match(TokenType.NUMBER)) {
-            return error("Expected number after FETCH FIRST/NEXT", cur.fullPos());
+        var lr = ctx.parse(Expression.class, cur);
+        if (lr.isError()) {
+            return error(lr);
         }
-
-        var t = cur.advance();
-        var limit = (long) Double.parseDouble(t.lexeme());
 
         // Optional ROW / ROWS
         if (cur.match(TokenType.ROW) || cur.match(TokenType.ROWS)) {
@@ -97,6 +108,6 @@ public class LimitOffsetParser implements Parser<LimitOffset> {
         if (!cur.consumeIf(TokenType.ONLY)) {
             return error("Expected ONLY at the end of FETCH clause", cur.fullPos());
         }
-        return ok(limit);
+        return ok(lr.value());
     }
 }

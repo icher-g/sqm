@@ -1,8 +1,6 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.ColumnExpr;
-import io.sqm.core.IsDistinctFromPredicate;
-import io.sqm.core.LiteralExpr;
+import io.sqm.core.*;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.ParseContext;
@@ -176,11 +174,22 @@ class IsDistinctFromPredicateParserTest {
     }
 
     @Test
-    void testParseError_InvalidLhs() {
+    void testParseWithQuestionOperatorExpressionLhs() {
         var sql = "??? IS DISTINCT FROM 1";
         var result = ctx.parse(IsDistinctFromPredicate.class, sql);
 
-        assertTrue(result.isError());
+        assertTrue(result.ok());
+        var predicate = result.value();
+        assertNotNull(predicate);
+
+        assertInstanceOf(BinaryOperatorExpr.class, predicate.lhs());
+        var lhs = (BinaryOperatorExpr) predicate.lhs();
+        assertEquals("?", lhs.operator());
+        assertInstanceOf(AnonymousParamExpr.class, lhs.left());
+        assertInstanceOf(AnonymousParamExpr.class, lhs.right());
+
+        assertInstanceOf(LiteralExpr.class, predicate.rhs());
+        assertEquals(1L, ((LiteralExpr) predicate.rhs()).value());
     }
 
     @Test

@@ -9,12 +9,14 @@ class LimitOffsetTest {
     @Test
     void limit() {
         var lo = LimitOffset.limit(1L);
-        assertEquals(1, lo.limit());
+        assertInstanceOf(LiteralExpr.class, lo.limit());
+        assertEquals(1L, ((LiteralExpr) lo.limit()).value());
     }
 
     @Test
     void offset() {
         var lo = LimitOffset.offset(1L);
-        assertEquals(1, lo.offset());
+        assertInstanceOf(LiteralExpr.class, lo.offset());
+        assertEquals(1L, ((LiteralExpr) lo.offset()).value());
     }
 }

@@ -165,8 +165,10 @@ class QueryParserTest {
             Assertions.assertFalse(q.groupBy().items().isEmpty(), "GROUP BY items expected");
             Assertions.assertNotNull(q.having(), "HAVING should be parsed");
             Assertions.assertFalse(q.orderBy().items().isEmpty(), "ORDER BY items expected");
-            Assertions.assertEquals(50, q.limit(), "LIMIT should be 50");
-            Assertions.assertEquals(100, q.offset(), "OFFSET should be 100");
+            Assertions.assertInstanceOf(io.sqm.core.LiteralExpr.class, q.limit(), "LIMIT should be a literal");
+            Assertions.assertInstanceOf(io.sqm.core.LiteralExpr.class, q.offset(), "OFFSET should be a literal");
+            Assertions.assertEquals(50L, ((io.sqm.core.LiteralExpr) q.limit()).value(), "LIMIT should be 50");
+            Assertions.assertEquals(100L, ((io.sqm.core.LiteralExpr) q.offset()).value(), "OFFSET should be 100");
         }
 
         @Test
@@ -238,20 +240,22 @@ class QueryParserTest {
         @DisplayName("LIMIT and OFFSET accept numeric literals")
         void limitOffsetNumeric() {
             var q = (SelectQuery) parseOk("SELECT 1 LIMIT 5 OFFSET 2");
-            Assertions.assertEquals(5, q.limit());
-            Assertions.assertEquals(2, q.offset());
+            Assertions.assertInstanceOf(io.sqm.core.LiteralExpr.class, q.limit());
+            Assertions.assertInstanceOf(io.sqm.core.LiteralExpr.class, q.offset());
+            Assertions.assertEquals(5L, ((io.sqm.core.LiteralExpr) q.limit()).value());
+            Assertions.assertEquals(2L, ((io.sqm.core.LiteralExpr) q.offset()).value());
         }
 
         @Test
-        @DisplayName("LIMIT without a number is rejected")
-        void limitWithoutNumber() {
-            parseErr("SELECT 1 LIMIT x");
+        @DisplayName("LIMIT without an expression is rejected")
+        void limitWithoutExpression() {
+            parseErr("SELECT 1 LIMIT");
         }
 
         @Test
-        @DisplayName("OFFSET without a number is rejected")
-        void offsetWithoutNumber() {
-            parseErr("SELECT 1 OFFSET x");
+        @DisplayName("OFFSET without an expression is rejected")
+        void offsetWithoutExpression() {
+            parseErr("SELECT 1 OFFSET");
         }
     }
 }

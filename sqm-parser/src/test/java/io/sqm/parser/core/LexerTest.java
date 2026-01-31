@@ -336,6 +336,20 @@ class LexerTest {
     }
 
     @Test
+    void lexer_handlesAdditionalPostgresOperators() {
+        List<Token> tokens = Lexer.lexAll("@? @@ #- << >> &< &> -|-", quoting);
+        assertEquals(8, countTokensOfType(tokens, TokenType.OPERATOR));
+        assertEquals("@?", tokens.get(0).lexeme());
+        assertEquals("@@", tokens.get(1).lexeme());
+        assertEquals("#-", tokens.get(2).lexeme());
+        assertEquals("<<", tokens.get(3).lexeme());
+        assertEquals(">>", tokens.get(4).lexeme());
+        assertEquals("&<", tokens.get(5).lexeme());
+        assertEquals("&>", tokens.get(6).lexeme());
+        assertEquals("-|-", tokens.get(7).lexeme());
+    }
+
+    @Test
     void lexer_handlesConcatenationOperator() {
         List<Token> tokens = Lexer.lexAll("||", quoting);
         assertEquals(1, countTokensOfType(tokens, TokenType.OPERATOR));
@@ -409,7 +423,16 @@ class LexerTest {
     }
 
     @Test
-    void lexer_distinguishesQuestionMarkVsJsonOperator() {
+    void lexer_handlesJsonbExistsOperator() {
+        List<Token> tokens = Lexer.lexAll("data ? 'key'", quoting);
+        assertEquals(TokenType.IDENT, tokens.get(0).type());
+        assertEquals(TokenType.QMARK, tokens.get(1).type());
+        assertEquals("?", tokens.get(1).lexeme());
+        assertEquals(TokenType.STRING, tokens.get(2).type());
+    }
+
+    @Test
+    void lexer_distinguishesQuestionMarkVsJsonbArrayOperators() {
         List<Token> tokens = Lexer.lexAll("? ?| ?&", quoting);
         assertEquals(TokenType.QMARK, tokens.get(0).type());
         assertEquals(TokenType.OPERATOR, tokens.get(1).type());
