@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *   <li>Composition and chaining</li>
  * </ul>
  */
-class ArrayExpressionParserTest {
+class ArrayExprParserTest {
 
     @Test
     void parsesArrayConstructor() {
@@ -132,11 +132,6 @@ class ArrayExpressionParserTest {
     @Test
     void rejectsUnclosedSlice() {
         assertParseError("arr[1:2");
-    }
-
-    @Test
-    void rejectsEmptyArrayConstructor() {
-        assertParseError("ARRAY[]");
     }
 
     @Test

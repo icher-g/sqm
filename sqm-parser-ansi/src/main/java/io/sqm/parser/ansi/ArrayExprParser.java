@@ -80,12 +80,19 @@ public class ArrayExprParser implements MatchableParser<ArrayExpr> {
         }
 
         // 1D form: ARRAY[expr, expr, ...]
-        var items = parseItems(Expression.class, cur, ctx);
-        if (items.isError()) {
-            return error(items);
+        List<Expression> elements;
+        if (!cur.match(TokenType.RBRACKET)) {
+            var items = parseItems(Expression.class, cur, ctx);
+            if (items.isError()) {
+                return error(items);
+            }
+            elements = items.value();
+        }
+        else {
+            elements = List.of();
         }
 
         cur.expect("Expected ]", TokenType.RBRACKET);
-        return ok(ArrayExpr.of(items.value()));
+        return ok(ArrayExpr.of(elements));
     }
 }
