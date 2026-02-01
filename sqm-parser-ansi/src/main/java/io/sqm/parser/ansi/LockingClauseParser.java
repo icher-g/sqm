@@ -47,19 +47,19 @@ public class LockingClauseParser implements Parser<LockingClause> {
             }
             break;
             case "key": {
-                cur.expect("Expected SHARE", TokenType.SHARE);
                 if (!ctx.capabilities().supports(SqlFeature.LOCKING_KEY_SHARE)) {
                     return error("FOR KEY SHARE is not supported by this dialect", cur.fullPos());
                 }
+                cur.expect("Expected SHARE", TokenType.SHARE);
                 mode = LockMode.KEY_SHARE;
             }
             break;
             case "no": {
-                cur.expect("Expected KEY", TokenType.KEY);
-                cur.expect("Expected UPDATE", TokenType.UPDATE);
                 if (!ctx.capabilities().supports(SqlFeature.LOCKING_NO_KEY_UPDATE)) {
                     return error("FOR NO KEY UPDATE is not supported by this dialect", cur.fullPos());
                 }
+                cur.expect("Expected KEY", TokenType.KEY);
+                cur.expect("Expected UPDATE", TokenType.UPDATE);
                 mode = LockMode.NO_KEY_UPDATE;
             }
             break;

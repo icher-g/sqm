@@ -9,6 +9,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("LockingClauseParser Tests")
@@ -111,5 +113,76 @@ class LockingClauseParserTest {
         var result = ctx.parse(LockingClause.class, "FOR SHARE");
 
         assertFalse(result.ok());
+    }
+
+    @Test
+    @DisplayName("Parse FOR KEY SHARE is not supported in ANSI")
+    void parseForKeyShareNotSupported() {
+        var result = parser.parse(Cursor.of("FOR KEY SHARE", quoting), ctx);
+
+        assertFalse(result.ok());
+        assertNotNull(result.errorMessage());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("FOR KEY SHARE is not supported"));
+    }
+
+    @Test
+    @DisplayName("Parse FOR NO KEY UPDATE is not supported in ANSI")
+    void parseForNoKeyUpdateNotSupported() {
+        var result = parser.parse(Cursor.of("FOR NO KEY UPDATE", quoting), ctx);
+
+        assertFalse(result.ok());
+        assertNotNull(result.errorMessage());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("FOR NO KEY UPDATE is not supported"));
+    }
+
+    @Test
+    @DisplayName("Parse FOR with invalid mode fails")
+    void parseForWithInvalidModeFails() {
+        var result = parser.parse(Cursor.of("FOR INVALID", quoting), ctx);
+
+        assertFalse(result.ok());
+        assertNotNull(result.errorMessage());
+    }
+
+    @Test
+    @DisplayName("Parse FOR KEY without SHARE fails")
+    void parseForKeyWithoutShareFails() {
+        var result = parser.parse(Cursor.of("FOR KEY", quoting), ctx);
+
+        assertFalse(result.ok());
+        assertNotNull(result.errorMessage());
+    }
+
+    @Test
+    @DisplayName("Parse FOR NO without KEY UPDATE fails")
+    void parseForNoWithoutKeyUpdateFails() {
+        var result = parser.parse(Cursor.of("FOR NO", quoting), ctx);
+
+        assertFalse(result.ok());
+        assertNotNull(result.errorMessage());
+    }
+
+    @Test
+    @DisplayName("Parse FOR NO KEY without UPDATE fails")
+    void parseForNoKeyWithoutUpdateFails() {
+        var result = parser.parse(Cursor.of("FOR NO KEY", quoting), ctx);
+
+        assertFalse(result.ok());
+        assertNotNull(result.errorMessage());
+    }
+
+    @Test
+    @DisplayName("Parse SKIP without LOCKED fails")
+    void parseSkipWithoutLockedFails() {
+        var result = parser.parse(Cursor.of("FOR UPDATE SKIP", quoting), ctx);
+
+        assertFalse(result.ok());
+        assertNotNull(result.errorMessage());
+    }
+
+    @Test
+    @DisplayName("Target type is LockingClause")
+    void targetTypeIsLockingClause() {
+        assertEquals(io.sqm.core.LockingClause.class, parser.targetType());
     }
 }

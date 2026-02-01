@@ -4,10 +4,12 @@ import io.sqm.core.Query;
 import io.sqm.core.RegexPredicate;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -66,6 +68,13 @@ final class RegexPredicateParserTest {
     private ParseResult<? extends Query> parse(String sql) {
         var ctx = ParseContext.of(new AnsiSpecs());
         return ctx.parse(Query.class, sql);
+    }
+
+    @Test
+    @DisplayName("Target type is RegexPredicate")
+    void targetTypeIsRegexPredicate() {
+        var parser = new RegexPredicateParser();
+        assertEquals(io.sqm.core.RegexPredicate.class, parser.targetType());
     }
 
 }
