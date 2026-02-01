@@ -2,6 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.CteDef;
 import io.sqm.core.Query;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
@@ -36,8 +37,22 @@ public class CteDefParser implements Parser<CteDef> {
         }
 
         cur.expect("Expected AS", TokenType.AS);
-        if (cur.match(TokenType.MATERIALIZED) || (cur.match(TokenType.NOT) && cur.match(TokenType.MATERIALIZED, 1))) {
-            return error("CTE materialization is not supported by ANSI WITH", cur.fullPos());
+
+        CteDef.Materialization materialization = CteDef.Materialization.DEFAULT;
+        if (cur.consumeIf(TokenType.MATERIALIZED)) {
+            if (!ctx.capabilities().supports(SqlFeature.CTE_MATERIALIZATION)) {
+                return error("CTE materialization is not supported by this dialect", cur.fullPos());
+            }
+            materialization = CteDef.Materialization.MATERIALIZED;
+        }
+        else if (cur.consumeIf(TokenType.NOT)) {
+            if (!cur.consumeIf(TokenType.MATERIALIZED)) {
+                return error("Expected MATERIALIZED after NOT", cur.fullPos());
+            }
+            if (!ctx.capabilities().supports(SqlFeature.CTE_MATERIALIZATION)) {
+                return error("CTE materialization is not supported by this dialect", cur.fullPos());
+            }
+            materialization = CteDef.Materialization.NOT_MATERIALIZED;
         }
         cur.expect("Expected '(' before CTE subquery", TokenType.LPAREN);
 
@@ -47,7 +62,7 @@ public class CteDefParser implements Parser<CteDef> {
         }
 
         cur.expect("Expected ')' after CTE subquery", TokenType.RPAREN);
-        return ok(Query.cte(name.lexeme(), body.value(), aliases));
+        return ok(Query.cte(name.lexeme(), body.value(), aliases, materialization));
     }
 
     /**

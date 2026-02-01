@@ -1,6 +1,7 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.CteDef;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.ansi.spi.AnsiDialect;
@@ -78,6 +79,6 @@ class CteDefRendererTest {
             .from(tbl("users").as("u"));
         var cte = cte("u_cte", q).materialization(CteDef.Materialization.MATERIALIZED);
 
-        assertThrows(UnsupportedOperationException.class, () -> render(cte));
+        assertThrows(UnsupportedDialectFeatureException.class, () -> render(cte));
     }
 }

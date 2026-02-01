@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.ArraySliceExpr;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -15,9 +17,18 @@ public class ArraySliceExprRenderer implements Renderer<ArraySliceExpr> {
      */
     @Override
     public void render(ArraySliceExpr node, RenderContext ctx, SqlWriter w) {
-        throw new UnsupportedOperationException(
-            "Array slicing is not supported by ANSI SQL renderer"
-        );
+        if (!ctx.dialect().capabilities().supports(SqlFeature.ARRAY_SLICE)) {
+            throw new UnsupportedDialectFeatureException("Array slice", ctx.dialect().name());
+        }
+        w.append(node.base()).append("[");
+        if (node.from().isPresent()) {
+            w.append(node.from().get());
+        }
+        w.append(":");
+        if (node.to().isPresent()) {
+            w.append(node.to().get());
+        }
+        w.append("]");
     }
 
     /**

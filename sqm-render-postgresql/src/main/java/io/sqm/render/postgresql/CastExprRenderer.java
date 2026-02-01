@@ -4,6 +4,8 @@ import io.sqm.core.ArithmeticExpr;
 import io.sqm.core.BinaryOperatorExpr;
 import io.sqm.core.CastExpr;
 import io.sqm.core.Expression;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -18,6 +20,9 @@ public class CastExprRenderer implements Renderer<CastExpr> {
      */
     @Override
     public void render(CastExpr node, RenderContext ctx, SqlWriter w) {
+        if (!ctx.dialect().capabilities().supports(SqlFeature.POSTGRES_TYPECAST)) {
+            throw new UnsupportedDialectFeatureException("PostgreSQL :: typecast", ctx.dialect().name());
+        }
         w.append(node.expr(), isComposite(node.expr()));
         w.append("::");
         w.append(node.type());

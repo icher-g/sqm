@@ -1,13 +1,17 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.GroupItem;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import java.util.List;
+
 import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
 
 /**
  * ANSI parser stub for {@code CUBE (...)}.
@@ -35,7 +39,23 @@ public class CubeParser implements MatchableParser<GroupItem.Cube> {
      */
     @Override
     public ParseResult<? extends GroupItem.Cube> parse(Cursor cur, ParseContext ctx) {
-        return error("CUBE is not supported by ANSI SQL parser", cur.fullPos());
+        if (!ctx.capabilities().supports(SqlFeature.CUBE)) {
+            return error("CUBE is not supported by this dialect", cur.fullPos());
+        }
+        cur.expect("Expected CUBE", TokenType.CUBE);
+        cur.expect("Expected ( after CUBE", TokenType.LPAREN);
+
+        if (cur.match(TokenType.RPAREN)) {
+            return error("CUBE requires at least one grouping item", cur.fullPos());
+        }
+
+        ParseResult<List<GroupItem>> items = parseItems(GroupItem.SimpleGroupItem.class, cur, ctx);
+        if (items.isError()) {
+            return error(items);
+        }
+
+        cur.expect("Expected ) to close CUBE", TokenType.RPAREN);
+        return ok((GroupItem.Cube) GroupItem.cube(items.value()));
     }
 
     /**

@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.GroupItem;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -18,9 +20,10 @@ public class CubeRenderer implements Renderer<GroupItem.Cube> {
      */
     @Override
     public void render(GroupItem.Cube node, RenderContext ctx, SqlWriter w) {
-        throw new UnsupportedOperationException(
-            "CUBE is not supported by ANSI SQL renderer"
-        );
+        if (!ctx.dialect().capabilities().supports(SqlFeature.CUBE)) {
+            throw new UnsupportedDialectFeatureException("CUBE", ctx.dialect().name());
+        }
+        w.append("CUBE").space().append("(").comma(node.items()).append(")");
     }
 
     /**

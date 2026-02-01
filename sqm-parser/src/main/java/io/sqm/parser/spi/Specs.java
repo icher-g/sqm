@@ -25,4 +25,11 @@ public interface Specs {
      * @return the dialect-specific identifier quoting configuration.
      */
     IdentifierQuoting identifierQuoting();
+
+    /**
+     * Returns dialect capabilities for feature gating.
+     *
+     * @return dialect capabilities
+     */
+    io.sqm.core.dialect.DialectCapabilities capabilities();
 }

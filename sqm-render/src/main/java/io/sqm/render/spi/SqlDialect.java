@@ -90,6 +90,13 @@ public interface SqlDialect {
     PaginationStyle paginationStyle();
 
     /**
+     * Returns dialect capabilities used for feature gating during rendering.
+     *
+     * @return dialect capabilities
+     */
+    io.sqm.core.dialect.DialectCapabilities capabilities();
+
+    /**
      * Gets renderers repository.
      *
      * @return a repository.

@@ -1,10 +1,11 @@
 package io.sqm.render.postgresql;
 
 import io.sqm.core.Nulls;
+import io.sqm.render.SqlWriter;
+import io.sqm.render.ansi.OrderItemRenderer;
 import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.postgresql.spi.PostgresDialect;
 import io.sqm.render.spi.RenderContext;
-import io.sqm.render.SqlWriter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +13,8 @@ import java.util.List;
 
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.order;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OrderItemRendererTest {
 

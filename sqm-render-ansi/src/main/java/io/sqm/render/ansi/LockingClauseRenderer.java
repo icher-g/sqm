@@ -1,7 +1,7 @@
 package io.sqm.render.ansi;
 
-import io.sqm.core.LockMode;
 import io.sqm.core.LockingClause;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
@@ -17,23 +17,62 @@ public class LockingClauseRenderer implements Renderer<LockingClause> {
      */
     @Override
     public void render(LockingClause node, RenderContext ctx, SqlWriter w) {
-        if (node.mode() != LockMode.UPDATE) {
-            throw new UnsupportedDialectFeatureException(node.mode().toString(), "ANSI");
+        w.append("FOR").space();
+
+        switch (node.mode()) {
+            case UPDATE -> {
+                if (!ctx.dialect().capabilities().supports(SqlFeature.LOCKING_CLAUSE)) {
+                    throw new UnsupportedDialectFeatureException("FOR UPDATE", ctx.dialect().name());
+                }
+                w.append("UPDATE");
+            }
+            case NO_KEY_UPDATE -> {
+                if (!ctx.dialect().capabilities().supports(SqlFeature.LOCKING_NO_KEY_UPDATE)) {
+                    throw new UnsupportedDialectFeatureException("FOR NO KEY UPDATE", ctx.dialect().name());
+                }
+                w.append("NO KEY UPDATE");
+            }
+            case SHARE -> {
+                if (!ctx.dialect().capabilities().supports(SqlFeature.LOCKING_SHARE)) {
+                    throw new UnsupportedDialectFeatureException("FOR SHARE", ctx.dialect().name());
+                }
+                w.append("SHARE");
+            }
+            case KEY_SHARE -> {
+                if (!ctx.dialect().capabilities().supports(SqlFeature.LOCKING_KEY_SHARE)) {
+                    throw new UnsupportedDialectFeatureException("FOR KEY SHARE", ctx.dialect().name());
+                }
+                w.append("KEY SHARE");
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + node.mode());
         }
 
         if (!node.ofTables().isEmpty()) {
-            throw new UnsupportedDialectFeatureException("OF t1, t2", "ANSI");
+            if (!ctx.dialect().capabilities().supports(SqlFeature.LOCKING_OF)) {
+                throw new UnsupportedDialectFeatureException("FOR UPDATE OF", ctx.dialect().name());
+            }
+            w.space().append("OF").space();
+            for (int i = 0; i < node.ofTables().size(); i++) {
+                if (i > 0) {
+                    w.append(",").space();
+                }
+                w.append(node.ofTables().get(i).identifier());
+            }
         }
 
         if (node.nowait()) {
-            throw new UnsupportedDialectFeatureException("NOWAIT", "ANSI");
+            if (!ctx.dialect().capabilities().supports(SqlFeature.LOCKING_NOWAIT)) {
+                throw new UnsupportedDialectFeatureException("NOWAIT", ctx.dialect().name());
+            }
+            w.space().append("NOWAIT");
         }
 
         if (node.skipLocked()) {
-            throw new UnsupportedDialectFeatureException("SKIP LOCKED", "ANSI");
+            if (!ctx.dialect().capabilities().supports(SqlFeature.LOCKING_SKIP_LOCKED)) {
+                throw new UnsupportedDialectFeatureException("SKIP LOCKED", ctx.dialect().name());
+            }
+            w.space().append("SKIP LOCKED");
         }
-
-        w.append("FOR UPDATE");
     }
 
     /**

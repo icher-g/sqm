@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.GroupItem;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -18,9 +20,10 @@ public class RollupRenderer implements Renderer<GroupItem.Rollup> {
      */
     @Override
     public void render(GroupItem.Rollup node, RenderContext ctx, SqlWriter w) {
-        throw new UnsupportedOperationException(
-            "ROLLUP is not supported by ANSI SQL renderer"
-        );
+        if (!ctx.dialect().capabilities().supports(SqlFeature.ROLLUP)) {
+            throw new UnsupportedDialectFeatureException("ROLLUP", ctx.dialect().name());
+        }
+        w.append("ROLLUP").space().append("(").comma(node.items()).append(")");
     }
 
     /**

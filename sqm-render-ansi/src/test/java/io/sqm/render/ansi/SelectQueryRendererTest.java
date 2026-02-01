@@ -1,5 +1,6 @@
 package io.sqm.render.ansi;
 
+import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.render.defaults.DefaultRenderContext;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.*;
@@ -117,6 +118,11 @@ public class SelectQueryRendererTest {
                     @Override
                     public PaginationStyle paginationStyle() {
                         return style;
+                    }
+
+                    @Override
+                    public DialectCapabilities capabilities() {
+                        return dialect.capabilities();
                     }
 
                     @Override

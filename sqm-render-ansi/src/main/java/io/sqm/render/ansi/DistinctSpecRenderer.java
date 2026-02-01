@@ -1,6 +1,7 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.DistinctSpec;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
@@ -16,10 +17,16 @@ public class DistinctSpecRenderer implements Renderer<DistinctSpec> {
      */
     @Override
     public void render(DistinctSpec node, RenderContext ctx, SqlWriter w) {
-        if (!node.items().isEmpty()) {
-            throw new UnsupportedDialectFeatureException("DISTINCT ON", "ANSI");
-        }
         w.append("DISTINCT");
+        if (!node.items().isEmpty()) {
+            if (!ctx.dialect().capabilities().supports(SqlFeature.DISTINCT_ON)) {
+                throw new UnsupportedDialectFeatureException("DISTINCT ON", ctx.dialect().name());
+            }
+            w.space().append("ON");
+            w.space().append("(");
+            w.comma(node.items());
+            w.append(")");
+        }
     }
 
     /**

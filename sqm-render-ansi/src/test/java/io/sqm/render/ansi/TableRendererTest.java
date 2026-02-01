@@ -1,6 +1,7 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.Table;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.defaults.DefaultSqlWriter;
@@ -33,13 +34,13 @@ class TableRendererTest {
     @DisplayName("Rejects ONLY in ANSI renderer")
     void rejects_only() {
         var table = Table.of("t").only();
-        assertThrows(UnsupportedOperationException.class, () -> render(table));
+        assertThrows(UnsupportedDialectFeatureException.class, () -> render(table));
     }
 
     @Test
     @DisplayName("Rejects table inheritance star in ANSI renderer")
     void rejects_inheritance_star() {
         var table = Table.of("t").includingDescendants();
-        assertThrows(UnsupportedOperationException.class, () -> render(table));
+        assertThrows(UnsupportedDialectFeatureException.class, () -> render(table));
     }
 }

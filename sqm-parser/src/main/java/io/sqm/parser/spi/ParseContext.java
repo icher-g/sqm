@@ -60,6 +60,13 @@ public interface ParseContext {
     IdentifierQuoting identifierQuoting();
 
     /**
+     * Returns the dialect capabilities used for feature gating.
+     *
+     * @return dialect capabilities
+     */
+    io.sqm.core.dialect.DialectCapabilities capabilities();
+
+    /**
      * Returns the logical parse call stack maintained by this context.
      * <p>
      * Unlike the JVM call stack, this stack contains the sequence of AST types

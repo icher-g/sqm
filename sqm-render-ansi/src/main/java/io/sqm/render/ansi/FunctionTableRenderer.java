@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.FunctionTable;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -15,9 +17,17 @@ public class FunctionTableRenderer implements Renderer<FunctionTable> {
      */
     @Override
     public void render(FunctionTable node, RenderContext ctx, SqlWriter w) {
-        throw new UnsupportedOperationException(
-            "Function call in FROM statement is not supported by ANSI SQL renderer"
-        );
+        if (!ctx.dialect().capabilities().supports(SqlFeature.FUNCTION_TABLE)) {
+            throw new UnsupportedDialectFeatureException("Function table", ctx.dialect().name());
+        }
+        w.append(node.function());
+        if (node.ordinality()) {
+            if (!ctx.dialect().capabilities().supports(SqlFeature.FUNCTION_TABLE_ORDINALITY)) {
+                throw new UnsupportedDialectFeatureException("WITH ORDINALITY", ctx.dialect().name());
+            }
+            w.space().append("WITH ORDINALITY");
+        }
+        renderAliased(node, ctx, w);
     }
 
     /**

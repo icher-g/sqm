@@ -1,16 +1,19 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.LockMode;
+import io.sqm.core.LockTarget;
 import io.sqm.core.LockingClause;
-import io.sqm.core.dialect.UnsupportedDialectFeatureException;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 public class LockingClauseParser implements Parser<LockingClause> {
@@ -24,21 +27,79 @@ public class LockingClauseParser implements Parser<LockingClause> {
     @Override
     public ParseResult<? extends LockingClause> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected FOR", TokenType.FOR);
-        cur.expect("Expected UPDATE", TokenType.UPDATE);
+        var t = cur.advance();
 
-        if (cur.match(TokenType.OF)) {
-            throw new UnsupportedDialectFeatureException("OF t1, t2", "ANSI");
+        LockMode mode;
+
+        switch (t.lexeme().toLowerCase()) {
+            case "update": {
+                if (!ctx.capabilities().supports(SqlFeature.LOCKING_CLAUSE)) {
+                    return error("FOR UPDATE is not supported by this dialect", cur.fullPos());
+                }
+                mode = LockMode.UPDATE;
+            }
+            break;
+            case "share": {
+                if (!ctx.capabilities().supports(SqlFeature.LOCKING_SHARE)) {
+                    return error("FOR SHARE is not supported by this dialect", cur.fullPos());
+                }
+                mode = LockMode.SHARE;
+            }
+            break;
+            case "key": {
+                cur.expect("Expected SHARE", TokenType.SHARE);
+                if (!ctx.capabilities().supports(SqlFeature.LOCKING_KEY_SHARE)) {
+                    return error("FOR KEY SHARE is not supported by this dialect", cur.fullPos());
+                }
+                mode = LockMode.KEY_SHARE;
+            }
+            break;
+            case "no": {
+                cur.expect("Expected KEY", TokenType.KEY);
+                cur.expect("Expected UPDATE", TokenType.UPDATE);
+                if (!ctx.capabilities().supports(SqlFeature.LOCKING_NO_KEY_UPDATE)) {
+                    return error("FOR NO KEY UPDATE is not supported by this dialect", cur.fullPos());
+                }
+                mode = LockMode.NO_KEY_UPDATE;
+            }
+            break;
+            default: {
+                return error("Unexpected token: " + t.lexeme(), cur.fullPos());
+            }
         }
 
-        if (cur.match(TokenType.NOWAIT)) {
-            throw new UnsupportedDialectFeatureException("NOWAIT", "ANSI");
+        List<LockTarget> targets = new ArrayList<>();
+        if (cur.consumeIf(TokenType.OF)) {
+            if (!ctx.capabilities().supports(SqlFeature.LOCKING_OF)) {
+                return error("FOR UPDATE OF is not supported by this dialect", cur.fullPos());
+            }
+            do {
+                var item = cur.expect("Expected table name after OF", TokenType.IDENT);
+                targets.add(LockTarget.of(item.lexeme()));
+            }
+            while (cur.consumeIf(TokenType.COMMA));
         }
 
-        if (cur.match(TokenType.SKIP)) {
-            throw new UnsupportedDialectFeatureException("SKIP LOCKED", "ANSI");
+        boolean nowait = false;
+        if (cur.consumeIf(TokenType.NOWAIT)) {
+            if (!ctx.capabilities().supports(SqlFeature.LOCKING_NOWAIT)) {
+                return error("NOWAIT is not supported by this dialect", cur.fullPos());
+            }
+            nowait = true;
         }
 
-        return ok(LockingClause.of(LockMode.UPDATE, List.of(), false, false));
+        boolean skipLocked = false;
+        if (cur.consumeIf(TokenType.SKIP)) {
+            if (!cur.consumeIf(TokenType.LOCKED)) {
+                return error("Expected LOCKED after SKIP", cur.fullPos());
+            }
+            if (!ctx.capabilities().supports(SqlFeature.LOCKING_SKIP_LOCKED)) {
+                return error("SKIP LOCKED is not supported by this dialect", cur.fullPos());
+            }
+            skipLocked = true;
+        }
+
+        return ok(LockingClause.of(mode, targets, nowait, skipLocked));
     }
 
     /**

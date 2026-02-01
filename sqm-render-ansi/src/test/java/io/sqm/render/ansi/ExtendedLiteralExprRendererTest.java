@@ -32,10 +32,16 @@ class ExtendedLiteralExprRendererTest extends BaseValuesRendererTest {
     }
 
     @Test
+    void renders_interval_literal() {
+        var ctx = RenderContext.of(new AnsiDialect());
+
+        assertSqlAndParams(ctx.render(IntervalLiteralExpr.of("1")), "INTERVAL '1'", List.of());
+    }
+
+    @Test
     void rejects_postgres_only_literals() {
         var ctx = RenderContext.of(new AnsiDialect());
 
-        assertThrows(UnsupportedDialectFeatureException.class, () -> ctx.render(IntervalLiteralExpr.of("1")));
         assertThrows(UnsupportedDialectFeatureException.class, () -> ctx.render(EscapeStringLiteralExpr.of("it\\'s")));
         assertThrows(UnsupportedDialectFeatureException.class, () -> ctx.render(DollarStringLiteralExpr.of("tag", "value")));
     }

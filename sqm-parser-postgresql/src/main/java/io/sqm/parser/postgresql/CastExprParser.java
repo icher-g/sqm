@@ -3,6 +3,7 @@ package io.sqm.parser.postgresql;
 import io.sqm.core.CastExpr;
 import io.sqm.core.Expression;
 import io.sqm.core.TypeName;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.InfixParser;
@@ -63,7 +64,10 @@ public class CastExprParser implements MatchableParser<CastExpr>, InfixParser<Ex
      */
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
-        return ansiParser.match(cur, ctx) || cur.match(TokenType.DOUBLE_COLON);
+        if (ansiParser.match(cur, ctx)) {
+            return true;
+        }
+        return cur.match(TokenType.DOUBLE_COLON);
     }
 
     /**
@@ -82,6 +86,9 @@ public class CastExprParser implements MatchableParser<CastExpr>, InfixParser<Ex
      */
     @Override
     public ParseResult<CastExpr> parse(Expression lhs, Cursor cur, ParseContext ctx) {
+        if (!ctx.capabilities().supports(SqlFeature.POSTGRES_TYPECAST)) {
+            return error("PostgreSQL :: typecast is not supported by this dialect", cur.fullPos());
+        }
         cur.expect("Expected ::", TokenType.DOUBLE_COLON);
         ParseResult<? extends TypeName> rhs = ctx.parse(TypeName.class, cur);
         if (rhs.isError()) {

@@ -1,13 +1,14 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.EscapeStringLiteralExpr;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
 /**
- * Rejects PostgreSQL escape string literals in the ANSI dialect.
+ * Renders escape string literals when supported by the dialect.
  */
 public class EscapeStringLiteralExprRenderer implements Renderer<EscapeStringLiteralExpr> {
     /**
@@ -19,7 +20,10 @@ public class EscapeStringLiteralExprRenderer implements Renderer<EscapeStringLit
      */
     @Override
     public void render(EscapeStringLiteralExpr node, RenderContext ctx, SqlWriter w) {
-        throw new UnsupportedDialectFeatureException("E'...'", "ANSI");
+        if (!ctx.dialect().capabilities().supports(SqlFeature.ESCAPE_STRING_LITERAL)) {
+            throw new UnsupportedDialectFeatureException(SqlFeature.ESCAPE_STRING_LITERAL.description(), ctx.dialect().name());
+        }
+        w.append("E'").append(node.value()).append("'");
     }
 
     /**

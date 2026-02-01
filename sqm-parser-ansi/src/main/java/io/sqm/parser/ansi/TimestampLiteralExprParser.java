@@ -2,6 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.TimeZoneSpec;
 import io.sqm.core.TimestampLiteralExpr;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
@@ -24,6 +25,9 @@ public class TimestampLiteralExprParser implements MatchableParser<TimestampLite
      */
     @Override
     public ParseResult<TimestampLiteralExpr> parse(Cursor cur, ParseContext ctx) {
+        if (!ctx.capabilities().supports(SqlFeature.TIMESTAMP_TYPED_LITERAL)) {
+            return error("TIMESTAMP literals are not supported by this dialect", cur.fullPos());
+        }
         var keyword = cur.expect("Expected TIMESTAMP literal", TokenType.IDENT);
         if (!keyword.lexeme().equalsIgnoreCase("timestamp")) {
             return error("Expected TIMESTAMP literal but found '" + keyword.lexeme() + "'", cur.fullPos());

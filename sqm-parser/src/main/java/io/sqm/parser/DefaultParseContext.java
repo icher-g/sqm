@@ -1,5 +1,6 @@
 package io.sqm.parser;
 
+import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.parser.spi.*;
 
 import java.util.ArrayDeque;
@@ -45,6 +46,16 @@ public class DefaultParseContext implements ParseContext {
     @Override
     public IdentifierQuoting identifierQuoting() {
         return specs.identifierQuoting();
+    }
+
+    /**
+     * Returns the dialect capabilities used for feature gating.
+     *
+     * @return dialect capabilities
+     */
+    @Override
+    public DialectCapabilities capabilities() {
+        return specs.capabilities();
     }
 
     /**

@@ -1,13 +1,17 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.GroupItem;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import java.util.List;
+
 import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
 
 /**
  * ANSI parser stub for {@code ROLLUP (...)}.
@@ -35,7 +39,23 @@ public class RollupParser implements MatchableParser<GroupItem.Rollup> {
      */
     @Override
     public ParseResult<? extends GroupItem.Rollup> parse(Cursor cur, ParseContext ctx) {
-        return error("ROLLUP is not supported by ANSI SQL parser", cur.fullPos());
+        if (!ctx.capabilities().supports(SqlFeature.ROLLUP)) {
+            return error("ROLLUP is not supported by this dialect", cur.fullPos());
+        }
+        cur.expect("Expected ROLLUP", TokenType.ROLLUP);
+        cur.expect("Expected ( after ROLLUP", TokenType.LPAREN);
+
+        if (cur.match(TokenType.RPAREN)) {
+            return error("ROLLUP requires at least one grouping item", cur.fullPos());
+        }
+
+        ParseResult<List<GroupItem>> items = parseItems(GroupItem.SimpleGroupItem.class, cur, ctx);
+        if (items.isError()) {
+            return error(items);
+        }
+
+        cur.expect("Expected ) to close ROLLUP", TokenType.RPAREN);
+        return ok((GroupItem.Rollup) GroupItem.rollup(items.value()));
     }
 
     /**

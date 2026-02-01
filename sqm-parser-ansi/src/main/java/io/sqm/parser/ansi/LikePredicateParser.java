@@ -3,6 +3,7 @@ package io.sqm.parser.ansi;
 import io.sqm.core.Expression;
 import io.sqm.core.LikeMode;
 import io.sqm.core.LikePredicate;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.InfixParser;
@@ -62,9 +63,15 @@ public class LikePredicateParser implements Parser<LikePredicate>, InfixParser<E
 
         if (!cur.consumeIf(TokenType.LIKE)) {
             if (cur.consumeIf(TokenType.ILIKE)) {
+                if (!ctx.capabilities().supports(SqlFeature.ILIKE_PREDICATE)) {
+                    return error("ILIKE is not supported by this dialect", cur.fullPos());
+                }
                 mode = LikeMode.ILIKE;
             }
             else {
+                if (!ctx.capabilities().supports(SqlFeature.SIMILAR_TO_PREDICATE)) {
+                    return error("SIMILAR TO is not supported by this dialect", cur.fullPos());
+                }
                 cur.expect("Expected SIMILAR", TokenType.SIMILAR);
                 cur.expect("Expected TO after SIMILAR", TokenType.TO);
                 mode = LikeMode.SIMILAR_TO;

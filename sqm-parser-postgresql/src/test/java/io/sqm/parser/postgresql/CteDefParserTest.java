@@ -1,13 +1,15 @@
 package io.sqm.parser.postgresql;
 
 import io.sqm.core.CteDef;
+import io.sqm.parser.ansi.CteDefParser;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CteDefParserTest {
 

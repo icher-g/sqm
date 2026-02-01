@@ -1,12 +1,14 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.HexStringLiteralExpr;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 /**
@@ -22,6 +24,9 @@ public class HexStringLiteralExprParser implements MatchableParser<HexStringLite
      */
     @Override
     public ParseResult<HexStringLiteralExpr> parse(Cursor cur, ParseContext ctx) {
+        if (!ctx.capabilities().supports(SqlFeature.HEX_STRING_LITERAL)) {
+            return error("Hex string literals are not supported by this dialect", cur.fullPos());
+        }
         var token = cur.expect("Expected hex string literal", TokenType.HEX_STRING);
         return ok(HexStringLiteralExpr.of(token.lexeme()));
     }

@@ -6,7 +6,8 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -26,7 +27,7 @@ final class RegexPredicateParserTest {
         var result = parse(sql);
 
         assertTrue(result.isError());
-        assertEquals("Feature not supported by dialect [ANSI]: Regular expression predicate", result.errorMessage());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Regex predicates are not supported by this dialect"));
     }
 
     @Test
@@ -37,7 +38,7 @@ final class RegexPredicateParserTest {
         var result = parse(sql);
 
         assertTrue(result.isError());
-        assertEquals("Feature not supported by dialect [ANSI]: Regular expression predicate", result.errorMessage());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Regex predicates are not supported by this dialect"));
     }
 
     @Test
@@ -48,7 +49,7 @@ final class RegexPredicateParserTest {
         var result = parse(sql);
 
         assertTrue(result.isError());
-        assertEquals("Feature not supported by dialect [ANSI]: Regular expression predicate", result.errorMessage());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Regex predicates are not supported by this dialect"));
     }
 
     @Test
@@ -59,7 +60,7 @@ final class RegexPredicateParserTest {
         var result = parse(sql);
 
         assertTrue(result.isError());
-        assertEquals("Feature not supported by dialect [ANSI]: Regular expression predicate", result.errorMessage());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Regex predicates are not supported by this dialect"));
     }
 
     private ParseResult<? extends Query> parse(String sql) {

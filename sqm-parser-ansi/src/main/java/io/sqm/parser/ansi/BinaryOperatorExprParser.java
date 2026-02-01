@@ -3,6 +3,7 @@ package io.sqm.parser.ansi;
 import io.sqm.core.ArithmeticExpr;
 import io.sqm.core.BinaryOperatorExpr;
 import io.sqm.core.Expression;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.Token;
 import io.sqm.parser.core.TokenType;
@@ -39,6 +40,9 @@ public class BinaryOperatorExprParser implements Parser<Expression>, InfixParser
         }
 
         while (isGenericBinaryOperator(cur.peek())) {
+            if (!ctx.capabilities().supports(SqlFeature.CUSTOM_OPERATOR)) {
+                return error("Dialect does not support custom operators", cur.fullPos());
+            }
             lhs = parse(lhs.value(), cur, ctx);
         }
 
@@ -71,6 +75,9 @@ public class BinaryOperatorExprParser implements Parser<Expression>, InfixParser
      */
     @Override
     public ParseResult<BinaryOperatorExpr> parse(Expression lhs, Cursor cur, ParseContext ctx) {
+        if (!ctx.capabilities().supports(SqlFeature.CUSTOM_OPERATOR)) {
+            return error("Dialect does not support custom operators", cur.fullPos());
+        }
         var token = cur.expect("Expected operator", TokenType.OPERATOR, TokenType.QMARK);
         var rhs = ctx.parse(ArithmeticExpr.class, cur);
         if (rhs.isError()) {

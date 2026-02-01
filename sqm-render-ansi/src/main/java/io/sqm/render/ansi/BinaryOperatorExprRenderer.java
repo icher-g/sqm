@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.BinaryOperatorExpr;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -15,6 +17,9 @@ public class BinaryOperatorExprRenderer implements Renderer<BinaryOperatorExpr> 
      */
     @Override
     public void render(BinaryOperatorExpr node, RenderContext ctx, SqlWriter w) {
+        if (!ctx.dialect().capabilities().supports(SqlFeature.CUSTOM_OPERATOR)) {
+            throw new UnsupportedDialectFeatureException("Binary operator " + node.operator(), ctx.dialect().name());
+        }
         w.append(node.left()).space().append(node.operator()).space().append(node.right());
     }
 

@@ -1,6 +1,7 @@
 package io.sqm.render.postgresql;
 
 import io.sqm.core.DistinctSpec;
+import io.sqm.render.ansi.DistinctSpecRenderer;
 import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.postgresql.spi.PostgresDialect;
 import io.sqm.render.spi.RenderContext;

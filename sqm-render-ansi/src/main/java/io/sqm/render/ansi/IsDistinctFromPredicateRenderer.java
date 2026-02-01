@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.IsDistinctFromPredicate;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -15,6 +17,9 @@ public class IsDistinctFromPredicateRenderer implements Renderer<IsDistinctFromP
      */
     @Override
     public void render(IsDistinctFromPredicate node, RenderContext ctx, SqlWriter w) {
+        if (!ctx.dialect().capabilities().supports(SqlFeature.IS_DISTINCT_FROM_PREDICATE)) {
+            throw new UnsupportedDialectFeatureException("IS DISTINCT FROM", ctx.dialect().name());
+        }
         w.append(node.lhs()).space();
         w.append(node.negated() ? ctx.dialect().operators().isNotDistinctFrom() : ctx.dialect().operators().isDistinctFrom()).space();
         w.append(node.rhs());

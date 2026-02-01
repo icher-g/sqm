@@ -13,7 +13,7 @@ import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for PostgreSQL {@link LateralRenderer}.
+ * Unit tests for PostgreSQL LATERAL rendering.
  */
 @DisplayName("PostgreSQL LateralRenderer Tests")
 class LateralRendererTest {

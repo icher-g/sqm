@@ -1,13 +1,18 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.Expression;
+import io.sqm.core.RegexMode;
 import io.sqm.core.RegexPredicate;
-import io.sqm.core.dialect.UnsupportedDialectFeatureException;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.InfixParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
+
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
 
 public class RegexPredicateParser implements Parser<RegexPredicate>, InfixParser<Expression, RegexPredicate> {
     /**
@@ -19,7 +24,11 @@ public class RegexPredicateParser implements Parser<RegexPredicate>, InfixParser
      */
     @Override
     public ParseResult<? extends RegexPredicate> parse(Cursor cur, ParseContext ctx) {
-        throw new UnsupportedDialectFeatureException("Regular expression predicate", "ANSI");
+        var expr = ctx.parse(Expression.class, cur);
+        if (expr.isError()) {
+            return error(expr);
+        }
+        return parse(expr.value(), cur, ctx);
     }
 
     /**
@@ -48,6 +57,16 @@ public class RegexPredicateParser implements Parser<RegexPredicate>, InfixParser
      */
     @Override
     public ParseResult<RegexPredicate> parse(Expression lhs, Cursor cur, ParseContext ctx) {
-        throw new UnsupportedDialectFeatureException("Regular expression predicate", "ANSI");
+        if (!ctx.capabilities().supports(SqlFeature.REGEX_PREDICATE)) {
+            return error("Regex predicates are not supported by this dialect", cur.fullPos());
+        }
+        var t = cur.expect("Expected operator", TokenType.OPERATOR);
+        var negated = t.lexeme().startsWith("!");
+        var mode = t.lexeme().endsWith("*") ? RegexMode.MATCH_INSENSITIVE : RegexMode.MATCH;
+        var expr = ctx.parse(Expression.class, cur);
+        if (expr.isError()) {
+            return error(expr);
+        }
+        return ok(RegexPredicate.of(mode, lhs, expr.value(), negated));
     }
 }

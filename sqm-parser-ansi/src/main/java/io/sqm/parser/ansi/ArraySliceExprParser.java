@@ -2,6 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.ArraySliceExpr;
 import io.sqm.core.Expression;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.*;
@@ -9,6 +10,7 @@ import io.sqm.parser.spi.*;
 import java.util.Set;
 
 import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
 
 public class ArraySliceExprParser implements MatchableParser<ArraySliceExpr>, InfixParser<Expression, ArraySliceExpr> {
     /**
@@ -20,7 +22,14 @@ public class ArraySliceExprParser implements MatchableParser<ArraySliceExpr>, In
      */
     @Override
     public ParseResult<? extends ArraySliceExpr> parse(Cursor cur, ParseContext ctx) {
-        return error("Array slicing is not supported by ANSI SQL parser", -1);
+        if (!ctx.capabilities().supports(SqlFeature.ARRAY_SLICE)) {
+            return error("Array slices are not supported by this dialect", cur.fullPos());
+        }
+        var left = ctx.parse(Expression.class, cur);
+        if (left.isError()) {
+            return error(left);
+        }
+        return parse(left.value(), cur, ctx);
     }
 
     /**
@@ -49,7 +58,34 @@ public class ArraySliceExprParser implements MatchableParser<ArraySliceExpr>, In
      */
     @Override
     public ParseResult<ArraySliceExpr> parse(Expression lhs, Cursor cur, ParseContext ctx) {
-        return error("Array slicing is not supported by ANSI SQL parser", -1);
+        if (!ctx.capabilities().supports(SqlFeature.ARRAY_SLICE)) {
+            return error("Array slices are not supported by this dialect", cur.fullPos());
+        }
+        cur.expect("Expected '[' to start array slice", TokenType.LBRACKET);
+
+        Expression from = null;
+        Expression to = null;
+
+        if (!cur.match(TokenType.COLON)) {
+            var fromExpr = ctx.parse(Expression.class, cur);
+            if (fromExpr.isError()) {
+                return error(fromExpr);
+            }
+            from = fromExpr.value();
+        }
+
+        cur.expect("Expected ':' inside array slice", TokenType.COLON);
+
+        if (!cur.match(TokenType.RBRACKET)) {
+            var toExpr = ctx.parse(Expression.class, cur);
+            if (toExpr.isError()) {
+                return error(toExpr);
+            }
+            to = toExpr.value();
+        }
+
+        cur.expect("Expected ']' to close array slice", TokenType.RBRACKET);
+        return ok(ArraySliceExpr.of(lhs, from, to));
     }
 
     /**

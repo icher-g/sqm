@@ -1,13 +1,14 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.DollarStringLiteralExpr;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
 /**
- * Rejects PostgreSQL dollar-quoted string literals in the ANSI dialect.
+ * Renders dollar-quoted string literals when supported by the dialect.
  */
 public class DollarStringLiteralExprRenderer implements Renderer<DollarStringLiteralExpr> {
     /**
@@ -19,7 +20,12 @@ public class DollarStringLiteralExprRenderer implements Renderer<DollarStringLit
      */
     @Override
     public void render(DollarStringLiteralExpr node, RenderContext ctx, SqlWriter w) {
-        throw new UnsupportedDialectFeatureException("dollar-quoted string", "ANSI");
+        if (!ctx.dialect().capabilities().supports(SqlFeature.DOLLAR_STRING_LITERAL)) {
+            throw new UnsupportedDialectFeatureException(SqlFeature.DOLLAR_STRING_LITERAL.description(), ctx.dialect().name());
+        }
+        w.append("$").append(node.tag()).append("$")
+            .append(node.value())
+            .append("$").append(node.tag()).append("$");
     }
 
     /**

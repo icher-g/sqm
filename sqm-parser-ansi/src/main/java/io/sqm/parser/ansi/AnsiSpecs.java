@@ -4,11 +4,35 @@ import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.Lookups;
 import io.sqm.parser.spi.ParsersRepository;
 import io.sqm.parser.spi.Specs;
+import io.sqm.core.dialect.DialectCapabilities;
+import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.VersionedDialectCapabilities;
+
+import java.util.Objects;
 
 public class AnsiSpecs implements Specs {
 
     private Lookups lookups;
     private IdentifierQuoting identifierQuoting;
+    private DialectCapabilities capabilities;
+    private final SqlDialectVersion version;
+
+    /**
+     * Creates ANSI specs for the SQL:2016 standard.
+     */
+    public AnsiSpecs() {
+        this(SqlDialectVersion.of(2016));
+    }
+
+    /**
+     * Creates ANSI specs for a specific dialect version.
+     *
+     * @param version ANSI version used to evaluate feature availability
+     */
+    public AnsiSpecs(SqlDialectVersion version) {
+        this.version = Objects.requireNonNull(version, "version");
+    }
 
     /**
      * Gets a parser's repository.
@@ -48,5 +72,33 @@ public class AnsiSpecs implements Specs {
             identifierQuoting = IdentifierQuoting.of('"');
         }
         return identifierQuoting;
+    }
+
+    /**
+     * Returns the dialect capabilities for ANSI SQL.
+     *
+     * @return dialect capabilities
+     */
+    @Override
+    public DialectCapabilities capabilities() {
+        if (capabilities == null) {
+            var sql1992 = SqlDialectVersion.of(1992);
+            var sql2008 = SqlDialectVersion.of(2008);
+            capabilities = VersionedDialectCapabilities.builder(version)
+                .supports(sql1992,
+                    SqlFeature.DATE_TYPED_LITERAL,
+                    SqlFeature.TIME_TYPED_LITERAL,
+                    SqlFeature.TIMESTAMP_TYPED_LITERAL,
+                    SqlFeature.INTERVAL_LITERAL,
+                    SqlFeature.BIT_STRING_LITERAL,
+                    SqlFeature.HEX_STRING_LITERAL,
+                    SqlFeature.LOCKING_CLAUSE
+                )
+                .supports(sql2008, SqlFeature.IS_DISTINCT_FROM_PREDICATE)
+                // CUSTOM_OPERATOR is not part of the SQL standard; keep enabled for ANSI parser extensions.
+                .supports(SqlFeature.CUSTOM_OPERATOR)
+                .build();
+        }
+        return capabilities;
     }
 }

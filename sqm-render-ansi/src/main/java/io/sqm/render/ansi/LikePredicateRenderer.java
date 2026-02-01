@@ -1,6 +1,9 @@
 package io.sqm.render.ansi;
 
+import io.sqm.core.LikeMode;
 import io.sqm.core.LikePredicate;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -15,6 +18,12 @@ public class LikePredicateRenderer implements Renderer<LikePredicate> {
      */
     @Override
     public void render(LikePredicate node, RenderContext ctx, SqlWriter w) {
+        if (node.mode() == LikeMode.ILIKE && !ctx.dialect().capabilities().supports(SqlFeature.ILIKE_PREDICATE)) {
+            throw new UnsupportedDialectFeatureException("ILIKE", ctx.dialect().name());
+        }
+        if (node.mode() == LikeMode.SIMILAR_TO && !ctx.dialect().capabilities().supports(SqlFeature.SIMILAR_TO_PREDICATE)) {
+            throw new UnsupportedDialectFeatureException("SIMILAR TO", ctx.dialect().name());
+        }
         w.append(node.value()).space();
 
         switch (node.mode()) {

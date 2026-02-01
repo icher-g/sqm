@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.DollarStringLiteralExpr;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
@@ -8,9 +9,10 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
 import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
 
 /**
- * Rejects PostgreSQL dollar-quoted literals in the ANSI dialect.
+ * Parses dollar-quoted literals ({@code $$...$$} or {@code $tag$...$tag$}).
  */
 public class DollarStringLiteralExprParser implements MatchableParser<DollarStringLiteralExpr> {
     /**
@@ -22,7 +24,15 @@ public class DollarStringLiteralExprParser implements MatchableParser<DollarStri
      */
     @Override
     public ParseResult<DollarStringLiteralExpr> parse(Cursor cur, ParseContext ctx) {
-        return error("Dollar-quoted string literals are not supported by ANSI dialect", cur.fullPos());
+        if (!ctx.capabilities().supports(SqlFeature.DOLLAR_STRING_LITERAL)) {
+            return error("Dollar-quoted string literals are not supported by this dialect", cur.fullPos());
+        }
+        var token = cur.expect("Expected dollar-quoted string literal", TokenType.DOLLAR_STRING);
+        var parsed = parseToken(token.lexeme());
+        if (parsed == null) {
+            return error("Invalid dollar-quoted string literal", cur.fullPos());
+        }
+        return ok(DollarStringLiteralExpr.of(parsed.tag(), parsed.value()));
     }
 
     /**
@@ -47,5 +57,27 @@ public class DollarStringLiteralExprParser implements MatchableParser<DollarStri
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
         return cur.match(TokenType.DOLLAR_STRING);
+    }
+
+    private static DollarParts parseToken(String raw) {
+        if (raw == null || raw.length() < 4 || raw.charAt(0) != '$') {
+            return null;
+        }
+        int second = raw.indexOf('$', 1);
+        if (second < 0) {
+            return null;
+        }
+        String tag = raw.substring(1, second);
+        String delim = "$" + tag + "$";
+        if (!raw.endsWith(delim)) {
+            return null;
+        }
+        int contentStart = second + 1;
+        int contentEnd = raw.length() - delim.length();
+        String value = raw.substring(contentStart, contentEnd);
+        return new DollarParts(tag, value);
+    }
+
+    private record DollarParts(String tag, String value) {
     }
 }

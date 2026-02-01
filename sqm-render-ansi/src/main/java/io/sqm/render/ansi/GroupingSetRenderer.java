@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.GroupItem;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -18,9 +20,10 @@ public class GroupingSetRenderer implements Renderer<GroupItem.GroupingSet> {
      */
     @Override
     public void render(GroupItem.GroupingSet node, RenderContext ctx, SqlWriter w) {
-        throw new UnsupportedOperationException(
-            "Grouping sets are not supported by ANSI SQL renderer"
-        );
+        if (!ctx.dialect().capabilities().supports(SqlFeature.GROUPING_SETS)) {
+            throw new UnsupportedDialectFeatureException("GROUPING SETS", ctx.dialect().name());
+        }
+        w.append("(").comma(node.items()).append(")");
     }
 
     /**

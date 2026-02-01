@@ -1,6 +1,8 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.Lateral;
+import io.sqm.core.TableRef;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
@@ -8,6 +10,7 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
 import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
 
 public class LateralParser implements MatchableParser<Lateral> {
     /**
@@ -19,7 +22,15 @@ public class LateralParser implements MatchableParser<Lateral> {
      */
     @Override
     public ParseResult<? extends Lateral> parse(Cursor cur, ParseContext ctx) {
-        return error("LATERAL is not supported by ANSI SQL parser", -1);
+        if (!ctx.capabilities().supports(SqlFeature.LATERAL)) {
+            return error("LATERAL is not supported by this dialect", cur.fullPos());
+        }
+        cur.expect("Expected LATERAL", TokenType.LATERAL);
+        var tableRef = ctx.parse(TableRef.class, cur);
+        if (tableRef.isError()) {
+            return error(tableRef);
+        }
+        return ok(Lateral.of(tableRef.value()));
     }
 
     /**

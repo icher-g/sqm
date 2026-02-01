@@ -18,25 +18,6 @@ public final class Renderers {
 
     private static RenderersRepository registerDefaults(RenderersRepository r) {
         return r
-            .register(new CteDefRenderer())
-            .register(new GroupingSetsRenderer())
-            .register(new GroupingSetRenderer())
-            .register(new RollupRenderer())
-            .register(new CubeRenderer())
-            .register(new GroupItemRenderer())
-            .register(new OrderItemRenderer())
-            .register(new TableRenderer())
-            .register(new FunctionTableRenderer())
-            .register(new DistinctSpecRenderer())
-            .register(new CastExprRenderer())
-            .register(new LateralRenderer())
-            .register(new LockingClauseRenderer())
-            .register(new RegexPredicateRenderer())
-            .register(new ArrayExprRenderer())
-            .register(new ArraySubscriptExprRenderer())
-            .register(new ArraySliceExprRenderer())
-            .register(new EscapeStringLiteralExprRenderer())
-            .register(new DollarStringLiteralExprRenderer())
-            .register(new IntervalLiteralExprRenderer());
+            .register(new CastExprRenderer());
     }
 }

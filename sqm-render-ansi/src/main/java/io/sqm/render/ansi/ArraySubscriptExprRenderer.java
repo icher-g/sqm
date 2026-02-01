@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.ArraySubscriptExpr;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -15,9 +17,10 @@ public class ArraySubscriptExprRenderer implements Renderer<ArraySubscriptExpr> 
      */
     @Override
     public void render(ArraySubscriptExpr node, RenderContext ctx, SqlWriter w) {
-        throw new UnsupportedOperationException(
-            "Array subscripting is not supported by ANSI SQL renderer"
-        );
+        if (!ctx.dialect().capabilities().supports(SqlFeature.ARRAY_SUBSCRIPT)) {
+            throw new UnsupportedDialectFeatureException("Array subscript", ctx.dialect().name());
+        }
+        w.append(node.base()).append("[").append(node.index()).append("]");
     }
 
     /**
