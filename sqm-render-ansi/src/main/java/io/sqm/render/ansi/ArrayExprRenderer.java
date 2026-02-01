@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.ArrayExpr;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -15,9 +17,14 @@ public class ArrayExprRenderer implements Renderer<ArrayExpr> {
      */
     @Override
     public void render(ArrayExpr node, RenderContext ctx, SqlWriter w) {
-        throw new UnsupportedOperationException(
-            "Array expressions are not supported by ANSI SQL renderer"
-        );
+        if (!ctx.dialect().capabilities().supports(SqlFeature.ARRAY_LITERAL)) {
+            throw new UnsupportedDialectFeatureException("ARRAY literal", ctx.dialect().name());
+        }
+        w.append("ARRAY").append("[");
+        if (!node.elements().isEmpty()) {
+            w.comma(node.elements());
+        }
+        w.append("]");
     }
 
     /**

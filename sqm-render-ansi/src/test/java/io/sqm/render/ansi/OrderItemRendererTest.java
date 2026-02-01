@@ -3,6 +3,11 @@ package io.sqm.render.ansi;
 import io.sqm.core.Direction;
 import io.sqm.core.Nulls;
 import io.sqm.core.OrderItem;
+import io.sqm.core.dialect.DialectCapabilities;
+import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
+import io.sqm.core.dialect.VersionedDialectCapabilities;
 import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.defaults.DefaultValueFormatter;
@@ -31,6 +36,12 @@ class OrderItemRendererTest {
     // ---------- Helpers ----------
 
     private static SqlDialect dialect(IdentifierQuoter quoter, NullSorting nulls) {
+        return dialect(quoter, nulls, VersionedDialectCapabilities.builder(SqlDialectVersion.minimum())
+            .supports(SqlDialectVersion.minimum(), SqlFeature.values())
+            .build());
+    }
+
+    private static SqlDialect dialect(IdentifierQuoter quoter, NullSorting nulls, DialectCapabilities caps) {
         return new SqlDialect() {
             @Override
             public String name() {
@@ -65,6 +76,11 @@ class OrderItemRendererTest {
             @Override
             public PaginationStyle paginationStyle() {
                 return null;
+            }
+
+            @Override
+            public DialectCapabilities capabilities() {
+                return caps;
             }
 
             @Override
@@ -266,10 +282,11 @@ class OrderItemRendererTest {
     @Test
     @DisplayName("USING operator is rejected by ANSI renderer")
     void using_operator_rejected() {
-        var d = dialect(passThruQuoter(), explicitNulls());
+        var caps = VersionedDialectCapabilities.builder(SqlDialectVersion.minimum()).build();
+        var d = dialect(passThruQuoter(), explicitNulls(), caps);
         var rc = RenderContext.of(d);
 
         var item = order(col("t", "c")).using("<").nulls(Nulls.FIRST);
-        assertThrows(UnsupportedOperationException.class, () -> renderToSql(renderer, item, rc));
+        assertThrows(UnsupportedDialectFeatureException.class, () -> renderToSql(renderer, item, rc));
     }
 }

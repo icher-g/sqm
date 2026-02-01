@@ -13,7 +13,7 @@ import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for PostgreSQL {@link FunctionTableRenderer}.
+ * Unit tests for PostgreSQL function table rendering.
  */
 @DisplayName("PostgreSQL FunctionTableRenderer Tests")
 class FunctionTableRendererTest {

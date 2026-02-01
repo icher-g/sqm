@@ -49,10 +49,6 @@ final class WherePredicateParsingTest {
             // LIKE family
             c("select * from t where name like 'abc%'", LikePredicate.class),
             c("select * from t where name not like 'abc%'", LikePredicate.class),
-            c("select * from t where name ilike 'abc%'", LikePredicate.class),
-            c("select * from t where name not ilike 'abc%'", LikePredicate.class),
-            c("select * from t where name similar to 'a.*'", LikePredicate.class),
-            c("select * from t where name not similar to 'a.*'", LikePredicate.class),
             c("select * from t where name like 'a!_%' escape '!'", LikePredicate.class),
 
             // null checks

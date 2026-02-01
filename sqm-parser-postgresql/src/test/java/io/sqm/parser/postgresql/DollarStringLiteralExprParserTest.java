@@ -1,5 +1,6 @@
 package io.sqm.parser.postgresql;
 
+import io.sqm.parser.ansi.DollarStringLiteralExprParser;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.Token;
 import io.sqm.parser.core.TokenType;

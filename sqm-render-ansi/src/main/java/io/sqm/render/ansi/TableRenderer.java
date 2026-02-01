@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.Table;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -15,16 +17,25 @@ public class TableRenderer implements Renderer<Table> {
      */
     @Override
     public void render(Table node, RenderContext ctx, SqlWriter w) {
-        if (node.inheritance() != Table.Inheritance.DEFAULT) {
-            throw new UnsupportedOperationException("Table inheritance is not supported by ANSI renderer.");
-        }
         var quoter = ctx.dialect().quoter();
         var schema = node.schema();
+        if (node.inheritance() == Table.Inheritance.ONLY) {
+            if (!ctx.dialect().capabilities().supports(SqlFeature.TABLE_INHERITANCE_ONLY)) {
+                throw new UnsupportedDialectFeatureException("ONLY", ctx.dialect().name());
+            }
+            w.append("ONLY").space();
+        }
         if (schema != null && !schema.isBlank()) {
             w.append(quoter.quoteIfNeeded(schema));
             w.append(".");
         }
         w.append(quoter.quoteIfNeeded(node.name()));
+        if (node.inheritance() == Table.Inheritance.INCLUDE_DESCENDANTS) {
+            if (!ctx.dialect().capabilities().supports(SqlFeature.TABLE_INHERITANCE_DESCENDANTS)) {
+                throw new UnsupportedDialectFeatureException("table *", ctx.dialect().name());
+            }
+            w.space().append("*");
+        }
 
         var alias = node.alias();
         if (alias != null && !alias.isBlank()) {

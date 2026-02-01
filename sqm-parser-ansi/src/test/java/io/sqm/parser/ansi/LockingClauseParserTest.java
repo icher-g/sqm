@@ -2,7 +2,6 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.LockMode;
 import io.sqm.core.LockingClause;
-import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.ParseContext;
@@ -53,22 +52,22 @@ class LockingClauseParserTest {
     @Test
     @DisplayName("Parse FOR UPDATE OF throws unsupported exception")
     void parseForUpdateOfThrows() {
-        assertThrows(UnsupportedDialectFeatureException.class,
-            () -> parser.parse(Cursor.of("FOR UPDATE OF users", quoting), ctx));
+        var result = parser.parse(Cursor.of("FOR UPDATE OF users", quoting), ctx);
+        assertFalse(result.ok());
     }
 
     @Test
     @DisplayName("Parse FOR UPDATE NOWAIT throws unsupported exception")
     void parseForUpdateNowaitThrows() {
-        assertThrows(UnsupportedDialectFeatureException.class,
-            () -> parser.parse(Cursor.of("FOR UPDATE NOWAIT", quoting), ctx));
+        var result = parser.parse(Cursor.of("FOR UPDATE NOWAIT", quoting), ctx);
+        assertFalse(result.ok());
     }
 
     @Test
     @DisplayName("Parse FOR UPDATE SKIP LOCKED throws unsupported exception")
     void parseForUpdateSkipLockedThrows() {
-        assertThrows(UnsupportedDialectFeatureException.class,
-            () -> parser.parse(Cursor.of("FOR UPDATE SKIP LOCKED", quoting), ctx));
+        var result = parser.parse(Cursor.of("FOR UPDATE SKIP LOCKED", quoting), ctx);
+        assertFalse(result.ok());
     }
 
     @Test
@@ -109,7 +108,6 @@ class LockingClauseParserTest {
     @Test
     @DisplayName("Parse FOR SHARE is not supported in ANSI")
     void parseForShareNotSupported() {
-        // FOR SHARE will fail because parser expects UPDATE after FOR
         var result = ctx.parse(LockingClause.class, "FOR SHARE");
 
         assertFalse(result.ok());

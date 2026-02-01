@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.DateLiteralExpr;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
@@ -23,6 +24,9 @@ public class DateLiteralExprParser implements MatchableParser<DateLiteralExpr> {
      */
     @Override
     public ParseResult<DateLiteralExpr> parse(Cursor cur, ParseContext ctx) {
+        if (!ctx.capabilities().supports(SqlFeature.DATE_TYPED_LITERAL)) {
+            return error("DATE literals are not supported by this dialect", cur.fullPos());
+        }
         var keyword = cur.expect("Expected DATE literal", TokenType.IDENT);
         if (!keyword.lexeme().equalsIgnoreCase("date")) {
             return error("Expected DATE literal but found '" + keyword.lexeme() + "'", cur.fullPos());

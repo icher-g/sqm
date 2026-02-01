@@ -1,6 +1,8 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.DistinctSpec;
+import io.sqm.core.Expression;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
@@ -21,8 +23,17 @@ public class DistinctSpecParser implements Parser<DistinctSpec> {
     @Override
     public ParseResult<? extends DistinctSpec> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected DISTINCT", TokenType.DISTINCT);
-        if (cur.match(TokenType.ON)) {
-            return error("DISTINCT ON clause is not supported by ANSI parser.", cur.fullPos());
+        if (cur.consumeIf(TokenType.ON)) {
+            if (!ctx.capabilities().supports(SqlFeature.DISTINCT_ON)) {
+                return error("DISTINCT ON is not supported by this dialect", cur.fullPos());
+            }
+            cur.expect("Expected ( after DISTINCT ON", TokenType.LPAREN);
+            var items = parseItems(Expression.class, cur, ctx);
+            if (items.isError()) {
+                return error(items);
+            }
+            cur.expect("Expected ) to close expressions list", TokenType.RPAREN);
+            return ok(DistinctSpec.on(items.value()));
         }
         return ok(DistinctSpec.TRUE);
     }

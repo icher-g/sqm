@@ -2,6 +2,10 @@ package io.sqm.render;
 
 import io.sqm.core.Direction;
 import io.sqm.core.Nulls;
+import io.sqm.core.dialect.DialectCapabilities;
+import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.VersionedDialectCapabilities;
 import io.sqm.render.defaults.DefaultOperators;
 import io.sqm.render.defaults.DefaultValueFormatter;
 import io.sqm.render.repos.DefaultRenderersRepository;
@@ -16,6 +20,9 @@ public class RenderTestDialect implements SqlDialect {
     private final NullSorting nullSorting = new SimpleNullSorting();
     private final PaginationStyle paginationStyle = new SimplePaginationStyle();
     private final ValueFormatter formatter = new DefaultValueFormatter(this);
+    private final DialectCapabilities capabilities = VersionedDialectCapabilities.builder(SqlDialectVersion.minimum())
+        .supports(SqlDialectVersion.minimum(), SqlFeature.values())
+        .build();
 
     public RenderTestDialect register(Renderer<?> renderer) {
         renderers.register(renderer);
@@ -55,6 +62,11 @@ public class RenderTestDialect implements SqlDialect {
     @Override
     public PaginationStyle paginationStyle() {
         return paginationStyle;
+    }
+
+    @Override
+    public DialectCapabilities capabilities() {
+        return capabilities;
     }
 
     @Override

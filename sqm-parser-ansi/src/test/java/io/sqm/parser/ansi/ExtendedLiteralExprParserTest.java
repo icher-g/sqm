@@ -81,8 +81,11 @@ class ExtendedLiteralExprParserTest {
     }
 
     @Test
-    void rejects_interval_literal() {
+    void parses_interval_literal() {
         var result = ctx.parse(Expression.class, "INTERVAL '1 day'");
-        assertTrue(result.isError());
+        assertTrue(result.ok());
+        var expr = assertInstanceOf(IntervalLiteralExpr.class, result.value());
+        assertEquals("1 day", expr.value());
+        assertTrue(expr.qualifier().isEmpty());
     }
 }

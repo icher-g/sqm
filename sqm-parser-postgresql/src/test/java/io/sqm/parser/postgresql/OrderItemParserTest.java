@@ -3,6 +3,7 @@ package io.sqm.parser.postgresql;
 import io.sqm.core.Direction;
 import io.sqm.core.Nulls;
 import io.sqm.core.OrderItem;
+import io.sqm.parser.ansi.OrderItemParser;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;

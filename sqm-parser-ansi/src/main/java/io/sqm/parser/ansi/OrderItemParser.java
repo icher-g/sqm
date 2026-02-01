@@ -4,6 +4,8 @@ import io.sqm.core.Direction;
 import io.sqm.core.Expression;
 import io.sqm.core.Nulls;
 import io.sqm.core.OrderItem;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.utils.Numbers;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
@@ -26,15 +28,6 @@ public class OrderItemParser implements Parser<OrderItem> {
         return s;
     }
 
-    private static boolean isPositiveInteger(String s) {
-        // Fast path: all digits, no sign, no decimal.
-        for (int i = 0, n = s.length(); i < n; i++) {
-            char ch = s.charAt(i);
-            if (ch < '0' || ch > '9') return false;
-        }
-        return !s.isEmpty();
-    }
-
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -47,12 +40,11 @@ public class OrderItemParser implements Parser<OrderItem> {
         Integer ordinal = null;
         Expression expr = null;
 
-        // Positional GROUP BY: "1", "2", ...
-        // SQL allows positive 1-based ordinals.
-        if (isPositiveInteger(cur.peek().lexeme())) {
+        // Positional ORDER BY: "1", "2", ...
+        if (Numbers.isPositiveInteger(cur.peek().lexeme())) {
             int pos = Integer.parseInt(cur.peek().lexeme());
             if (pos <= 0) {
-                return error("GROUP BY position must be a positive integer", pos);
+                return error("ORDER BY position must be a positive integer", pos);
             }
             ordinal = pos;
             cur.advance();
@@ -70,13 +62,17 @@ public class OrderItemParser implements Parser<OrderItem> {
         Direction direction = null;
         Nulls nulls = null;
         String collate = null;
+        String usingOperator = null;
 
-        var tokens = Set.of(TokenType.ASC, TokenType.DESC, TokenType.NULLS, TokenType.COLLATE);
+        var tokens = Set.of(TokenType.ASC, TokenType.DESC, TokenType.NULLS, TokenType.COLLATE, TokenType.USING);
 
         while (cur.matchAny(tokens)) {
             if (cur.consumeIf(TokenType.ASC)) {
                 if (direction != null) {
                     return error("Direction specified more than once", cur.fullPos());
+                }
+                if (usingOperator != null) {
+                    return error("USING operator cannot be combined with ASC/DESC", cur.fullPos());
                 }
                 direction = Direction.ASC;
                 continue;
@@ -84,6 +80,9 @@ public class OrderItemParser implements Parser<OrderItem> {
             if (cur.consumeIf(TokenType.DESC)) {
                 if (direction != null) {
                     return error("Direction specified more than once", cur.fullPos());
+                }
+                if (usingOperator != null) {
+                    return error("USING operator cannot be combined with ASC/DESC", cur.fullPos());
                 }
                 direction = Direction.DESC;
                 continue;
@@ -105,17 +104,35 @@ public class OrderItemParser implements Parser<OrderItem> {
                 }
                 var t = cur.expect("Expected collation name after COLLATE", TokenType.IDENT);
                 collate = unquoteIfQuoted(t.lexeme());
+                continue;
+            }
+            if (cur.consumeIf(TokenType.USING)) {
+                if (!ctx.capabilities().supports(SqlFeature.ORDER_BY_USING)) {
+                    return error("ORDER BY ... USING is not supported by this dialect", cur.fullPos());
+                }
+                if (usingOperator != null) {
+                    return error("USING specified more than once", cur.fullPos());
+                }
+                if (direction != null) {
+                    return error("USING operator cannot be combined with ASC/DESC", cur.fullPos());
+                }
+                if (cur.match(TokenType.OPERATOR)) {
+                    usingOperator = cur.advance().lexeme();
+                }
+                else
+                    if (cur.match(TokenType.QMARK)) {
+                        usingOperator = cur.advance().lexeme();
+                    }
+                    else {
+                        return error("Expected operator after USING", cur.fullPos());
+                    }
             }
         }
 
-        if (cur.match(TokenType.USING)) {
-            return error("USING operator is not supported by ANSI ORDER BY", cur.fullPos());
-        }
-
         if (expr != null) {
-            return ok(OrderItem.of(expr, direction, nulls, collate));
+            return ok(OrderItem.of(expr, null, direction, nulls, collate, usingOperator));
         }
-        return ok(OrderItem.of(ordinal, direction, nulls, collate));
+        return ok(OrderItem.of(null, ordinal, direction, nulls, collate, usingOperator));
     }
 
     /**

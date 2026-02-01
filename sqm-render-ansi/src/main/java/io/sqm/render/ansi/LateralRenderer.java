@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.Lateral;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -15,9 +17,10 @@ public class LateralRenderer implements Renderer<Lateral> {
      */
     @Override
     public void render(Lateral node, RenderContext ctx, SqlWriter w) {
-        throw new UnsupportedOperationException(
-            "LATERAL is not supported by ANSI SQL renderer"
-        );
+        if (!ctx.dialect().capabilities().supports(SqlFeature.LATERAL)) {
+            throw new UnsupportedDialectFeatureException("LATERAL", ctx.dialect().name());
+        }
+        w.append("LATERAL").space().append(node.inner());
     }
 
     /**

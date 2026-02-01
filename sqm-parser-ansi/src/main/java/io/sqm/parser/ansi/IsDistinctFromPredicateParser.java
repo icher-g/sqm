@@ -2,6 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.Expression;
 import io.sqm.core.IsDistinctFromPredicate;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.InfixParser;
@@ -55,6 +56,9 @@ public class IsDistinctFromPredicateParser implements Parser<IsDistinctFromPredi
      */
     @Override
     public ParseResult<IsDistinctFromPredicate> parse(Expression lhs, Cursor cur, ParseContext ctx) {
+        if (!ctx.capabilities().supports(SqlFeature.IS_DISTINCT_FROM_PREDICATE)) {
+            return error("IS DISTINCT FROM is not supported by this dialect", cur.fullPos());
+        }
         cur.expect("Expected IS", TokenType.IS);
         var negated = cur.consumeIf(TokenType.NOT);
         cur.expect("Expected DISTINCT", TokenType.DISTINCT);

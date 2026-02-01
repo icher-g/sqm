@@ -1,12 +1,16 @@
 package io.sqm.parser.ansi;
 
+import io.sqm.core.FunctionExpr;
 import io.sqm.core.FunctionTable;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
 import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
 
 public class FunctionTableParser implements MatchableParser<FunctionTable> {
     /**
@@ -36,7 +40,27 @@ public class FunctionTableParser implements MatchableParser<FunctionTable> {
      */
     @Override
     public ParseResult<? extends FunctionTable> parse(Cursor cur, ParseContext ctx) {
-        return error("Function call in FROM statement is not supported by ANSI SQL parser", -1);
+        if (!ctx.capabilities().supports(SqlFeature.FUNCTION_TABLE)) {
+            return error("Function tables are not supported by this dialect", cur.fullPos());
+        }
+        var funcExpr = ctx.parse(FunctionExpr.class, cur);
+        if (funcExpr.isError()) {
+            return error(funcExpr);
+        }
+
+        boolean withOrdinality = false;
+        if (cur.consumeIf(TokenType.WITH)) {
+            if (!cur.consumeIf(TokenType.ORDINALITY)) {
+                return error("Expected ORDINALITY after WITH", cur.fullPos());
+            }
+            if (!ctx.capabilities().supports(SqlFeature.FUNCTION_TABLE_ORDINALITY)) {
+                return error("WITH ORDINALITY is not supported by this dialect", cur.fullPos());
+            }
+            withOrdinality = true;
+        }
+
+        var aliases = parseColumnAliases(cur);
+        return ok(FunctionTable.of(funcExpr.value(), aliases.second(), aliases.first(), withOrdinality));
     }
 
     /**

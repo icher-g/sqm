@@ -1,13 +1,14 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.IntervalLiteralExpr;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
 /**
- * Rejects {@code INTERVAL '...'} literals in the ANSI dialect.
+ * Renders {@code INTERVAL '...'} literals when supported by the dialect.
  */
 public class IntervalLiteralExprRenderer implements Renderer<IntervalLiteralExpr> {
     /**
@@ -19,7 +20,11 @@ public class IntervalLiteralExprRenderer implements Renderer<IntervalLiteralExpr
      */
     @Override
     public void render(IntervalLiteralExpr node, RenderContext ctx, SqlWriter w) {
-        throw new UnsupportedDialectFeatureException("INTERVAL literal", "ANSI");
+        if (!ctx.dialect().capabilities().supports(SqlFeature.INTERVAL_LITERAL)) {
+            throw new UnsupportedDialectFeatureException(SqlFeature.INTERVAL_LITERAL.description(), ctx.dialect().name());
+        }
+        w.append("INTERVAL ").append(ctx.dialect().formatter().format(node.value()));
+        node.qualifier().ifPresent(q -> w.append(" ").append(q));
     }
 
     /**

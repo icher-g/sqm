@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.EscapeStringLiteralExpr;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
@@ -8,9 +9,10 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
 import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
 
 /**
- * Rejects PostgreSQL escape string literals in the ANSI dialect.
+ * Parses escape string literals ({@code E'...'}).
  */
 public class EscapeStringLiteralExprParser implements MatchableParser<EscapeStringLiteralExpr> {
     /**
@@ -22,7 +24,11 @@ public class EscapeStringLiteralExprParser implements MatchableParser<EscapeStri
      */
     @Override
     public ParseResult<EscapeStringLiteralExpr> parse(Cursor cur, ParseContext ctx) {
-        return error("Escape string literals (E'...') are not supported by ANSI dialect", cur.fullPos());
+        if (!ctx.capabilities().supports(SqlFeature.ESCAPE_STRING_LITERAL)) {
+            return error("Escape string literals are not supported by this dialect", cur.fullPos());
+        }
+        var token = cur.expect("Expected escape string literal", TokenType.ESCAPE_STRING);
+        return ok(EscapeStringLiteralExpr.of(token.lexeme()));
     }
 
     /**

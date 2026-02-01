@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.CteDef;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -33,11 +35,22 @@ public class CteDefRenderer implements Renderer<CteDef> {
             w.append(")");
         }
 
-        if (node.materialization() != CteDef.Materialization.DEFAULT) {
-            throw new UnsupportedOperationException("CTE materialization is not supported by ANSI renderer.");
+        w.space().append("AS");
+
+        if (node.materialization() == CteDef.Materialization.MATERIALIZED) {
+            if (!ctx.dialect().capabilities().supports(SqlFeature.CTE_MATERIALIZATION)) {
+                throw new UnsupportedDialectFeatureException("CTE MATERIALIZED", ctx.dialect().name());
+            }
+            w.space().append("MATERIALIZED");
+        }
+        else if (node.materialization() == CteDef.Materialization.NOT_MATERIALIZED) {
+            if (!ctx.dialect().capabilities().supports(SqlFeature.CTE_MATERIALIZATION)) {
+                throw new UnsupportedDialectFeatureException("CTE NOT MATERIALIZED", ctx.dialect().name());
+            }
+            w.space().append("NOT MATERIALIZED");
         }
 
-        w.space().append("AS").space();
+        w.space();
         w.append(node.body(), true, true);
     }
 

@@ -1,13 +1,18 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.GroupItem;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
 
 /**
  * ANSI parser stub for {@code GROUPING SETS (...)}.
@@ -35,7 +40,24 @@ public class GroupingSetsParser implements MatchableParser<GroupItem.GroupingSet
      */
     @Override
     public ParseResult<? extends GroupItem.GroupingSets> parse(Cursor cur, ParseContext ctx) {
-        return error("GROUPING SETS is not supported by ANSI SQL parser", cur.fullPos());
+        if (!ctx.capabilities().supports(SqlFeature.GROUPING_SETS)) {
+            return error("GROUPING SETS are not supported by this dialect", cur.fullPos());
+        }
+        cur.expect("Expected GROUPING", TokenType.GROUPING);
+        cur.expect("Expected SETS after GROUPING", TokenType.SETS);
+        cur.expect("Expected ( after GROUPING SETS", TokenType.LPAREN);
+
+        List<GroupItem> sets = new ArrayList<>();
+        if (!cur.match(TokenType.RPAREN)) {
+            ParseResult<List<GroupItem>> items = parseItems(GroupItem.class, cur, ctx);
+            if (items.isError()) {
+                return error(items);
+            }
+            sets = items.value();
+        }
+
+        cur.expect("Expected ) to close GROUPING SETS", TokenType.RPAREN);
+        return ok((GroupItem.GroupingSets) GroupItem.groupingSets(sets));
     }
 
     /**

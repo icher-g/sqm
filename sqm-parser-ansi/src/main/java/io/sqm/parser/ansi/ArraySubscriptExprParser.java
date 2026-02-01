@@ -2,6 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.ArraySubscriptExpr;
 import io.sqm.core.Expression;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.InfixParser;
@@ -12,6 +13,7 @@ import io.sqm.parser.spi.ParseResult;
 import java.util.Set;
 
 import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
 
 public class ArraySubscriptExprParser implements MatchableParser<ArraySubscriptExpr>, InfixParser<Expression, ArraySubscriptExpr> {
     /**
@@ -23,7 +25,14 @@ public class ArraySubscriptExprParser implements MatchableParser<ArraySubscriptE
      */
     @Override
     public ParseResult<? extends ArraySubscriptExpr> parse(Cursor cur, ParseContext ctx) {
-        return error("Array subscripting is not supported by ANSI SQL parser", -1);
+        if (!ctx.capabilities().supports(SqlFeature.ARRAY_SUBSCRIPT)) {
+            return error("Array subscripts are not supported by this dialect", cur.fullPos());
+        }
+        var left = ctx.parse(Expression.class, cur);
+        if (left.isError()) {
+            return error(left);
+        }
+        return parse(left.value(), cur, ctx);
     }
 
     /**
@@ -52,7 +61,18 @@ public class ArraySubscriptExprParser implements MatchableParser<ArraySubscriptE
      */
     @Override
     public ParseResult<ArraySubscriptExpr> parse(Expression lhs, Cursor cur, ParseContext ctx) {
-        return error("Array subscripting is not supported by ANSI SQL parser", -1);
+        if (!ctx.capabilities().supports(SqlFeature.ARRAY_SUBSCRIPT)) {
+            return error("Array subscripts are not supported by this dialect", cur.fullPos());
+        }
+        cur.expect("Expected '[' to start array subscript", TokenType.LBRACKET);
+
+        ParseResult<? extends Expression> index = ctx.parse(Expression.class, cur);
+        if (index.isError()) {
+            return error(index);
+        }
+
+        cur.expect("Expected ']' to close array subscript", TokenType.RBRACKET);
+        return ok(ArraySubscriptExpr.of(lhs, index.value()));
     }
 
     /**

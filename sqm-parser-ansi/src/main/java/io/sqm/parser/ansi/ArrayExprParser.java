@@ -1,13 +1,19 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.ArrayExpr;
+import io.sqm.core.Expression;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
 
 public class ArrayExprParser implements MatchableParser<ArrayExpr> {
     /**
@@ -19,7 +25,11 @@ public class ArrayExprParser implements MatchableParser<ArrayExpr> {
      */
     @Override
     public ParseResult<? extends ArrayExpr> parse(Cursor cur, ParseContext ctx) {
-        return error("Array expressions are not supported by ANSI SQL parser", -1);
+        if (!ctx.capabilities().supports(SqlFeature.ARRAY_LITERAL)) {
+            return error("ARRAY literals are not supported by this dialect", cur.fullPos());
+        }
+        cur.expect("Expected ARRAY", TokenType.ARRAY);
+        return parseArrayExpr(cur, ctx);
     }
 
     /**
@@ -48,5 +58,34 @@ public class ArrayExprParser implements MatchableParser<ArrayExpr> {
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
         return cur.match(TokenType.ARRAY);
+    }
+
+    private ParseResult<ArrayExpr> parseArrayExpr(Cursor cur, ParseContext ctx) {
+        cur.expect("Expected [", TokenType.LBRACKET);
+
+        // Multidimensional form: ARRAY[[...], [...], ...]
+        if (cur.match(TokenType.LBRACKET)) {
+            List<Expression> items = new ArrayList<>();
+            do {
+                var nested = parseArrayExpr(cur, ctx);
+                if (nested.isError()) {
+                    return error(nested);
+                }
+                items.add(nested.value());
+            }
+            while (cur.consumeIf(TokenType.COMMA));
+
+            cur.expect("Expected ]", TokenType.RBRACKET);
+            return ok(ArrayExpr.of(items));
+        }
+
+        // 1D form: ARRAY[expr, expr, ...]
+        var items = parseItems(Expression.class, cur, ctx);
+        if (items.isError()) {
+            return error(items);
+        }
+
+        cur.expect("Expected ]", TokenType.RBRACKET);
+        return ok(ArrayExpr.of(items.value()));
     }
 }

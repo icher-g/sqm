@@ -1,6 +1,7 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.Node;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;
@@ -86,7 +87,7 @@ class GroupByRendererTest {
             .from(tbl("employees"))
             .groupBy(rollup(group("dept"), group("status")));
 
-        assertThrows(UnsupportedOperationException.class, () -> render(query));
+        assertThrows(UnsupportedDialectFeatureException.class, () -> render(query));
     }
 
     @Test
@@ -96,7 +97,7 @@ class GroupByRendererTest {
             .from(tbl("employees"))
             .groupBy(groupingSets(group("dept"), groupingSet()));
 
-        assertThrows(UnsupportedOperationException.class, () -> render(query));
+        assertThrows(UnsupportedDialectFeatureException.class, () -> render(query));
     }
 
     @Test
@@ -106,7 +107,7 @@ class GroupByRendererTest {
             .from(tbl("employees"))
             .groupBy(groupingSet(group("dept")));
 
-        assertThrows(UnsupportedOperationException.class, () -> render(query));
+        assertThrows(UnsupportedDialectFeatureException.class, () -> render(query));
     }
 
     @Test
@@ -116,6 +117,6 @@ class GroupByRendererTest {
             .from(tbl("employees"))
             .groupBy(cube(group("dept"), group("status")));
 
-        assertThrows(UnsupportedOperationException.class, () -> render(query));
+        assertThrows(UnsupportedDialectFeatureException.class, () -> render(query));
     }
 }

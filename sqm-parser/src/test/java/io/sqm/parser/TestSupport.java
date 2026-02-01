@@ -7,6 +7,10 @@ import io.sqm.parser.spi.Lookups;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParsersRepository;
 import io.sqm.parser.spi.Specs;
+import io.sqm.core.dialect.DialectCapabilities;
+import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.VersionedDialectCapabilities;
 
 final class TestSupport {
 
@@ -21,6 +25,9 @@ final class TestSupport {
         private final ParsersRepository parsers;
         private final Lookups lookups = new NoopLookups();
         private final IdentifierQuoting quoting = IdentifierQuoting.of('"');
+        private final DialectCapabilities capabilities = VersionedDialectCapabilities.builder(SqlDialectVersion.minimum())
+            .supports(SqlDialectVersion.minimum(), SqlFeature.values())
+            .build();
 
         private TestSpecs(ParsersRepository parsers) {
             this.parsers = parsers;
@@ -39,6 +46,11 @@ final class TestSupport {
         @Override
         public IdentifierQuoting identifierQuoting() {
             return quoting;
+        }
+
+        @Override
+        public DialectCapabilities capabilities() {
+            return capabilities;
         }
     }
 

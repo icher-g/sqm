@@ -3,6 +3,8 @@ package io.sqm.render.ansi;
 import io.sqm.core.Direction;
 import io.sqm.core.Nulls;
 import io.sqm.core.OrderItem;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -32,10 +34,12 @@ public class OrderItemRenderer implements Renderer<OrderItem> {
             w.space().append("COLLATE").space().append(quoter.quoteIfNeeded(collate));
         }
 
-        // USING <operator> is PostgreSQL-specific
         var usingOperator = node.usingOperator();
         if (usingOperator != null && !usingOperator.isBlank()) {
-            throw new UnsupportedOperationException("USING in ORDER BY is not supported by ANSI renderer.");
+            if (!ctx.dialect().capabilities().supports(SqlFeature.ORDER_BY_USING)) {
+                throw new UnsupportedDialectFeatureException("ORDER BY ... USING", ctx.dialect().name());
+            }
+            w.space().append("USING").space().append(usingOperator);
         }
 
         // ASC/DESC (omit if unspecified -> dialect default)
