@@ -167,4 +167,52 @@ class AtTimeZoneExprMatchTest {
 
         assertEquals("COLUMN", result);
     }
+
+    @Test
+    void atTimeZone_withOrElseThrow() {
+        Expression expr = col("name");
+
+        assertThrows(IllegalArgumentException.class, () -> Match
+            .<String>expression(expr)
+            .atTimeZone(a -> "AT_TIME_ZONE")
+            .orElseThrow(() -> new IllegalArgumentException("Expected AT TIME ZONE")));
+    }
+
+    @Test
+    void atTimeZone_withOrElseGetSupplier() {
+        Expression expr = col("name");
+
+        String result = Match
+            .<String>expression(expr)
+            .atTimeZone(a -> "MATCHED")
+            .orElseGet(() -> "SUPPLIED_DEFAULT");
+
+        assertEquals("SUPPLIED_DEFAULT", result);
+    }
+
+    @Test
+    void atTimeZone_doesNotMatchOtherExpressions() {
+        Expression expr = func("now", starArg());
+
+        String result = Match
+            .<String>expression(expr)
+            .atTimeZone(a -> "AT_TIME_ZONE")
+            .func(f -> "FUNCTION")
+            .orElse("OTHER");
+
+        assertEquals("FUNCTION", result);
+    }
+
+    @Test
+    void atTimeZone_matchedFlagPreventsDouble() {
+        AtTimeZoneExpr expr = AtTimeZoneExpr.of(col("ts"), lit("UTC"));
+
+        String result = Match
+            .<String>expression(expr)
+            .atTimeZone(a -> "FIRST")
+            .atTimeZone(a -> "SECOND")  // Should not match again
+            .otherwise(e -> "OTHER");
+
+        assertEquals("FIRST", result);
+    }
 }

@@ -76,6 +76,52 @@ class AtTimeZoneExprParserTest {
     }
 
     /**
+     * Tests parsing with ZONE as a column reference (identifier).
+     */
+    @Test
+    void zoneCanBeParsedAsColumnReference() {
+        var result = parseExpr("ZONE");
+        assertTrue(result.ok(), "ZONE should parse as a column reference");
+    }
+
+    /**
+     * Tests parsing multiple AT expressions as column references.
+     */
+    @Test
+    void multipleAtTokensAsColumnReferences() {
+        var result = parseExpr("AT");
+        assertTrue(result.ok(), "AT should parse as column reference");
+        assertInstanceOf(ColumnExpr.class, result.value());
+    }
+
+    /**
+     * Tests parsing function call without AT TIME ZONE.
+     */
+    @Test
+    void functionCallWithoutAtTimeZone() {
+        var result = parseExpr("now()");
+        assertTrue(result.ok(), "Function calls should parse normally");
+    }
+
+    /**
+     * Tests with timezone string literal alone.
+     */
+    @Test
+    void timezoneStringLiteralAlone() {
+        var result = parseExpr("'UTC'");
+        assertTrue(result.ok(), "String literals should parse successfully");
+    }
+
+    /**
+     * Tests column with qualified name does not confuse parser.
+     */
+    @Test
+    void qualifiedColumnExpression() {
+        var result = parseExpr("t.created_at");
+        assertTrue(result.ok(), "Qualified columns should parse normally");
+    }
+
+    /**
      * Helper method to parse an expression using the ANSI parser.
      */
     private ParseResult<? extends Expression> parseExpr(String sql) {
