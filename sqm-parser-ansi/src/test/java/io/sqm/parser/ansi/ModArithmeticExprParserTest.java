@@ -3,6 +3,7 @@ package io.sqm.parser.ansi;
 import io.sqm.core.Expression;
 import io.sqm.core.ModArithmeticExpr;
 import io.sqm.parser.AtomicExprParser;
+import io.sqm.parser.PostfixExprParser;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ModArithmeticExprParserTest {
 
     private final ParseContext ctx = ParseContext.of(new AnsiSpecs());
-    private final ModArithmeticExprParser parser = new ModArithmeticExprParser(new AtomicExprParser());
+    private final ModArithmeticExprParser parser = new ModArithmeticExprParser(new PostfixExprParser(new AtomicExprParser()));
 
     @Test
     void parsesModFunctionSyntax() {

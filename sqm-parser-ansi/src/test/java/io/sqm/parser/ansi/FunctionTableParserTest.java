@@ -11,26 +11,28 @@ import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for {@link FunctionTableParser} in ANSI dialect.
+ * Unit tests for {@link FunctionTableParser}.
  * 
- * <p>Note: ANSI SQL does not support function tables, so all tests should fail.</p>
+ * <p>Tests both feature rejection (ANSI) and actual parsing logic (TestSpecs).</p>
  */
-@DisplayName("ANSI FunctionTableParser Tests")
+@DisplayName("FunctionTableParser Tests")
 class FunctionTableParserTest {
 
-    private ParseContext ctx;
+    private ParseContext ansiCtx;
+    private ParseContext testCtx;
     private FunctionTableParser parser;
 
     @BeforeEach
     void setUp() {
-        ctx = ParseContext.of(new AnsiSpecs());
+        ansiCtx = ParseContext.of(new AnsiSpecs());
+        testCtx = ParseContext.of(new TestSpecs());
         parser = new FunctionTableParser();
     }
 
     @Test
     @DisplayName("Parse simple function table is not supported in ANSI")
     void parseFunctionTableNotSupported() {
-        var result = ctx.parse(FunctionTable.class, "func()");
+        var result = ansiCtx.parse(FunctionTable.class, "func()");
 
         assertFalse(result.ok());
         assertNotNull(result.errorMessage());
@@ -40,7 +42,7 @@ class FunctionTableParserTest {
     @Test
     @DisplayName("Parse function table with arguments is not supported")
     void parseFunctionTableWithArgumentsNotSupported() {
-        var result = ctx.parse(FunctionTable.class, "func(1, 2, 3)");
+        var result = ansiCtx.parse(FunctionTable.class, "func(1, 2, 3)");
 
         assertFalse(result.ok());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Function tables are not supported"));
@@ -49,7 +51,7 @@ class FunctionTableParserTest {
     @Test
     @DisplayName("Parse function table with alias is not supported")
     void parseFunctionTableWithAliasNotSupported() {
-        var result = ctx.parse(FunctionTable.class, "func() AS f");
+        var result = ansiCtx.parse(FunctionTable.class, "func() AS f");
 
         assertFalse(result.ok());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Function tables are not supported"));
@@ -58,7 +60,7 @@ class FunctionTableParserTest {
     @Test
     @DisplayName("Parse function table with column aliases is not supported")
     void parseFunctionTableWithColumnAliasesNotSupported() {
-        var result = ctx.parse(FunctionTable.class, "func() AS f(a, b)");
+        var result = ansiCtx.parse(FunctionTable.class, "func() AS f(a, b)");
 
         assertFalse(result.ok());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Function tables are not supported"));
@@ -67,7 +69,7 @@ class FunctionTableParserTest {
     @Test
     @DisplayName("Parse function table WITH ORDINALITY is not supported")
     void parseFunctionTableWithOrdinalityNotSupported() {
-        var result = ctx.parse(FunctionTable.class, "func() WITH ORDINALITY");
+        var result = ansiCtx.parse(FunctionTable.class, "func() WITH ORDINALITY");
 
         assertFalse(result.ok());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Function tables are not supported"));
@@ -76,38 +78,75 @@ class FunctionTableParserTest {
     @Test
     @DisplayName("Parse function table WITH ORDINALITY and alias is not supported")
     void parseFunctionTableWithOrdinalityAndAliasNotSupported() {
-        var result = ctx.parse(FunctionTable.class, "func() WITH ORDINALITY AS f");
+        var result = ansiCtx.parse(FunctionTable.class, "func() WITH ORDINALITY AS f");
 
         assertFalse(result.ok());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Function tables are not supported"));
     }
 
     @Test
-    @DisplayName("Parse function table WITH without ORDINALITY is not supported")
-    void parseFunctionTableWithWithoutOrdinalityNotSupported() {
-        var result = ctx.parse(FunctionTable.class, "func() WITH");
+    @DisplayName("Parse simple function table")
+    void parseSimpleFunctionTable() {
+        var result = testCtx.parse(FunctionTable.class, "generate_series(1, 10)");
 
-        assertFalse(result.ok());
-        assertNotNull(result.errorMessage());
+        assertTrue(result.ok());
+        var table = result.value();
+        assertNotNull(table);
+        assertNotNull(table.function());
+        assertFalse(table.ordinality());
+    }
+
+    @Test
+    @DisplayName("Parse function table with alias")
+    void parseFunctionTableWithAlias() {
+        var result = testCtx.parse(FunctionTable.class, "unnest(arr) AS t");
+
+        assertTrue(result.ok());
+        var table = result.value();
+        assertNotNull(table);
+        assertEquals("t", table.alias());
+    }
+
+    @Test
+    @DisplayName("Parse function table with column aliases")
+    void parseFunctionTableWithColumnAliases() {
+        var result = testCtx.parse(FunctionTable.class, "func() AS f(col1, col2)");
+
+        assertTrue(result.ok());
+        var table = result.value();
+        assertNotNull(table);
+        assertEquals("f", table.alias());
+        assertNotNull(table.columnAliases());
+        assertEquals(2, table.columnAliases().size());
+    }
+
+    @Test
+    @DisplayName("Parse function table WITH ORDINALITY")
+    void parseFunctionTableWithOrdinality() {
+        var result = testCtx.parse(FunctionTable.class, "unnest(array_col) WITH ORDINALITY");
+
+        assertTrue(result.ok());
+        var table = result.value();
+        assertNotNull(table);
+        assertTrue(table.ordinality());
+    }
+
+    @Test
+    @DisplayName("Parse function table WITH ORDINALITY and alias")
+    void parseFunctionTableWithOrdinalityAndAlias() {
+        var result = testCtx.parse(FunctionTable.class, "generate_series(1, 5) WITH ORDINALITY AS t(val, ord)");
+
+        assertTrue(result.ok());
+        var table = result.value();
+        assertNotNull(table);
+        assertTrue(table.ordinality());
+        assertEquals("t", table.alias());
+        assertEquals(2, table.columnAliases().size());
     }
 
     @Test
     @DisplayName("Target type is FunctionTable")
     void targetTypeIsFunctionTable() {
         assertEquals(FunctionTable.class, parser.targetType());
-    }
-
-    @Test
-    @DisplayName("Match returns true for function call syntax")
-    void matchReturnsTrueForFunctionCallSyntax() {
-        var cur = io.sqm.parser.core.Cursor.of("func()", ctx.identifierQuoting());
-        assertTrue(parser.match(cur, ctx));
-    }
-
-    @Test
-    @DisplayName("Match returns false for non-function syntax")
-    void matchReturnsFalseForNonFunctionSyntax() {
-        var cur = io.sqm.parser.core.Cursor.of("table1", ctx.identifierQuoting());
-        assertFalse(parser.match(cur, ctx));
     }
 }

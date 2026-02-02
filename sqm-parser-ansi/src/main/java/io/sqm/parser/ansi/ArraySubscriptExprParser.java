@@ -3,6 +3,7 @@ package io.sqm.parser.ansi;
 import io.sqm.core.ArraySubscriptExpr;
 import io.sqm.core.Expression;
 import io.sqm.core.dialect.SqlFeature;
+import io.sqm.parser.AtomicExprParser;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.InfixParser;
@@ -16,6 +17,13 @@ import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 public class ArraySubscriptExprParser implements MatchableParser<ArraySubscriptExpr>, InfixParser<Expression, ArraySubscriptExpr> {
+
+    private final AtomicExprParser atomicParser;
+
+    public ArraySubscriptExprParser(AtomicExprParser atomicParser) {
+        this.atomicParser = atomicParser;
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -28,7 +36,7 @@ public class ArraySubscriptExprParser implements MatchableParser<ArraySubscriptE
         if (!ctx.capabilities().supports(SqlFeature.ARRAY_SUBSCRIPT)) {
             return error("Array subscripts are not supported by this dialect", cur.fullPos());
         }
-        var left = ctx.parse(Expression.class, cur);
+        var left = atomicParser.parse(cur, ctx);
         if (left.isError()) {
             return error(left);
         }

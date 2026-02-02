@@ -152,7 +152,7 @@ class AtomicExprParserTest {
     private static final class AtomicExprWrapper implements Parser<Expression> {
         @Override
         public ParseResult<? extends Expression> parse(Cursor cur, ParseContext ctx) {
-            return new AtomicExprParser().parse(cur, ctx);
+            return new PostfixExprParser(new AtomicExprParser()).parse(cur, ctx);
         }
 
         @Override

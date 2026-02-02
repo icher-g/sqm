@@ -3,6 +3,7 @@ package io.sqm.parser.ansi;
 import io.sqm.core.ArraySliceExpr;
 import io.sqm.core.Expression;
 import io.sqm.core.dialect.SqlFeature;
+import io.sqm.parser.AtomicExprParser;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.*;
@@ -13,6 +14,13 @@ import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 public class ArraySliceExprParser implements MatchableParser<ArraySliceExpr>, InfixParser<Expression, ArraySliceExpr> {
+
+    private final AtomicExprParser atomicParser;
+
+    public ArraySliceExprParser(AtomicExprParser atomicParser) {
+        this.atomicParser = atomicParser;
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -25,7 +33,7 @@ public class ArraySliceExprParser implements MatchableParser<ArraySliceExpr>, In
         if (!ctx.capabilities().supports(SqlFeature.ARRAY_SLICE)) {
             return error("Array slices are not supported by this dialect", cur.fullPos());
         }
-        var left = ctx.parse(Expression.class, cur);
+        var left = atomicParser.parse(cur, ctx);
         if (left.isError()) {
             return error(left);
         }
