@@ -126,7 +126,9 @@ class AtomicExprParserTest {
             .register(ColumnExpr.class, new ColumnExprParser())
             .register(LiteralExpr.class, new LiteralExprParser())
             .register(ArraySubscriptExpr.class, new ArraySubscriptExprParser())
-            .register(ArraySliceExpr.class, new ArraySliceExprParser());
+            .register(ArraySliceExpr.class, new ArraySliceExprParser())
+            .register(AtTimeZoneExpr.class, new NoMatchParser<>(AtTimeZoneExpr.class))
+            .register(AtTimeZoneExpr.class, new NoMatchInfixParser<>(AtTimeZoneExpr.class));
         return TestSupport.context(repo);
     }
 
@@ -145,7 +147,9 @@ class AtomicExprParserTest {
             .register(ArraySliceExpr.class, new NoMatchInfixParser<>(ArraySliceExpr.class))
             .register(RowExpr.class, new RowExprParser())
             .register(ColumnExpr.class, new ColumnExprParser())
-            .register(LiteralExpr.class, new LiteralExprParser());
+            .register(LiteralExpr.class, new LiteralExprParser())
+            .register(AtTimeZoneExpr.class, new NoMatchParser<>(AtTimeZoneExpr.class))
+            .register(AtTimeZoneExpr.class, new NoMatchInfixParser<>(AtTimeZoneExpr.class));
         return TestSupport.context(repo);
     }
 

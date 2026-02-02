@@ -1061,6 +1061,24 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
+     * Visits an {@link AtTimeZoneExpr}}.
+     * <p>
+     * This represents a PostgreSQL {@code <expr> AT TIME ZONE <timezone>} expression
+     * used for timezone conversion of timestamp values.
+     * <p>
+     * The visitor is applied recursively to both the timestamp and timezone expressions.
+     *
+     * @param expr AT TIME ZONE expression being visited
+     * @return the visitor result produced by {@link #defaultResult()}
+     */
+    @Override
+    public R visitAtTimeZoneExpr(AtTimeZoneExpr expr) {
+        accept(expr.timestamp());
+        accept(expr.timezone());
+        return defaultResult();
+    }
+
+    /**
      * Visits an {@link ArrayExpr}.
      * <p>
      * The visitor is applied recursively to each array element expression.

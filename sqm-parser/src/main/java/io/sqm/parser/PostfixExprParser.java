@@ -94,6 +94,14 @@ public class PostfixExprParser {
                 if (left.isError()) return left;
                 continue;
             }
+
+            // support of PostgreSQL AT TIME ZONE
+            matched = ctx.parseIfMatch(AtTimeZoneExpr.class, left.value(), cur);
+            if (matched.match()) {
+                left = matched.result();
+                if (left.isError()) return left;
+                continue;
+            }
             break;
         }
 

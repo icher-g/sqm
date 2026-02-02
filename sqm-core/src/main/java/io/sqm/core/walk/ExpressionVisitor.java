@@ -275,8 +275,19 @@ public interface ExpressionVisitor<R> {
      */
     R visitCastExpr(CastExpr expr);
 
-    /**
-     * Visits an {@link ArrayExpr}.
+    /**     * Visits an {@link AtTimeZoneExpr}}.
+     * <p>
+     * This represents a PostgreSQL {@code <expr> AT TIME ZONE <timezone>} expression
+     * used for timezone conversion of timestamp values.
+     * <p>
+     * The visitor is applied recursively to both the timestamp and timezone expressions.
+     *
+     * @param expr AT TIME ZONE expression being visited
+     * @return visitor result
+     */
+    R visitAtTimeZoneExpr(AtTimeZoneExpr expr);
+
+    /**     * Visits an {@link ArrayExpr}.
      * <p>
      * The visitor is applied recursively to each array element expression.
      * No transformation is performed by this method; it is intended for traversal,

@@ -414,6 +414,25 @@ public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
      * @return the computed result, never {@code null} unless produced by the handler
      */
     @Override
+    public ExpressionMatch<R> atTimeZone(Function<AtTimeZoneExpr, R> f) {
+        if (!matched && expr instanceof AtTimeZoneExpr atTimeZoneExpr) {
+            result = f.apply(atTimeZoneExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Terminal operation for this match chain.
+     * <p>
+     * Executes the first matching branch that was previously registered.
+     * If none of the registered type handlers matched the input object,
+     * the given fallback function will be applied.
+     *
+     * @param f a function providing a fallback value if no match occurred
+     * @return the computed result, never {@code null} unless produced by the handler
+     */
+    @Override
     public R otherwise(Function<Expression, R> f) {
         return matched ? result : f.apply(expr);
     }
