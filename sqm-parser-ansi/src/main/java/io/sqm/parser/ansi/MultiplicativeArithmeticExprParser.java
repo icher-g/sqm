@@ -1,7 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.*;
-import io.sqm.parser.AtomicExprParser;
+import io.sqm.parser.PostfixExprParser;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
@@ -12,9 +12,9 @@ import static io.sqm.parser.spi.ParseResult.error;
 
 public class MultiplicativeArithmeticExprParser implements Parser<Expression> {
 
-    private final AtomicExprParser atomicExprParser;
+    private final PostfixExprParser atomicExprParser;
 
-    public MultiplicativeArithmeticExprParser(AtomicExprParser atomicExprParser) {
+    public MultiplicativeArithmeticExprParser(PostfixExprParser atomicExprParser) {
         this.atomicExprParser = atomicExprParser;
     }
 

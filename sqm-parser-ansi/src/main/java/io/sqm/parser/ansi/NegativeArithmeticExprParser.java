@@ -2,7 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.Expression;
 import io.sqm.core.NegativeArithmeticExpr;
-import io.sqm.parser.AtomicExprParser;
+import io.sqm.parser.PostfixExprParser;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
@@ -15,9 +15,9 @@ import static io.sqm.parser.spi.ParseResult.ok;
 
 public class NegativeArithmeticExprParser implements Parser<NegativeArithmeticExpr> {
 
-    private final AtomicExprParser atomicExprParser;
+    private final PostfixExprParser atomicExprParser;
 
-    public NegativeArithmeticExprParser(AtomicExprParser atomicExprParser) {
+    public NegativeArithmeticExprParser(PostfixExprParser atomicExprParser) {
         this.atomicExprParser = atomicExprParser;
     }
 

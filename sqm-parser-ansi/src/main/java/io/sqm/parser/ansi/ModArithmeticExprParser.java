@@ -2,7 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.Expression;
 import io.sqm.core.ModArithmeticExpr;
-import io.sqm.parser.AtomicExprParser;
+import io.sqm.parser.PostfixExprParser;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.ParserException;
 import io.sqm.parser.core.TokenType;
@@ -17,9 +17,9 @@ import static io.sqm.parser.spi.ParseResult.ok;
 
 public class ModArithmeticExprParser implements Parser<ModArithmeticExpr>, InfixParser<Expression, ModArithmeticExpr> {
 
-    private final AtomicExprParser atomicExprParser;
+    private final PostfixExprParser atomicExprParser;
 
-    public ModArithmeticExprParser(AtomicExprParser atomicExprParser) {
+    public ModArithmeticExprParser(PostfixExprParser atomicExprParser) {
         this.atomicExprParser = atomicExprParser;
     }
 

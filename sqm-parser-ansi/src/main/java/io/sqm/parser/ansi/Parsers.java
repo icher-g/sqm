@@ -18,6 +18,7 @@ public final class Parsers {
         var atomicExprParser = new AtomicExprParser();
         var atomicPredicateParser = new AtomicPredicateParser();
         var atomicQueryParser = new AtomicQueryParser();
+        var postfixExprParser = new PostfixExprParser(atomicExprParser);
         return r
             .register(new QueryParser())
             .register(new WithQueryParser())
@@ -99,13 +100,13 @@ public final class Parsers {
             .register(new NamedParamExprParser())
             .register(new OrdinalParamExprParser())
             .register(new ArithmeticExprParser())
-            .register(new NegativeArithmeticExprParser(atomicExprParser))
-            .register(new ModArithmeticExprParser(atomicExprParser))
+            .register(new NegativeArithmeticExprParser(postfixExprParser))
+            .register(new ModArithmeticExprParser(postfixExprParser))
             .register(new AddArithmeticExprParser())
             .register(new SubArithmeticExprParser())
-            .register(new MulArithmeticExprParser(atomicExprParser))
-            .register(new DivArithmeticExprParser(atomicExprParser))
-            .register(new MultiplicativeArithmeticExprParser(atomicExprParser))
+            .register(new MulArithmeticExprParser(postfixExprParser))
+            .register(new DivArithmeticExprParser(postfixExprParser))
+            .register(new MultiplicativeArithmeticExprParser(postfixExprParser))
             .register(new AdditiveArithmeticExprParser())
             .register(new ArrayExprParser())
             .register(new BinaryOperatorExprParser())
@@ -117,8 +118,8 @@ public final class Parsers {
             .register(new LateralParser())
             .register(new FunctionTableParser())
             .register(new LockingClauseParser())
-            .register(new ArraySubscriptExprParser())
-            .register(new ArraySliceExprParser())
+            .register(new ArraySubscriptExprParser(atomicExprParser))
+            .register(new ArraySliceExprParser(atomicExprParser))
             .register(new DistinctSpecParser());
     }
 }

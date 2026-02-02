@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.ArraySliceExpr;
+import io.sqm.parser.AtomicExprParser;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,26 +12,28 @@ import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for {@link ArraySliceExprParser} in ANSI dialect.
+ * Unit tests for {@link ArraySliceExprParser}.
  *
- * <p>Note: ANSI SQL does not support array slicing, so all tests should fail.</p>
+ * <p>Tests both feature rejection (ANSI) and actual parsing logic (TestSpecs).</p>
  */
-@DisplayName("ANSI ArraySliceExprParser Tests")
+@DisplayName("ArraySliceExprParser Tests")
 class ArraySliceExprParserTest {
 
-    private ParseContext ctx;
+    private ParseContext ansiCtx;
+    private ParseContext testCtx;
     private ArraySliceExprParser parser;
 
     @BeforeEach
     void setUp() {
-        ctx = ParseContext.of(new AnsiSpecs());
-        parser = new ArraySliceExprParser();
+        ansiCtx = ParseContext.of(new AnsiSpecs());
+        testCtx = ParseContext.of(new TestSpecs());
+        parser = new ArraySliceExprParser(new AtomicExprParser());
     }
 
     @Test
     @DisplayName("Parse array slice is not supported in ANSI")
     void parseArraySliceNotSupported() {
-        var result = ctx.parse(ArraySliceExpr.class, "arr[1:3]");
+        var result = ansiCtx.parse(ArraySliceExpr.class, "arr[1:3]");
 
         assertFalse(result.ok());
         assertNotNull(result.errorMessage());
@@ -40,7 +43,7 @@ class ArraySliceExprParserTest {
     @Test
     @DisplayName("Parse array slice with both bounds is not supported")
     void parseArraySliceWithBothBoundsNotSupported() {
-        var result = ctx.parse(ArraySliceExpr.class, "col[2:5]");
+        var result = ansiCtx.parse(ArraySliceExpr.class, "col[2:5]");
 
         assertFalse(result.ok());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Array slices are not supported"));
@@ -49,7 +52,7 @@ class ArraySliceExprParserTest {
     @Test
     @DisplayName("Parse array slice with missing from bound is not supported")
     void parseArraySliceWithMissingFromNotSupported() {
-        var result = ctx.parse(ArraySliceExpr.class, "arr[:5]");
+        var result = ansiCtx.parse(ArraySliceExpr.class, "arr[:5]");
 
         assertFalse(result.ok());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Array slices are not supported"));
@@ -58,7 +61,7 @@ class ArraySliceExprParserTest {
     @Test
     @DisplayName("Parse array slice with missing to bound is not supported")
     void parseArraySliceWithMissingToNotSupported() {
-        var result = ctx.parse(ArraySliceExpr.class, "arr[2:]");
+        var result = ansiCtx.parse(ArraySliceExpr.class, "arr[2:]");
 
         assertFalse(result.ok());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Array slices are not supported"));
@@ -67,10 +70,58 @@ class ArraySliceExprParserTest {
     @Test
     @DisplayName("Parse array slice with no bounds is not supported")
     void parseArraySliceWithNoBoundsNotSupported() {
-        var result = ctx.parse(ArraySliceExpr.class, "arr[:]");
+        var result = ansiCtx.parse(ArraySliceExpr.class, "arr[:]");
 
         assertFalse(result.ok());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Array slices are not supported"));
+    }
+
+    @Test
+    @DisplayName("Parse array slice with both bounds")
+    void parseArraySliceWithBothBounds() {
+        var result = testCtx.parse(ArraySliceExpr.class, "arr[1:3]");
+
+        assertTrue(result.ok());
+        var expr = result.value();
+        assertNotNull(expr);
+        assertTrue(expr.from().isPresent());
+        assertTrue(expr.to().isPresent());
+    }
+
+    @Test
+    @DisplayName("Parse array slice with only from bound")
+    void parseArraySliceWithOnlyFrom() {
+        var result = testCtx.parse(ArraySliceExpr.class, "col[2:]");
+
+        assertTrue(result.ok());
+        var expr = result.value();
+        assertNotNull(expr);
+        assertTrue(expr.from().isPresent());
+        assertTrue(expr.to().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Parse array slice with only to bound")
+    void parseArraySliceWithOnlyTo() {
+        var result = testCtx.parse(ArraySliceExpr.class, "arr[:5]");
+
+        assertTrue(result.ok());
+        var expr = result.value();
+        assertNotNull(expr);
+        assertTrue(expr.from().isEmpty());
+        assertTrue(expr.to().isPresent());
+    }
+
+    @Test
+    @DisplayName("Parse array slice with no bounds")
+    void parseArraySliceWithNoBounds() {
+        var result = testCtx.parse(ArraySliceExpr.class, "data[:]");
+
+        assertTrue(result.ok());
+        var expr = result.value();
+        assertNotNull(expr);
+        assertTrue(expr.from().isEmpty());
+        assertTrue(expr.to().isEmpty());
     }
 
     @Test
@@ -79,7 +130,7 @@ class ArraySliceExprParserTest {
         // Even if syntax looks like slice, ANSI doesn't support it
         // so the match behavior depends on implementation
         // The parser itself will reject it during parse
-        assertFalse(ctx.parse(ArraySliceExpr.class, "arr[1:3]").ok());
+        assertFalse(ansiCtx.parse(ArraySliceExpr.class, "arr[1:3]").ok());
     }
 
     @Test
