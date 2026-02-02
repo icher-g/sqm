@@ -3,6 +3,7 @@ package io.sqm.render.spi;
 import io.sqm.core.Node;
 import io.sqm.core.OrdinalParamExpr;
 import io.sqm.core.collect.ParametersCollector;
+import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.transform.ParameterizeLiteralsTransformer;
 
 import java.util.List;
@@ -94,7 +95,7 @@ public interface SqlDialect {
      *
      * @return dialect capabilities
      */
-    io.sqm.core.dialect.DialectCapabilities capabilities();
+    DialectCapabilities capabilities();
 
     /**
      * Gets renderers repository.

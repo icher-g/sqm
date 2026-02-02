@@ -146,7 +146,12 @@ public enum SqlFeature {
     /**
      * Dialect-specific binary operators not covered by standard SQL.
      */
-    CUSTOM_OPERATOR("Dialect-specific binary operators");
+    CUSTOM_OPERATOR("Dialect-specific binary operators"),
+    /**
+     * PostgreSQL AT TIME ZONE operator for timezone conversion.
+     * Example: {@code timestamp_col AT TIME ZONE 'UTC'}
+     */
+    AT_TIME_ZONE("PostgreSQL AT TIME ZONE operator");
 
     private final String description;
 

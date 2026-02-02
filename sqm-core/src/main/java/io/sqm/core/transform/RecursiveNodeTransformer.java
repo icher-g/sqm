@@ -1211,6 +1211,29 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
+     * Transforms an {@link AtTimeZoneExpr}.
+     * <p>
+     * The transformer is applied recursively to both the timestamp and timezone expressions.
+     * If neither expression is changed by the transformation, the original
+     * {@code AtTimeZoneExpr} instance is returned to preserve structural sharing.
+     * <p>
+     * If at least one expression changes, a new {@code AtTimeZoneExpr} is created with
+     * the transformed expressions.
+     *
+     * @param expr AT TIME ZONE expression to transform
+     * @return the original expression if unchanged, otherwise a new transformed instance
+     */
+    @Override
+    public Node visitAtTimeZoneExpr(AtTimeZoneExpr expr) {
+        var timestamp = apply(expr.timestamp());
+        var timezone = apply(expr.timezone());
+        if (timestamp == expr.timestamp() && timezone == expr.timezone()) {
+            return expr;
+        }
+        return AtTimeZoneExpr.of(timestamp, timezone);
+    }
+
+    /**
      * Transforms an {@link ArrayExpr}.
      * <p>
      * The transformer is applied recursively to each element expression.

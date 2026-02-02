@@ -185,6 +185,18 @@ public final class Cursor {
     }
 
     /**
+     * Validates if current token type and lexeme are the same as the specified.
+     *
+     * @param type   the type to match.
+     * @param lexeme the lexeme to match.
+     * @return True if the current token type matches the provided one.
+     */
+    public boolean match(TokenType type, String lexeme) {
+        var t = peek();
+        return t.type() == type && t.lexeme().equalsIgnoreCase(lexeme);
+    }
+
+    /**
      * Validates if current token type is the same as the provided one.
      *
      * @param func the custom function to match.
@@ -209,9 +221,25 @@ public final class Cursor {
     }
 
     /**
+     * Validates if current token type and lexeme with respect to a lookahead position are the same as specified.
+     *
+     * @param type      the type to match.
+     * @param lexeme    the lexeme to match.
+     * @param lookahead the lookahead position.
+     * @return True if the token type matches the provided one.
+     */
+    public boolean match(TokenType type, String lexeme, int lookahead) {
+        if (lookahead >= tokens.size()) {
+            return false;
+        }
+        var t = peek(lookahead);
+        return t.type() == type && t.lexeme().equalsIgnoreCase(lexeme);
+    }
+
+    /**
      * Validates if current token type with respect to a lookahead position is the same as the provided one.
      *
-     * @param func the custom function to match.
+     * @param func      the custom function to match.
      * @param lookahead the lookahead position.
      * @return True if the token type matches the provided one.
      */

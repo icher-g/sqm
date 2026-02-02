@@ -18,6 +18,7 @@ Node
 │  ├─ ArrayExpr
 │  ├─ ArraySubscriptExpr
 │  ├─ ArraySliceExpr
+│  ├─ AtTimeZoneExpr
 │  ├─ ColumnExpr
 │  ├─ FunctionExpr
 │  │  └─ FunctionExpr.Arg
@@ -347,6 +348,13 @@ graph TD
 
 - **ArraySliceExpr**
   Array slice expression (`array[lower:upper]`). Represents slice notation for extracting a subarray. Either bound may be omitted (e.g., `array[:5]` or `array[2:]`), with semantics determined by the SQL dialect.
+
+- **AtTimeZoneExpr**
+  PostgreSQL-specific timezone conversion expression (`<timestamp_expr> AT TIME ZONE <timezone_expr>`). 
+  Converts a timestamp to a different time zone. The expression represents both a timestamp value 
+  and a timezone identifier (which can be a string literal or expression). This node is not supported 
+  by the ANSI SQL parser and renderer; it is only available through the DSL for testing purposes or 
+  for use with PostgreSQL-specific parser and renderer implementations.
 
 ---
 

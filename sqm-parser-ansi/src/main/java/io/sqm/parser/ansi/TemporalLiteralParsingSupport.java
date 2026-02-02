@@ -14,11 +14,11 @@ final class TemporalLiteralParsingSupport {
             return offset;
         }
         int p = offset + 1;
-        if (!cur.match(TokenType.IDENT, p) || !cur.peek(p).lexeme().equalsIgnoreCase("time")) {
+        if (!cur.match(TokenType.IDENT, "time", p)) {
             return -1;
         }
         p++;
-        if (!cur.match(TokenType.IDENT, p) || !cur.peek(p).lexeme().equalsIgnoreCase("zone")) {
+        if (!cur.match(TokenType.IDENT, "zone", p)) {
             return -1;
         }
         return p + 1;

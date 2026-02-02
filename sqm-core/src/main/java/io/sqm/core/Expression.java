@@ -9,7 +9,7 @@ import java.util.List;
  * Any value-producing node (scalar or boolean).
  */
 public sealed interface Expression extends Node
-    permits ArithmeticExpr, ArrayExpr, ArraySliceExpr, ArraySubscriptExpr, BinaryOperatorExpr, CaseExpr, CastExpr, ColumnExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, ParamExpr, Predicate, UnaryOperatorExpr, ValueSet {
+    permits ArithmeticExpr, ArrayExpr, ArraySliceExpr, ArraySubscriptExpr, AtTimeZoneExpr, BinaryOperatorExpr, CaseExpr, CastExpr, ColumnExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, ParamExpr, Predicate, UnaryOperatorExpr, ValueSet {
 
     /**
      * Creates a literal expression.
@@ -790,6 +790,30 @@ public sealed interface Expression extends Node
      */
     default CastExpr cast(TypeName type) {
         return CastExpr.of(this, type);
+    }
+
+    /**
+     * Creates an AT TIME ZONE expression to convert this timestamp to a different time zone.
+     * <p>
+     * This models PostgreSQL {@code <expr> AT TIME ZONE <timezone>}.
+     * <p>
+     * The timezone argument can be:
+     * <ul>
+     *   <li>A string literal (e.g., {@code lit("UTC")}, {@code lit("America/New_York")})</li>
+     *   <li>A column reference (e.g., {@code col("tz_column")})</li>
+     *   <li>An interval expression (e.g., {@code lit(interval("-05:00"))})</li>
+     * </ul>
+     *
+     * <pre>{@code
+     * col("ts_column").atTimeZone(lit("UTC"))
+     * col("ts_column").atTimeZone(col("timezone_column"))
+     * }</pre>
+     *
+     * @param timezone the target time zone expression
+     * @return AT TIME ZONE expression
+     */
+    default AtTimeZoneExpr atTimeZone(Expression timezone) {
+        return AtTimeZoneExpr.of(this, timezone);
     }
 
     /**

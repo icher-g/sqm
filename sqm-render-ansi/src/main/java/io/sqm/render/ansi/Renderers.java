@@ -92,6 +92,7 @@ public final class Renderers {
             .register(new BinaryOperatorExprRenderer())
             .register(new UnaryOperatorExprRenderer())
             .register(new CastExprRenderer())
+            .register(new AtTimeZoneExprRenderer())
             .register(new ArrayExprRenderer())
             .register(new LimitOffsetRenderer())
             .register(new TypeNameRenderer())
