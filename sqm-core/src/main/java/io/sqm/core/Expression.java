@@ -817,6 +817,26 @@ public sealed interface Expression extends Node
     }
 
     /**
+     * Creates {@code this ^ exponent}.
+     *
+     * @param exponent an exponent expression.
+     * @return exponent expression.
+     */
+    default PowerArithmeticExpr pow(Expression exponent) {
+        return PowerArithmeticExpr.of(this, exponent);
+    }
+
+    /**
+     * Creates {@code this ^ exponent}.
+     *
+     * @param exponent an exponent.
+     * @return exponent expression.
+     */
+    default PowerArithmeticExpr pow(int exponent) {
+        return pow(literal(exponent));
+    }
+
+    /**
      * Creates a new matcher for the current {@link Expression}.
      *
      * @param <R> the result type produced by the match

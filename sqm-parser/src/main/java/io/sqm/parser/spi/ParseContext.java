@@ -1,6 +1,7 @@
 package io.sqm.parser.spi;
 
 import io.sqm.core.Node;
+import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.parser.DefaultParseContext;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.ParserException;
@@ -64,7 +65,14 @@ public interface ParseContext {
      *
      * @return dialect capabilities
      */
-    io.sqm.core.dialect.DialectCapabilities capabilities();
+    DialectCapabilities capabilities();
+
+    /**
+     * Returns an operator policy per dialect.
+     *
+     * @return operator policy.
+     */
+    OperatorPolicy operatorPolicy();
 
     /**
      * Returns the logical parse call stack maintained by this context.

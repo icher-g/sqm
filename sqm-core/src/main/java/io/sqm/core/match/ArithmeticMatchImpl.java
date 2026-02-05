@@ -147,6 +147,25 @@ public class ArithmeticMatchImpl<R> implements ArithmeticMatch<R> {
     }
 
     /**
+     * Registers a handler for {@link PowerArithmeticExpr} expressions.
+     * <p>
+     * This matcher is invoked for exponentiation expressions using the
+     * PostgreSQL {@code ^} operator, which has higher precedence than
+     * multiplicative and additive arithmetic operators.
+     *
+     * @param f a function that handles {@link PowerArithmeticExpr} instances
+     * @return this matcher for fluent chaining
+     */
+    @Override
+    public ArithmeticMatch<R> pow(Function<PowerArithmeticExpr, R> f) {
+        if (!matched && expr instanceof PowerArithmeticExpr e) {
+            result = f.apply(e);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
      * Terminal operation for this match chain.
      * <p>
      * Executes the first matching branch that was previously registered.

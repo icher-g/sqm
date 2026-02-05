@@ -9,6 +9,6 @@ package io.sqm.core;
  * unary operations (e.g. {@code -expr}).</p>
  */
 public sealed interface ArithmeticExpr extends Expression
-    permits BinaryArithmeticExpr, NegativeArithmeticExpr {
+    permits BinaryArithmeticExpr, NegativeArithmeticExpr, PowerArithmeticExpr {
 }
 

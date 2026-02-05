@@ -59,6 +59,16 @@ public class DefaultParseContext implements ParseContext {
     }
 
     /**
+     * Returns an operator policy per dialect.
+     *
+     * @return operator policy.
+     */
+    @Override
+    public OperatorPolicy operatorPolicy() {
+        return specs.operatorPolicy();
+    }
+
+    /**
      * Gets a current callstack.
      *
      * @return a current callstack.

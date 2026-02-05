@@ -333,5 +333,17 @@ public interface ExpressionVisitor<R> {
      * @return the result of visiting the expression
      */
     R visitArraySliceExpr(ArraySliceExpr expr);
+
+    /**
+     * Visits a {@link PowerArithmeticExpr} node.
+     * <p>
+     * Represents PostgreSQL exponentiation using the {@code ^} operator.
+     * The operator has higher precedence than multiplicative and additive
+     * arithmetic operators.
+     *
+     * @param expr the exponentiation expression to visit
+     * @return a result defined by the visitor implementation
+     */
+    R visitPowerArithmeticExpr(PowerArithmeticExpr expr);
 }
 

@@ -5,26 +5,16 @@ import io.sqm.core.BinaryOperatorExpr;
 import io.sqm.core.Expression;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
-import io.sqm.parser.core.Token;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.InfixParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-import static io.sqm.parser.core.OperatorTokens.*;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 public class BinaryOperatorExprParser implements Parser<Expression>, InfixParser<Expression, BinaryOperatorExpr> {
-    private static boolean isGenericBinaryOperator(Token t) {
-        return isBinaryOperatorToken(t) && !isArithmetic(t) && !isComparison(t) && !isRegex(t);
-    }
-
-    private static boolean isBinaryOperatorToken(Token t) {
-        return t.type() == TokenType.OPERATOR || t.type() == TokenType.QMARK;
-    }
-
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -39,7 +29,7 @@ public class BinaryOperatorExprParser implements Parser<Expression>, InfixParser
             return lhs;
         }
 
-        while (isGenericBinaryOperator(cur.peek())) {
+        while (ctx.operatorPolicy().isGenericBinaryOperator(cur.peek())) {
             if (!ctx.capabilities().supports(SqlFeature.CUSTOM_OPERATOR)) {
                 return error("Dialect does not support custom operators", cur.fullPos());
             }

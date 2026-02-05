@@ -74,6 +74,23 @@ class ArithmeticMatchTest {
         assertEquals("mod", kind);
     }
 
+    @Test
+    void pow_branch_is_invoked_for_PowerArithmeticExpr() {
+        ArithmeticExpr expr = PowerArithmeticExpr.of(lit(2), lit(3));
+
+        String kind = ArithmeticMatch.<String>match(expr)
+            .add(a -> "add")
+            .sub(s -> "sub")
+            .mul(m -> "mul")
+            .div(d -> "div")
+            .mod(mo -> "mod")
+            .neg(n -> "neg")
+            .pow(p -> "pow")
+            .otherwise(a -> "other");
+
+        assertEquals("pow", kind);
+    }
+
     // -------------------------------------------------------------------------
     // Fallback: otherwise(...)
     // -------------------------------------------------------------------------

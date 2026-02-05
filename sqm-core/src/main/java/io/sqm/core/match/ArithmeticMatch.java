@@ -100,5 +100,17 @@ public interface ArithmeticMatch<R> extends Match<ArithmeticExpr, R> {
      * @return this matcher instance for chaining
      */
     ArithmeticMatch<R> neg(Function<NegativeArithmeticExpr, R> f);
+
+    /**
+     * Registers a handler for {@link PowerArithmeticExpr} expressions.
+     * <p>
+     * This matcher is invoked for exponentiation expressions using the
+     * PostgreSQL {@code ^} operator, which has higher precedence than
+     * multiplicative and additive arithmetic operators.
+     *
+     * @param f a function that handles {@link PowerArithmeticExpr} instances
+     * @return this matcher for fluent chaining
+     */
+    ArithmeticMatch<R> pow(Function<PowerArithmeticExpr, R> f);
 }
 

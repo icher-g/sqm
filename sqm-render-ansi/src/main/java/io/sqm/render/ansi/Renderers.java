@@ -104,6 +104,7 @@ public final class Renderers {
             .register(new DistinctSpecRenderer())
             .register(new ArraySubscriptExprRenderer())
             .register(new ArraySliceExprRenderer())
-            .register(new UnaryPredicateRenderer());
+            .register(new UnaryPredicateRenderer())
+            .register(new PowerArithmeticExprRenderer());
     }
 }

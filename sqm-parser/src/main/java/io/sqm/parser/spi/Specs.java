@@ -1,5 +1,7 @@
 package io.sqm.parser.spi;
 
+import io.sqm.core.dialect.DialectCapabilities;
+
 public interface Specs {
     /**
      * Gets a parser's repository.
@@ -31,5 +33,12 @@ public interface Specs {
      *
      * @return dialect capabilities
      */
-    io.sqm.core.dialect.DialectCapabilities capabilities();
+    DialectCapabilities capabilities();
+
+    /**
+     * Returns an operator policy per dialect.
+     *
+     * @return operator policy.
+     */
+    OperatorPolicy operatorPolicy();
 }
