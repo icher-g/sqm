@@ -14,7 +14,7 @@ It enables **bidirectional transformations** between SQL, JSON, and DSL forms �
 
 - 🧩 **Structured model** — fully object-oriented representation of SQL (Query, Table, Column, Predicate, Join, etc.)
 - 🔁 **Bidirectional flow** — parse SQL → model → render SQL again (and JSON/DSL support)
-- 🧠 **Dialect-aware rendering** — ANSI core + SQL Server, PostgreSQL, etc.
+- 🧠 **Dialect-aware parsing/rendering** — ANSI core + PostgreSQL, etc.
 - 🧪 **Extensive test coverage** — golden-file round-trip tests and property-based validation
 - 🧰 **Builder DSL** — fluent helpers for programmatic query construction
 - 🧾 **JSON serialization** — Jackson mixins for all core model types
@@ -119,6 +119,40 @@ if (pr.isError()) {
 var query = pr.value();
 ```
 ---
+
+### PostgreSQL Dialect Support
+
+SQM includes PostgreSQL parsing and rendering with dialect-specific capabilities.
+
+```java
+var sql = """
+    SELECT a OPERATOR(pg_catalog.##) b
+    FROM t
+    WHERE ts AT TIME ZONE 'UTC' > now() - interval '1 day'
+""";
+
+var parseCtx = ParseContext.of(new PostgresSpecs());
+var query = parseCtx.parse(Query.class, sql).value();
+
+var renderCtx = RenderContext.of(new PostgresDialect());
+var rendered = renderCtx.render(query).sql();
+```
+
+Highlights:
+- Custom operators (including OPERATOR(...)) with PostgreSQL-style precedence tiers
+- PostgreSQL `::` type casts
+- Expression `COLLATE`
+- `AT TIME ZONE` expressions
+- Exponentiation operator (`^`)
+- DISTINCT ON
+- ILIKE / SIMILAR TO
+- IS DISTINCT FROM / IS NOT DISTINCT FROM
+- Regex predicates (~, ~*, !~, !~*)
+- Arrays (ARRAY literals, subscripts, slices)
+- LATERAL, function tables, WITH ORDINALITY
+- GROUPING SETS / ROLLUP / CUBE
+- ORDER BY ... USING
+- SELECT locking clauses (FOR UPDATE/SHARE, NOWAIT, SKIP LOCKED)
 
 ### Serialize to JSON
 
