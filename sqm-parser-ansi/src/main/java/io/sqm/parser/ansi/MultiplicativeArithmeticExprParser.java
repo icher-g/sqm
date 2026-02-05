@@ -1,7 +1,6 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.*;
-import io.sqm.parser.PostfixExprParser;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
@@ -12,12 +11,6 @@ import static io.sqm.parser.spi.ParseResult.error;
 
 public class MultiplicativeArithmeticExprParser implements Parser<Expression> {
 
-    private final PostfixExprParser atomicExprParser;
-
-    public MultiplicativeArithmeticExprParser(PostfixExprParser atomicExprParser) {
-        this.atomicExprParser = atomicExprParser;
-    }
-
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -27,7 +20,7 @@ public class MultiplicativeArithmeticExprParser implements Parser<Expression> {
      */
     @Override
     public ParseResult<? extends Expression> parse(Cursor cur, ParseContext ctx) {
-        var lhs = atomicExprParser.parse(cur, ctx);
+        ParseResult<? extends Expression> lhs = ctx.parse(PowerArithmeticExpr.class, cur);
         if (lhs.isError()) {
             return error(lhs);
         }

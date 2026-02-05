@@ -1,11 +1,9 @@
 package io.sqm.parser.postgresql.spi;
 
 import io.sqm.parser.ansi.AnsiLookups;
+import io.sqm.parser.ansi.AnsiOperatorPolicy;
 import io.sqm.parser.postgresql.Parsers;
-import io.sqm.parser.spi.IdentifierQuoting;
-import io.sqm.parser.spi.Lookups;
-import io.sqm.parser.spi.ParsersRepository;
-import io.sqm.parser.spi.Specs;
+import io.sqm.parser.spi.*;
 import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.core.dialect.SqlFeature;
@@ -18,6 +16,7 @@ public class PostgresSpecs implements Specs {
     private Lookups lookups;
     private IdentifierQuoting identifierQuoting;
     private DialectCapabilities capabilities;
+    private OperatorPolicy operatorPolicy;
     private final SqlDialectVersion version;
 
     /**
@@ -135,5 +134,18 @@ public class PostgresSpecs implements Specs {
                 .build();
         }
         return capabilities;
+    }
+
+    /**
+     * Returns an operator policy per dialect.
+     *
+     * @return operator policy.
+     */
+    @Override
+    public OperatorPolicy operatorPolicy() {
+        if (operatorPolicy == null) {
+            operatorPolicy = new PostgresOperatorPolicy(new AnsiOperatorPolicy());
+        }
+        return operatorPolicy;
     }
 }

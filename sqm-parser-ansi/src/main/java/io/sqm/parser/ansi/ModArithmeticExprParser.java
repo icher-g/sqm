@@ -2,7 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.Expression;
 import io.sqm.core.ModArithmeticExpr;
-import io.sqm.parser.PostfixExprParser;
+import io.sqm.core.PowerArithmeticExpr;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.ParserException;
 import io.sqm.parser.core.TokenType;
@@ -16,13 +16,6 @@ import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 public class ModArithmeticExprParser implements Parser<ModArithmeticExpr>, InfixParser<Expression, ModArithmeticExpr> {
-
-    private final PostfixExprParser atomicExprParser;
-
-    public ModArithmeticExprParser(PostfixExprParser atomicExprParser) {
-        this.atomicExprParser = atomicExprParser;
-    }
-
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -39,14 +32,14 @@ public class ModArithmeticExprParser implements Parser<ModArithmeticExpr>, Infix
 
         cur.expect("Expected (", TokenType.LPAREN);
 
-        var lhs = atomicExprParser.parse(cur, ctx);
+        var lhs = ctx.parse(PowerArithmeticExpr.class, cur);
         if (lhs.isError()) {
             return error(lhs);
         }
 
         cur.expect("Expected ,", TokenType.COMMA);
 
-        var rhs = atomicExprParser.parse(cur, ctx);
+        var rhs = ctx.parse(PowerArithmeticExpr.class, cur);
         if (rhs.isError()) {
             return error(rhs);
         }
@@ -73,7 +66,7 @@ public class ModArithmeticExprParser implements Parser<ModArithmeticExpr>, Infix
     public ParseResult<ModArithmeticExpr> parse(Expression lhs, Cursor cur, ParseContext ctx) {
         cur.expect("Expected %", t -> isPercent(t));
 
-        var rhs = atomicExprParser.parse(cur, ctx);
+        var rhs = ctx.parse(PowerArithmeticExpr.class, cur);
         if (rhs.isError()) {
             return error(rhs);
         }

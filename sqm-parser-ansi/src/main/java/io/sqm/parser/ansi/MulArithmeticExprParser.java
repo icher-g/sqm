@@ -2,7 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.Expression;
 import io.sqm.core.MulArithmeticExpr;
-import io.sqm.parser.PostfixExprParser;
+import io.sqm.core.PowerArithmeticExpr;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.InfixParser;
 import io.sqm.parser.spi.ParseContext;
@@ -14,13 +14,6 @@ import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 public class MulArithmeticExprParser implements Parser<MulArithmeticExpr>, InfixParser<Expression, MulArithmeticExpr> {
-
-    private final PostfixExprParser atomicExprParser;
-
-    public MulArithmeticExprParser(PostfixExprParser atomicExprParser) {
-        this.atomicExprParser = atomicExprParser;
-    }
-
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -30,7 +23,7 @@ public class MulArithmeticExprParser implements Parser<MulArithmeticExpr>, Infix
      */
     @Override
     public ParseResult<MulArithmeticExpr> parse(Cursor cur, ParseContext ctx) {
-        var lhs = atomicExprParser.parse(cur, ctx);
+        var lhs = ctx.parse(PowerArithmeticExpr.class, cur);
         if (lhs.isError()) {
             return error(lhs);
         }
@@ -55,7 +48,7 @@ public class MulArithmeticExprParser implements Parser<MulArithmeticExpr>, Infix
     public ParseResult<MulArithmeticExpr> parse(Expression lhs, Cursor cur, ParseContext ctx) {
         cur.expect("Expected *", t -> isStar(t));
 
-        var rhs = atomicExprParser.parse(cur, ctx);
+        var rhs = ctx.parse(PowerArithmeticExpr.class, cur);
         if (rhs.isError()) {
             return error(rhs);
         }

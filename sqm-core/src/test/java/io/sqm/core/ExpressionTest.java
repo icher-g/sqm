@@ -197,4 +197,20 @@ class ExpressionTest {
         assertInstanceOf(UnaryPredicate.class, unary);
         assertTrue(unary.<Boolean>matchPredicate().unary(u -> true).orElse(false));
     }
+
+    @Test
+    void powExpression() {
+        var expr = Expression.literal(2).pow(Expression.literal(3));
+        assertInstanceOf(PowerArithmeticExpr.class, expr);
+        assertEquals(2, expr.lhs().matchExpression().literal(l -> l.value()).orElse(null));
+        assertEquals(3, expr.rhs().matchExpression().literal(l -> l.value()).orElse(null));
+    }
+
+    @Test
+    void powIntExpression() {
+        var expr = Expression.literal(4).pow(2);
+        assertInstanceOf(PowerArithmeticExpr.class, expr);
+        assertEquals(4, expr.lhs().matchExpression().literal(l -> l.value()).orElse(null));
+        assertEquals(2, expr.rhs().matchExpression().literal(l -> l.value()).orElse(null));
+    }
 }

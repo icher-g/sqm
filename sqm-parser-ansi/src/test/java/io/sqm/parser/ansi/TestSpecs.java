@@ -4,10 +4,9 @@ import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.VersionedDialectCapabilities;
-import io.sqm.parser.spi.IdentifierQuoting;
-import io.sqm.parser.spi.Lookups;
-import io.sqm.parser.spi.ParsersRepository;
-import io.sqm.parser.spi.Specs;
+import io.sqm.parser.core.Token;
+import io.sqm.parser.core.TokenType;
+import io.sqm.parser.spi.*;
 
 import java.util.Objects;
 
@@ -28,10 +27,11 @@ import java.util.Objects;
  */
 public class TestSpecs implements Specs {
 
+    private final SqlDialectVersion version;
     private Lookups lookups;
     private IdentifierQuoting identifierQuoting;
     private DialectCapabilities capabilities;
-    private final SqlDialectVersion version;
+    private OperatorPolicy operatorPolicy;
 
     /**
      * Creates test specs with default SQL:2016 version and all features enabled.
@@ -89,5 +89,24 @@ public class TestSpecs implements Specs {
             capabilities = builder.build();
         }
         return capabilities;
+    }
+
+    /**
+     * Returns an operator policy per dialect.
+     *
+     * @return operator policy.
+     */
+    @Override
+    public OperatorPolicy operatorPolicy() {
+        if (operatorPolicy == null) {
+            operatorPolicy = new OperatorPolicy() {
+                private final OperatorPolicy operatorPolicy = new AnsiOperatorPolicy();
+                @Override
+                public boolean isGenericBinaryOperator(Token token) {
+                    return operatorPolicy.isGenericBinaryOperator(token) && !(token.type() == TokenType.OPERATOR && "^".equals(token.lexeme()));
+                }
+            };
+        }
+        return operatorPolicy;
     }
 }

@@ -2,7 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.Expression;
 import io.sqm.core.NegativeArithmeticExpr;
-import io.sqm.parser.PostfixExprParser;
+import io.sqm.core.PowerArithmeticExpr;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
@@ -14,13 +14,6 @@ import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 public class NegativeArithmeticExprParser implements Parser<NegativeArithmeticExpr> {
-
-    private final PostfixExprParser atomicExprParser;
-
-    public NegativeArithmeticExprParser(PostfixExprParser atomicExprParser) {
-        this.atomicExprParser = atomicExprParser;
-    }
-
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -37,7 +30,7 @@ public class NegativeArithmeticExprParser implements Parser<NegativeArithmeticEx
             result = ctx.parse(Expression.class, cur);
         }
         else {
-            result = atomicExprParser.parse(cur, ctx);
+            result = ctx.parse(PowerArithmeticExpr.class, cur);
         }
         if (result.isError()) {
             return error(result);

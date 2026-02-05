@@ -151,7 +151,12 @@ public enum SqlFeature {
      * PostgreSQL AT TIME ZONE operator for timezone conversion.
      * Example: {@code timestamp_col AT TIME ZONE 'UTC'}
      */
-    AT_TIME_ZONE("PostgreSQL AT TIME ZONE operator");
+    AT_TIME_ZONE("PostgreSQL AT TIME ZONE operator"),
+    /**
+     * PostgreSQL exponentiation operator.
+     * Example: {@code a ^ b}
+     */
+    EXPONENTIATION_OPERATOR("PostgreSQL exponentiation operator");
 
     private final String description;
 

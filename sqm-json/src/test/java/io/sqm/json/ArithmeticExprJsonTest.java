@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests JSON serialization/deserialization for all arithmetic expression types.
- * Covers Add, Sub, Mul, Div, Mod, and Negative arithmetic operations.
+ * Covers Add, Sub, Mul, Div, Mod, Negative, and Power arithmetic operations.
  */
 public class ArithmeticExprJsonTest {
 
@@ -133,6 +133,24 @@ public class ArithmeticExprJsonTest {
 
         JsonNode node = toTree(expr);
         assertEquals("neg", node.path("kind").asText());
+    }
+
+    @Test
+    @DisplayName("PowerArithmeticExpr: serialize and deserialize exponentiation")
+    void powerArithmeticExpr_roundTrip() throws Exception {
+        // base ^ exponent
+        var expr = col("base").pow(lit(2));
+
+        var back = roundTrip(expr, PowerArithmeticExpr.class);
+
+        assertNotNull(back);
+        assertInstanceOf(ColumnExpr.class, back.lhs());
+        assertInstanceOf(LiteralExpr.class, back.rhs());
+        assertEquals("base", back.lhs().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals(2, back.rhs().matchExpression().literal(l -> l.value()).orElse(null));
+
+        JsonNode node = toTree(expr);
+        assertEquals("pow", node.path("kind").asText());
     }
 
     @Test
