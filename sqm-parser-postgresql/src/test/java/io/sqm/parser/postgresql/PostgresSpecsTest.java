@@ -50,6 +50,7 @@ class PostgresSpecsTest {
         assertTrue(specs.capabilities().supports(SqlFeature.ROLLUP));
         assertTrue(specs.capabilities().supports(SqlFeature.CUBE));
         assertTrue(specs.capabilities().supports(SqlFeature.POSTGRES_TYPECAST));
+        assertTrue(specs.capabilities().supports(SqlFeature.EXPONENTIATION_OPERATOR));
     }
 
     @Test
