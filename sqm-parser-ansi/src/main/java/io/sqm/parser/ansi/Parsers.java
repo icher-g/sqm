@@ -100,13 +100,13 @@ public final class Parsers {
             .register(new NamedParamExprParser())
             .register(new OrdinalParamExprParser())
             .register(new ArithmeticExprParser())
-            .register(new NegativeArithmeticExprParser(postfixExprParser))
-            .register(new ModArithmeticExprParser(postfixExprParser))
+            .register(new NegativeArithmeticExprParser())
+            .register(new ModArithmeticExprParser())
             .register(new AddArithmeticExprParser())
             .register(new SubArithmeticExprParser())
-            .register(new MulArithmeticExprParser(postfixExprParser))
-            .register(new DivArithmeticExprParser(postfixExprParser))
-            .register(new MultiplicativeArithmeticExprParser(postfixExprParser))
+            .register(new MulArithmeticExprParser())
+            .register(new DivArithmeticExprParser())
+            .register(new MultiplicativeArithmeticExprParser())
             .register(new AdditiveArithmeticExprParser())
             .register(new ArrayExprParser())
             .register(new BinaryOperatorExprParser())
@@ -121,6 +121,7 @@ public final class Parsers {
             .register(new LockingClauseParser())
             .register(new ArraySubscriptExprParser(atomicExprParser))
             .register(new ArraySliceExprParser(atomicExprParser))
-            .register(new DistinctSpecParser());
+            .register(new DistinctSpecParser())
+            .register(new PowerArithmeticExprParser(postfixExprParser));
     }
 }

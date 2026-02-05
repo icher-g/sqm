@@ -1257,4 +1257,33 @@ class RecursiveNodeTransformerTest {
         assertInstanceOf(LiteralExpr.class, l);
         assertEquals(-7L, ((LiteralExpr) l).value());
     }
+
+    @Test
+    void visitPowerArithmeticExpr() {
+        var e = lit(2).pow(lit(3));
+        var increaseTransformer = new RecursiveNodeTransformer() {
+            public int expected = 0;
+
+            @Override
+            public Node visitLiteralExpr(LiteralExpr l) {
+                if (l.value().equals(expected)) {
+                    return lit(Literals.add(l, lit(1)));
+                }
+                return l;
+            }
+        };
+
+        increaseTransformer.expected = 2; // transform only base literal
+        e = (PowerArithmeticExpr) e.accept(increaseTransformer);
+        assertEquals(3L, ((LiteralExpr) e.lhs()).value());
+        assertEquals(3, ((LiteralExpr) e.rhs()).value());
+
+        increaseTransformer.expected = 3; // transform exponent literal
+        e = (PowerArithmeticExpr) e.accept(increaseTransformer);
+        assertEquals(4L, ((LiteralExpr) e.rhs()).value());
+
+        increaseTransformer.expected = 0; // do not transform any literal
+        var unchanged = e.accept(increaseTransformer);
+        assertSame(e, unchanged);
+    }
 }

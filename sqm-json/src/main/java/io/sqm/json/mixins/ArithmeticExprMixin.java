@@ -15,7 +15,8 @@ import io.sqm.core.*;
     @JsonSubTypes.Type(value = DivArithmeticExpr.Impl.class, name = "div"),
     @JsonSubTypes.Type(value = ModArithmeticExpr.Impl.class, name = "mod"),
     @JsonSubTypes.Type(value = MulArithmeticExpr.Impl.class, name = "mul"),
-    @JsonSubTypes.Type(value = NegativeArithmeticExpr.Impl.class, name = "neg")
+    @JsonSubTypes.Type(value = NegativeArithmeticExpr.Impl.class, name = "neg"),
+    @JsonSubTypes.Type(value = PowerArithmeticExpr.Impl.class, name = "pow")
 })
 public abstract class ArithmeticExprMixin extends CommonJsonMixin {
 }

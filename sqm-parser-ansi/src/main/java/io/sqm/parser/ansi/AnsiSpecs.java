@@ -1,22 +1,20 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.parser.spi.IdentifierQuoting;
-import io.sqm.parser.spi.Lookups;
-import io.sqm.parser.spi.ParsersRepository;
-import io.sqm.parser.spi.Specs;
 import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.VersionedDialectCapabilities;
+import io.sqm.parser.spi.*;
 
 import java.util.Objects;
 
 public class AnsiSpecs implements Specs {
 
+    private final SqlDialectVersion version;
     private Lookups lookups;
     private IdentifierQuoting identifierQuoting;
     private DialectCapabilities capabilities;
-    private final SqlDialectVersion version;
+    private OperatorPolicy operatorPolicy;
 
     /**
      * Creates ANSI specs for the SQL:2016 standard.
@@ -100,5 +98,18 @@ public class AnsiSpecs implements Specs {
                 .build();
         }
         return capabilities;
+    }
+
+    /**
+     * Returns an operator policy per dialect.
+     *
+     * @return operator policy.
+     */
+    @Override
+    public OperatorPolicy operatorPolicy() {
+        if (operatorPolicy == null) {
+            operatorPolicy = new AnsiOperatorPolicy();
+        }
+        return operatorPolicy;
     }
 }

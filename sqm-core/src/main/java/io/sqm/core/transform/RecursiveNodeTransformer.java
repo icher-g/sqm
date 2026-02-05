@@ -1416,4 +1416,26 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitLockingClause(LockingClause clause) {
         return clause;
     }
+
+    /**
+     * Transforms a {@link PowerArithmeticExpr} by recursively applying the
+     * transformer to its operands.
+     * <p>
+     * A new expression instance is created only if either the base or the
+     * exponent expression is transformed; otherwise, the original instance
+     * is returned unchanged.
+     *
+     * @param expr the exponentiation expression to transform
+     * @return the transformed expression or the original instance if no
+     * changes were made
+     */
+    @Override
+    public Node visitPowerArithmeticExpr(PowerArithmeticExpr expr) {
+        var lhs = apply(expr.lhs());
+        var rhs = apply(expr.rhs());
+        if (lhs != expr.lhs() || rhs != expr.rhs()) {
+            return PowerArithmeticExpr.of(lhs, rhs);
+        }
+        return expr;
+    }
 }

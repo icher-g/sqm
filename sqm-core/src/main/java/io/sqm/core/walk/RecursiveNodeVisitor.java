@@ -1222,4 +1222,21 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     public R visitLockingClause(LockingClause clause) {
         return defaultResult();
     }
+
+    /**
+     * Visits a {@link PowerArithmeticExpr} node.
+     * <p>
+     * Represents PostgreSQL exponentiation using the {@code ^} operator.
+     * The operator has higher precedence than multiplicative and additive
+     * arithmetic operators.
+     *
+     * @param expr the exponentiation expression to visit
+     * @return a result defined by the visitor implementation
+     */
+    @Override
+    public R visitPowerArithmeticExpr(PowerArithmeticExpr expr) {
+        accept(expr.lhs());
+        accept(expr.rhs());
+        return defaultResult();
+    }
 }

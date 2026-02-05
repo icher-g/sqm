@@ -4,6 +4,7 @@ package io.sqm.parser.ansi;
 import io.sqm.core.*;
 import io.sqm.parser.core.ParserException;
 import io.sqm.parser.spi.ParseContext;
+import io.sqm.parser.spi.Specs;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,7 +35,18 @@ class ArithmeticParserTest {
      * @return the expression of the first select item
      */
     private Expression selectExpr(String sql) {
-        Query q = parseQuery(sql);
+        return selectExpr(sql, new AnsiSpecs());
+    }
+
+    /**
+     * Parses a query and returns the expression of the first SELECT item.
+     *
+     * @param sql SQL query string
+     * @param specs specs to use.
+     * @return the expression of the first select item
+     */
+    private Expression selectExpr(String sql, Specs specs) {
+        Query q = parseQuery(sql, specs);
 
         return q.<Expression>matchQuery()
             .select(s -> {
@@ -243,6 +255,24 @@ class ArithmeticParserTest {
         assertEquals(2L, ((LiteralExpr) rightSub.rhs()).value());
     }
 
+    @Test
+    void power_is_left_associative_in_postgres() {
+        // 2 ^ 3 ^ 3  -> (2 ^ 3) ^ 3
+        var expr = selectExpr("SELECT 2 ^ 3 ^ 3", new TestSpecs());
+        assertInstanceOf(PowerArithmeticExpr.class, expr);
+
+        var top = (PowerArithmeticExpr) expr;
+        assertInstanceOf(PowerArithmeticExpr.class, top.lhs());
+    }
+
+    @Test
+    void power_has_higher_precedence_than_multiplicative() {
+        // 2 * 3 ^ 2  -> 2 * (3 ^ 2)
+        var expr = selectExpr("SELECT 2 * 3 ^ 2", new TestSpecs());
+        var mul = (MultiplicativeArithmeticExpr) expr;
+        assertInstanceOf(PowerArithmeticExpr.class, mul.rhs());
+    }
+
     // -------------------------------------------------------------------------
     // Parser hook
     // -------------------------------------------------------------------------
@@ -254,7 +284,17 @@ class ArithmeticParserTest {
      * {@code return SqlParser.parseQuery(sql); }
      */
     private Query parseQuery(String sql) {
-        var ctx = ParseContext.of(new AnsiSpecs());
+        return parseQuery(sql, new AnsiSpecs());
+    }
+
+    /**
+     * Helper to adapt tests to the actual parser API.
+     * <p>
+     * Replace the body with your real entry point, for example:
+     * {@code return SqlParser.parseQuery(sql); }
+     */
+    private Query parseQuery(String sql, Specs specs) {
+        var ctx = ParseContext.of(specs);
         var res = ctx.parse(Query.class, sql);
         if (res.isError()) {
             throw new ParserException(res.errorMessage(), 0);

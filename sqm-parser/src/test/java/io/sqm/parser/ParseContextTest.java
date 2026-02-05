@@ -4,6 +4,7 @@ import io.sqm.core.ExprSelectItem;
 import io.sqm.core.Expression;
 import io.sqm.core.SelectItem;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.Token;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.*;
 import org.junit.jupiter.api.Test;
@@ -101,6 +102,17 @@ class ParseContextTest {
         var result = ctx.parse(SelectItem.class, "(x)");
         assertTrue(result.ok());
         assertInstanceOf(ExprSelectItem.class, result.value());
+    }
+
+    @Test
+    void operatorPolicy_is_available_from_context() {
+        var ctx = TestSupport.context(new DefaultParsersRepository());
+
+        var generic = ctx.operatorPolicy().isGenericBinaryOperator(new Token(TokenType.OPERATOR, "||", 0));
+        var arithmetic = ctx.operatorPolicy().isGenericBinaryOperator(new Token(TokenType.OPERATOR, "+", 0));
+
+        assertTrue(generic);
+        assertFalse(arithmetic);
     }
 
     private static final class SingleTokenExpressionParser implements Parser<Expression> {

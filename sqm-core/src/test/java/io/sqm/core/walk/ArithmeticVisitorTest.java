@@ -129,13 +129,32 @@ class ArithmeticVisitorTest {
     }
 
     @Test
+    void visitPowerArithmeticExpr_is_called_for_PowerArithmeticExpr() {
+        Expression expr = PowerArithmeticExpr.of(lit(2), lit(3));
+
+        RecordingArithmeticVisitor visitor = new RecordingArithmeticVisitor();
+        expr.accept(visitor);
+
+        assertFalse(visitor.addVisited);
+        assertFalse(visitor.subVisited);
+        assertFalse(visitor.mulVisited);
+        assertFalse(visitor.divVisited);
+        assertFalse(visitor.modVisited);
+        assertFalse(visitor.negVisited);
+        assertTrue(visitor.powVisited);
+        assertEquals(1, visitor.visitedOrder.size());
+        assertInstanceOf(PowerArithmeticExpr.class, visitor.visitedOrder.getFirst());
+    }
+
+    @Test
     void recursiveNodeVisitor_traverses_nested_arithmetic_expressions() {
-        // Expression: -( (1 + 2) * (3 - 4) ) % 5
+        // Expression: -( (1 + 2) * (3 - 4) ) % (2 ^ 3)
         Expression innerAdd = AddArithmeticExpr.of(lit(1), lit(2));
         Expression innerSub = SubArithmeticExpr.of(lit(3), lit(4));
         Expression mul = MulArithmeticExpr.of(innerAdd, innerSub);
         Expression neg = NegativeArithmeticExpr.of(mul);
-        Expression root = ModArithmeticExpr.of(neg, lit(5));
+        Expression pow = PowerArithmeticExpr.of(lit(2), lit(3));
+        Expression root = ModArithmeticExpr.of(neg, pow);
 
         RecordingArithmeticVisitor visitor = new RecordingArithmeticVisitor();
         root.accept(visitor);
@@ -146,16 +165,18 @@ class ArithmeticVisitorTest {
         assertTrue(visitor.mulVisited);
         assertTrue(visitor.modVisited);
         assertTrue(visitor.negVisited);
+        assertTrue(visitor.powVisited);
         // No division in this tree
         assertFalse(visitor.divVisited);
 
-        // We expect 5 arithmetic nodes in total: add, sub, mul, neg, mod
-        assertEquals(5, visitor.visitedOrder.size());
+        // We expect 6 arithmetic nodes in total: add, sub, mul, neg, mod, pow
+        assertEquals(6, visitor.visitedOrder.size());
         assertTrue(visitor.visitedOrder.stream().anyMatch(AddArithmeticExpr.class::isInstance));
         assertTrue(visitor.visitedOrder.stream().anyMatch(SubArithmeticExpr.class::isInstance));
         assertTrue(visitor.visitedOrder.stream().anyMatch(MulArithmeticExpr.class::isInstance));
         assertTrue(visitor.visitedOrder.stream().anyMatch(ModArithmeticExpr.class::isInstance));
         assertTrue(visitor.visitedOrder.stream().anyMatch(NegativeArithmeticExpr.class::isInstance));
+        assertTrue(visitor.visitedOrder.stream().anyMatch(PowerArithmeticExpr.class::isInstance));
     }
 
     // -------------------------------------------------------------------------
@@ -174,6 +195,7 @@ class ArithmeticVisitorTest {
         boolean divVisited;
         boolean modVisited;
         boolean negVisited;
+        boolean powVisited;
 
         @Override
         protected Void defaultResult() {
@@ -220,6 +242,13 @@ class ArithmeticVisitorTest {
             negVisited = true;
             visitedOrder.add(expr);
             return super.visitNegativeArithmeticExpr(expr);
+        }
+
+        @Override
+        public Void visitPowerArithmeticExpr(PowerArithmeticExpr expr) {
+            powVisited = true;
+            visitedOrder.add(expr);
+            return super.visitPowerArithmeticExpr(expr);
         }
     }
 }
