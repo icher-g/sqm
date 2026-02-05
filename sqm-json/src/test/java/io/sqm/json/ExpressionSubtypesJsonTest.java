@@ -107,6 +107,24 @@ public class ExpressionSubtypesJsonTest {
         assertEquals("integer", innerCast.type().qualifiedName().getFirst());
     }
 
+    /* ==================== CollateExpr Tests ==================== */
+
+    @Test
+    @DisplayName("CollateExpr: collate column")
+    void collateExpr_column() throws Exception {
+        var expr = col("name").collate("de-CH");
+
+        var back = roundTrip(expr, CollateExpr.class);
+
+        assertNotNull(back);
+        assertEquals("de-CH", back.collation());
+        assertInstanceOf(ColumnExpr.class, back.expr());
+
+        JsonNode node = toTree(expr);
+        assertEquals("collate", node.path("kind").asText());
+        assertEquals("de-CH", node.path("collation").asText());
+    }
+
     /* ==================== ArrayExpr Tests ==================== */
 
     @Test

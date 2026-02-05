@@ -275,6 +275,17 @@ public interface ExpressionVisitor<R> {
      */
     R visitCastExpr(CastExpr expr);
 
+    /**
+     * Visits a {@link CollateExpr}.
+     * <p>
+     * This represents an expression with an explicit collation applied,
+     * such as {@code name COLLATE "de-CH"}.
+     *
+     * @param expr collate expression being visited
+     * @return visitor result
+     */
+    R visitCollateExpr(CollateExpr expr);
+
     /**     * Visits an {@link AtTimeZoneExpr}}.
      * <p>
      * This represents a PostgreSQL {@code <expr> AT TIME ZONE <timezone>} expression

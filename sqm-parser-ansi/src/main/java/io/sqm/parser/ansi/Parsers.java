@@ -112,6 +112,7 @@ public final class Parsers {
             .register(new BinaryOperatorExprParser())
             .register(new UnaryOperatorExprParser())
             .register(new CastExprParser())
+            .register(new CollateExprParser(atomicExprParser))
             .register(new AtTimeZoneExprParser(atomicExprParser))
             .register(new TypeNameParser())
             .register(new RegexPredicateParser())

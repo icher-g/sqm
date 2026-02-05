@@ -153,6 +153,11 @@ public enum SqlFeature {
      */
     AT_TIME_ZONE("PostgreSQL AT TIME ZONE operator"),
     /**
+     * Expression-level COLLATE support.
+     * Example: {@code name COLLATE "de-CH"}
+     */
+    EXPR_COLLATE("Expression-level COLLATE"),
+    /**
      * PostgreSQL exponentiation operator.
      * Example: {@code a ^ b}
      */

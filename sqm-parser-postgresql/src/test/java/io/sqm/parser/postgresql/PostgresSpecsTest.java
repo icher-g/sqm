@@ -51,6 +51,7 @@ class PostgresSpecsTest {
         assertTrue(specs.capabilities().supports(SqlFeature.CUBE));
         assertTrue(specs.capabilities().supports(SqlFeature.POSTGRES_TYPECAST));
         assertTrue(specs.capabilities().supports(SqlFeature.EXPONENTIATION_OPERATOR));
+        assertTrue(specs.capabilities().supports(SqlFeature.EXPR_COLLATE));
     }
 
     @Test

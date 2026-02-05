@@ -9,7 +9,7 @@ import java.util.List;
  * Any value-producing node (scalar or boolean).
  */
 public sealed interface Expression extends Node
-    permits ArithmeticExpr, ArrayExpr, ArraySliceExpr, ArraySubscriptExpr, AtTimeZoneExpr, BinaryOperatorExpr, CaseExpr, CastExpr, ColumnExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, ParamExpr, Predicate, UnaryOperatorExpr, ValueSet {
+    permits ArithmeticExpr, ArrayExpr, ArraySliceExpr, ArraySubscriptExpr, AtTimeZoneExpr, BinaryOperatorExpr, CaseExpr, CastExpr, CollateExpr, ColumnExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, ParamExpr, Predicate, UnaryOperatorExpr, ValueSet {
 
     /**
      * Creates a literal expression.
@@ -174,6 +174,22 @@ public sealed interface Expression extends Node
      */
     default SelectItem toSelectItem() {
         return SelectItem.expr(this).as(null);
+    }
+
+    /**
+     * Applies a collation to the current expression.
+     * <p>Example:</p>
+     * <pre>
+     * {@code
+     * col("name").collate("de-CH")
+     * }
+     * </pre>
+     *
+     * @param collation collation name
+     * @return a {@link CollateExpr} wrapping this expression
+     */
+    default CollateExpr collate(String collation) {
+        return CollateExpr.of(this, collation);
     }
 
     /**

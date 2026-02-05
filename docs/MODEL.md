@@ -15,6 +15,7 @@ Node
 ├─ Expression
 │  ├─ CaseExpr
 │  ├─ CastExpr
+│  ├─ CollateExpr
 │  ├─ ArrayExpr
 │  ├─ ArraySubscriptExpr
 │  ├─ ArraySliceExpr
@@ -41,7 +42,8 @@ Node
 │  │  │  │  ├─ DivArithmeticExpr
 │  │  │  │  ├─ ModArithmeticExpr
 │  │  │  │  └─ MulArithmeticExpr
-│  │  └─ NegativeArithmeticExpr
+│  │  ├─ NegativeArithmeticExpr
+│  │  └─ PowerArithmeticExpr
 │  ├─ LiteralExpr
 │  │  ├─ DateLiteralExpr
 │  │  ├─ TimeLiteralExpr
@@ -135,6 +137,7 @@ graph TD
 
   Expression --> CaseExpr
   Expression --> CastExpr
+  Expression --> CollateExpr
   Expression --> ArrayExpr
   Expression --> ArraySubscriptExpr
   Expression --> ArraySliceExpr
@@ -169,6 +172,7 @@ graph TD
 
   ArithmeticExpr --> BinaryArithmeticExpr
   ArithmeticExpr --> NegativeArithmeticExpr
+  ArithmeticExpr --> PowerArithmeticExpr
 
   BinaryArithmeticExpr --> AdditiveArithmeticExpr
   BinaryArithmeticExpr --> MultiplicativeArithmeticExpr
@@ -318,6 +322,7 @@ graph TD
         - ModArithmeticExpr (`a % b`)
         - MulArithmeticExpr (`a * b`)
 - **NegativeArithmeticExpr** (`-x`)
+- **PowerArithmeticExpr** (`a ^ b`)
 
 - **BinaryOperatorExpr**
   Generic binary operator expression (`<left> <operator> <right>`). Useful for SQL constructs that are naturally expressed via operators and do not justify a dedicated node per operator.
@@ -339,6 +344,10 @@ graph TD
 - **CastExpr**
   Type cast expression (`CAST(<expr> AS <type>)` or dialect-specific shorthand).
   The cast target type is represented by a `TypeName`.
+
+- **CollateExpr**
+  Collation selection expression (`<expr> COLLATE <collation>`).
+  The collation name is stored as an identifier string.
 
 - **ArrayExpr**
   Array constructor expression (`ARRAY[<elem1>, <elem2>, ...]`). Used for array expressions and dialect-specific array operators.

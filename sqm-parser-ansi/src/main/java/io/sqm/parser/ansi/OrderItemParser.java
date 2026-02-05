@@ -1,9 +1,6 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.Direction;
-import io.sqm.core.Expression;
-import io.sqm.core.Nulls;
-import io.sqm.core.OrderItem;
+import io.sqm.core.*;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.utils.Numbers;
 import io.sqm.parser.core.Cursor;
@@ -39,6 +36,7 @@ public class OrderItemParser implements Parser<OrderItem> {
     public ParseResult<OrderItem> parse(Cursor cur, ParseContext ctx) {
         Integer ordinal = null;
         Expression expr = null;
+        String collate = null;
 
         // Positional ORDER BY: "1", "2", ...
         if (Numbers.isPositiveInteger(cur.peek().lexeme())) {
@@ -56,12 +54,15 @@ public class OrderItemParser implements Parser<OrderItem> {
                 return error(result);
             }
             expr = result.value();
+            if (expr instanceof CollateExpr collateExpr) {
+                collate = collateExpr.collation();
+                expr = collateExpr.expr();
+            }
         }
 
         // 3) Parse optional modifiers in any order from the remaining tokens
         Direction direction = null;
         Nulls nulls = null;
-        String collate = null;
         String usingOperator = null;
 
         var tokens = Set.of(TokenType.ASC, TokenType.DESC, TokenType.NULLS, TokenType.COLLATE, TokenType.USING);

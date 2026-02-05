@@ -1211,6 +1211,28 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
+     * Transforms a {@link CollateExpr}.
+     * <p>
+     * The transformer is applied recursively to the operand expression.
+     * If the operand is not changed by the transformation, the original
+     * {@code CollateExpr} instance is returned to preserve structural sharing.
+     * <p>
+     * If the operand changes, a new {@code CollateExpr} is created with the transformed
+     * operand and the same collation name.
+     *
+     * @param expr collate expression to transform
+     * @return the original expression if unchanged, otherwise a new transformed instance
+     */
+    @Override
+    public Node visitCollateExpr(CollateExpr expr) {
+        var operand = apply(expr.expr());
+        if (operand == expr.expr()) {
+            return expr;
+        }
+        return CollateExpr.of(operand, expr.collation());
+    }
+
+    /**
      * Transforms an {@link AtTimeZoneExpr}.
      * <p>
      * The transformer is applied recursively to both the timestamp and timezone expressions.

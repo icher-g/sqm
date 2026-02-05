@@ -98,6 +98,42 @@ public class ExpressionMatchTest {
     }
 
     @Test
+    void matches_collate() {
+        var expr = col("name").collate("de-CH");
+        String out = Match
+            .<String>expression(expr)
+            .collate(c -> c.collation())
+            .column(c -> "COL")
+            .orElse("OTHER");
+
+        assertEquals("de-CH", out);
+    }
+
+    @Test
+    void collate_is_not_applied_when_already_matched() {
+        var expr = col("name");
+        String out = Match
+            .<String>expression(expr)
+            .column(c -> "COL")
+            .collate(c -> c.collation())
+            .orElse("OTHER");
+
+        assertEquals("COL", out);
+    }
+
+    @Test
+    void collate_is_ignored_when_not_collate_expr() {
+        var expr = literal(1);
+        String out = Match
+            .<String>expression(expr)
+            .collate(c -> c.collation())
+            .literal(l -> "LIT")
+            .orElse("OTHER");
+
+        assertEquals("LIT", out);
+    }
+
+    @Test
     void matches_typed_literals() {
         String dateResult = Match
             .<String>expression(DateLiteralExpr.of("2020-01-01"))
