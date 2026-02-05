@@ -6,10 +6,7 @@ import io.sqm.core.Expression;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
-import io.sqm.parser.spi.InfixParser;
-import io.sqm.parser.spi.ParseContext;
-import io.sqm.parser.spi.ParseResult;
-import io.sqm.parser.spi.Parser;
+import io.sqm.parser.spi.*;
 
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
@@ -36,31 +33,11 @@ public class BinaryOperatorExprParser implements Parser<Expression>, InfixParser
             return lhs;
         }
 
-        while (true) {
-            if (ctx.operatorPolicy().isGenericBinaryOperator(cur.peek())) {
-                if (!ctx.capabilities().supports(SqlFeature.CUSTOM_OPERATOR)) {
-                    return error("Dialect does not support custom operators", cur.fullPos());
-                }
-                lhs = parse(lhs.value(), cur, ctx);
-                if (lhs.isError()) {
-                    return lhs;
-                }
-                continue;
-            }
-            if (isOperatorSyntax(cur)) {
-                if (!ctx.capabilities().supports(SqlFeature.CUSTOM_OPERATOR)) {
-                    return error("Dialect does not support custom operators", cur.fullPos());
-                }
-                lhs = parseOperatorSyntax(lhs.value(), cur, ctx);
-                if (lhs.isError()) {
-                    return lhs;
-                }
-                continue;
-            }
-            break;
+        if (peekOperator(cur, ctx) == null) {
+            return lhs;
         }
 
-        return lhs;
+        return parse(lhs.value(), cur, ctx);
     }
 
     /**
@@ -92,19 +69,79 @@ public class BinaryOperatorExprParser implements Parser<Expression>, InfixParser
         if (!ctx.capabilities().supports(SqlFeature.CUSTOM_OPERATOR)) {
             return error("Dialect does not support custom operators", cur.fullPos());
         }
-        var token = cur.expect("Expected operator", TokenType.OPERATOR, TokenType.QMARK);
-        var rhs = ctx.parse(ArithmeticExpr.class, cur);
-        if (rhs.isError()) {
-            return error(rhs);
+
+        if (peekOperator(cur, ctx) == null) {
+            return error("Expected operator", cur.fullPos());
         }
-        return ok(BinaryOperatorExpr.of(lhs, token.lexeme(), rhs.value()));
+
+        var result = parseCustomOperators(lhs, cur, ctx, OperatorPrecedence.CUSTOM_LOW);
+        if (result.isError()) {
+            return error(result);
+        }
+
+        if (!(result.value() instanceof BinaryOperatorExpr expr)) {
+            return error("Expected binary operator expression", cur.fullPos());
+        }
+        return ok(expr);
     }
 
     private boolean isOperatorSyntax(Cursor cur) {
         return cur.match(TokenType.IDENT, "OPERATOR") && cur.match(TokenType.LPAREN, 1);
     }
 
-    private ParseResult<BinaryOperatorExpr> parseOperatorSyntax(Expression lhs, Cursor cur, ParseContext ctx) {
+    private ParseResult<? extends Expression> parseCustomOperators(Expression lhs, Cursor cur, ParseContext ctx, OperatorPrecedence minPrecedence) {
+        Expression left = lhs;
+
+        while (true) {
+            var operatorPrecedence = peekOperator(cur, ctx);
+            if (operatorPrecedence == null || operatorPrecedence.level() < minPrecedence.level()) {
+                break;
+            }
+
+            var operator = consumeOperator(cur);
+            if (operator.isError()) {
+                return error(operator);
+            }
+
+            ParseResult<? extends Expression> rhs = ctx.parse(ArithmeticExpr.class, cur);
+            if (rhs.isError()) {
+                return error(rhs);
+            }
+
+            var lookahead = peekOperator(cur, ctx);
+
+            while (lookahead != null && lookahead.level() > operatorPrecedence.level()) {
+                var rhsResult = parseCustomOperators(rhs.value(), cur, ctx, lookahead);
+                if (rhsResult.isError()) {
+                    return rhsResult;
+                }
+                rhs = rhsResult;
+                lookahead = peekOperator(cur, ctx);
+            }
+
+            left = BinaryOperatorExpr.of(left, operator.value(), rhs.value());
+        }
+
+        return ok(left);
+    }
+
+    private OperatorPrecedence peekOperator(Cursor cur, ParseContext ctx) {
+        if (ctx.operatorPolicy().isGenericBinaryOperator(cur.peek()) || isOperatorSyntax(cur)) {
+            return ctx.operatorPolicy().customOperatorPrecedence(cur.peek().lexeme());
+        }
+        return null;
+    }
+
+    private ParseResult<String> consumeOperator(Cursor cur) {
+        if (isOperatorSyntax(cur)) {
+            return consumeOperatorSyntax(cur);
+        }
+
+        var token = cur.expect("Expected operator", TokenType.OPERATOR, TokenType.QMARK);
+        return ok(token.lexeme());
+    }
+
+    private ParseResult<String> consumeOperatorSyntax(Cursor cur) {
         cur.expect("Expected OPERATOR", t -> t.type() == TokenType.IDENT && "OPERATOR".equalsIgnoreCase(t.lexeme()));
         cur.expect("Expected '(' after OPERATOR", TokenType.LPAREN);
 
@@ -121,10 +158,6 @@ public class BinaryOperatorExprParser implements Parser<Expression>, InfixParser
             ? "OPERATOR(" + opToken.lexeme() + ")"
             : "OPERATOR(" + schema + "." + opToken.lexeme() + ")";
 
-        var rhs = ctx.parse(ArithmeticExpr.class, cur);
-        if (rhs.isError()) {
-            return error(rhs);
-        }
-        return ok(BinaryOperatorExpr.of(lhs, operator, rhs.value()));
+        return ok(operator);
     }
 }

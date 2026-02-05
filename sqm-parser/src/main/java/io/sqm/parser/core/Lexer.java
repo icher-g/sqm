@@ -149,6 +149,10 @@ public final class Lexer {
         return Character.isLetterOrDigit(c) || c == '_' || c == '$';
     }
 
+    private static boolean isOperatorChar(char c) {
+        return "+-*/<>=~!@#%^&|`?".indexOf(c) >= 0;
+    }
+
     private static TokenType keywordOf(String keyword) {
         String k = keyword.toUpperCase(Locale.ROOT);
         return KEYWORDS.get(k);
@@ -226,156 +230,6 @@ public final class Lexer {
             case ')':
                 pos++;
                 return new Token(RPAREN, ")", start);
-            case '+':
-                pos++;
-                return new Token(OPERATOR, "+", start);
-            case '-':
-                // JSON operators: -> and ->>
-                if (peekNext() == '>') {
-                    pos++;
-                    if (peekNext() == '>') {
-                        pos += 2;
-                        return new Token(OPERATOR, "->>", start);
-                    }
-                    pos++;
-                    return new Token(OPERATOR, "->", start);
-                }
-                // range operator: -|-
-                if (pos + 2 < len && s.charAt(pos + 1) == '|' && s.charAt(pos + 2) == '-') {
-                    pos += 3;
-                    return new Token(OPERATOR, "-|-", start);
-                }
-                pos++;
-                return new Token(OPERATOR, "-", start);
-            case '*':
-                pos++;
-                return new Token(OPERATOR, "*", start);
-            case '/':
-                pos++;
-                return new Token(OPERATOR, "/", start);
-            case '%':
-                pos++;
-                return new Token(OPERATOR, "%", start);
-            case '^':
-                pos++;
-                return new Token(OPERATOR, "^", start);
-            case '#':
-                // JSON path operators: #> and #>>
-                if (peekNext() == '>') {
-                    pos++;
-                    if (peekNext() == '>') {
-                        pos += 2;
-                        return new Token(OPERATOR, "#>>", start);
-                    }
-                    pos++;
-                    return new Token(OPERATOR, "#>", start);
-                }
-                // JSONB delete path operator: #-
-                if (peekNext() == '-') {
-                    pos += 2;
-                    return new Token(OPERATOR, "#-", start);
-                }
-                break;
-            case '@':
-                // containment operator: @>
-                if (peekNext() == '>') {
-                    pos += 2;
-                    return new Token(OPERATOR, "@>", start);
-                }
-                // jsonpath match operator: @?
-                if (peekNext() == '?') {
-                    pos += 2;
-                    return new Token(OPERATOR, "@?", start);
-                }
-                // full text / jsonpath operator: @@
-                if (peekNext() == '@') {
-                    pos += 2;
-                    return new Token(OPERATOR, "@@", start);
-                }
-                break;
-            case '|':
-                // Concatenation and array concat: ||
-                if (peekNext() == '|') {
-                    pos += 2;
-                    return new Token(OPERATOR, "||", start);
-                }
-                break;
-            case '&':
-                // Array overlap: &&
-                if (peekNext() == '&') {
-                    pos += 2;
-                    return new Token(OPERATOR, "&&", start);
-                }
-                // range operators: &< and &>
-                if (peekNext() == '<') {
-                    pos += 2;
-                    return new Token(OPERATOR, "&<", start);
-                }
-                if (peekNext() == '>') {
-                    pos += 2;
-                    return new Token(OPERATOR, "&>", start);
-                }
-                break;
-            case '~':
-                // regex operators: ~ and ~*
-                if (peekNext() == '*') {
-                    pos += 2;
-                    return new Token(OPERATOR, "~*", start);
-                }
-                pos++;
-                return new Token(OPERATOR, "~", start);
-            case '=':
-                pos++;
-                return new Token(OPERATOR, "=", start);
-            case '!':
-                if (peekNext() == '=') {
-                    pos += 2;
-                    return new Token(OPERATOR, "!=", start);
-                }
-                // regex operators: !~ and !~*
-                if (peekNext() == '~') {
-                    pos++;
-                    if (peekNext() == '*') {
-                        pos += 2;
-                        return new Token(OPERATOR, "!~*", start);
-                    }
-                    pos++;
-                    return new Token(OPERATOR, "!~", start);
-                }
-                break;
-            case '<':
-                // containment operator: <@
-                if (peekNext() == '@') {
-                    pos += 2;
-                    return new Token(OPERATOR, "<@", start);
-                }
-                // range operators: << and &< (handled in '&')
-                if (peekNext() == '<') {
-                    pos += 2;
-                    return new Token(OPERATOR, "<<", start);
-                }
-                if (peekNext() == '>') {
-                    pos += 2;
-                    return new Token(OPERATOR, "<>", start);
-                }
-                if (peekNext() == '=') {
-                    pos += 2;
-                    return new Token(OPERATOR, "<=", start);
-                }
-                pos++;
-                return new Token(OPERATOR, "<", start);
-            case '>':
-                // range operator: >>
-                if (peekNext() == '>') {
-                    pos += 2;
-                    return new Token(OPERATOR, ">>", start);
-                }
-                if (peekNext() == '=') {
-                    pos += 2;
-                    return new Token(OPERATOR, ">=", start);
-                }
-                pos++;
-                return new Token(OPERATOR, ">", start);
             case '"':
                 if (identifierQuoting.supports('"')) {
                     return readQuotedIdentifier();
@@ -397,6 +251,15 @@ public final class Lexer {
                 }
                 pos++;
                 return new Token(BACKTICK, "`", start);
+        }
+
+        // generic operator (custom operators, non-ANSI symbols, etc.)
+        if (isOperatorChar(c)) {
+            int j = pos;
+            while (j < len && isOperatorChar(s.charAt(j))) j++;
+            String op = s.substring(pos, j);
+            pos = j;
+            return new Token(OPERATOR, op, start);
         }
 
         // number?
