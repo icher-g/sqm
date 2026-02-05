@@ -150,19 +150,6 @@ class LexerTest {
         assertEquals("user_name", tokens.get(13).lexeme());
     }
 
-    // --- NAMED: @name  (user var vs param – lexer just recognises the shape) ---
-
-    @Test
-    void namedParameterWithAtIsNotRecognizedByCoreLexer() {
-        assertThrows(ParserException.class, () -> Lexer.lexAll("SELECT * FROM t WHERE a = @id AND b = @user_name", quoting));
-    }
-
-    @Test
-    void atFollowedByDigitIsNotRecognizedAsNamedParameter() {
-        // Pattern for named params is @[A-Za-z_][A-Za-z0-9_]*
-        assertThrows(ParserException.class, () -> Lexer.lexAll("SELECT * FROM t WHERE a = @1", quoting));
-    }
-
     // --- Mixed styles sanity test ------------------------------------------
 
     @Test

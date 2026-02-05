@@ -153,7 +153,9 @@ public class PostgresDialect implements SqlDialect {
                 SqlFeature.ARRAY_SUBSCRIPT,
                 SqlFeature.ARRAY_SLICE,
                 SqlFeature.CUSTOM_OPERATOR,
-                SqlFeature.EXPR_COLLATE
+                SqlFeature.EXPR_COLLATE,
+                SqlFeature.AT_TIME_ZONE,
+                SqlFeature.EXPONENTIATION_OPERATOR
             )
             .supports(pg93,
                 SqlFeature.LATERAL,

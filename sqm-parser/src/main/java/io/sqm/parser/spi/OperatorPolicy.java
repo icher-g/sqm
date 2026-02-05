@@ -48,5 +48,19 @@ public interface OperatorPolicy {
      * operator; {@code false} otherwise
      */
     boolean isGenericBinaryOperator(Token token);
+
+    /**
+     * Returns the precedence tier for a custom operator.
+     * <p>
+     * Dialects may override this to model operator precedence tiers for
+     * non-built-in operators. The default implementation assigns all custom
+     * operators to the same (lowest) tier.
+     *
+     * @param operator operator text (for example {@code "->"})
+     * @return precedence tier for the custom operator
+     */
+    default OperatorPrecedence customOperatorPrecedence(String operator) {
+        return OperatorPrecedence.CUSTOM_LOW;
+    }
 }
 
