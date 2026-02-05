@@ -15,6 +15,7 @@ public class Parsers {
 
     private static ParsersRepository registerDefaults(ParsersRepository r) {
         return r
+            .register(new BinaryOperatorExprParser())
             .register(new CastExprParser());
     }
 }

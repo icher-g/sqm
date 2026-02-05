@@ -116,7 +116,8 @@ public class PostgresSpecs implements Specs {
                     SqlFeature.ARRAY_SUBSCRIPT,
                     SqlFeature.ARRAY_SLICE,
                     SqlFeature.CUSTOM_OPERATOR,
-                    SqlFeature.AT_TIME_ZONE
+                    SqlFeature.AT_TIME_ZONE,
+                    SqlFeature.EXPONENTIATION_OPERATOR
                 )
                 .supports(pg93,
                     SqlFeature.LATERAL,
