@@ -15,10 +15,15 @@ import java.util.Objects;
 class OrderItemParserTest {
 
     private final ParseContext ctx = ParseContext.of(new AnsiSpecs());
+    private final ParseContext testCtx = ParseContext.of(new TestSpecs());
     private final OrderItemParser parser = new OrderItemParser();
 
     private ParseResult<? extends OrderItem> parse(String sql) {
         return ctx.parse(parser, sql);
+    }
+
+    private ParseResult<? extends OrderItem> parseWithTestSpecs(String sql) {
+        return testCtx.parse(parser, sql);
     }
 
     @Nested
@@ -102,6 +107,17 @@ class OrderItemParserTest {
             Assertions.assertEquals(Direction.DESC, oi.direction());
             Assertions.assertEquals(Nulls.FIRST, oi.nulls());
             Assertions.assertEquals("de-CH", oi.collate());
+        }
+
+        @Test
+        @DisplayName("Expression-level COLLATE normalized into OrderItem")
+        void expression_collate_normalized() {
+            var res = parseWithTestSpecs("name COLLATE de_CH DESC");
+            Assertions.assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
+            OrderItem oi = res.value();
+            Assertions.assertNotNull(oi.expr());
+            Assertions.assertEquals(Direction.DESC, oi.direction());
+            Assertions.assertEquals("de_CH", oi.collate());
         }
     }
 

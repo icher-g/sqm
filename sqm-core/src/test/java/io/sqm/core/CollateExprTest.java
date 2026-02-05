@@ -23,4 +23,14 @@ class CollateExprTest {
     void rejects_blank_collation() {
         assertThrows(IllegalArgumentException.class, () -> CollateExpr.of(ColumnExpr.of("name"), " "));
     }
+
+    @Test
+    void rejects_null_collation() {
+        assertThrows(NullPointerException.class, () -> CollateExpr.of(ColumnExpr.of("name"), null));
+    }
+
+    @Test
+    void rejects_null_expression() {
+        assertThrows(NullPointerException.class, () -> CollateExpr.of(null, "de-CH"));
+    }
 }
