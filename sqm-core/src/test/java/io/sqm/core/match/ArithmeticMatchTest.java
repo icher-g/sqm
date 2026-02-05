@@ -91,6 +91,23 @@ class ArithmeticMatchTest {
         assertEquals("pow", kind);
     }
 
+    @Test
+    void pow_branch_is_skipped_when_already_matched() {
+        ArithmeticExpr expr = AddArithmeticExpr.of(lit(1), lit(2));
+
+        final int[] powCalls = {0};
+        String kind = ArithmeticMatch.<String>match(expr)
+            .add(a -> "add")
+            .pow(p -> {
+                powCalls[0]++;
+                return "pow";
+            })
+            .otherwise(a -> "other");
+
+        assertEquals("add", kind);
+        assertEquals(0, powCalls[0]);
+    }
+
     // -------------------------------------------------------------------------
     // Fallback: otherwise(...)
     // -------------------------------------------------------------------------

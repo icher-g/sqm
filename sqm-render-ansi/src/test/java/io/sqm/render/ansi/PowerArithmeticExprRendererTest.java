@@ -1,7 +1,11 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.PowerArithmeticExpr;
+import io.sqm.core.dialect.DialectCapabilities;
+import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
+import io.sqm.core.dialect.VersionedDialectCapabilities;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.spi.RenderContext;
@@ -22,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class PowerArithmeticExprRendererTest {
 
     private final RenderContext ctx = RenderContext.of(new AnsiDialect());
+    private final RenderContext enabledCtx = RenderContext.of(new TestDialectWithExponentiation());
     private final PowerArithmeticExprRenderer renderer = new PowerArithmeticExprRenderer();
 
     @Test
@@ -54,5 +59,31 @@ class PowerArithmeticExprRendererTest {
     @DisplayName("Target type is PowerArithmeticExpr")
     void targetTypeIsPowerArithmeticExpr() {
         assertEquals(PowerArithmeticExpr.class, renderer.targetType());
+    }
+
+    @Test
+    @DisplayName("Power expression renders when feature is enabled")
+    void powerExprRendersWhenSupported() {
+        var expr = PowerArithmeticExpr.of(lit(2), lit(3));
+        var writer = new DefaultSqlWriter(enabledCtx);
+
+        renderer.render(expr, enabledCtx, writer);
+
+        var sql = writer.toText(java.util.List.of()).sql();
+        assertEquals("2 ^ 3", sql.trim());
+    }
+
+    private static final class TestDialectWithExponentiation extends AnsiDialect {
+        private DialectCapabilities capabilities;
+
+        @Override
+        public DialectCapabilities capabilities() {
+            if (capabilities == null) {
+                capabilities = VersionedDialectCapabilities.builder(SqlDialectVersion.of(2016))
+                    .supports(SqlFeature.EXPONENTIATION_OPERATOR)
+                    .build();
+            }
+            return capabilities;
+        }
     }
 }

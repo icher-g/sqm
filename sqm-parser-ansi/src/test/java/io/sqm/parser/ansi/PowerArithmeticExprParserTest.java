@@ -2,14 +2,15 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.LiteralExpr;
 import io.sqm.core.PowerArithmeticExpr;
+import io.sqm.parser.AtomicExprParser;
+import io.sqm.parser.PostfixExprParser;
+import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link PowerArithmeticExprParser}.
@@ -39,5 +40,28 @@ class PowerArithmeticExprParserTest {
 
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).toLowerCase().contains("not supported"));
+    }
+
+    @Test
+    void parses_expression_without_power_operator() {
+        var ctx = ParseContext.of(new TestSpecs());
+        var parser = new PowerArithmeticExprParser(new PostfixExprParser(new AtomicExprParser()));
+
+        var result = parser.parse(Cursor.of("2", ctx.identifierQuoting()), ctx);
+
+        assertTrue(result.ok());
+        assertInstanceOf(LiteralExpr.class, result.value());
+        assertEquals(2L, ((LiteralExpr) result.value()).value());
+    }
+
+    @Test
+    void errors_when_missing_rhs_operand() {
+        var ctx = ParseContext.of(new TestSpecs());
+        var parser = new PowerArithmeticExprParser(new PostfixExprParser(new AtomicExprParser()));
+
+        var result = parser.parse(Cursor.of("2 ^", ctx.identifierQuoting()), ctx);
+
+        assertTrue(result.isError());
+        assertFalse(Objects.requireNonNull(result.errorMessage()).isEmpty());
     }
 }

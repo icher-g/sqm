@@ -32,4 +32,10 @@ class PostgresOperatorPolicyTest {
         Token token = new Token(TokenType.OPERATOR, "+", 0);
         assertFalse(policy.isGenericBinaryOperator(token));
     }
+
+    @Test
+    void accepts_qmark_token_as_generic_operator() {
+        Token token = new Token(TokenType.QMARK, "?", 0);
+        assertTrue(policy.isGenericBinaryOperator(token));
+    }
 }
