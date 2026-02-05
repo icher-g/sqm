@@ -1061,6 +1061,20 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
+     * Visits a {@link CollateExpr}.
+     * <p>
+     * The visitor is applied recursively to the operand expression.
+     *
+     * @param expr collate expression being visited
+     * @return the visitor result produced by {@link #defaultResult()}
+     */
+    @Override
+    public R visitCollateExpr(CollateExpr expr) {
+        accept(expr.expr());
+        return defaultResult();
+    }
+
+    /**
      * Visits an {@link AtTimeZoneExpr}}.
      * <p>
      * This represents a PostgreSQL {@code <expr> AT TIME ZONE <timezone>} expression

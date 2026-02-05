@@ -62,6 +62,24 @@ public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
     }
 
     /**
+     * Matches a {@link CollateExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * an expression with an explicit collation applied.</p>
+     *
+     * @param f a mapping function applied to the matched {@link CollateExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    @Override
+    public ExpressionMatch<R> collate(Function<CollateExpr, R> f) {
+        if (!matched && expr instanceof CollateExpr collateExpr) {
+            result = f.apply(collateExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
      * Matches an {@link ArrayExpr} expression.
      *
      * <p>This matcher is invoked when the inspected expression represents

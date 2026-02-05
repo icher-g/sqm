@@ -46,6 +46,17 @@ public interface ExpressionMatch<R> extends Match<Expression, R> {
     ExpressionMatch<R> cast(Function<CastExpr, R> f);
 
     /**
+     * Matches a {@link CollateExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * an expression with an explicit collation applied.</p>
+     *
+     * @param f a mapping function applied to the matched {@link CollateExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    ExpressionMatch<R> collate(Function<CollateExpr, R> f);
+
+    /**
      * Matches an {@link ArrayExpr} expression.
      *
      * <p>This matcher is invoked when the inspected expression represents
