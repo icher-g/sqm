@@ -4,12 +4,17 @@ import io.sqm.core.BinaryOperatorExpr;
 import io.sqm.core.ColumnExpr;
 import io.sqm.core.Expression;
 import io.sqm.parser.core.ParserException;
+import io.sqm.parser.core.Cursor;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
+import io.sqm.parser.spi.ParseProblem;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests PostgreSQL custom operator precedence tiers.
@@ -163,6 +168,25 @@ public class CustomOperatorPrecedenceParserTest {
 
         assertInstanceOf(ColumnExpr.class, outer.right());
         assertEquals("c", ((ColumnExpr) outer.right()).name());
+    }
+
+    @Test
+    void parse_without_operator_returns_lhs() {
+        var expr = parseExpr("a");
+
+        assertInstanceOf(ColumnExpr.class, expr);
+        assertEquals("a", ((ColumnExpr) expr).name());
+    }
+
+    @Test
+    void infix_parse_without_operator_returns_error() {
+        var parser = new BinaryOperatorExprParser();
+        var ctx = ParseContext.of(new PostgresSpecs());
+        var cur = Cursor.of("", ctx.identifierQuoting());
+
+        var result = parser.parse(ColumnExpr.of("a"), cur, ctx);
+        assertInstanceOf(ParseProblem.class, result.problems().getFirst());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).startsWith("Expected operator"));
     }
 
     private Expression parseExpr(String sql) {
