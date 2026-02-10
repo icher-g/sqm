@@ -53,15 +53,6 @@
                 <configuration>
                     <skipErrorNoDescriptorsFound>false</skipErrorNoDescriptorsFound>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>default-descriptor</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>descriptor</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
