@@ -15,8 +15,7 @@ import org.apache.maven.project.MavenProject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.HashSet;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -77,24 +76,24 @@ public class GenerateMojo extends AbstractMojo {
     private boolean includeGenerationTimestamp;
 
     static int removeStaleGeneratedFiles(SqlFileCodegenOptions options, java.util.List<Path> generatedFiles) {
-        var packageDir = options.generatedSourcesDirectory().resolve(options.basePackage().replace('.', '/'));
+        Path packageDir = options.generatedSourcesDirectory().resolve(options.basePackage().replace('.', '/'));
         if (!Files.exists(packageDir)) {
             return 0;
         }
 
-        var expected = generatedFiles.stream()
+        Set<Path> expected = generatedFiles.stream()
             .map(Path::normalize)
             .collect(Collectors.toCollection(HashSet::new));
 
         int removedCount = 0;
         try (Stream<Path> stream = Files.walk(packageDir)) {
-            var existingGeneratedFiles = stream
+            List<Path> existingGeneratedFiles = stream
                 .filter(Files::isRegularFile)
                 .filter(path -> path.getFileName().toString().endsWith(".java"))
                 .map(Path::normalize)
                 .toList();
 
-            for (var existing : existingGeneratedFiles) {
+            for (Path existing : existingGeneratedFiles) {
                 if (!expected.contains(existing)) {
                     Files.deleteIfExists(existing);
                     removedCount++;
@@ -105,11 +104,11 @@ public class GenerateMojo extends AbstractMojo {
         }
 
         try (Stream<Path> stream = Files.walk(packageDir)) {
-            var dirs = stream
+            List<Path> dirs = stream
                 .filter(Files::isDirectory)
                 .sorted(Comparator.reverseOrder())
-                .toList();
-            for (var dir : dirs) {
+                .collect(Collectors.toCollection(ArrayList::new));
+            for (Path dir : dirs) {
                 if (!dir.equals(packageDir) && isDirectoryEmpty(dir)) {
                     Files.deleteIfExists(dir);
                 }
@@ -141,17 +140,17 @@ public class GenerateMojo extends AbstractMojo {
         }
 
         try {
-            var resolvedDialect = SqlCodegenDialect.from(dialect);
-            var options = SqlFileCodegenOptions.of(
+            SqlCodegenDialect resolvedDialect = SqlCodegenDialect.from(dialect);
+            SqlFileCodegenOptions options = SqlFileCodegenOptions.of(
                 Path.of(sqlDirectory),
                 Path.of(generatedSourcesDirectory),
                 basePackage,
                 resolvedDialect,
                 includeGenerationTimestamp
             );
-            var generatedFiles = SqlFileCodeGenerator.of(options).generate();
+            List<Path> generatedFiles = SqlFileCodeGenerator.of(options).generate();
             if (cleanupStaleFiles) {
-                var removed = removeStaleGeneratedFiles(options, generatedFiles);
+                int removed = removeStaleGeneratedFiles(options, generatedFiles);
                 if (removed > 0) {
                     getLog().info("SQM SQL codegen removed stale files: " + removed);
                 }
