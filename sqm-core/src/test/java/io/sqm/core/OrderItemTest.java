@@ -48,4 +48,13 @@ class OrderItemTest {
         assertEquals("collate", item.collate());
         assertEquals(">", item.usingOperator());
     }
+
+    @Test
+    void of_ordinal_with_using_operator() {
+        var item = OrderItem.of(3, "<>", Nulls.DEFAULT, "de_DE");
+        assertEquals(3, item.ordinal());
+        assertEquals("<>", item.usingOperator());
+        assertEquals(Nulls.DEFAULT, item.nulls());
+        assertEquals("de_DE", item.collate());
+    }
 }

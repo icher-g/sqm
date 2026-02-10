@@ -32,4 +32,19 @@ class NameNormalizerTest {
     void toMethodName_forNumericPrefix_addsIdentifierPrefix() {
         assertEquals("q123Query", NameNormalizer.toMethodName("123_query"));
     }
+
+    @Test
+    void toClassName_forNumericLeadingSegment_addsClassPrefix() {
+        assertEquals("Q123DailyQueries", NameNormalizer.toClassName(Path.of("123", "daily")));
+    }
+
+    @Test
+    void toClassName_forOnlySeparators_returnsRootQueries() {
+        assertEquals("RootQueries", NameNormalizer.toClassName(Path.of("__")));
+    }
+
+    @Test
+    void toMethodName_forOnlySeparators_returnsDefaultQueryName() {
+        assertEquals("query", NameNormalizer.toMethodName("__"));
+    }
 }

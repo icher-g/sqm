@@ -39,6 +39,14 @@ class DslAdditionalHelpersTest {
 
         var empty = over();
         assertInstanceOf(OverSpec.Def.class, empty);
+
+        var baseOnly = overDef("w");
+        assertInstanceOf(OverSpec.Def.class, baseOnly);
+        assertEquals("w", baseOnly.baseWindow());
+
+        var withExclude = over(orderBy(order(col("created_at"))), rows(preceding(1), currentRow()), excludeNoOthers());
+        assertInstanceOf(OverSpec.Def.class, withExclude);
+        assertEquals(OverSpec.Exclude.NO_OTHERS, withExclude.exclude());
     }
 
     @Test
@@ -64,4 +72,3 @@ class DslAdditionalHelpersTest {
         assertNotNull(allWithOffset.offset());
     }
 }
-

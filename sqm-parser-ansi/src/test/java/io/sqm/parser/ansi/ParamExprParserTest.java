@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.*;
+import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.ParserException;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
@@ -120,5 +121,14 @@ class ParamExprParserTest {
         var ctx = ParseContext.of(new AnsiSpecs());
         var pr = ctx.parse(Query.class, "SELECT * FROM t WHERE a = $ 1");
         assertFalse(pr.ok());
+    }
+
+    @Test
+    void namedParamParserMatch_ignoresArraySliceSeparator() {
+        var parser = new NamedParamExprParser();
+        var ctx = ParseContext.of(new AnsiSpecs());
+
+        assertFalse(parser.match(Cursor.of(":end]", ctx.identifierQuoting()), ctx));
+        assertTrue(parser.match(Cursor.of(":name)", ctx.identifierQuoting()), ctx));
     }
 }

@@ -234,6 +234,46 @@ class SqlFileCodeGeneratorTest {
         assertTrue(withDateSource.contains("date = \""));
     }
 
+    @Test
+    void generate_returnsEmptyWhenSqlDirectoryDoesNotExist() {
+        var sqlDir = tempDir.resolve("missing-sql");
+        var outputDir = tempDir.resolve("generated-missing");
+
+        var options = SqlFileCodegenOptions.of(sqlDir, outputDir, "io.sqm.codegen.generated");
+        var generated = SqlFileCodeGenerator.of(options).generate();
+
+        assertTrue(generated.isEmpty());
+        assertTrue(Files.exists(outputDir.resolve(".sqm-codegen.hashes")));
+    }
+
+    @Test
+    void generate_returnsEmptyWhenNoSqlFilesPresent() throws IOException {
+        var sqlDir = tempDir.resolve("empty-sql");
+        var outputDir = tempDir.resolve("generated-empty");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(sqlDir.resolve("user/readme.txt"), "not sql");
+
+        var options = SqlFileCodegenOptions.of(sqlDir, outputDir, "io.sqm.codegen.generated");
+        var generated = SqlFileCodeGenerator.of(options).generate();
+
+        assertTrue(generated.isEmpty());
+        assertTrue(Files.exists(outputDir.resolve(".sqm-codegen.hashes")));
+    }
+
+    @Test
+    void generate_wrapsEmitterUnsupportedNodeErrorWithSourcePath() throws IOException {
+        var sqlDir = tempDir.resolve("sql-unsupported");
+        var outputDir = tempDir.resolve("generated-unsupported");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(sqlDir.resolve("user/unsupported_expr.sql"), "select 1 + 2 from users");
+
+        var options = SqlFileCodegenOptions.of(sqlDir, outputDir, "io.sqm.codegen.generated");
+        var error = assertThrows(SqlFileCodegenException.class, () -> SqlFileCodeGenerator.of(options).generate());
+
+        assertTrue(error.getMessage().contains("user/unsupported_expr.sql"));
+        assertTrue(error.getMessage().contains("Unsupported node"));
+    }
+
     private Map<String, String> generateAndReadSources(Path sqlDir, Path outputDir) throws IOException {
         var options = SqlFileCodegenOptions.of(sqlDir, outputDir, "io.sqm.codegen.generated");
         var generated = SqlFileCodeGenerator.of(options).generate();
