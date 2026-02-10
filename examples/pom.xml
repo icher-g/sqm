@@ -46,4 +46,27 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>io.sqm</groupId>
+                <artifactId>sqm-codegen-maven-plugin</artifactId>
+                <version>${project.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-sqm-queries</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <dialect>postgresql</dialect>
+                    <basePackage>io.sqm.examples.generated</basePackage>
+                    <sqlDirectory>${project.basedir}/src/main/sql</sqlDirectory>
+                    <generatedSourcesDirectory>${project.build.directory}/generated-sources/sqm-codegen</generatedSourcesDirectory>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

@@ -53,6 +53,6 @@ public class NamedParamExprParser implements MatchableParser<NamedParamExpr> {
      */
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
-        return cur.match(TokenType.COLON) && cur.match(TokenType.IDENT, 1) && !cur.match(TokenType.RPAREN, 2); // avoid array slicing [start:end]
+        return cur.match(TokenType.COLON) && cur.match(TokenType.IDENT, 1) && !cur.match(TokenType.RBRACKET, 2); // avoid array slicing [start:end]
     }
 }

@@ -532,6 +532,17 @@ public final class Dsl {
     }
 
     /**
+     * Creates an order by item from the ordinal value.
+     * For example: {@code ORDER BY 1, 2, 3}
+     *
+     * @param ordinal an ordinal value.
+     * @return an order by item.
+     */
+    public static OrderItem order(int ordinal) {
+        return OrderItem.of(ordinal);
+    }
+
+    /**
      * Creates OrderBy statement from the list of provided items.
      *
      * @param items a list of OrderBy items.
@@ -641,6 +652,15 @@ public final class Dsl {
     }
 
     /**
+     * Creates an empty inline {@code OVER()} specification.
+     *
+     * @return an {@link OverSpec.Def}
+     */
+    public static OverSpec.Def over() {
+        return OverSpec.def((String) null, null, null, null);
+    }
+
+    /**
      * Creates an inline {@code OVER(...)} specification with {@code PARTITION BY}.
      * <p>Example SQL:</p>
      * <pre>
@@ -733,6 +753,20 @@ public final class Dsl {
     }
 
     /**
+     * Creates an {@code OVER(...)} definition extending only a base window name.
+     * <p>Example SQL:</p>
+     * <pre>
+     * SUM(salary) OVER (w)
+     * </pre>
+     *
+     * @param baseWindow the referenced base window name
+     * @return an {@link OverSpec.Def}
+     */
+    public static OverSpec.Def overDef(String baseWindow) {
+        return OverSpec.def(baseWindow, null, null, null);
+    }
+
+    /**
      * Creates an {@code OVER(...)} specification extending a base window name with a frame.
      * <p>Example SQL:</p>
      * <pre>
@@ -778,6 +812,64 @@ public final class Dsl {
      */
     public static OverSpec.Def over(String baseWindow, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude) {
         return OverSpec.def(baseWindow, orderBy, frame, exclude);
+    }
+
+    /**
+     * Creates an inline {@code OVER(...)} specification with {@code ORDER BY}.
+     * <p>Example SQL:</p>
+     * <pre>
+     * ROW_NUMBER() OVER (ORDER BY created_at DESC)
+     * </pre>
+     *
+     * @param orderBy the order-by specification
+     * @return an {@link OverSpec.Def}
+     */
+    public static OverSpec.Def over(OrderBy orderBy) {
+        return OverSpec.def((String) null, orderBy, null, null);
+    }
+
+    /**
+     * Creates an inline {@code OVER(...)} specification with {@code ORDER BY} and frame.
+     *
+     * @param orderBy the order-by specification
+     * @param frame   the frame specification
+     * @return an {@link OverSpec.Def}
+     */
+    public static OverSpec.Def over(OrderBy orderBy, FrameSpec frame) {
+        return OverSpec.def((String) null, orderBy, frame, null);
+    }
+
+    /**
+     * Creates an inline {@code OVER(...)} specification with {@code ORDER BY}, frame and exclusion.
+     *
+     * @param orderBy the order-by specification
+     * @param frame   the frame specification
+     * @param exclude the exclusion clause
+     * @return an {@link OverSpec.Def}
+     */
+    public static OverSpec.Def over(OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude) {
+        return OverSpec.def((String) null, orderBy, frame, exclude);
+    }
+
+    /**
+     * Creates an inline {@code OVER(...)} specification with frame.
+     *
+     * @param frame the frame specification
+     * @return an {@link OverSpec.Def}
+     */
+    public static OverSpec.Def over(FrameSpec frame) {
+        return OverSpec.def((String) null, null, frame, null);
+    }
+
+    /**
+     * Creates an inline {@code OVER(...)} specification with frame and exclusion.
+     *
+     * @param frame   the frame specification
+     * @param exclude the exclusion clause
+     * @return an {@link OverSpec.Def}
+     */
+    public static OverSpec.Def over(FrameSpec frame, OverSpec.Exclude exclude) {
+        return OverSpec.def((String) null, null, frame, exclude);
     }
 
     /* ========================= PARTITION BY ========================= */
@@ -917,6 +1009,16 @@ public final class Dsl {
     }
 
     /**
+     * Creates an {@code expr PRECEDING} bound.
+     *
+     * @param expr bound expression
+     * @return a {@link BoundSpec.Preceding} instance
+     */
+    public static BoundSpec preceding(Expression expr) {
+        return BoundSpec.preceding(expr);
+    }
+
+    /**
      * Creates a {@code CURRENT ROW} bound.
      * <p>Example SQL:</p>
      * <pre>
@@ -941,6 +1043,16 @@ public final class Dsl {
      */
     public static BoundSpec following(int n) {
         return BoundSpec.following(lit(n));
+    }
+
+    /**
+     * Creates an {@code expr FOLLOWING} bound.
+     *
+     * @param expr bound expression
+     * @return a {@link BoundSpec.Following} instance
+     */
+    public static BoundSpec following(Expression expr) {
+        return BoundSpec.following(expr);
     }
 
     /**
@@ -1164,6 +1276,55 @@ public final class Dsl {
      */
     public static CteDef cte(String name, Query body, List<String> columnAliases, CteDef.Materialization materialization) {
         return Query.cte(name, body, columnAliases, materialization);
+    }
+
+    /**
+     * Creates plain {@code DISTINCT} specification.
+     *
+     * @return a {@link DistinctSpec} representing {@code DISTINCT}
+     */
+    public static DistinctSpec distinct() {
+        return DistinctSpec.TRUE;
+    }
+
+    /**
+     * Creates {@code DISTINCT ON (...)} specification.
+     *
+     * @param items distinct expressions
+     * @return a {@link DistinctSpec} representing {@code DISTINCT ON}
+     */
+    public static DistinctSpec distinctOn(Expression... items) {
+        return DistinctSpec.on(List.of(items));
+    }
+
+    /**
+     * Creates a LIMIT/OFFSET specification.
+     *
+     * @param limit  limit expression, may be null
+     * @param offset offset expression, may be null
+     * @return a limit/offset spec
+     */
+    public static LimitOffset limitOffset(Expression limit, Expression offset) {
+        return LimitOffset.of(limit, offset);
+    }
+
+    /**
+     * Creates {@code LIMIT ALL} specification.
+     *
+     * @return a limit/offset spec with {@code LIMIT ALL}
+     */
+    public static LimitOffset limitAll() {
+        return LimitOffset.all();
+    }
+
+    /**
+     * Creates {@code LIMIT ALL OFFSET <expr>} specification.
+     *
+     * @param offset offset expression
+     * @return a limit/offset spec with {@code LIMIT ALL} and offset
+     */
+    public static LimitOffset limitAll(Expression offset) {
+        return LimitOffset.of(null, offset, true);
     }
 
     /**

@@ -180,6 +180,33 @@ public non-sealed interface OrderItem extends Node {
     }
 
     /**
+     * Adds {@code NULLS FIRST} to an order by item.
+     *
+     * @return A new instance of the order item with {@link Nulls#FIRST}. All other fields are preserved.
+     */
+    default OrderItem nullsFirst() {
+        return nulls(Nulls.FIRST);
+    }
+
+    /**
+     * Adds {@code NULLS LAST} to an order by item.
+     *
+     * @return A new instance of the order item with {@link Nulls#LAST}. All other fields are preserved.
+     */
+    default OrderItem nullsLast() {
+        return nulls(Nulls.LAST);
+    }
+
+    /**
+     * Resets nulls handling to dialect default behavior.
+     *
+     * @return A new instance of the order item with {@link Nulls#DEFAULT}. All other fields are preserved.
+     */
+    default OrderItem nullsDefault() {
+        return nulls(Nulls.DEFAULT);
+    }
+
+    /**
      * Adds collate to an order by item.
      *
      * @param collate collate to be used in OrderBy clause.

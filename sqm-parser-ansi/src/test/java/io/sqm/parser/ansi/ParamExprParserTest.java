@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.*;
+import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.ParserException;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
@@ -66,6 +67,35 @@ class ParamExprParserTest {
     }
 
     @Test
+    void parsesNamedParameterBeforeRightParenInFunctionCall() {
+        SelectQuery q = parseSelect("SELECT coalesce(:name, 'n/a') FROM t");
+        assertEquals(1, q.items().size());
+        assertInstanceOf(ExprSelectItem.class, q.items().getFirst());
+        Expression expr = ((ExprSelectItem) q.items().getFirst()).expr();
+        assertInstanceOf(FunctionExpr.class, expr);
+        FunctionExpr fn = (FunctionExpr) expr;
+        assertEquals("coalesce", fn.name());
+        assertInstanceOf(FunctionExpr.Arg.ExprArg.class, fn.args().getFirst());
+        Expression argExpr = ((FunctionExpr.Arg.ExprArg) fn.args().getFirst()).expr();
+        assertInstanceOf(NamedParamExpr.class, argExpr);
+        assertEquals("name", ((NamedParamExpr) argExpr).name());
+    }
+
+    @Test
+    void parsesNamedParameterBeforeRightParenInInList() {
+        SelectQuery q = parseSelect("SELECT * FROM t WHERE a IN (:kind_a, :kind_b)");
+        assertInstanceOf(InPredicate.class, q.where());
+        InPredicate in = (InPredicate) q.where();
+        assertInstanceOf(RowExpr.class, in.rhs());
+        RowExpr row = (RowExpr) in.rhs();
+        assertEquals(2, row.items().size());
+        assertInstanceOf(NamedParamExpr.class, row.items().get(0));
+        assertInstanceOf(NamedParamExpr.class, row.items().get(1));
+        assertEquals("kind_a", ((NamedParamExpr) row.items().get(0)).name());
+        assertEquals("kind_b", ((NamedParamExpr) row.items().get(1)).name());
+    }
+
+    @Test
     void parseNamedParameterWithAtShouldFail() {
         assertThrows(ParserException.class, () -> parseError("SELECT * FROM t WHERE a = @user_id"));
     }
@@ -91,5 +121,14 @@ class ParamExprParserTest {
         var ctx = ParseContext.of(new AnsiSpecs());
         var pr = ctx.parse(Query.class, "SELECT * FROM t WHERE a = $ 1");
         assertFalse(pr.ok());
+    }
+
+    @Test
+    void namedParamParserMatch_ignoresArraySliceSeparator() {
+        var parser = new NamedParamExprParser();
+        var ctx = ParseContext.of(new AnsiSpecs());
+
+        assertFalse(parser.match(Cursor.of(":end]", ctx.identifierQuoting()), ctx));
+        assertTrue(parser.match(Cursor.of(":name)", ctx.identifierQuoting()), ctx));
     }
 }
