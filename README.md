@@ -120,6 +120,52 @@ var query = pr.value();
 ```
 ---
 
+### SQL File Codegen (Maven)
+
+Generate Java query classes from `src/main/sql/**/*.sql` at build time.
+
+```xml
+<plugin>
+  <groupId>io.sqm</groupId>
+  <artifactId>sqm-codegen-maven-plugin</artifactId>
+  <version>${project.version}</version>
+  <executions>
+    <execution>
+      <goals>
+        <goal>generate</goal>
+      </goals>
+    </execution>
+  </executions>
+  <configuration>
+    <dialect>postgresql</dialect>
+    <basePackage>com.acme.generated</basePackage>
+    <sqlDirectory>${project.basedir}/src/main/sql</sqlDirectory>
+    <generatedSourcesDirectory>${project.build.directory}/generated-sources/sqm-codegen</generatedSourcesDirectory>
+  </configuration>
+</plugin>
+```
+
+Example SQL file:
+
+```sql
+-- src/main/sql/user/find_by_id.sql
+select u.id, u.user_name
+from users u
+where u.id = :id
+```
+
+Generated usage:
+
+```java
+import com.acme.generated.UserQueries;
+
+var query = UserQueries.findById();
+var params = UserQueries.findByIdParams(); // ["id"]
+```
+
+The plugin runs in `generate-sources`, writes generated Java files under `target/generated-sources/sqm-codegen`, and Maven compiles them together with your source code.
+---
+
 ### PostgreSQL Dialect Support
 
 SQM includes PostgreSQL parsing and rendering with dialect-specific capabilities.
@@ -554,16 +600,20 @@ price + quantity * 2
 
 ## 🧩 Core Modules
 
-| Module              | Description                      |
-|---------------------|----------------------------------|
-| `sqm-core`          | Core model, renderers, DSL       |
-| `sqm-parser`        | Base SQL parser interfaces       |
-| `sqm-parser-ansi`   | ANSI SQL parser implementation   |
-| `sqm-renderer`      | Base SQL renderer interfaces     |
-| `sqm-renderer-ansi` | ANSI SQL renderer                |
-| `sqm-json`          | JSON serialization mixins        |
-| `sqm-it`            | SQM integration tests            |
-| `examples`          | Code Examples                    |
+| Module                     | Description                          |
+|----------------------------|--------------------------------------|
+| `sqm-core`                 | Core model, renderers, DSL           |
+| `sqm-parser`               | Base SQL parser interfaces           |
+| `sqm-parser-ansi`          | ANSI SQL parser implementation       |
+| `sqm-parser-postgresql`    | PostgreSQL SQL parser implementation |
+| `sqm-render`               | Base SQL renderer interfaces         |
+| `sqm-render-ansi`          | ANSI SQL renderer                    |
+| `sqm-render-postgresql`    | PostgreSQL SQL renderer              |
+| `sqm-json`                 | JSON serialization mixins            |
+| `sqm-codegen`              | SQL-to-DSL Java source generator     |
+| `sqm-codegen-maven-plugin` | Maven plugin for SQL file codegen    |
+| `sqm-it`                   | SQM integration tests                |
+| `examples`                 | Code Examples                        |
 
 ---
 
@@ -608,7 +658,7 @@ mvn test
 <dependency>
   <groupId>io.sqm</groupId>
   <artifactId>sqm-core</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -618,10 +668,11 @@ mvn test
 
 - [X] Add support for parsing parameters in query (WHERE q = ?)
 - [X] Arithmetic operations in SQL statements (SELECT salary + bonus AS total_income)
-- [ ] Add support for INSERT | UPDATE | DELETE | MERGE
-- [ ] PostgresSQL support: update model, add renderer / parser
+- [X] PostgresSQL support: update model, add renderer / parser
+- [ ] MySQL support: update model, add renderer / parser
 - [ ] Query optimizer
 - [ ] Query validator
+- [ ] Add support for INSERT | UPDATE | DELETE | MERGE
 
 ---
 
