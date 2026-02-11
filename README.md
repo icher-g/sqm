@@ -200,6 +200,57 @@ Highlights:
 - ORDER BY ... USING
 - SELECT locking clauses (FOR UPDATE/SHARE, NOWAIT, SKIP LOCKED)
 
+### Schema Validation (sqm-validate)
+
+SQM includes semantic query validation against a provided schema model.
+
+Add dependency:
+
+```xml
+<dependency>
+  <groupId>io.sqm</groupId>
+  <artifactId>sqm-validate</artifactId>
+  <version>0.2.0-SNAPSHOT</version>
+</dependency>
+```
+
+Basic usage:
+
+```java
+import io.sqm.validate.schema.SchemaQueryValidator;
+import io.sqm.validate.schema.model.*;
+
+DbSchema schema = DbSchema.of(
+    DbTable.of("public", "users",
+        DbColumn.of("id", DbType.LONG),
+        DbColumn.of("name", DbType.STRING)
+    )
+);
+
+var validator = SchemaQueryValidator.of(schema);
+var result = validator.validate(query);
+
+if (!result.ok()) {
+    result.problems().forEach(System.out::println);
+}
+```
+
+Custom settings and dialect extension:
+
+```java
+import io.sqm.validate.schema.SchemaValidationSettings;
+
+var settings = SchemaValidationSettings.builder()
+    .functionCatalog(customCatalog)
+    .addRule(customRule)
+    .build();
+
+var validator1 = SchemaQueryValidator.of(schema, settings);
+var validator2 = SchemaQueryValidator.of(schema, myDialect); // SchemaValidationDialect
+```
+
+See full validation features and planned improvements in `docs/VALIDATION_FEATURES.md`.
+
 ### Serialize to JSON
 
 ```java
@@ -600,20 +651,21 @@ price + quantity * 2
 
 ## 🧩 Core Modules
 
-| Module                     | Description                          |
-|----------------------------|--------------------------------------|
-| `sqm-core`                 | Core model, renderers, DSL           |
-| `sqm-parser`               | Base SQL parser interfaces           |
-| `sqm-parser-ansi`          | ANSI SQL parser implementation       |
-| `sqm-parser-postgresql`    | PostgreSQL SQL parser implementation |
-| `sqm-render`               | Base SQL renderer interfaces         |
-| `sqm-render-ansi`          | ANSI SQL renderer                    |
-| `sqm-render-postgresql`    | PostgreSQL SQL renderer              |
-| `sqm-json`                 | JSON serialization mixins            |
-| `sqm-codegen`              | SQL-to-DSL Java source generator     |
-| `sqm-codegen-maven-plugin` | Maven plugin for SQL file codegen    |
-| `sqm-it`                   | SQM integration tests                |
-| `examples`                 | Code Examples                        |
+| Module                     | Description                           |
+|----------------------------|---------------------------------------|
+| `sqm-core`                 | Core model, renderers, DSL            |
+| `sqm-parser`               | Base SQL parser interfaces            |
+| `sqm-parser-ansi`          | ANSI SQL parser implementation        |
+| `sqm-parser-postgresql`    | PostgreSQL SQL parser implementation  |
+| `sqm-render`               | Base SQL renderer interfaces          |
+| `sqm-render-ansi`          | ANSI SQL renderer                     |
+| `sqm-render-postgresql`    | PostgreSQL SQL renderer               |
+| `sqm-json`                 | JSON serialization mixins             |
+| `sqm-codegen`              | SQL-to-DSL Java source generator      |
+| `sqm-codegen-maven-plugin` | Maven plugin for SQL file codegen     |
+| `sqm-validate`             | Schema-aware semantic query validator |
+| `sqm-it`                   | SQM integration tests                 |
+| `examples`                 | Code Examples                         |
 
 ---
 
@@ -671,7 +723,7 @@ mvn test
 - [X] PostgresSQL support: update model, add renderer / parser
 - [ ] MySQL support: update model, add renderer / parser
 - [ ] Query optimizer
-- [ ] Query validator
+- [X] Query validator
 - [ ] Add support for INSERT | UPDATE | DELETE | MERGE
 
 ---

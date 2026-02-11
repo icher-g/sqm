@@ -39,13 +39,14 @@
         <module>sqm-parser</module>
         <module>sqm-json</module>
         <module>sqm-render-ansi</module>
-        <module>sqm-it</module>
-        <module>examples</module>
         <module>sqm-parser-ansi</module>
         <module>sqm-parser-postgresql</module>
         <module>sqm-render-postgresql</module>
         <module>sqm-codegen</module>
         <module>sqm-codegen-maven-plugin</module>
+        <module>sqm-validate</module>
+        <module>sqm-it</module>
+        <module>examples</module>
     </modules>
     <properties>
         <maven.compiler.release>21</maven.compiler.release>
