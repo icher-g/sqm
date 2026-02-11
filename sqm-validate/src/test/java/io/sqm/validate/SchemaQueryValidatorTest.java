@@ -1036,6 +1036,58 @@ class SchemaQueryValidatorTest {
     }
 
     @Test
+    void validate_reportsFunctionSignatureMismatchWhenAnyExprReceivesStarArg() {
+        FunctionCatalog catalog = name -> "f_any".equalsIgnoreCase(name)
+            ? java.util.Optional.of(FunctionSignature.of(1, 1, FunctionArgKind.ANY_EXPR))
+            : java.util.Optional.empty();
+        var customValidator = SchemaQueryValidator.of(SCHEMA, catalog);
+
+        Query query = select(func("f_any", starArg())).from(tbl("users").as("u"));
+        var result = customValidator.validate(query);
+
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.FUNCTION_SIGNATURE_MISMATCH));
+    }
+
+    @Test
+    void validate_acceptsFunctionSignatureStarOrExprWithStarArg() {
+        FunctionCatalog catalog = name -> "f_star_or_expr".equalsIgnoreCase(name)
+            ? java.util.Optional.of(FunctionSignature.of(1, 1, FunctionArgKind.STAR_OR_EXPR))
+            : java.util.Optional.empty();
+        var customValidator = SchemaQueryValidator.of(SCHEMA, catalog);
+
+        Query query = select(func("f_star_or_expr", starArg())).from(tbl("users").as("u"));
+        var result = customValidator.validate(query);
+
+        assertTrue(result.ok());
+    }
+
+    @Test
+    void validate_reportsSetOperationOrderByInvalidWhenProjectionIsNotExpressionOnly() {
+        Query query = select(star()).from(tbl("users").as("u"))
+            .union(select(star()).from(tbl("users").as("u2")))
+            .orderBy(order(col("u", "id")));
+
+        var result = validator.validate(query);
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.SET_OPERATION_ORDER_BY_INVALID));
+    }
+
+    @Test
+    void validate_reportsJoinUsingInvalidColumnWhenRightSourceHasNoAliasKey() {
+        Query query = select(star())
+            .from(tbl("users").as("u"))
+            .join(inner(tbl(select(col("id")).from(tbl("orders")))).using("id"));
+
+        var result = validator.validate(query);
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.JOIN_USING_INVALID_COLUMN));
+    }
+
+    @Test
     void validate_acceptsSettingsFactoryWithDefaultBehavior() {
         var customValidator = SchemaQueryValidator.of(SCHEMA, SchemaValidationSettings.defaults());
         Query query = select(star()).from(tbl("users").as("u"));
@@ -1202,6 +1254,23 @@ class SchemaQueryValidatorTest {
         assertFalse(result.ok());
         assertTrue(result.problems().stream()
             .anyMatch(p -> p.code() == ValidationProblem.Code.WINDOW_INHERITANCE_CYCLE));
+    }
+
+    @Test
+    void validate_reportsRangeOffsetFrameWhenWindowOrderByResolutionFallsBackToCycleGuard() {
+        Query query = select(
+            func("sum", arg(col("u", "age"))).over("w1")
+        )
+            .from(tbl("users").as("u"))
+            .window(
+                WindowDef.of("w1", OverSpec.def("w2", null, range(preceding(1)), null)),
+                WindowDef.of("w2", OverSpec.def("w1", null, null, null))
+            );
+
+        var result = validator.validate(query);
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.WINDOW_FRAME_INVALID));
     }
 
     @Test
