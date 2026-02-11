@@ -8,17 +8,13 @@
         <artifactId>sqm-parent</artifactId>
         <version>0.2.0-SNAPSHOT</version>
     </parent>
-    <artifactId>sqm-render-postgresql</artifactId>
-    <name>SQM (render-PostgreSQL)</name>
+    <artifactId>sqm-core-postgresql</artifactId>
+    <name>SQM (core-PostgreSQL)</name>
+
     <dependencies>
         <dependency>
             <groupId>io.sqm</groupId>
-            <artifactId>sqm-core-postgresql</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.sqm</groupId>
-            <artifactId>sqm-render-ansi</artifactId>
+            <artifactId>sqm-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -28,6 +24,7 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
