@@ -8,6 +8,23 @@
 
 ## Core Architecture Principles
 
+### Repository-Wide Baseline Rules (Applies to Any Feature)
+
+1. Model-first design: introduce/update core model nodes before parser/renderer/DSL wiring.
+2. One node, full lifecycle: every node must have parser, renderer, visitor/transformer, match API, JSON mixins, and docs coverage.
+3. Visitor-first traversal: rely on recursive base visitors/transformers and override only node-specific behavior.
+4. Split by concern: prefer focused classes (rules/handlers/components) over monoliths.
+5. Registry-based composition: compose behavior via registries/factories, not hardcoded branching.
+6. Extensibility by contracts: use interfaces/settings for future dialect/features instead of tight coupling.
+7. Stable defaults: new extension points must preserve existing behavior unless explicitly enabled.
+8. DSL readability first: prefer user-friendly DSL APIs; avoid direct `Impl` usage in user-facing code.
+9. Deterministic outputs: keep generation/rendering stable (ordering, naming, formatting).
+10. Diagnostic quality: emit actionable errors with code, message, node kind, and clause/path context.
+11. Test every behavior: add happy-path, error-path, and boundary/edge tests for each new behavior.
+12. Documentation is part of done: update README and feature docs whenever behavior/API changes.
+13. Repository hygiene: avoid unrelated changes (including IDE files) and keep commits scoped.
+14. Compatibility by intent: keep compatibility for established features; for new features, prefer simple clean design unless compatibility is explicitly required.
+
 ### Principle 1: Sealed Interfaces + Immutable Records
 Every AST node is a sealed interface with a record implementation:
 - Compile-time exhaustiveness checking
