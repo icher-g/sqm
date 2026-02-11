@@ -13,6 +13,11 @@
     <dependencies>
         <dependency>
             <groupId>io.sqm</groupId>
+            <artifactId>sqm-core-postgresql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.sqm</groupId>
             <artifactId>sqm-parser-ansi</artifactId>
             <version>${project.version}</version>
         </dependency>
