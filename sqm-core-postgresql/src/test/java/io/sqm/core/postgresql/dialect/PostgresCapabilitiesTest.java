@@ -24,6 +24,8 @@ class PostgresCapabilitiesTest {
         assertTrue(capabilities.supports(SqlFeature.GROUPING_SETS));
         assertTrue(capabilities.supports(SqlFeature.ROLLUP));
         assertTrue(capabilities.supports(SqlFeature.CUBE));
+        assertTrue(capabilities.supports(SqlFeature.WINDOW_FRAME_GROUPS));
+        assertTrue(capabilities.supports(SqlFeature.WINDOW_FRAME_EXCLUDE));
         assertTrue(capabilities.supports(SqlFeature.POSTGRES_TYPECAST));
         assertTrue(capabilities.supports(SqlFeature.EXPONENTIATION_OPERATOR));
         assertTrue(capabilities.supports(SqlFeature.EXPR_COLLATE));
@@ -38,6 +40,8 @@ class PostgresCapabilitiesTest {
         assertFalse(capabilities.supports(SqlFeature.GROUPING_SETS));
         assertFalse(capabilities.supports(SqlFeature.ROLLUP));
         assertFalse(capabilities.supports(SqlFeature.CUBE));
+        assertFalse(capabilities.supports(SqlFeature.WINDOW_FRAME_GROUPS));
+        assertFalse(capabilities.supports(SqlFeature.WINDOW_FRAME_EXCLUDE));
         assertFalse(capabilities.supports(SqlFeature.LATERAL));
     }
 }

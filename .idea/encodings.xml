@@ -35,6 +35,8 @@
     <file url="file://$PROJECT_DIR$/sqm-render-postgresql/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-render/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-render/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-validate-postgresql/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-validate-postgresql/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-validate/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-validate/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />

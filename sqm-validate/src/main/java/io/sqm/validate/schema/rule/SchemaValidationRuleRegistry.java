@@ -75,7 +75,6 @@ public final class SchemaValidationRuleRegistry {
             new WindowInheritanceValidationRule(),
             new WindowReferenceValidationRule(),
             new WindowFrameValidationRule(),
-            new DistinctOnValidationRule(),
             new LockingClauseValidationRule(),
             new SetOperationValidationRule(projectionShapeInspector),
             new OnJoinValidationRule(),

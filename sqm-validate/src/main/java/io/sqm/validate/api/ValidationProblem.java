@@ -164,6 +164,14 @@ public record ValidationProblem(
         /**
          * Recursive CTE anchor and recursive terms have incompatible projected types.
          */
-        CTE_RECURSIVE_TYPE_MISMATCH
+        CTE_RECURSIVE_TYPE_MISMATCH,
+        /**
+         * Query uses a feature not supported by the configured SQL dialect/version.
+         */
+        DIALECT_FEATURE_UNSUPPORTED,
+        /**
+         * Query uses an invalid dialect-specific clause combination.
+         */
+        DIALECT_CLAUSE_INVALID
     }
 }

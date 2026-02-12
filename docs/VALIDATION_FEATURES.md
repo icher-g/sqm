@@ -84,10 +84,40 @@ It is currently dialect-agnostic by default (core SQL semantics), with extension
 - Window inheritance cycles (`WINDOW_INHERITANCE_CYCLE`)
 - Window frame validity (`WINDOW_FRAME_INVALID`)
 
-### 9. DISTINCT ON and Locking
+### 9. Locking
+
+- `FOR ... OF` lock target visibility (`LOCK_TARGET_NOT_FOUND`)
+
+## PostgreSQL Dialect Module (`sqm-validate-postgresql`)
+
+PostgreSQL-specific validation is implemented in a dedicated dialect module:
+- `io.sqm.validate.postgresql.PostgresValidationDialect`
+
+### PostgreSQL-Specific Feature Validation
+
+- Version-gated PostgreSQL features (`DIALECT_FEATURE_UNSUPPORTED`), including:
+  - `DISTINCT ON`
+  - locking variants (`FOR SHARE`, `FOR KEY SHARE`, `FOR NO KEY UPDATE`, `OF`, `NOWAIT`, `SKIP LOCKED`)
+  - `LATERAL`, function tables and `WITH ORDINALITY`
+  - PostgreSQL expression/predicate features (`ILIKE`, `SIMILAR TO`, regex predicates, arrays, `COLLATE`, `AT TIME ZONE`, custom operators, PostgreSQL cast syntax, power operator)
+  - grouping extensions (`GROUPING SETS`, `ROLLUP`, `CUBE`)
+  - window extensions (`GROUPS`, `EXCLUDE`)
+  - CTE materialization hints
+
+### PostgreSQL Clause Consistency Validation
 
 - `DISTINCT ON` must match leftmost `ORDER BY` prefix (`DISTINCT_ON_ORDER_BY_MISMATCH`)
-- `FOR ... OF` lock target visibility (`LOCK_TARGET_NOT_FOUND`)
+- PostgreSQL clause consistency (`DIALECT_CLAUSE_INVALID`), including:
+  - `ORDER BY ... USING` constraints
+  - `LATERAL` wrapper constraints
+  - invalid lock context combinations
+  - duplicate `FOR ... OF` targets
+  - locking nullable side of outer joins
+
+### PostgreSQL Function Catalog
+
+- PostgreSQL-aware function signatures and return-type inference are provided by
+  `io.sqm.validate.postgresql.function.PostgresFunctionCatalog`.
 
 ## Extension Architecture
 
@@ -114,7 +144,6 @@ Default behavior is unchanged when using:
 
 ## Known Constraints (Current State)
 
-- No dedicated dialect module is implemented yet (for example PostgreSQL-only semantic rules).
 - Type inference is intentionally conservative and may return `UNKNOWN` for complex expressions.
 - Validation operates on the SQM model, not on actual database metadata snapshots at runtime.
 - It validates semantic model consistency, not execution plans or optimizer behavior.
@@ -123,9 +152,9 @@ Default behavior is unchanged when using:
 
 ### High Priority
 
-1. Add first dialect rule pack module (start with PostgreSQL).
-2. Add function-catalog strategy per dialect (core + dialect overlays).
-3. Add richer diagnostics payload (rule id, offending node summary, optional hint).
+1. Expand PostgreSQL function catalog coverage and version granularity.
+2. Add richer diagnostics payload (rule id, offending node summary, optional hint).
+3. Add end-to-end parser-to-validator PostgreSQL integration tests.
 
 ### Medium Priority
 
@@ -148,7 +177,6 @@ Default behavior is unchanged when using:
 
 ## Suggested Next Step
 
-After committing current core validation + docs:
-1. create `sqm-validate-postgresql`
-2. implement PostgreSQL-specific rule pack via `SchemaValidationDialect`
-3. adjust extension architecture only if real dialect use reveals gaps
+1. Continue expanding dialect-specific rule packs starting with deeper PostgreSQL semantic checks.
+2. Extend dialect/version matrix coverage for newly added clause-consistency rules.
+3. Document per-dialect rule inventories and examples.

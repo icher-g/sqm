@@ -112,6 +112,14 @@ public enum SqlFeature {
      */
     CUBE("CUBE"),
     /**
+     * GROUPS window frame unit in OVER clauses.
+     */
+    WINDOW_FRAME_GROUPS("GROUPS window frame unit"),
+    /**
+     * EXCLUDE clause in window frame definitions.
+     */
+    WINDOW_FRAME_EXCLUDE("Window frame EXCLUDE clause"),
+    /**
      * PostgreSQL case-insensitive ILIKE pattern matching operator.
      */
     ILIKE_PREDICATE("PostgreSQL ILIKE predicate"),

@@ -28,6 +28,7 @@ public final class PostgresCapabilities {
         var pg93 = SqlDialectVersion.of(9, 3);
         var pg94 = SqlDialectVersion.of(9, 4);
         var pg95 = SqlDialectVersion.of(9, 5);
+        var pg11 = SqlDialectVersion.of(11, 0);
         var pg12 = SqlDialectVersion.of(12, 0);
         return VersionedDialectCapabilities.builder(version)
             .supports(pg90,
@@ -72,6 +73,10 @@ public final class PostgresCapabilities {
                 SqlFeature.ROLLUP,
                 SqlFeature.CUBE,
                 SqlFeature.LOCKING_SKIP_LOCKED
+            )
+            .supports(pg11,
+                SqlFeature.WINDOW_FRAME_GROUPS,
+                SqlFeature.WINDOW_FRAME_EXCLUDE
             )
             .supports(pg12, SqlFeature.CTE_MATERIALIZATION)
             .build();
