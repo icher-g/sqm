@@ -27,8 +27,7 @@ jobs:
         env:
           DOCKER_HOST: unix:///var/run/docker.sock
           DOCKER_API_VERSION: '1.44'
-          MAVEN_OPTS: -Dapi.version=1.44 -Ddocker.host=unix:///var/run/docker.sock
-        run: mvn -B verify -Pdocker-it
+        run: mvn -B verify -Pdocker-it -Dapi.version=1.44 -Ddocker.host=unix:///var/run/docker.sock
 
       # Upload all per-module HTML for download
       - name: Upload coverage to Codecov
