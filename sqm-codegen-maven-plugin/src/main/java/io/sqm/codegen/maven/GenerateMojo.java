@@ -1,9 +1,9 @@
 package io.sqm.codegen.maven;
 
-import io.sqm.codegen.SqlCodegenDialect;
-import io.sqm.codegen.SqlFileCodeGenerator;
-import io.sqm.codegen.SqlFileCodegenException;
-import io.sqm.codegen.SqlFileCodegenOptions;
+import io.sqm.codegen.*;
+import io.sqm.schema.introspect.SchemaProvider;
+import io.sqm.schema.introspect.jdbc.JdbcSchemaProvider;
+import io.sqm.schema.introspect.snapshot.JsonSchemaProvider;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -11,11 +11,14 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.Server;
+import org.apache.maven.settings.Settings;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -31,6 +34,11 @@ public class GenerateMojo extends AbstractMojo {
      */
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private MavenProject project;
+    /**
+     * Maven settings used to resolve credentials from server entries.
+     */
+    @Parameter(defaultValue = "${settings}", readonly = true)
+    private Settings settings;
 
     /**
      * Skip SQL code generation.
@@ -74,6 +82,124 @@ public class GenerateMojo extends AbstractMojo {
      */
     @Parameter(property = "sqm.codegen.includeGenerationTimestamp", defaultValue = "false")
     private boolean includeGenerationTimestamp;
+
+    /**
+     * Schema provider kind used for semantic validation before code emission.
+     * Supported values: {@code none}, {@code json}, {@code jdbc}.
+     */
+    @Parameter(property = "sqm.codegen.schemaProvider", defaultValue = "none")
+    private String schemaProvider;
+
+    /**
+     * JSON schema snapshot path used when {@code sqm.codegen.schemaProvider=json}.
+     */
+    @Parameter(property = "sqm.codegen.schemaSnapshotPath")
+    private String schemaSnapshotPath;
+
+    /**
+     * JDBC URL used when {@code sqm.codegen.schemaProvider=jdbc}.
+     */
+    @Parameter(property = "sqm.codegen.schemaJdbcUrl")
+    private String schemaJdbcUrl;
+
+    /**
+     * JDBC username used when {@code sqm.codegen.schemaProvider=jdbc}.
+     */
+    @Parameter(property = "sqm.codegen.schemaJdbcUsername")
+    private String schemaJdbcUsername;
+
+    /**
+     * JDBC password used when {@code sqm.codegen.schemaProvider=jdbc}.
+     */
+    @Parameter(property = "sqm.codegen.schemaJdbcPassword")
+    private String schemaJdbcPassword;
+    /**
+     * Optional Maven settings server id used to resolve JDBC credentials.
+     */
+    @Parameter(property = "sqm.codegen.schemaJdbcServerId")
+    private String schemaJdbcServerId;
+    /**
+     * Environment variable name for JDBC username fallback.
+     */
+    @Parameter(property = "sqm.codegen.schemaJdbcUsernameEnv", defaultValue = "SQM_SCHEMA_JDBC_USERNAME")
+    private String schemaJdbcUsernameEnv;
+    /**
+     * Environment variable name for JDBC password fallback.
+     */
+    @Parameter(property = "sqm.codegen.schemaJdbcPasswordEnv", defaultValue = "SQM_SCHEMA_JDBC_PASSWORD")
+    private String schemaJdbcPasswordEnv;
+
+    /**
+     * Optional JDBC catalog filter used when {@code sqm.codegen.schemaProvider=jdbc}.
+     */
+    @Parameter(property = "sqm.codegen.schemaJdbcCatalog")
+    private String schemaJdbcCatalog;
+
+    /**
+     * Optional JDBC schema pattern filter used when {@code sqm.codegen.schemaProvider=jdbc}.
+     */
+    @Parameter(property = "sqm.codegen.schemaJdbcSchemaPattern")
+    private String schemaJdbcSchemaPattern;
+    /**
+     * Local schema cache path reused between codegen runs.
+     */
+    @Parameter(property = "sqm.codegen.schemaCachePath", defaultValue = "${project.build.directory}/sqm-codegen/schema-cache.json")
+    private String schemaCachePath;
+    /**
+     * Forces JDBC refresh even when schema cache exists.
+     */
+    @Parameter(property = "sqm.codegen.schemaCacheRefresh", defaultValue = "false")
+    private boolean schemaCacheRefresh;
+    /**
+     * Writes introspected schema into local schema cache file.
+     */
+    @Parameter(property = "sqm.codegen.schemaCacheWrite", defaultValue = "true")
+    private boolean schemaCacheWrite;
+    /**
+     * Maximum cache age in minutes. {@code <= 0} disables expiration checks.
+     */
+    @Parameter(property = "sqm.codegen.schemaCacheTtlMinutes", defaultValue = "0")
+    private long schemaCacheTtlMinutes;
+    /**
+     * Comma-separated regex patterns of schema names to include.
+     */
+    @Parameter(property = "sqm.codegen.schemaIncludePatterns")
+    private String schemaIncludePatterns;
+    /**
+     * Comma-separated regex patterns of schema names to exclude.
+     */
+    @Parameter(property = "sqm.codegen.schemaExcludePatterns")
+    private String schemaExcludePatterns;
+    /**
+     * Comma-separated regex patterns of table names to include.
+     */
+    @Parameter(property = "sqm.codegen.tableIncludePatterns")
+    private String tableIncludePatterns;
+    /**
+     * Comma-separated regex patterns of table names to exclude.
+     */
+    @Parameter(property = "sqm.codegen.tableExcludePatterns")
+    private String tableExcludePatterns;
+    /**
+     * Expected database product name pinned to cache metadata, for example {@code PostgreSQL}.
+     */
+    @Parameter(property = "sqm.codegen.schemaCacheExpectedDatabaseProduct")
+    private String schemaCacheExpectedDatabaseProduct;
+    /**
+     * Expected database major version pinned to cache metadata.
+     */
+    @Parameter(property = "sqm.codegen.schemaCacheExpectedDatabaseMajorVersion")
+    private Integer schemaCacheExpectedDatabaseMajorVersion;
+    /**
+     * Whether semantic validation failures should fail code generation.
+     */
+    @Parameter(property = "sqm.codegen.failOnValidationError", defaultValue = "true")
+    private boolean failOnValidationError = true;
+    /**
+     * Optional validation report JSON output path.
+     */
+    @Parameter(property = "sqm.codegen.validationReportPath", defaultValue = "${project.build.directory}/sqm-codegen/validation-report.json")
+    private String validationReportPath;
 
     static int removeStaleGeneratedFiles(SqlFileCodegenOptions options, java.util.List<Path> generatedFiles) {
         Path packageDir = options.generatedSourcesDirectory().resolve(options.basePackage().replace('.', '/'));
@@ -126,6 +252,32 @@ public class GenerateMojo extends AbstractMojo {
         }
     }
 
+    private static String normalizeBlank(String value) {
+        return value == null || value.isBlank() ? null : value;
+    }
+
+    private static String firstNonBlank(String... candidates) {
+        for (var candidate : candidates) {
+            var value = normalizeBlank(candidate);
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static List<Pattern> parseRegexList(String value) {
+        var normalized = normalizeBlank(value);
+        if (normalized == null) {
+            return List.of();
+        }
+        return Arrays.stream(normalized.split(","))
+            .map(String::trim)
+            .filter(part -> !part.isEmpty())
+            .map(Pattern::compile)
+            .toList();
+    }
+
     /**
      * Executes SQL file code generation.
      *
@@ -141,20 +293,25 @@ public class GenerateMojo extends AbstractMojo {
 
         try {
             SqlCodegenDialect resolvedDialect = SqlCodegenDialect.from(dialect);
+            SchemaProvider resolvedSchemaProvider = resolveSchemaProvider();
             SqlFileCodegenOptions options = SqlFileCodegenOptions.of(
                 Path.of(sqlDirectory),
                 Path.of(generatedSourcesDirectory),
                 basePackage,
                 resolvedDialect,
-                includeGenerationTimestamp
+                includeGenerationTimestamp,
+                resolvedSchemaProvider,
+                failOnValidationError
             );
-            List<Path> generatedFiles = SqlFileCodeGenerator.of(options).generate();
+            var generator = SqlFileCodeGenerator.of(options);
+            List<Path> generatedFiles = generator.generate();
             if (cleanupStaleFiles) {
                 int removed = removeStaleGeneratedFiles(options, generatedFiles);
                 if (removed > 0) {
                     getLog().info("SQM SQL codegen removed stale files: " + removed);
                 }
             }
+            writeValidationReport(generator.validationIssues());
 
             project.addCompileSourceRoot(options.generatedSourcesDirectory().toString());
             getLog().info("SQM SQL codegen source root: " + options.generatedSourcesDirectory());
@@ -165,4 +322,131 @@ public class GenerateMojo extends AbstractMojo {
             throw new MojoExecutionException("Failed to execute SQM SQL code generation.", ex);
         }
     }
+
+    private SchemaProvider resolveSchemaProvider() {
+        var kind = (schemaProvider == null ? "none" : schemaProvider.trim().toLowerCase(Locale.ROOT));
+        return switch (kind) {
+            case "", "none" -> null;
+            case "json" -> resolveJsonSchemaProvider();
+            case "jdbc" -> resolveJdbcSchemaProvider();
+            default -> throw new IllegalArgumentException(
+                "Unsupported schema provider: " + schemaProvider + ". Supported values: none, json, jdbc"
+            );
+        };
+    }
+
+    private SchemaProvider resolveJsonSchemaProvider() {
+        if (schemaSnapshotPath == null || schemaSnapshotPath.isBlank()) {
+            throw new IllegalArgumentException(
+                "sqm.codegen.schemaSnapshotPath is required when sqm.codegen.schemaProvider=json"
+            );
+        }
+        return JsonSchemaProvider.of(Path.of(schemaSnapshotPath));
+    }
+
+    private SchemaProvider resolveJdbcSchemaProvider() {
+        if (schemaJdbcUrl == null || schemaJdbcUrl.isBlank()) {
+            throw new IllegalArgumentException(
+                "sqm.codegen.schemaJdbcUrl is required when sqm.codegen.schemaProvider=jdbc"
+            );
+        }
+        var credentials = resolveJdbcCredentials();
+        var dataSource = new JdbcDriverManagerDataSource(schemaJdbcUrl, credentials.username(), credentials.password());
+        var jdbcProvider = JdbcSchemaProvider.of(
+            dataSource,
+            normalizeBlank(schemaJdbcCatalog),
+            normalizeBlank(schemaJdbcSchemaPattern),
+            List.of("TABLE", "VIEW", "MATERIALIZED VIEW", "FOREIGN TABLE"),
+            io.sqm.schema.introspect.postgresql.PostgresSqlTypeMapper.standard()
+        );
+        var filteredProvider = filteredProvider(jdbcProvider);
+        var cachePath = resolveSchemaCachePath();
+        if (cachePath == null) {
+            return filteredProvider;
+        }
+        return new CachingSchemaProvider(
+            filteredProvider,
+            dataSource,
+            cachePath,
+            schemaCacheRefresh,
+            schemaCacheWrite,
+            schemaCacheTtlMinutes,
+            expectedCacheMetadata(),
+            getLog()
+        );
+    }
+
+    private SchemaProvider filteredProvider(SchemaProvider delegate) {
+        var schemaIncludes = parseRegexList(schemaIncludePatterns);
+        var schemaExcludes = parseRegexList(schemaExcludePatterns);
+        var tableIncludes = parseRegexList(tableIncludePatterns);
+        var tableExcludes = parseRegexList(tableExcludePatterns);
+        if (schemaIncludes.isEmpty() && schemaExcludes.isEmpty() && tableIncludes.isEmpty() && tableExcludes.isEmpty()) {
+            return delegate;
+        }
+        return new RegexFilteringSchemaProvider(delegate, schemaIncludes, schemaExcludes, tableIncludes, tableExcludes);
+    }
+
+    private Path resolveSchemaCachePath() {
+        var value = normalizeBlank(schemaCachePath);
+        return value == null ? null : Path.of(value);
+    }
+
+    private JdbcCredentials resolveJdbcCredentials() {
+        var username = firstNonBlank(
+            schemaJdbcUsername,
+            readEnv(schemaJdbcUsernameEnv),
+            readFromSettingsServer(Server::getUsername)
+        );
+        var password = firstNonBlank(
+            schemaJdbcPassword,
+            readEnv(schemaJdbcPasswordEnv),
+            readFromSettingsServer(Server::getPassword)
+        );
+        return new JdbcCredentials(username, password);
+    }
+
+    private String readEnv(String envVarName) {
+        var name = normalizeBlank(envVarName);
+        if (name == null) {
+            return null;
+        }
+        return normalizeBlank(System.getenv(name));
+    }
+
+    private String readFromSettingsServer(java.util.function.Function<Server, String> extractor) {
+        var id = normalizeBlank(schemaJdbcServerId);
+        if (id == null || settings == null) {
+            return null;
+        }
+        var server = settings.getServer(id);
+        if (server == null) {
+            throw new IllegalArgumentException("Maven settings server not found: " + id);
+        }
+        return normalizeBlank(extractor.apply(server));
+    }
+
+    private SchemaCacheMetadata expectedCacheMetadata() {
+        return new SchemaCacheMetadata(
+            SqlCodegenDialect.from(dialect).name(),
+            normalizeBlank(schemaCacheExpectedDatabaseProduct),
+            schemaCacheExpectedDatabaseMajorVersion,
+            0L
+        );
+    }
+
+    private void writeValidationReport(List<SqlValidationIssue> issues) {
+        var reportPath = normalizeBlank(validationReportPath);
+        if (reportPath == null || reportPath.contains("${")) {
+            return;
+        }
+        try {
+            var jsonPath = Path.of(reportPath);
+            new ValidationReportWriter(jsonPath, failOnValidationError).write(issues);
+            getLog().info("SQM SQL codegen validation report: " + jsonPath);
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to write SQM SQL validation report", ex);
+        }
+    }
+
 }

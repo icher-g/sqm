@@ -9,6 +9,11 @@ import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.IdentifierQuoting;
+import io.sqm.validate.api.QueryValidator;
+import io.sqm.validate.api.ValidationProblem;
+import io.sqm.validate.schema.SchemaQueryValidator;
+import io.sqm.validate.schema.model.DbSchema;
+import io.sqm.validate.postgresql.PostgresValidationDialect;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -16,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -41,11 +47,15 @@ public final class SqlFileCodeGenerator {
     private final SqlFileCodegenOptions options;
     private final List<ParseStage> parseStages;
     private final SqmJavaEmitter emitter;
+    private final QueryValidator schemaValidator;
+    private final List<SqlValidationIssue> validationIssues;
 
     private SqlFileCodeGenerator(SqlFileCodegenOptions options) {
         this.options = options;
         this.parseStages = parseStagesFor(options.dialect());
         this.emitter = new SqmJavaEmitter();
+        this.schemaValidator = createSchemaValidator(options);
+        this.validationIssues = new ArrayList<>();
     }
 
     /**
@@ -56,6 +66,17 @@ public final class SqlFileCodeGenerator {
      */
     public static SqlFileCodeGenerator of(SqlFileCodegenOptions options) {
         return new SqlFileCodeGenerator(Objects.requireNonNull(options, "options"));
+    }
+
+    /**
+     * Returns semantic validation issues collected during generation.
+     * The list is non-empty only when schema validation is enabled and
+     * {@link SqlFileCodegenOptions#failOnValidationError()} is {@code false}.
+     *
+     * @return immutable list of collected semantic validation issues.
+     */
+    public List<SqlValidationIssue> validationIssues() {
+        return List.copyOf(validationIssues);
     }
 
     private static SqlFileCodegenException parseError(Path relativePath, String sql, ParseAttempt attempt) {
@@ -278,6 +299,7 @@ public final class SqlFileCodeGenerator {
         for (var stage : parseStages) {
             var result = stage.context().parse(Query.class, sql);
             if (result.ok() && result.value() != null) {
+                validateQuery(relativePath, result.value());
                 return result.value();
             }
             attempts.add(new ParseAttempt(stage.name(), result, stage.context().identifierQuoting()));
@@ -291,6 +313,55 @@ public final class SqlFileCodeGenerator {
             .max(Comparator.comparingInt(SqlFileCodeGenerator::bestProblemPosition))
             .orElse(attempts.getFirst());
         throw parseError(relativePath, sql, bestAttempt);
+    }
+
+    private static QueryValidator createSchemaValidator(SqlFileCodegenOptions options) {
+        var provider = options.schemaProvider().orElse(null);
+        if (provider == null) {
+            return null;
+        }
+        try {
+            DbSchema schema = provider.load();
+            return switch (options.dialect()) {
+                case ANSI -> SchemaQueryValidator.of(schema);
+                case POSTGRESQL -> SchemaQueryValidator.of(schema, PostgresValidationDialect.of());
+            };
+        } catch (SQLException ex) {
+            throw new SqlFileCodegenException("Failed to load schema for validation: " + ex.getMessage());
+        }
+    }
+
+    private void validateQuery(Path relativePath, Query query) {
+        if (schemaValidator == null) {
+            return;
+        }
+        var result = schemaValidator.validate(query);
+        if (result.ok()) {
+            return;
+        }
+        var firstProblem = result.problems().getFirst();
+        validationIssues.add(new SqlValidationIssue(relativePath, firstProblem));
+        if (!options.failOnValidationError()) {
+            return;
+        }
+        throw new SqlFileCodegenException(
+            normalizePath(relativePath)
+                + ": semantic validation failed: "
+                + formatProblem(firstProblem)
+        );
+    }
+
+    private static String formatProblem(ValidationProblem problem) {
+        var details = new StringBuilder(problem.code().name())
+            .append(": ")
+            .append(problem.message());
+        if (problem.clausePath() != null && !problem.clausePath().isBlank()) {
+            details.append(" [clause=").append(problem.clausePath()).append("]");
+        }
+        if (problem.nodeKind() != null && !problem.nodeKind().isBlank()) {
+            details.append(" [node=").append(problem.nodeKind()).append("]");
+        }
+        return details.toString();
     }
 
     private static int bestProblemPosition(ParseAttempt attempt) {

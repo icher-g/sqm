@@ -65,8 +65,37 @@
                     <basePackage>io.sqm.examples.generated</basePackage>
                     <sqlDirectory>${project.basedir}/src/main/sql</sqlDirectory>
                     <generatedSourcesDirectory>${project.build.directory}/generated-sources/sqm-codegen</generatedSourcesDirectory>
+                    <schemaProvider>json</schemaProvider>
+                    <schemaSnapshotPath>${project.basedir}/src/main/sqm/schema.json</schemaSnapshotPath>
+                    <validationReportPath>${project.build.directory}/sqm-codegen/validation-report.json</validationReportPath>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>jdbc-schema-validate</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.sqm</groupId>
+                        <artifactId>sqm-codegen-maven-plugin</artifactId>
+                        <version>${project.version}</version>
+                        <configuration>
+                            <schemaProvider>jdbc</schemaProvider>
+                            <schemaJdbcUrl>${env.SQM_SCHEMA_JDBC_URL}</schemaJdbcUrl>
+                            <schemaJdbcUsernameEnv>SQM_SCHEMA_JDBC_USERNAME</schemaJdbcUsernameEnv>
+                            <schemaJdbcPasswordEnv>SQM_SCHEMA_JDBC_PASSWORD</schemaJdbcPasswordEnv>
+                            <schemaJdbcSchemaPattern>public</schemaJdbcSchemaPattern>
+                            <schemaCachePath>${project.build.directory}/sqm-codegen/schema-cache.json</schemaCachePath>
+                            <schemaCacheTtlMinutes>60</schemaCacheTtlMinutes>
+                            <schemaCacheWrite>true</schemaCacheWrite>
+                            <schemaCacheExpectedDatabaseProduct>PostgreSQL</schemaCacheExpectedDatabaseProduct>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
