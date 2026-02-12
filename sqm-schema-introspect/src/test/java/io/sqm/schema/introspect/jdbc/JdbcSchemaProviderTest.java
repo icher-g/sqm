@@ -230,6 +230,52 @@ class JdbcSchemaProviderTest {
                 PostgresSqlTypeMapper.standard()
             )
         );
+        assertThrows(IllegalArgumentException.class, () ->
+            JdbcSchemaProvider.of(
+                dataSourceProxy(metadataProxy(new MetadataState(), List.of(), Map.of())),
+                null,
+                null,
+                List.of(" ", "\t"),
+                PostgresSqlTypeMapper.standard()
+            )
+        );
+    }
+
+    @Test
+    void load_skipsBlankNames_normalizesTypes_andHandlesNullMetadataValues() throws SQLException {
+        var state = new MetadataState();
+        var tableRows = List.of(
+            row("TABLE_SCHEM", " ", "TABLE_NAME", "users"),
+            row("TABLE_SCHEM", "public", "TABLE_NAME", " ")
+        );
+        var columnRowsByTable = Map.of(
+            "users", List.of(
+                row("COLUMN_NAME", " ", "TYPE_NAME", "text", "DATA_TYPE", Types.VARCHAR, "ORDINAL_POSITION", 1),
+                row("COLUMN_NAME", "name", "TYPE_NAME", "text", "DATA_TYPE", Types.VARCHAR, "ORDINAL_POSITION", 1),
+                row("COLUMN_NAME", "payload", "TYPE_NAME", null, "DATA_TYPE", null, "ORDINAL_POSITION", null)
+            )
+        );
+        SqlTypeMapper mapper = (nativeTypeName, jdbcType) -> {
+            if (nativeTypeName == null && jdbcType == Types.OTHER) {
+                return DbType.JSON;
+            }
+            return PostgresSqlTypeMapper.standard().map(nativeTypeName, jdbcType);
+        };
+        var provider = JdbcSchemaProvider.of(
+            dataSourceProxy(metadataProxy(state, tableRows, columnRowsByTable)),
+            null,
+            null,
+            List.of("TABLE", "", "VIEW", "TABLE"),
+            mapper
+        );
+
+        DbSchema schema = provider.load();
+
+        assertArrayEquals(new String[]{"TABLE", "VIEW"}, state.tablesTypes);
+        var users = ((DbSchema.TableLookupResult.Found) schema.resolve(null, "users")).table();
+        assertTrue(users.column("name").isPresent());
+        assertEquals(DbType.JSON, users.column("payload").orElseThrow().type());
+        assertEquals(2, users.columns().size());
     }
 
     private static final class MetadataState {
@@ -239,4 +285,3 @@ class JdbcSchemaProviderTest {
         private String[] tablesTypes;
     }
 }
-

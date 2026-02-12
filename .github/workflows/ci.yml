@@ -22,11 +22,8 @@ jobs:
       - name: Docker Info
         run: docker version
 
-      # Run tests; your parent POM already runs jacoco:prepare-agent and jacoco:report at verify
+      # Run tests;
       - name: Build & Test
-        env:
-          DOCKER_HOST: unix:///var/run/docker.sock
-          DOCKER_API_VERSION: '1.44'
         run: mvn -B verify -Pdocker-it -Dapi.version=1.44 -Ddocker.host=unix:///var/run/docker.sock
 
       # Upload all per-module HTML for download

@@ -29,5 +29,20 @@ class PostgresSqlTypeMapperTest {
         assertEquals(DbType.UNKNOWN, mapper.map("my_enum_type", Types.OTHER));
         assertEquals(DbType.UNKNOWN, mapper.map(null, Types.REF_CURSOR));
     }
-}
 
+    @Test
+    void map_handlesAliasesAndCaseInsensitiveTypeNames() {
+        assertEquals(DbType.INTEGER, mapper.map("SERIAL4", Types.OTHER));
+        assertEquals(DbType.BOOLEAN, mapper.map("BoOl", Types.OTHER));
+        assertEquals(DbType.TIME, mapper.map("time with time zone", Types.OTHER));
+        assertEquals(DbType.STRING, mapper.map("CITEXT", Types.OTHER));
+    }
+
+    @Test
+    void map_coversJdbcFallbackForTemporalAndBinaryTypes() {
+        assertEquals(DbType.TIME, mapper.map("unknown", Types.TIME_WITH_TIMEZONE));
+        assertEquals(DbType.TIMESTAMP, mapper.map("unknown", Types.TIMESTAMP_WITH_TIMEZONE));
+        assertEquals(DbType.DATE, mapper.map("unknown", Types.DATE));
+        assertEquals(DbType.BYTES, mapper.map("unknown", Types.VARBINARY));
+    }
+}
