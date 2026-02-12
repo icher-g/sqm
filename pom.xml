@@ -41,12 +41,13 @@
         <module>sqm-json</module>
         <module>sqm-render-ansi</module>
         <module>sqm-parser-ansi</module>
+        <module>sqm-validate</module>
         <module>sqm-parser-postgresql</module>
         <module>sqm-render-postgresql</module>
         <module>sqm-validate-postgresql</module>
+        <module>sqm-schema-introspect</module>
         <module>sqm-codegen</module>
         <module>sqm-codegen-maven-plugin</module>
-        <module>sqm-validate</module>
         <module>sqm-it</module>
         <module>examples</module>
     </modules>

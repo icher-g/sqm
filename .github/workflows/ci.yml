@@ -19,9 +19,12 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      # Run tests; your parent POM already runs jacoco:prepare-agent and jacoco:report at verify
+      - name: Docker Info
+        run: docker version
+
+      # Run tests;
       - name: Build & Test
-        run: mvn -B verify
+        run: mvn -B verify -Pdocker-it -Dapi.version=1.44 -Ddocker.host=unix:///var/run/docker.sock
 
       # Upload all per-module HTML for download
       - name: Upload coverage to Codecov

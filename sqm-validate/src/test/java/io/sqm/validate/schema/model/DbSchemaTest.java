@@ -50,4 +50,18 @@ class DbSchemaTest {
         ));
         assertTrue(ex.getMessage().contains("Duplicate table"));
     }
+
+    @Test
+    void tables_returnsAllTablesInDeclarationOrder() {
+        var schema = DbSchema.of(
+            DbTable.of("public", "users", DbColumn.of("id", DbType.LONG)),
+            DbTable.of("public", "orders", DbColumn.of("id", DbType.LONG))
+        );
+
+        var tables = schema.tables();
+
+        assertEquals(2, tables.size());
+        assertEquals("users", tables.get(0).name());
+        assertEquals("orders", tables.get(1).name());
+    }
 }
