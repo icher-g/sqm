@@ -164,6 +164,32 @@ var params = UserQueries.findByIdParams(); // ["id"]
 ```
 
 The plugin runs in `generate-sources`, writes generated Java files under `target/generated-sources/sqm-codegen`, and Maven compiles them together with your source code.
+
+### Schema-Aware Codegen Validation
+
+`sqm-codegen-maven-plugin` can validate parsed SQL files against a schema before generating Java classes.
+The schema can be loaded from:
+- JSON snapshot (`JsonSchemaProvider`)
+- JDBC introspection (`JdbcSchemaProvider`) with optional local cache reuse
+
+See full setup and all configuration options in:
+- `docs/SQL_FILE_CODEGEN_SCHEMA_VALIDATION.md`
+
+Quick-start (JSON snapshot):
+
+```xml
+<configuration>
+  <dialect>postgresql</dialect>
+  <schemaProvider>json</schemaProvider>
+  <schemaSnapshotPath>${project.basedir}/src/main/sqm/schema.json</schemaSnapshotPath>
+</configuration>
+```
+
+Examples module also provides JDBC mode via profile:
+
+```bash
+mvn -pl examples -am generate-sources -Pjdbc-schema-validate
+```
 ---
 
 ### PostgreSQL Dialect Support

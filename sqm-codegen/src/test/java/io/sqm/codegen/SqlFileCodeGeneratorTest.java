@@ -1,5 +1,10 @@
 package io.sqm.codegen;
 
+import io.sqm.schema.introspect.snapshot.JsonSchemaProvider;
+import io.sqm.validate.schema.model.DbColumn;
+import io.sqm.validate.schema.model.DbSchema;
+import io.sqm.validate.schema.model.DbTable;
+import io.sqm.validate.schema.model.DbType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -272,6 +277,95 @@ class SqlFileCodeGeneratorTest {
 
         assertTrue(error.getMessage().contains("user/unsupported_expr.sql"));
         assertTrue(error.getMessage().contains("Unsupported node"));
+    }
+
+    @Test
+    void generate_validatesAgainstJsonSchemaProviderWhenConfigured() throws Exception {
+        var sqlDir = tempDir.resolve("sql-schema-valid");
+        var outputDir = tempDir.resolve("generated-schema-valid");
+        var schemaSnapshot = tempDir.resolve("schema-valid.json");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(sqlDir.resolve("user/find_active.sql"), "select u.id from users u where u.status = :status");
+
+        JsonSchemaProvider.of(schemaSnapshot).save(DbSchema.of(
+            DbTable.of("public", "users",
+                DbColumn.of("id", DbType.LONG),
+                DbColumn.of("status", DbType.STRING)
+            )
+        ));
+
+        var options = SqlFileCodegenOptions.of(
+            sqlDir,
+            outputDir,
+            "io.sqm.codegen.generated",
+            SqlCodegenDialect.POSTGRESQL,
+            false,
+            JsonSchemaProvider.of(schemaSnapshot)
+        );
+
+        var generated = SqlFileCodeGenerator.of(options).generate();
+
+        assertEquals(1, generated.size());
+    }
+
+    @Test
+    void generate_failsWhenSchemaValidationFindsSemanticError() throws Exception {
+        var sqlDir = tempDir.resolve("sql-schema-invalid");
+        var outputDir = tempDir.resolve("generated-schema-invalid");
+        var schemaSnapshot = tempDir.resolve("schema-invalid.json");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(sqlDir.resolve("user/find_active.sql"), "select u.missing_col from users u");
+
+        JsonSchemaProvider.of(schemaSnapshot).save(DbSchema.of(
+            DbTable.of("public", "users", DbColumn.of("id", DbType.LONG))
+        ));
+
+        var options = SqlFileCodegenOptions.of(
+            sqlDir,
+            outputDir,
+            "io.sqm.codegen.generated",
+            SqlCodegenDialect.POSTGRESQL,
+            false,
+            JsonSchemaProvider.of(schemaSnapshot)
+        );
+
+        var error = assertThrows(SqlFileCodegenException.class, () -> SqlFileCodeGenerator.of(options).generate());
+
+        assertTrue(error.getMessage().contains("semantic validation failed"));
+        assertTrue(error.getMessage().contains("COLUMN_NOT_FOUND"));
+        assertTrue(error.getMessage().contains("user/find_active.sql"));
+    }
+
+    @Test
+    void generate_collectsSemanticIssuesWhenConfiguredNotToFail() throws Exception {
+        var sqlDir = tempDir.resolve("sql-schema-non-fail");
+        var outputDir = tempDir.resolve("generated-schema-non-fail");
+        var schemaSnapshot = tempDir.resolve("schema-non-fail.json");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(sqlDir.resolve("user/find_active.sql"), "select u.missing_col from users u");
+
+        JsonSchemaProvider.of(schemaSnapshot).save(DbSchema.of(
+            DbTable.of("public", "users", DbColumn.of("id", DbType.LONG))
+        ));
+
+        var options = SqlFileCodegenOptions.of(
+            sqlDir,
+            outputDir,
+            "io.sqm.codegen.generated",
+            SqlCodegenDialect.POSTGRESQL,
+            false,
+            JsonSchemaProvider.of(schemaSnapshot),
+            false
+        );
+
+        var generator = SqlFileCodeGenerator.of(options);
+        var generated = generator.generate();
+        var issues = generator.validationIssues();
+
+        assertEquals(1, generated.size());
+        assertEquals(1, issues.size());
+        assertEquals("user/find_active.sql", issues.getFirst().sqlFile().toString().replace('\\', '/'));
+        assertEquals("COLUMN_NOT_FOUND", issues.getFirst().problem().code().name());
     }
 
     private Map<String, String> generateAndReadSources(Path sqlDir, Path outputDir) throws IOException {

@@ -1,0 +1,13 @@
+{
+  "tables": [
+    {
+      "schema": "public",
+      "name": "users",
+      "columns": [
+        { "name": "id", "type": "LONG" },
+        { "name": "user_name", "type": "STRING" },
+        { "name": "status", "type": "STRING" }
+      ]
+    }
+  ]
+}
