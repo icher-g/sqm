@@ -1419,27 +1419,25 @@ class SchemaQueryValidatorTest {
     }
 
     @Test
-    void validate_reportsDistinctOnWithoutOrderBy() {
+    void validate_doesNotApplyDistinctOnSemanticsWithoutPostgresDialect() {
         Query query = select(col("u", "status"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "status")));
 
         var result = validator.validate(query);
-        assertFalse(result.ok());
-        assertTrue(result.problems().stream()
+        assertFalse(result.problems().stream()
             .anyMatch(p -> p.code() == ValidationProblem.Code.DISTINCT_ON_ORDER_BY_MISMATCH));
     }
 
     @Test
-    void validate_reportsDistinctOnOrderByPrefixMismatch() {
+    void validate_doesNotApplyDistinctOnPrefixSemanticsWithoutPostgresDialect() {
         Query query = select(col("u", "status"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "status")))
             .orderBy(order(col("u", "id")));
 
         var result = validator.validate(query);
-        assertFalse(result.ok());
-        assertTrue(result.problems().stream()
+        assertFalse(result.problems().stream()
             .anyMatch(p -> p.code() == ValidationProblem.Code.DISTINCT_ON_ORDER_BY_MISMATCH));
     }
 

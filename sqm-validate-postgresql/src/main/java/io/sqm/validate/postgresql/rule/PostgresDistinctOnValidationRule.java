@@ -1,17 +1,18 @@
-package io.sqm.validate.schema.rule;
+package io.sqm.validate.postgresql.rule;
 
 import io.sqm.core.ExprSelectItem;
 import io.sqm.core.Expression;
 import io.sqm.core.SelectQuery;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
+import io.sqm.validate.schema.rule.SchemaValidationRule;
 
 import java.util.Optional;
 
 /**
- * Validates DISTINCT ON alignment with leftmost ORDER BY expressions.
+ * Validates PostgreSQL DISTINCT ON alignment with leftmost ORDER BY expressions.
  */
-final class DistinctOnValidationRule implements SchemaValidationRule<SelectQuery> {
+public final class PostgresDistinctOnValidationRule implements SchemaValidationRule<SelectQuery> {
     /**
      * Returns supported node type.
      *
@@ -23,7 +24,7 @@ final class DistinctOnValidationRule implements SchemaValidationRule<SelectQuery
     }
 
     /**
-     * Validates PostgreSQL DISTINCT ON ordering semantics.
+     * Validates DISTINCT ON ordering semantics.
      *
      * @param node select query node.
      * @param context schema validation context.
