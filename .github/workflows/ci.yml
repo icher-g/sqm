@@ -21,7 +21,7 @@ jobs:
 
       # Run tests; your parent POM already runs jacoco:prepare-agent and jacoco:report at verify
       - name: Build & Test
-        run: mvn -B verify
+        run: mvn -B verify -Pdocker-it
 
       # Upload all per-module HTML for download
       - name: Upload coverage to Codecov

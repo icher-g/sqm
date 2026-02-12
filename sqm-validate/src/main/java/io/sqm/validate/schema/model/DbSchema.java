@@ -50,6 +50,15 @@ public final class DbSchema {
     }
 
     /**
+     * Returns all schema tables in declaration order.
+     *
+     * @return immutable list of tables.
+     */
+    public List<DbTable> tables() {
+        return List.copyOf(tablesByKey.values());
+    }
+
+    /**
      * Resolves a table reference by schema/name.
      *
      * @param schema schema name, may be null.
