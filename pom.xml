@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.sqm</groupId>
     <artifactId>sqm-parent</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
+    <version>${revision}</version>
     <packaging>pom</packaging>
     <name>SQM (parent)</name>
     <url>https://github.com/icher-g/sqm</url>
@@ -52,6 +52,7 @@
         <module>examples</module>
     </modules>
     <properties>
+        <revision>0.3.0-SNAPSHOT</revision>
         <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.2</junit.version>
