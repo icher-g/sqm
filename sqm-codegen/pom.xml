@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.sqm</groupId>
         <artifactId>sqm-parent</artifactId>
-        <version>0.2.0-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
     <artifactId>sqm-codegen</artifactId>
     <name>SQM (codegen)</name>

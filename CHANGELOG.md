@@ -1,4 +1,67 @@
-# 📜 Changelog
+﻿# ðŸ“œ Changelog
+
+## [v0.3.0] - 2026-02-13
+### Added
+- New module: `sqm-core-postgresql` for shared PostgreSQL model/capability artifacts reused across parser, renderer, and validator layers.
+- New module: `sqm-validate-postgresql` with PostgreSQL semantic validation dialect.
+- PostgreSQL semantic rules including:
+  - `DISTINCT ON` leftmost `ORDER BY` consistency validation.
+  - Window-frame legality checks and PostgreSQL clause consistency checks.
+  - PostgreSQL function-catalog backed validation support.
+- New module: `sqm-schema-introspect`:
+  - `JdbcSchemaProvider` for schema loading from live database metadata.
+  - `JsonSchemaProvider` for snapshot-based schema loading/saving.
+  - PostgreSQL SQL-type mapping for schema introspection.
+- SQL codegen schema validation integration:
+  - `sqm-codegen` now validates parsed queries against schema before emitting Java.
+  - Dialect-aware validator selection (`ANSI` and `POSTGRESQL`).
+- `sqm-codegen-maven-plugin` schema provider integration:
+  - `schemaProvider=none|json|jdbc`.
+  - Secure JDBC credential resolution via direct fields, environment variables, or Maven `settings.xml` server id.
+  - JDBC cache support with refresh/write options.
+  - Cache TTL (`schemaCacheTtlMinutes`) and metadata sidecar (`${schemaCachePath}.meta.properties`).
+  - Schema/table include/exclude regex filters for JDBC introspection.
+  - Expected DB product/version cache pinning.
+  - Validation behavior toggle: `failOnValidationError`.
+  - Validation report outputs (JSON + text summary) with `formatVersion`.
+- Examples integration for schema-aware codegen:
+  - Default JSON snapshot flow.
+  - Optional JDBC profile (`jdbc-schema-validate`).
+
+### Changed
+- Refactored `GenerateMojo` internals into dedicated classes:
+  - `CachingSchemaProvider`
+  - `RegexFilteringSchemaProvider`
+  - `JdbcDriverManagerDataSource`
+  - `SchemaCacheMetadata`
+  - `JdbcCredentials`
+  - `ValidationReportWriter`
+- Added dedicated JavaDoc for newly introduced public APIs and extracted helper components.
+- Updated root README with schema-aware codegen guidance and Wiki link.
+
+### Testing
+- Added/expanded unit tests across:
+  - `sqm-validate-postgresql` semantic rules and dialect behavior.
+  - `sqm-codegen` schema validation paths.
+  - `sqm-codegen-maven-plugin` JSON/JDBC provider behavior, cache reuse/refresh/TTL, and reporting.
+  - `sqm-schema-introspect` JSON and JDBC providers.
+- Added Docker-backed integration tests for PostgreSQL schema introspection and JDBC-backed codegen validation.
+- CI updated to run Docker-based verification flow with explicit Docker API compatibility settings.
+
+### Documentation
+- Added `docs/SQL_FILE_CODEGEN_SCHEMA_VALIDATION.md` covering all configuration modes and options.
+- Expanded docs/README references for secure credentials, caching strategy, and validation reports.
+- Added repository-managed wiki source set (`wiki-src/`) and publish script (`scripts/publish-wiki.ps1`).
+
+### Known Limitations
+- No DML (INSERT/UPDATE/DELETE/MERGE) support yet.
+- Query optimizer is not implemented yet.
+- PostgreSQL SELECT INTO (table-creating SELECT) not supported.
+- TABLESAMPLE not supported.
+- Recursive CTE SEARCH/CYCLE not supported.
+- FETCH FIRST ... WITH TIES not supported.
+
+---
 
 ## [v0.2.0] - 2026-02-05
 ### Added
@@ -42,7 +105,7 @@
 - Initial public release of **SQM (Structured Query Model)**.
 - Introduced full immutable AST model (`Node` hierarchy) for SQL representation.
 - Added pattern-matching API (`matchX()` methods) for type-safe traversal and extraction.
-- Implemented **ANSI SQL parser** (`sqm-parser` module) converting SQL → SQM AST.
+- Implemented **ANSI SQL parser** (`sqm-parser` module) converting SQL â†’ SQM AST.
 - Implemented **ANSI SQL renderer** (`sqm-render-ansi` module) with dialect-based repository.
 - Implemented **PostgreSQL SQL renderer** (`sqm-render-postgresql` module).
 - Added **CTE**, **window functions**, **composite queries**, and **joins** support.
@@ -65,3 +128,4 @@
 - [ ] Query optimizer and validator
 
 ---
+
