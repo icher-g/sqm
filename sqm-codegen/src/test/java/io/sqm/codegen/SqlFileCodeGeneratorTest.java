@@ -38,18 +38,18 @@ class SqlFileCodeGeneratorTest {
         assertEquals(List.of(generatedFile), generated);
         var source = Files.readString(generatedFile);
         assertTrue(source.contains("import static io.sqm.dsl.Dsl.*;"));
-        assertTrue(source.contains("public static Query aFindById()"));
+        assertTrue(source.contains("public static SelectQuery aFindById()"));
         assertTrue(source.contains("return select("));
         assertTrue(source.contains("param(\"id\")"));
         assertTrue(source.contains("param(\"status\")"));
         assertTrue(source.contains(".where("));
         assertTrue(source.contains("public static Set<String> aFindByIdParams()"));
         assertTrue(source.contains("return Set.of(\"id\", \"status\")"));
-        assertTrue(source.contains("public static Query zListActive()"));
+        assertTrue(source.contains("public static SelectQuery zListActive()"));
         assertTrue(source.contains("param(\"status\")"));
         assertTrue(source.contains("public static Set<String> zListActiveParams()"));
         assertTrue(source.contains("return Set.of(\"status\")"));
-        assertTrue(source.indexOf("public static Query aFindById()") < source.indexOf("public static Query zListActive()"));
+        assertTrue(source.indexOf("public static SelectQuery aFindById()") < source.indexOf("public static SelectQuery zListActive()"));
         assertFalse(source.contains("UnsupportedOperationException"));
     }
 

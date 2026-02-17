@@ -6,14 +6,14 @@ import io.sqm.parser.core.Lexer;
 import io.sqm.parser.core.Token;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
+import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
-import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.validate.api.QueryValidator;
 import io.sqm.validate.api.ValidationProblem;
+import io.sqm.validate.postgresql.PostgresValidationDialect;
 import io.sqm.validate.schema.SchemaQueryValidator;
 import io.sqm.validate.schema.model.DbSchema;
-import io.sqm.validate.postgresql.PostgresValidationDialect;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -66,17 +66,6 @@ public final class SqlFileCodeGenerator {
      */
     public static SqlFileCodeGenerator of(SqlFileCodegenOptions options) {
         return new SqlFileCodeGenerator(Objects.requireNonNull(options, "options"));
-    }
-
-    /**
-     * Returns semantic validation issues collected during generation.
-     * The list is non-empty only when schema validation is enabled and
-     * {@link SqlFileCodegenOptions#failOnValidationError()} is {@code false}.
-     *
-     * @return immutable list of collected semantic validation issues.
-     */
-    public List<SqlValidationIssue> validationIssues() {
-        return List.copyOf(validationIssues);
     }
 
     private static SqlFileCodegenException parseError(Path relativePath, String sql, ParseAttempt attempt) {
@@ -204,6 +193,67 @@ public final class SqlFileCodeGenerator {
         return new LineColumn(line, column);
     }
 
+    private static QueryValidator createSchemaValidator(SqlFileCodegenOptions options) {
+        var provider = options.schemaProvider().orElse(null);
+        if (provider == null) {
+            return null;
+        }
+        try {
+            DbSchema schema = provider.load();
+            return switch (options.dialect()) {
+                case ANSI -> SchemaQueryValidator.of(schema);
+                case POSTGRESQL -> SchemaQueryValidator.of(schema, PostgresValidationDialect.of());
+            };
+        } catch (SQLException ex) {
+            throw new SqlFileCodegenException("Failed to load schema for validation: " + ex.getMessage());
+        }
+    }
+
+    private static String formatProblem(ValidationProblem problem) {
+        var details = new StringBuilder(problem.code().name())
+            .append(": ")
+            .append(problem.message());
+        if (problem.clausePath() != null && !problem.clausePath().isBlank()) {
+            details.append(" [clause=").append(problem.clausePath()).append("]");
+        }
+        if (problem.nodeKind() != null && !problem.nodeKind().isBlank()) {
+            details.append(" [node=").append(problem.nodeKind()).append("]");
+        }
+        return details.toString();
+    }
+
+    private static int bestProblemPosition(ParseAttempt attempt) {
+        return attempt.result().problems().stream()
+            .mapToInt(problem -> Math.max(problem.pos(), -1))
+            .max()
+            .orElse(-1);
+    }
+
+    private static String sha256(String value) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder(hash.length * 2);
+            for (byte b : hash) {
+                hex.append(String.format("%02x", b));
+            }
+            return hex.toString();
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 algorithm is not available", ex);
+        }
+    }
+
+    /**
+     * Returns semantic validation issues collected during generation.
+     * The list is non-empty only when schema validation is enabled and
+     * {@link SqlFileCodegenOptions#failOnValidationError()} is {@code false}.
+     *
+     * @return immutable list of collected semantic validation issues.
+     */
+    public List<SqlValidationIssue> validationIssues() {
+        return List.copyOf(validationIssues);
+    }
+
     /**
      * Generates Java source files from SQL files.
      *
@@ -315,22 +365,6 @@ public final class SqlFileCodeGenerator {
         throw parseError(relativePath, sql, bestAttempt);
     }
 
-    private static QueryValidator createSchemaValidator(SqlFileCodegenOptions options) {
-        var provider = options.schemaProvider().orElse(null);
-        if (provider == null) {
-            return null;
-        }
-        try {
-            DbSchema schema = provider.load();
-            return switch (options.dialect()) {
-                case ANSI -> SchemaQueryValidator.of(schema);
-                case POSTGRESQL -> SchemaQueryValidator.of(schema, PostgresValidationDialect.of());
-            };
-        } catch (SQLException ex) {
-            throw new SqlFileCodegenException("Failed to load schema for validation: " + ex.getMessage());
-        }
-    }
-
     private void validateQuery(Path relativePath, Query query) {
         if (schemaValidator == null) {
             return;
@@ -349,26 +383,6 @@ public final class SqlFileCodeGenerator {
                 + ": semantic validation failed: "
                 + formatProblem(firstProblem)
         );
-    }
-
-    private static String formatProblem(ValidationProblem problem) {
-        var details = new StringBuilder(problem.code().name())
-            .append(": ")
-            .append(problem.message());
-        if (problem.clausePath() != null && !problem.clausePath().isBlank()) {
-            details.append(" [clause=").append(problem.clausePath()).append("]");
-        }
-        if (problem.nodeKind() != null && !problem.nodeKind().isBlank()) {
-            details.append(" [node=").append(problem.nodeKind()).append("]");
-        }
-        return details.toString();
-    }
-
-    private static int bestProblemPosition(ParseAttempt attempt) {
-        return attempt.result().problems().stream()
-            .mapToInt(problem -> Math.max(problem.pos(), -1))
-            .max()
-            .orElse(-1);
     }
 
     private Set<String> extractNamedParameters(String sql) {
@@ -453,25 +467,11 @@ public final class SqlFileCodeGenerator {
         return sha256(sb.toString());
     }
 
-    private static String sha256(String value) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder(hash.length * 2);
-            for (byte b : hash) {
-                hex.append(String.format("%02x", b));
-            }
-            return hex.toString();
-        } catch (NoSuchAlgorithmException ex) {
-            throw new IllegalStateException("SHA-256 algorithm is not available", ex);
-        }
-    }
-
     private String renderGroup(SqlFolderGroup group) {
         var code = new StringBuilder();
         code.append("package ").append(options.basePackage()).append(";").append(NEWLINE).append(NEWLINE);
         code.append("import javax.annotation.processing.Generated;").append(NEWLINE);
-        code.append("import io.sqm.core.Query;").append(NEWLINE);
+        code.append("import io.sqm.core.*;").append(NEWLINE);
         code.append("import java.util.Set;").append(NEWLINE);
         code.append("import static io.sqm.dsl.Dsl.*;").append(NEWLINE).append(NEWLINE);
         code.append("/**").append(NEWLINE);
@@ -498,7 +498,9 @@ public final class SqlFileCodeGenerator {
             code.append(INDENT).append(" *").append(NEWLINE);
             code.append(INDENT).append(" * @return query model for this SQL source.").append(NEWLINE);
             code.append(INDENT).append(" */").append(NEWLINE);
-            code.append(INDENT).append("public static Query ").append(file.methodName()).append("() {").append(NEWLINE);
+            code.append(INDENT).append("public static ")
+                .append(file.query().getTopLevelInterface().getSimpleName()).append(" ")
+                .append(file.methodName()).append("() {").append(NEWLINE);
             code.append(INDENT).append(INDENT).append("return ")
                 .append(indentContinuationLines(queryExpression, 8))
                 .append(";").append(NEWLINE);

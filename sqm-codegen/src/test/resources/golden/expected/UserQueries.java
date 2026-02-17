@@ -1,7 +1,7 @@
 package io.sqm.codegen.generated;
 
 import javax.annotation.processing.Generated;
-import io.sqm.core.Query;
+import io.sqm.core.*;
 import java.util.Set;
 import static io.sqm.dsl.Dsl.*;
 
@@ -26,7 +26,7 @@ public final class UserQueries {
      *
      * @return query model for this SQL source.
      */
-    public static Query aFindById() {
+    public static SelectQuery aFindById() {
         return select(
           star()
         )
@@ -48,7 +48,7 @@ public final class UserQueries {
      *
      * @return query model for this SQL source.
      */
-    public static Query zListActive() {
+    public static SelectQuery zListActive() {
         return select(
           star()
         )
