@@ -3,6 +3,7 @@ package io.sqm.core;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 /**
  * Represents a generic element of the SQM (Structured Query Model) tree.
@@ -35,4 +36,22 @@ public sealed interface Node extends Serializable permits BoundSpec, CteDef, Dia
      * or {@code null} if the visitor’s return type is {@link Void}
      */
     <R> R accept(NodeVisitor<R> v);
+
+    /**
+     * Gets the first interface of the implementation class derived from the {@link Node}.
+     *
+     * @param <T>  the actual type derived from the {@link Node}.
+     * @return an interface if found or self otherwise.
+     */
+    @SuppressWarnings("unchecked")
+    default <T extends Node> Class<T> getTopLevelInterface() {
+        Class<? extends T> impl = (Class<? extends T>) this.getClass();
+
+        var opt = Arrays.stream(impl.getInterfaces())
+            .filter(Node.class::isAssignableFrom)
+            .findFirst();
+
+        var key = (Class<? extends Node>) opt.orElse(impl.asSubclass(Node.class));
+        return (Class<T>) key;
+    }
 }

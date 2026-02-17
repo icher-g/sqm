@@ -1,7 +1,7 @@
 package io.sqm.codegen.generated;
 
 import javax.annotation.processing.Generated;
-import io.sqm.core.Query;
+import io.sqm.core.*;
 import java.util.Set;
 import static io.sqm.dsl.Dsl.*;
 
@@ -25,7 +25,7 @@ public final class ReportingQueries {
      *
      * @return query model for this SQL source.
      */
-    public static Query kitchenSink() {
+    public static SelectQuery kitchenSink() {
         return select(
           col("u", "id"),
           col("u", "org_id"),
