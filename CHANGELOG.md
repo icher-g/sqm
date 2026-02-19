@@ -1,4 +1,4 @@
-﻿# ðŸ“œ Changelog
+﻿# Changelog
 
 ## [v0.3.0] - 2026-02-13
 ### Added
