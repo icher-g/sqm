@@ -43,6 +43,16 @@ public record ExecutionContext(
     }
 
     /**
+     * Creates a new context with the provided mode while preserving other attributes.
+     *
+     * @param newMode new processing mode
+     * @return new execution context
+     */
+    public ExecutionContext withMode(ExecutionMode newMode) {
+        return new ExecutionContext(dialect, principal, tenant, newMode);
+    }
+
+    /**
      * Validates required fields.
      *
      * @param dialect   dialect identifier

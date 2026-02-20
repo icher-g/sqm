@@ -50,6 +50,11 @@ public enum ReasonCode {
     DENY_UNSUPPORTED_DIALECT_FEATURE,
 
     /**
+     * Query processing failed due to an internal pipeline error.
+     */
+    DENY_PIPELINE_ERROR,
+
+    /**
      * Query was rewritten to enforce a limit.
      */
     REWRITE_LIMIT,
