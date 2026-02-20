@@ -10,12 +10,14 @@ import java.util.Objects;
  * @param reasonCode    machine-readable reason code
  * @param message       human-readable message, may be {@code null}
  * @param rewrittenSql  rewritten SQL when {@link DecisionKind#REWRITE}, otherwise {@code null}
+ * @param guidance      machine-actionable retry/remediation guidance, required for deny decisions
  */
 public record DecisionResult(
     DecisionKind kind,
     ReasonCode reasonCode,
     String message,
-    String rewrittenSql
+    String rewrittenSql,
+    DecisionGuidance guidance
 ) implements Serializable {
 
     /**
@@ -24,7 +26,7 @@ public record DecisionResult(
      * @return allow decision
      */
     public static DecisionResult allow() {
-        return new DecisionResult(DecisionKind.ALLOW, ReasonCode.NONE, null, null);
+        return new DecisionResult(DecisionKind.ALLOW, ReasonCode.NONE, null, null, null);
     }
 
     /**
@@ -35,7 +37,19 @@ public record DecisionResult(
      * @return deny decision
      */
     public static DecisionResult deny(ReasonCode reasonCode, String message) {
-        return new DecisionResult(DecisionKind.DENY, reasonCode, message, null);
+        return deny(reasonCode, message, ReasonGuidanceCatalog.forReason(reasonCode));
+    }
+
+    /**
+     * Creates a deny decision with explicit guidance.
+     *
+     * @param reasonCode machine-readable reason code
+     * @param message    human-readable message
+     * @param guidance   machine-actionable retry/remediation guidance
+     * @return deny decision
+     */
+    public static DecisionResult deny(ReasonCode reasonCode, String message, DecisionGuidance guidance) {
+        return new DecisionResult(DecisionKind.DENY, reasonCode, message, null, guidance);
     }
 
     /**
@@ -47,7 +61,7 @@ public record DecisionResult(
      * @return rewrite decision
      */
     public static DecisionResult rewrite(ReasonCode reasonCode, String message, String rewrittenSql) {
-        return new DecisionResult(DecisionKind.REWRITE, reasonCode, message, rewrittenSql);
+        return new DecisionResult(DecisionKind.REWRITE, reasonCode, message, rewrittenSql, null);
     }
 
     /**
@@ -57,6 +71,7 @@ public record DecisionResult(
      * @param reasonCode   machine-readable reason code
      * @param message      human-readable message
      * @param rewrittenSql rewritten SQL
+     * @param guidance     machine-actionable retry/remediation guidance
      */
     public DecisionResult {
         Objects.requireNonNull(kind, "kind must not be null");
@@ -70,6 +85,12 @@ public record DecisionResult(
         }
         if (kind != DecisionKind.REWRITE && rewrittenSql != null) {
             throw new IllegalArgumentException("rewrittenSql is only allowed for REWRITE decisions");
+        }
+        if (kind == DecisionKind.DENY && guidance == null) {
+            throw new IllegalArgumentException("DENY decision requires guidance");
+        }
+        if (kind != DecisionKind.DENY && guidance != null) {
+            throw new IllegalArgumentException("guidance is only allowed for DENY decisions");
         }
     }
 }
