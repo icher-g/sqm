@@ -7,8 +7,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class DecisionResultTest {
 
@@ -25,6 +24,8 @@ class DecisionResultTest {
         assertEquals(DecisionKind.DENY, result.kind());
         assertEquals(ReasonCode.DENY_DDL, result.reasonCode());
         assertEquals("DDL is blocked", result.message());
+        assertEquals("remove_ddl", result.guidance().suggestedAction());
+        assertTrue(result.guidance().retryable());
     }
 
     @Test
@@ -38,7 +39,7 @@ class DecisionResultTest {
     @Test
     void allow_requires_none_reason_code() {
         assertThrows(IllegalArgumentException.class,
-            () -> new DecisionResult(DecisionKind.ALLOW, ReasonCode.DENY_DDL, null, null));
+            () -> new DecisionResult(DecisionKind.ALLOW, ReasonCode.DENY_DDL, null, null, null));
     }
 
     @Test
@@ -50,7 +51,29 @@ class DecisionResultTest {
     @Test
     void non_rewrite_disallows_rewritten_sql() {
         assertThrows(IllegalArgumentException.class,
-            () -> new DecisionResult(DecisionKind.DENY, ReasonCode.DENY_DML, "blocked", "select 1"));
+            () -> new DecisionResult(
+                DecisionKind.DENY,
+                ReasonCode.DENY_DML,
+                "blocked",
+                "select 1",
+                ReasonGuidanceCatalog.forReason(ReasonCode.DENY_DML)));
+    }
+
+    @Test
+    void deny_requires_guidance() {
+        assertThrows(IllegalArgumentException.class,
+            () -> new DecisionResult(DecisionKind.DENY, ReasonCode.DENY_DDL, "blocked", null, null));
+    }
+
+    @Test
+    void non_deny_disallows_guidance() {
+        assertThrows(IllegalArgumentException.class,
+            () -> new DecisionResult(
+                DecisionKind.ALLOW,
+                ReasonCode.NONE,
+                null,
+                null,
+                DecisionGuidance.retryable("hint", "act", "retry")));
     }
 
     @Test
