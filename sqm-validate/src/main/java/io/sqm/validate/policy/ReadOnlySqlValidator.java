@@ -54,8 +54,8 @@ public final class ReadOnlySqlValidator implements SqlValidator {
     @Override
     public ValidationResult validate(String sql) {
         Objects.requireNonNull(sql, "sql");
-        var token = firstTopLevelStatementToken(sql);
-        if (token == null || token.type() == TokenType.SELECT) {
+        var token = firstDisallowedTopLevelStatementToken(sql);
+        if (token == null) {
             return new ValidationResult(List.of());
         }
         if (DML_TOKEN_TYPES.contains(token.type())) {
@@ -81,12 +81,19 @@ public final class ReadOnlySqlValidator implements SqlValidator {
         return new ValidationResult(List.of());
     }
 
-    private static Token firstTopLevelStatementToken(String sql) {
+    private static Token firstDisallowedTopLevelStatementToken(String sql) {
         var cursor = Cursor.of(sql, DEFAULT_QUOTING);
-        int i = cursor.find(STATEMENT_START_TOKEN_TYPES);
-        if (i >= cursor.size()) {
-            return null;
+        int lookahead = 0;
+        while (true) {
+            int i = cursor.find(STATEMENT_START_TOKEN_TYPES, lookahead);
+            if (i >= cursor.size()) {
+                return null;
+            }
+            var token = cursor.peek(i - cursor.pos());
+            if (DML_TOKEN_TYPES.contains(token.type()) || DDL_TOKEN_TYPES.contains(token.type())) {
+                return token;
+            }
+            lookahead = (i - cursor.pos()) + 1;
         }
-        return cursor.peek(i - cursor.pos());
     }
 }
