@@ -35,6 +35,7 @@
     </dependencyManagement>
     <modules>
         <module>sqm-core</module>
+        <module>sqm-control</module>
         <module>sqm-core-postgresql</module>
         <module>sqm-render</module>
         <module>sqm-parser</module>

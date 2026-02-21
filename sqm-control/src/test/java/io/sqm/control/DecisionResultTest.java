@@ -1,4 +1,4 @@
-package io.sqm.core.control;
+package io.sqm.control;
 
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ class DecisionResultTest {
         var result = DecisionResult.allow();
         assertEquals(DecisionKind.ALLOW, result.kind());
         assertEquals(ReasonCode.NONE, result.reasonCode());
+        assertNull(result.fingerprint());
     }
 
     @Test
@@ -34,12 +35,30 @@ class DecisionResultTest {
         assertEquals(DecisionKind.REWRITE, result.kind());
         assertEquals(ReasonCode.REWRITE_LIMIT, result.reasonCode());
         assertEquals("select * from t limit 100", result.rewrittenSql());
+        assertNull(result.fingerprint());
+    }
+
+    @Test
+    void allow_factory_with_fingerprint() {
+        var result = DecisionResult.allow("abc");
+        assertEquals("abc", result.fingerprint());
+    }
+
+    @Test
+    void rewrite_factory_with_fingerprint() {
+        var result = DecisionResult.rewrite(
+            ReasonCode.REWRITE_LIMIT,
+            "Added LIMIT",
+            "select * from t limit 100",
+            "abc"
+        );
+        assertEquals("abc", result.fingerprint());
     }
 
     @Test
     void allow_requires_none_reason_code() {
         assertThrows(IllegalArgumentException.class,
-            () -> new DecisionResult(DecisionKind.ALLOW, ReasonCode.DENY_DDL, null, null, null));
+            () -> new DecisionResult(DecisionKind.ALLOW, ReasonCode.DENY_DDL, null, null, null, null));
     }
 
     @Test
@@ -56,13 +75,14 @@ class DecisionResultTest {
                 ReasonCode.DENY_DML,
                 "blocked",
                 "select 1",
+                null,
                 ReasonGuidanceCatalog.forReason(ReasonCode.DENY_DML)));
     }
 
     @Test
     void deny_requires_guidance() {
         assertThrows(IllegalArgumentException.class,
-            () -> new DecisionResult(DecisionKind.DENY, ReasonCode.DENY_DDL, "blocked", null, null));
+            () -> new DecisionResult(DecisionKind.DENY, ReasonCode.DENY_DDL, "blocked", null, null, null));
     }
 
     @Test
@@ -73,7 +93,14 @@ class DecisionResultTest {
                 ReasonCode.NONE,
                 null,
                 null,
+                null,
                 DecisionGuidance.retryable("hint", "act", "retry")));
+    }
+
+    @Test
+    void blank_fingerprint_is_rejected() {
+        assertThrows(IllegalArgumentException.class,
+            () -> new DecisionResult(DecisionKind.ALLOW, ReasonCode.NONE, null, null, " ", null));
     }
 
     @Test

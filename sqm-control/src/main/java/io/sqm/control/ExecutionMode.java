@@ -1,4 +1,4 @@
-package io.sqm.core.control;
+package io.sqm.control;
 
 /**
  * Represents how SQL processing should be handled by middleware.

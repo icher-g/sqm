@@ -1,4 +1,4 @@
-package io.sqm.core.control;
+package io.sqm.control;
 
 /**
  * Final decision returned by SQL middleware processing.
