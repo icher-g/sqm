@@ -1,4 +1,4 @@
-package io.sqm.core.control;
+package io.sqm.control;
 
 /**
  * Stable, machine-readable reason codes for middleware decisions.

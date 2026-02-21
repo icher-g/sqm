@@ -1,4 +1,4 @@
-package io.sqm.core.control;
+package io.sqm.control;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -10,6 +10,7 @@ import java.util.Objects;
  * @param reasonCode    machine-readable reason code
  * @param message       human-readable message, may be {@code null}
  * @param rewrittenSql  rewritten SQL when {@link DecisionKind#REWRITE}, otherwise {@code null}
+ * @param fingerprint   canonical query fingerprint when available, otherwise {@code null}
  * @param guidance      machine-actionable retry/remediation guidance, required for deny decisions
  */
 public record DecisionResult(
@@ -17,6 +18,7 @@ public record DecisionResult(
     ReasonCode reasonCode,
     String message,
     String rewrittenSql,
+    String fingerprint,
     DecisionGuidance guidance
 ) implements Serializable {
 
@@ -26,7 +28,17 @@ public record DecisionResult(
      * @return allow decision
      */
     public static DecisionResult allow() {
-        return new DecisionResult(DecisionKind.ALLOW, ReasonCode.NONE, null, null, null);
+        return allow(null);
+    }
+
+    /**
+     * Creates an allow decision with optional canonical fingerprint.
+     *
+     * @param fingerprint canonical fingerprint.
+     * @return allow decision
+     */
+    public static DecisionResult allow(String fingerprint) {
+        return new DecisionResult(DecisionKind.ALLOW, ReasonCode.NONE, null, null, fingerprint, null);
     }
 
     /**
@@ -49,7 +61,7 @@ public record DecisionResult(
      * @return deny decision
      */
     public static DecisionResult deny(ReasonCode reasonCode, String message, DecisionGuidance guidance) {
-        return new DecisionResult(DecisionKind.DENY, reasonCode, message, null, guidance);
+        return new DecisionResult(DecisionKind.DENY, reasonCode, message, null, null, guidance);
     }
 
     /**
@@ -61,7 +73,30 @@ public record DecisionResult(
      * @return rewrite decision
      */
     public static DecisionResult rewrite(ReasonCode reasonCode, String message, String rewrittenSql) {
-        return new DecisionResult(DecisionKind.REWRITE, reasonCode, message, rewrittenSql, null);
+        return rewrite(reasonCode, message, rewrittenSql, null);
+    }
+
+    /**
+     * Creates a rewrite decision with canonical fingerprint.
+     *
+     * @param reasonCode   machine-readable rewrite reason
+     * @param message      human-readable message
+     * @param rewrittenSql rewritten SQL
+     * @param fingerprint  canonical fingerprint
+     * @return rewrite decision
+     */
+    public static DecisionResult rewrite(ReasonCode reasonCode, String message, String rewrittenSql, String fingerprint) {
+        return new DecisionResult(DecisionKind.REWRITE, reasonCode, message, rewrittenSql, fingerprint, null);
+    }
+
+    /**
+     * Returns a copy of this decision with canonical fingerprint attached.
+     *
+     * @param fingerprint canonical fingerprint value.
+     * @return decision copy with fingerprint.
+     */
+    public DecisionResult withFingerprint(String fingerprint) {
+        return new DecisionResult(kind, reasonCode, message, rewrittenSql, fingerprint, guidance);
     }
 
     /**
@@ -71,6 +106,7 @@ public record DecisionResult(
      * @param reasonCode   machine-readable reason code
      * @param message      human-readable message
      * @param rewrittenSql rewritten SQL
+     * @param fingerprint  canonical query fingerprint
      * @param guidance     machine-actionable retry/remediation guidance
      */
     public DecisionResult {
@@ -91,6 +127,9 @@ public record DecisionResult(
         }
         if (kind != DecisionKind.DENY && guidance != null) {
             throw new IllegalArgumentException("guidance is only allowed for DENY decisions");
+        }
+        if (fingerprint != null && fingerprint.isBlank()) {
+            throw new IllegalArgumentException("fingerprint must not be blank");
         }
     }
 }

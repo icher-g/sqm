@@ -1,4 +1,4 @@
-package io.sqm.core.control;
+package io.sqm.control;
 
 import org.junit.jupiter.api.Test;
 

@@ -1,4 +1,4 @@
-package io.sqm.core.control;
+package io.sqm.control;
 
 /**
  * Default guidance mapping for reason codes.
