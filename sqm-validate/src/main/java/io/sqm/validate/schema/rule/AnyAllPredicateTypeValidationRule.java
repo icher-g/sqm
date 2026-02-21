@@ -3,7 +3,7 @@ package io.sqm.validate.schema.rule;
 import io.sqm.core.AnyAllPredicate;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 /**
  * Validates type compatibility for ANY / ALL predicates.
@@ -33,7 +33,7 @@ final class AnyAllPredicateTypeValidationRule implements SchemaValidationRule<An
     /**
      * Validates that left side and subquery projection are comparable.
      *
-     * @param node ANY/ALL predicate node.
+     * @param node    ANY/ALL predicate node.
      * @param context schema validation context.
      */
     @Override
@@ -49,7 +49,7 @@ final class AnyAllPredicateTypeValidationRule implements SchemaValidationRule<An
         }
         var leftType = context.inferType(node.lhs());
         var rightType = context.inferSingleColumnType(node.subquery());
-        if (leftType.isPresent() && rightType.isPresent() && !DbType.comparable(leftType.get(), rightType.get())) {
+        if (leftType.isPresent() && rightType.isPresent() && !CatalogTypeSemantics.comparable(leftType.get(), rightType.get())) {
             context.addProblem(
                 ValidationProblem.Code.TYPE_MISMATCH,
                 "Incompatible ANY/ALL types: " + leftType.get() + " and " + rightType.get(),
@@ -59,4 +59,6 @@ final class AnyAllPredicateTypeValidationRule implements SchemaValidationRule<An
         }
     }
 }
+
+
 

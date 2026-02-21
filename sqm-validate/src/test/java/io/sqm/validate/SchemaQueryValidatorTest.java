@@ -6,19 +6,19 @@ import io.sqm.core.Expression;
 import io.sqm.core.OverSpec;
 import io.sqm.core.SelectQuery;
 import io.sqm.core.WindowDef;
+import io.sqm.catalog.access.DefaultCatalogAccessPolicy;
+import io.sqm.catalog.model.CatalogColumn;
+import io.sqm.catalog.model.CatalogSchema;
+import io.sqm.catalog.model.CatalogTable;
+import io.sqm.catalog.model.CatalogType;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.SchemaQueryValidator;
-import io.sqm.validate.schema.SchemaAccessPolicy;
 import io.sqm.validate.schema.SchemaValidationLimits;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
 import io.sqm.validate.schema.function.FunctionArgKind;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.function.FunctionSignature;
-import io.sqm.validate.schema.model.DbColumn;
-import io.sqm.validate.schema.model.DbSchema;
-import io.sqm.validate.schema.model.DbTable;
-import io.sqm.validate.schema.model.DbType;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
 import org.junit.jupiter.api.Test;
 
@@ -29,21 +29,21 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SchemaQueryValidatorTest {
 
-    private static final DbSchema SCHEMA = DbSchema.of(
-        DbTable.of("public", "users",
-            DbColumn.of("id", DbType.LONG),
-            DbColumn.of("name", DbType.STRING),
-            DbColumn.of("age", DbType.INTEGER),
-            DbColumn.of("status", DbType.STRING)
+    private static final CatalogSchema SCHEMA = CatalogSchema.of(
+        CatalogTable.of("public", "users",
+            CatalogColumn.of("id", CatalogType.LONG),
+            CatalogColumn.of("name", CatalogType.STRING),
+            CatalogColumn.of("age", CatalogType.INTEGER),
+            CatalogColumn.of("status", CatalogType.STRING)
         ),
-        DbTable.of("public", "orders",
-            DbColumn.of("id", DbType.LONG),
-            DbColumn.of("user_id", DbType.LONG),
-            DbColumn.of("status", DbType.STRING)
+        CatalogTable.of("public", "orders",
+            CatalogColumn.of("id", CatalogType.LONG),
+            CatalogColumn.of("user_id", CatalogType.LONG),
+            CatalogColumn.of("status", CatalogType.STRING)
         ),
-        DbTable.of("public", "accounts",
-            DbColumn.of("id", DbType.STRING),
-            DbColumn.of("status", DbType.STRING)
+        CatalogTable.of("public", "accounts",
+            CatalogColumn.of("id", CatalogType.STRING),
+            CatalogColumn.of("status", CatalogType.STRING)
         )
     );
 
@@ -75,7 +75,7 @@ class SchemaQueryValidatorTest {
     @Test
     void validate_reportsDeniedTableByPolicy() {
         var settings = SchemaValidationSettings.builder()
-            .accessPolicy(SchemaAccessPolicy.builder().denyTable("orders").build())
+            .accessPolicy(DefaultCatalogAccessPolicy.builder().denyTable("orders").build())
             .build();
         var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
 
@@ -97,9 +97,28 @@ class SchemaQueryValidatorTest {
     }
 
     @Test
+    void validate_appliesPrincipalSpecificTablePolicy() {
+        var policy = DefaultCatalogAccessPolicy.builder()
+            .denyTableForPrincipal("alice", "orders")
+            .build();
+        var settings = SchemaValidationSettings.builder()
+            .principal("alice")
+            .accessPolicy(policy)
+            .build();
+        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+
+        Query query = select(star()).from(tbl("orders").as("o"));
+        var result = policyValidator.validate(query);
+
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.POLICY_TABLE_DENIED));
+    }
+
+    @Test
     void validate_reportsDeniedColumnByPolicy() {
         var settings = SchemaValidationSettings.builder()
-            .accessPolicy(SchemaAccessPolicy.builder().denyColumn("u.status").build())
+            .accessPolicy(DefaultCatalogAccessPolicy.builder().denyColumn("u.status").build())
             .build();
         var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
 
@@ -231,7 +250,7 @@ class SchemaQueryValidatorTest {
     @Test
     void validate_reportsFunctionNotAllowedByPolicy() {
         var settings = SchemaValidationSettings.builder()
-            .accessPolicy(SchemaAccessPolicy.builder().allowFunction("length").build())
+            .accessPolicy(DefaultCatalogAccessPolicy.builder().allowFunction("length").build())
             .build();
         var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
 
@@ -246,7 +265,7 @@ class SchemaQueryValidatorTest {
     @Test
     void validate_acceptsAllowedFunctionByPolicy() {
         var settings = SchemaValidationSettings.builder()
-            .accessPolicy(SchemaAccessPolicy.builder().allowFunction("length").build())
+            .accessPolicy(DefaultCatalogAccessPolicy.builder().allowFunction("length").build())
             .build();
         var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
 
@@ -1718,7 +1737,7 @@ class SchemaQueryValidatorTest {
     @Test
     void validate_usesCustomFunctionReturnTypeForInference() {
         FunctionCatalog catalog = name -> "foo".equalsIgnoreCase(name)
-            ? java.util.Optional.of(FunctionSignature.of(1, 1, DbType.STRING, FunctionArgKind.ANY_EXPR))
+            ? java.util.Optional.of(FunctionSignature.of(1, 1, CatalogType.STRING, FunctionArgKind.ANY_EXPR))
             : java.util.Optional.empty();
         var customValidator = SchemaQueryValidator.of(SCHEMA, catalog);
 
@@ -1734,8 +1753,8 @@ class SchemaQueryValidatorTest {
 
     @Test
     void validate_skipsStrictMismatchChecksForUnknownTypeColumns() {
-        DbSchema unknownSchema = DbSchema.of(
-            DbTable.of("public", "events", DbColumn.of("payload", DbType.UNKNOWN))
+        CatalogSchema unknownSchema = CatalogSchema.of(
+            CatalogTable.of("public", "events", CatalogColumn.of("payload", CatalogType.UNKNOWN))
         );
         var unknownValidator = SchemaQueryValidator.of(unknownSchema);
 
@@ -1783,3 +1802,4 @@ class SchemaQueryValidatorTest {
         assertTrue(result.ok());
     }
 }
+

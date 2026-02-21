@@ -2,7 +2,7 @@ package io.sqm.validate.schema.rule;
 
 import io.sqm.core.*;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +31,7 @@ class DefaultProjectionShapeInspector implements ProjectionShapeInspector {
      * @return projected expression types.
      */
     @Override
-    public Optional<List<Optional<DbType>>> expressionProjectionTypes(
+    public Optional<List<Optional<CatalogType>>> expressionProjectionTypes(
         Query query,
         SchemaValidationContext context
     ) {
@@ -86,7 +86,7 @@ class DefaultProjectionShapeInspector implements ProjectionShapeInspector {
      * @param context validation context.
      * @return projected expression types.
      */
-    private Optional<List<Optional<DbType>>> expressionProjectionTypesForComposite(
+    private Optional<List<Optional<CatalogType>>> expressionProjectionTypesForComposite(
         CompositeQuery composite,
         SchemaValidationContext context
     ) {
@@ -103,12 +103,12 @@ class DefaultProjectionShapeInspector implements ProjectionShapeInspector {
      * @param context validation context.
      * @return projected expression types.
      */
-    private Optional<List<Optional<DbType>>> selectProjectionTypes(
+    private Optional<List<Optional<CatalogType>>> selectProjectionTypes(
         SelectQuery select,
         SchemaValidationContext context
     ) {
         if (context == null) {
-            var unknownTypes = new ArrayList<Optional<DbType>>(select.items().size());
+            var unknownTypes = new ArrayList<Optional<CatalogType>>(select.items().size());
             for (var item : select.items()) {
                 if (!(item instanceof ExprSelectItem)) {
                     return Optional.empty();
@@ -137,3 +137,4 @@ class DefaultProjectionShapeInspector implements ProjectionShapeInspector {
         return Optional.of(List.copyOf(expressions));
     }
 }
+

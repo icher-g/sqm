@@ -7,7 +7,8 @@ import io.sqm.validate.schema.function.FunctionArgKind;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.function.FunctionSignature;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 import java.util.List;
 import java.util.Optional;
@@ -131,7 +132,7 @@ final class FunctionSignatureValidationRule implements SchemaValidationRule<Func
                 mismatch(node, "expects expression argument", context);
                 yield false;
             }
-            case STRING_EXPR -> validateTypedExprArg(arg, node, context, DbType.STRING, "expects STRING argument");
+            case STRING_EXPR -> validateTypedExprArg(arg, node, context, CatalogType.STRING, "expects STRING argument");
             case NUMERIC_EXPR -> validateNumericExprArg(arg, node, context);
         };
     }
@@ -150,7 +151,7 @@ final class FunctionSignatureValidationRule implements SchemaValidationRule<Func
         FunctionExpr.Arg arg,
         FunctionExpr node,
         SchemaValidationContext context,
-        DbType expectedType,
+        CatalogType expectedType,
         String message
     ) {
         var exprArg = asExprArg(arg, node, context);
@@ -158,7 +159,7 @@ final class FunctionSignatureValidationRule implements SchemaValidationRule<Func
             return false;
         }
         var type = context.inferType(exprArg.get());
-        if (type.isPresent() && DbType.isKnown(type.get()) && type.get() != expectedType) {
+        if (type.isPresent() && CatalogTypeSemantics.isKnown(type.get()) && type.get() != expectedType) {
             mismatch(node, message, context);
             return false;
         }
@@ -183,7 +184,7 @@ final class FunctionSignatureValidationRule implements SchemaValidationRule<Func
             return false;
         }
         var type = context.inferType(exprArg.get());
-        if (type.isPresent() && DbType.isKnown(type.get()) && !DbType.isNumeric(type.get())) {
+        if (type.isPresent() && CatalogTypeSemantics.isKnown(type.get()) && !CatalogTypeSemantics.isNumeric(type.get())) {
             mismatch(node, "expects numeric argument", context);
             return false;
         }
@@ -226,3 +227,5 @@ final class FunctionSignatureValidationRule implements SchemaValidationRule<Func
         );
     }
 }
+
+

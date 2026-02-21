@@ -3,7 +3,8 @@ package io.sqm.validate.schema.rule;
 import io.sqm.core.CompositeQuery;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 import java.util.List;
 import java.util.Optional;
@@ -71,15 +72,15 @@ final class SetOperationValidationRule implements SchemaValidationRule<Composite
     }
 
     private static void validateTypes(
-        List<Optional<DbType>> left,
-        List<Optional<DbType>> right,
+        List<Optional<CatalogType>> left,
+        List<Optional<CatalogType>> right,
         int pairIndex,
         CompositeQuery node,
         SchemaValidationContext context
     ) {
         for (int c = 0; c < left.size(); c++) {
             if (left.get(c).isPresent() && right.get(c).isPresent()
-                && !DbType.comparable(left.get(c).get(), right.get(c).get())) {
+                && !CatalogTypeSemantics.comparable(left.get(c).get(), right.get(c).get())) {
                 context.addProblem(
                     ValidationProblem.Code.TYPE_MISMATCH,
                     "Set operation type mismatch at term pair "
@@ -145,3 +146,5 @@ final class SetOperationValidationRule implements SchemaValidationRule<Composite
         }
     }
 }
+
+

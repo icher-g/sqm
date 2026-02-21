@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.sqm.catalog.access.DefaultCatalogAccessPolicy;
 
 import java.util.List;
 import java.util.Objects;
@@ -56,9 +57,10 @@ public final class SchemaValidationSettingsLoader {
 
     private static SchemaValidationSettings toSettings(SettingsConfig config) {
         var builder = SchemaValidationSettings.builder();
+        builder.principal(config.principal);
 
         if (config.accessPolicy != null) {
-            var policyBuilder = SchemaAccessPolicy.builder();
+            var policyBuilder = DefaultCatalogAccessPolicy.builder();
             for (var table : safe(config.accessPolicy.deniedTables)) {
                 policyBuilder.denyTable(table);
             }
@@ -67,6 +69,17 @@ public final class SchemaValidationSettingsLoader {
             }
             for (var functionName : safe(config.accessPolicy.allowedFunctions)) {
                 policyBuilder.allowFunction(functionName);
+            }
+            for (var principalRule : safePrincipalRules(config.accessPolicy.principals)) {
+                for (var table : safe(principalRule.deniedTables)) {
+                    policyBuilder.denyTableForPrincipal(principalRule.name, table);
+                }
+                for (var column : safe(principalRule.deniedColumns)) {
+                    policyBuilder.denyColumnForPrincipal(principalRule.name, column);
+                }
+                for (var functionName : safe(principalRule.allowedFunctions)) {
+                    policyBuilder.allowFunctionForPrincipal(principalRule.name, functionName);
+                }
             }
             builder.accessPolicy(policyBuilder.build());
         }
@@ -89,14 +102,28 @@ public final class SchemaValidationSettingsLoader {
         return values == null ? List.of() : values;
     }
 
+    private static List<PrincipalPolicyConfig> safePrincipalRules(List<PrincipalPolicyConfig> values) {
+        return values == null ? List.of() : values;
+    }
+
     @JsonIgnoreProperties()
     private static final class SettingsConfig {
+        public String principal;
         public AccessPolicyConfig accessPolicy;
         public LimitsConfig limits;
     }
 
     @JsonIgnoreProperties()
     private static final class AccessPolicyConfig {
+        public List<String> deniedTables;
+        public List<String> deniedColumns;
+        public List<String> allowedFunctions;
+        public List<PrincipalPolicyConfig> principals;
+    }
+
+    @JsonIgnoreProperties()
+    private static final class PrincipalPolicyConfig {
+        public String name;
         public List<String> deniedTables;
         public List<String> deniedColumns;
         public List<String> allowedFunctions;

@@ -6,7 +6,8 @@ import io.sqm.core.UnaryPredicate;
 import io.sqm.core.walk.RecursiveNodeVisitor;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 import java.util.LinkedHashSet;
 import java.util.Locale;
@@ -144,7 +145,7 @@ final class OnJoinValidationRule implements SchemaValidationRule<OnJoin> {
         @Override
         public Void visitUnaryPredicate(UnaryPredicate p) {
             var inferred = context.inferType(p.expr());
-            if (inferred.isPresent() && DbType.isKnown(inferred.get()) && inferred.get() != DbType.BOOLEAN) {
+            if (inferred.isPresent() && CatalogTypeSemantics.isKnown(inferred.get()) && inferred.get() != CatalogType.BOOLEAN) {
                 context.addProblem(
                     ValidationProblem.Code.JOIN_ON_INVALID_BOOLEAN_EXPRESSION,
                     "JOIN ON unary predicate expression must be BOOLEAN but was " + inferred.get(),
@@ -156,3 +157,5 @@ final class OnJoinValidationRule implements SchemaValidationRule<OnJoin> {
         }
     }
 }
+
+

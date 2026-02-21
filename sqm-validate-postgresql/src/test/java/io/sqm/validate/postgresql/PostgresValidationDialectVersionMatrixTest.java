@@ -3,13 +3,13 @@ package io.sqm.validate.postgresql;
 import io.sqm.core.CteDef;
 import io.sqm.core.Query;
 import io.sqm.core.RegexPredicate;
+import io.sqm.catalog.model.CatalogColumn;
+import io.sqm.catalog.model.CatalogSchema;
+import io.sqm.catalog.model.CatalogTable;
+import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.SchemaQueryValidator;
-import io.sqm.validate.schema.model.DbColumn;
-import io.sqm.validate.schema.model.DbSchema;
-import io.sqm.validate.schema.model.DbTable;
-import io.sqm.validate.schema.model.DbType;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -21,10 +21,10 @@ import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PostgresValidationDialectVersionMatrixTest {
-    private static final DbSchema SCHEMA = DbSchema.of(
-        DbTable.of("public", "users",
-            DbColumn.of("id", DbType.LONG),
-            DbColumn.of("name", DbType.STRING)
+    private static final CatalogSchema SCHEMA = CatalogSchema.of(
+        CatalogTable.of("public", "users",
+            CatalogColumn.of("id", CatalogType.LONG),
+            CatalogColumn.of("name", CatalogType.STRING)
         )
     );
 

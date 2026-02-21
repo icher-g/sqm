@@ -3,7 +3,8 @@ package io.sqm.validate.schema.rule;
 import io.sqm.core.LikePredicate;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 /**
  * Validates type compatibility for LIKE-family predicates.
@@ -85,8 +86,8 @@ final class LikeTypeValidationRule implements SchemaValidationRule<LikePredicate
         }
         var inferredType = context.inferType(expression);
         if (inferredType.isPresent()
-            && DbType.isKnown(inferredType.get())
-            && inferredType.get() != DbType.STRING) {
+            && CatalogTypeSemantics.isKnown(inferredType.get())
+            && inferredType.get() != CatalogType.STRING) {
             context.addProblem(
                 ValidationProblem.Code.TYPE_MISMATCH,
                 label + " must be STRING but was " + inferredType.get(),
@@ -96,4 +97,6 @@ final class LikeTypeValidationRule implements SchemaValidationRule<LikePredicate
         }
     }
 }
+
+
 

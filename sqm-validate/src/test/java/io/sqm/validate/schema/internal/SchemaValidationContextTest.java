@@ -3,13 +3,13 @@ package io.sqm.validate.schema.internal;
 import io.sqm.core.Query;
 import io.sqm.core.TableRef;
 import io.sqm.core.TypeKeyword;
+import io.sqm.catalog.model.CatalogColumn;
+import io.sqm.catalog.model.CatalogSchema;
+import io.sqm.catalog.model.CatalogTable;
+import io.sqm.catalog.model.CatalogType;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.function.FunctionSignature;
-import io.sqm.validate.schema.model.DbColumn;
-import io.sqm.validate.schema.model.DbSchema;
-import io.sqm.validate.schema.model.DbTable;
-import io.sqm.validate.schema.model.DbType;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
@@ -19,15 +19,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SchemaValidationContextTest {
-    private static final DbSchema SCHEMA = DbSchema.of(
-        DbTable.of("public", "users",
-            DbColumn.of("id", DbType.LONG),
-            DbColumn.of("name", DbType.STRING),
-            DbColumn.of("age", DbType.INTEGER)
+    private static final CatalogSchema SCHEMA = CatalogSchema.of(
+        CatalogTable.of("public", "users",
+            CatalogColumn.of("id", CatalogType.LONG),
+            CatalogColumn.of("name", CatalogType.STRING),
+            CatalogColumn.of("age", CatalogType.INTEGER)
         ),
-        DbTable.of("public", "orders",
-            DbColumn.of("id", DbType.LONG),
-            DbColumn.of("user_id", DbType.LONG)
+        CatalogTable.of("public", "orders",
+            CatalogColumn.of("id", CatalogType.LONG),
+            CatalogColumn.of("user_id", CatalogType.LONG)
         )
     );
 
@@ -87,17 +87,17 @@ class SchemaValidationContextTest {
     @Test
     void inferType_supportsCastArithmeticAndFunctionCatalog() {
         FunctionCatalog catalog = name -> "fnum".equalsIgnoreCase(name)
-            ? java.util.Optional.of(FunctionSignature.of(1, 1, DbType.DECIMAL))
+            ? java.util.Optional.of(FunctionSignature.of(1, 1, CatalogType.DECIMAL))
             : java.util.Optional.empty();
         var context = new SchemaValidationContext(SCHEMA, catalog);
 
-        assertEquals(DbType.STRING, context.inferType(lit("x").cast(type(TypeKeyword.CHARACTER_VARYING))).orElseThrow());
-        assertEquals(DbType.INTEGER, context.inferType(lit("1").cast(type("int4"))).orElseThrow());
-        assertEquals(DbType.LONG, context.inferType(lit(1).add(lit(2L))).orElseThrow());
-        assertEquals(DbType.DECIMAL, context.inferType(lit(1L).add(lit(2.5))).orElseThrow());
-        assertEquals(DbType.INTEGER, context.inferType(lit(1).neg()).orElseThrow());
+        assertEquals(CatalogType.STRING, context.inferType(lit("x").cast(type(TypeKeyword.CHARACTER_VARYING))).orElseThrow());
+        assertEquals(CatalogType.INTEGER, context.inferType(lit("1").cast(type("int4"))).orElseThrow());
+        assertEquals(CatalogType.LONG, context.inferType(lit(1).add(lit(2L))).orElseThrow());
+        assertEquals(CatalogType.DECIMAL, context.inferType(lit(1L).add(lit(2.5))).orElseThrow());
+        assertEquals(CatalogType.INTEGER, context.inferType(lit(1).neg()).orElseThrow());
         assertTrue(context.inferType(lit("bad").neg()).isEmpty());
-        assertEquals(DbType.DECIMAL, context.inferType(func("fnum", arg(lit(1)))).orElseThrow());
+        assertEquals(CatalogType.DECIMAL, context.inferType(func("fnum", arg(lit(1)))).orElseThrow());
     }
 
     @Test
@@ -125,3 +125,4 @@ class SchemaValidationContextTest {
         }
     }
 }
+

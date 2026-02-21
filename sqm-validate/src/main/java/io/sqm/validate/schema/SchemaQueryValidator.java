@@ -2,13 +2,13 @@ package io.sqm.validate.schema;
 
 import io.sqm.core.*;
 import io.sqm.core.walk.RecursiveNodeVisitor;
+import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.validate.api.QueryValidator;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.api.ValidationResult;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbSchema;
 import io.sqm.validate.schema.rule.SchemaValidationRuleRegistry;
 
 import java.util.LinkedHashSet;
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Validates {@link Query} model against {@link DbSchema}.
+ * Validates {@link Query} model against {@link CatalogSchema}.
  *
  * <p>Current validation checks:</p>
  * <ul>
@@ -27,7 +27,7 @@ import java.util.Objects;
  * </ul>
  */
 public final class SchemaQueryValidator implements QueryValidator {
-    private final DbSchema schema;
+    private final CatalogSchema schema;
     private final SchemaValidationSettings settings;
     private final SchemaValidationRuleRegistry registry;
 
@@ -36,7 +36,7 @@ public final class SchemaQueryValidator implements QueryValidator {
      *
      * @param schema schema model used during validation.
      */
-    private SchemaQueryValidator(DbSchema schema) {
+    private SchemaQueryValidator(CatalogSchema schema) {
         this(schema, SchemaValidationSettings.defaults());
     }
 
@@ -46,7 +46,7 @@ public final class SchemaQueryValidator implements QueryValidator {
      * @param schema schema model used during validation.
      * @param functionCatalog function signatures catalog.
      */
-    private SchemaQueryValidator(DbSchema schema, FunctionCatalog functionCatalog) {
+    private SchemaQueryValidator(CatalogSchema schema, FunctionCatalog functionCatalog) {
         this(schema, SchemaValidationSettings.of(functionCatalog));
     }
 
@@ -56,7 +56,7 @@ public final class SchemaQueryValidator implements QueryValidator {
      * @param schema schema model used during validation.
      * @param settings schema validation settings.
      */
-    private SchemaQueryValidator(DbSchema schema, SchemaValidationSettings settings) {
+    private SchemaQueryValidator(CatalogSchema schema, SchemaValidationSettings settings) {
         this(
             schema,
             settings,
@@ -76,7 +76,7 @@ public final class SchemaQueryValidator implements QueryValidator {
      * @param registry node-rule registry.
      */
     private SchemaQueryValidator(
-        DbSchema schema,
+        CatalogSchema schema,
         SchemaValidationSettings settings,
         SchemaValidationRuleRegistry registry
     ) {
@@ -91,7 +91,7 @@ public final class SchemaQueryValidator implements QueryValidator {
      * @param schema database schema model.
      * @return validator instance.
      */
-    public static SchemaQueryValidator of(DbSchema schema) {
+    public static SchemaQueryValidator of(CatalogSchema schema) {
         return new SchemaQueryValidator(schema);
     }
 
@@ -102,7 +102,7 @@ public final class SchemaQueryValidator implements QueryValidator {
      * @param functionCatalog function signatures catalog.
      * @return validator instance.
      */
-    public static SchemaQueryValidator of(DbSchema schema, FunctionCatalog functionCatalog) {
+    public static SchemaQueryValidator of(CatalogSchema schema, FunctionCatalog functionCatalog) {
         return new SchemaQueryValidator(schema, functionCatalog);
     }
 
@@ -113,7 +113,7 @@ public final class SchemaQueryValidator implements QueryValidator {
      * @param settings schema validation settings.
      * @return validator instance.
      */
-    public static SchemaQueryValidator of(DbSchema schema, SchemaValidationSettings settings) {
+    public static SchemaQueryValidator of(CatalogSchema schema, SchemaValidationSettings settings) {
         return new SchemaQueryValidator(schema, settings);
     }
 
@@ -124,7 +124,7 @@ public final class SchemaQueryValidator implements QueryValidator {
      * @param dialect dialect extension.
      * @return validator instance.
      */
-    public static SchemaQueryValidator of(DbSchema schema, SchemaValidationDialect dialect) {
+    public static SchemaQueryValidator of(CatalogSchema schema, SchemaValidationDialect dialect) {
         Objects.requireNonNull(dialect, "dialect");
         return new SchemaQueryValidator(schema, dialect.toSettings());
     }
@@ -139,7 +139,7 @@ public final class SchemaQueryValidator implements QueryValidator {
     public ValidationResult validate(Query query) {
         Objects.requireNonNull(query, "query");
         var visitor = new ValidationVisitor(
-            new SchemaValidationContext(schema, settings.functionCatalog(), settings.accessPolicy()),
+            new SchemaValidationContext(schema, settings.functionCatalog(), settings.accessPolicy(), settings.principal()),
             registry
         );
         query.accept(visitor);

@@ -3,6 +3,8 @@ package io.sqm.validate.schema;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -32,6 +34,7 @@ class SchemaValidationSettingsLoaderTest {
         assertTrue(settings.accessPolicy().isFunctionAllowed("length"));
         assertEquals(2, settings.limits().maxJoinCount());
         assertEquals(5, settings.limits().maxSelectColumns());
+        assertNull(settings.principal());
     }
 
     @Test
@@ -56,6 +59,35 @@ class SchemaValidationSettingsLoaderTest {
         assertTrue(settings.accessPolicy().isFunctionAllowed("length"));
         assertEquals(1, settings.limits().maxJoinCount());
         assertEquals(3, settings.limits().maxSelectColumns());
+        assertNull(settings.principal());
+    }
+
+    @Test
+    void loads_principal_specific_policy_and_principal_context() {
+        var json = """
+            {
+              "principal": "alice",
+              "accessPolicy": {
+                "principals": [
+                  {
+                    "name": "alice",
+                    "deniedTables": ["orders"],
+                    "deniedColumns": ["u.secret"],
+                    "allowedFunctions": ["length"]
+                  }
+                ]
+              }
+            }
+            """;
+
+        var settings = SchemaValidationSettingsLoader.fromJson(json);
+
+        assertEquals("alice", settings.principal());
+        assertTrue(settings.accessPolicy().isTableDenied("alice", null, "orders"));
+        assertTrue(settings.accessPolicy().isColumnDenied("alice", "u", "secret"));
+        assertTrue(settings.accessPolicy().isFunctionAllowed("alice", "length"));
+        assertTrue(settings.accessPolicy().isFunctionAllowed("alice", null));
+        assertFalse(settings.accessPolicy().isFunctionAllowed("bob", "length"));
     }
 
     @Test

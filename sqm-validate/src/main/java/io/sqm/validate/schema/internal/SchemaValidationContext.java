@@ -1,13 +1,15 @@
 package io.sqm.validate.schema.internal;
 
 import io.sqm.core.*;
+import io.sqm.catalog.access.CatalogAccessPolicies;
+import io.sqm.catalog.access.CatalogAccessPolicy;
+import io.sqm.catalog.model.CatalogColumn;
+import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.validate.api.ValidationProblem;
-import io.sqm.validate.schema.SchemaAccessPolicy;
 import io.sqm.validate.schema.function.DefaultFunctionCatalog;
 import io.sqm.validate.schema.function.FunctionCatalog;
-import io.sqm.validate.schema.model.DbColumn;
-import io.sqm.validate.schema.model.DbSchema;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 import java.util.*;
 
@@ -18,9 +20,10 @@ import java.util.*;
  * schema-backed symbol resolution, and basic type inference helpers.</p>
  */
 public final class SchemaValidationContext {
-    private final DbSchema schema;
+    private final CatalogSchema schema;
     private final FunctionCatalog functionCatalog;
-    private final SchemaAccessPolicy accessPolicy;
+    private final CatalogAccessPolicy accessPolicy;
+    private final String principal;
     private final List<ValidationProblem> problems = new ArrayList<>();
     private final Deque<Scope> scopes = new ArrayDeque<>();
     private final Deque<Map<String, CteSource>> cteScopes = new ArrayDeque<>();
@@ -30,8 +33,8 @@ public final class SchemaValidationContext {
      *
      * @param schema schema used for table and column resolution.
      */
-    public SchemaValidationContext(DbSchema schema) {
-        this(schema, DefaultFunctionCatalog.standard(), SchemaAccessPolicy.allowAll());
+    public SchemaValidationContext(CatalogSchema schema) {
+        this(schema, DefaultFunctionCatalog.standard(), CatalogAccessPolicies.allowAll(), null);
     }
 
     /**
@@ -40,8 +43,8 @@ public final class SchemaValidationContext {
      * @param schema          schema used for table and column resolution.
      * @param functionCatalog function signature catalog used for return-type inference.
      */
-    public SchemaValidationContext(DbSchema schema, FunctionCatalog functionCatalog) {
-        this(schema, functionCatalog, SchemaAccessPolicy.allowAll());
+    public SchemaValidationContext(CatalogSchema schema, FunctionCatalog functionCatalog) {
+        this(schema, functionCatalog, CatalogAccessPolicies.allowAll(), null);
     }
 
     /**
@@ -52,13 +55,15 @@ public final class SchemaValidationContext {
      * @param accessPolicy schema access policy.
      */
     public SchemaValidationContext(
-        DbSchema schema,
+        CatalogSchema schema,
         FunctionCatalog functionCatalog,
-        SchemaAccessPolicy accessPolicy
+        CatalogAccessPolicy accessPolicy,
+        String principal
     ) {
         this.schema = Objects.requireNonNull(schema, "schema");
         this.functionCatalog = Objects.requireNonNull(functionCatalog, "functionCatalog");
         this.accessPolicy = Objects.requireNonNull(accessPolicy, "accessPolicy");
+        this.principal = principal;
     }
 
     /**
@@ -78,14 +83,14 @@ public final class SchemaValidationContext {
      * @param right right type.
      * @return promoted type.
      */
-    private static DbType promoteNumeric(DbType left, DbType right) {
-        if (left == DbType.DECIMAL || right == DbType.DECIMAL) {
-            return DbType.DECIMAL;
+    private static CatalogType promoteNumeric(CatalogType left, CatalogType right) {
+        if (left == CatalogType.DECIMAL || right == CatalogType.DECIMAL) {
+            return CatalogType.DECIMAL;
         }
-        if (left == DbType.LONG || right == DbType.LONG) {
-            return DbType.LONG;
+        if (left == CatalogType.LONG || right == CatalogType.LONG) {
+            return CatalogType.LONG;
         }
-        return DbType.INTEGER;
+        return CatalogType.INTEGER;
     }
 
     /**
@@ -102,8 +107,40 @@ public final class SchemaValidationContext {
      *
      * @return schema access policy.
      */
-    public SchemaAccessPolicy accessPolicy() {
+    public CatalogAccessPolicy accessPolicy() {
         return accessPolicy;
+    }
+
+    /**
+     * Returns true when table access is denied for the current principal.
+     *
+     * @param schemaName table schema, may be {@code null}.
+     * @param tableName table name.
+     * @return true when denied.
+     */
+    public boolean isTableDenied(String schemaName, String tableName) {
+        return accessPolicy.isTableDenied(principal, schemaName, tableName);
+    }
+
+    /**
+     * Returns true when column access is denied for the current principal.
+     *
+     * @param sourceName source alias or table name, may be {@code null}.
+     * @param columnName column name.
+     * @return true when denied.
+     */
+    public boolean isColumnDenied(String sourceName, String columnName) {
+        return accessPolicy.isColumnDenied(principal, sourceName, columnName);
+    }
+
+    /**
+     * Returns true when function usage is allowed for the current principal.
+     *
+     * @param functionName function name.
+     * @return true when allowed.
+     */
+    public boolean isFunctionAllowed(String functionName) {
+        return accessPolicy.isFunctionAllowed(principal, functionName);
     }
 
     /**
@@ -254,7 +291,7 @@ public final class SchemaValidationContext {
      * @param columnName column name.
      * @return column type when source and column are known.
      */
-    public Optional<DbType> sourceColumnType(String sourceKey, String columnName) {
+    public Optional<CatalogType> sourceColumnType(String sourceKey, String columnName) {
         return sourceColumnType(sourceKey, columnName, ScopeResolutionMode.CURRENT_SCOPE);
     }
 
@@ -306,7 +343,7 @@ public final class SchemaValidationContext {
      * @param reportErrors whether lookup failures should be recorded as problems.
      * @return resolved column metadata when available.
      */
-    public Optional<DbColumn> resolveColumn(ColumnExpr column, boolean reportErrors) {
+    public Optional<CatalogColumn> resolveColumn(ColumnExpr column, boolean reportErrors) {
         return resolveColumn(column, ScopeResolutionMode.ALL_SCOPES, reportErrors);
     }
 
@@ -316,7 +353,7 @@ public final class SchemaValidationContext {
      * @param expression expression to analyze.
      * @return inferred type if known.
      */
-    public Optional<DbType> inferType(Expression expression) {
+    public Optional<CatalogType> inferType(Expression expression) {
         return inferType(expression, ScopeResolutionMode.ALL_SCOPES);
     }
 
@@ -326,20 +363,20 @@ public final class SchemaValidationContext {
      * @param typeName cast target type.
      * @return inferred cast output type.
      */
-    private Optional<DbType> inferCastType(TypeName typeName) {
+    private Optional<CatalogType> inferCastType(TypeName typeName) {
         if (typeName == null) {
             return Optional.empty();
         }
         if (typeName.keyword().isPresent()) {
             return switch (typeName.keyword().get()) {
-                case DOUBLE_PRECISION -> Optional.of(DbType.DECIMAL);
-                case CHARACTER_VARYING, NATIONAL_CHARACTER, NATIONAL_CHARACTER_VARYING -> Optional.of(DbType.STRING);
+                case DOUBLE_PRECISION -> Optional.of(CatalogType.DECIMAL);
+                case CHARACTER_VARYING, NATIONAL_CHARACTER, NATIONAL_CHARACTER_VARYING -> Optional.of(CatalogType.STRING);
             };
         }
         if (typeName.qualifiedName().isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(DbType.fromSqlType(typeName.qualifiedName().getLast()));
+        return Optional.of(CatalogTypeSemantics.fromSqlType(typeName.qualifiedName().getLast()));
     }
 
     /**
@@ -348,7 +385,7 @@ public final class SchemaValidationContext {
      * @param functionExpr function expression.
      * @return inferred return type.
      */
-    private Optional<DbType> inferFunctionType(FunctionExpr functionExpr) {
+    private Optional<CatalogType> inferFunctionType(FunctionExpr functionExpr) {
         if (functionExpr == null || functionExpr.name() == null) {
             return Optional.empty();
         }
@@ -361,7 +398,7 @@ public final class SchemaValidationContext {
      * @param query query to analyze.
      * @return inferred type for the first projected expression.
      */
-    public Optional<DbType> inferSingleColumnType(Query query) {
+    public Optional<CatalogType> inferSingleColumnType(Query query) {
         return switch (query) {
             case SelectQuery select -> inferSingleColumnType(select);
             case CompositeQuery composite -> composite.terms().isEmpty()
@@ -378,7 +415,7 @@ public final class SchemaValidationContext {
      * @param select select query.
      * @return inferred projection type.
      */
-    private Optional<DbType> inferSingleColumnType(SelectQuery select) {
+    private Optional<CatalogType> inferSingleColumnType(SelectQuery select) {
         var projectionTypes = inferProjectionTypes(select);
         if (projectionTypes.isEmpty() || projectionTypes.get().size() != 1) {
             return Optional.empty();
@@ -392,7 +429,7 @@ public final class SchemaValidationContext {
      * @param select select query.
      * @return inferred projection types or empty when projection is not expression-only.
      */
-    public Optional<List<Optional<DbType>>> inferProjectionTypes(SelectQuery select) {
+    public Optional<List<Optional<CatalogType>>> inferProjectionTypes(SelectQuery select) {
         if (select == null) {
             return Optional.empty();
         }
@@ -402,7 +439,7 @@ public final class SchemaValidationContext {
             for (var join : select.joins()) {
                 registerTableRef(join.right());
             }
-            var types = new ArrayList<Optional<DbType>>(select.items().size());
+            var types = new ArrayList<Optional<CatalogType>>(select.items().size());
             for (var item : select.items()) {
                 if (!(item instanceof ExprSelectItem exprItem)) {
                     return Optional.empty();
@@ -421,7 +458,7 @@ public final class SchemaValidationContext {
      * @param table table reference.
      */
     private void registerPhysicalTable(Table table) {
-        if (accessPolicy.isTableDenied(table.schema(), table.name())) {
+        if (isTableDenied(table.schema(), table.name())) {
             var tableName = table.schema() == null ? table.name() : table.schema() + "." + table.name();
             addProblem(
                 ValidationProblem.Code.POLICY_TABLE_DENIED,
@@ -439,20 +476,24 @@ public final class SchemaValidationContext {
         }
 
         var lookup = schema.resolve(table.schema(), table.name());
-        if (lookup instanceof DbSchema.TableLookupResult.NotFound(String schema1, String name)) {
+        if (lookup instanceof CatalogSchema.TableLookupResult.NotFound(String schema1, String name)) {
             var tableName = schema1 == null ? name : schema1 + "." + name;
             addProblem(ValidationProblem.Code.TABLE_NOT_FOUND, "Table not found: " + tableName, table, "from.table");
             registerSource(aliasOrName, ResolvedSource.of(aliasOrName, Map.of(), false));
             return;
         }
-        if (lookup instanceof DbSchema.TableLookupResult.Ambiguous ambiguous) {
+        if (lookup instanceof CatalogSchema.TableLookupResult.Ambiguous ambiguous) {
             addProblem(ValidationProblem.Code.TABLE_AMBIGUOUS, "Ambiguous unqualified table: " + ambiguous.name(), table, "from.table");
             registerSource(aliasOrName, ResolvedSource.of(aliasOrName, Map.of(), false));
             return;
         }
 
-        var found = (DbSchema.TableLookupResult.Found) lookup;
-        registerSource(aliasOrName, ResolvedSource.of(aliasOrName, found.table().columnsByName(), true));
+        var found = (CatalogSchema.TableLookupResult.Found) lookup;
+        var columnsByName = new LinkedHashMap<String, CatalogColumn>();
+        for (var column : found.table().columns()) {
+            columnsByName.put(normalize(column.name()), column);
+        }
+        registerSource(aliasOrName, ResolvedSource.of(aliasOrName, columnsByName, true));
     }
 
     /**
@@ -468,10 +509,10 @@ public final class SchemaValidationContext {
         if (alias == null) {
             return;
         }
-        var columns = new LinkedHashMap<String, DbColumn>();
+        var columns = new LinkedHashMap<String, CatalogColumn>();
         if (columnAliases != null) {
             for (var columnAlias : columnAliases) {
-                columns.put(normalize(columnAlias), DbColumn.of(columnAlias, DbType.STRING));
+                columns.put(normalize(columnAlias), CatalogColumn.of(columnAlias, CatalogType.STRING));
             }
         }
         registerSource(alias, ResolvedSource.of(alias, columns, false));
@@ -510,7 +551,7 @@ public final class SchemaValidationContext {
      * @param expression expression to infer.
      * @return inferred type.
      */
-    private Optional<DbType> inferTypeInCurrentScope(Expression expression) {
+    private Optional<CatalogType> inferTypeInCurrentScope(Expression expression) {
         return inferType(expression, ScopeResolutionMode.CURRENT_SCOPE);
     }
 
@@ -522,7 +563,7 @@ public final class SchemaValidationContext {
      * @param reportErrors whether lookup failures should be recorded as problems.
      * @return resolved column metadata when available.
      */
-    private Optional<DbColumn> resolveColumn(
+    private Optional<CatalogColumn> resolveColumn(
         ColumnExpr column,
         ScopeResolutionMode mode,
         boolean reportErrors
@@ -556,7 +597,7 @@ public final class SchemaValidationContext {
             return Optional.ofNullable(dbColumn);
         }
 
-        var matches = new ArrayList<DbColumn>();
+        var matches = new ArrayList<CatalogColumn>();
         var unknownSourceVisible = false;
         for (var scope : iterScopes(mode)) {
             for (var source : scope.sources) {
@@ -602,10 +643,10 @@ public final class SchemaValidationContext {
      * @param mode       scope resolution mode.
      * @return inferred type if known.
      */
-    private Optional<DbType> inferType(Expression expression, ScopeResolutionMode mode) {
+    private Optional<CatalogType> inferType(Expression expression, ScopeResolutionMode mode) {
         return switch (expression) {
-            case LiteralExpr literalExpr -> DbType.fromLiteral(literalExpr.value());
-            case ColumnExpr columnExpr -> resolveColumn(columnExpr, mode, false).map(DbColumn::type);
+            case LiteralExpr literalExpr -> CatalogTypeSemantics.fromLiteral(literalExpr.value());
+            case ColumnExpr columnExpr -> resolveColumn(columnExpr, mode, false).map(column -> column.type());
             case QueryExpr queryExpr -> inferSingleColumnType(queryExpr.subquery());
             case CastExpr castExpr -> inferCastType(castExpr.type());
             case FunctionExpr functionExpr -> inferFunctionType(functionExpr);
@@ -623,9 +664,9 @@ public final class SchemaValidationContext {
      * @param mode       scope resolution mode.
      * @return numeric type when operand is numeric.
      */
-    private Optional<DbType> inferNumericType(Expression expression, ScopeResolutionMode mode) {
+    private Optional<CatalogType> inferNumericType(Expression expression, ScopeResolutionMode mode) {
         var operandType = inferType(expression, mode);
-        return operandType.filter(DbType::isNumeric);
+        return operandType.filter(CatalogTypeSemantics::isNumeric);
     }
 
     /**
@@ -636,13 +677,13 @@ public final class SchemaValidationContext {
      * @param mode scope resolution mode.
      * @return promoted numeric type when both operands are numeric.
      */
-    private Optional<DbType> inferBinaryNumericType(Expression lhs, Expression rhs, ScopeResolutionMode mode) {
+    private Optional<CatalogType> inferBinaryNumericType(Expression lhs, Expression rhs, ScopeResolutionMode mode) {
         var left = inferType(lhs, mode);
         var right = inferType(rhs, mode);
         if (left.isEmpty() || right.isEmpty()) {
             return Optional.empty();
         }
-        if (!DbType.isNumeric(left.get()) || !DbType.isNumeric(right.get())) {
+        if (!CatalogTypeSemantics.isNumeric(left.get()) || !CatalogTypeSemantics.isNumeric(right.get())) {
             return Optional.empty();
         }
         return Optional.of(promoteNumeric(left.get(), right.get()));
@@ -707,7 +748,7 @@ public final class SchemaValidationContext {
      * @param mode scope resolution mode.
      * @return column type when source and column are known.
      */
-    private Optional<DbType> sourceColumnType(
+    private Optional<CatalogType> sourceColumnType(
         String sourceKey,
         String columnName,
         ScopeResolutionMode mode
@@ -809,7 +850,7 @@ public final class SchemaValidationContext {
      * @param columns       visible columns by normalized name.
      * @param strictColumns whether unresolved columns should be reported.
      */
-    private record ResolvedSource(String aliasOrName, Map<String, DbColumn> columns, boolean strictColumns) {
+    private record ResolvedSource(String aliasOrName, Map<String, CatalogColumn> columns, boolean strictColumns) {
         /**
          * Creates immutable source metadata.
          *
@@ -818,7 +859,7 @@ public final class SchemaValidationContext {
          * @param strictColumns strict lookup mode.
          * @return source metadata.
          */
-        private static ResolvedSource of(String aliasOrName, Map<String, DbColumn> columns, boolean strictColumns) {
+        private static ResolvedSource of(String aliasOrName, Map<String, CatalogColumn> columns, boolean strictColumns) {
             return new ResolvedSource(aliasOrName, Map.copyOf(columns), strictColumns);
         }
     }
@@ -829,7 +870,7 @@ public final class SchemaValidationContext {
      * @param columns       CTE output columns.
      * @param strictColumns whether column list is explicit and strict.
      */
-    private record CteSource(Map<String, DbColumn> columns, boolean strictColumns) {
+    private record CteSource(Map<String, CatalogColumn> columns, boolean strictColumns) {
         /**
          * Creates CTE metadata from definition.
          *
@@ -840,11 +881,14 @@ public final class SchemaValidationContext {
             if (cte.columnAliases() == null || cte.columnAliases().isEmpty()) {
                 return new CteSource(Map.of(), false);
             }
-            var columns = new LinkedHashMap<String, DbColumn>(cte.columnAliases().size());
+            var columns = new LinkedHashMap<String, CatalogColumn>(cte.columnAliases().size());
             for (var alias : cte.columnAliases()) {
-                columns.put(normalize(alias), DbColumn.of(alias, DbType.STRING));
+                columns.put(normalize(alias), CatalogColumn.of(alias, CatalogType.STRING));
             }
             return new CteSource(Map.copyOf(columns), true);
         }
     }
 }
+
+
+

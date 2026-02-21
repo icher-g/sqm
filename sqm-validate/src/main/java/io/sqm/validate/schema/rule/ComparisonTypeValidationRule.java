@@ -3,7 +3,7 @@ package io.sqm.validate.schema.rule;
 import io.sqm.core.ComparisonPredicate;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 /**
  * Validates comparison operand type compatibility.
@@ -33,7 +33,7 @@ final class ComparisonTypeValidationRule implements SchemaValidationRule<Compari
     /**
      * Validates that both comparison operands are type-compatible.
      *
-     * @param node comparison predicate node.
+     * @param node    comparison predicate node.
      * @param context schema validation context.
      */
     @Override
@@ -57,7 +57,7 @@ final class ComparisonTypeValidationRule implements SchemaValidationRule<Compari
         }
         var leftType = context.inferType(node.lhs());
         var rightType = context.inferType(node.rhs());
-        if (leftType.isPresent() && rightType.isPresent() && !DbType.comparable(leftType.get(), rightType.get())) {
+        if (leftType.isPresent() && rightType.isPresent() && !CatalogTypeSemantics.comparable(leftType.get(), rightType.get())) {
             context.addProblem(
                 ValidationProblem.Code.TYPE_MISMATCH,
                 "Incompatible comparison types: " + leftType.get() + " and " + rightType.get(),
@@ -67,3 +67,5 @@ final class ComparisonTypeValidationRule implements SchemaValidationRule<Compari
         }
     }
 }
+
+

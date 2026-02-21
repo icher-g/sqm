@@ -1,9 +1,9 @@
 package io.sqm.codegen.maven;
 
 import io.sqm.codegen.*;
-import io.sqm.schema.introspect.SchemaProvider;
-import io.sqm.schema.introspect.jdbc.JdbcSchemaProvider;
-import io.sqm.schema.introspect.snapshot.JsonSchemaProvider;
+import io.sqm.catalog.SchemaProvider;
+import io.sqm.catalog.jdbc.JdbcSchemaProvider;
+import io.sqm.catalog.snapshot.JsonSchemaProvider;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -357,7 +357,7 @@ public class GenerateMojo extends AbstractMojo {
             normalizeBlank(schemaJdbcCatalog),
             normalizeBlank(schemaJdbcSchemaPattern),
             List.of("TABLE", "VIEW", "MATERIALIZED VIEW", "FOREIGN TABLE"),
-            io.sqm.schema.introspect.postgresql.PostgresSqlTypeMapper.standard()
+            io.sqm.catalog.postgresql.PostgresSqlTypeMapper.standard()
         );
         var filteredProvider = filteredProvider(jdbcProvider);
         var cachePath = resolveSchemaCachePath();

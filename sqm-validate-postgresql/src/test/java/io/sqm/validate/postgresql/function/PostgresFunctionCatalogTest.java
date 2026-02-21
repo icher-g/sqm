@@ -1,13 +1,11 @@
 package io.sqm.validate.postgresql.function;
 
+import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.validate.schema.function.FunctionArgKind;
-import io.sqm.validate.schema.model.DbType;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class PostgresFunctionCatalogTest {
 
@@ -18,7 +16,7 @@ class PostgresFunctionCatalogTest {
         var signature = catalog.resolve("lower");
 
         assertTrue(signature.isPresent());
-        assertEquals(DbType.STRING, signature.get().returnType().orElseThrow());
+        assertEquals(CatalogType.STRING, signature.get().returnType().orElseThrow());
     }
 
     @Test
@@ -28,7 +26,7 @@ class PostgresFunctionCatalogTest {
         var signature = catalog.resolve("JSONB_TYPEOF");
 
         assertTrue(signature.isPresent());
-        assertEquals(DbType.STRING, signature.get().returnType().orElseThrow());
+        assertEquals(CatalogType.STRING, signature.get().returnType().orElseThrow());
     }
 
     @Test
@@ -51,9 +49,9 @@ class PostgresFunctionCatalogTest {
         assertTrue(toJsonb.isPresent());
         assertTrue(jsonbBuildObject.isPresent());
         assertTrue(jsonBuildObject.isPresent());
-        assertEquals(DbType.JSONB, toJsonb.get().returnType().orElseThrow());
-        assertEquals(DbType.JSONB, jsonbBuildObject.get().returnType().orElseThrow());
-        assertEquals(DbType.JSON, jsonBuildObject.get().returnType().orElseThrow());
+        assertEquals(CatalogType.JSONB, toJsonb.get().returnType().orElseThrow());
+        assertEquals(CatalogType.JSONB, jsonbBuildObject.get().returnType().orElseThrow());
+        assertEquals(CatalogType.JSON, jsonBuildObject.get().returnType().orElseThrow());
     }
 
     @Test
@@ -63,7 +61,7 @@ class PostgresFunctionCatalogTest {
         var signature = catalog.resolve("string_agg");
 
         assertTrue(signature.isPresent());
-        assertEquals(DbType.STRING, signature.get().returnType().orElseThrow());
+        assertEquals(CatalogType.STRING, signature.get().returnType().orElseThrow());
     }
 
     @Test
@@ -80,7 +78,7 @@ class PostgresFunctionCatalogTest {
         var signature = catalog.resolve("json_typeof");
 
         assertTrue(signature.isPresent());
-        assertEquals(DbType.STRING, signature.get().returnType().orElseThrow());
+        assertEquals(CatalogType.STRING, signature.get().returnType().orElseThrow());
     }
 
     @Test
@@ -99,7 +97,7 @@ class PostgresFunctionCatalogTest {
         assertTrue(signature.isPresent());
         assertEquals(1, signature.get().minArity());
         assertEquals(Integer.MAX_VALUE, signature.get().maxArity());
-        assertEquals(DbType.STRING, signature.get().returnType().orElseThrow());
+        assertEquals(CatalogType.STRING, signature.get().returnType().orElseThrow());
         assertEquals(FunctionArgKind.STRING_EXPR, signature.get().argKinds().getFirst());
         assertEquals(FunctionArgKind.ANY_EXPR, signature.get().argKinds().get(1));
     }
@@ -111,7 +109,7 @@ class PostgresFunctionCatalogTest {
         var signature = catalog.resolve("array_length");
 
         assertTrue(signature.isPresent());
-        assertEquals(DbType.INTEGER, signature.get().returnType().orElseThrow());
+        assertEquals(CatalogType.INTEGER, signature.get().returnType().orElseThrow());
         assertEquals(2, signature.get().minArity());
         assertEquals(2, signature.get().maxArity());
     }

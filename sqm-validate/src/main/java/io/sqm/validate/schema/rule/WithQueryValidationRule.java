@@ -8,7 +8,8 @@ import io.sqm.core.WithQuery;
 import io.sqm.core.walk.RecursiveNodeVisitor;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 import java.util.HashSet;
 import java.util.List;
@@ -250,8 +251,8 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
     private static void validateRecursiveTypePair(
         io.sqm.core.CteDef cte,
         int termIndex,
-        List<Optional<DbType>> anchorTypes,
-        List<Optional<DbType>> termTypes,
+        List<Optional<CatalogType>> anchorTypes,
+        List<Optional<CatalogType>> termTypes,
         SchemaValidationContext context
     ) {
         var width = Math.min(anchorTypes.size(), termTypes.size());
@@ -261,7 +262,7 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
             }
             var anchorType = anchorTypes.get(c).get();
             var termType = termTypes.get(c).get();
-            if (DbType.comparable(anchorType, termType)) {
+            if (CatalogTypeSemantics.comparable(anchorType, termType)) {
                 continue;
             }
             context.addProblem(
@@ -384,3 +385,5 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
         }
     }
 }
+
+

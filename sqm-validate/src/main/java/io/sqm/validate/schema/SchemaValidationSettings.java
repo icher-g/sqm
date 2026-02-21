@@ -1,6 +1,8 @@
 package io.sqm.validate.schema;
 
 import io.sqm.core.Node;
+import io.sqm.catalog.access.CatalogAccessPolicies;
+import io.sqm.catalog.access.CatalogAccessPolicy;
 import io.sqm.validate.schema.function.DefaultFunctionCatalog;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
@@ -17,18 +19,21 @@ import java.util.Objects;
  */
 public final class SchemaValidationSettings {
     private final FunctionCatalog functionCatalog;
-    private final SchemaAccessPolicy accessPolicy;
+    private final CatalogAccessPolicy accessPolicy;
+    private final String principal;
     private final SchemaValidationLimits limits;
     private final List<SchemaValidationRule<? extends Node>> additionalRules;
 
     private SchemaValidationSettings(
         FunctionCatalog functionCatalog,
-        SchemaAccessPolicy accessPolicy,
+        CatalogAccessPolicy accessPolicy,
+        String principal,
         SchemaValidationLimits limits,
         List<SchemaValidationRule<? extends Node>> additionalRules
     ) {
         this.functionCatalog = Objects.requireNonNull(functionCatalog, "functionCatalog");
         this.accessPolicy = Objects.requireNonNull(accessPolicy, "accessPolicy");
+        this.principal = normalizePrincipal(principal);
         this.limits = Objects.requireNonNull(limits, "limits");
         this.additionalRules = List.copyOf(additionalRules);
     }
@@ -75,8 +80,17 @@ public final class SchemaValidationSettings {
      *
      * @return schema access policy.
      */
-    public SchemaAccessPolicy accessPolicy() {
+    public CatalogAccessPolicy accessPolicy() {
         return accessPolicy;
+    }
+
+    /**
+     * Returns principal identifier used for principal-aware access checks.
+     *
+     * @return principal identifier, may be {@code null}.
+     */
+    public String principal() {
+        return principal;
     }
 
     /**
@@ -100,7 +114,8 @@ public final class SchemaValidationSettings {
      */
     public static final class Builder {
         private FunctionCatalog functionCatalog = DefaultFunctionCatalog.standard();
-        private SchemaAccessPolicy accessPolicy = SchemaAccessPolicy.allowAll();
+        private CatalogAccessPolicy accessPolicy = CatalogAccessPolicies.allowAll();
+        private String principal;
         private SchemaValidationLimits limits = SchemaValidationLimits.unlimited();
         private final List<SchemaValidationRule<? extends Node>> additionalRules = new ArrayList<>();
 
@@ -121,8 +136,19 @@ public final class SchemaValidationSettings {
          * @param accessPolicy schema access policy.
          * @return this builder.
          */
-        public Builder accessPolicy(SchemaAccessPolicy accessPolicy) {
+        public Builder accessPolicy(CatalogAccessPolicy accessPolicy) {
             this.accessPolicy = Objects.requireNonNull(accessPolicy, "accessPolicy");
+            return this;
+        }
+
+        /**
+         * Sets principal identifier used for principal-aware access checks.
+         *
+         * @param principal principal identifier, may be {@code null}.
+         * @return this builder.
+         */
+        public Builder principal(String principal) {
+            this.principal = normalizePrincipal(principal);
             return this;
         }
 
@@ -171,9 +197,17 @@ public final class SchemaValidationSettings {
             return new SchemaValidationSettings(
                 functionCatalog,
                 accessPolicy,
+                principal,
                 limits,
                 additionalRules
             );
         }
+    }
+
+    private static String normalizePrincipal(String principal) {
+        if (principal == null || principal.isBlank()) {
+            return null;
+        }
+        return principal;
     }
 }

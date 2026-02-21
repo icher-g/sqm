@@ -1,10 +1,10 @@
 package io.sqm.codegen;
 
-import io.sqm.schema.introspect.snapshot.JsonSchemaProvider;
-import io.sqm.validate.schema.model.DbColumn;
-import io.sqm.validate.schema.model.DbSchema;
-import io.sqm.validate.schema.model.DbTable;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.snapshot.JsonSchemaProvider;
+import io.sqm.catalog.model.CatalogColumn;
+import io.sqm.catalog.model.CatalogSchema;
+import io.sqm.catalog.model.CatalogTable;
+import io.sqm.catalog.model.CatalogType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -287,10 +287,10 @@ class SqlFileCodeGeneratorTest {
         Files.createDirectories(sqlDir.resolve("user"));
         Files.writeString(sqlDir.resolve("user/find_active.sql"), "select u.id from users u where u.status = :status");
 
-        JsonSchemaProvider.of(schemaSnapshot).save(DbSchema.of(
-            DbTable.of("public", "users",
-                DbColumn.of("id", DbType.LONG),
-                DbColumn.of("status", DbType.STRING)
+        JsonSchemaProvider.of(schemaSnapshot).save(CatalogSchema.of(
+            CatalogTable.of("public", "users",
+                CatalogColumn.of("id", CatalogType.LONG),
+                CatalogColumn.of("status", CatalogType.STRING)
             )
         ));
 
@@ -316,8 +316,8 @@ class SqlFileCodeGeneratorTest {
         Files.createDirectories(sqlDir.resolve("user"));
         Files.writeString(sqlDir.resolve("user/find_active.sql"), "select u.missing_col from users u");
 
-        JsonSchemaProvider.of(schemaSnapshot).save(DbSchema.of(
-            DbTable.of("public", "users", DbColumn.of("id", DbType.LONG))
+        JsonSchemaProvider.of(schemaSnapshot).save(CatalogSchema.of(
+            CatalogTable.of("public", "users", CatalogColumn.of("id", CatalogType.LONG))
         ));
 
         var options = SqlFileCodegenOptions.of(
@@ -344,8 +344,8 @@ class SqlFileCodeGeneratorTest {
         Files.createDirectories(sqlDir.resolve("user"));
         Files.writeString(sqlDir.resolve("user/find_active.sql"), "select u.missing_col from users u");
 
-        JsonSchemaProvider.of(schemaSnapshot).save(DbSchema.of(
-            DbTable.of("public", "users", DbColumn.of("id", DbType.LONG))
+        JsonSchemaProvider.of(schemaSnapshot).save(CatalogSchema.of(
+            CatalogTable.of("public", "users", CatalogColumn.of("id", CatalogType.LONG))
         ));
 
         var options = SqlFileCodegenOptions.of(

@@ -1,6 +1,6 @@
 package io.sqm.validate.schema.function;
 
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogType;
 
 import java.util.List;
 import java.util.Objects;
@@ -9,17 +9,17 @@ import java.util.Optional;
 /**
  * Function signature descriptor used for semantic validation.
  *
- * @param minArity minimum number of accepted arguments.
- * @param maxArity maximum number of accepted arguments.
- * @param argKinds expected argument kinds by position; when fewer than actual arity, the last kind is reused.
+ * @param minArity   minimum number of accepted arguments.
+ * @param maxArity   maximum number of accepted arguments.
+ * @param argKinds   expected argument kinds by position; when fewer than actual arity, the last kind is reused.
  * @param returnType optional function return type for expression type inference.
- * @param aggregate whether function is treated as aggregate in non-window context.
+ * @param aggregate  whether function is treated as aggregate in non-window context.
  */
 public record FunctionSignature(
     int minArity,
     int maxArity,
     List<FunctionArgKind> argKinds,
-    Optional<DbType> returnType,
+    Optional<CatalogType> returnType,
     boolean aggregate
 ) {
     /**
@@ -36,9 +36,9 @@ public record FunctionSignature(
     /**
      * Creates a function signature without explicit return type metadata.
      *
-     * @param minArity minimum accepted arity.
-     * @param maxArity maximum accepted arity.
-     * @param argKinds expected argument kinds by position.
+     * @param minArity  minimum accepted arity.
+     * @param maxArity  maximum accepted arity.
+     * @param argKinds  expected argument kinds by position.
      * @param aggregate whether function is aggregate.
      */
     public FunctionSignature(int minArity, int maxArity, List<FunctionArgKind> argKinds, boolean aggregate) {
@@ -48,23 +48,23 @@ public record FunctionSignature(
     /**
      * Creates a function signature.
      *
-     * @param minArity minimum accepted arity.
-     * @param maxArity maximum accepted arity.
-     * @param argKinds expected argument kinds by position.
+     * @param minArity   minimum accepted arity.
+     * @param maxArity   maximum accepted arity.
+     * @param argKinds   expected argument kinds by position.
      * @param returnType optional return type metadata.
      */
-    public FunctionSignature(int minArity, int maxArity, List<FunctionArgKind> argKinds, Optional<DbType> returnType) {
-        this(minArity, maxArity, argKinds, returnType, false);
+    public FunctionSignature(int minArity, int maxArity, List<FunctionArgKind> argKinds, CatalogType returnType) {
+        this(minArity, maxArity, argKinds, Optional.of(returnType), false);
     }
 
     /**
      * Creates a function signature.
      *
-     * @param minArity minimum accepted arity.
-     * @param maxArity maximum accepted arity.
-     * @param argKinds expected argument kinds by position.
+     * @param minArity   minimum accepted arity.
+     * @param maxArity   maximum accepted arity.
+     * @param argKinds   expected argument kinds by position.
      * @param returnType optional return type metadata.
-     * @param aggregate whether function is aggregate.
+     * @param aggregate  whether function is aggregate.
      */
     public FunctionSignature {
         if (minArity < 0) {
@@ -93,14 +93,14 @@ public record FunctionSignature(
     /**
      * Creates a signature instance with explicit return type metadata.
      *
-     * @param minArity minimum accepted arity.
-     * @param maxArity maximum accepted arity.
+     * @param minArity   minimum accepted arity.
+     * @param maxArity   maximum accepted arity.
      * @param returnType inferred function return type.
-     * @param argKinds expected argument kinds by position.
+     * @param argKinds   expected argument kinds by position.
      * @return function signature.
      */
-    public static FunctionSignature of(int minArity, int maxArity, DbType returnType, FunctionArgKind... argKinds) {
-        return new FunctionSignature(minArity, maxArity, List.of(argKinds), Optional.of(returnType));
+    public static FunctionSignature of(int minArity, int maxArity, CatalogType returnType, FunctionArgKind... argKinds) {
+        return new FunctionSignature(minArity, maxArity, List.of(argKinds), returnType);
     }
 
     /**
@@ -118,13 +118,14 @@ public record FunctionSignature(
     /**
      * Creates an aggregate signature instance with explicit return type metadata.
      *
-     * @param minArity minimum accepted arity.
-     * @param maxArity maximum accepted arity.
+     * @param minArity   minimum accepted arity.
+     * @param maxArity   maximum accepted arity.
      * @param returnType inferred function return type.
-     * @param argKinds expected argument kinds by position.
+     * @param argKinds   expected argument kinds by position.
      * @return aggregate function signature.
      */
-    public static FunctionSignature ofAggregate(int minArity, int maxArity, DbType returnType, FunctionArgKind... argKinds) {
+    public static FunctionSignature ofAggregate(int minArity, int maxArity, CatalogType returnType, FunctionArgKind... argKinds) {
         return new FunctionSignature(minArity, maxArity, List.of(argKinds), Optional.of(returnType), true);
     }
 }
+
