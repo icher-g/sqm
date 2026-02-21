@@ -166,6 +166,34 @@ public record ValidationProblem(
          */
         CTE_RECURSIVE_TYPE_MISMATCH,
         /**
+         * DML statement is not allowed in read-only mode.
+         */
+        DML_NOT_ALLOWED,
+        /**
+         * DDL statement is not allowed in read-only mode.
+         */
+        DDL_NOT_ALLOWED,
+        /**
+         * Referenced table is denied by access policy.
+         */
+        POLICY_TABLE_DENIED,
+        /**
+         * Referenced column is denied by access policy.
+         */
+        POLICY_COLUMN_DENIED,
+        /**
+         * Function call is denied by access policy allowlist.
+         */
+        POLICY_FUNCTION_NOT_ALLOWED,
+        /**
+         * Query exceeds configured maximum join count.
+         */
+        POLICY_MAX_JOINS_EXCEEDED,
+        /**
+         * Query exceeds configured maximum projected column count.
+         */
+        POLICY_MAX_SELECT_COLUMNS_EXCEEDED,
+        /**
          * Query uses a feature not supported by the configured SQL dialect/version.
          */
         DIALECT_FEATURE_UNSUPPORTED,

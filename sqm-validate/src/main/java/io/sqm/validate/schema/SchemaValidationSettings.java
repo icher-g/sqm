@@ -17,13 +17,19 @@ import java.util.Objects;
  */
 public final class SchemaValidationSettings {
     private final FunctionCatalog functionCatalog;
+    private final SchemaAccessPolicy accessPolicy;
+    private final SchemaValidationLimits limits;
     private final List<SchemaValidationRule<? extends Node>> additionalRules;
 
     private SchemaValidationSettings(
         FunctionCatalog functionCatalog,
+        SchemaAccessPolicy accessPolicy,
+        SchemaValidationLimits limits,
         List<SchemaValidationRule<? extends Node>> additionalRules
     ) {
         this.functionCatalog = Objects.requireNonNull(functionCatalog, "functionCatalog");
+        this.accessPolicy = Objects.requireNonNull(accessPolicy, "accessPolicy");
+        this.limits = Objects.requireNonNull(limits, "limits");
         this.additionalRules = List.copyOf(additionalRules);
     }
 
@@ -65,6 +71,22 @@ public final class SchemaValidationSettings {
     }
 
     /**
+     * Returns access policy used by policy-aware validation rules.
+     *
+     * @return schema access policy.
+     */
+    public SchemaAccessPolicy accessPolicy() {
+        return accessPolicy;
+    }
+
+    /**
+     * Returns configured structural validation limits.
+     */
+    public SchemaValidationLimits limits() {
+        return limits;
+    }
+
+    /**
      * Returns additional node rules appended after default rules.
      *
      * @return immutable list of additional rules.
@@ -78,6 +100,8 @@ public final class SchemaValidationSettings {
      */
     public static final class Builder {
         private FunctionCatalog functionCatalog = DefaultFunctionCatalog.standard();
+        private SchemaAccessPolicy accessPolicy = SchemaAccessPolicy.allowAll();
+        private SchemaValidationLimits limits = SchemaValidationLimits.unlimited();
         private final List<SchemaValidationRule<? extends Node>> additionalRules = new ArrayList<>();
 
         /**
@@ -88,6 +112,28 @@ public final class SchemaValidationSettings {
          */
         public Builder functionCatalog(FunctionCatalog functionCatalog) {
             this.functionCatalog = Objects.requireNonNull(functionCatalog, "functionCatalog");
+            return this;
+        }
+
+        /**
+         * Sets schema access policy used by table/column/function access checks.
+         *
+         * @param accessPolicy schema access policy.
+         * @return this builder.
+         */
+        public Builder accessPolicy(SchemaAccessPolicy accessPolicy) {
+            this.accessPolicy = Objects.requireNonNull(accessPolicy, "accessPolicy");
+            return this;
+        }
+
+        /**
+         * Sets structural validation limits.
+         *
+         * @param limits structural limits.
+         * @return this builder.
+         */
+        public Builder limits(SchemaValidationLimits limits) {
+            this.limits = Objects.requireNonNull(limits, "limits");
             return this;
         }
 
@@ -122,7 +168,12 @@ public final class SchemaValidationSettings {
          * @return settings instance.
          */
         public SchemaValidationSettings build() {
-            return new SchemaValidationSettings(functionCatalog, additionalRules);
+            return new SchemaValidationSettings(
+                functionCatalog,
+                accessPolicy,
+                limits,
+                additionalRules
+            );
         }
     }
 }

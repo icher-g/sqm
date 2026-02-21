@@ -528,6 +528,29 @@ class LexerTest {
         assertEquals(TokenType.WHERE, tokens.get(2).type());
     }
 
+    @Test
+    void lexer_recognizes_dml_and_ddl_keywords() {
+        List<Token> tokens = Lexer.lexAll(
+            "INSERT UPDATE DELETE MERGE TRUNCATE REPLACE COPY CREATE ALTER DROP GRANT REVOKE COMMENT RENAME",
+            quoting
+        );
+
+        assertEquals(TokenType.INSERT, tokens.get(0).type());
+        assertEquals(TokenType.UPDATE, tokens.get(1).type());
+        assertEquals(TokenType.DELETE, tokens.get(2).type());
+        assertEquals(TokenType.MERGE, tokens.get(3).type());
+        assertEquals(TokenType.TRUNCATE, tokens.get(4).type());
+        assertEquals(TokenType.REPLACE, tokens.get(5).type());
+        assertEquals(TokenType.COPY, tokens.get(6).type());
+        assertEquals(TokenType.CREATE, tokens.get(7).type());
+        assertEquals(TokenType.ALTER, tokens.get(8).type());
+        assertEquals(TokenType.DROP, tokens.get(9).type());
+        assertEquals(TokenType.GRANT, tokens.get(10).type());
+        assertEquals(TokenType.REVOKE, tokens.get(11).type());
+        assertEquals(TokenType.COMMENT, tokens.get(12).type());
+        assertEquals(TokenType.RENAME, tokens.get(13).type());
+    }
+
     private static class TestIdentifierQuoting implements IdentifierQuoting {
         /**
          * Checks whether the given character can start a quoted identifier.
