@@ -62,6 +62,26 @@ public final class ReasonGuidanceCatalog {
                 "The middleware failed to process this query.",
                 "report_pipeline_error"
             );
+            case DENY_VALIDATION -> DecisionGuidance.retryable(
+                "The query failed semantic validation.",
+                "fix_validation_errors",
+                "Adjust query structure and references according to schema and validation errors."
+            );
+            case DENY_MAX_SQL_LENGTH -> DecisionGuidance.retryable(
+                "The query text is too long.",
+                "shorten_sql",
+                "Reduce query length by removing unnecessary clauses or splitting the request."
+            );
+            case DENY_TIMEOUT -> DecisionGuidance.retryable(
+                "The query evaluation timed out.",
+                "simplify_query",
+                "Simplify query complexity and avoid expensive constructs."
+            );
+            case DENY_MAX_ROWS -> DecisionGuidance.retryable(
+                "The query exceeds row-limit guardrails.",
+                "reduce_limit",
+                "Add or lower LIMIT so it is within allowed maximum rows."
+            );
             default -> null;
         };
     }

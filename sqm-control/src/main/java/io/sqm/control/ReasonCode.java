@@ -55,6 +55,26 @@ public enum ReasonCode {
     DENY_PIPELINE_ERROR,
 
     /**
+     * Query denied due to semantic validation failures.
+     */
+    DENY_VALIDATION,
+
+    /**
+     * Query denied because SQL text exceeds configured maximum length.
+     */
+    DENY_MAX_SQL_LENGTH,
+
+    /**
+     * Query denied because evaluation exceeded configured timeout.
+     */
+    DENY_TIMEOUT,
+
+    /**
+     * Query denied because LIMIT guardrail was violated.
+     */
+    DENY_MAX_ROWS,
+
+    /**
      * Query was rewritten to enforce a limit.
      */
     REWRITE_LIMIT,
@@ -62,5 +82,10 @@ public enum ReasonCode {
     /**
      * Query was rewritten to apply identifier qualification.
      */
-    REWRITE_QUALIFICATION
+    REWRITE_QUALIFICATION,
+
+    /**
+     * Query was rewritten to EXPLAIN dry-run mode.
+     */
+    REWRITE_EXPLAIN_DRY_RUN
 }
