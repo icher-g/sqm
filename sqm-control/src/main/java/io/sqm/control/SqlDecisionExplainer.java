@@ -1,5 +1,7 @@
 package io.sqm.control;
 
+import io.sqm.core.Query;
+
 /**
  * Functional contract for building decision explanations.
  */
@@ -8,12 +10,12 @@ public interface SqlDecisionExplainer {
     /**
      * Builds an explanation for a decision.
      *
-     * @param sql      input SQL
+     * @param query    parsed query model
      * @param context  execution context
      * @param decision decision result
      * @return explanation text
      */
-    String explain(String sql, ExecutionContext context, DecisionResult decision);
+    String explain(Query query, ExecutionContext context, DecisionResult decision);
 
     /**
      * Creates a default explainer that uses the decision message when available.
@@ -21,7 +23,7 @@ public interface SqlDecisionExplainer {
      * @return default explainer
      */
     static SqlDecisionExplainer basic() {
-        return (sql, context, decision) -> {
+        return (query, context, decision) -> {
             if (decision.message() != null && !decision.message().isBlank()) {
                 return decision.message();
             }
