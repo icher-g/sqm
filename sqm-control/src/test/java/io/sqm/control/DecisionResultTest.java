@@ -56,6 +56,16 @@ class DecisionResultTest {
     }
 
     @Test
+    void with_fingerprint_returns_updated_copy() {
+        var original = DecisionResult.allow();
+        var updated = original.withFingerprint("fp-1");
+
+        assertNull(original.fingerprint());
+        assertEquals("fp-1", updated.fingerprint());
+        assertEquals(DecisionKind.ALLOW, updated.kind());
+    }
+
+    @Test
     void allow_requires_none_reason_code() {
         assertThrows(IllegalArgumentException.class,
             () -> new DecisionResult(DecisionKind.ALLOW, ReasonCode.DENY_DDL, null, null, null, null));
