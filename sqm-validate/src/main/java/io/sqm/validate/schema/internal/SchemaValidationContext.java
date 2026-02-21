@@ -5,11 +5,11 @@ import io.sqm.catalog.access.CatalogAccessPolicies;
 import io.sqm.catalog.access.CatalogAccessPolicy;
 import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
-import io.sqm.catalog.model.CatalogType;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.function.DefaultFunctionCatalog;
 import io.sqm.validate.schema.function.FunctionCatalog;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 import java.util.*;
 
@@ -83,14 +83,14 @@ public final class SchemaValidationContext {
      * @param right right type.
      * @return promoted type.
      */
-    private static DbType promoteNumeric(DbType left, DbType right) {
-        if (left == DbType.DECIMAL || right == DbType.DECIMAL) {
-            return DbType.DECIMAL;
+    private static CatalogType promoteNumeric(CatalogType left, CatalogType right) {
+        if (left == CatalogType.DECIMAL || right == CatalogType.DECIMAL) {
+            return CatalogType.DECIMAL;
         }
-        if (left == DbType.LONG || right == DbType.LONG) {
-            return DbType.LONG;
+        if (left == CatalogType.LONG || right == CatalogType.LONG) {
+            return CatalogType.LONG;
         }
-        return DbType.INTEGER;
+        return CatalogType.INTEGER;
     }
 
     /**
@@ -291,7 +291,7 @@ public final class SchemaValidationContext {
      * @param columnName column name.
      * @return column type when source and column are known.
      */
-    public Optional<DbType> sourceColumnType(String sourceKey, String columnName) {
+    public Optional<CatalogType> sourceColumnType(String sourceKey, String columnName) {
         return sourceColumnType(sourceKey, columnName, ScopeResolutionMode.CURRENT_SCOPE);
     }
 
@@ -353,7 +353,7 @@ public final class SchemaValidationContext {
      * @param expression expression to analyze.
      * @return inferred type if known.
      */
-    public Optional<DbType> inferType(Expression expression) {
+    public Optional<CatalogType> inferType(Expression expression) {
         return inferType(expression, ScopeResolutionMode.ALL_SCOPES);
     }
 
@@ -363,20 +363,20 @@ public final class SchemaValidationContext {
      * @param typeName cast target type.
      * @return inferred cast output type.
      */
-    private Optional<DbType> inferCastType(TypeName typeName) {
+    private Optional<CatalogType> inferCastType(TypeName typeName) {
         if (typeName == null) {
             return Optional.empty();
         }
         if (typeName.keyword().isPresent()) {
             return switch (typeName.keyword().get()) {
-                case DOUBLE_PRECISION -> Optional.of(DbType.DECIMAL);
-                case CHARACTER_VARYING, NATIONAL_CHARACTER, NATIONAL_CHARACTER_VARYING -> Optional.of(DbType.STRING);
+                case DOUBLE_PRECISION -> Optional.of(CatalogType.DECIMAL);
+                case CHARACTER_VARYING, NATIONAL_CHARACTER, NATIONAL_CHARACTER_VARYING -> Optional.of(CatalogType.STRING);
             };
         }
         if (typeName.qualifiedName().isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(DbType.fromSqlType(typeName.qualifiedName().getLast()));
+        return Optional.of(CatalogTypeSemantics.fromSqlType(typeName.qualifiedName().getLast()));
     }
 
     /**
@@ -385,7 +385,7 @@ public final class SchemaValidationContext {
      * @param functionExpr function expression.
      * @return inferred return type.
      */
-    private Optional<DbType> inferFunctionType(FunctionExpr functionExpr) {
+    private Optional<CatalogType> inferFunctionType(FunctionExpr functionExpr) {
         if (functionExpr == null || functionExpr.name() == null) {
             return Optional.empty();
         }
@@ -398,7 +398,7 @@ public final class SchemaValidationContext {
      * @param query query to analyze.
      * @return inferred type for the first projected expression.
      */
-    public Optional<DbType> inferSingleColumnType(Query query) {
+    public Optional<CatalogType> inferSingleColumnType(Query query) {
         return switch (query) {
             case SelectQuery select -> inferSingleColumnType(select);
             case CompositeQuery composite -> composite.terms().isEmpty()
@@ -415,7 +415,7 @@ public final class SchemaValidationContext {
      * @param select select query.
      * @return inferred projection type.
      */
-    private Optional<DbType> inferSingleColumnType(SelectQuery select) {
+    private Optional<CatalogType> inferSingleColumnType(SelectQuery select) {
         var projectionTypes = inferProjectionTypes(select);
         if (projectionTypes.isEmpty() || projectionTypes.get().size() != 1) {
             return Optional.empty();
@@ -429,7 +429,7 @@ public final class SchemaValidationContext {
      * @param select select query.
      * @return inferred projection types or empty when projection is not expression-only.
      */
-    public Optional<List<Optional<DbType>>> inferProjectionTypes(SelectQuery select) {
+    public Optional<List<Optional<CatalogType>>> inferProjectionTypes(SelectQuery select) {
         if (select == null) {
             return Optional.empty();
         }
@@ -439,7 +439,7 @@ public final class SchemaValidationContext {
             for (var join : select.joins()) {
                 registerTableRef(join.right());
             }
-            var types = new ArrayList<Optional<DbType>>(select.items().size());
+            var types = new ArrayList<Optional<CatalogType>>(select.items().size());
             for (var item : select.items()) {
                 if (!(item instanceof ExprSelectItem exprItem)) {
                     return Optional.empty();
@@ -551,7 +551,7 @@ public final class SchemaValidationContext {
      * @param expression expression to infer.
      * @return inferred type.
      */
-    private Optional<DbType> inferTypeInCurrentScope(Expression expression) {
+    private Optional<CatalogType> inferTypeInCurrentScope(Expression expression) {
         return inferType(expression, ScopeResolutionMode.CURRENT_SCOPE);
     }
 
@@ -643,10 +643,10 @@ public final class SchemaValidationContext {
      * @param mode       scope resolution mode.
      * @return inferred type if known.
      */
-    private Optional<DbType> inferType(Expression expression, ScopeResolutionMode mode) {
+    private Optional<CatalogType> inferType(Expression expression, ScopeResolutionMode mode) {
         return switch (expression) {
-            case LiteralExpr literalExpr -> DbType.fromLiteral(literalExpr.value());
-            case ColumnExpr columnExpr -> resolveColumn(columnExpr, mode, false).map(column -> DbType.fromCatalogType(column.type()));
+            case LiteralExpr literalExpr -> CatalogTypeSemantics.fromLiteral(literalExpr.value());
+            case ColumnExpr columnExpr -> resolveColumn(columnExpr, mode, false).map(column -> column.type());
             case QueryExpr queryExpr -> inferSingleColumnType(queryExpr.subquery());
             case CastExpr castExpr -> inferCastType(castExpr.type());
             case FunctionExpr functionExpr -> inferFunctionType(functionExpr);
@@ -664,9 +664,9 @@ public final class SchemaValidationContext {
      * @param mode       scope resolution mode.
      * @return numeric type when operand is numeric.
      */
-    private Optional<DbType> inferNumericType(Expression expression, ScopeResolutionMode mode) {
+    private Optional<CatalogType> inferNumericType(Expression expression, ScopeResolutionMode mode) {
         var operandType = inferType(expression, mode);
-        return operandType.filter(DbType::isNumeric);
+        return operandType.filter(CatalogTypeSemantics::isNumeric);
     }
 
     /**
@@ -677,13 +677,13 @@ public final class SchemaValidationContext {
      * @param mode scope resolution mode.
      * @return promoted numeric type when both operands are numeric.
      */
-    private Optional<DbType> inferBinaryNumericType(Expression lhs, Expression rhs, ScopeResolutionMode mode) {
+    private Optional<CatalogType> inferBinaryNumericType(Expression lhs, Expression rhs, ScopeResolutionMode mode) {
         var left = inferType(lhs, mode);
         var right = inferType(rhs, mode);
         if (left.isEmpty() || right.isEmpty()) {
             return Optional.empty();
         }
-        if (!DbType.isNumeric(left.get()) || !DbType.isNumeric(right.get())) {
+        if (!CatalogTypeSemantics.isNumeric(left.get()) || !CatalogTypeSemantics.isNumeric(right.get())) {
             return Optional.empty();
         }
         return Optional.of(promoteNumeric(left.get(), right.get()));
@@ -748,7 +748,7 @@ public final class SchemaValidationContext {
      * @param mode scope resolution mode.
      * @return column type when source and column are known.
      */
-    private Optional<DbType> sourceColumnType(
+    private Optional<CatalogType> sourceColumnType(
         String sourceKey,
         String columnName,
         ScopeResolutionMode mode
@@ -761,7 +761,7 @@ public final class SchemaValidationContext {
             return Optional.empty();
         }
         var column = source.get().columns().get(normalize(columnName));
-        return column == null ? Optional.empty() : Optional.of(DbType.fromCatalogType(column.type()));
+        return column == null ? Optional.empty() : Optional.of(column.type());
     }
 
     /**
@@ -889,3 +889,6 @@ public final class SchemaValidationContext {
         }
     }
 }
+
+
+

@@ -3,7 +3,8 @@ package io.sqm.validate.schema.rule;
 import io.sqm.core.*;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 /**
  * Validates type compatibility for IN / NOT IN predicates.
@@ -64,7 +65,7 @@ final class InPredicateTypeValidationRule implements SchemaValidationRule<InPred
      * @param context schema validation context.
      */
     private static void validateAgainstQuery(
-        DbType leftType,
+        CatalogType leftType,
         QueryExpr queryExpr,
         InPredicate node,
         SchemaValidationContext context,
@@ -80,7 +81,7 @@ final class InPredicateTypeValidationRule implements SchemaValidationRule<InPred
             return;
         }
         var rightType = context.inferSingleColumnType(queryExpr.subquery());
-        if (rightType.isPresent() && !DbType.comparable(leftType, rightType.get())) {
+        if (rightType.isPresent() && !CatalogTypeSemantics.comparable(leftType, rightType.get())) {
             context.addProblem(
                 ValidationProblem.Code.TYPE_MISMATCH,
                 "Incompatible IN types: " + leftType + " and " + rightType.get(),
@@ -98,14 +99,14 @@ final class InPredicateTypeValidationRule implements SchemaValidationRule<InPred
      * @param context schema validation context.
      */
     private static void validateAgainstScalarRow(
-        DbType leftType,
+        CatalogType leftType,
         RowExpr rowExpr,
         InPredicate node,
         SchemaValidationContext context
     ) {
         for (var item : rowExpr.items()) {
             var rightType = context.inferType(item);
-            if (rightType.isPresent() && !DbType.comparable(leftType, rightType.get())) {
+            if (rightType.isPresent() && !CatalogTypeSemantics.comparable(leftType, rightType.get())) {
                 context.addProblem(
                     ValidationProblem.Code.TYPE_MISMATCH,
                     "Incompatible IN types: " + leftType + " and " + rightType.get(),
@@ -124,7 +125,7 @@ final class InPredicateTypeValidationRule implements SchemaValidationRule<InPred
      * @param context schema validation context.
      */
     private static void validateAgainstScalarRowList(
-        DbType leftType,
+        CatalogType leftType,
         RowListExpr rowListExpr,
         InPredicate node,
         SchemaValidationContext context
@@ -139,7 +140,7 @@ final class InPredicateTypeValidationRule implements SchemaValidationRule<InPred
                 continue;
             }
             var rightType = context.inferType(row.items().getFirst());
-            if (rightType.isPresent() && !DbType.comparable(leftType, rightType.get())) {
+            if (rightType.isPresent() && !CatalogTypeSemantics.comparable(leftType, rightType.get())) {
                 context.addProblem(
                     ValidationProblem.Code.TYPE_MISMATCH,
                     "Incompatible IN types: " + leftType + " and " + rightType.get(),
@@ -296,7 +297,7 @@ final class InPredicateTypeValidationRule implements SchemaValidationRule<InPred
         for (int i = 0; i < width; i++) {
             var leftType = context.inferType(leftItems.get(i));
             var rightType = context.inferType(rightItems.get(i));
-            if (leftType.isPresent() && rightType.isPresent() && !DbType.comparable(leftType.get(), rightType.get())) {
+            if (leftType.isPresent() && rightType.isPresent() && !CatalogTypeSemantics.comparable(leftType.get(), rightType.get())) {
                 context.addProblem(
                     ValidationProblem.Code.TYPE_MISMATCH,
                     "Incompatible IN tuple types at column " + (i + 1) + ": " + leftType.get() + " and " + rightType.get(),
@@ -317,7 +318,7 @@ final class InPredicateTypeValidationRule implements SchemaValidationRule<InPred
      */
     private static void validateTupleTypesAgainstProjectionTypes(
         java.util.List<Expression> leftItems,
-        java.util.List<java.util.Optional<DbType>> rightTypes,
+        java.util.List<java.util.Optional<CatalogType>> rightTypes,
         InPredicate node,
         SchemaValidationContext context
     ) {
@@ -325,7 +326,7 @@ final class InPredicateTypeValidationRule implements SchemaValidationRule<InPred
         for (int i = 0; i < width; i++) {
             var leftType = context.inferType(leftItems.get(i));
             var rightType = rightTypes.get(i);
-            if (leftType.isPresent() && rightType.isPresent() && !DbType.comparable(leftType.get(), rightType.get())) {
+            if (leftType.isPresent() && rightType.isPresent() && !CatalogTypeSemantics.comparable(leftType.get(), rightType.get())) {
                 context.addProblem(
                     ValidationProblem.Code.TYPE_MISMATCH,
                     "Incompatible IN tuple types at column " + (i + 1) + ": " + leftType.get() + " and " + rightType.get(),
@@ -356,4 +357,6 @@ final class InPredicateTypeValidationRule implements SchemaValidationRule<InPred
         );
     }
 }
+
+
 

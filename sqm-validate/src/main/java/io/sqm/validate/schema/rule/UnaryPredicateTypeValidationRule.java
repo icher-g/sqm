@@ -3,7 +3,8 @@ package io.sqm.validate.schema.rule;
 import io.sqm.core.UnaryPredicate;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 /**
  * Validates that unary predicates use boolean-valued expressions.
@@ -49,7 +50,7 @@ final class UnaryPredicateTypeValidationRule implements SchemaValidationRule<Una
             return;
         }
         var inferred = context.inferType(node.expr());
-        if (inferred.isPresent() && DbType.isKnown(inferred.get()) && inferred.get() != DbType.BOOLEAN) {
+        if (inferred.isPresent() && CatalogTypeSemantics.isKnown(inferred.get()) && inferred.get() != CatalogType.BOOLEAN) {
             context.addProblem(
                 ValidationProblem.Code.TYPE_MISMATCH,
                 "Unary predicate expression must be BOOLEAN but was " + inferred.get(),
@@ -59,3 +60,5 @@ final class UnaryPredicateTypeValidationRule implements SchemaValidationRule<Una
         }
     }
 }
+
+

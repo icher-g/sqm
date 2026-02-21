@@ -1,13 +1,9 @@
 package io.sqm.validate.schema.rule;
 
-import io.sqm.core.CompositeQuery;
-import io.sqm.core.Expression;
-import io.sqm.core.LimitOffset;
-import io.sqm.core.LiteralExpr;
-import io.sqm.core.SelectQuery;
+import io.sqm.core.*;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 /**
  * Validates LIMIT/OFFSET expression types and non-negative literal values.
@@ -25,32 +21,11 @@ final class LimitOffsetValidationRule implements SchemaValidationRule<SelectQuer
     }
 
     /**
-     * Returns supported node type.
-     *
-     * @return select query type.
-     */
-    @Override
-    public Class<SelectQuery> nodeType() {
-        return SelectQuery.class;
-    }
-
-    /**
-     * Validates LIMIT/OFFSET for a select query.
-     *
-     * @param node select query node.
-     * @param context schema validation context.
-     */
-    @Override
-    public void validate(SelectQuery node, SchemaValidationContext context) {
-        validateLimitOffset(node.limitOffset(), node, context, scalarSubqueryShapeValidator);
-    }
-
-    /**
      * Validates one limit/offset pair.
      *
      * @param limitOffset limit/offset clause.
-     * @param owner owner node for diagnostics.
-     * @param context schema validation context.
+     * @param owner       owner node for diagnostics.
+     * @param context     schema validation context.
      */
     static void validateLimitOffset(
         LimitOffset limitOffset,
@@ -69,9 +44,9 @@ final class LimitOffsetValidationRule implements SchemaValidationRule<SelectQuer
      * Validates one LIMIT/OFFSET expression.
      *
      * @param expression expression to validate.
-     * @param label limit/offset label.
-     * @param owner owner node for diagnostics.
-     * @param context schema validation context.
+     * @param label      limit/offset label.
+     * @param owner      owner node for diagnostics.
+     * @param context    schema validation context.
      */
     private static void validateExpression(
         Expression expression,
@@ -94,7 +69,7 @@ final class LimitOffsetValidationRule implements SchemaValidationRule<SelectQuer
             return;
         }
         var type = context.inferType(expression);
-        if (type.isPresent() && DbType.isKnown(type.get()) && !DbType.isNumeric(type.get())) {
+        if (type.isPresent() && CatalogTypeSemantics.isKnown(type.get()) && !CatalogTypeSemantics.isNumeric(type.get())) {
             context.addProblem(
                 ValidationProblem.Code.LIMIT_OFFSET_INVALID,
                 label + " expression must be numeric but was " + type.get(),
@@ -114,6 +89,27 @@ final class LimitOffsetValidationRule implements SchemaValidationRule<SelectQuer
                 );
             }
         }
+    }
+
+    /**
+     * Returns supported node type.
+     *
+     * @return select query type.
+     */
+    @Override
+    public Class<SelectQuery> nodeType() {
+        return SelectQuery.class;
+    }
+
+    /**
+     * Validates LIMIT/OFFSET for a select query.
+     *
+     * @param node    select query node.
+     * @param context schema validation context.
+     */
+    @Override
+    public void validate(SelectQuery node, SchemaValidationContext context) {
+        validateLimitOffset(node.limitOffset(), node, context, scalarSubqueryShapeValidator);
     }
 }
 
@@ -145,7 +141,7 @@ final class CompositeLimitOffsetValidationRule implements SchemaValidationRule<C
     /**
      * Validates LIMIT/OFFSET for a composite query.
      *
-     * @param node composite query node.
+     * @param node    composite query node.
      * @param context schema validation context.
      */
     @Override
@@ -153,3 +149,5 @@ final class CompositeLimitOffsetValidationRule implements SchemaValidationRule<C
         LimitOffsetValidationRule.validateLimitOffset(node.limitOffset(), node, context, scalarSubqueryShapeValidator);
     }
 }
+
+

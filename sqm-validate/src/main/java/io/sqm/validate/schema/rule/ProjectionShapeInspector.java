@@ -3,7 +3,7 @@ package io.sqm.validate.schema.rule;
 import io.sqm.core.Expression;
 import io.sqm.core.Query;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogType;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +27,7 @@ interface ProjectionShapeInspector {
      * @param context validation context for type inference; may be null for shape-only checks.
      * @return projected expression types.
      */
-    Optional<List<Optional<DbType>>> expressionProjectionTypes(Query query, SchemaValidationContext context);
+    Optional<List<Optional<CatalogType>>> expressionProjectionTypes(Query query, SchemaValidationContext context);
 
     /**
      * Returns projection arity for query when determinable.
@@ -45,3 +45,4 @@ interface ProjectionShapeInspector {
      */
     Optional<List<Expression>> expressionProjectionExpressions(Query query);
 }
+

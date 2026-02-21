@@ -3,7 +3,7 @@ package io.sqm.validate.schema.rule;
 import io.sqm.core.BetweenPredicate;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 /**
  * Validates type compatibility in BETWEEN predicates.
@@ -33,7 +33,7 @@ final class BetweenTypeValidationRule implements SchemaValidationRule<BetweenPre
     /**
      * Validates that value, lower, and upper operands are mutually comparable.
      *
-     * @param node BETWEEN predicate node.
+     * @param node    BETWEEN predicate node.
      * @param context schema validation context.
      */
     @Override
@@ -66,7 +66,7 @@ final class BetweenTypeValidationRule implements SchemaValidationRule<BetweenPre
         var lowerType = context.inferType(node.lower());
         var upperType = context.inferType(node.upper());
 
-        if (valueType.isPresent() && lowerType.isPresent() && !DbType.comparable(valueType.get(), lowerType.get())) {
+        if (valueType.isPresent() && lowerType.isPresent() && !CatalogTypeSemantics.comparable(valueType.get(), lowerType.get())) {
             context.addProblem(
                 ValidationProblem.Code.TYPE_MISMATCH,
                 "Incompatible BETWEEN types: " + valueType.get() + " and " + lowerType.get(),
@@ -74,7 +74,7 @@ final class BetweenTypeValidationRule implements SchemaValidationRule<BetweenPre
                 "predicate.between"
             );
         }
-        if (valueType.isPresent() && upperType.isPresent() && !DbType.comparable(valueType.get(), upperType.get())) {
+        if (valueType.isPresent() && upperType.isPresent() && !CatalogTypeSemantics.comparable(valueType.get(), upperType.get())) {
             context.addProblem(
                 ValidationProblem.Code.TYPE_MISMATCH,
                 "Incompatible BETWEEN types: " + valueType.get() + " and " + upperType.get(),
@@ -84,4 +84,6 @@ final class BetweenTypeValidationRule implements SchemaValidationRule<BetweenPre
         }
     }
 }
+
+
 

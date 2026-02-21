@@ -3,7 +3,8 @@ package io.sqm.validate.schema.rule;
 import io.sqm.core.UsingJoin;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 import java.util.Optional;
 
@@ -32,7 +33,7 @@ final class UsingJoinValidationRule implements SchemaValidationRule<UsingJoin> {
         var rightSourceKey = context.sourceKey(node.right()).orElse(null);
         for (var column : node.usingColumns()) {
             var leftMatches = context.countStrictSourcesWithColumn(column, rightSourceKey);
-            var rightType = rightSourceKey == null ? Optional.<DbType>empty() : context.sourceColumnType(rightSourceKey, column);
+            var rightType = rightSourceKey == null ? Optional.<CatalogType>empty() : context.sourceColumnType(rightSourceKey, column);
 
             if (leftMatches == 0 || rightType.isEmpty()) {
                 context.addProblem(
@@ -54,7 +55,7 @@ final class UsingJoinValidationRule implements SchemaValidationRule<UsingJoin> {
             }
 
             // Resolve unique left-side type by scanning strict sources excluding right.
-            DbType leftType = null;
+            CatalogType leftType = null;
             for (var sourceKey : context.currentScopeSourceKeys()) {
                 if (rightSourceKey != null && rightSourceKey.equals(sourceKey)) {
                     continue;
@@ -66,7 +67,7 @@ final class UsingJoinValidationRule implements SchemaValidationRule<UsingJoin> {
                 }
             }
 
-            if (leftType != null && !DbType.comparable(leftType, rightType.get())) {
+            if (leftType != null && !CatalogTypeSemantics.comparable(leftType, rightType.get())) {
                 context.addProblem(
                     ValidationProblem.Code.TYPE_MISMATCH,
                     "Incompatible USING column types for '" + column + "': " + leftType + " and " + rightType.get(),
@@ -77,3 +78,5 @@ final class UsingJoinValidationRule implements SchemaValidationRule<UsingJoin> {
         }
     }
 }
+
+

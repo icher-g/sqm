@@ -19,7 +19,6 @@ import io.sqm.validate.schema.dialect.SchemaValidationDialect;
 import io.sqm.validate.schema.function.FunctionArgKind;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.function.FunctionSignature;
-import io.sqm.validate.schema.model.DbType;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
 import org.junit.jupiter.api.Test;
 
@@ -1738,7 +1737,7 @@ class SchemaQueryValidatorTest {
     @Test
     void validate_usesCustomFunctionReturnTypeForInference() {
         FunctionCatalog catalog = name -> "foo".equalsIgnoreCase(name)
-            ? java.util.Optional.of(FunctionSignature.of(1, 1, DbType.STRING, FunctionArgKind.ANY_EXPR))
+            ? java.util.Optional.of(FunctionSignature.of(1, 1, CatalogType.STRING, FunctionArgKind.ANY_EXPR))
             : java.util.Optional.empty();
         var customValidator = SchemaQueryValidator.of(SCHEMA, catalog);
 
@@ -1803,3 +1802,4 @@ class SchemaQueryValidatorTest {
         assertTrue(result.ok());
     }
 }
+

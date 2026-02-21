@@ -45,4 +45,14 @@ class PostgresSqlTypeMapperTest {
         assertEquals(CatalogType.DATE, mapper.map("unknown", Types.DATE));
         assertEquals(CatalogType.BYTES, mapper.map("unknown", Types.VARBINARY));
     }
+
+    @Test
+    void map_covers_additional_postgres_aliases() {
+        assertEquals(CatalogType.INTEGER, mapper.map("serial", Types.OTHER));
+        assertEquals(CatalogType.LONG, mapper.map("bigserial", Types.OTHER));
+        assertEquals(CatalogType.DECIMAL, mapper.map("money", Types.OTHER));
+        assertEquals(CatalogType.STRING, mapper.map("name", Types.OTHER));
+        assertEquals(CatalogType.JSON, mapper.map("json", Types.OTHER));
+        assertEquals(CatalogType.BYTES, mapper.map("bytea", Types.OTHER));
+    }
 }

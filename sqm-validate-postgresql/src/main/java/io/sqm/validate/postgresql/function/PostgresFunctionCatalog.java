@@ -1,11 +1,11 @@
 package io.sqm.validate.postgresql.function;
 
+import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.validate.schema.function.DefaultFunctionCatalog;
 import io.sqm.validate.schema.function.FunctionArgKind;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.function.FunctionSignature;
-import io.sqm.validate.schema.model.DbType;
 
 import java.util.*;
 
@@ -84,43 +84,43 @@ public final class PostgresFunctionCatalog implements FunctionCatalog {
         put(signatures, version, SqlDialectVersion.of(9, 0), "generate_series",
             FunctionSignature.of(2, 3, FunctionArgKind.NUMERIC_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 0), "pg_typeof",
-            FunctionSignature.of(1, 1, DbType.STRING, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.of(1, 1, CatalogType.STRING, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 0), "array_length",
-            FunctionSignature.of(2, 2, DbType.INTEGER, FunctionArgKind.ANY_EXPR, FunctionArgKind.NUMERIC_EXPR));
+            FunctionSignature.of(2, 2, CatalogType.INTEGER, FunctionArgKind.ANY_EXPR, FunctionArgKind.NUMERIC_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 0), "array_dims",
-            FunctionSignature.of(1, 1, DbType.STRING, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.of(1, 1, CatalogType.STRING, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 0), "strpos",
-            FunctionSignature.of(2, 2, DbType.INTEGER, FunctionArgKind.STRING_EXPR, FunctionArgKind.STRING_EXPR));
+            FunctionSignature.of(2, 2, CatalogType.INTEGER, FunctionArgKind.STRING_EXPR, FunctionArgKind.STRING_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 0), "split_part",
-            FunctionSignature.of(3, 3, DbType.STRING, FunctionArgKind.STRING_EXPR, FunctionArgKind.STRING_EXPR, FunctionArgKind.NUMERIC_EXPR));
+            FunctionSignature.of(3, 3, CatalogType.STRING, FunctionArgKind.STRING_EXPR, FunctionArgKind.STRING_EXPR, FunctionArgKind.NUMERIC_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 0), "to_json",
-            FunctionSignature.of(1, 1, DbType.JSON, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.of(1, 1, CatalogType.JSON, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 1), "concat",
-            FunctionSignature.of(1, Integer.MAX_VALUE, DbType.STRING, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.of(1, Integer.MAX_VALUE, CatalogType.STRING, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 1), "format",
-            FunctionSignature.of(1, Integer.MAX_VALUE, DbType.STRING, FunctionArgKind.STRING_EXPR, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.of(1, Integer.MAX_VALUE, CatalogType.STRING, FunctionArgKind.STRING_EXPR, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 2), "json_typeof",
-            FunctionSignature.of(1, 1, DbType.STRING, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.of(1, 1, CatalogType.STRING, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 2), "array_to_json",
-            FunctionSignature.of(1, 2, DbType.JSON, FunctionArgKind.ANY_EXPR, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.of(1, 2, CatalogType.JSON, FunctionArgKind.ANY_EXPR, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 2), "row_to_json",
-            FunctionSignature.of(1, 2, DbType.JSON, FunctionArgKind.ANY_EXPR, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.of(1, 2, CatalogType.JSON, FunctionArgKind.ANY_EXPR, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 0), "string_agg",
-            FunctionSignature.ofAggregate(2, 2, DbType.STRING, FunctionArgKind.ANY_EXPR, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.ofAggregate(2, 2, CatalogType.STRING, FunctionArgKind.ANY_EXPR, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 4), "json_build_object",
-            FunctionSignature.of(0, Integer.MAX_VALUE, DbType.JSON, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.of(0, Integer.MAX_VALUE, CatalogType.JSON, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 4), "json_object_agg",
-            FunctionSignature.ofAggregate(2, 2, DbType.JSON, FunctionArgKind.ANY_EXPR, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.ofAggregate(2, 2, CatalogType.JSON, FunctionArgKind.ANY_EXPR, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 4), "to_jsonb",
-            FunctionSignature.of(1, 1, DbType.JSONB, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.of(1, 1, CatalogType.JSONB, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 4), "jsonb_typeof",
-            FunctionSignature.of(1, 1, DbType.STRING, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.of(1, 1, CatalogType.STRING, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 4), "jsonb_build_object",
-            FunctionSignature.of(0, Integer.MAX_VALUE, DbType.JSONB, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.of(0, Integer.MAX_VALUE, CatalogType.JSONB, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 4), "jsonb_build_array",
-            FunctionSignature.of(0, Integer.MAX_VALUE, DbType.JSONB, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.of(0, Integer.MAX_VALUE, CatalogType.JSONB, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 4), "jsonb_object_agg",
-            FunctionSignature.ofAggregate(2, 2, DbType.JSONB, FunctionArgKind.ANY_EXPR, FunctionArgKind.ANY_EXPR));
+            FunctionSignature.ofAggregate(2, 2, CatalogType.JSONB, FunctionArgKind.ANY_EXPR, FunctionArgKind.ANY_EXPR));
         return signatures;
     }
 

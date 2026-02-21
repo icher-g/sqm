@@ -1,9 +1,9 @@
-package io.sqm.schema.introspect.snapshot;
+package io.sqm.catalog.snapshot;
 
-import io.sqm.validate.schema.model.DbColumn;
-import io.sqm.validate.schema.model.DbSchema;
-import io.sqm.validate.schema.model.DbTable;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogColumn;
+import io.sqm.catalog.model.CatalogSchema;
+import io.sqm.catalog.model.CatalogTable;
+import io.sqm.catalog.model.CatalogType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -22,11 +22,11 @@ class JsonSchemaProviderTest {
 
     @Test
     void saveAndLoad_roundTripsSchemaSnapshot() throws Exception {
-        var schema = DbSchema.of(
-            DbTable.of("public", "users",
-                DbColumn.of("id", DbType.LONG),
-                DbColumn.of("name", DbType.STRING),
-                DbColumn.of("payload", DbType.JSONB)
+        var schema = CatalogSchema.of(
+            CatalogTable.of("public", "users",
+                CatalogColumn.of("id", CatalogType.LONG),
+                CatalogColumn.of("name", CatalogType.STRING),
+                CatalogColumn.of("payload", CatalogType.JSONB)
             )
         );
         var file = tempDir.resolve("schema.json");
@@ -35,10 +35,10 @@ class JsonSchemaProviderTest {
         provider.save(schema);
         var loaded = provider.load();
 
-        var users = ((DbSchema.TableLookupResult.Found) loaded.resolve("public", "users")).table();
-        assertEquals(DbType.LONG, users.column("id").orElseThrow().type());
-        assertEquals(DbType.STRING, users.column("name").orElseThrow().type());
-        assertEquals(DbType.JSONB, users.column("payload").orElseThrow().type());
+        var users = ((CatalogSchema.TableLookupResult.Found) loaded.resolve("public", "users")).table();
+        assertEquals(CatalogType.LONG, users.column("id").orElseThrow().type());
+        assertEquals(CatalogType.STRING, users.column("name").orElseThrow().type());
+        assertEquals(CatalogType.JSONB, users.column("payload").orElseThrow().type());
         assertTrue(Files.size(file) > 0);
     }
 
@@ -67,7 +67,7 @@ class JsonSchemaProviderTest {
         var noColumnsProvider = JsonSchemaProvider.of(noColumnsSnapshot);
 
         var schema = noColumnsProvider.load();
-        var users = ((DbSchema.TableLookupResult.Found) schema.resolve("public", "users")).table();
+        var users = ((CatalogSchema.TableLookupResult.Found) schema.resolve("public", "users")).table();
         assertTrue(users.columns().isEmpty());
     }
 
@@ -83,11 +83,20 @@ class JsonSchemaProviderTest {
         var directory = tempDir.resolve("snapshot-dir");
         Files.createDirectories(directory);
         var provider = JsonSchemaProvider.of(directory);
-        var schema = DbSchema.of(DbTable.of("public", "users", DbColumn.of("id", DbType.LONG)));
+        var schema = CatalogSchema.of(CatalogTable.of("public", "users", CatalogColumn.of("id", CatalogType.LONG)));
 
         var ex = assertThrows(SQLException.class, () -> provider.save(schema));
 
         assertTrue(ex.getMessage().contains("Failed to save schema snapshot"));
         assertNull(ex.getSQLState());
+    }
+
+    @Test
+    void of_rejects_null_path_and_load_missing_file_throws_sql_exception() {
+        assertThrows(NullPointerException.class, () -> JsonSchemaProvider.of(null));
+
+        var provider = JsonSchemaProvider.of(tempDir.resolve("missing-schema.json"));
+        var ex = assertThrows(SQLException.class, provider::load);
+        assertTrue(ex.getMessage().contains("Failed to load schema snapshot"));
     }
 }

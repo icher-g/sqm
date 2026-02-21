@@ -1,7 +1,8 @@
-package io.sqm.schema.introspect.jdbc;
+package io.sqm.catalog.jdbc;
 
-import io.sqm.validate.schema.model.DbSchema;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogSchema;
+import io.sqm.catalog.model.CatalogType;
+import io.sqm.catalog.postgresql.PostgresSqlTypeMapper;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -38,21 +39,38 @@ class PostgresJdbcSchemaProviderIT {
                     "payload jsonb," +
                     "created_at timestamptz," +
                     "data bytea)");
+                statement.execute("create table events (" +
+                    "id bigint primary key," +
+                    "user_id bigint not null references users(id)," +
+                    "payload jsonb not null)");
             }
         }
 
-        var provider = JdbcSchemaProvider.of(dataSource());
-        DbSchema schema = provider.load();
+        var provider = JdbcSchemaProvider.of(dataSource(), PostgresSqlTypeMapper.standard());
+        CatalogSchema schema = provider.load();
 
-        var users = ((DbSchema.TableLookupResult.Found) schema.resolve("public", "users")).table();
-        assertEquals(DbType.LONG, users.column("id").orElseThrow().type());
-        assertEquals(DbType.STRING, users.column("name").orElseThrow().type());
-        assertEquals(DbType.BOOLEAN, users.column("active").orElseThrow().type());
-        assertEquals(DbType.DECIMAL, users.column("amount").orElseThrow().type());
-        assertEquals(DbType.UUID, users.column("uid").orElseThrow().type());
-        assertEquals(DbType.JSONB, users.column("payload").orElseThrow().type());
-        assertEquals(DbType.TIMESTAMP, users.column("created_at").orElseThrow().type());
-        assertEquals(DbType.BYTES, users.column("data").orElseThrow().type());
+        var users = ((CatalogSchema.TableLookupResult.Found) schema.resolve("public", "users")).table();
+        assertEquals(CatalogType.LONG, users.column("id").orElseThrow().type());
+        assertEquals(CatalogType.STRING, users.column("name").orElseThrow().type());
+        assertEquals(CatalogType.BOOLEAN, users.column("active").orElseThrow().type());
+        assertEquals(CatalogType.DECIMAL, users.column("amount").orElseThrow().type());
+        assertEquals(CatalogType.UUID, users.column("uid").orElseThrow().type());
+        assertEquals(CatalogType.JSONB, users.column("payload").orElseThrow().type());
+        assertEquals(CatalogType.TIMESTAMP, users.column("created_at").orElseThrow().type());
+        assertEquals(CatalogType.BYTES, users.column("data").orElseThrow().type());
+        assertEquals(1, users.primaryKeyColumns().size());
+        assertEquals("id", users.primaryKeyColumns().getFirst());
+
+        var events = ((CatalogSchema.TableLookupResult.Found) schema.resolve("public", "events")).table();
+        assertEquals(1, events.primaryKeyColumns().size());
+        assertEquals("id", events.primaryKeyColumns().getFirst());
+        assertEquals(1, events.foreignKeys().size());
+        var fk = events.foreignKeys().getFirst();
+        assertEquals("users", fk.targetTable());
+        assertEquals(1, fk.sourceColumns().size());
+        assertEquals("user_id", fk.sourceColumns().getFirst());
+        assertEquals(1, fk.targetColumns().size());
+        assertEquals("id", fk.targetColumns().getFirst());
     }
 
     private static DataSource dataSource() {

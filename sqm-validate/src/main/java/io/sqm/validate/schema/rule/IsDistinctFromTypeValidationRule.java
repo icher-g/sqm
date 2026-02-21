@@ -3,7 +3,7 @@ package io.sqm.validate.schema.rule;
 import io.sqm.core.IsDistinctFromPredicate;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 /**
  * Validates type compatibility for IS DISTINCT FROM predicates.
@@ -33,7 +33,7 @@ final class IsDistinctFromTypeValidationRule implements SchemaValidationRule<IsD
     /**
      * Validates that both operands are comparable when type information is known.
      *
-     * @param node predicate node.
+     * @param node    predicate node.
      * @param context schema validation context.
      */
     @Override
@@ -57,7 +57,7 @@ final class IsDistinctFromTypeValidationRule implements SchemaValidationRule<IsD
         }
         var leftType = context.inferType(node.lhs());
         var rightType = context.inferType(node.rhs());
-        if (leftType.isPresent() && rightType.isPresent() && !DbType.comparable(leftType.get(), rightType.get())) {
+        if (leftType.isPresent() && rightType.isPresent() && !CatalogTypeSemantics.comparable(leftType.get(), rightType.get())) {
             context.addProblem(
                 ValidationProblem.Code.TYPE_MISMATCH,
                 "Incompatible IS DISTINCT FROM types: " + leftType.get() + " and " + rightType.get(),
@@ -67,4 +67,6 @@ final class IsDistinctFromTypeValidationRule implements SchemaValidationRule<IsD
         }
     }
 }
+
+
 

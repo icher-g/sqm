@@ -10,7 +10,6 @@ import io.sqm.catalog.model.CatalogType;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.function.FunctionSignature;
-import io.sqm.validate.schema.model.DbType;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
@@ -88,17 +87,17 @@ class SchemaValidationContextTest {
     @Test
     void inferType_supportsCastArithmeticAndFunctionCatalog() {
         FunctionCatalog catalog = name -> "fnum".equalsIgnoreCase(name)
-            ? java.util.Optional.of(FunctionSignature.of(1, 1, DbType.DECIMAL))
+            ? java.util.Optional.of(FunctionSignature.of(1, 1, CatalogType.DECIMAL))
             : java.util.Optional.empty();
         var context = new SchemaValidationContext(SCHEMA, catalog);
 
-        assertEquals(DbType.STRING, context.inferType(lit("x").cast(type(TypeKeyword.CHARACTER_VARYING))).orElseThrow());
-        assertEquals(DbType.INTEGER, context.inferType(lit("1").cast(type("int4"))).orElseThrow());
-        assertEquals(DbType.LONG, context.inferType(lit(1).add(lit(2L))).orElseThrow());
-        assertEquals(DbType.DECIMAL, context.inferType(lit(1L).add(lit(2.5))).orElseThrow());
-        assertEquals(DbType.INTEGER, context.inferType(lit(1).neg()).orElseThrow());
+        assertEquals(CatalogType.STRING, context.inferType(lit("x").cast(type(TypeKeyword.CHARACTER_VARYING))).orElseThrow());
+        assertEquals(CatalogType.INTEGER, context.inferType(lit("1").cast(type("int4"))).orElseThrow());
+        assertEquals(CatalogType.LONG, context.inferType(lit(1).add(lit(2L))).orElseThrow());
+        assertEquals(CatalogType.DECIMAL, context.inferType(lit(1L).add(lit(2.5))).orElseThrow());
+        assertEquals(CatalogType.INTEGER, context.inferType(lit(1).neg()).orElseThrow());
         assertTrue(context.inferType(lit("bad").neg()).isEmpty());
-        assertEquals(DbType.DECIMAL, context.inferType(func("fnum", arg(lit(1)))).orElseThrow());
+        assertEquals(CatalogType.DECIMAL, context.inferType(func("fnum", arg(lit(1)))).orElseThrow());
     }
 
     @Test
@@ -126,3 +125,4 @@ class SchemaValidationContextTest {
         }
     }
 }
+

@@ -4,7 +4,8 @@ import io.sqm.core.*;
 import io.sqm.core.walk.RecursiveNodeVisitor;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.validate.schema.model.DbType;
+import io.sqm.catalog.model.CatalogType;
+import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -234,10 +235,10 @@ final class WindowFrameValidationRule implements SchemaValidationRule<SelectQuer
             return;
         }
         var inferredType = context.inferType(expression);
-        if (inferredType.isEmpty() || !DbType.isKnown(inferredType.get())) {
+        if (inferredType.isEmpty() || !CatalogTypeSemantics.isKnown(inferredType.get())) {
             return;
         }
-        if (inferredType.get() == DbType.INTEGER || inferredType.get() == DbType.LONG) {
+        if (inferredType.get() == CatalogType.INTEGER || inferredType.get() == CatalogType.LONG) {
             return;
         }
         context.addProblem(
@@ -321,7 +322,7 @@ final class WindowFrameValidationRule implements SchemaValidationRule<SelectQuer
         String clausePath
     ) {
         var inferredType = context.inferType(expression);
-        if (inferredType.isPresent() && DbType.isKnown(inferredType.get()) && !DbType.isNumeric(inferredType.get())) {
+        if (inferredType.isPresent() && CatalogTypeSemantics.isKnown(inferredType.get()) && !CatalogTypeSemantics.isNumeric(inferredType.get())) {
             context.addProblem(
                 ValidationProblem.Code.WINDOW_FRAME_INVALID,
                 label + " bound expression must be numeric but was " + inferredType.get(),
@@ -452,3 +453,5 @@ final class WindowFrameValidationRule implements SchemaValidationRule<SelectQuer
         }
     }
 }
+
+
