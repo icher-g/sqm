@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DefaultSqlMiddlewareTest {
 
@@ -70,5 +71,27 @@ class DefaultSqlMiddlewareTest {
         middleware.analyze("select 1", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(1, audit.events().size());
         assertEquals(List.of(), audit.events().getFirst().appliedRules());
+    }
+
+    @Test
+    void schema_factory_validates_required_arguments() {
+        assertThrows(NullPointerException.class, () -> SqlMiddleware.of((io.sqm.catalog.model.CatalogSchema) null));
+        assertThrows(NullPointerException.class, () -> SqlMiddleware.of(SCHEMA, null));
+        assertThrows(NullPointerException.class, () -> SqlMiddleware.of(SCHEMA, SchemaValidationSettings.defaults(), null));
+    }
+
+    @Test
+    void explicit_factory_validates_required_arguments() {
+        var engine = (SqlDecisionEngine) (query, context) -> DecisionResult.allow();
+        var explainer = SqlDecisionExplainer.basic();
+        var audit = AuditEventPublisher.noop();
+        var guardrails = RuntimeGuardrails.disabled();
+        var parser = DefaultSqlQueryParser.standard();
+
+        assertThrows(NullPointerException.class, () -> SqlMiddleware.of(null, explainer, audit, guardrails, parser));
+        assertThrows(NullPointerException.class, () -> SqlMiddleware.of(engine, null, audit, guardrails, parser));
+        assertThrows(NullPointerException.class, () -> SqlMiddleware.of(engine, explainer, null, guardrails, parser));
+        assertThrows(NullPointerException.class, () -> SqlMiddleware.of(engine, explainer, audit, null, parser));
+        assertThrows(NullPointerException.class, () -> SqlMiddleware.of(engine, explainer, audit, guardrails, null));
     }
 }

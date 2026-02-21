@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DefaultSqlDecisionEngineTest {
 
@@ -41,5 +42,23 @@ class DefaultSqlDecisionEngineTest {
         assertEquals(DecisionKind.DENY, result.kind());
         assertEquals(ReasonCode.DENY_VALIDATION, result.reasonCode());
     }
-}
 
+    @Test
+    void validates_input_arguments() {
+        var engine = DefaultSqlDecisionEngine.of(query -> new ValidationResult(List.of()));
+
+        assertThrows(NullPointerException.class, () -> engine.evaluate(null, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE)));
+        assertThrows(NullPointerException.class, () -> engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), null));
+    }
+
+    @Test
+    void maps_dialect_validation_to_unsupported_dialect_reason() {
+        var engine = DefaultSqlDecisionEngine.of(query -> new ValidationResult(List.of(
+            new ValidationProblem(ValidationProblem.Code.DIALECT_CLAUSE_INVALID, "unsupported for dialect")
+        )));
+
+        var result = engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        assertEquals(DecisionKind.DENY, result.kind());
+        assertEquals(ReasonCode.DENY_UNSUPPORTED_DIALECT_FEATURE, result.reasonCode());
+    }
+}

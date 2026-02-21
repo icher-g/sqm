@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SqlMiddlewareTest {
@@ -87,7 +88,7 @@ class SqlMiddlewareTest {
 
         assertEquals(3, events.size());
 
-        var allowEvent = events.get(0);
+        var allowEvent = events.getFirst();
         assertEquals(DecisionKind.ALLOW, allowEvent.decision().kind());
         assertEquals("select 1", allowEvent.normalizedSql());
         assertEquals(List.of(), allowEvent.appliedRules());
@@ -176,6 +177,77 @@ class SqlMiddlewareTest {
         assertEquals(DecisionKind.REWRITE, result.kind());
         assertEquals(ReasonCode.REWRITE_EXPLAIN_DRY_RUN, result.reasonCode());
         assertEquals("EXPLAIN select * from users limit 10", result.rewrittenSql());
+    }
+
+    @Test
+    void explain_dry_run_uses_existing_rewritten_sql() {
+        var middleware = SqlMiddleware.of(
+            (query, context) -> DecisionResult.rewrite(ReasonCode.REWRITE_LIMIT, "limit", "select 1 limit 10"),
+            new RuntimeGuardrails(null, null, null, true)
+        );
+
+        var result = middleware.enforce("select 1", ExecutionContext.of("postgresql", ExecutionMode.EXECUTE));
+        assertEquals(DecisionKind.REWRITE, result.kind());
+        assertEquals("EXPLAIN select 1 limit 10", result.rewrittenSql());
+    }
+
+    @Test
+    void explanation_falls_back_when_explainer_returns_blank() {
+        var middleware = SqlMiddleware.of(
+            (query, context) -> DecisionResult.allow(),
+            (query, context, decision) -> " "
+        );
+
+        var result = middleware.explainDecision("select 1", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        assertEquals("Decision=ALLOW, reason=NONE", result.explanation());
+    }
+
+    @Test
+    void parse_error_uses_fallback_explanation_and_pipeline_deny() {
+        var middleware = SqlMiddleware.of(
+            (query, context) -> DecisionResult.allow(),
+            (query, context, decision) -> "unused",
+            AuditEventPublisher.noop(),
+            RuntimeGuardrails.disabled(),
+            (sql, context) -> {
+                throw new IllegalArgumentException("bad sql");
+            }
+        );
+
+        var result = middleware.explainDecision("select from", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        assertEquals(DecisionKind.DENY, result.decision().kind());
+        assertEquals(ReasonCode.DENY_PIPELINE_ERROR, result.decision().reasonCode());
+        assertEquals("Decision=DENY, reason=DENY_PIPELINE_ERROR", result.explanation());
+    }
+
+    @Test
+    void validate_input_rejects_blank_sql_and_null_context() {
+        var middleware = SqlMiddleware.of((query, context) -> DecisionResult.allow());
+
+        assertThrows(IllegalArgumentException.class, () -> middleware.analyze(" ", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE)));
+        assertThrows(NullPointerException.class, () -> middleware.analyze("select 1", null));
+    }
+
+    @Test
+    void null_engine_result_maps_to_pipeline_error() {
+        var middleware = SqlMiddleware.of((query, context) -> null);
+
+        var result = middleware.analyze("select 1", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        assertEquals(DecisionKind.DENY, result.kind());
+        assertEquals(ReasonCode.DENY_PIPELINE_ERROR, result.reasonCode());
+        assertTrue(result.message().contains("engine must return a decision"));
+    }
+
+    @Test
+    void max_rows_guardrail_ignores_when_engine_already_denied() {
+        var middleware = SqlMiddleware.of(
+            (query, context) -> DecisionResult.deny(ReasonCode.DENY_DDL, "blocked"),
+            new RuntimeGuardrails(null, null, 10, false)
+        );
+
+        var result = middleware.enforce("select 1", ExecutionContext.of("postgresql", ExecutionMode.EXECUTE));
+        assertEquals(DecisionKind.DENY, result.kind());
+        assertEquals(ReasonCode.DENY_DDL, result.reasonCode());
     }
 }
 
