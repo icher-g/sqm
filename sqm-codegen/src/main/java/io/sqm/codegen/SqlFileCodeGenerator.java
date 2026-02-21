@@ -13,7 +13,6 @@ import io.sqm.validate.api.QueryValidator;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.postgresql.PostgresValidationDialect;
 import io.sqm.validate.schema.SchemaQueryValidator;
-import io.sqm.validate.schema.model.DbSchema;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -199,7 +198,7 @@ public final class SqlFileCodeGenerator {
             return null;
         }
         try {
-            DbSchema schema = provider.load();
+            var schema = provider.load();
             return switch (options.dialect()) {
                 case ANSI -> SchemaQueryValidator.of(schema);
                 case POSTGRESQL -> SchemaQueryValidator.of(schema, PostgresValidationDialect.of());

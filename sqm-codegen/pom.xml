@@ -33,7 +33,7 @@
         </dependency>
         <dependency>
             <groupId>io.sqm</groupId>
-            <artifactId>sqm-schema-introspect</artifactId>
+            <artifactId>sqm-catalog</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

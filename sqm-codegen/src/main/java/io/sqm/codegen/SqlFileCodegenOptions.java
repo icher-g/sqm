@@ -1,6 +1,6 @@
 package io.sqm.codegen;
 
-import io.sqm.schema.introspect.SchemaProvider;
+import io.sqm.catalog.SchemaProvider;
 
 import java.nio.file.Path;
 import java.util.Optional;

@@ -26,7 +26,7 @@ final class ColumnAccessValidationRule implements SchemaValidationRule<ColumnExp
      */
     @Override
     public void validate(ColumnExpr node, SchemaValidationContext context) {
-        if (!context.accessPolicy().isColumnDenied(node.tableAlias(), node.name())) {
+        if (!context.isColumnDenied(node.tableAlias(), node.name())) {
             return;
         }
         context.addProblem(

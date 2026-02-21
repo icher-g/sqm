@@ -1,5 +1,6 @@
 package io.sqm.validate.schema.model;
 
+import io.sqm.catalog.model.CatalogType;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -48,6 +49,15 @@ class DbTypeTest {
         assertEquals(DbType.TIMESTAMP, DbType.fromSqlType("timestamptz"));
         assertEquals(DbType.UNKNOWN, DbType.fromSqlType("custom_type"));
         assertEquals(DbType.UNKNOWN, DbType.fromSqlType(null));
+    }
+
+    @Test
+    void fromCatalogType_mapsKnownValuesAndNullFallback() {
+        assertEquals(DbType.INTEGER, DbType.fromCatalogType(CatalogType.INTEGER));
+        assertEquals(DbType.STRING, DbType.fromCatalogType(CatalogType.STRING));
+        assertEquals(DbType.BOOLEAN, DbType.fromCatalogType(CatalogType.BOOLEAN));
+        assertEquals(DbType.UNKNOWN, DbType.fromCatalogType(CatalogType.UNKNOWN));
+        assertEquals(DbType.UNKNOWN, DbType.fromCatalogType(null));
     }
 
     @Test

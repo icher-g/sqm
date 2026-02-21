@@ -1,8 +1,8 @@
 package io.sqm.codegen.maven;
 
-import io.sqm.schema.introspect.SchemaProvider;
-import io.sqm.schema.introspect.snapshot.JsonSchemaProvider;
-import io.sqm.validate.schema.model.DbSchema;
+import io.sqm.catalog.SchemaProvider;
+import io.sqm.catalog.model.CatalogSchema;
+import io.sqm.catalog.snapshot.JsonSchemaProvider;
 import org.apache.maven.plugin.logging.Log;
 
 import javax.sql.DataSource;
@@ -91,7 +91,7 @@ final class CachingSchemaProvider implements SchemaProvider {
     }
 
     @Override
-    public DbSchema load() throws SQLException {
+    public CatalogSchema load() throws SQLException {
         if (!refresh && canUseCache()) {
             log.info("SQM SQL codegen schema: using cached snapshot " + cachePath);
             return JsonSchemaProvider.of(cachePath).load();

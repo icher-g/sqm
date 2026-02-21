@@ -26,7 +26,7 @@ final class FunctionAllowlistValidationRule implements SchemaValidationRule<Func
      */
     @Override
     public void validate(FunctionExpr node, SchemaValidationContext context) {
-        if (context.accessPolicy().isFunctionAllowed(node.name())) {
+        if (context.isFunctionAllowed(node.name())) {
             return;
         }
         context.addProblem(

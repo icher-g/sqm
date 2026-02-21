@@ -3,12 +3,13 @@ package io.sqm.validate.schema.internal;
 import io.sqm.core.Query;
 import io.sqm.core.TableRef;
 import io.sqm.core.TypeKeyword;
+import io.sqm.catalog.model.CatalogColumn;
+import io.sqm.catalog.model.CatalogSchema;
+import io.sqm.catalog.model.CatalogTable;
+import io.sqm.catalog.model.CatalogType;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.function.FunctionSignature;
-import io.sqm.validate.schema.model.DbColumn;
-import io.sqm.validate.schema.model.DbSchema;
-import io.sqm.validate.schema.model.DbTable;
 import io.sqm.validate.schema.model.DbType;
 import org.junit.jupiter.api.Test;
 
@@ -19,15 +20,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SchemaValidationContextTest {
-    private static final DbSchema SCHEMA = DbSchema.of(
-        DbTable.of("public", "users",
-            DbColumn.of("id", DbType.LONG),
-            DbColumn.of("name", DbType.STRING),
-            DbColumn.of("age", DbType.INTEGER)
+    private static final CatalogSchema SCHEMA = CatalogSchema.of(
+        CatalogTable.of("public", "users",
+            CatalogColumn.of("id", CatalogType.LONG),
+            CatalogColumn.of("name", CatalogType.STRING),
+            CatalogColumn.of("age", CatalogType.INTEGER)
         ),
-        DbTable.of("public", "orders",
-            DbColumn.of("id", DbType.LONG),
-            DbColumn.of("user_id", DbType.LONG)
+        CatalogTable.of("public", "orders",
+            CatalogColumn.of("id", CatalogType.LONG),
+            CatalogColumn.of("user_id", CatalogType.LONG)
         )
     );
 

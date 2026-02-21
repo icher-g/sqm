@@ -1,5 +1,7 @@
 package io.sqm.validate.schema.model;
 
+import io.sqm.catalog.model.CatalogType;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -134,6 +136,34 @@ public enum DbType {
             case "time", "timetz" -> TIME;
             case "timestamp", "timestamptz" -> TIMESTAMP;
             default -> UNKNOWN;
+        };
+    }
+
+    /**
+     * Maps catalog type to validator type.
+     *
+     * @param catalogType catalog type.
+     * @return mapped validator type.
+     */
+    public static DbType fromCatalogType(CatalogType catalogType) {
+        if (catalogType == null) {
+            return UNKNOWN;
+        }
+        return switch (catalogType) {
+            case UNKNOWN -> UNKNOWN;
+            case STRING -> STRING;
+            case INTEGER -> INTEGER;
+            case LONG -> LONG;
+            case DECIMAL -> DECIMAL;
+            case BOOLEAN -> BOOLEAN;
+            case UUID -> UUID;
+            case JSON -> JSON;
+            case JSONB -> JSONB;
+            case BYTES -> BYTES;
+            case ENUM -> ENUM;
+            case DATE -> DATE;
+            case TIME -> TIME;
+            case TIMESTAMP -> TIMESTAMP;
         };
     }
 

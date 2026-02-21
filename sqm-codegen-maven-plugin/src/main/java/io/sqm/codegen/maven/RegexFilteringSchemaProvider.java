@@ -1,7 +1,7 @@
 package io.sqm.codegen.maven;
 
-import io.sqm.schema.introspect.SchemaProvider;
-import io.sqm.validate.schema.model.DbSchema;
+import io.sqm.catalog.SchemaProvider;
+import io.sqm.catalog.model.CatalogSchema;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -43,13 +43,13 @@ final class RegexFilteringSchemaProvider implements SchemaProvider {
     }
 
     @Override
-    public DbSchema load() throws SQLException {
+    public CatalogSchema load() throws SQLException {
         var schema = delegate.load();
         var filtered = schema.tables().stream()
             .filter(table -> matches(table.schema(), schemaIncludes, schemaExcludes))
             .filter(table -> matches(table.name(), tableIncludes, tableExcludes))
             .toList();
-        return DbSchema.of(filtered);
+        return CatalogSchema.of(filtered);
     }
 
     private static boolean matches(String value, List<Pattern> includes, List<Pattern> excludes) {

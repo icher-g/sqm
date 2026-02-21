@@ -46,7 +46,8 @@
         <module>sqm-parser-postgresql</module>
         <module>sqm-render-postgresql</module>
         <module>sqm-validate-postgresql</module>
-        <module>sqm-schema-introspect</module>
+        <module>sqm-catalog</module>
+        <module>sqm-catalog-postgresql</module>
         <module>sqm-codegen</module>
         <module>sqm-codegen-maven-plugin</module>
         <module>sqm-it</module>
