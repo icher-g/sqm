@@ -60,7 +60,11 @@ public final class SchemaQueryValidator implements QueryValidator {
         this(
             schema,
             settings,
-            SchemaValidationRuleRegistry.defaults(settings.functionCatalog(), settings.additionalRules())
+            SchemaValidationRuleRegistry.defaults(
+                settings.functionCatalog(),
+                settings.limits(),
+                settings.additionalRules()
+            )
         );
     }
 
@@ -134,7 +138,10 @@ public final class SchemaQueryValidator implements QueryValidator {
     @Override
     public ValidationResult validate(Query query) {
         Objects.requireNonNull(query, "query");
-        var visitor = new ValidationVisitor(new SchemaValidationContext(schema, settings.functionCatalog()), registry);
+        var visitor = new ValidationVisitor(
+            new SchemaValidationContext(schema, settings.functionCatalog(), settings.accessPolicy()),
+            registry
+        );
         query.accept(visitor);
         return new ValidationResult(visitor.problems());
     }

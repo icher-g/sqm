@@ -8,6 +8,8 @@ import io.sqm.core.SelectQuery;
 import io.sqm.core.WindowDef;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.SchemaQueryValidator;
+import io.sqm.validate.schema.SchemaAccessPolicy;
+import io.sqm.validate.schema.SchemaValidationLimits;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
 import io.sqm.validate.schema.function.FunctionArgKind;
@@ -71,12 +73,42 @@ class SchemaQueryValidatorTest {
     }
 
     @Test
+    void validate_reportsDeniedTableByPolicy() {
+        var settings = SchemaValidationSettings.builder()
+            .accessPolicy(SchemaAccessPolicy.builder().denyTable("orders").build())
+            .build();
+        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+
+        Query query = select(star()).from(tbl("orders").as("o"));
+        var result = policyValidator.validate(query);
+
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.POLICY_TABLE_DENIED));
+    }
+
+    @Test
     void validate_reportsMissingColumn() {
         Query query = select(col("u", "unknown_col")).from(tbl("users").as("u"));
 
         var result = validator.validate(query);
         assertFalse(result.ok());
         assertTrue(result.problems().stream().anyMatch(p -> p.code() == ValidationProblem.Code.COLUMN_NOT_FOUND));
+    }
+
+    @Test
+    void validate_reportsDeniedColumnByPolicy() {
+        var settings = SchemaValidationSettings.builder()
+            .accessPolicy(SchemaAccessPolicy.builder().denyColumn("u.status").build())
+            .build();
+        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+
+        Query query = select(col("u", "status")).from(tbl("users").as("u"));
+        var result = policyValidator.validate(query);
+
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.POLICY_COLUMN_DENIED));
     }
 
     @Test
@@ -194,6 +226,100 @@ class SchemaQueryValidatorTest {
         var result = validator.validate(query);
         assertFalse(result.ok());
         assertTrue(result.problems().stream().anyMatch(p -> p.code() == ValidationProblem.Code.TYPE_MISMATCH));
+    }
+
+    @Test
+    void validate_reportsFunctionNotAllowedByPolicy() {
+        var settings = SchemaValidationSettings.builder()
+            .accessPolicy(SchemaAccessPolicy.builder().allowFunction("length").build())
+            .build();
+        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+
+        Query query = select(func("lower", arg(col("u", "name")))).from(tbl("users").as("u"));
+        var result = policyValidator.validate(query);
+
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.POLICY_FUNCTION_NOT_ALLOWED));
+    }
+
+    @Test
+    void validate_acceptsAllowedFunctionByPolicy() {
+        var settings = SchemaValidationSettings.builder()
+            .accessPolicy(SchemaAccessPolicy.builder().allowFunction("length").build())
+            .build();
+        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+
+        Query query = select(func("length", arg(col("u", "name")))).from(tbl("users").as("u"));
+        var result = policyValidator.validate(query);
+
+        assertTrue(result.problems().stream()
+            .noneMatch(p -> p.code() == ValidationProblem.Code.POLICY_FUNCTION_NOT_ALLOWED));
+    }
+
+    @Test
+    void validate_reportsMaxJoinLimitExceeded() {
+        var settings = SchemaValidationSettings.builder()
+            .limits(SchemaValidationLimits.builder().maxJoinCount(1).build())
+            .build();
+        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+
+        Query query = select(star())
+            .from(tbl("users").as("u"))
+            .join(inner(tbl("orders").as("o")).on(col("o", "user_id").eq(col("u", "id"))))
+            .join(inner(tbl("accounts").as("a")).on(col("a", "id").eq(col("u", "id"))));
+
+        var result = policyValidator.validate(query);
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.POLICY_MAX_JOINS_EXCEEDED));
+    }
+
+    @Test
+    void validate_acceptsBoundaryMaxJoinLimit() {
+        var settings = SchemaValidationSettings.builder()
+            .limits(SchemaValidationLimits.builder().maxJoinCount(1).build())
+            .build();
+        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+
+        Query query = select(star())
+            .from(tbl("users").as("u"))
+            .join(inner(tbl("orders").as("o")).on(col("o", "user_id").eq(col("u", "id"))));
+
+        var result = policyValidator.validate(query);
+        assertTrue(result.problems().stream()
+            .noneMatch(p -> p.code() == ValidationProblem.Code.POLICY_MAX_JOINS_EXCEEDED));
+    }
+
+    @Test
+    void validate_reportsMaxSelectColumnsExceeded() {
+        var settings = SchemaValidationSettings.builder()
+            .limits(SchemaValidationLimits.builder().maxSelectColumns(2).build())
+            .build();
+        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+
+        Query query = select(col("u", "id"), col("u", "name"), col("u", "status"))
+            .from(tbl("users").as("u"));
+
+        var result = policyValidator.validate(query);
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.POLICY_MAX_SELECT_COLUMNS_EXCEEDED));
+    }
+
+    @Test
+    void validate_acceptsBoundaryMaxSelectColumnsLimit() {
+        var settings = SchemaValidationSettings.builder()
+            .limits(SchemaValidationLimits.builder().maxSelectColumns(2).build())
+            .build();
+        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+
+        Query query = select(col("u", "id"), col("u", "name"))
+            .from(tbl("users").as("u"));
+
+        var result = policyValidator.validate(query);
+        assertTrue(result.problems().stream()
+            .noneMatch(p -> p.code() == ValidationProblem.Code.POLICY_MAX_SELECT_COLUMNS_EXCEEDED));
     }
 
     @Test

@@ -2,6 +2,7 @@ package io.sqm.validate.schema.internal;
 
 import io.sqm.core.*;
 import io.sqm.validate.api.ValidationProblem;
+import io.sqm.validate.schema.SchemaAccessPolicy;
 import io.sqm.validate.schema.function.DefaultFunctionCatalog;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.model.DbColumn;
@@ -19,6 +20,7 @@ import java.util.*;
 public final class SchemaValidationContext {
     private final DbSchema schema;
     private final FunctionCatalog functionCatalog;
+    private final SchemaAccessPolicy accessPolicy;
     private final List<ValidationProblem> problems = new ArrayList<>();
     private final Deque<Scope> scopes = new ArrayDeque<>();
     private final Deque<Map<String, CteSource>> cteScopes = new ArrayDeque<>();
@@ -29,7 +31,7 @@ public final class SchemaValidationContext {
      * @param schema schema used for table and column resolution.
      */
     public SchemaValidationContext(DbSchema schema) {
-        this(schema, DefaultFunctionCatalog.standard());
+        this(schema, DefaultFunctionCatalog.standard(), SchemaAccessPolicy.allowAll());
     }
 
     /**
@@ -39,8 +41,24 @@ public final class SchemaValidationContext {
      * @param functionCatalog function signature catalog used for return-type inference.
      */
     public SchemaValidationContext(DbSchema schema, FunctionCatalog functionCatalog) {
+        this(schema, functionCatalog, SchemaAccessPolicy.allowAll());
+    }
+
+    /**
+     * Creates a context for the provided schema, function catalog, and access policy.
+     *
+     * @param schema schema used for table and column resolution.
+     * @param functionCatalog function signature catalog used for return-type inference.
+     * @param accessPolicy schema access policy.
+     */
+    public SchemaValidationContext(
+        DbSchema schema,
+        FunctionCatalog functionCatalog,
+        SchemaAccessPolicy accessPolicy
+    ) {
         this.schema = Objects.requireNonNull(schema, "schema");
         this.functionCatalog = Objects.requireNonNull(functionCatalog, "functionCatalog");
+        this.accessPolicy = Objects.requireNonNull(accessPolicy, "accessPolicy");
     }
 
     /**
@@ -77,6 +95,15 @@ public final class SchemaValidationContext {
      */
     public List<ValidationProblem> problems() {
         return List.copyOf(problems);
+    }
+
+    /**
+     * Returns access policy used by policy-aware validation rules.
+     *
+     * @return schema access policy.
+     */
+    public SchemaAccessPolicy accessPolicy() {
+        return accessPolicy;
     }
 
     /**
@@ -394,6 +421,16 @@ public final class SchemaValidationContext {
      * @param table table reference.
      */
     private void registerPhysicalTable(Table table) {
+        if (accessPolicy.isTableDenied(table.schema(), table.name())) {
+            var tableName = table.schema() == null ? table.name() : table.schema() + "." + table.name();
+            addProblem(
+                ValidationProblem.Code.POLICY_TABLE_DENIED,
+                "Table is denied by policy: " + tableName,
+                table,
+                "from.table"
+            );
+        }
+
         var aliasOrName = table.alias() == null ? table.name() : table.alias();
         var cte = currentCtes().get(normalize(table.name()));
         if (table.schema() == null && cte != null) {

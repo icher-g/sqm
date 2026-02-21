@@ -1,6 +1,7 @@
 package io.sqm.validate.schema.rule;
 
 import io.sqm.core.Node;
+import io.sqm.validate.schema.SchemaValidationLimits;
 import io.sqm.validate.schema.function.DefaultFunctionCatalog;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
@@ -29,7 +30,7 @@ public final class SchemaValidationRuleRegistry {
      * @return default rule registry.
      */
     public static SchemaValidationRuleRegistry defaults() {
-        return defaults(DefaultFunctionCatalog.standard());
+        return defaults(DefaultFunctionCatalog.standard(), SchemaValidationLimits.unlimited(), List.of());
     }
 
     /**
@@ -39,7 +40,7 @@ public final class SchemaValidationRuleRegistry {
      * @return default rule registry.
      */
     public static SchemaValidationRuleRegistry defaults(FunctionCatalog functionCatalog) {
-        return defaults(functionCatalog, List.of());
+        return defaults(functionCatalog, SchemaValidationLimits.unlimited(), List.of());
     }
 
     /**
@@ -51,12 +52,15 @@ public final class SchemaValidationRuleRegistry {
      */
     public static SchemaValidationRuleRegistry defaults(
         FunctionCatalog functionCatalog,
+        SchemaValidationLimits limits,
         List<SchemaValidationRule<? extends Node>> additionalRules
     ) {
         var projectionShapeInspector = new DefaultProjectionShapeInspector();
         var scalarSubqueryShapeValidator = new DefaultScalarSubqueryShapeValidator(projectionShapeInspector);
         var rules = new ArrayList<>(List.of(
+            new StructuralLimitsValidationRule(limits),
             new ColumnReferenceValidationRule(),
+            new ColumnAccessValidationRule(),
             new ComparisonTypeValidationRule(scalarSubqueryShapeValidator),
             new BetweenTypeValidationRule(scalarSubqueryShapeValidator),
             new LikeTypeValidationRule(scalarSubqueryShapeValidator),
@@ -80,6 +84,7 @@ public final class SchemaValidationRuleRegistry {
             new OnJoinValidationRule(),
             new UsingJoinValidationRule(),
             new SelectAggregationValidationRule(functionCatalog),
+            new FunctionAllowlistValidationRule(),
             new FunctionSignatureValidationRule(functionCatalog)
         ));
         rules.addAll(additionalRules);
