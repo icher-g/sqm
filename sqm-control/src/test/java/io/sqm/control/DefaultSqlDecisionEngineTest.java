@@ -181,6 +181,20 @@ class DefaultSqlDecisionEngineTest {
     }
 
     @Test
+    void built_in_limit_injection_rewrite_renders_sql() {
+        var engine = SqlDecisionEngine.validationAndRewrite(
+            "postgresql",
+            query -> new ValidationResult(List.of()),
+            BuiltInRewriteRule.LIMIT_INJECTION
+        );
+
+        var result = engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        assertEquals(DecisionKind.REWRITE, result.kind());
+        assertEquals(ReasonCode.REWRITE_LIMIT, result.reasonCode());
+        assertTrue(result.rewrittenSql().toLowerCase().contains("limit 1000"));
+    }
+
+    @Test
     void schema_dialect_factory_builds_validation_engine() {
         var engine = SqlDecisionEngine.validationOnly(
             "postgresql",
@@ -190,5 +204,22 @@ class DefaultSqlDecisionEngineTest {
 
         var result = engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.ALLOW, result.kind());
+    }
+
+    @Test
+    void schema_built_in_qualification_rewrite_is_wired_in_engine_factory() {
+        var engine = SqlDecisionEngine.validationAndRewrite(
+            "postgresql",
+            SCHEMA,
+            SchemaValidationSettings.defaults(),
+            BuiltInRewriteRule.SCHEMA_QUALIFICATION
+        );
+        var query = SqlQueryParser.standard().parse("select id from users", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+
+        var result = engine.evaluate(query, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+
+        assertEquals(DecisionKind.REWRITE, result.kind());
+        assertEquals(ReasonCode.REWRITE_QUALIFICATION, result.reasonCode());
+        assertTrue(result.rewrittenSql().toLowerCase().contains("from public.users"));
     }
 }

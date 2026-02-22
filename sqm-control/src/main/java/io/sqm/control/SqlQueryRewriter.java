@@ -1,5 +1,6 @@
 package io.sqm.control;
 
+import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.core.Query;
 import io.sqm.control.rewrite.BuiltInSqlRewriters;
 
@@ -24,6 +25,37 @@ public interface SqlQueryRewriter {
     }
 
     /**
+     * Returns a rewriter composed from all currently available built-in rewrite rules using explicit settings.
+     *
+     * @param settings built-in rewrite settings
+     * @return built-in rewrite pipeline
+     */
+    static SqlQueryRewriter allBuiltIn(BuiltInRewriteSettings settings) {
+        return BuiltInSqlRewriters.allAvailable(settings);
+    }
+
+    /**
+     * Returns a schema-aware rewriter composed from all built-in rewrite rules available with catalog metadata.
+     *
+     * @param schema catalog schema used for schema qualification
+     * @return built-in rewrite pipeline
+     */
+    static SqlQueryRewriter allBuiltIn(CatalogSchema schema) {
+        return BuiltInSqlRewriters.allAvailable(schema);
+    }
+
+    /**
+     * Returns a schema-aware rewriter composed from all built-in rewrite rules available with catalog metadata.
+     *
+     * @param schema catalog schema used for schema qualification
+     * @param settings built-in rewrite settings
+     * @return built-in rewrite pipeline
+     */
+    static SqlQueryRewriter allBuiltIn(CatalogSchema schema, BuiltInRewriteSettings settings) {
+        return BuiltInSqlRewriters.allAvailable(schema, settings);
+    }
+
+    /**
      * Returns a rewriter composed from selected built-in rewrite rules.
      *
      * @param rules built-in rewrite rules to enable
@@ -34,6 +66,17 @@ public interface SqlQueryRewriter {
     }
 
     /**
+     * Returns a rewriter composed from selected built-in rewrite rules using explicit settings.
+     *
+     * @param settings built-in rewrite settings
+     * @param rules built-in rewrite rules to enable
+     * @return built-in rewrite pipeline
+     */
+    static SqlQueryRewriter builtIn(BuiltInRewriteSettings settings, BuiltInRewriteRule... rules) {
+        return BuiltInSqlRewriters.of(settings, rules);
+    }
+
+    /**
      * Returns a rewriter composed from selected built-in rewrite rules.
      *
      * @param rules built-in rewrite rules to enable
@@ -41,6 +84,52 @@ public interface SqlQueryRewriter {
      */
     static SqlQueryRewriter builtIn(Set<BuiltInRewriteRule> rules) {
         return BuiltInSqlRewriters.of(rules);
+    }
+
+    /**
+     * Returns a rewriter composed from selected built-in rewrite rules using explicit settings.
+     *
+     * @param settings built-in rewrite settings
+     * @param rules built-in rewrite rules to enable
+     * @return built-in rewrite pipeline
+     */
+    static SqlQueryRewriter builtIn(BuiltInRewriteSettings settings, Set<BuiltInRewriteRule> rules) {
+        return BuiltInSqlRewriters.of(settings, rules);
+    }
+
+    /**
+     * Returns a schema-aware rewriter composed from selected built-in rewrite rules.
+     *
+     * @param schema catalog schema used for schema qualification
+     * @param rules built-in rewrite rules to enable
+     * @return built-in rewrite pipeline
+     */
+    static SqlQueryRewriter builtIn(CatalogSchema schema, BuiltInRewriteRule... rules) {
+        return BuiltInSqlRewriters.forSchema(schema, rules);
+    }
+
+    /**
+     * Returns a schema-aware rewriter composed from selected built-in rewrite rules using explicit settings.
+     *
+     * @param schema catalog schema used for schema qualification
+     * @param settings built-in rewrite settings
+     * @param rules built-in rewrite rules to enable
+     * @return built-in rewrite pipeline
+     */
+    static SqlQueryRewriter builtIn(CatalogSchema schema, BuiltInRewriteSettings settings, BuiltInRewriteRule... rules) {
+        return BuiltInSqlRewriters.forSchema(schema, settings, rules);
+    }
+
+    /**
+     * Returns a schema-aware rewriter composed from selected built-in rewrite rules using explicit settings.
+     *
+     * @param schema catalog schema used for schema qualification
+     * @param settings built-in rewrite settings
+     * @param rules built-in rewrite rules to enable
+     * @return built-in rewrite pipeline
+     */
+    static SqlQueryRewriter builtIn(CatalogSchema schema, BuiltInRewriteSettings settings, Set<BuiltInRewriteRule> rules) {
+        return BuiltInSqlRewriters.forSchema(schema, settings, rules);
     }
 
     /**

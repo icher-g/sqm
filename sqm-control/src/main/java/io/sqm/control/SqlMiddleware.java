@@ -314,9 +314,12 @@ public interface SqlMiddleware {
     /**
      * Evaluates SQL in enforce (execute-intent) mode.
      *
+     * <p>This method does not execute SQL. It returns a decision and may rewrite the SQL
+     * (for example, {@code EXPLAIN} dry-run when enabled by {@link RuntimeGuardrails}).</p>
+     *
      * @param sql     input SQL
      * @param context execution context
-     * @return decision result
+     * @return decision result for execute-intent flow
      */
     DecisionResult enforce(String sql, ExecutionContext context);
 

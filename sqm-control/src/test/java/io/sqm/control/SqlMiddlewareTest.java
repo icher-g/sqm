@@ -180,15 +180,30 @@ class SqlMiddlewareTest {
     }
 
     @Test
+    void explain_dry_run_does_not_apply_in_analyze_mode() {
+        var middleware = SqlMiddleware.of(
+            (query, context) -> DecisionResult.allow("fp-a"),
+            new RuntimeGuardrails(null, null, null, true)
+        );
+
+        var result = middleware.analyze("select * from users limit 10", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        assertEquals(DecisionKind.ALLOW, result.kind());
+        assertEquals(ReasonCode.NONE, result.reasonCode());
+        assertEquals("fp-a", result.fingerprint());
+    }
+
+    @Test
     void explain_dry_run_uses_existing_rewritten_sql() {
         var middleware = SqlMiddleware.of(
-            (query, context) -> DecisionResult.rewrite(ReasonCode.REWRITE_LIMIT, "limit", "select 1 limit 10"),
+            (query, context) -> DecisionResult.rewrite(ReasonCode.REWRITE_LIMIT, "limit", "select 1 limit 10", "fp-rw"),
             new RuntimeGuardrails(null, null, null, true)
         );
 
         var result = middleware.enforce("select 1", ExecutionContext.of("postgresql", ExecutionMode.EXECUTE));
         assertEquals(DecisionKind.REWRITE, result.kind());
+        assertEquals(ReasonCode.REWRITE_EXPLAIN_DRY_RUN, result.reasonCode());
         assertEquals("EXPLAIN select 1 limit 10", result.rewrittenSql());
+        assertEquals("fp-rw", result.fingerprint());
     }
 
     @Test

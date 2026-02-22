@@ -85,6 +85,11 @@ public enum ReasonCode {
     REWRITE_QUALIFICATION,
 
     /**
+     * Query was rewritten to a canonicalized form.
+     */
+    REWRITE_CANONICALIZATION,
+
+    /**
      * Query was rewritten to EXPLAIN dry-run mode.
      */
     REWRITE_EXPLAIN_DRY_RUN
