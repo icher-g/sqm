@@ -1,5 +1,18 @@
-package io.sqm.control;
+package io.sqm.control.impl;
 
+import io.sqm.control.DecisionExplanation;
+import io.sqm.control.DecisionKind;
+import io.sqm.control.DecisionResult;
+import io.sqm.control.ExecutionContext;
+import io.sqm.control.ExecutionMode;
+import io.sqm.control.ReasonCode;
+import io.sqm.control.RuntimeGuardrails;
+import io.sqm.control.SqlDecisionEngine;
+import io.sqm.control.SqlDecisionExplainer;
+import io.sqm.control.SqlMiddleware;
+import io.sqm.control.SqlQueryParser;
+import io.sqm.control.AuditEvent;
+import io.sqm.control.AuditEventPublisher;
 import io.sqm.core.CompositeQuery;
 import io.sqm.core.LimitOffset;
 import io.sqm.core.LiteralExpr;
@@ -14,14 +27,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-final class DefaultSqlMiddleware implements SqlMiddleware {
+public final class DefaultSqlMiddleware implements SqlMiddleware {
     private final SqlDecisionEngine engine;
     private final SqlDecisionExplainer explainer;
     private final AuditEventPublisher auditPublisher;
     private final RuntimeGuardrails guardrails;
     private final SqlQueryParser queryParser;
 
-    DefaultSqlMiddleware(
+    public DefaultSqlMiddleware(
         SqlDecisionEngine engine,
         SqlDecisionExplainer explainer,
         AuditEventPublisher auditPublisher,

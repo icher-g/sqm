@@ -1,5 +1,6 @@
 package io.sqm.control;
 
+import io.sqm.control.audit.LoggingAuditEventPublisher;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

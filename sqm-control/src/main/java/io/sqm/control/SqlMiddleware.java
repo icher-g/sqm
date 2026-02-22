@@ -1,7 +1,7 @@
 package io.sqm.control;
 
 import io.sqm.catalog.model.CatalogSchema;
-import io.sqm.validate.schema.SchemaQueryValidator;
+import io.sqm.control.impl.DefaultSqlMiddleware;
 import io.sqm.validate.schema.SchemaValidationSettings;
 
 import java.util.Objects;
@@ -22,7 +22,7 @@ public interface SqlMiddleware {
             SqlDecisionExplainer.basic(),
             AuditEventPublisher.noop(),
             RuntimeGuardrails.disabled(),
-            DefaultSqlQueryParser.standard()
+            SqlQueryParser.standard()
         );
     }
 
@@ -39,7 +39,7 @@ public interface SqlMiddleware {
             explainer,
             AuditEventPublisher.noop(),
             RuntimeGuardrails.disabled(),
-            DefaultSqlQueryParser.standard()
+            SqlQueryParser.standard()
         );
     }
 
@@ -56,7 +56,7 @@ public interface SqlMiddleware {
             SqlDecisionExplainer.basic(),
             auditPublisher,
             RuntimeGuardrails.disabled(),
-            DefaultSqlQueryParser.standard()
+            SqlQueryParser.standard()
         );
     }
 
@@ -73,7 +73,7 @@ public interface SqlMiddleware {
             SqlDecisionExplainer.basic(),
             AuditEventPublisher.noop(),
             guardrails,
-            DefaultSqlQueryParser.standard()
+            SqlQueryParser.standard()
         );
     }
 
@@ -90,7 +90,7 @@ public interface SqlMiddleware {
         SqlDecisionExplainer explainer,
         AuditEventPublisher auditPublisher
     ) {
-        return of(engine, explainer, auditPublisher, RuntimeGuardrails.disabled(), DefaultSqlQueryParser.standard());
+        return of(engine, explainer, auditPublisher, RuntimeGuardrails.disabled(), SqlQueryParser.standard());
     }
 
     /**
@@ -108,7 +108,7 @@ public interface SqlMiddleware {
         AuditEventPublisher auditPublisher,
         RuntimeGuardrails guardrails
     ) {
-        return of(engine, explainer, auditPublisher, guardrails, DefaultSqlQueryParser.standard());
+        return of(engine, explainer, auditPublisher, guardrails, SqlQueryParser.standard());
     }
 
     /**
@@ -137,42 +137,30 @@ public interface SqlMiddleware {
     }
 
     /**
-     * Creates middleware from catalog schema using default validation settings and no-op observability/guardrails.
+     * Creates middleware from catalog schema using ANSI dialect by default, default validation settings,
+     * and no-op observability/guardrails.
      *
      * @param schema catalog schema
      * @return middleware instance
      */
     static SqlMiddleware of(CatalogSchema schema) {
-        return of(
-            schema,
-            SchemaValidationSettings.defaults(),
-            RuntimeGuardrails.disabled(),
-            AuditEventPublisher.noop(),
-            SqlDecisionExplainer.basic(),
-            DefaultSqlQueryParser.standard()
-        );
+        return of(null, schema);
     }
 
     /**
-     * Creates middleware from catalog schema with explicit validation settings.
+     * Creates middleware from catalog schema with explicit validation settings using ANSI dialect by default.
      *
      * @param schema catalog schema
      * @param settings schema validation settings
      * @return middleware instance
      */
     static SqlMiddleware of(CatalogSchema schema, SchemaValidationSettings settings) {
-        return of(
-            schema,
-            settings,
-            RuntimeGuardrails.disabled(),
-            AuditEventPublisher.noop(),
-            SqlDecisionExplainer.basic(),
-            DefaultSqlQueryParser.standard()
-        );
+        return of(null, schema, settings);
     }
 
     /**
-     * Creates middleware from catalog schema with explicit validation settings and runtime guardrails.
+     * Creates middleware from catalog schema with explicit validation settings and runtime guardrails
+     * using ANSI dialect by default.
      *
      * @param schema catalog schema
      * @param settings schema validation settings
@@ -184,18 +172,11 @@ public interface SqlMiddleware {
         SchemaValidationSettings settings,
         RuntimeGuardrails guardrails
     ) {
-        return of(
-            schema,
-            settings,
-            guardrails,
-            AuditEventPublisher.noop(),
-            SqlDecisionExplainer.basic(),
-            DefaultSqlQueryParser.standard()
-        );
+        return of(null, schema, settings, guardrails);
     }
 
     /**
-     * Creates middleware from catalog schema with full customization.
+     * Creates middleware from catalog schema with full customization using ANSI dialect by default.
      *
      * @param schema catalog schema
      * @param settings schema validation settings
@@ -213,6 +194,103 @@ public interface SqlMiddleware {
         SqlDecisionExplainer explainer,
         SqlQueryParser queryParser
     ) {
+        return of(null, schema, settings, guardrails, auditPublisher, explainer, queryParser);
+    }
+
+    /**
+     * Creates middleware from catalog schema for a fixed target dialect using dialect-aware validation.
+     *
+     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
+     *
+     * @param dialect dialect identifier (for example, {@code ansi}, {@code postgresql}, {@code postgres})
+     * @param schema catalog schema
+     * @return middleware instance
+     */
+    static SqlMiddleware of(String dialect, CatalogSchema schema) {
+        return of(
+            dialect,
+            schema,
+            SchemaValidationSettings.defaults(),
+            RuntimeGuardrails.disabled(),
+            AuditEventPublisher.noop(),
+            SqlDecisionExplainer.basic(),
+            SqlQueryParser.standard()
+        );
+    }
+
+    /**
+     * Creates middleware from catalog schema for a fixed target dialect with explicit validation settings.
+     *
+     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
+     *
+     * @param dialect dialect identifier
+     * @param schema catalog schema
+     * @param settings schema validation settings
+     * @return middleware instance
+     */
+    static SqlMiddleware of(String dialect, CatalogSchema schema, SchemaValidationSettings settings) {
+        return of(
+            dialect,
+            schema,
+            settings,
+            RuntimeGuardrails.disabled(),
+            AuditEventPublisher.noop(),
+            SqlDecisionExplainer.basic(),
+            SqlQueryParser.standard()
+        );
+    }
+
+    /**
+     * Creates middleware from catalog schema for a fixed target dialect with explicit validation settings and guardrails.
+     *
+     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
+     *
+     * @param dialect dialect identifier
+     * @param schema catalog schema
+     * @param settings schema validation settings
+     * @param guardrails runtime guardrails
+     * @return middleware instance
+     */
+    static SqlMiddleware of(
+        String dialect,
+        CatalogSchema schema,
+        SchemaValidationSettings settings,
+        RuntimeGuardrails guardrails
+    ) {
+        return of(
+            dialect,
+            schema,
+            settings,
+            guardrails,
+            AuditEventPublisher.noop(),
+            SqlDecisionExplainer.basic(),
+            SqlQueryParser.standard()
+        );
+    }
+
+    /**
+     * Creates middleware from catalog schema for a fixed target dialect with full customization.
+     *
+     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
+     *
+     * @param dialect dialect identifier
+     * @param schema catalog schema
+     * @param settings schema validation settings
+     * @param guardrails runtime guardrails
+     * @param auditPublisher audit event publisher
+     * @param explainer decision explainer
+     * @param queryParser SQL parser
+     * @return middleware instance
+     */
+    static SqlMiddleware of(
+        String dialect,
+        CatalogSchema schema,
+        SchemaValidationSettings settings,
+        RuntimeGuardrails guardrails,
+        AuditEventPublisher auditPublisher,
+        SqlDecisionExplainer explainer,
+        SqlQueryParser queryParser
+    ) {
         Objects.requireNonNull(schema, "schema must not be null");
         Objects.requireNonNull(settings, "settings must not be null");
         Objects.requireNonNull(guardrails, "guardrails must not be null");
@@ -220,8 +298,7 @@ public interface SqlMiddleware {
         Objects.requireNonNull(explainer, "explainer must not be null");
         Objects.requireNonNull(queryParser, "queryParser must not be null");
 
-        var queryValidator = SchemaQueryValidator.of(schema, settings);
-        var engine = DefaultSqlDecisionEngine.of(queryValidator);
+        var engine = SqlDecisionEngine.validationOnly(dialect, schema, settings);
         return of(engine, explainer, auditPublisher, guardrails, queryParser);
     }
 
