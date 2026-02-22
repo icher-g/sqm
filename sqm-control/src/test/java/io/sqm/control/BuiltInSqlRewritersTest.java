@@ -36,4 +36,18 @@ class BuiltInSqlRewritersTest {
         assertThrows(IllegalArgumentException.class,
             () -> BuiltInSqlRewriters.of(EnumSet.of(BuiltInRewriteRule.CANONICALIZATION)));
     }
+
+    @Test
+    void factory_validates_nulls_and_supports_empty_selection() {
+        var query = io.sqm.core.Query.select(io.sqm.core.Expression.literal(1));
+        var context = ExecutionContext.of("ansi", ExecutionMode.ANALYZE);
+
+        assertThrows(NullPointerException.class, () -> BuiltInSqlRewriters.of((BuiltInRewriteRule[]) null));
+        assertThrows(NullPointerException.class, () -> BuiltInSqlRewriters.of((Set<BuiltInRewriteRule>) null));
+
+        var resultFromVarargs = BuiltInSqlRewriters.of().rewrite(query, context);
+        var resultFromSet = BuiltInSqlRewriters.of(Set.of()).rewrite(query, context);
+        assertFalse(resultFromVarargs.rewritten());
+        assertFalse(resultFromSet.rewritten());
+    }
 }

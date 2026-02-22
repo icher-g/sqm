@@ -249,5 +249,20 @@ class SqlMiddlewareTest {
         assertEquals(DecisionKind.DENY, result.kind());
         assertEquals(ReasonCode.DENY_DDL, result.reasonCode());
     }
+
+    @Test
+    void middleware_factory_overloads_delegate_successfully() {
+        var engine = (SqlDecisionEngine) (query, context) -> DecisionResult.allow();
+        var context = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
+
+        assertEquals(DecisionKind.ALLOW, SqlMiddleware.of(engine).analyze("select 1", context).kind());
+        assertEquals(DecisionKind.ALLOW, SqlMiddleware.of(engine, SqlDecisionExplainer.basic()).analyze("select 1", context).kind());
+        assertEquals(DecisionKind.ALLOW, SqlMiddleware.of(engine, AuditEventPublisher.noop()).analyze("select 1", context).kind());
+        assertEquals(DecisionKind.ALLOW,
+            SqlMiddleware.of(engine, SqlDecisionExplainer.basic(), AuditEventPublisher.noop()).analyze("select 1", context).kind());
+        assertEquals(DecisionKind.ALLOW,
+            SqlMiddleware.of(engine, SqlDecisionExplainer.basic(), AuditEventPublisher.noop(), RuntimeGuardrails.disabled())
+                .analyze("select 1", context).kind());
+    }
 }
 

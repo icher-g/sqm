@@ -35,4 +35,16 @@ class SqlQueryRendererTest {
     void for_dialect_rejects_unsupported_dialect() {
         assertThrows(IllegalArgumentException.class, () -> SqlQueryRenderer.forDialect("mysql"));
     }
+
+    @Test
+    void convenience_factories_and_blank_dialect_are_supported() {
+        var query = Query.select(Expression.literal(1));
+        var ansiSql = SqlQueryRenderer.ansi().render(query, ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
+        var postgresSql = SqlQueryRenderer.postgresql().render(query, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var blankDialectSql = SqlQueryRenderer.forDialect("   ").render(query, ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
+
+        assertTrue(ansiSql.toLowerCase().contains("select"));
+        assertTrue(postgresSql.toLowerCase().contains("select"));
+        assertTrue(blankDialectSql.toLowerCase().contains("select"));
+    }
 }
