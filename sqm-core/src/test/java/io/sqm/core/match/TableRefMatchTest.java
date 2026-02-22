@@ -29,7 +29,7 @@ class TableRefMatchTest {
     @Test
     @DisplayName("Match lateral")
     void matchLateral() {
-        var subquery = select(col("*")).from(tbl("users"));
+        var subquery = select(col("*")).from(tbl("users")).build();
         TableRef table = tbl(subquery).as("sub").lateral();
 
         var result = table.matchTableRef()
@@ -60,7 +60,7 @@ class TableRefMatchTest {
     @Test
     @DisplayName("Match query table")
     void matchQueryTable() {
-        var subquery = select(col("*")).from(tbl("users"));
+        var subquery = select(col("*")).from(tbl("users")).build();
         TableRef table = tbl(subquery).as("sub");
 
         var result = table.matchTableRef()
@@ -106,7 +106,7 @@ class TableRefMatchTest {
     @Test
     @DisplayName("Extract inner from lateral")
     void extractInnerFromLateral() {
-        var subquery = select(col("*")).from(tbl("users"));
+        var subquery = select(col("*")).from(tbl("users")).build();
         var queryTable = tbl(subquery).as("sub");
         TableRef lateral = queryTable.lateral();
 

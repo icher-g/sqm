@@ -27,7 +27,7 @@ class ExistsPredicateRendererTest {
     @Test
     @DisplayName("EXISTS with subquery")
     void exists_with_subquery() {
-        var subquery = select(col("1")).from(tbl("users"));
+        var subquery = select(col("1")).from(tbl("users")).build();
         var pred = exists(subquery);
         String result = render(pred);
         assertTrue(result.contains("EXISTS"));
@@ -37,7 +37,7 @@ class ExistsPredicateRendererTest {
     @Test
     @DisplayName("NOT EXISTS with subquery")
     void not_exists_with_subquery() {
-        var subquery = select(col("1")).from(tbl("users"));
+        var subquery = select(col("1")).from(tbl("users")).build();
         var pred = notExists(subquery);
         String result = render(pred);
         assertTrue(result.contains("NOT EXISTS"));
@@ -47,7 +47,7 @@ class ExistsPredicateRendererTest {
     @Test
     @DisplayName("EXISTS is wrapped in parentheses")
     void exists_with_parentheses() {
-        var subquery = select(col("1")).from(tbl("orders"));
+        var subquery = select(col("1")).from(tbl("orders")).build();
         var pred = exists(subquery);
         String result = render(pred);
         assertTrue(result.contains("("));
@@ -57,7 +57,7 @@ class ExistsPredicateRendererTest {
     @Test
     @DisplayName("NOT EXISTS is wrapped in parentheses")
     void not_exists_with_parentheses() {
-        var subquery = select(col("1")).from(tbl("orders"));
+        var subquery = select(col("1")).from(tbl("orders")).build();
         var pred = notExists(subquery);
         String result = render(pred);
         assertTrue(result.contains("("));

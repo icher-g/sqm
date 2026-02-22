@@ -6,6 +6,7 @@ import io.sqm.core.LimitOffset;
 import io.sqm.core.Node;
 import io.sqm.core.Query;
 import io.sqm.core.SelectQuery;
+import io.sqm.core.SelectQueryBuilder;
 
 /**
  * Injects a deterministic default LIMIT into queries when limit is absent.
@@ -67,17 +68,18 @@ public final class LimitInjectionTransformer extends RecursiveNodeTransformer {
         if (shouldNotInject(current)) {
             return transformed;
         }
-        transformed.limitOffset(LimitOffset.of(defaultLimit, current == null ? null : current.offset()));
-        return transformed;
+        return SelectQueryBuilder.of(transformed)
+            .limitOffset(LimitOffset.of(defaultLimit, current == null ? null : current.offset()))
+            .build();
     }
 
     @Override
     public Node visitCompositeQuery(CompositeQuery q) {
+        if (shouldNotInject(q.limitOffset())) {
+            return q;
+        }
         var transformed = (CompositeQuery) super.visitCompositeQuery(q);
         var current = transformed.limitOffset();
-        if (shouldNotInject(current)) {
-            return transformed;
-        }
         return CompositeQuery.of(
             transformed.terms(),
             transformed.ops(),

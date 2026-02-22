@@ -52,7 +52,8 @@ class IsDistinctFromPredicateVisitorTest {
     void testVisitorInSelectQuery() {
         var query = select(col("id"))
             .from(tbl("users"))
-            .where(IsDistinctFromPredicate.of(col("status"), lit("active"), false));
+            .where(IsDistinctFromPredicate.of(col("status"), lit("active"), false))
+            .build();
         
         var collector = new PredicateTypeCollector();
         query.accept(collector);
@@ -116,7 +117,8 @@ class IsDistinctFromPredicateVisitorTest {
         
         var query = select(col("name"))
             .from(tbl("users").as("u"))
-            .join(join);
+            .join(join)
+            .build();
         
         var collector = new PredicateTypeCollector();
         query.accept(collector);

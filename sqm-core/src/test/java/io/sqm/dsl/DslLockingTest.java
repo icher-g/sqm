@@ -109,7 +109,8 @@ class DslLockingTest {
         var query = select(col("*"))
             .from(tbl("users").as("u"))
             .where(col("u", "active").eq(lit(true)))
-            .lockFor(update(), ofTables("u"), false, false);
+            .lockFor(update(), ofTables("u"), false, false)
+            .build();
         
         assertNotNull(query.lockFor());
         assertEquals(LockMode.UPDATE, query.lockFor().mode());

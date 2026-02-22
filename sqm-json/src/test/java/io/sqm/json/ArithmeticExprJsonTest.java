@@ -186,7 +186,7 @@ public class ArithmeticExprJsonTest {
     void arithmetic_inSelect() throws Exception {
         var query = select(
             col("price").mul(col("quantity")).as("total")
-        ).from(tbl("orders"));
+        ).from(tbl("orders")).build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -203,7 +203,8 @@ public class ArithmeticExprJsonTest {
     void arithmetic_inWhere() throws Exception {
         var query = select(col("id"))
             .from(tbl("products"))
-            .where(col("price").sub(col("discount")).gt(lit(100)));
+            .where(col("price").sub(col("discount")).gt(lit(100)))
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -273,7 +274,7 @@ public class ArithmeticExprJsonTest {
     void arithmetic_inFunctionArg() throws Exception {
         var query = select(
             func("sum", arg(col("price").mul(col("quantity")))).as("total_value")
-        ).from(tbl("orders"));
+        ).from(tbl("orders")).build();
 
         var back = roundTrip(query, SelectQuery.class);
 

@@ -50,8 +50,8 @@ class ArithmeticParserTest {
 
         return q.<Expression>matchQuery()
             .select(s -> {
-                assertFalse(s.select().items().isEmpty(), "Expected at least one select item");
-                var item = s.select().items().getFirst();
+                assertFalse(s.items().isEmpty(), "Expected at least one select item");
+                var item = s.items().getFirst();
                 assertInstanceOf(ExprSelectItem.class, item);
                 return ((ExprSelectItem) item).expr();
             })

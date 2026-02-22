@@ -20,7 +20,8 @@ public class Transform_RenameColumnTransformer {
             )
             .where(col("o", "status").in("A", "B"))
             .groupBy(group("u", "user_name"), group("o", "status"))
-            .having(func("count", starArg()).gt(10));
+            .having(func("count", starArg()).gt(10))
+            .build();
 
         var transformer = new Transform_RenameColumnTransformer.RenameColumnTransformer();
         var transformedQuery = (Query) query.accept(transformer);

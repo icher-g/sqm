@@ -14,6 +14,6 @@ class QueryRewriteRuleTest {
 
         assertEquals(rule.getClass().getSimpleName(), rule.id());
         // also execute apply to keep interface method line exercised in patch coverage
-        rule.apply(Query.select(Expression.literal(1)), ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
+        rule.apply(Query.select(Expression.literal(1)).build(), ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
     }
 }

@@ -14,7 +14,7 @@ class AliasedTableRefTest {
     @Test
     @DisplayName("QueryTable implements AliasedTableRef")
     void queryTableImplementsAliasedTableRef() {
-        var query = select(col("*")).from(tbl("users"));
+        var query = select(col("*")).from(tbl("users")).build();
         AliasedTableRef aliased = tbl(query).as("sub").columnAliases("id", "name");
 
         assertEquals("sub", aliased.alias());
@@ -50,7 +50,7 @@ class AliasedTableRefTest {
     @Test
     @DisplayName("AliasedTableRef with null alias")
     void aliasedTableRefWithNullAlias() {
-        var query = select(col("*")).from(tbl("users"));
+        var query = select(col("*")).from(tbl("users")).build();
         AliasedTableRef aliased = tbl(query);
 
         assertNull(aliased.alias());
@@ -86,12 +86,13 @@ class AliasedTableRefTest {
             col("v", "name"),
             col("s", "num")
         )
-        .from(tbl(select(col("id")).from(tbl("users"))).as("sub").columnAliases("id"))
-        .join(inner(tbl(rows(row(1, "a"))).as("v").columnAliases("id", "name"))
-            .on(col("sub", "id").eq(col("v", "id"))))
-        .join(inner(func("generate_series", arg(lit(1)), arg(lit(10)))
-            .asTable().as("s").columnAliases("num"))
-            .on(col("s", "num").eq(col("v", "id"))));
+            .from(tbl(select(col("id")).from(tbl("users")).build()).as("sub").columnAliases("id"))
+            .join(inner(tbl(rows(row(1, "a"))).as("v").columnAliases("id", "name"))
+                .on(col("sub", "id").eq(col("v", "id"))))
+            .join(inner(func("generate_series", arg(lit(1)), arg(lit(10)))
+                .asTable().as("s").columnAliases("num"))
+                .on(col("s", "num").eq(col("v", "id"))))
+            .build();
 
         assertNotNull(query);
         assertEquals(2, query.joins().size());

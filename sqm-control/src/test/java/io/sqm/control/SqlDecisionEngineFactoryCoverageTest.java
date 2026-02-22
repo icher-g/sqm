@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SqlDecisionEngineFactoryCoverageTest {
+    // Touch file to force test recompilation after Query.select(...) return-type refactor.
     private static final CatalogSchema SCHEMA = CatalogSchema.of(
         CatalogTable.of("public", "users", CatalogColumn.of("id", CatalogType.LONG))
     );
@@ -22,7 +23,7 @@ class SqlDecisionEngineFactoryCoverageTest {
     private static final ExecutionContext ANSI_ANALYZE = ExecutionContext.of("ansi", ExecutionMode.ANALYZE);
 
     private static Query query() {
-        return Query.select(Expression.literal(1));
+        return Query.select(Expression.literal(1)).build();
     }
 
     @Test

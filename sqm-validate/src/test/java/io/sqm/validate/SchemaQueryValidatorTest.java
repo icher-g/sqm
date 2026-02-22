@@ -1,16 +1,11 @@
 package io.sqm.validate;
 
-import io.sqm.core.Query;
-import io.sqm.core.ComparisonOperator;
-import io.sqm.core.Expression;
-import io.sqm.core.OverSpec;
-import io.sqm.core.SelectQuery;
-import io.sqm.core.WindowDef;
 import io.sqm.catalog.access.DefaultCatalogAccessPolicy;
 import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
+import io.sqm.core.*;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.SchemaQueryValidator;
 import io.sqm.validate.schema.SchemaValidationLimits;
@@ -28,6 +23,7 @@ import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SchemaQueryValidatorTest {
+    // Touch file to force test recompilation after Dsl.select(...) return-type refactor.
 
     private static final CatalogSchema SCHEMA = CatalogSchema.of(
         CatalogTable.of("public", "users",
@@ -57,7 +53,8 @@ class SchemaQueryValidatorTest {
         )
             .from(tbl("users").as("u"))
             .join(inner(tbl("orders").as("o")).on(col("o", "user_id").eq(col("u", "id"))))
-            .where(col("u", "status").eq(lit("active")));
+            .where(col("u", "status").eq(lit("active")))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -65,7 +62,7 @@ class SchemaQueryValidatorTest {
 
     @Test
     void validate_reportsMissingTable() {
-        Query query = select(star()).from(tbl("missing_users"));
+        Query query = select(star()).from(tbl("missing_users")).build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -79,7 +76,7 @@ class SchemaQueryValidatorTest {
             .build();
         var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
 
-        Query query = select(star()).from(tbl("orders").as("o"));
+        Query query = select(star()).from(tbl("orders").as("o")).build();
         var result = policyValidator.validate(query);
 
         assertFalse(result.ok());
@@ -89,7 +86,7 @@ class SchemaQueryValidatorTest {
 
     @Test
     void validate_reportsMissingColumn() {
-        Query query = select(col("u", "unknown_col")).from(tbl("users").as("u"));
+        Query query = select(col("u", "unknown_col")).from(tbl("users").as("u")).build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -107,7 +104,7 @@ class SchemaQueryValidatorTest {
             .build();
         var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
 
-        Query query = select(star()).from(tbl("orders").as("o"));
+        Query query = select(star()).from(tbl("orders").as("o")).build();
         var result = policyValidator.validate(query);
 
         assertFalse(result.ok());
@@ -122,7 +119,7 @@ class SchemaQueryValidatorTest {
             .build();
         var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
 
-        Query query = select(col("u", "status")).from(tbl("users").as("u"));
+        Query query = select(col("u", "status")).from(tbl("users").as("u")).build();
         var result = policyValidator.validate(query);
 
         assertFalse(result.ok());
@@ -132,7 +129,7 @@ class SchemaQueryValidatorTest {
 
     @Test
     void validate_reportsUnknownAlias() {
-        Query query = select(col("x", "id")).from(tbl("users").as("u"));
+        Query query = select(col("x", "id")).from(tbl("users").as("u")).build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -143,7 +140,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsAmbiguousUnqualifiedColumn() {
         Query query = select(col("id"))
             .from(tbl("users").as("u"))
-            .join(inner(tbl("orders").as("o")).on(col("o", "user_id").eq(col("u", "id"))));
+            .join(inner(tbl("orders").as("o")).on(col("o", "user_id").eq(col("u", "id"))))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -158,7 +156,9 @@ class SchemaQueryValidatorTest {
                 select(star())
                     .from(tbl("orders").as("o"))
                     .where(col("o", "user_id").eq(col("u", "id")))
-            ));
+                    .build()
+            ))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -168,7 +168,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsInvalidUsingColumn() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .join(inner(tbl("orders").as("o")).using("missing_col"));
+            .join(inner(tbl("orders").as("o")).using("missing_col"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -180,7 +181,8 @@ class SchemaQueryValidatorTest {
         Query query = select(star())
             .from(tbl("users").as("u"))
             .join(inner(tbl("orders").as("o")).on(col("o", "user_id").eq(col("a", "id"))))
-            .join(inner(tbl("accounts").as("a")).on(col("a", "id").eq(col("u", "id"))));
+            .join(inner(tbl("accounts").as("a")).on(col("a", "id").eq(col("u", "id"))))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -193,7 +195,8 @@ class SchemaQueryValidatorTest {
         Query query = select(star())
             .from(tbl("users").as("u"))
             .join(inner(tbl("orders").as("o")).on(col("o", "user_id").eq(col("u", "id"))))
-            .join(inner(tbl("accounts").as("a")).on(col("a", "id").eq(col("u", "id"))));
+            .join(inner(tbl("accounts").as("a")).on(col("a", "id").eq(col("u", "id"))))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.problems().stream()
@@ -204,7 +207,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsMissingOnPredicateForRegularJoin() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .join(inner(tbl("orders").as("o")));
+            .join(inner(tbl("orders").as("o")))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -216,7 +220,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsJoinOnInvalidBooleanExpression() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .join(inner(tbl("orders").as("o")).on(unary(lit(1))));
+            .join(inner(tbl("orders").as("o")).on(unary(lit(1))))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -229,7 +234,8 @@ class SchemaQueryValidatorTest {
     void validate_acceptsJoinOnBooleanUnaryExpression() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .join(inner(tbl("orders").as("o")).on(unary(lit(true))));
+            .join(inner(tbl("orders").as("o")).on(unary(lit(true))))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.problems().stream()
@@ -240,7 +246,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsTypeMismatchForUsingColumn() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .join(inner(tbl("accounts").as("a")).using("id"));
+            .join(inner(tbl("accounts").as("a")).using("id"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -254,7 +261,9 @@ class SchemaQueryValidatorTest {
             .build();
         var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
 
-        Query query = select(func("lower", arg(col("u", "name")))).from(tbl("users").as("u"));
+        Query query = select(func("lower", arg(col("u", "name"))))
+            .from(tbl("users").as("u"))
+            .build();
         var result = policyValidator.validate(query);
 
         assertFalse(result.ok());
@@ -269,7 +278,9 @@ class SchemaQueryValidatorTest {
             .build();
         var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
 
-        Query query = select(func("length", arg(col("u", "name")))).from(tbl("users").as("u"));
+        Query query = select(func("length", arg(col("u", "name"))))
+            .from(tbl("users").as("u"))
+            .build();
         var result = policyValidator.validate(query);
 
         assertTrue(result.problems().stream()
@@ -286,7 +297,8 @@ class SchemaQueryValidatorTest {
         Query query = select(star())
             .from(tbl("users").as("u"))
             .join(inner(tbl("orders").as("o")).on(col("o", "user_id").eq(col("u", "id"))))
-            .join(inner(tbl("accounts").as("a")).on(col("a", "id").eq(col("u", "id"))));
+            .join(inner(tbl("accounts").as("a")).on(col("a", "id").eq(col("u", "id"))))
+            .build();
 
         var result = policyValidator.validate(query);
         assertFalse(result.ok());
@@ -303,7 +315,8 @@ class SchemaQueryValidatorTest {
 
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .join(inner(tbl("orders").as("o")).on(col("o", "user_id").eq(col("u", "id"))));
+            .join(inner(tbl("orders").as("o")).on(col("o", "user_id").eq(col("u", "id"))))
+            .build();
 
         var result = policyValidator.validate(query);
         assertTrue(result.problems().stream()
@@ -318,7 +331,8 @@ class SchemaQueryValidatorTest {
         var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
 
         Query query = select(col("u", "id"), col("u", "name"), col("u", "status"))
-            .from(tbl("users").as("u"));
+            .from(tbl("users").as("u"))
+            .build();
 
         var result = policyValidator.validate(query);
         assertFalse(result.ok());
@@ -334,7 +348,8 @@ class SchemaQueryValidatorTest {
         var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
 
         Query query = select(col("u", "id"), col("u", "name"))
-            .from(tbl("users").as("u"));
+            .from(tbl("users").as("u"))
+            .build();
 
         var result = policyValidator.validate(query);
         assertTrue(result.problems().stream()
@@ -345,7 +360,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsTypeMismatchWhenTypesAreKnown() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .where(col("u", "age").eq(lit("not_numeric")));
+            .where(col("u", "age").eq(lit("not_numeric")))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -356,7 +372,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsTypeMismatchForBetween() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .where(col("u", "age").between(lit("low"), lit("high")));
+            .where(col("u", "age").between(lit("low"), lit("high")))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -367,7 +384,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsTypeMismatchForLike() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .where(col("u", "age").like(lit("%1%")));
+            .where(col("u", "age").like(lit("%1%")))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -378,7 +396,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsTypeMismatchForIn() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .where(col("u", "age").in("a", "b"));
+            .where(col("u", "age").in("a", "b"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -389,7 +408,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsInRowShapeMismatchForScalarLeftAndTupleRight() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .where(col("u", "id").in(rows(row(lit(1), lit("active")))));
+            .where(col("u", "id").in(rows(row(lit(1), lit("active")))))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -402,7 +422,8 @@ class SchemaQueryValidatorTest {
             .from(tbl("users").as("u"))
             .where(row(col("u", "id"), col("u", "status")).in(
                 row(lit(1))
-            ));
+            ))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -414,8 +435,9 @@ class SchemaQueryValidatorTest {
         Query query = select(star())
             .from(tbl("users").as("u"))
             .where(row(col("u", "id"), col("u", "status")).in(
-                Expression.subquery(select(col("id")).from(tbl("orders").as("o")))
-            ));
+                Expression.subquery(select(col("id")).from(tbl("orders").as("o")).build())
+            ))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -431,7 +453,8 @@ class SchemaQueryValidatorTest {
                     row(lit(1L), lit("active")),
                     row(lit(2L), lit("inactive"))
                 )
-            ));
+            ))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.problems().stream()
@@ -446,8 +469,10 @@ class SchemaQueryValidatorTest {
                 Expression.subquery(
                     select(col("o", "status"), col("o", "id"))
                         .from(tbl("orders").as("o"))
+                        .build()
                 )
-            ));
+            ))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -462,8 +487,10 @@ class SchemaQueryValidatorTest {
                 Expression.subquery(
                     select(col("o", "id"), col("o", "status"))
                         .from(tbl("orders").as("o"))
+                        .build()
                 )
-            ));
+            ))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.problems().stream()
@@ -475,7 +502,12 @@ class SchemaQueryValidatorTest {
     void validate_reportsTypeMismatchForAnyAll() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .where(col("u", "age").all(ComparisonOperator.GT, select(col("status")).from(tbl("orders").as("o"))));
+            .where(col("u", "age").all(ComparisonOperator.GT,
+                select(col("status"))
+                    .from(tbl("orders").as("o"))
+                    .build()
+            ))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -486,7 +518,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsInvalidLimitTypeForScalarSubqueryExpression() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .limit(Expression.subquery(select(col("status")).from(tbl("orders").as("o"))));
+            .limit(Expression.subquery(select(col("status")).from(tbl("orders").as("o")).build()))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -498,7 +531,8 @@ class SchemaQueryValidatorTest {
     void validate_acceptsNumericLimitForScalarSubqueryExpression() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .limit(Expression.subquery(select(col("id")).from(tbl("orders").as("o"))));
+            .limit(Expression.subquery(select(col("id")).from(tbl("orders").as("o")).build()))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.problems().stream()
@@ -509,7 +543,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsSubqueryShapeMismatchForLimitExpression() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .limit(Expression.subquery(select(col("id"), col("status")).from(tbl("orders").as("o"))));
+            .limit(Expression.subquery(select(col("id"), col("status")).from(tbl("orders").as("o")).build()))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -523,8 +558,9 @@ class SchemaQueryValidatorTest {
             .from(tbl("users").as("u"))
             .where(col("u", "age").all(
                 ComparisonOperator.GT,
-                select(col("id"), col("status")).from(tbl("orders").as("o"))
-            ));
+                select(col("id"), col("status")).from(tbl("orders").as("o")).build()
+            ))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -535,7 +571,9 @@ class SchemaQueryValidatorTest {
     void validate_reportsSubqueryShapeMismatchForIn() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .where(col("u", "age").in(Expression.subquery(select(col("id"), col("status")).from(tbl("orders").as("o")))));
+            .where(col("u", "age").in(Expression.subquery(
+                select(col("id"), col("status")).from(tbl("orders").as("o")).build())))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -547,9 +585,10 @@ class SchemaQueryValidatorTest {
         Query query = select(star())
             .from(tbl("users").as("u"))
             .where(col("u", "age").between(
-                Expression.subquery(select(col("id"), col("status")).from(tbl("orders").as("o"))),
+                Expression.subquery(select(col("id"), col("status")).from(tbl("orders").as("o")).build()),
                 lit(10)
-            ));
+            ))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -561,8 +600,9 @@ class SchemaQueryValidatorTest {
         Query query = select(star())
             .from(tbl("users").as("u"))
             .where(col("u", "id").isDistinctFrom(Expression.subquery(
-                select(col("id"), col("status")).from(tbl("orders").as("o"))
-            )));
+                select(col("id"), col("status")).from(tbl("orders").as("o")).build()
+            )))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -574,8 +614,9 @@ class SchemaQueryValidatorTest {
         Query query = select(star())
             .from(tbl("users").as("u"))
             .where(col("u", "name").like(Expression.subquery(
-                select(col("id"), col("status")).from(tbl("orders").as("o"))
-            )));
+                select(col("id"), col("status")).from(tbl("orders").as("o")).build()
+            )))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -587,8 +628,9 @@ class SchemaQueryValidatorTest {
         Query query = select(star())
             .from(tbl("users").as("u"))
             .where(unary(Expression.subquery(
-                select(col("id"), col("status")).from(tbl("orders").as("o"))
-            )));
+                select(col("id"), col("status")).from(tbl("orders").as("o")).build()
+            )))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -599,7 +641,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsTypeMismatchForIsDistinctFrom() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .where(col("u", "age").isDistinctFrom(lit("x")));
+            .where(col("u", "age").isDistinctFrom(lit("x")))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -610,10 +653,10 @@ class SchemaQueryValidatorTest {
     void validate_supportsCteNameWithExplicitAliases() {
         Query query = with(
             cte("active_users",
-                select(col("id")).from(tbl("users")).where(col("status").eq(lit("active")))
+                select(col("id")).from(tbl("users")).where(col("status").eq(lit("active"))).build()
             ).columnAliases("id")
         ).body(
-            select(col("a", "id")).from(tbl("active_users").as("a"))
+            select(col("a", "id")).from(tbl("active_users").as("a")).build()
         );
 
         var result = validator.validate(query);
@@ -624,10 +667,10 @@ class SchemaQueryValidatorTest {
     void validate_reportsCteColumnAliasCountMismatch() {
         Query query = with(
             cte("user_stats",
-                select(col("id"), col("status")).from(tbl("users"))
+                select(col("id"), col("status")).from(tbl("users")).build()
             ).columnAliases("id")
         ).body(
-            select(col("s", "id")).from(tbl("user_stats").as("s"))
+            select(col("s", "id")).from(tbl("user_stats").as("s")).build()
         );
 
         var result = validator.validate(query);
@@ -640,10 +683,10 @@ class SchemaQueryValidatorTest {
     void validate_acceptsMatchingCteColumnAliasCount() {
         Query query = with(
             cte("user_stats",
-                select(col("id"), col("status")).from(tbl("users"))
+                select(col("id"), col("status")).from(tbl("users")).build()
             ).columnAliases("id", "status")
         ).body(
-            select(col("s", "id")).from(tbl("user_stats").as("s"))
+            select(col("s", "id")).from(tbl("user_stats").as("s")).build()
         );
 
         var result = validator.validate(query);
@@ -653,10 +696,10 @@ class SchemaQueryValidatorTest {
     @Test
     void validate_reportsDuplicateCteNamesInWithBlock() {
         Query query = with(
-            cte("dup", select(col("id")).from(tbl("users"))),
-            cte("dup", select(col("id")).from(tbl("orders")))
+            cte("dup", select(col("id")).from(tbl("users")).build()),
+            cte("dup", select(col("id")).from(tbl("orders")).build())
         ).body(
-            select(col("d", "id")).from(tbl("dup").as("d"))
+            select(col("d", "id")).from(tbl("dup").as("d")).build()
         );
 
         var result = validator.validate(query);
@@ -668,10 +711,10 @@ class SchemaQueryValidatorTest {
     @Test
     void validate_reportsDuplicateCteNamesCaseInsensitive() {
         Query query = with(
-            cte("dup", select(col("id")).from(tbl("users"))),
-            cte("DUP", select(col("id")).from(tbl("orders")))
+            cte("dup", select(col("id")).from(tbl("users")).build()),
+            cte("DUP", select(col("id")).from(tbl("orders")).build())
         ).body(
-            select(col("d", "id")).from(tbl("dup").as("d"))
+            select(col("d", "id")).from(tbl("dup").as("d")).build()
         );
 
         var result = validator.validate(query);
@@ -684,10 +727,10 @@ class SchemaQueryValidatorTest {
     void validate_reportsNonRecursiveCteSelfReference() {
         Query query = with(
             cte("r",
-                select(lit(1)).from(tbl("r"))
+                select(lit(1)).from(tbl("r")).build()
             ).columnAliases("n")
         ).body(
-            select(star()).from(tbl("users").as("u"))
+            select(star()).from(tbl("users").as("u")).build()
         );
 
         var result = validator.validate(query);
@@ -700,12 +743,12 @@ class SchemaQueryValidatorTest {
     void validate_acceptsRecursiveCteSelfReference() {
         Query query = with(
             cte("r",
-                select(lit(1)).from(tbl("r"))
+                select(lit(1)).from(tbl("r")).build()
             ).columnAliases("n")
         )
             .recursive(true)
             .body(
-                select(star()).from(tbl("users").as("u"))
+                select(star()).from(tbl("users").as("u")).build()
             );
 
         var result = validator.validate(query);
@@ -718,11 +761,11 @@ class SchemaQueryValidatorTest {
     void validate_reportsRecursiveCteThatIsNotSetOperation() {
         Query query = with(
             cte("r",
-                select(lit(1)).from(tbl("r"))
+                select(lit(1)).from(tbl("r")).build()
             ).columnAliases("n")
         )
             .recursive(true)
-            .body(select(star()).from(tbl("users").as("u")));
+            .body(select(star()).from(tbl("users").as("u")).build());
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -735,11 +778,12 @@ class SchemaQueryValidatorTest {
         Query query = with(
             cte("r",
                 select(lit(1))
-                    .intersect(select(lit(2)).from(tbl("r")))
+                    .build()
+                    .intersect(select(lit(2)).from(tbl("r")).build())
             ).columnAliases("n")
         )
             .recursive(true)
-            .body(select(star()).from(tbl("users").as("u")));
+            .body(select(star()).from(tbl("users").as("u")).build());
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -751,12 +795,12 @@ class SchemaQueryValidatorTest {
     void validate_reportsRecursiveCteWithoutRecursiveTermReference() {
         Query query = with(
             cte("r",
-                select(lit(1)).from(tbl("r"))
-                    .union(select(lit(2)))
+                select(lit(1)).from(tbl("r")).build()
+                    .union(select(lit(2)).build())
             ).columnAliases("n")
         )
             .recursive(true)
-            .body(select(star()).from(tbl("users").as("u")));
+            .body(select(star()).from(tbl("users").as("u")).build());
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -768,12 +812,12 @@ class SchemaQueryValidatorTest {
     void validate_reportsRecursiveCteProjectionArityMismatch() {
         Query query = with(
             cte("r",
-                select(lit(1))
-                    .union(select(lit(2), lit(3)).from(tbl("r")))
+                select(lit(1)).build()
+                    .union(select(lit(2), lit(3)).from(tbl("r")).build())
             ).columnAliases("n")
         )
             .recursive(true)
-            .body(select(star()).from(tbl("users").as("u")));
+            .body(select(star()).from(tbl("users").as("u")).build());
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -785,15 +829,15 @@ class SchemaQueryValidatorTest {
     void validate_acceptsWellFormedRecursiveCteStructure() {
         Query query = with(
             cte("r",
-                select(lit(1))
+                select(lit(1)).build()
                     .union(
                         select(col("r", "n").add(lit(1)))
-                            .from(tbl("r").as("r"))
+                            .from(tbl("r").as("r")).build()
                     )
             ).columnAliases("n")
         )
             .recursive(true)
-            .body(select(star()).from(tbl("users").as("u")));
+            .body(select(star()).from(tbl("users").as("u")).build());
 
         var result = validator.validate(query);
         assertTrue(result.problems().stream()
@@ -804,14 +848,14 @@ class SchemaQueryValidatorTest {
     void validate_reportsRecursiveCteTypeMismatchBetweenAnchorAndRecursiveTerm() {
         Query query = with(
             cte("r",
-                select(lit(1))
+                select(lit(1)).build()
                     .union(
-                        select(lit("x")).from(tbl("r").as("r"))
+                        select(lit("x")).from(tbl("r").as("r")).build()
                     )
             ).columnAliases("n")
         )
             .recursive(true)
-            .body(select(star()).from(tbl("users").as("u")));
+            .body(select(star()).from(tbl("users").as("u")).build());
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -823,14 +867,14 @@ class SchemaQueryValidatorTest {
     void validate_acceptsRecursiveCteComparableNumericTypesBetweenTerms() {
         Query query = with(
             cte("r",
-                select(lit(1))
+                select(lit(1)).build()
                     .union(
-                        select(lit(2L)).from(tbl("r").as("r"))
+                        select(lit(2L)).from(tbl("r").as("r")).build()
                     )
             ).columnAliases("n")
         )
             .recursive(true)
-            .body(select(star()).from(tbl("users").as("u")));
+            .body(select(star()).from(tbl("users").as("u")).build());
 
         var result = validator.validate(query);
         assertTrue(result.problems().stream()
@@ -839,7 +883,7 @@ class SchemaQueryValidatorTest {
 
     @Test
     void validate_reportsSetOperationColumnCountMismatch() {
-        Query query = select(lit(1)).union(select(lit(2), lit(3)));
+        Query query = select(lit(1)).build().union(select(lit(2), lit(3)).build());
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -849,7 +893,7 @@ class SchemaQueryValidatorTest {
 
     @Test
     void validate_reportsSetOperationTypeMismatch() {
-        Query query = select(lit(1)).union(select(lit("x")));
+        Query query = select(lit(1)).build().union(select(lit("x")).build());
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -858,8 +902,8 @@ class SchemaQueryValidatorTest {
 
     @Test
     void validate_reportsInvalidSetOperationOrderByExpression() {
-        Query query = select(lit(1))
-            .union(select(lit(2)))
+        Query query = select(lit(1)).build()
+            .union(select(lit(2)).build())
             .orderBy(order(lit(3)));
 
         var result = validator.validate(query);
@@ -870,8 +914,8 @@ class SchemaQueryValidatorTest {
 
     @Test
     void validate_acceptsSetOperationOrderByProjectedExpression() {
-        Query query = select(lit(1))
-            .union(select(lit(2)))
+        Query query = select(lit(1)).build()
+            .union(select(lit(2)).build())
             .orderBy(order(lit(1)));
 
         var result = validator.validate(query);
@@ -881,8 +925,8 @@ class SchemaQueryValidatorTest {
     @Test
     void validate_reportsSetOperationOrderByExpressionWhenOutputShapeIsNotExpressionOnly() {
         Query query = select(star())
-            .from(tbl("users").as("u"))
-            .union(select(star()).from(tbl("orders").as("o")))
+            .from(tbl("users").as("u")).build()
+            .union(select(star()).from(tbl("orders").as("o")).build())
             .orderBy(order(lit(1)));
 
         var result = validator.validate(query);
@@ -894,8 +938,8 @@ class SchemaQueryValidatorTest {
     @Test
     void validate_acceptsSetOperationOrderByOrdinalWhenOutputShapeIsNotExpressionOnly() {
         Query query = select(star())
-            .from(tbl("users").as("u"))
-            .union(select(star()).from(tbl("orders").as("o")))
+            .from(tbl("users").as("u")).build()
+            .union(select(star()).from(tbl("orders").as("o")).build())
             .orderBy(order(1));
 
         var result = validator.validate(query);
@@ -906,7 +950,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsInvalidOrderByOrdinalInSelectQuery() {
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .orderBy(order(2));
+            .orderBy(order(2))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -918,7 +963,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsOrderByOrdinalReferencingStarSelectItem() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .orderBy(order(1));
+            .orderBy(order(1))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -930,7 +976,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsInvalidZeroOrderByOrdinalInSelectQuery() {
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .orderBy(order(0));
+            .orderBy(order(0))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -940,8 +987,8 @@ class SchemaQueryValidatorTest {
 
     @Test
     void validate_reportsInvalidOrderByOrdinalInCompositeQuery() {
-        Query query = select(lit(1))
-            .union(select(lit(2)))
+        Query query = select(lit(1)).build()
+            .union(select(lit(2)).build())
             .orderBy(order(2));
 
         var result = validator.validate(query);
@@ -954,7 +1001,8 @@ class SchemaQueryValidatorTest {
     void validate_acceptsValidOrderByOrdinal() {
         Query query = select(col("u", "id"), col("u", "status"))
             .from(tbl("users").as("u"))
-            .orderBy(order(2));
+            .orderBy(order(2))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -964,7 +1012,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsInvalidGroupByOrdinal() {
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .groupBy(group(2));
+            .groupBy(group(2))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -976,7 +1025,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsGroupByOrdinalReferencingStarSelectItem() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .groupBy(group(1));
+            .groupBy(group(1))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -988,7 +1038,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsInvalidZeroGroupByOrdinal() {
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .groupBy(group(0));
+            .groupBy(group(0))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1000,7 +1051,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsInvalidNestedGroupByOrdinal() {
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .groupBy(groupingSets(groupingSet(group(2))));
+            .groupBy(groupingSets(groupingSet(group(2))))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1012,7 +1064,8 @@ class SchemaQueryValidatorTest {
     void validate_acceptsValidGroupByOrdinal() {
         Query query = select(col("u", "status"), func("count", starArg()))
             .from(tbl("users").as("u"))
-            .groupBy(group(1));
+            .groupBy(group(1))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -1022,7 +1075,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsGroupedSelectNonAggregatedExpression() {
         Query query = select(col("u", "name"), col("u", "status"))
             .from(tbl("users").as("u"))
-            .groupBy(group(col("u", "name")));
+            .groupBy(group(col("u", "name")))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1033,7 +1087,8 @@ class SchemaQueryValidatorTest {
     void validate_acceptsGroupedSelectWithAggregate() {
         Query query = select(col("u", "status"), func("count", starArg()))
             .from(tbl("users").as("u"))
-            .groupBy(group(col("u", "status")));
+            .groupBy(group(col("u", "status")))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -1043,7 +1098,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsHavingWithoutGroupOrAggregate() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .having(col("u", "status").eq(lit("active")));
+            .having(col("u", "status").eq(lit("active")))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1055,7 +1111,8 @@ class SchemaQueryValidatorTest {
         Query query = select(col("u", "status"), func("count", starArg()))
             .from(tbl("users").as("u"))
             .groupBy(group(col("u", "status")))
-            .having(col("u", "name").eq(lit("x")));
+            .having(col("u", "name").eq(lit("x")))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1067,7 +1124,8 @@ class SchemaQueryValidatorTest {
         Query query = select(col("u", "status"), func("count", starArg()).as("cnt"))
             .from(tbl("users").as("u"))
             .groupBy(group(col("u", "status")))
-            .having(func("count", starArg()).gt(lit(1)));
+            .having(func("count", starArg()).gt(lit(1)))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -1079,7 +1137,8 @@ class SchemaQueryValidatorTest {
             func("lower", arg(col("u", "name"))),
             func("sum", arg(col("u", "age"))),
             func("count", starArg())
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -1089,7 +1148,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsFunctionArityMismatch() {
         Query query = select(
             func("lower", arg(col("u", "name")), arg(col("u", "status")))
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1101,7 +1161,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsFunctionTypeMismatch() {
         Query query = select(
             func("lower", arg(col("u", "age")))
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1113,7 +1174,8 @@ class SchemaQueryValidatorTest {
     void validate_includesStructuredDiagnosticContext() {
         Query query = select(
             func("lower", arg(col("u", "age")))
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
 
         var result = validator.validate(query);
         var problem = result.problems().stream()
@@ -1134,7 +1196,8 @@ class SchemaQueryValidatorTest {
 
         Query query = select(
             func("lower", arg(col("u", "name")))
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
 
         var result = customValidator.validate(query);
         assertFalse(result.ok());
@@ -1154,7 +1217,8 @@ class SchemaQueryValidatorTest {
             func("my_agg", arg(col("u", "name")))
         )
             .from(tbl("users").as("u"))
-            .groupBy(group(col("u", "status")));
+            .groupBy(group(col("u", "status")))
+            .build();
 
         var result = customValidator.validate(query);
         assertTrue(result.ok());
@@ -1172,7 +1236,8 @@ class SchemaQueryValidatorTest {
             func("my_agg", arg(col("u", "name")))
         )
             .from(tbl("users").as("u"))
-            .groupBy(group(col("u", "status")));
+            .groupBy(group(col("u", "status")))
+            .build();
 
         var result = customValidator.validate(query);
         assertFalse(result.ok());
@@ -1187,7 +1252,7 @@ class SchemaQueryValidatorTest {
             : java.util.Optional.empty();
         var customValidator = SchemaQueryValidator.of(SCHEMA, catalog);
 
-        Query query = select(func("f_any", starArg())).from(tbl("users").as("u"));
+        Query query = select(func("f_any", starArg())).from(tbl("users").as("u")).build();
         var result = customValidator.validate(query);
 
         assertFalse(result.ok());
@@ -1202,7 +1267,7 @@ class SchemaQueryValidatorTest {
             : java.util.Optional.empty();
         var customValidator = SchemaQueryValidator.of(SCHEMA, catalog);
 
-        Query query = select(func("f_star_or_expr", starArg())).from(tbl("users").as("u"));
+        Query query = select(func("f_star_or_expr", starArg())).from(tbl("users").as("u")).build();
         var result = customValidator.validate(query);
 
         assertTrue(result.ok());
@@ -1210,8 +1275,8 @@ class SchemaQueryValidatorTest {
 
     @Test
     void validate_reportsSetOperationOrderByInvalidWhenProjectionIsNotExpressionOnly() {
-        Query query = select(star()).from(tbl("users").as("u"))
-            .union(select(star()).from(tbl("users").as("u2")))
+        Query query = select(star()).from(tbl("users").as("u")).build()
+            .union(select(star()).from(tbl("users").as("u2")).build())
             .orderBy(order(col("u", "id")));
 
         var result = validator.validate(query);
@@ -1224,7 +1289,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsJoinUsingInvalidColumnWhenRightSourceHasNoAliasKey() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .join(inner(tbl(select(col("id")).from(tbl("orders")))).using("id"));
+            .join(inner(tbl(select(col("id")).from(tbl("orders")).build())).using("id"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1235,7 +1301,7 @@ class SchemaQueryValidatorTest {
     @Test
     void validate_acceptsSettingsFactoryWithDefaultBehavior() {
         var customValidator = SchemaQueryValidator.of(SCHEMA, SchemaValidationSettings.defaults());
-        Query query = select(star()).from(tbl("users").as("u"));
+        Query query = select(star()).from(tbl("users").as("u")).build();
 
         var result = customValidator.validate(query);
         assertTrue(result.ok());
@@ -1273,7 +1339,7 @@ class SchemaQueryValidatorTest {
         };
 
         var customValidator = SchemaQueryValidator.of(SCHEMA, dialect);
-        Query query = select(star()).from(tbl("users").as("u"));
+        Query query = select(star()).from(tbl("users").as("u")).build();
         var result = customValidator.validate(query);
 
         assertFalse(result.ok());
@@ -1286,7 +1352,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsMissingWindowReference() {
         Query query = select(
             func("sum", arg(col("u", "age"))).over("missing_window")
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1298,7 +1365,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsMissingBaseWindowReference() {
         Query query = select(
             func("sum", arg(col("u", "age"))).over(over("missing_window", orderBy(order(col("u", "id")))))
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1312,7 +1380,8 @@ class SchemaQueryValidatorTest {
             func("sum", arg(col("u", "age"))).over("w")
         )
             .from(tbl("users").as("u"))
-            .window(window("w", partition(col("u", "status"))));
+            .window(window("w", partition(col("u", "status"))))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -1327,7 +1396,8 @@ class SchemaQueryValidatorTest {
             .window(
                 window("w", partition(col("u", "status"))),
                 window("w", partition(col("u", "id")))
-            );
+            )
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1344,7 +1414,8 @@ class SchemaQueryValidatorTest {
             .window(
                 window("w", partition(col("u", "status"))),
                 window("W", partition(col("u", "id")))
-            );
+            )
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1362,7 +1433,8 @@ class SchemaQueryValidatorTest {
             .window(
                 window("w1", partition(col("u", "status"))),
                 window("w2", partition(col("u", "id")))
-            );
+            )
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -1376,7 +1448,8 @@ class SchemaQueryValidatorTest {
             .from(tbl("users").as("u"))
             .window(
                 WindowDef.of("w1", OverSpec.def("missing", orderBy(order(col("u", "id"))), null, null))
-            );
+            )
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1393,7 +1466,8 @@ class SchemaQueryValidatorTest {
             .window(
                 WindowDef.of("w1", OverSpec.def("w2", orderBy(order(col("u", "id"))), null, null)),
                 WindowDef.of("w2", OverSpec.def("w1", orderBy(order(col("u", "status"))), null, null))
-            );
+            )
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1410,7 +1484,8 @@ class SchemaQueryValidatorTest {
             .window(
                 WindowDef.of("w1", OverSpec.def("w2", null, range(preceding(1)), null)),
                 WindowDef.of("w2", OverSpec.def("w1", null, null, null))
-            );
+            )
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1426,7 +1501,8 @@ class SchemaQueryValidatorTest {
             .from(tbl("users").as("u"))
             .window(
                 WindowDef.of("w1", OverSpec.def("w1", orderBy(order(col("u", "id"))), null, null))
-            );
+            )
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1443,7 +1519,8 @@ class SchemaQueryValidatorTest {
             .window(
                 window("w1", partition(col("u", "status"))),
                 WindowDef.of("w2", OverSpec.def("w1", orderBy(order(col("u", "id"))), null, null))
-            );
+            )
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -1453,7 +1530,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsWindowFrameNonNumericBoundExpression() {
         Query query = select(
             func("sum", arg(col("u", "age"))).over(over(rows(preceding(lit("x")))))
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1465,7 +1543,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsWindowFrameNegativeBoundExpression() {
         Query query = select(
             func("sum", arg(col("u", "age"))).over(over(rows(preceding(lit(-1)))))
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1478,7 +1557,8 @@ class SchemaQueryValidatorTest {
         Query query = select(
             func("sum", arg(col("u", "age")))
                 .over(over(rows(following(1), preceding(1))))
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1492,7 +1572,8 @@ class SchemaQueryValidatorTest {
             func("sum", arg(col("u", "age"))).over("w")
         )
             .from(tbl("users").as("u"))
-            .window(window("w", partition(col("u", "status")), orderBy(order(col("u", "id"))), rows(following(1), currentRow())));
+            .window(window("w", partition(col("u", "status")), orderBy(order(col("u", "id"))), rows(following(1), currentRow())))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1505,7 +1586,8 @@ class SchemaQueryValidatorTest {
         Query query = select(
             func("sum", arg(col("u", "age")))
                 .over(over(rows(unboundedPreceding(), currentRow())))
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.problems().stream()
@@ -1517,7 +1599,8 @@ class SchemaQueryValidatorTest {
         Query query = select(
             func("sum", arg(col("u", "age")))
                 .over(over(range(preceding(1))))
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1530,7 +1613,8 @@ class SchemaQueryValidatorTest {
         Query query = select(
             func("sum", arg(col("u", "age")))
                 .over(over(orderBy(order(col("u", "id")), order(col("u", "age"))), range(preceding(1))))
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1543,7 +1627,8 @@ class SchemaQueryValidatorTest {
         Query query = select(
             func("sum", arg(col("u", "age")))
                 .over(over(orderBy(order(col("u", "id"))), range(preceding(1))))
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.problems().stream()
@@ -1555,7 +1640,8 @@ class SchemaQueryValidatorTest {
         Query query = select(
             func("sum", arg(col("u", "age")))
                 .over(over(groups(preceding(lit(1.5)))))
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1567,7 +1653,8 @@ class SchemaQueryValidatorTest {
     void validate_doesNotApplyDistinctOnSemanticsWithoutPostgresDialect() {
         Query query = select(col("u", "status"), col("u", "id"))
             .from(tbl("users").as("u"))
-            .distinct(distinctOn(col("u", "status")));
+            .distinct(distinctOn(col("u", "status")))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.problems().stream()
@@ -1579,7 +1666,8 @@ class SchemaQueryValidatorTest {
         Query query = select(col("u", "status"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "status")))
-            .orderBy(order(col("u", "id")));
+            .orderBy(order(col("u", "id")))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.problems().stream()
@@ -1591,7 +1679,8 @@ class SchemaQueryValidatorTest {
         Query query = select(col("u", "status"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "status")))
-            .orderBy(order(col("u", "status")), order(col("u", "id")));
+            .orderBy(order(col("u", "status")), order(col("u", "id")))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -1602,7 +1691,8 @@ class SchemaQueryValidatorTest {
         Query query = select(col("u", "status"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "status")))
-            .orderBy(order(1), order(2));
+            .orderBy(order(1), order(2))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -1612,7 +1702,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsTypeMismatchForUnaryPredicate() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .where(unary(lit(1)));
+            .where(unary(lit(1)))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1625,7 +1716,8 @@ class SchemaQueryValidatorTest {
     void validate_acceptsBooleanUnaryPredicate() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .where(unary(lit(true)));
+            .where(unary(lit(true)))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -1635,7 +1727,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsInvalidLimitType() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .limit(col("u", "status"));
+            .limit(col("u", "status"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1647,7 +1740,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsInvalidOffsetType() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .offset(col("u", "status"));
+            .offset(col("u", "status"))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1659,7 +1753,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsInvalidLimitTypeForFunctionReturnType() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .limit(func("lower", arg(col("u", "name"))));
+            .limit(func("lower", arg(col("u", "name"))))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1671,7 +1766,8 @@ class SchemaQueryValidatorTest {
     void validate_acceptsNumericLimitForFunctionReturnType() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .limit(func("length", arg(col("u", "name"))));
+            .limit(func("length", arg(col("u", "name"))))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.problems().stream()
@@ -1682,7 +1778,8 @@ class SchemaQueryValidatorTest {
     void validate_acceptsNumericLimitForArithmeticExpression() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .limit(col("u", "age").add(lit(1)));
+            .limit(col("u", "age").add(lit(1)))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.problems().stream()
@@ -1693,7 +1790,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsTypeMismatchForCastTargetType() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .where(col("u", "age").eq(lit("10").cast(type("text"))));
+            .where(col("u", "age").eq(lit("10").cast(type("text"))))
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1705,7 +1803,8 @@ class SchemaQueryValidatorTest {
     void validate_acceptsCompatibleTypeForCastTargetType() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .where(col("u", "age").eq(lit("10").cast(type("int"))));
+            .where(col("u", "age").eq(lit("10").cast(type("int"))))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -1716,7 +1815,8 @@ class SchemaQueryValidatorTest {
         Query query = select(star())
             .from(tbl("users").as("u"))
             .limit(col("u", "age"))
-            .offset(lit(1));
+            .offset(lit(1))
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -1724,8 +1824,8 @@ class SchemaQueryValidatorTest {
 
     @Test
     void validate_reportsInvalidCompositeLimitType() {
-        Query query = select(lit(1))
-            .union(select(lit(2)))
+        Query query = select(lit(1)).build()
+            .union(select(lit(2)).build())
             .limit(lit("x"));
 
         var result = validator.validate(query);
@@ -1743,7 +1843,8 @@ class SchemaQueryValidatorTest {
 
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .limit(func("foo", arg(col("u", "id"))));
+            .limit(func("foo", arg(col("u", "id"))))
+            .build();
 
         var result = customValidator.validate(query);
         assertFalse(result.ok());
@@ -1761,7 +1862,8 @@ class SchemaQueryValidatorTest {
         Query query = select(star())
             .from(tbl("events").as("e"))
             .where(col("e", "payload").eq(lit("x")))
-            .limit(col("e", "payload"));
+            .limit(col("e", "payload"))
+            .build();
 
         var result = unknownValidator.validate(query);
         assertTrue(result.problems().stream()
@@ -1773,7 +1875,8 @@ class SchemaQueryValidatorTest {
     void validate_reportsMissingLockTargetAlias() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .lockFor(update(), ofTables("missing_alias"), false, false);
+            .lockFor(update(), ofTables("missing_alias"), false, false)
+            .build();
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1786,7 +1889,8 @@ class SchemaQueryValidatorTest {
         Query query = select(star())
             .from(tbl("users").as("u"))
             .join(inner(tbl("orders").as("o")).on(col("o", "user_id").eq(col("u", "id"))))
-            .lockFor(update(), ofTables("u", "o"), false, false);
+            .lockFor(update(), ofTables("u", "o"), false, false)
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -1796,7 +1900,8 @@ class SchemaQueryValidatorTest {
     void validate_acceptsLockingClauseWithoutOfTargets() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .lockFor(update(), List.of(), false, false);
+            .lockFor(update(), List.of(), false, false)
+            .build();
 
         var result = validator.validate(query);
         assertTrue(result.ok());

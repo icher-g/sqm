@@ -33,7 +33,7 @@ public class JoinAndTableRefMatchTest {
             .otherwise(x -> "OTHER");
         assertEquals("TABLE", r1);
 
-        QueryTable qt = TableRef.query(select(lit(1)));
+        QueryTable qt = TableRef.query(select(lit(1)).build());
         String r2 = Match
             .<String>tableRef(qt)
             .values(v -> "VT")

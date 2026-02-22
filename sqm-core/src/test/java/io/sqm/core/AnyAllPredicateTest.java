@@ -9,7 +9,7 @@ class AnyAllPredicateTest {
     @Test
     void of() {
         var lhs = Expression.column("age");
-        var subquery = Query.select(Expression.literal(1));
+        var subquery = Query.select(Expression.literal(1)).build();
         var predicate = AnyAllPredicate.of(lhs, ComparisonOperator.EQ, subquery, Quantifier.ANY);
         
         assertNotNull(predicate);
@@ -25,7 +25,7 @@ class AnyAllPredicateTest {
         var predicate = AnyAllPredicate.of(
             Expression.column("age"),
             ComparisonOperator.LT,
-            Query.select(Expression.column("age")).from(TableRef.table("users")),
+            Query.select(Expression.column("age")).from(TableRef.table("users")).build(),
             Quantifier.ANY
         );
         
@@ -37,7 +37,7 @@ class AnyAllPredicateTest {
         var predicate = AnyAllPredicate.of(
             Expression.column("age"),
             ComparisonOperator.GT,
-            Query.select(Expression.column("age")).from(TableRef.table("users")),
+            Query.select(Expression.column("age")).from(TableRef.table("users")).build(),
             Quantifier.ALL
         );
         
@@ -56,7 +56,7 @@ class AnyAllPredicateTest {
             var predicate = AnyAllPredicate.of(
                 Expression.column("x"),
                 op,
-                Query.select(Expression.literal(1)),
+                Query.select(Expression.literal(1)).build(),
                 Quantifier.ANY
             );
             assertEquals(op, predicate.operator());
@@ -68,7 +68,7 @@ class AnyAllPredicateTest {
         var predicate = AnyAllPredicate.of(
             Expression.column("age"),
             ComparisonOperator.EQ,
-            Query.select(Expression.literal(1)),
+            Query.select(Expression.literal(1)).build(),
             Quantifier.ANY
         );
         
@@ -83,7 +83,7 @@ class AnyAllPredicateTest {
         var predicate = AnyAllPredicate.of(
             lhs,
             ComparisonOperator.EQ,
-            Query.select(Expression.literal(1)),
+            Query.select(Expression.literal(1)).build(),
             Quantifier.ANY
         );
         
@@ -92,7 +92,7 @@ class AnyAllPredicateTest {
 
     @Test
     void subquery() {
-        var subquery = Query.select(Expression.column("id")).from(TableRef.table("orders"));
+        var subquery = Query.select(Expression.column("id")).from(TableRef.table("orders")).build();
         var predicate = AnyAllPredicate.of(
             Expression.column("orderId"),
             ComparisonOperator.EQ,

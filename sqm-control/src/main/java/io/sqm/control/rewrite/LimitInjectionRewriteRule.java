@@ -12,6 +12,7 @@ import io.sqm.core.LimitOffset;
 import io.sqm.core.LiteralExpr;
 import io.sqm.core.Query;
 import io.sqm.core.SelectQuery;
+import io.sqm.core.SelectQueryBuilder;
 import io.sqm.core.WithQuery;
 import io.sqm.core.transform.LimitInjectionTransformer;
 import io.sqm.core.transform.QueryFingerprint;
@@ -168,7 +169,9 @@ public final class LimitInjectionRewriteRule implements QueryRewriteRule {
         }
         Expression clamped = Expression.literal(settings.maxAllowedLimit().longValue());
         return switch (query) {
-            case SelectQuery select -> select.limitOffset(LimitOffset.of(clamped, current.offset()));
+            case SelectQuery select -> SelectQueryBuilder.of(select)
+                .limitOffset(LimitOffset.of(clamped, current.offset()))
+                .build();
             case CompositeQuery composite -> CompositeQuery.of(
                 composite.terms(),
                 composite.ops(),

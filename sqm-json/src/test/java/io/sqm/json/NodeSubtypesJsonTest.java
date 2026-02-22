@@ -207,7 +207,8 @@ public class NodeSubtypesJsonTest {
     void distinctSpec_inSelect() throws Exception {
         var query = select(col("id"), col("name"))
             .from(tbl("users"))
-            .distinct(DistinctSpec.TRUE);
+            .distinct(DistinctSpec.TRUE)
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -219,7 +220,8 @@ public class NodeSubtypesJsonTest {
     @DisplayName("DistinctSpec: query without DISTINCT")
     void distinctSpec_noDistinct() throws Exception {
         var query = select(col("id"), col("name"))
-            .from(tbl("users"));
+            .from(tbl("users"))
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -256,7 +258,8 @@ public class NodeSubtypesJsonTest {
             .where(col("price").gt(lit(100)))
             .groupBy(group(col("category")))
             .having(func("count", starArg()).gt(lit(10)))
-            .orderBy(order(col("category")).asc());
+            .orderBy(order(col("category")).asc())
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -280,7 +283,8 @@ public class NodeSubtypesJsonTest {
         )
         .from(tbl("products"))
         .distinct(DistinctSpec.TRUE)
-        .where(col("active").eq(lit(true)));
+        .where(col("active").eq(lit(true)))
+        .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -304,7 +308,8 @@ public class NodeSubtypesJsonTest {
             col("data").cast(type("jsonb")).as("data_json"),
             col("tags").cast(type("text").array()).as("tags_array")
         ).from(tbl("records"))
-        .distinct(DistinctSpec.TRUE);
+        .distinct(DistinctSpec.TRUE)
+        .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -365,7 +370,8 @@ public class NodeSubtypesJsonTest {
         .having(func("count", starArg()).gt(lit(0)))
         .orderBy(order(col("name")).asc())
         .limit(10L)
-        .offset(0L);
+        .offset(0L)
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -377,15 +383,15 @@ public class NodeSubtypesJsonTest {
         assertNotNull(back.groupBy());
         assertNotNull(back.having());
         assertNotNull(back.orderBy());
-        assertNotNull(back.limit());
-        assertNotNull(back.offset());
+        assertNotNull(back.limitOffset().limit());
+        assertNotNull(back.limitOffset().offset());
 
         // Verify JSON structure
         JsonNode node = toTree(query);
         assertEquals("select", node.path("kind").asText());
-        assertTrue(node.has("distinctSpec"));
+        assertTrue(node.has("distinct"));
         assertTrue(node.has("items"));
-        assertTrue(node.has("tableRef"));
+        assertTrue(node.has("from"));
         assertTrue(node.has("where"));
         assertTrue(node.has("groupBy"));
         assertTrue(node.has("having"));

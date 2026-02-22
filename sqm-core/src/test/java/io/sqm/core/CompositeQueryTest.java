@@ -10,7 +10,7 @@ class CompositeQueryTest {
 
     @Test
     void of() {
-        List<Query> terms = List.of(Query.select(Expression.literal(1)), Query.select(Expression.literal(2)));
+        List<Query> terms = List.of(Query.select(Expression.literal(1)).build(), Query.select(Expression.literal(2)).build());
         OrderBy orderBy = OrderBy.of(OrderItem.of(1));
         LimitOffset limitOffset = LimitOffset.of(1L, 1L);
         assertInstanceOf(CompositeQuery.class, CompositeQuery.of(terms, List.of(SetOperator.UNION), orderBy, limitOffset));
@@ -18,7 +18,7 @@ class CompositeQueryTest {
 
     @Test
     void orderBy() {
-        List<Query> terms = List.of(Query.select(Expression.literal(1)), Query.select(Expression.literal(2)));
+        List<Query> terms = List.of(Query.select(Expression.literal(1)).build(), Query.select(Expression.literal(2)).build());
         CompositeQuery query = CompositeQuery.of(terms, List.of(SetOperator.UNION)).orderBy(OrderItem.of(1));
         assertNotNull(query.orderBy());
         assertEquals(1, query.orderBy().items().size());
@@ -29,7 +29,7 @@ class CompositeQueryTest {
 
     @Test
     void limit() {
-        List<Query> terms = List.of(Query.select(Expression.literal(1)), Query.select(Expression.literal(2)));
+        List<Query> terms = List.of(Query.select(Expression.literal(1)).build(), Query.select(Expression.literal(2)).build());
         CompositeQuery query = CompositeQuery.of(terms, List.of(SetOperator.UNION)).limit(1L);
         assertNotNull(query.limitOffset());
         assertInstanceOf(LiteralExpr.class, query.limitOffset().limit());
@@ -43,7 +43,7 @@ class CompositeQueryTest {
 
     @Test
     void offset() {
-        List<Query> terms = List.of(Query.select(Expression.literal(1)), Query.select(Expression.literal(2)));
+        List<Query> terms = List.of(Query.select(Expression.literal(1)).build(), Query.select(Expression.literal(2)).build());
         CompositeQuery query = CompositeQuery.of(terms, List.of(SetOperator.UNION)).offset(1L);
         assertNotNull(query.limitOffset());
         assertInstanceOf(LiteralExpr.class, query.limitOffset().offset());
@@ -57,7 +57,7 @@ class CompositeQueryTest {
 
     @Test
     void limitExpressionAndNullLimit() {
-        List<Query> terms = List.of(Query.select(Expression.literal(1)), Query.select(Expression.literal(2)));
+        List<Query> terms = List.of(Query.select(Expression.literal(1)).build(), Query.select(Expression.literal(2)).build());
         CompositeQuery query = CompositeQuery.of(terms, List.of(SetOperator.UNION)).limit(Expression.literal(3));
         assertNotNull(query.limitOffset());
         assertInstanceOf(LiteralExpr.class, query.limitOffset().limit());
@@ -70,7 +70,7 @@ class CompositeQueryTest {
 
     @Test
     void offsetExpressionAndNullOffset() {
-        List<Query> terms = List.of(Query.select(Expression.literal(1)), Query.select(Expression.literal(2)));
+        List<Query> terms = List.of(Query.select(Expression.literal(1)).build(), Query.select(Expression.literal(2)).build());
         CompositeQuery query = CompositeQuery.of(terms, List.of(SetOperator.UNION)).offset(Expression.literal(4));
         assertNotNull(query.limitOffset());
         assertInstanceOf(LiteralExpr.class, query.limitOffset().offset());

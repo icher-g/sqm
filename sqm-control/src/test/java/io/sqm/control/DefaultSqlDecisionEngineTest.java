@@ -4,6 +4,7 @@ import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
+import io.sqm.core.Expression;
 import io.sqm.core.Query;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.api.ValidationResult;
@@ -25,7 +26,7 @@ class DefaultSqlDecisionEngineTest {
     @Test
     void allows_when_validation_passes() {
         var engine = SqlDecisionEngine.validationOnly(query -> new ValidationResult(List.of()));
-        var result = engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var result = engine.evaluate(Query.select(Expression.literal(1)).build(), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
 
         assertEquals(DecisionKind.ALLOW, result.kind());
         assertEquals(ReasonCode.NONE, result.reasonCode());
@@ -37,7 +38,7 @@ class DefaultSqlDecisionEngineTest {
             new ValidationProblem(ValidationProblem.Code.POLICY_TABLE_DENIED, "table denied")
         )));
 
-        var result = engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var result = engine.evaluate(Query.select(Expression.literal(1)).build(), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.DENY, result.kind());
         assertEquals(ReasonCode.DENY_TABLE, result.reasonCode());
     }
@@ -48,7 +49,7 @@ class DefaultSqlDecisionEngineTest {
             new ValidationProblem(ValidationProblem.Code.TYPE_MISMATCH, "type mismatch")
         )));
 
-        var result = engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var result = engine.evaluate(Query.select(Expression.literal(1)).build(), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.DENY, result.kind());
         assertEquals(ReasonCode.DENY_VALIDATION, result.reasonCode());
     }
@@ -58,7 +59,7 @@ class DefaultSqlDecisionEngineTest {
         var engine = SqlDecisionEngine.validationOnly(query -> new ValidationResult(List.of()));
 
         assertThrows(NullPointerException.class, () -> engine.evaluate(null, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE)));
-        assertThrows(NullPointerException.class, () -> engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), null));
+        assertThrows(NullPointerException.class, () -> engine.evaluate(Query.select(Expression.literal(1)).build(), null));
     }
 
     @Test
@@ -67,7 +68,7 @@ class DefaultSqlDecisionEngineTest {
             new ValidationProblem(ValidationProblem.Code.DIALECT_CLAUSE_INVALID, "unsupported for dialect")
         )));
 
-        var result = engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var result = engine.evaluate(Query.select(Expression.literal(1)).build(), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.DENY, result.kind());
         assertEquals(ReasonCode.DENY_UNSUPPORTED_DIALECT_FEATURE, result.reasonCode());
     }
@@ -81,14 +82,14 @@ class DefaultSqlDecisionEngineTest {
                 return new ValidationResult(List.of());
             },
             (query, context) -> QueryRewriteResult.rewritten(
-                Query.select(io.sqm.core.Expression.literal(2)),
+                Query.select(Expression.literal(2)).build(),
                 "limit-injection",
                 ReasonCode.REWRITE_LIMIT
             ),
             (query, context) -> "select 2 limit 100"
         );
 
-        var result = engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var result = engine.evaluate(Query.select(Expression.literal(1)).build(), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
 
         assertEquals(DecisionKind.REWRITE, result.kind());
         assertEquals(ReasonCode.REWRITE_LIMIT, result.reasonCode());
@@ -111,14 +112,14 @@ class DefaultSqlDecisionEngineTest {
                 ));
             },
             (query, context) -> QueryRewriteResult.rewritten(
-                Query.select(io.sqm.core.Expression.literal(2)),
+                Query.select(Expression.literal(2)).build(),
                 "qualification",
                 ReasonCode.REWRITE_QUALIFICATION
             ),
             (query, context) -> "select 2"
         );
 
-        var result = engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var result = engine.evaluate(Query.select(Expression.literal(1)).build(), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
 
         assertEquals(DecisionKind.DENY, result.kind());
         assertEquals(ReasonCode.DENY_MAX_JOINS, result.reasonCode());
@@ -155,11 +156,11 @@ class DefaultSqlDecisionEngineTest {
         );
 
         assertEquals(DecisionKind.ALLOW,
-            engine1.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("ansi", ExecutionMode.ANALYZE)).kind());
+            engine1.evaluate(Query.select(Expression.literal(1)).build(), ExecutionContext.of("ansi", ExecutionMode.ANALYZE)).kind());
         assertEquals(DecisionKind.ALLOW,
-            engine2.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("ansi", ExecutionMode.ANALYZE)).kind());
+            engine2.evaluate(Query.select(Expression.literal(1)).build(), ExecutionContext.of("ansi", ExecutionMode.ANALYZE)).kind());
         assertEquals(DecisionKind.ALLOW,
-            engine3.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("ansi", ExecutionMode.ANALYZE)).kind());
+            engine3.evaluate(Query.select(Expression.literal(1)).build(), ExecutionContext.of("ansi", ExecutionMode.ANALYZE)).kind());
     }
 
     @Test
@@ -168,13 +169,13 @@ class DefaultSqlDecisionEngineTest {
             "postgres",
             query -> new ValidationResult(List.of()),
             (query, context) -> QueryRewriteResult.rewritten(
-                Query.select(io.sqm.core.Expression.literal(1)),
+                Query.select(Expression.literal(1)).build(),
                 "qualification",
                 ReasonCode.REWRITE_QUALIFICATION
             )
         );
 
-        var result = engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var result = engine.evaluate(Query.select(Expression.literal(1)).build(), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.REWRITE, result.kind());
         assertEquals(ReasonCode.REWRITE_QUALIFICATION, result.reasonCode());
         assertTrue(result.rewrittenSql().toLowerCase().contains("select"));
@@ -188,7 +189,7 @@ class DefaultSqlDecisionEngineTest {
             BuiltInRewriteRule.LIMIT_INJECTION
         );
 
-        var result = engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var result = engine.evaluate(Query.select(Expression.literal(1)).build(), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.REWRITE, result.kind());
         assertEquals(ReasonCode.REWRITE_LIMIT, result.reasonCode());
         assertTrue(result.rewrittenSql().toLowerCase().contains("limit 1000"));
@@ -202,7 +203,7 @@ class DefaultSqlDecisionEngineTest {
             SchemaValidationSettings.defaults()
         );
 
-        var result = engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var result = engine.evaluate(Query.select(Expression.literal(1)).build(), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.ALLOW, result.kind());
     }
 
@@ -233,7 +234,7 @@ class DefaultSqlDecisionEngineTest {
             SqlQueryRenderer.ansi()
         );
 
-        var result = engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
+        var result = engine.evaluate(Query.select(Expression.literal(1)).build(), ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
 
         assertEquals(DecisionKind.DENY, result.kind());
         assertEquals(ReasonCode.DENY_MAX_ROWS, result.reasonCode());
@@ -244,7 +245,7 @@ class DefaultSqlDecisionEngineTest {
         var engine = SqlDecisionEngine.fullFlow(
             query -> new ValidationResult(List.of()),
             (query, context) -> QueryRewriteResult.rewritten(
-                Query.select(io.sqm.core.Expression.literal(2)),
+                Query.select(Expression.literal(2)).build(),
                 "r",
                 ReasonCode.REWRITE_LIMIT
             ),
@@ -252,6 +253,6 @@ class DefaultSqlDecisionEngineTest {
         );
 
         assertThrows(NullPointerException.class,
-            () -> engine.evaluate(Query.select(io.sqm.core.Expression.literal(1)), ExecutionContext.of("ansi", ExecutionMode.ANALYZE)));
+            () -> engine.evaluate(Query.select(Expression.literal(1)).build(), ExecutionContext.of("ansi", ExecutionMode.ANALYZE)));
     }
 }

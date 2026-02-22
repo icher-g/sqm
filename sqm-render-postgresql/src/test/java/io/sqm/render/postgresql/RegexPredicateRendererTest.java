@@ -1,6 +1,7 @@
 package io.sqm.render.postgresql;
 
 import io.sqm.core.*;
+import io.sqm.render.ansi.RegexPredicateRenderer;
 import io.sqm.render.postgresql.spi.PostgresDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,7 +65,8 @@ class RegexPredicateRendererTest {
     void rendersRegexInWhereClause() {
         var query = select(col("*"))
             .from(tbl("users"))
-            .where(RegexPredicate.of(RegexMode.MATCH, col("email"), lit("@company\\.com$"), false));
+            .where(RegexPredicate.of(RegexMode.MATCH, col("email"), lit("@company\\.com$"), false))
+            .build();
         
         var sql = renderContext.render(query).sql();
         
@@ -119,7 +121,8 @@ class RegexPredicateRendererTest {
         var query = select(col("category"), func("COUNT", starArg()).as("cnt"))
             .from(tbl("products"))
             .groupBy(group("category"))
-            .having(RegexPredicate.of(RegexMode.MATCH_INSENSITIVE, col("category"), lit("^elec"), false));
+            .having(RegexPredicate.of(RegexMode.MATCH_INSENSITIVE, col("category"), lit("^elec"), false))
+            .build();
         
         var sql = renderContext.render(query).sql();
         

@@ -105,7 +105,8 @@ public class PredicateSubtypesJsonTest {
     void likePredicate_inWhere() throws Exception {
         var query = select(col("*"))
             .from(tbl("users"))
-            .where(col("name").like("%Smith%"));
+            .where(col("name").like("%Smith%"))
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -135,7 +136,8 @@ public class PredicateSubtypesJsonTest {
             .where(
                 col("name").like("%Phone%")
                     .and(col("description").like("%Apple%"))
-            );
+            )
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -224,7 +226,8 @@ public class PredicateSubtypesJsonTest {
     void regexPredicate_inWhere() throws Exception {
         var query = select(col("*"))
             .from(tbl("logs"))
-            .where(RegexPredicate.of(col("message"), lit(".*ERROR.*"), false));
+            .where(RegexPredicate.of(col("message"), lit(".*ERROR.*"), false))
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -282,7 +285,8 @@ public class PredicateSubtypesJsonTest {
                 col("name").like("%Smith%")
                     .and(RegexPredicate.of(col("email"), lit("^[a-z]+@company\\.com$"), false))
                     .or(col("username").notLike("admin%"))
-            );
+            )
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -304,7 +308,8 @@ public class PredicateSubtypesJsonTest {
                 col("name").like("%Phone%")
                     .or(col("name").like("%Tablet%"))
                     .or(col("name").like("%Laptop%"))
-            );
+            )
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -343,7 +348,8 @@ public class PredicateSubtypesJsonTest {
             .where(
                 col("filename").like("%\\_archive\\_%").escape("\\")
                     .and(col("status").eq(lit("active")))
-            );
+            )
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -382,7 +388,8 @@ public class PredicateSubtypesJsonTest {
             .where(
                 col("name").like("%test%").not()
                     .and(RegexPredicate.of(col("code"), lit("^[A-Z]{3}$"), true))
-            );
+            )
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 

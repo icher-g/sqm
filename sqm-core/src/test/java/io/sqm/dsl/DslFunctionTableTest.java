@@ -35,7 +35,8 @@ class DslFunctionTableTest {
     @DisplayName("Function table in FROM clause")
     void functionTableInFromClause() {
         var query = select(col("num"))
-            .from(tbl(func("generate_series", arg(lit(1)), arg(lit(10)))).as("series"));
+            .from(tbl(func("generate_series", arg(lit(1)), arg(lit(10)))).as("series"))
+            .build();
 
         assertNotNull(query);
         assertInstanceOf(FunctionTable.class, query.from());
@@ -70,7 +71,7 @@ class DslFunctionTableTest {
     @Test
     @DisplayName("Lateral wrapping query table")
     void lateralWrappingQueryTable() {
-        var subquery = select(col("*")).from(tbl("users"));
+        var subquery = select(col("*")).from(tbl("users")).build();
         var lateral = tbl(subquery).as("sub").lateral();
 
         assertNotNull(lateral);
@@ -97,7 +98,8 @@ class DslFunctionTableTest {
             .join(inner(
                 tbl(func("unnest", arg(col("t", "arr")))).as("u").columnAliases("val").lateral())
                 .on(col("t", "id").gt(lit(0)))
-            );
+            )
+            .build();
 
         assertNotNull(query);
         assertEquals(1, query.joins().size());
@@ -113,7 +115,8 @@ class DslFunctionTableTest {
     void multipleFunctionTablesInQuery() {
         var query = select(col("s", "num"), col("u", "val"))
             .from(tbl(func("generate_series", arg(lit(1)), arg(lit(10)))).as("s").columnAliases("num"))
-            .join(cross(tbl(func("unnest", arg(array(lit("a"), lit("b"))))).as("u").columnAliases("val")));
+            .join(cross(tbl(func("unnest", arg(array(lit("a"), lit("b"))))).as("u").columnAliases("val")))
+            .build();
 
         assertNotNull(query);
         assertInstanceOf(FunctionTable.class, query.from());
@@ -127,7 +130,8 @@ class DslFunctionTableTest {
     @DisplayName("Lateral in subquery")
     void lateralInSubquery() {
         var innerQuery = select(col("*"))
-            .from(tbl(func("generate_series", arg(lit(1)), arg(col("t", "max")))).as("s").lateral());
+            .from(tbl(func("generate_series", arg(lit(1)), arg(col("t", "max")))).as("s").lateral())
+            .build();
         
         var outerQuery = select(col("*"))
             .from(tbl("t"))

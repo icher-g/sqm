@@ -151,7 +151,8 @@ public class SelectQueryRendererTest {
                 .from(tbl("t1"))
                 .orderBy(order("t1", "c1").asc())
                 .limit(10L)
-                .offset(5L);
+                .offset(5L)
+                .build();
 
             String sql = ctx.render(q).sql();
 
@@ -167,7 +168,8 @@ public class SelectQueryRendererTest {
 
             var q = select(col("t", "c"))
                 .from(tbl("t"))
-                .limit(3L);
+                .limit(3L)
+                .build();
 
             String sql = ctx.render(q).sql();
             assertTrue(sql.endsWith("LIMIT 3") || sql.contains("\nLIMIT 3"),
@@ -181,7 +183,8 @@ public class SelectQueryRendererTest {
 
             var q = select(col("t", "c"))
                 .from(tbl("t"))
-                .offset(7L);
+                .offset(7L)
+                .build();
 
             String sql = ctx.render(q).sql();
             assertTrue(sql.endsWith("OFFSET 7") || sql.contains("\nOFFSET 7"),
@@ -201,7 +204,8 @@ public class SelectQueryRendererTest {
                 .from(tbl("t1"))
                 .orderBy(order("t1", "c1").asc())
                 .limit(10L)
-                .offset(5L);
+                .offset(5L)
+                .build();
 
             String sql = ctx.render(q).sql();
             assertTrue(sql.contains("ORDER BY"), "must include ORDER BY");
@@ -218,7 +222,8 @@ public class SelectQueryRendererTest {
             var q = select(col("t", "c"))
                 .from(tbl("t"))
                 .orderBy(order("t", "c").asc())
-                .offset(12L);
+                .offset(12L)
+                .build();
 
             String sql = ctx.render(q).sql();
             assertTrue(sql.contains("ORDER BY"), "must include ORDER BY");
@@ -238,7 +243,8 @@ public class SelectQueryRendererTest {
 
             var q = select(col("t", "c"))
                 .from(tbl("t"))
-                .limit(4L);
+                .limit(4L)
+                .build();
 
             String sql = ctx.render(q).sql();
             // Allow both "SELECT TOP 4" and "SELECT DISTINCT TOP 4" if user sets distinct elsewhere.
@@ -254,7 +260,8 @@ public class SelectQueryRendererTest {
             var q = select(col("t", "c"))
                 .from(tbl("t"))
                 .limit(4L)
-                .offset(2L);
+                .offset(2L)
+                .build();
 
             UnsupportedOperationException ex = assertThrows(UnsupportedOperationException.class, () -> ctx.render(q));
             assertTrue(ex.getMessage().toLowerCase().contains("offset"), "message should mention OFFSET not supported");

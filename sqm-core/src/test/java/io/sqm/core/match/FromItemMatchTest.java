@@ -40,7 +40,7 @@ class FromItemMatchTest {
     @Test
     @DisplayName("Match table ref - query table")
     void matchQueryTableRef() {
-        FromItem item = tbl(select(col("*")).from(tbl("users"))).as("sub");
+        FromItem item = tbl(select(col("*")).from(tbl("users")).build()).as("sub");
 
         var result = Match.<String>join(item)
             .join(j -> "Join")

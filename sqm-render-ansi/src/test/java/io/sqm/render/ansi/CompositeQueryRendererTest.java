@@ -18,7 +18,8 @@ class CompositeQueryRendererTest {
 
     private static SelectQuery sel(String table, String alias, String... cols) {
         return select(Arrays.stream(cols).map(c -> col(alias, c)).toArray(ColumnExpr[]::new))
-            .from(tbl(table).as(alias));
+            .from(tbl(table).as(alias))
+            .build();
     }
 
     private static String render(CompositeQuery cq) {

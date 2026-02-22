@@ -1208,7 +1208,7 @@ public final class Dsl {
      * @param nodes a list of expressions to select.
      * @return a query.
      */
-    public static SelectQuery select(Node... nodes) {
+    public static SelectQueryBuilder select(Node... nodes) {
         return Query.select(nodes);
     }
 

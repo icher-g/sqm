@@ -33,7 +33,7 @@ class ModArithmeticExprRendererTest {
         // a % b   (or equivalent dialect-specific symbol)
         Expression expr = col("a").mod(col("b"));
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         // Adjust this if your AnsiDialect renders MOD as a function instead.
@@ -46,7 +46,7 @@ class ModArithmeticExprRendererTest {
         ArithmeticExpr inner = ModArithmeticExpr.of(col("a"), col("b"));
         ArithmeticExpr expr = ModArithmeticExpr.of(inner, col("c"));
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         assertEquals("SELECT MOD(MOD(a, b), c) FROM t", normalize(sql));
@@ -58,7 +58,7 @@ class ModArithmeticExprRendererTest {
         ArithmeticExpr inner = ModArithmeticExpr.of(col("b"), col("c"));
         ArithmeticExpr expr = ModArithmeticExpr.of(col("a"), inner);
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         assertEquals("SELECT MOD(a, MOD(b, c)) FROM t", normalize(sql));

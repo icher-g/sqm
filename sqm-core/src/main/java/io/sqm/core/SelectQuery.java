@@ -1,372 +1,122 @@
 package io.sqm.core;
 
-import io.sqm.core.internal.SelectQueryImpl;
 import io.sqm.core.walk.NodeVisitor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * A SELECT-style query.
+ *
+ * <p>This interface is immutable and exposes only read operations. Use
+ * {@link SelectQueryBuilder} (for example via {@link #builder()}) to construct
+ * or edit {@link SelectQuery} instances.</p>
  */
 public non-sealed interface SelectQuery extends Query {
 
-    /**
-     * Creates instance of the SELECT statement.
-     *
-     * @return new instance of SELECT query.
-     */
-    static SelectQuery of() {
-        return new SelectQueryImpl();
+    static SelectQuery of(
+        List<SelectItem> items,
+        TableRef from,
+        List<Join> joins,
+        Predicate where,
+        GroupBy groupBy,
+        Predicate having,
+        OrderBy orderBy,
+        DistinctSpec distinct,
+        LimitOffset limitOffset,
+        LockingClause lockFor,
+        List<WindowDef> windows) {
+        return new Impl(items, from, joins, where, groupBy, having, orderBy, distinct, limitOffset, lockFor, windows);
     }
 
     /**
-     * Gets a list of select items to be used in SELECT statement.
+     * Creates a mutable builder for constructing an immutable {@link SelectQuery}.
      *
-     * @return a list of select items.
+     * @return new select-query builder
+     */
+    static SelectQueryBuilder builder() {
+        return SelectQueryBuilder.of();
+    }
+
+    /**
+     * Gets a list of select items to be used in the SELECT clause.
+     *
+     * @return immutable list of select items
      */
     List<SelectItem> items();
 
     /**
-     * Adds items to the SELECT statement.
+     * Gets a table reference used in the FROM clause.
      *
-     * @param nodes an array of SELECT items.
-     * @return this.
-     */
-    default SelectQuery select(Node... nodes) {
-        var items = new ArrayList<SelectItem>();
-        for (var expr : nodes) {
-            switch (expr) {
-                case Expression expression -> items.add(expression.toSelectItem());
-                case SelectItem selectItem -> items.add(selectItem);
-                case Query query -> items.add(Expression.subquery(query).toSelectItem());
-                default -> throw new IllegalStateException("The provided node is not supported in the SELECT clause: " + expr);
-            }
-        }
-        return select(items);
-    }
-
-    /**
-     * Adds items to the SELECT statement.
-     *
-     * @param items a list of items.
-     * @return this.
-     */
-    SelectQuery select(List<SelectItem> items);
-
-    /**
-     * Gets a table reference used in a FROM statement.
-     *
-     * @return a table.
+     * @return table reference or {@code null}
      */
     TableRef from();
 
     /**
-     * Sets a table reference used in a FROM statement. The table can be a sub query.
-     *
-     * @param table a table reference.
-     * @return this.
-     */
-    SelectQuery from(TableRef table);
-
-    /**
      * Gets a list of joins.
      *
-     * @return a list of joins.
+     * @return immutable list of joins
      */
     List<Join> joins();
 
     /**
-     * Adds joins to the query.
+     * Gets a predicate used in the WHERE clause.
      *
-     * @param joins an array of joins.
-     * @return this.
-     */
-    default SelectQuery join(Join... joins) {
-        return join(List.of(joins));
-    }
-
-    /**
-     * Adds joins to the query.
-     *
-     * @param joins a list of joins.
-     * @return this.
-     */
-    SelectQuery join(List<Join> joins);
-
-    /**
-     * Gets a predicate to be used in a WHERE statement.
-     *
-     * @return a predicate.
+     * @return predicate or {@code null}
      */
     Predicate where();
 
     /**
-     * Sets a predicate to be used in a WHERE statement.
+     * Gets the GROUP BY clause.
      *
-     * @param predicate a predicate.
-     * @return this.
-     */
-    SelectQuery where(Predicate predicate);
-
-    /**
-     * Gets a list of GroupBy items.
-     *
-     * @return a list of group by items.
+     * @return group-by clause or {@code null}
      */
     GroupBy groupBy();
 
     /**
-     * Adds group by items to the query.
+     * Gets a predicate used in the HAVING clause.
      *
-     * @param items an array of group by items.
-     * @return this.
-     */
-    default SelectQuery groupBy(GroupItem... items) {
-        return groupBy(List.of(items));
-    }
-
-    /**
-     * Adds group by items to the query.
-     *
-     * @param items a list of group by items.
-     * @return this.
-     */
-    SelectQuery groupBy(List<GroupItem> items);
-
-    /**
-     * Gets a predicate to be used in a HAVING statement.
-     *
-     * @return a predicate.
+     * @return predicate or {@code null}
      */
     Predicate having();
 
     /**
-     * Sets a predicate to be used in a HAVING statement.
+     * Gets window definitions declared in the WINDOW clause.
      *
-     * @param predicate a predicate.
-     * @return this.
-     */
-    SelectQuery having(Predicate predicate);
-
-    /**
-     * Gets a list of WINDOW specifications if there is any or NULL otherwise.
-     * <p>Example of WINDOW specification:</p>
-     * <pre>
-     *     {@code
-     *      SELECT
-     *          dept,
-     *          emp_name,
-     *          salary,
-     *          RANK() OVER w1        AS dept_rank,
-     *          AVG(salary) OVER w2   AS overall_avg
-     *      FROM employees
-     *      WINDOW
-     *          w1 AS (PARTITION BY dept ORDER BY salary DESC),
-     *          w2 AS (ORDER BY salary DESC);
-     *     }
-     * </pre>
-     *
-     * @return a list of WINDOW specifications or NULL>
+     * @return immutable list of window definitions
      */
     List<WindowDef> windows();
 
     /**
-     * Adds WINDOW specification(s) to a query.
+     * Gets the ORDER BY clause.
      *
-     * @param windows a WINDOW specification(s).
-     * @return this.
+     * @return order-by clause or {@code null}
      */
-    default SelectQuery window(WindowDef... windows) {
-        return window(List.of(windows));
-    }
-
-    /**
-     * Adds WINDOW specifications to a query.
-     *
-     * @param windows a WINDOW specifications.
-     * @return this.
-     */
-    SelectQuery window(List<WindowDef> windows);
-
-    /**
-     * Gets a list of order by items.
-     *
-     * @return a list of oder by items.
-     */
-    OrderBy orderBy();             // null if absent
-
-    /**
-     * Adds order by items to the query.
-     *
-     * @param items an array of order by items.
-     * @return this.
-     */
-    default SelectQuery orderBy(OrderItem... items) {
-        return orderBy(List.of(items));
-    }
-
-    /**
-     * Adds order by items to the query.
-     *
-     * @param items a list of group by items.
-     * @return this.
-     */
-    SelectQuery orderBy(List<OrderItem> items);
+    OrderBy orderBy();
 
     /**
      * Returns the DISTINCT specification of this SELECT query.
-     *
-     * <p>If this method returns {@code null}, the query does not apply any DISTINCT
-     * semantics and behaves as a regular {@code SELECT}.</p>
-     *
-     * <p>If a {@link DistinctSpec} is present, its concrete implementation determines
-     * the exact behavior. ANSI renderers may treat any non-null {@link DistinctSpec}
-     * as plain {@code DISTINCT}, while dialect-specific renderers may apply more
-     * specialized semantics (for example, PostgreSQL {@code DISTINCT ON}).</p>
      *
      * @return DISTINCT specification, or {@code null} if not present
      */
     DistinctSpec distinct();
 
     /**
-     * Sets SELECT query with the given DISTINCT specification applied.
+     * Gets the limit/offset specification for this query.
      *
-     * <p>Passing {@code null} clears any existing DISTINCT specification.</p>
-     *
-     * <p>The concrete behavior of the DISTINCT clause is defined by the provided
-     * {@link DistinctSpec} implementation and interpreted by the target SQL dialect
-     * during rendering or validation.</p>
-     *
-     * @param spec DISTINCT specification to apply, or {@code null} to remove DISTINCT
-     * @return this.
-     */
-    SelectQuery distinct(DistinctSpec spec);
-
-
-    /**
-     * Sets SELECT query with the given DISTINCT ON specification provided by the list of expressions.
-     *
-     * @param items a list of expressions to be used in DISTINCT ON (e1, e2) clause.
-     * @return this.
-     */
-    default SelectQuery distinct(Expression... items) {
-        return distinct(List.of(items));
-    }
-
-    /**
-     * Sets SELECT query with the given DISTINCT ON specification provided by the list of expressions.
-     *
-     * @param items a list of expressions to be used in DISTINCT ON (e1, e2) clause.
-     * @return this.
-     */
-    SelectQuery distinct(List<Expression> items);
-
-    /**
-     * Gets a limit of the query if there is any or NULL otherwise.
-     *
-     * @return a value of the limit.
-     */
-    Expression limit();
-
-    /**
-     * Gets a limit/offset specification for this query.
-     *
-     * @return a limit/offset specification or {@code null} if absent.
+     * @return limit/offset specification or {@code null} if absent
      */
     LimitOffset limitOffset();
 
     /**
-     * Sets a limit/offset specification for this query.
-     *
-     * @param limitOffset a limit/offset specification or {@code null} to clear it.
-     * @return this.
-     */
-    SelectQuery limitOffset(LimitOffset limitOffset);
-
-    /**
-     * Sets the query limit.
-     *
-     * @param limit a limit.
-     * @return this.
-     */
-    SelectQuery limit(long limit);
-
-    /**
-     * Sets the query limit expression.
-     *
-     * @param limit a limit expression.
-     * @return this.
-     */
-    SelectQuery limit(Expression limit);
-
-    /**
-     * Gets an offset of the query if there is any or NULL otherwise.
-     *
-     * @return a value of the offset.
-     */
-    Expression offset();
-
-    /**
-     * Sets the query offset.
-     *
-     * @param offset an offset.
-     * @return this.
-     */
-    SelectQuery offset(long offset);
-
-    /**
-     * Sets the query offset expression.
-     *
-     * @param offset an offset expression.
-     * @return this.
-     */
-    SelectQuery offset(Expression offset);
-
-    /**
      * Returns the locking clause associated with this SELECT query.
      *
-     * <p>If present, the locking clause controls row-level locking behavior
-     * during query execution.</p>
-     *
-     * @return locking clause
+     * @return locking clause or {@code null}
      */
     LockingClause lockFor();
 
     /**
-     * Returns SELECT query with the given locking clause.
-     *
-     * <p>The locking clause replaces any existing locking clause.</p>
-     *
-     * @param lockingClause locking clause to apply
-     * @return this.
-     */
-    SelectQuery lockFor(LockingClause lockingClause);
-
-    /**
-     * Sets a locking clause based on the provided parameters.
-     *
-     * <p>This is a convenience method equivalent to creating a
-     * {@link LockingClause} via {@link LockingClause#of(LockMode, List, boolean, boolean)}
-     * and applying it to the query.</p>
-     *
-     * <p>Example:</p>
-     * <pre>
-     * select()
-     *     .lockFor(update(), ofTables("t1", "t2"), false, true);
-     * </pre>
-     *
-     * @param mode       lock mode
-     * @param ofTables   tables affected by the lock, empty list means all tables
-     * @param nowait     whether NOWAIT is specified
-     * @param skipLocked whether SKIP LOCKED is specified
-     * @return this.
-     */
-    SelectQuery lockFor(LockMode mode, List<LockTarget> ofTables, boolean nowait, boolean skipLocked);
-
-    /**
      * Accepts a {@link NodeVisitor} and dispatches control to the
-     * visitor method corresponding to the concrete subtype
+     * visitor method corresponding to the concrete subtype.
      *
      * @param v   the visitor instance to accept (must not be {@code null})
      * @param <R> the result type returned by the visitor
@@ -375,5 +125,27 @@ public non-sealed interface SelectQuery extends Query {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitSelectQuery(this);
+    }
+
+    /**
+     * Default immutable implementation of {@link SelectQuery}.
+     */
+    record Impl(List<SelectItem> items,
+                TableRef from,
+                List<Join> joins,
+                Predicate where,
+                GroupBy groupBy,
+                Predicate having,
+                OrderBy orderBy,
+                DistinctSpec distinct,
+                LimitOffset limitOffset,
+                LockingClause lockFor,
+                List<WindowDef> windows) implements SelectQuery {
+
+        public Impl {
+            items = List.copyOf(items);
+            joins = List.copyOf(joins);
+            windows = List.copyOf(windows);
+        }
     }
 }

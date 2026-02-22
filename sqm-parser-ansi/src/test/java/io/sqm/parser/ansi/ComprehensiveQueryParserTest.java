@@ -173,7 +173,7 @@ class ComprehensiveQueryParserTest {
         var query = result.value();
         assertInstanceOf(SelectQuery.class, query);
         SelectQuery select = (SelectQuery) query;
-        assertNotNull(select.limit());
+        assertNotNull(select.limitOffset().limit());
     }
 
     @Test
@@ -183,7 +183,7 @@ class ComprehensiveQueryParserTest {
         var query = result.value();
         assertInstanceOf(SelectQuery.class, query);
         SelectQuery select = (SelectQuery) query;
-        assertNotNull(select.offset());
+        assertNotNull(select.limitOffset().offset());
     }
 
     @Test
@@ -193,8 +193,8 @@ class ComprehensiveQueryParserTest {
         var query = result.value();
         assertInstanceOf(SelectQuery.class, query);
         SelectQuery select = (SelectQuery) query;
-        assertNotNull(select.limit());
-        assertNotNull(select.offset());
+        assertNotNull(select.limitOffset().limit());
+        assertNotNull(select.limitOffset().offset());
     }
 
     @Test

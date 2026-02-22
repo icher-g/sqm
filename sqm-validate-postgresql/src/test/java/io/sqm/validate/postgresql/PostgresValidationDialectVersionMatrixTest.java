@@ -21,6 +21,7 @@ import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PostgresValidationDialectVersionMatrixTest {
+    // Touch file to force test recompilation after Dsl.select(...) return-type refactor.
     private static final CatalogSchema SCHEMA = CatalogSchema.of(
         CatalogTable.of("public", "users",
             CatalogColumn.of("id", CatalogType.LONG),
@@ -61,64 +62,78 @@ class PostgresValidationDialectVersionMatrixTest {
     }
 
     private static Stream<Arguments> featureCases() {
-        var lateral = select(star()).from(tbl("users").lateral());
+        var lateral = select(star()).from(tbl("users").lateral()).build();
         var withOrdinality = select(star())
-            .from(tbl(func("unnest", arg(array(lit(1L))))).as("u").withOrdinality());
+            .from(tbl(func("unnest", arg(array(lit(1L))))).as("u").withOrdinality())
+            .build();
         var groupingSetsQuery = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .groupBy(groupingSets(group("u", "id")));
+            .groupBy(groupingSets(group("u", "id")))
+            .build();
         var cteMaterialized = with(
             cte(
                 "u",
-                select(col("id")).from(tbl("users")),
+                select(col("id")).from(tbl("users")).build(),
                 List.of("id"),
                 CteDef.Materialization.MATERIALIZED
             )
-        ).body(select(col("u", "id")).from(tbl("u").as("u")));
+        ).body(select(col("u", "id")).from(tbl("u").as("u")).build());
         var keyShareLock = select(star())
             .from(tbl("users").as("u"))
-            .lockFor(keyShare(), List.of(), false, false);
+            .lockFor(keyShare(), List.of(), false, false)
+            .build();
         var skipLocked = select(star())
             .from(tbl("users").as("u"))
-            .lockFor(update(), List.of(), false, true);
+            .lockFor(update(), List.of(), false, true)
+            .build();
         var customOperator = select(col("u", "id").op("~>", lit(1L)))
-            .from(tbl("users").as("u"));
+            .from(tbl("users").as("u"))
+            .build();
         var postgresTypecast = select(lit("1").cast(type("int")))
-            .from(tbl("users").as("u"));
+            .from(tbl("users").as("u"))
+            .build();
         var groupsFrame = select(
             func("sum", arg(col("u", "id")))
                 .over(over(orderBy(order(col("u", "id"))), groups(unboundedPreceding(), currentRow())))
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
         var excludeFrame = select(
             func("sum", arg(col("u", "id")))
                 .over(over(orderBy(order(col("u", "id"))), rows(unboundedPreceding(), currentRow()), excludeTies()))
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u"))
+            .build();
         var ilike = select(star())
             .from(tbl("users").as("u"))
-            .where(col("u", "name").ilike("%a%"));
+            .where(col("u", "name").ilike("%a%"))
+            .build();
         var similarTo = select(star())
             .from(tbl("users").as("u"))
-            .where(col("u", "name").similarTo("%(a|b)%"));
+            .where(col("u", "name").similarTo("%(a|b)%"))
+            .build();
         var regex = select(star())
             .from(tbl("users").as("u"))
-            .where(RegexPredicate.of(col("u", "name"), lit("^a"), false));
-        var tableOnly = select(star()).from(tbl("users").only().as("u"));
-        var tableDescendants = select(star()).from(tbl("users").includingDescendants().as("u"));
-        var arrayLiteral = select(array(lit(1L), lit(2L))).from(tbl("users").as("u"));
-        var arraySubscript = select(col("u", "name").at(1)).from(tbl("users").as("u"));
-        var arraySlice = select(col("u", "name").slice(1, 2)).from(tbl("users").as("u"));
-        var collateExpr = select(col("u", "name").collate("C")).from(tbl("users").as("u"));
-        var atTimeZoneExpr = select(col("u", "name").atTimeZone(lit("UTC"))).from(tbl("users").as("u"));
-        var powerExpr = select(col("u", "id").pow(2)).from(tbl("users").as("u"));
+            .where(RegexPredicate.of(col("u", "name"), lit("^a"), false))
+            .build();
+        var tableOnly = select(star()).from(tbl("users").only().as("u")).build();
+        var tableDescendants = select(star()).from(tbl("users").includingDescendants().as("u")).build();
+        var arrayLiteral = select(array(lit(1L), lit(2L))).from(tbl("users").as("u")).build();
+        var arraySubscript = select(col("u", "name").at(1)).from(tbl("users").as("u")).build();
+        var arraySlice = select(col("u", "name").slice(1, 2)).from(tbl("users").as("u")).build();
+        var collateExpr = select(col("u", "name").collate("C")).from(tbl("users").as("u")).build();
+        var atTimeZoneExpr = select(col("u", "name").atTimeZone(lit("UTC"))).from(tbl("users").as("u")).build();
+        var powerExpr = select(col("u", "id").pow(2)).from(tbl("users").as("u")).build();
         var isDistinctFromPredicate = select(star())
             .from(tbl("users").as("u"))
-            .where(col("u", "name").isDistinctFrom(lit("x")));
+            .where(col("u", "name").isDistinctFrom(lit("x")))
+            .build();
         var rollupQuery = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .groupBy(rollup(group("u", "id")));
+            .groupBy(rollup(group("u", "id")))
+            .build();
         var cubeQuery = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .groupBy(cube(group("u", "id")));
+            .groupBy(cube(group("u", "id")))
+            .build();
 
         return Stream.of(
             Arguments.of("ilike-unsupported-pg84", SqlDialectVersion.of(8, 4), ilike, true),
@@ -177,14 +192,18 @@ class PostgresValidationDialectVersionMatrixTest {
             select(col("i", "id"))
                 .from(tbl("users").as("i"))
                 .groupBy(groupingSets(group("i", "id")))
-        )).from(tbl("users").as("u"));
+                .build()
+        )).from(tbl("users").as("u"))
+            .build();
 
         var nestedAsQueryTable = select(star())
             .from(tbl(
                 select(col("i", "id"))
                     .from(tbl("users").as("i"))
                     .groupBy(groupingSets(group("i", "id")))
-            ).as("x"));
+                    .build()
+            ).as("x"))
+            .build();
 
         var nestedAsExists = select(star())
             .from(tbl("users").as("u"))
@@ -192,7 +211,9 @@ class PostgresValidationDialectVersionMatrixTest {
                 select(col("i", "id"))
                     .from(tbl("users").as("i"))
                     .groupBy(groupingSets(group("i", "id")))
-            ));
+                    .build()
+            ))
+            .build();
 
         return Stream.of(
             Arguments.of("nested-queryexpr-no-duplicate", nestedAsQueryExpr),

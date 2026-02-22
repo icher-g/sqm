@@ -19,9 +19,9 @@ class ParameterizeLiteralsTransformerTest {
 
         Node result = literal.accept(transformer);
         assertNotNull(result);
-        assertTrue(result instanceof ParamExpr);
+        assertInstanceOf(ParamExpr.class, result);
         assertEquals(1, transformer.values().size());
-        assertEquals(42, transformer.values().get(0));
+        assertEquals(42, transformer.values().getFirst());
     }
 
     @Test
@@ -31,21 +31,21 @@ class ParameterizeLiteralsTransformerTest {
 
         Node result = literal.accept(transformer);
         assertNotNull(result);
-        assertTrue(result instanceof ParamExpr);
+        assertInstanceOf(ParamExpr.class, result);
         assertEquals(1, transformer.values().size());
-        assertEquals("hello", transformer.values().get(0));
+        assertEquals("hello", transformer.values().getFirst());
     }
 
     @Test
     void parameterizeSingleNullLiteral() {
-        LiteralExpr literal = lit((Object) null);
+        LiteralExpr literal = lit(null);
         ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
 
         Node result = literal.accept(transformer);
         assertNotNull(result);
-        assertTrue(result instanceof ParamExpr);
+        assertInstanceOf(ParamExpr.class, result);
         assertEquals(1, transformer.values().size());
-        assertNull(transformer.values().get(0));
+        assertNull(transformer.values().getFirst());
     }
 
     @Test
@@ -55,9 +55,9 @@ class ParameterizeLiteralsTransformerTest {
 
         Node result = literal.accept(transformer);
         assertNotNull(result);
-        assertTrue(result instanceof ParamExpr);
+        assertInstanceOf(ParamExpr.class, result);
         assertEquals(1, transformer.values().size());
-        assertEquals(3.14, (Double) transformer.values().get(0), 0.001);
+        assertEquals(3.14, (Double) transformer.values().getFirst(), 0.001);
     }
 
     @Test
@@ -67,9 +67,9 @@ class ParameterizeLiteralsTransformerTest {
 
         Node result = literal.accept(transformer);
         assertNotNull(result);
-        assertTrue(result instanceof ParamExpr);
+        assertInstanceOf(ParamExpr.class, result);
         assertEquals(1, transformer.values().size());
-        assertEquals(true, transformer.values().get(0));
+        assertEquals(true, transformer.values().getFirst());
     }
 
     @Test
@@ -79,7 +79,7 @@ class ParameterizeLiteralsTransformerTest {
 
         Node result = expr.accept(transformer);
         assertNotNull(result);
-        assertTrue(result instanceof AddArithmeticExpr);
+        assertInstanceOf(AddArithmeticExpr.class, result);
 
         assertEquals(2, transformer.values().size());
         assertEquals(10, transformer.values().get(0));
@@ -93,7 +93,7 @@ class ParameterizeLiteralsTransformerTest {
 
         Node result = expr.accept(transformer);
         assertNotNull(result);
-        assertTrue(result instanceof SubArithmeticExpr);
+        assertInstanceOf(SubArithmeticExpr.class, result);
 
         assertEquals(2, transformer.values().size());
         assertEquals(100, transformer.values().get(0));
@@ -126,10 +126,10 @@ class ParameterizeLiteralsTransformerTest {
 
         Node result = pred.accept(transformer);
         assertNotNull(result);
-        assertTrue(result instanceof ComparisonPredicate);
+        assertInstanceOf(ComparisonPredicate.class, result);
 
         assertEquals(1, transformer.values().size());
-        assertEquals(42, transformer.values().get(0));
+        assertEquals(42, transformer.values().getFirst());
     }
 
     @Test
@@ -155,7 +155,7 @@ class ParameterizeLiteralsTransformerTest {
 
         Node result = pred.accept(transformer);
         assertNotNull(result);
-        assertTrue(result instanceof BetweenPredicate);
+        assertInstanceOf(BetweenPredicate.class, result);
 
         assertEquals(2, transformer.values().size());
         assertEquals(18, transformer.values().get(0));
@@ -169,7 +169,7 @@ class ParameterizeLiteralsTransformerTest {
 
         Node result = pred.accept(transformer);
         assertNotNull(result);
-        assertTrue(result instanceof InPredicate);
+        assertInstanceOf(InPredicate.class, result);
 
         assertEquals(2, transformer.values().size());
         assertEquals("active", transformer.values().get(0));
@@ -183,10 +183,10 @@ class ParameterizeLiteralsTransformerTest {
 
         Node result = func.accept(transformer);
         assertNotNull(result);
-        assertTrue(result instanceof FunctionExpr);
+        assertInstanceOf(FunctionExpr.class, result);
 
         assertEquals(1, transformer.values().size());
-        assertEquals(" ", transformer.values().get(0));
+        assertEquals(" ", transformer.values().getFirst());
     }
 
     @Test
@@ -198,7 +198,7 @@ class ParameterizeLiteralsTransformerTest {
         ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
         Node result = caseExpr.accept(transformer);
         assertNotNull(result);
-        assertTrue(result instanceof CaseExpr);
+        assertInstanceOf(CaseExpr.class, result);
 
         assertEquals(2, transformer.values().size());
         assertEquals("active", transformer.values().get(0));
@@ -209,7 +209,8 @@ class ParameterizeLiteralsTransformerTest {
     void parameterizeLiteralsInSelectQuery() {
         SelectQuery query = select(col("id"), lit(42).as("constant"))
             .from(tbl("users"))
-            .where(col("age").gte(lit(18)));
+            .where(col("age").gte(lit(18)))
+            .build();
 
         ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
         Node result = query.accept(transformer);
@@ -227,7 +228,7 @@ class ParameterizeLiteralsTransformerTest {
 
         Node result = col.accept(transformer);
         assertNotNull(result);
-        assertTrue(result instanceof ColumnExpr);
+        assertInstanceOf(ColumnExpr.class, result);
         assertEquals("user_id", ((ColumnExpr) result).name());
     }
 
@@ -249,7 +250,7 @@ class ParameterizeLiteralsTransformerTest {
 
     @Test
     void orderingOfParametersMatchesEncounterOrder() {
-        SelectQuery query = select(lit("a"), lit("b"), lit("c")).from(tbl("t"));
+        SelectQuery query = select(lit("a"), lit("b"), lit("c")).from(tbl("t")).build();
         ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
 
         query.accept(transformer);
@@ -267,6 +268,7 @@ class ParameterizeLiteralsTransformerTest {
         literal.accept(transformer);
 
         var list = transformer.values();
+        //noinspection DataFlowIssue
         assertThrows(UnsupportedOperationException.class, () -> list.add(100));
     }
 }

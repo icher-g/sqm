@@ -171,6 +171,7 @@ final class SqmJavaEmitter {
             if (q.lockFor() != null) {
                 sb.append("\n.lockFor(").append(emitLockingClauseArgs(q.lockFor())).append(")");
             }
+            sb.append("\n.build()");
             return sb.toString();
         }
 

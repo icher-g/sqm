@@ -221,7 +221,7 @@ class AtomicPredicateParserTest {
         @Override
         public ParseResult<? extends ExistsPredicate> parse(Cursor cur, ParseContext ctx) {
             cur.expect("Expected EXISTS", TokenType.EXISTS);
-            return ParseResult.ok(ExistsPredicate.of(Query.select(Expression.literal(1)), false));
+            return ParseResult.ok(ExistsPredicate.of(Query.select(Expression.literal(1)).build(), false));
         }
 
         @Override
@@ -282,7 +282,7 @@ class AtomicPredicateParserTest {
                 quantifier = Quantifier.ALL;
             }
             cur.expect("Expected subquery marker", TokenType.IDENT);
-            return ParseResult.ok(AnyAllPredicate.of(lhs, ComparisonOperator.EQ, Query.select(Expression.literal(1)), quantifier));
+            return ParseResult.ok(AnyAllPredicate.of(lhs, ComparisonOperator.EQ, Query.select(Expression.literal(1)).build(), quantifier));
         }
 
         @Override

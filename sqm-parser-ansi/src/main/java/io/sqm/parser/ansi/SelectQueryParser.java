@@ -23,7 +23,7 @@ public class SelectQueryParser implements Parser<SelectQuery> {
         // SELECT
         cur.expect("Expected SELECT at the beginning of a query", TokenType.SELECT);
 
-        var q = SelectQuery.of();
+        var q = SelectQuery.builder();
 
         // DISTINCT
         if (cur.match(TokenType.DISTINCT)) {
@@ -135,7 +135,7 @@ public class SelectQueryParser implements Parser<SelectQuery> {
             q.lockFor(lockFor.value());
         }
 
-        return ok(q);
+        return ok(q.build());
     }
 
     /**

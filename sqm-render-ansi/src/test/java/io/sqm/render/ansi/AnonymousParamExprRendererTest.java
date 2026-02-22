@@ -23,7 +23,7 @@ class AnonymousParamExprRendererTest {
     @Test
     @DisplayName("Anonymous parameter renders as question mark")
     void anonymous_param_renders_as_question_mark() {
-        var query = select(param()).from(tbl("users"));
+        var query = select(param()).from(tbl("users")).build();
         String result = normalize(ctx.render(query).sql());
         assertTrue(result.contains("?"));
     }
@@ -31,7 +31,7 @@ class AnonymousParamExprRendererTest {
     @Test
     @DisplayName("Multiple anonymous parameters")
     void multiple_anonymous_params() {
-        var query = select(param(), param(), param()).from(tbl("users"));
+        var query = select(param(), param(), param()).from(tbl("users")).build();
         String result = normalize(ctx.render(query).sql());
         // Count question marks
         int count = 0;
@@ -44,7 +44,7 @@ class AnonymousParamExprRendererTest {
     @Test
     @DisplayName("Anonymous parameter in WHERE clause")
     void anonymous_param_in_where() {
-        var query = select(param()).from(tbl("users")).where(param().eq(5));
+        var query = select(param()).from(tbl("users")).where(param().eq(5)).build();
         String result = normalize(ctx.render(query).sql());
         // Should contain multiple question marks
         int count = 0;

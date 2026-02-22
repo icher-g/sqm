@@ -10,13 +10,13 @@ class QueryTest {
 
     @Test
     void select() {
-        assertInstanceOf(SelectQuery.class, Query.select(Expression.literal(1)));
+        assertInstanceOf(SelectQuery.class, Query.select(Expression.literal(1)).build());
     }
 
     @Test
     void compose() {
-        var query1 = Query.select(Expression.literal(1));
-        var query2 = Query.select(Expression.literal(2));
+        var query1 = Query.select(Expression.literal(1)).build();
+        var query2 = Query.select(Expression.literal(2)).build();
         var composedQuery = Query.compose(List.of(query1, query2), List.of(SetOperator.UNION));
         assertInstanceOf(CompositeQuery.class, composedQuery);
         assertEquals(2, composedQuery.terms().size());
@@ -34,22 +34,22 @@ class QueryTest {
     @Test
     void cte() {
         assertInstanceOf(CteDef.class, Query.cte("name"));
-        assertInstanceOf(CteDef.class, Query.cte("name", Query.select(Expression.literal(1))));
-        assertInstanceOf(CteDef.class, Query.cte("name", Query.select(Expression.literal(1)), List.of("a")));
+        assertInstanceOf(CteDef.class, Query.cte("name", Query.select(Expression.literal(1)).build()));
+        assertInstanceOf(CteDef.class, Query.cte("name", Query.select(Expression.literal(1)).build(), List.of("a")));
     }
 
     @Test
     void with() {
         var cte = Query.cte("name");
-        var query = Query.select(Expression.literal(1));
+        var query = Query.select(Expression.literal(1)).build();
         assertInstanceOf(WithQuery.class, Query.with(List.of(cte), query));
         assertInstanceOf(WithQuery.class, Query.with(List.of(cte), query, true));
     }
 
     @Test
     void union() {
-        var query1 = Query.select(Expression.literal(1));
-        var query2 = Query.select(Expression.literal(2));
+        var query1 = Query.select(Expression.literal(1)).build();
+        var query2 = Query.select(Expression.literal(2)).build();
         var composedQuery = query1.union(query2);
         assertInstanceOf(CompositeQuery.class, composedQuery);
         assertEquals(SetOperator.UNION, composedQuery.ops().getFirst());
@@ -57,8 +57,8 @@ class QueryTest {
 
     @Test
     void unionAll() {
-        var query1 = Query.select(Expression.literal(1));
-        var query2 = Query.select(Expression.literal(2));
+        var query1 = Query.select(Expression.literal(1)).build();
+        var query2 = Query.select(Expression.literal(2)).build();
         var composedQuery = query1.unionAll(query2);
         assertInstanceOf(CompositeQuery.class, composedQuery);
         assertEquals(SetOperator.UNION_ALL, composedQuery.ops().getFirst());
@@ -66,8 +66,8 @@ class QueryTest {
 
     @Test
     void intersect() {
-        var query1 = Query.select(Expression.literal(1));
-        var query2 = Query.select(Expression.literal(2));
+        var query1 = Query.select(Expression.literal(1)).build();
+        var query2 = Query.select(Expression.literal(2)).build();
         var composedQuery = query1.intersect(query2);
         assertInstanceOf(CompositeQuery.class, composedQuery);
         assertEquals(SetOperator.INTERSECT, composedQuery.ops().getFirst());
@@ -75,8 +75,8 @@ class QueryTest {
 
     @Test
     void intersectAll() {
-        var query1 = Query.select(Expression.literal(1));
-        var query2 = Query.select(Expression.literal(2));
+        var query1 = Query.select(Expression.literal(1)).build();
+        var query2 = Query.select(Expression.literal(2)).build();
         var composedQuery = query1.intersectAll(query2);
         assertInstanceOf(CompositeQuery.class, composedQuery);
         assertEquals(SetOperator.INTERSECT_ALL, composedQuery.ops().getFirst());
@@ -84,8 +84,8 @@ class QueryTest {
 
     @Test
     void except() {
-        var query1 = Query.select(Expression.literal(1));
-        var query2 = Query.select(Expression.literal(2));
+        var query1 = Query.select(Expression.literal(1)).build();
+        var query2 = Query.select(Expression.literal(2)).build();
         var composedQuery = query1.except(query2);
         assertInstanceOf(CompositeQuery.class, composedQuery);
         assertEquals(SetOperator.EXCEPT, composedQuery.ops().getFirst());
@@ -93,8 +93,8 @@ class QueryTest {
 
     @Test
     void exceptAll() {
-        var query1 = Query.select(Expression.literal(1));
-        var query2 = Query.select(Expression.literal(2));
+        var query1 = Query.select(Expression.literal(1)).build();
+        var query2 = Query.select(Expression.literal(2)).build();
         var composedQuery = query1.exceptAll(query2);
         assertInstanceOf(CompositeQuery.class, composedQuery);
         assertEquals(SetOperator.EXCEPT_ALL, composedQuery.ops().getFirst());
@@ -102,8 +102,8 @@ class QueryTest {
 
     @Test
     void maybeSelect() {
-        Query query1 = Query.select(Expression.literal(1));
-        Query query2 = Query.select(Expression.literal(2));
+        Query query1 = Query.select(Expression.literal(1)).build();
+        Query query2 = Query.select(Expression.literal(2)).build();
         assertTrue(query1.<Boolean>matchQuery().select(s -> true).orElse(false));
         assertFalse(query1.union(query2).<Boolean>matchQuery().select(s -> true).orElse(false));
     }
@@ -111,15 +111,15 @@ class QueryTest {
     @Test
     void maybeWith() {
         var cte = Query.cte("name");
-        var query = Query.select(Expression.literal(1));
+        var query = Query.select(Expression.literal(1)).build();
         assertTrue(Query.with(List.of(cte), query).<Boolean>matchQuery().with(w -> true).orElse(false));
         assertFalse(query.<Boolean>matchQuery().with(w -> true).orElse(false));
     }
 
     @Test
     void maybeComposite() {
-        Query query1 = Query.select(Expression.literal(1));
-        Query query2 = Query.select(Expression.literal(2));
+        Query query1 = Query.select(Expression.literal(1)).build();
+        Query query2 = Query.select(Expression.literal(2)).build();
         assertTrue(query1.union(query2).<Boolean>matchQuery().composite(c -> true).orElse(false));
         assertFalse(query1.<Boolean>matchQuery().composite(c -> true).orElse(false));
     }

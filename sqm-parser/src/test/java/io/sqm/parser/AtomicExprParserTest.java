@@ -281,7 +281,7 @@ class AtomicExprParserTest {
         @Override
         public ParseResult<? extends QueryExpr> parse(Cursor cur, ParseContext ctx) {
             cur.expect("Expected subquery marker", TokenType.IDENT);
-            return ParseResult.ok(QueryExpr.of(Query.select(Expression.literal(1))));
+            return ParseResult.ok(QueryExpr.of(Query.select(Expression.literal(1)).build()));
         }
 
         @Override

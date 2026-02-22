@@ -29,7 +29,8 @@ public final class AnalyticsQueries {
         return select(
           func("row_number").over(over(partition(col("dept")), orderBy(order(col("salary")).desc()))).as("rn")
         )
-        .from(tbl("employees"));
+        .from(tbl("employees"))
+        .build();
     }
 
     /**

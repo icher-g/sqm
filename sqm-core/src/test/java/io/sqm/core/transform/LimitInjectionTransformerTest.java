@@ -10,49 +10,50 @@ class LimitInjectionTransformerTest {
 
     @Test
     void injects_limit_when_absent() {
-        SelectQuery query = select(col("u", "id")).from(tbl("users").as("u"));
+        SelectQuery query = select(col("u", "id")).from(tbl("users").as("u")).build();
 
         var transformed = (SelectQuery) LimitInjectionTransformer.of(100).apply(query);
 
-        assertEquals(100L, ((LiteralExpr) transformed.limit()).value());
-        assertNull(transformed.offset());
+        assertEquals(100L, ((LiteralExpr) transformed.limitOffset().limit()).value());
+        assertNull(transformed.limitOffset().offset());
     }
 
     @Test
     void keeps_existing_limit_unchanged() {
-        SelectQuery query = select(col("u", "id")).from(tbl("users").as("u")).limit(10);
+        SelectQuery query = select(col("u", "id")).from(tbl("users").as("u")).limit(10).build();
 
         var transformed = (SelectQuery) LimitInjectionTransformer.of(100).apply(query);
 
-        assertEquals(10L, ((LiteralExpr) transformed.limit()).value());
+        assertEquals(10L, ((LiteralExpr) transformed.limitOffset().limit()).value());
     }
 
     @Test
     void injects_limit_and_preserves_offset() {
-        SelectQuery query = select(col("u", "id")).from(tbl("users").as("u")).offset(5);
+        SelectQuery query = select(col("u", "id")).from(tbl("users").as("u")).offset(5).build();
 
         var transformed = (SelectQuery) LimitInjectionTransformer.of(100).apply(query);
 
-        assertEquals(100L, ((LiteralExpr) transformed.limit()).value());
-        assertEquals(5L, ((LiteralExpr) transformed.offset()).value());
+        assertEquals(100L, ((LiteralExpr) transformed.limitOffset().limit()).value());
+        assertEquals(5L, ((LiteralExpr) transformed.limitOffset().offset()).value());
     }
 
     @Test
     void does_not_override_limit_all() {
         SelectQuery query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .limitOffset(LimitOffset.all());
+            .limitOffset(LimitOffset.all())
+            .build();
 
         var transformed = (SelectQuery) LimitInjectionTransformer.of(100).apply(query);
 
         assertSame(query, transformed);
         assertTrue(transformed.limitOffset().limitAll());
-        assertNull(transformed.limit());
+        assertNull(transformed.limitOffset().limit());
     }
 
     @Test
     void injects_into_composite_query_when_absent() {
-        CompositeQuery query = select(lit(1)).union(select(lit(2)));
+        CompositeQuery query = select(lit(1)).build().union(select(lit(2)).build());
 
         var transformed = (CompositeQuery) LimitInjectionTransformer.of(50).apply(query);
 
@@ -61,13 +62,13 @@ class LimitInjectionTransformerTest {
 
     @Test
     void injects_into_with_query_body() {
-        Query query = with(Query.cte("u", select(lit(1)))).body(select(lit(1)));
+        Query query = with(Query.cte("u", select(lit(1)).build())).body(select(lit(1)).build());
 
         var transformed = LimitInjectionTransformer.of(25).apply(query);
 
         var withQuery = (WithQuery) transformed;
         var body = (SelectQuery) withQuery.body();
-        assertEquals(25L, ((LiteralExpr) body.limit()).value());
+        assertEquals(25L, ((LiteralExpr) body.limitOffset().limit()).value());
     }
 
     @Test

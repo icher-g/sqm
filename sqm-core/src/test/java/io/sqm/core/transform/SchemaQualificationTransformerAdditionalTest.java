@@ -21,7 +21,7 @@ class SchemaQualificationTransformerAdditionalTest {
 
     @Test
     void unresolved_table_stays_unchanged() {
-        SelectQuery query = select(col("id")).from(tbl("users"));
+        SelectQuery query = select(col("id")).from(tbl("users")).build();
         var transformer = SchemaQualificationTransformer.of(t -> TableQualification.unresolved());
 
         var transformed = (SelectQuery) transformer.apply(query);
@@ -31,9 +31,9 @@ class SchemaQualificationTransformerAdditionalTest {
 
     @Test
     void recursive_cte_reference_in_body_is_not_qualified() {
-        Query query = with(Query.cte("chain", select(col("id")).from(tbl("chain"))))
+        Query query = with(Query.cte("chain", select(col("id")).from(tbl("chain")).build()))
             .recursive(true)
-            .body(select(col("id")).from(tbl("chain")));
+            .body(select(col("id")).from(tbl("chain")).build());
 
         var transformer = SchemaQualificationTransformer.of(t -> TableQualification.qualified("app"));
         var transformed = (WithQuery) transformer.apply(query);

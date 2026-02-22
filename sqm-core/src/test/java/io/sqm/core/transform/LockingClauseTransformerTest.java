@@ -55,7 +55,8 @@ class LockingClauseTransformerTest {
     void transformerAppliedToQuery() {
         var query = select(col("*"))
             .from(tbl("users"))
-            .lockFor(update(), List.of(), false, false);
+            .lockFor(update(), List.of(), false, false)
+            .build();
         
         var transformer = new LockModeTransformer();
         var transformedQuery = (SelectQuery) transformer.transform(query);
@@ -68,7 +69,8 @@ class LockingClauseTransformerTest {
     @DisplayName("Transformer preserves query without locking clause")
     void transformerPreservesQueryWithoutLocking() {
         var query = select(col("*"))
-            .from(tbl("users"));
+            .from(tbl("users"))
+            .build();
         
         var transformer = new LockModeTransformer();
         var transformedQuery = (SelectQuery) transformer.transform(query);

@@ -27,7 +27,7 @@ class AnyAllPredicateRendererTest {
     @Test
     @DisplayName("ANY quantifier renders ANY with subquery")
     void rendersAny() {
-        var subquery = select(lit(1)).from(tbl("nums"));
+        var subquery = select(lit(1)).from(tbl("nums")).build();
         var predicate = AnyAllPredicate.of(col("a"), ComparisonOperator.EQ, subquery, Quantifier.ANY);
 
         String sql = render(predicate);
@@ -39,7 +39,7 @@ class AnyAllPredicateRendererTest {
     @Test
     @DisplayName("ALL quantifier renders ALL with subquery")
     void rendersAll() {
-        var subquery = select(lit(1)).from(tbl("nums"));
+        var subquery = select(lit(1)).from(tbl("nums")).build();
         var predicate = AnyAllPredicate.of(col("a"), ComparisonOperator.EQ, subquery, Quantifier.ALL);
 
         String sql = render(predicate);

@@ -34,7 +34,8 @@ class CteDefRendererTest {
     @DisplayName("CTE materialized renders in PostgreSQL")
     void cte_materialized_renders() {
         var q = select(col("u", "id"))
-            .from(tbl("users").as("u"));
+            .from(tbl("users").as("u"))
+            .build();
         var cte = cte("u_cte", q).materialization(CteDef.Materialization.MATERIALIZED);
         var sql = normalize(render(cte));
         assertTrue(sql.startsWith("u_cte AS MATERIALIZED ("));
@@ -44,7 +45,8 @@ class CteDefRendererTest {
     @DisplayName("CTE not materialized renders in PostgreSQL")
     void cte_not_materialized_renders() {
         var q = select(col("u", "id"))
-            .from(tbl("users").as("u"));
+            .from(tbl("users").as("u"))
+            .build();
         var cte = cte("u_cte", q).materialization(CteDef.Materialization.NOT_MATERIALIZED);
         var sql = normalize(render(cte));
         assertTrue(sql.startsWith("u_cte AS NOT MATERIALIZED ("));

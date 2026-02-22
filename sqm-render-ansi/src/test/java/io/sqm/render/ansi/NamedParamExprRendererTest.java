@@ -27,7 +27,7 @@ class NamedParamExprRendererTest {
     @DisplayName("Named parameter renders as question mark (ANSI limitation)")
     void named_param_renders_as_question_mark() {
         var param = Dsl.param("userId");
-        var query = select(param).from(tbl("users"));
+        var query = select(param).from(tbl("users")).build();
         String result = normalize(ctx.render(query).sql());
         assertTrue(result.contains("?"), "Named parameters render as ? in ANSI");
     }
@@ -36,7 +36,8 @@ class NamedParamExprRendererTest {
     @DisplayName("Multiple named parameters all render as question marks")
     void multiple_named_params() {
         var query = select(Dsl.param("id"), Dsl.param("name"))
-            .from(tbl("users"));
+            .from(tbl("users"))
+            .build();
         String result = normalize(ctx.render(query).sql());
         int count = 0;
         for (char c : result.toCharArray()) {
@@ -49,7 +50,7 @@ class NamedParamExprRendererTest {
     @DisplayName("Named parameter in WHERE clause")
     void named_param_in_where() {
         var param = Dsl.param("status");
-        var query = select(param).from(tbl("users"));
+        var query = select(param).from(tbl("users")).build();
         String result = normalize(ctx.render(query).sql());
         assertTrue(result.contains("?"));
     }

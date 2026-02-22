@@ -42,7 +42,8 @@ public final class ReportingQueries {
         .having(func("count", starArg()).gt(lit(1L)))
         .orderBy(order(func("sum", arg(col("o", "amount")))).desc().nullsLast(), order(col("u", "id")).asc())
         .limitOffset(limitOffset(lit(100L), lit(10L)))
-        .lockFor(update(), ofTables("u", "o"), false, true);
+        .lockFor(update(), ofTables("u", "o"), false, true)
+        .build();
     }
 
     /**

@@ -31,7 +31,8 @@ class LockingClauseVisitorTest {
     void visitorInSelectQuery() {
         var query = select(col("*"))
             .from(tbl("users"))
-            .lockFor(update(), List.of(), false, false);
+            .lockFor(update(), List.of(), false, false)
+            .build();
         
         var visitor = new CountingVisitor();
         query.accept(visitor);
@@ -93,7 +94,8 @@ class LockingClauseVisitorTest {
     @DisplayName("Query without locking clause does not visit locking clause")
     void queryWithoutLockingClause() {
         var query = select(col("*"))
-            .from(tbl("users"));
+            .from(tbl("users"))
+            .build();
         
         var visitor = new CountingVisitor();
         query.accept(visitor);

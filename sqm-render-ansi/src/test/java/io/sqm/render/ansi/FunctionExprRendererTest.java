@@ -137,7 +137,7 @@ class FunctionExprRendererTest {
             func("lower", arg(
                 kase(when(col("u", "flag").gt(0)).then(col("u", "name")))
             )).as("ln")
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u")).build();
 
         String sql = render(q);
         assertTrue(sql.toLowerCase().contains("lower(case when u.flag > 0 then u.name end)"),
@@ -146,11 +146,11 @@ class FunctionExprRendererTest {
 
     @Test
     void coalesce_with_scalar_subquery_argument_renders() {
-        var sub = select(func("max", arg(col("t", "v")))).from(tbl("t"));
+        var sub = select(func("max", arg(col("t", "v")))).from(tbl("t")).build();
 
         var q = select(
             func("coalesce", arg(expr(sub)), arg(lit(0))).as("mx")
-        ).from(tbl("dual"));
+        ).from(tbl("dual")).build();
 
         String sql = norm(render(q).stripIndent().toLowerCase());
         assertTrue(sql.matches(".*coalesce\\s*\\(\\s*\\(\\s*select\\b.*max\\s*\\(t\\.v\\)\\s*from\\s*t\\s*\\)\\s*,\\s*0\\s*\\).*"),
@@ -161,7 +161,7 @@ class FunctionExprRendererTest {
     void count_star_renders() {
         var q = select(
             func("count", starArg()).as("cnt")
-        ).from(tbl("users"));
+        ).from(tbl("users")).build();
 
         String sql = norm(render(q)).toLowerCase();
         assertTrue(sql.contains("count(*)"), "Expected COUNT(*), got: " + sql);
@@ -174,7 +174,7 @@ class FunctionExprRendererTest {
                 arg(func("lower", arg(col("u", "name")))),
                 arg(lit("N/A"))
             ).as("val")
-        ).from(tbl("users").as("u"));
+        ).from(tbl("users").as("u")).build();
 
         String sql = norm(render(q)).toLowerCase();
         assertTrue(sql.contains("coalesce(lower(u.name), 'n/a')"),

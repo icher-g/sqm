@@ -33,7 +33,7 @@ class SubArithmeticExprRendererTest {
         // a - b
         Expression expr = col("a").sub(col("b"));
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         assertEquals("SELECT a - b FROM t", normalize(sql));
@@ -45,7 +45,7 @@ class SubArithmeticExprRendererTest {
         ArithmeticExpr inner = SubArithmeticExpr.of(col("a"), col("b"));
         ArithmeticExpr expr = SubArithmeticExpr.of(inner, col("c"));
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         assertEquals("SELECT (a - b) - c FROM t", normalize(sql));
@@ -57,7 +57,7 @@ class SubArithmeticExprRendererTest {
         ArithmeticExpr inner = SubArithmeticExpr.of(col("b"), col("c"));
         ArithmeticExpr expr = SubArithmeticExpr.of(col("a"), inner);
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         assertEquals("SELECT a - (b - c) FROM t", normalize(sql));

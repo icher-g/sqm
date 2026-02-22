@@ -62,7 +62,8 @@ public class ComprehensiveIntegrationJsonTest {
                     .and(col("name").like("%Phone%"))
             )
             .orderBy(order("total_amount").desc())
-            .limit(100L);
+            .limit(100L)
+            .build();
 
         var back = roundTrip(query);
 
@@ -128,7 +129,8 @@ public class ComprehensiveIntegrationJsonTest {
                     ),
                     col("title").ilike("%important%")
                 )
-            );
+            )
+            .build();
 
         var back = roundTrip(query);
 
@@ -185,7 +187,8 @@ public class ComprehensiveIntegrationJsonTest {
             .where(
                 col("balance").add(col("adjustment")).between(ParamExpr.named("min"), ParamExpr.named("max"))
                     .and(col("account_type").notLike("TEST_%"))
-            );
+            )
+            .build();
 
         var back = roundTrip(query);
 
@@ -262,7 +265,8 @@ public class ComprehensiveIntegrationJsonTest {
             .groupBy(group(col("category")))
             .having(
                 func("sum", arg(col("price").mul(col("quantity")))).gt(ParamExpr.named("min_revenue"))
-            );
+            )
+            .build();
 
         var back = roundTrip(query);
 
@@ -349,7 +353,8 @@ public class ComprehensiveIntegrationJsonTest {
             )
             .orderBy(order(col("id")).asc())
             .limit(50L)
-            .offset(10L);
+            .offset(10L)
+            .build();
 
         var back = roundTrip(query);
 
@@ -359,8 +364,8 @@ public class ComprehensiveIntegrationJsonTest {
         assertNotNull(back.from());
         assertNotNull(back.where());
         assertNotNull(back.orderBy());
-        assertNotNull(back.limit());
-        assertNotNull(back.offset());
+        assertNotNull(back.limitOffset().limit());
+        assertNotNull(back.limitOffset().offset());
 
         // Verify each SELECT item type
         assertInstanceOf(ColumnExpr.class, ((ExprSelectItem) back.items().get(0)).expr());
@@ -415,7 +420,8 @@ public class ComprehensiveIntegrationJsonTest {
             .where(
                 complexExpr.gt(ParamExpr.named("threshold"))
                     .and(col("description").like("%calculation%"))
-            );
+            )
+            .build();
 
         var back = roundTrip(query);
 
@@ -451,7 +457,8 @@ public class ComprehensiveIntegrationJsonTest {
                     .and(col("role").eq(ParamExpr.anonymous()))
                     .and(col("status").eq(ParamExpr.named("status")))
                     .and(col("created_at").gt(ParamExpr.ordinal(3)))
-            );
+            )
+            .build();
 
         var back = roundTrip(query);
 
@@ -481,7 +488,8 @@ public class ComprehensiveIntegrationJsonTest {
             .where(
                 col("name").like("%test%")
                     .and(col("count").gt(ParamExpr.named("minCount")))
-            );
+            )
+            .build();
 
         String json = mapper.writeValueAsString(query);
 

@@ -187,7 +187,7 @@ class LockingClauseParserTest {
         assertTrue(qResult.ok());
         var query = assertInstanceOf(SelectQuery.class, qResult.value());
         assertNotNull(query.orderBy());
-        assertNotNull(query.limit());
+        assertNotNull(query.limitOffset().limit());
         assertNotNull(query.lockFor());
     }
 

@@ -34,7 +34,8 @@ class QueryTableRendererTest {
      */
     private SelectQuery makeSimpleQuery() {
         return select(col("u", "id"), col("u", "name"))
-            .from(tbl("users").as("u"));
+            .from(tbl("users").as("u"))
+            .build();
     }
 
     // --- Tests ---------------------------------------------------------------

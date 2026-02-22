@@ -31,7 +31,8 @@ class GroupByRendererTest {
                 group("a"),
                 groupingSet(group("a"), group("b")),
                 groupingSet()
-            ));
+            ))
+            .build();
 
         String result = render(query);
         assertEquals("SELECT a, count(b) FROM t GROUP BY GROUPING SETS (a, (a, b), ())", result);
@@ -42,7 +43,8 @@ class GroupByRendererTest {
     void rendersRollup() {
         var query = select(col("a"), func("count", arg(col("b"))))
             .from(tbl("t"))
-            .groupBy(rollup(group("a"), group("b")));
+            .groupBy(rollup(group("a"), group("b")))
+            .build();
 
         String result = render(query);
         assertEquals("SELECT a, count(b) FROM t GROUP BY ROLLUP (a, b)", result);
@@ -53,7 +55,8 @@ class GroupByRendererTest {
     void rendersCube() {
         var query = select(col("a"), func("count", arg(col("b"))))
             .from(tbl("t"))
-            .groupBy(cube(group("a"), group("b")));
+            .groupBy(cube(group("a"), group("b")))
+            .build();
 
         String result = render(query);
         assertEquals("SELECT a, count(b) FROM t GROUP BY CUBE (a, b)", result);

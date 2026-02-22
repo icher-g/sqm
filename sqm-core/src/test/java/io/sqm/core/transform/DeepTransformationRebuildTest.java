@@ -77,7 +77,7 @@ public class DeepTransformationRebuildTest {
                         .and(
                             col("o", "flag").isNull()
                                 .or(col("o", "code").like("%ZZ%"))
-                                .or(col("o", "user").all(ComparisonOperator.EQ, select(lit(1))))
+                                .or(col("o", "user").all(ComparisonOperator.EQ, select(lit(1)).build()))
                         )
                 )
                 .groupBy(group("u", "user_name"), group("o", "user_status"))
@@ -90,7 +90,8 @@ public class DeepTransformationRebuildTest {
                 )
                 .orderBy(order(col("o", "status")).desc())
                 .limit(100)
-                .offset(10);
+                .offset(10)
+                .build();
 
         var transformer = new RenameAnyColumn();
         var newQuery = q.accept(transformer);

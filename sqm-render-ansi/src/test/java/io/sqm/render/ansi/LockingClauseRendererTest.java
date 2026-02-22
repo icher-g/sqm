@@ -39,7 +39,8 @@ class LockingClauseRendererTest {
     void renderForUpdateInSelect() {
         var query = select(col("*"))
             .from(tbl("users"))
-            .lockFor(update(), List.of(), false, false);
+            .lockFor(update(), List.of(), false, false)
+            .build();
         
         var sql = renderContext.render(query).sql();
         
@@ -52,7 +53,8 @@ class LockingClauseRendererTest {
         var query = select(col("*"))
             .from(tbl("users"))
             .where(col("active").eq(lit(true)))
-            .lockFor(update(), List.of(), false, false);
+            .lockFor(update(), List.of(), false, false)
+            .build();
         
         var sql = renderContext.render(query).sql();
         
@@ -127,7 +129,8 @@ class LockingClauseRendererTest {
             .having(func("count", starArg()).gt(lit(5)))
             .orderBy(order("u", "name"))
             .limit(10)
-            .lockFor(update(), List.of(), false, false);
+            .lockFor(update(), List.of(), false, false)
+            .build();
         
         var sql = renderContext.render(query).sql();
         
@@ -138,7 +141,8 @@ class LockingClauseRendererTest {
     @DisplayName("Query without locking clause has no FOR UPDATE")
     void queryWithoutLockingClause() {
         var query = select(col("*"))
-            .from(tbl("users"));
+            .from(tbl("users"))
+            .build();
         
         var sql = renderContext.render(query).sql();
         

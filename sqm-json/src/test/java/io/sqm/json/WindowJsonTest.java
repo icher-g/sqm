@@ -38,7 +38,8 @@ public class WindowJsonTest {
             .from(tbl("employees"))
             .window(
                 window("w", partition(col("dept")), orderBy(order(col("salary")).desc()))
-            );
+            )
+            .build();
 
         // Round-trip the whole SelectQuery
         var back = roundTrip(q, SelectQuery.class);
@@ -128,7 +129,8 @@ public class WindowJsonTest {
             .from(tbl("employees"))
             .window(
                 window("w", partition(col("dept")), orderBy(order(col("salary")).desc()))
-            );
+            )
+            .build();
 
         var back = roundTrip(q, SelectQuery.class);
 

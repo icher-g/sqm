@@ -71,7 +71,8 @@ class PostgresDslExecutionIntegrationTest {
             .join(inner(tbl("orders").as("o")).on(col("u", "id").eq(col("o", "user_id"))))
             .where(col("u", "active").eq(true).and(col("o", "status").eq("PAID")))
             .groupBy(group("u", "name"))
-            .orderBy(order(col("u", "name")).asc());
+            .orderBy(order(col("u", "name")).asc())
+            .build();
 
         var sql = renderContext.render(query).sql();
         assertTrue(sql.contains("JOIN"));
@@ -102,7 +103,8 @@ class PostgresDslExecutionIntegrationTest {
             .orderBy(
                 order(col("e", "user_id")).asc(),
                 order(col("e", "version")).desc()
-            );
+            )
+            .build();
 
         var sql = renderContext.render(query).sql();
         assertTrue(sql.contains("DISTINCT ON"));

@@ -28,7 +28,7 @@ class RecursiveNodeVisitorTest {
     @Test
     @DisplayName("Visit Lateral")
     void visitLateral() {
-        var subquery = select(col("*")).from(tbl("users"));
+        var subquery = select(col("*")).from(tbl("users")).build();
         var lateral = tbl(subquery).as("sub").lateral();
 
         var collector = new NodeCollector();
@@ -58,7 +58,7 @@ class RecursiveNodeVisitorTest {
     @DisplayName("Visit query with FunctionTable in FROM")
     void visitQueryWithFunctionTableInFrom() {
         var func = func("generate_series", arg(lit(1)), arg(lit(10)));
-        var query = select(col("num")).from(func.asTable().as("series"));
+        var query = select(col("num")).from(func.asTable().as("series")).build();
 
         var collector = new NodeCollector();
         query.accept(collector);
@@ -75,7 +75,8 @@ class RecursiveNodeVisitorTest {
         var query = select(col("*"))
             .from(tbl("t"))
             .join(inner(func.asTable().as("u").lateral())
-                .on(col("t", "id").eq(col("u", "id"))));
+                .on(col("t", "id").eq(col("u", "id"))))
+            .build();
 
         var collector = new NodeCollector();
         query.accept(collector);
@@ -102,7 +103,7 @@ class RecursiveNodeVisitorTest {
     @Test
     @DisplayName("Transform Lateral")
     void transformLateral() {
-        var subquery = select(col("*")).from(tbl("users"));
+        var subquery = select(col("*")).from(tbl("users")).build();
         var lateral = tbl(subquery).as("sub").lateral();
 
         var transformer = new RenameTableTransformer();

@@ -33,7 +33,7 @@ class ExprSelectItemRendererTest {
     @Test
     @DisplayName("Simple column without alias")
     void simple_column_no_alias() {
-        var query = select(col("id")).from(tbl("users"));
+        var query = select(col("id")).from(tbl("users")).build();
         String result = render(query);
         assertEquals("SELECT id FROM users", result);
     }
@@ -41,7 +41,7 @@ class ExprSelectItemRendererTest {
     @Test
     @DisplayName("Column with alias")
     void column_with_alias() {
-        var query = select(col("id").as("user_id")).from(tbl("users"));
+        var query = select(col("id").as("user_id")).from(tbl("users")).build();
         String result = render(query);
         assertEquals("SELECT id AS user_id FROM users", result);
     }
@@ -49,7 +49,7 @@ class ExprSelectItemRendererTest {
     @Test
     @DisplayName("Expression with alias")
     void expression_with_alias() {
-        var query = select(col("salary").mul(lit(1.1)).as("adjusted_salary")).from(tbl("employees"));
+        var query = select(col("salary").mul(lit(1.1)).as("adjusted_salary")).from(tbl("employees")).build();
         String result = render(query);
         assertEquals("SELECT salary * 1.1 AS adjusted_salary FROM employees", result);
     }
@@ -57,7 +57,7 @@ class ExprSelectItemRendererTest {
     @Test
     @DisplayName("Qualified column without alias")
     void qualified_column_no_alias() {
-        var query = select(col("u", "name")).from(tbl("users").as("u"));
+        var query = select(col("u", "name")).from(tbl("users").as("u")).build();
         String result = render(query);
         assertEquals("SELECT u.name FROM users AS u", result);
     }
@@ -65,7 +65,7 @@ class ExprSelectItemRendererTest {
     @Test
     @DisplayName("Qualified column with alias")
     void qualified_column_with_alias() {
-        var query = select(col("u", "id").as("user_id")).from(tbl("users").as("u"));
+        var query = select(col("u", "id").as("user_id")).from(tbl("users").as("u")).build();
         String result = render(query);
         assertEquals("SELECT u.id AS user_id FROM users AS u", result);
     }
@@ -77,7 +77,7 @@ class ExprSelectItemRendererTest {
             col("id"),
             col("name").as("full_name"),
             col("email")
-        ).from(tbl("users"));
+        ).from(tbl("users")).build();
         String result = render(query);
         assertEquals("SELECT id, name AS full_name, email FROM users",
             result.replaceAll("\\s+,\\s+", " , "));
@@ -88,7 +88,8 @@ class ExprSelectItemRendererTest {
     void aggregate_with_alias() {
         var query = select(col("status"), func("COUNT", arg(col("id"))).as("cnt"))
             .from(tbl("users"))
-            .groupBy(group("status"));
+            .groupBy(group("status"))
+            .build();
         String result = render(query);
         assertTrue(result.contains("COUNT"));
         assertTrue(result.contains("cnt"));

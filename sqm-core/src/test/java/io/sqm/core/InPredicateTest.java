@@ -76,7 +76,7 @@ class InPredicateTest {
     @Test
     void withQueryExpr() {
         var subquery = Query.select(Expression.column("id")).from(TableRef.table("orders"));
-        var rhs = Expression.subquery(subquery);
+        var rhs = Expression.subquery(subquery.build());
         var predicate = InPredicate.of(
             Expression.column("orderId"),
             rhs,

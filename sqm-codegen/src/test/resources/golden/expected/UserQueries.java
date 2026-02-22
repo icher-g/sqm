@@ -31,7 +31,8 @@ public final class UserQueries {
           star()
         )
         .from(tbl("users"))
-        .where(col("id").eq(param("id")).and(col("status").eq(param("status"))));
+        .where(col("id").eq(param("id")).and(col("status").eq(param("status"))))
+        .build();
     }
 
     /**
@@ -53,7 +54,8 @@ public final class UserQueries {
           star()
         )
         .from(tbl("users"))
-        .where(col("status").eq(param("status")));
+        .where(col("status").eq(param("status")))
+        .build();
     }
 
     /**

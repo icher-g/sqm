@@ -11,21 +11,24 @@ public class RecursiveNodeVisitorEdgeNodesTraversalTest {
 
     @Test
     void edgeNodes_areVisited() {
-        var sub = select(func("max", arg(col("t", "v")))).from(tbl("t"));
+        var sub = select(func("max", arg(col("t", "v")))).from(tbl("t")).build();
 
-        var cteBody = select(col("c")).from(tbl("cte_source"));
+        var cteBody = select(col("c")).from(tbl("cte_source")).build();
         var withQuery = with(cte("w", cteBody))
-            .body(select(col("w", "c")).from(tbl(select(lit(1))
-                .from(tbl("dual"))).as("w")));
+            .body(select(col("w", "c")).from(tbl(
+                select(lit(1))
+                    .from(tbl("dual")).build()).as("w")).build());
 
         var union =
             select(col("a"))
                 .from(tbl("A"))
                 .where(col("a").between(1, 10))
+                .build()
                 .unionAll(
                     select(col("b"))
                         .from(tbl("B"))
-                        .where(col("b").eq(select(col("x")).from(tbl("X")))))
+                        .where(col("b").eq(select(col("x")).from(tbl("X"))))
+                        .build())
                 .orderBy(order(col("b")).asc())
                 .limit(5L);
 
@@ -36,10 +39,11 @@ public class RecursiveNodeVisitorEdgeNodesTraversalTest {
                 row(lit(1), lit("X")),
                 row(lit(2), lit("Y")))
             ).columnAliases("vt", "id", "name"))
-            .where(exists(select(lit(1)).from(tbl("dual")))
+            .where(exists(select(lit(1)).from(tbl("dual")).build())
                 .and(not(col("m", "n").isNull()))
                 .and(unary(col("r", "ok"))))
-            .orderBy(order(col("m", "n")).asc());
+            .orderBy(order(col("m", "n")).asc())
+            .build();
 
         var v = new RecordingVisitor();
         withQuery.accept(v);

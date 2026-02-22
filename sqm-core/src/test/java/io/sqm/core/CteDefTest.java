@@ -11,7 +11,7 @@ class CteDefTest {
 
     @Test
     void of() {
-        var cte = CteDef.of("name", Query.select(Expression.literal(1)), List.of("c1"));
+        var cte = CteDef.of("name", Query.select(Expression.literal(1)).build(), List.of("c1"));
         assertEquals("name", cte.name());
         assertEquals(1, cte.body().matchQuery()
             .select(s -> s.items().getFirst().matchSelectItem()
@@ -29,7 +29,7 @@ class CteDefTest {
 
     @Test
     void body() {
-        var body = Query.select(Expression.literal(1));
+        var body = Query.select(Expression.literal(1)).build();
         var cte = CteDef.of("name").body(body);
         assertEquals("name", cte.name());
         assertEquals(1, cte.body().matchQuery()
@@ -63,7 +63,7 @@ class CteDefTest {
 
     @Test
     void materialization() {
-        var cte = CteDef.of("name", Query.select(Expression.literal(1)), List.of(), CteDef.Materialization.MATERIALIZED);
+        var cte = CteDef.of("name", Query.select(Expression.literal(1)).build(), List.of(), CteDef.Materialization.MATERIALIZED);
         assertEquals(CteDef.Materialization.MATERIALIZED, cte.materialization());
         cte = cte.materialization(CteDef.Materialization.NOT_MATERIALIZED);
         assertEquals(CteDef.Materialization.NOT_MATERIALIZED, cte.materialization());
@@ -71,7 +71,7 @@ class CteDefTest {
 
     @Test
     void dsl_materialization_factory() {
-        var q = Query.select(Expression.literal(1));
+        var q = Query.select(Expression.literal(1)).build();
         var cte = io.sqm.dsl.Dsl.cte("name", q, List.of("c1"), CteDef.Materialization.MATERIALIZED);
         assertEquals(CteDef.Materialization.MATERIALIZED, cte.materialization());
         assertEquals("c1", cte.columnAliases().getFirst());

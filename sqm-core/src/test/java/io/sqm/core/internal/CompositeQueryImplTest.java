@@ -14,7 +14,7 @@ class CompositeQueryImplTest {
 
     @Test
     void negative() {
-        List<Query> terms = List.of(Query.select(Expression.literal(1)), Query.select(Expression.literal(2)));
+        List<Query> terms = List.of(Query.select(Expression.literal(1)).build(), Query.select(Expression.literal(2)).build());
         var ops = List.of(SetOperator.EXCEPT, SetOperator.UNION);
         assertThrows(IllegalArgumentException.class, () -> CompositeQuery.of(terms, ops));
     }

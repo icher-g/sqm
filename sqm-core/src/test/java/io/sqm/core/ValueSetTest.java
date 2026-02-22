@@ -9,7 +9,7 @@ class ValueSetTest {
 
     @Test
     void maybeQuery() {
-        ValueSet query = Expression.subquery(Query.select(Expression.literal(1)));
+        ValueSet query = Expression.subquery(Query.select(Expression.literal(1)).build());
         assertTrue(query.<Boolean>matchValueSet().query(s -> true).orElse(false));
         assertFalse(Expression.row(1, 2, 3).<Boolean>matchValueSet().query(s -> true).orElse(false));
     }
@@ -18,7 +18,7 @@ class ValueSetTest {
     void maybeRow() {
         ValueSet row = Expression.row(1, 2, 3);
         assertTrue(row.<Boolean>matchValueSet().row(s -> true).orElse(false));
-        assertFalse(Expression.subquery(Query.select(Expression.literal(1))).<Boolean>matchValueSet().row(s -> true).orElse(false));
+        assertFalse(Expression.subquery(Query.select(Expression.literal(1)).build()).<Boolean>matchValueSet().row(s -> true).orElse(false));
     }
 
     @Test

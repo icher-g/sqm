@@ -128,7 +128,8 @@ class IsDistinctFromPredicateRendererTest {
     void testRenderInSelectQuery() {
         var query = select(col("id"), col("name"))
             .from(tbl("users"))
-            .where(IsDistinctFromPredicate.of(col("status"), lit("active"), false));
+            .where(IsDistinctFromPredicate.of(col("status"), lit("active"), false))
+            .build();
         
         var sql = ctx.render(query).sql();
 
@@ -142,7 +143,8 @@ class IsDistinctFromPredicateRendererTest {
         
         var query = select(col("u", "name"))
             .from(tbl("users").as("u"))
-            .join(join);
+            .join(join)
+            .build();
         
         var sql = ctx.render(query).sql();
 
@@ -158,7 +160,8 @@ class IsDistinctFromPredicateRendererTest {
                 func("COUNT", starArg()),
                 lit(10),
                 false
-            ));
+            ))
+            .build();
         
         var sql = ctx.render(query).sql();
 
@@ -184,7 +187,7 @@ class IsDistinctFromPredicateRendererTest {
 
     @Test
     void testRenderWithSubquery() {
-        var subquery = select(col("id")).from(tbl("temp"));
+        var subquery = select(col("id")).from(tbl("temp")).build();
         var predicate = IsDistinctFromPredicate.of(
             col("main_id"),
             expr(subquery),

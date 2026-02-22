@@ -12,10 +12,10 @@ public sealed interface Query extends Node permits CompositeQuery, DialectQuery,
      * Creates SELECT query with a list of expressions.
      *
      * @param nodes an array of expressions.
-     * @return this.
+     * @return select-query builder initialized with the provided select items
      */
-    static SelectQuery select(Node... nodes) {
-        return SelectQuery.of().select(nodes);
+    static SelectQueryBuilder select(Node... nodes) {
+        return SelectQuery.builder().select(nodes);
     }
 
     /**

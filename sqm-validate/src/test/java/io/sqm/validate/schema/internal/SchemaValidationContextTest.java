@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SchemaValidationContextTest {
+    // Touch file to force test recompilation after Dsl.select(...) return-type refactor.
     private static final CatalogSchema SCHEMA = CatalogSchema.of(
         CatalogTable.of("public", "users",
             CatalogColumn.of("id", CatalogType.LONG),
@@ -58,7 +59,7 @@ class SchemaValidationContextTest {
         var context = new SchemaValidationContext(SCHEMA);
         context.pushScope();
         try {
-            Query subquery = select(star()).from(tbl("users").as("u"));
+            Query subquery = select(star()).from(tbl("users").as("u")).build();
             context.registerTableRef(tbl(subquery).as("q"));
 
             var resolved = context.resolveColumn(col("missing"), true);
@@ -72,7 +73,7 @@ class SchemaValidationContextTest {
 
     @Test
     void sourceKey_handlesAllSupportedTableRefKinds() {
-        var subqueryTable = tbl(select(col("id")).from(tbl("users"))).as("sq");
+        var subqueryTable = tbl(select(col("id")).from(tbl("users")).build()).as("sq");
         var valuesTable = tbl(rows(row(lit(1)))).as("v");
         var functionTable = tbl(func("unnest", arg(rows(row(lit(1)))))).as("f");
         TableRef lateral = tbl("users").as("u").lateral();
@@ -81,7 +82,7 @@ class SchemaValidationContextTest {
         assertEquals("v", contextSourceKey(valuesTable));
         assertEquals("f", contextSourceKey(functionTable));
         assertEquals("u", contextSourceKey(lateral));
-        assertTrue(new SchemaValidationContext(SCHEMA).sourceKey(tbl(select(col("id")).from(tbl("users")))).isEmpty());
+        assertTrue(new SchemaValidationContext(SCHEMA).sourceKey(tbl(select(col("id")).from(tbl("users")).build())).isEmpty());
     }
 
     @Test
@@ -103,7 +104,7 @@ class SchemaValidationContextTest {
     @Test
     void inferProjectionTypes_returnsEmptyForNonExpressionProjection() {
         var context = new SchemaValidationContext(SCHEMA);
-        var projection = context.inferProjectionTypes(select(star()).from(tbl("users")));
+        var projection = context.inferProjectionTypes(select(star()).from(tbl("users")).build());
         assertTrue(projection.isEmpty());
     }
 

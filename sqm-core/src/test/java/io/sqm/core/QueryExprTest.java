@@ -8,9 +8,9 @@ class QueryExprTest {
 
     @Test
     void of() {
-        var subquery = Query.select(Expression.literal(1));
+        var subquery = Query.select(Expression.literal(1)).build();
         var queryExpr = QueryExpr.of(subquery);
-        
+
         assertNotNull(queryExpr);
         assertInstanceOf(QueryExpr.class, queryExpr);
         assertEquals(subquery, queryExpr.subquery());
@@ -18,14 +18,14 @@ class QueryExprTest {
 
     @Test
     void subquery() {
-        var subquery = Query.select(Expression.column("id")).from(TableRef.table("users"));
+        var subquery = Query.select(Expression.column("id")).from(TableRef.table("users")).build();
         var queryExpr = QueryExpr.of(subquery);
         assertEquals(subquery, queryExpr.subquery());
     }
 
     @Test
     void accept() {
-        var queryExpr = QueryExpr.of(Query.select(Expression.literal(1)));
+        var queryExpr = QueryExpr.of(Query.select(Expression.literal(1)).build());
         var visitor = new TestVisitor();
         var result = queryExpr.accept(visitor);
         assertTrue(result);
@@ -34,14 +34,14 @@ class QueryExprTest {
     @Test
     void withComplexQuery() {
         var subquery = Query.select(Expression.column("id")).from(TableRef.table("orders"))
-            .where(Expression.column("status").eq("active"));
+            .where(Expression.column("status").eq("active")).build();
         var queryExpr = QueryExpr.of(subquery);
         assertNotNull(queryExpr.subquery());
     }
 
     @Test
     void implementsValueSet() {
-        var queryExpr = QueryExpr.of(Query.select(Expression.literal(1)));
+        var queryExpr = QueryExpr.of(Query.select(Expression.literal(1)).build());
         assertInstanceOf(ValueSet.class, queryExpr);
     }
 

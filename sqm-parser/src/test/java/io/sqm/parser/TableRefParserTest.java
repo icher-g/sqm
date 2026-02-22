@@ -130,7 +130,7 @@ class TableRefParserTest {
             cur.expect("Expected (", TokenType.LPAREN);
             cur.expect("Expected query marker", TokenType.IDENT);
             cur.expect("Expected )", TokenType.RPAREN);
-            return ParseResult.ok(QueryTable.of(Query.select(Expression.literal(1))));
+            return ParseResult.ok(QueryTable.of(Query.select(Expression.literal(1)).build()));
         }
 
         @Override

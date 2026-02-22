@@ -38,7 +38,8 @@ public class DslTest {
     @DisplayName("1) Simple SELECT … FROM")
     void simpleSelectFrom() {
         var q = select(col("u", "id"), col("u", "name"))
-            .from(tbl("users").as("u"));
+            .from(tbl("users").as("u"))
+            .build();
 
         SqlText out = render(q);
         assertSql(
@@ -56,7 +57,8 @@ public class DslTest {
             .where(col("u", "active").eq(true))
             .orderBy(order("u", "name").asc())
             .limit(10)
-            .offset(20);
+            .offset(20)
+            .build();
 
         SqlText out = render(q);
         assertSql(
@@ -75,7 +77,8 @@ public class DslTest {
         var q = select(func("count", starArg()).as("cnt"), col("o", "status"))
             .from(tbl("orders").as("o"))
             .groupBy(group(col("o", "status")))
-            .having(func("count", starArg()).gt(10));
+            .having(func("count", starArg()).gt(10))
+            .build();
 
         SqlText out = render(q);
         assertSql(
@@ -93,7 +96,8 @@ public class DslTest {
         var q = select(col("u", "id"), col("u", "name"), col("o", "total"))
             .from(tbl("users").as("u"))
             .join(inner(tbl("orders").as("o")).on(col("u", "id").eq(col("o", "user_id"))))
-            .where(col("o", "total").gt(100));
+            .where(col("o", "total").gt(100))
+            .build();
 
         SqlText out = render(q);
         assertSql(
@@ -117,7 +121,8 @@ public class DslTest {
                 when(col("p", "status").eq("I")).then(lit("Inactive"))
             ).elseExpr(lit("Unknown")).as("status_text")
         )
-            .from(tbl("products").as("p"));
+            .from(tbl("products").as("p"))
+            .build();
 
         SqlText out = render(q);
         assertSql(
@@ -145,7 +150,8 @@ public class DslTest {
                         row("Jane", "Smith")
                     )
                 )
-            );
+            )
+            .build();
 
         SqlText out = render(q);
         // Depending on your placeholders strategy, the VALUES may be literal or parameterized.

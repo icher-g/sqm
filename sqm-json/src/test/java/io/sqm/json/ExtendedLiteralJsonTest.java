@@ -22,7 +22,7 @@ class ExtendedLiteralJsonTest {
             HexStringLiteralExpr.of("FF"),
             EscapeStringLiteralExpr.of("it\\'s"),
             DollarStringLiteralExpr.of("tag", "value")
-        );
+        ).build();
 
         String json = mapper.writeValueAsString(query);
         var back = mapper.readValue(json, SelectQuery.class);

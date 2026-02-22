@@ -20,7 +20,8 @@ public class SelectRoundTripTest {
                 .on(col("u", "id").eq(col("o", "user_id"))))
             .where(col("o", "status").in("A", "B"))
             .groupBy(group("u", "user_name"), group("o", "status"))
-            .having(func("count", starArg()).gt(10));
+            .having(func("count", starArg()).gt(10))
+            .build();
 
         String sql = Utils.renderAnsi(original);
         Query reparsed = Utils.parse(sql);
@@ -37,7 +38,8 @@ public class SelectRoundTripTest {
             .from(tbl("products").as("p"))
             .orderBy(order(col("p", "name")).asc())
             .limit(10)
-            .offset(20);
+            .offset(20)
+            .build();
 
         String sql = Utils.renderAnsi(original);
         Query reparsed = Utils.parse(sql);

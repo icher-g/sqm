@@ -56,20 +56,26 @@ class WithQueryRendererTest {
         var cteUsers = cte("cte_users")
             .columnAliases("id", "name")
             .body(
-                select(col("u", "id"), col("u", "name")).from(tbl("users").as("u"))
+                select(col("u", "id"), col("u", "name"))
+                    .from(tbl("users").as("u"))
+                    .build()
             );
 
         // CTE #2: plain Query used as CTE (no column aliases)
         var cteOrders = cte("cte_orders")
             .body(
-                select(col("o", "user_id"), col("o", "amount")).from(tbl("orders").as("o"))
+                select(col("o", "user_id"), col("o", "amount"))
+                    .from(tbl("orders").as("o"))
+                    .build()
             );
 
         // WITH ... (cte_users, cte_orders)  <— CTEs live in WithQuery.getQueries()
         // Outer body is the WithQuery itself (inherited Query fields)
         var q = with(cteUsers, cteOrders)
             .body(
-                select(col("x", "id")).from(tbl("cte_users").as("x"))
+                select(col("x", "id"))
+                    .from(tbl("cte_users").as("x"))
+                    .build()
             );
 
         var sql = renderWith(q);
@@ -93,13 +99,17 @@ class WithQueryRendererTest {
         var nums = cte("nums")
             .columnAliases("n")
             .body(
-                select(col("s", "n")).from(tbl("seed_numbers").as("s"))
+                select(col("s", "n"))
+                    .from(tbl("seed_numbers").as("s"))
+                    .build()
             );
 
         var q = with(nums)
             .recursive(true)
             .body(
-                select(col("t", "n")).from(tbl("nums").as("t"))
+                select(col("t", "n"))
+                    .from(tbl("nums").as("t"))
+                    .build()
             );
 
         var sql = normalize(renderWith(q));
@@ -113,17 +123,23 @@ class WithQueryRendererTest {
     void with_onlyCteQueries_ok() {
         var c1 = cte("c1")
             .body(
-                select(col("a", "id")).from(tbl("users").as("a"))
+                select(col("a", "id"))
+                    .from(tbl("users").as("a"))
+                    .build()
             );
 
         var c2 = cte("c2")
             .body(
-                select(col("b", "user_id")).from(tbl("orders").as("b"))
+                select(col("b", "user_id"))
+                    .from(tbl("orders").as("b"))
+                    .build()
             );
 
         var q = with(c1, c2)
             .body(
-                select(col("b", "user_id")).from(tbl("c2").as("b"))
+                select(col("b", "user_id"))
+                    .from(tbl("c2").as("b"))
+                    .build()
             );
 
         var sql = normalize(renderWith(q));
@@ -138,7 +154,9 @@ class WithQueryRendererTest {
     void with_emptyCtes_throws() {
         var q = with()
             .body(
-                select(col("t", "id")).from(tbl("users", "t"))
+                select(col("t", "id"))
+                    .from(tbl("users", "t"))
+                    .build()
             );
         var ex = assertThrows(IllegalArgumentException.class, () -> renderWith(q));
         assertTrue(ex.getMessage().toLowerCase().contains("with requires at least one query"));
@@ -149,12 +167,16 @@ class WithQueryRendererTest {
     void cte_without_name_fails() {
         var nameless = cte(null)
             .body(
-                select(col("u", "id")).from(tbl("users", "u"))
+                select(col("u", "id"))
+                    .from(tbl("users", "u"))
+                    .build()
             );
 
         var q = with(nameless)
             .body(
-                select(col("u", "id")).from(tbl("users", "u"))
+                select(col("u", "id"))
+                    .from(tbl("users", "u"))
+                    .build()
             );
 
         // Depending on your writer/renderer, this may NPE or be validated elsewhere.

@@ -27,7 +27,7 @@ class ValuesTableRendererTest {
     @Test
     @DisplayName("VALUES table without alias")
     void values_table_no_alias() {
-        var query = select(lit(1)).from(tbl(rows(row(lit(1), lit("A")))));
+        var query = select(lit(1)).from(tbl(rows(row(lit(1), lit("A"))))).build();
         String result = render(query);
         assertTrue(result.contains("VALUES"));
         assertTrue(result.contains("1"));
@@ -38,7 +38,7 @@ class ValuesTableRendererTest {
     @DisplayName("VALUES table with alias")
     void values_table_with_alias() {
         var vt = tbl(rows(row(lit(1), lit("A")))).as("v");
-        var query = select(lit(1)).from(vt);
+        var query = select(lit(1)).from(vt).build();
         String result = render(query);
         assertTrue(result.contains("VALUES"));
         assertTrue(result.contains("AS"));
@@ -49,7 +49,7 @@ class ValuesTableRendererTest {
     @DisplayName("VALUES table with alias and column names")
     void values_table_with_alias_and_columns() {
         var vt = tbl(rows(row(lit(1), lit("Alice")))).as("v").columnAliases("id", "name");
-        var query = select(lit(1)).from(vt);
+        var query = select(lit(1)).from(vt).build();
         String result = render(query);
         assertTrue(result.contains("VALUES"));
         assertTrue(result.contains("v"));
@@ -64,7 +64,7 @@ class ValuesTableRendererTest {
             row(lit(1), lit("A")),
             row(lit(2), lit("B"))
         )).as("v");
-        var query = select(lit(1)).from(vt);
+        var query = select(lit(1)).from(vt).build();
         String result = render(query);
         assertTrue(result.contains("VALUES"));
         assertTrue(result.contains("v"));
@@ -73,7 +73,7 @@ class ValuesTableRendererTest {
     @Test
     @DisplayName("VALUES clause is wrapped in parentheses")
     void values_wrapped_in_parentheses() {
-        var query = select(lit(1)).from(tbl(rows(row(lit(1), lit("A")))));
+        var query = select(lit(1)).from(tbl(rows(row(lit(1), lit("A"))))).build();
         String result = render(query);
         assertTrue(result.contains("(VALUES"));
         assertTrue(result.contains(")"));

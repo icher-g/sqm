@@ -13,7 +13,7 @@ class QueryRewriteResultTest {
 
     @Test
     void unchanged_factory_creates_valid_result() {
-        Query query = Query.select(Expression.literal(1));
+        Query query = Query.select(Expression.literal(1)).build();
 
         QueryRewriteResult result = QueryRewriteResult.unchanged(query);
 
@@ -25,7 +25,7 @@ class QueryRewriteResultTest {
 
     @Test
     void rewritten_factory_creates_valid_result() {
-        Query query = Query.select(Expression.literal(1));
+        Query query = Query.select(Expression.literal(1)).build();
 
         QueryRewriteResult result = QueryRewriteResult.rewritten(query, "limit-injection", ReasonCode.REWRITE_LIMIT);
 
@@ -37,7 +37,7 @@ class QueryRewriteResultTest {
 
     @Test
     void copies_applied_rule_ids_defensively() {
-        Query query = Query.select(Expression.literal(1));
+        Query query = Query.select(Expression.literal(1)).build();
         List<String> ids = new ArrayList<>();
         ids.add("r1");
 
@@ -50,7 +50,7 @@ class QueryRewriteResultTest {
 
     @Test
     void validates_constructor_arguments() {
-        Query query = Query.select(Expression.literal(1));
+        Query query = Query.select(Expression.literal(1)).build();
 
         assertThrows(NullPointerException.class, () -> new QueryRewriteResult(null, false, List.of(), ReasonCode.NONE));
         assertThrows(NullPointerException.class, () -> new QueryRewriteResult(query, false, null, ReasonCode.NONE));
