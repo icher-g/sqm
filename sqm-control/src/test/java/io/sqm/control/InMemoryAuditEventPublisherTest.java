@@ -1,5 +1,6 @@
 package io.sqm.control;
 
+import io.sqm.control.audit.InMemoryAuditEventPublisher;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -58,6 +59,7 @@ class InMemoryAuditEventPublisherTest {
         ));
 
         var snapshot = publisher.events();
+        //noinspection DataFlowIssue
         assertThrows(UnsupportedOperationException.class, () -> snapshot.add(snapshot.getFirst()));
     }
 }

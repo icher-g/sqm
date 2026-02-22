@@ -1,4 +1,7 @@
-package io.sqm.control;
+package io.sqm.control.audit;
+
+import io.sqm.control.AuditEvent;
+import io.sqm.control.AuditEventPublisher;
 
 import java.util.Objects;
 import java.util.logging.Level;

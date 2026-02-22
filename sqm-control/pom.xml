@@ -37,6 +37,26 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>io.sqm</groupId>
+            <artifactId>sqm-validate-postgresql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.sqm</groupId>
+            <artifactId>sqm-render</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.sqm</groupId>
+            <artifactId>sqm-render-ansi</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.sqm</groupId>
+            <artifactId>sqm-render-postgresql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>

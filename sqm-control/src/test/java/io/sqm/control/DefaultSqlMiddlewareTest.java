@@ -4,6 +4,7 @@ import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
+import io.sqm.control.audit.InMemoryAuditEventPublisher;
 import io.sqm.validate.schema.SchemaValidationLimits;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import org.junit.jupiter.api.Test;
@@ -65,12 +66,35 @@ class DefaultSqlMiddlewareTest {
             RuntimeGuardrails.disabled(),
             audit,
             SqlDecisionExplainer.basic(),
-            DefaultSqlQueryParser.standard()
+            SqlQueryParser.standard()
         );
 
         middleware.analyze("select 1", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(1, audit.events().size());
         assertEquals(List.of(), audit.events().getFirst().appliedRules());
+    }
+
+    @Test
+    void dialect_schema_factory_uses_dialect_aware_validation_wiring() {
+        var middleware = SqlMiddleware.of("postgres", SCHEMA);
+
+        var result = middleware.analyze("select 1", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        assertEquals(DecisionKind.ALLOW, result.kind());
+    }
+
+    @Test
+    void dialect_schema_factory_validates_required_arguments() {
+        assertThrows(NullPointerException.class, () -> SqlMiddleware.of("postgresql", null));
+        assertThrows(NullPointerException.class, () -> SqlMiddleware.of("postgresql", SCHEMA, null));
+        assertThrows(IllegalArgumentException.class, () -> SqlMiddleware.of("mysql", SCHEMA));
+    }
+
+    @Test
+    void dialect_schema_factory_defaults_to_ansi_when_missing() {
+        var middleware = SqlMiddleware.of(null, SCHEMA);
+
+        var result = middleware.analyze("select 1", ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
+        assertEquals(DecisionKind.ALLOW, result.kind());
     }
 
     @Test
@@ -86,7 +110,7 @@ class DefaultSqlMiddlewareTest {
         var explainer = SqlDecisionExplainer.basic();
         var audit = AuditEventPublisher.noop();
         var guardrails = RuntimeGuardrails.disabled();
-        var parser = DefaultSqlQueryParser.standard();
+        var parser = SqlQueryParser.standard();
 
         assertThrows(NullPointerException.class, () -> SqlMiddleware.of(null, explainer, audit, guardrails, parser));
         assertThrows(NullPointerException.class, () -> SqlMiddleware.of(engine, null, audit, guardrails, parser));
