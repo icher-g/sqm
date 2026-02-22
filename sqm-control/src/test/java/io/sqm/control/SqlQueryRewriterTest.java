@@ -122,6 +122,7 @@ class SqlQueryRewriterTest {
         assertFalse(noneSelected.rewritten());
         assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn((BuiltInRewriteRule[]) null));
         assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn((Set<BuiltInRewriteRule>) null));
+        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn(new BuiltInRewriteSettings(5), (Set<BuiltInRewriteRule>) null));
         assertThrows(IllegalArgumentException.class, () -> SqlQueryRewriter.builtIn(BuiltInRewriteRule.IDENTIFIER_NORMALIZATION));
     }
 
@@ -146,5 +147,29 @@ class SqlQueryRewriterTest {
         assertThrows(NullPointerException.class, () -> SqlQueryRewriter.allBuiltIn(SCHEMA, null));
         assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn((BuiltInRewriteSettings) null, BuiltInRewriteRule.LIMIT_INJECTION));
         assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn(SCHEMA, (BuiltInRewriteRule[]) null));
+        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn(SCHEMA, new BuiltInRewriteSettings(5), (Set<BuiltInRewriteRule>) null));
+    }
+
+    @Test
+    void settings_and_set_based_built_in_factories_delegate_and_empty_chain_is_noop() {
+        Query query = Query.select(Expression.literal(1));
+
+        var configured = SqlQueryRewriter.builtIn(
+            new BuiltInRewriteSettings(11),
+            Set.of(BuiltInRewriteRule.LIMIT_INJECTION)
+        ).rewrite(query, ANALYZE);
+        var schemaConfigured = SqlQueryRewriter.builtIn(
+            SCHEMA,
+            new BuiltInRewriteSettings(13),
+            Set.of(BuiltInRewriteRule.LIMIT_INJECTION, BuiltInRewriteRule.SCHEMA_QUALIFICATION)
+        ).rewrite(SqlQueryParser.standard().parse("select id from users", ANALYZE), ANALYZE);
+        var emptyVarargsChain = SqlQueryRewriter.chain().rewrite(query, ANALYZE);
+        var emptyListChain = SqlQueryRewriter.chain(List.of()).rewrite(query, ANALYZE);
+
+        assertTrue(configured.rewritten());
+        assertTrue(SqlQueryRenderer.postgresql().render(configured.query(), ANALYZE).toLowerCase().contains("limit 11"));
+        assertTrue(schemaConfigured.rewritten());
+        assertFalse(emptyVarargsChain.rewritten());
+        assertFalse(emptyListChain.rewritten());
     }
 }

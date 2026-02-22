@@ -153,4 +153,43 @@ class SqlDecisionEngineFactoryCoverageTest {
         assertThrows(IllegalArgumentException.class,
             () -> SqlDecisionEngine.fullFlow("mysql", validator, SqlQueryRewriter.noop(), SqlQueryRenderer.ansi()));
     }
+
+    @Test
+    void additional_factory_overloads_delegate_successfully() {
+        var validator = (io.sqm.validate.api.QueryValidator) query -> new ValidationResult(java.util.List.of());
+        var settings = SchemaValidationSettings.defaults();
+        var rewriteSettings = new BuiltInRewriteSettings(15);
+        var context = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
+
+        assertEquals(DecisionKind.REWRITE,
+            SqlDecisionEngine.validationAndRewrite("postgresql", validator, rewriteSettings).evaluate(query(), context).kind());
+        assertEquals(DecisionKind.REWRITE,
+            SqlDecisionEngine.fullFlow("postgresql", validator, rewriteSettings).evaluate(query(), context).kind());
+        assertEquals(DecisionKind.REWRITE,
+            SqlDecisionEngine.fullFlow("postgresql", validator, rewriteSettings, BuiltInRewriteRule.LIMIT_INJECTION)
+                .evaluate(query(), context).kind());
+
+        assertEquals(DecisionKind.REWRITE,
+            SqlDecisionEngine.validationAndRewrite("postgresql", SCHEMA, settings).evaluate(query(), context).kind());
+        assertEquals(DecisionKind.REWRITE,
+            SqlDecisionEngine.validationAndRewrite("postgresql", SCHEMA, settings, rewriteSettings).evaluate(query(), context).kind());
+        assertEquals(DecisionKind.REWRITE,
+            SqlDecisionEngine.validationAndRewrite("postgresql", SCHEMA, settings, rewriteSettings, BuiltInRewriteRule.LIMIT_INJECTION)
+                .evaluate(query(), context).kind());
+
+        assertEquals(DecisionKind.REWRITE,
+            SqlDecisionEngine.fullFlow("postgresql", SCHEMA, settings).evaluate(query(), context).kind());
+        assertEquals(DecisionKind.REWRITE,
+            SqlDecisionEngine.fullFlow("postgresql", SCHEMA, settings, rewriteSettings).evaluate(query(), context).kind());
+        assertEquals(DecisionKind.REWRITE,
+            SqlDecisionEngine.fullFlow("postgresql", SCHEMA, settings, rewriteSettings, BuiltInRewriteRule.LIMIT_INJECTION)
+                .evaluate(query(), context).kind());
+
+        assertEquals(DecisionKind.ALLOW,
+            SqlDecisionEngine.validationOnly("postgresql", SCHEMA).evaluate(query(), context).kind());
+        assertEquals(DecisionKind.ALLOW,
+            SqlDecisionEngine.validationAndRewrite("postgresql", SCHEMA, settings, SqlQueryRewriter.noop()).evaluate(query(), context).kind());
+        assertEquals(DecisionKind.ALLOW,
+            SqlDecisionEngine.fullFlow("postgresql", SCHEMA, settings, SqlQueryRewriter.noop()).evaluate(query(), context).kind());
+    }
 }
