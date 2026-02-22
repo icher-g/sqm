@@ -1,9 +1,11 @@
 package io.sqm.control.impl;
 
 import io.sqm.catalog.model.CatalogSchema;
+import io.sqm.control.BuiltInRewriteSettings;
 import io.sqm.control.DecisionResult;
 import io.sqm.control.ExecutionContext;
 import io.sqm.control.ReasonCode;
+import io.sqm.control.RewriteDenyException;
 import io.sqm.control.SqlDecisionEngine;
 import io.sqm.control.SqlQueryRenderer;
 import io.sqm.control.SqlQueryRewriter;
@@ -136,6 +138,24 @@ public final class DefaultSqlDecisionEngine implements SqlDecisionEngine {
     }
 
     /**
+     * Creates a decision engine with validation and all currently available built-in rewrites using explicit settings.
+     *
+     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
+     *
+     * @param dialect dialect identifier
+     * @param queryValidator semantic validator
+     * @param rewriteSettings built-in rewrite settings
+     * @return engine instance
+     */
+    public static DefaultSqlDecisionEngine validationAndRewrite(
+        String dialect,
+        QueryValidator queryValidator,
+        BuiltInRewriteSettings rewriteSettings
+    ) {
+        return validationAndRewrite(dialect, queryValidator, SqlQueryRewriter.allBuiltIn(rewriteSettings));
+    }
+
+    /**
      * Creates a decision engine with validation and the selected built-in rewrites.
      *
      * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
@@ -151,6 +171,26 @@ public final class DefaultSqlDecisionEngine implements SqlDecisionEngine {
         BuiltInRewriteRule... rewrites
     ) {
         return validationAndRewrite(dialect, queryValidator, SqlQueryRewriter.builtIn(rewrites));
+    }
+
+    /**
+     * Creates a decision engine with validation and selected built-in rewrites using explicit settings.
+     *
+     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
+     *
+     * @param dialect dialect identifier
+     * @param queryValidator semantic validator
+     * @param rewriteSettings built-in rewrite settings
+     * @param rewrites built-in rewrites to enable
+     * @return engine instance
+     */
+    public static DefaultSqlDecisionEngine validationAndRewrite(
+        String dialect,
+        QueryValidator queryValidator,
+        BuiltInRewriteSettings rewriteSettings,
+        BuiltInRewriteRule... rewrites
+    ) {
+        return validationAndRewrite(dialect, queryValidator, SqlQueryRewriter.builtIn(rewriteSettings, rewrites));
     }
 
     /**
@@ -188,7 +228,27 @@ public final class DefaultSqlDecisionEngine implements SqlDecisionEngine {
         CatalogSchema schema,
         SchemaValidationSettings settings
     ) {
-        return validationAndRewrite(dialect, schema, settings, SqlQueryRewriter.allBuiltIn());
+        return validationAndRewrite(dialect, schema, settings, SqlQueryRewriter.allBuiltIn(schema));
+    }
+
+    /**
+     * Creates a decision engine with validation and all currently available schema-aware built-in rewrites using explicit settings.
+     *
+     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
+     *
+     * @param dialect dialect identifier
+     * @param schema catalog schema
+     * @param settings schema validation settings
+     * @param rewriteSettings built-in rewrite settings
+     * @return engine instance
+     */
+    public static DefaultSqlDecisionEngine validationAndRewrite(
+        String dialect,
+        CatalogSchema schema,
+        SchemaValidationSettings settings,
+        BuiltInRewriteSettings rewriteSettings
+    ) {
+        return validationAndRewrite(dialect, schema, settings, SqlQueryRewriter.allBuiltIn(schema, rewriteSettings));
     }
 
     /**
@@ -208,7 +268,29 @@ public final class DefaultSqlDecisionEngine implements SqlDecisionEngine {
         SchemaValidationSettings settings,
         BuiltInRewriteRule... rewrites
     ) {
-        return validationAndRewrite(dialect, schema, settings, SqlQueryRewriter.builtIn(rewrites));
+        return validationAndRewrite(dialect, schema, settings, SqlQueryRewriter.builtIn(schema, rewrites));
+    }
+
+    /**
+     * Creates a decision engine with validation and selected schema-aware built-in rewrites using explicit settings.
+     *
+     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
+     *
+     * @param dialect dialect identifier
+     * @param schema catalog schema
+     * @param settings schema validation settings
+     * @param rewriteSettings built-in rewrite settings
+     * @param rewrites built-in rewrites to enable
+     * @return engine instance
+     */
+    public static DefaultSqlDecisionEngine validationAndRewrite(
+        String dialect,
+        CatalogSchema schema,
+        SchemaValidationSettings settings,
+        BuiltInRewriteSettings rewriteSettings,
+        BuiltInRewriteRule... rewrites
+    ) {
+        return validationAndRewrite(dialect, schema, settings, SqlQueryRewriter.builtIn(schema, rewriteSettings, rewrites));
     }
 
     /**
@@ -243,6 +325,24 @@ public final class DefaultSqlDecisionEngine implements SqlDecisionEngine {
     }
 
     /**
+     * Creates a decision engine with full flow enabled and all currently available built-in rewrites using explicit settings.
+     *
+     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
+     *
+     * @param dialect dialect identifier
+     * @param queryValidator semantic validator
+     * @param rewriteSettings built-in rewrite settings
+     * @return engine instance
+     */
+    public static DefaultSqlDecisionEngine fullFlow(
+        String dialect,
+        QueryValidator queryValidator,
+        BuiltInRewriteSettings rewriteSettings
+    ) {
+        return fullFlow(dialect, queryValidator, SqlQueryRewriter.allBuiltIn(rewriteSettings));
+    }
+
+    /**
      * Creates a decision engine with full flow enabled and selected built-in rewrites.
      *
      * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
@@ -258,6 +358,26 @@ public final class DefaultSqlDecisionEngine implements SqlDecisionEngine {
         BuiltInRewriteRule... rewrites
     ) {
         return fullFlow(dialect, queryValidator, SqlQueryRewriter.builtIn(rewrites));
+    }
+
+    /**
+     * Creates a decision engine with full flow enabled and selected built-in rewrites using explicit settings.
+     *
+     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
+     *
+     * @param dialect dialect identifier
+     * @param queryValidator semantic validator
+     * @param rewriteSettings built-in rewrite settings
+     * @param rewrites built-in rewrites to enable
+     * @return engine instance
+     */
+    public static DefaultSqlDecisionEngine fullFlow(
+        String dialect,
+        QueryValidator queryValidator,
+        BuiltInRewriteSettings rewriteSettings,
+        BuiltInRewriteRule... rewrites
+    ) {
+        return fullFlow(dialect, queryValidator, SqlQueryRewriter.builtIn(rewriteSettings, rewrites));
     }
 
     /**
@@ -316,7 +436,27 @@ public final class DefaultSqlDecisionEngine implements SqlDecisionEngine {
         CatalogSchema schema,
         SchemaValidationSettings settings
     ) {
-        return fullFlow(dialect, schema, settings, SqlQueryRewriter.allBuiltIn());
+        return fullFlow(dialect, schema, settings, SqlQueryRewriter.allBuiltIn(schema));
+    }
+
+    /**
+     * Creates a full-flow decision engine for a catalog schema and all currently available schema-aware built-in rewrites using explicit settings.
+     *
+     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
+     *
+     * @param dialect dialect identifier
+     * @param schema catalog schema
+     * @param settings schema validation settings
+     * @param rewriteSettings built-in rewrite settings
+     * @return engine instance
+     */
+    public static DefaultSqlDecisionEngine fullFlow(
+        String dialect,
+        CatalogSchema schema,
+        SchemaValidationSettings settings,
+        BuiltInRewriteSettings rewriteSettings
+    ) {
+        return fullFlow(dialect, schema, settings, SqlQueryRewriter.allBuiltIn(schema, rewriteSettings));
     }
 
     /**
@@ -336,7 +476,29 @@ public final class DefaultSqlDecisionEngine implements SqlDecisionEngine {
         SchemaValidationSettings settings,
         BuiltInRewriteRule... rewrites
     ) {
-        return fullFlow(dialect, schema, settings, SqlQueryRewriter.builtIn(rewrites));
+        return fullFlow(dialect, schema, settings, SqlQueryRewriter.builtIn(schema, rewrites));
+    }
+
+    /**
+     * Creates a full-flow decision engine for a catalog schema and selected schema-aware built-in rewrites using explicit settings.
+     *
+     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
+     *
+     * @param dialect dialect identifier
+     * @param schema catalog schema
+     * @param settings schema validation settings
+     * @param rewriteSettings built-in rewrite settings
+     * @param rewrites built-in rewrites to enable
+     * @return engine instance
+     */
+    public static DefaultSqlDecisionEngine fullFlow(
+        String dialect,
+        CatalogSchema schema,
+        SchemaValidationSettings settings,
+        BuiltInRewriteSettings rewriteSettings,
+        BuiltInRewriteRule... rewrites
+    ) {
+        return fullFlow(dialect, schema, settings, SqlQueryRewriter.builtIn(schema, rewriteSettings, rewrites));
     }
 
     /**
@@ -379,7 +541,12 @@ public final class DefaultSqlDecisionEngine implements SqlDecisionEngine {
             return DecisionResult.deny(mapReason(first.code()), first.message());
         }
 
-        var rewrite = queryRewriter.rewrite(query, context);
+        final io.sqm.control.QueryRewriteResult rewrite;
+        try {
+            rewrite = queryRewriter.rewrite(query, context);
+        } catch (RewriteDenyException ex) {
+            return DecisionResult.deny(ex.reasonCode(), ex.getMessage());
+        }
         if (!rewrite.rewritten()) {
             return DecisionResult.allow();
         }

@@ -8,7 +8,9 @@ import java.io.Serializable;
  * @param maxSqlLength maximum SQL length in characters; {@code null} disables this guardrail
  * @param timeoutMillis evaluation timeout in milliseconds; {@code null} disables timeout
  * @param maxRows maximum allowed LIMIT value; {@code null} disables this guardrail
- * @param explainDryRun when {@code true}, execute mode is rewritten to EXPLAIN dry-run
+ * @param explainDryRun when {@code true}, {@link SqlMiddleware#enforce(String, ExecutionContext)}
+ *                      rewrites the effective SQL to {@code EXPLAIN <sql>} instead of changing analyze-mode behavior;
+ *                      SQM does not execute the statement, it only returns the rewritten SQL for the caller to run
  */
 public record RuntimeGuardrails(
     Integer maxSqlLength,
@@ -32,7 +34,7 @@ public record RuntimeGuardrails(
      * @param maxSqlLength maximum SQL length
      * @param timeoutMillis evaluation timeout in milliseconds
      * @param maxRows maximum allowed LIMIT value
-     * @param explainDryRun explain dry-run flag
+     * @param explainDryRun explain dry-run rewrite flag for execute-intent flow
      */
     public RuntimeGuardrails {
         if (maxSqlLength != null && maxSqlLength <= 0) {
