@@ -27,7 +27,8 @@ public final class UserQueries {
      * @return query model for this SQL source.
      */
     public static SelectQuery aFindById() {
-        return select(
+        var builder = SelectQuery.builder();
+        return builder.select(
           star()
         )
         .from(tbl("users"))
@@ -50,7 +51,8 @@ public final class UserQueries {
      * @return query model for this SQL source.
      */
     public static SelectQuery zListActive() {
-        return select(
+        var builder = SelectQuery.builder();
+        return builder.select(
           star()
         )
         .from(tbl("users"))

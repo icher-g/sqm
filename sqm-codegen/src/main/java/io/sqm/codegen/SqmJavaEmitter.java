@@ -9,6 +9,9 @@ final class SqmJavaEmitter {
     private final DslEmitterVisitor visitor = new DslEmitterVisitor();
 
     String emitQuery(Query query) {
+        if (query instanceof SelectQuery selectQuery) {
+            return visitor.emitTopLevelSelectQuery(selectQuery);
+        }
         return visitor.emitNode(query);
     }
 
@@ -121,6 +124,10 @@ final class SqmJavaEmitter {
             return result;
         }
 
+        String emitTopLevelSelectQuery(SelectQuery q) {
+            return emitSelectQuery(q, "builder.select(\n");
+        }
+
         @Override
         protected String defaultResult() {
             return null;
@@ -128,8 +135,12 @@ final class SqmJavaEmitter {
 
         @Override
         public String visitSelectQuery(SelectQuery q) {
+            return emitSelectQuery(q, "select(\n");
+        }
+
+        private String emitSelectQuery(SelectQuery q, String selectPrefix) {
             var sb = new StringBuilder();
-            sb.append("select(\n");
+            sb.append(selectPrefix);
             sb.append(indentList(q.items().stream().map(this::emitNode).toList(), 1));
             sb.append("\n)");
 

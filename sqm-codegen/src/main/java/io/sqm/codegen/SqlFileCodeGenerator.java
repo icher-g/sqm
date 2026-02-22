@@ -500,6 +500,9 @@ public final class SqlFileCodeGenerator {
             code.append(INDENT).append("public static ")
                 .append(file.query().getTopLevelInterface().getSimpleName()).append(" ")
                 .append(file.methodName()).append("() {").append(NEWLINE);
+            if (file.query() instanceof io.sqm.core.SelectQuery) {
+                code.append(INDENT).append(INDENT).append("var builder = SelectQuery.builder();").append(NEWLINE);
+            }
             code.append(INDENT).append(INDENT).append("return ")
                 .append(indentContinuationLines(queryExpression, 8))
                 .append(";").append(NEWLINE);

@@ -82,6 +82,7 @@ class SqmJavaEmitterTest {
             .build();
 
         String source = emitter.emitQuery(query);
+        assertTrue(source.contains("builder.select("));
         assertTrue(source.contains("select("));
         assertTrue(source.contains("star(\"u\")"));
         assertTrue(source.contains(".withinGroup(orderBy("));
@@ -115,6 +116,7 @@ class SqmJavaEmitterTest {
     @Test
     void emitQuery_coversOverVariantsAndLimitOffsetVariants() {
         String overBaseOnly = emitter.emitQuery(select(func("f").over(overDef("base"))).from(tbl("t")).build());
+        assertTrue(overBaseOnly.contains("builder.select("));
         assertTrue(overBaseOnly.contains("overDef(\"base\")"));
 
         String overFrameExclude = emitter.emitQuery(

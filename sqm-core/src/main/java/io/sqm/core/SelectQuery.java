@@ -13,6 +13,26 @@ import java.util.List;
  */
 public non-sealed interface SelectQuery extends Query {
 
+    /**
+     * Creates an immutable {@link SelectQuery} from all SELECT clause parts.
+     *
+     * <p>This is a low-level factory intended for callers that already have the
+     * full query shape available. For incremental construction use
+     * {@link #builder()}.</p>
+     *
+     * @param items select items (must not be {@code null})
+     * @param from FROM table reference, or {@code null}
+     * @param joins joins (must not be {@code null})
+     * @param where WHERE predicate, or {@code null}
+     * @param groupBy GROUP BY clause, or {@code null}
+     * @param having HAVING predicate, or {@code null}
+     * @param orderBy ORDER BY clause, or {@code null}
+     * @param distinct DISTINCT specification, or {@code null}
+     * @param limitOffset LIMIT/OFFSET specification, or {@code null}
+     * @param lockFor locking clause, or {@code null}
+     * @param windows WINDOW clause definitions (must not be {@code null})
+     * @return immutable {@link SelectQuery} instance
+     */
     static SelectQuery of(
         List<SelectItem> items,
         TableRef from,

@@ -26,7 +26,8 @@ public final class ReportingQueries {
      * @return query model for this SQL source.
      */
     public static SelectQuery kitchenSink() {
-        return select(
+        var builder = SelectQuery.builder();
+        return builder.select(
           col("u", "id"),
           col("u", "org_id"),
           func("count", starArg()).as("total_orders"),
