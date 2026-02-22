@@ -23,7 +23,8 @@ public final class Query_BuildSimpleQueryWithDSL {
         .having(func("count", starArg()).gt(10))
         .orderBy(order("cnt"))
         .limit(10)
-        .offset(20);
+        .offset(20)
+        .build();
 
         var ctx = RenderContext.of(new AnsiDialect());
         var sql = ctx.render(q);

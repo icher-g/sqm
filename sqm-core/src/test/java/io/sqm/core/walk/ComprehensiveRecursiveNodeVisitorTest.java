@@ -201,7 +201,8 @@ class ComprehensiveRecursiveNodeVisitorTest {
     void columnCollectorVisitor() {
         ColumnCollector visitor = new ColumnCollector();
         SelectQuery query = select(col("id"), col("name"), col("email"))
-            .from(tbl("users"));
+            .from(tbl("users"))
+            .build();
         query.accept(visitor);
 
         assertTrue(visitor.columns.contains("id"));
@@ -214,7 +215,8 @@ class ComprehensiveRecursiveNodeVisitorTest {
         ColumnCollector visitor = new ColumnCollector();
         SelectQuery query = select(col("*"))
             .from(tbl("users"))
-            .where(col("status").eq("active").and(col("age").gte(18)));
+            .where(col("status").eq("active").and(col("age").gte(18)))
+            .build();
         query.accept(visitor);
 
         assertTrue(visitor.columns.contains("status"));
@@ -227,7 +229,7 @@ class ComprehensiveRecursiveNodeVisitorTest {
         SelectQuery query = select(
             col("id"),
             func("LOWER", arg(col("name"))).as("lower_name")
-        ).from(tbl("users"));
+        ).from(tbl("users")).build();
         query.accept(visitor);
 
         assertTrue(visitor.columns.contains("id"));

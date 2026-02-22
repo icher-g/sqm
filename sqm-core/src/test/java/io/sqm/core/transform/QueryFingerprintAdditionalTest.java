@@ -28,7 +28,8 @@ class QueryFingerprintAdditionalTest {
     void normalize_parameterizes_literals() {
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .where(col("u", "age").gte(lit(18)));
+            .where(col("u", "age").gte(lit(18)))
+            .build();
 
         var normalized = QueryFingerprint.normalize(query);
         assertNotNull(normalized);

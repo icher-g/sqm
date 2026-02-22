@@ -33,7 +33,7 @@ class AddArithmeticExprRendererTest {
         // a + b
         Expression expr = col("a").add(col("b"));
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         // Outer SELECT/ FROM shape may be dialect-dependent, but the core
@@ -47,7 +47,7 @@ class AddArithmeticExprRendererTest {
         ArithmeticExpr inner = AddArithmeticExpr.of(col("a"), col("b"));
         ArithmeticExpr expr = AddArithmeticExpr.of(inner, col("c"));
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         // The left operand is an ArithmeticExpr, so it should be wrapped in
@@ -61,7 +61,7 @@ class AddArithmeticExprRendererTest {
         ArithmeticExpr inner = AddArithmeticExpr.of(col("b"), col("c"));
         ArithmeticExpr expr = AddArithmeticExpr.of(col("a"), inner);
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         // The right operand is an ArithmeticExpr, so it should be wrapped in

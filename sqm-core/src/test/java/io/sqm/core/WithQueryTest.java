@@ -10,7 +10,7 @@ class WithQueryTest {
 
     @Test
     void of() {
-        var query = Query.select(Expression.literal(1));
+        var query = Query.select(Expression.literal(1)).build();
         var cte = CteDef.of("cte", query);
         var with = WithQuery.of(List.of(cte), query, true);
         assertEquals("cte", with.ctes().getFirst().name());
@@ -19,7 +19,7 @@ class WithQueryTest {
 
     @Test
     void recursive() {
-        var query = Query.select(Expression.literal(1));
+        var query = Query.select(Expression.literal(1)).build();
         var cte = CteDef.of("cte", query);
         var with = WithQuery.of(List.of(cte), query);
         assertFalse(with.recursive());
@@ -29,7 +29,7 @@ class WithQueryTest {
 
     @Test
     void body() {
-        var query = Query.select(Expression.literal(1));
+        var query = Query.select(Expression.literal(1)).build();
         var cte = CteDef.of("cte", query);
         var with = WithQuery.of(cte);
         assertNull(with.body());

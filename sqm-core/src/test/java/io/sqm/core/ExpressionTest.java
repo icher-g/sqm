@@ -65,7 +65,7 @@ class ExpressionTest {
 
     @Test
     void subquery() {
-        assertInstanceOf(QueryExpr.class, Expression.subquery(Query.select(Expression.literal(1))));
+        assertInstanceOf(QueryExpr.class, Expression.subquery(Query.select(Expression.literal(1)).build()));
     }
 
     @Test
@@ -179,14 +179,14 @@ class ExpressionTest {
 
     @Test
     void any() {
-        var any = Expression.column("c").any(ComparisonOperator.EQ, Query.select(Expression.literal(1)));
+        var any = Expression.column("c").any(ComparisonOperator.EQ, Query.select(Expression.literal(1)).build());
         assertInstanceOf(AnyAllPredicate.class, any);
         assertEquals(Quantifier.ANY, any.quantifier());
     }
 
     @Test
     void all() {
-        var all = Expression.column("c").all(ComparisonOperator.EQ, Query.select(Expression.literal(1)));
+        var all = Expression.column("c").all(ComparisonOperator.EQ, Query.select(Expression.literal(1)).build());
         assertInstanceOf(AnyAllPredicate.class, all);
         assertEquals(Quantifier.ALL, all.quantifier());
     }

@@ -75,7 +75,8 @@ class ArrayExprRenderTest {
     @DisplayName("Render array in SELECT list")
     void rendersArrayInSelectList() {
         var query = select(array(lit(1), lit(2), lit(3)).as("nums"))
-            .from(tbl("t"));
+            .from(tbl("t"))
+            .build();
 
         var sql = renderContext.render(query).sql();
 
@@ -87,7 +88,8 @@ class ArrayExprRenderTest {
     void rendersArrayInWhereClause() {
         var query = select(col("*"))
             .from(tbl("t"))
-            .where(col("tags").eq(array(lit("tag1"), lit("tag2"))));
+            .where(col("tags").eq(array(lit("tag1"), lit("tag2"))))
+            .build();
 
         var sql = renderContext.render(query).sql();
 

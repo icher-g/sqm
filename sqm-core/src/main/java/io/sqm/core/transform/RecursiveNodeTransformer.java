@@ -827,7 +827,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         var lockFor = apply(q.lockFor());
         changed |= lockFor != q.lockFor();
         if (changed) {
-            var query = SelectQuery.of()
+            var builder = SelectQuery.builder()
                 .select(items)
                 .distinct(distinct)
                 .from(from)
@@ -837,18 +837,18 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
                 .window(windows);
 
             if (groupBy != null) {
-                query.groupBy(groupBy.items());
+                builder.groupBy(groupBy.items());
             }
             if (orderBy != null) {
-                query.orderBy(orderBy.items());
+                builder.orderBy(orderBy.items());
             }
             if (limitOffset != null) {
-                query.limitOffset(limitOffset);
+                builder.limitOffset(limitOffset);
             }
             if (lockFor != null) {
-                query.lockFor(lockFor);
+                builder.lockFor(lockFor);
             }
-            return query;
+            return builder.build();
         }
         return q;
     }

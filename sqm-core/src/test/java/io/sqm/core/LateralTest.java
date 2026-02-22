@@ -12,7 +12,7 @@ class LateralTest {
     @Test
     @DisplayName("Create lateral with query table")
     void createWithQueryTable() {
-        var subquery = select(col("id")).from(tbl("users"));
+        var subquery = select(col("id")).from(tbl("users")).build();
         var queryTable = tbl(subquery).as("sub");
         var lateral = Lateral.of(queryTable);
 
@@ -44,7 +44,7 @@ class LateralTest {
     @Test
     @DisplayName("lateral() method on TableRef")
     void lateralMethodOnTableRef() {
-        var subquery = select(col("*")).from(tbl("orders"));
+        var subquery = select(col("*")).from(tbl("orders")).build();
         var queryTable = tbl(subquery).as("o");
         var lateral = queryTable.lateral();
 

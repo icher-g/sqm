@@ -27,7 +27,7 @@ class SqlQueryRewriterTest {
 
     @Test
     void noop_returns_unchanged_result() {
-        Query query = Query.select(Expression.literal(1));
+        Query query = Query.select(Expression.literal(1)).build();
 
         QueryRewriteResult result = SqlQueryRewriter.noop().rewrite(query, ANALYZE);
 
@@ -39,9 +39,9 @@ class SqlQueryRewriterTest {
 
     @Test
     void chain_applies_rules_in_order_and_accumulates_rule_ids() {
-        Query input = Query.select(Expression.literal(1));
-        Query intermediate = Query.select(Expression.literal(2));
-        Query output = Query.select(Expression.literal(3));
+        Query input = Query.select(Expression.literal(1)).build();
+        Query intermediate = Query.select(Expression.literal(2)).build();
+        Query output = Query.select(Expression.literal(3)).build();
         AtomicReference<Query> secondRuleInput = new AtomicReference<>();
 
         QueryRewriteRule first = new QueryRewriteRule() {
@@ -81,8 +81,8 @@ class SqlQueryRewriterTest {
 
     @Test
     void chain_preserves_last_query_when_no_rule_rewrites() {
-        Query input = Query.select(Expression.literal(1));
-        Query passThrough = Query.select(Expression.literal(2));
+        Query input = Query.select(Expression.literal(1)).build();
+        Query passThrough = Query.select(Expression.literal(2)).build();
 
         QueryRewriteRule rule = (query, context) -> QueryRewriteResult.unchanged(passThrough);
 
@@ -96,7 +96,7 @@ class SqlQueryRewriterTest {
 
     @Test
     void chain_validates_configuration_and_runtime_arguments() {
-        Query query = Query.select(Expression.literal(1));
+        Query query = Query.select(Expression.literal(1)).build();
         QueryRewriteRule nullResultRule = (q, c) -> null;
         SqlQueryRewriter rewriter = SqlQueryRewriter.chain(nullResultRule);
 
@@ -111,7 +111,7 @@ class SqlQueryRewriterTest {
 
     @Test
     void built_in_factory_methods_delegate_and_validate_arguments() {
-        Query query = Query.select(Expression.literal(1));
+        Query query = Query.select(Expression.literal(1)).build();
 
         QueryRewriteResult allBuiltIn = SqlQueryRewriter.allBuiltIn().rewrite(query, ANALYZE);
         QueryRewriteResult noneSelected = SqlQueryRewriter.builtIn(Set.of()).rewrite(query, ANALYZE);
@@ -152,7 +152,7 @@ class SqlQueryRewriterTest {
 
     @Test
     void settings_and_set_based_built_in_factories_delegate_and_empty_chain_is_noop() {
-        Query query = Query.select(Expression.literal(1));
+        Query query = Query.select(Expression.literal(1)).build();
 
         var configured = SqlQueryRewriter.builtIn(
             new BuiltInRewriteSettings(11),

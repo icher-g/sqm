@@ -15,7 +15,7 @@ class TableRefTest {
 
     @Test
     void query() {
-        assertInstanceOf(QueryTable.class, TableRef.query(Query.select(Expression.literal(1))));
+        assertInstanceOf(QueryTable.class, TableRef.query(Query.select(Expression.literal(1)).build()));
     }
 
     @Test

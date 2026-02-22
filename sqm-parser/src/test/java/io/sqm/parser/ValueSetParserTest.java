@@ -59,7 +59,7 @@ class ValueSetParserTest {
         @Override
         public ParseResult<? extends QueryExpr> parse(Cursor cur, ParseContext ctx) {
             cur.advance();
-            return ParseResult.ok(QueryExpr.of(SelectQuery.of()));
+            return ParseResult.ok(QueryExpr.of(Query.select().build()));
         }
 
         @Override

@@ -95,7 +95,8 @@ class FunctionTableRendererTest {
     void rendersTableFunctionInFromClause() {
         var func = func("generate_series", arg(lit(1)), arg(lit(10)));
         var query = select(col("*"))
-            .from(TableRef.function(func).as("s").columnAliases(List.of("n")));
+            .from(TableRef.function(func).as("s").columnAliases(List.of("n")))
+            .build();
         
         var sql = renderContext.render(query).sql();
         
@@ -109,7 +110,8 @@ class FunctionTableRendererTest {
         var query = select(col("*"))
             .from(tbl("users").as("u"))
             .join(inner(TableRef.function(func).as("s").columnAliases(List.of("n")))
-                .on(col("u", "id").eq(col("s", "n"))));
+                .on(col("u", "id").eq(col("s", "n"))))
+            .build();
         
         var sql = renderContext.render(query).sql();
         
@@ -124,7 +126,8 @@ class FunctionTableRendererTest {
         
         var query = select(col("*"))
             .from(TableRef.function(func1).as("s1"))
-            .join(cross(TableRef.function(func2).as("s2")));
+            .join(cross(TableRef.function(func2).as("s2")))
+            .build();
         
         var sql = renderContext.render(query).sql();
         
@@ -138,7 +141,8 @@ class FunctionTableRendererTest {
         var func = func("unnest", arg(col("u", "tags")));
         var query = select(star())
             .from(tbl("users").as("u"))
-            .join(cross(TableRef.function(func).as("t").columnAliases(List.of("tag"))));
+            .join(cross(TableRef.function(func).as("t").columnAliases(List.of("tag"))))
+            .build();
         
         var sql = renderContext.render(query).sql();
         

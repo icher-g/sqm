@@ -29,7 +29,8 @@ public class WindowRenderingTest {
                 window("w",
                     partition(col("dept")),
                     orderBy(order(col("salary")).desc()))
-            );
+            )
+            .build();
 
         var sql = render(q);
         assertEquals("""
@@ -53,7 +54,8 @@ public class WindowRenderingTest {
                     rows(preceding(5))
                 ).as("s")
         )
-            .from(tbl("tx"));
+            .from(tbl("tx"))
+            .build();
 
         var sql = render(q);
         assertEquals("""
@@ -77,7 +79,8 @@ public class WindowRenderingTest {
                     excludeTies()
                 ).as("rk")
         )
-            .from(tbl("scores"));
+            .from(tbl("scores"))
+            .build();
 
         var sql = render(q);
         assertEquals("""
@@ -104,7 +107,8 @@ public class WindowRenderingTest {
                     partition(col("dept")),
                     orderBy(order(col("salary")).desc())
                 )
-            );
+            )
+            .build();
 
         var sql = render(q);
         assertEquals("""
@@ -130,7 +134,8 @@ public class WindowRenderingTest {
             .window(
                 window("w1", partition(col("k")), orderBy(order(col("ts")).asc())),
                 window("w2", partition(), orderBy(order(col("v")).asc())) // partition() with 0 args -> no PARTITION BY
-            );
+            )
+            .build();
 
         var sql = render(q);
         assertEquals("""
@@ -155,7 +160,8 @@ public class WindowRenderingTest {
             col("dept"),
             countDistinctActive.as("active_users")
         )
-            .from(tbl("users"));
+            .from(tbl("users"))
+            .build();
 
         var sql = render(q);
         assertEquals("""
@@ -177,7 +183,8 @@ public class WindowRenderingTest {
         )
             .from(tbl("t"))
             .window(window("w", partition(), orderBy(order(col("val")).asc())))
-            .orderBy(order(col("val")).asc());
+            .orderBy(order(col("val")).asc())
+            .build();
 
         var sql = render(q);
         assertEquals("""

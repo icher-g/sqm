@@ -26,7 +26,8 @@ public final class ReportingQueries {
      * @return query model for this SQL source.
      */
     public static SelectQuery kitchenSink() {
-        return select(
+        var builder = SelectQuery.builder();
+        return builder.select(
           col("u", "id"),
           col("u", "org_id"),
           func("count", starArg()).as("total_orders"),
@@ -42,7 +43,8 @@ public final class ReportingQueries {
         .having(func("count", starArg()).gt(lit(1L)))
         .orderBy(order(func("sum", arg(col("o", "amount")))).desc().nullsLast(), order(col("u", "id")).asc())
         .limitOffset(limitOffset(lit(100L), lit(10L)))
-        .lockFor(update(), ofTables("u", "o"), false, true);
+        .lockFor(update(), ofTables("u", "o"), false, true)
+        .build();
     }
 
     /**

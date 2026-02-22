@@ -23,7 +23,8 @@ public final class Collect_ColumnCollector {
             )
             .where(col("o", "status").in("A", "B"))
             .groupBy(group("u", "user_name"), group("o", "status"))
-            .having(func("count", starArg()).gt(10));
+            .having(func("count", starArg()).gt(10))
+            .build();
 
         var collector = new QueryColumnCollector();
         q.accept(collector);

@@ -24,7 +24,7 @@ class LateralRendererTest {
     @Test
     @DisplayName("LATERAL with query table throws UnsupportedDialectFeatureException")
     void lateralWithQueryTableThrowsException() {
-        var query = select(col("id")).from(tbl("users"));
+        var query = select(col("id")).from(tbl("users")).build();
         var lateral = Lateral.of(tbl(query).as("t"));
         var writer = new DefaultSqlWriter(ctx);
 
@@ -47,7 +47,7 @@ class LateralRendererTest {
     @Test
     @DisplayName("UnsupportedDialectFeatureException has descriptive message")
     void exceptionMessageIsDescriptive() {
-        var query = select(col("id")).from(tbl("users"));
+        var query = select(col("id")).from(tbl("users")).build();
         var lateral = Lateral.of(tbl(query).as("t"));
         var writer = new DefaultSqlWriter(ctx);
 

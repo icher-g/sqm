@@ -113,7 +113,7 @@ class RecursiveNodeTransformerTest {
 
     @Test
     void visitQueryExpr() {
-        var queryExpr = expr(select(lit(1)));
+        var queryExpr = expr(select(lit(1)).build());
         var queryTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitExprSelectItem(ExprSelectItem i) {
@@ -177,7 +177,7 @@ class RecursiveNodeTransformerTest {
 
     @Test
     void visitQueryTable() {
-        var qt = tbl(select(lit(1)));
+        var qt = tbl(select(lit(1)).build());
         var transformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitLiteralExpr(LiteralExpr l) {
@@ -402,7 +402,7 @@ class RecursiveNodeTransformerTest {
 
     @Test
     void visitAnyAllPredicate() {
-        var any = col("c1").any(ComparisonOperator.EQ, select(lit(1)));
+        var any = col("c1").any(ComparisonOperator.EQ, select(lit(1)).build());
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
@@ -503,7 +503,7 @@ class RecursiveNodeTransformerTest {
 
     @Test
     void visitExistsPredicate() {
-        var p = exists(select(lit(1)));
+        var p = exists(select(lit(1)).build());
         var literalTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitLiteralExpr(LiteralExpr l) {
@@ -711,7 +711,8 @@ class RecursiveNodeTransformerTest {
     void visitSelectQuery() {
         var query = select(lit(1))
             .from(tbl("t1"))
-            .limit(1L);
+            .limit(1L)
+            .build();
         var tableTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitTable(Table t) {
@@ -727,14 +728,14 @@ class RecursiveNodeTransformerTest {
             }
         };
         var query2 = (SelectQuery) query.accept(limitTransformer);
-        assertInstanceOf(LiteralExpr.class, query2.limit());
-        assertEquals(2L, ((LiteralExpr) query2.limit()).value());
+        assertInstanceOf(LiteralExpr.class, query2.limitOffset().limit());
+        assertEquals(2L, ((LiteralExpr) query2.limitOffset().limit()).value());
     }
 
     @Test
     void visitCompositeQuery() {
-        var query1 = select(lit(1));
-        var query2 = select(lit(2));
+        var query1 = select(lit(1)).build();
+        var query2 = select(lit(2)).build();
         var cq = query1.union(query2).orderBy(order("c1")).limit(1L);
         // change one of the queries
         var columnTransformer = new RecursiveNodeTransformer() {
@@ -777,8 +778,8 @@ class RecursiveNodeTransformerTest {
 
     @Test
     void visitWithQuery() {
-        var cte = cte("cte", select(col("c1")));
-        var body = select(col("c2"));
+        var cte = cte("cte", select(col("c1")).build());
+        var body = select(col("c2")).build();
         var with = with(cte).body(body);
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override

@@ -1,6 +1,7 @@
 package io.sqm.render.postgresql;
 
 import io.sqm.core.*;
+import io.sqm.render.ansi.LockingClauseRenderer;
 import io.sqm.render.postgresql.spi.PostgresDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -124,7 +125,8 @@ class LockingClauseRendererTest {
     void rendersForUpdateInSelectQuery() {
         var query = select(col("*"))
             .from(tbl("users"))
-            .lockFor(update(), List.of(), false, false);
+            .lockFor(update(), List.of(), false, false)
+            .build();
         
         var sql = renderContext.render(query).sql();
         
@@ -137,7 +139,8 @@ class LockingClauseRendererTest {
         var query = select(col("*"))
             .from(tbl("users"))
             .where(col("active").eq(lit(true)))
-            .lockFor(update(), List.of(), false, false);
+            .lockFor(update(), List.of(), false, false)
+            .build();
         
         var sql = renderContext.render(query).sql();
         
@@ -152,7 +155,8 @@ class LockingClauseRendererTest {
             .from(tbl("users"))
             .orderBy(order("id"))
             .limit(10)
-            .lockFor(update(), List.of(), false, false);
+            .lockFor(update(), List.of(), false, false)
+            .build();
         
         var sql = renderContext.render(query).sql();
         
@@ -168,7 +172,8 @@ class LockingClauseRendererTest {
         var query = select(col("*"))
             .from(tbl("users").as("u"))
             .join(inner(tbl("orders").as("o")).on(col("u", "id").eq(col("o", "user_id"))))
-            .lockFor(update(), targets, false, false);
+            .lockFor(update(), targets, false, false)
+            .build();
         
         var sql = renderContext.render(query).sql();
         

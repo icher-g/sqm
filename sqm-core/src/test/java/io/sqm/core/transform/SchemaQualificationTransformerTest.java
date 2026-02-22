@@ -21,7 +21,8 @@ class SchemaQualificationTransformerTest {
     void qualifies_unqualified_base_and_join_tables() {
         SelectQuery query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .join(inner(tbl("orders").as("o")).on(col("u", "id").eq(col("o", "user_id"))));
+            .join(inner(tbl("orders").as("o")).on(col("u", "id").eq(col("o", "user_id"))))
+            .build();
 
         var transformer = SchemaQualificationTransformer.of(tableName -> switch (tableName) {
             case "users" -> TableQualification.qualified("app");
@@ -44,7 +45,7 @@ class SchemaQualificationTransformerTest {
 
     @Test
     void keeps_already_qualified_table_unchanged() {
-        SelectQuery query = select(col("u", "id")).from(tbl("app", "users").as("u"));
+        SelectQuery query = select(col("u", "id")).from(tbl("app", "users").as("u")).build();
         var transformer = SchemaQualificationTransformer.of(tableName -> TableQualification.qualified("ignored"));
 
         var transformed = (SelectQuery) transformer.apply(query);
@@ -56,8 +57,8 @@ class SchemaQualificationTransformerTest {
 
     @Test
     void leaves_cte_reference_unqualified() {
-        Query query = with(Query.cte("users", select(col("id")).from(tbl("raw_users"))))
-            .body(select(col("id")).from(tbl("users")));
+        Query query = with(Query.cte("users", select(col("id")).from(tbl("raw_users")).build()))
+            .body(select(col("id")).from(tbl("users")).build());
 
         var resolver = SchemaQualificationTransformer.of(tableName -> {
             var mapping = Map.of(
@@ -83,7 +84,7 @@ class SchemaQualificationTransformerTest {
 
     @Test
     void throws_on_ambiguous_table_resolution() {
-        SelectQuery query = select(col("id")).from(tbl("users"));
+        SelectQuery query = select(col("id")).from(tbl("users")).build();
         var transformer = SchemaQualificationTransformer.of(tableName -> TableQualification.ambiguous());
 
         assertThrows(

@@ -103,7 +103,8 @@ class CastExprRendererTest {
     @DisplayName("Render cast in SELECT list")
     void rendersCastInSelectList() {
         var query = select(CastExpr.of(col("id"), type("text")).as("id_str"))
-            .from(tbl("t"));
+            .from(tbl("t"))
+            .build();
         
         var sql = renderContext.render(query).sql();
         
@@ -115,7 +116,8 @@ class CastExprRendererTest {
     void rendersCastInWhereClause() {
         var query = select(col("*"))
             .from(tbl("t"))
-            .where(CastExpr.of(col("id"), type("text")).eq(lit("123")));
+            .where(CastExpr.of(col("id"), type("text")).eq(lit("123")))
+            .build();
         
         var sql = renderContext.render(query).sql();
         

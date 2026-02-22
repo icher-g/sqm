@@ -32,7 +32,7 @@ class NegativeArithmeticExprRendererTest {
         // -a
         Expression expr = col("a").neg();
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         assertEquals("SELECT -a FROM t", normalize(sql));
@@ -44,7 +44,7 @@ class NegativeArithmeticExprRendererTest {
         ArithmeticExpr inner = col("a").add(col("b"));
         Expression expr = inner.neg();
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         assertEquals("SELECT -(a + b) FROM t", normalize(sql));

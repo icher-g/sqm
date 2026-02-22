@@ -61,7 +61,7 @@ class AtomicQueryParserTest {
         @Override
         public ParseResult<? extends SelectQuery> parse(Cursor cur, ParseContext ctx) {
             cur.expect("Expected SELECT", TokenType.SELECT);
-            return ParseResult.ok(SelectQuery.of());
+            return ParseResult.ok(Query.select().build());
         }
 
         @Override

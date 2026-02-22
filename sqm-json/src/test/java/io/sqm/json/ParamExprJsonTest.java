@@ -114,7 +114,8 @@ public class ParamExprJsonTest {
     void namedParam_inWhereClause() throws Exception {
         var query = select(col("id"), col("name"))
             .from(tbl("users"))
-            .where(col("id").eq(ParamExpr.named("userId")));
+            .where(col("id").eq(ParamExpr.named("userId")))
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -136,7 +137,8 @@ public class ParamExprJsonTest {
     void ordinalParam_inWhereClause() throws Exception {
         var query = select(col("*"))
             .from(tbl("products"))
-            .where(col("price").gt(ParamExpr.ordinal(1)));
+            .where(col("price").gt(ParamExpr.ordinal(1)))
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -152,7 +154,8 @@ public class ParamExprJsonTest {
     void anonymousParam_inWhereClause() throws Exception {
         var query = select(col("*"))
             .from(tbl("orders"))
-            .where(col("status").eq(ParamExpr.anonymous()));
+            .where(col("status").eq(ParamExpr.anonymous()))
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -168,7 +171,8 @@ public class ParamExprJsonTest {
             .where(
                 col("username").eq(ParamExpr.named("username"))
                     .and(col("status").eq(ParamExpr.named("status")))
-            );
+            )
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -194,7 +198,8 @@ public class ParamExprJsonTest {
                 ParamExpr.ordinal(1),
                 ParamExpr.ordinal(2),
                 ParamExpr.ordinal(3)
-            ));
+            ))
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -217,7 +222,7 @@ public class ParamExprJsonTest {
     void namedParam_inFunctionArg() throws Exception {
         var query = select(
             func("CONCAT", arg(col("first_name")), arg(ParamExpr.named("separator")), arg(col("last_name"))).as("full_name")
-        ).from(tbl("users"));
+        ).from(tbl("users")).build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -235,7 +240,8 @@ public class ParamExprJsonTest {
     void params_inBetweenPredicate() throws Exception {
         var query = select(col("*"))
             .from(tbl("orders"))
-            .where(col("amount").between(ParamExpr.named("minAmount"), ParamExpr.named("maxAmount")));
+            .where(col("amount").between(ParamExpr.named("minAmount"), ParamExpr.named("maxAmount")))
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -319,7 +325,8 @@ public class ParamExprJsonTest {
                 col("user_id").eq(ParamExpr.named("userId"))
                     .and(col("amount").gt(ParamExpr.ordinal(1)))
                     .and(col("status").eq(ParamExpr.anonymous()))
-            );
+            )
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 

@@ -87,7 +87,8 @@ class LockingClauseRoundTripTest {
     void dslBuiltQueryRenders() {
         var query = select(col("*"))
             .from(tbl("users"))
-            .lockFor(update(), ofTables(), false, false);
+            .lockFor(update(), ofTables(), false, false)
+            .build();
         
         var sql = renderContext.render(query).sql();
         

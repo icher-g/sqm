@@ -39,7 +39,8 @@ class SqlFileCodeGeneratorTest {
         var source = Files.readString(generatedFile);
         assertTrue(source.contains("import static io.sqm.dsl.Dsl.*;"));
         assertTrue(source.contains("public static SelectQuery aFindById()"));
-        assertTrue(source.contains("return select("));
+        assertTrue(source.contains("var builder = SelectQuery.builder();"));
+        assertTrue(source.contains("return builder.select("));
         assertTrue(source.contains("param(\"id\")"));
         assertTrue(source.contains("param(\"status\")"));
         assertTrue(source.contains(".where("));

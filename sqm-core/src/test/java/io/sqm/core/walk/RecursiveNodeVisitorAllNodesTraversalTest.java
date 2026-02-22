@@ -45,7 +45,7 @@ public class RecursiveNodeVisitorAllNodesTraversalTest {
                         .and(
                             col("o", "flag").isNull()
                                 .or(col("o", "code").like("%ZZ%"))
-                                .or(col("o", "user").all(ComparisonOperator.EQ, select(lit(1))))
+                                .or(col("o", "user").all(ComparisonOperator.EQ, select(lit(1)).build()))
                         )
                 )
                 .groupBy(group("u", "user_name"), group("o", "user_status"))
@@ -58,7 +58,8 @@ public class RecursiveNodeVisitorAllNodesTraversalTest {
                 )
                 .orderBy(order(col("o", "status")).desc())
                 .limit(100)
-                .offset(10);
+                .offset(10)
+                .build();
 
         var v = new RecordingVisitor();
         q.accept(v);
@@ -105,7 +106,8 @@ public class RecursiveNodeVisitorAllNodesTraversalTest {
                 )
                 .where(col("o", "state").in("A", "B"))
                 .groupBy(group("u", "user_name"), group("o", "user_status"))
-                .having(func("count", arg(col("u", "test"))).gt(10));
+                .having(func("count", arg(col("u", "test"))).gt(10))
+                .build();
 
         var expectedColumns = Set.of("u.name", "o.name", "o.status", "u.id", "u.desc", "u.sid", "o.user_id", "o.state", "u.user_name",
             "o.user_status", "u.test");

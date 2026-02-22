@@ -33,7 +33,7 @@ class DivArithmeticExprRendererTest {
         // a / b
         Expression expr = col("a").div(col("b"));
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         // Core expression should be "a / b" without extra parentheses.
@@ -46,7 +46,7 @@ class DivArithmeticExprRendererTest {
         ArithmeticExpr inner = DivArithmeticExpr.of(col("a"), col("b"));
         ArithmeticExpr expr = DivArithmeticExpr.of(inner, col("c"));
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         // Left operand is an ArithmeticExpr, so it should be wrapped:
@@ -60,7 +60,7 @@ class DivArithmeticExprRendererTest {
         ArithmeticExpr inner = DivArithmeticExpr.of(col("b"), col("c"));
         ArithmeticExpr expr = DivArithmeticExpr.of(col("a"), inner);
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         // Right operand is an ArithmeticExpr, so it should be wrapped:

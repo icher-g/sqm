@@ -17,7 +17,8 @@ class SelectQueryLockingTest {
         var lockClause = LockingClause.of(LockMode.UPDATE, List.of(), false, false);
         var query = select(col("id"), col("name"))
             .from(tbl("users"))
-            .lockFor(lockClause);
+            .lockFor(lockClause)
+            .build();
         
         assertNotNull(query.lockFor());
         assertEquals(LockMode.UPDATE, query.lockFor().mode());
@@ -28,7 +29,8 @@ class SelectQueryLockingTest {
     void addForUpdateConvenience() {
         var query = select(col("id"))
             .from(tbl("users"))
-            .lockFor(update(), List.of(), false, false);
+            .lockFor(update(), List.of(), false, false)
+            .build();
         
         assertNotNull(query.lockFor());
         assertEquals(LockMode.UPDATE, query.lockFor().mode());
@@ -40,7 +42,8 @@ class SelectQueryLockingTest {
         var targets = ofTables("users", "orders");
         var query = select(col("*"))
             .from(tbl("users"))
-            .lockFor(update(), targets, false, false);
+            .lockFor(update(), targets, false, false)
+            .build();
         
         assertNotNull(query.lockFor());
         assertEquals(2, query.lockFor().ofTables().size());
@@ -51,7 +54,8 @@ class SelectQueryLockingTest {
     void addForUpdateNowait() {
         var query = select(col("*"))
             .from(tbl("users"))
-            .lockFor(update(), List.of(), true, false);
+            .lockFor(update(), List.of(), true, false)
+            .build();
         
         assertTrue(query.lockFor().nowait());
         assertFalse(query.lockFor().skipLocked());
@@ -62,30 +66,19 @@ class SelectQueryLockingTest {
     void addForUpdateSkipLocked() {
         var query = select(col("*"))
             .from(tbl("users"))
-            .lockFor(update(), List.of(), false, true);
+            .lockFor(update(), List.of(), false, true)
+            .build();
         
         assertFalse(query.lockFor().nowait());
         assertTrue(query.lockFor().skipLocked());
     }
 
     @Test
-    @DisplayName("Replace existing locking clause")
-    void replaceLockingClause() {
-        var query = select(col("*"))
-            .from(tbl("users"))
-            .lockFor(update(), List.of(), false, false);
-        
-        // Replace with NOWAIT
-        query = query.lockFor(update(), List.of(), true, false);
-        
-        assertTrue(query.lockFor().nowait());
-    }
-
-    @Test
     @DisplayName("Query without locking clause returns null")
     void queryWithoutLockingClause() {
         var query = select(col("*"))
-            .from(tbl("users"));
+            .from(tbl("users"))
+            .build();
         
         assertNull(query.lockFor());
     }
@@ -98,7 +91,8 @@ class SelectQueryLockingTest {
             .join(inner(tbl("orders").as("o"))
                 .on(col("u", "id").eq(col("o", "user_id"))))
             .where(col("u", "active").eq(lit(true)))
-            .lockFor(update(), ofTables("u", "o"), false, false);
+            .lockFor(update(), ofTables("u", "o"), false, false)
+            .build();
         
         assertNotNull(query.lockFor());
         assertEquals(2, query.lockFor().ofTables().size());
@@ -109,7 +103,8 @@ class SelectQueryLockingTest {
     void forShareMode() {
         var query = select(col("*"))
             .from(tbl("users"))
-            .lockFor(share(), List.of(), false, false);
+            .lockFor(share(), List.of(), false, false)
+            .build();
         
         assertEquals(LockMode.SHARE, query.lockFor().mode());
     }
@@ -119,7 +114,8 @@ class SelectQueryLockingTest {
     void forNoKeyUpdateMode() {
         var query = select(col("*"))
             .from(tbl("users"))
-            .lockFor(noKeyUpdate(), List.of(), false, false);
+            .lockFor(noKeyUpdate(), List.of(), false, false)
+            .build();
         
         assertEquals(LockMode.NO_KEY_UPDATE, query.lockFor().mode());
     }
@@ -129,7 +125,8 @@ class SelectQueryLockingTest {
     void forKeyShareMode() {
         var query = select(col("*"))
             .from(tbl("users"))
-            .lockFor(keyShare(), List.of(), false, false);
+            .lockFor(keyShare(), List.of(), false, false)
+            .build();
         
         assertEquals(LockMode.KEY_SHARE, query.lockFor().mode());
     }

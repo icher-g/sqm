@@ -13,7 +13,7 @@ class SqlQueryRendererTest {
     void for_dialect_defaults_to_ansi_when_missing() {
         var renderer = SqlQueryRenderer.forDialect(null);
         var sql = renderer.render(
-            Query.select(Expression.literal(1)),
+            Query.select(Expression.literal(1)).build(),
             ExecutionContext.of("ansi", ExecutionMode.ANALYZE)
         );
 
@@ -24,7 +24,7 @@ class SqlQueryRendererTest {
     void for_dialect_supports_postgres_alias() {
         var renderer = SqlQueryRenderer.forDialect("postgres");
         var sql = renderer.render(
-            Query.select(Expression.literal(1)),
+            Query.select(Expression.literal(1)).build(),
             ExecutionContext.of("postgresql", ExecutionMode.ANALYZE)
         );
 
@@ -38,7 +38,7 @@ class SqlQueryRendererTest {
 
     @Test
     void convenience_factories_and_blank_dialect_are_supported() {
-        var query = Query.select(Expression.literal(1));
+        var query = Query.select(Expression.literal(1)).build();
         var ansiSql = SqlQueryRenderer.ansi().render(query, ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
         var postgresSql = SqlQueryRenderer.postgresql().render(query, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         var blankDialectSql = SqlQueryRenderer.forDialect("   ").render(query, ExecutionContext.of("ansi", ExecutionMode.ANALYZE));

@@ -252,7 +252,7 @@ public class ExpressionMatchTest {
 
     @Test
     void matches_query() {
-        var expr = expr(Query.select(literal(1)));
+        var expr = expr(Query.select(literal(1)).build());
         String out = Match
             .<String>valueSet(expr)
             .row(r -> "R")

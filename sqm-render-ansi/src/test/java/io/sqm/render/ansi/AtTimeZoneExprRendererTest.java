@@ -63,7 +63,8 @@ class AtTimeZoneExprRendererTest {
     void throwsWhenRenderingInWhereClause() {
         var query = select(col("*"))
             .from(tbl("events"))
-            .where(col("timestamp").atTimeZone(lit("UTC")).eq(lit("2024-01-01")));
+            .where(col("timestamp").atTimeZone(lit("UTC")).eq(lit("2024-01-01")))
+            .build();
 
         var exception = assertThrows(UnsupportedOperationException.class,
             () -> ansiCtx.render(query).sql(),
@@ -78,7 +79,8 @@ class AtTimeZoneExprRendererTest {
     @Test
     void throwsWhenRenderingInSelectList() {
         var query = select(col("created_at").atTimeZone(lit("UTC")))
-            .from(tbl("events"));
+            .from(tbl("events"))
+            .build();
 
         var exception = assertThrows(UnsupportedOperationException.class,
             () -> ansiCtx.render(query).sql(),
@@ -157,7 +159,8 @@ class AtTimeZoneExprRendererTest {
     @DisplayName("Render AT TIME ZONE in SELECT when supported")
     void renderAtTimeZoneInSelectContext() {
         var query = select(col("created_at").atTimeZone(lit("UTC")))
-            .from(tbl("events"));
+            .from(tbl("events"))
+            .build();
 
         String sql = testDialectCtx.render(query).sql();
 
@@ -174,7 +177,8 @@ class AtTimeZoneExprRendererTest {
     void renderAtTimeZoneInWhereClause() {
         var query = select(col("*"))
             .from(tbl("events"))
-            .where(col("timestamp").atTimeZone(lit("UTC")).eq(lit("2024-01-01")));
+            .where(col("timestamp").atTimeZone(lit("UTC")).eq(lit("2024-01-01")))
+            .build();
 
         String sql = testDialectCtx.render(query).sql();
 

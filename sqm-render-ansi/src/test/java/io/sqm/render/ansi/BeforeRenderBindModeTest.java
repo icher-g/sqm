@@ -90,7 +90,8 @@ class BeforeRenderBindModeTest {
                     .and(
                         col("b").eq(lit("x"))
                     )
-            );
+            )
+            .build();
     }
 
     /**

@@ -2,7 +2,6 @@ package io.sqm.parser;
 
 import io.sqm.core.CompositeQuery;
 import io.sqm.core.Query;
-import io.sqm.core.SelectQuery;
 import io.sqm.core.WithQuery;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -12,9 +11,18 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class QueryParserTest {
+
+    private static ParseContext contextWithQueryParsers() {
+        var repo = new DefaultParsersRepository()
+            .register(Query.class, new io.sqm.parser.QueryParser())
+            .register(WithQuery.class, new WithQueryParser())
+            .register(CompositeQuery.class, new CompositeQueryParser());
+        return TestSupport.context(repo);
+    }
 
     @Test
     void delegatesToWithQueryWhenWithTokenPresent() {
@@ -34,14 +42,6 @@ class QueryParserTest {
         assertInstanceOf(CompositeQuery.class, result.value());
     }
 
-    private static ParseContext contextWithQueryParsers() {
-        var repo = new DefaultParsersRepository()
-            .register(Query.class, new io.sqm.parser.QueryParser())
-            .register(WithQuery.class, new WithQueryParser())
-            .register(CompositeQuery.class, new CompositeQueryParser());
-        return TestSupport.context(repo);
-    }
-
     private static final class WithQueryParser implements io.sqm.parser.spi.Parser<WithQuery> {
         @Override
         public ParseResult<? extends WithQuery> parse(Cursor cur, ParseContext ctx) {
@@ -59,7 +59,7 @@ class QueryParserTest {
         @Override
         public ParseResult<? extends CompositeQuery> parse(Cursor cur, ParseContext ctx) {
             cur.expect("Expected SELECT", TokenType.SELECT);
-            return ParseResult.ok(CompositeQuery.of(List.of(SelectQuery.of()), List.of()));
+            return ParseResult.ok(CompositeQuery.of(List.of(Query.select().build()), List.of()));
         }
 
         @Override

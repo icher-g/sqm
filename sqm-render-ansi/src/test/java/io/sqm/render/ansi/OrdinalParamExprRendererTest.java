@@ -27,7 +27,7 @@ class OrdinalParamExprRendererTest {
     @DisplayName("Ordinal parameter renders as question mark (ANSI limitation)")
     void ordinal_param_renders_as_question_mark() {
         var param = Dsl.param(1);
-        var query = select(param).from(tbl("users"));
+        var query = select(param).from(tbl("users")).build();
         String result = normalize(ctx.render(query).sql());
         assertTrue(result.contains("?"), "Ordinal parameters render as ? in ANSI");
     }
@@ -36,7 +36,8 @@ class OrdinalParamExprRendererTest {
     @DisplayName("Multiple ordinal parameters all render as question marks")
     void multiple_ordinal_params() {
         var query = select(Dsl.param(1), Dsl.param(2), Dsl.param(3))
-            .from(tbl("users"));
+            .from(tbl("users"))
+            .build();
         String result = normalize(ctx.render(query).sql());
         int count = 0;
         for (char c : result.toCharArray()) {
@@ -63,7 +64,7 @@ class OrdinalParamExprRendererTest {
     @DisplayName("Ordinal parameter in WHERE clause")
     void ordinal_param_in_where() {
         var param = Dsl.param(1);
-        var query = select(param).from(tbl("users"));
+        var query = select(param).from(tbl("users")).build();
         String result = normalize(ctx.render(query).sql());
         assertTrue(result.contains("?"));
     }

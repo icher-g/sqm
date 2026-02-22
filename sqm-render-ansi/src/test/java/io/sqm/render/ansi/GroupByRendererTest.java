@@ -30,7 +30,8 @@ class GroupByRendererTest {
     void group_by_single_column() {
         var query = select(col("dept"), func("count", arg(col("id"))))
             .from(tbl("employees"))
-            .groupBy(group("dept"));
+            .groupBy(group("dept"))
+            .build();
         String result = render(query);
         assertEquals("SELECT dept, count(id) FROM employees GROUP BY dept", result);
     }
@@ -40,7 +41,8 @@ class GroupByRendererTest {
     void group_by_multiple_columns() {
         var query = select(col("dept"), col("status"), func("count", arg(col("id"))))
             .from(tbl("employees"))
-            .groupBy(group("dept"), group("status"));
+            .groupBy(group("dept"), group("status"))
+            .build();
         String result = render(query);
         assertTrue(result.contains("GROUP BY"));
         assertTrue(result.contains("dept"));
@@ -52,7 +54,8 @@ class GroupByRendererTest {
     void group_by_qualified_column() {
         var query = select(col("e", "dept"), func("count", arg(col("id"))))
             .from(tbl("employees").as("e"))
-            .groupBy(group("e", "dept"));
+            .groupBy(group("e", "dept"))
+            .build();
         String result = render(query);
         assertTrue(result.contains("GROUP BY"));
         assertTrue(result.contains("e.dept"));
@@ -63,7 +66,8 @@ class GroupByRendererTest {
     void group_by_keyword_rendered() {
         var query = select(col("category"), func("count", arg(col("id"))))
             .from(tbl("products"))
-            .groupBy(group("category"));
+            .groupBy(group("category"))
+            .build();
         String result = render(query);
         assertTrue(result.contains("GROUP BY"));
     }
@@ -74,7 +78,8 @@ class GroupByRendererTest {
         var query = select(col("dept"), func("count", arg(col("id"))).as("cnt"))
             .from(tbl("employees"))
             .groupBy(group("dept"))
-            .having(func("count", arg(col("id"))).gt(5));
+            .having(func("count", arg(col("id"))).gt(5))
+            .build();
         String result = render(query);
         assertTrue(result.contains("GROUP BY"));
         assertTrue(result.contains("HAVING"));
@@ -85,7 +90,8 @@ class GroupByRendererTest {
     void group_by_rollup_rejected() {
         var query = select(col("dept"), func("count", arg(col("id"))))
             .from(tbl("employees"))
-            .groupBy(rollup(group("dept"), group("status")));
+            .groupBy(rollup(group("dept"), group("status")))
+            .build();
 
         assertThrows(UnsupportedDialectFeatureException.class, () -> render(query));
     }
@@ -95,7 +101,8 @@ class GroupByRendererTest {
     void group_by_grouping_sets_rejected() {
         var query = select(col("dept"), func("count", arg(col("id"))))
             .from(tbl("employees"))
-            .groupBy(groupingSets(group("dept"), groupingSet()));
+            .groupBy(groupingSets(group("dept"), groupingSet()))
+            .build();
 
         assertThrows(UnsupportedDialectFeatureException.class, () -> render(query));
     }
@@ -105,7 +112,8 @@ class GroupByRendererTest {
     void group_by_grouping_set_rejected() {
         var query = select(col("dept"), func("count", arg(col("id"))))
             .from(tbl("employees"))
-            .groupBy(groupingSet(group("dept")));
+            .groupBy(groupingSet(group("dept")))
+            .build();
 
         assertThrows(UnsupportedDialectFeatureException.class, () -> render(query));
     }
@@ -115,7 +123,8 @@ class GroupByRendererTest {
     void group_by_cube_rejected() {
         var query = select(col("dept"), func("count", arg(col("id"))))
             .from(tbl("employees"))
-            .groupBy(cube(group("dept"), group("status")));
+            .groupBy(cube(group("dept"), group("status")))
+            .build();
 
         assertThrows(UnsupportedDialectFeatureException.class, () -> render(query));
     }

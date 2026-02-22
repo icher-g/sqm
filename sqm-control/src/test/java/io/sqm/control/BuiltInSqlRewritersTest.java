@@ -5,6 +5,8 @@ import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.control.rewrite.BuiltInSqlRewriters;
+import io.sqm.core.Expression;
+import io.sqm.core.Query;
 import org.junit.jupiter.api.Test;
 
 import java.util.EnumSet;
@@ -22,7 +24,7 @@ class BuiltInSqlRewritersTest {
     @Test
     void all_available_applies_limit_injection() {
         var result = BuiltInSqlRewriters.allAvailable()
-            .rewrite(io.sqm.core.Query.select(io.sqm.core.Expression.literal(1)),
+            .rewrite(Query.select(Expression.literal(1)).build(),
                 ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
 
         assertTrue(result.rewritten());
@@ -47,7 +49,7 @@ class BuiltInSqlRewritersTest {
 
     @Test
     void factory_validates_nulls_and_supports_empty_selection() {
-        var query = io.sqm.core.Query.select(io.sqm.core.Expression.literal(1));
+        var query = Query.select(Expression.literal(1)).build();
         var context = ExecutionContext.of("ansi", ExecutionMode.ANALYZE);
 
         assertThrows(NullPointerException.class, () -> BuiltInSqlRewriters.of((BuiltInRewriteRule[]) null));
@@ -62,7 +64,7 @@ class BuiltInSqlRewritersTest {
     @Test
     void selecting_supported_limit_injection_rewrites_query() {
         var result = BuiltInSqlRewriters.of(BuiltInRewriteRule.LIMIT_INJECTION)
-            .rewrite(io.sqm.core.Query.select(io.sqm.core.Expression.literal(1)),
+            .rewrite(Query.select(Expression.literal(1)).build(),
                 ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
 
         assertTrue(result.rewritten());

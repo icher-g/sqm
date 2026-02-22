@@ -16,16 +16,16 @@ class LimitInjectionTransformerAdditionalTest {
 
     @Test
     void expression_based_default_limit_is_used() {
-        SelectQuery query = select(col("id")).from(tbl("users"));
+        SelectQuery query = select(col("id")).from(tbl("users")).build();
 
         var transformed = (SelectQuery) LimitInjectionTransformer.of(lit(7)).apply(query);
 
-        assertEquals(7, ((LiteralExpr) transformed.limit()).value());
+        assertEquals(7, ((LiteralExpr) transformed.limitOffset().limit()).value());
     }
 
     @Test
     void composite_with_explicit_limit_is_unchanged() {
-        CompositeQuery query = select(lit(1)).union(select(lit(2))).limit(3L);
+        CompositeQuery query = select(lit(1)).build().union(select(lit(2)).build()).limit(3L);
 
         var transformed = (CompositeQuery) LimitInjectionTransformer.of(50).apply(query);
 

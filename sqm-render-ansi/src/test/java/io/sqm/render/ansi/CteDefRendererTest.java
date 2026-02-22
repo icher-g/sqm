@@ -39,7 +39,8 @@ class CteDefRendererTest {
     @DisplayName("CTE with aliases renders: name (a, b) AS ( <inner-select> )")
     void cte_with_aliases_ok() {
         var q = select(col("u", "id"), col("u", "name"))
-            .from(tbl("users").as("u"));
+            .from(tbl("users").as("u"))
+            .build();
         var cte = cte("u_cte", q).columnAliases("id", "name");
         var sql = render(cte);
         var norm = normalize(sql);
@@ -52,7 +53,8 @@ class CteDefRendererTest {
     @DisplayName("CTE without aliases renders: name AS ( <inner-select> )")
     void cte_without_aliases_ok() {
         var q = select(col("o", "user_id"), col("o", "amount"))
-            .from(tbl("orders").as("o"));
+            .from(tbl("orders").as("o"))
+            .build();
         var cte = cte("orders_cte", q);
         var sql = render(cte);
 
@@ -66,7 +68,8 @@ class CteDefRendererTest {
     @DisplayName("CTE missing name -> expect a render failure")
     void cte_missing_name_fails() {
         var q = select(col("u", "id"))
-            .from(tbl("users", "u"));
+            .from(tbl("users", "u"))
+            .build();
         var cte = cte(null, q);
 
         assertThrows(RuntimeException.class, () -> render(cte));
@@ -76,7 +79,8 @@ class CteDefRendererTest {
     @DisplayName("CTE materialization is rejected by ANSI renderer")
     void cte_materialization_rejected() {
         var q = select(col("u", "id"))
-            .from(tbl("users").as("u"));
+            .from(tbl("users").as("u"))
+            .build();
         var cte = cte("u_cte", q).materialization(CteDef.Materialization.MATERIALIZED);
 
         assertThrows(UnsupportedDialectFeatureException.class, () -> render(cte));

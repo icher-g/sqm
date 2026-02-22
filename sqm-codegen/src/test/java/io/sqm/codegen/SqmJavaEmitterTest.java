@@ -32,11 +32,11 @@ class SqmJavaEmitterTest {
             param(2),
             row(lit(1), lit("x")),
             rows(row(lit(1), lit("a")), row(lit(2), lit("b"))),
-            expr(select(star()).from(tbl("subq")))
+            expr(select(star()).from(tbl("subq")).build())
         )
             .from(tbl("public", "users").as("u").only())
             .join(
-                inner(tbl(select(star()).from(tbl("sub_src"))).as("sq").columnAliases("c1").lateral()).on(col("u", "id").eq(col("sq", "c1"))),
+                inner(tbl(select(star()).from(tbl("sub_src")).build()).as("sq").columnAliases("c1").lateral()).on(col("u", "id").eq(col("sq", "c1"))),
                 left(tbl("orders").as("o")).on(col("o", "uid").eq(col("u", "id"))),
                 right(tbl("right_t").as("r")).on(col("r", "uid").eq(col("u", "id"))),
                 full(tbl("full_t").as("f")).on(col("f", "uid").eq(col("u", "id"))),
@@ -56,8 +56,8 @@ class SqmJavaEmitterTest {
                     .and(col("u", "age").between(lit(1), lit(2)).symmetric(true).negated(true))
                     .and(col("u", "deleted").isNull())
                     .and(col("u", "created").isNotNull())
-                    .and(exists(select(star()).from(tbl("ex"))))
-                    .and(notExists(select(star()).from(tbl("nex"))))
+                    .and(exists(select(star()).from(tbl("ex")).build()))
+                    .and(notExists(select(star()).from(tbl("nex")).build()))
                     .and(unary(lit(true)).not())
             )
             .groupBy(
@@ -78,9 +78,11 @@ class SqmJavaEmitterTest {
             )
             .distinct(distinct())
             .limitOffset(limitAll(lit(10)))
-            .lockFor(update(), ofTables("u"), true, false);
+            .lockFor(update(), ofTables("u"), true, false)
+            .build();
 
         String source = emitter.emitQuery(query);
+        assertTrue(source.contains("builder.select("));
         assertTrue(source.contains("select("));
         assertTrue(source.contains("star(\"u\")"));
         assertTrue(source.contains(".withinGroup(orderBy("));
@@ -113,26 +115,27 @@ class SqmJavaEmitterTest {
 
     @Test
     void emitQuery_coversOverVariantsAndLimitOffsetVariants() {
-        String overBaseOnly = emitter.emitQuery(select(func("f").over(overDef("base"))).from(tbl("t")));
+        String overBaseOnly = emitter.emitQuery(select(func("f").over(overDef("base"))).from(tbl("t")).build());
+        assertTrue(overBaseOnly.contains("builder.select("));
         assertTrue(overBaseOnly.contains("overDef(\"base\")"));
 
         String overFrameExclude = emitter.emitQuery(
-            select(func("f").over(over(orderBy(order(col("x"))), rows(unboundedPreceding(), currentRow()), excludeGroup()))).from(tbl("t"))
+            select(func("f").over(over(orderBy(order(col("x"))), rows(unboundedPreceding(), currentRow()), excludeGroup()))).from(tbl("t")).build()
         );
         assertTrue(overFrameExclude.contains("excludeGroup()"));
 
         String overPartitionOnly = emitter.emitQuery(
-            select(func("f").over(over(partition(col("p"))))).from(tbl("t"))
+            select(func("f").over(over(partition(col("p"))))).from(tbl("t")).build()
         );
         assertTrue(overPartitionOnly.contains("over(partition("));
 
-        String limitOnly = emitter.emitQuery(select(star()).from(tbl("t")).limit(lit(5)));
+        String limitOnly = emitter.emitQuery(select(star()).from(tbl("t")).limit(lit(5)).build());
         assertTrue(limitOnly.contains(".limit(lit(5))"));
 
-        String offsetOnly = emitter.emitQuery(select(star()).from(tbl("t")).offset(lit(7)));
+        String offsetOnly = emitter.emitQuery(select(star()).from(tbl("t")).offset(lit(7)).build());
         assertTrue(offsetOnly.contains(".offset(lit(7))"));
 
-        String bothNull = emitter.emitQuery(select(star()).from(tbl("t")).limitOffset(limitOffset(null, null)));
+        String bothNull = emitter.emitQuery(select(star()).from(tbl("t")).limitOffset(limitOffset(null, null)).build());
         assertTrue(bothNull.contains(".limitOffset(limitOffset(null, null))"));
     }
 
@@ -150,7 +153,7 @@ class SqmJavaEmitterTest {
                 lit(4),
                 lit(2.5),
                 lit(null)
-            ).from(tbl("t"))
+            ).from(tbl("t")).build()
         );
 
         assertTrue(source.contains("lit(\"text\")"));
@@ -167,7 +170,7 @@ class SqmJavaEmitterTest {
 
     @Test
     void emitQuery_throwsOnUnsupportedLiteralType() {
-        Query query = select(lit(new BigDecimal("1.25"))).from(tbl("t"));
+        Query query = select(lit(new BigDecimal("1.25"))).from(tbl("t")).build();
         var error = assertThrows(IllegalStateException.class, () -> emitter.emitQuery(query));
         assertTrue(error.getMessage().contains("Unsupported literal value type"));
     }
@@ -175,7 +178,7 @@ class SqmJavaEmitterTest {
     @Test
     void emitQuery_throwsOnOrderItemWithoutExprAndOrdinal() {
         OrderItem broken = OrderItem.of(null, null, null, null, null, null);
-        Query query = select(star()).from(tbl("t")).orderBy(broken);
+        Query query = select(star()).from(tbl("t")).orderBy(broken).build();
 
         var error = assertThrows(IllegalStateException.class, () -> emitter.emitQuery(query));
         assertTrue(error.getMessage().contains("Order item must have expression or ordinal"));
@@ -183,7 +186,7 @@ class SqmJavaEmitterTest {
 
     @Test
     void emitQuery_emitsTableInheritanceIncludingDescendants() {
-        String source = emitter.emitQuery(select(star()).from(tbl("users").includingDescendants()));
+        String source = emitter.emitQuery(select(star()).from(tbl("users").includingDescendants()).build());
         assertTrue(source.contains(".includingDescendants()"));
     }
 }

@@ -33,7 +33,7 @@ class MulArithmeticExprRendererTest {
         // a * b
         Expression expr = col("a").mul(col("b"));
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         assertEquals("SELECT a * b FROM t", normalize(sql));
@@ -45,7 +45,7 @@ class MulArithmeticExprRendererTest {
         ArithmeticExpr inner = MulArithmeticExpr.of(col("a"), col("b"));
         ArithmeticExpr expr = MulArithmeticExpr.of(inner, col("c"));
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         assertEquals("SELECT a * b * c FROM t", normalize(sql));
@@ -57,7 +57,7 @@ class MulArithmeticExprRendererTest {
         ArithmeticExpr inner = MulArithmeticExpr.of(col("b"), col("c"));
         ArithmeticExpr expr = MulArithmeticExpr.of(col("a"), inner);
 
-        var query = select(expr).from(tbl("t"));
+        var query = select(expr).from(tbl("t")).build();
         String sql = ctx.render(query).sql();
 
         assertEquals("SELECT a * b * c FROM t", normalize(sql));

@@ -18,14 +18,14 @@ class PredicateTest {
 
     @Test
     void exists() {
-        var exists = Predicate.exists(Query.select(Expression.literal(1)));
+        var exists = Predicate.exists(Query.select(Expression.literal(1)).build());
         assertInstanceOf(ExistsPredicate.class, exists);
         assertFalse(exists.negated());
     }
 
     @Test
     void notExists() {
-        var exists = Predicate.notExists(Query.select(Expression.literal(1)));
+        var exists = Predicate.notExists(Query.select(Expression.literal(1)).build());
         assertInstanceOf(ExistsPredicate.class, exists);
         assertTrue(exists.negated());
     }
@@ -57,8 +57,8 @@ class PredicateTest {
 
     @Test
     void asAnyAll() {
-        Predicate any = Expression.column("c").any(ComparisonOperator.EQ, Query.select(Expression.literal(1)));
-        Predicate all = Expression.column("c").all(ComparisonOperator.EQ, Query.select(Expression.literal(1)));
+        Predicate any = Expression.column("c").any(ComparisonOperator.EQ, Query.select(Expression.literal(1)).build());
+        Predicate all = Expression.column("c").all(ComparisonOperator.EQ, Query.select(Expression.literal(1)).build());
         assertTrue(any.<Boolean>matchPredicate().anyAll(p -> true).orElse(false));
         assertTrue(all.<Boolean>matchPredicate().anyAll(p -> true).orElse(false));
         assertFalse(Expression.column("c").eq(1).<Boolean>matchPredicate().anyAll(p -> true).orElse(false));
@@ -80,7 +80,7 @@ class PredicateTest {
 
     @Test
     void asExists() {
-        Predicate exists = Predicate.notExists(Query.select(Expression.literal(1)));
+        Predicate exists = Predicate.notExists(Query.select(Expression.literal(1)).build());
         assertTrue(exists.<Boolean>matchPredicate().exists(e -> true).orElse(false));
         assertFalse(Expression.column("c1").eq(1).<Boolean>matchPredicate().exists(e -> true).orElse(false));
     }

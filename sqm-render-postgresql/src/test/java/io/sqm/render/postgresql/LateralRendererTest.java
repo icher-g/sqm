@@ -30,7 +30,8 @@ class LateralRendererTest {
     void rendersLateralWithSubquery() {
         var subquery = select(col("*"))
             .from(tbl("orders"))
-            .where(col("user_id").eq(col("u", "id")));
+            .where(col("user_id").eq(col("u", "id")))
+            .build();
         
         var lateral = Lateral.of(TableRef.query(subquery).as("o"));
         var sql = renderContext.render(lateral).sql();
@@ -56,11 +57,13 @@ class LateralRendererTest {
         var subquery = select(col("*"))
             .from(tbl("orders"))
             .where(col("user_id").eq(col("u", "id")))
-            .limit(1);
+            .limit(1)
+            .build();
         
         var query = select(col("u", "*"), col("o", "*"))
             .from(tbl("users").as("u"))
-            .join(inner(Lateral.of(TableRef.query(subquery).as("o"))).on(unary(lit(true))));
+            .join(inner(Lateral.of(TableRef.query(subquery).as("o"))).on(unary(lit(true))))
+            .build();
         
         var sql = renderContext.render(query).sql();
         
@@ -74,11 +77,13 @@ class LateralRendererTest {
         var subquery = select(col("*"))
             .from(tbl("orders"))
             .where(col("user_id").eq(col("u", "id")))
-            .limit(1);
+            .limit(1)
+            .build();
         
         var query = select(col("*"))
             .from(tbl("users").as("u"))
-            .join(left(Lateral.of(TableRef.query(subquery).as("o"))).on(unary(lit(true))));
+            .join(left(Lateral.of(TableRef.query(subquery).as("o"))).on(unary(lit(true))))
+            .build();
         
         var sql = renderContext.render(query).sql();
         
@@ -102,16 +107,19 @@ class LateralRendererTest {
     void rendersMultipleLateralJoins() {
         var subq1 = select(col("*"))
             .from(tbl("orders"))
-            .where(col("user_id").eq(col("u", "id")));
+            .where(col("user_id").eq(col("u", "id")))
+            .build();
         
         var subq2 = select(col("*"))
             .from(tbl("payments"))
-            .where(col("order_id").eq(col("o", "id")));
+            .where(col("order_id").eq(col("o", "id")))
+            .build();
         
         var query = select(col("*"))
             .from(tbl("users").as("u"))
             .join(inner(Lateral.of(TableRef.query(subq1).as("o"))).on(unary(lit(true))))
-            .join(inner(Lateral.of(TableRef.query(subq2).as("p"))).on(unary(lit(true))));
+            .join(inner(Lateral.of(TableRef.query(subq2).as("p"))).on(unary(lit(true))))
+            .build();
         
         var sql = renderContext.render(query).sql();
         
@@ -125,11 +133,13 @@ class LateralRendererTest {
     void rendersLateralWithAggregate() {
         var subquery = select(func("COUNT", starArg()).as("order_count"))
             .from(tbl("orders"))
-            .where(col("user_id").eq(col("u", "id")));
+            .where(col("user_id").eq(col("u", "id")))
+            .build();
         
         var query = select(col("u", "name"), col("cnt", "order_count"))
             .from(tbl("users").as("u"))
-            .join(inner(Lateral.of(TableRef.query(subquery).as("cnt"))).on(unary(lit(true))));
+            .join(inner(Lateral.of(TableRef.query(subquery).as("cnt"))).on(unary(lit(true))))
+            .build();
         
         var sql = renderContext.render(query).sql();
         

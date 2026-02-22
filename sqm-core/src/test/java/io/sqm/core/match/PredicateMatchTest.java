@@ -75,7 +75,7 @@ public class PredicateMatchTest {
 
     @Test
     void fallback_helpers_behave() {
-        ExistsPredicate exists = exists(select(lit(1)));
+        ExistsPredicate exists = exists(select(lit(1)).build());
 
         String v = PredicateMatch
             .<String>match(exists)
@@ -87,7 +87,7 @@ public class PredicateMatchTest {
 
     @Test
     void matches_anyAllPredicate() {
-        var predicate = col("c").any(ComparisonOperator.EQ, select(lit(1)));
+        var predicate = col("c").any(ComparisonOperator.EQ, select(lit(1)).build());
         String out = PredicateMatch
             .<String>match(predicate)
             .anyAll(p -> "AnyAll")
@@ -97,7 +97,7 @@ public class PredicateMatchTest {
 
     @Test
     void matches_existsPredicate() {
-        var predicate = exists(select(lit(1)));
+        var predicate = exists(select(lit(1)).build());
         String out = PredicateMatch
             .<String>match(predicate)
             .exists(p -> "EXISTS")

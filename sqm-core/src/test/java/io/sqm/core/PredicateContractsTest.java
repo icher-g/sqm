@@ -12,7 +12,7 @@ public class PredicateContractsTest {
         var p = AnyAllPredicate.of(
             ColumnExpr.of("c1"),
             ComparisonOperator.GT,
-            Query.select(literal(1)),
+            Query.select(literal(1)).build(),
             Quantifier.ALL);
 
         assertEquals("c1", p.lhs().matchExpression().column(c -> c.name()).orElse(null));
@@ -133,7 +133,7 @@ public class PredicateContractsTest {
 
     @Test
     void exists_predicate() {
-        var p = ExistsPredicate.of(Query.select(literal(1)), false);
+        var p = ExistsPredicate.of(Query.select(literal(1)).build(), false);
 
         assertEquals(1, (Integer) p.subquery().matchQuery()
             .select(s -> s.items().getFirst().matchSelectItem()

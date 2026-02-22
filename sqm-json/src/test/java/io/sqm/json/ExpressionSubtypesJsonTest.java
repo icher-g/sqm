@@ -79,7 +79,7 @@ public class ExpressionSubtypesJsonTest {
         var query = select(
             col("id"),
             col("price").cast(TypeName.of(List.of("decimal"), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE)).as("price_decimal")
-        ).from(tbl("products"));
+        ).from(tbl("products")).build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -198,7 +198,7 @@ public class ExpressionSubtypesJsonTest {
         var query = select(
             col("id"),
             ArrayExpr.of(col("tag1"), col("tag2"), col("tag3")).as("tags")
-        ).from(tbl("items"));
+        ).from(tbl("items")).build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -312,7 +312,8 @@ public class ExpressionSubtypesJsonTest {
         var binaryExpr = col("metadata").op("@>", lit("{\"status\":\"active\"}"));
         var query = select(col("*"))
             .from(tbl("documents"))
-            .where(UnaryPredicate.of(binaryExpr));
+            .where(UnaryPredicate.of(binaryExpr))
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -384,7 +385,7 @@ public class ExpressionSubtypesJsonTest {
         var query = select(
             col("id"),
             col("flags").unary("~").as("inverted_flags")
-        ).from(tbl("config"));
+        ).from(tbl("config")).build();
 
         var back = roundTrip(query, SelectQuery.class);
 
@@ -449,7 +450,8 @@ public class ExpressionSubtypesJsonTest {
                     UnaryPredicate.of(col("metadata").op("@>", lit("{\"active\":true}"))),
                     col("amount").gt(lit(100))
                 )
-            );
+            )
+            .build();
 
         var back = roundTrip(query, SelectQuery.class);
 
