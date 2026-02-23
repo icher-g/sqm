@@ -14,6 +14,12 @@ public final class InMemoryAuditEventPublisher implements AuditEventPublisher {
 
     /**
      * Creates a new in-memory publisher.
+     */
+    public InMemoryAuditEventPublisher() {
+    }
+
+    /**
+     * Creates a new in-memory publisher.
      *
      * @return publisher instance
      */

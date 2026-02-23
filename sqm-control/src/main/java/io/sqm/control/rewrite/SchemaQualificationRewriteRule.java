@@ -2,12 +2,13 @@ package io.sqm.control.rewrite;
 
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
+import io.sqm.control.BuiltInRewriteSettings;
 import io.sqm.control.ExecutionContext;
 import io.sqm.control.QueryRewriteResult;
 import io.sqm.control.QueryRewriteRule;
 import io.sqm.control.ReasonCode;
+import io.sqm.control.RewriteDenyException;
 import io.sqm.core.Query;
-import io.sqm.core.transform.QueryFingerprint;
 import io.sqm.core.transform.SchemaQualificationTransformer;
 import io.sqm.core.transform.TableQualification;
 import io.sqm.core.transform.TableSchemaResolver;
@@ -38,6 +39,19 @@ public final class SchemaQualificationRewriteRule implements QueryRewriteRule {
     }
 
     /**
+     * Creates a schema-qualification rewrite rule backed by catalog schema metadata and qualification policy settings.
+     *
+     * @param schema catalog schema used for unqualified table resolution
+     * @param settings built-in rewrite settings (qualification defaults/strictness are used)
+     * @return rule instance
+     */
+    public static SchemaQualificationRewriteRule of(CatalogSchema schema, BuiltInRewriteSettings settings) {
+        Objects.requireNonNull(schema, "schema must not be null");
+        Objects.requireNonNull(settings, "settings must not be null");
+        return new SchemaQualificationRewriteRule(SchemaQualificationTransformer.of(catalogResolver(schema, settings)));
+    }
+
+    /**
      * Returns a stable rule identifier.
      *
      * @return rule identifier
@@ -59,11 +73,8 @@ public final class SchemaQualificationRewriteRule implements QueryRewriteRule {
         Objects.requireNonNull(query, "query must not be null");
         Objects.requireNonNull(context, "context must not be null");
 
-        String before = QueryFingerprint.of(query, false);
         Query transformed = transformer.apply(query);
-        String after = QueryFingerprint.of(transformed, false);
-
-        if (before.equals(after)) {
+        if (transformed == query) {
             return QueryRewriteResult.unchanged(transformed);
         }
         return QueryRewriteResult.rewritten(transformed, id(), ReasonCode.REWRITE_QUALIFICATION);
@@ -76,6 +87,41 @@ public final class SchemaQualificationRewriteRule implements QueryRewriteRule {
                 case CatalogSchema.TableLookupResult.Found found -> toQualification(found.table());
                 case CatalogSchema.TableLookupResult.Ambiguous ignored -> TableQualification.ambiguous();
                 case CatalogSchema.TableLookupResult.NotFound ignored -> TableQualification.unresolved();
+            };
+        };
+    }
+
+    private static TableSchemaResolver catalogResolver(CatalogSchema schema, BuiltInRewriteSettings settings) {
+        return tableName -> {
+            String preferredSchema = settings.qualificationDefaultSchema();
+            if (preferredSchema != null) {
+                var preferred = schema.resolve(preferredSchema, tableName);
+                if (preferred instanceof CatalogSchema.TableLookupResult.Found(CatalogTable table)) {
+                    return toQualification(table);
+                }
+            }
+
+            var result = schema.resolve(null, tableName);
+            return switch (result) {
+                case CatalogSchema.TableLookupResult.Found found -> toQualification(found.table());
+                case CatalogSchema.TableLookupResult.Ambiguous ambiguous -> {
+                    if (settings.qualificationFailureMode() == BuiltInRewriteSettings.QualificationFailureMode.DENY) {
+                        throw new RewriteDenyException(
+                            ReasonCode.DENY_TABLE,
+                            "Ambiguous unqualified table '" + ambiguous.name() + "' cannot be schema-qualified deterministically"
+                        );
+                    }
+                    yield TableQualification.unresolved();
+                }
+                case CatalogSchema.TableLookupResult.NotFound notFound -> {
+                    if (settings.qualificationFailureMode() == BuiltInRewriteSettings.QualificationFailureMode.DENY) {
+                        throw new RewriteDenyException(
+                            ReasonCode.DENY_TABLE,
+                            "Unqualified table '" + notFound.name() + "' not found in catalog for schema qualification"
+                        );
+                    }
+                    yield TableQualification.unresolved();
+                }
             };
         };
     }

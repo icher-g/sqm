@@ -11,6 +11,7 @@ import java.util.Objects;
  * @param query           resulting query model after rewrite evaluation
  * @param rewritten       whether any rewrite was applied
  * @param appliedRuleIds  identifiers of applied rewrite rules in application order
+ * @param primaryReasonCode primary rewrite reason code, or {@link ReasonCode#NONE} when unchanged
  */
 public record QueryRewriteResult(
     Query query,

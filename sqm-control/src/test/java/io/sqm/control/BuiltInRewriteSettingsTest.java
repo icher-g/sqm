@@ -2,20 +2,22 @@ package io.sqm.control;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class BuiltInRewriteSettingsTest {
 
     @Test
     void defaults_and_null_mode_fallback_to_deny() {
         var defaults = BuiltInRewriteSettings.defaults();
-        var withNullMode = new BuiltInRewriteSettings(25, 50, null);
+        var withNullModes = new BuiltInRewriteSettings(25, 50, null, " ", null);
 
         assertEquals(1000L, defaults.defaultLimitInjectionValue());
         assertEquals(BuiltInRewriteSettings.LimitExcessMode.DENY, defaults.limitExcessMode());
-        assertEquals(BuiltInRewriteSettings.LimitExcessMode.DENY, withNullMode.limitExcessMode());
-        assertEquals(Integer.valueOf(50), withNullMode.maxAllowedLimit());
+        assertEquals(BuiltInRewriteSettings.QualificationFailureMode.DENY, defaults.qualificationFailureMode());
+        assertEquals(BuiltInRewriteSettings.LimitExcessMode.DENY, withNullModes.limitExcessMode());
+        assertEquals(BuiltInRewriteSettings.QualificationFailureMode.DENY, withNullModes.qualificationFailureMode());
+        assertEquals(Integer.valueOf(50), withNullModes.maxAllowedLimit());
+        assertNull(withNullModes.qualificationDefaultSchema());
     }
 
     @Test

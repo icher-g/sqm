@@ -27,6 +27,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+/**
+ * Default {@link SqlMiddleware} implementation that orchestrates parse, decision evaluation,
+ * runtime guardrails, explanation, and audit publishing.
+ */
 public final class DefaultSqlMiddleware implements SqlMiddleware {
     private final SqlDecisionEngine engine;
     private final SqlDecisionExplainer explainer;
@@ -34,6 +38,15 @@ public final class DefaultSqlMiddleware implements SqlMiddleware {
     private final RuntimeGuardrails guardrails;
     private final SqlQueryParser queryParser;
 
+    /**
+     * Creates a middleware instance with explicit component wiring.
+     *
+     * @param engine decision engine used for validate/rewrite/render decisions
+     * @param explainer explainer used by {@link #explainDecision(String, ExecutionContext)}
+     * @param auditPublisher audit sink for emitted audit events
+     * @param guardrails runtime guardrail settings
+     * @param queryParser parser used for ingress SQL parsing
+     */
     public DefaultSqlMiddleware(
         SqlDecisionEngine engine,
         SqlDecisionExplainer explainer,

@@ -125,6 +125,73 @@ class BuiltInSqlRewritersTest {
     }
 
     @Test
+    void schema_qualification_prefers_configured_default_schema_when_name_is_ambiguous() {
+        var schema = CatalogSchema.of(
+            CatalogTable.of("public", "users", CatalogColumn.of("id", CatalogType.LONG)),
+            CatalogTable.of("tenant_a", "users", CatalogColumn.of("id", CatalogType.LONG))
+        );
+        var settings = new BuiltInRewriteSettings(
+            1000,
+            null,
+            BuiltInRewriteSettings.LimitExcessMode.DENY,
+            "public",
+            BuiltInRewriteSettings.QualificationFailureMode.DENY
+        );
+        var query = SqlQueryParser.standard().parse("select id from users", POSTGRES_ANALYZE);
+
+        var result = BuiltInSqlRewriters.forSchema(schema, settings, BuiltInRewriteRule.SCHEMA_QUALIFICATION)
+            .rewrite(query, POSTGRES_ANALYZE);
+
+        assertTrue(result.rewritten());
+        assertEquals(ReasonCode.REWRITE_QUALIFICATION, result.primaryReasonCode());
+        String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE).toLowerCase();
+        assertTrue(rendered.contains("from public.users"));
+    }
+
+    @Test
+    void schema_qualification_uses_policy_for_unresolved_or_ambiguous_targets() {
+        var unresolvedSchema = CatalogSchema.of(
+            CatalogTable.of("public", "other", CatalogColumn.of("id", CatalogType.LONG))
+        );
+        var ambiguousSchema = CatalogSchema.of(
+            CatalogTable.of("public", "users", CatalogColumn.of("id", CatalogType.LONG)),
+            CatalogTable.of("tenant_a", "users", CatalogColumn.of("id", CatalogType.LONG))
+        );
+        var query = SqlQueryParser.standard().parse("select id from users", POSTGRES_ANALYZE);
+        var strict = new BuiltInRewriteSettings(
+            1000,
+            null,
+            BuiltInRewriteSettings.LimitExcessMode.DENY,
+            null,
+            BuiltInRewriteSettings.QualificationFailureMode.DENY
+        );
+        var skip = new BuiltInRewriteSettings(
+            1000,
+            null,
+            BuiltInRewriteSettings.LimitExcessMode.DENY,
+            null,
+            BuiltInRewriteSettings.QualificationFailureMode.SKIP
+        );
+
+        assertThrows(
+            RewriteDenyException.class,
+            () -> BuiltInSqlRewriters.forSchema(unresolvedSchema, strict, BuiltInRewriteRule.SCHEMA_QUALIFICATION)
+                .rewrite(query, POSTGRES_ANALYZE)
+        );
+        assertThrows(
+            RewriteDenyException.class,
+            () -> BuiltInSqlRewriters.forSchema(ambiguousSchema, strict, BuiltInRewriteRule.SCHEMA_QUALIFICATION)
+                .rewrite(query, POSTGRES_ANALYZE)
+        );
+        assertFalse(BuiltInSqlRewriters.forSchema(unresolvedSchema, skip, BuiltInRewriteRule.SCHEMA_QUALIFICATION)
+            .rewrite(query, POSTGRES_ANALYZE)
+            .rewritten());
+        assertFalse(BuiltInSqlRewriters.forSchema(ambiguousSchema, skip, BuiltInRewriteRule.SCHEMA_QUALIFICATION)
+            .rewrite(query, POSTGRES_ANALYZE)
+            .rewritten());
+    }
+
+    @Test
     void schema_aware_rewriter_applies_rules_in_enum_order() {
         var query = SqlQueryParser.standard().parse("select id from users", POSTGRES_ANALYZE);
 
@@ -132,15 +199,34 @@ class BuiltInSqlRewritersTest {
             SCHEMA,
             new BuiltInRewriteSettings(17),
             BuiltInRewriteRule.SCHEMA_QUALIFICATION,
+            BuiltInRewriteRule.COLUMN_QUALIFICATION,
             BuiltInRewriteRule.LIMIT_INJECTION
         ).rewrite(query, POSTGRES_ANALYZE);
 
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_LIMIT, result.primaryReasonCode());
-        assertEquals(List.of("limit-injection", "schema-qualification"), result.appliedRuleIds());
+        assertEquals(List.of("limit-injection", "schema-qualification", "column-qualification"), result.appliedRuleIds());
         String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE).toLowerCase();
         assertTrue(rendered.contains("from public.users"));
+        assertTrue(rendered.contains("select users.id") || rendered.contains("select public.users.id") || rendered.contains("select id"));
         assertTrue(rendered.contains("limit 17"));
+    }
+
+    @Test
+    void column_qualification_rewrites_when_schema_rule_is_also_enabled() {
+        var query = SqlQueryParser.standard().parse("select id from users u", POSTGRES_ANALYZE);
+
+        var result = BuiltInSqlRewriters.forSchema(
+            SCHEMA,
+            BuiltInRewriteRule.SCHEMA_QUALIFICATION,
+            BuiltInRewriteRule.COLUMN_QUALIFICATION
+        ).rewrite(query, POSTGRES_ANALYZE);
+
+        assertTrue(result.rewritten());
+        assertEquals(List.of("schema-qualification", "column-qualification"), result.appliedRuleIds());
+        String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE).toLowerCase();
+        assertTrue(rendered.contains("select u.id"));
+        assertTrue(rendered.contains("from public.users as u"));
     }
 
     @Test
