@@ -14,6 +14,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@SuppressWarnings("SameParameterValue")
 class DefaultSqlMiddlewareTest {
 
     private static final CatalogSchema SCHEMA = CatalogSchema.of(
@@ -23,9 +24,62 @@ class DefaultSqlMiddlewareTest {
         )
     );
 
+    private static SqlMiddleware create(CatalogSchema schema) {
+        return SqlMiddleware.create(SqlMiddlewareConfig.forValidation(schema));
+    }
+
+    private static SqlMiddleware create(String dialect, CatalogSchema schema) {
+        return SqlMiddleware.create(SqlMiddlewareConfig.forValidation(dialect, schema));
+    }
+
+    private static SqlMiddleware create(CatalogSchema schema, SchemaValidationSettings settings) {
+        return SqlMiddleware.create(SqlMiddlewareConfig.forValidation(null, schema, settings));
+    }
+
+    private static SqlMiddleware create(
+        CatalogSchema schema,
+        SchemaValidationSettings settings,
+        RuntimeGuardrails guardrails
+    ) {
+        return SqlMiddleware.create(SqlMiddlewareConfig.forValidation(null, schema, settings).withGuardrails(guardrails));
+    }
+
+    private static SqlMiddleware create(
+        CatalogSchema schema,
+        SchemaValidationSettings settings,
+        RuntimeGuardrails guardrails,
+        AuditEventPublisher auditPublisher,
+        SqlDecisionExplainer explainer,
+        SqlQueryParser queryParser
+    ) {
+        return SqlMiddleware.create(
+            SqlMiddlewareConfig.forValidation(null, schema, settings)
+                .withGuardrails(guardrails)
+                .withAuditPublisher(auditPublisher)
+                .withExplainer(explainer)
+                .withQueryParser(queryParser)
+        );
+    }
+
+    private static SqlMiddleware create(
+        SqlDecisionEngine engine,
+        SqlDecisionExplainer explainer,
+        AuditEventPublisher auditPublisher,
+        RuntimeGuardrails guardrails,
+        SqlQueryParser queryParser
+    ) {
+        return SqlMiddleware.create(
+            SqlMiddlewareConfig.forEngine(engine)
+                .withExplainer(explainer)
+                .withAuditPublisher(auditPublisher)
+                .withGuardrails(guardrails)
+                .withQueryParser(queryParser)
+        );
+    }
+
     @Test
     void default_factory_creates_working_middleware() {
-        var middleware = SqlMiddleware.of(SCHEMA);
+        var middleware = create(SCHEMA);
         var context = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
 
         var result = middleware.analyze("select 1", context);
@@ -37,7 +91,7 @@ class DefaultSqlMiddlewareTest {
         var settings = SchemaValidationSettings.builder()
             .limits(SchemaValidationLimits.builder().maxSelectColumns(1).build())
             .build();
-        var middleware = SqlMiddleware.of(SCHEMA, settings);
+        var middleware = create(SCHEMA, settings);
 
         var result = middleware.analyze("select 1, 2", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.DENY, result.kind());
@@ -46,7 +100,7 @@ class DefaultSqlMiddlewareTest {
 
     @Test
     void factory_applies_runtime_guardrails() {
-        var middleware = SqlMiddleware.of(
+        var middleware = create(
             SCHEMA,
             SchemaValidationSettings.defaults(),
             new RuntimeGuardrails(null, null, 100, false)
@@ -60,7 +114,7 @@ class DefaultSqlMiddlewareTest {
     @Test
     void factory_allows_custom_audit_wiring() {
         var audit = InMemoryAuditEventPublisher.create();
-        var middleware = SqlMiddleware.of(
+        var middleware = create(
             SCHEMA,
             SchemaValidationSettings.defaults(),
             RuntimeGuardrails.disabled(),
@@ -76,7 +130,7 @@ class DefaultSqlMiddlewareTest {
 
     @Test
     void dialect_schema_factory_uses_dialect_aware_validation_wiring() {
-        var middleware = SqlMiddleware.of("postgres", SCHEMA);
+        var middleware = create("postgres", SCHEMA);
 
         var result = middleware.analyze("select 1", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.ALLOW, result.kind());
@@ -84,14 +138,14 @@ class DefaultSqlMiddlewareTest {
 
     @Test
     void dialect_schema_factory_validates_required_arguments() {
-        assertThrows(NullPointerException.class, () -> SqlMiddleware.of("postgresql", null));
-        assertThrows(NullPointerException.class, () -> SqlMiddleware.of("postgresql", SCHEMA, null));
-        assertThrows(IllegalArgumentException.class, () -> SqlMiddleware.of("mysql", SCHEMA));
+        assertThrows(NullPointerException.class, () -> create("postgresql", null));
+        assertThrows(NullPointerException.class, () -> SqlMiddlewareConfig.forValidation("postgresql", SCHEMA, null));
+        assertThrows(IllegalArgumentException.class, () -> SqlMiddlewareConfig.forValidation("mysql", SCHEMA));
     }
 
     @Test
     void dialect_schema_factory_defaults_to_ansi_when_missing() {
-        var middleware = SqlMiddleware.of(null, SCHEMA);
+        var middleware = create(null, SCHEMA);
 
         var result = middleware.analyze("select 1", ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.ALLOW, result.kind());
@@ -99,9 +153,10 @@ class DefaultSqlMiddlewareTest {
 
     @Test
     void schema_factory_validates_required_arguments() {
-        assertThrows(NullPointerException.class, () -> SqlMiddleware.of((io.sqm.catalog.model.CatalogSchema) null));
-        assertThrows(NullPointerException.class, () -> SqlMiddleware.of(SCHEMA, null));
-        assertThrows(NullPointerException.class, () -> SqlMiddleware.of(SCHEMA, SchemaValidationSettings.defaults(), null));
+        assertThrows(NullPointerException.class, () -> SqlMiddlewareConfig.forValidation(null));
+        assertThrows(NullPointerException.class, () -> SqlMiddlewareConfig.forValidation(null, SCHEMA, null));
+        assertThrows(NullPointerException.class,
+            () -> SqlMiddlewareConfig.forValidation(SCHEMA).withGuardrails(null));
     }
 
     @Test
@@ -112,10 +167,10 @@ class DefaultSqlMiddlewareTest {
         var guardrails = RuntimeGuardrails.disabled();
         var parser = SqlQueryParser.standard();
 
-        assertThrows(NullPointerException.class, () -> SqlMiddleware.of(null, explainer, audit, guardrails, parser));
-        assertThrows(NullPointerException.class, () -> SqlMiddleware.of(engine, null, audit, guardrails, parser));
-        assertThrows(NullPointerException.class, () -> SqlMiddleware.of(engine, explainer, null, guardrails, parser));
-        assertThrows(NullPointerException.class, () -> SqlMiddleware.of(engine, explainer, audit, null, parser));
-        assertThrows(NullPointerException.class, () -> SqlMiddleware.of(engine, explainer, audit, guardrails, null));
+        assertThrows(NullPointerException.class, () -> create(null, explainer, audit, guardrails, parser));
+        assertThrows(NullPointerException.class, () -> create(engine, null, audit, guardrails, parser));
+        assertThrows(NullPointerException.class, () -> create(engine, explainer, null, guardrails, parser));
+        assertThrows(NullPointerException.class, () -> create(engine, explainer, audit, null, parser));
+        assertThrows(NullPointerException.class, () -> create(engine, explainer, audit, guardrails, null));
     }
 }
