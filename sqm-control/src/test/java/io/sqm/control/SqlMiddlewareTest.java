@@ -11,11 +11,69 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SqlMiddlewareTest {
+    private static SqlMiddleware create(SqlDecisionEngine engine) {
+        return SqlMiddleware.create(SqlMiddlewareConfig.forEngine(engine));
+    }
+
+    private static SqlMiddleware create(SqlDecisionEngine engine, SqlDecisionExplainer explainer) {
+        return SqlMiddleware.create(SqlMiddlewareConfig.forEngine(engine).withExplainer(explainer));
+    }
+
+    private static SqlMiddleware create(SqlDecisionEngine engine, AuditEventPublisher auditPublisher) {
+        return SqlMiddleware.create(SqlMiddlewareConfig.forEngine(engine).withAuditPublisher(auditPublisher));
+    }
+
+    private static SqlMiddleware create(SqlDecisionEngine engine, RuntimeGuardrails guardrails) {
+        return SqlMiddleware.create(SqlMiddlewareConfig.forEngine(engine).withGuardrails(guardrails));
+    }
+
+    private static SqlMiddleware create(
+        SqlDecisionEngine engine,
+        SqlDecisionExplainer explainer,
+        AuditEventPublisher auditPublisher
+    ) {
+        return SqlMiddleware.create(
+            SqlMiddlewareConfig.forEngine(engine)
+                .withExplainer(explainer)
+                .withAuditPublisher(auditPublisher)
+        );
+    }
+
+    private static SqlMiddleware create(
+        SqlDecisionEngine engine,
+        SqlDecisionExplainer explainer,
+        AuditEventPublisher auditPublisher,
+        RuntimeGuardrails guardrails
+    ) {
+        return SqlMiddleware.create(
+            SqlMiddlewareConfig.forEngine(engine)
+                .withExplainer(explainer)
+                .withAuditPublisher(auditPublisher)
+                .withGuardrails(guardrails)
+        );
+    }
+
+    private static SqlMiddleware create(
+        SqlDecisionEngine engine,
+        SqlDecisionExplainer explainer,
+        AuditEventPublisher auditPublisher,
+        RuntimeGuardrails guardrails,
+        SqlQueryParser queryParser
+    ) {
+        return SqlMiddleware.create(
+            SqlMiddlewareConfig.forEngine(engine)
+                .withExplainer(explainer)
+                .withAuditPublisher(auditPublisher)
+                .withGuardrails(guardrails)
+                .withQueryParser(queryParser)
+        );
+    }
+
 
     @Test
     void analyze_routes_with_analyze_mode() {
         var modeRef = new AtomicReference<ExecutionMode>();
-        var middleware = SqlMiddleware.of((query, context) -> {
+        var middleware = create((query, context) -> {
             modeRef.set(context.mode());
             return DecisionResult.allow();
         });
@@ -29,7 +87,7 @@ class SqlMiddlewareTest {
     @Test
     void enforce_routes_with_execute_mode() {
         var modeRef = new AtomicReference<ExecutionMode>();
-        var middleware = SqlMiddleware.of((query, context) -> {
+        var middleware = create((query, context) -> {
             modeRef.set(context.mode());
             return DecisionResult.allow();
         });
@@ -42,7 +100,7 @@ class SqlMiddlewareTest {
 
     @Test
     void explain_decision_uses_explainer() {
-        var middleware = SqlMiddleware.of(
+        var middleware = create(
             (query, context) -> DecisionResult.deny(ReasonCode.DENY_DDL, "ddl blocked"),
             (query, context, decision) -> "reason=%s mode=%s".formatted(decision.reasonCode(), context.mode()));
 
@@ -55,7 +113,7 @@ class SqlMiddlewareTest {
 
     @Test
     void pipeline_failure_maps_to_deterministic_deny() {
-        var middleware = SqlMiddleware.of((query, context) -> {
+        var middleware = create((query, context) -> {
             throw new IllegalStateException("parse failed");
         });
 
@@ -68,15 +126,15 @@ class SqlMiddlewareTest {
     @Test
     void emits_audit_event_for_allow_deny_and_rewrite() {
         var events = new ArrayList<AuditEvent>();
-        var allowMiddleware = SqlMiddleware.of(
+        var allowMiddleware = create(
             (query, context) -> DecisionResult.allow("fp-1"),
             events::add
         );
-        var rewriteMiddleware = SqlMiddleware.of(
+        var rewriteMiddleware = create(
             (query, context) -> DecisionResult.rewrite(ReasonCode.REWRITE_LIMIT, "limit", "select 1 limit 10"),
             events::add
         );
-        var denyMiddleware = SqlMiddleware.of(
+        var denyMiddleware = create(
             (query, context) -> DecisionResult.deny(ReasonCode.DENY_DDL, "blocked"),
             events::add
         );
@@ -107,7 +165,7 @@ class SqlMiddlewareTest {
 
     @Test
     void audit_publisher_failure_does_not_change_decision() {
-        var middleware = SqlMiddleware.of(
+        var middleware = create(
             (query, context) -> DecisionResult.allow(),
             event -> {
                 throw new IllegalStateException("sink failed");
@@ -120,7 +178,7 @@ class SqlMiddlewareTest {
 
     @Test
     void max_sql_length_guardrail_denies() {
-        var middleware = SqlMiddleware.of(
+        var middleware = create(
             (query, context) -> DecisionResult.allow(),
             new RuntimeGuardrails(7, null, null, false)
         );
@@ -132,7 +190,7 @@ class SqlMiddlewareTest {
 
     @Test
     void timeout_guardrail_denies() {
-        var middleware = SqlMiddleware.of(
+        var middleware = create(
             (query, context) -> {
                 try {
                     Thread.sleep(200);
@@ -151,7 +209,7 @@ class SqlMiddlewareTest {
 
     @Test
     void max_rows_guardrail_denies_missing_or_excessive_limit() {
-        var middleware = SqlMiddleware.of(
+        var middleware = create(
             (query, context) -> DecisionResult.allow(),
             new RuntimeGuardrails(null, null, 100, false)
         );
@@ -168,7 +226,7 @@ class SqlMiddlewareTest {
 
     @Test
     void explain_dry_run_rewrites_execute_mode() {
-        var middleware = SqlMiddleware.of(
+        var middleware = create(
             (query, context) -> DecisionResult.allow(),
             new RuntimeGuardrails(null, null, null, true)
         );
@@ -181,7 +239,7 @@ class SqlMiddlewareTest {
 
     @Test
     void explain_dry_run_does_not_apply_in_analyze_mode() {
-        var middleware = SqlMiddleware.of(
+        var middleware = create(
             (query, context) -> DecisionResult.allow("fp-a"),
             new RuntimeGuardrails(null, null, null, true)
         );
@@ -194,7 +252,7 @@ class SqlMiddlewareTest {
 
     @Test
     void explain_dry_run_uses_existing_rewritten_sql() {
-        var middleware = SqlMiddleware.of(
+        var middleware = create(
             (query, context) -> DecisionResult.rewrite(ReasonCode.REWRITE_LIMIT, "limit", "select 1 limit 10", "fp-rw"),
             new RuntimeGuardrails(null, null, null, true)
         );
@@ -208,7 +266,7 @@ class SqlMiddlewareTest {
 
     @Test
     void explanation_falls_back_when_explainer_returns_blank() {
-        var middleware = SqlMiddleware.of(
+        var middleware = create(
             (query, context) -> DecisionResult.allow(),
             (query, context, decision) -> " "
         );
@@ -219,7 +277,7 @@ class SqlMiddlewareTest {
 
     @Test
     void parse_error_uses_fallback_explanation_and_pipeline_deny() {
-        var middleware = SqlMiddleware.of(
+        var middleware = create(
             (query, context) -> DecisionResult.allow(),
             (query, context, decision) -> "unused",
             AuditEventPublisher.noop(),
@@ -237,7 +295,7 @@ class SqlMiddlewareTest {
 
     @Test
     void validate_input_rejects_blank_sql_and_null_context() {
-        var middleware = SqlMiddleware.of((query, context) -> DecisionResult.allow());
+        var middleware = create((query, context) -> DecisionResult.allow());
 
         assertThrows(IllegalArgumentException.class, () -> middleware.analyze(" ", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE)));
         assertThrows(NullPointerException.class, () -> middleware.analyze("select 1", null));
@@ -245,7 +303,7 @@ class SqlMiddlewareTest {
 
     @Test
     void null_engine_result_maps_to_pipeline_error() {
-        var middleware = SqlMiddleware.of((query, context) -> null);
+        var middleware = create((query, context) -> null);
 
         var result = middleware.analyze("select 1", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.DENY, result.kind());
@@ -255,7 +313,7 @@ class SqlMiddlewareTest {
 
     @Test
     void max_rows_guardrail_ignores_when_engine_already_denied() {
-        var middleware = SqlMiddleware.of(
+        var middleware = create(
             (query, context) -> DecisionResult.deny(ReasonCode.DENY_DDL, "blocked"),
             new RuntimeGuardrails(null, null, 10, false)
         );
@@ -266,17 +324,17 @@ class SqlMiddlewareTest {
     }
 
     @Test
-    void middleware_factory_overloads_delegate_successfully() {
+    void middleware_config_entrypoint_variants_delegate_successfully() {
         var engine = (SqlDecisionEngine) (query, context) -> DecisionResult.allow();
         var context = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
 
-        assertEquals(DecisionKind.ALLOW, SqlMiddleware.of(engine).analyze("select 1", context).kind());
-        assertEquals(DecisionKind.ALLOW, SqlMiddleware.of(engine, SqlDecisionExplainer.basic()).analyze("select 1", context).kind());
-        assertEquals(DecisionKind.ALLOW, SqlMiddleware.of(engine, AuditEventPublisher.noop()).analyze("select 1", context).kind());
+        assertEquals(DecisionKind.ALLOW, create(engine).analyze("select 1", context).kind());
+        assertEquals(DecisionKind.ALLOW, create(engine, SqlDecisionExplainer.basic()).analyze("select 1", context).kind());
+        assertEquals(DecisionKind.ALLOW, create(engine, AuditEventPublisher.noop()).analyze("select 1", context).kind());
         assertEquals(DecisionKind.ALLOW,
-            SqlMiddleware.of(engine, SqlDecisionExplainer.basic(), AuditEventPublisher.noop()).analyze("select 1", context).kind());
+            create(engine, SqlDecisionExplainer.basic(), AuditEventPublisher.noop()).analyze("select 1", context).kind());
         assertEquals(DecisionKind.ALLOW,
-            SqlMiddleware.of(engine, SqlDecisionExplainer.basic(), AuditEventPublisher.noop(), RuntimeGuardrails.disabled())
+            create(engine, SqlDecisionExplainer.basic(), AuditEventPublisher.noop(), RuntimeGuardrails.disabled())
                 .analyze("select 1", context).kind());
     }
 }
