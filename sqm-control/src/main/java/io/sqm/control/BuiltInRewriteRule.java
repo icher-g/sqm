@@ -20,6 +20,11 @@ public enum BuiltInRewriteRule {
     SCHEMA_QUALIFICATION,
 
     /**
+     * Qualifies unqualified columns using visible table sources and catalog resolution.
+     */
+    COLUMN_QUALIFICATION,
+
+    /**
      * Normalizes identifier casing/quoting for stable rendering.
      */
     IDENTIFIER_NORMALIZATION,

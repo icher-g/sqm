@@ -6,7 +6,6 @@ import io.sqm.control.QueryRewriteRule;
 import io.sqm.control.ReasonCode;
 import io.sqm.core.Query;
 import io.sqm.core.transform.ArithmeticSimplifier;
-import io.sqm.core.transform.QueryFingerprint;
 
 import java.util.Objects;
 
@@ -55,11 +54,8 @@ public final class CanonicalizationRewriteRule implements QueryRewriteRule {
         Objects.requireNonNull(query, "query must not be null");
         Objects.requireNonNull(context, "context must not be null");
 
-        String before = QueryFingerprint.of(query, false);
         Query transformed = (Query) transformer.transform(query);
-        String after = QueryFingerprint.of(transformed, false);
-
-        if (before.equals(after)) {
+        if (transformed == query) {
             return QueryRewriteResult.unchanged(transformed);
         }
         return QueryRewriteResult.rewritten(transformed, id(), ReasonCode.REWRITE_CANONICALIZATION);

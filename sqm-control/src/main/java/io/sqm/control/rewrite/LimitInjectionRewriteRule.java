@@ -15,7 +15,6 @@ import io.sqm.core.SelectQuery;
 import io.sqm.core.SelectQueryBuilder;
 import io.sqm.core.WithQuery;
 import io.sqm.core.transform.LimitInjectionTransformer;
-import io.sqm.core.transform.QueryFingerprint;
 
 import java.util.Objects;
 
@@ -81,12 +80,9 @@ public final class LimitInjectionRewriteRule implements QueryRewriteRule {
         Objects.requireNonNull(query, "query must not be null");
         Objects.requireNonNull(context, "context must not be null");
 
-        String before = QueryFingerprint.of(query, false);
         Query transformed = transformer.apply(query);
         transformed = enforceMaxLimitPolicy(transformed);
-        String after = QueryFingerprint.of(transformed, false);
-
-        if (before.equals(after)) {
+        if (transformed == query) {
             return QueryRewriteResult.unchanged(transformed);
         }
         return QueryRewriteResult.rewritten(transformed, id(), ReasonCode.REWRITE_LIMIT);

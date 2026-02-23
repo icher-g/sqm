@@ -6,6 +6,9 @@ import java.util.Objects;
  * Exception used by rewrite rules to request a deterministic deny decision from the decision engine.
  */
 public final class RewriteDenyException extends RuntimeException {
+    /**
+     * Stable deny reason code requested by the rewrite rule.
+     */
     private final ReasonCode reasonCode;
 
     /**
