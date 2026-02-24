@@ -35,69 +35,17 @@ public non-sealed interface OrderItem extends Node {
     }
 
     /**
-     * Creates an order by item for a provided expr.
-     *
-     * @param expr      an expr to be used in an OrderBy clause.
-     * @param direction an ORDER BY direction: ASC, DESC.
-     * @param nulls     the definition of how NULLs should be treated in the ORDER BY statement.
-     * @param collate   collation name; may be null.
-     * @return A newly created instance of an order by item.
-     */
-    static OrderItem of(Expression expr, Direction direction, Nulls nulls, String collate) {
-        return of(expr, null, direction, nulls, collate, null);
-    }
-
-    /**
-     * Creates an order by item for a provided expr.
-     *
-     * @param ordinal   an ordinal to be used in an ORDER BY clause.
-     * @param direction an ORDER BY direction: ASC, DESC.
-     * @param nulls     the definition of how NULLs should be treated in the ORDER BY statement.
-     * @param collate   collation name; may be null.
-     * @return A newly created instance of an order by item.
-     */
-    static OrderItem of(Integer ordinal, Direction direction, Nulls nulls, String collate) {
-        return of(null, ordinal, direction, nulls, collate, null);
-    }
-
-    /**
-     * Creates an order by item for a provided expr with {@code USING <operator>}.
-     *
-     * @param expr          an expr to be used in an OrderBy clause.
-     * @param usingOperator an operator to be used in {@code ORDER BY ... USING <operator>}.
-     * @param nulls         the definition of how NULLs should be treated in the ORDER BY statement.
-     * @param collate       collation name; may be null.
-     * @return A newly created instance of an order by item.
-     */
-    static OrderItem of(Expression expr, String usingOperator, Nulls nulls, String collate) {
-        return of(expr, null, null, nulls, collate, usingOperator);
-    }
-
-    /**
-     * Creates an order by item for a provided ordinal with {@code USING <operator>}.
-     *
-     * @param ordinal       an ordinal to be used in an ORDER BY clause.
-     * @param usingOperator an operator to be used in {@code ORDER BY ... USING <operator>}.
-     * @param nulls         the definition of how NULLs should be treated in the ORDER BY statement.
-     * @param collate       collation name; may be null.
-     * @return A newly created instance of an order by item.
-     */
-    static OrderItem of(Integer ordinal, String usingOperator, Nulls nulls, String collate) {
-        return of(null, ordinal, null, nulls, collate, usingOperator);
-    }
-
-    /**
-     * Creates an order by item with explicit fields.
+     * Creates an order by item with explicit fields using identifier-aware collation metadata.
      *
      * @param expr          an expression to be used in ORDER BY statement. Can be null if ordinal is used.
      * @param ordinal       an ordinal to be used in ORDER BY statement. 1-based; may be null if expression is used.
      * @param direction     an ORDER BY direction: ASC, DESC.
      * @param nulls         the definition of how NULLs should be treated in the ORDER BY statement.
-     * @param collate       optional collation name; may be null.
+     * @param collate       optional collation qualified name; may be null.
      * @param usingOperator optional {@code USING <operator>} value; may be null.
-     * @return A newly created instance of an order by item.
+     * @return a newly created instance of an order by item.
      */
-    static OrderItem of(Expression expr, Integer ordinal, Direction direction, Nulls nulls, String collate, String usingOperator) {
+    static OrderItem of(Expression expr, Integer ordinal, Direction direction, Nulls nulls, QualifiedName collate, String usingOperator) {
         return new Impl(expr, ordinal, direction, nulls, collate, usingOperator);
     }
 
@@ -142,7 +90,7 @@ public non-sealed interface OrderItem extends Node {
      *
      * @return collate string.
      */
-    String collate();
+    QualifiedName collate();
 
     /**
      * Optional {@code USING <operator>} operator; may be null.
@@ -213,7 +161,21 @@ public non-sealed interface OrderItem extends Node {
      * @return A new instance of the order item with the provided collate. All other fields are preserved.
      */
     default OrderItem collate(String collate) {
-        return of(expr(), ordinal(), direction(), nulls(), collate, usingOperator());
+        java.util.Objects.requireNonNull(collate, "collate");
+        if (collate.isBlank()) {
+            throw new IllegalArgumentException("collate must not be blank");
+        }
+        return of(expr(), ordinal(), direction(), nulls(), QualifiedName.of(collate.split("\\.")), usingOperator());
+    }
+
+    /**
+     * Adds collate to an order by item using identifier-aware qualified name.
+     *
+     * @param collateName collation qualified name.
+     * @return a new instance of the order item with the provided collate.
+     */
+    default OrderItem collate(QualifiedName collateName) {
+        return of(expr(), ordinal(), direction(), nulls(), collateName, usingOperator());
     }
 
     /**
@@ -250,13 +212,13 @@ public non-sealed interface OrderItem extends Node {
      *     }
      * </pre>
      *
-     * @param expr      an expression to be used in ORDER BY statement. Can be null if ordinal is used.
-     * @param ordinal   an ordinal to be used in ORDER BY statement. 1-based; may be null if expression is used.
-     * @param direction an ORDER BY direction: ASC, DESC.
-     * @param nulls     the definition of how NULLs should be treated in the ORDER BY statement.
+     * @param expr          an expression to be used in ORDER BY statement. Can be null if ordinal is used.
+     * @param ordinal       an ordinal to be used in ORDER BY statement. 1-based; may be null if expression is used.
+     * @param direction     an ORDER BY direction: ASC, DESC.
+     * @param nulls         the definition of how NULLs should be treated in the ORDER BY statement.
      * @param collate       optional collation name; may be null.
      * @param usingOperator optional {@code USING <operator>} value; may be null.
      */
-    record Impl(Expression expr, Integer ordinal, Direction direction, Nulls nulls, String collate, String usingOperator) implements OrderItem {
+    record Impl(Expression expr, Integer ordinal, Direction direction, Nulls nulls, QualifiedName collate, String usingOperator) implements OrderItem {
     }
 }

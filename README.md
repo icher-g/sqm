@@ -68,8 +68,8 @@ This model is shared between the DSL, parser, and renderer modules.
 
 ```java
 Query q = select(
-        sel("u", "user_name"),
-        sel("o", "status"),
+        col("u", "user_name"),
+        col("o", "status"),
         func("count", starArg()).as("cnt")
     )
     .from(tbl("orders").as("o"))
@@ -82,7 +82,8 @@ Query q = select(
     .having(func("count", starArg()).gt(10))
     .orderBy(order("cnt"))
     .limit(10)
-    .offset(20);
+    .offset(20)
+    .build();
 
 var ctx = RenderContext.of(new AnsiDialect());
 var sql = ctx.render(q).sql();
@@ -99,7 +100,7 @@ INNER JOIN users AS u ON u.id = o.user_id
 WHERE o.status IN ('A', 'B')
 GROUP BY u.user_name, o.status
 HAVING count(*) > 10
-ORDER BY cnt DESC
+ORDER BY cnt
 OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY
 ```
 ---
@@ -247,13 +248,16 @@ Add dependency:
 Basic usage:
 
 ```java
+import io.sqm.catalog.model.CatalogColumn;
+import io.sqm.catalog.model.CatalogSchema;
+import io.sqm.catalog.model.CatalogTable;
+import io.sqm.catalog.model.CatalogType;
 import io.sqm.validate.schema.SchemaQueryValidator;
-import io.sqm.validate.schema.model.*;
 
-DbSchema schema = DbSchema.of(
-    DbTable.of("public", "users",
-        DbColumn.of("id", DbType.LONG),
-        DbColumn.of("name", DbType.STRING)
+CatalogSchema schema = CatalogSchema.of(
+    CatalogTable.of("public", "users",
+        CatalogColumn.of("id", CatalogType.LONG),
+        CatalogColumn.of("name", CatalogType.STRING)
     )
 );
 
@@ -294,22 +298,22 @@ Output example:
   "kind" : "on",
   "right" : {
     "kind": "table",
-    "name": "users",
-    "alias": "u"
+    "name": { "value": "users", "quoteStyle": "NONE" },
+    "alias": { "value": "u", "quoteStyle": "NONE" }
   },
-  "kind" : "INNER",
+  "joinKind" : "INNER",
   "on" : {
     "kind": "comparison",
     "lhs":  {
       "kind" : "column",
-      "tableAlias" : "u",
-      "name" : "id"
+      "tableAlias" : { "value": "u", "quoteStyle": "NONE" },
+      "name" : { "value": "id", "quoteStyle": "NONE" }
     },
     "operator": "EQ",
     "rhs": {
       "kind" : "column",
-      "tableAlias" : "o",
-      "name" : "user_id"
+      "tableAlias" : { "value": "o", "quoteStyle": "NONE" },
+      "name" : { "value": "user_id", "quoteStyle": "NONE" }
     }
   }
 }
@@ -342,7 +346,9 @@ private static class QueryColumnCollector extends RecursiveNodeVisitor<Void> {
     }
     @Override
     public Void visitColumnExpr(ColumnExpr c) {
-        columns.add(c.tableAlias() == null ? c.name() : c.tableAlias() + "." + c.name());
+        columns.add(c.tableAlias() == null
+            ? c.name().value()
+            : c.tableAlias().value() + "." + c.name().value());
         return super.visitColumnExpr(c);
     }
 }
@@ -371,8 +377,10 @@ Transformers extend `RecursiveNodeTransformer` (a subclass of `NodeTransformer<N
 public static class RenameColumnTransformer extends RecursiveNodeTransformer {
     @Override
     public Node visitColumnExpr(ColumnExpr c) {
-        if ("u".equals(c.tableAlias()) && "id".equals(c.name())) {
-            return ColumnExpr.of("u", "user_id");
+        if (c.tableAlias() != null
+            && "u".equals(c.tableAlias().value())
+            && "id".equals(c.name().value())) {
+            return col("u", "user_id");
         }
         return c;
     }
@@ -481,9 +489,11 @@ String result = Match
 ```java
 String sql = Match
     .<String>expression(expr)
-    .column(c -> c.tableAlias() == null ? c.name() : c.tableAlias() + "." + c.name())
+    .column(c -> c.tableAlias() == null
+        ? c.name().value()
+        : c.tableAlias().value() + "." + c.name().value())
     .literal(l -> String.valueOf(l.value()))
-    .func(f -> f.name() + "(...)" )
+    .func(f -> String.join(".", f.name().values()) + "(...)" )
     .orElse("<unknown expression>");
 ```
 
@@ -504,7 +514,7 @@ var columnName = q.matchQuery()
     .select(s -> s.joins().getFirst().matchJoin()
         .on(j -> j.on().matchPredicate()
             .comparison(cmp -> cmp.rhs().matchExpression()
-                .column(c -> c.name())
+                .column(c -> c.name().value())
                 .orElse(null) // each match needs to provide alternative.
             )
             .orElse(null)
@@ -612,7 +622,8 @@ var q = select(col("a"), col("b"))
     .from(tbl("t"))
     .where(
         col("a").eq(10).and(col("b").eq("x"))
-    );
+    )
+    .build();
 
 var opts = RenderOptions.of(ParameterizationMode.Bind);
 

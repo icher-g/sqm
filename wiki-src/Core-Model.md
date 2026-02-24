@@ -24,7 +24,9 @@ class ColumnCollector extends RecursiveNodeVisitor<Void> {
   private final Set<String> cols = new LinkedHashSet<>();
   @Override protected Void defaultResult() { return null; }
   @Override public Void visitColumnExpr(ColumnExpr c) {
-    cols.add(c.tableAlias() == null ? c.name() : c.tableAlias() + "." + c.name());
+    cols.add(c.tableAlias() == null
+      ? c.name().value()
+      : c.tableAlias().value() + "." + c.name().value());
     return super.visitColumnExpr(c);
   }
   Set<String> columns() { return cols; }

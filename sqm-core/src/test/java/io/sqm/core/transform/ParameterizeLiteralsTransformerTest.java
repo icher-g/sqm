@@ -229,7 +229,7 @@ class ParameterizeLiteralsTransformerTest {
         Node result = col.accept(transformer);
         assertNotNull(result);
         assertInstanceOf(ColumnExpr.class, result);
-        assertEquals("user_id", ((ColumnExpr) result).name());
+        assertEquals("user_id", ((ColumnExpr) result).name().value());
     }
 
     @Test

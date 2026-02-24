@@ -37,13 +37,24 @@ public class MixInsSmokeTest {
                   "kind" : "expr",
                   "expr" : {
                     "kind" : "function",
-                    "name" : "lower",
+                    "name" : {
+                      "parts" : [ {
+                        "value" : "lower",
+                        "quoteStyle" : "NONE"
+                      } ]
+                    },
                     "args" : [ {
                       "kind" : "arg_expr",
                       "expr" : {
                         "kind" : "column",
-                        "tableAlias" : "t",
-                        "name" : "name"
+                        "tableAlias" : {
+                          "value" : "t",
+                          "quoteStyle" : "NONE"
+                        },
+                        "name" : {
+                          "value" : "name",
+                          "quoteStyle" : "NONE"
+                        }
                       }
                     }, {
                       "kind" : "arg_expr",
@@ -54,15 +65,18 @@ public class MixInsSmokeTest {
                     } ],
                     "distinctArg" : false
                   },
-                  "alias" : "l"
+                  "alias" : {
+                    "value" : "l",
+                    "quoteStyle" : "NONE"
+                  }
                 }""";
 
         // 1) Can deserialize into FunctionExpr
         var esi = m.readValue(json, ExprSelectItem.class);
         var fe = esi.expr().<FunctionExpr>matchExpression().func(f -> f).orElse(null);
 
-        assertEquals("lower", fe.name());
-        assertEquals("l", esi.alias());
+        assertEquals("lower", fe.name().values().getLast());
+        assertEquals("l", esi.alias().value());
         assertNotNull(fe.args());
         assertEquals(2, fe.args().size());
 
@@ -103,9 +117,19 @@ public class MixInsSmokeTest {
                 "kind" : "expr",
                   "expr" : {
                     "kind": "column",
-                    "name": "u.name"
+                    "tableAlias": {
+                      "value" : "u",
+                      "quoteStyle" : "NONE"
+                    },
+                    "name": {
+                      "value" : "name",
+                      "quoteStyle" : "NONE"
+                    }
                   },
-                  "alias": "n"
+                  "alias": {
+                    "value" : "n",
+                    "quoteStyle" : "NONE"
+                  }
                 }
                 """;
 
@@ -130,8 +154,14 @@ public class MixInsSmokeTest {
                   "kind" : "comparison",
                   "lhs" : {
                     "kind" : "column",
-                    "tableAlias" : "u",
-                    "name" : "id"
+                    "tableAlias" : {
+                      "value" : "u",
+                      "quoteStyle" : "NONE"
+                    },
+                    "name" : {
+                      "value" : "id",
+                      "quoteStyle" : "NONE"
+                    }
                   },
                   "operator" : "EQ",
                   "rhs" : {
@@ -164,22 +194,40 @@ public class MixInsSmokeTest {
                   "kind" : "on",
                   "right" : {
                     "kind": "table",
-                    "name": "users",
-                    "alias": "u"
+                    "name": {
+                      "value" : "users",
+                      "quoteStyle" : "NONE"
+                    },
+                    "alias": {
+                      "value" : "u",
+                      "quoteStyle" : "NONE"
+                    }
                   },
                   "kind" : "INNER",
                   "on" : {
                     "kind": "comparison",
                     "lhs":  {
                       "kind" : "column",
-                        "tableAlias" : "u",
-                        "name" : "id"
+                        "tableAlias" : {
+                          "value" : "u",
+                          "quoteStyle" : "NONE"
+                        },
+                        "name" : {
+                          "value" : "id",
+                          "quoteStyle" : "NONE"
+                        }
                     },
                     "operator": "EQ",
                     "rhs": {
                         "kind" : "column",
-                        "tableAlias" : "o",
-                        "name" : "user_id"
+                        "tableAlias" : {
+                          "value" : "o",
+                          "quoteStyle" : "NONE"
+                        },
+                        "name" : {
+                          "value" : "user_id",
+                          "quoteStyle" : "NONE"
+                        }
                     }
                   }
                 }
@@ -197,10 +245,10 @@ public class MixInsSmokeTest {
             )
             .orElse(null);
         assertInstanceOf(ComparisonPredicate.class, p);
-        assertEquals("users", j.right().matchTableRef().table(t -> t.name()).orElse(null));
-        assertEquals("u", j.right().matchTableRef().table(t -> t.alias()).orElse(null));
-        assertEquals("id", p.lhs().matchExpression().column(c -> c.name()).orElse(null));
-        assertEquals("user_id", p.rhs().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("users", j.right().matchTableRef().table(t -> t.name().value()).orElse(null));
+        assertEquals("u", j.right().matchTableRef().table(t -> t.alias() == null ? null : t.alias().value()).orElse(null));
+        assertEquals("id", p.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
+        assertEquals("user_id", p.rhs().matchExpression().column(c -> c.name().value()).orElse(null));
     }
 
     @Test
@@ -212,16 +260,27 @@ public class MixInsSmokeTest {
             """
                 {
                   "kind": "table",
-                  "name": "users",
-                  "schema": "public",
-                  "alias": "u"
+                  "name": {
+                    "value" : "users",
+                    "quoteStyle" : "NONE"
+                  },
+                  "schema": {
+                    "value" : "public",
+                    "quoteStyle" : "NONE"
+                  },
+                  "alias": {
+                    "value" : "u",
+                    "quoteStyle" : "NONE"
+                  }
                 }
                 """;
 
         var t = m.readValue(json, Table.class);
 
         assertNotNull(t);
-        assertTrue(m.writeValueAsString(t).contains("\"name\":\"users\""));
+        var out = m.writeValueAsString(t);
+        assertTrue(out.contains("\"name\""));
+        assertTrue(out.contains("\"value\":\"users\""));
     }
 
     @Test

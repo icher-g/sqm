@@ -51,7 +51,7 @@ class PredicateParserTest {
         var f = assertIs(InPredicate.class, r.value());
         var v = assertIs(RowExpr.class, f.rhs());
         Assertions.assertEquals(List.of(1L, 2L, 3L), v.items().stream().map(i -> i.matchExpression().literal(l -> l.value()).orElse(null)).toList()); // longs if your parser maps integers to Long
-        Assertions.assertEquals("category", f.lhs().matchExpression().column(c -> c.name()).orElse(null));
+        Assertions.assertEquals("category", f.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
     }
 
     @Test
@@ -63,7 +63,7 @@ class PredicateParserTest {
         Assertions.assertTrue(f.negated());
         var v = assertIs(RowExpr.class, f.rhs());
         Assertions.assertEquals(List.of("A", "B"), v.items().stream().map(i -> i.matchExpression().literal(l -> l.value()).orElse(null)).toList());
-        Assertions.assertEquals("status", f.lhs().matchExpression().column(c -> c.name()).orElse(null));
+        Assertions.assertEquals("status", f.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
     }
 
     @Test
@@ -74,7 +74,7 @@ class PredicateParserTest {
         var f = assertIs(LikePredicate.class, r.value());
         var v = assertIs(LiteralExpr.class, f.pattern());
         Assertions.assertEquals("%abc%", v.value());
-        Assertions.assertEquals("name", f.value().matchExpression().column(c -> c.name()).orElse(null));
+        Assertions.assertEquals("name", f.value().matchExpression().column(c -> c.name().value()).orElse(null));
     }
 
     /* ----------------------------- tuple IN --------------------------------- */
@@ -89,7 +89,7 @@ class PredicateParserTest {
         var u = assertIs(LiteralExpr.class, f.upper());
         Assertions.assertEquals(10L, l.value());
         Assertions.assertEquals(20L, u.value());
-        Assertions.assertEquals("price", f.value().matchExpression().column(c -> c.name()).orElse(null));
+        Assertions.assertEquals("price", f.value().matchExpression().column(c -> c.name().value()).orElse(null));
     }
 
     /* --------------------- boolean composition & precedence ------------------ */
@@ -112,7 +112,7 @@ class PredicateParserTest {
         Assertions.assertEquals(operator, f.operator());
         var v = assertIs(LiteralExpr.class, f.rhs());
         Assertions.assertEquals(expected, v.value());
-        Assertions.assertEquals("qty", f.lhs().matchExpression().column(c -> c.name()).orElse(null));
+        Assertions.assertEquals("qty", f.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
     }
 
     @Test
@@ -130,8 +130,8 @@ class PredicateParserTest {
         var c0 = items.get(0);
         var c1 = items.get(1);
         Assertions.assertEquals(2, items.size());
-        Assertions.assertEquals("a", c0.matchExpression().column(c -> c.name()).orElse(null));
-        Assertions.assertEquals("b", c1.matchExpression().column(c -> c.name()).orElse(null));
+        Assertions.assertEquals("a", c0.matchExpression().column(c -> c.name().value()).orElse(null));
+        Assertions.assertEquals("b", c1.matchExpression().column(c -> c.name().value()).orElse(null));
 
         var v = assertIs(RowListExpr.class, f.rhs());
         Assertions.assertEquals(List.of(List.of(1L, 2L), List.of(3L, 4L)),

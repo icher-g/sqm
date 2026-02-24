@@ -5,20 +5,22 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.window;
 
 class SelectQueryBuilderTest {
 
     @Test
     void builds_select_query_with_incremental_mutations() {
         var query = SelectQuery.builder()
-            .select(java.util.List.of(Expression.column("id").toSelectItem()))
-            .from(TableRef.table("users"))
-            .join(Join.left(TableRef.table("roles")))
-            .where(Expression.column("id").gt(0))
-            .groupBy(java.util.List.of(GroupItem.of(Expression.column("id"))))
+            .select(java.util.List.of(col("id").toSelectItem()))
+            .from(TableRef.table(Identifier.of("users")))
+            .join(Join.left(TableRef.table(Identifier.of("roles"))))
+            .where(col("id").gt(0))
+            .groupBy(java.util.List.of(GroupItem.of(col("id"))))
             .having(Expression.literal(1).gt(0))
-            .window(WindowDef.of("w", OverSpec.def((PartitionBy) null, null, null, null)))
-            .orderBy(java.util.List.of(OrderItem.of(Expression.column("id"))))
+            .window(window("w", OverSpec.def((PartitionBy) null, null, null, null)))
+            .orderBy(java.util.List.of(OrderItem.of(col("id"))))
             .limitOffset(LimitOffset.limit(10))
             .lockFor(LockingClause.of(LockMode.UPDATE, java.util.List.of(), false, false))
             .build();
@@ -47,3 +49,5 @@ class SelectQueryBuilderTest {
         assertThrows(NullPointerException.class, () -> builder.window((WindowDef) null));
     }
 }
+
+

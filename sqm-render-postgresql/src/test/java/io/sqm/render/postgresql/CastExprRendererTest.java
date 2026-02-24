@@ -44,7 +44,7 @@ class CastExprRendererTest {
     @Test
     @DisplayName("Render cast with array type")
     void rendersCastWithArrayType() {
-        var arrayType = TypeName.of(java.util.List.of("text"), null, java.util.List.of(), 1, TimeZoneSpec.NONE);
+        var arrayType = TypeName.of(QualifiedName.of(java.util.List.of("text")), null, java.util.List.of(), 1, TimeZoneSpec.NONE);
         var cast = CastExpr.of(col("vals"), arrayType);
         var sql = renderContext.render(cast).sql();
         
@@ -54,7 +54,7 @@ class CastExprRendererTest {
     @Test
     @DisplayName("Render cast with multi-dimensional array type")
     void rendersCastWithMultiDimArrayType() {
-        var arrayType = TypeName.of(java.util.List.of("int"), null, java.util.List.of(), 2, TimeZoneSpec.NONE);
+        var arrayType = TypeName.of(QualifiedName.of(java.util.List.of("int")), null, java.util.List.of(), 2, TimeZoneSpec.NONE);
         var cast = CastExpr.of(col("matrix"), arrayType);
         var sql = renderContext.render(cast).sql();
         
@@ -128,7 +128,7 @@ class CastExprRendererTest {
     @DisplayName("Render cast with type modifiers")
     void rendersCastWithTypeModifiers() {
         var typeName = TypeName.of(
-            java.util.List.of("varchar"),
+            QualifiedName.of(java.util.List.of("varchar")),
             null,
             java.util.List.of(lit(10)),
             0,
@@ -144,3 +144,6 @@ class CastExprRendererTest {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
+
+
+

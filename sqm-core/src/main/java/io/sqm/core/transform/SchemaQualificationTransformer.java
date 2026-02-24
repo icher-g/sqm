@@ -1,10 +1,6 @@
 package io.sqm.core.transform;
 
-import io.sqm.core.CteDef;
-import io.sqm.core.Node;
-import io.sqm.core.Query;
-import io.sqm.core.Table;
-import io.sqm.core.WithQuery;
+import io.sqm.core.*;
 
 import java.util.*;
 
@@ -34,6 +30,10 @@ public final class SchemaQualificationTransformer extends RecursiveNodeTransform
      */
     public static SchemaQualificationTransformer of(TableSchemaResolver resolver) {
         return new SchemaQualificationTransformer(Objects.requireNonNull(resolver, "resolver"));
+    }
+
+    private static String normalize(Identifier name) {
+        return name == null ? "" : name.value().toLowerCase(Locale.ROOT);
     }
 
     /**
@@ -86,18 +86,18 @@ public final class SchemaQualificationTransformer extends RecursiveNodeTransform
         if (t.schema() != null || isVisibleCte(t.name())) {
             return t;
         }
-        var resolution = resolver.resolve(t.name());
+        var resolution = resolver.resolve(t.name().value());
         if (resolution instanceof TableQualification.Unresolved) {
             return t;
         }
         if (resolution instanceof TableQualification.Ambiguous) {
-            throw new AmbiguousTableQualificationException(t.name());
+            throw new AmbiguousTableQualificationException(t.name().value());
         }
         var qualified = (TableQualification.Qualified) resolution;
         return t.inSchema(qualified.schema());
     }
 
-    private boolean isVisibleCte(String name) {
+    private boolean isVisibleCte(Identifier name) {
         var normalized = normalize(name);
         for (var scope : cteScopes) {
             if (scope.contains(normalized)) {
@@ -105,10 +105,6 @@ public final class SchemaQualificationTransformer extends RecursiveNodeTransform
             }
         }
         return false;
-    }
-
-    private static String normalize(String name) {
-        return name == null ? "" : name.toLowerCase(Locale.ROOT);
     }
 
     /**

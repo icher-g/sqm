@@ -1,5 +1,7 @@
 package io.sqm.validate.schema.internal;
 
+import io.sqm.catalog.access.CatalogAccessPolicy;
+import io.sqm.core.Identifier;
 import io.sqm.core.Query;
 import io.sqm.core.TableRef;
 import io.sqm.core.TypeKeyword;
@@ -16,6 +18,8 @@ import java.util.Set;
 
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SchemaValidationContextTest {
@@ -124,6 +128,55 @@ class SchemaValidationContextTest {
         } finally {
             context.popScope();
         }
+    }
+
+    @Test
+    void identifierOverloadsAndCurrentScopeHelpersWork() {
+        var context = new SchemaValidationContext(SCHEMA);
+        context.pushScope();
+        try {
+            context.registerTableRef(tbl("users").as("u"));
+            context.registerTableRef(tbl(rows(row(lit(1)))).as("v").columnAliases("c1"));
+
+            assertEquals(1, context.countStrictSourcesWithColumn(Identifier.of("id"), null));
+            assertEquals(0, context.countStrictSourcesWithColumn(Identifier.of("id"), "u"));
+            assertEquals(CatalogType.LONG, context.sourceColumnType("u", Identifier.of("id")).orElseThrow());
+            assertTrue(context.sourceColumnType("v", Identifier.of("c1")).isEmpty()); // derived sources are non-strict
+            assertEquals(Set.of("u", "v"), Set.copyOf(context.currentScopeSourceKeys()));
+        } finally {
+            context.popScope();
+        }
+    }
+
+    @Test
+    void accessPolicyIdentifierOverloadsDelegateWithPrincipal() {
+        CatalogAccessPolicy policy = new CatalogAccessPolicy() {
+            @Override
+            public boolean isTableDenied(String principal, String schemaName, String tableName) {
+                return "p1".equals(principal) && "public".equals(schemaName) && "users".equals(tableName);
+            }
+
+            @Override
+            public boolean isColumnDenied(String principal, String sourceName, String columnName) {
+                return "p1".equals(principal) && "u".equals(sourceName) && "secret".equals(columnName);
+            }
+
+            @Override
+            public boolean isFunctionAllowed(String principal, String functionName) {
+                return true;
+            }
+        };
+        var context = new SchemaValidationContext(SCHEMA, name -> java.util.Optional.empty(), policy, "p1");
+
+        assertTrue(context.isTableDenied("public", "users"));
+        assertTrue(context.isColumnDenied(Identifier.of("u"), Identifier.of("secret")));
+        assertFalse(context.isColumnDenied(null, Identifier.of("secret")));
+    }
+
+    @Test
+    void normalizeIdentifierRejectsNullIdentifier() {
+        //noinspection DataFlowIssue
+        assertThrows(NullPointerException.class, () -> SchemaValidationContext.normalize((Identifier) null));
     }
 }
 

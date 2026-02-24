@@ -13,7 +13,7 @@ public class ExpressionMatchTest {
 
     @Test
     void kase_forSpecificSubtype_isChosen() {
-        var col = ColumnExpr.of("c");
+        var col = ColumnExpr.of(null, Identifier.of("c"));
         var out = Match
             .<String>expression(col)
             .func(f -> "FUNC")
@@ -102,7 +102,7 @@ public class ExpressionMatchTest {
         var expr = col("name").collate("de-CH");
         String out = Match
             .<String>expression(expr)
-            .collate(c -> c.collation())
+            .collate(c -> String.join(".", c.collation().values()))
             .column(c -> "COL")
             .orElse("OTHER");
 
@@ -115,7 +115,7 @@ public class ExpressionMatchTest {
         String out = Match
             .<String>expression(expr)
             .column(c -> "COL")
-            .collate(c -> c.collation())
+            .collate(c -> String.join(".", c.collation().values()))
             .orElse("OTHER");
 
         assertEquals("COL", out);
@@ -126,7 +126,7 @@ public class ExpressionMatchTest {
         var expr = literal(1);
         String out = Match
             .<String>expression(expr)
-            .collate(c -> c.collation())
+            .collate(c -> String.join(".", c.collation().values()))
             .literal(l -> "LIT")
             .orElse("OTHER");
 

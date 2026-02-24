@@ -3,6 +3,7 @@ package io.sqm.render.defaults;
 import io.sqm.core.ColumnExpr;
 import io.sqm.core.LiteralExpr;
 import io.sqm.core.OrdinalParamExpr;
+import io.sqm.dsl.Dsl;
 import io.sqm.render.RenderTestDialect;
 import io.sqm.render.SqlText;
 import io.sqm.render.SqlWriter;
@@ -34,9 +35,9 @@ class DefaultSqlWriterTest {
         var ctx = RenderContext.of(dialect);
         var writer = new DefaultSqlWriter(ctx);
 
-        writer.append(ColumnExpr.of("a"));
+        writer.append(Dsl.col("a"));
         writer.space();
-        writer.comma(List.of(ColumnExpr.of("b"), ColumnExpr.of("c")), true);
+        writer.comma(List.of(Dsl.col("b"), Dsl.col("c")), true);
 
         assertEquals("a (b), (c)", writer.toText(List.of()).sql());
     }
@@ -66,7 +67,7 @@ class DefaultSqlWriterTest {
         var ctx = RenderContext.of(dialect);
         SqlWriter writer = new DefaultSqlWriter(ctx, 2);
 
-        writer.append(ColumnExpr.of("col"), true, true);
+        writer.append(Dsl.col("col"), true, true);
 
         assertEquals("(\n  col\n)", writer.toText(List.of()).sql());
     }
@@ -89,7 +90,7 @@ class DefaultSqlWriterTest {
     private static final class ColumnRenderer implements Renderer<ColumnExpr> {
         @Override
         public void render(ColumnExpr node, RenderContext ctx, SqlWriter w) {
-            w.append(node.name());
+            w.append(node.name().value());
         }
 
         @Override
@@ -122,3 +123,4 @@ class DefaultSqlWriterTest {
         }
     }
 }
+

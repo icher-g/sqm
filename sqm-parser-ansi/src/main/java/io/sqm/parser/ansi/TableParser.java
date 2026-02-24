@@ -1,5 +1,6 @@
 package io.sqm.parser.ansi;
 
+import io.sqm.core.Identifier;
 import io.sqm.core.Table;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
@@ -35,13 +36,13 @@ public class TableParser implements MatchableParser<Table> {
         // first identifier
         var t = cur.expect("Expected identifier", TokenType.IDENT);
 
-        List<String> parts = new ArrayList<>();
-        parts.add(t.lexeme());
+        List<Identifier> parts = new ArrayList<>();
+        parts.add(toIdentifier(t));
 
         // dot-separated identifiers
         while (cur.consumeIf(TokenType.DOT)) {
             t = cur.expect("Expected identifier after '.'", TokenType.IDENT);
-            parts.add(t.lexeme());
+            parts.add(toIdentifier(t));
         }
 
         if (cur.match(TokenType.OPERATOR) && "*".equals(cur.peek().lexeme())) {
@@ -56,11 +57,17 @@ public class TableParser implements MatchableParser<Table> {
         }
 
         // optional alias: AS identifier | bare identifier
-        String alias = parseAlias(cur);
+        Identifier alias = parseAliasIdentifier(cur);
 
         // Map parts → schema + name
-        String name = parts.getLast();
-        String schema = parts.size() > 1 ? String.join(".", parts.subList(0, parts.size() - 1)) : null;
+        Identifier name = parts.getLast();
+        Identifier schema = null;
+        if (parts.size() == 2) {
+            schema = parts.getFirst();
+        }
+        else if (parts.size() > 2) {
+            schema = Identifier.of(String.join(".", parts.subList(0, parts.size() - 1).stream().map(Identifier::value).toList()));
+        }
 
         return ok(Table.of(schema, name, alias, inheritance));
     }

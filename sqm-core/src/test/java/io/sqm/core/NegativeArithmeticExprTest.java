@@ -3,6 +3,7 @@ package io.sqm.core;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class NegativeArithmeticExprTest {
 
@@ -18,7 +19,7 @@ class NegativeArithmeticExprTest {
 
     @Test
     void expr() {
-        var expr = Expression.column("price");
+        var expr = col("price");
         var negExpr = NegativeArithmeticExpr.of(expr);
         assertEquals(expr, negExpr.expr());
     }
@@ -39,7 +40,7 @@ class NegativeArithmeticExprTest {
 
     @Test
     void withColumn() {
-        var negExpr = NegativeArithmeticExpr.of(Expression.column("amount"));
+        var negExpr = NegativeArithmeticExpr.of(col("amount"));
         assertInstanceOf(ColumnExpr.class, negExpr.expr());
     }
 
@@ -74,3 +75,4 @@ class NegativeArithmeticExprTest {
         }
     }
 }
+

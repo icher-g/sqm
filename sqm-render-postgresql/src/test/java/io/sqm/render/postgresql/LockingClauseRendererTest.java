@@ -65,7 +65,7 @@ class LockingClauseRendererTest {
     @Test
     @DisplayName("Render FOR UPDATE OF single table")
     void rendersForUpdateOfSingleTable() {
-        var targets = List.of(LockTarget.of("users"));
+        var targets = List.of(LockTarget.of(Identifier.of("users")));
         var clause = LockingClause.of(LockMode.UPDATE, targets, false, false);
         var sql = renderContext.render(clause).sql();
         
@@ -75,7 +75,7 @@ class LockingClauseRendererTest {
     @Test
     @DisplayName("Render FOR UPDATE OF multiple tables")
     void rendersForUpdateOfMultipleTables() {
-        var targets = List.of(LockTarget.of("users"), LockTarget.of("orders"));
+        var targets = ofTables("users", "orders");
         var clause = LockingClause.of(LockMode.UPDATE, targets, false, false);
         var sql = renderContext.render(clause).sql();
         
@@ -103,7 +103,7 @@ class LockingClauseRendererTest {
     @Test
     @DisplayName("Render FOR UPDATE OF with NOWAIT")
     void rendersForUpdateOfWithNowait() {
-        var targets = List.of(LockTarget.of("users"));
+        var targets = ofTables("users");
         var clause = LockingClause.of(LockMode.UPDATE, targets, true, false);
         var sql = renderContext.render(clause).sql();
         
@@ -113,11 +113,33 @@ class LockingClauseRendererTest {
     @Test
     @DisplayName("Render FOR SHARE OF with SKIP LOCKED")
     void rendersForShareOfWithSkipLocked() {
-        var targets = List.of(LockTarget.of("users"));
+        var targets = ofTables("users");
         var clause = LockingClause.of(LockMode.SHARE, targets, false, true);
         var sql = renderContext.render(clause).sql();
         
         assertEquals("FOR SHARE OF users SKIP LOCKED", normalizeWhitespace(sql));
+    }
+
+    @Test
+    @DisplayName("Render FOR UPDATE OF preserves supported quote style")
+    void rendersForUpdateOfPreservesQuotedTarget() {
+        var targets = ofTables(QuoteStyle.DOUBLE_QUOTE, "Users");
+        var clause = LockingClause.of(LockMode.UPDATE, targets, false, false);
+
+        var sql = renderContext.render(clause).sql();
+
+        assertEquals("FOR UPDATE OF \"Users\"", normalizeWhitespace(sql));
+    }
+
+    @Test
+    @DisplayName("Render FOR UPDATE OF falls back unsupported quote style")
+    void rendersForUpdateOfFallsBackUnsupportedQuoteStyle() {
+        var targets = ofTables(QuoteStyle.BACKTICK, "Users");
+        var clause = LockingClause.of(LockMode.UPDATE, targets, false, false);
+
+        var sql = renderContext.render(clause).sql();
+
+        assertEquals("FOR UPDATE OF \"Users\"", normalizeWhitespace(sql));
     }
 
     @Test

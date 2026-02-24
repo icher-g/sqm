@@ -34,7 +34,7 @@ class CastExprParserTest {
 
         var type = cast.type();
         assertTrue(type.keyword().isEmpty());
-        assertEquals(java.util.List.of("int"), type.qualifiedName());
+        assertEquals(java.util.List.of("int"), type.qualifiedName().values());
         assertTrue(type.modifiers().isEmpty());
         assertEquals(0, type.arrayDims());
         assertEquals(TimeZoneSpec.NONE, type.timeZoneSpec());
@@ -48,7 +48,7 @@ class CastExprParserTest {
 
         var type = cast.type();
         assertTrue(type.keyword().isEmpty());
-        assertEquals(java.util.List.of("pg_catalog", "int4"), type.qualifiedName());
+        assertEquals(java.util.List.of("pg_catalog", "int4"), type.qualifiedName().values());
     }
 
     @Test
@@ -58,7 +58,7 @@ class CastExprParserTest {
         var cast = assertInstanceOf(CastExpr.class, e.value());
 
         var type = cast.type();
-        assertEquals(java.util.List.of("varchar"), type.qualifiedName());
+        assertEquals(java.util.List.of("varchar"), type.qualifiedName().values());
         assertEquals(1, type.modifiers().size());
     }
 
@@ -69,7 +69,7 @@ class CastExprParserTest {
         var cast = assertInstanceOf(CastExpr.class, e.value());
 
         var type = cast.type();
-        assertEquals(java.util.List.of("numeric"), type.qualifiedName());
+        assertEquals(java.util.List.of("numeric"), type.qualifiedName().values());
         assertEquals(2, type.modifiers().size());
     }
 
@@ -80,7 +80,7 @@ class CastExprParserTest {
         var cast = assertInstanceOf(CastExpr.class, e.value());
 
         var type = cast.type();
-        assertTrue(type.qualifiedName().isEmpty());
+        assertNull(type.qualifiedName());
         assertEquals(TypeKeyword.DOUBLE_PRECISION, type.keyword().orElseThrow());
         assertTrue(type.modifiers().isEmpty());
         assertEquals(TimeZoneSpec.NONE, type.timeZoneSpec());
@@ -101,7 +101,7 @@ class CastExprParserTest {
         var exprItem = assertInstanceOf(ExprSelectItem.class, item);
 
         var cast = assertInstanceOf(CastExpr.class, exprItem.expr());
-        assertEquals(java.util.List.of("numeric"), cast.type().qualifiedName());
+        assertEquals(java.util.List.of("numeric"), cast.type().qualifiedName().values());
         assertEquals(2, cast.type().modifiers().size());
     }
 
@@ -121,15 +121,15 @@ class CastExprParserTest {
         var cmp = assertInstanceOf(ComparisonPredicate.class, where);
 
         var lhs = assertInstanceOf(CastExpr.class, cmp.lhs());
-        assertEquals(java.util.List.of("int"), lhs.type().qualifiedName());
+        assertEquals(java.util.List.of("int"), lhs.type().qualifiedName().values());
     }
 
     @Test
     void parsesCastArrayTypeInAnsiParser() {
         var e = parseExpr("CAST(a AS text[])");
         var cast = assertInstanceOf(CastExpr.class, e.value());
-        assertEquals("a", cast.expr().matchExpression().column(c -> c.name()).orElse(null));
-        assertEquals(java.util.List.of("text"), cast.type().qualifiedName());
+        assertEquals("a", cast.expr().matchExpression().column(c -> c.name().value()).orElse(null));
+        assertEquals(java.util.List.of("text"), cast.type().qualifiedName().values());
         assertEquals(1, cast.type().arrayDims());
     }
 
@@ -137,8 +137,8 @@ class CastExprParserTest {
     void parsesCastTimeZoneClauseInAnsiParser() {
         var e = parseExpr("CAST(a AS timestamp with time zone)");
         var cast = assertInstanceOf(CastExpr.class, e.value());
-        assertEquals("a", cast.expr().matchExpression().column(c -> c.name()).orElse(null));
-        assertEquals(java.util.List.of("timestamp"), cast.type().qualifiedName());
+        assertEquals("a", cast.expr().matchExpression().column(c -> c.name().value()).orElse(null));
+        assertEquals(java.util.List.of("timestamp"), cast.type().qualifiedName().values());
         assertEquals(TimeZoneSpec.WITH_TIME_ZONE, cast.type().timeZoneSpec());
     }
 
@@ -146,8 +146,8 @@ class CastExprParserTest {
     void parsesCastTimeZoneClauseInAnsiParser_without() {
         var e = parseExpr("CAST(a AS timestamp without time zone)");
         var cast = assertInstanceOf(CastExpr.class, e.value());
-        assertEquals("a", cast.expr().matchExpression().column(c -> c.name()).orElse(null));
-        assertEquals(java.util.List.of("timestamp"), cast.type().qualifiedName());
+        assertEquals("a", cast.expr().matchExpression().column(c -> c.name().value()).orElse(null));
+        assertEquals(java.util.List.of("timestamp"), cast.type().qualifiedName().values());
         assertEquals(TimeZoneSpec.WITHOUT_TIME_ZONE, cast.type().timeZoneSpec());
     }
 

@@ -29,7 +29,7 @@ class TableRefParserTest {
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         Table t = (Table) r.value();
         Assertions.assertEquals(Table.Inheritance.ONLY, t.inheritance());
-        Assertions.assertEquals("products", t.name());
+        Assertions.assertEquals("products", t.name().value());
     }
 
     @Test
@@ -39,7 +39,7 @@ class TableRefParserTest {
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         Table t = (Table) r.value();
         Assertions.assertEquals(Table.Inheritance.INCLUDE_DESCENDANTS, t.inheritance());
-        Assertions.assertEquals("products", t.name());
+        Assertions.assertEquals("products", t.name().value());
     }
 
     @Test
@@ -49,8 +49,8 @@ class TableRefParserTest {
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         Table t = (Table) r.value();
         Assertions.assertEquals(Table.Inheritance.INCLUDE_DESCENDANTS, t.inheritance());
-        Assertions.assertEquals("sales", t.schema());
-        Assertions.assertEquals("products", t.name());
+        Assertions.assertEquals("sales", t.schema().value());
+        Assertions.assertEquals("products", t.name().value());
     }
 
     @Test
@@ -60,7 +60,7 @@ class TableRefParserTest {
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         Table t = (Table) r.value();
         Assertions.assertEquals(Table.Inheritance.INCLUDE_DESCENDANTS, t.inheritance());
-        Assertions.assertEquals("p", t.alias());
+        Assertions.assertEquals("p", t.alias().value());
     }
 
     @Test
@@ -70,7 +70,7 @@ class TableRefParserTest {
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         Table t = (Table) r.value();
         Assertions.assertEquals(Table.Inheritance.ONLY, t.inheritance());
-        Assertions.assertEquals("p", t.alias());
+        Assertions.assertEquals("p", t.alias().value());
     }
 
     @Test

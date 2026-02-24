@@ -5,6 +5,7 @@
     <inspection_tool class="EqualsWithItself" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoreNonFinalClassesInTest" value="true" />
     </inspection_tool>
+    <inspection_tool class="SameParameterValue" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SqlNoDataSourceInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SwitchStatementWithTooFewBranches" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="m_limit" value="2" />

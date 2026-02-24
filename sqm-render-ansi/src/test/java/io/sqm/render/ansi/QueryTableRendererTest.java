@@ -59,16 +59,16 @@ class QueryTableRendererTest {
     }
 
     @Test
-    @DisplayName("No alias when both explicit alias is blank and query.name() is null")
+    @DisplayName("No alias when explicit alias is not provided")
     void no_alias_when_both_missing() {
         var inner = makeSimpleQuery();
-        var qt = tbl(inner).as("   "); // blank alias
+        var qt = tbl(inner); // no alias
 
         var sql = render(qt);
 
         // Must not contain " AS "
         assertFalse(sql.matches(".*\\sAS\\s+.+"),
-            "Must not append AS <alias> when both alias and query name are missing");
+            "Must not append AS <alias> when alias is not provided");
     }
 
     @Test
@@ -96,7 +96,7 @@ class QueryTableRendererTest {
 
         var sql = render(qt);
 
-        // Not asserting exact spaces—just structure:
+        // Not asserting exact spacesâ€”just structure:
         assertTrue(sql.startsWith("("), "Should start with '('");
         assertTrue(sql.contains("\n"), "Should place the inner query on a new line");
         assertTrue(sql.contains(")"), "Should close the subquery with ')'");

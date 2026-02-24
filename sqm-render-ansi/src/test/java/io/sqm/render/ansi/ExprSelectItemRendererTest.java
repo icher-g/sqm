@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
+import io.sqm.core.Identifier;
 import io.sqm.core.Node;
+import io.sqm.core.QuoteStyle;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;
@@ -93,5 +95,18 @@ class ExprSelectItemRendererTest {
         String result = render(query);
         assertTrue(result.contains("COUNT"));
         assertTrue(result.contains("cnt"));
+    }
+
+    @Test
+    @DisplayName("Projection alias preserves supported quotes and falls back unsupported quotes")
+    void projection_alias_quote_preservation_and_fallback() {
+        var query = select(
+            io.sqm.core.SelectItem.expr(col("name")).as(Identifier.of("Name", QuoteStyle.DOUBLE_QUOTE)),
+            io.sqm.core.SelectItem.expr(col("id")).as(Identifier.of("Id", QuoteStyle.BACKTICK))
+        ).from(tbl("users")).build();
+
+        String result = render(query);
+        assertTrue(result.contains("name AS \"Name\""));
+        assertTrue(result.contains("id AS \"Id\""));
     }
 }

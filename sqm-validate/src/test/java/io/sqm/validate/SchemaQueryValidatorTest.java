@@ -1447,7 +1447,7 @@ class SchemaQueryValidatorTest {
         )
             .from(tbl("users").as("u"))
             .window(
-                WindowDef.of("w1", OverSpec.def("missing", orderBy(order(col("u", "id"))), null, null))
+                WindowDef.of(Identifier.of("w1"), OverSpec.def(Identifier.of("missing"), orderBy(order(col("u", "id"))), null, null))
             )
             .build();
 
@@ -1464,8 +1464,8 @@ class SchemaQueryValidatorTest {
         )
             .from(tbl("users").as("u"))
             .window(
-                WindowDef.of("w1", OverSpec.def("w2", orderBy(order(col("u", "id"))), null, null)),
-                WindowDef.of("w2", OverSpec.def("w1", orderBy(order(col("u", "status"))), null, null))
+                WindowDef.of(Identifier.of("w1"), OverSpec.def(Identifier.of("w2"), orderBy(order(col("u", "id"))), null, null)),
+                WindowDef.of(Identifier.of("w2"), OverSpec.def(Identifier.of("w1"), orderBy(order(col("u", "status"))), null, null))
             )
             .build();
 
@@ -1482,8 +1482,8 @@ class SchemaQueryValidatorTest {
         )
             .from(tbl("users").as("u"))
             .window(
-                WindowDef.of("w1", OverSpec.def("w2", null, range(preceding(1)), null)),
-                WindowDef.of("w2", OverSpec.def("w1", null, null, null))
+                WindowDef.of(Identifier.of("w1"), OverSpec.def(Identifier.of("w2"), null, range(preceding(1)), null)),
+                WindowDef.of(Identifier.of("w2"), OverSpec.def(Identifier.of("w1"), null, null, null))
             )
             .build();
 
@@ -1500,7 +1500,7 @@ class SchemaQueryValidatorTest {
         )
             .from(tbl("users").as("u"))
             .window(
-                WindowDef.of("w1", OverSpec.def("w1", orderBy(order(col("u", "id"))), null, null))
+                WindowDef.of(Identifier.of("w1"), OverSpec.def(Identifier.of("w1"), orderBy(order(col("u", "id"))), null, null))
             )
             .build();
 
@@ -1518,7 +1518,7 @@ class SchemaQueryValidatorTest {
             .from(tbl("users").as("u"))
             .window(
                 window("w1", partition(col("u", "status"))),
-                WindowDef.of("w2", OverSpec.def("w1", orderBy(order(col("u", "id"))), null, null))
+                WindowDef.of(Identifier.of("w2"), OverSpec.def(Identifier.of("w1"), orderBy(order(col("u", "id"))), null, null))
             )
             .build();
 

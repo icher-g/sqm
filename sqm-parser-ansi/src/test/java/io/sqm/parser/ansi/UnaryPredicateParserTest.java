@@ -1,13 +1,13 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.ColumnExpr;
-import io.sqm.core.Expression;
 import io.sqm.core.LiteralExpr;
 import io.sqm.core.UnaryPredicate;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
 
+import static io.sqm.dsl.Dsl.col;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UnaryPredicateParserTest {
@@ -32,7 +32,7 @@ class UnaryPredicateParserTest {
 
     @Test
     void infixParseWrapsLhs() {
-        var lhs = Expression.column("a");
+        var lhs = col("a");
         var cur = Cursor.of("ignored", ctx.identifierQuoting());
 
         var result = parser.parse(lhs, cur, ctx);
@@ -42,3 +42,4 @@ class UnaryPredicateParserTest {
         assertSame(lhs, result.value().expr());
     }
 }
+

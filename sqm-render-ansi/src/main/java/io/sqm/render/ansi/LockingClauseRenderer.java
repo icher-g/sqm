@@ -51,12 +51,13 @@ public class LockingClauseRenderer implements Renderer<LockingClause> {
             if (!ctx.dialect().capabilities().supports(SqlFeature.LOCKING_OF)) {
                 throw new UnsupportedDialectFeatureException("FOR UPDATE OF", ctx.dialect().name());
             }
+            var quoter = ctx.dialect().quoter();
             w.space().append("OF").space();
             for (int i = 0; i < node.ofTables().size(); i++) {
                 if (i > 0) {
                     w.append(",").space();
                 }
-                w.append(node.ofTables().get(i).identifier());
+                w.append(renderIdentifier(node.ofTables().get(i).identifier(), quoter));
             }
         }
 

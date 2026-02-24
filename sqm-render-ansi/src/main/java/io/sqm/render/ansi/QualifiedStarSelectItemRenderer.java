@@ -15,7 +15,7 @@ public class QualifiedStarSelectItemRenderer implements Renderer<QualifiedStarSe
      */
     @Override
     public void render(QualifiedStarSelectItem node, RenderContext ctx, SqlWriter w) {
-        w.append(node.qualifier()).append(".*");
+        w.append(renderIdentifier(node.qualifier(), ctx.dialect().quoter())).append(".*");
     }
 
     /**

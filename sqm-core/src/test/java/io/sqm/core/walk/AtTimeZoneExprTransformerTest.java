@@ -43,7 +43,7 @@ class AtTimeZoneExprTransformerTest {
         assertInstanceOf(AtTimeZoneExpr.class, transformed);
         AtTimeZoneExpr result = (AtTimeZoneExpr) transformed;
         ColumnExpr timestamp = (ColumnExpr) result.timestamp();
-        assertEquals("new_ts", timestamp.name());
+        assertEquals("new_ts", timestamp.name().value());
     }
 
     @Test
@@ -56,7 +56,7 @@ class AtTimeZoneExprTransformerTest {
         assertInstanceOf(AtTimeZoneExpr.class, transformed);
         AtTimeZoneExpr result = (AtTimeZoneExpr) transformed;
         ColumnExpr timezone = (ColumnExpr) result.timezone();
-        assertEquals("tz_name", timezone.name());
+        assertEquals("tz_name", timezone.name().value());
     }
 
     @Test
@@ -88,7 +88,7 @@ class AtTimeZoneExprTransformerTest {
 
         AtTimeZoneExpr resultInner = (AtTimeZoneExpr) resultOuter.timestamp();
         ColumnExpr innerTimestamp = (ColumnExpr) resultInner.timestamp();
-        assertEquals("event_ts", innerTimestamp.name());
+        assertEquals("event_ts", innerTimestamp.name().value());
     }
 
     /**
@@ -105,8 +105,8 @@ class AtTimeZoneExprTransformerTest {
 
         @Override
         public Node visitColumnExpr(ColumnExpr c) {
-            if (oldName.equals(c.name())) {
-                return ColumnExpr.of(newName).inTable(c.tableAlias());
+            if (oldName.equals(c.name().value())) {
+                return ColumnExpr.of(null, Identifier.of(newName)).inTable(c.tableAlias());
             }
             return c;
         }
@@ -119,7 +119,7 @@ class AtTimeZoneExprTransformerTest {
         @Override
         public Node visitLiteralExpr(LiteralExpr l) {
             // For testing purposes: replace literals used in AT TIME ZONE with column reference
-            return ColumnExpr.of("tz_name");
+            return ColumnExpr.of(null, Identifier.of("tz_name"));
         }
     }
 }

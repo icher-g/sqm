@@ -49,7 +49,7 @@ final class CteDefinitionValidationRule implements SchemaValidationRule<CteDef> 
         }
         context.addProblem(
             ValidationProblem.Code.CTE_COLUMN_ALIAS_COUNT_MISMATCH,
-            "CTE '" + node.name() + "' column alias count "
+            "CTE '" + node.name().value() + "' column alias count "
                 + node.columnAliases().size()
                 + " does not match body projection width "
                 + projectionArity.get(),

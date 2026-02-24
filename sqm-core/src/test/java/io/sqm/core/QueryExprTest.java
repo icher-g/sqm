@@ -3,6 +3,7 @@ package io.sqm.core;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class QueryExprTest {
 
@@ -18,7 +19,7 @@ class QueryExprTest {
 
     @Test
     void subquery() {
-        var subquery = Query.select(Expression.column("id")).from(TableRef.table("users")).build();
+        var subquery = Query.select(col("id")).from(TableRef.table(Identifier.of("users"))).build();
         var queryExpr = QueryExpr.of(subquery);
         assertEquals(subquery, queryExpr.subquery());
     }
@@ -33,8 +34,8 @@ class QueryExprTest {
 
     @Test
     void withComplexQuery() {
-        var subquery = Query.select(Expression.column("id")).from(TableRef.table("orders"))
-            .where(Expression.column("status").eq("active")).build();
+        var subquery = Query.select(col("id")).from(TableRef.table(Identifier.of("orders")))
+            .where(col("status").eq("active")).build();
         var queryExpr = QueryExpr.of(subquery);
         assertNotNull(queryExpr.subquery());
     }
@@ -57,3 +58,5 @@ class QueryExprTest {
         }
     }
 }
+
+

@@ -4,6 +4,7 @@ import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * ANSI table value constructor: (VALUES (...), (...)) [AS alias(col1, col2, ...)]
@@ -27,6 +28,18 @@ public non-sealed interface ValuesTable extends AliasedTableRef {
     }
 
     /**
+     * Creates a VALUES statement used as a table with identifier metadata.
+     *
+     * @param rows          a set of values
+     * @param alias         table alias identifier or null
+     * @param columnAliases derived column aliases
+     * @return a newly created values table
+     */
+    static ValuesTable of(RowValues rows, Identifier alias, List<Identifier> columnAliases) {
+        return new Impl(rows, columnAliases, alias);
+    }
+
+    /**
      * Rows of expressions; all rows must have the same arity.
      *
      * @return row values for the VALUES table
@@ -40,19 +53,19 @@ public non-sealed interface ValuesTable extends AliasedTableRef {
      * @param columnAliases a list of column names to add.
      * @return this.
      */
-    default ValuesTable columnAliases(List<String> columnAliases) {
-        return new Impl(values(), Objects.requireNonNull(columnAliases), alias());
+    default ValuesTable columnAliases(String... columnAliases) {
+        return columnAliases(Stream.of(columnAliases).map(Identifier::of).toList());
     }
 
     /**
-     * Adds column names to the alias.
+     * Adds derived column aliases preserving quote metadata.
      * Note: column names without {@link ValuesTable#alias()} are ignored.
      *
-     * @param columnAliases a list of column names to add.
+     * @param columnAliases a list of column alias identifiers to add.
      * @return this.
      */
-    default ValuesTable columnAliases(String... columnAliases) {
-        return new Impl(values(), List.of(columnAliases), alias());
+    default ValuesTable columnAliases(List<Identifier> columnAliases) {
+        return new Impl(values(), Objects.requireNonNull(columnAliases), alias());
     }
 
     /**
@@ -62,7 +75,17 @@ public non-sealed interface ValuesTable extends AliasedTableRef {
      * @return A newly created values table with the provide alias. All other fields are preserved.
      */
     default ValuesTable as(String alias) {
-        return new Impl(values(), columnAliases(), Objects.requireNonNull(alias));
+        return as(alias == null ? null : Identifier.of(alias));
+    }
+
+    /**
+     * Adds alias to the values table preserving quote metadata.
+     *
+     * @param alias an alias to add.
+     * @return a newly created values table with the provided alias. All other fields are preserved.
+     */
+    default ValuesTable as(Identifier alias) {
+        return new Impl(values(), columnAliases(), alias);
     }
 
     /**
@@ -83,19 +106,20 @@ public non-sealed interface ValuesTable extends AliasedTableRef {
      *
      * @param values        Rows of expressions; all rows must have the same arity.
      * @param columnAliases Optional derived column list; may be null or empty.
-     * @param alias         table alias or null if none
+     * @param alias        table alias or null if none
      */
-    record Impl(RowValues values, List<String> columnAliases, String alias) implements ValuesTable {
+    record Impl(RowValues values, List<Identifier> columnAliases, Identifier alias) implements ValuesTable {
 
         /**
          * Creates a values table implementation.
          *
-         * @param values        row values
-         * @param columnAliases optional column aliases
-         * @param alias         table alias
+         * @param values                 row values
+         * @param columnAliases optional column alias identifiers
+         * @param alias        table alias identifier
          */
         public Impl {
-            columnAliases = columnAliases == null ? null : List.copyOf(columnAliases);
+            Objects.requireNonNull(values, "values");
+            columnAliases = columnAliases == null ? List.of() : List.copyOf(columnAliases);
         }
     }
 }

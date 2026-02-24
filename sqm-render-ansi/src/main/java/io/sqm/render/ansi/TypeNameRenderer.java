@@ -25,8 +25,13 @@ public class TypeNameRenderer implements Renderer<TypeName> {
         if (node.keyword().isPresent())
             w.append(node.keyword().get().sql());
         else
-            // write the parts: pg_catalog.int4 or double precision
-            w.append(String.join(".", node.qualifiedName()));
+            // write multipart identifiers with quote preservation/fallback
+            for (int i = 0; i < node.qualifiedName().parts().size(); i++) {
+                if (i > 0) {
+                    w.append(".");
+                }
+                w.append(renderIdentifier(node.qualifiedName().parts().get(i), ctx.dialect().quoter()));
+            }
 
         if (!node.modifiers().isEmpty()) {
             // add modifiers: numeric(10,2)
@@ -40,11 +45,11 @@ public class TypeNameRenderer implements Renderer<TypeName> {
         }
 
         if (node.timeZoneSpec() != TimeZoneSpec.NONE) {
-            if (node.qualifiedName().isEmpty()) {
+            if (node.qualifiedName() == null) {
                 throw new IllegalArgumentException("Timezone spec is only supported for qualified names.");
             }
 
-            var name = node.qualifiedName().getLast().toLowerCase(Locale.ROOT);
+            var name = node.qualifiedName().parts().getLast().value().toLowerCase(Locale.ROOT);
             if (!validTimeTypes.contains(name)) {
                 throw new IllegalArgumentException("Timezone spec is only supported for time types.");
             }

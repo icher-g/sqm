@@ -40,13 +40,13 @@ public class ExpressionSubtypesJsonTest {
         var back = roundTrip(expr, CastExpr.class);
 
         assertNotNull(back);
-        assertEquals("bigint", back.type().qualifiedName().getFirst());
+        assertEquals("bigint", back.type().qualifiedName().values().getFirst());
         assertInstanceOf(LiteralExpr.class, back.expr());
         assertEquals(123, ((LiteralExpr) back.expr()).value());
 
         JsonNode node = toTree(expr);
         assertEquals("cast", node.path("kind").asText());
-        assertEquals("bigint", node.path("type").path("qualifiedName").get(0).asText());
+        assertEquals("bigint", node.path("type").path("qualifiedName").path("parts").get(0).path("value").asText());
     }
 
     @Test
@@ -57,7 +57,7 @@ public class ExpressionSubtypesJsonTest {
         var back = roundTrip(expr, CastExpr.class);
 
         assertInstanceOf(ColumnExpr.class, back.expr());
-        assertEquals("text", back.type().qualifiedName().getFirst());
+        assertEquals("text", back.type().qualifiedName().values().getFirst());
         assertEquals(1, back.type().arrayDims());
     }
 
@@ -70,7 +70,7 @@ public class ExpressionSubtypesJsonTest {
         Expression back = mapper.readValue(json, Expression.class);
 
         assertInstanceOf(CastExpr.class, back);
-        assertEquals("jsonb", ((CastExpr) back).type().qualifiedName().getFirst());
+        assertEquals("jsonb", ((CastExpr) back).type().qualifiedName().values().getFirst());
     }
 
     @Test
@@ -78,17 +78,17 @@ public class ExpressionSubtypesJsonTest {
     void castExpr_inSelect() throws Exception {
         var query = select(
             col("id"),
-            col("price").cast(TypeName.of(List.of("decimal"), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE)).as("price_decimal")
+            col("price").cast(TypeName.of(QualifiedName.of(List.of("decimal")), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE)).as("price_decimal")
         ).from(tbl("products")).build();
 
         var back = roundTrip(query, SelectQuery.class);
 
         var selectItem = (ExprSelectItem) back.items().get(1);
-        assertEquals("price_decimal", selectItem.alias());
+        assertEquals("price_decimal", selectItem.alias().value());
         assertInstanceOf(CastExpr.class, selectItem.expr());
 
         var castExpr = (CastExpr) selectItem.expr();
-        assertEquals("decimal", castExpr.type().qualifiedName().getFirst());
+        assertEquals("decimal", castExpr.type().qualifiedName().values().getFirst());
     }
 
     @Test
@@ -101,10 +101,10 @@ public class ExpressionSubtypesJsonTest {
         var back = roundTrip(outer, CastExpr.class);
 
         assertInstanceOf(CastExpr.class, back.expr());
-        assertEquals("bigint", back.type().qualifiedName().getFirst());
+        assertEquals("bigint", back.type().qualifiedName().values().getFirst());
 
         var innerCast = (CastExpr) back.expr();
-        assertEquals("integer", innerCast.type().qualifiedName().getFirst());
+        assertEquals("integer", innerCast.type().qualifiedName().values().getFirst());
     }
 
     /* ==================== CollateExpr Tests ==================== */
@@ -117,12 +117,12 @@ public class ExpressionSubtypesJsonTest {
         var back = roundTrip(expr, CollateExpr.class);
 
         assertNotNull(back);
-        assertEquals("de-CH", back.collation());
+        assertEquals(QualifiedName.of("de-CH"), back.collation());
         assertInstanceOf(ColumnExpr.class, back.expr());
 
         JsonNode node = toTree(expr);
         assertEquals("collate", node.path("kind").asText());
-        assertEquals("de-CH", node.path("collation").asText());
+        assertEquals("de-CH", node.path("collation").path("parts").get(0).path("value").asText());
     }
 
     /* ==================== ArrayExpr Tests ==================== */
@@ -157,9 +157,9 @@ public class ExpressionSubtypesJsonTest {
         assertInstanceOf(ColumnExpr.class, back.elements().get(1));
         assertInstanceOf(ColumnExpr.class, back.elements().get(2));
 
-        assertEquals("a", back.elements().get(0).matchExpression().column(c -> c.name()).orElse(null));
-        assertEquals("b", back.elements().get(1).matchExpression().column(c -> c.name()).orElse(null));
-        assertEquals("c", back.elements().get(2).matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("a", back.elements().get(0).matchExpression().column(c -> c.name().value()).orElse(null));
+        assertEquals("b", back.elements().get(1).matchExpression().column(c -> c.name().value()).orElse(null));
+        assertEquals("c", back.elements().get(2).matchExpression().column(c -> c.name().value()).orElse(null));
     }
 
     @Test
@@ -203,7 +203,7 @@ public class ExpressionSubtypesJsonTest {
         var back = roundTrip(query, SelectQuery.class);
 
         var selectItem = (ExprSelectItem) back.items().get(1);
-        assertEquals("tags", selectItem.alias());
+        assertEquals("tags", selectItem.alias().value());
         assertInstanceOf(ArrayExpr.class, selectItem.expr());
     }
 
@@ -217,13 +217,13 @@ public class ExpressionSubtypesJsonTest {
         var back = roundTrip(expr, BinaryOperatorExpr.class);
 
         assertNotNull(back);
-        assertEquals("->", back.operator());
+        assertEquals("->", back.operator().text());
         assertInstanceOf(ColumnExpr.class, back.left());
         assertInstanceOf(LiteralExpr.class, back.right());
 
         JsonNode node = toTree(expr);
         assertEquals("binary-op", node.path("kind").asText());
-        assertEquals("->", node.path("operator").asText());
+        assertEquals("->", node.path("operator").path("symbol").asText());
     }
 
     @Test
@@ -233,8 +233,8 @@ public class ExpressionSubtypesJsonTest {
 
         var back = roundTrip(expr, BinaryOperatorExpr.class);
 
-        assertEquals("->>", back.operator());
-        assertEquals("data", back.left().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("->>", back.operator().text());
+        assertEquals("data", back.left().matchExpression().column(c -> c.name().value()).orElse(null));
         assertEquals("name", ((LiteralExpr) back.right()).value());
     }
 
@@ -245,7 +245,7 @@ public class ExpressionSubtypesJsonTest {
 
         var back = roundTrip(expr, BinaryOperatorExpr.class);
 
-        assertEquals("&&", back.operator());
+        assertEquals("&&", back.operator().text());
         assertInstanceOf(ColumnExpr.class, back.left());
         assertInstanceOf(ColumnExpr.class, back.right());
     }
@@ -257,7 +257,7 @@ public class ExpressionSubtypesJsonTest {
 
         var back = roundTrip(expr, BinaryOperatorExpr.class);
 
-        assertEquals("@>", back.operator());
+        assertEquals("@>", back.operator().text());
     }
 
     @Test
@@ -267,7 +267,7 @@ public class ExpressionSubtypesJsonTest {
 
         var back = roundTrip(expr, BinaryOperatorExpr.class);
 
-        assertEquals("<@", back.operator());
+        assertEquals("<@", back.operator().text());
     }
 
     @Test
@@ -277,7 +277,7 @@ public class ExpressionSubtypesJsonTest {
 
         var back = roundTrip(expr, BinaryOperatorExpr.class);
 
-        assertEquals("~", back.operator());
+        assertEquals("~", back.operator().text());
     }
 
     @Test
@@ -289,7 +289,7 @@ public class ExpressionSubtypesJsonTest {
         Expression back = mapper.readValue(json, Expression.class);
 
         assertInstanceOf(BinaryOperatorExpr.class, back);
-        assertEquals("->", ((BinaryOperatorExpr) back).operator());
+        assertEquals("->", ((BinaryOperatorExpr) back).operator().text());
     }
 
     @Test
@@ -302,7 +302,7 @@ public class ExpressionSubtypesJsonTest {
         var back = roundTrip(outer, BinaryOperatorExpr.class);
 
         assertInstanceOf(BinaryOperatorExpr.class, back.left());
-        assertEquals("->", back.operator());
+        assertEquals("->", back.operator().text());
         assertEquals("c", ((LiteralExpr) back.right()).value());
     }
 
@@ -332,13 +332,13 @@ public class ExpressionSubtypesJsonTest {
         var back = roundTrip(expr, UnaryOperatorExpr.class);
 
         assertNotNull(back);
-        assertEquals("~", back.operator());
+        assertEquals("~", back.operator().text());
         assertInstanceOf(ColumnExpr.class, back.expr());
-        assertEquals("mask", back.expr().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("mask", back.expr().matchExpression().column(c -> c.name().value()).orElse(null));
 
         JsonNode node = toTree(expr);
         assertEquals("unary-op", node.path("kind").asText());
-        assertEquals("~", node.path("operator").asText());
+        assertEquals("~", node.path("operator").path("symbol").asText());
     }
 
     @Test
@@ -348,8 +348,8 @@ public class ExpressionSubtypesJsonTest {
 
         var back = roundTrip(expr, UnaryOperatorExpr.class);
 
-        assertEquals("-", back.operator());
-        assertEquals("amount", back.expr().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("-", back.operator().text());
+        assertEquals("amount", back.expr().matchExpression().column(c -> c.name().value()).orElse(null));
     }
 
     @Test
@@ -361,7 +361,7 @@ public class ExpressionSubtypesJsonTest {
         Expression back = mapper.readValue(json, Expression.class);
 
         assertInstanceOf(UnaryOperatorExpr.class, back);
-        assertEquals("~", ((UnaryOperatorExpr) back).operator());
+        assertEquals("~", ((UnaryOperatorExpr) back).operator().text());
     }
 
     @Test
@@ -372,11 +372,11 @@ public class ExpressionSubtypesJsonTest {
 
         var back = roundTrip(outer, UnaryOperatorExpr.class);
 
-        assertEquals("~", back.operator());
+        assertEquals("~", back.operator().text());
         assertInstanceOf(UnaryOperatorExpr.class, back.expr());
 
         var innerBack = (UnaryOperatorExpr) back.expr();
-        assertEquals("-", innerBack.operator());
+        assertEquals("-", innerBack.operator().text());
     }
 
     @Test
@@ -390,7 +390,7 @@ public class ExpressionSubtypesJsonTest {
         var back = roundTrip(query, SelectQuery.class);
 
         var selectItem = (ExprSelectItem) back.items().get(1);
-        assertEquals("inverted_flags", selectItem.alias());
+        assertEquals("inverted_flags", selectItem.alias().value());
         assertInstanceOf(UnaryOperatorExpr.class, selectItem.expr());
     }
 
@@ -405,7 +405,7 @@ public class ExpressionSubtypesJsonTest {
         var back = roundTrip(cast, CastExpr.class);
 
         assertInstanceOf(ArrayExpr.class, back.expr());
-        assertEquals("integer", back.type().qualifiedName().getFirst());
+        assertEquals("integer", back.type().qualifiedName().values().getFirst());
         assertEquals(1, back.type().arrayDims());
     }
 
@@ -418,7 +418,7 @@ public class ExpressionSubtypesJsonTest {
         var back = roundTrip(expr, BinaryOperatorExpr.class);
 
         assertInstanceOf(CastExpr.class, back.left());
-        assertEquals("->", back.operator());
+        assertEquals("->", back.operator().text());
     }
 
     @Test
@@ -441,7 +441,7 @@ public class ExpressionSubtypesJsonTest {
         var query = select(
             col("id"),
             col("data").op("->", lit("user")).as("user_data"),
-            col("price").cast(TypeName.of(List.of("decimal"), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE)).as("price_decimal"),
+            col("price").cast(TypeName.of(QualifiedName.of(List.of("decimal")), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE)).as("price_decimal"),
             ArrayExpr.of(col("tag1"), col("tag2")).as("tags"),
             col("flags").unary("~").as("inverted")
         ).from(tbl("records"))
@@ -483,3 +483,6 @@ public class ExpressionSubtypesJsonTest {
         assertTrue(unaryJson.contains("\"kind\" : \"unary-op\""));
     }
 }
+
+
+

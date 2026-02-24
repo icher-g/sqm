@@ -1,7 +1,6 @@
 package io.sqm.parser.postgresql;
 
-import io.sqm.core.CollateExpr;
-import io.sqm.core.Expression;
+import io.sqm.core.*;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +26,7 @@ class CollateExprParserTest {
         assertTrue(result.ok());
 
         var expr = assertInstanceOf(CollateExpr.class, result.value());
-        assertEquals("de-CH", expr.collation());
+        assertEquals(QualifiedName.of(Identifier.of("de-CH", QuoteStyle.DOUBLE_QUOTE)), expr.collation());
     }
 
     @Test
@@ -36,7 +35,7 @@ class CollateExprParserTest {
         assertTrue(result.ok());
 
         var expr = assertInstanceOf(CollateExpr.class, result.value());
-        assertEquals("pg_catalog.en_US", expr.collation());
+        assertEquals(QualifiedName.of("pg_catalog", "en_US"), expr.collation());
     }
 
     @Test
@@ -57,3 +56,4 @@ class CollateExprParserTest {
         assertTrue(result.isError());
     }
 }
+

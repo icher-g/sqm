@@ -9,6 +9,8 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+import java.util.stream.Collectors;
+
 public class OrderItemRenderer implements Renderer<OrderItem> {
     /**
      * Renders the node into an {@link SqlWriter}.
@@ -29,9 +31,13 @@ public class OrderItemRenderer implements Renderer<OrderItem> {
 
         // COLLATE (if any) - typically placed right after the expr
         var collate = node.collate();
-        if (collate != null && !collate.isBlank()) {
+        if (collate != null) {
             var quoter = ctx.dialect().quoter();
-            w.space().append("COLLATE").space().append(quoter.quoteIfNeeded(collate));
+            w.space().append("COLLATE").space().append(
+                collate.parts().stream()
+                    .map(part -> renderIdentifier(part, quoter))
+                    .collect(Collectors.joining("."))
+            );
         }
 
         var usingOperator = node.usingOperator();

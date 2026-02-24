@@ -19,37 +19,26 @@ import java.util.Objects;
  */
 public non-sealed interface FunctionExpr extends Expression {
     /**
-     * Creates a function call expression.
+     * Creates a function call expression with a quote-aware qualified function name.
      *
-     * @param name a function name
-     * @param args an array of function arguments.
-     * @return A newly created instance of a function call expression.
+     * @param name a function name (possibly qualified) with quote metadata
+     * @param args          an array of function arguments.
+     * @param distinctArg   indicates whether DISTINCT should be added before the list of arguments in the function call.
+     * @param withinGroup   defines an ordered-set aggregates.
+     * @param filter        a filter used to filter rows only for aggregates.
+     * @param over          an OVER specification.
+     * @return a newly created instance of a function call expression.
      */
-    static FunctionExpr of(String name, FunctionExpr.Arg... args) {
-        return new Impl(Objects.requireNonNull(name), List.of(args), null, null, null, null);
+    static FunctionExpr of(QualifiedName name, List<FunctionExpr.Arg> args, Boolean distinctArg, OrderBy withinGroup, Predicate filter, OverSpec over) {
+        return new Impl(Objects.requireNonNull(name, "name"), args, distinctArg, withinGroup, filter, over);
     }
 
     /**
-     * Creates a function call expression.
+     * Gets the quote-aware qualified function name.
      *
-     * @param name        a function name
-     * @param args        an array of function arguments.
-     * @param distinctArg indicates whether DISTINCT should be added before the list of arguments in the function call. {@code COUNT(DISTINCT t.id) AS c}.
-     * @param withinGroup defines an ordered-set aggregates.
-     * @param filter      a filter used to filter rows only for aggregates.
-     * @param over        an OVER specification.
-     * @return A newly created instance of a function call expression.
+     * @return the qualified function name.
      */
-    static FunctionExpr of(String name, List<FunctionExpr.Arg> args, Boolean distinctArg, OrderBy withinGroup, Predicate filter, OverSpec over) {
-        return new Impl(Objects.requireNonNull(name), args, distinctArg, withinGroup, filter, over);
-    }
-
-    /**
-     * Gets the name of the function.
-     *
-     * @return the name of the function.
-     */
-    String name();
+    QualifiedName name();
 
     /**
      * Gets a list of arguments. Can be NULL or empty if there are no arguments.
@@ -203,7 +192,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return an {@link FunctionExpr}
      */
     default FunctionExpr over(String windowName) {
-        return over(OverSpec.ref(windowName));
+        return over(OverSpec.ref(Identifier.of(windowName)));
     }
 
     /**
@@ -295,7 +284,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return an {@link FunctionExpr}
      */
     default FunctionExpr over(String baseWindow, OrderBy orderBy) {
-        return over(OverSpec.def(baseWindow, orderBy, null, null));
+        return over(OverSpec.def(Identifier.of(baseWindow), orderBy, null, null));
     }
 
     /**
@@ -311,7 +300,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return an {@link FunctionExpr}
      */
     default FunctionExpr over(String baseWindow, OrderBy orderBy, FrameSpec frame) {
-        return over(OverSpec.def(baseWindow, orderBy, frame, null));
+        return over(OverSpec.def(Identifier.of(baseWindow), orderBy, frame, null));
     }
 
     /**
@@ -326,7 +315,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return an {@link FunctionExpr}
      */
     default FunctionExpr over(String baseWindow, FrameSpec frame) {
-        return over(OverSpec.def(baseWindow, null, frame, null));
+        return over(OverSpec.def(Identifier.of(baseWindow), null, frame, null));
     }
 
     /**
@@ -343,7 +332,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return an {@link FunctionExpr}
      */
     default FunctionExpr over(String baseWindow, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude) {
-        return over(OverSpec.def(baseWindow, orderBy, frame, exclude));
+        return over(OverSpec.def(Identifier.of(baseWindow), orderBy, frame, exclude));
     }
 
     /**
@@ -466,26 +455,28 @@ public non-sealed interface FunctionExpr extends Expression {
      *     }
      * </pre>
      *
-     * @param name        the name of the function.
-     * @param args        a list of arguments. Can be NULL or empty if there are no arguments.
-     * @param distinctArg indicates whether DISTINCT should be added before the list of arguments in the function call. {@code COUNT(DISTINCT t.id) AS c}.
-     * @param withinGroup defines an ordered-set aggregates.
-     * @param filter      a filter used to filter rows only for aggregates.
-     * @param over        an OVER specification.
+     * @param name the name of the function.
+     * @param args          a list of arguments. Can be NULL or empty if there are no arguments.
+     * @param distinctArg   indicates whether DISTINCT should be added before the list of arguments in the function call. {@code COUNT(DISTINCT t.id) AS c}.
+     * @param withinGroup   defines an ordered-set aggregates.
+     * @param filter        a filter used to filter rows only for aggregates.
+     * @param over          an OVER specification.
      */
-    record Impl(String name, List<Arg> args, Boolean distinctArg, OrderBy withinGroup, Predicate filter, OverSpec over) implements FunctionExpr {
+    record Impl(QualifiedName name, List<Arg> args, Boolean distinctArg, OrderBy withinGroup, Predicate filter, OverSpec over) implements FunctionExpr {
         /**
          * This constructor ensures the arguments list is immutable.
          *
-         * @param name        the name of the function.
-         * @param args        a list of arguments. Can be NULL or empty if there are no arguments.
-         * @param distinctArg indicates whether DISTINCT should be added before the list of arguments in the function call. {@code COUNT(DISTINCT t.id) AS c}.
-         * @param withinGroup defines an ordered-set aggregates.
-         * @param filter      a filter used to filter rows only for aggregates.
-         * @param over        an OVER specification.
+         * @param name the name of the function.
+         * @param args          a list of arguments. Can be NULL or empty if there are no arguments.
+         * @param distinctArg   indicates whether DISTINCT should be added before the list of arguments in the function call. {@code COUNT(DISTINCT t.id) AS c}.
+         * @param withinGroup   defines an ordered-set aggregates.
+         * @param filter        a filter used to filter rows only for aggregates.
+         * @param over          an OVER specification.
          */
         public Impl {
+            Objects.requireNonNull(name, "qualifiedName");
             args = List.copyOf(args);
         }
+
     }
 }

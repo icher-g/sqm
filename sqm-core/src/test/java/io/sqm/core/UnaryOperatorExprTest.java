@@ -3,29 +3,39 @@ package io.sqm.core;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.*;
 
 class UnaryOperatorExprTest {
 
     @Test
     void of() {
-        var expr = Expression.column("amount");
+        var expr = col("amount");
         var unaryExpr = UnaryOperatorExpr.of("-", expr);
         
         assertNotNull(unaryExpr);
         assertInstanceOf(UnaryOperatorExpr.class, unaryExpr);
-        assertEquals("-", unaryExpr.operator());
+        assertEquals("-", unaryExpr.operator().text());
         assertEquals(expr, unaryExpr.expr());
     }
 
     @Test
     void operator() {
-        var expr = UnaryOperatorExpr.of("~", Expression.column("mask"));
-        assertEquals("~", expr.operator());
+        var expr = UnaryOperatorExpr.of("~", col("mask"));
+        assertEquals("~", expr.operator().text());
+    }
+
+    @Test
+    void structuredOperatorName() {
+        var expr = UnaryOperatorExpr.of(OperatorName.of("~"), col("mask"));
+        assertEquals("~", expr.operator().text());
+        assertEquals("~", expr.operator().symbol());
+        assertFalse(expr.operator().operatorKeywordSyntax());
     }
 
     @Test
     void expr() {
-        var operand = Expression.column("value");
+        var operand = col("value");
         var expr = UnaryOperatorExpr.of("-", operand);
         assertEquals(operand, expr.expr());
     }
@@ -40,27 +50,27 @@ class UnaryOperatorExprTest {
 
     @Test
     void viaExpressionUnary() {
-        var expr = Expression.column("amount").unary("-");
+        var expr = col("amount").unary("-");
         assertInstanceOf(UnaryOperatorExpr.class, expr);
-        assertEquals("-", expr.operator());
+        assertEquals("-", expr.operator().text());
     }
 
     @Test
     void arithmeticNegation() {
         var expr = UnaryOperatorExpr.of("-", Expression.literal(42));
-        assertEquals("-", expr.operator());
+        assertEquals("-", expr.operator().text());
         assertInstanceOf(LiteralExpr.class, expr.expr());
     }
 
     @Test
     void bitwiseNot() {
-        var expr = UnaryOperatorExpr.of("~", Expression.column("mask"));
-        assertEquals("~", expr.operator());
+        var expr = UnaryOperatorExpr.of("~", col("mask"));
+        assertEquals("~", expr.operator().text());
     }
 
     @Test
     void withColumn() {
-        var expr = UnaryOperatorExpr.of("-", Expression.column("price"));
+        var expr = UnaryOperatorExpr.of("-", col("price"));
         assertInstanceOf(ColumnExpr.class, expr.expr());
     }
 
@@ -72,14 +82,14 @@ class UnaryOperatorExprTest {
 
     @Test
     void withNestedExpression() {
-        var nested = Expression.column("a").add(Expression.column("b"));
+        var nested = col("a").add(col("b"));
         var expr = UnaryOperatorExpr.of("-", nested);
         assertInstanceOf(AddArithmeticExpr.class, expr.expr());
     }
 
     @Test
     void withFunction() {
-        var func = Expression.func("abs", Expression.funcArg(Expression.column("x")));
+        var func = func("abs", Expression.funcArg(col("x")));
         var expr = UnaryOperatorExpr.of("-", func);
         assertInstanceOf(FunctionExpr.class, expr.expr());
     }
@@ -87,7 +97,7 @@ class UnaryOperatorExprTest {
     @Test
     void nullOperatorThrows() {
         assertThrows(NullPointerException.class, () ->
-            UnaryOperatorExpr.of(null, Expression.literal(1))
+            UnaryOperatorExpr.of((String) null, Expression.literal(1))
         );
     }
 
@@ -110,19 +120,19 @@ class UnaryOperatorExprTest {
 
     @Test
     void differentOperators() {
-        var operand = Expression.column("x");
+        var operand = col("x");
         var operators = new String[]{"-", "+", "~", "!", "@"};
         
         for (var op : operators) {
             var expr = UnaryOperatorExpr.of(op, operand);
-            assertEquals(op, expr.operator());
+            assertEquals(op, expr.operator().text());
         }
     }
 
     @Test
     void multiCharacterOperator() {
-        var expr = UnaryOperatorExpr.of("!!", Expression.column("array"));
-        assertEquals("!!", expr.operator());
+        var expr = UnaryOperatorExpr.of("!!", col("array"));
+        assertEquals("!!", expr.operator().text());
     }
 
     @Test
@@ -133,7 +143,7 @@ class UnaryOperatorExprTest {
 
     @Test
     void recordEquality() {
-        var operand = Expression.column("amount");
+        var operand = col("amount");
         var op = "-";
         
         var expr1 = UnaryOperatorExpr.of(op, operand);
@@ -145,7 +155,7 @@ class UnaryOperatorExprTest {
 
     @Test
     void recordInequality() {
-        var operand = Expression.column("x");
+        var operand = col("x");
         var expr1 = UnaryOperatorExpr.of("-", operand);
         var expr2 = UnaryOperatorExpr.of("~", operand);
         
@@ -154,26 +164,26 @@ class UnaryOperatorExprTest {
 
     @Test
     void recordInequalityDifferentOperands() {
-        var expr1 = UnaryOperatorExpr.of("-", Expression.column("a"));
-        var expr2 = UnaryOperatorExpr.of("-", Expression.column("b"));
+        var expr1 = UnaryOperatorExpr.of("-", col("a"));
+        var expr2 = UnaryOperatorExpr.of("-", col("b"));
         
         assertNotEquals(expr1, expr2);
     }
 
     @Test
     void nestedUnaryOperators() {
-        var inner = UnaryOperatorExpr.of("-", Expression.column("amount"));
+        var inner = UnaryOperatorExpr.of("-", col("amount"));
         var outer = UnaryOperatorExpr.of("~", inner);
         
         assertInstanceOf(UnaryOperatorExpr.class, outer.expr());
-        assertEquals("~", outer.operator());
-        assertEquals("-", ((UnaryOperatorExpr) outer.expr()).operator());
+        assertEquals("~", outer.operator().text());
+        assertEquals("-", ((UnaryOperatorExpr) outer.expr()).operator().text());
     }
 
     @Test
     void withBinaryOperatorExpr() {
         var binary = BinaryOperatorExpr.of(
-            Expression.column("a"),
+            col("a"),
             "->",
             Expression.literal("b")
         );
@@ -184,7 +194,7 @@ class UnaryOperatorExprTest {
 
     @Test
     void toStringTest() {
-        var expr = UnaryOperatorExpr.of("-", Expression.column("amount"));
+        var expr = UnaryOperatorExpr.of("-", col("amount"));
         var str = expr.toString();
         assertNotNull(str);
         assertTrue(str.contains("UnaryOperatorExpr") || str.contains("-"));
@@ -202,3 +212,4 @@ class UnaryOperatorExprTest {
         }
     }
 }
+

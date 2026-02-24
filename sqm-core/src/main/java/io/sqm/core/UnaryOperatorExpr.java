@@ -13,8 +13,8 @@ import java.util.Objects;
  * <p>This node models SQL unary operators that are represented using operator syntax.
  * In PostgreSQL, this can include arithmetic signs and other unary operators such as bitwise NOT ({@code ~}).</p>
  *
- * <p>The operator is stored as a raw {@link String} and is rendered as-is by a dialect renderer.
- * Dialect-specific validation should be implemented in the PostgreSQL module.</p>
+ * <p>The operator is stored as structured {@link OperatorName} metadata.
+ * The operator is exposed as structured {@link OperatorName} metadata.</p>
  *
  * <p>Examples (PostgreSQL)</p>
  * <ul>
@@ -32,15 +32,26 @@ public non-sealed interface UnaryOperatorExpr extends Expression {
      * @return unary operator expression
      */
     static UnaryOperatorExpr of(String operator, Expression expr) {
+        return of(OperatorName.of(operator), expr);
+    }
+
+    /**
+     * Creates a unary operator expression with a structured operator name.
+     *
+     * @param operator structured operator metadata
+     * @param expr operand expression
+     * @return unary operator expression
+     */
+    static UnaryOperatorExpr of(OperatorName operator, Expression expr) {
         return new Impl(operator, expr);
     }
 
     /**
-     * Operator token to apply to the operand.
+     * Structured operator metadata.
      *
-     * @return operator token, not blank
+     * @return operator metadata
      */
-    String operator();
+    OperatorName operator();
 
     /**
      * Operand expression the operator is applied to.
@@ -68,23 +79,20 @@ public non-sealed interface UnaryOperatorExpr extends Expression {
      * Nested to keep the model change self-contained. You may later move it to your standard
      * implementation package without changing the public API.
      *
-     * @param operator operator token (for example {@code "-"} or {@code "~"})
+     * @param operator structured operator metadata
      * @param expr     operand expression
      */
-    record Impl(String operator, Expression expr) implements UnaryOperatorExpr {
+    record Impl(OperatorName operator, Expression expr) implements UnaryOperatorExpr {
 
         /**
          * Creates a unary operator expression implementation.
          *
-         * @param operator operator token
+         * @param operator structured operator metadata
          * @param expr     operand expression
          */
         public Impl {
             Objects.requireNonNull(operator, "operator");
             Objects.requireNonNull(expr, "expr");
-            if (operator.isBlank()) {
-                throw new IllegalArgumentException("operator must not be blank");
-            }
         }
     }
 }

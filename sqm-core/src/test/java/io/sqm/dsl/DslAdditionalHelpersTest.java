@@ -1,11 +1,9 @@
 package io.sqm.dsl;
 
-import io.sqm.core.BoundSpec;
-import io.sqm.core.DistinctSpec;
-import io.sqm.core.LimitOffset;
-import io.sqm.core.Nulls;
-import io.sqm.core.OverSpec;
+import io.sqm.core.*;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,7 +40,7 @@ class DslAdditionalHelpersTest {
 
         var baseOnly = overDef("w");
         assertInstanceOf(OverSpec.Def.class, baseOnly);
-        assertEquals("w", baseOnly.baseWindow());
+        assertEquals("w", baseOnly.baseWindow().value());
 
         var withExclude = over(orderBy(order(col("created_at"))), rows(preceding(1), currentRow()), excludeNoOthers());
         assertInstanceOf(OverSpec.Def.class, withExclude);
@@ -70,5 +68,64 @@ class DslAdditionalHelpersTest {
         assertTrue(allOnly.limitAll());
         assertTrue(allWithOffset.limitAll());
         assertNotNull(allWithOffset.offset());
+    }
+
+    @Test
+    void typeAndTableWrapperHelpers() {
+        assertEquals(List.of("int4"), type("int4").qualifiedName().values());
+        assertEquals(TypeKeyword.DOUBLE_PRECISION, type(TypeKeyword.DOUBLE_PRECISION).keyword().orElseThrow());
+
+        QueryTable queryTable = tbl(select(star()).from(tbl("t")).build());
+        assertNotNull(queryTable.query());
+
+        ValuesTable valuesTable = tbl(rows(row(1, "a")));
+        assertNotNull(valuesTable.values());
+
+        FunctionTable functionTable = tbl(func("unnest", arg(array(lit(1), lit(2)))));
+        assertNotNull(functionTable.function());
+    }
+
+    @Test
+    void cteHelpersConvertStringNamesAndAliases() {
+        var body = select(star()).from(tbl("t")).build();
+
+        CteDef c1 = cte("c");
+        assertEquals("c", c1.name().value());
+
+        CteDef c2 = cte("c", body);
+        assertEquals(body, c2.body());
+
+        CteDef c3 = cte("c", body, List.of("id", "name"), CteDef.Materialization.MATERIALIZED);
+        assertEquals(List.of("id", "name"), c3.columnAliases().stream().map(a -> a.value()).toList());
+        assertEquals(CteDef.Materialization.MATERIALIZED, c3.materialization());
+
+        CteDef c4 = cte("c", body, List.of("id"));
+        assertEquals(List.of("id"), c4.columnAliases().stream().map(a -> a.value()).toList());
+    }
+
+    @Test
+    void lockTargetHelpersValidateAndSupportQuoteStyle() {
+        var targets = ofTables("u", "orders");
+        assertEquals(List.of("u", "orders"), targets.stream().map(t -> t.identifier().value()).toList());
+
+        var quoted = ofTables(QuoteStyle.BACKTICK, "U");
+        assertEquals(QuoteStyle.BACKTICK, quoted.getFirst().identifier().quoteStyle());
+
+        assertThrows(IllegalArgumentException.class, () -> ofTables("ok", " "));
+        assertThrows(IllegalArgumentException.class, () -> ofTables(QuoteStyle.DOUBLE_QUOTE, (String) null));
+    }
+
+    @Test
+    void overAndWindowConvenienceVariantsCoverStringBaseWindows() {
+        var frame = rows(preceding(1), currentRow());
+
+        assertEquals("base", overDef("base").baseWindow().value());
+        assertEquals("base", over("base", orderBy(order(1))).baseWindow().value());
+        assertEquals("base", over("base", frame).baseWindow().value());
+        assertEquals("base", over("base", null, frame, excludeTies()).baseWindow().value());
+        assertEquals("base", over("base", orderBy(order(1)), frame).baseWindow().value());
+        assertEquals("base", over("base", orderBy(order(1)), frame, excludeCurrentRow()).baseWindow().value());
+
+        assertEquals("wq", window("wq", over()).name().value());
     }
 }

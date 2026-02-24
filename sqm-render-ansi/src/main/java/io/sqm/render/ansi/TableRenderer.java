@@ -25,11 +25,11 @@ public class TableRenderer implements Renderer<Table> {
             }
             w.append("ONLY").space();
         }
-        if (schema != null && !schema.isBlank()) {
-            w.append(quoter.quoteIfNeeded(schema));
+        if (schema != null) {
+            w.append(renderIdentifier(schema, quoter));
             w.append(".");
         }
-        w.append(quoter.quoteIfNeeded(node.name()));
+        w.append(renderIdentifier(node.name(), quoter));
         if (node.inheritance() == Table.Inheritance.INCLUDE_DESCENDANTS) {
             if (!ctx.dialect().capabilities().supports(SqlFeature.TABLE_INHERITANCE_DESCENDANTS)) {
                 throw new UnsupportedDialectFeatureException("table *", ctx.dialect().name());
@@ -38,8 +38,8 @@ public class TableRenderer implements Renderer<Table> {
         }
 
         var alias = node.alias();
-        if (alias != null && !alias.isBlank()) {
-            w.space().append("AS").space().append(quoter.quoteIfNeeded(alias));
+        if (alias != null) {
+            w.space().append("AS").space().append(renderIdentifier(alias, quoter));
         }
     }
 

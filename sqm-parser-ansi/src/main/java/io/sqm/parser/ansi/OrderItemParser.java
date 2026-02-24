@@ -16,15 +16,6 @@ import static io.sqm.parser.spi.ParseResult.ok;
 
 public class OrderItemParser implements Parser<OrderItem> {
 
-    private static String unquoteIfQuoted(String s) {
-        int n = s.length();
-        if (n >= 2 && s.charAt(0) == '"' && s.charAt(n - 1) == '"') {
-            // ANSI: doubled quotes inside are escapes
-            return s.substring(1, n - 1).replace("\"\"", "\"");
-        }
-        return s;
-    }
-
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
@@ -36,7 +27,7 @@ public class OrderItemParser implements Parser<OrderItem> {
     public ParseResult<OrderItem> parse(Cursor cur, ParseContext ctx) {
         Integer ordinal = null;
         Expression expr = null;
-        String collate = null;
+        QualifiedName collateName = null;
 
         // Positional ORDER BY: "1", "2", ...
         if (Numbers.isPositiveInteger(cur.peek().lexeme())) {
@@ -55,7 +46,7 @@ public class OrderItemParser implements Parser<OrderItem> {
             }
             expr = result.value();
             if (expr instanceof CollateExpr collateExpr) {
-                collate = collateExpr.collation();
+                collateName = collateExpr.collation();
                 expr = collateExpr.expr();
             }
         }
@@ -100,11 +91,11 @@ public class OrderItemParser implements Parser<OrderItem> {
                 continue;
             }
             if (cur.consumeIf(TokenType.COLLATE)) {
-                if (collate != null) {
+                if (collateName != null) {
                     return error("COLLATE specified more than once", cur.fullPos());
                 }
                 var t = cur.expect("Expected collation name after COLLATE", TokenType.IDENT);
-                collate = unquoteIfQuoted(t.lexeme());
+                collateName = parseQualifiedName(toIdentifier(t), cur);
                 continue;
             }
             if (cur.consumeIf(TokenType.USING)) {
@@ -131,9 +122,9 @@ public class OrderItemParser implements Parser<OrderItem> {
         }
 
         if (expr != null) {
-            return ok(OrderItem.of(expr, null, direction, nulls, collate, usingOperator));
+            return ok(OrderItem.of(expr, null, direction, nulls, collateName, usingOperator));
         }
-        return ok(OrderItem.of(null, ordinal, direction, nulls, collate, usingOperator));
+        return ok(OrderItem.of(null, ordinal, direction, nulls, collateName, usingOperator));
     }
 
     /**

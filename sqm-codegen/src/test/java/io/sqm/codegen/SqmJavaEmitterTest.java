@@ -1,5 +1,6 @@
 package io.sqm.codegen;
 
+import io.sqm.core.Identifier;
 import io.sqm.core.OrderItem;
 import io.sqm.core.Query;
 import org.junit.jupiter.api.Test;
@@ -188,5 +189,23 @@ class SqmJavaEmitterTest {
     void emitQuery_emitsTableInheritanceIncludingDescendants() {
         String source = emitter.emitQuery(select(star()).from(tbl("users").includingDescendants()).build());
         assertTrue(source.contains(".includingDescendants()"));
+    }
+
+    @Test
+    void emitQuery_escapesIdentifierValuesFromTypedModelNodes() {
+        Query query = select(
+            col("t", "a").as("a\"b"),
+            io.sqm.core.SelectItem.star(Identifier.of("q\\x"))
+        )
+            .from(tbl("public", "ta\"b").as("t"))
+            .window(io.sqm.core.WindowDef.of(Identifier.of("w\"1"), over()))
+            .build();
+
+        String source = emitter.emitQuery(query);
+
+        assertTrue(source.contains(".as(\"a\\\"b\")"));
+        assertTrue(source.contains("star(\"q\\\\x\")"));
+        assertTrue(source.contains("tbl(\"public\", \"ta\\\"b\")"));
+        assertTrue(source.contains("window(\"w\\\"1\", over())"));
     }
 }

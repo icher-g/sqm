@@ -108,6 +108,10 @@ final class SqmJavaEmitter {
             return "\"" + escapeJava(value) + "\"";
         }
 
+        private static String quote(Identifier value) {
+            return quote(value.value());
+        }
+
         private static String escapeJava(String value) {
             return value.replace("\\", "\\\\").replace("\"", "\\\"");
         }
@@ -189,7 +193,7 @@ final class SqmJavaEmitter {
         @Override
         public String visitExprSelectItem(ExprSelectItem i) {
             String expr = emitNode(i.expr());
-            return i.alias() == null ? expr : expr + ".as(" + quote(i.alias()) + ")";
+            return i.alias() == null ? expr : expr + ".as(" + quote(i.alias().value()) + ")";
         }
 
         @Override
@@ -199,7 +203,7 @@ final class SqmJavaEmitter {
 
         @Override
         public String visitQualifiedStarSelectItem(QualifiedStarSelectItem i) {
-            return "star(" + quote(i.qualifier()) + ")";
+            return "star(" + quote(i.qualifier().value()) + ")";
         }
 
         @Override
@@ -324,7 +328,7 @@ final class SqmJavaEmitter {
                 };
             }
             if (i.collate() != null) {
-                out += ".collate(" + quote(i.collate()) + ")";
+                out += ".collate(" + quote(String.join(".", i.collate().values())) + ")";
             }
             if (i.usingOperator() != null) {
                 out += ".using(" + quote(i.usingOperator()) + ")";
@@ -462,7 +466,7 @@ final class SqmJavaEmitter {
             String args = (f.args() == null || f.args().isEmpty())
                 ? ""
                 : ", " + joinInline(f.args().stream().map(this::emitNode).toList());
-            String out = "func(" + quote(f.name()) + args + ")";
+            String out = "func(" + quote(String.join(".", f.name().values())) + args + ")";
             if (Boolean.TRUE.equals(f.distinctArg())) {
                 out += ".distinct()";
             }
@@ -485,31 +489,31 @@ final class SqmJavaEmitter {
 
         @Override
         public String visitWindowDef(WindowDef w) {
-            return "window(" + quote(w.name()) + ", " + emitNode(w.spec()) + ")";
+            return "window(" + quote(w.name().value()) + ", " + emitNode(w.spec()) + ")";
         }
 
         @Override
         public String visitOverRef(OverSpec.Ref r) {
-            return "over(" + quote(r.windowName()) + ")";
+            return "over(" + quote(r.windowName().value()) + ")";
         }
 
         @Override
         public String visitOverDef(OverSpec.Def d) {
             if (d.baseWindow() != null) {
                 if (d.frame() != null && d.exclude() != null) {
-                    return "over(" + quote(d.baseWindow()) + ", " + emitOrderByOrNull(d.orderBy())
+                    return "over(" + quote(d.baseWindow().value()) + ", " + emitOrderByOrNull(d.orderBy())
                         + ", " + emitNode(d.frame()) + ", " + emitExcludeOrNull(d.exclude()) + ")";
                 }
                 if (d.frame() != null && d.orderBy() != null) {
-                    return "over(" + quote(d.baseWindow()) + ", " + emitNode(d.orderBy()) + ", " + emitNode(d.frame()) + ")";
+                    return "over(" + quote(d.baseWindow().value()) + ", " + emitNode(d.orderBy()) + ", " + emitNode(d.frame()) + ")";
                 }
                 if (d.frame() != null) {
-                    return "over(" + quote(d.baseWindow()) + ", " + emitNode(d.frame()) + ")";
+                    return "over(" + quote(d.baseWindow().value()) + ", " + emitNode(d.frame()) + ")";
                 }
                 if (d.orderBy() != null) {
-                    return "over(" + quote(d.baseWindow()) + ", " + emitNode(d.orderBy()) + ")";
+                    return "over(" + quote(d.baseWindow().value()) + ", " + emitNode(d.orderBy()) + ")";
                 }
-                return "overDef(" + quote(d.baseWindow()) + ")";
+                return "overDef(" + quote(d.baseWindow().value()) + ")";
             }
             if (d.partitionBy() != null) {
                 if (d.frame() != null && d.exclude() != null) {

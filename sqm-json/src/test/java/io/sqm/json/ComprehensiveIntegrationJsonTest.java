@@ -76,12 +76,12 @@ public class ComprehensiveIntegrationJsonTest {
 
         // Verify arithmetic in SELECT
         var totalAmountItem = (ExprSelectItem) back.items().get(2);
-        assertEquals("total_amount", totalAmountItem.alias());
+        assertEquals("total_amount", totalAmountItem.alias().value());
         assertInstanceOf(SubArithmeticExpr.class, totalAmountItem.expr());
 
         // Verify CAST in SELECT
         var orderDateItem = (ExprSelectItem) back.items().get(3);
-        assertEquals("order_date", orderDateItem.alias());
+        assertEquals("order_date", orderDateItem.alias().value());
         assertInstanceOf(CastExpr.class, orderDateItem.expr());
 
         // Verify WHERE clause predicates
@@ -181,7 +181,7 @@ public class ComprehensiveIntegrationJsonTest {
             col("balance").neg().add(col("adjustment")).as("adjusted_balance"),
             col("amount").mod(lit(100)).as("cents"),
             col("flags").unary("~").as("inverted_flags"),
-            col("total").div(col("count")).cast(TypeName.of(List.of("decimal"), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE)).as("average")
+            col("total").div(col("count")).cast(TypeName.of(QualifiedName.of(List.of("decimal")), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE)).as("average")
         )
             .from(tbl("accounts"))
             .where(
@@ -252,7 +252,7 @@ public class ComprehensiveIntegrationJsonTest {
             func("sum", arg(
                 col("price").add(col("tax")).mul(col("quantity")).sub(col("discount"))
             )).as("total_with_tax"),
-            func("avg", arg(col("price").cast(TypeName.of(List.of("decimal"), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE)))).as("avg_price"),
+            func("avg", arg(col("price").cast(TypeName.of(QualifiedName.of(List.of("decimal")), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE)))).as("avg_price"),
             func("count", starArg()).as("count")
         )
             .from(tbl("sales"))
@@ -279,7 +279,7 @@ public class ComprehensiveIntegrationJsonTest {
         // Verify function with arithmetic
         var totalRevenueItem = (ExprSelectItem) back.items().get(1);
         var funcExpr = (FunctionExpr) totalRevenueItem.expr();
-        assertEquals("sum", funcExpr.name());
+        assertEquals("sum", funcExpr.name().values().getLast());
 
         // Verify complex arithmetic in function
         var totalWithTaxItem = (ExprSelectItem) back.items().get(2);
@@ -414,7 +414,7 @@ public class ComprehensiveIntegrationJsonTest {
 
         var query = select(
             complexExpr.as("complex_result"),
-            complexExpr.cast(TypeName.of(List.of("decimal"), null, List.of(lit(20), lit(6)), 0, TimeZoneSpec.NONE)).as("complex_decimal")
+            complexExpr.cast(TypeName.of(QualifiedName.of(List.of("decimal")), null, List.of(lit(20), lit(6)), 0, TimeZoneSpec.NONE)).as("complex_decimal")
         )
             .from(tbl("calculations"))
             .where(
@@ -506,3 +506,6 @@ public class ComprehensiveIntegrationJsonTest {
         assertEquals(json, json2);
     }
 }
+
+
+

@@ -47,13 +47,13 @@ final class LockingClauseValidationRule implements SchemaValidationRule<SelectQu
             if (target == null || target.identifier() == null) {
                 continue;
             }
-            var normalized = normalize(target.identifier());
+            var normalized = normalize(target.identifier().value());
             if (sourceKeys.contains(normalized)) {
                 continue;
             }
             context.addProblem(
                 ValidationProblem.Code.LOCK_TARGET_NOT_FOUND,
-                "Lock target not found in SELECT scope: " + target.identifier(),
+                "Lock target not found in SELECT scope: " + target.identifier().value(),
                 "LockingClause",
                 "locking.of"
             );

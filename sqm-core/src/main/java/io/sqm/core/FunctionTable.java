@@ -4,6 +4,7 @@ import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * A table reference whose source is a function call.
@@ -27,42 +28,19 @@ public non-sealed interface FunctionTable extends AliasedTableRef {
      * @return function table reference
      */
     static FunctionTable of(FunctionExpr function) {
-        return of(function, List.of(), null, false);
+        return new Impl(function, List.of(), null, false);
     }
 
     /**
-     * Creates a function table reference with a table alias.
-     *
-     * @param function the function call
-     * @param alias    the table alias
-     * @return function table reference
-     */
-    static FunctionTable of(FunctionExpr function, String alias) {
-        return of(function, List.of(), alias, false);
-    }
-
-    /**
-     * Creates a function table reference with a table alias and column aliases.
+     * Creates a function table reference with explicit fields preserving quote metadata.
      *
      * @param function      the function call
      * @param columnAliases the column aliases
      * @param alias         the table alias
+     * @param ordinality    whether {@code WITH ORDINALITY} is enabled
      * @return function table reference
      */
-    static FunctionTable of(FunctionExpr function, List<String> columnAliases, String alias) {
-        return of(function, columnAliases, alias, false);
-    }
-
-    /**
-     * Creates a function table reference with explicit fields.
-     *
-     * @param function       the function call
-     * @param columnAliases  the column aliases
-     * @param alias          the table alias
-     * @param ordinality whether {@code WITH ORDINALITY} is enabled
-     * @return function table reference
-     */
-    static FunctionTable of(FunctionExpr function, List<String> columnAliases, String alias, boolean ordinality) {
+    static FunctionTable of(FunctionExpr function, List<Identifier> columnAliases, Identifier alias, boolean ordinality) {
         return new Impl(function, columnAliases, alias, ordinality);
     }
 
@@ -87,6 +65,16 @@ public non-sealed interface FunctionTable extends AliasedTableRef {
      * @return this.
      */
     default FunctionTable as(String alias) {
+        return as(alias == null ? null : Identifier.of(alias));
+    }
+
+    /**
+     * Adds an alias to a function table preserving quote metadata.
+     *
+     * @param alias an alias identifier to add.
+     * @return this.
+     */
+    default FunctionTable as(Identifier alias) {
         return new Impl(function(), columnAliases(), alias, ordinality());
     }
 
@@ -98,7 +86,7 @@ public non-sealed interface FunctionTable extends AliasedTableRef {
      * @return this.
      */
     default FunctionTable columnAliases(List<String> columnAliases) {
-        return new Impl(function(), Objects.requireNonNull(columnAliases), alias(), ordinality());
+        return withColumnAliases(Objects.requireNonNull(columnAliases).stream().map(Identifier::of).toList());
     }
 
     /**
@@ -109,7 +97,18 @@ public non-sealed interface FunctionTable extends AliasedTableRef {
      * @return this.
      */
     default FunctionTable columnAliases(String... columnAliases) {
-        return new Impl(function(), List.of(columnAliases), alias(), ordinality());
+        return withColumnAliases(Stream.of(columnAliases).map(Identifier::of).toList());
+    }
+
+    /**
+     * Adds column aliases preserving quote metadata.
+     * Note: column names without {@link FunctionTable#alias()} are ignored.
+     *
+     * @param columnAliases a list of column alias identifiers to add.
+     * @return this.
+     */
+    default FunctionTable withColumnAliases(List<Identifier> columnAliases) {
+        return new Impl(function(), Objects.requireNonNull(columnAliases), alias(), ordinality());
     }
 
     /**
@@ -138,23 +137,23 @@ public non-sealed interface FunctionTable extends AliasedTableRef {
      * Default implementation.
      *
      * @param function       the function call
-     * @param columnAliases  a list of column names to add.
-     * @param alias          an alias to add.
+     * @param columnAliases  a list of column alias identifiers to add.
+     * @param alias         an alias to add.
      * @param ordinality whether {@code WITH ORDINALITY} is enabled
      */
-    record Impl(FunctionExpr function, List<String> columnAliases, String alias, boolean ordinality) implements FunctionTable {
+    record Impl(FunctionExpr function, List<Identifier> columnAliases, Identifier alias, boolean ordinality) implements FunctionTable {
 
         /**
          * Creates a function table implementation.
          *
          * @param function      the function call
-         * @param columnAliases column aliases
-         * @param alias         table alias
+         * @param columnAliases column alias identifiers
+         * @param alias        table alias identifier
          * @param ordinality    whether {@code WITH ORDINALITY} is enabled
          */
         public Impl {
             Objects.requireNonNull(function, "function");
-            columnAliases = columnAliases == null ? null : List.copyOf(columnAliases);
+            columnAliases = columnAliases == null ? List.of() : List.copyOf(columnAliases);
         }
     }
 }

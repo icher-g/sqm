@@ -1,17 +1,22 @@
 package io.sqm.parser;
 
 import io.sqm.core.Expression;
+import io.sqm.core.Identifier;
+import io.sqm.core.QuoteStyle;
+import io.sqm.core.utils.Pair;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.ParserException;
+import io.sqm.parser.core.Token;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
-import io.sqm.core.utils.Pair;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Objects;
 
+import static io.sqm.dsl.Dsl.col;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ParserDefaultsTest {
@@ -32,11 +37,11 @@ class ParserDefaultsTest {
         var quoting = TestSupport.context(new DefaultParsersRepository()).identifierQuoting();
 
         var withAs = Cursor.of("AS alias", quoting);
-        assertEquals("alias", parser.parseAlias(withAs));
+        assertEquals("alias", parser.parseAliasIdentifier(withAs).value());
         assertTrue(withAs.isEof());
 
         var withoutAs = Cursor.of("alias", quoting);
-        assertEquals("alias", parser.parseAlias(withoutAs));
+        assertEquals("alias", parser.parseAliasIdentifier(withoutAs).value());
         assertTrue(withoutAs.isEof());
     }
 
@@ -46,8 +51,18 @@ class ParserDefaultsTest {
         var quoting = TestSupport.context(new DefaultParsersRepository()).identifierQuoting();
         var cur = Cursor.of("1", quoting);
 
-        assertNull(parser.parseAlias(cur));
+        assertNull(parser.parseAliasIdentifier(cur));
         assertTrue(cur.match(TokenType.NUMBER));
+    }
+
+    @Test
+    void parseAliasIdentifierFailsWhenAsHasNoIdentifier() {
+        var parser = new DummyParser();
+        var quoting = TestSupport.context(new DefaultParsersRepository()).identifierQuoting();
+        var cur = Cursor.of("AS 1", quoting);
+
+        var error = assertThrows(ParserException.class, () -> parser.parseAliasIdentifier(cur));
+        assertTrue(error.getMessage().contains("Expected alias after AS"));
     }
 
     @Test
@@ -56,10 +71,60 @@ class ParserDefaultsTest {
         var quoting = TestSupport.context(new DefaultParsersRepository()).identifierQuoting();
         var cur = Cursor.of("t(c1, c2)", quoting);
 
-        Pair<String, List<String>> result = parser.parseColumnAliases(cur);
+        Pair<Identifier, List<Identifier>> result = parser.parseColumnAliasIdentifiers(cur);
 
-        assertEquals("t", result.first());
-        assertEquals(List.of("c1", "c2"), result.second());
+        assertEquals("t", result.first().value());
+        assertEquals(List.of("c1", "c2"), result.second().stream().map(v -> v.value()).toList());
+        assertTrue(cur.isEof());
+    }
+
+    @Test
+    void toIdentifierPreservesQuoteStyle() {
+        var parser = new DummyParser();
+
+        assertEquals(QuoteStyle.DOUBLE_QUOTE, parser.toIdentifier(new Token(TokenType.IDENT, "X", 0, '"')).quoteStyle());
+        assertEquals(QuoteStyle.BACKTICK, parser.toIdentifier(new Token(TokenType.IDENT, "X", 0, '`')).quoteStyle());
+        assertEquals(QuoteStyle.BRACKETS, parser.toIdentifier(new Token(TokenType.IDENT, "X", 0, '[')).quoteStyle());
+    }
+
+    @Test
+    void parseQualifiedNameParsesMultipartAndOverloadWithFirstPart() {
+        var parser = new DummyParser();
+        var quoting = TestSupport.context(new DefaultParsersRepository()).identifierQuoting();
+
+        var cur = Cursor.of("\"S\".t", quoting);
+        var qn = parser.parseQualifiedName(cur);
+        assertEquals(List.of("S", "t"), qn.values());
+        assertEquals(QuoteStyle.DOUBLE_QUOTE, qn.parts().getFirst().quoteStyle());
+        assertTrue(cur.isEof());
+
+        var cur2 = Cursor.of(".t2", quoting);
+        var qn2 = parser.parseQualifiedName(Identifier.of("s"), cur2);
+        assertEquals(List.of("s", "t2"), qn2.values());
+        assertEquals(QuoteStyle.NONE, qn2.parts().get(1).quoteStyle());
+        assertTrue(cur2.isEof());
+    }
+
+    @Test
+    void parseQualifiedNameOverloadRejectsNullFirstPart() {
+        var parser = new DummyParser();
+        var quoting = TestSupport.context(new DefaultParsersRepository()).identifierQuoting();
+        var cur = Cursor.of(".t", quoting);
+
+        assertThrows(NullPointerException.class, () -> parser.parseQualifiedName(null, cur));
+    }
+
+    @Test
+    void parseColumnAliasIdentifiersParsesAliasWithoutDerivedColumns() {
+        var parser = new DummyParser();
+        var quoting = TestSupport.context(new DefaultParsersRepository()).identifierQuoting();
+        var cur = Cursor.of("\"t\"", quoting);
+
+        Pair<Identifier, List<Identifier>> result = parser.parseColumnAliasIdentifiers(cur);
+
+        assertEquals("t", result.first().value());
+        assertEquals(QuoteStyle.DOUBLE_QUOTE, result.first().quoteStyle());
+        assertNull(result.second());
         assertTrue(cur.isEof());
     }
 
@@ -113,7 +178,7 @@ class ParserDefaultsTest {
             if ("bad".equalsIgnoreCase(token.lexeme())) {
                 return ParseResult.error("bad expression", token.pos());
             }
-            return ParseResult.ok(Expression.column(token.lexeme()));
+            return ParseResult.ok(col(token.lexeme()));
         }
 
         @Override
@@ -122,3 +187,4 @@ class ParserDefaultsTest {
         }
     }
 }
+

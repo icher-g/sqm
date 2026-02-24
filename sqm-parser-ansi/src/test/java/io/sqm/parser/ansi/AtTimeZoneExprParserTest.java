@@ -180,8 +180,8 @@ class AtTimeZoneExprParserTest {
         assertNotNull(expr);
         assertInstanceOf(ColumnExpr.class, expr.timestamp());
         ColumnExpr col = (ColumnExpr) expr.timestamp();
-        assertEquals("t", col.tableAlias());
-        assertEquals("created_at", col.name());
+        assertEquals("t", col.tableAlias().value());
+        assertEquals("created_at", col.name().value());
     }
 
     /**

@@ -1,5 +1,6 @@
 package io.sqm.render.postgresql.spi;
 
+import io.sqm.core.QuoteStyle;
 import io.sqm.render.ansi.spi.AnsiIdentifierQuoter;
 import io.sqm.render.spi.IdentifierQuoter;
 
@@ -50,6 +51,25 @@ public class PostgresIdentifierQuoter implements IdentifierQuoter {
     }
 
     /**
+     * Quotes identifier using the requested quote style when supported by PostgreSQL.
+     *
+     * @param identifier the identifier to quote.
+     * @param quoteStyle the requested quote style.
+     * @return a quoted identifier.
+     */
+    @Override
+    public String quote(String identifier, QuoteStyle quoteStyle) {
+        if (!supports(quoteStyle)) {
+            throw new IllegalArgumentException("Unsupported quote style for PostgreSQL: " + quoteStyle);
+        }
+        return switch (quoteStyle == null ? QuoteStyle.NONE : quoteStyle) {
+            case NONE -> quoteIfNeeded(identifier);
+            case DOUBLE_QUOTE -> quote(identifier);
+            default -> throw new IllegalArgumentException("Unsupported quote style for PostgreSQL: " + quoteStyle);
+        };
+    }
+
+    /**
      * Puts the identifier inside the quotes supported by the dialect only if needed.
      * The possible implementation is to check whether the identifier is a keyword and only then to quote it.
      *
@@ -95,5 +115,16 @@ public class PostgresIdentifierQuoter implements IdentifierQuoter {
         if (!SIMPLE.matcher(identifier).matches()) return true;
         // ANSI folds unquoted identifiers; keep rule simple: quote reserved words.
         return RESERVED.contains(identifier.toUpperCase());
+    }
+
+    /**
+     * Indicates whether PostgreSQL supports the requested quote style.
+     *
+     * @param quoteStyle the quote style to check.
+     * @return True for SQL standard double quotes and unquoted identifiers.
+     */
+    @Override
+    public boolean supports(QuoteStyle quoteStyle) {
+        return quoteStyle == null || quoteStyle == QuoteStyle.NONE || quoteStyle == QuoteStyle.DOUBLE_QUOTE;
     }
 }

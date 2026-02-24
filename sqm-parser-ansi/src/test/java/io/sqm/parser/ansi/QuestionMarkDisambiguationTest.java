@@ -38,9 +38,9 @@ class QuestionMarkDisambiguationTest {
         assertInstanceOf(BinaryOperatorExpr.class, expr);
 
         BinaryOperatorExpr op = (BinaryOperatorExpr) expr;
-        assertEquals("?", op.operator());
+        assertEquals("?", op.operator().text());
         assertInstanceOf(ColumnExpr.class, op.left());
-        assertEquals("data", ((ColumnExpr) op.left()).name());
+        assertEquals("data", ((ColumnExpr) op.left()).name().value());
         assertInstanceOf(LiteralExpr.class, op.right());
         assertEquals("key", ((LiteralExpr) op.right()).value());
     }
@@ -53,9 +53,9 @@ class QuestionMarkDisambiguationTest {
         assertInstanceOf(BinaryOperatorExpr.class, expr);
 
         BinaryOperatorExpr op = (BinaryOperatorExpr) expr;
-        assertEquals("?", op.operator());
+        assertEquals("?", op.operator().text());
         assertInstanceOf(ColumnExpr.class, op.left());
-        assertEquals("data", ((ColumnExpr) op.left()).name());
+        assertEquals("data", ((ColumnExpr) op.left()).name().value());
         assertInstanceOf(AnonymousParamExpr.class, op.right());
     }
 
@@ -67,7 +67,7 @@ class QuestionMarkDisambiguationTest {
         assertInstanceOf(BinaryOperatorExpr.class, expr);
 
         BinaryOperatorExpr op = (BinaryOperatorExpr) expr;
-        assertEquals("?", op.operator());
+        assertEquals("?", op.operator().text());
         assertInstanceOf(AnonymousParamExpr.class, op.left());
         assertInstanceOf(LiteralExpr.class, op.right());
         assertEquals("key", ((LiteralExpr) op.right()).value());
@@ -81,7 +81,7 @@ class QuestionMarkDisambiguationTest {
         assertInstanceOf(BinaryOperatorExpr.class, expr);
 
         BinaryOperatorExpr op = (BinaryOperatorExpr) expr;
-        assertEquals("?", op.operator());
+        assertEquals("?", op.operator().text());
         assertInstanceOf(AnonymousParamExpr.class, op.left());
         assertInstanceOf(AnonymousParamExpr.class, op.right());
     }

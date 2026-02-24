@@ -420,7 +420,7 @@ public final class Lexer {
                     continue;
                 }
                 // closing quote
-                return new Token(TokenType.IDENT, sb.toString(), start);
+                return new Token(TokenType.IDENT, sb.toString(), start, '"');
             }
             sb.append(ch);
         }
@@ -441,7 +441,7 @@ public final class Lexer {
                     continue;
                 }
                 // closing ]
-                return new Token(TokenType.IDENT, sb.toString(), start);
+                return new Token(TokenType.IDENT, sb.toString(), start, '[');
             }
             sb.append(ch);
         }
@@ -462,7 +462,7 @@ public final class Lexer {
                     continue;
                 }
                 // closing `
-                return new Token(TokenType.IDENT, sb.toString(), start);
+                return new Token(TokenType.IDENT, sb.toString(), start, '`');
             }
             sb.append(ch);
         }

@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.func;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -29,11 +31,11 @@ public class TraversalOrderTest {
 
     @Test
     void visits_inDepthFirstOrder() {
-        ColumnExpr colUid = ColumnExpr.of("u", "id");
-        ColumnExpr colName = ColumnExpr.of(null, "name");
+        ColumnExpr colUid = col("u", "id");
+        ColumnExpr colName = col(null, "name");
 
         FunctionExpr.Arg colArg = FunctionExpr.Arg.expr(colUid);
-        FunctionExpr lower = FunctionExpr.of("lower", colArg);
+        FunctionExpr lower = func("lower", colArg);
 
         RowExpr row = RowExpr.of(List.of(lower, colName));
 
@@ -67,7 +69,7 @@ public class TraversalOrderTest {
 
         @Override
         public Void visitFunctionExpr(FunctionExpr f) {
-            order.add("FunctionExpr:" + f.name());
+            order.add("FunctionExpr:" + String.join(".", f.name().values()));
             return super.visitFunctionExpr(f);
         }
 
@@ -78,7 +80,7 @@ public class TraversalOrderTest {
 
         @Override
         public Void visitColumnExpr(ColumnExpr c) {
-            order.add("ColumnExpr:" + (c.tableAlias() == null ? "" : c.tableAlias() + ".") + c.name());
+            order.add("ColumnExpr:" + (c.tableAlias() == null ? "" : c.tableAlias().value() + ".") + c.name().value());
             return super.visitColumnExpr(c);
         }
     }

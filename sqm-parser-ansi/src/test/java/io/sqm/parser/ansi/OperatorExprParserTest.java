@@ -23,9 +23,9 @@ public class OperatorExprParserTest {
         assertInstanceOf(BinaryOperatorExpr.class, e);
         var op = (BinaryOperatorExpr) e;
 
-        assertEquals("->", op.operator());
+        assertEquals("->", op.operator().text());
         assertInstanceOf(ColumnExpr.class, op.left());
-        assertEquals("payload", ((ColumnExpr) op.left()).name());
+        assertEquals("payload", ((ColumnExpr) op.left()).name().value());
 
         assertInstanceOf(LiteralExpr.class, op.right());
         assertEquals("user", ((LiteralExpr) op.right()).value());
@@ -38,14 +38,14 @@ public class OperatorExprParserTest {
         // (payload -> 'a') ->> 'b'
         assertInstanceOf(BinaryOperatorExpr.class, e);
         var outer = (BinaryOperatorExpr) e;
-        assertEquals("->>", outer.operator());
+        assertEquals("->>", outer.operator().text());
 
         assertInstanceOf(BinaryOperatorExpr.class, outer.left());
         var inner = (BinaryOperatorExpr) outer.left();
-        assertEquals("->", inner.operator());
+        assertEquals("->", inner.operator().text());
 
         assertInstanceOf(ColumnExpr.class, inner.left());
-        assertEquals("payload", ((ColumnExpr) inner.left()).name());
+        assertEquals("payload", ((ColumnExpr) inner.left()).name().value());
 
         assertInstanceOf(LiteralExpr.class, inner.right());
         assertEquals("a", ((LiteralExpr) inner.right()).value());
@@ -60,15 +60,15 @@ public class OperatorExprParserTest {
 
         assertInstanceOf(BinaryOperatorExpr.class, e);
         var op = (BinaryOperatorExpr) e;
-        assertEquals("->>", op.operator());
+        assertEquals("->>", op.operator().text());
 
         // left side should be the full arithmetic expression (a + b)
         assertInstanceOf(AddArithmeticExpr.class, op.left());
         var add = (AddArithmeticExpr) op.left();
         assertInstanceOf(ColumnExpr.class, add.lhs());
-        assertEquals("a", ((ColumnExpr) add.lhs()).name());
+        assertEquals("a", ((ColumnExpr) add.lhs()).name().value());
         assertInstanceOf(ColumnExpr.class, add.rhs());
-        assertEquals("b", ((ColumnExpr) add.rhs()).name());
+        assertEquals("b", ((ColumnExpr) add.rhs()).name().value());
 
         assertInstanceOf(LiteralExpr.class, op.right());
         assertEquals("x", ((LiteralExpr) op.right()).value());
@@ -81,9 +81,9 @@ public class OperatorExprParserTest {
         assertInstanceOf(UnaryOperatorExpr.class, e);
         var op = (UnaryOperatorExpr) e;
 
-        assertEquals("~", op.operator());
+        assertEquals("~", op.operator().text());
         assertInstanceOf(ColumnExpr.class, op.expr());
-        assertEquals("mask", ((ColumnExpr) op.expr()).name());
+        assertEquals("mask", ((ColumnExpr) op.expr()).name().value());
     }
 
     private Expression parseExpr(String sql) {

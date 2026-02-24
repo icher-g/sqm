@@ -1,5 +1,7 @@
 package io.sqm.render.ansi;
 
+import io.sqm.core.Identifier;
+import io.sqm.core.CteDef;
 import io.sqm.core.WithQuery;
 import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.SqlWriter;
@@ -69,7 +71,7 @@ class WithQueryRendererTest {
                     .build()
             );
 
-        // WITH ... (cte_users, cte_orders)  <— CTEs live in WithQuery.getQueries()
+        // WITH ... (cte_users, cte_orders)  <â€” CTEs live in WithQuery.getQueries()
         // Outer body is the WithQuery itself (inherited Query fields)
         var q = with(cteUsers, cteOrders)
             .body(
@@ -165,12 +167,14 @@ class WithQueryRendererTest {
     @Test
     @DisplayName("CTE without name should lead to a clear failure")
     void cte_without_name_fails() {
-        var nameless = cte(null)
-            .body(
-                select(col("u", "id"))
-                    .from(tbl("users", "u"))
-                    .build()
-            );
+        var nameless = CteDef.of(
+            null,
+            select(col("u", "id"))
+                .from(tbl("users", "u"))
+                .build(),
+            null,
+            null
+        );
 
         var q = with(nameless)
             .body(

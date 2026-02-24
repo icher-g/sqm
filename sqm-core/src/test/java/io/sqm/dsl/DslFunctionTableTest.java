@@ -28,7 +28,7 @@ class DslFunctionTableTest {
 
         assertNotNull(table);
         assertInstanceOf(FunctionTable.class, table);
-        assertEquals("unnest", table.function().name());
+        assertEquals("unnest", table.function().name().values().getLast());
     }
 
     @Test
@@ -40,7 +40,7 @@ class DslFunctionTableTest {
 
         assertNotNull(query);
         assertInstanceOf(FunctionTable.class, query.from());
-        assertEquals("series", ((FunctionTable) query.from()).alias());
+        assertEquals("series", ((FunctionTable) query.from()).alias().value());
     }
 
     @Test
@@ -51,7 +51,7 @@ class DslFunctionTableTest {
             .columnAliases("key", "value");
 
         assertInstanceOf(FunctionTable.class, table);
-        assertEquals("t", table.alias());
+        assertEquals("t", table.alias().value());
         assertEquals(2, table.columnAliases().size());
     }
 
@@ -64,7 +64,7 @@ class DslFunctionTableTest {
             .columnAliases("num", "ord");
 
         assertTrue(table.ordinality());
-        assertEquals("s", table.alias());
+        assertEquals("s", table.alias().value());
         assertEquals(2, table.columnAliases().size());
     }
 

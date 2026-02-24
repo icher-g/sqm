@@ -62,7 +62,7 @@ class LimitInjectionTransformerTest {
 
     @Test
     void injects_into_with_query_body() {
-        Query query = with(Query.cte("u", select(lit(1)).build())).body(select(lit(1)).build());
+        Query query = with(cte("u", select(lit(1)).build())).body(select(lit(1)).build());
 
         var transformed = LimitInjectionTransformer.of(25).apply(query);
 

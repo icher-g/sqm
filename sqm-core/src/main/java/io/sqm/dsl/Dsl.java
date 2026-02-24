@@ -43,7 +43,7 @@ public final class Dsl {
      * @return a table.
      */
     public static Table tbl(String name) {
-        return Table.of(name);
+        return tbl(null, name, null, Table.Inheritance.DEFAULT);
     }
 
     /**
@@ -54,9 +54,37 @@ public final class Dsl {
      * @return a table.
      */
     public static Table tbl(String schema, String name) {
-        return Table
-            .of(name)
-            .inSchema(schema);
+        return tbl(schema, name, null, Table.Inheritance.DEFAULT);
+    }
+
+    /**
+     * Creates a table with provided schema, name and alias.
+     *
+     * @param schema optional schema identifier
+     * @param name   table name identifier (unqualified)
+     * @param alias  optional table alias identifier
+     * @return a newly created table instance
+     */
+    static Table tbl(String schema, String name, String alias) {
+        return tbl(schema, name, alias, Table.Inheritance.DEFAULT);
+    }
+
+    /**
+     * Creates a table with provided parameters.
+     *
+     * @param schema      optional schema identifier
+     * @param name        table name identifier (unqualified)
+     * @param alias       optional table alias identifier
+     * @param inheritance inheritance behavior
+     * @return a newly created table instance
+     */
+    static Table tbl(String schema, String name, String alias, Table.Inheritance inheritance) {
+        return Table.of(
+            schema == null ? null : Identifier.of(schema),
+            Identifier.of(name),
+            alias == null ? null : Identifier.of(alias),
+            inheritance
+        );
     }
 
     /**
@@ -98,7 +126,7 @@ public final class Dsl {
      * @return a column.
      */
     public static ColumnExpr col(String name) {
-        return ColumnExpr.of(name);
+        return ColumnExpr.of(null, Identifier.of(name));
     }
 
     /**
@@ -109,9 +137,10 @@ public final class Dsl {
      * @return a column.
      */
     public static ColumnExpr col(String table, String name) {
-        return ColumnExpr
-            .of(name)
-            .inTable(table);
+        return ColumnExpr.of(
+            table == null ? null : Identifier.of(table),
+            Identifier.of(name)
+        );
     }
 
     /* ========================= Select Items ====================== */
@@ -132,7 +161,7 @@ public final class Dsl {
      * @return select item.
      */
     public static QualifiedStarSelectItem star(String qualifier) {
-        return QualifiedStarSelectItem.of(qualifier);
+        return QualifiedStarSelectItem.of(Identifier.of(qualifier));
     }
 
     /* ========================= Functions ========================= */
@@ -145,7 +174,7 @@ public final class Dsl {
      * @return a function column.
      */
     public static FunctionExpr func(String name, FunctionExpr.Arg... args) {
-        return Expression.func(name, args);
+        return FunctionExpr.of(QualifiedName.of(name.split("\\.")), List.of(args), null, null, null, null);
     }
 
     /**
@@ -339,7 +368,7 @@ public final class Dsl {
      * @return a qualified {@link TypeName}
      */
     public static TypeName type(String... parts) {
-        return TypeName.of(List.of(parts), null, List.of(), 0, TimeZoneSpec.NONE);
+        return TypeName.of(QualifiedName.of(List.of(parts)), null, List.of(), 0, TimeZoneSpec.NONE);
     }
 
     /**
@@ -566,7 +595,7 @@ public final class Dsl {
      * @return a new {@link WindowDef}
      */
     public static WindowDef window(String name, OverSpec.Def spec) {
-        return WindowDef.of(name, spec);
+        return WindowDef.of(Identifier.of(name), spec);
     }
 
     /**
@@ -581,7 +610,7 @@ public final class Dsl {
      * @return a new {@link WindowDef}
      */
     public static WindowDef window(String name, PartitionBy partitionBy) {
-        return WindowDef.of(name, OverSpec.def(partitionBy, null, null, null));
+        return WindowDef.of(Identifier.of(name), OverSpec.def(partitionBy, null, null, null));
     }
 
     /**
@@ -597,7 +626,7 @@ public final class Dsl {
      * @return a new {@link WindowDef}
      */
     public static WindowDef window(String name, PartitionBy partitionBy, OrderBy orderBy) {
-        return WindowDef.of(name, OverSpec.def(partitionBy, orderBy, null, null));
+        return WindowDef.of(Identifier.of(name), OverSpec.def(partitionBy, orderBy, null, null));
     }
 
     /**
@@ -614,7 +643,7 @@ public final class Dsl {
      * @return a new {@link WindowDef}
      */
     public static WindowDef window(String name, PartitionBy partitionBy, OrderBy orderBy, FrameSpec frame) {
-        return WindowDef.of(name, OverSpec.def(partitionBy, orderBy, frame, null));
+        return WindowDef.of(Identifier.of(name), OverSpec.def(partitionBy, orderBy, frame, null));
     }
 
     /**
@@ -632,7 +661,7 @@ public final class Dsl {
      * @return a new {@link WindowDef}
      */
     public static WindowDef window(String name, PartitionBy partitionBy, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude) {
-        return WindowDef.of(name, OverSpec.def(partitionBy, orderBy, frame, exclude));
+        return WindowDef.of(Identifier.of(name), OverSpec.def(partitionBy, orderBy, frame, exclude));
     }
 
     /* ========================= OVER (attach to FunctionExpr) ========================= */
@@ -648,7 +677,7 @@ public final class Dsl {
      * @return an {@link OverSpec.Ref}
      */
     public static OverSpec.Ref over(String windowName) {
-        return OverSpec.ref(windowName);
+        return OverSpec.ref(Identifier.of(windowName));
     }
 
     /**
@@ -657,7 +686,7 @@ public final class Dsl {
      * @return an {@link OverSpec.Def}
      */
     public static OverSpec.Def over() {
-        return OverSpec.def((String) null, null, null, null);
+        return OverSpec.def((Identifier) null, null, null, null);
     }
 
     /**
@@ -749,7 +778,7 @@ public final class Dsl {
      * @return an {@link OverSpec.Def}
      */
     public static OverSpec.Def over(String baseWindow, OrderBy orderBy) {
-        return OverSpec.def(baseWindow, orderBy, null, null);
+        return OverSpec.def(Identifier.of(baseWindow), orderBy, null, null);
     }
 
     /**
@@ -763,7 +792,7 @@ public final class Dsl {
      * @return an {@link OverSpec.Def}
      */
     public static OverSpec.Def overDef(String baseWindow) {
-        return OverSpec.def(baseWindow, null, null, null);
+        return OverSpec.def(Identifier.of(baseWindow), null, null, null);
     }
 
     /**
@@ -779,7 +808,7 @@ public final class Dsl {
      * @return an {@link OverSpec.Def}
      */
     public static OverSpec.Def over(String baseWindow, OrderBy orderBy, FrameSpec frame) {
-        return OverSpec.def(baseWindow, orderBy, frame, null);
+        return OverSpec.def(Identifier.of(baseWindow), orderBy, frame, null);
     }
 
     /**
@@ -794,7 +823,7 @@ public final class Dsl {
      * @return an {@link OverSpec.Def}
      */
     public static OverSpec.Def over(String baseWindow, FrameSpec frame) {
-        return OverSpec.def(baseWindow, null, frame, null);
+        return OverSpec.def(Identifier.of(baseWindow), null, frame, null);
     }
 
     /**
@@ -811,7 +840,7 @@ public final class Dsl {
      * @return an {@link OverSpec.Def}
      */
     public static OverSpec.Def over(String baseWindow, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude) {
-        return OverSpec.def(baseWindow, orderBy, frame, exclude);
+        return OverSpec.def(Identifier.of(baseWindow), orderBy, frame, exclude);
     }
 
     /**
@@ -825,7 +854,7 @@ public final class Dsl {
      * @return an {@link OverSpec.Def}
      */
     public static OverSpec.Def over(OrderBy orderBy) {
-        return OverSpec.def((String) null, orderBy, null, null);
+        return OverSpec.def((Identifier) null, orderBy, null, null);
     }
 
     /**
@@ -836,7 +865,7 @@ public final class Dsl {
      * @return an {@link OverSpec.Def}
      */
     public static OverSpec.Def over(OrderBy orderBy, FrameSpec frame) {
-        return OverSpec.def((String) null, orderBy, frame, null);
+        return OverSpec.def((Identifier) null, orderBy, frame, null);
     }
 
     /**
@@ -848,7 +877,7 @@ public final class Dsl {
      * @return an {@link OverSpec.Def}
      */
     public static OverSpec.Def over(OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude) {
-        return OverSpec.def((String) null, orderBy, frame, exclude);
+        return OverSpec.def((Identifier) null, orderBy, frame, exclude);
     }
 
     /**
@@ -858,7 +887,7 @@ public final class Dsl {
      * @return an {@link OverSpec.Def}
      */
     public static OverSpec.Def over(FrameSpec frame) {
-        return OverSpec.def((String) null, null, frame, null);
+        return OverSpec.def((Identifier) null, null, frame, null);
     }
 
     /**
@@ -869,7 +898,7 @@ public final class Dsl {
      * @return an {@link OverSpec.Def}
      */
     public static OverSpec.Def over(FrameSpec frame, OverSpec.Exclude exclude) {
-        return OverSpec.def((String) null, null, frame, exclude);
+        return OverSpec.def((Identifier) null, null, frame, exclude);
     }
 
     /* ========================= PARTITION BY ========================= */
@@ -1237,7 +1266,7 @@ public final class Dsl {
      * @return a CTE query.
      */
     public static CteDef cte(String name) {
-        return Query.cte(name);
+        return Query.cte(Identifier.of(name));
     }
 
     /**
@@ -1256,7 +1285,7 @@ public final class Dsl {
      * @return a CTE query.
      */
     public static CteDef cte(String name, Query body) {
-        return Query.cte(name, body);
+        return Query.cte(Identifier.of(name), body);
     }
 
     /**
@@ -1275,7 +1304,34 @@ public final class Dsl {
      * @return a CTE definition.
      */
     public static CteDef cte(String name, Query body, List<String> columnAliases, CteDef.Materialization materialization) {
-        return Query.cte(name, body, columnAliases, materialization);
+        return Query.cte(
+            Identifier.of(name),
+            body,
+            columnAliases == null ? null : columnAliases.stream().map(Identifier::of).toList(),
+            materialization
+        );
+    }
+
+    /**
+     * Creates a CTE definition with the provided name and materialization hint.
+     * <p>Example:</p>
+     * <pre>
+     *     {@code
+     *     WITH cte AS MATERIALIZED (SELECT ...)
+     *     }
+     * </pre>
+     *
+     * @param name          the CTE name.
+     * @param body          a sub query wrapped by the CTE.
+     * @param columnAliases a list of column aliases.
+     * @return a CTE definition.
+     */
+    public static CteDef cte(String name, Query body, List<String> columnAliases) {
+        return Query.cte(
+            Identifier.of(name),
+            body,
+            columnAliases == null ? null : columnAliases.stream().map(Identifier::of).toList()
+        );
     }
 
     /**
@@ -1417,7 +1473,36 @@ public final class Dsl {
                     "Lock target identifier cannot be null or blank"
                 );
             }
-            targets.add(LockTarget.of(id));
+            targets.add(LockTarget.of(Identifier.of(id)));
+        }
+        return targets;
+    }
+
+    /**
+     * Creates lock targets for a FOR ... OF locking clause with the provided {@link QuoteStyle}.
+     *
+     * <p>Each identifier must refer to a table name or table alias visible
+     * in the FROM clause.</p>
+     *
+     * <p>Example:</p>
+     * <pre>
+     * lockFor(update(), ofTables("t1", "orders"), false, false)
+     * </pre>
+     *
+     * @param quoteStyle  quote style to user for table identifiers.
+     * @param identifiers table names or aliases
+     * @return list of lock targets
+     * @throws IllegalArgumentException if any identifier is null or blank
+     */
+    public static List<LockTarget> ofTables(QuoteStyle quoteStyle, String... identifiers) {
+        List<LockTarget> targets = new ArrayList<>(identifiers.length);
+        for (String id : identifiers) {
+            if (id == null || id.isBlank()) {
+                throw new IllegalArgumentException(
+                    "Lock target identifier cannot be null or blank"
+                );
+            }
+            targets.add(LockTarget.of(Identifier.of(id, quoteStyle)));
         }
         return targets;
     }

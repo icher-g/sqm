@@ -139,7 +139,7 @@ class ArraySliceExprParserTest {
         var item = assertInstanceOf(ExprSelectItem.class, query.items().getFirst());
         assertInstanceOf(ArraySliceExpr.class, item.expr());
         assertNotNull(item.alias());
-        assertEquals("slice", item.alias());
+        assertEquals("slice", item.alias().value());
     }
 
     @Test
@@ -151,8 +151,8 @@ class ArraySliceExprParserTest {
         var slice = assertInstanceOf(ArraySliceExpr.class, result.value());
 
         var base = assertInstanceOf(ColumnExpr.class, slice.base());
-        assertEquals("t", base.tableAlias());
-        assertEquals("arr", base.name());
+        assertEquals("t", base.tableAlias().value());
+        assertEquals("arr", base.name().value());
     }
 
     @Test

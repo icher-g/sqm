@@ -2,6 +2,8 @@ package io.sqm.core.transform;
 
 import io.sqm.core.ColumnExpr;
 import io.sqm.core.FunctionExpr;
+import io.sqm.core.Identifier;
+import io.sqm.core.QualifiedName;
 import io.sqm.core.RowExpr;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +19,9 @@ public class NoopPreservesIdentityTest {
 
     @Test
     void unchangedTree_returnsSameInstances() {
-        ColumnExpr colUid = ColumnExpr.of("u", "id");
-        ColumnExpr colName = ColumnExpr.of(null, "name");
-        FunctionExpr lower = FunctionExpr.of("lower", FunctionExpr.Arg.expr(colName));
+        ColumnExpr colUid = ColumnExpr.of(Identifier.of("u"), Identifier.of("id"));
+        ColumnExpr colName = ColumnExpr.of(null, Identifier.of("name"));
+        FunctionExpr lower = FunctionExpr.of(QualifiedName.of("lower"), List.of(FunctionExpr.Arg.expr(colName)), null, null, null, null);
         RowExpr row = RowExpr.of(List.of(colUid, lower));
 
         NoopTransformer t = new NoopTransformer();
@@ -37,3 +39,4 @@ public class NoopPreservesIdentityTest {
         // No overrides — rely entirely on the superclass traversal.
     }
 }
+

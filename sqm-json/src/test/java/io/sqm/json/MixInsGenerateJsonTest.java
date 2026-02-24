@@ -25,8 +25,10 @@ public class MixInsGenerateJsonTest {
         // Should contain polymorphic Arg markers
         assertTrue(json.contains("\"kind\" : \"function\""));
         assertTrue(json.contains("\"arg_expr\""));
-        assertTrue(json.contains("\"name\" : \"lower\""));
-        assertTrue(json.contains("\"alias\" : \"l\""));
+        assertTrue(json.contains("\"name\""));
+        assertTrue(json.contains("\"value\" : \"lower\""));
+        assertTrue(json.contains("\"alias\""));
+        assertTrue(json.contains("\"value\" : \"l\""));
 
         System.out.println(json);
     }
@@ -68,9 +70,12 @@ public class MixInsGenerateJsonTest {
         String json = mapper.writeValueAsString(t);
 
         assertTrue(json.contains("\"kind\""));
-        assertTrue(json.contains("\"name\" : \"users\""));
-        assertTrue(json.contains("\"schema\" : \"public\""));
-        assertTrue(json.contains("\"alias\" : \"u\""));
+        assertTrue(json.contains("\"name\""));
+        assertTrue(json.contains("\"schema\""));
+        assertTrue(json.contains("\"alias\""));
+        assertTrue(json.contains("\"value\" : \"users\""));
+        assertTrue(json.contains("\"value\" : \"public\""));
+        assertTrue(json.contains("\"value\" : \"u\""));
 
         System.out.println(json);
     }

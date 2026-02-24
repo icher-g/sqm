@@ -45,12 +45,12 @@ public class WindowParsingTest {
         // Shape: WINDOW clause exists with a single WindowDef named "w"
         List<WindowDef> windows = q.windows();
         assertEquals(1, windows.size());
-        assertEquals("w", windows.getFirst().name());
+        assertEquals("w", windows.getFirst().name().value());
 
         // The RANK() uses OVER w (reference)
         var over = overFromSelectItem(q.items().get(1));
         assertInstanceOf(OverSpec.Ref.class, over);
-        assertEquals("w", ((OverSpec.Ref) over).windowName());
+        assertEquals("w", ((OverSpec.Ref) over).windowName().value());
     }
 
     @Test
@@ -121,14 +121,14 @@ public class WindowParsingTest {
 
         // WindowDef "w" exists
         assertEquals(1, q.windows().size());
-        assertEquals("w", q.windows().getFirst().name());
+        assertEquals("w", q.windows().getFirst().name().value());
 
         var over = overFromSelectItem(q.items().get(2));
         var def = (OverSpec.Def) over;
 
         // Base name present (extending w)
         assertNotNull(def.baseWindow());
-        assertEquals("w", def.baseWindow());
+        assertEquals("w", def.baseWindow().value());
 
         // Frame = Between (UNBOUNDED PRECEDING .. CURRENT ROW)
         var between = (FrameSpec.Between) def.frame();
@@ -149,13 +149,37 @@ public class WindowParsingTest {
 
         var q = parseSelect(sql);
         assertEquals(2, q.windows().size());
-        assertEquals("w1", q.windows().get(0).name());
-        assertEquals("w2", q.windows().get(1).name());
+        assertEquals("w1", q.windows().get(0).name().value());
+        assertEquals("w2", q.windows().get(1).name().value());
 
         var over1 = overFromSelectItem(q.items().get(1));
         var over2 = overFromSelectItem(q.items().get(2));
         assertInstanceOf(OverSpec.Ref.class, over1);
         assertInstanceOf(OverSpec.Ref.class, over2);
+    }
+
+    @Test
+    void quoted_window_names_preserve_quote_metadata() {
+        var sql = """
+            SELECT RANK() OVER "W1" AS r
+            FROM t
+            WINDOW "W1" AS (ORDER BY v),
+                   "W2" AS ("W1" ROWS 1 PRECEDING)
+            """;
+
+        var q = parseSelect(sql);
+        assertEquals(2, q.windows().size());
+        assertEquals("W1", q.windows().getFirst().name().value());
+        assertEquals(QuoteStyle.DOUBLE_QUOTE, q.windows().getFirst().name().quoteStyle());
+
+        var overRef = (OverSpec.Ref) overFromSelectItem(q.items().getFirst());
+        assertEquals("W1", overRef.windowName().value());
+        assertEquals(QuoteStyle.DOUBLE_QUOTE, overRef.windowName().quoteStyle());
+
+        var second = q.windows().get(1).spec();
+        assertEquals("W1", second.baseWindow().value());
+        assertNotNull(second.baseWindow());
+        assertEquals(QuoteStyle.DOUBLE_QUOTE, second.baseWindow().quoteStyle());
     }
 
     @Test

@@ -18,15 +18,11 @@ public sealed interface OverSpec extends Node permits DialectOverSpec, OverSpec.
 
     /**
      * References a named window from the {@code WINDOW} clause.
-     * <p>Example SQL:</p>
-     * <pre>
-     * SUM(salary) OVER w
-     * </pre>
      *
-     * @param windowName the name of the referenced window
+     * @param windowName the name identifier of the referenced window
      * @return an {@link OverSpec.Ref}
      */
-    static Ref ref(String windowName) {
+    static Ref ref(Identifier windowName) {
         return new Ref.Impl(windowName);
     }
 
@@ -49,18 +45,14 @@ public sealed interface OverSpec extends Node permits DialectOverSpec, OverSpec.
 
     /**
      * Creates an {@code OVER(...)} specification extending a base window with a frame and exclusion.
-     * <p>Example SQL:</p>
-     * <pre>
-     * SUM(amount) OVER (w ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING EXCLUDE CURRENT ROW)
-     * </pre>
      *
-     * @param baseWindow the base window name
+     * @param baseWindow the base window identifier
      * @param orderBy    an optional order-by clause
      * @param frame      the frame specification
      * @param exclude    the exclusion clause
      * @return an {@link OverSpec.Def}
      */
-    static Def def(String baseWindow, OrderBy orderBy, FrameSpec frame, Exclude exclude) {
+    static Def def(Identifier baseWindow, OrderBy orderBy, FrameSpec frame, Exclude exclude) {
         return new Def.Impl(baseWindow, null, orderBy, frame, exclude);
     }
 
@@ -111,7 +103,7 @@ public sealed interface OverSpec extends Node permits DialectOverSpec, OverSpec.
          *
          * @return a base window name.
          */
-        String baseWindow();
+        Identifier baseWindow();
 
         /**
          * Gets a {@code PARTITION BY e1, e2, ...} statement.
@@ -167,13 +159,24 @@ public sealed interface OverSpec extends Node permits DialectOverSpec, OverSpec.
          *     }
          * </pre>
          *
-         * @param baseWindow the base window name. {@code OVER (w ORDER BY ... ROWS ...)}
+         * @param baseWindow  the base window name. {@code OVER (w ORDER BY ... ROWS ...)}
          * @param partitionBy a {@code PARTITION BY e1, e2, ...} statement.
-         * @param orderBy an {@code ORDER BY x [ASC|DESC] [NULLS {FIRST|LAST}], ...} statement.
-         * @param frame a frame definition. {@code ROWS/RANGE/GROUPS frame (bounds + exclusion)}
-         * @param exclude an exclusion.
+         * @param orderBy     an {@code ORDER BY x [ASC|DESC] [NULLS {FIRST|LAST}], ...} statement.
+         * @param frame       a frame definition. {@code ROWS/RANGE/GROUPS frame (bounds + exclusion)}
+         * @param exclude     an exclusion.
          */
-        record Impl(String baseWindow, PartitionBy partitionBy, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude) implements OverSpec.Def {
+        record Impl(Identifier baseWindow, PartitionBy partitionBy, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude) implements OverSpec.Def {
+            /**
+             * Creates an inline window definition.
+             *
+             * @param baseWindow  a base window identifier
+             * @param partitionBy a PARTITION BY statement
+             * @param orderBy     an ORDER BY statement
+             * @param frame       a frame definition
+             * @param exclude     an exclusion
+             */
+            public Impl {
+            }
         }
     }
 
@@ -193,7 +196,7 @@ public sealed interface OverSpec extends Node permits DialectOverSpec, OverSpec.
          *
          * @return a window name.
          */
-        String windowName();
+        Identifier windowName();
 
         /**
          * Accepts a {@link NodeVisitor} that performs an operation on this node.
@@ -223,7 +226,15 @@ public sealed interface OverSpec extends Node permits DialectOverSpec, OverSpec.
          *
          * @param windowName a window name.
          */
-        record Impl(String windowName) implements OverSpec.Ref {
+        record Impl(Identifier windowName) implements OverSpec.Ref {
+            /**
+             * Creates a named window reference.
+             *
+             * @param windowName a window name identifier
+             */
+            public Impl {
+                java.util.Objects.requireNonNull(windowName, "windowName");
+            }
         }
     }
 }

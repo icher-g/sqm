@@ -53,7 +53,7 @@ class QueryParserTest {
 
         Assertions.assertFalse(cq.recursive());
         Assertions.assertEquals(1, cq.ctes().size());
-        Assertions.assertEquals("t", cq.ctes().getFirst().name());
+        Assertions.assertEquals("t", cq.ctes().getFirst().name().value());
         Assertions.assertEquals(0, cq.ctes().getFirst().columnAliases().size()); // no explicit alias list
     }
 
@@ -71,12 +71,12 @@ class QueryParserTest {
         Assertions.assertEquals(1, cq.ctes().size());
         var cte = cq.ctes().getFirst();
 
-        Assertions.assertEquals("u_cte", cte.name());
+        Assertions.assertEquals("u_cte", cte.name().value());
         var columnAliases = cq.ctes().getFirst().columnAliases();
         Assertions.assertNotNull(columnAliases);
         Assertions.assertEquals(2, columnAliases.size());
-        Assertions.assertEquals("id", columnAliases.get(0));
-        Assertions.assertEquals("name", columnAliases.get(1));
+        Assertions.assertEquals("id", columnAliases.get(0).value());
+        Assertions.assertEquals("name", columnAliases.get(1).value());
     }
 
     @Test
@@ -90,8 +90,8 @@ class QueryParserTest {
 
         var cq = (WithQuery) q;
         Assertions.assertEquals(2, cq.ctes().size());
-        Assertions.assertEquals("a", cq.ctes().get(0).name());
-        Assertions.assertEquals("b", cq.ctes().get(1).name());
+        Assertions.assertEquals("a", cq.ctes().get(0).name().value());
+        Assertions.assertEquals("b", cq.ctes().get(1).name().value());
     }
 
     @Test
@@ -109,8 +109,8 @@ class QueryParserTest {
         var cq = (WithQuery) q;
         Assertions.assertTrue(cq.recursive());
         Assertions.assertEquals(1, cq.ctes().size());
-        Assertions.assertEquals("t", cq.ctes().getFirst().name());
-        Assertions.assertEquals(List.of("n"), cq.ctes().getFirst().columnAliases());
+        Assertions.assertEquals("t", cq.ctes().getFirst().name().value());
+        Assertions.assertEquals(List.of("n"), cq.ctes().getFirst().columnAliases().stream().map(io.sqm.core.Identifier::value).toList());
     }
 
     @Nested

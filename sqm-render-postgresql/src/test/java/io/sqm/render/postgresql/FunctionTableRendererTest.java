@@ -1,16 +1,16 @@
 package io.sqm.render.postgresql;
 
-import io.sqm.core.*;
+import io.sqm.core.CastExpr;
+import io.sqm.core.TableRef;
 import io.sqm.render.postgresql.spi.PostgresDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static io.sqm.dsl.Dsl.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Unit tests for PostgreSQL function table rendering.
@@ -31,7 +31,7 @@ class FunctionTableRendererTest {
         var func = func("generate_series", arg(lit(1)), arg(lit(10)));
         var table = TableRef.function(func);
         var sql = renderContext.render(table).sql();
-        
+
         assertEquals("generate_series(1, 10)", normalizeWhitespace(sql));
     }
 
@@ -41,7 +41,7 @@ class FunctionTableRendererTest {
         var func = func("generate_series", arg(lit(1)), arg(lit(10)));
         var table = TableRef.function(func).as("nums");
         var sql = renderContext.render(table).sql();
-        
+
         assertEquals("generate_series(1, 10) AS nums", normalizeWhitespace(sql));
     }
 
@@ -49,9 +49,9 @@ class FunctionTableRendererTest {
     @DisplayName("Render table function with column aliases")
     void rendersTableFunctionWithColumnAliases() {
         var func = func("generate_series", arg(lit(1)), arg(lit(10)));
-        var table = TableRef.function(func).as("t").columnAliases(List.of("n"));
+        var table = TableRef.function(func).as("t").columnAliases("n");
         var sql = renderContext.render(table).sql();
-        
+
         assertEquals("generate_series(1, 10) AS t(n)", normalizeWhitespace(sql));
     }
 
@@ -62,7 +62,7 @@ class FunctionTableRendererTest {
         var table = TableRef.function(func)
             .withOrdinality()
             .as("t")
-            .columnAliases(List.of("n", "ord"));
+            .columnAliases("n", "ord");
         var sql = renderContext.render(table).sql();
 
         assertEquals("generate_series(1, 3) WITH ORDINALITY AS t(n, ord)", normalizeWhitespace(sql));
@@ -75,7 +75,7 @@ class FunctionTableRendererTest {
         var func = func("unnest", arg(arr));
         var table = TableRef.function(func);
         var sql = renderContext.render(table).sql();
-        
+
         assertTrue(normalizeWhitespace(sql).contains("unnest(ARRAY[1, 2, 3])"));
     }
 
@@ -86,7 +86,7 @@ class FunctionTableRendererTest {
         var func = func("json_array_elements", arg(cast));
         var table = TableRef.function(func);
         var sql = renderContext.render(table).sql();
-        
+
         assertTrue(normalizeWhitespace(sql).contains("json_array_elements"));
     }
 
@@ -95,11 +95,11 @@ class FunctionTableRendererTest {
     void rendersTableFunctionInFromClause() {
         var func = func("generate_series", arg(lit(1)), arg(lit(10)));
         var query = select(col("*"))
-            .from(TableRef.function(func).as("s").columnAliases(List.of("n")))
+            .from(TableRef.function(func).as("s").columnAliases("n"))
             .build();
-        
+
         var sql = renderContext.render(query).sql();
-        
+
         assertTrue(normalizeWhitespace(sql).contains("FROM generate_series(1, 10) AS s(n)"));
     }
 
@@ -109,12 +109,12 @@ class FunctionTableRendererTest {
         var func = func("generate_series", arg(lit(1)), arg(lit(10)));
         var query = select(col("*"))
             .from(tbl("users").as("u"))
-            .join(inner(TableRef.function(func).as("s").columnAliases(List.of("n")))
+            .join(inner(TableRef.function(func).as("s").columnAliases("n"))
                 .on(col("u", "id").eq(col("s", "n"))))
             .build();
-        
+
         var sql = renderContext.render(query).sql();
-        
+
         assertTrue(normalizeWhitespace(sql).contains("JOIN generate_series(1, 10) AS s(n)"));
     }
 
@@ -123,14 +123,14 @@ class FunctionTableRendererTest {
     void rendersMultipleTableFunctions() {
         var func1 = func("generate_series", arg(lit(1)), arg(lit(5)));
         var func2 = func("generate_series", arg(lit(1)), arg(lit(3)));
-        
+
         var query = select(col("*"))
             .from(TableRef.function(func1).as("s1"))
             .join(cross(TableRef.function(func2).as("s2")))
             .build();
-        
+
         var sql = renderContext.render(query).sql();
-        
+
         assertTrue(normalizeWhitespace(sql).contains("generate_series(1, 5) AS s1"));
         assertTrue(normalizeWhitespace(sql).contains("generate_series(1, 3) AS s2"));
     }
@@ -141,11 +141,11 @@ class FunctionTableRendererTest {
         var func = func("unnest", arg(col("u", "tags")));
         var query = select(star())
             .from(tbl("users").as("u"))
-            .join(cross(TableRef.function(func).as("t").columnAliases(List.of("tag"))))
+            .join(cross(TableRef.function(func).as("t").columnAliases("tag")))
             .build();
-        
+
         var sql = renderContext.render(query).sql();
-        
+
         assertTrue(normalizeWhitespace(sql).contains("unnest(u.tags) AS t(tag)"));
     }
 
@@ -153,9 +153,9 @@ class FunctionTableRendererTest {
     @DisplayName("Render table function with multiple column aliases")
     void rendersTableFunctionWithMultipleColumnAliases() {
         var func = func("json_to_recordset", arg(col("data")));
-        var table = TableRef.function(func).as("t").columnAliases(List.of("id", "name", "email"));
+        var table = TableRef.function(func).as("t").columnAliases("id", "name", "email");
         var sql = renderContext.render(table).sql();
-        
+
         assertTrue(normalizeWhitespace(sql).contains("AS t(id, name, email)"));
     }
 

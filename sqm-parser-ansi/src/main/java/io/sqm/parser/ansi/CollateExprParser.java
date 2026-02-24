@@ -2,6 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.CollateExpr;
 import io.sqm.core.Expression;
+import io.sqm.core.QualifiedName;
 import io.sqm.parser.AtomicExprParser;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -99,18 +100,10 @@ public class CollateExprParser implements MatchableParser<Expression>, InfixPars
         return ok(CollateExpr.of(lhs, collation));
     }
 
-    private String parseCollationName(Cursor cur) {
+    private QualifiedName parseCollationName(Cursor cur) {
         if (!cur.match(TokenType.IDENT)) {
             return null;
         }
-        StringBuilder sb = new StringBuilder(cur.advance().lexeme());
-        while (cur.match(TokenType.DOT)) {
-            if (!cur.match(TokenType.IDENT, 1)) {
-                break;
-            }
-            cur.advance();
-            sb.append('.').append(cur.advance().lexeme());
-        }
-        return sb.toString();
+        return parseQualifiedName(cur);
     }
 }

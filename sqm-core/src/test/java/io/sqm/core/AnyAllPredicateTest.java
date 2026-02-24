@@ -3,12 +3,13 @@ package io.sqm.core;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class AnyAllPredicateTest {
 
     @Test
     void of() {
-        var lhs = Expression.column("age");
+        var lhs = col("age");
         var subquery = Query.select(Expression.literal(1)).build();
         var predicate = AnyAllPredicate.of(lhs, ComparisonOperator.EQ, subquery, Quantifier.ANY);
         
@@ -23,9 +24,9 @@ class AnyAllPredicateTest {
     @Test
     void anyQuantifier() {
         var predicate = AnyAllPredicate.of(
-            Expression.column("age"),
+            col("age"),
             ComparisonOperator.LT,
-            Query.select(Expression.column("age")).from(TableRef.table("users")).build(),
+            Query.select(col("age")).from(TableRef.table(Identifier.of("users"))).build(),
             Quantifier.ANY
         );
         
@@ -35,9 +36,9 @@ class AnyAllPredicateTest {
     @Test
     void allQuantifier() {
         var predicate = AnyAllPredicate.of(
-            Expression.column("age"),
+            col("age"),
             ComparisonOperator.GT,
-            Query.select(Expression.column("age")).from(TableRef.table("users")).build(),
+            Query.select(col("age")).from(TableRef.table(Identifier.of("users"))).build(),
             Quantifier.ALL
         );
         
@@ -54,7 +55,7 @@ class AnyAllPredicateTest {
         
         for (var op : operators) {
             var predicate = AnyAllPredicate.of(
-                Expression.column("x"),
+                col("x"),
                 op,
                 Query.select(Expression.literal(1)).build(),
                 Quantifier.ANY
@@ -66,7 +67,7 @@ class AnyAllPredicateTest {
     @Test
     void accept() {
         var predicate = AnyAllPredicate.of(
-            Expression.column("age"),
+            col("age"),
             ComparisonOperator.EQ,
             Query.select(Expression.literal(1)).build(),
             Quantifier.ANY
@@ -79,7 +80,7 @@ class AnyAllPredicateTest {
 
     @Test
     void lhs() {
-        var lhs = Expression.column("price");
+        var lhs = col("price");
         var predicate = AnyAllPredicate.of(
             lhs,
             ComparisonOperator.EQ,
@@ -92,9 +93,9 @@ class AnyAllPredicateTest {
 
     @Test
     void subquery() {
-        var subquery = Query.select(Expression.column("id")).from(TableRef.table("orders")).build();
+        var subquery = Query.select(col("id")).from(TableRef.table(Identifier.of("orders"))).build();
         var predicate = AnyAllPredicate.of(
-            Expression.column("orderId"),
+            col("orderId"),
             ComparisonOperator.EQ,
             subquery,
             Quantifier.ANY
@@ -115,3 +116,5 @@ class AnyAllPredicateTest {
         }
     }
 }
+
+

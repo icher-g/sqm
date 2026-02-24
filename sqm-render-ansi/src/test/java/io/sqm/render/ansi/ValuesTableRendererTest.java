@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
+import io.sqm.core.Identifier;
 import io.sqm.core.Node;
+import io.sqm.core.QuoteStyle;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;
@@ -77,5 +79,21 @@ class ValuesTableRendererTest {
         String result = render(query);
         assertTrue(result.contains("(VALUES"));
         assertTrue(result.contains(")"));
+    }
+
+    @Test
+    @DisplayName("VALUES alias and column aliases preserve supported quotes and fallback unsupported ones")
+    void values_table_alias_identifier_quote_preservation_and_fallback() {
+        var vt = tbl(rows(row(lit(1), lit("Alice"))))
+            .as(Identifier.of("v", QuoteStyle.BACKTICK))
+            .columnAliases(java.util.List.of(
+                Identifier.of("id", QuoteStyle.DOUBLE_QUOTE),
+                Identifier.of("name", QuoteStyle.BRACKETS)
+            ));
+        var query = select(lit(1)).from(vt).build();
+        String result = render(query);
+
+        assertTrue(result.contains("AS \"v\""), "Unsupported backtick alias should fallback to ANSI double quotes");
+        assertTrue(result.contains("(\"id\", \"name\")"), "Column aliases should preserve/fallback to ANSI quotes");
     }
 }

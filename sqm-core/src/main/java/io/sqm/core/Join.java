@@ -59,27 +59,6 @@ public sealed interface Join extends FromItem permits CrossJoin, DialectJoin, Na
     }
 
     /**
-     * Creates cross join with the provided table name.
-     *
-     * @param table the name of the table. This is not qualified name.
-     * @return A newly created instance of the table.
-     */
-    static CrossJoin cross(String table) {
-        return CrossJoin.of(table);
-    }
-
-    /**
-     * Creates cross join with the provided table schema and name.
-     *
-     * @param schema a table schema.
-     * @param table  the name of the table. This is not qualified name.
-     * @return A newly created instance of the table.
-     */
-    static CrossJoin cross(String schema, String table) {
-        return CrossJoin.of(schema, table);
-    }
-
-    /**
      * Creates a natural join with the provided table.
      *
      * @param right a table to join.
@@ -87,27 +66,6 @@ public sealed interface Join extends FromItem permits CrossJoin, DialectJoin, Na
      */
     static NaturalJoin natural(TableRef right) {
         return NaturalJoin.of(right);
-    }
-
-    /**
-     * Creates cross join with the provided table name.
-     *
-     * @param table the name of the table. This is not qualified name.
-     * @return A newly created instance of the table.
-     */
-    static NaturalJoin natural(String table) {
-        return NaturalJoin.of(TableRef.table(table));
-    }
-
-    /**
-     * Creates cross join with the provided table schema and name.
-     *
-     * @param schema a table schema.
-     * @param table  the name of the table. This is not qualified name.
-     * @return A newly created instance of the table.
-     */
-    static NaturalJoin natural(String schema, String table) {
-        return NaturalJoin.of(TableRef.table(schema, table));
     }
 
     /**

@@ -52,7 +52,7 @@ public final class Collect_ColumnCollector {
 
         @Override
         public Void visitColumnExpr(ColumnExpr c) {
-            columns.add(c.tableAlias() == null ? c.name() : c.tableAlias() + "." + c.name());
+            columns.add(c.tableAlias() == null ? c.name().value() : c.tableAlias().value() + "." + c.name().value());
             return super.visitColumnExpr(c);
         }
     }

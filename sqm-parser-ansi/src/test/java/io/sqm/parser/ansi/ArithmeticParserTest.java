@@ -70,10 +70,10 @@ class ArithmeticParserTest {
         AddArithmeticExpr add = (AddArithmeticExpr) expr;
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, add.lhs());
-        assertEquals("a", ((io.sqm.core.ColumnExpr) add.lhs()).name());
+        assertEquals("a", ((io.sqm.core.ColumnExpr) add.lhs()).name().value());
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, add.rhs());
-        assertEquals("b", ((io.sqm.core.ColumnExpr) add.rhs()).name());
+        assertEquals("b", ((io.sqm.core.ColumnExpr) add.rhs()).name().value());
     }
 
     @Test
@@ -84,10 +84,10 @@ class ArithmeticParserTest {
         MulArithmeticExpr mul = (MulArithmeticExpr) expr;
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, mul.lhs());
-        assertEquals("a", ((io.sqm.core.ColumnExpr) mul.lhs()).name());
+        assertEquals("a", ((io.sqm.core.ColumnExpr) mul.lhs()).name().value());
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, mul.rhs());
-        assertEquals("b", ((io.sqm.core.ColumnExpr) mul.rhs()).name());
+        assertEquals("b", ((io.sqm.core.ColumnExpr) mul.rhs()).name().value());
     }
 
     // -------------------------------------------------------------------------
@@ -104,13 +104,13 @@ class ArithmeticParserTest {
         AddArithmeticExpr add = (AddArithmeticExpr) expr;
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, add.lhs());
-        assertEquals("a", ((io.sqm.core.ColumnExpr) add.lhs()).name());
+        assertEquals("a", ((io.sqm.core.ColumnExpr) add.lhs()).name().value());
 
         assertInstanceOf(MulArithmeticExpr.class, add.rhs());
         MulArithmeticExpr mul = (MulArithmeticExpr) add.rhs();
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, mul.lhs());
-        assertEquals("b", ((io.sqm.core.ColumnExpr) mul.lhs()).name());
+        assertEquals("b", ((io.sqm.core.ColumnExpr) mul.lhs()).name().value());
 
         assertInstanceOf(LiteralExpr.class, mul.rhs());
         assertEquals(2L, ((LiteralExpr) mul.rhs()).value());
@@ -129,10 +129,10 @@ class ArithmeticParserTest {
         AddArithmeticExpr add = (AddArithmeticExpr) mul.lhs();
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, add.lhs());
-        assertEquals("a", ((io.sqm.core.ColumnExpr) add.lhs()).name());
+        assertEquals("a", ((io.sqm.core.ColumnExpr) add.lhs()).name().value());
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, add.rhs());
-        assertEquals("b", ((io.sqm.core.ColumnExpr) add.rhs()).name());
+        assertEquals("b", ((io.sqm.core.ColumnExpr) add.rhs()).name().value());
 
         assertInstanceOf(LiteralExpr.class, mul.rhs());
         assertEquals(2L, ((LiteralExpr) mul.rhs()).value());
@@ -151,13 +151,13 @@ class ArithmeticParserTest {
         SubArithmeticExpr inner = (SubArithmeticExpr) outer.lhs();
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, inner.lhs());
-        assertEquals("a", ((io.sqm.core.ColumnExpr) inner.lhs()).name());
+        assertEquals("a", ((io.sqm.core.ColumnExpr) inner.lhs()).name().value());
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, inner.rhs());
-        assertEquals("b", ((io.sqm.core.ColumnExpr) inner.rhs()).name());
+        assertEquals("b", ((io.sqm.core.ColumnExpr) inner.rhs()).name().value());
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, outer.rhs());
-        assertEquals("c", ((io.sqm.core.ColumnExpr) outer.rhs()).name());
+        assertEquals("c", ((io.sqm.core.ColumnExpr) outer.rhs()).name().value());
     }
 
     @Test
@@ -173,13 +173,13 @@ class ArithmeticParserTest {
         DivArithmeticExpr div = (DivArithmeticExpr) mod.lhs();
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, div.lhs());
-        assertEquals("a", ((io.sqm.core.ColumnExpr) div.lhs()).name());
+        assertEquals("a", ((io.sqm.core.ColumnExpr) div.lhs()).name().value());
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, div.rhs());
-        assertEquals("b", ((io.sqm.core.ColumnExpr) div.rhs()).name());
+        assertEquals("b", ((io.sqm.core.ColumnExpr) div.rhs()).name().value());
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, mod.rhs());
-        assertEquals("c", ((io.sqm.core.ColumnExpr) mod.rhs()).name());
+        assertEquals("c", ((io.sqm.core.ColumnExpr) mod.rhs()).name().value());
     }
 
     // -------------------------------------------------------------------------
@@ -195,7 +195,7 @@ class ArithmeticParserTest {
         NegativeArithmeticExpr neg = (NegativeArithmeticExpr) expr;
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, neg.expr());
-        assertEquals("a", ((io.sqm.core.ColumnExpr) neg.expr()).name());
+        assertEquals("a", ((io.sqm.core.ColumnExpr) neg.expr()).name().value());
     }
 
     @Test
@@ -210,10 +210,10 @@ class ArithmeticParserTest {
         NegativeArithmeticExpr neg = (NegativeArithmeticExpr) add.lhs();
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, neg.expr());
-        assertEquals("a", ((io.sqm.core.ColumnExpr) neg.expr()).name());
+        assertEquals("a", ((io.sqm.core.ColumnExpr) neg.expr()).name().value());
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, add.rhs());
-        assertEquals("b", ((io.sqm.core.ColumnExpr) add.rhs()).name());
+        assertEquals("b", ((io.sqm.core.ColumnExpr) add.rhs()).name().value());
     }
 
     // -------------------------------------------------------------------------
@@ -240,7 +240,7 @@ class ArithmeticParserTest {
         AddArithmeticExpr leftAdd = (AddArithmeticExpr) cmp.lhs();
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, leftAdd.lhs());
-        assertEquals("a", ((io.sqm.core.ColumnExpr) leftAdd.lhs()).name());
+        assertEquals("a", ((io.sqm.core.ColumnExpr) leftAdd.lhs()).name().value());
 
         assertInstanceOf(LiteralExpr.class, leftAdd.rhs());
         assertEquals(1L, ((LiteralExpr) leftAdd.rhs()).value());
@@ -249,7 +249,7 @@ class ArithmeticParserTest {
         SubArithmeticExpr rightSub = (SubArithmeticExpr) cmp.rhs();
 
         assertInstanceOf(io.sqm.core.ColumnExpr.class, rightSub.lhs());
-        assertEquals("b", ((io.sqm.core.ColumnExpr) rightSub.lhs()).name());
+        assertEquals("b", ((io.sqm.core.ColumnExpr) rightSub.lhs()).name().value());
 
         assertInstanceOf(LiteralExpr.class, rightSub.rhs());
         assertEquals(2L, ((LiteralExpr) rightSub.rhs()).value());

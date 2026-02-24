@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.Expression;
+import io.sqm.core.OperatorName;
 import io.sqm.core.UnaryOperatorExpr;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -26,7 +27,7 @@ public class UnaryOperatorExprParser implements Parser<UnaryOperatorExpr> {
         if (result.isError()) {
             return error(result);
         }
-        return ok(UnaryOperatorExpr.of(t.lexeme(), result.value()));
+        return ok(UnaryOperatorExpr.of(OperatorName.of(t.lexeme()), result.value()));
     }
 
     /**

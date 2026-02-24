@@ -2,6 +2,7 @@ package io.sqm.dsl;
 
 import io.sqm.core.LockMode;
 import io.sqm.core.LockTarget;
+import io.sqm.core.Identifier;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -42,8 +43,8 @@ class DslLockingTest {
         
         assertNotNull(targets);
         assertEquals(2, targets.size());
-        assertEquals("users", targets.get(0).identifier());
-        assertEquals("orders", targets.get(1).identifier());
+        assertEquals("users", targets.get(0).identifier().value());
+        assertEquals("orders", targets.get(1).identifier().value());
     }
 
     @Test
@@ -52,7 +53,7 @@ class DslLockingTest {
         var targets = ofTables("users");
         
         assertEquals(1, targets.size());
-        assertEquals("users", targets.getFirst().identifier());
+        assertEquals("users", targets.getFirst().identifier().value());
     }
 
     @Test
@@ -87,10 +88,10 @@ class DslLockingTest {
         var targets = ofTables("t1", "t2", "t3", "t4");
         
         assertEquals(4, targets.size());
-        assertEquals("t1", targets.get(0).identifier());
-        assertEquals("t2", targets.get(1).identifier());
-        assertEquals("t3", targets.get(2).identifier());
-        assertEquals("t4", targets.get(3).identifier());
+        assertEquals("t1", targets.get(0).identifier().value());
+        assertEquals("t2", targets.get(1).identifier().value());
+        assertEquals("t3", targets.get(2).identifier().value());
+        assertEquals("t4", targets.get(3).identifier().value());
     }
 
     @Test
@@ -99,7 +100,7 @@ class DslLockingTest {
         var targets = ofTables("users", "orders");
         
         // Should be able to add more targets
-        targets.add(LockTarget.of("products"));
+        targets.add(LockTarget.of(Identifier.of("products")));
         assertEquals(3, targets.size());
     }
 

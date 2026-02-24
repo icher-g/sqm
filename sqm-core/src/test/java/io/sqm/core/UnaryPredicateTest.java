@@ -3,6 +3,7 @@ package io.sqm.core;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class UnaryPredicateTest {
 
@@ -18,7 +19,7 @@ class UnaryPredicateTest {
 
     @Test
     void expr() {
-        var expr = Expression.column("active");
+        var expr = col("active");
         var predicate = UnaryPredicate.of(expr);
         assertEquals(expr, predicate.expr());
     }
@@ -39,7 +40,7 @@ class UnaryPredicateTest {
 
     @Test
     void withBooleanColumn() {
-        var predicate = UnaryPredicate.of(Expression.column("isActive"));
+        var predicate = UnaryPredicate.of(col("isActive"));
         assertInstanceOf(ColumnExpr.class, predicate.expr());
     }
 
@@ -61,3 +62,4 @@ class UnaryPredicateTest {
         }
     }
 }
+

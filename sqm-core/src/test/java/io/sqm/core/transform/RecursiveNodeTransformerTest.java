@@ -44,12 +44,12 @@ class RecursiveNodeTransformerTest {
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col("t", c.name());
+                return col("t", c.name().value());
             }
         };
         var c = (ColumnExpr) column.accept(columnTransformer);
-        assertEquals("t", c.tableAlias());
-        assertEquals("c", c.name());
+        assertEquals("t", c.tableAlias().value());
+        assertEquals("c", c.name().value());
     }
 
     @Test
@@ -233,7 +233,7 @@ class RecursiveNodeTransformerTest {
             }
         };
         var join2 = (OnJoin) join.accept(tableTransformer);
-        assertEquals("t2", join2.right().matchTableRef().table(t -> t.name()).orElse(null));
+        assertEquals("t2", join2.right().matchTableRef().table(t -> t.name().value()).orElse(null));
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
@@ -243,7 +243,7 @@ class RecursiveNodeTransformerTest {
         var join3 = (OnJoin) join.accept(columnTransformer);
         assertEquals("c2", join3.on().matchPredicate()
             .comparison(cmp -> cmp.lhs().matchExpression()
-                .column(c -> c.name())
+                .column(c -> c.name().value())
                 .orElse(null)
             )
             .orElse(null)
@@ -262,7 +262,7 @@ class RecursiveNodeTransformerTest {
             }
         };
         var join2 = (CrossJoin) join.accept(tableTransformer);
-        assertEquals("t2", join2.right().matchTableRef().table(t -> t.name()).orElse(null));
+        assertEquals("t2", join2.right().matchTableRef().table(t -> t.name().value()).orElse(null));
         var join3 = (CrossJoin) join.accept(new NothingTransformer());
         assertEquals(join, join3);
     }
@@ -277,7 +277,7 @@ class RecursiveNodeTransformerTest {
             }
         };
         var join2 = (NaturalJoin) join.accept(tableTransformer);
-        assertEquals("t2", join2.right().matchTableRef().table(t -> t.name()).orElse(null));
+        assertEquals("t2", join2.right().matchTableRef().table(t -> t.name().value()).orElse(null));
         var join3 = (NaturalJoin) join.accept(new NothingTransformer());
         assertEquals(join, join3);
     }
@@ -292,7 +292,7 @@ class RecursiveNodeTransformerTest {
             }
         };
         var join2 = (UsingJoin) join.accept(tableTransformer);
-        assertEquals("t2", join2.right().matchTableRef().table(t -> t.name()).orElse(null));
+        assertEquals("t2", join2.right().matchTableRef().table(t -> t.name().value()).orElse(null));
         var join3 = (UsingJoin) join.accept(new NothingTransformer());
         assertEquals(join, join3);
     }
@@ -303,13 +303,13 @@ class RecursiveNodeTransformerTest {
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col(c.name() + 1);
+                return col(c.name().value() + 1);
             }
         };
         var gb2 = (GroupBy) gb.accept(columnTransformer);
         assertEquals(List.of("c11", "c21"), gb2.items().stream()
             .map(i -> ((GroupItem.SimpleGroupItem) i).expr().matchExpression()
-                .column(c -> c.name())
+                .column(c -> c.name().value())
                 .orElse(null)
             )
             .toList()
@@ -328,14 +328,14 @@ class RecursiveNodeTransformerTest {
         var transformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col(c.name() + "x");
+                return col(c.name().value() + "x");
             }
         };
 
         var transformed = (GroupItem.SimpleGroupItem) item.accept(transformer);
         assertNotSame(item, transformed);
         assertEquals("c1x", transformed.expr().matchExpression()
-            .column(c -> c.name())
+            .column(c -> c.name().value())
             .orElse(null));
 
         var unchanged = (GroupItem.SimpleGroupItem) item.accept(new NothingTransformer());
@@ -352,7 +352,7 @@ class RecursiveNodeTransformerTest {
         var transformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col(c.name() + "x");
+                return col(c.name().value() + "x");
             }
         };
 
@@ -361,7 +361,7 @@ class RecursiveNodeTransformerTest {
         var sets = (GroupItem.GroupingSets) transformed;
         var first = (GroupItem.GroupingSet) sets.sets().getFirst();
         assertEquals("c1x", ((GroupItem.SimpleGroupItem) first.items().getFirst()).expr().matchExpression()
-            .column(c -> c.name())
+            .column(c -> c.name().value())
             .orElse(null));
     }
 
@@ -371,13 +371,13 @@ class RecursiveNodeTransformerTest {
         var transformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col(c.name() + "x");
+                return col(c.name().value() + "x");
             }
         };
 
         var transformed = (GroupItem.Rollup) rollup.accept(transformer);
         assertEquals("c1x", ((GroupItem.SimpleGroupItem) transformed.items().getFirst()).expr().matchExpression()
-            .column(c -> c.name())
+            .column(c -> c.name().value())
             .orElse(null));
     }
 
@@ -406,11 +406,11 @@ class RecursiveNodeTransformerTest {
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col(c.name() + 1);
+                return col(c.name().value() + 1);
             }
         };
         var any2 = (AnyAllPredicate) any.accept(columnTransformer);
-        assertEquals("c11", any2.lhs().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("c11", any2.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
         var literalTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitLiteralExpr(LiteralExpr l) {
@@ -439,11 +439,11 @@ class RecursiveNodeTransformerTest {
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col(c.name() + 1);
+                return col(c.name().value() + 1);
             }
         };
         var p1 = (BetweenPredicate) p.accept(columnTransformer);
-        assertEquals("c11", p1.value().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("c11", p1.value().matchExpression().column(c -> c.name().value()).orElse(null));
         // change lower value
         var literalTransformer1 = new RecursiveNodeTransformer() {
             @Override
@@ -469,7 +469,7 @@ class RecursiveNodeTransformerTest {
                 return l;
             }
         };
-        assertEquals("c11", p1.value().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("c11", p1.value().matchExpression().column(c -> c.name().value()).orElse(null));
         var p3 = (BetweenPredicate) p.accept(literalTransformer2);
         assertEquals(1, p3.lower().matchExpression().literal(l -> l.value()).orElse(null));
         assertEquals(15, p3.upper().matchExpression().literal(l -> l.value()).orElse(null));
@@ -484,11 +484,11 @@ class RecursiveNodeTransformerTest {
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col(c.name() + 1);
+                return col(c.name().value() + 1);
             }
         };
         var p1 = (ComparisonPredicate) p.accept(columnTransformer);
-        assertEquals("c11", p1.lhs().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("c11", p1.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
         var literalTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitLiteralExpr(LiteralExpr l) {
@@ -535,11 +535,11 @@ class RecursiveNodeTransformerTest {
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col(c.name() + 1);
+                return col(c.name().value() + 1);
             }
         };
         var p1 = (IsNullPredicate) p.accept(columnTransformer);
-        assertEquals("c11", p1.expr().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("c11", p1.expr().matchExpression().column(c -> c.name().value()).orElse(null));
         var p2 = (IsNullPredicate) p.accept(new NothingTransformer());
         assertEquals(p, p2);
     }
@@ -550,11 +550,11 @@ class RecursiveNodeTransformerTest {
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col(c.name() + 1);
+                return col(c.name().value() + 1);
             }
         };
         var p1 = (LikePredicate) p.accept(columnTransformer);
-        assertEquals("c11", p1.value().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("c11", p1.value().matchExpression().column(c -> c.name().value()).orElse(null));
         var patternTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitLiteralExpr(LiteralExpr l) {
@@ -587,13 +587,13 @@ class RecursiveNodeTransformerTest {
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col(c.name() + 1);
+                return col(c.name().value() + 1);
             }
         };
         var p1 = (NotPredicate) p.accept(columnTransformer);
         assertEquals("c11", p1.inner().matchPredicate()
             .comparison(cmp -> cmp.lhs().matchExpression()
-                .column(c -> c.name())
+                .column(c -> c.name().value())
                 .orElse(null)
             )
             .orElse(null)
@@ -720,7 +720,7 @@ class RecursiveNodeTransformerTest {
             }
         };
         var query1 = (SelectQuery) query.accept(tableTransformer);
-        assertEquals("t2", query1.from().matchTableRef().table(t -> t.name()).orElse(null));
+        assertEquals("t2", query1.from().matchTableRef().table(t -> t.name().value()).orElse(null));
         var limitTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitLimitOffset(LimitOffset l) {
@@ -741,11 +741,11 @@ class RecursiveNodeTransformerTest {
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col(c.name() + 1);
+                return col(c.name().value() + 1);
             }
         };
         var cq1 = (CompositeQuery) cq.accept(columnTransformer);
-        assertEquals("c11", cq1.orderBy().items().getFirst().expr().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("c11", cq1.orderBy().items().getFirst().expr().matchExpression().column(c -> c.name().value()).orElse(null));
         var literalTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitLiteralExpr(LiteralExpr l) {
@@ -784,14 +784,14 @@ class RecursiveNodeTransformerTest {
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col(c.name() + 1);
+                return col(c.name().value() + 1);
             }
         };
         var with1 = (WithQuery) with.accept(columnTransformer);
         assertEquals("c11", with1.ctes().getFirst().body().matchQuery()
             .select(s -> s.items().getFirst().matchSelectItem()
                 .expr(e -> e.expr().matchExpression()
-                    .column(c -> c.name())
+                    .column(c -> c.name().value())
                     .orElse(null)
                 )
                 .orElse(null)
@@ -801,7 +801,7 @@ class RecursiveNodeTransformerTest {
         assertEquals("c21", with1.body().matchQuery()
             .select(s -> s.items().getFirst().matchSelectItem()
                 .expr(e -> e.expr().matchExpression()
-                    .column(c -> c.name())
+                    .column(c -> c.name().value())
                     .orElse(null)
                 )
                 .orElse(null)
@@ -818,13 +818,13 @@ class RecursiveNodeTransformerTest {
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col(c.name() + 1);
+                return col(c.name().value() + 1);
             }
         };
         var whenThen1 = (WhenThen) whenThen.accept(columnTransformer);
         assertEquals("c11", whenThen1.when().matchPredicate()
             .comparison(cmp -> cmp.lhs().matchExpression()
-                .column(c -> c.name())
+                .column(c -> c.name().value())
                 .orElse(null)
             )
             .orElse(null)
@@ -855,11 +855,11 @@ class RecursiveNodeTransformerTest {
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col(c.name() + 1);
+                return col(c.name().value() + 1);
             }
         };
         var window1 = (WindowDef) window.accept(columnTransformer);
-        assertEquals("c11", window1.spec().partitionBy().items().getFirst().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("c11", window1.spec().partitionBy().items().getFirst().matchExpression().column(c -> c.name().value()).orElse(null));
         var window2 = (WindowDef) window.accept(new NothingTransformer());
         assertEquals(window, window2);
     }
@@ -874,13 +874,13 @@ class RecursiveNodeTransformerTest {
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
-                return col(c.name() + 1);
+                return col(c.name().value() + 1);
             }
         };
         var over1 = (OverSpec) over.accept(columnTransformer);
         assertEquals("p11", over1.matchOverSpec()
             .def(d -> d.partitionBy().items().getFirst().matchExpression()
-                .column(c -> c.name())
+                .column(c -> c.name().value())
                 .orElse(null)
             )
             .orElse(null)
@@ -1288,3 +1288,5 @@ class RecursiveNodeTransformerTest {
         assertSame(e, unchanged);
     }
 }
+
+

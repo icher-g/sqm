@@ -17,10 +17,10 @@ class AliasedTableRefTest {
         var query = select(col("*")).from(tbl("users")).build();
         AliasedTableRef aliased = tbl(query).as("sub").columnAliases("id", "name");
 
-        assertEquals("sub", aliased.alias());
+        assertEquals("sub", aliased.alias().value());
         assertEquals(2, aliased.columnAliases().size());
-        assertTrue(aliased.columnAliases().contains("id"));
-        assertTrue(aliased.columnAliases().contains("name"));
+        assertTrue(aliased.columnAliases().stream().map(Identifier::value).toList().contains("id"));
+        assertTrue(aliased.columnAliases().stream().map(Identifier::value).toList().contains("name"));
     }
 
     @Test
@@ -30,10 +30,10 @@ class AliasedTableRefTest {
             .as("v")
             .columnAliases("id", "name");
 
-        assertEquals("v", aliased.alias());
+        assertEquals("v", aliased.alias().value());
         assertEquals(2, aliased.columnAliases().size());
-        assertEquals("id", aliased.columnAliases().get(0));
-        assertEquals("name", aliased.columnAliases().get(1));
+        assertEquals("id", aliased.columnAliases().get(0).value());
+        assertEquals("name", aliased.columnAliases().get(1).value());
     }
 
     @Test
@@ -42,9 +42,9 @@ class AliasedTableRefTest {
         var func = func("generate_series", arg(lit(1)), arg(lit(10)));
         AliasedTableRef aliased = func.asTable().as("series").columnAliases("num");
 
-        assertEquals("series", aliased.alias());
+        assertEquals("series", aliased.alias().value());
         assertEquals(1, aliased.columnAliases().size());
-        assertEquals("num", aliased.columnAliases().getFirst());
+        assertEquals("num", aliased.columnAliases().getFirst().value());
     }
 
     @Test
@@ -63,7 +63,7 @@ class AliasedTableRefTest {
         var func = func("unnest", arg(array(lit(1), lit(2))));
         AliasedTableRef aliased = func.asTable().as("t").columnAliases(List.of());
 
-        assertEquals("t", aliased.alias());
+        assertEquals("t", aliased.alias().value());
         assertTrue(aliased.columnAliases().isEmpty());
     }
 
@@ -74,7 +74,7 @@ class AliasedTableRefTest {
         AliasedTableRef aliased = func.asTable().as("t").columnAliases("key", "value");
 
         assertThrows(UnsupportedOperationException.class, () ->
-            aliased.columnAliases().add("extra")
+            aliased.columnAliases().add(Identifier.of("extra"))
         );
     }
 

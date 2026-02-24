@@ -5,12 +5,13 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class CaseExprTest {
 
     @Test
     void of() {
-        var p = Expression.column("c").lt(1);
+        var p = col("c").lt(1);
         var e = Expression.literal(2);
         var kase = CaseExpr.of(List.of(WhenThen.of(p, e)), e);
         assertEquals(2, kase.whens().getFirst().then().matchExpression().literal(l -> l.value()).orElse(null));
@@ -22,7 +23,7 @@ class CaseExprTest {
 
     @Test
     void elseExpr() {
-        var p = Expression.column("c").lt(1);
+        var p = col("c").lt(1);
         var e = Expression.literal(2);
         var kase = CaseExpr.of(List.of(WhenThen.of(p, e))).elseExpr(e);
         assertEquals(2, kase.whens().getFirst().then().matchExpression().literal(l -> l.value()).orElse(null));
@@ -31,7 +32,7 @@ class CaseExprTest {
 
     @Test
     void elseValue() {
-        var p = Expression.column("c").lt(1);
+        var p = col("c").lt(1);
         var e = Expression.literal(2);
         var kase = CaseExpr.of(List.of(WhenThen.of(p, e))).elseValue(3);
         assertEquals(2, kase.whens().getFirst().then().matchExpression().literal(l -> l.value()).orElse(null));

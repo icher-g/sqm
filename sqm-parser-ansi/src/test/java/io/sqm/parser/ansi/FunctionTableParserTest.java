@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.FunctionTable;
+import io.sqm.core.QuoteStyle;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -104,7 +105,7 @@ class FunctionTableParserTest {
         assertTrue(result.ok());
         var table = result.value();
         assertNotNull(table);
-        assertEquals("t", table.alias());
+        assertEquals("t", table.alias().value());
     }
 
     @Test
@@ -115,7 +116,7 @@ class FunctionTableParserTest {
         assertTrue(result.ok());
         var table = result.value();
         assertNotNull(table);
-        assertEquals("f", table.alias());
+        assertEquals("f", table.alias().value());
         assertNotNull(table.columnAliases());
         assertEquals(2, table.columnAliases().size());
     }
@@ -140,8 +141,23 @@ class FunctionTableParserTest {
         var table = result.value();
         assertNotNull(table);
         assertTrue(table.ordinality());
-        assertEquals("t", table.alias());
+        assertEquals("t", table.alias().value());
         assertEquals(2, table.columnAliases().size());
+    }
+
+    @Test
+    @DisplayName("Parse function table preserves quote style for alias and column aliases")
+    void parseFunctionTablePreservesQuotedAliasMetadata() {
+        var result = testCtx.parse(FunctionTable.class, "func() AS \"t\"(\"c1\", \"c2\")");
+
+        assertTrue(result.ok());
+        var table = result.value();
+        assertNotNull(table);
+        assertEquals("t", table.alias().value());
+        assertEquals(QuoteStyle.DOUBLE_QUOTE, table.alias().quoteStyle());
+        assertEquals(2, table.columnAliases().size());
+        assertEquals(QuoteStyle.DOUBLE_QUOTE, table.columnAliases().get(0).quoteStyle());
+        assertEquals(QuoteStyle.DOUBLE_QUOTE, table.columnAliases().get(1).quoteStyle());
     }
 
     @Test

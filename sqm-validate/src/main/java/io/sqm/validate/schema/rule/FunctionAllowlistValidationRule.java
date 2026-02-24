@@ -26,14 +26,19 @@ final class FunctionAllowlistValidationRule implements SchemaValidationRule<Func
      */
     @Override
     public void validate(FunctionExpr node, SchemaValidationContext context) {
-        if (context.isFunctionAllowed(node.name())) {
+        var functionName = functionName(node);
+        if (context.isFunctionAllowed(functionName)) {
             return;
         }
         context.addProblem(
             ValidationProblem.Code.POLICY_FUNCTION_NOT_ALLOWED,
-            "Function is not allowed by policy: " + node.name(),
+            "Function is not allowed by policy: " + functionName,
             node,
             "function.call"
         );
+    }
+
+    private static String functionName(FunctionExpr node) {
+        return node.name() == null ? null : node.name().parts().getLast().value();
     }
 }

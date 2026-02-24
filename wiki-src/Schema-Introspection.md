@@ -1,12 +1,12 @@
 # Schema Introspection
 
-Use `sqm-schema-introspect` to load schema metadata either from JDBC or JSON snapshots.
+Use `sqm-catalog` providers to load schema metadata either from JDBC or JSON snapshots.
 
 ## JSON Snapshot Provider
 
 ```java
 var provider = JsonSchemaProvider.of(Path.of("schema.json"));
-DbSchema schema = provider.load();
+CatalogSchema schema = provider.load();
 provider.save(schema);
 ```
 
@@ -21,7 +21,7 @@ var provider = JdbcSchemaProvider.of(
   List.of("TABLE", "VIEW"),
   PostgresSqlTypeMapper.standard()
 );
-DbSchema schema = provider.load();
+CatalogSchema schema = provider.load();
 ```
 
 ## Recommended Flow

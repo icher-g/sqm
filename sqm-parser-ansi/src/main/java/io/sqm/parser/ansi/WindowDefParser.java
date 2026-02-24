@@ -29,7 +29,7 @@ public class WindowDefParser implements Parser<WindowDef> {
             return error(spec);
         }
         cur.expect("Expected )", TokenType.RPAREN);
-        return ok(WindowDef.of(name.lexeme(), spec.value()));
+        return ok(WindowDef.of(toIdentifier(name), spec.value()));
     }
 
     /**

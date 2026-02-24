@@ -22,38 +22,6 @@ public sealed interface Expression extends Node
     }
 
     /**
-     * Creates a column reference expression.
-     *
-     * @param name a name of the column.
-     * @return A newly created instance of the column reference.
-     */
-    static ColumnExpr column(String name) {
-        return ColumnExpr.of(name);
-    }
-
-    /**
-     * Creates a column reference expression.
-     *
-     * @param name  a name of the column.
-     * @param table a table this column belongs to.
-     * @return A newly created instance of the column reference.
-     */
-    static ColumnExpr column(String table, String name) {
-        return ColumnExpr.of(table, name);
-    }
-
-    /**
-     * Creates a function call expression.
-     *
-     * @param name a function name
-     * @param args an array of function arguments.
-     * @return A newly created instance of a function call expression.
-     */
-    static FunctionExpr func(String name, FunctionExpr.Arg... args) {
-        return FunctionExpr.of(name, args);
-    }
-
-    /**
      * Creates a function argument that wraps an expression.
      *
      * @param expr an expression to wrap.
@@ -161,6 +129,23 @@ public sealed interface Expression extends Node
     }
 
     /**
+     * Creates a SELECT item based on the current expression and provided alias.
+     * <p>Example:</p>
+     * <pre>
+     *     {@code
+     *     // with DSL usage.
+     *     select(col("u", "id").as("userId"), col("u", "name").toSelectItem());
+     *     }
+     * </pre>
+     *
+     * @param alias an alias identifier.
+     * @return {@link SelectItem}.
+     */
+    default SelectItem as(Identifier alias) {
+        return SelectItem.expr(this).as(alias);
+    }
+
+    /**
      * Creates a SELECT item based on the current expression.
      * <p>Example:</p>
      * <pre>
@@ -173,7 +158,7 @@ public sealed interface Expression extends Node
      * @return {@link SelectItem}.
      */
     default SelectItem toSelectItem() {
-        return SelectItem.expr(this).as(null);
+        return SelectItem.expr(this);
     }
 
     /**
@@ -189,7 +174,11 @@ public sealed interface Expression extends Node
      * @return a {@link CollateExpr} wrapping this expression
      */
     default CollateExpr collate(String collation) {
-        return CollateExpr.of(this, collation);
+        java.util.Objects.requireNonNull(collation, "collation");
+        if (collation.isBlank()) {
+            throw new IllegalArgumentException("collation must not be blank");
+        }
+        return CollateExpr.of(this, QualifiedName.of(collation.split("\\.")));
     }
 
     /**
@@ -862,3 +851,4 @@ public sealed interface Expression extends Node
         return ExpressionMatch.match(this);
     }
 }
+

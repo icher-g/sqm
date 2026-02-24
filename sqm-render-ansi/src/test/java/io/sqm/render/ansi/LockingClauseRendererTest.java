@@ -3,6 +3,7 @@ package io.sqm.render.ansi;
 import io.sqm.core.LockMode;
 import io.sqm.core.LockTarget;
 import io.sqm.core.LockingClause;
+import io.sqm.core.Identifier;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.RenderContext;
@@ -92,7 +93,7 @@ class LockingClauseRendererTest {
     @Test
     @DisplayName("FOR UPDATE OF throws unsupported exception")
     void forUpdateOfThrows() {
-        var targets = List.of(LockTarget.of("users"));
+        var targets = List.of(LockTarget.of(Identifier.of("users")));
         var clause = LockingClause.of(LockMode.UPDATE, targets, false, false);
         
         assertThrows(UnsupportedDialectFeatureException.class, 

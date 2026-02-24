@@ -97,7 +97,7 @@ class TableRefMatchTest {
         TableRef table = func.asTable().as("t");
 
         var result = table.matchTableRef()
-            .function(f -> f.function().name())
+            .function(f -> String.join(".", f.function().name().values()))
             .orElse("Unknown");
 
         assertEquals("unnest", result);
@@ -157,7 +157,7 @@ class TableRefMatchTest {
             .function(f -> {
                 var alias = f.alias();
                 var colCount = f.columnAliases().size();
-                return alias + ":" + colCount;
+                return alias.value() + ":" + colCount;
             })
             .orElse("Unknown");
 
@@ -172,7 +172,7 @@ class TableRefMatchTest {
 
         var result = table.matchTableRef()
             .lateral(l -> l.inner().matchTableRef()
-                .function(f -> "Function: " + f.function().name())
+                .function(f -> "Function: " + String.join(".", f.function().name().values()))
                 .orElse("Unknown"))
             .orElse("Not Lateral");
 

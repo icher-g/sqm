@@ -97,7 +97,7 @@ class RecursiveNodeVisitorTest {
         var transformed = transformer.transform(table);
 
         assertInstanceOf(FunctionTable.class, transformed);
-        assertEquals("renamed", ((FunctionTable) transformed).alias());
+        assertEquals("renamed", ((FunctionTable) transformed).alias().value());
     }
 
     @Test
@@ -112,7 +112,7 @@ class RecursiveNodeVisitorTest {
         assertInstanceOf(Lateral.class, transformed);
         var inner = ((Lateral) transformed).inner();
         assertInstanceOf(QueryTable.class, inner);
-        assertEquals("renamed", ((QueryTable) inner).alias());
+        assertEquals("renamed", ((QueryTable) inner).alias().value());
     }
 
     @Test
@@ -128,7 +128,7 @@ class RecursiveNodeVisitorTest {
         var transformedFunc = ((FunctionTable) transformed).function();
         
         // Also check if alias was preserved
-        assertEquals("t", ((FunctionTable) transformed).alias());
+        assertEquals("t", ((FunctionTable) transformed).alias().value());
         
         var firstArg = (FunctionExpr.Arg.ExprArg) transformedFunc.args().getFirst();
         assertEquals(2, ((LiteralExpr) firstArg.expr()).value());

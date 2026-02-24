@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.QueryTable;
+import io.sqm.core.QuoteStyle;
 import io.sqm.core.Table;
 import io.sqm.core.TableRef;
 import io.sqm.parser.TableRefParser;
@@ -28,7 +29,7 @@ class TableRefParserTest {
         var r = parse("products");
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         Table t = (Table) r.value();
-        Assertions.assertEquals("products", t.name());
+        Assertions.assertEquals("products", t.name().value());
         Assertions.assertNull(t.schema());
         Assertions.assertNull(t.alias());
     }
@@ -39,9 +40,9 @@ class TableRefParserTest {
         var r = parse("sales.products p");
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         Table t = (Table) r.value();
-        Assertions.assertEquals("sales", t.schema());
-        Assertions.assertEquals("products", t.name());
-        Assertions.assertEquals("p", t.alias());
+        Assertions.assertEquals("sales", t.schema().value());
+        Assertions.assertEquals("products", t.name().value());
+        Assertions.assertEquals("p", t.alias().value());
     }
 
     @Test
@@ -50,9 +51,23 @@ class TableRefParserTest {
         var r = parse("sales.products AS p");
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         Table t = (Table) r.value();
-        Assertions.assertEquals("sales", t.schema());
-        Assertions.assertEquals("products", t.name());
-        Assertions.assertEquals("p", t.alias());
+        Assertions.assertEquals("sales", t.schema().value());
+        Assertions.assertEquals("products", t.name().value());
+        Assertions.assertEquals("p", t.alias().value());
+    }
+
+    @Test
+    @DisplayName("Preserves quote metadata for table/schema/alias identifiers")
+    void preserves_quote_metadata() {
+        var r = parse("\"Sales\".\"Users\" AS \"U\"");
+        Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
+        Table t = (Table) r.value();
+        Assertions.assertEquals("Sales", t.schema().value());
+        Assertions.assertEquals("Users", t.name().value());
+        Assertions.assertEquals("U", t.alias().value());
+        Assertions.assertEquals(QuoteStyle.DOUBLE_QUOTE, t.schema().quoteStyle());
+        Assertions.assertEquals(QuoteStyle.DOUBLE_QUOTE, t.name().quoteStyle());
+        Assertions.assertEquals(QuoteStyle.DOUBLE_QUOTE, t.alias().quoteStyle());
     }
 
     @Test
@@ -61,9 +76,9 @@ class TableRefParserTest {
         var r = parse("srv.db.sales.products prod");
         Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
         Table t = (Table) r.value();
-        Assertions.assertEquals("srv.db.sales", t.schema());
-        Assertions.assertEquals("products", t.name());
-        Assertions.assertEquals("prod", t.alias());
+        Assertions.assertEquals("srv.db.sales", t.schema().value());
+        Assertions.assertEquals("products", t.name().value());
+        Assertions.assertEquals("prod", t.alias().value());
     }
 
     @Test

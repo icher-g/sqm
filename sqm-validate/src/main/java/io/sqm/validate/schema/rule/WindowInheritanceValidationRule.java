@@ -2,6 +2,7 @@ package io.sqm.validate.schema.rule;
 
 import io.sqm.core.SelectQuery;
 import io.sqm.core.WindowDef;
+import io.sqm.core.Identifier;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
 
@@ -76,7 +77,7 @@ final class WindowInheritanceValidationRule implements SchemaValidationRule<Sele
             if (!indexedWindows.containsKey(to)) {
                 context.addProblem(
                     ValidationProblem.Code.WINDOW_NOT_FOUND,
-                    "Base window not found: " + baseRaw,
+                    "Base window not found: " + baseRaw.value(),
                     window,
                     "window.inheritance"
                 );
@@ -184,7 +185,7 @@ final class WindowInheritanceValidationRule implements SchemaValidationRule<Sele
             }
             context.addProblem(
                 ValidationProblem.Code.WINDOW_INHERITANCE_CYCLE,
-                "Window inheritance cycle detected for window: " + window.name(),
+                "Window inheritance cycle detected for window: " + window.name().value(),
                 window,
                 "window.inheritance"
             );
@@ -197,7 +198,7 @@ final class WindowInheritanceValidationRule implements SchemaValidationRule<Sele
      * @param identifier identifier value.
      * @return normalized identifier.
      */
-    private static String normalize(String identifier) {
-        return identifier.toLowerCase(Locale.ROOT);
+    private static String normalize(Identifier identifier) {
+        return identifier.value().toLowerCase(Locale.ROOT);
     }
 }

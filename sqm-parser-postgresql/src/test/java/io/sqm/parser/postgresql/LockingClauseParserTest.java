@@ -91,7 +91,7 @@ class LockingClauseParserTest {
         
         var lock = query.lockFor();
         assertEquals(1, lock.ofTables().size());
-        assertEquals("u", lock.ofTables().getFirst().identifier());
+        assertEquals("u", lock.ofTables().getFirst().identifier().value());
     }
 
     @Test
@@ -105,8 +105,24 @@ class LockingClauseParserTest {
         
         var lock = query.lockFor();
         assertEquals(2, lock.ofTables().size());
-        assertEquals("u", lock.ofTables().get(0).identifier());
-        assertEquals("o", lock.ofTables().get(1).identifier());
+        assertEquals("u", lock.ofTables().get(0).identifier().value());
+        assertEquals("o", lock.ofTables().get(1).identifier().value());
+    }
+
+    @Test
+    @DisplayName("Parse FOR UPDATE OF preserves quoted lock target alias")
+    void parsesForUpdateOfPreservesQuotedLockTargetAlias() {
+        var qResult = parseQuery("SELECT * FROM users AS \"U\" FOR UPDATE OF \"U\"");
+
+        assertTrue(qResult.ok());
+        var query = assertInstanceOf(SelectQuery.class, qResult.value());
+        assertNotNull(query.lockFor());
+        var lock = query.lockFor();
+
+        assertEquals(1, lock.ofTables().size());
+        var target = lock.ofTables().getFirst();
+        assertEquals("U", target.identifier().value());
+        assertEquals(QuoteStyle.DOUBLE_QUOTE, target.identifier().quoteStyle());
     }
 
     @Test

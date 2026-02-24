@@ -15,10 +15,14 @@ public class UsingJoinRenderer implements Renderer<UsingJoin> {
      */
     @Override
     public void render(UsingJoin node, RenderContext ctx, SqlWriter w) {
-        w.append("USING").space()
-            .append("(")
-            .append(ctx.dialect().formatter().format(node.usingColumns()))
-            .append(")");
+        w.append("USING").space().append("(");
+        for (int i = 0; i < node.usingColumns().size(); i++) {
+            if (i > 0) {
+                w.append(", ");
+            }
+            w.append(renderIdentifier(node.usingColumns().get(i), ctx.dialect().quoter()));
+        }
+        w.append(")");
     }
 
     /**

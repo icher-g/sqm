@@ -1,9 +1,11 @@
 package io.sqm.core;
 
+import io.sqm.dsl.Dsl;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static io.sqm.dsl.Dsl.col;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FunctionExprTest {
@@ -12,15 +14,15 @@ class FunctionExprTest {
     void of() {
         List<FunctionExpr.Arg> args = List.of(Expression.starArg(), Expression.funcArg(Expression.literal(1)));
         OrderBy withinGroups = OrderBy.of(List.of(OrderItem.of(1)));
-        Predicate filter = Expression.column("c").eq(1);
-        OverSpec over = OverSpec.ref("w");
-        assertInstanceOf(FunctionExpr.class, FunctionExpr.of("rank"));
-        assertInstanceOf(FunctionExpr.class, FunctionExpr.of("rank", args, true, withinGroups, filter, over));
+        Predicate filter = col("c").eq(1);
+        OverSpec over = Dsl.over("w");
+        assertInstanceOf(FunctionExpr.class, FunctionExpr.of(QualifiedName.of("rank"), List.of(), null, null, null, null));
+        assertInstanceOf(FunctionExpr.class, FunctionExpr.of(QualifiedName.of("rank"), args, true, withinGroups, filter, over));
     }
 
     @Test
     void distinct() {
-        var f = FunctionExpr.of("count", FunctionExpr.Arg.star()).distinct();
+        var f = FunctionExpr.of(QualifiedName.of("count"), List.of(FunctionExpr.Arg.star()), null, null, null, null).distinct();
         assertInstanceOf(FunctionExpr.class, f);
         assertTrue(f.distinctArg());
     }
@@ -29,24 +31,24 @@ class FunctionExprTest {
     void withinGroup() {
         OrderItem item = OrderItem.of(1);
         OrderBy withinGroups = OrderBy.of(List.of(item));
-        var f1 = FunctionExpr.of("count", FunctionExpr.Arg.star()).withinGroup(item);
+        var f1 = FunctionExpr.of(QualifiedName.of("count"), List.of(FunctionExpr.Arg.star()), null, null, null, null).withinGroup(item);
         assertEquals(withinGroups, f1.withinGroup());
-        var f2 = FunctionExpr.of("count", FunctionExpr.Arg.star()).withinGroup(withinGroups);
+        var f2 = FunctionExpr.of(QualifiedName.of("count"), List.of(FunctionExpr.Arg.star()), null, null, null, null).withinGroup(withinGroups);
         assertEquals(withinGroups, f2.withinGroup());
     }
 
     @Test
     void filter() {
-        var predicate = Expression.column("c").eq(1);
-        var f = FunctionExpr.of("count", FunctionExpr.Arg.star()).filter(predicate);
+        var predicate = col("c").eq(1);
+        var f = FunctionExpr.of(QualifiedName.of("count"), List.of(FunctionExpr.Arg.star()), null, null, null, null).filter(predicate);
         assertEquals(predicate, f.filter());
     }
 
     @Test
     void over() {
-        var f = FunctionExpr.of("count", FunctionExpr.Arg.star());
+        var f = FunctionExpr.of(QualifiedName.of("count"), List.of(FunctionExpr.Arg.star()), null, null, null, null);
         assertInstanceOf(OverSpec.Ref.class, f.over("w").over());
-        assertInstanceOf(OverSpec.Ref.class, f.over(OverSpec.ref("w")).over());
+        assertInstanceOf(OverSpec.Ref.class, f.over("w").over());
         // check all variations of: over(PartitionBy partitionBy, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude)
         var over = f.over(PartitionBy.of(Expression.literal(1))).over();
         assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
@@ -106,13 +108,13 @@ class FunctionExprTest {
         over = f.over("w", OrderBy.of(OrderItem.of(1))).over();
         assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
         assertNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
-        assertEquals("w", over.matchOverSpec().def(def -> def.baseWindow()).orElse(null));
+        assertEquals("w", over.matchOverSpec().def(def -> def.baseWindow().value()).orElse(null));
         assertNotNull(over.matchOverSpec().def(d -> d.orderBy()));
         assertEquals(1, over.matchOverSpec().def(d -> d.orderBy().items().size()).orElse(0));
         over = f.over("w", FrameSpec.single(FrameSpec.Unit.ROWS, BoundSpec.currentRow())).over();
         assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
         assertNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
-        assertEquals("w", over.matchOverSpec().def(def -> def.baseWindow()).orElse(null));
+        assertEquals("w", over.matchOverSpec().def(def -> def.baseWindow().value()).orElse(null));
         assertNotNull(over.matchOverSpec().def(d -> d.frame()).orElse(null));
         assertEquals(FrameSpec.Unit.ROWS, over.matchOverSpec().def(d -> d.frame().unit()).orElse(null));
         assertInstanceOf(BoundSpec.CurrentRow.class, over.matchOverSpec()
@@ -125,7 +127,7 @@ class FunctionExprTest {
         over = f.over("w", OrderBy.of(OrderItem.of(1)), FrameSpec.single(FrameSpec.Unit.ROWS, BoundSpec.currentRow())).over();
         assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
         assertNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
-        assertEquals("w", over.matchOverSpec().def(def -> def.baseWindow()).orElse(null));
+        assertEquals("w", over.matchOverSpec().def(def -> def.baseWindow().value()).orElse(null));
         assertNotNull(over.matchOverSpec().def(d -> d.orderBy()));
         assertEquals(1, over.matchOverSpec().def(d -> d.orderBy().items().size()).orElse(0));
         assertNotNull(over.matchOverSpec().def(d -> d.frame()).orElse(null));
@@ -140,7 +142,7 @@ class FunctionExprTest {
         over = f.over("w", OrderBy.of(OrderItem.of(1)), FrameSpec.single(FrameSpec.Unit.ROWS, BoundSpec.currentRow()), OverSpec.Exclude.CURRENT_ROW).over();
         assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
         assertNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
-        assertEquals("w", over.matchOverSpec().def(def -> def.baseWindow()).orElse(null));
+        assertEquals("w", over.matchOverSpec().def(def -> def.baseWindow().value()).orElse(null));
         assertNotNull(over.matchOverSpec().def(d -> d.orderBy()));
         assertEquals(1, over.matchOverSpec().def(d -> d.orderBy().items().size()).orElse(0));
         assertNotNull(over.matchOverSpec().def(d -> d.frame()).orElse(null));
@@ -155,3 +157,5 @@ class FunctionExprTest {
         assertEquals(OverSpec.Exclude.CURRENT_ROW, over.matchOverSpec().def(def -> def.exclude()).orElse(null));
     }
 }
+
+

@@ -3,6 +3,7 @@ package io.sqm.core;
 import org.junit.jupiter.api.Test;
 
 import static io.sqm.core.Expression.*;
+import static io.sqm.dsl.Dsl.col;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class PredicateContractsTest {
@@ -10,12 +11,12 @@ public class PredicateContractsTest {
     @Test
     void any_all_predicate() {
         var p = AnyAllPredicate.of(
-            ColumnExpr.of("c1"),
+            ColumnExpr.of(null, Identifier.of("c1")),
             ComparisonOperator.GT,
             Query.select(literal(1)).build(),
             Quantifier.ALL);
 
-        assertEquals("c1", p.lhs().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("c1", p.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
         assertEquals(ComparisonOperator.GT, p.operator());
         assertEquals(1, (Integer) p.subquery().matchQuery()
             .select(s -> s.items().getFirst().matchSelectItem()
@@ -29,13 +30,13 @@ public class PredicateContractsTest {
     @Test
     void between_predicate() {
         var p = BetweenPredicate.of(
-            column("c"),
+            col("c"),
             literal(1),
             literal(10),
             false,
             false);
 
-        assertEquals("c", p.value().matchExpression().column(l -> l.name()).orElse(null));
+        assertEquals("c", p.value().matchExpression().column(l -> l.name().value()).orElse(null));
         assertEquals(1, p.lower().matchExpression().literal(l -> l.value()).orElse(null));
         assertEquals(10, p.upper().matchExpression().literal(l -> l.value()).orElse(null));
         assertFalse(p.symmetric());
@@ -43,8 +44,8 @@ public class PredicateContractsTest {
 
     @Test
     void comparison_predicate() {
-        var p = ComparisonPredicate.of(column("c"), ComparisonOperator.EQ, literal(1));
-        assertEquals("c", p.lhs().matchExpression().column(l -> l.name()).orElse(null));
+        var p = ComparisonPredicate.of(col("c"), ComparisonOperator.EQ, literal(1));
+        assertEquals("c", p.lhs().matchExpression().column(l -> l.name().value()).orElse(null));
         assertEquals(ComparisonOperator.EQ, p.operator());
         assertEquals(1, p.rhs().matchExpression().literal(l -> l.value()).orElse(null));
     }
@@ -52,15 +53,15 @@ public class PredicateContractsTest {
     @Test
     void and_predicate() {
         var p = AndPredicate.of(
-            ComparisonPredicate.of(column("c1"), ComparisonOperator.EQ, literal(1)),
-            ComparisonPredicate.of(column("c2"), ComparisonOperator.GT, literal(2))
+            ComparisonPredicate.of(col("c1"), ComparisonOperator.EQ, literal(1)),
+            ComparisonPredicate.of(col("c2"), ComparisonOperator.GT, literal(2))
         );
 
         assertInstanceOf(ComparisonPredicate.class, p.lhs());
         assertInstanceOf(ComparisonPredicate.class, p.rhs());
         assertEquals("c1", p.lhs().matchPredicate()
             .comparison(c -> c.lhs().matchExpression()
-                .column(l -> l.name())
+                .column(l -> l.name().value())
                 .orElse(null)
             )
             .orElse(null));
@@ -75,7 +76,7 @@ public class PredicateContractsTest {
             .orElse(null));
         assertEquals("c2", p.rhs().matchPredicate()
             .comparison(c -> c.lhs().matchExpression()
-                .column(l -> l.name())
+                .column(l -> l.name().value())
                 .orElse(null)
             )
             .orElse(null));
@@ -93,15 +94,15 @@ public class PredicateContractsTest {
     @Test
     void or_predicate() {
         var p = OrPredicate.of(
-            ComparisonPredicate.of(column("c1"), ComparisonOperator.EQ, literal(1)),
-            ComparisonPredicate.of(column("c2"), ComparisonOperator.GT, literal(2))
+            ComparisonPredicate.of(col("c1"), ComparisonOperator.EQ, literal(1)),
+            ComparisonPredicate.of(col("c2"), ComparisonOperator.GT, literal(2))
         );
 
         assertInstanceOf(ComparisonPredicate.class, p.lhs());
         assertInstanceOf(ComparisonPredicate.class, p.rhs());
         assertEquals("c1", p.lhs().matchPredicate()
             .comparison(c -> c.lhs().matchExpression()
-                .column(l -> l.name())
+                .column(l -> l.name().value())
                 .orElse(null)
             )
             .orElse(null));
@@ -116,7 +117,7 @@ public class PredicateContractsTest {
             .orElse(null));
         assertEquals("c2", p.rhs().matchPredicate()
             .comparison(c -> c.lhs().matchExpression()
-                .column(l -> l.name())
+                .column(l -> l.name().value())
                 .orElse(null)
             )
             .orElse(null));
@@ -149,9 +150,9 @@ public class PredicateContractsTest {
 
     @Test
     void in_predicate() {
-        var p = InPredicate.of(column("c"), row(1), true);
+        var p = InPredicate.of(col("c"), row(1), true);
 
-        assertEquals("c", p.lhs().matchExpression().column(l -> l.name()).orElse(null));
+        assertEquals("c", p.lhs().matchExpression().column(l -> l.name().value()).orElse(null));
         assertEquals(1, p.rhs().matchValueSet().row(r -> r.items().size()).orElse(0));
         assertEquals(1, p.rhs().matchValueSet()
             .row(r -> r.items().getFirst().matchExpression()
@@ -164,17 +165,17 @@ public class PredicateContractsTest {
 
     @Test
     void is_null_predicate() {
-        var p = IsNullPredicate.of(column("c"), true);
+        var p = IsNullPredicate.of(col("c"), true);
 
-        assertEquals("c", p.expr().matchExpression().column(l -> l.name()).orElse(null));
+        assertEquals("c", p.expr().matchExpression().column(l -> l.name().value()).orElse(null));
         assertTrue(p.negated());
     }
 
     @Test
     void like_predicate() {
-        var p = LikePredicate.of(column("c"), literal("%c%"), literal("\\"), true);
+        var p = LikePredicate.of(col("c"), literal("%c%"), literal("\\"), true);
 
-        assertEquals("c", p.value().matchExpression().column(l -> l.name()).orElse(null));
+        assertEquals("c", p.value().matchExpression().column(l -> l.name().value()).orElse(null));
         assertEquals("%c%", p.pattern().matchExpression().literal(l -> l.value()).orElse(null));
         assertEquals("\\", p.escape().matchExpression().literal(l -> l.value()).orElse(null));
         assertTrue(p.negated());
@@ -182,12 +183,12 @@ public class PredicateContractsTest {
 
     @Test
     void not_predicate() {
-        var p = NotPredicate.of(ComparisonPredicate.of(column("c1"), ComparisonOperator.EQ, literal(1)));
+        var p = NotPredicate.of(ComparisonPredicate.of(col("c1"), ComparisonOperator.EQ, literal(1)));
 
         assertInstanceOf(ComparisonPredicate.class, p.inner());
         assertEquals("c1", p.inner().matchPredicate()
             .comparison(c -> c.lhs().matchExpression()
-                .column(col -> col.name())
+                .column(col -> col.name().value())
                 .orElse(null)
             )
             .orElse(null));
@@ -209,3 +210,7 @@ public class PredicateContractsTest {
         assertTrue((boolean) p.expr().matchExpression().literal(l -> l.value()).orElse(null));
     }
 }
+
+
+
+

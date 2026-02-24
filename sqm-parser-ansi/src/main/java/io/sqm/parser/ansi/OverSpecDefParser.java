@@ -23,10 +23,9 @@ public class OverSpecDefParser implements Parser<OverSpec.Def> {
      */
     @Override
     public ParseResult<OverSpec.Def> parse(Cursor cur, ParseContext ctx) {
-        String baseWindow = null;
+        io.sqm.core.Identifier baseWindow = null;
         if (cur.match(TokenType.IDENT)) {
-            baseWindow = cur.peek().lexeme();
-            cur.advance();
+            baseWindow = toIdentifier(cur.advance());
         }
 
         PartitionBy partitionBy = null;

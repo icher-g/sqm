@@ -32,7 +32,7 @@ public class QueryTableParser implements MatchableParser<QueryTable> {
 
         cur.expect("Expected )", TokenType.RPAREN);
 
-        var alias = parseAlias(cur);
+        var alias = parseAliasIdentifier(cur);
         return ok(TableRef.query(query.value()).as(alias));
     }
 

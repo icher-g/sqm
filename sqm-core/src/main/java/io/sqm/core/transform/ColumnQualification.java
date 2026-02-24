@@ -1,5 +1,7 @@
 package io.sqm.core.transform;
 
+import io.sqm.core.Identifier;
+
 import java.util.Objects;
 
 /**
@@ -9,12 +11,12 @@ public sealed interface ColumnQualification
     permits ColumnQualification.Qualified, ColumnQualification.Unresolved, ColumnQualification.Ambiguous {
 
     /**
-     * Returns a qualified column outcome using the provided table alias/name qualifier.
+     * Returns a qualified column outcome using the provided table alias/name qualifier identifier.
      *
-     * @param qualifier table alias or table name qualifier
+     * @param qualifier table alias or table name qualifier identifier
      * @return qualified outcome
      */
-    static ColumnQualification qualified(String qualifier) {
+    static ColumnQualification qualified(Identifier qualifier) {
         return new Qualified(Objects.requireNonNull(qualifier, "qualifier"));
     }
 
@@ -39,9 +41,9 @@ public sealed interface ColumnQualification
     /**
      * Resolved qualification outcome.
      *
-     * @param qualifier table alias or table name qualifier
+     * @param qualifier table alias or table name qualifier identifier
      */
-    record Qualified(String qualifier) implements ColumnQualification {
+    record Qualified(Identifier qualifier) implements ColumnQualification {
     }
 
     /**

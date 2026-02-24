@@ -180,7 +180,7 @@ class FromItemMatchTest {
 
         var result = item.matchFromItem()
             .join(j -> "Join")
-            .tableRef(t -> ((Table)t).name())
+            .tableRef(t -> ((Table) t).name().value())
             .orElse("Unknown");
 
         assertEquals("users", result);

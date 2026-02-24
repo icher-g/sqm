@@ -1,6 +1,5 @@
 package io.sqm.parser;
 
-import io.sqm.core.ColumnExpr;
 import io.sqm.core.GroupItem;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -10,10 +9,22 @@ import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 import org.junit.jupiter.api.Test;
 
+import static io.sqm.dsl.Dsl.col;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GroupItemParserTest {
+
+    private static ParseContext contextWithParsers() {
+        var repo = new DefaultParsersRepository()
+            .register(GroupItem.class, new GroupItemParser())
+            .register(GroupItem.GroupingSets.class, new GroupingSetsParser())
+            .register(GroupItem.Rollup.class, new RollupParser())
+            .register(GroupItem.Cube.class, new CubeParser())
+            .register(GroupItem.GroupingSet.class, new GroupingSetParser())
+            .register(GroupItem.SimpleGroupItem.class, new SimpleGroupItemParser());
+        return TestSupport.context(repo);
+    }
 
     @Test
     void parsesGroupingSets() {
@@ -58,17 +69,6 @@ class GroupItemParserTest {
 
         assertTrue(result.ok());
         assertInstanceOf(GroupItem.SimpleGroupItem.class, result.value());
-    }
-
-    private static ParseContext contextWithParsers() {
-        var repo = new DefaultParsersRepository()
-            .register(GroupItem.class, new GroupItemParser())
-            .register(GroupItem.GroupingSets.class, new GroupingSetsParser())
-            .register(GroupItem.Rollup.class, new RollupParser())
-            .register(GroupItem.Cube.class, new CubeParser())
-            .register(GroupItem.GroupingSet.class, new GroupingSetParser())
-            .register(GroupItem.SimpleGroupItem.class, new SimpleGroupItemParser());
-        return TestSupport.context(repo);
     }
 
     private static final class GroupingSetsParser implements MatchableParser<GroupItem.GroupingSets> {
@@ -147,7 +147,7 @@ class GroupItemParserTest {
         @Override
         public ParseResult<? extends GroupItem.SimpleGroupItem> parse(Cursor cur, ParseContext ctx) {
             var token = cur.expect("Expected identifier", TokenType.IDENT);
-            return ParseResult.ok(GroupItem.of(ColumnExpr.of(token.lexeme())));
+            return ParseResult.ok(GroupItem.of(col(token.lexeme())));
         }
 
         @Override
@@ -156,3 +156,4 @@ class GroupItemParserTest {
         }
     }
 }
+

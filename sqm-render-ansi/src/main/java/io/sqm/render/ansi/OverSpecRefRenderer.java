@@ -15,7 +15,7 @@ public class OverSpecRefRenderer implements Renderer<OverSpec.Ref> {
      */
     @Override
     public void render(OverSpec.Ref node, RenderContext ctx, SqlWriter w) {
-        w.append(node.windowName());
+        w.append(renderIdentifier(node.windowName(), ctx.dialect().quoter()));
     }
 
     /**

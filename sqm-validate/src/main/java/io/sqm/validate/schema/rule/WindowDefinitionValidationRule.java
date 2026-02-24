@@ -1,5 +1,6 @@
 package io.sqm.validate.schema.rule;
 
+import io.sqm.core.Identifier;
 import io.sqm.core.SelectQuery;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
@@ -47,7 +48,7 @@ final class WindowDefinitionValidationRule implements SchemaValidationRule<Selec
      * @param context schema validation context.
      */
     private static void validateUniqueWindowName(
-        String windowName,
+        Identifier windowName,
         Set<String> seen,
         SchemaValidationContext context
     ) {
@@ -57,7 +58,7 @@ final class WindowDefinitionValidationRule implements SchemaValidationRule<Selec
         }
         context.addProblem(
             ValidationProblem.Code.DUPLICATE_WINDOW_NAME,
-            "Duplicate window name in SELECT scope: " + windowName,
+            "Duplicate window name in SELECT scope: " + windowName.value(),
             "WindowDef",
             "window"
         );
@@ -69,7 +70,7 @@ final class WindowDefinitionValidationRule implements SchemaValidationRule<Selec
      * @param identifier identifier value.
      * @return normalized identifier.
      */
-    private static String normalize(String identifier) {
-        return identifier.toLowerCase(Locale.ROOT);
+    private static String normalize(Identifier identifier) {
+        return identifier.value().toLowerCase(Locale.ROOT);
     }
 }

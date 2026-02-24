@@ -33,7 +33,7 @@ class CastExprParserTest {
         assertInstanceOf(ColumnExpr.class, cast.expr());
         
         var type = cast.type();
-        assertEquals(java.util.List.of("int"), type.qualifiedName());
+        assertEquals(java.util.List.of("int"), type.qualifiedName().values());
     }
 
     @Test
@@ -45,7 +45,7 @@ class CastExprParserTest {
         var cast = assertInstanceOf(CastExpr.class, result.value());
         
         var type = cast.type();
-        assertEquals(java.util.List.of("pg_catalog", "int4"), type.qualifiedName());
+        assertEquals(java.util.List.of("pg_catalog", "int4"), type.qualifiedName().values());
     }
 
     @Test
@@ -57,7 +57,7 @@ class CastExprParserTest {
         var cast = assertInstanceOf(CastExpr.class, result.value());
         
         var type = cast.type();
-        assertEquals(java.util.List.of("text"), type.qualifiedName());
+        assertEquals(java.util.List.of("text"), type.qualifiedName().values());
         assertEquals(1, type.arrayDims());
     }
 
@@ -70,7 +70,7 @@ class CastExprParserTest {
         var cast = assertInstanceOf(CastExpr.class, result.value());
         
         var type = cast.type();
-        assertEquals(java.util.List.of("int"), type.qualifiedName());
+        assertEquals(java.util.List.of("int"), type.qualifiedName().values());
         assertEquals(2, type.arrayDims());
     }
 
@@ -84,7 +84,7 @@ class CastExprParserTest {
         assertInstanceOf(ColumnExpr.class, cast.expr());
         
         var type = cast.type();
-        assertEquals(java.util.List.of("varchar"), type.qualifiedName());
+        assertEquals(java.util.List.of("varchar"), type.qualifiedName().values());
         assertEquals(1, type.modifiers().size());
     }
 
@@ -143,7 +143,7 @@ class CastExprParserTest {
         var item = assertInstanceOf(ExprSelectItem.class, query.items().getFirst());
         assertInstanceOf(CastExpr.class, item.expr());
         assertNotNull(item.alias());
-        assertEquals("id_str", item.alias());
+        assertEquals("id_str", item.alias().value());
     }
 
     private ParseResult<? extends Expression> parseExpr(String sql) {

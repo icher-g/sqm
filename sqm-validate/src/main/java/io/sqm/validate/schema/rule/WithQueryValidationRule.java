@@ -64,13 +64,13 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
             if (cte == null || cte.name() == null) {
                 continue;
             }
-            var normalized = normalize(cte.name());
+            var normalized = normalize(cte.name().value());
             if (seen.add(normalized)) {
                 continue;
             }
             context.addProblem(
                 ValidationProblem.Code.DUPLICATE_CTE_NAME,
-                "Duplicate CTE name in WITH block: " + cte.name(),
+                "Duplicate CTE name in WITH block: " + cte.name().value(),
                 cte,
                 "with.cte"
             );
@@ -93,12 +93,12 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
             if (cte == null || cte.name() == null || cte.body() == null) {
                 continue;
             }
-            if (!containsUnqualifiedTableReference(cte.body(), cte.name())) {
+            if (!containsUnqualifiedTableReference(cte.body(), cte.name().value())) {
                 continue;
             }
             context.addProblem(
                 ValidationProblem.Code.CTE_RECURSION_NOT_ALLOWED,
-                "CTE '" + cte.name() + "' references itself but WITH is not recursive",
+                "CTE '" + cte.name().value() + "' references itself but WITH is not recursive",
                 cte,
                 "with.cte"
             );
@@ -119,7 +119,7 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
             if (cte == null || cte.name() == null || cte.body() == null) {
                 continue;
             }
-            if (!containsUnqualifiedTableReference(cte.body(), cte.name())) {
+            if (!containsUnqualifiedTableReference(cte.body(), cte.name().value())) {
                 continue;
             }
             validateRecursiveCte(cte, context);
@@ -136,7 +136,7 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
         if (!(cte.body() instanceof CompositeQuery composite) || composite.terms().size() < 2) {
             reportRecursiveStructure(
                 cte,
-                "Recursive CTE '" + cte.name() + "' must use a set operation with anchor and recursive terms",
+                "Recursive CTE '" + cte.name().value() + "' must use a set operation with anchor and recursive terms",
                 context
             );
             return;
@@ -144,17 +144,17 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
         if (!composite.ops().stream().allMatch(WithQueryValidationRule::isRecursiveSetOperator)) {
             reportRecursiveStructure(
                 cte,
-                "Recursive CTE '" + cte.name() + "' must use UNION or UNION ALL between terms",
+                "Recursive CTE '" + cte.name().value() + "' must use UNION or UNION ALL between terms",
                 context
             );
             return;
         }
 
         var anchor = composite.terms().getFirst();
-        if (containsUnqualifiedTableReference(anchor, cte.name())) {
+        if (containsUnqualifiedTableReference(anchor, cte.name().value())) {
             reportRecursiveStructure(
                 cte,
-                "Recursive CTE '" + cte.name() + "' anchor term must not reference itself",
+                "Recursive CTE '" + cte.name().value() + "' anchor term must not reference itself",
                 context
             );
         }
@@ -162,14 +162,14 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
         var recursiveTermFound = false;
         for (int i = 1; i < composite.terms().size(); i++) {
             var term = composite.terms().get(i);
-            if (containsUnqualifiedTableReference(term, cte.name())) {
+            if (containsUnqualifiedTableReference(term, cte.name().value())) {
                 recursiveTermFound = true;
             }
         }
         if (!recursiveTermFound) {
             reportRecursiveStructure(
                 cte,
-                "Recursive CTE '" + cte.name() + "' must reference itself in at least one recursive term",
+                "Recursive CTE '" + cte.name().value() + "' must reference itself in at least one recursive term",
                 context
             );
         }
@@ -203,7 +203,7 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
             }
             reportRecursiveStructure(
                 cte,
-                "Recursive CTE '" + cte.name() + "' term "
+                "Recursive CTE '" + cte.name().value() + "' term "
                     + (i + 1)
                     + " projection width "
                     + termArity.get()
@@ -267,7 +267,7 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
             }
             context.addProblem(
                 ValidationProblem.Code.CTE_RECURSIVE_TYPE_MISMATCH,
-                "Recursive CTE '" + cte.name() + "' term "
+                "Recursive CTE '" + cte.name().value() + "' term "
                     + (termIndex + 1)
                     + ", column "
                     + (c + 1)
@@ -377,7 +377,7 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
          */
         @Override
         public Void visitTable(Table t) {
-            if (t.schema() == null && targetCteName.equals(normalize(t.name()))) {
+            if (t.schema() == null && targetCteName.equals(normalize(t.name().value()))) {
                 found = true;
                 return defaultResult();
             }

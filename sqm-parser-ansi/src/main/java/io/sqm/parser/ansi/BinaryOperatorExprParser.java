@@ -3,6 +3,7 @@ package io.sqm.parser.ansi;
 import io.sqm.core.ArithmeticExpr;
 import io.sqm.core.BinaryOperatorExpr;
 import io.sqm.core.Expression;
+import io.sqm.core.OperatorName;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -73,6 +74,6 @@ public class BinaryOperatorExprParser implements Parser<Expression>, InfixParser
         if (rhs.isError()) {
             return error(rhs);
         }
-        return ok(BinaryOperatorExpr.of(lhs, token.lexeme(), rhs.value()));
+        return ok(BinaryOperatorExpr.of(lhs, OperatorName.of(token.lexeme()), rhs.value()));
     }
 }
