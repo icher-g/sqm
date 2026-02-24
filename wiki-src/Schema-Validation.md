@@ -5,10 +5,10 @@
 ## Basic Usage
 
 ```java
-DbSchema schema = DbSchema.of(
-  DbTable.of("public", "users",
-    DbColumn.of("id", DbType.LONG),
-    DbColumn.of("user_name", DbType.STRING)
+CatalogSchema schema = CatalogSchema.of(
+  CatalogTable.of("public", "users",
+    CatalogColumn.of("id", CatalogType.LONG),
+    CatalogColumn.of("user_name", CatalogType.STRING)
   )
 );
 

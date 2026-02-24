@@ -4,7 +4,7 @@ This document describes the current capabilities of `sqm-validate`, how to use i
 
 ## Scope
 
-`sqm-validate` performs semantic validation of SQM query models against a provided database schema (`DbSchema`).
+`sqm-validate` performs semantic validation of SQM query models against a provided catalog schema (`CatalogSchema`).
 
 It is currently dialect-agnostic by default (core SQL semantics), with extension hooks for dialect-specific rules.
 
@@ -13,10 +13,10 @@ It is currently dialect-agnostic by default (core SQL semantics), with extension
 - Main validator:
   - `io.sqm.validate.schema.SchemaQueryValidator`
 - Schema model:
-  - `io.sqm.validate.schema.model.DbSchema`
-  - `io.sqm.validate.schema.model.DbTable`
-  - `io.sqm.validate.schema.model.DbColumn`
-  - `io.sqm.validate.schema.model.DbType`
+  - `io.sqm.catalog.model.CatalogSchema`
+  - `io.sqm.catalog.model.CatalogTable`
+  - `io.sqm.catalog.model.CatalogColumn`
+  - `io.sqm.catalog.model.CatalogType`
 - Extension points:
   - `io.sqm.validate.schema.SchemaValidationSettings`
   - `io.sqm.validate.schema.dialect.SchemaValidationDialect`
