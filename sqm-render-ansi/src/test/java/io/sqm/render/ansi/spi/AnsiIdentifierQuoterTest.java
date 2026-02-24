@@ -1,4 +1,4 @@
-package io.sqm.render.postgresql.spi;
+package io.sqm.render.ansi.spi;
 
 import io.sqm.core.QuoteStyle;
 import org.junit.jupiter.api.Test;
@@ -8,21 +8,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class PostgresIdentifierQuoterTest {
+class AnsiIdentifierQuoterTest {
 
-    private final PostgresIdentifierQuoter quoter = new PostgresIdentifierQuoter();
+    private final AnsiIdentifierQuoter quoter = new AnsiIdentifierQuoter();
 
     @Test
-    void quoteWithStyleSupportsPostgresDoubleQuotesOnly() {
+    void quoteWithStyleSupportsAnsiDoubleQuotesOnly() {
         assertEquals("\"select\"", quoter.quote("select", QuoteStyle.NONE));
         assertEquals("\"x\"", quoter.quote("x", QuoteStyle.DOUBLE_QUOTE));
         assertThrows(IllegalArgumentException.class, () -> quoter.quote("x", QuoteStyle.BACKTICK));
-    }
-
-    @Test
-    void qualifyHandlesNullSchema() {
-        assertEquals("\"t\"", quoter.qualify(null, "t"));
-        assertEquals("\"s\".\"t\"", quoter.qualify("s", "t"));
     }
 
     @Test

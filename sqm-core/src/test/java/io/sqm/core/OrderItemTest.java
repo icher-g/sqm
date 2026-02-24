@@ -35,6 +35,12 @@ class OrderItemTest {
     }
 
     @Test
+    void collateRejectsNullAndBlank() {
+        assertThrows(NullPointerException.class, () -> OrderItem.of(1).collate((String) null));
+        assertThrows(IllegalArgumentException.class, () -> OrderItem.of(1).collate("   "));
+    }
+
+    @Test
     void usingOperator() {
         var item = OrderItem.of(Expression.literal(1)).using("<");
         assertEquals("<", item.usingOperator());
