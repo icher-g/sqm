@@ -25,27 +25,6 @@ public non-sealed interface CrossJoin extends Join {
     }
 
     /**
-     * Creates cross join with the provided table name.
-     *
-     * @param table the name of the table. This is not qualified name.
-     * @return A newly created instance of the table.
-     */
-    static CrossJoin of(String table) {
-        return new Impl(TableRef.table(table));
-    }
-
-    /**
-     * Creates cross join with the provided table schema and name.
-     *
-     * @param schema a table schema.
-     * @param table  the name of the table. This is not qualified name.
-     * @return A newly created instance of the table.
-     */
-    static CrossJoin of(String schema, String table) {
-        return new Impl(TableRef.table(schema, table));
-    }
-
-    /**
      * Accepts a {@link NodeVisitor} and dispatches control to the
      * visitor method corresponding to the concrete subtype
      *

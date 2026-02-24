@@ -1,5 +1,6 @@
 package io.sqm.render.ansi.spi;
 
+import io.sqm.core.QuoteStyle;
 import io.sqm.render.spi.IdentifierQuoter;
 
 import java.util.Set;
@@ -23,6 +24,25 @@ public class AnsiIdentifierQuoter implements IdentifierQuoter {
         return "\"" + escaped + "\"";
     }
 
+    /**
+     * Quotes identifier using the requested quote style when supported by ANSI.
+     *
+     * @param identifier the identifier to quote.
+     * @param quoteStyle the requested quote style.
+     * @return a quoted identifier.
+     */
+    @Override
+    public String quote(String identifier, QuoteStyle quoteStyle) {
+        if (!supports(quoteStyle)) {
+            throw new IllegalArgumentException("Unsupported quote style for ANSI: " + quoteStyle);
+        }
+        return switch (quoteStyle == null ? QuoteStyle.NONE : quoteStyle) {
+            case NONE -> quoteIfNeeded(identifier);
+            case DOUBLE_QUOTE -> quote(identifier);
+            default -> throw new IllegalArgumentException("Unsupported quote style for ANSI: " + quoteStyle);
+        };
+    }
+
     @Override
     public String quoteIfNeeded(String identifier) {
         if (needsQuoting(identifier)) return quote(identifier);
@@ -40,5 +60,16 @@ public class AnsiIdentifierQuoter implements IdentifierQuoter {
         if (!SIMPLE.matcher(identifier).matches()) return true;
         // ANSI folds unquoted identifiers; keep rule simple: quote reserved words.
         return RESERVED.contains(identifier.toUpperCase());
+    }
+
+    /**
+     * Indicates whether ANSI supports the requested quote style.
+     *
+     * @param quoteStyle the quote style to check.
+     * @return True for SQL standard double quotes and unquoted identifiers.
+     */
+    @Override
+    public boolean supports(QuoteStyle quoteStyle) {
+        return quoteStyle == null || quoteStyle == QuoteStyle.NONE || quoteStyle == QuoteStyle.DOUBLE_QUOTE;
     }
 }

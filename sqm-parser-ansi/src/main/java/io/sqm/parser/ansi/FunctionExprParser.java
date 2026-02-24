@@ -29,10 +29,7 @@ public class FunctionExprParser implements MatchableParser<FunctionExpr> {
     public ParseResult<FunctionExpr> parse(Cursor cur, ParseContext ctx) {
         var t = cur.expect("Expected function name", TokenType.IDENT);
 
-        StringBuilder name = new StringBuilder(t.lexeme());
-        while (cur.consumeIf(TokenType.DOT) && cur.match(TokenType.IDENT, 1)) {
-            name.append('.').append(cur.advance().lexeme());
-        }
+        var functionName = parseQualifiedName(toIdentifier(t), cur);
 
         // '('
         cur.expect("Expected '(' after function name", TokenType.LPAREN);
@@ -86,7 +83,7 @@ public class FunctionExprParser implements MatchableParser<FunctionExpr> {
             over = or.value();
         }
 
-        return ok(FunctionExpr.of(name.toString(), args, distinct, withinGroup, filter, over));
+        return ok(FunctionExpr.of(functionName, args, distinct, withinGroup, filter, over));
     }
 
     /**
@@ -124,3 +121,4 @@ public class FunctionExprParser implements MatchableParser<FunctionExpr> {
         return cur.match(TokenType.LPAREN, p.current());
     }
 }
+

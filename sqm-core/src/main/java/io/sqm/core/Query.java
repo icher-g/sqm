@@ -43,48 +43,48 @@ public sealed interface Query extends Node permits CompositeQuery, DialectQuery,
     }
 
     /**
-     * Creates a CTE definition with the provided name.
+     * Creates a common table expression definition with identifier metadata.
      *
-     * @param name the CTE name.
+     * @param name CTE name identifier.
      * @return A newly created CTE definition.
      */
-    static CteDef cte(String name) {
+    static CteDef cte(Identifier name) {
         return CteDef.of(name);
     }
 
     /**
-     * Creates a CTE definition with the provided name.
+     * Creates a common table expression definition with identifier metadata.
      *
-     * @param name the CTE name.
-     * @param body a sub query wrapped by the CTE.
+     * @param name CTE name identifier.
+     * @param body query body.
      * @return A newly created CTE definition.
      */
-    static CteDef cte(String name, Query body) {
+    static CteDef cte(Identifier name, Query body) {
         return CteDef.of(name, body);
     }
 
     /**
-     * Creates a CTE definition with the provided name.
+     * Creates a common table expression definition with identifier metadata.
      *
-     * @param name          the CTE name.
-     * @param body          a sub query wrapped by the CTE.
-     * @param columnAliases a list of column aliases.
+     * @param name          CTE name identifier.
+     * @param body          query body.
+     * @param columnAliases column alias identifiers.
      * @return A newly created CTE definition.
      */
-    static CteDef cte(String name, Query body, List<String> columnAliases) {
+    static CteDef cte(Identifier name, Query body, List<Identifier> columnAliases) {
         return CteDef.of(name, body, columnAliases);
     }
 
     /**
-     * Creates a CTE definition with the provided name and materialization hint.
+     * Creates a common table expression definition with identifier metadata.
      *
-     * @param name            the CTE name.
-     * @param body            a sub query wrapped by the CTE.
-     * @param columnAliases   a list of column aliases.
+     * @param name            CTE name identifier.
+     * @param body            query body.
+     * @param columnAliases   column alias identifiers.
      * @param materialization materialization hint.
      * @return A newly created CTE definition.
      */
-    static CteDef cte(String name, Query body, List<String> columnAliases, CteDef.Materialization materialization) {
+    static CteDef cte(Identifier name, Query body, List<Identifier> columnAliases, CteDef.Materialization materialization) {
         return CteDef.of(name, body, columnAliases, materialization);
     }
 

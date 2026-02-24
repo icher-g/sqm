@@ -46,8 +46,8 @@ public class Transform_RenameColumnTransformer {
     public static class RenameColumnTransformer extends RecursiveNodeTransformer {
         @Override
         public Node visitColumnExpr(ColumnExpr c) {
-            if ("u".equals(c.tableAlias()) && "id".equals(c.name())) {
-                return ColumnExpr.of("u", "user_id");
+            if ("u".equals(c.tableAlias().value()) && "id".equals(c.name().value())) {
+                return col("u", "user_id");
             }
             return c;
         }

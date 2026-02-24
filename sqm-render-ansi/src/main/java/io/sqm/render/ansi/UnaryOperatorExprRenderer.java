@@ -15,7 +15,11 @@ public class UnaryOperatorExprRenderer implements Renderer<UnaryOperatorExpr> {
      */
     @Override
     public void render(UnaryOperatorExpr node, RenderContext ctx, SqlWriter w) {
-        w.append(node.operator()).append(node.expr());
+        var operatorName = node.operator();
+        if (operatorName.operatorKeywordSyntax()) {
+            throw new IllegalStateException("Unary OPERATOR(...) syntax is not supported");
+        }
+        w.append(operatorName.symbol()).append(node.expr());
     }
 
     /**

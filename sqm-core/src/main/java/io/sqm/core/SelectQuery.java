@@ -149,6 +149,18 @@ public non-sealed interface SelectQuery extends Query {
 
     /**
      * Default immutable implementation of {@link SelectQuery}.
+     *
+     * @param items select items (immutable copy)
+     * @param from FROM table reference, or {@code null}
+     * @param joins joins (immutable copy)
+     * @param where WHERE predicate, or {@code null}
+     * @param groupBy GROUP BY clause, or {@code null}
+     * @param having HAVING predicate, or {@code null}
+     * @param orderBy ORDER BY clause, or {@code null}
+     * @param distinct DISTINCT specification, or {@code null}
+     * @param limitOffset LIMIT/OFFSET specification, or {@code null}
+     * @param lockFor locking clause, or {@code null}
+     * @param windows WINDOW clause definitions (immutable copy)
      */
     record Impl(List<SelectItem> items,
                 TableRef from,
@@ -162,6 +174,9 @@ public non-sealed interface SelectQuery extends Query {
                 LockingClause lockFor,
                 List<WindowDef> windows) implements SelectQuery {
 
+        /**
+         * Creates an immutable {@link SelectQuery} implementation and defensively copies list inputs.
+         */
         public Impl {
             items = List.copyOf(items);
             joins = List.copyOf(joins);

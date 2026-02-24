@@ -40,8 +40,8 @@ public class NodeSubtypesJsonTest {
         var back = roundTrip(typeName, TypeName.class);
 
         assertNotNull(back);
-        assertEquals(1, back.qualifiedName().size());
-        assertEquals("integer", back.qualifiedName().getFirst());
+        assertEquals(1, back.qualifiedName().parts().size());
+        assertEquals("integer", back.qualifiedName().values().getFirst());
         assertEquals(0, back.arrayDims());
         assertFalse(back.keyword().isPresent());
 
@@ -56,19 +56,19 @@ public class NodeSubtypesJsonTest {
 
         var back = roundTrip(typeName, TypeName.class);
 
-        assertEquals(2, back.qualifiedName().size());
-        assertEquals("public", back.qualifiedName().get(0));
-        assertEquals("custom_type", back.qualifiedName().get(1));
+        assertEquals(2, back.qualifiedName().parts().size());
+        assertEquals("public", back.qualifiedName().values().get(0));
+        assertEquals("custom_type", back.qualifiedName().values().get(1));
     }
 
     @Test
     @DisplayName("TypeName: with modifiers")
     void typeName_withModifiers() throws Exception {
-        var typeName = TypeName.of(List.of("decimal"), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE);
+        var typeName = TypeName.of(QualifiedName.of(List.of("decimal")), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE);
 
         var back = roundTrip(typeName, TypeName.class);
 
-        assertEquals("decimal", back.qualifiedName().getFirst());
+        assertEquals("decimal", back.qualifiedName().values().getFirst());
         assertEquals(2, back.modifiers().size());
         assertEquals(10, ((LiteralExpr) back.modifiers().get(0)).value());
         assertEquals(2, ((LiteralExpr) back.modifiers().get(1)).value());
@@ -81,7 +81,7 @@ public class NodeSubtypesJsonTest {
 
         var back = roundTrip(typeName, TypeName.class);
 
-        assertEquals("text", back.qualifiedName().getFirst());
+        assertEquals("text", back.qualifiedName().values().getFirst());
         assertEquals(1, back.arrayDims());
     }
 
@@ -92,29 +92,29 @@ public class NodeSubtypesJsonTest {
 
         var back = roundTrip(typeName, TypeName.class);
 
-        assertEquals("integer", back.qualifiedName().getFirst());
+        assertEquals("integer", back.qualifiedName().values().getFirst());
         assertEquals(3, back.arrayDims());
     }
 
     @Test
     @DisplayName("TypeName: with time zone spec")
     void typeName_withTimeZone() throws Exception {
-        var typeName = TypeName.of(List.of("timestamp"), null, List.of(), 0, TimeZoneSpec.WITH_TIME_ZONE);
+        var typeName = TypeName.of(QualifiedName.of(List.of("timestamp")), null, List.of(), 0, TimeZoneSpec.WITH_TIME_ZONE);
 
         var back = roundTrip(typeName, TypeName.class);
 
-        assertEquals("timestamp", back.qualifiedName().getFirst());
+        assertEquals("timestamp", back.qualifiedName().values().getFirst());
         assertEquals(TimeZoneSpec.WITH_TIME_ZONE, back.timeZoneSpec());
     }
 
     @Test
     @DisplayName("TypeName: without time zone spec")
     void typeName_withoutTimeZone() throws Exception {
-        var typeName = TypeName.of(List.of("timestamp"), null, List.of(), 0, TimeZoneSpec.WITHOUT_TIME_ZONE);
+        var typeName = TypeName.of(QualifiedName.of(List.of("timestamp")), null, List.of(), 0, TimeZoneSpec.WITHOUT_TIME_ZONE);
 
         var back = roundTrip(typeName, TypeName.class);
 
-        assertEquals("timestamp", back.qualifiedName().getFirst());
+        assertEquals("timestamp", back.qualifiedName().values().getFirst());
         assertEquals(TimeZoneSpec.WITHOUT_TIME_ZONE, back.timeZoneSpec());
     }
 
@@ -127,7 +127,7 @@ public class NodeSubtypesJsonTest {
         Node back = mapper.readValue(json, Node.class);
 
         assertInstanceOf(TypeName.class, back);
-        assertEquals("varchar", ((TypeName) back).qualifiedName().getFirst());
+        assertEquals("varchar", ((TypeName) back).qualifiedName().values().getFirst());
     }
 
     @Test
@@ -138,14 +138,14 @@ public class NodeSubtypesJsonTest {
         var back = roundTrip(castExpr, CastExpr.class);
 
         var typeName = back.type();
-        assertEquals("bigint", typeName.qualifiedName().getFirst());
+        assertEquals("bigint", typeName.qualifiedName().values().getFirst());
     }
 
     @Test
     @DisplayName("TypeName: complex with schema, modifiers, and array")
     void typeName_complex() throws Exception {
         var typeName = TypeName.of(
-            List.of("pg_catalog", "varchar"),
+            QualifiedName.of(List.of("pg_catalog", "varchar")),
             null,
             List.of(lit(255)),
             2,
@@ -154,9 +154,9 @@ public class NodeSubtypesJsonTest {
 
         var back = roundTrip(typeName, TypeName.class);
 
-        assertEquals(2, back.qualifiedName().size());
-        assertEquals("pg_catalog", back.qualifiedName().get(0));
-        assertEquals("varchar", back.qualifiedName().get(1));
+        assertEquals(2, back.qualifiedName().parts().size());
+        assertEquals("pg_catalog", back.qualifiedName().values().get(0));
+        assertEquals("varchar", back.qualifiedName().values().get(1));
         assertEquals(1, back.modifiers().size());
         assertEquals(255, ((LiteralExpr) back.modifiers().getFirst()).value());
         assertEquals(2, back.arrayDims());
@@ -170,7 +170,7 @@ public class NodeSubtypesJsonTest {
         for (String typeName : types) {
             var type = type(typeName);
             var back = roundTrip(type, TypeName.class);
-            assertEquals(typeName, back.qualifiedName().getFirst());
+            assertEquals(typeName, back.qualifiedName().values().getFirst());
         }
     }
 
@@ -279,7 +279,7 @@ public class NodeSubtypesJsonTest {
     void integration_castAndDistinct() throws Exception {
         var query = select(
             col("id"),
-            col("price").cast(TypeName.of(List.of("decimal"), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE)).as("price_decimal")
+            col("price").cast(TypeName.of(QualifiedName.of(List.of("decimal")), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE)).as("price_decimal")
         )
         .from(tbl("products"))
         .distinct(DistinctSpec.TRUE)
@@ -295,7 +295,7 @@ public class NodeSubtypesJsonTest {
         assertInstanceOf(CastExpr.class, selectItem.expr());
 
         var castExpr = (CastExpr) selectItem.expr();
-        assertEquals("decimal", castExpr.type().qualifiedName().getFirst());
+        assertEquals("decimal", castExpr.type().qualifiedName().values().getFirst());
         assertEquals(2, castExpr.type().modifiers().size());
     }
 
@@ -304,7 +304,7 @@ public class NodeSubtypesJsonTest {
     void integration_multipleCasts() throws Exception {
         var query = select(
             col("id").cast(type("bigint")).as("id_bigint"),
-            col("amount").cast(TypeName.of(List.of("numeric"), null, List.of(lit(12), lit(4)), 0, TimeZoneSpec.NONE)).as("amount_numeric"),
+            col("amount").cast(TypeName.of(QualifiedName.of(List.of("numeric")), null, List.of(lit(12), lit(4)), 0, TimeZoneSpec.NONE)).as("amount_numeric"),
             col("data").cast(type("jsonb")).as("data_json"),
             col("tags").cast(type("text").array()).as("tags_array")
         ).from(tbl("records"))
@@ -326,9 +326,9 @@ public class NodeSubtypesJsonTest {
     @Test
     @DisplayName("TypeName with various time zone specs")
     void typeName_allTimeZoneSpecs() throws Exception {
-        var none = TypeName.of(List.of("timestamp"), null, List.of(), 0, TimeZoneSpec.NONE);
-        var withTz = TypeName.of(List.of("timestamp"), null, List.of(), 0, TimeZoneSpec.WITH_TIME_ZONE);
-        var withoutTz = TypeName.of(List.of("timestamp"), null, List.of(), 0, TimeZoneSpec.WITHOUT_TIME_ZONE);
+        var none = TypeName.of(QualifiedName.of(List.of("timestamp")), null, List.of(), 0, TimeZoneSpec.NONE);
+        var withTz = TypeName.of(QualifiedName.of(List.of("timestamp")), null, List.of(), 0, TimeZoneSpec.WITH_TIME_ZONE);
+        var withoutTz = TypeName.of(QualifiedName.of(List.of("timestamp")), null, List.of(), 0, TimeZoneSpec.WITHOUT_TIME_ZONE);
 
         var backNone = roundTrip(none, TypeName.class);
         var backWithTz = roundTrip(withTz, TypeName.class);
@@ -342,13 +342,13 @@ public class NodeSubtypesJsonTest {
     @Test
     @DisplayName("TypeName with keyword")
     void typeName_withKeyword() throws Exception {
-        var typeName = TypeName.of(List.of(), TypeKeyword.DOUBLE_PRECISION, List.of(), 0, TimeZoneSpec.NONE);
+        var typeName = TypeName.of(null, TypeKeyword.DOUBLE_PRECISION, List.of(), 0, TimeZoneSpec.NONE);
 
         var back = roundTrip(typeName, TypeName.class);
 
         assertTrue(back.keyword().isPresent());
         assertEquals(TypeKeyword.DOUBLE_PRECISION, back.keyword().get());
-        assertTrue(back.qualifiedName().isEmpty());
+        assertNull(back.qualifiedName());
     }
 
     @Test
@@ -357,7 +357,7 @@ public class NodeSubtypesJsonTest {
         var query = select(
             col("id"),
             col("name"),
-            col("price").cast(TypeName.of(List.of("decimal"), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE)).as("price_decimal"),
+            col("price").cast(TypeName.of(QualifiedName.of(List.of("decimal")), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE)).as("price_decimal"),
             func("upper", arg(col("status"))).as("upper_status")
         )
         .from(tbl("products"))
@@ -399,3 +399,7 @@ public class NodeSubtypesJsonTest {
         assertTrue(node.has("limitOffset"));
     }
 }
+
+
+
+

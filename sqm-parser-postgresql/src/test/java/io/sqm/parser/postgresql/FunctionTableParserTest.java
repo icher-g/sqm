@@ -42,7 +42,7 @@ class FunctionTableParserTest {
         
         var table = assertInstanceOf(FunctionTable.class, query.from());
         assertNotNull(table.alias());
-        assertEquals("nums", table.alias());
+        assertEquals("nums", table.alias().value());
     }
 
     @Test
@@ -55,9 +55,9 @@ class FunctionTableParserTest {
         
         var table = assertInstanceOf(FunctionTable.class, query.from());
         assertNotNull(table.alias());
-        assertEquals("t", table.alias());
+        assertEquals("t", table.alias().value());
         assertEquals(1, table.columnAliases().size());
-        assertEquals("n", table.columnAliases().getFirst());
+        assertEquals("n", table.columnAliases().getFirst().value());
     }
 
     @Test
@@ -70,7 +70,7 @@ class FunctionTableParserTest {
 
         var table = assertInstanceOf(FunctionTable.class, query.from());
         assertTrue(table.ordinality());
-        assertEquals("t", table.alias());
+        assertEquals("t", table.alias().value());
         assertEquals(2, table.columnAliases().size());
     }
 
@@ -96,9 +96,9 @@ class FunctionTableParserTest {
         var query = assertInstanceOf(SelectQuery.class, qResult.value());
 
         var table = assertInstanceOf(FunctionTable.class, query.from());
-        assertEquals("t", table.alias());
+        assertEquals("t", table.alias().value());
         assertEquals(1, table.columnAliases().size());
-        assertEquals("n", table.columnAliases().getFirst());
+        assertEquals("n", table.columnAliases().getFirst().value());
     }
 
     @Test
@@ -111,7 +111,7 @@ class FunctionTableParserTest {
         
         var table = assertInstanceOf(FunctionTable.class, query.from());
         var func = table.function();
-        assertEquals("unnest", func.name());
+        assertEquals("unnest", func.name().values().getLast());
     }
 
     @Test
@@ -123,7 +123,7 @@ class FunctionTableParserTest {
         var query = assertInstanceOf(SelectQuery.class, qResult.value());
         
         var table = assertInstanceOf(FunctionTable.class, query.from());
-        assertEquals("json_array_elements", table.function().name());
+        assertEquals("json_array_elements", table.function().name().values().getLast());
     }
 
     @Test

@@ -3,6 +3,7 @@ package io.sqm.core;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a USING JOIN statement.
@@ -17,26 +18,14 @@ import java.util.List;
  */
 public non-sealed interface UsingJoin extends Join {
     /**
-     * Creates a cross join with the provided table.
+     * Creates a USING join with the provided list of column identifiers.
      *
-     * @param right        a table to join.
-     * @param kind         a join kind.
-     * @param usingColumns a list of columns to be used for joining.
-     * @return A newly created instance of CROSS JOIN with the provided table.
+     * @param right a table to join.
+     * @param kind a join kind.
+     * @param usingColumns identifiers used in the {@code USING (...)} clause.
+     * @return a newly created USING join.
      */
-    static UsingJoin of(TableRef right, JoinKind kind, String... usingColumns) {
-        return new Impl(right, kind, List.of(usingColumns));
-    }
-
-    /**
-     * Creates a cross join with the provided table.
-     *
-     * @param right        a table to join.
-     * @param kind         a join kind.
-     * @param usingColumns a list of columns to be used for joining.
-     * @return A newly created instance of CROSS JOIN with the provided table.
-     */
-    static UsingJoin of(TableRef right, JoinKind kind, List<String> usingColumns) {
+    static UsingJoin of(TableRef right, JoinKind kind, List<Identifier> usingColumns) {
         return new Impl(right, kind, usingColumns);
     }
 
@@ -52,7 +41,16 @@ public non-sealed interface UsingJoin extends Join {
      *
      * @return list of column names used in USING clause
      */
-    List<String> usingColumns();
+    List<Identifier> usingColumns();
+
+    /**
+     * USING (col1, col2, ...) column names as plain values.
+     *
+     * @return list of identifier values used in USING clause
+     */
+    default List<String> usingColumnNames() {
+        return usingColumns().stream().map(Identifier::value).toList();
+    }
 
     /**
      * Adds a kind to the current join instance.
@@ -93,6 +91,19 @@ public non-sealed interface UsingJoin extends Join {
      * @param kind         a join kind.
      * @param usingColumns a list of columns to join on.
      */
-    record Impl(TableRef right, JoinKind kind, List<String> usingColumns) implements UsingJoin {
+    record Impl(TableRef right, JoinKind kind, List<Identifier> usingColumns) implements UsingJoin {
+        /**
+         * Creates a USING join implementation.
+         *
+         * @param right the table to join
+         * @param kind the join kind
+         * @param usingColumns identifiers used in the USING clause
+         */
+        public Impl {
+            Objects.requireNonNull(right, "right");
+            Objects.requireNonNull(kind, "kind");
+            Objects.requireNonNull(usingColumns, "usingColumns");
+            usingColumns = List.copyOf(usingColumns);
+        }
     }
 }

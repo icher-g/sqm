@@ -1,6 +1,7 @@
 package io.sqm.validate.schema.rule;
 
 import io.sqm.core.FunctionExpr;
+import io.sqm.core.Identifier;
 import io.sqm.core.OverSpec;
 import io.sqm.core.SelectQuery;
 import io.sqm.core.walk.RecursiveNodeVisitor;
@@ -59,8 +60,8 @@ final class WindowReferenceValidationRule implements SchemaValidationRule<Select
      * @param identifier identifier value.
      * @return normalized identifier.
      */
-    private static String normalize(String identifier) {
-        return identifier.toLowerCase(Locale.ROOT);
+    private static String normalize(Identifier identifier) {
+        return identifier.value().toLowerCase(Locale.ROOT);
     }
 
     /**
@@ -153,13 +154,13 @@ final class WindowReferenceValidationRule implements SchemaValidationRule<Select
          * @param windowName referenced window name.
          * @param source source node for diagnostics.
          */
-        private void validateWindowName(String windowName, FunctionExpr source) {
+        private void validateWindowName(Identifier windowName, FunctionExpr source) {
             if (windowName == null || windowNames.contains(normalize(windowName))) {
                 return;
             }
             context.addProblem(
                 ValidationProblem.Code.WINDOW_NOT_FOUND,
-                "Window not found: " + windowName,
+                "Window not found: " + windowName.value(),
                 source,
                 "window.reference"
             );

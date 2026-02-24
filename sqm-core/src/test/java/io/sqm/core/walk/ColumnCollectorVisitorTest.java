@@ -2,6 +2,8 @@ package io.sqm.core.walk;
 
 import io.sqm.core.ColumnExpr;
 import io.sqm.core.FunctionExpr;
+import io.sqm.core.Identifier;
+import io.sqm.core.QualifiedName;
 import io.sqm.core.RowExpr;
 import org.junit.jupiter.api.Test;
 
@@ -19,10 +21,10 @@ public class ColumnCollectorVisitorTest {
 
     @Test
     void collectsColumns_fromNestedExpressions() {
-        ColumnExpr colUid = ColumnExpr.of("u", "id");
-        ColumnExpr colName = ColumnExpr.of(null, "name");
+        ColumnExpr colUid = ColumnExpr.of(Identifier.of("u"), Identifier.of("id"));
+        ColumnExpr colName = ColumnExpr.of(null, Identifier.of("name"));
 
-        FunctionExpr lower = FunctionExpr.of("lower", FunctionExpr.Arg.expr(colName));
+        FunctionExpr lower = FunctionExpr.of(QualifiedName.of("lower"), List.of(FunctionExpr.Arg.expr(colName)), null, null, null, null);
         RowExpr row = RowExpr.of(List.of(colUid, lower));
 
         ColumnCollector collector = new ColumnCollector();
@@ -45,8 +47,10 @@ public class ColumnCollectorVisitorTest {
 
         @Override
         public Void visitColumnExpr(ColumnExpr c) {
-            cols.add(c.tableAlias() == null ? c.name() : c.tableAlias() + "." + c.name());
+            cols.add(c.tableAlias() == null ? c.name().value() : c.tableAlias().value() + "." + c.name().value());
             return super.visitColumnExpr(c); // continue recursion if there are nested nodes (usually none for columns)
         }
     }
 }
+
+

@@ -1,5 +1,6 @@
 package io.sqm.core;
 
+import io.sqm.dsl.Dsl;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -33,14 +34,14 @@ class QueryTest {
 
     @Test
     void cte() {
-        assertInstanceOf(CteDef.class, Query.cte("name"));
-        assertInstanceOf(CteDef.class, Query.cte("name", Query.select(Expression.literal(1)).build()));
-        assertInstanceOf(CteDef.class, Query.cte("name", Query.select(Expression.literal(1)).build(), List.of("a")));
+        assertInstanceOf(CteDef.class, Dsl.cte("name"));
+        assertInstanceOf(CteDef.class, Dsl.cte("name", Query.select(Expression.literal(1)).build()));
+        assertInstanceOf(CteDef.class, Dsl.cte("name", Query.select(Expression.literal(1)).build(), List.of("a")));
     }
 
     @Test
     void with() {
-        var cte = Query.cte("name");
+        var cte = Dsl.cte("name");
         var query = Query.select(Expression.literal(1)).build();
         assertInstanceOf(WithQuery.class, Query.with(List.of(cte), query));
         assertInstanceOf(WithQuery.class, Query.with(List.of(cte), query, true));
@@ -110,7 +111,7 @@ class QueryTest {
 
     @Test
     void maybeWith() {
-        var cte = Query.cte("name");
+        var cte = Query.cte(Identifier.of("name"));
         var query = Query.select(Expression.literal(1)).build();
         assertTrue(Query.with(List.of(cte), query).<Boolean>matchQuery().with(w -> true).orElse(false));
         assertFalse(query.<Boolean>matchQuery().with(w -> true).orElse(false));

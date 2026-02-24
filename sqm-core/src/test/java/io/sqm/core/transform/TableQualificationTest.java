@@ -1,5 +1,6 @@
 package io.sqm.core.transform;
 
+import io.sqm.core.Identifier;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -16,9 +17,9 @@ class TableQualificationTest {
 
     @Test
     void qualified_contains_schema() {
-        var qualified = TableQualification.qualified("app");
+        var qualified = TableQualification.qualified(Identifier.of("app"));
         assertInstanceOf(TableQualification.Qualified.class, qualified);
-        assertEquals("app", ((TableQualification.Qualified) qualified).schema());
+        assertEquals("app", ((TableQualification.Qualified) qualified).schema().value());
     }
 
     @Test

@@ -2,6 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.TimeZoneSpec;
 import io.sqm.core.TypeName;
+import io.sqm.core.QuoteStyle;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +26,7 @@ class TypeNameArrayParserTest {
         var t = parseTypeName("int[]");
 
         assertEquals(1, t.arrayDims());
-        assertEquals(java.util.List.of("int"), t.qualifiedName());
+        assertEquals(java.util.List.of("int"), t.qualifiedName().values());
         assertTrue(t.keyword().isEmpty());
         assertTrue(t.modifiers().isEmpty());
         assertEquals(TimeZoneSpec.NONE, t.timeZoneSpec());
@@ -36,14 +37,14 @@ class TypeNameArrayParserTest {
         var t = parseTypeName("text[][]");
 
         assertEquals(2, t.arrayDims());
-        assertEquals(java.util.List.of("text"), t.qualifiedName());
+        assertEquals(java.util.List.of("text"), t.qualifiedName().values());
     }
 
     @Test
     void parsesArrayType_withModifiers() {
         var t = parseTypeName("varchar(10)[]");
 
-        assertEquals(java.util.List.of("varchar"), t.qualifiedName());
+        assertEquals(java.util.List.of("varchar"), t.qualifiedName().values());
         assertEquals(1, t.modifiers().size());
         assertEquals(1, t.arrayDims());
     }
@@ -52,8 +53,18 @@ class TypeNameArrayParserTest {
     void parsesArrayType_withQualification() {
         var t = parseTypeName("pg_catalog.int4[]");
 
-        assertEquals(java.util.List.of("pg_catalog", "int4"), t.qualifiedName());
+        assertEquals(java.util.List.of("pg_catalog", "int4"), t.qualifiedName().values());
         assertEquals(1, t.arrayDims());
+    }
+
+    @Test
+    void preserves_quote_metadata_in_qualified_type_name_parts() {
+        var t = parseTypeName("\"Pg\".\"Int4\"[]");
+
+        assertEquals(java.util.List.of("Pg", "Int4"), t.qualifiedName().values());
+        assertNotNull(t.qualifiedName());
+        assertEquals(QuoteStyle.DOUBLE_QUOTE, t.qualifiedName().parts().get(0).quoteStyle());
+        assertEquals(QuoteStyle.DOUBLE_QUOTE, t.qualifiedName().parts().get(1).quoteStyle());
     }
 
     @Test
@@ -62,7 +73,7 @@ class TypeNameArrayParserTest {
         // If your PgTypeNameParser supports TZ, this should pass.
         var t = parseTypeName("timestamp with time zone[]");
 
-        assertEquals(java.util.List.of("timestamp"), t.qualifiedName());
+        assertEquals(java.util.List.of("timestamp"), t.qualifiedName().values());
         assertEquals(TimeZoneSpec.WITH_TIME_ZONE, t.timeZoneSpec());
         assertEquals(1, t.arrayDims());
     }

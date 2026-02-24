@@ -28,11 +28,11 @@ class FunctionTableTest {
     @DisplayName("Create function table with alias")
     void createWithAlias() {
         var func = func("unnest", arg(array(lit(1), lit(2), lit(3))));
-        var table = FunctionTable.of(func, "t");
+        var table = FunctionTable.of(func).as("t");
 
         assertNotNull(table);
         assertEquals(func, table.function());
-        assertEquals("t", table.alias());
+        assertEquals("t", table.alias().value());
         assertTrue(table.columnAliases().isEmpty());
         assertFalse(table.ordinality());
     }
@@ -41,14 +41,16 @@ class FunctionTableTest {
     @DisplayName("Create function table with alias and column aliases")
     void createWithAliasAndColumns() {
         var func = func("json_to_record", arg(lit("{}")));
-        var table = FunctionTable.of(func, List.of("id", "name"), "t");
+        var table = FunctionTable.of(func)
+            .as("t")
+            .columnAliases("id", "name");
 
         assertNotNull(table);
         assertEquals(func, table.function());
-        assertEquals("t", table.alias());
+        assertEquals("t", table.alias().value());
         assertEquals(2, table.columnAliases().size());
-        assertTrue(table.columnAliases().contains("id"));
-        assertTrue(table.columnAliases().contains("name"));
+        assertTrue(table.columnAliases().stream().map(Identifier::value).toList().contains("id"));
+        assertTrue(table.columnAliases().stream().map(Identifier::value).toList().contains("name"));
         assertFalse(table.ordinality());
     }
 
@@ -58,7 +60,7 @@ class FunctionTableTest {
         var func = func("generate_series", arg(lit(1)), arg(lit(10)));
         var table = FunctionTable.of(func).as("series");
 
-        assertEquals("series", table.alias());
+        assertEquals("series", table.alias().value());
         assertEquals(func, table.function());
     }
 
@@ -76,23 +78,23 @@ class FunctionTableTest {
     @DisplayName("Add column aliases as list")
     void addColumnAliasesList() {
         var func = func("generate_series", arg(lit(1)), arg(lit(10)));
-        var table = FunctionTable.of(func, "t")
-            .columnAliases(List.of("num"));
+        var table = FunctionTable.of(func).as("t")
+            .columnAliases("num");
 
         assertEquals(1, table.columnAliases().size());
-        assertEquals("num", table.columnAliases().getFirst());
+        assertEquals("num", table.columnAliases().getFirst().value());
     }
 
     @Test
     @DisplayName("Add column aliases as varargs")
     void addColumnAliasesVarargs() {
         var func = func("json_each", arg(col("data")));
-        var table = FunctionTable.of(func, "t")
+        var table = FunctionTable.of(func).as("t")
             .columnAliases("key", "value");
 
         assertEquals(2, table.columnAliases().size());
-        assertEquals("key", table.columnAliases().get(0));
-        assertEquals("value", table.columnAliases().get(1));
+        assertEquals("key", table.columnAliases().get(0).value());
+        assertEquals("value", table.columnAliases().get(1).value());
     }
 
     @Test
@@ -114,9 +116,9 @@ class FunctionTableTest {
             .as("series")
             .columnAliases("num");
 
-        assertEquals("series", table.alias());
+        assertEquals("series", table.alias().value());
         assertEquals(1, table.columnAliases().size());
-        assertEquals("num", table.columnAliases().getFirst());
+        assertEquals("num", table.columnAliases().getFirst().value());
     }
 
     @Test
@@ -129,8 +131,8 @@ class FunctionTableTest {
         var table4 = table3.withOrdinality();
 
         assertNull(table1.alias());
-        assertEquals("t", table2.alias());
-        assertEquals("t", table3.alias());
+        assertEquals("t", table2.alias().value());
+        assertEquals("t", table3.alias().value());
         assertTrue(table1.columnAliases().isEmpty());
         assertTrue(table2.columnAliases().isEmpty());
         assertFalse(table3.columnAliases().isEmpty());
@@ -142,7 +144,7 @@ class FunctionTableTest {
     @DisplayName("Accept visitor")
     void acceptVisitor() {
         var func = func("generate_series", arg(lit(1)), arg(lit(10)));
-        var table = FunctionTable.of(func, "t");
+        var table = FunctionTable.of(func).as("t");
 
         var result = table.accept(new TestVisitor());
         assertEquals("FunctionTable", result);
@@ -153,7 +155,9 @@ class FunctionTableTest {
     void columnAliasesAreCopied() {
         var func = func("generate_series", arg(lit(1)), arg(lit(10)));
         var columns = new java.util.ArrayList<>(List.of("a", "b"));
-        var table = FunctionTable.of(func, columns, "t");
+        var table = FunctionTable.of(func)
+            .as("t")
+            .columnAliases(columns);
 
         columns.add("c");
         assertEquals(2, table.columnAliases().size());

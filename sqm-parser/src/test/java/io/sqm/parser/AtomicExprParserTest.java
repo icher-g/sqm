@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class AtomicExprParserTest {
 
@@ -56,7 +57,7 @@ class AtomicExprParserTest {
 
         assertTrue(result.ok());
         var expr = assertInstanceOf(UnaryOperatorExpr.class, result.value());
-        assertEquals("+", expr.operator());
+        assertEquals("+", expr.operator().text());
     }
 
     @Test
@@ -191,7 +192,7 @@ class AtomicExprParserTest {
         public ParseResult<? extends UnaryOperatorExpr> parse(Cursor cur, ParseContext ctx) {
             var op = cur.expect("Expected unary operator", TokenType.OPERATOR).lexeme();
             var token = cur.expect("Expected identifier", TokenType.IDENT);
-            return ParseResult.ok(UnaryOperatorExpr.of(op, Expression.column(token.lexeme())));
+            return ParseResult.ok(UnaryOperatorExpr.of(op, col(token.lexeme())));
         }
 
         @Override
@@ -209,7 +210,7 @@ class AtomicExprParserTest {
         @Override
         public ParseResult<? extends ColumnExpr> parse(Cursor cur, ParseContext ctx) {
             var token = cur.expect("Expected identifier", TokenType.IDENT);
-            return ParseResult.ok(ColumnExpr.of(token.lexeme()));
+            return ParseResult.ok(col(token.lexeme()));
         }
 
         @Override
@@ -245,7 +246,7 @@ class AtomicExprParserTest {
         @Override
         public ParseResult<? extends FunctionExpr> parse(Cursor cur, ParseContext ctx) {
             cur.expect("Expected function name", TokenType.IDENT);
-            return ParseResult.ok(FunctionExpr.of("fn"));
+            return ParseResult.ok(FunctionExpr.of(QualifiedName.of("fn"), java.util.List.of(), null, null, null, null));
         }
 
         @Override
@@ -301,7 +302,7 @@ class AtomicExprParserTest {
             cur.expect("Expected (", TokenType.LPAREN);
             var token = cur.expect("Expected row marker", TokenType.IDENT);
             cur.expect("Expected )", TokenType.RPAREN);
-            return ParseResult.ok(RowExpr.of(List.of(Expression.column(token.lexeme()))));
+            return ParseResult.ok(RowExpr.of(List.of(col(token.lexeme()))));
         }
 
         @Override
@@ -319,14 +320,14 @@ class AtomicExprParserTest {
         @Override
         public ParseResult<CastExpr> parse(Expression lhs, Cursor cur, ParseContext ctx) {
             cur.expect("Expected cast marker", TokenType.CAST);
-            var type = TypeName.of(List.of("int"), null, List.of(), 0, TimeZoneSpec.NONE);
+            var type = TypeName.of(QualifiedName.of(List.of("int")), null, List.of(), 0, TimeZoneSpec.NONE);
             return ParseResult.ok(CastExpr.of(lhs, type));
         }
 
         @Override
         public ParseResult<? extends CastExpr> parse(Cursor cur, ParseContext ctx) {
             cur.expect("Expected CAST", TokenType.CAST);
-            var type = TypeName.of(List.of("int"), null, List.of(), 0, TimeZoneSpec.NONE);
+            var type = TypeName.of(QualifiedName.of(List.of("int")), null, List.of(), 0, TimeZoneSpec.NONE);
             return ParseResult.ok(CastExpr.of(Expression.literal(1), type));
         }
 
@@ -448,3 +449,7 @@ class AtomicExprParserTest {
         }
     }
 }
+
+
+
+

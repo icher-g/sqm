@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.CteDef;
+import io.sqm.core.Identifier;
 import io.sqm.core.Query;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
@@ -24,13 +25,13 @@ public class CteDefParser implements Parser<CteDef> {
      */
     @Override
     public ParseResult<CteDef> parse(Cursor cur, ParseContext ctx) {
-        var name = cur.expect("Expected CTE name", TokenType.IDENT);
-        var aliases = new ArrayList<String>();
+        var name = toIdentifier(cur.expect("Expected CTE name", TokenType.IDENT));
+        var aliases = new ArrayList<Identifier>();
 
         if (cur.consumeIf(TokenType.LPAREN)) {
             do {
                 var alias = cur.expect("Expected column name", TokenType.IDENT);
-                aliases.add(alias.lexeme());
+                aliases.add(toIdentifier(alias));
             } while (cur.consumeIf(TokenType.COMMA));
 
             cur.expect("Expected ')'", TokenType.RPAREN);
@@ -62,7 +63,7 @@ public class CteDefParser implements Parser<CteDef> {
         }
 
         cur.expect("Expected ')' after CTE subquery", TokenType.RPAREN);
-        return ok(Query.cte(name.lexeme(), body.value(), aliases, materialization));
+        return ok(Query.cte(name, body.value(), aliases, materialization));
     }
 
     /**

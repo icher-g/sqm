@@ -1,5 +1,7 @@
 package io.sqm.core.transform;
 
+import io.sqm.core.Identifier;
+
 import java.util.Objects;
 
 /**
@@ -17,12 +19,12 @@ public sealed interface TableQualification
     }
 
     /**
-     * Returns outcome when table resolved to an explicit schema.
+     * Returns outcome when table resolved to an explicit schema identifier.
      *
-     * @param schema resolved schema name.
+     * @param schema resolved schema identifier.
      * @return qualified outcome.
      */
-    static TableQualification qualified(String schema) {
+    static TableQualification qualified(Identifier schema) {
         return new Qualified(Objects.requireNonNull(schema, "schema"));
     }
 
@@ -38,9 +40,9 @@ public sealed interface TableQualification
     /**
      * Resolved, schema-qualified table outcome.
      *
-     * @param schema schema name.
+     * @param schema schema identifier.
      */
-    record Qualified(String schema) implements TableQualification {
+    record Qualified(Identifier schema) implements TableQualification {
     }
 
     /**

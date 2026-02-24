@@ -5,9 +5,30 @@ package io.sqm.parser.core;
  *
  * @param type   a token type.
  * @param lexeme an actual text.
- * @param pos    a position in the tokens list.
+ * @param pos      a position in the tokens list.
+ * @param quoteChar quote delimiter used for quoted identifiers, or {@code null} otherwise.
  */
-public record Token(TokenType type, String lexeme, int pos) {
+public record Token(TokenType type, String lexeme, int pos, Character quoteChar) {
+    /**
+     * Creates a token without quote metadata.
+     *
+     * @param type   token type
+     * @param lexeme token text
+     * @param pos    source position
+     */
+    public Token(TokenType type, String lexeme, int pos) {
+        this(type, lexeme, pos, null);
+    }
+
+    /**
+     * Indicates whether this token is a quoted identifier.
+     *
+     * @return {@code true} if a quote delimiter is attached
+     */
+    public boolean quotedIdentifier() {
+        return quoteChar != null;
+    }
+
     @Override
     public String toString() {
         return type + (lexeme != null ? "[" + lexeme + "]" : "") + "@" + pos;

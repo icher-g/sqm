@@ -8,24 +8,24 @@ import java.util.Objects;
  *
  * @param identifier Identifier used in FOR UPDATE OF clause. This is either a table name or an alias.
  */
-public record LockTarget(String identifier) {
+public record LockTarget(Identifier identifier) {
 
     /**
      * Creates a lock target.
      *
-     * @param identifier table name or alias
+     * @param identifier table name or alias identifier
      */
     public LockTarget {
         Objects.requireNonNull(identifier, "identifier");
     }
 
     /**
-     * Creates a lock target from identifier.
+     * Creates a lock target from a quote-aware identifier.
      *
-     * @param identifier table name or alias
+     * @param identifier table name or alias identifier
      * @return lock target
      */
-    public static LockTarget of(String identifier) {
+    public static LockTarget of(Identifier identifier) {
         return new LockTarget(identifier);
     }
 }

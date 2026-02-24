@@ -1,5 +1,9 @@
 package io.sqm.render.ansi;
 
+import io.sqm.core.FunctionExpr;
+import io.sqm.core.Identifier;
+import io.sqm.core.QualifiedName;
+import io.sqm.core.QuoteStyle;
 import io.sqm.core.Node;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.RenderContext;
@@ -38,6 +42,36 @@ class FunctionExprRendererTest {
         var fc = func("pg_catalog.lower", arg(col("name")));
         var sql = render(fc);
         assertEquals("pg_catalog.lower(name)", sql);
+    }
+
+    @Test
+    @DisplayName("Qualified function name preserves or falls back quote style per part")
+    void qualifiedFuncName_quoteAware() {
+        var preserved = FunctionExpr.of(
+            new QualifiedName(java.util.List.of(
+                Identifier.of("pg_catalog"),
+                Identifier.of("Lower", QuoteStyle.DOUBLE_QUOTE)
+            )),
+            java.util.List.of(FunctionExpr.Arg.expr(col("name"))),
+            null,
+            null,
+            null,
+            null
+        );
+        assertEquals("pg_catalog.\"Lower\"(name)", render(preserved));
+
+        var fallback = FunctionExpr.of(
+            new QualifiedName(java.util.List.of(
+                Identifier.of("pg_catalog"),
+                Identifier.of("Lower", QuoteStyle.BACKTICK)
+            )),
+            java.util.List.of(FunctionExpr.Arg.expr(col("name"))),
+            null,
+            null,
+            null,
+            null
+        );
+        assertEquals("pg_catalog.\"Lower\"(name)", render(fallback));
     }
 
     @Test
@@ -181,3 +215,4 @@ class FunctionExprRendererTest {
             "Expected COALESCE(LOWER(u.name), 'N/A'), got: " + sql);
     }
 }
+

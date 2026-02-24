@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Unit tests for AnsiNamedTableRenderer.
@@ -63,13 +64,9 @@ class TableRefRendererTest {
     }
 
     @Test
-    @DisplayName("blank schema is ignored; blank alias is ignored")
-    void blanksIgnored() {
-        // ensure blanks produce same as no schema/alias
-        var noSchema = tbl("orders").inSchema("");
-        assertEquals("orders", renderToSql(noSchema));
-
-        var noAlias = tbl("orders").as("   "); // blank alias
-        assertEquals("orders", renderToSql(noAlias));
+    @DisplayName("blank schema/alias identifiers are rejected by model")
+    void blanksRejected() {
+        assertThrows(IllegalArgumentException.class, () -> tbl("orders").inSchema(""));
+        assertThrows(IllegalArgumentException.class, () -> tbl("orders").as("   "));
     }
 }

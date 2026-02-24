@@ -27,7 +27,7 @@ public class CollateExprRenderer implements Renderer<CollateExpr> {
         var quoter = ctx.dialect().quoter();
         w.append(node.expr())
             .space().append("COLLATE").space()
-            .append(quoter.quoteIfNeeded(node.collation()));
+            .append(renderQualifiedName(node.collation(), quoter));
     }
 
     /**
@@ -38,5 +38,11 @@ public class CollateExprRenderer implements Renderer<CollateExpr> {
     @Override
     public Class<? extends CollateExpr> targetType() {
         return CollateExpr.class;
+    }
+
+    private String renderQualifiedName(io.sqm.core.QualifiedName name, io.sqm.render.spi.IdentifierQuoter quoter) {
+        return name.parts().stream()
+            .map(part -> renderIdentifier(part, quoter))
+            .collect(java.util.stream.Collectors.joining("."));
     }
 }

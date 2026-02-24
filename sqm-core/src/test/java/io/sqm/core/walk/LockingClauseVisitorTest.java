@@ -1,7 +1,6 @@
 package io.sqm.core.walk;
 
 import io.sqm.core.LockMode;
-import io.sqm.core.LockTarget;
 import io.sqm.core.LockingClause;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,9 +19,9 @@ class LockingClauseVisitorTest {
     void visitorVisitsLockingClause() {
         var clause = LockingClause.of(LockMode.UPDATE, List.of(), false, false);
         var visitor = new CountingVisitor();
-        
+
         clause.accept(visitor);
-        
+
         assertEquals(1, visitor.lockingClauseCount);
     }
 
@@ -33,10 +32,10 @@ class LockingClauseVisitorTest {
             .from(tbl("users"))
             .lockFor(update(), List.of(), false, false)
             .build();
-        
+
         var visitor = new CountingVisitor();
         query.accept(visitor);
-        
+
         assertEquals(1, visitor.lockingClauseCount);
     }
 
@@ -45,9 +44,9 @@ class LockingClauseVisitorTest {
     void visitorExtractsLockMode() {
         var clause = LockingClause.of(LockMode.SHARE, List.of(), false, false);
         var visitor = new LockModeCollector();
-        
+
         clause.accept(visitor);
-        
+
         assertEquals(1, visitor.modes.size());
         assertEquals(LockMode.SHARE, visitor.modes.getFirst());
     }
@@ -55,12 +54,12 @@ class LockingClauseVisitorTest {
     @Test
     @DisplayName("Visitor extracts lock targets")
     void visitorExtractsLockTargets() {
-        var targets = List.of(LockTarget.of("users"), LockTarget.of("orders"));
+        var targets = ofTables("users", "orders");
         var clause = LockingClause.of(LockMode.UPDATE, targets, false, false);
         var visitor = new LockTargetCollector();
-        
+
         clause.accept(visitor);
-        
+
         assertEquals(2, visitor.targets.size());
         assertEquals("users", visitor.targets.get(0));
         assertEquals("orders", visitor.targets.get(1));
@@ -71,9 +70,9 @@ class LockingClauseVisitorTest {
     void visitorDetectsNowait() {
         var clause = LockingClause.of(LockMode.UPDATE, List.of(), true, false);
         var visitor = new FlagDetector();
-        
+
         clause.accept(visitor);
-        
+
         assertTrue(visitor.hasNowait);
         assertFalse(visitor.hasSkipLocked);
     }
@@ -83,9 +82,9 @@ class LockingClauseVisitorTest {
     void visitorDetectsSkipLocked() {
         var clause = LockingClause.of(LockMode.UPDATE, List.of(), false, true);
         var visitor = new FlagDetector();
-        
+
         clause.accept(visitor);
-        
+
         assertFalse(visitor.hasNowait);
         assertTrue(visitor.hasSkipLocked);
     }
@@ -96,10 +95,10 @@ class LockingClauseVisitorTest {
         var query = select(col("*"))
             .from(tbl("users"))
             .build();
-        
+
         var visitor = new CountingVisitor();
         query.accept(visitor);
-        
+
         assertEquals(0, visitor.lockingClauseCount);
     }
 
@@ -143,7 +142,7 @@ class LockingClauseVisitorTest {
 
         @Override
         public Void visitLockingClause(LockingClause clause) {
-            clause.ofTables().forEach(t -> targets.add(t.identifier()));
+            clause.ofTables().forEach(t -> targets.add(t.identifier().value()));
             return super.visitLockingClause(clause);
         }
     }

@@ -3,6 +3,8 @@ package io.sqm.parser.ansi;
 import io.sqm.core.ColumnExpr;
 import io.sqm.core.Expression;
 import io.sqm.core.GroupItem;
+import io.sqm.core.Identifier;
+import io.sqm.core.QuoteStyle;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import org.junit.jupiter.api.Assertions;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
+import static io.sqm.dsl.Dsl.col;
 
 class GroupItemParserTest {
 
@@ -58,7 +61,7 @@ class GroupItemParserTest {
         Assertions.assertNotNull(gi.expr(), "column must be set for column-based group item");
         Assertions.assertNull(gi.ordinal(), "position must be null for column-based group item");
 
-        Expression expected = ColumnExpr.of("c");
+        Expression expected = col("c");
         Assertions.assertEquals(expected, gi.expr());
     }
 
@@ -68,7 +71,7 @@ class GroupItemParserTest {
         var res = parse("t.c");
         Assertions.assertTrue(res.ok(), () -> "expected ok, got error: " + res.errorMessage());
 
-        Expression expected = ColumnExpr.of("c").inTable("t");
+        Expression expected = col("c").inTable("t");
         Assertions.assertEquals(expected, res.value().expr());
         Assertions.assertNull(res.value().ordinal());
     }
@@ -79,7 +82,10 @@ class GroupItemParserTest {
         var res = parse("\"T\".\"Name\"");
         Assertions.assertTrue(res.ok(), () -> "expected ok, got error: " + res.errorMessage());
 
-        Expression expected = ColumnExpr.of("Name").inTable("T");
+        Expression expected = ColumnExpr.of(
+            Identifier.of("T", QuoteStyle.DOUBLE_QUOTE),
+            Identifier.of("Name", QuoteStyle.DOUBLE_QUOTE)
+        );
         Assertions.assertEquals(expected, res.value().expr());
         Assertions.assertNull(res.value().ordinal());
     }
@@ -124,3 +130,4 @@ class GroupItemParserTest {
         Assertions.assertFalse(res.ok());
     }
 }
+

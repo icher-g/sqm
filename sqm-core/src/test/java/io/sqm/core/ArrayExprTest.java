@@ -61,7 +61,7 @@ class ArrayExprTest {
     void mixedElementTypes() {
         ArrayExpr arr = ArrayExpr.of(
             Expression.literal(1),
-            ColumnExpr.of("col"),
+            ColumnExpr.of(null, Identifier.of("col")),
             Expression.literal("text")
         );
         assertEquals(3, arr.elements().size());
@@ -88,8 +88,8 @@ class ArrayExprTest {
     @Test
     @DisplayName("Array with column expressions")
     void arrayWithColumnExpressions() {
-        ColumnExpr col1 = ColumnExpr.of("users", "id");
-        ColumnExpr col2 = ColumnExpr.of("users", "name");
+        ColumnExpr col1 = ColumnExpr.of(Identifier.of("users"), Identifier.of("id"));
+        ColumnExpr col2 = ColumnExpr.of(Identifier.of("users"), Identifier.of("name"));
         ArrayExpr arr = ArrayExpr.of(col1, col2);
         assertEquals(2, arr.elements().size());
         assertEquals(col1, arr.elements().get(0));

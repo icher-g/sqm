@@ -34,8 +34,8 @@ class PowerArithmeticExprParserTest {
         var lhs = assertInstanceOf(ColumnExpr.class, expr.lhs());
         var rhs = assertInstanceOf(ColumnExpr.class, expr.rhs());
 
-        assertEquals("a", lhs.name());
-        assertEquals("b", rhs.name());
+        assertEquals("a", lhs.name().value());
+        assertEquals("b", rhs.name().value());
     }
 
     @Test
@@ -50,9 +50,9 @@ class PowerArithmeticExprParserTest {
         var innerLhs = assertInstanceOf(ColumnExpr.class, inner.lhs());
         var innerRhs = assertInstanceOf(ColumnExpr.class, inner.rhs());
 
-        assertEquals("a", innerLhs.name());
-        assertEquals("b", innerRhs.name());
-        assertEquals("c", rhs.name());
+        assertEquals("a", innerLhs.name().value());
+        assertEquals("b", innerRhs.name().value());
+        assertEquals("c", rhs.name().value());
     }
 
     @Test
@@ -67,8 +67,9 @@ class PowerArithmeticExprParserTest {
         var rhsLhs = assertInstanceOf(ColumnExpr.class, rhs.lhs());
         var rhsRhs = assertInstanceOf(ColumnExpr.class, rhs.rhs());
 
-        assertEquals("a", lhs.name());
-        assertEquals("b", rhsLhs.name());
-        assertEquals("c", rhsRhs.name());
+        assertEquals("a", lhs.name().value());
+        assertEquals("b", rhsLhs.name().value());
+        assertEquals("c", rhsRhs.name().value());
     }
 }
+

@@ -75,7 +75,7 @@ public class LockingClauseParser implements Parser<LockingClause> {
             }
             do {
                 var item = cur.expect("Expected table name after OF", TokenType.IDENT);
-                targets.add(LockTarget.of(item.lexeme()));
+                targets.add(LockTarget.of(toIdentifier(item)));
             }
             while (cur.consumeIf(TokenType.COMMA));
         }

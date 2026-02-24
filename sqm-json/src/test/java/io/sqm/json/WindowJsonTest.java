@@ -47,7 +47,7 @@ public class WindowJsonTest {
         // Inspect JSON shape a bit
         JsonNode root = toTree(q);
         // windows[0].name == "w"
-        assertEquals("w", root.path("windows").get(0).path("name").asText());
+        assertEquals("w", root.path("windows").get(0).path("name").path("value").asText());
         // selectItems[1].expr.over.kind is Ref (depending on your type hint; adapt "kind" name if different)
         String overNodeText = root.path("items").get(1).path("expr").path("over").toString();
         assertTrue(overNodeText.contains("Ref"), "Expected OverSpec.Ref in JSON: " + overNodeText);
@@ -57,7 +57,7 @@ public class WindowJsonTest {
         var fn = (FunctionExpr) si.expr();
         assertNotNull(fn.over());
         assertInstanceOf(OverSpec.Ref.class, fn.over());
-        assertEquals("w", ((OverSpec.Ref) fn.over()).windowName());
+        assertEquals("w", ((OverSpec.Ref) fn.over()).windowName().value());
     }
 
     @Test
@@ -136,7 +136,7 @@ public class WindowJsonTest {
 
         // JSON checks
         JsonNode root = toTree(q);
-        assertEquals("w", root.path("windows").get(0).path("name").asText());
+        assertEquals("w", root.path("windows").get(0).path("name").path("value").asText());
         String overJson = root.path("items").get(2).path("expr").path("over").toString();
         assertTrue(overJson.contains("Def"));
         assertTrue(overJson.contains("between"));
@@ -147,7 +147,7 @@ public class WindowJsonTest {
         var si = (ExprSelectItem) back.items().get(2);
         var fn = (FunctionExpr) si.expr();
         var def = (OverSpec.Def) fn.over();
-        assertEquals("w", def.baseWindow());
+        assertEquals("w", def.baseWindow().value());
         var between = (FrameSpec.Between) def.frame();
         assertInstanceOf(BoundSpec.UnboundedPreceding.class, between.start());
         assertInstanceOf(BoundSpec.CurrentRow.class, between.end());
@@ -188,8 +188,8 @@ public class WindowJsonTest {
         JsonNode arr = mapper.readTree(json);
 
         assertEquals(2, arr.size());
-        assertEquals("w1", arr.get(0).path("name").asText());
+        assertEquals("w1", arr.get(0).path("name").path("value").asText());
         assertTrue(arr.get(0).path("spec").toString().contains("Def"));
-        assertEquals("w2", arr.get(1).path("name").asText());
+        assertEquals("w2", arr.get(1).path("name").path("value").asText());
     }
 }

@@ -92,7 +92,7 @@ final class WindowFrameValidationRule implements SchemaValidationRule<SelectQuer
         var byName = new HashMap<String, WindowDef>(select.windows().size());
         for (var window : select.windows()) {
             if (window.name() != null) {
-                byName.putIfAbsent(normalize(window.name()), window);
+                byName.putIfAbsent(normalize(window.name().value()), window);
             }
         }
         return Map.copyOf(byName);
@@ -131,7 +131,7 @@ final class WindowFrameValidationRule implements SchemaValidationRule<SelectQuer
         if (spec.baseWindow() == null) {
             return null;
         }
-        var baseKey = normalize(spec.baseWindow());
+        var baseKey = normalize(spec.baseWindow().value());
         if (!visiting.add(baseKey)) {
             return null;
         }

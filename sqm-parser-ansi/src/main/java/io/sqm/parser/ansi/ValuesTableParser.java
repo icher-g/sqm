@@ -42,7 +42,7 @@ public class ValuesTableParser implements MatchableParser<ValuesTable> {
 
         cur.expect("Expected )", TokenType.RPAREN);
 
-        var aliases = parseColumnAliases(cur);
+        var aliases = parseColumnAliasIdentifiers(cur);
         return ok(TableRef.values(rows).as(aliases.first()).columnAliases(aliases.second()));
     }
 

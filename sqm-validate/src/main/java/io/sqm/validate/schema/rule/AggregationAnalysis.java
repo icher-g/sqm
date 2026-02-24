@@ -67,13 +67,20 @@ final class AggregationAnalysis {
         if (functionExpr.filter() != null || functionExpr.withinGroup() != null) {
             return true;
         }
-        return functionCatalog.resolve(functionExpr.name())
+        return functionCatalog.resolve(functionName(functionExpr))
             .map(io.sqm.validate.schema.function.FunctionSignature::aggregate)
             .orElse(false);
     }
 
-    private static String normalize(String value) {
-        return value == null ? "" : value.toLowerCase(Locale.ROOT);
+    private static String normalize(io.sqm.core.Identifier value) {
+        return value == null ? "" : value.value().toLowerCase(Locale.ROOT);
+    }
+
+    private static String functionName(FunctionExpr functionExpr) {
+        if (functionExpr == null || functionExpr.name() == null) {
+            return null;
+        }
+        return functionExpr.name().parts().getLast().value();
     }
 
     /**

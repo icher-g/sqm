@@ -2,6 +2,7 @@ package io.sqm.core.walk;
 
 import io.sqm.core.CollateExpr;
 import io.sqm.core.ColumnExpr;
+import io.sqm.core.Identifier;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -13,7 +14,7 @@ class CollateExprVisitorTest {
 
     @Test
     void visit_collate_expr_traverses_child() {
-        var expr = CollateExpr.of(ColumnExpr.of("name"), "de-CH");
+        var expr = ColumnExpr.of(null, Identifier.of("name")).collate("de-CH");
 
         var visitor = new RecursiveNodeVisitor<String>() {
             private String result;
@@ -23,7 +24,7 @@ class CollateExprVisitorTest {
             }
             @Override
             public String visitColumnExpr(ColumnExpr c) {
-                result = c.name();
+                result = c.name().value();
                 return defaultResult();
             }
         };

@@ -102,13 +102,13 @@ public final class PostgresSelectClauseConsistencyRule implements SchemaValidati
             if (target == null || target.identifier() == null) {
                 continue;
             }
-            var normalized = normalize(target.identifier());
+            var normalized = normalize(target.identifier().value());
             if (seen.add(normalized)) {
                 continue;
             }
             context.addProblem(
                 ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
-                "PostgreSQL does not allow duplicate FOR ... OF lock targets: " + target.identifier(),
+                "PostgreSQL does not allow duplicate FOR ... OF lock targets: " + target.identifier().value(),
                 node.lockFor(),
                 "select.lock"
             );
@@ -124,12 +124,12 @@ public final class PostgresSelectClauseConsistencyRule implements SchemaValidati
             if (target == null || target.identifier() == null) {
                 continue;
             }
-            if (!nullableSourceKeys.contains(normalize(target.identifier()))) {
+            if (!nullableSourceKeys.contains(normalize(target.identifier().value()))) {
                 continue;
             }
             context.addProblem(
                 ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
-                "PostgreSQL does not allow FOR ... OF on nullable outer-join side: " + target.identifier(),
+                "PostgreSQL does not allow FOR ... OF on nullable outer-join side: " + target.identifier().value(),
                 node.lockFor(),
                 "select.lock"
             );

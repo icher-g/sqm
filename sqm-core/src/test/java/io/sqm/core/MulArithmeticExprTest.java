@@ -3,6 +3,7 @@ package io.sqm.core;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class MulArithmeticExprTest {
 
@@ -20,14 +21,14 @@ class MulArithmeticExprTest {
 
     @Test
     void lhs() {
-        var lhs = Expression.column("quantity");
+        var lhs = col("quantity");
         var expr = MulArithmeticExpr.of(lhs, Expression.literal(2));
         assertEquals(lhs, expr.lhs());
     }
 
     @Test
     void rhs() {
-        var rhs = Expression.column("price");
+        var rhs = col("price");
         var expr = MulArithmeticExpr.of(Expression.literal(10), rhs);
         assertEquals(rhs, expr.rhs());
     }
@@ -48,8 +49,8 @@ class MulArithmeticExprTest {
 
     @Test
     void nestedExpressions() {
-        var expr = Expression.column("quantity")
-            .mul(Expression.column("price"))
+        var expr = col("quantity")
+            .mul(col("price"))
             .mul(Expression.literal(0.9));
         assertInstanceOf(MulArithmeticExpr.class, expr);
     }
@@ -72,3 +73,4 @@ class MulArithmeticExprTest {
         }
     }
 }
+

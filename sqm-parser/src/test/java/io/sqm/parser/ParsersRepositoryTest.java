@@ -10,6 +10,7 @@ import io.sqm.parser.spi.ParsersRepository;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class ParsersRepositoryTest {
 
@@ -29,7 +30,7 @@ class ParsersRepositoryTest {
         var parser = new ColumnExprParser();
         repo.register(parser);
 
-        var handler = repo.getFor(ColumnExpr.of("a"));
+        var handler = repo.getFor(col("a"));
 
         assertSame(parser, handler);
     }
@@ -52,7 +53,7 @@ class ParsersRepositoryTest {
         var parser = new ColumnExprParser();
         repo.register(parser);
 
-        assertSame(parser, repo.requireFor(ColumnExpr.of("b")));
+        assertSame(parser, repo.requireFor(col("b")));
 
         var ex = assertThrows(IllegalArgumentException.class, () -> repo.requireFor(Expression.literal("c")));
         assertTrue(ex.getMessage().contains("No handler registered"));
@@ -61,7 +62,7 @@ class ParsersRepositoryTest {
     private static final class ColumnExprParser implements Parser<ColumnExpr> {
         @Override
         public ParseResult<? extends ColumnExpr> parse(Cursor cur, ParseContext ctx) {
-            return ParseResult.ok(ColumnExpr.of("x"));
+            return ParseResult.ok(col("x"));
         }
 
         @Override
@@ -70,3 +71,4 @@ class ParsersRepositoryTest {
         }
     }
 }
+

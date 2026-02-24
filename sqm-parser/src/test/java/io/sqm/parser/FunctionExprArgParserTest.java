@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.sqm.parser.core.OperatorTokens.isStar;
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class FunctionExprArgParserTest {
 
@@ -83,7 +84,7 @@ class FunctionExprArgParserTest {
         @Override
         public ParseResult<? extends Expression> parse(Cursor cur, ParseContext ctx) {
             var token = cur.expect("Expected identifier", io.sqm.parser.core.TokenType.IDENT);
-            return ParseResult.ok(Expression.column(token.lexeme()));
+            return ParseResult.ok(col(token.lexeme()));
         }
 
         @Override
@@ -92,3 +93,4 @@ class FunctionExprArgParserTest {
         }
     }
 }
+

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class AtomicPredicateParserTest {
 
@@ -208,7 +209,7 @@ class AtomicPredicateParserTest {
                 return ParseResult.ok(Expression.literal(Integer.parseInt(number.lexeme())));
             }
             var token = cur.expect("Expected identifier", TokenType.IDENT);
-            return ParseResult.ok(Expression.column(token.lexeme()));
+            return ParseResult.ok(col(token.lexeme()));
         }
 
         @Override
@@ -340,7 +341,7 @@ class AtomicPredicateParserTest {
             cur.expect("Expected (", TokenType.LPAREN);
             var value = cur.expect("Expected value", TokenType.IDENT).lexeme();
             cur.expect("Expected )", TokenType.RPAREN);
-            var row = RowExpr.of(List.of(Expression.column(value)));
+            var row = RowExpr.of(List.of(col(value)));
             return ParseResult.ok(InPredicate.of(lhs, row, negated));
         }
 
@@ -483,3 +484,4 @@ class AtomicPredicateParserTest {
         }
     }
 }
+

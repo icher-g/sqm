@@ -52,16 +52,16 @@ public non-sealed interface OnJoin extends Join {
      * @return A newly created instance of the USING join with the provided list of columns.
      */
     default UsingJoin using(String... usingColumns) {
-        return UsingJoin.of(right(), kind(), usingColumns);
+        return UsingJoin.of(right(), kind(), java.util.stream.Stream.of(usingColumns).map(Identifier::of).toList());
     }
 
     /**
-     * Creates USING join with the provided list of columns. {@code USING (col1, col2, ...);}
+     * Creates USING join with the provided list of column identifiers. {@code USING (col1, col2, ...);}
      *
-     * @param usingColumns a list of columns to be used in USING statement.
-     * @return A newly created instance of the USING join with the provided list of columns.
+     * @param usingColumns identifiers to be used in USING statement.
+     * @return a newly created USING join with the provided identifiers.
      */
-    default UsingJoin using(List<String> usingColumns) {
+    default UsingJoin using(List<Identifier> usingColumns) {
         return UsingJoin.of(right(), kind(), usingColumns);
     }
 

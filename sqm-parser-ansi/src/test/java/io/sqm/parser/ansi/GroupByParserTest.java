@@ -21,7 +21,7 @@ class GroupByParserTest {
         assertTrue(result.ok(), () -> "expected ok, got error: " + result.errorMessage());
         assertEquals(2, result.value().items().size());
         var first = (GroupItem.SimpleGroupItem) result.value().items().getFirst();
-        assertEquals("a", first.expr().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("a", first.expr().matchExpression().column(c -> c.name().value()).orElse(null));
     }
 
     @Test

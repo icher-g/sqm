@@ -12,13 +12,13 @@ import java.util.Objects;
 public non-sealed interface CollateExpr extends Expression {
 
     /**
-     * Creates a {@link CollateExpr} wrapping the provided expression and collation name.
+     * Creates a {@link CollateExpr} wrapping the provided expression and collation qualified name.
      *
      * @param expr      expression to apply collation to
-     * @param collation collation name (identifier), not blank
+     * @param collation qualified collation identifier
      * @return a new {@link CollateExpr}
      */
-    static CollateExpr of(Expression expr, String collation) {
+    static CollateExpr of(Expression expr, QualifiedName collation) {
         return new Impl(expr, collation);
     }
 
@@ -34,7 +34,7 @@ public non-sealed interface CollateExpr extends Expression {
      *
      * @return collation name
      */
-    String collation();
+    QualifiedName collation();
 
     /**
      * Accepts a {@link NodeVisitor} and dispatches control to the
@@ -52,22 +52,22 @@ public non-sealed interface CollateExpr extends Expression {
     /**
      * Default implementation.
      *
-     * @param expr      expression to collate
+     * @param expr          expression to collate
      * @param collation collation name
      */
-    record Impl(Expression expr, String collation) implements CollateExpr {
+    record Impl(Expression expr, QualifiedName collation) implements CollateExpr {
 
         /**
          * Creates a new {@link CollateExpr} implementation.
          *
-         * @param expr      expression to collate
+         * @param expr          expression to collate
          * @param collation collation name
          */
         public Impl {
             Objects.requireNonNull(expr, "expr");
             Objects.requireNonNull(collation, "collation");
-            if (collation.isBlank()) {
-                throw new IllegalArgumentException("collation must not be blank");
+            if (collation.parts().isEmpty()) {
+                throw new IllegalArgumentException("collation must not be empty");
             }
         }
     }

@@ -49,9 +49,9 @@ class OperatorExprIntegrationTest {
         assertInstanceOf(UnaryOperatorExpr.class, item.expr());
 
         var u = (UnaryOperatorExpr) item.expr();
-        assertEquals("~", u.operator());
+        assertEquals("~", u.operator().text());
         assertInstanceOf(ColumnExpr.class, u.expr());
-        assertEquals("mask", ((ColumnExpr) u.expr()).name());
+        assertEquals("mask", ((ColumnExpr) u.expr()).name().value());
     }
 
     @Test
@@ -62,9 +62,9 @@ class OperatorExprIntegrationTest {
         assertInstanceOf(BinaryOperatorExpr.class, item.expr());
 
         var b = (BinaryOperatorExpr) item.expr();
-        assertEquals("->>", b.operator());
+        assertEquals("->>", b.operator().text());
         assertInstanceOf(ColumnExpr.class, b.left());
-        assertEquals("payload", ((ColumnExpr) b.left()).name());
+        assertEquals("payload", ((ColumnExpr) b.left()).name().value());
         assertInstanceOf(LiteralExpr.class, b.right());
         assertEquals("id", ((LiteralExpr) b.right()).value());
     }
@@ -80,13 +80,13 @@ class OperatorExprIntegrationTest {
         assertInstanceOf(BinaryOperatorExpr.class, p.expr());
 
         var b = (BinaryOperatorExpr) p.expr();
-        assertEquals("@>", b.operator());
+        assertEquals("@>", b.operator().text());
         assertInstanceOf(ColumnExpr.class, b.left());
-        assertEquals("data", ((ColumnExpr) b.left()).name());
+        assertEquals("data", ((ColumnExpr) b.left()).name().value());
 
         assertInstanceOf(CastExpr.class, b.right());
         var c = (CastExpr) b.right();
-        assertEquals("jsonb", c.type().qualifiedName().getFirst());
+        assertEquals("jsonb", c.type().qualifiedName().parts().getFirst().value());
         assertInstanceOf(LiteralExpr.class, c.expr());
         assertEquals("{}", ((LiteralExpr) c.expr()).value());
     }

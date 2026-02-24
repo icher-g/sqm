@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 /**
  * Unit tests for {@link IsDistinctFromPredicateParser}.
@@ -34,10 +35,10 @@ class IsDistinctFromPredicateParserTest {
         assertFalse(predicate.negated());
 
         assertInstanceOf(ColumnExpr.class, predicate.lhs());
-        assertEquals("a", ((ColumnExpr) predicate.lhs()).name());
+        assertEquals("a", ((ColumnExpr) predicate.lhs()).name().value());
 
         assertInstanceOf(ColumnExpr.class, predicate.rhs());
-        assertEquals("b", ((ColumnExpr) predicate.rhs()).name());
+        assertEquals("b", ((ColumnExpr) predicate.rhs()).name().value());
     }
 
     @Test
@@ -51,10 +52,10 @@ class IsDistinctFromPredicateParserTest {
         assertTrue(predicate.negated());
 
         assertInstanceOf(ColumnExpr.class, predicate.lhs());
-        assertEquals("x", ((ColumnExpr) predicate.lhs()).name());
+        assertEquals("x", ((ColumnExpr) predicate.lhs()).name().value());
 
         assertInstanceOf(ColumnExpr.class, predicate.rhs());
-        assertEquals("y", ((ColumnExpr) predicate.rhs()).name());
+        assertEquals("y", ((ColumnExpr) predicate.rhs()).name().value());
     }
 
     @Test
@@ -68,7 +69,7 @@ class IsDistinctFromPredicateParserTest {
         assertFalse(predicate.negated());
 
         assertInstanceOf(ColumnExpr.class, predicate.lhs());
-        assertEquals("status", ((ColumnExpr) predicate.lhs()).name());
+        assertEquals("status", ((ColumnExpr) predicate.lhs()).name().value());
 
         assertInstanceOf(LiteralExpr.class, predicate.rhs());
         assertEquals("active", ((LiteralExpr) predicate.rhs()).value());
@@ -109,12 +110,12 @@ class IsDistinctFromPredicateParserTest {
         var predicate = result.value();
 
         var lhs = (ColumnExpr) predicate.lhs();
-        assertEquals("t1", lhs.tableAlias());
-        assertEquals("id", lhs.name());
+        assertEquals("t1", lhs.tableAlias().value());
+        assertEquals("id", lhs.name().value());
 
         var rhs = (ColumnExpr) predicate.rhs();
-        assertEquals("t2", rhs.tableAlias());
-        assertEquals("id", rhs.name());
+        assertEquals("t2", rhs.tableAlias().value());
+        assertEquals("id", rhs.name().value());
     }
 
     @Test
@@ -136,7 +137,7 @@ class IsDistinctFromPredicateParserTest {
     @Test
     void testInfixParsing() {
         var parser = new IsDistinctFromPredicateParser();
-        var lhs = ColumnExpr.of("a");
+        var lhs = col("a");
         var cur = Cursor.of("IS DISTINCT FROM b", IdentifierQuoting.of('"'));
 
         var result = parser.parse(lhs, cur, ctx);
@@ -184,7 +185,7 @@ class IsDistinctFromPredicateParserTest {
 
         assertInstanceOf(BinaryOperatorExpr.class, predicate.lhs());
         var lhs = (BinaryOperatorExpr) predicate.lhs();
-        assertEquals("?", lhs.operator());
+        assertEquals("?", lhs.operator().text());
         assertInstanceOf(AnonymousParamExpr.class, lhs.left());
         assertInstanceOf(AnonymousParamExpr.class, lhs.right());
 
@@ -228,4 +229,5 @@ class IsDistinctFromPredicateParserTest {
         assertNotNull(result.value());
     }
 }
+
 

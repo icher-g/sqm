@@ -25,7 +25,7 @@ public class ExprSelectItemParser implements Parser<ExprSelectItem> {
         if (expr.isError()) {
             return error(expr);
         }
-        var alias = parseAlias(cur);
+        var alias = parseAliasIdentifier(cur);
         return ok(SelectItem.expr(expr.value()).as(alias));
     }
 

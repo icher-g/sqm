@@ -66,7 +66,7 @@ class ComprehensiveExpressionParserTest {
         assertTrue(result.ok());
         var expr = result.value();
         assertInstanceOf(ColumnExpr.class, expr);
-        assertEquals("user_id", ((ColumnExpr) expr).name());
+        assertEquals("user_id", ((ColumnExpr) expr).name().value());
     }
 
     @Test
@@ -76,8 +76,8 @@ class ComprehensiveExpressionParserTest {
         var expr = result.value();
         assertInstanceOf(ColumnExpr.class, expr);
         ColumnExpr col = (ColumnExpr) expr;
-        assertEquals("users", col.tableAlias());
-        assertEquals("user_id", col.name());
+        assertEquals("users", col.tableAlias().value());
+        assertEquals("user_id", col.name().value());
     }
 
     @Test
@@ -87,7 +87,7 @@ class ComprehensiveExpressionParserTest {
         var expr = result.value();
         assertInstanceOf(FunctionExpr.class, expr);
         FunctionExpr func = (FunctionExpr) expr;
-        assertEquals("now", func.name().toLowerCase());
+        assertEquals("now", String.join(".", func.name().values()).toLowerCase());
         assertTrue(func.args().isEmpty());
     }
 
@@ -98,7 +98,7 @@ class ComprehensiveExpressionParserTest {
         var expr = result.value();
         assertInstanceOf(FunctionExpr.class, expr);
         FunctionExpr func = (FunctionExpr) expr;
-        assertEquals("concat", func.name().toLowerCase());
+        assertEquals("concat", String.join(".", func.name().values()).toLowerCase());
         assertEquals(3, func.args().size());
     }
 
@@ -109,7 +109,7 @@ class ComprehensiveExpressionParserTest {
         var expr = result.value();
         assertInstanceOf(FunctionExpr.class, expr);
         FunctionExpr func = (FunctionExpr) expr;
-        assertEquals("count", func.name().toLowerCase());
+        assertEquals("count", String.join(".", func.name().values()).toLowerCase());
         assertEquals(1, func.args().size());
         assertInstanceOf(FunctionExpr.Arg.StarArg.class, func.args().getFirst());
     }
@@ -121,7 +121,7 @@ class ComprehensiveExpressionParserTest {
         var expr = result.value();
         assertInstanceOf(FunctionExpr.class, expr);
         FunctionExpr func = (FunctionExpr) expr;
-        assertEquals("count", func.name().toLowerCase());
+        assertEquals("count", String.join(".", func.name().values()).toLowerCase());
         assertTrue(func.distinctArg() != null && func.distinctArg());
     }
 
@@ -154,7 +154,7 @@ class ComprehensiveExpressionParserTest {
         var expr = result.value();
         assertInstanceOf(FunctionExpr.class, expr);
         FunctionExpr outerFunc = (FunctionExpr) expr;
-        assertEquals("upper", outerFunc.name().toLowerCase());
+        assertEquals("upper", String.join(".", outerFunc.name().values()).toLowerCase());
     }
 
     @Test
@@ -163,7 +163,7 @@ class ComprehensiveExpressionParserTest {
         assertTrue(result.ok());
         var expr = result.value();
         assertInstanceOf(ColumnExpr.class, expr);
-        assertEquals("user_id", ((ColumnExpr) expr).name());
+        assertEquals("user_id", ((ColumnExpr) expr).name().value());
     }
 
     @Test

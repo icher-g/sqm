@@ -59,7 +59,7 @@ public class FunctionTableParser implements MatchableParser<FunctionTable> {
             withOrdinality = true;
         }
 
-        var aliases = parseColumnAliases(cur);
+        var aliases = parseColumnAliasIdentifiers(cur);
         return ok(FunctionTable.of(funcExpr.value(), aliases.second(), aliases.first(), withOrdinality));
     }
 

@@ -3,6 +3,8 @@ package io.sqm.render.ansi;
 import io.sqm.core.JoinKind;
 import io.sqm.core.TableRef;
 import io.sqm.core.UsingJoin;
+import io.sqm.core.Identifier;
+import io.sqm.core.QuoteStyle;
 import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.RenderContext;
@@ -19,9 +21,28 @@ class UsingJoinRendererTest {
 
     @Test
     void rendersUsingColumnsList() {
-        var join = UsingJoin.of(TableRef.table("t"), JoinKind.INNER, List.of("id", "name"));
+        var join = UsingJoin.of(
+            TableRef.table(Identifier.of("t")),
+            JoinKind.INNER,
+            List.of(Identifier.of("id"), Identifier.of("name"))
+        );
         var w = new DefaultSqlWriter(ctx);
         renderer.render(join, ctx, w);
-        assertEquals("USING (('id', 'name'))", w.toText(null).sql());
+        assertEquals("USING (id, name)", w.toText(null).sql());
+    }
+
+    @Test
+    void preservesOrFallsBackQuoteStyleForUsingColumns() {
+        var join = UsingJoin.of(
+            TableRef.table(Identifier.of("t")),
+            JoinKind.INNER,
+            List.of(
+                Identifier.of("A", QuoteStyle.DOUBLE_QUOTE),
+                Identifier.of("B", QuoteStyle.BACKTICK)
+            )
+        );
+        var w = new DefaultSqlWriter(ctx);
+        renderer.render(join, ctx, w);
+        assertEquals("USING (\"A\", \"B\")", w.toText(null).sql());
     }
 }

@@ -127,7 +127,7 @@ class AtTimeZoneExprVisitorTest {
 
         @Override
         public Void visitColumnExpr(ColumnExpr c) {
-            String qualified = c.tableAlias() == null ? c.name() : c.tableAlias() + "." + c.name();
+            String qualified = c.tableAlias() == null ? c.name().value() : c.tableAlias().value() + "." + c.name().value();
             columnExpressions.add(qualified);
             return super.visitColumnExpr(c);
         }
@@ -139,3 +139,4 @@ class AtTimeZoneExprVisitorTest {
         }
     }
 }
+

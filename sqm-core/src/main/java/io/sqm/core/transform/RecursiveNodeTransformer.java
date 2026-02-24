@@ -328,7 +328,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitExprSelectItem(ExprSelectItem i) {
         var expr = apply(i.expr());
         if (expr != i.expr()) {
-            return ExprSelectItem.of(expr);
+            return ExprSelectItem.of(expr, i.alias());
         }
         return i;
     }
@@ -1461,3 +1461,4 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         return expr;
     }
 }
+

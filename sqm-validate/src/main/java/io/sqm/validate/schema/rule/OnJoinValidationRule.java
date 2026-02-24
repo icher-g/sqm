@@ -119,7 +119,7 @@ final class OnJoinValidationRule implements SchemaValidationRule<OnJoin> {
         @Override
         public Void visitColumnExpr(ColumnExpr c) {
             if (c.tableAlias() != null) {
-                aliases.add(c.tableAlias().toLowerCase(Locale.ROOT));
+                aliases.add(c.tableAlias().value().toLowerCase(Locale.ROOT));
             }
             return super.visitColumnExpr(c);
         }

@@ -17,7 +17,7 @@ public class OverSpecDefRenderer implements Renderer<OverSpec.Def> {
     public void render(OverSpec.Def node, RenderContext ctx, SqlWriter w) {
         boolean addSpace = false;
         if (node.baseWindow() != null) {
-            w.append(node.baseWindow());
+            w.append(renderIdentifier(node.baseWindow(), ctx.dialect().quoter()));
             addSpace = true;
         }
         if (node.partitionBy() != null && !node.partitionBy().items().isEmpty()) {

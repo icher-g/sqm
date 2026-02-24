@@ -25,11 +25,11 @@ public non-sealed interface WindowDef extends Node {
     /**
      * Creates an instance of the WINDOW definition with the provided name and OVER specification.
      *
-     * @param name a window name.
-     * @param spec an OVER specification.
+     * @param name a window name identifier.
+     * @param spec           an OVER specification.
      * @return new instance of the WINDOW definition.
      */
-    static WindowDef of(String name, OverSpec.Def spec) {
+    static WindowDef of(Identifier name, OverSpec.Def spec) {
         return new Impl(name, spec);
     }
 
@@ -38,7 +38,7 @@ public non-sealed interface WindowDef extends Node {
      *
      * @return the name of the WINDOW.
      */
-    String name();
+    Identifier name();
 
     /**
      * Gets the OVER specification.
@@ -83,8 +83,18 @@ public non-sealed interface WindowDef extends Node {
      * </pre>
      *
      * @param name a window name.
-     * @param spec an OVER specification.
+     * @param spec           an OVER specification.
      */
-    record Impl(String name, OverSpec.Def spec) implements WindowDef {
+    record Impl(Identifier name, OverSpec.Def spec) implements WindowDef {
+        /**
+         * Creates a WINDOW definition.
+         *
+         * @param name a window name identifier
+         * @param spec           an OVER specification
+         */
+        public Impl {
+            java.util.Objects.requireNonNull(name, "name");
+            java.util.Objects.requireNonNull(spec, "spec");
+        }
     }
 }

@@ -39,8 +39,8 @@ public class ArithmeticExprJsonTest {
         assertNotNull(back);
         assertInstanceOf(ColumnExpr.class, back.lhs());
         assertInstanceOf(ColumnExpr.class, back.rhs());
-        assertEquals("price", back.lhs().matchExpression().column(c -> c.name()).orElse(null));
-        assertEquals("tax", back.rhs().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("price", back.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
+        assertEquals("tax", back.rhs().matchExpression().column(c -> c.name().value()).orElse(null));
 
         // Check JSON contains "kind": "add"
         JsonNode node = toTree(expr);
@@ -58,8 +58,8 @@ public class ArithmeticExprJsonTest {
         assertNotNull(back);
         assertInstanceOf(ColumnExpr.class, back.lhs());
         assertInstanceOf(ColumnExpr.class, back.rhs());
-        assertEquals("total", back.lhs().matchExpression().column(c -> c.name()).orElse(null));
-        assertEquals("discount", back.rhs().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("total", back.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
+        assertEquals("discount", back.rhs().matchExpression().column(c -> c.name().value()).orElse(null));
 
         JsonNode node = toTree(expr);
         assertEquals("sub", node.path("kind").asText());
@@ -76,8 +76,8 @@ public class ArithmeticExprJsonTest {
         assertNotNull(back);
         assertInstanceOf(ColumnExpr.class, back.lhs());
         assertInstanceOf(ColumnExpr.class, back.rhs());
-        assertEquals("quantity", back.lhs().matchExpression().column(c -> c.name()).orElse(null));
-        assertEquals("price", back.rhs().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("quantity", back.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
+        assertEquals("price", back.rhs().matchExpression().column(c -> c.name().value()).orElse(null));
 
         JsonNode node = toTree(expr);
         assertEquals("mul", node.path("kind").asText());
@@ -94,8 +94,8 @@ public class ArithmeticExprJsonTest {
         assertNotNull(back);
         assertInstanceOf(ColumnExpr.class, back.lhs());
         assertInstanceOf(ColumnExpr.class, back.rhs());
-        assertEquals("total", back.lhs().matchExpression().column(c -> c.name()).orElse(null));
-        assertEquals("count", back.rhs().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("total", back.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
+        assertEquals("count", back.rhs().matchExpression().column(c -> c.name().value()).orElse(null));
 
         JsonNode node = toTree(expr);
         assertEquals("div", node.path("kind").asText());
@@ -112,7 +112,7 @@ public class ArithmeticExprJsonTest {
         assertNotNull(back);
         assertInstanceOf(ColumnExpr.class, back.lhs());
         assertInstanceOf(LiteralExpr.class, back.rhs());
-        assertEquals("value", back.lhs().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("value", back.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
         assertEquals(10, back.rhs().matchExpression().literal(l -> l.value()).orElse(null));
 
         JsonNode node = toTree(expr);
@@ -129,7 +129,7 @@ public class ArithmeticExprJsonTest {
 
         assertNotNull(back);
         assertInstanceOf(ColumnExpr.class, back.expr());
-        assertEquals("balance", back.expr().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("balance", back.expr().matchExpression().column(c -> c.name().value()).orElse(null));
 
         JsonNode node = toTree(expr);
         assertEquals("neg", node.path("kind").asText());
@@ -146,7 +146,7 @@ public class ArithmeticExprJsonTest {
         assertNotNull(back);
         assertInstanceOf(ColumnExpr.class, back.lhs());
         assertInstanceOf(LiteralExpr.class, back.rhs());
-        assertEquals("base", back.lhs().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("base", back.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
         assertEquals(2, back.rhs().matchExpression().literal(l -> l.value()).orElse(null));
 
         JsonNode node = toTree(expr);
@@ -176,9 +176,9 @@ public class ArithmeticExprJsonTest {
         assertInstanceOf(ColumnExpr.class, back.rhs());
 
         var addExpr = (AddArithmeticExpr) back.lhs();
-        assertEquals("price", addExpr.lhs().matchExpression().column(c -> c.name()).orElse(null));
-        assertEquals("tax", addExpr.rhs().matchExpression().column(c -> c.name()).orElse(null));
-        assertEquals("quantity", back.rhs().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("price", addExpr.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
+        assertEquals("tax", addExpr.rhs().matchExpression().column(c -> c.name().value()).orElse(null));
+        assertEquals("quantity", back.rhs().matchExpression().column(c -> c.name().value()).orElse(null));
     }
 
     @Test
@@ -191,7 +191,7 @@ public class ArithmeticExprJsonTest {
         var back = roundTrip(query, SelectQuery.class);
 
         var selectItem = (ExprSelectItem) back.items().getFirst();
-        assertEquals("total", selectItem.alias());
+        assertEquals("total", selectItem.alias().value());
         assertInstanceOf(MulArithmeticExpr.class, selectItem.expr());
 
         JsonNode node = toTree(query);
@@ -225,8 +225,8 @@ public class ArithmeticExprJsonTest {
         assertInstanceOf(ColumnExpr.class, back.rhs());
 
         var negExpr = (NegativeArithmeticExpr) back.lhs();
-        assertEquals("balance", negExpr.expr().matchExpression().column(c -> c.name()).orElse(null));
-        assertEquals("adjustment", back.rhs().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("balance", negExpr.expr().matchExpression().column(c -> c.name().value()).orElse(null));
+        assertEquals("adjustment", back.rhs().matchExpression().column(c -> c.name().value()).orElse(null));
     }
 
     @Test
@@ -240,8 +240,8 @@ public class ArithmeticExprJsonTest {
 
         assertInstanceOf(AddArithmeticExpr.class, back);
         var addExpr = (AddArithmeticExpr) back;
-        assertEquals("a", addExpr.lhs().matchExpression().column(c -> c.name()).orElse(null));
-        assertEquals("b", addExpr.rhs().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("a", addExpr.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
+        assertEquals("b", addExpr.rhs().matchExpression().column(c -> c.name().value()).orElse(null));
     }
 
     @Test
@@ -265,7 +265,7 @@ public class ArithmeticExprJsonTest {
         // Validate JSON structure
         JsonNode node = toTree(expr);
         assertEquals("add", node.path("kind").asText());
-        assertEquals("a", node.path("lhs").path("name").asText());
+        assertEquals("a", node.path("lhs").path("name").path("value").asText());
         assertEquals("sub", node.path("rhs").path("kind").asText());
     }
 
@@ -280,8 +280,8 @@ public class ArithmeticExprJsonTest {
 
         var selectItem = (ExprSelectItem) back.items().getFirst();
         var funcExpr = (FunctionExpr) selectItem.expr();
-        assertEquals("sum", funcExpr.name());
-        assertEquals("total_value", selectItem.alias());
+        assertEquals("sum", funcExpr.name().values().getLast());
+        assertEquals("total_value", selectItem.alias().value());
 
         var arg0 = funcExpr.args().getFirst();
         var argExpr = arg0.matchArg().exprArg(a -> a.expr()).orElse(null);

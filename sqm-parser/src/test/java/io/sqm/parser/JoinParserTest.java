@@ -65,7 +65,7 @@ class JoinParserTest {
         assertTrue(result.ok());
         var join = assertInstanceOf(UsingJoin.class, result.value());
         assertEquals(JoinKind.LEFT, join.kind());
-        assertEquals(List.of("c"), join.usingColumns());
+        assertEquals(List.of("c"), join.usingColumnNames());
     }
 
     @Test
@@ -125,7 +125,7 @@ class JoinParserTest {
         @Override
         public ParseResult<? extends CrossJoin> parse(Cursor cur, ParseContext ctx) {
             cur.expect("Expected CROSS", TokenType.CROSS);
-            return ParseResult.ok(CrossJoin.of(TableRef.table("x")));
+            return ParseResult.ok(CrossJoin.of(TableRef.table(io.sqm.core.Identifier.of("x"))));
         }
 
         @Override
@@ -143,7 +143,7 @@ class JoinParserTest {
         @Override
         public ParseResult<? extends NaturalJoin> parse(Cursor cur, ParseContext ctx) {
             cur.expect("Expected NATURAL", TokenType.NATURAL);
-            return ParseResult.ok(NaturalJoin.of(TableRef.table("n")));
+            return ParseResult.ok(NaturalJoin.of(TableRef.table(io.sqm.core.Identifier.of("n"))));
         }
 
         @Override
@@ -164,7 +164,7 @@ class JoinParserTest {
             cur.expect("Expected (", TokenType.LPAREN);
             var column = cur.expect("Expected column", TokenType.IDENT).lexeme();
             cur.expect("Expected )", TokenType.RPAREN);
-            return ParseResult.ok(UsingJoin.of(lhs, JoinKind.INNER, column));
+            return ParseResult.ok(UsingJoin.of(lhs, JoinKind.INNER, java.util.List.of(Identifier.of(column))));
         }
 
         @Override
@@ -206,7 +206,7 @@ class JoinParserTest {
         @Override
         public ParseResult<? extends TableRef> parse(Cursor cur, ParseContext ctx) {
             var token = cur.expect("Expected table", TokenType.IDENT);
-            return ParseResult.ok(TableRef.table(token.lexeme()));
+            return ParseResult.ok(TableRef.table(io.sqm.core.Identifier.of(token.lexeme())));
         }
 
         @Override

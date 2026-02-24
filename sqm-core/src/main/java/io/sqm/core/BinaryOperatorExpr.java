@@ -14,9 +14,9 @@ import java.util.Objects;
  * which is especially important for PostgreSQL where many features are expressed via operators
  * (JSON/JSONB, regex, arrays, ranges, custom operators).</p>
  *
- * <p>The operator is stored as a raw {@link String} and is rendered as-is by a dialect renderer.
- * Dialect-specific validation (for example, allow-listing PostgreSQL operators such as {@code ->}, {@code @>}, {@code ~*})
- * should be implemented in a PostgreSQL module, not in the core model.</p>
+ * <p>The operator is stored as structured {@link OperatorName} metadata so dialect-specific syntax
+ * such as PostgreSQL {@code OPERATOR(schema.op)} can be preserved and rendered deterministically.
+ * The operator is exposed as {@link OperatorName} to preserve dialect-specific structure.</p>
  *
  * <p>Examples (PostgreSQL)</p>
  * <ul>
@@ -38,6 +38,18 @@ public non-sealed interface BinaryOperatorExpr extends Expression {
      * @return binary operator expression
      */
     static BinaryOperatorExpr of(Expression left, String operator, Expression right) {
+        return of(left, OperatorName.of(operator), right);
+    }
+
+    /**
+     * Creates a binary operator expression with a structured operator name.
+     *
+     * @param left     left operand
+     * @param operator structured operator name
+     * @param right    right operand
+     * @return binary operator expression
+     */
+    static BinaryOperatorExpr of(Expression left, OperatorName operator, Expression right) {
         return new Impl(left, operator, right);
     }
 
@@ -49,13 +61,11 @@ public non-sealed interface BinaryOperatorExpr extends Expression {
     Expression left();
 
     /**
-     * Operator token to apply between operands.
-     * <p>
-     * Stored as raw text and interpreted by the dialect renderer and validator.
+     * Structured operator metadata.
      *
-     * @return operator token, not blank
+     * @return operator metadata
      */
-    String operator();
+    OperatorName operator();
 
     /**
      * Right operand of the operator.
@@ -84,25 +94,22 @@ public non-sealed interface BinaryOperatorExpr extends Expression {
      * implementation package without changing the public API.
      *
      * @param left     left operand
-     * @param operator operator token (for example {@code "->"} or {@code "@>"})
+     * @param operator structured operator metadata
      * @param right    right operand
      */
-    record Impl(Expression left, String operator, Expression right) implements BinaryOperatorExpr {
+    record Impl(Expression left, OperatorName operator, Expression right) implements BinaryOperatorExpr {
 
         /**
          * Creates a binary operator expression implementation.
          *
          * @param left     left operand
-         * @param operator operator token
+         * @param operator structured operator metadata
          * @param right    right operand
          */
         public Impl {
             Objects.requireNonNull(left, "left");
             Objects.requireNonNull(operator, "operator");
             Objects.requireNonNull(right, "right");
-            if (operator.isBlank()) {
-                throw new IllegalArgumentException("operator must not be blank");
-            }
         }
     }
 }

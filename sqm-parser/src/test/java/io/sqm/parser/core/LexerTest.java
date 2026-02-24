@@ -28,11 +28,13 @@ class LexerTest {
 
         assertEquals(TokenType.IDENT, t(toks, 2).type());  // "T" -> T
         assertEquals("T", t(toks, 2).lexeme());
+        assertEquals(Character.valueOf('"'), t(toks, 2).quoteChar());
 
         assertEquals(TokenType.DOT, t(toks, 3).type());
 
         assertEquals(TokenType.IDENT, t(toks, 4).type());  // "Name" -> Name
         assertEquals("Name", t(toks, 4).lexeme());
+        assertEquals(Character.valueOf('"'), t(toks, 4).quoteChar());
 
         assertEquals(TokenType.RPAREN, t(toks, 5).type());
 
@@ -47,6 +49,7 @@ class LexerTest {
 
         assertEquals(TokenType.IDENT, t(toks, 9).type());  // "de-CH" -> de-CH
         assertEquals("de-CH", t(toks, 9).lexeme());
+        assertEquals(Character.valueOf('"'), t(toks, 9).quoteChar());
 
         assertEquals(TokenType.DESC, t(toks, 10).type()); // DESC
         assertEquals("DESC", t(toks, 10).lexeme());
@@ -61,11 +64,13 @@ class LexerTest {
 
         assertEquals(TokenType.IDENT, t(toks, 0).type());  // [dbo] -> dbo
         assertEquals("dbo", t(toks, 0).lexeme());
+        assertEquals(Character.valueOf('['), t(toks, 0).quoteChar());
 
         assertEquals(TokenType.DOT, t(toks, 1).type());
 
         assertEquals(TokenType.IDENT, t(toks, 2).type());  // [Order]]Name] -> Order]Name
         assertEquals("Order]Name", t(toks, 2).lexeme());
+        assertEquals(Character.valueOf('['), t(toks, 2).quoteChar());
 
         assertEquals(TokenType.EOF, t(toks, 3).type());
     }
@@ -77,11 +82,13 @@ class LexerTest {
 
         assertEquals(TokenType.IDENT, t(toks, 0).type());  // `sch` -> sch
         assertEquals("sch", t(toks, 0).lexeme());
+        assertEquals(Character.valueOf('`'), t(toks, 0).quoteChar());
 
         assertEquals(TokenType.DOT, t(toks, 1).type());
 
         assertEquals(TokenType.IDENT, t(toks, 2).type());  // `ta``ble` -> ta`ble
         assertEquals("ta`ble", t(toks, 2).lexeme());
+        assertEquals(Character.valueOf('`'), t(toks, 2).quoteChar());
 
         assertEquals(TokenType.EOF, t(toks, 3).type());
     }

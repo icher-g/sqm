@@ -2,26 +2,29 @@ package io.sqm.core;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class BinaryOperatorExprTest {
 
     @Test
     void of() {
-        var left = Expression.column("payload");
+        var left = col("payload");
         var right = Expression.literal("user");
         var expr = BinaryOperatorExpr.of(left, "->", right);
         
         assertNotNull(expr);
         assertInstanceOf(BinaryOperatorExpr.class, expr);
         assertEquals(left, expr.left());
-        assertEquals("->", expr.operator());
+        assertEquals("->", expr.operator().text());
         assertEquals(right, expr.right());
     }
 
     @Test
     void left() {
-        var left = Expression.column("data");
+        var left = col("data");
         var expr = BinaryOperatorExpr.of(left, "@>", Expression.literal("{}"));
         assertEquals(left, expr.left());
     }
@@ -29,18 +32,32 @@ class BinaryOperatorExprTest {
     @Test
     void operator() {
         var expr = BinaryOperatorExpr.of(
-            Expression.column("name"),
+            col("name"),
             "~*",
             Expression.literal("abc")
         );
-        assertEquals("~*", expr.operator());
+        assertEquals("~*", expr.operator().text());
+    }
+
+    @Test
+    void structuredOperatorNamePreservesPostgresSyntax() {
+        var expr = BinaryOperatorExpr.of(
+            col("a"),
+            OperatorName.operator(QualifiedName.of(Identifier.of("pg_catalog")), "##"),
+            col("b")
+        );
+
+        assertEquals("OPERATOR(pg_catalog.##)", expr.operator().text());
+        assertTrue(expr.operator().operatorKeywordSyntax());
+        assertTrue(expr.operator().qualified());
+        assertEquals(List.of("pg_catalog"), expr.operator().schemaName().values());
     }
 
     @Test
     void right() {
-        var right = Expression.column("other_tags");
+        var right = col("other_tags");
         var expr = BinaryOperatorExpr.of(
-            Expression.column("tags"),
+            col("tags"),
             "&&",
             right
         );
@@ -61,56 +78,56 @@ class BinaryOperatorExprTest {
 
     @Test
     void viaExpressionOp() {
-        var expr = Expression.column("payload").op("->", Expression.literal("user"));
+        var expr = col("payload").op("->", Expression.literal("user"));
         assertInstanceOf(BinaryOperatorExpr.class, expr);
-        assertEquals("->", expr.operator());
+        assertEquals("->", expr.operator().text());
     }
 
     @Test
     void postgresqlJsonOperators() {
-        var payload = Expression.column("payload");
+        var payload = col("payload");
         
         var arrow = BinaryOperatorExpr.of(payload, "->", Expression.literal("key"));
-        assertEquals("->", arrow.operator());
+        assertEquals("->", arrow.operator().text());
         
         var arrowArrow = BinaryOperatorExpr.of(payload, "->>", Expression.literal("key"));
-        assertEquals("->>", arrowArrow.operator());
+        assertEquals("->>", arrowArrow.operator().text());
     }
 
     @Test
     void postgresqlContainsOperator() {
         var expr = BinaryOperatorExpr.of(
-            Expression.column("data"),
+            col("data"),
             "@>",
             Expression.literal("{\"a\":1}")
         );
-        assertEquals("@>", expr.operator());
+        assertEquals("@>", expr.operator().text());
     }
 
     @Test
     void postgresqlRegexOperators() {
-        var name = Expression.column("name");
+        var name = col("name");
         
         var tilde = BinaryOperatorExpr.of(name, "~", Expression.literal("abc"));
-        assertEquals("~", tilde.operator());
+        assertEquals("~", tilde.operator().text());
         
         var tildeStar = BinaryOperatorExpr.of(name, "~*", Expression.literal("abc"));
-        assertEquals("~*", tildeStar.operator());
+        assertEquals("~*", tildeStar.operator().text());
     }
 
     @Test
     void postgresqlArrayOperators() {
-        var tags = Expression.column("tags");
-        var otherTags = Expression.column("other_tags");
+        var tags = col("tags");
+        var otherTags = col("other_tags");
         
         var overlap = BinaryOperatorExpr.of(tags, "&&", otherTags);
-        assertEquals("&&", overlap.operator());
+        assertEquals("&&", overlap.operator().text());
     }
 
     @Test
     void nestedExpressions() {
         var inner = BinaryOperatorExpr.of(
-            Expression.column("a"),
+            col("a"),
             "->",
             Expression.literal("b")
         );
@@ -132,7 +149,7 @@ class BinaryOperatorExprTest {
     @Test
     void nullOperatorThrows() {
         assertThrows(NullPointerException.class, () ->
-            BinaryOperatorExpr.of(Expression.literal(1), null, Expression.literal(2))
+            BinaryOperatorExpr.of(Expression.literal(1), (String) null, Expression.literal(2))
         );
     }
 
@@ -155,14 +172,14 @@ class BinaryOperatorExprTest {
 
     @Test
     void differentOperators() {
-        var left = Expression.column("x");
-        var right = Expression.column("y");
+        var left = col("x");
+        var right = col("y");
         
         var operators = new String[]{"+", "-", "*", "/", "%", "->", "->>", "@>", "<@", "&&", "||", "~", "~*", "!~", "!~*"};
         
         for (var op : operators) {
             var expr = BinaryOperatorExpr.of(left, op, right);
-            assertEquals(op, expr.operator());
+            assertEquals(op, expr.operator().text());
         }
     }
 
@@ -178,8 +195,8 @@ class BinaryOperatorExprTest {
 
     @Test
     void recordEquality() {
-        var left = Expression.column("a");
-        var right = Expression.column("b");
+        var left = col("a");
+        var right = col("b");
         var op = "->";
         
         var expr1 = BinaryOperatorExpr.of(left, op, right);
@@ -192,14 +209,14 @@ class BinaryOperatorExprTest {
     @Test
     void recordInequality() {
         var expr1 = BinaryOperatorExpr.of(
-            Expression.column("a"),
+            col("a"),
             "->",
-            Expression.column("b")
+            col("b")
         );
         var expr2 = BinaryOperatorExpr.of(
-            Expression.column("a"),
+            col("a"),
             "->>",
-            Expression.column("b")
+            col("b")
         );
         
         assertNotEquals(expr1, expr2);
@@ -217,3 +234,4 @@ class BinaryOperatorExprTest {
         }
     }
 }
+

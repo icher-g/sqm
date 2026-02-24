@@ -74,7 +74,7 @@ class ParamExprParserTest {
         Expression expr = ((ExprSelectItem) q.items().getFirst()).expr();
         assertInstanceOf(FunctionExpr.class, expr);
         FunctionExpr fn = (FunctionExpr) expr;
-        assertEquals("coalesce", fn.name());
+        assertEquals("coalesce", String.join(".", fn.name().values()));
         assertInstanceOf(FunctionExpr.Arg.ExprArg.class, fn.args().getFirst());
         Expression argExpr = ((FunctionExpr.Arg.ExprArg) fn.args().getFirst()).expr();
         assertInstanceOf(NamedParamExpr.class, argExpr);

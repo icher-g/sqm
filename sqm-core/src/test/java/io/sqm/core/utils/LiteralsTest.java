@@ -4,6 +4,8 @@ import io.sqm.core.Expression;
 import org.junit.jupiter.api.Test;
 
 import static io.sqm.core.Expression.*;
+import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.func;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -60,7 +62,7 @@ public class LiteralsTest {
 
     @Test
     void asNumber_withColumnExpr_returnsNull() {
-        Expression expr = column("amount");
+        Expression expr = col("amount");
         Number num = Literals.asNumber(expr);
         assertNull(num);
     }
@@ -134,7 +136,7 @@ public class LiteralsTest {
 
     @Test
     void isZero_withColumn() {
-        Expression expr = column("value");
+        Expression expr = col("value");
         assertFalse(Literals.isZero(expr));
     }
 
@@ -236,7 +238,7 @@ public class LiteralsTest {
     @Test
     void add_withColumn_returnsNull() {
         Expression lhs = literal(10);
-        Expression rhs = column("amount");
+        Expression rhs = col("amount");
         Number result = Literals.add(lhs, rhs);
         assertNull(result);
     }
@@ -290,7 +292,7 @@ public class LiteralsTest {
     @Test
     void sub_withColumn_returnsNull() {
         Expression lhs = literal(30);
-        Expression rhs = column("amount");
+        Expression rhs = col("amount");
         Number result = Literals.sub(lhs, rhs);
         assertNull(result);
     }
@@ -345,7 +347,7 @@ public class LiteralsTest {
     @Test
     void mul_withColumn_returnsNull() {
         Expression lhs = literal(6);
-        Expression rhs = column("quantity");
+        Expression rhs = col("quantity");
         Number result = Literals.mul(lhs, rhs);
         assertNull(result);
     }
@@ -399,7 +401,7 @@ public class LiteralsTest {
     @Test
     void div_withColumn_returnsNull() {
         Expression lhs = literal(100);
-        Expression rhs = column("divisor");
+        Expression rhs = col("divisor");
         Number result = Literals.div(lhs, rhs);
         assertNull(result);
     }
@@ -447,7 +449,7 @@ public class LiteralsTest {
         // Note: mod with 0 divisor might throw or return null depending on implementation
         // Testing that it doesn't crash
         try {
-            Number result = Literals.mod(lhs, rhs);
+            Literals.mod(lhs, rhs);
             // Either null or an exception is acceptable
         } catch (ArithmeticException e) {
             // Division by zero - acceptable
@@ -457,7 +459,7 @@ public class LiteralsTest {
     @Test
     void mod_withColumn_returnsNull() {
         Expression lhs = literal(10);
-        Expression rhs = column("divisor");
+        Expression rhs = col("divisor");
         Number result = Literals.mod(lhs, rhs);
         assertNull(result);
     }
@@ -496,6 +498,9 @@ public class LiteralsTest {
         
         // When mixing int and double, result should be double
         Number result = Literals.mul(intExpr, doubleExpr);
-        assertTrue(result instanceof Double || result instanceof Number);
+        assertInstanceOf(Number.class, result);
     }
 }
+
+
+

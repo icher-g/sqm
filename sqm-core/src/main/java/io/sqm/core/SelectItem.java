@@ -28,13 +28,13 @@ public sealed interface SelectItem extends Node
     }
 
     /**
-     * Creates a qualified '*' item for the SELECT statement.
+     * Creates a qualified star select item.
      *
-     * @param qualifier a qualifier. For example: {@code t.*}
-     * @return {@link QualifiedStarSelectItem}.
+     * @param qualifierIdentifier a qualifier identifier before '*'
+     * @return a qualified star select item.
      */
-    static QualifiedStarSelectItem star(String qualifier) {
-        return QualifiedStarSelectItem.of(qualifier);
+    static QualifiedStarSelectItem star(Identifier qualifierIdentifier) {
+        return QualifiedStarSelectItem.of(qualifierIdentifier);
     }
 
     /**

@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Objects;
 
+import static io.sqm.dsl.Dsl.func;
+import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TableRefParserTest {
@@ -108,7 +110,7 @@ class TableRefParserTest {
         @Override
         public ParseResult<? extends Lateral> parse(Cursor cur, ParseContext ctx) {
             cur.expect("Expected LATERAL", TokenType.LATERAL);
-            return ParseResult.ok(Lateral.of(Table.of("t")));
+            return ParseResult.ok(Lateral.of(tbl("t")));
         }
 
         @Override
@@ -176,7 +178,7 @@ class TableRefParserTest {
         @Override
         public ParseResult<? extends FunctionTable> parse(Cursor cur, ParseContext ctx) {
             cur.expect("Expected func marker", TokenType.IDENT);
-            return ParseResult.ok(FunctionExpr.of("func").asTable());
+            return ParseResult.ok(func("func").asTable());
         }
 
         @Override
@@ -194,7 +196,7 @@ class TableRefParserTest {
         @Override
         public ParseResult<? extends Table> parse(Cursor cur, ParseContext ctx) {
             cur.expect("Expected table name", TokenType.IDENT);
-            return ParseResult.ok(Table.of("table"));
+            return ParseResult.ok(tbl("table"));
         }
 
         @Override
@@ -203,3 +205,4 @@ class TableRefParserTest {
         }
     }
 }
+

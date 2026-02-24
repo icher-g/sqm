@@ -13,24 +13,24 @@ class CollateExprTest {
 
     @Test
     void creates_collate_expression() {
-        var expr = CollateExpr.of(ColumnExpr.of("name"), "de-CH");
+        var expr = ColumnExpr.of(null, Identifier.of("name")).collate("de-CH");
 
-        assertEquals("de-CH", expr.collation());
+        assertEquals(QualifiedName.of("de-CH"), expr.collation());
         assertInstanceOf(ColumnExpr.class, expr.expr());
     }
 
     @Test
     void rejects_blank_collation() {
-        assertThrows(IllegalArgumentException.class, () -> CollateExpr.of(ColumnExpr.of("name"), " "));
+        assertThrows(IllegalArgumentException.class, () -> ColumnExpr.of(null, Identifier.of("name")).collate(" "));
     }
 
     @Test
     void rejects_null_collation() {
-        assertThrows(NullPointerException.class, () -> CollateExpr.of(ColumnExpr.of("name"), null));
+        assertThrows(NullPointerException.class, () -> ColumnExpr.of(null, Identifier.of("name")).collate(null));
     }
 
     @Test
     void rejects_null_expression() {
-        assertThrows(NullPointerException.class, () -> CollateExpr.of(null, "de-CH"));
+        assertThrows(NullPointerException.class, () -> CollateExpr.of(null, QualifiedName.of("de-CH")));
     }
 }

@@ -14,16 +14,16 @@ class CastExprTest {
     void castFromLiteral() {
         Expression literal = Expression.literal(123);
         CastExpr cast = CastExpr.of(literal, type("bigint"));
-        assertEquals("bigint", cast.type().qualifiedName().getFirst());
+        assertEquals("bigint", cast.type().qualifiedName().parts().getFirst().value());
         assertNotNull(cast.expr());
     }
 
     @Test
     @DisplayName("Create cast expression from column")
     void castFromColumn() {
-        Expression col = ColumnExpr.of("users", "age");
+        Expression col = ColumnExpr.of(Identifier.of("users"), Identifier.of("age"));
         CastExpr cast = CastExpr.of(col, type("integer"));
-        assertEquals("integer", cast.type().qualifiedName().getFirst());
+        assertEquals("integer", cast.type().qualifiedName().parts().getFirst().value());
         assertEquals(col, cast.expr());
     }
 
@@ -32,7 +32,7 @@ class CastExprTest {
     void typeNamePreserved() {
         Expression expr = Expression.literal("test");
         CastExpr cast = CastExpr.of(expr, type("text").array());
-        assertEquals("text", cast.type().qualifiedName().getFirst());
+        assertEquals("text", cast.type().qualifiedName().parts().getFirst().value());
         assertEquals(1, cast.type().arrayDims());
     }
 
@@ -41,7 +41,7 @@ class CastExprTest {
     void castToJsonb() {
         Expression expr = Expression.literal("{\"a\":1}");
         CastExpr cast = CastExpr.of(expr, type("jsonb"));
-        assertEquals("jsonb", cast.type().qualifiedName().getFirst());
+        assertEquals("jsonb", cast.type().qualifiedName().parts().getFirst().value());
     }
 
     @Test
@@ -61,9 +61,9 @@ class CastExprTest {
     @Test
     @DisplayName("Cast with nested expression")
     void castWithNestedExpression() {
-        BinaryArithmeticExpr arithmetic = ColumnExpr.of("salary").add(Expression.literal(1000));
+        BinaryArithmeticExpr arithmetic = ColumnExpr.of(null, Identifier.of("salary")).add(Expression.literal(1000));
         CastExpr cast = CastExpr.of(arithmetic, type("decimal"));
-        assertEquals("decimal", cast.type().qualifiedName().getFirst());
+        assertEquals("decimal", cast.type().qualifiedName().parts().getFirst().value());
         assertNotNull(cast.expr());
     }
 
@@ -117,7 +117,7 @@ class CastExprTest {
         Expression expr = Expression.literal("test");
         CastExpr cast = CastExpr.of(expr, type("integer"));
         assertNotNull(cast);
-        assertEquals("integer", cast.type().qualifiedName().getFirst());
+        assertEquals("integer", cast.type().qualifiedName().parts().getFirst().value());
     }
 
     @Test
@@ -125,11 +125,11 @@ class CastExprTest {
     void typeNamesWithSpecialCharacters() {
         Expression expr = Expression.literal(1);
         CastExpr cast = CastExpr.of(expr, type("text").array());
-        assertEquals("text", cast.type().qualifiedName().getFirst());
+        assertEquals("text", cast.type().qualifiedName().parts().getFirst().value());
         assertEquals(1, cast.type().arrayDims());
 
         cast = CastExpr.of(expr, type("numeric").withModifiers(lit(10), lit(2)));
-        assertEquals("numeric", cast.type().qualifiedName().getFirst());
+        assertEquals("numeric", cast.type().qualifiedName().parts().getFirst().value());
         assertEquals(lit(10), cast.type().modifiers().getFirst());
         assertEquals(lit(2), cast.type().modifiers().get(1));
 

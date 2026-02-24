@@ -23,11 +23,11 @@ public class DeepTransformationRebuildTest {
 
     @Test
     void deepChildChange_updatesOnlyNecessaryParts() {
-        ColumnExpr colUid = ColumnExpr.of("u", "id");
-        ColumnExpr colName = ColumnExpr.of(null, "name");
+        ColumnExpr colUid = ColumnExpr.of(Identifier.of("u"), Identifier.of("id"));
+        ColumnExpr colName = ColumnExpr.of(null, Identifier.of("name"));
 
         // lower(u.id)
-        FunctionExpr lower = FunctionExpr.of("lower", FunctionExpr.Arg.expr(colUid));
+        FunctionExpr lower = FunctionExpr.of(QualifiedName.of("lower"), List.of(FunctionExpr.Arg.expr(colUid)), null, null, null, null);
         // Row: [ name, lower(u.id) ]
         RowExpr row = RowExpr.of(List.of(colName, lower));
 
@@ -39,11 +39,11 @@ public class DeepTransformationRebuildTest {
 
         // Right child (function) should reflect the change in its arg
         FunctionExpr outFn = (FunctionExpr) out.items().get(1);
-        assertEquals("lower", outFn.name());
+        assertEquals("lower", outFn.name().values().getLast());
 
         ColumnExpr outArgCol = ((FunctionExpr.Arg.ExprArg) outFn.args().getFirst()).expr().<ColumnExpr>matchExpression().column(c -> c).orElse(null);
-        assertEquals("u", outArgCol.tableAlias());
-        assertEquals("user_id", outArgCol.name(), "Deep-renamed column should be applied");
+        assertEquals("u", outArgCol.tableAlias().value());
+        assertEquals("user_id", outArgCol.name().value(), "Deep-renamed column should be applied");
     }
 
     @Test
@@ -103,8 +103,8 @@ public class DeepTransformationRebuildTest {
     static class RenameInsideFunction extends RecursiveNodeTransformer {
         @Override
         public Node visitColumnExpr(ColumnExpr c) {
-            if ("u".equals(c.tableAlias()) && "id".equals(c.name())) {
-                return ColumnExpr.of("u", "user_id");
+            if ("u".equals(c.tableAlias() == null ? null : c.tableAlias().value()) && "id".equals(c.name().value())) {
+                return ColumnExpr.of(Identifier.of("u"), Identifier.of("user_id"));
             }
             return c;
         }
@@ -113,7 +113,10 @@ public class DeepTransformationRebuildTest {
     static class RenameAnyColumn extends RecursiveNodeTransformer {
         @Override
         public Node visitColumnExpr(ColumnExpr c) {
-            return ColumnExpr.of("dbo." + c.tableAlias(), c.name());
+            return ColumnExpr.of(
+                c.tableAlias() == null ? Identifier.of("dbo") : Identifier.of("dbo." + c.tableAlias().value()),
+                c.name()
+            );
         }
     }
 
@@ -131,8 +134,10 @@ public class DeepTransformationRebuildTest {
 
         @Override
         public Void visitColumnExpr(ColumnExpr c) {
-            cols.add(c.tableAlias() == null ? c.name() : c.tableAlias() + "." + c.name());
+            cols.add(c.tableAlias() == null ? c.name().value() : c.tableAlias().value() + "." + c.name().value());
             return super.visitColumnExpr(c); // continue recursion if there are nested nodes (usually none for columns)
         }
     }
 }
+
+

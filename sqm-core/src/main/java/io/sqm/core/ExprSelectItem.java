@@ -24,6 +24,17 @@ public non-sealed interface ExprSelectItem extends SelectItem {
     }
 
     /**
+     * Creates an expression wrapper for a SELECT statement preserving alias quote metadata.
+     *
+     * @param expr  an expression to wrap.
+     * @param alias an alias identifier or {@code null}.
+     * @return a newly created instance of a wrapper.
+     */
+    static ExprSelectItem of(Expression expr, Identifier alias) {
+        return new Impl(expr, alias);
+    }
+
+    /**
      * Gets an expression wrapped by this instance.
      *
      * @return an expression.
@@ -35,7 +46,7 @@ public non-sealed interface ExprSelectItem extends SelectItem {
      *
      * @return an alias.
      */
-    String alias();
+    Identifier alias();
 
     /**
      * Adds an alias to a SELECT item.
@@ -44,6 +55,16 @@ public non-sealed interface ExprSelectItem extends SelectItem {
      * @return A newly created instance with the provided alias. The {@link ExprSelectItem#expr()} field is preserved.
      */
     default ExprSelectItem as(String alias) {
+        return as(alias == null ? null : Identifier.of(alias));
+    }
+
+    /**
+     * Adds an alias to a SELECT item preserving quote metadata.
+     *
+     * @param alias an alias identifier to add.
+     * @return A newly created instance with the provided alias. The {@link ExprSelectItem#expr()} field is preserved.
+     */
+    default ExprSelectItem as(Identifier alias) {
         return new Impl(expr(), alias);
     }
 
@@ -70,8 +91,8 @@ public non-sealed interface ExprSelectItem extends SelectItem {
      * </pre>
      *
      * @param expr an expression to wrap.
-     * @param alias an alias.
+     * @param alias an alias identifier.
      */
-    record Impl(Expression expr, String alias) implements ExprSelectItem {
+    record Impl(Expression expr, Identifier alias) implements ExprSelectItem {
     }
 }

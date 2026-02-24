@@ -1,6 +1,7 @@
 package io.sqm.validate.schema.rule;
 
 import io.sqm.core.UsingJoin;
+import io.sqm.core.Identifier;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
 import io.sqm.catalog.model.CatalogType;
@@ -38,7 +39,7 @@ final class UsingJoinValidationRule implements SchemaValidationRule<UsingJoin> {
             if (leftMatches == 0 || rightType.isEmpty()) {
                 context.addProblem(
                     ValidationProblem.Code.JOIN_USING_INVALID_COLUMN,
-                    "USING column must exist on both sides: " + column,
+                    "USING column must exist on both sides: " + display(column),
                     node,
                     "join.using"
                 );
@@ -47,7 +48,7 @@ final class UsingJoinValidationRule implements SchemaValidationRule<UsingJoin> {
             if (leftMatches > 1) {
                 context.addProblem(
                     ValidationProblem.Code.JOIN_USING_INVALID_COLUMN,
-                    "USING column is ambiguous on left side: " + column,
+                    "USING column is ambiguous on left side: " + display(column),
                     node,
                     "join.using"
                 );
@@ -57,7 +58,7 @@ final class UsingJoinValidationRule implements SchemaValidationRule<UsingJoin> {
             // Resolve unique left-side type by scanning strict sources excluding right.
             CatalogType leftType = null;
             for (var sourceKey : context.currentScopeSourceKeys()) {
-                if (rightSourceKey != null && rightSourceKey.equals(sourceKey)) {
+                if (rightSourceKey.equals(sourceKey)) {
                     continue;
                 }
                 var candidate = context.sourceColumnType(sourceKey, column);
@@ -70,12 +71,16 @@ final class UsingJoinValidationRule implements SchemaValidationRule<UsingJoin> {
             if (leftType != null && !CatalogTypeSemantics.comparable(leftType, rightType.get())) {
                 context.addProblem(
                     ValidationProblem.Code.TYPE_MISMATCH,
-                    "Incompatible USING column types for '" + column + "': " + leftType + " and " + rightType.get(),
+                    "Incompatible USING column types for '" + display(column) + "': " + leftType + " and " + rightType.get(),
                     node,
                     "join.using"
                 );
             }
         }
+    }
+
+    private static String display(Identifier column) {
+        return column == null ? null : column.value();
     }
 }
 

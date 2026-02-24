@@ -2,6 +2,7 @@ package io.sqm.core;
 
 import org.junit.jupiter.api.Test;
 
+import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
@@ -9,8 +10,8 @@ class TableRefTest {
 
     @Test
     void table() {
-        assertInstanceOf(Table.class, TableRef.table("t"));
-        assertInstanceOf(Table.class, TableRef.table("sys", "t"));
+        assertInstanceOf(Table.class, tbl("t"));
+        assertInstanceOf(Table.class, tbl("sys", "t"));
     }
 
     @Test
@@ -25,7 +26,7 @@ class TableRefTest {
 
     @Test
     void alias() {
-        var table = TableRef.table("t").as("a");
-        assertEquals("a", table.alias());
+        var table = tbl("t").as("a");
+        assertEquals("a", table.alias().value());
     }
 }

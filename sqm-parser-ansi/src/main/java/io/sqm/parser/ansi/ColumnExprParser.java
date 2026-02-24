@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.ColumnExpr;
+import io.sqm.core.Identifier;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
@@ -20,12 +21,13 @@ public class ColumnExprParser implements MatchableParser<ColumnExpr> {
     @Override
     public ParseResult<ColumnExpr> parse(Cursor cur, ParseContext ctx) {
         var t = cur.expect("Expected identifier", TokenType.IDENT);
-        String table = null, name = t.lexeme();
+        Identifier table = null;
+        Identifier name = toIdentifier(t);
 
         // t1.c1
         if (cur.consumeIf(TokenType.DOT) && cur.match(TokenType.IDENT)) {
             table = name;
-            name = cur.advance().lexeme();
+            name = toIdentifier(cur.advance());
         }
         return ok(ColumnExpr.of(table, name));
     }

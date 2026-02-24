@@ -3,12 +3,13 @@ package io.sqm.core;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class InPredicateTest {
 
     @Test
     void of() {
-        var lhs = Expression.column("status");
+        var lhs = col("status");
         var rhs = Expression.row("active", "pending");
         var predicate = InPredicate.of(lhs, rhs, false);
         
@@ -22,7 +23,7 @@ class InPredicateTest {
     @Test
     void in() {
         var predicate = InPredicate.of(
-            Expression.column("id"),
+            col("id"),
             Expression.row(1, 2),
             false
         );
@@ -32,7 +33,7 @@ class InPredicateTest {
     @Test
     void notIn() {
         var predicate = InPredicate.of(
-            Expression.column("id"),
+            col("id"),
             Expression.row(1, 2),
             true
         );
@@ -41,7 +42,7 @@ class InPredicateTest {
 
     @Test
     void lhs() {
-        var lhs = Expression.column("category");
+        var lhs = col("category");
         var predicate = InPredicate.of(
             lhs,
             Expression.row("A"),
@@ -54,7 +55,7 @@ class InPredicateTest {
     void rhs() {
         var rhs = Expression.row(1, 2, 3);
         var predicate = InPredicate.of(
-            Expression.column("id"),
+            col("id"),
             rhs,
             false
         );
@@ -64,7 +65,7 @@ class InPredicateTest {
     @Test
     void accept() {
         var predicate = InPredicate.of(
-            Expression.column("x"),
+            col("x"),
             Expression.row(1),
             false
         );
@@ -75,10 +76,10 @@ class InPredicateTest {
 
     @Test
     void withQueryExpr() {
-        var subquery = Query.select(Expression.column("id")).from(TableRef.table("orders"));
+        var subquery = Query.select(col("id")).from(TableRef.table(Identifier.of("orders")));
         var rhs = Expression.subquery(subquery.build());
         var predicate = InPredicate.of(
-            Expression.column("orderId"),
+            col("orderId"),
             rhs,
             false
         );
@@ -91,7 +92,7 @@ class InPredicateTest {
         var row2 = RowExpr.of(java.util.List.of(Expression.literal(3), Expression.literal(4)));
         var rhs = Expression.rows(row1, row2);
         var predicate = InPredicate.of(
-            Expression.column("x"),
+            col("x"),
             rhs,
             false
         );
@@ -110,3 +111,5 @@ class InPredicateTest {
         }
     }
 }
+
+

@@ -3,6 +3,8 @@ package io.sqm.parser.postgresql;
 import io.sqm.core.ArithmeticExpr;
 import io.sqm.core.BinaryOperatorExpr;
 import io.sqm.core.Expression;
+import io.sqm.core.OperatorName;
+import io.sqm.core.QualifiedName;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -132,32 +134,30 @@ public class BinaryOperatorExprParser implements Parser<Expression>, InfixParser
         return null;
     }
 
-    private ParseResult<String> consumeOperator(Cursor cur) {
+    private ParseResult<OperatorName> consumeOperator(Cursor cur) {
         if (isOperatorSyntax(cur)) {
             return consumeOperatorSyntax(cur);
         }
 
         var token = cur.expect("Expected operator", TokenType.OPERATOR, TokenType.QMARK);
-        return ok(token.lexeme());
+        return ok(OperatorName.of(token.lexeme()));
     }
 
-    private ParseResult<String> consumeOperatorSyntax(Cursor cur) {
+    private ParseResult<OperatorName> consumeOperatorSyntax(Cursor cur) {
         cur.expect("Expected OPERATOR", t -> t.type() == TokenType.IDENT && "OPERATOR".equalsIgnoreCase(t.lexeme()));
         cur.expect("Expected '(' after OPERATOR", TokenType.LPAREN);
 
-        String schema = null;
+        QualifiedName schemaName = null;
         if (cur.match(TokenType.IDENT) && cur.match(TokenType.DOT, 1)) {
-            schema = cur.advance().lexeme();
+            schemaName = QualifiedName.of(toIdentifier(cur.advance()));
             cur.advance();
         }
 
         var opToken = cur.expect("Expected operator name in OPERATOR()", TokenType.OPERATOR, TokenType.QMARK);
         cur.expect("Expected ')' after OPERATOR()", TokenType.RPAREN);
 
-        var operator = schema == null
-            ? "OPERATOR(" + opToken.lexeme() + ")"
-            : "OPERATOR(" + schema + "." + opToken.lexeme() + ")";
-
-        return ok(operator);
+        return ok(schemaName == null
+            ? OperatorName.operator(opToken.lexeme())
+            : OperatorName.operator(schemaName, opToken.lexeme()));
     }
 }

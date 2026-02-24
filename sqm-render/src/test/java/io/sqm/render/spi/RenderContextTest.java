@@ -64,7 +64,7 @@ class RenderContextTest {
     private static final class ColumnRenderer implements Renderer<ColumnExpr> {
         @Override
         public void render(ColumnExpr node, RenderContext ctx, SqlWriter w) {
-            w.append(node.name());
+            w.append(node.name().value());
         }
 
         @Override

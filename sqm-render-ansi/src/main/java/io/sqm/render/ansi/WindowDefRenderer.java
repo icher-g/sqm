@@ -16,7 +16,7 @@ public class WindowDefRenderer implements Renderer<WindowDef> {
     @Override
     public void render(WindowDef node, RenderContext ctx, SqlWriter w) {
         w.append("WINDOW").space();
-        w.append(node.name()).space().append("AS").space();
+        w.append(renderIdentifier(node.name(), ctx.dialect().quoter())).space().append("AS").space();
         w.append(node.spec(), true, false);
     }
 

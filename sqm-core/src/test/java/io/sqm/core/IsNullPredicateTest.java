@@ -3,12 +3,13 @@ package io.sqm.core;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class IsNullPredicateTest {
 
     @Test
     void of() {
-        var expr = Expression.column("name");
+        var expr = col("name");
         var predicate = IsNullPredicate.of(expr, false);
         
         assertNotNull(predicate);
@@ -19,26 +20,26 @@ class IsNullPredicateTest {
 
     @Test
     void isNull() {
-        var predicate = IsNullPredicate.of(Expression.column("email"), false);
+        var predicate = IsNullPredicate.of(col("email"), false);
         assertFalse(predicate.negated());
     }
 
     @Test
     void isNotNull() {
-        var predicate = IsNullPredicate.of(Expression.column("email"), true);
+        var predicate = IsNullPredicate.of(col("email"), true);
         assertTrue(predicate.negated());
     }
 
     @Test
     void expr() {
-        var expr = Expression.column("status");
+        var expr = col("status");
         var predicate = IsNullPredicate.of(expr, false);
         assertEquals(expr, predicate.expr());
     }
 
     @Test
     void accept() {
-        var predicate = IsNullPredicate.of(Expression.column("x"), false);
+        var predicate = IsNullPredicate.of(col("x"), false);
         var visitor = new TestVisitor();
         var result = predicate.accept(visitor);
         assertTrue(result);
@@ -46,8 +47,8 @@ class IsNullPredicateTest {
 
     @Test
     void differentExpressions() {
-        var expr1 = Expression.column("col1");
-        var expr2 = Expression.column("col2");
+        var expr1 = col("col1");
+        var expr2 = col("col2");
         
         var pred1 = IsNullPredicate.of(expr1, false);
         var pred2 = IsNullPredicate.of(expr2, false);
@@ -58,8 +59,8 @@ class IsNullPredicateTest {
 
     @Test
     void negatedFlag() {
-        var pred1 = IsNullPredicate.of(Expression.column("x"), false);
-        var pred2 = IsNullPredicate.of(Expression.column("x"), true);
+        var pred1 = IsNullPredicate.of(col("x"), false);
+        var pred2 = IsNullPredicate.of(col("x"), true);
         
         assertFalse(pred1.negated());
         assertTrue(pred2.negated());
@@ -77,3 +78,4 @@ class IsNullPredicateTest {
         }
     }
 }
+

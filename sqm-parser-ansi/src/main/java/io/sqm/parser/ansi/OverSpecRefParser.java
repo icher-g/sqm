@@ -20,7 +20,7 @@ public class OverSpecRefParser implements Parser<OverSpec.Ref> {
     @Override
     public ParseResult<OverSpec.Ref> parse(Cursor cur, ParseContext ctx) {
         var t = cur.expect("Expected IDENTIFIER after OVER", TokenType.IDENT);
-        return ok(OverSpec.ref(t.lexeme()));
+        return ok(OverSpec.ref(toIdentifier(t)));
     }
 
     /**

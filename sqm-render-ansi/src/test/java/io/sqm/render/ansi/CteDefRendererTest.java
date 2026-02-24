@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.CteDef;
+import io.sqm.core.Identifier;
+import io.sqm.core.QuoteStyle;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.SqlWriter;
@@ -70,7 +72,7 @@ class CteDefRendererTest {
         var q = select(col("u", "id"))
             .from(tbl("users", "u"))
             .build();
-        var cte = cte(null, q);
+        var cte = CteDef.of(null, q, null, CteDef.Materialization.DEFAULT);
 
         assertThrows(RuntimeException.class, () -> render(cte));
     }
@@ -84,5 +86,25 @@ class CteDefRendererTest {
         var cte = cte("u_cte", q).materialization(CteDef.Materialization.MATERIALIZED);
 
         assertThrows(UnsupportedDialectFeatureException.class, () -> render(cte));
+    }
+
+    @Test
+    @DisplayName("CTE header preserves supported quotes and falls back unsupported ones")
+    void cte_header_quote_preservation_and_fallback() {
+        var q = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .build();
+        var cte = CteDef.of(
+            Identifier.of("MyCte", QuoteStyle.BACKTICK),
+            q,
+            List.of(
+                Identifier.of("id", QuoteStyle.DOUBLE_QUOTE),
+                Identifier.of("name", QuoteStyle.BRACKETS)
+            ),
+            CteDef.Materialization.DEFAULT
+        );
+
+        var sql = normalize(render(cte));
+        assertTrue(sql.startsWith("\"MyCte\" (\"id\", \"name\") AS ("), "CTE header quote conversion expected");
     }
 }

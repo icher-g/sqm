@@ -1,6 +1,7 @@
 package io.sqm.core.walk;
 
 import io.sqm.core.ColumnExpr;
+import io.sqm.core.Identifier;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,7 +18,7 @@ public class DefaultResultPropagationTest {
     @Test
     void defaultResult_isNullByDefault() {
         // Build any simple node; here we assume a factory exists
-        ColumnExpr col = ColumnExpr.of("u", "id");
+        ColumnExpr col = ColumnExpr.of(Identifier.of("u"), Identifier.of("id"));
 
         String result = col.accept(new NoopVisitor());
         assertNull(result, "Expected null when defaultResult() returns null");
@@ -25,7 +26,7 @@ public class DefaultResultPropagationTest {
 
     @Test
     void defaultResult_customMarkerIsPropagated() {
-        ColumnExpr col = ColumnExpr.of("u", "id");
+        ColumnExpr col = ColumnExpr.of(Identifier.of("u"), Identifier.of("id"));
 
         String result = col.accept(new MarkerVisitor());
         assertEquals("__DEFAULT__", result, "Expected custom default marker to be returned");

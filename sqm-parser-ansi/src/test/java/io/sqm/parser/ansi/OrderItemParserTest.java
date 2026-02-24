@@ -3,6 +3,7 @@ package io.sqm.parser.ansi;
 import io.sqm.core.Direction;
 import io.sqm.core.Nulls;
 import io.sqm.core.OrderItem;
+import io.sqm.core.QualifiedName;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import org.junit.jupiter.api.Assertions;
@@ -85,7 +86,7 @@ class OrderItemParserTest {
             Assertions.assertNotNull(oi.expr());
             Assertions.assertNull(oi.direction());
             Assertions.assertNull(oi.nulls());
-            Assertions.assertEquals("de_CH", oi.collate());
+            Assertions.assertEquals(QualifiedName.of("de_CH"), oi.collate());
         }
 
         @Test
@@ -94,7 +95,7 @@ class OrderItemParserTest {
             var res = parse("name COLLATE \"de-CH-x-phonebk\"");
             Assertions.assertTrue(res.ok(), () -> "unexpected error: " + res.errorMessage());
             OrderItem oi = res.value();
-            Assertions.assertEquals("de-CH-x-phonebk", oi.collate());
+            Assertions.assertEquals(QualifiedName.of(io.sqm.core.Identifier.of("de-CH-x-phonebk", io.sqm.core.QuoteStyle.DOUBLE_QUOTE)), oi.collate());
         }
 
         @Test
@@ -106,7 +107,7 @@ class OrderItemParserTest {
             Assertions.assertNotNull(oi.expr());
             Assertions.assertEquals(Direction.DESC, oi.direction());
             Assertions.assertEquals(Nulls.FIRST, oi.nulls());
-            Assertions.assertEquals("de-CH", oi.collate());
+            Assertions.assertEquals(QualifiedName.of(io.sqm.core.Identifier.of("de-CH", io.sqm.core.QuoteStyle.DOUBLE_QUOTE)), oi.collate());
         }
 
         @Test
@@ -117,7 +118,7 @@ class OrderItemParserTest {
             OrderItem oi = res.value();
             Assertions.assertNotNull(oi.expr());
             Assertions.assertEquals(Direction.DESC, oi.direction());
-            Assertions.assertEquals("de_CH", oi.collate());
+            Assertions.assertEquals(QualifiedName.of("de_CH"), oi.collate());
         }
     }
 

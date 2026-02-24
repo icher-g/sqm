@@ -41,7 +41,7 @@ public class PredicateSubtypesJsonTest {
         assertEquals(LikeMode.LIKE, back.mode());
         assertFalse(back.negated());
         assertInstanceOf(ColumnExpr.class, back.value());
-        assertEquals("name", back.value().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("name", back.value().matchExpression().column(c -> c.name().value()).orElse(null));
         assertInstanceOf(LiteralExpr.class, back.pattern());
         assertEquals("%John%", ((LiteralExpr) back.pattern()).value());
         assertNull(back.escape());
@@ -59,7 +59,7 @@ public class PredicateSubtypesJsonTest {
 
         assertTrue(back.negated());
         assertEquals(LikeMode.LIKE, back.mode());
-        assertEquals("email", back.value().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("email", back.value().matchExpression().column(c -> c.name().value()).orElse(null));
         assertEquals("%@test.com", ((LiteralExpr) back.pattern()).value());
     }
 
@@ -113,7 +113,7 @@ public class PredicateSubtypesJsonTest {
         assertNotNull(back.where());
         var predicate = back.where().<LikePredicate>matchPredicate().like(l -> l).orElse(null);
         assertNotNull(predicate);
-        assertEquals("name", predicate.value().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("name", predicate.value().matchExpression().column(c -> c.name().value()).orElse(null));
         assertEquals("%Smith%", ((LiteralExpr) predicate.pattern()).value());
     }
 
@@ -125,7 +125,7 @@ public class PredicateSubtypesJsonTest {
         var back = roundTrip(predicate, LikePredicate.class);
 
         assertInstanceOf(ColumnExpr.class, back.pattern());
-        assertEquals("pattern_col", back.pattern().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("pattern_col", back.pattern().matchExpression().column(c -> c.name().value()).orElse(null));
     }
 
     @Test
@@ -149,8 +149,8 @@ public class PredicateSubtypesJsonTest {
 
         assertNotNull(left);
         assertNotNull(right);
-        assertEquals("name", left.value().matchExpression().column(c -> c.name()).orElse(null));
-        assertEquals("description", right.value().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("name", left.value().matchExpression().column(c -> c.name().value()).orElse(null));
+        assertEquals("description", right.value().matchExpression().column(c -> c.name().value()).orElse(null));
     }
 
     @Test
@@ -161,7 +161,7 @@ public class PredicateSubtypesJsonTest {
         var back = roundTrip(predicate, LikePredicate.class);
 
         assertEquals(LikeMode.SIMILAR_TO, back.mode());
-        assertEquals("code", back.value().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("code", back.value().matchExpression().column(c -> c.name().value()).orElse(null));
         assertEquals("\\d{3}-\\d{4}", ((LiteralExpr) back.pattern()).value());
     }
 
@@ -178,7 +178,7 @@ public class PredicateSubtypesJsonTest {
         assertEquals(RegexMode.MATCH, back.mode());
         assertFalse(back.negated());
         assertInstanceOf(ColumnExpr.class, back.value());
-        assertEquals("email", back.value().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("email", back.value().matchExpression().column(c -> c.name().value()).orElse(null));
         assertInstanceOf(LiteralExpr.class, back.pattern());
         assertEquals("^[a-z]+@[a-z]+\\.[a-z]+$", ((LiteralExpr) back.pattern()).value());
 
@@ -206,7 +206,7 @@ public class PredicateSubtypesJsonTest {
 
         assertEquals(RegexMode.MATCH_INSENSITIVE, back.mode());
         assertFalse(back.negated());
-        assertEquals("title", back.value().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("title", back.value().matchExpression().column(c -> c.name().value()).orElse(null));
     }
 
     @Test
@@ -236,7 +236,7 @@ public class PredicateSubtypesJsonTest {
         var regexPredicate = back.where().<RegexPredicate>matchPredicate().regex(u -> u).orElse(null);
         assertNotNull(regexPredicate);
         assertInstanceOf(RegexPredicate.class, regexPredicate);
-        assertEquals("message", regexPredicate.value().matchExpression().column(c -> c.name()).orElse(null));
+        assertEquals("message", regexPredicate.value().matchExpression().column(c -> c.name().value()).orElse(null));
         assertEquals(".*ERROR.*", ((LiteralExpr) regexPredicate.pattern()).value());
     }
 

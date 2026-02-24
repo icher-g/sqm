@@ -9,22 +9,22 @@ public sealed interface TableRef extends FromItem permits AliasedTableRef, Diale
     /**
      * Creates a table with the provided name. All other fields are set to NULL.
      *
-     * @param name the name of the table. This is not qualified name.
-     * @return A newly created instance of the table.
+     * @param name the table name identifier. This is not a qualified name.
+     * @return a newly created table reference.
      */
-    static Table table(String name) {
-        return Table.of(name);
+    static Table table(Identifier name) {
+        return Table.of(null, name, null, Table.Inheritance.DEFAULT);
     }
 
     /**
-     * Creates a table with the provided name.
+     * Creates a table with the provided schema and name.
      *
-     * @param name   the name of the table. This is not qualified name.
-     * @param schema a table schema.
-     * @return A newly created instance of the table.
+     * @param schema a table schema identifier; may be null.
+     * @param name   the table name identifier. This is not a qualified name.
+     * @return a newly created table reference.
      */
-    static Table table(String schema, String name) {
-        return Table.of(schema, name);
+    static Table table(Identifier schema, Identifier name) {
+        return Table.of(schema, name, null, Table.Inheritance.DEFAULT);
     }
 
     /**

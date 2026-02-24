@@ -3,13 +3,14 @@ package io.sqm.core;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class BetweenPredicateTest {
 
     @Test
     void of() {
-        var p = BetweenPredicate.of(Expression.column("c"), Expression.literal(1), Expression.literal(2), true, false);
-        assertEquals("c", p.value().matchExpression().column(c -> c.name()).orElse(null));
+        var p = BetweenPredicate.of(col("c"), Expression.literal(1), Expression.literal(2), true, false);
+        assertEquals("c", p.value().matchExpression().column(c -> c.name().value()).orElse(null));
         assertEquals(1, p.lower().matchExpression().literal(l -> l.value()).orElse(null));
         assertEquals(2, p.upper().matchExpression().literal(l -> l.value()).orElse(null));
         assertTrue(p.symmetric());
@@ -17,8 +18,8 @@ class BetweenPredicateTest {
 
     @Test
     void symmetric() {
-        var p = BetweenPredicate.of(Expression.column("c"), Expression.literal(1), Expression.literal(2));
-        assertEquals("c", p.value().matchExpression().column(c -> c.name()).orElse(null));
+        var p = BetweenPredicate.of(col("c"), Expression.literal(1), Expression.literal(2));
+        assertEquals("c", p.value().matchExpression().column(c -> c.name().value()).orElse(null));
         assertEquals(1, p.lower().matchExpression().literal(l -> l.value()).orElse(null));
         assertEquals(2, p.upper().matchExpression().literal(l -> l.value()).orElse(null));
         assertFalse(p.symmetric());
@@ -26,3 +27,4 @@ class BetweenPredicateTest {
         assertTrue(p.symmetric());
     }
 }
+

@@ -69,7 +69,7 @@ class ArraySubscriptExprParserTest {
         
         assertInstanceOf(ColumnExpr.class, sub1.base());
         var col = (ColumnExpr) sub1.base();
-        assertEquals("matrix", col.name());
+        assertEquals("matrix", col.name().value());
     }
 
     @Test
@@ -120,7 +120,7 @@ class ArraySubscriptExprParserTest {
         var item = assertInstanceOf(ExprSelectItem.class, query.items().getFirst());
         assertInstanceOf(ArraySubscriptExpr.class, item.expr());
         assertNotNull(item.alias());
-        assertEquals("first_elem", item.alias());
+        assertEquals("first_elem", item.alias().value());
     }
 
     @Test
@@ -132,8 +132,8 @@ class ArraySubscriptExprParserTest {
         var sub = assertInstanceOf(ArraySubscriptExpr.class, result.value());
         
         var base = assertInstanceOf(ColumnExpr.class, sub.base());
-        assertEquals("t", base.tableAlias());
-        assertEquals("arr", base.name());
+        assertEquals("t", base.tableAlias().value());
+        assertEquals("arr", base.name().value());
     }
 
     @Test

@@ -17,11 +17,11 @@ public class ColumnRefRenderer implements Renderer<ColumnExpr> {
     public void render(ColumnExpr node, RenderContext ctx, SqlWriter w) {
         var quoter = ctx.dialect().quoter();
         var table = node.tableAlias();
-        if (table != null && !table.isBlank()) {
-            w.append(quoter.quoteIfNeeded(table));
+        if (table != null) {
+            w.append(renderIdentifier(table, quoter));
             w.append(".");
         }
-        w.append(quoter.quoteIfNeeded(node.name()));
+        w.append(renderIdentifier(node.name(), quoter));
     }
 
     /**

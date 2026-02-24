@@ -77,6 +77,16 @@ public final class SchemaValidationContext {
     }
 
     /**
+     * Normalizes identifier to case-insensitive map key.
+     *
+     * @param value identifier.
+     * @return normalized identifier key.
+     */
+    static String normalize(Identifier value) {
+        return normalize(value.value());
+    }
+
+    /**
      * Promotes two numeric types to resulting arithmetic type.
      *
      * @param left  left type.
@@ -131,6 +141,21 @@ public final class SchemaValidationContext {
      */
     public boolean isColumnDenied(String sourceName, String columnName) {
         return accessPolicy.isColumnDenied(principal, sourceName, columnName);
+    }
+
+    /**
+     * Returns true when the given column access is denied for the current principal.
+     *
+     * @param sourceName optional source/table alias identifier.
+     * @param columnName column identifier.
+     * @return true when denied.
+     */
+    public boolean isColumnDenied(Identifier sourceName, Identifier columnName) {
+        return accessPolicy.isColumnDenied(
+            principal,
+            sourceName == null ? null : sourceName.value(),
+            columnName == null ? null : columnName.value()
+        );
     }
 
     /**
@@ -285,6 +310,20 @@ public final class SchemaValidationContext {
     }
 
     /**
+     * Counts strict current-scope sources that contain the given column.
+     *
+     * @param columnName        column identifier to lookup.
+     * @param excludedSourceKey optional normalized source key to exclude.
+     * @return number of matching strict sources.
+     */
+    public int countStrictSourcesWithColumn(Identifier columnName, String excludedSourceKey) {
+        if (columnName == null) {
+            return 0;
+        }
+        return countStrictSourcesWithColumn(columnName.value(), excludedSourceKey, ScopeResolutionMode.CURRENT_SCOPE);
+    }
+
+    /**
      * Returns type of a column in a strict current-scope source.
      *
      * @param sourceKey  normalized or raw source key.
@@ -293,6 +332,20 @@ public final class SchemaValidationContext {
      */
     public Optional<CatalogType> sourceColumnType(String sourceKey, String columnName) {
         return sourceColumnType(sourceKey, columnName, ScopeResolutionMode.CURRENT_SCOPE);
+    }
+
+    /**
+     * Returns type of a column in a strict current-scope source.
+     *
+     * @param sourceKey  normalized or raw source key.
+     * @param columnName column identifier.
+     * @return column type when source and column are known.
+     */
+    public Optional<CatalogType> sourceColumnType(String sourceKey, Identifier columnName) {
+        if (columnName == null) {
+            return Optional.empty();
+        }
+        return sourceColumnType(sourceKey, columnName.value(), ScopeResolutionMode.CURRENT_SCOPE);
     }
 
     /**
@@ -373,10 +426,10 @@ public final class SchemaValidationContext {
                 case CHARACTER_VARYING, NATIONAL_CHARACTER, NATIONAL_CHARACTER_VARYING -> Optional.of(CatalogType.STRING);
             };
         }
-        if (typeName.qualifiedName().isEmpty()) {
+        if (typeName.qualifiedName() == null) {
             return Optional.empty();
         }
-        return Optional.of(CatalogTypeSemantics.fromSqlType(typeName.qualifiedName().getLast()));
+        return Optional.of(CatalogTypeSemantics.fromSqlType(typeName.qualifiedName().parts().getLast().value()));
     }
 
     /**
@@ -386,10 +439,11 @@ public final class SchemaValidationContext {
      * @return inferred return type.
      */
     private Optional<CatalogType> inferFunctionType(FunctionExpr functionExpr) {
-        if (functionExpr == null || functionExpr.name() == null) {
+        var functionName = functionName(functionExpr);
+        if (functionName == null) {
             return Optional.empty();
         }
-        return functionCatalog.resolve(functionExpr.name()).flatMap(io.sqm.validate.schema.function.FunctionSignature::returnType);
+        return functionCatalog.resolve(functionName).flatMap(io.sqm.validate.schema.function.FunctionSignature::returnType);
     }
 
     /**
@@ -458,8 +512,8 @@ public final class SchemaValidationContext {
      * @param table table reference.
      */
     private void registerPhysicalTable(Table table) {
-        if (isTableDenied(table.schema(), table.name())) {
-            var tableName = table.schema() == null ? table.name() : table.schema() + "." + table.name();
+        if (isTableDenied(table.schema() == null ? null : table.schema().value(), table.name().value())) {
+            var tableName = table.schema() == null ? table.name().value() : table.schema().value() + "." + table.name().value();
             addProblem(
                 ValidationProblem.Code.POLICY_TABLE_DENIED,
                 "Table is denied by policy: " + tableName,
@@ -475,7 +529,7 @@ public final class SchemaValidationContext {
             return;
         }
 
-        var lookup = schema.resolve(table.schema(), table.name());
+        var lookup = schema.resolve(table.schema() == null ? null : table.schema().value(), table.name().value());
         if (lookup instanceof CatalogSchema.TableLookupResult.NotFound(String schema1, String name)) {
             var tableName = schema1 == null ? name : schema1 + "." + name;
             addProblem(ValidationProblem.Code.TABLE_NOT_FOUND, "Table not found: " + tableName, table, "from.table");
@@ -505,14 +559,14 @@ public final class SchemaValidationContext {
      * @param alias         source alias.
      * @param columnAliases explicit output aliases.
      */
-    private void registerDerivedSource(String alias, List<String> columnAliases) {
+    private void registerDerivedSource(Identifier alias, List<Identifier> columnAliases) {
         if (alias == null) {
             return;
         }
         var columns = new LinkedHashMap<String, CatalogColumn>();
         if (columnAliases != null) {
             for (var columnAlias : columnAliases) {
-                columns.put(normalize(columnAlias), CatalogColumn.of(columnAlias, CatalogType.STRING));
+                columns.put(normalize(columnAlias), CatalogColumn.of(columnAlias.value(), CatalogType.STRING));
             }
         }
         registerSource(alias, ResolvedSource.of(alias, columns, false));
@@ -524,7 +578,7 @@ public final class SchemaValidationContext {
      * @param aliasOrName effective source alias key.
      * @param source      source metadata.
      */
-    private void registerSource(String aliasOrName, ResolvedSource source) {
+    private void registerSource(Identifier aliasOrName, ResolvedSource source) {
         var scope = currentScope().orElse(null);
         if (scope == null) {
             return;
@@ -534,7 +588,7 @@ public final class SchemaValidationContext {
         if (previous != null) {
             addProblem(
                 ValidationProblem.Code.DUPLICATE_TABLE_ALIAS,
-                "Duplicate table alias in scope: " + aliasOrName,
+                "Duplicate table alias in scope: " + aliasOrName.value(),
                 "TableRef",
                 "from"
             );
@@ -574,7 +628,7 @@ public final class SchemaValidationContext {
                 if (reportErrors) {
                     addProblem(
                         ValidationProblem.Code.UNKNOWN_TABLE_ALIAS,
-                        "Unknown table alias: " + column.tableAlias(),
+                        "Unknown table alias: " + column.tableAlias().value(),
                         column,
                         "column.reference"
                     );
@@ -589,7 +643,7 @@ public final class SchemaValidationContext {
             if (dbColumn == null && reportErrors) {
                 addProblem(
                     ValidationProblem.Code.COLUMN_NOT_FOUND,
-                    "Column not found: " + column.tableAlias() + "." + column.name(),
+                    "Column not found: " + column.tableAlias().value() + "." + column.name().value(),
                     column,
                     "column.reference"
                 );
@@ -615,7 +669,7 @@ public final class SchemaValidationContext {
             if (reportErrors && (!unknownSourceVisible || mode == ScopeResolutionMode.CURRENT_SCOPE)) {
                 addProblem(
                     ValidationProblem.Code.COLUMN_NOT_FOUND,
-                    "Column not found: " + column.name(),
+                    "Column not found: " + column.name().value(),
                     column,
                     "column.reference"
                 );
@@ -626,7 +680,7 @@ public final class SchemaValidationContext {
             if (reportErrors) {
                 addProblem(
                     ValidationProblem.Code.COLUMN_AMBIGUOUS,
-                    "Ambiguous column reference: " + column.name(),
+                    "Ambiguous column reference: " + column.name().value(),
                     column,
                     "column.reference"
                 );
@@ -696,7 +750,28 @@ public final class SchemaValidationContext {
      * @param mode  scope resolution mode.
      * @return resolved source metadata.
      */
+    private Optional<ResolvedSource> findSource(Identifier alias, ScopeResolutionMode mode) {
+        var key = normalize(alias);
+        for (var scope : iterScopes(mode)) {
+            var source = scope.byAlias.get(key);
+            if (source != null) {
+                return Optional.of(source);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Finds source metadata by raw or normalized alias for selected scope visibility.
+     *
+     * @param alias source alias text.
+     * @param mode  scope resolution mode.
+     * @return resolved source metadata.
+     */
     private Optional<ResolvedSource> findSource(String alias, ScopeResolutionMode mode) {
+        if (alias == null) {
+            return Optional.empty();
+        }
         var key = normalize(alias);
         for (var scope : iterScopes(mode)) {
             var source = scope.byAlias.get(key);
@@ -850,7 +925,7 @@ public final class SchemaValidationContext {
      * @param columns       visible columns by normalized name.
      * @param strictColumns whether unresolved columns should be reported.
      */
-    private record ResolvedSource(String aliasOrName, Map<String, CatalogColumn> columns, boolean strictColumns) {
+    private record ResolvedSource(Identifier aliasOrName, Map<String, CatalogColumn> columns, boolean strictColumns) {
         /**
          * Creates immutable source metadata.
          *
@@ -859,7 +934,7 @@ public final class SchemaValidationContext {
          * @param strictColumns strict lookup mode.
          * @return source metadata.
          */
-        private static ResolvedSource of(String aliasOrName, Map<String, CatalogColumn> columns, boolean strictColumns) {
+        private static ResolvedSource of(Identifier aliasOrName, Map<String, CatalogColumn> columns, boolean strictColumns) {
             return new ResolvedSource(aliasOrName, Map.copyOf(columns), strictColumns);
         }
     }
@@ -883,10 +958,17 @@ public final class SchemaValidationContext {
             }
             var columns = new LinkedHashMap<String, CatalogColumn>(cte.columnAliases().size());
             for (var alias : cte.columnAliases()) {
-                columns.put(normalize(alias), CatalogColumn.of(alias, CatalogType.STRING));
+                columns.put(normalize(alias), CatalogColumn.of(alias.value(), CatalogType.STRING));
             }
             return new CteSource(Map.copyOf(columns), true);
         }
+    }
+
+    private static String functionName(FunctionExpr functionExpr) {
+        if (functionExpr == null || functionExpr.name() == null) {
+            return null;
+        }
+        return functionExpr.name().parts().getLast().value();
     }
 }
 

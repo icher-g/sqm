@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.sqm.parser.core.OperatorTokens.isStar;
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class SelectItemParserTest {
 
@@ -29,7 +30,7 @@ class SelectItemParserTest {
 
         assertTrue(result.ok());
         var item = assertInstanceOf(QualifiedStarSelectItem.class, result.value());
-        assertEquals("t", item.qualifier());
+        assertEquals("t", item.qualifier().value());
     }
 
     @Test
@@ -83,7 +84,7 @@ class SelectItemParserTest {
             var qualifier = cur.expect("Expected qualifier", TokenType.IDENT).lexeme();
             cur.expect("Expected .", TokenType.DOT);
             cur.expect("Expected *", t -> isStar(t));
-            return ParseResult.ok(QualifiedStarSelectItem.of(qualifier));
+            return ParseResult.ok(QualifiedStarSelectItem.of(Identifier.of(qualifier)));
         }
 
         @Override
@@ -112,7 +113,7 @@ class SelectItemParserTest {
         @Override
         public ParseResult<? extends Expression> parse(Cursor cur, ParseContext ctx) {
             var token = cur.expect("Expected identifier", TokenType.IDENT);
-            return ParseResult.ok(Expression.column(token.lexeme()));
+            return ParseResult.ok(col(token.lexeme()));
         }
 
         @Override
@@ -121,3 +122,5 @@ class SelectItemParserTest {
         }
     }
 }
+
+

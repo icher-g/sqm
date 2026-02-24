@@ -96,7 +96,7 @@ class IsDistinctFromPredicateVisitorTest {
         
         var transformed = (IsDistinctFromPredicate) original.accept(transformer);
         
-        assertEquals("new", ((ColumnExpr) transformed.lhs()).name());
+        assertEquals("new", ((ColumnExpr) transformed.lhs()).name().value());
         assertNotSame(original, transformed);
     }
 
@@ -230,8 +230,8 @@ class IsDistinctFromPredicateVisitorTest {
     private static class ColumnRenameTransformer extends io.sqm.core.transform.RecursiveNodeTransformer {
         @Override
         public Node visitColumnExpr(ColumnExpr c) {
-            if ("old".equals(c.name())) {
-                return ColumnExpr.of("new");
+            if ("old".equals(c.name().value())) {
+                return ColumnExpr.of(null, Identifier.of("new"));
             }
             return c;
         }

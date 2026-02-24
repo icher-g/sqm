@@ -46,7 +46,8 @@ final class FunctionSignatureValidationRule implements SchemaValidationRule<Func
      */
     @Override
     public void validate(FunctionExpr node, SchemaValidationContext context) {
-        var signature = functionCatalog.resolve(node.name());
+        var functionName = functionName(node);
+        var signature = functionCatalog.resolve(functionName);
         if (signature.isEmpty()) {
             return;
         }
@@ -221,10 +222,14 @@ final class FunctionSignatureValidationRule implements SchemaValidationRule<Func
     private static void mismatch(FunctionExpr node, String details, SchemaValidationContext context) {
         context.addProblem(
             ValidationProblem.Code.FUNCTION_SIGNATURE_MISMATCH,
-            "Function signature mismatch for '" + node.name() + "': " + details,
+            "Function signature mismatch for '" + functionName(node) + "': " + details,
             node,
             "function.call"
         );
+    }
+
+    private static String functionName(FunctionExpr node) {
+        return node.name() == null ? null : node.name().parts().getLast().value();
     }
 }
 

@@ -42,7 +42,7 @@ class ArithmeticSimplifierTest {
 
         // Expect: a
         assertInstanceOf(ColumnExpr.class, simplified);
-        assertEquals("a", ((ColumnExpr) simplified).name());
+        assertEquals("a", ((ColumnExpr) simplified).name().value());
     }
 
     @Test
@@ -52,7 +52,7 @@ class ArithmeticSimplifierTest {
 
         // Expect: a
         assertInstanceOf(ColumnExpr.class, simplified);
-        assertEquals("a", ((ColumnExpr) simplified).name());
+        assertEquals("a", ((ColumnExpr) simplified).name().value());
     }
 
     @Test
@@ -75,7 +75,7 @@ class ArithmeticSimplifierTest {
 
         // Expect: a
         assertInstanceOf(ColumnExpr.class, simplified);
-        assertEquals("a", ((ColumnExpr) simplified).name());
+        assertEquals("a", ((ColumnExpr) simplified).name().value());
     }
 
     @Test
@@ -98,7 +98,7 @@ class ArithmeticSimplifierTest {
 
         // Expect: a
         assertInstanceOf(ColumnExpr.class, simplified);
-        assertEquals("a", ((ColumnExpr) simplified).name());
+        assertEquals("a", ((ColumnExpr) simplified).name().value());
     }
 
     @Test
@@ -108,7 +108,7 @@ class ArithmeticSimplifierTest {
 
         // Expect: a
         assertInstanceOf(ColumnExpr.class, simplified);
-        assertEquals("a", ((ColumnExpr) simplified).name());
+        assertEquals("a", ((ColumnExpr) simplified).name().value());
     }
 
     @Test
@@ -175,7 +175,7 @@ class ArithmeticSimplifierTest {
 
         // Expect: a
         assertInstanceOf(ColumnExpr.class, simplified);
-        assertEquals("a", ((ColumnExpr) simplified).name());
+        assertEquals("a", ((ColumnExpr) simplified).name().value());
     }
 
     // -------------------------------------------------------------------------
@@ -196,10 +196,10 @@ class ArithmeticSimplifierTest {
         MulArithmeticExpr mul = (MulArithmeticExpr) simplified;
 
         assertInstanceOf(ColumnExpr.class, mul.lhs());
-        assertEquals("a", ((ColumnExpr) mul.lhs()).name());
+        assertEquals("a", ((ColumnExpr) mul.lhs()).name().value());
 
         assertInstanceOf(ColumnExpr.class, mul.rhs());
-        assertEquals("b", ((ColumnExpr) mul.rhs()).name());
+        assertEquals("b", ((ColumnExpr) mul.rhs()).name().value());
     }
 
     // -------------------------------------------------------------------------
@@ -232,7 +232,7 @@ class ArithmeticSimplifierTest {
 
         // After first simplification: a
         assertInstanceOf(ColumnExpr.class, once);
-        assertEquals("a", ((ColumnExpr) once).name());
+        assertEquals("a", ((ColumnExpr) once).name().value());
 
         // Second run should not change the expression further.
         assertSame(once, twice, "Running the simplifier twice should not change the result");

@@ -3,6 +3,7 @@ package io.sqm.core;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * A CTE definition used in a WITH statement.
@@ -59,48 +60,48 @@ public non-sealed interface CteDef extends Node {
     }
 
     /**
-     * Creates a CTE definition with the provided name.
+     * Creates a CTE definition with the provided name identifier.
      *
-     * @param name the CTE name.
-     * @return A newly created CTE definition.
+     * @param name the CTE name identifier.
+     * @return a newly created CTE definition.
      */
-    static CteDef of(String name) {
+    static CteDef of(Identifier name) {
         return of(name, null, null, Materialization.DEFAULT);
     }
 
     /**
-     * Creates a CTE definition with the provided name.
+     * Creates a CTE definition with the provided name identifier.
      *
-     * @param name the CTE name.
+     * @param name the CTE name identifier.
      * @param body a sub query wrapped by the CTE.
-     * @return A newly created CTE definition.
+     * @return a newly created CTE definition.
      */
-    static CteDef of(String name, Query body) {
+    static CteDef of(Identifier name, Query body) {
         return of(name, body, null, Materialization.DEFAULT);
     }
 
     /**
-     * Creates a CTE definition with the provided name.
+     * Creates a CTE definition with the provided name identifier.
      *
-     * @param name the CTE name.
+     * @param name the CTE name identifier.
      * @param body a sub query wrapped by the CTE.
-     * @param columnAliases a list of column aliases.
-     * @return A newly created CTE definition.
+     * @param columnAliases a list of column alias identifiers.
+     * @return a newly created CTE definition.
      */
-    static CteDef of(String name, Query body, List<String> columnAliases) {
+    static CteDef of(Identifier name, Query body, List<Identifier> columnAliases) {
         return of(name, body, columnAliases, Materialization.DEFAULT);
     }
 
     /**
-     * Creates a CTE definition with the provided name.
+     * Creates a CTE definition with the provided name identifier.
      *
-     * @param name the CTE name.
+     * @param name the CTE name identifier.
      * @param body a sub query wrapped by the CTE.
-     * @param columnAliases a list of column aliases.
+     * @param columnAliases a list of column alias identifiers.
      * @param materialization materialization hint.
-     * @return A newly created CTE definition.
+     * @return a newly created CTE definition.
      */
-    static CteDef of(String name, Query body, List<String> columnAliases, Materialization materialization) {
+    static CteDef of(Identifier name, Query body, List<Identifier> columnAliases, Materialization materialization) {
         return new Impl(name, body, columnAliases, materialization);
     }
 
@@ -109,7 +110,7 @@ public non-sealed interface CteDef extends Node {
      *
      * @return a CTE name.
      */
-    String name();
+    Identifier name();
 
     /**
      * Gets a query wrapped by the current CTE.
@@ -134,7 +135,7 @@ public non-sealed interface CteDef extends Node {
      *
      * @return a list of column aliases.
      */
-    List<String> columnAliases();
+    List<Identifier> columnAliases();
 
     /**
      * Gets materialization hint for this CTE.
@@ -159,18 +160,31 @@ public non-sealed interface CteDef extends Node {
      * @param columnAliases a list of column aliases.
      * @return A new instance of {@link CteDef} with the list of column aliases. All other fields are preserved.
      */
-    default CteDef columnAliases(List<String> columnAliases) {
+    default CteDef columnAliases(List<Identifier> columnAliases) {
         return of(name(), body(), columnAliases, materialization());
     }
 
     /**
      * Adds a list of column aliases to the WITH query.
      *
-     * @param columnAliases a list of column aliases.
-     * @return A new instance of {@link CteDef} with the list of column aliases. All other fields are preserved.
+     * @param columnAliases a list of column alias identifiers.
+     * @return a new instance of {@link CteDef} with the list of column aliases. All other fields are preserved.
+     */
+    default CteDef columnAliases(Identifier... columnAliases) {
+        return columnAliases(List.of(columnAliases));
+    }
+
+    /**
+     * Adds a list of column aliases to the WITH query using string convenience values.
+     * <p>
+     * This is a helper for DSL/model authoring. Parsers and internal transformations should prefer
+     * identifier-preserving APIs.
+     *
+     * @param columnAliases a list of column alias values.
+     * @return a new instance of {@link CteDef} with the list of column aliases. All other fields are preserved.
      */
     default CteDef columnAliases(String... columnAliases) {
-        return of(name(), body(), List.of(columnAliases), materialization());
+        return columnAliases(Stream.of(columnAliases).map(Identifier::of).toList());
     }
 
     /**
@@ -235,6 +249,17 @@ public non-sealed interface CteDef extends Node {
      * @param columnAliases a list of column aliases used in the CTE.
      * @param materialization materialization hint.
      */
-    record Impl(String name, Query body, List<String> columnAliases, Materialization materialization) implements CteDef {
+    record Impl(Identifier name, Query body, List<Identifier> columnAliases, Materialization materialization) implements CteDef {
+        /**
+         * Creates a CTE implementation.
+         *
+         * @param name                   CTE name identifier
+         * @param body                   query body
+         * @param columnAliases          CTE column alias identifiers
+         * @param materialization        materialization hint
+         */
+        public Impl {
+            columnAliases = columnAliases == null ? null : List.copyOf(columnAliases);
+        }
     }
 }

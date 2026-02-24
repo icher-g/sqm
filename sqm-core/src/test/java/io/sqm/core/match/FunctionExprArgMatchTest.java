@@ -4,6 +4,8 @@ import io.sqm.core.FunctionExpr;
 import org.junit.jupiter.api.Test;
 
 import static io.sqm.core.Expression.*;
+import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.func;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -35,7 +37,7 @@ public class FunctionExprArgMatchTest {
 
     @Test
     void match_exprArgWithComplexExpression() {
-        FunctionExpr complexExpr = func("upper", funcArg(column("users", "name")));
+        FunctionExpr complexExpr = func("upper", funcArg(col("users", "name")));
         FunctionExpr.Arg exprArg = funcArg(complexExpr);
         
         String result = FunctionExprArgMatch
@@ -61,7 +63,7 @@ public class FunctionExprArgMatchTest {
 
     @Test
     void match_exprArgWithColumnExpression() {
-        FunctionExpr.Arg exprArg = funcArg(column("t", "id"));
+        FunctionExpr.Arg exprArg = funcArg(col("t", "id"));
         
         String result = FunctionExprArgMatch
             .<String>match(exprArg)
@@ -95,7 +97,7 @@ public class FunctionExprArgMatchTest {
 
     @Test
     void match_multipleExprArgs_differentExpressions() {
-        FunctionExpr.Arg arg1 = funcArg(column("t1", "c1"));
+        FunctionExpr.Arg arg1 = funcArg(col("t1", "c1"));
         FunctionExpr.Arg arg2 = funcArg(literal("test"));
         FunctionExpr.Arg arg3 = funcArg(func("count", starArg()));
         
@@ -119,4 +121,7 @@ public class FunctionExprArgMatchTest {
         assertEquals("func", result3);
     }
 }
+
+
+
 

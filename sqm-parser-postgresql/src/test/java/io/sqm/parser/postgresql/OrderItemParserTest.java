@@ -3,6 +3,7 @@ package io.sqm.parser.postgresql;
 import io.sqm.core.Direction;
 import io.sqm.core.Nulls;
 import io.sqm.core.OrderItem;
+import io.sqm.core.QualifiedName;
 import io.sqm.parser.ansi.OrderItemParser;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.ParseContext;
@@ -67,7 +68,7 @@ class OrderItemParserTest {
             Assertions.assertNotNull(oi.expr());
             Assertions.assertEquals(Direction.DESC, oi.direction());
             Assertions.assertEquals(Nulls.FIRST, oi.nulls());
-            Assertions.assertEquals("de-CH", oi.collate());
+            Assertions.assertEquals(QualifiedName.of(io.sqm.core.Identifier.of("de-CH", io.sqm.core.QuoteStyle.DOUBLE_QUOTE)), oi.collate());
         }
 
         @Test
@@ -166,3 +167,4 @@ class OrderItemParserTest {
         }
     }
 }
+

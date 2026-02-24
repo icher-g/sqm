@@ -1,17 +1,19 @@
 package io.sqm.parser;
 
 import io.sqm.core.Expression;
+import io.sqm.core.Identifier;
+import io.sqm.core.utils.Pair;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
-import io.sqm.core.utils.Pair;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Objects;
 
+import static io.sqm.dsl.Dsl.col;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ParserDefaultsTest {
@@ -32,11 +34,11 @@ class ParserDefaultsTest {
         var quoting = TestSupport.context(new DefaultParsersRepository()).identifierQuoting();
 
         var withAs = Cursor.of("AS alias", quoting);
-        assertEquals("alias", parser.parseAlias(withAs));
+        assertEquals("alias", parser.parseAliasIdentifier(withAs).value());
         assertTrue(withAs.isEof());
 
         var withoutAs = Cursor.of("alias", quoting);
-        assertEquals("alias", parser.parseAlias(withoutAs));
+        assertEquals("alias", parser.parseAliasIdentifier(withoutAs).value());
         assertTrue(withoutAs.isEof());
     }
 
@@ -46,7 +48,7 @@ class ParserDefaultsTest {
         var quoting = TestSupport.context(new DefaultParsersRepository()).identifierQuoting();
         var cur = Cursor.of("1", quoting);
 
-        assertNull(parser.parseAlias(cur));
+        assertNull(parser.parseAliasIdentifier(cur));
         assertTrue(cur.match(TokenType.NUMBER));
     }
 
@@ -56,10 +58,10 @@ class ParserDefaultsTest {
         var quoting = TestSupport.context(new DefaultParsersRepository()).identifierQuoting();
         var cur = Cursor.of("t(c1, c2)", quoting);
 
-        Pair<String, List<String>> result = parser.parseColumnAliases(cur);
+        Pair<Identifier, List<Identifier>> result = parser.parseColumnAliasIdentifiers(cur);
 
-        assertEquals("t", result.first());
-        assertEquals(List.of("c1", "c2"), result.second());
+        assertEquals("t", result.first().value());
+        assertEquals(List.of("c1", "c2"), result.second().stream().map(v -> v.value()).toList());
         assertTrue(cur.isEof());
     }
 
@@ -113,7 +115,7 @@ class ParserDefaultsTest {
             if ("bad".equalsIgnoreCase(token.lexeme())) {
                 return ParseResult.error("bad expression", token.pos());
             }
-            return ParseResult.ok(Expression.column(token.lexeme()));
+            return ParseResult.ok(col(token.lexeme()));
         }
 
         @Override
@@ -122,3 +124,4 @@ class ParserDefaultsTest {
         }
     }
 }
+

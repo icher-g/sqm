@@ -121,7 +121,7 @@ class AtTimeZoneExprMatchTest {
             .<String>expression(expr)
             .atTimeZone(atz -> {
                 String ts = Match.<String>expression(atz.timestamp())
-                    .column(c -> c.name())
+                    .column(c -> c.name().value())
                     .orElse("unknown");
                 String tz = Match.<String>expression(atz.timezone())
                     .literal(l -> String.valueOf(l.value()))
@@ -216,3 +216,4 @@ class AtTimeZoneExprMatchTest {
         assertEquals("FIRST", result);
     }
 }
+

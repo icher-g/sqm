@@ -2,6 +2,7 @@ package io.sqm.render.repos;
 
 import io.sqm.core.ColumnExpr;
 import io.sqm.core.Expression;
+import io.sqm.dsl.Dsl;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -20,9 +21,9 @@ class DefaultRenderersRepositoryTest {
         repo.register(renderer);
 
         assertSame(renderer, repo.get(ColumnExpr.class));
-        assertSame(renderer, repo.getFor(ColumnExpr.of("a")));
+        assertSame(renderer, repo.getFor(Dsl.col("a")));
         assertSame(renderer, repo.require(ColumnExpr.class));
-        assertSame(renderer, repo.requireFor(ColumnExpr.of("b")));
+        assertSame(renderer, repo.requireFor(Dsl.col("b")));
     }
 
     @Test
@@ -36,7 +37,7 @@ class DefaultRenderersRepositoryTest {
     private static final class ColumnRenderer implements Renderer<ColumnExpr> {
         @Override
         public void render(ColumnExpr node, RenderContext ctx, SqlWriter w) {
-            w.append(node.name());
+            w.append(node.name().value());
         }
 
         @Override
@@ -45,3 +46,4 @@ class DefaultRenderersRepositoryTest {
         }
     }
 }
+

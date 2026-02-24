@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class RowExprTest {
 
@@ -67,7 +68,7 @@ class RowExprTest {
     void mixedExpressions() {
         List<Expression> items = new ArrayList<>();
         items.add(Expression.literal(1));
-        items.add(Expression.column("x"));
+        items.add(col("x"));
         items.add(Expression.literal("test"));
         var rowExpr = RowExpr.of(items);
         assertEquals(3, rowExpr.items().size());
@@ -93,3 +94,4 @@ class RowExprTest {
         }
     }
 }
+

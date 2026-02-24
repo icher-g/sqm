@@ -9,53 +9,25 @@ import java.util.Objects;
  */
 public non-sealed interface Table extends TableRef {
     /**
-     * Table inheritance handling for PostgreSQL.
-     */
-    enum Inheritance {
-        /**
-         * Default behavior (dialect-defined).
-         */
-        DEFAULT,
-        /**
-         * Use ONLY to exclude child tables (PostgreSQL).
-         */
-        ONLY,
-        /**
-         * Explicitly include child tables via {@code table *} (PostgreSQL).
-         */
-        INCLUDE_DESCENDANTS
-    }
-    /**
-     * Creates a table with the provided name. All other fields are set to NULL.
+     * Creates a table with quote-aware identifier.
      *
-     * @param name the name of the table. This is not qualified name.
-     * @return A newly created instance of the table.
+     * @param name table name identifier (unqualified)
+     * @return a newly created table instance
      */
-    static Table of(String name) {
-        return of(null, Objects.requireNonNull(name), null, Inheritance.DEFAULT);
+    static Table of(Identifier name) {
+        return new Impl(null, Objects.requireNonNull(name), null, Inheritance.DEFAULT);
     }
 
     /**
-     * Creates a table with the provided name. All other fields are set to NULL.
+     * Creates a table with quote-aware identifiers.
      *
-     * @param name   the name of the table. This is not qualified name.
-     * @param schema a table schema.
-     * @return A newly created instance of the table.
+     * @param schema      optional schema identifier
+     * @param name        table name identifier (unqualified)
+     * @param alias       optional table alias identifier
+     * @param inheritance inheritance behavior
+     * @return a newly created table instance
      */
-    static Table of(String schema, String name) {
-        return of(schema, Objects.requireNonNull(name), null, Inheritance.DEFAULT);
-    }
-
-    /**
-     * Creates a table with the provided name.
-     *
-     * @param schema      a table schema.
-     * @param name        the table name (unqualified).
-     * @param alias       optional table alias.
-     * @param inheritance inheritance behavior.
-     * @return A newly created instance of the table.
-     */
-    static Table of(String schema, String name, String alias, Inheritance inheritance) {
+    static Table of(Identifier schema, Identifier name, Identifier alias, Inheritance inheritance) {
         return new Impl(schema, Objects.requireNonNull(name), alias, inheritance);
     }
 
@@ -64,21 +36,21 @@ public non-sealed interface Table extends TableRef {
      *
      * @return a table schema.
      */
-    String schema();  // may be null
+    Identifier schema();  // may be null
 
     /**
-     * Gets a table name.
+     * Gets the table name identifier with quote metadata.
      *
-     * @return a table name.
+     * @return table name identifier
      */
-    String name();
+    Identifier name();
 
     /**
-     * Optional table alias.
+     * Gets the table alias identifier with quote metadata.
      *
-     * @return table alias or {@code null}
+     * @return alias identifier or {@code null}
      */
-    String alias();
+    Identifier alias();
 
     /**
      * Gets table inheritance behavior.
@@ -94,6 +66,16 @@ public non-sealed interface Table extends TableRef {
      * @return A newly created table with the provide alias. All other fields are preserved.
      */
     default Table as(String alias) {
+        return of(schema(), name(), alias == null ? null : Identifier.of(alias), inheritance());
+    }
+
+    /**
+     * Adds alias to the table.
+     *
+     * @param alias an alias identifier to add.
+     * @return a newly created table with the provided alias.
+     */
+    default Table as(Identifier alias) {
         return of(schema(), name(), alias, inheritance());
     }
 
@@ -104,6 +86,16 @@ public non-sealed interface Table extends TableRef {
      * @return A newly created table with the provided schema. All other fields are preserved.
      */
     default Table inSchema(String schema) {
+        return of(schema == null ? null : Identifier.of(schema), name(), alias(), inheritance());
+    }
+
+    /**
+     * Adds a schema to the table.
+     *
+     * @param schema a schema identifier to add.
+     * @return a newly created table with the provided schema.
+     */
+    default Table inSchema(Identifier schema) {
         return of(schema, name(), alias(), inheritance());
     }
 
@@ -139,23 +131,42 @@ public non-sealed interface Table extends TableRef {
     }
 
     /**
+     * Table inheritance handling for PostgreSQL.
+     */
+    enum Inheritance {
+        /**
+         * Default behavior (dialect-defined).
+         */
+        DEFAULT,
+        /**
+         * Use ONLY to exclude child tables (PostgreSQL).
+         */
+        ONLY,
+        /**
+         * Explicitly include child tables via {@code table *} (PostgreSQL).
+         */
+        INCLUDE_DESCENDANTS
+    }
+
+    /**
      * An implementation class of the {@link Table}l
      *
+     * @param schema      a table schema identifier.
      * @param name        the name of the table. This is not qualified name.
-     * @param schema      a table schema.
-     * @param alias       a table alias.
+     * @param alias       a table alias identifier.
      * @param inheritance table inheritance behavior.
      */
-    record Impl(String schema, String name, String alias, Inheritance inheritance) implements Table {
+    record Impl(Identifier schema, Identifier name, Identifier alias, Inheritance inheritance) implements Table {
         /**
          * Creates a table implementation.
          *
-         * @param schema      table schema
-         * @param name        table name
-         * @param alias       table alias
+         * @param schema      table schema identifier
+         * @param name        table name identifier
+         * @param alias       table alias identifier
          * @param inheritance table inheritance behavior
          */
         public Impl {
+            Objects.requireNonNull(name, "name");
             if (inheritance == null) {
                 inheritance = Inheritance.DEFAULT;
             }

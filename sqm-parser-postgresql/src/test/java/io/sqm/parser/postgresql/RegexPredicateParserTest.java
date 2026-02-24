@@ -132,8 +132,8 @@ class RegexPredicateParserTest {
         var pred = assertInstanceOf(RegexPredicate.class, result.value());
 
         var col = assertInstanceOf(ColumnExpr.class, pred.value());
-        assertEquals("t", col.tableAlias());
-        assertEquals("name", col.name());
+        assertEquals("t", col.tableAlias().value());
+        assertEquals("name", col.name().value());
     }
 
     @Test
@@ -174,3 +174,4 @@ class RegexPredicateParserTest {
         }
     }
 }
+

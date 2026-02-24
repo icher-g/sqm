@@ -38,29 +38,29 @@ public final class ColumnQualificationRewriteRule implements QueryRewriteRule {
 
     private static ColumnQualificationResolver catalogResolver(CatalogSchema schema, BuiltInRewriteSettings settings) {
         return (columnName, visibleTables) -> {
-            String chosenQualifier = null;
+            VisibleTableBinding chosenVisible = null;
             for (VisibleTableBinding visible : visibleTables) {
                 CatalogTable table = resolveVisibleTable(schema, visible, settings);
                 if (table == null || table.column(columnName).isEmpty()) {
                     continue;
                 }
-                if (chosenQualifier != null && !chosenQualifier.equals(visible.qualifier())) {
+                if (chosenVisible != null && !chosenVisible.qualifier().equals(visible.qualifier())) {
                     return onQualificationFailure(
                         settings,
                         ReasonCode.DENY_COLUMN,
                         "Ambiguous unqualified column '" + columnName + "' cannot be qualified deterministically"
                     );
                 }
-                chosenQualifier = visible.qualifier();
+                chosenVisible = visible;
             }
-            if (chosenQualifier == null) {
+            if (chosenVisible == null) {
                 return onQualificationFailure(
                     settings,
                     ReasonCode.DENY_COLUMN,
                     "Unqualified column '" + columnName + "' cannot be resolved for qualification"
                 );
             }
-            return ColumnQualification.qualified(chosenQualifier);
+            return ColumnQualification.qualified(chosenVisible.qualifier());
         };
     }
 

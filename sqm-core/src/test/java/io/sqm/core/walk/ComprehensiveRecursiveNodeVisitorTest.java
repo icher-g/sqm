@@ -492,7 +492,7 @@ class ComprehensiveRecursiveNodeVisitorTest {
 
         @Override
         public List<String> visitColumnExpr(ColumnExpr c) {
-            columns.add(c.name());
+            columns.add(c.name().value());
             return super.visitColumnExpr(c);
         }
     }

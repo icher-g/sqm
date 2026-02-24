@@ -16,10 +16,10 @@ public non-sealed interface QualifiedStarSelectItem extends SelectItem {
     /**
      * Creates a qualified '*' item for the SELECT statement.
      *
-     * @param qualifier a qualifier. For example: {@code t.*}
+     * @param qualifier a qualifier identifier. For example: {@code t.*}
      * @return {@link QualifiedStarSelectItem}.
      */
-    static QualifiedStarSelectItem of(String qualifier) {
+    static QualifiedStarSelectItem of(Identifier qualifier) {
         return new Impl(qualifier);
     }
 
@@ -28,7 +28,7 @@ public non-sealed interface QualifiedStarSelectItem extends SelectItem {
      *
      * @return a qualifier.
      */
-    String qualifier();
+    Identifier qualifier();
 
     /**
      * Accepts a {@link NodeVisitor} and dispatches control to the
@@ -54,6 +54,14 @@ public non-sealed interface QualifiedStarSelectItem extends SelectItem {
      *
      * @param qualifier a qualifier before the '*'.
      */
-    record Impl(String qualifier) implements QualifiedStarSelectItem {
+    record Impl(Identifier qualifier) implements QualifiedStarSelectItem {
+        /**
+         * Creates a qualified-star select item.
+         *
+         * @param qualifier a qualifier identifier before the '*'
+         */
+        public Impl {
+            java.util.Objects.requireNonNull(qualifier, "qualifier");
+        }
     }
 }

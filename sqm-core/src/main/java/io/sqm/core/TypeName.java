@@ -30,14 +30,14 @@ public non-sealed interface TypeName extends Node {
      *
      * <p>Exactly one of {@code qualifiedName} or {@code keyword} must be provided.</p>
      *
-     * @param qualifiedName schema-qualified or unqualified identifier parts
+     * @param qualifiedName schema-qualified or unqualified identifier parts with quote metadata
      * @param keyword       SQL keyword-based type, or {@code null} if not applicable
      * @param modifiers     optional type modifiers, such as {@code (10)} or {@code (10,2)}
      * @param arrayDims     number of array dimensions
      * @param timeZoneSpec  time zone clause specification
      * @return a new {@link TypeName} instance
      */
-    static TypeName of(List<String> qualifiedName, TypeKeyword keyword, List<Expression> modifiers, int arrayDims, TimeZoneSpec timeZoneSpec) {
+    static TypeName of(QualifiedName qualifiedName, TypeKeyword keyword, List<Expression> modifiers, int arrayDims, TimeZoneSpec timeZoneSpec) {
         return new Impl(qualifiedName, Optional.ofNullable(keyword), modifiers, arrayDims, timeZoneSpec);
     }
 
@@ -54,7 +54,7 @@ public non-sealed interface TypeName extends Node {
      *
      * @return identifier parts of the type name
      */
-    List<String> qualifiedName();
+    QualifiedName qualifiedName();
 
     /**
      * Returns the SQL keyword-based type, if this type name is represented
@@ -63,7 +63,7 @@ public non-sealed interface TypeName extends Node {
      * <p>Examples include {@code DOUBLE PRECISION} and
      * {@code CHARACTER VARYING}.</p>
      *
-     * <p>This value is present if and only if {@link #qualifiedName()} is empty.</p>
+     * <p>This value is present if and only if {@link #qualifiedName()} is {@code null}.</p>
      *
      * @return the keyword-based type, if applicable
      */
@@ -196,21 +196,20 @@ public non-sealed interface TypeName extends Node {
      * @param arrayDims     number of array dimensions
      * @param timeZoneSpec  time zone clause specification
      */
-    record Impl(List<String> qualifiedName, Optional<TypeKeyword> keyword, List<Expression> modifiers, int arrayDims, TimeZoneSpec timeZoneSpec) implements TypeName {
+    record Impl(QualifiedName qualifiedName, Optional<TypeKeyword> keyword, List<Expression> modifiers, int arrayDims, TimeZoneSpec timeZoneSpec) implements TypeName {
         /**
          * Creates a {@link TypeName.Impl} instance.
          *
          * @throws IllegalArgumentException if invariants are violated
          */
         public Impl {
-            qualifiedName = qualifiedName == null ? List.of() : List.copyOf(qualifiedName);
             modifiers = modifiers == null ? List.of() : List.copyOf(modifiers);
 
-            if (keyword.isPresent() && !qualifiedName.isEmpty()) {
+            if (keyword.isPresent() && qualifiedName != null) {
                 throw new IllegalArgumentException("TypeName cannot have both keyword and qualifiedName");
             }
 
-            if (keyword.isEmpty() && qualifiedName.isEmpty()) {
+            if (keyword.isEmpty() && qualifiedName == null) {
                 throw new IllegalArgumentException("TypeName must have either keyword or qualifiedName");
             }
 

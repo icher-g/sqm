@@ -16,8 +16,8 @@ class ExpressionIsDistinctFromTest {
 
         assertInstanceOf(IsDistinctFromPredicate.class, pred);
         assertFalse(pred.negated());
-        assertEquals("a", ((ColumnExpr) pred.lhs()).name());
-        assertEquals("b", ((ColumnExpr) pred.rhs()).name());
+        assertEquals("a", ((ColumnExpr) pred.lhs()).name().value());
+        assertEquals("b", ((ColumnExpr) pred.rhs()).name().value());
     }
 
     @Test
@@ -27,8 +27,8 @@ class ExpressionIsDistinctFromTest {
 
         assertInstanceOf(IsDistinctFromPredicate.class, pred);
         assertTrue(pred.negated());
-        assertEquals("a", ((ColumnExpr) pred.lhs()).name());
-        assertEquals("b", ((ColumnExpr) pred.rhs()).name());
+        assertEquals("a", ((ColumnExpr) pred.lhs()).name().value());
+        assertEquals("b", ((ColumnExpr) pred.rhs()).name().value());
     }
 
     @Test
@@ -56,8 +56,8 @@ class ExpressionIsDistinctFromTest {
         var pred = col("t1", "id").isNotDistinctFrom(col("t2", "id"));
 
         assertTrue(pred.negated());
-        assertEquals("t1", ((ColumnExpr) pred.lhs()).tableAlias());
-        assertEquals("t2", ((ColumnExpr) pred.rhs()).tableAlias());
+        assertEquals("t1", ((ColumnExpr) pred.lhs()).tableAlias().value());
+        assertEquals("t2", ((ColumnExpr) pred.rhs()).tableAlias().value());
     }
 
     @Test

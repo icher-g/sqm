@@ -8,6 +8,7 @@ import io.sqm.control.QueryRewriteResult;
 import io.sqm.control.QueryRewriteRule;
 import io.sqm.control.ReasonCode;
 import io.sqm.control.RewriteDenyException;
+import io.sqm.core.Identifier;
 import io.sqm.core.Query;
 import io.sqm.core.transform.SchemaQualificationTransformer;
 import io.sqm.core.transform.TableQualification;
@@ -130,6 +131,6 @@ public final class SchemaQualificationRewriteRule implements QueryRewriteRule {
         if (table.schema() == null || table.schema().isBlank()) {
             return TableQualification.unresolved();
         }
-        return TableQualification.qualified(table.schema());
+        return TableQualification.qualified(Identifier.of(table.schema()));
     }
 }

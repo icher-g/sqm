@@ -19,9 +19,9 @@ public class ExprSelectItemRenderer implements Renderer<ExprSelectItem> {
         w.append(node.expr(), node.expr() instanceof QueryExpr, true);
 
         var alias = node.alias();
-        if (alias != null && !alias.isBlank()) {
+        if (alias != null) {
             var quoter = ctx.dialect().quoter();
-            w.space().append("AS").space().append(quoter.quoteIfNeeded(alias));
+            w.space().append("AS").space().append(renderIdentifier(alias, quoter));
         }
     }
 

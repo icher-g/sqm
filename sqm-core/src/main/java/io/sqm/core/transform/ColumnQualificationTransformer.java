@@ -69,12 +69,12 @@ public final class ColumnQualificationTransformer extends RecursiveNodeTransform
         if (c.tableAlias() != null) {
             return c;
         }
-        ColumnQualification result = resolver.resolve(c.name(), visibleTables());
+        ColumnQualification result = resolver.resolve(c.name().value(), visibleTables());
         if (result instanceof ColumnQualification.Unresolved) {
             return c;
         }
         if (result instanceof ColumnQualification.Ambiguous) {
-            throw new AmbiguousColumnQualificationException(c.name());
+            throw new AmbiguousColumnQualificationException(c.name().value());
         }
         return c.inTable(((ColumnQualification.Qualified) result).qualifier());
     }
@@ -113,8 +113,12 @@ public final class ColumnQualificationTransformer extends RecursiveNodeTransform
         }
         switch (ref) {
             case Table table -> {
-                String qualifier = table.alias() == null ? table.name() : table.alias();
-                visible.add(VisibleTableBinding.of(table.schema(), table.name(), qualifier));
+                var qualifier = table.alias() == null ? table.name() : table.alias();
+                visible.add(VisibleTableBinding.of(
+                    table.schema() == null ? null : table.schema().value(),
+                    table.name().value(),
+                    qualifier
+                ));
             }
             case Lateral lateral -> addVisibleTable(visible, lateral.inner());
             default -> {

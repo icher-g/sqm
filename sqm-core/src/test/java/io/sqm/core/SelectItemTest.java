@@ -21,12 +21,12 @@ class SelectItemTest {
     @Test
     void maybeStar() {
         assertTrue(SelectItem.star().<Boolean>matchSelectItem().star(s -> true).orElse(false));
-        assertFalse(SelectItem.star("t").<Boolean>matchSelectItem().star(s -> true).orElse(false));
+        assertFalse(SelectItem.star(Identifier.of("t")).<Boolean>matchSelectItem().star(s -> true).orElse(false));
     }
 
     @Test
     void maybeQualifiedStar() {
-        assertTrue(SelectItem.star("t").<Boolean>matchSelectItem().qualifiedStar(qs -> true).orElse(false));
+        assertTrue(SelectItem.star(Identifier.of("t")).<Boolean>matchSelectItem().qualifiedStar(qs -> true).orElse(false));
         assertFalse(SelectItem.star().<Boolean>matchSelectItem().qualifiedStar(qs -> true).orElse(false));
     }
 }

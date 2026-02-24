@@ -1,9 +1,6 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.Expression;
-import io.sqm.core.TimeZoneSpec;
-import io.sqm.core.TypeKeyword;
-import io.sqm.core.TypeName;
+import io.sqm.core.*;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.ParserException;
 import io.sqm.parser.core.TokenType;
@@ -52,16 +49,6 @@ public class TypeNameParser implements Parser<TypeName> {
         return TypeKeyword.NATIONAL_CHARACTER;
     }
 
-    private static List<String> parseQualifiedName(String firstPart, Cursor cur) {
-        var parts = new ArrayList<String>();
-        parts.add(firstPart);
-        while (cur.consumeIf(TokenType.DOT)) {
-            var t = cur.expect("Expected identifier", TokenType.IDENT);
-            parts.add(t.lexeme());
-        }
-        return parts;
-    }
-
     private static List<Expression> parseModifiers(Cursor cur, ParseContext ctx) {
         List<Expression> expressions = new ArrayList<>();
         do {
@@ -88,23 +75,22 @@ public class TypeNameParser implements Parser<TypeName> {
         var name = cur.expect("Expected identifier", TokenType.IDENT);
 
         TypeKeyword keyword = null;
-        List<String> parts = null;
+        QualifiedName parts = null;
         List<Expression> modifiers = null;
         TimeZoneSpec timeZoneSpec = TimeZoneSpec.NONE;
         int arrayDims = 0;
 
-        if (keywords.contains(name.lexeme().toLowerCase(Locale.ROOT))) {
+        if (!name.quotedIdentifier() && keywords.contains(name.lexeme().toLowerCase(Locale.ROOT))) {
             keyword = parseKeyword(name.lexeme(), cur);
         }
 
         if (cur.match(TokenType.DOT)) {
-            parts = parseQualifiedName(name.lexeme(), cur);
+            parts = parseQualifiedName(toIdentifier(name), cur);
         }
 
         // this is a single word.
         if (parts == null && keyword == null) {
-            parts = new ArrayList<>();
-            parts.add(name.lexeme());
+            parts = QualifiedName.of(toIdentifier(name));
         }
 
         if (cur.consumeIf(TokenType.LPAREN)) {
@@ -147,3 +133,4 @@ public class TypeNameParser implements Parser<TypeName> {
         return TypeName.class;
     }
 }
+

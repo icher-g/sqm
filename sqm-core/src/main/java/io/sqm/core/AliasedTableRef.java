@@ -26,21 +26,21 @@ import java.util.List;
 public sealed interface AliasedTableRef extends TableRef permits FunctionTable, QueryTable, ValuesTable {
 
     /**
-     * Returns the table alias.
+     * Returns the table alias identifier with quote metadata preserved.
      *
-     * @return the alias name, or {@code null} if no alias is defined
+     * @return the alias identifier, or {@code null} if no alias is defined
      */
-    String alias();
+    Identifier alias();
 
     /**
-     * Returns the derived column list for this table reference.
+     * Returns the derived column list for this table reference preserving quote metadata.
      * <p>
      * The list is empty when no column aliases are defined.
      * Column aliases are positional and correspond to the columns
      * produced by the underlying table expression.
      *
-     * @return an immutable list of column alias names
+     * @return an immutable list of column alias identifiers
      */
-    List<String> columnAliases();
+    List<Identifier> columnAliases();
 }
 

@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.Expression;
+import io.sqm.core.QualifiedName;
 import io.sqm.parser.AtomicExprParser;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
@@ -46,7 +47,7 @@ class CollateExprParserTest {
         assertTrue(result.ok());
 
         var expr = assertInstanceOf(io.sqm.core.CollateExpr.class, result.value());
-        assertEquals("de_CH", expr.collation());
+        assertEquals(QualifiedName.of("de_CH"), expr.collation());
     }
 
     @Test
@@ -55,7 +56,7 @@ class CollateExprParserTest {
         assertTrue(result.ok());
 
         var expr = assertInstanceOf(io.sqm.core.CollateExpr.class, result.value());
-        assertEquals("pg_catalog.en_US", expr.collation());
+        assertEquals(QualifiedName.of("pg_catalog", "en_US"), expr.collation());
     }
 
     @Test

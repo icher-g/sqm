@@ -62,8 +62,8 @@ class LimitOffsetTest {
 
     @Test
     void equals_uses_expression_equality_for_non_literals() {
-        var lo1 = LimitOffset.of(ColumnExpr.of("a"), null);
-        var lo2 = LimitOffset.of(ColumnExpr.of("a"), null);
+        var lo1 = LimitOffset.of(ColumnExpr.of(null, Identifier.of("a")), null);
+        var lo2 = LimitOffset.of(ColumnExpr.of(null, Identifier.of("a")), null);
 
         assertEquals(lo1, lo2);
         assertEquals(lo1.hashCode(), lo2.hashCode());

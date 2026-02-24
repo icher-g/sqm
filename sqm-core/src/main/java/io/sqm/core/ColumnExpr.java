@@ -18,23 +18,13 @@ import io.sqm.core.walk.NodeVisitor;
 public non-sealed interface ColumnExpr extends Expression {
 
     /**
-     * Creates a column reference expression.
+     * Creates a column reference expression with quote-aware identifiers.
      *
-     * @param name a name of the column.
-     * @return A newly created instance of the column reference.
+     * @param tableAlias a table alias identifier. Can be {@code null}.
+     * @param name       a column name identifier.
+     * @return a newly created instance of the column reference.
      */
-    static ColumnExpr of(String name) {
-        return new Impl(null, name);
-    }
-
-    /**
-     * Creates a column reference expression.
-     *
-     * @param name       a name of the column.
-     * @param tableAlias a table name/alias. Can be NULL if the table is not used.
-     * @return A newly created instance of the column reference.
-     */
-    static ColumnExpr of(String tableAlias, String name) {
+    static ColumnExpr of(Identifier tableAlias, Identifier name) {
         return new Impl(tableAlias, name);
     }
 
@@ -43,14 +33,14 @@ public non-sealed interface ColumnExpr extends Expression {
      *
      * @return a table name/alias if exists or NULL otherwise.
      */
-    String tableAlias();
+    Identifier tableAlias();
 
     /**
-     * Gets the name of the column.
+     * Gets the column name identifier with quote metadata.
      *
-     * @return a name of the column.
+     * @return column name identifier.
      */
-    String name();
+    Identifier name();
 
     /**
      * Adds a table name/alias to the column.
@@ -59,6 +49,16 @@ public non-sealed interface ColumnExpr extends Expression {
      * @return this.
      */
     default ColumnExpr inTable(String tableAlias) {
+        return new Impl(tableAlias == null ? null : Identifier.of(tableAlias), name());
+    }
+
+    /**
+     * Adds a table name/alias identifier to the column.
+     *
+     * @param tableAlias table name or alias identifier.
+     * @return a new instance with the provided table alias.
+     */
+    default ColumnExpr inTable(Identifier tableAlias) {
         return new Impl(tableAlias, name());
     }
 
@@ -88,9 +88,18 @@ public non-sealed interface ColumnExpr extends Expression {
      *     }
      * </pre>
      *
-     * @param tableAlias a table name/alias. Can be NULL if the table is not used.
-     * @param name       the name of the column.
+     * @param tableAlias a table name/alias identifier. Can be NULL if the table is not used.
+     * @param name       the name of the column identifier.
      */
-    record Impl(String tableAlias, String name) implements ColumnExpr {
+    record Impl(Identifier tableAlias, Identifier name) implements ColumnExpr {
+        /**
+         * Creates a column reference implementation.
+         *
+         * @param tableAlias optional table alias identifier
+         * @param name       column name identifier
+         */
+        public Impl {
+            java.util.Objects.requireNonNull(name, "name");
+        }
     }
 }

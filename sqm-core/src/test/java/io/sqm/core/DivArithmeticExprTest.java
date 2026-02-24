@@ -3,6 +3,7 @@ package io.sqm.core;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.col;
 
 class DivArithmeticExprTest {
 
@@ -20,14 +21,14 @@ class DivArithmeticExprTest {
 
     @Test
     void lhs() {
-        var lhs = Expression.column("total");
+        var lhs = col("total");
         var expr = DivArithmeticExpr.of(lhs, Expression.literal(2));
         assertEquals(lhs, expr.lhs());
     }
 
     @Test
     void rhs() {
-        var rhs = Expression.column("count");
+        var rhs = col("count");
         var expr = DivArithmeticExpr.of(Expression.literal(100), rhs);
         assertEquals(rhs, expr.rhs());
     }
@@ -48,8 +49,8 @@ class DivArithmeticExprTest {
 
     @Test
     void nestedExpressions() {
-        var expr = Expression.column("total")
-            .div(Expression.column("count"))
+        var expr = col("total")
+            .div(col("count"))
             .div(Expression.literal(2));
         assertInstanceOf(DivArithmeticExpr.class, expr);
     }
@@ -72,3 +73,4 @@ class DivArithmeticExprTest {
         }
     }
 }
+
