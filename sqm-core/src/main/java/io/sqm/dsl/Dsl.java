@@ -58,6 +58,27 @@ public final class Dsl {
     }
 
     /**
+     * Creates a table with the provided quote-aware table name identifier.
+     *
+     * @param name table name identifier
+     * @return a table
+     */
+    public static Table tbl(Identifier name) {
+        return Table.of(name);
+    }
+
+    /**
+     * Creates a table with the provided quote-aware schema and name identifiers.
+     *
+     * @param schema schema identifier
+     * @param name table name identifier
+     * @return a table
+     */
+    public static Table tbl(Identifier schema, Identifier name) {
+        return Table.of(schema, name, null, Table.Inheritance.DEFAULT);
+    }
+
+    /**
      * Creates a table with provided schema, name and alias.
      *
      * @param schema optional schema identifier
@@ -143,6 +164,27 @@ public final class Dsl {
         );
     }
 
+    /**
+     * Creates a column with the provided quote-aware column name identifier.
+     *
+     * @param name column name identifier
+     * @return a column
+     */
+    public static ColumnExpr col(Identifier name) {
+        return ColumnExpr.of(null, name);
+    }
+
+    /**
+     * Creates a column with the provided quote-aware table alias and column name identifiers.
+     *
+     * @param table table alias identifier
+     * @param name column name identifier
+     * @return a column
+     */
+    public static ColumnExpr col(Identifier table, Identifier name) {
+        return ColumnExpr.of(table, name);
+    }
+
     /* ========================= Select Items ====================== */
 
     /**
@@ -175,6 +217,38 @@ public final class Dsl {
      */
     public static FunctionExpr func(String name, FunctionExpr.Arg... args) {
         return FunctionExpr.of(QualifiedName.of(name.split("\\.")), List.of(args), null, null, null, null);
+    }
+
+    /**
+     * Creates a bare operator name (for example {@code +}, {@code ->}, {@code @>}).
+     *
+     * @param symbol operator symbol token
+     * @return operator name
+     */
+    public static OperatorName op(String symbol) {
+        return OperatorName.of(symbol);
+    }
+
+    /**
+     * Creates an {@code OPERATOR(schema.symbol)} operator name using a schema value.
+     *
+     * @param schema operator schema
+     * @param symbol operator symbol token
+     * @return operator name using {@code OPERATOR(...)} syntax
+     */
+    public static OperatorName op(String schema, String symbol) {
+        return OperatorName.operator(QualifiedName.of(schema), symbol);
+    }
+
+    /**
+     * Creates an {@code OPERATOR(schema.symbol)} operator name using a quote-aware schema path.
+     *
+     * @param schema operator schema path
+     * @param symbol operator symbol token
+     * @return operator name using {@code OPERATOR(...)} syntax
+     */
+    public static OperatorName op(QualifiedName schema, String symbol) {
+        return OperatorName.operator(schema, symbol);
     }
 
     /**
@@ -372,6 +446,16 @@ public final class Dsl {
     }
 
     /**
+     * Convenience factory for a qualified type name using a quote-aware qualified path.
+     *
+     * @param qualifiedName quote-aware qualified type name
+     * @return a qualified {@link TypeName}
+     */
+    public static TypeName type(QualifiedName qualifiedName) {
+        return TypeName.of(qualifiedName, null, List.of(), 0, TimeZoneSpec.NONE);
+    }
+
+    /**
      * Convenience factory for a keyword type name like {@code double precision}.
      *
      * @param keyword keyword tokens (space-joined)
@@ -379,6 +463,17 @@ public final class Dsl {
      */
     public static TypeName type(TypeKeyword keyword) {
         return TypeName.of(null, keyword, List.of(), 0, TimeZoneSpec.NONE);
+    }
+
+    /**
+     * Creates a cast expression.
+     *
+     * @param expr expression to cast
+     * @param type target type
+     * @return a cast expression
+     */
+    public static CastExpr cast(Expression expr, TypeName type) {
+        return CastExpr.of(expr, type);
     }
 
     /* ========================= Joins ========================= */

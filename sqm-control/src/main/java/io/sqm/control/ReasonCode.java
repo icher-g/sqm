@@ -85,6 +85,11 @@ public enum ReasonCode {
     REWRITE_QUALIFICATION,
 
     /**
+     * Query was rewritten to normalize identifier lexical form.
+     */
+    REWRITE_IDENTIFIER_NORMALIZATION,
+
+    /**
      * Query was rewritten to a canonicalized form.
      */
     REWRITE_CANONICALIZATION,
