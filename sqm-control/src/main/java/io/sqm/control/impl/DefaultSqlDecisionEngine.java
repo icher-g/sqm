@@ -11,6 +11,7 @@ import io.sqm.control.SqlQueryRenderer;
 import io.sqm.control.SqlQueryRewriter;
 import io.sqm.control.BuiltInRewriteRule;
 import io.sqm.core.Query;
+import io.sqm.core.transform.QueryFingerprint;
 import io.sqm.validate.api.QueryValidator;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.postgresql.PostgresValidationDialect;
@@ -526,6 +527,9 @@ public final class DefaultSqlDecisionEngine implements SqlDecisionEngine {
     /**
      * Evaluates a query model and maps validation outcomes to middleware decisions.
      *
+     * <p>ALLOW and REWRITE decisions include a deterministic fingerprint computed from the final
+     * query model after the rewrite pipeline using {@link QueryFingerprint#of(Query)}.</p>
+     *
      * @param query query model
      * @param context execution context
      * @return decision result
@@ -548,7 +552,7 @@ public final class DefaultSqlDecisionEngine implements SqlDecisionEngine {
             return DecisionResult.deny(ex.reasonCode(), ex.getMessage());
         }
         if (!rewrite.rewritten()) {
-            return DecisionResult.allow();
+            return DecisionResult.allow(QueryFingerprint.of(query));
         }
 
         var rewrittenValidation = queryValidator.validate(rewrite.query());
@@ -562,7 +566,12 @@ public final class DefaultSqlDecisionEngine implements SqlDecisionEngine {
             "queryRenderer must not return null"
         );
         String message = "Rewritten by policy rules: " + String.join(", ", rewrite.appliedRuleIds());
-        return DecisionResult.rewrite(rewrite.primaryReasonCode(), message, rewrittenSql);
+        return DecisionResult.rewrite(
+            rewrite.primaryReasonCode(),
+            message,
+            rewrittenSql,
+            QueryFingerprint.of(rewrite.query())
+        );
     }
 
     private static ReasonCode mapReason(ValidationProblem.Code code) {

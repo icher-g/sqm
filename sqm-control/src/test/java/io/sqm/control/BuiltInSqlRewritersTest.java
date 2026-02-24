@@ -13,6 +13,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BuiltInSqlRewritersTest {
@@ -36,15 +37,22 @@ class BuiltInSqlRewritersTest {
     void available_rules_exposes_supported_rules_and_is_immutable() {
         Set<BuiltInRewriteRule> available = BuiltInSqlRewriters.availableRules();
 
-        assertEquals(Set.of(BuiltInRewriteRule.LIMIT_INJECTION, BuiltInRewriteRule.CANONICALIZATION), available);
+        assertEquals(
+            Set.of(
+                BuiltInRewriteRule.LIMIT_INJECTION,
+                BuiltInRewriteRule.IDENTIFIER_NORMALIZATION,
+                BuiltInRewriteRule.CANONICALIZATION
+            ),
+            available
+        );
         //noinspection DataFlowIssue
-        assertThrows(UnsupportedOperationException.class, () -> available.add(BuiltInRewriteRule.IDENTIFIER_NORMALIZATION));
+        assertThrows(UnsupportedOperationException.class, () -> available.add(BuiltInRewriteRule.LITERAL_PARAMETERIZATION));
     }
 
     @Test
     void selecting_unavailable_built_in_rule_fails_fast() {
         assertThrows(IllegalArgumentException.class,
-            () -> BuiltInSqlRewriters.of(EnumSet.of(BuiltInRewriteRule.IDENTIFIER_NORMALIZATION)));
+            () -> BuiltInSqlRewriters.of(EnumSet.of(BuiltInRewriteRule.LITERAL_PARAMETERIZATION)));
     }
 
     @Test
@@ -257,5 +265,70 @@ class BuiltInSqlRewritersTest {
         String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE).toLowerCase();
         assertTrue(rendered.contains("select 1"));
         assertFalse(rendered.contains("+"));
+    }
+
+    @Test
+    void canonicalization_simplifies_boolean_predicates() {
+        var query = select(lit(1))
+            .where(unary(lit(true)).and(col("active").eq(true)).or(unary(lit(false))))
+            .build();
+
+        var result = BuiltInSqlRewriters.of(BuiltInRewriteRule.CANONICALIZATION)
+            .rewrite(query, POSTGRES_ANALYZE);
+
+        assertTrue(result.rewritten());
+        assertEquals(ReasonCode.REWRITE_CANONICALIZATION, result.primaryReasonCode());
+        String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE);
+        assertTrue(rendered.contains("WHERE active = TRUE"));
+        assertFalse(rendered.contains("TRUE AND"));
+        assertFalse(rendered.contains("OR FALSE"));
+    }
+
+    @Test
+    void identifier_normalization_rewrites_unquoted_identifiers_only() {
+        var query = SqlQueryParser.standard().parse("select U.ID as CNT from Public.Users as U", POSTGRES_ANALYZE);
+
+        var result = BuiltInSqlRewriters.of(BuiltInRewriteRule.IDENTIFIER_NORMALIZATION)
+            .rewrite(query, POSTGRES_ANALYZE);
+
+        assertTrue(result.rewritten());
+        assertEquals(ReasonCode.REWRITE_IDENTIFIER_NORMALIZATION, result.primaryReasonCode());
+        assertEquals(List.of("identifier-normalization"), result.appliedRuleIds());
+        String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE);
+        assertTrue(rendered.toLowerCase().contains("from public.users as u"));
+        assertTrue(rendered.toLowerCase().contains("select u.id as cnt"));
+    }
+
+    @Test
+    void identifier_normalization_leaves_quoted_identifiers_unchanged() {
+        var query = SqlQueryParser.standard().parse("select \"U\".\"ID\" from \"Public\".\"Users\" as \"U\"", POSTGRES_ANALYZE);
+
+        var result = BuiltInSqlRewriters.of(BuiltInRewriteRule.IDENTIFIER_NORMALIZATION)
+            .rewrite(query, POSTGRES_ANALYZE);
+
+        assertFalse(result.rewritten());
+        assertEquals(ReasonCode.NONE, result.primaryReasonCode());
+    }
+
+    @Test
+    void identifier_normalization_case_mode_can_be_configured() {
+        var query = SqlQueryParser.standard().parse("select u.id as cnt from public.users as u", POSTGRES_ANALYZE);
+        var settings = new BuiltInRewriteSettings(
+            1000,
+            null,
+            BuiltInRewriteSettings.LimitExcessMode.DENY,
+            null,
+            BuiltInRewriteSettings.QualificationFailureMode.DENY,
+            io.sqm.core.transform.IdentifierNormalizationCaseMode.UPPER
+        );
+
+        var result = BuiltInSqlRewriters.of(settings, BuiltInRewriteRule.IDENTIFIER_NORMALIZATION)
+            .rewrite(query, POSTGRES_ANALYZE);
+
+        assertTrue(result.rewritten());
+        assertEquals(ReasonCode.REWRITE_IDENTIFIER_NORMALIZATION, result.primaryReasonCode());
+        String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE);
+        assertTrue(rendered.contains("SELECT U.ID AS CNT"));
+        assertTrue(rendered.contains("FROM PUBLIC.USERS AS U"));
     }
 }

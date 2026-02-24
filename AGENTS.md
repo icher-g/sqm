@@ -26,6 +26,10 @@ Agents should read it first and follow it throughout the task.
 - Prefer small, focused tests that cover edge cases and error handling.
 - Keep tests deterministic; avoid external I/O unless explicitly required.
 - Use existing test utilities and patterns already in the repo.
+- Tests should use DSL/helper methods for query model creation and serve as examples for developers.
+- Avoid direct node factory usage in tests when a DSL/helper method can express the same intent.
+- If a needed DSL/helper method does not exist for a test scenario, add it (with JavaDoc) and use it in the test.
+- Review generated test/model-building code from a developer perspective: if the API usage feels awkward or unintuitive, simplify it (prefer DSL helpers) before finalizing.
 
 ## Workflow
 - Locate parser entry points and associated test suites.

@@ -6,21 +6,28 @@ import io.sqm.control.QueryRewriteRule;
 import io.sqm.control.ReasonCode;
 import io.sqm.core.Query;
 import io.sqm.core.transform.ArithmeticSimplifier;
+import io.sqm.core.transform.BooleanPredicateSimplifier;
 
 import java.util.Objects;
 
 /**
  * Middleware rewrite rule that applies deterministic AST canonicalization transforms.
  *
- * <p>Current implementation uses {@link ArithmeticSimplifier} for safe arithmetic normalization.</p>
+ * <p>Current implementation composes safe local canonicalizers including
+ * arithmetic and boolean-predicate simplification.</p>
  */
 public final class CanonicalizationRewriteRule implements QueryRewriteRule {
     private static final String RULE_ID = "canonicalization";
 
-    private final ArithmeticSimplifier transformer;
+    private final ArithmeticSimplifier arithmeticSimplifier;
+    private final BooleanPredicateSimplifier booleanTransformer;
 
-    private CanonicalizationRewriteRule(ArithmeticSimplifier transformer) {
-        this.transformer = transformer;
+    private CanonicalizationRewriteRule(
+        ArithmeticSimplifier arithmeticSimplifier,
+        BooleanPredicateSimplifier booleanTransformer
+    ) {
+        this.arithmeticSimplifier = arithmeticSimplifier;
+        this.booleanTransformer = booleanTransformer;
     }
 
     /**
@@ -29,7 +36,10 @@ public final class CanonicalizationRewriteRule implements QueryRewriteRule {
      * @return rule instance
      */
     public static CanonicalizationRewriteRule of() {
-        return new CanonicalizationRewriteRule(new ArithmeticSimplifier());
+        return new CanonicalizationRewriteRule(
+            new ArithmeticSimplifier(),
+            new BooleanPredicateSimplifier()
+        );
     }
 
     /**
@@ -54,7 +64,8 @@ public final class CanonicalizationRewriteRule implements QueryRewriteRule {
         Objects.requireNonNull(query, "query must not be null");
         Objects.requireNonNull(context, "context must not be null");
 
-        Query transformed = (Query) transformer.transform(query);
+        Query transformed = (Query) arithmeticSimplifier.transform(query);
+        transformed = (Query) booleanTransformer.transform(transformed);
         if (transformed == query) {
             return QueryRewriteResult.unchanged(transformed);
         }

@@ -12,8 +12,8 @@ import static io.sqm.dsl.Dsl.*;
 public final class Collect_ColumnCollector {
     public static void main(String[] args) {
         Query q = select(
-            col("u", "user_name").toSelectItem(),
-            col("o", "status").toSelectItem(),
+            col("u", "user_name"),
+            col("o", "status"),
             func("count", starArg()).as("cnt")
         )
             .from(tbl("orders").as("o"))

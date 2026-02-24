@@ -6,6 +6,7 @@ import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.Expression;
 import io.sqm.core.Query;
+import io.sqm.core.transform.QueryFingerprint;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.api.ValidationResult;
 import io.sqm.validate.schema.SchemaValidationSettings;
@@ -25,11 +26,13 @@ class DefaultSqlDecisionEngineTest {
 
     @Test
     void allows_when_validation_passes() {
+        var inputQuery = Query.select(Expression.literal(1)).build();
         var engine = SqlDecisionEngine.validationOnly(query -> new ValidationResult(List.of()));
-        var result = engine.evaluate(Query.select(Expression.literal(1)).build(), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var result = engine.evaluate(inputQuery, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
 
         assertEquals(DecisionKind.ALLOW, result.kind());
         assertEquals(ReasonCode.NONE, result.reasonCode());
+        assertEquals(QueryFingerprint.of(inputQuery), result.fingerprint());
     }
 
     @Test
@@ -76,13 +79,14 @@ class DefaultSqlDecisionEngineTest {
     @Test
     void returns_rewrite_when_rewriter_changes_query_and_rewritten_query_validates() {
         var validatorCalls = new AtomicInteger();
+        var rewrittenQuery = Query.select(Expression.literal(2)).limit(10).build();
         var engine = SqlDecisionEngine.fullFlow(
             query -> {
                 validatorCalls.incrementAndGet();
                 return new ValidationResult(List.of());
             },
             (query, context) -> QueryRewriteResult.rewritten(
-                Query.select(Expression.literal(2)).build(),
+                rewrittenQuery,
                 "limit-injection",
                 ReasonCode.REWRITE_LIMIT
             ),
@@ -95,6 +99,7 @@ class DefaultSqlDecisionEngineTest {
         assertEquals(ReasonCode.REWRITE_LIMIT, result.reasonCode());
         assertEquals("select 2 limit 100", result.rewrittenSql());
         assertTrue(result.message().contains("limit-injection"));
+        assertEquals(QueryFingerprint.of(rewrittenQuery), result.fingerprint());
         assertEquals(2, validatorCalls.get());
     }
 

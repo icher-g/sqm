@@ -21,12 +21,14 @@ import java.util.Set;
 public final class BuiltInSqlRewriters {
     private static final EnumSet<BuiltInRewriteRule> AVAILABLE_RULES = EnumSet.of(
         BuiltInRewriteRule.LIMIT_INJECTION,
+        BuiltInRewriteRule.IDENTIFIER_NORMALIZATION,
         BuiltInRewriteRule.CANONICALIZATION
     );
     private static final EnumSet<BuiltInRewriteRule> SCHEMA_AVAILABLE_RULES = EnumSet.of(
         BuiltInRewriteRule.LIMIT_INJECTION,
         BuiltInRewriteRule.SCHEMA_QUALIFICATION,
         BuiltInRewriteRule.COLUMN_QUALIFICATION,
+        BuiltInRewriteRule.IDENTIFIER_NORMALIZATION,
         BuiltInRewriteRule.CANONICALIZATION
     );
 
@@ -223,6 +225,7 @@ public final class BuiltInSqlRewriters {
                 schema,
                 "schema must be provided for COLUMN_QUALIFICATION"
             ), settings);
+            case IDENTIFIER_NORMALIZATION -> IdentifierNormalizationRewriteRule.of(settings);
             case CANONICALIZATION -> CanonicalizationRewriteRule.of();
             default -> throw new IllegalArgumentException("unsupported built-in rewrites requested: " + Set.of(rule));
         };

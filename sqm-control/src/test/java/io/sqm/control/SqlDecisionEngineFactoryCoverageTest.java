@@ -54,7 +54,7 @@ class SqlDecisionEngineFactoryCoverageTest {
     }
 
     @Test
-    void built_in_rewrite_overloads_support_limit_injection_and_reject_unavailable_rules() {
+    void built_in_rewrite_overloads_support_limit_and_identifier_normalization_and_reject_unavailable_rules() {
         var validator = (io.sqm.validate.api.QueryValidator) query -> new ValidationResult(java.util.List.of());
 
         assertEquals(DecisionKind.REWRITE,
@@ -72,8 +72,20 @@ class SqlDecisionEngineFactoryCoverageTest {
                 "postgresql", SCHEMA, SchemaValidationSettings.defaults(), BuiltInRewriteRule.LIMIT_INJECTION)
                 .evaluate(query(), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE)).kind());
 
+        var normalizeQuery = SqlQueryParser.standard().parse(
+            "select U.ID from Public.Users as U",
+            ExecutionContext.of("postgresql", ExecutionMode.ANALYZE)
+        );
+        var normalizeResult = SqlDecisionEngine.validationAndRewrite(
+            "postgresql",
+            validator,
+            BuiltInRewriteRule.IDENTIFIER_NORMALIZATION
+        ).evaluate(normalizeQuery, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        assertEquals(DecisionKind.REWRITE, normalizeResult.kind());
+        assertEquals(ReasonCode.REWRITE_IDENTIFIER_NORMALIZATION, normalizeResult.reasonCode());
+
         assertThrows(IllegalArgumentException.class,
-            () -> SqlDecisionEngine.validationAndRewrite("ansi", validator, BuiltInRewriteRule.IDENTIFIER_NORMALIZATION));
+            () -> SqlDecisionEngine.validationAndRewrite("ansi", validator, BuiltInRewriteRule.LITERAL_PARAMETERIZATION));
     }
 
     @Test

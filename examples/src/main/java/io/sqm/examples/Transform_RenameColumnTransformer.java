@@ -10,10 +10,10 @@ import static io.sqm.dsl.Dsl.*;
 public class Transform_RenameColumnTransformer {
     public static void main(String[] args) {
         Query query = select(
-            col("u", "user_name").toSelectItem(),
-            col("o", "status").toSelectItem(),
-            func("count", starArg()).as("cnt")
-        )
+                col("u", "user_name"),
+                col("o", "status"),
+                func("count", starArg()).as("cnt")
+            )
             .from(tbl("orders").as("o"))
             .join(
                 inner(tbl("users").as("u")).on(col("u", "id").eq(col("o", "user_id")))

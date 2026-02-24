@@ -1,5 +1,7 @@
 package io.sqm.control;
 
+import io.sqm.core.transform.IdentifierNormalizationCaseMode;
+
 /**
  * Configuration for built-in middleware rewrite rules.
  *
@@ -8,13 +10,15 @@ package io.sqm.control;
  * @param limitExcessMode behavior when explicit LIMIT exceeds configured max
  * @param qualificationDefaultSchema optional preferred schema used to resolve ambiguous unqualified tables
  * @param qualificationFailureMode behavior when schema qualification cannot be resolved deterministically
+ * @param identifierNormalizationCaseMode case mode for unquoted identifier normalization
  */
 public record BuiltInRewriteSettings(
     long defaultLimitInjectionValue,
     Integer maxAllowedLimit,
     LimitExcessMode limitExcessMode,
     String qualificationDefaultSchema,
-    QualificationFailureMode qualificationFailureMode
+    QualificationFailureMode qualificationFailureMode,
+    IdentifierNormalizationCaseMode identifierNormalizationCaseMode
 ) {
     private static final long DEFAULT_LIMIT_INJECTION_VALUE = 1000L;
 
@@ -57,7 +61,8 @@ public record BuiltInRewriteSettings(
             null,
             LimitExcessMode.DENY,
             null,
-            QualificationFailureMode.DENY
+            QualificationFailureMode.DENY,
+            IdentifierNormalizationCaseMode.LOWER
         );
     }
 
@@ -67,7 +72,14 @@ public record BuiltInRewriteSettings(
      * @param defaultLimitInjectionValue default LIMIT value used by limit injection rewrite
      */
     public BuiltInRewriteSettings(long defaultLimitInjectionValue) {
-        this(defaultLimitInjectionValue, null, LimitExcessMode.DENY, null, QualificationFailureMode.DENY);
+        this(
+            defaultLimitInjectionValue,
+            null,
+            LimitExcessMode.DENY,
+            null,
+            QualificationFailureMode.DENY,
+            IdentifierNormalizationCaseMode.LOWER
+        );
     }
 
     /**
@@ -82,7 +94,40 @@ public record BuiltInRewriteSettings(
         Integer maxAllowedLimit,
         LimitExcessMode limitExcessMode
     ) {
-        this(defaultLimitInjectionValue, maxAllowedLimit, limitExcessMode, null, QualificationFailureMode.DENY);
+        this(
+            defaultLimitInjectionValue,
+            maxAllowedLimit,
+            limitExcessMode,
+            null,
+            QualificationFailureMode.DENY,
+            IdentifierNormalizationCaseMode.LOWER
+        );
+    }
+
+    /**
+     * Creates settings with qualification policy and identifier normalization defaults.
+     *
+     * @param defaultLimitInjectionValue default LIMIT value used by limit injection rewrite
+     * @param maxAllowedLimit optional maximum allowed LIMIT value
+     * @param limitExcessMode behavior when explicit LIMIT exceeds configured max
+     * @param qualificationDefaultSchema optional preferred schema used to resolve ambiguous unqualified tables
+     * @param qualificationFailureMode behavior when qualification fails (missing/ambiguous)
+     */
+    public BuiltInRewriteSettings(
+        long defaultLimitInjectionValue,
+        Integer maxAllowedLimit,
+        LimitExcessMode limitExcessMode,
+        String qualificationDefaultSchema,
+        QualificationFailureMode qualificationFailureMode
+    ) {
+        this(
+            defaultLimitInjectionValue,
+            maxAllowedLimit,
+            limitExcessMode,
+            qualificationDefaultSchema,
+            qualificationFailureMode,
+            IdentifierNormalizationCaseMode.LOWER
+        );
     }
 
     /**
@@ -93,6 +138,7 @@ public record BuiltInRewriteSettings(
      * @param limitExcessMode behavior when explicit LIMIT exceeds configured max
      * @param qualificationDefaultSchema optional preferred schema used to resolve ambiguous unqualified tables
      * @param qualificationFailureMode behavior when qualification fails (missing/ambiguous)
+     * @param identifierNormalizationCaseMode case mode for unquoted identifier normalization
      */
     public BuiltInRewriteSettings {
         if (defaultLimitInjectionValue <= 0) {
@@ -106,6 +152,9 @@ public record BuiltInRewriteSettings(
         }
         if (qualificationFailureMode == null) {
             qualificationFailureMode = QualificationFailureMode.DENY;
+        }
+        if (identifierNormalizationCaseMode == null) {
+            identifierNormalizationCaseMode = IdentifierNormalizationCaseMode.LOWER;
         }
         if (qualificationDefaultSchema != null && qualificationDefaultSchema.isBlank()) {
             qualificationDefaultSchema = null;

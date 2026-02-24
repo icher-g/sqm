@@ -123,7 +123,7 @@ class SqlQueryRewriterTest {
         assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn((BuiltInRewriteRule[]) null));
         assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn((Set<BuiltInRewriteRule>) null));
         assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn(new BuiltInRewriteSettings(5), (Set<BuiltInRewriteRule>) null));
-        assertThrows(IllegalArgumentException.class, () -> SqlQueryRewriter.builtIn(BuiltInRewriteRule.IDENTIFIER_NORMALIZATION));
+        assertThrows(IllegalArgumentException.class, () -> SqlQueryRewriter.builtIn(BuiltInRewriteRule.LITERAL_PARAMETERIZATION));
     }
 
     @Test
@@ -171,5 +171,17 @@ class SqlQueryRewriterTest {
         assertTrue(schemaConfigured.rewritten());
         assertFalse(emptyVarargsChain.rewritten());
         assertFalse(emptyListChain.rewritten());
+    }
+
+    @Test
+    void built_in_identifier_normalization_rewrites_unquoted_names() {
+        var query = SqlQueryParser.standard().parse("select U.ID from Public.Users as U", ANALYZE);
+
+        var result = SqlQueryRewriter.builtIn(BuiltInRewriteRule.IDENTIFIER_NORMALIZATION)
+            .rewrite(query, ANALYZE);
+
+        assertTrue(result.rewritten());
+        assertEquals(ReasonCode.REWRITE_IDENTIFIER_NORMALIZATION, result.primaryReasonCode());
+        assertEquals(List.of("identifier-normalization"), result.appliedRuleIds());
     }
 }
