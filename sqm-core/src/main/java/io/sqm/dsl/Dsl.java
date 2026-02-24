@@ -206,6 +206,16 @@ public final class Dsl {
         return QualifiedStarSelectItem.of(Identifier.of(qualifier));
     }
 
+    /**
+     * Creates a qualified '*' item for SELECT statement with a quote-aware qualifier: t.*
+     *
+     * @param qualifier quote-aware qualifier identifier
+     * @return select item
+     */
+    public static QualifiedStarSelectItem star(Identifier qualifier) {
+        return QualifiedStarSelectItem.of(qualifier);
+    }
+
     /* ========================= Functions ========================= */
 
     /**

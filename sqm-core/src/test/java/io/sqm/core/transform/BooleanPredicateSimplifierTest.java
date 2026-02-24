@@ -1,5 +1,6 @@
 package io.sqm.core.transform;
 
+import io.sqm.core.NotPredicate;
 import io.sqm.core.Predicate;
 import io.sqm.core.UnaryPredicate;
 import org.junit.jupiter.api.Test;
@@ -86,5 +87,39 @@ class BooleanPredicateSimplifierTest {
 
         assertInstanceOf(UnaryPredicate.class, simplified);
         assertEquals(col("flag").eq(true), ((UnaryPredicate) simplified).expr());
+    }
+
+    @Test
+    void leaves_not_and_composites_unchanged_when_no_rules_apply() {
+        var left = col("a").eq(1);
+        var right = col("b").eq(2);
+        var notPred = not(left);
+        var andPred = left.and(right);
+        var orPred = left.or(right);
+
+        assertSame(notPred, simplify(notPred));
+        assertSame(andPred, simplify(andPred));
+        assertSame(orPred, simplify(orPred));
+    }
+
+    @Test
+    void rebuilds_not_and_composites_when_children_change_but_no_boolean_literal_rule_applies() {
+        var left = unary(not(not(col("a").eq(1))));
+        var right = col("b").eq(2);
+
+        var notPred = not(unary(not(not(col("flag").eq(true)))));
+        var andPred = left.and(right);
+        var orPred = right.or(left);
+
+        var notOut = simplify(notPred);
+        var andOut = simplify(andPred);
+        var orOut = simplify(orPred);
+
+        assertInstanceOf(NotPredicate.class, notOut);
+        assertNotSame(notPred, notOut);
+        assertInstanceOf(io.sqm.core.AndPredicate.class, andOut);
+        assertNotSame(andPred, andOut);
+        assertInstanceOf(io.sqm.core.OrPredicate.class, orOut);
+        assertNotSame(orPred, orOut);
     }
 }

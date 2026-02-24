@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class IdentifierNormalizationTransformerTest {
@@ -205,5 +207,48 @@ class IdentifierNormalizationTransformerTest {
         assertEquals("f", functionTable.alias().value());
         assertEquals(java.util.List.of("val"), functionTable.columnAliases().stream().map(Identifier::value).toList());
         assertEquals(java.util.List.of("pg_catalog", "generate_series"), functionTable.function().name().values());
+    }
+
+    @Test
+    void normalizes_misc_node_types_and_preserves_noop_nodes() {
+        var tx = new IdentifierNormalizationTransformer();
+
+        var qualifiedStar = star(Identifier.of("T"));
+        var qualifiedStarOut = tx.apply(qualifiedStar);
+        assertEquals("t", qualifiedStarOut.qualifier().value());
+
+        var overDefWithoutBase = over(orderBy(order(col("T", "ID"))));
+        var overDefOut = tx.apply(overDefWithoutBase);
+        assertInstanceOf(OverSpec.Def.class, overDefOut);
+        assertNull(overDefOut.baseWindow());
+
+        var lockingNoTargets = LockingClause.of(update(), java.util.List.of(), false, false);
+        assertSame(lockingNoTargets, tx.apply(lockingNoTargets));
+
+        var keywordType = type(TypeKeyword.DOUBLE_PRECISION);
+        assertSame(keywordType, tx.apply(keywordType));
+
+        var bareBinary = BinaryOperatorExpr.of(lit(1), op("+"), lit(2));
+        var bareUnary = UnaryOperatorExpr.of(op("-"), lit(1));
+        assertSame(bareBinary, tx.apply(bareBinary));
+        assertSame(bareUnary, tx.apply(bareUnary));
+
+        var orderNoCollate = order(col("x"));
+        assertSame(orderNoCollate, tx.apply(orderNoCollate));
+    }
+
+    @Test
+    void normalizes_expr_select_item_alias_and_collate_expr_directly() {
+        var tx = new IdentifierNormalizationTransformer();
+        var item = col("T", "ID").add(lit(0)).as("CNT");
+        var collated = col("NAME").collate("PG_CATALOG.C");
+
+        var itemOut = tx.apply(item);
+        var collateOut = tx.apply(collated);
+
+        assertInstanceOf(ExprSelectItem.class, itemOut);
+        assertEquals("cnt", ((ExprSelectItem) itemOut).alias().value());
+        assertInstanceOf(io.sqm.core.CollateExpr.class, collateOut);
+        assertEquals(java.util.List.of("pg_catalog", "c"), collateOut.collation().values());
     }
 }
