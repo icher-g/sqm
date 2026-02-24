@@ -1,6 +1,5 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$WikiRepoUrl,
+    [string]$WikiRepoUrl = "https://github.com/icher-g/sqm.wiki.git",
     [string]$SourceDir = "wiki-src",
     [string]$WorkDir = ".wiki-tmp",
     [string]$CommitMessage = "Update wiki pages"
