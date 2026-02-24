@@ -73,6 +73,8 @@ class DslAdditionalHelpersTest {
     @Test
     void typeAndTableWrapperHelpers() {
         assertEquals(List.of("int4"), type("int4").qualifiedName().values());
+        assertEquals(List.of("PG_CATALOG", "INT4"),
+            type(QualifiedName.of(Identifier.of("PG_CATALOG"), Identifier.of("INT4"))).qualifiedName().values());
         assertEquals(TypeKeyword.DOUBLE_PRECISION, type(TypeKeyword.DOUBLE_PRECISION).keyword().orElseThrow());
 
         QueryTable queryTable = tbl(select(star()).from(tbl("t")).build());
@@ -83,6 +85,27 @@ class DslAdditionalHelpersTest {
 
         FunctionTable functionTable = tbl(func("unnest", arg(array(lit(1), lit(2)))));
         assertNotNull(functionTable.function());
+    }
+
+    @Test
+    void typedIdentifierHelpersForTableColumnCastAndOperator() {
+        var table = tbl(Identifier.of("Users"));
+        var qualifiedTable = tbl(Identifier.of("Public"), Identifier.of("Users"));
+        var column = col(Identifier.of("ID"));
+        var qualifiedColumn = col(Identifier.of("U"), Identifier.of("ID"));
+        var castExpr = cast(lit(1), type(QualifiedName.of("pg_catalog", "int4")));
+        var bareOp = op("+");
+        var schemaOp = op("pg_catalog", "@>");
+        var typedSchemaOp = op(QualifiedName.of(Identifier.of("pg_catalog")), "||");
+
+        assertEquals("Users", table.name().value());
+        assertEquals("Public", qualifiedTable.schema().value());
+        assertEquals("ID", column.name().value());
+        assertEquals("U", qualifiedColumn.tableAlias().value());
+        assertEquals(List.of("pg_catalog", "int4"), castExpr.type().qualifiedName().values());
+        assertNull(bareOp.schemaName());
+        assertEquals(List.of("pg_catalog"), schemaOp.schemaName().values());
+        assertEquals(List.of("pg_catalog"), typedSchemaOp.schemaName().values());
     }
 
     @Test

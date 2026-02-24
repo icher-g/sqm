@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class IdentifierNormalizationTransformerTest {
 
@@ -123,5 +124,86 @@ class IdentifierNormalizationTransformerTest {
         assertEquals("U", itemCol.tableAlias().value());
         assertEquals("ID", itemCol.name().value());
         assertEquals("CNT", item.alias().value());
+    }
+
+    @Test
+    void supports_unchanged_mode_and_validates_constructor_argument() {
+        SelectQuery query = select(col("MiXeD", "Id").as("Cnt"))
+            .from(tbl("Public", "Users").as("U"))
+            .build();
+
+        var transformed = new IdentifierNormalizationTransformer(
+            IdentifierNormalizationCaseMode.UNCHANGED
+        ).apply(query);
+
+        assertSame(query, transformed);
+        assertThrows(NullPointerException.class, () -> new IdentifierNormalizationTransformer(null));
+    }
+
+    @Test
+    void normalizes_cte_windows_order_collation_and_lock_targets() {
+        var cteBody = select(col("ID"))
+            .from(tbl("USERS"))
+            .build();
+        var windowDef = window("W", over(orderBy(order(col("U", "ID")).collate("PG_CATALOG.C"))));
+        var query = with(
+            cte("C", cteBody, java.util.List.of("ID"))
+        ).body(
+            select(
+                col("U", "ID").as("CNT"),
+                func("SUM", arg(col("U", "ID"))).over("W")
+            )
+                .from(tbl("C").as("U"))
+                .window(windowDef)
+                .orderBy(order(col("U", "ID")).collate("PG_CATALOG.C"))
+                .lockFor(update(), ofTables("U"), false, false)
+                .build()
+        );
+
+        var transformed = new IdentifierNormalizationTransformer().apply(query);
+        var normalizedCte = transformed.ctes().getFirst();
+        var select = (SelectQuery) transformed.body();
+
+        assertEquals("c", normalizedCte.name().value());
+        assertEquals(java.util.List.of("id"), normalizedCte.columnAliases().stream().map(Identifier::value).toList());
+
+        assertEquals("w", select.windows().getFirst().name().value());
+
+        var overItem = (ExprSelectItem) select.items().get(1);
+        var overFunc = (FunctionExpr) overItem.expr();
+        assertEquals("w", ((OverSpec.Ref) overFunc.over()).windowName().value());
+
+        var orderItem = select.orderBy().items().getFirst();
+        assertEquals(java.util.List.of("pg_catalog", "c"), orderItem.collate().values());
+
+        assertEquals("u", select.lockFor().ofTables().getFirst().identifier().value());
+    }
+
+    @Test
+    void normalizes_query_values_function_tables_and_using_join_column_aliases() {
+        var sub = select(col("ID")).from(tbl("USERS")).build();
+        var main = select(col("SUB", "ID"), col("V", "X"), col("F", "VAL"))
+            .from(tbl(sub).as("SUB").columnAliases("ID"))
+            .join(inner(tbl(rows(row(1))).as("V").columnAliases("X")).using("ID"))
+            .join(inner(tbl(func("PG_CATALOG.GENERATE_SERIES", arg(lit(1)), arg(lit(2)))).as("F").columnAliases("VAL")).on(unary(lit(true))))
+            .build();
+
+        var transformed = new IdentifierNormalizationTransformer().apply(main);
+
+        var fromQuery = (QueryTable) transformed.from();
+        assertEquals("sub", fromQuery.alias().value());
+        assertEquals(java.util.List.of("id"), fromQuery.columnAliases().stream().map(Identifier::value).toList());
+
+        var usingJoin = (UsingJoin) transformed.joins().getFirst();
+        assertEquals(java.util.List.of("id"), usingJoin.usingColumns().stream().map(Identifier::value).toList());
+        var valuesTable = (ValuesTable) usingJoin.right();
+        assertEquals("v", valuesTable.alias().value());
+        assertEquals(java.util.List.of("x"), valuesTable.columnAliases().stream().map(Identifier::value).toList());
+
+        var onJoin = (OnJoin) transformed.joins().get(1);
+        var functionTable = (FunctionTable) onJoin.right();
+        assertEquals("f", functionTable.alias().value());
+        assertEquals(java.util.List.of("val"), functionTable.columnAliases().stream().map(Identifier::value).toList());
+        assertEquals(java.util.List.of("pg_catalog", "generate_series"), functionTable.function().name().values());
     }
 }

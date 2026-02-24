@@ -65,4 +65,26 @@ class BooleanPredicateSimplifierTest {
 
         assertSame(predicate, simplified);
     }
+
+    @Test
+    void folds_and_or_when_both_sides_are_boolean_literals() {
+        var andPred = unary(lit(true)).and(unary(lit(false)));
+        var orPred = unary(lit(false)).or(unary(lit(true)));
+
+        var andOut = simplify(andPred);
+        var orOut = simplify(orPred);
+
+        assertEquals(Boolean.FALSE, ((io.sqm.core.LiteralExpr) ((UnaryPredicate) andOut).expr()).value());
+        assertEquals(Boolean.TRUE, ((io.sqm.core.LiteralExpr) ((UnaryPredicate) orOut).expr()).value());
+    }
+
+    @Test
+    void simplifies_unary_predicate_when_inner_predicate_expression_changes() {
+        var unaryPredicate = unary(not(not(col("flag").eq(true))));
+
+        var simplified = simplify(unaryPredicate);
+
+        assertInstanceOf(UnaryPredicate.class, simplified);
+        assertEquals(col("flag").eq(true), ((UnaryPredicate) simplified).expr());
+    }
 }
