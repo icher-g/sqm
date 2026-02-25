@@ -9,7 +9,6 @@ import io.sqm.core.Expression;
 import io.sqm.core.Query;
 import org.junit.jupiter.api.Test;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -45,14 +44,6 @@ class BuiltInSqlRewritersTest {
             ),
             available
         );
-        //noinspection DataFlowIssue
-        assertThrows(UnsupportedOperationException.class, () -> available.add(BuiltInRewriteRule.LITERAL_PARAMETERIZATION));
-    }
-
-    @Test
-    void selecting_unavailable_built_in_rule_fails_fast() {
-        assertThrows(IllegalArgumentException.class,
-            () -> BuiltInSqlRewriters.of(EnumSet.of(BuiltInRewriteRule.LITERAL_PARAMETERIZATION)));
     }
 
     @Test

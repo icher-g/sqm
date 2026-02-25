@@ -30,11 +30,6 @@ public enum BuiltInRewriteRule {
     IDENTIFIER_NORMALIZATION,
 
     /**
-     * Rewrites inline literals into parameterized expressions.
-     */
-    LITERAL_PARAMETERIZATION,
-
-    /**
      * Canonicalizes query structure for deterministic fingerprints and output.
      */
     CANONICALIZATION

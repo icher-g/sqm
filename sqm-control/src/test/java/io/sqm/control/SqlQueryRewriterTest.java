@@ -123,7 +123,6 @@ class SqlQueryRewriterTest {
         assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn((BuiltInRewriteRule[]) null));
         assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn((Set<BuiltInRewriteRule>) null));
         assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn(new BuiltInRewriteSettings(5), (Set<BuiltInRewriteRule>) null));
-        assertThrows(IllegalArgumentException.class, () -> SqlQueryRewriter.builtIn(BuiltInRewriteRule.LITERAL_PARAMETERIZATION));
     }
 
     @Test
