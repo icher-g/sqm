@@ -3,9 +3,15 @@ package io.sqm.control;
 import io.sqm.core.Query;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.postgresql.spi.PostgresDialect;
+import io.sqm.render.spi.ParameterizationMode;
 import io.sqm.render.spi.RenderContext;
+import io.sqm.render.spi.RenderOptions;
+import io.sqm.render.spi.SqlDialect;
 
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * Renders SQM {@link Query} models to SQL text for a target execution context.
@@ -13,45 +19,52 @@ import java.util.Locale;
 @FunctionalInterface
 public interface SqlQueryRenderer {
     /**
-     * Creates a renderer for the selected dialect.
+     * Creates the default dialect-aware renderer used by middleware.
      *
-     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
+     * <p>The returned renderer resolves the render dialect from {@link ExecutionContext#dialect()} and supports
+     * ANSI plus PostgreSQL aliases ({@code postgresql}, {@code postgres}).</p>
      *
-     * @param dialect dialect identifier (for example, {@code ansi}, {@code postgresql}, or {@code postgres})
-     * @return renderer for the selected dialect
+     * @return dialect-aware renderer
      */
-    static SqlQueryRenderer forDialect(String dialect) {
-        String normalized = normalizeDialect(dialect);
-        return switch (normalized) {
-            case "ansi" -> (query, context) -> RenderContext.of(new AnsiDialect()).render(query).sql();
-            case "postgresql", "postgres" -> (query, context) -> RenderContext.of(new PostgresDialect()).render(query).sql();
-            default -> throw new IllegalArgumentException("unsupported dialect: " + dialect);
+    static SqlQueryRenderer standard() {
+        return dialectAware(Map.of(
+            "ansi", AnsiDialect::new,
+            "postgresql", PostgresDialect::new,
+            "postgres", PostgresDialect::new
+        ));
+    }
+
+    /**
+     * Creates a dialect-aware renderer with custom dialect mappings.
+     *
+     * @param specsByDialect mapping of normalized dialect names to parser specs factories
+     * @return dialect-aware parser
+     */
+    static SqlQueryRenderer dialectAware(Map<String, Supplier<SqlDialect>> specsByDialect) {
+        Objects.requireNonNull(specsByDialect, "specsByDialect must not be null");
+        var mappings = Map.copyOf(specsByDialect);
+
+        return (sql, context) -> {
+            Objects.requireNonNull(sql, "sql must not be null");
+            Objects.requireNonNull(context, "context must not be null");
+
+            var specsFactory = mappings.get(context.dialect().toLowerCase(Locale.ROOT));
+            if (specsFactory == null) {
+                throw new IllegalArgumentException("Unsupported dialect: " + context.dialect());
+            }
+
+            var ctx = RenderContext.of(specsFactory.get());
+            var result = ctx.render(sql, renderOptions(context));
+
+            return QueryRenderResult.of(result.sql(), result.params());
         };
     }
 
-    /**
-     * Creates an ANSI renderer.
-     *
-     * @return ANSI renderer
-     */
-    static SqlQueryRenderer ansi() {
-        return forDialect("ansi");
-    }
-
-    /**
-     * Creates a PostgreSQL renderer.
-     *
-     * @return PostgreSQL renderer
-     */
-    static SqlQueryRenderer postgresql() {
-        return forDialect("postgresql");
-    }
-
-    private static String normalizeDialect(String dialect) {
-        if (dialect == null || dialect.isBlank()) {
-            return "ansi";
-        }
-        return dialect.trim().toLowerCase(Locale.ROOT);
+    private static RenderOptions renderOptions(ExecutionContext context) {
+        return RenderOptions.of(switch (context.parameterizationMode()) {
+            case OFF -> ParameterizationMode.Inline;
+            case BIND -> ParameterizationMode.Bind;
+        });
     }
 
     /**
@@ -61,5 +74,5 @@ public interface SqlQueryRenderer {
      * @param context execution context
      * @return rendered SQL text
      */
-    String render(Query query, ExecutionContext context);
+    QueryRenderResult render(Query query, ExecutionContext context);
 }

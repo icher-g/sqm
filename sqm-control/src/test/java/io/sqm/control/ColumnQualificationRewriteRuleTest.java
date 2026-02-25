@@ -23,7 +23,7 @@ class ColumnQualificationRewriteRuleTest {
 
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_QUALIFICATION, result.primaryReasonCode());
-        String rendered = SqlQueryRenderer.postgresql().render(result.query(), PG_ANALYZE).toLowerCase();
+        String rendered = SqlQueryRenderer.standard().render(result.query(), PG_ANALYZE).sql().toLowerCase();
         assertTrue(rendered.contains("select u.id"));
     }
 
@@ -40,7 +40,7 @@ class ColumnQualificationRewriteRuleTest {
             strict.maxAllowedLimit(),
             strict.limitExcessMode(),
             strict.qualificationDefaultSchema(),
-            BuiltInRewriteSettings.QualificationFailureMode.SKIP
+            QualificationFailureMode.SKIP
         );
         var unresolvedQuery = SqlQueryParser.standard().parse("select id from users u", PG_ANALYZE);
         var ambiguousQuery = SqlQueryParser.standard().parse(

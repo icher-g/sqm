@@ -1,24 +1,7 @@
 package io.sqm.control.impl;
 
-import io.sqm.control.DecisionExplanation;
-import io.sqm.control.DecisionKind;
-import io.sqm.control.DecisionResult;
-import io.sqm.control.ExecutionContext;
-import io.sqm.control.ExecutionMode;
-import io.sqm.control.ReasonCode;
-import io.sqm.control.RuntimeGuardrails;
-import io.sqm.control.SqlDecisionEngine;
-import io.sqm.control.SqlDecisionExplainer;
-import io.sqm.control.SqlMiddleware;
-import io.sqm.control.SqlQueryParser;
-import io.sqm.control.AuditEvent;
-import io.sqm.control.AuditEventPublisher;
-import io.sqm.core.CompositeQuery;
-import io.sqm.core.LimitOffset;
-import io.sqm.core.LiteralExpr;
-import io.sqm.core.Query;
-import io.sqm.core.SelectQuery;
-import io.sqm.core.WithQuery;
+import io.sqm.control.*;
+import io.sqm.core.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -32,6 +15,7 @@ import java.util.concurrent.TimeoutException;
  * runtime guardrails, explanation, and audit publishing.
  */
 public final class DefaultSqlMiddleware implements SqlMiddleware {
+
     private final SqlDecisionEngine engine;
     private final SqlDecisionExplainer explainer;
     private final AuditEventPublisher auditPublisher;
@@ -41,11 +25,11 @@ public final class DefaultSqlMiddleware implements SqlMiddleware {
     /**
      * Creates a middleware instance with explicit component wiring.
      *
-     * @param engine decision engine used for validate/rewrite/render decisions
-     * @param explainer explainer used by {@link #explainDecision(String, ExecutionContext)}
+     * @param engine         decision engine used for validate/rewrite/render decisions
+     * @param explainer      explainer used by {@link #explainDecision(String, ExecutionContext)}
      * @param auditPublisher audit sink for emitted audit events
-     * @param guardrails runtime guardrail settings
-     * @param queryParser parser used for ingress SQL parsing
+     * @param guardrails     runtime guardrail settings
+     * @param queryParser    parser used for ingress SQL parsing
      */
     public DefaultSqlMiddleware(
         SqlDecisionEngine engine,
@@ -107,7 +91,7 @@ public final class DefaultSqlMiddleware implements SqlMiddleware {
         var decision = evaluated.decision();
         var explanation = evaluated.query() == null
             ? null
-            : explainer.explain(evaluated.query(), context.withMode(ExecutionMode.ANALYZE), decision);
+            : explainer.explain(evaluated.query(), context.withExecutionMode(ExecutionMode.ANALYZE), decision);
         if (explanation == null || explanation.isBlank()) {
             explanation = "Decision=%s, reason=%s".formatted(decision.kind(), decision.reasonCode());
         }
@@ -116,7 +100,7 @@ public final class DefaultSqlMiddleware implements SqlMiddleware {
 
     private EvaluatedDecision evaluate(String sql, ExecutionContext context, ExecutionMode mode) {
         validateInput(sql, context);
-        var contextWithMode = context.withMode(mode);
+        var contextWithMode = context.withExecutionMode(mode);
         var startedNanos = System.nanoTime();
         Query query = null;
 
@@ -214,6 +198,7 @@ public final class DefaultSqlMiddleware implements SqlMiddleware {
             ReasonCode.REWRITE_EXPLAIN_DRY_RUN,
             "Execution switched to EXPLAIN dry-run",
             "EXPLAIN " + effectiveSql,
+            decision.sqlParams(),
             decision.fingerprint()
         );
     }

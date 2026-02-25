@@ -6,6 +6,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -31,7 +32,7 @@ class DecisionResultTest {
 
     @Test
     void rewrite_factory() {
-        var result = DecisionResult.rewrite(ReasonCode.REWRITE_LIMIT, "Added LIMIT", "select * from t limit 100");
+        var result = DecisionResult.rewrite(ReasonCode.REWRITE_LIMIT, "Added LIMIT", "select * from t limit 100", List.of());
         assertEquals(DecisionKind.REWRITE, result.kind());
         assertEquals(ReasonCode.REWRITE_LIMIT, result.reasonCode());
         assertEquals("select * from t limit 100", result.rewrittenSql());
@@ -50,6 +51,7 @@ class DecisionResultTest {
             ReasonCode.REWRITE_LIMIT,
             "Added LIMIT",
             "select * from t limit 100",
+            List.of(),
             "abc"
         );
         assertEquals("abc", result.fingerprint());
@@ -68,13 +70,13 @@ class DecisionResultTest {
     @Test
     void allow_requires_none_reason_code() {
         assertThrows(IllegalArgumentException.class,
-            () -> new DecisionResult(DecisionKind.ALLOW, ReasonCode.DENY_DDL, null, null, null, null));
+            () -> new DecisionResult(DecisionKind.ALLOW, ReasonCode.DENY_DDL, null, null, List.of(), null, null));
     }
 
     @Test
     void rewrite_requires_rewritten_sql() {
         assertThrows(IllegalArgumentException.class,
-            () -> DecisionResult.rewrite(ReasonCode.REWRITE_LIMIT, "Added LIMIT", " "));
+            () -> DecisionResult.rewrite(ReasonCode.REWRITE_LIMIT, "Added LIMIT", " ", List.of()));
     }
 
     @Test
@@ -85,6 +87,7 @@ class DecisionResultTest {
                 ReasonCode.DENY_DML,
                 "blocked",
                 "select 1",
+                List.of(),
                 null,
                 ReasonGuidanceCatalog.forReason(ReasonCode.DENY_DML)));
     }
@@ -92,7 +95,7 @@ class DecisionResultTest {
     @Test
     void deny_requires_guidance() {
         assertThrows(IllegalArgumentException.class,
-            () -> new DecisionResult(DecisionKind.DENY, ReasonCode.DENY_DDL, "blocked", null, null, null));
+            () -> new DecisionResult(DecisionKind.DENY, ReasonCode.DENY_DDL, "blocked", null, List.of(), null, null));
     }
 
     @Test
@@ -103,6 +106,7 @@ class DecisionResultTest {
                 ReasonCode.NONE,
                 null,
                 null,
+                List.of(),
                 null,
                 DecisionGuidance.retryable("hint", "act", "retry")));
     }
@@ -110,7 +114,7 @@ class DecisionResultTest {
     @Test
     void blank_fingerprint_is_rejected() {
         assertThrows(IllegalArgumentException.class,
-            () -> new DecisionResult(DecisionKind.ALLOW, ReasonCode.NONE, null, null, " ", null));
+            () -> new DecisionResult(DecisionKind.ALLOW, ReasonCode.NONE, null, null, List.of(), " ", null));
     }
 
     @Test
@@ -118,7 +122,8 @@ class DecisionResultTest {
         var original = DecisionResult.rewrite(
             ReasonCode.REWRITE_QUALIFICATION,
             "Qualified identifiers",
-            "select app.users.id from app.users");
+            "select app.users.id from app.users",
+            List.of());
 
         var bytes = new ByteArrayOutputStream();
         try (var out = new ObjectOutputStream(bytes)) {

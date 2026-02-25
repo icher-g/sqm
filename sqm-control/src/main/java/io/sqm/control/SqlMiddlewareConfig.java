@@ -4,6 +4,7 @@ import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.validate.schema.SchemaValidationSettings;
 
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Immutable configuration object for assembling {@link SqlMiddleware} instances.
@@ -12,212 +13,273 @@ import java.util.Objects;
  * customization methods for optional concerns (audit, explain, parser, guardrails),
  * avoiding large overload sets on {@link SqlMiddleware}.</p>
  */
-public final class SqlMiddlewareConfig {
-    private final SqlDecisionEngine engine;
-    private final SqlDecisionExplainer explainer;
-    private final AuditEventPublisher auditPublisher;
-    private final RuntimeGuardrails guardrails;
-    private final SqlQueryParser queryParser;
-
-    private SqlMiddlewareConfig(
-        SqlDecisionEngine engine,
-        SqlDecisionExplainer explainer,
-        AuditEventPublisher auditPublisher,
-        RuntimeGuardrails guardrails,
-        SqlQueryParser queryParser
-    ) {
-        this.engine = Objects.requireNonNull(engine, "engine must not be null");
-        this.explainer = Objects.requireNonNull(explainer, "explainer must not be null");
-        this.auditPublisher = Objects.requireNonNull(auditPublisher, "auditPublisher must not be null");
-        this.guardrails = Objects.requireNonNull(guardrails, "guardrails must not be null");
-        this.queryParser = Objects.requireNonNull(queryParser, "queryParser must not be null");
-    }
+public record SqlMiddlewareConfig(
+    SqlDecisionEngine engine,
+    SqlDecisionExplainer explainer,
+    AuditEventPublisher auditPublisher,
+    RuntimeGuardrails guardrails,
+    SqlQueryParser queryParser) {
 
     /**
-     * Creates a middleware context for a pre-built decision engine.
+     * Validates required configuration fields.
      *
-     * @param engine decision engine
-     * @return middleware context with default explainer/audit/guardrails/parser
-     */
-    public static SqlMiddlewareConfig forEngine(SqlDecisionEngine engine) {
-        return new SqlMiddlewareConfig(
-            engine,
-            SqlDecisionExplainer.basic(),
-            AuditEventPublisher.noop(),
-            RuntimeGuardrails.disabled(),
-            SqlQueryParser.standard()
-        );
-    }
-
-    /**
-     * Creates a validation-only middleware context for a catalog schema using ANSI by default.
-     *
-     * @param schema catalog schema
-     * @return middleware context
-     */
-    public static SqlMiddlewareConfig forValidation(CatalogSchema schema) {
-        return forValidation(null, schema, SchemaValidationSettings.defaults());
-    }
-
-    /**
-     * Creates a validation-only middleware context for a catalog schema and dialect.
-     *
-     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
-     *
-     * @param dialect dialect identifier
-     * @param schema catalog schema
-     * @return middleware context
-     */
-    public static SqlMiddlewareConfig forValidation(String dialect, CatalogSchema schema) {
-        return forValidation(dialect, schema, SchemaValidationSettings.defaults());
-    }
-
-    /**
-     * Creates a validation-only middleware context for a catalog schema and dialect.
-     *
-     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
-     *
-     * @param dialect dialect identifier
-     * @param schema catalog schema
-     * @param validationSettings schema validation settings
-     * @return middleware context
-     */
-    public static SqlMiddlewareConfig forValidation(
-        String dialect,
-        CatalogSchema schema,
-        SchemaValidationSettings validationSettings
-    ) {
-        return forEngine(SqlDecisionEngine.validationOnly(dialect, schema, validationSettings));
-    }
-
-    /**
-     * Creates a validation+rewrite middleware context using schema-aware built-in rewrites.
-     *
-     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
-     *
-     * @param dialect dialect identifier
-     * @param schema catalog schema
-     * @param validationSettings schema validation settings
-     * @return middleware context
-     */
-    public static SqlMiddlewareConfig forValidationAndRewrite(
-        String dialect,
-        CatalogSchema schema,
-        SchemaValidationSettings validationSettings
-    ) {
-        return forEngine(SqlDecisionEngine.validationAndRewrite(dialect, schema, validationSettings));
-    }
-
-    /**
-     * Creates a validation+rewrite middleware context using selected schema-aware built-in rewrites.
-     *
-     * <p>If {@code dialect} is {@code null} or blank, ANSI is used by default.</p>
-     *
-     * @param dialect dialect identifier
-     * @param schema catalog schema
-     * @param validationSettings schema validation settings
-     * @param rewriteSettings built-in rewrite settings
-     * @param rewrites built-in rewrites to enable
-     * @return middleware context
-     */
-    public static SqlMiddlewareConfig forValidationAndRewrite(
-        String dialect,
-        CatalogSchema schema,
-        SchemaValidationSettings validationSettings,
-        BuiltInRewriteSettings rewriteSettings,
-        BuiltInRewriteRule... rewrites
-    ) {
-        return forEngine(SqlDecisionEngine.validationAndRewrite(
-            dialect,
-            schema,
-            validationSettings,
-            rewriteSettings,
-            rewrites
-        ));
-    }
-
-    /**
-     * Returns a copy with custom decision explanation strategy.
-     *
-     * @param explainer explanation strategy
-     * @return updated middleware context
-     */
-    public SqlMiddlewareConfig withExplainer(SqlDecisionExplainer explainer) {
-        return new SqlMiddlewareConfig(engine, explainer, auditPublisher, guardrails, queryParser);
-    }
-
-    /**
-     * Returns a copy with custom audit publisher.
-     *
+     * @param engine         decision engine
+     * @param explainer      explanation strategy
      * @param auditPublisher audit publisher
-     * @return updated middleware context
+     * @param guardrails     runtime guardrails
+     * @param queryParser    SQL parser
      */
-    public SqlMiddlewareConfig withAuditPublisher(AuditEventPublisher auditPublisher) {
-        return new SqlMiddlewareConfig(engine, explainer, auditPublisher, guardrails, queryParser);
+    public SqlMiddlewareConfig {
+        Objects.requireNonNull(engine, "engine must not be null");
+        Objects.requireNonNull(queryParser, "queryParser must not be null");
     }
 
     /**
-     * Returns a copy with custom runtime guardrails.
+     * Creates a builder pre-bound to the provided catalog schema.
      *
-     * @param guardrails runtime guardrails
-     * @return updated middleware context
+     * @param schema catalog schema used by validation and schema-aware rewrites
+     * @return middleware config builder
      */
-    public SqlMiddlewareConfig withGuardrails(RuntimeGuardrails guardrails) {
-        return new SqlMiddlewareConfig(engine, explainer, auditPublisher, guardrails, queryParser);
+    public static Builder builder(CatalogSchema schema) {
+        return new Builder(schema);
     }
 
     /**
-     * Returns a copy with custom SQL parser.
-     *
-     * @param queryParser SQL parser
-     * @return updated middleware context
+     * A builder class for composing SqlMiddlewareConfig.
      */
-    public SqlMiddlewareConfig withQueryParser(SqlQueryParser queryParser) {
-        return new SqlMiddlewareConfig(engine, explainer, auditPublisher, guardrails, queryParser);
-    }
+    public static final class Builder {
 
-    /**
-     * Returns the configured decision engine.
-     *
-     * @return decision engine
-     */
-    public SqlDecisionEngine engine() {
-        return engine;
-    }
+        private final CatalogSchema schema;
+        private SchemaValidationSettings validationSettings;
+        private BuiltInRewriteSettings rewriteSettings;
+        private Set<BuiltInRewriteRule> rewriteRules;
+        private SqlDecisionExplainer explainer;
+        private AuditEventPublisher eventPublisher;
+        private RuntimeGuardrails guardrails;
+        private SqlQueryParser queryParser;
+        private SqlQueryValidator queryValidator;
+        private SqlQueryRenderer queryRenderer;
+        private SqlQueryRewriter queryRewriter;
 
-    /**
-     * Returns the configured decision explainer.
-     *
-     * @return decision explainer
-     */
-    public SqlDecisionExplainer explainer() {
-        return explainer;
-    }
+        /**
+         * Creates a builder bound to a catalog schema.
+         *
+         * @param schema catalog schema
+         */
+        public Builder(CatalogSchema schema) {
+            this.schema = Objects.requireNonNull(schema, "schema must not be null");
+        }
 
-    /**
-     * Returns the configured audit publisher.
-     *
-     * @return audit publisher
-     */
-    public AuditEventPublisher auditPublisher() {
-        return auditPublisher;
-    }
+        /**
+         * Sets schema-validation settings used by the query validator.
+         *
+         * @param validationSettings schema-validation settings
+         * @return builder instance
+         */
+        public Builder validationSettings(SchemaValidationSettings validationSettings) {
+            this.validationSettings = validationSettings;
+            return this;
+        }
 
-    /**
-     * Returns runtime guardrail settings.
-     *
-     * @return runtime guardrails
-     */
-    public RuntimeGuardrails guardrails() {
-        return guardrails;
-    }
+        /**
+         * Sets built-in rewrite rules for rewrite-enabled configurations.
+         *
+         * @param rewriteRules rewrite rules to enable
+         * @return builder instance
+         */
+        public Builder rewriteRules(BuiltInRewriteRule... rewriteRules) {
+            this.rewriteRules = Set.of(rewriteRules);
+            return this;
+        }
 
-    /**
-     * Returns the SQL parser.
-     *
-     * @return SQL parser
-     */
-    public SqlQueryParser queryParser() {
-        return queryParser;
+        /**
+         * Sets built-in rewrite settings.
+         *
+         * @param rewriteSettings rewrite settings
+         * @return builder instance
+         */
+        public Builder builtInRewriteSettings(BuiltInRewriteSettings rewriteSettings) {
+            this.rewriteSettings = rewriteSettings;
+            return this;
+        }
+
+        /**
+         * Sets custom decision explainer.
+         *
+         * @param explainer explanation strategy
+         * @return builder instance
+         */
+        public Builder explainer(SqlDecisionExplainer explainer) {
+            this.explainer = explainer;
+            return this;
+        }
+
+        /**
+         * Sets custom audit publisher.
+         *
+         * @param eventPublisher audit publisher
+         * @return builder instance
+         */
+        public Builder auditPublisher(AuditEventPublisher eventPublisher) {
+            this.eventPublisher = eventPublisher;
+            return this;
+        }
+
+        /**
+         * Sets runtime guardrails.
+         *
+         * @param guardrails runtime guardrails
+         * @return builder instance
+         */
+        public Builder guardrails(RuntimeGuardrails guardrails) {
+            this.guardrails = guardrails;
+            return this;
+        }
+
+        /**
+         * Sets custom SQL parser.
+         *
+         * @param queryParser SQL parser
+         * @return builder instance
+         */
+        public Builder queryParser(SqlQueryParser queryParser) {
+            this.queryParser = queryParser;
+            return this;
+        }
+
+        /**
+         * Sets custom query validator.
+         *
+         * @param queryValidator query validator
+         * @return builder instance
+         */
+        public Builder queryValidator(SqlQueryValidator queryValidator) {
+            this.queryValidator = queryValidator;
+            return this;
+        }
+
+        /**
+         * Sets custom query renderer.
+         *
+         * @param queryRenderer query renderer
+         * @return builder instance
+         */
+        public Builder queryRenderer(SqlQueryRenderer queryRenderer) {
+            this.queryRenderer = queryRenderer;
+            return this;
+        }
+
+        /**
+         * Sets custom query rewriter.
+         *
+         * @param sqlQueryRewriter query rewriter
+         * @return builder instance
+         */
+        public Builder queryRewriter(SqlQueryRewriter sqlQueryRewriter) {
+            this.queryRewriter = sqlQueryRewriter;
+            return this;
+        }
+
+        /**
+         * Builds validation-only configuration with defaults for omitted optional components.
+         *
+         * @return validation-only middleware config
+         */
+        public SqlMiddlewareConfig buildValidationConfig() {
+            if (queryParser == null) {
+                queryParser = SqlQueryParser.standard();
+            }
+
+            if (queryValidator == null) {
+                if (validationSettings == null) {
+                    queryValidator = SqlQueryValidator.standard(schema);
+                }
+                else {
+                    queryValidator = SqlQueryValidator.standard(schema, validationSettings);
+                }
+            }
+
+            if (queryRenderer == null) {
+                queryRenderer = (query, context) -> {
+                    throw new IllegalStateException("queryRenderer must be configured when rewrite rules are enabled");
+                };
+            }
+
+            if (queryRewriter == null) {
+                queryRewriter = SqlQueryRewriter.noop();
+            }
+
+            if (guardrails == null) {
+                guardrails = RuntimeGuardrails.disabled();
+            }
+
+            if (eventPublisher == null) {
+                eventPublisher = AuditEventPublisher.noop();
+            }
+
+            if (explainer == null) {
+                explainer = SqlDecisionExplainer.basic();
+            }
+
+            return new SqlMiddlewareConfig(
+                SqlDecisionEngine.of(queryValidator, queryRewriter, queryRenderer),
+                explainer,
+                eventPublisher,
+                guardrails,
+                queryParser
+            );
+        }
+
+        /**
+         * Builds validation+rewrite configuration with defaults for omitted optional components.
+         *
+         * @return validation+rewrite middleware config
+         */
+        public SqlMiddlewareConfig buildValidationAndRewriteConfig() {
+            if (queryParser == null) {
+                queryParser = SqlQueryParser.standard();
+            }
+
+            if (queryValidator == null) {
+                if (validationSettings == null) {
+                    queryValidator = SqlQueryValidator.standard(schema);
+                }
+                else {
+                    queryValidator = SqlQueryValidator.standard(schema, validationSettings);
+                }
+            }
+
+            if (queryRenderer == null) {
+                queryRenderer = SqlQueryRenderer.standard();
+            }
+
+            if (queryRewriter == null) {
+                queryRewriter = SqlQueryRewriter.builtIn(schema, rewriteSettings, rewriteRules);
+            }
+
+            if (queryRewriter == null) {
+                queryRewriter = SqlQueryRewriter.noop();
+            }
+
+            if (guardrails == null) {
+                guardrails = RuntimeGuardrails.disabled();
+            }
+
+            if (eventPublisher == null) {
+                eventPublisher = AuditEventPublisher.noop();
+            }
+
+            if (explainer == null) {
+                explainer = SqlDecisionExplainer.basic();
+            }
+
+            return new SqlMiddlewareConfig(
+                SqlDecisionEngine.of(queryValidator, queryRewriter, queryRenderer),
+                explainer,
+                eventPublisher,
+                guardrails,
+                queryParser
+            );
+        }
     }
 }

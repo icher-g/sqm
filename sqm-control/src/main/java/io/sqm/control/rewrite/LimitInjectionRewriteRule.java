@@ -1,11 +1,6 @@
 package io.sqm.control.rewrite;
 
-import io.sqm.control.BuiltInRewriteSettings;
-import io.sqm.control.ExecutionContext;
-import io.sqm.control.QueryRewriteResult;
-import io.sqm.control.QueryRewriteRule;
-import io.sqm.control.ReasonCode;
-import io.sqm.control.RewriteDenyException;
+import io.sqm.control.*;
 import io.sqm.core.CompositeQuery;
 import io.sqm.core.Expression;
 import io.sqm.core.LimitOffset;
@@ -52,7 +47,7 @@ public final class LimitInjectionRewriteRule implements QueryRewriteRule {
     public static LimitInjectionRewriteRule of(BuiltInRewriteSettings settings) {
         Objects.requireNonNull(settings, "settings must not be null");
         long defaultLimit = settings.maxAllowedLimit() != null
-            && settings.limitExcessMode() == BuiltInRewriteSettings.LimitExcessMode.CLAMP
+            && settings.limitExcessMode() == LimitExcessMode.CLAMP
             ? Math.min(settings.defaultLimitInjectionValue(), settings.maxAllowedLimit())
             : settings.defaultLimitInjectionValue();
         return new LimitInjectionRewriteRule(LimitInjectionTransformer.of(defaultLimit), settings);
@@ -157,7 +152,7 @@ public final class LimitInjectionRewriteRule implements QueryRewriteRule {
     }
 
     private Query handleExceededLimit(Query query, LimitOffset current, long currentLimit) {
-        if (settings.limitExcessMode() == BuiltInRewriteSettings.LimitExcessMode.DENY) {
+        if (settings.limitExcessMode() == LimitExcessMode.DENY) {
             throw new RewriteDenyException(
                 ReasonCode.DENY_MAX_ROWS,
                 "Query LIMIT %s exceeds configured max %d".formatted(printableLimit(currentLimit), settings.maxAllowedLimit())

@@ -17,6 +17,33 @@ class ExecutionContextTest {
         var context = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
         assertEquals("postgresql", context.dialect());
         assertEquals(ExecutionMode.ANALYZE, context.mode());
+        assertEquals(ParameterizationMode.OFF, context.parameterizationMode());
+    }
+
+    @Test
+    void with_parameterization_mode_preserves_other_fields() {
+        var context = ExecutionContext.of("postgresql", "alice", "tenant-a", ExecutionMode.EXECUTE);
+
+        var bindContext = context.withParameterizationMode(ParameterizationMode.BIND);
+
+        assertEquals("postgresql", bindContext.dialect());
+        assertEquals("alice", bindContext.principal());
+        assertEquals("tenant-a", bindContext.tenant());
+        assertEquals(ExecutionMode.EXECUTE, bindContext.mode());
+        assertEquals(ParameterizationMode.BIND, bindContext.parameterizationMode());
+    }
+
+    @Test
+    void of_full_supports_explicit_parameterization_mode() {
+        var context = ExecutionContext.of(
+            "postgresql",
+            "alice",
+            "tenant-a",
+            ExecutionMode.ANALYZE,
+            ParameterizationMode.BIND
+        );
+
+        assertEquals(ParameterizationMode.BIND, context.parameterizationMode());
     }
 
     @Test

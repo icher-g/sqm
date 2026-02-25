@@ -91,7 +91,7 @@ public final class ColumnQualificationRewriteRule implements QueryRewriteRule {
         ReasonCode reasonCode,
         String message
     ) {
-        if (settings.qualificationFailureMode() == BuiltInRewriteSettings.QualificationFailureMode.DENY) {
+        if (settings.qualificationFailureMode() == QualificationFailureMode.DENY) {
             throw new RewriteDenyException(reasonCode, message);
         }
         return ColumnQualification.unresolved();

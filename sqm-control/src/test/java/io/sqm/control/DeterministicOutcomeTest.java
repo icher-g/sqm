@@ -9,6 +9,8 @@ import io.sqm.validate.schema.SchemaValidationSettings;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DeterministicOutcomeTest {
 
@@ -20,11 +22,11 @@ class DeterministicOutcomeTest {
     );
 
     private static SqlMiddleware create(CatalogSchema schema) {
-        return SqlMiddleware.create(SqlMiddlewareConfig.forValidation(schema));
+        return SqlMiddleware.create(SqlMiddlewareConfig.builder(schema).buildValidationConfig());
     }
 
     private static SqlMiddleware create(CatalogSchema schema, SchemaValidationSettings settings) {
-        return SqlMiddleware.create(SqlMiddlewareConfig.forValidation(null, schema, settings));
+        return SqlMiddleware.create(SqlMiddlewareConfig.builder(schema).validationSettings(settings).buildValidationConfig());
     }
 
     private static SqlMiddleware create(
@@ -32,7 +34,8 @@ class DeterministicOutcomeTest {
         SchemaValidationSettings settings,
         RuntimeGuardrails guardrails
     ) {
-        return SqlMiddleware.create(SqlMiddlewareConfig.forValidation(null, schema, settings).withGuardrails(guardrails));
+        var builder = SqlMiddlewareConfig.builder(schema).validationSettings(settings).guardrails(guardrails);
+        return SqlMiddleware.create(builder.buildValidationConfig());
     }
 
     @Test
@@ -103,5 +106,39 @@ class DeterministicOutcomeTest {
         assertEquals(first.kind(), second.kind());
         assertEquals(first.reasonCode(), second.reasonCode());
         assertEquals(first.rewrittenSql(), second.rewrittenSql());
+    }
+
+    @Test
+    void validation_rewrite_pipeline_supports_off_and_bind_parameterization_modes() {
+        var middleware = SqlMiddleware.create(
+            SqlMiddlewareConfig.builder(SCHEMA)
+                .validationSettings(SchemaValidationSettings.defaults())
+                .builtInRewriteSettings(BuiltInRewriteSettings.defaults())
+                .rewriteRules(BuiltInRewriteRule.LIMIT_INJECTION)
+                .buildValidationAndRewriteConfig()
+        );
+
+        var sql = "select id from users where id = 7";
+
+        var inline = middleware.analyze(
+            sql,
+            ExecutionContext.of("postgresql", "alice", "tenant-a", ExecutionMode.ANALYZE, ParameterizationMode.OFF)
+        );
+        var bind = middleware.analyze(
+            sql,
+            ExecutionContext.of("postgresql", "alice", "tenant-a", ExecutionMode.ANALYZE, ParameterizationMode.BIND)
+        );
+
+        assertEquals(DecisionKind.REWRITE, inline.kind());
+        assertEquals(DecisionKind.REWRITE, bind.kind());
+        assertEquals(ReasonCode.REWRITE_LIMIT, inline.reasonCode());
+        assertEquals(ReasonCode.REWRITE_LIMIT, bind.reasonCode());
+
+        assertEquals(0, inline.sqlParams().size());
+        assertTrue(inline.rewrittenSql().contains("7"));
+
+        assertFalse(bind.sqlParams().isEmpty());
+        assertTrue(bind.sqlParams().contains(7L));
+        assertTrue(bind.rewrittenSql().contains("?"));
     }
 }
