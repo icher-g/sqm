@@ -28,9 +28,11 @@ class SqlMiddlewareConfigTest {
             .build();
 
         var middleware = SqlMiddleware.create(
-            SqlMiddlewareConfig.forValidation("postgresql", SCHEMA, settings)
-                .withAuditPublisher(audit)
-                .withGuardrails(guardrails)
+            SqlMiddlewareConfig.builder(SCHEMA)
+                .validationSettings(settings)
+                .auditPublisher(audit)
+                .guardrails(guardrails)
+                .buildValidationConfig()
         );
 
         var result = middleware.enforce("select 1, 2", ExecutionContext.of("postgresql", ExecutionMode.EXECUTE));
@@ -42,15 +44,14 @@ class SqlMiddlewareConfigTest {
     @Test
     void for_validation_and_rewrite_builds_rewrite_enabled_middleware() {
         var middleware = SqlMiddleware.create(
-            SqlMiddlewareConfig.forValidationAndRewrite(
-                "postgresql",
-                SCHEMA,
-                SchemaValidationSettings.defaults(),
-                BuiltInRewriteSettings.defaults(),
-                BuiltInRewriteRule.SCHEMA_QUALIFICATION,
-                BuiltInRewriteRule.COLUMN_QUALIFICATION,
-                BuiltInRewriteRule.LIMIT_INJECTION
-            )
+            SqlMiddlewareConfig.builder(SCHEMA)
+                .validationSettings(SchemaValidationSettings.defaults())
+                .builtInRewriteSettings(BuiltInRewriteSettings.defaults())
+                .rewriteRules(
+                    BuiltInRewriteRule.SCHEMA_QUALIFICATION,
+                    BuiltInRewriteRule.COLUMN_QUALIFICATION,
+                    BuiltInRewriteRule.LIMIT_INJECTION
+                ).buildValidationAndRewriteConfig()
         );
 
         var result = middleware.analyze("select id from users u", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
@@ -64,15 +65,15 @@ class SqlMiddlewareConfigTest {
     }
 
     @Test
-    void for_engine_and_with_methods_validate_nulls() {
-        var engine = (SqlDecisionEngine) (query, context) -> DecisionResult.allow();
-        var context = SqlMiddlewareConfig.forEngine(engine);
+    void builder_defaults_and_required_schema_are_enforced() {
+        assertThrows(NullPointerException.class, () -> SqlMiddlewareConfig.builder(null));
 
-        assertThrows(NullPointerException.class, () -> SqlMiddleware.create(null));
-        assertThrows(NullPointerException.class, () -> SqlMiddlewareConfig.forEngine(null));
-        assertThrows(NullPointerException.class, () -> context.withAuditPublisher(null));
-        assertThrows(NullPointerException.class, () -> context.withExplainer(null));
-        assertThrows(NullPointerException.class, () -> context.withGuardrails(null));
-        assertThrows(NullPointerException.class, () -> context.withQueryParser(null));
+        var config = SqlMiddlewareConfig.builder(SCHEMA).buildValidationConfig();
+
+        assertNotNull(config.engine());
+        assertNotNull(config.explainer());
+        assertNotNull(config.auditPublisher());
+        assertNotNull(config.guardrails());
+        assertNotNull(config.queryParser());
     }
 }

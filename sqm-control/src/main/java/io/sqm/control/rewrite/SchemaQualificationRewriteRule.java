@@ -2,12 +2,7 @@ package io.sqm.control.rewrite;
 
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
-import io.sqm.control.BuiltInRewriteSettings;
-import io.sqm.control.ExecutionContext;
-import io.sqm.control.QueryRewriteResult;
-import io.sqm.control.QueryRewriteRule;
-import io.sqm.control.ReasonCode;
-import io.sqm.control.RewriteDenyException;
+import io.sqm.control.*;
 import io.sqm.core.Identifier;
 import io.sqm.core.Query;
 import io.sqm.core.transform.SchemaQualificationTransformer;
@@ -106,7 +101,7 @@ public final class SchemaQualificationRewriteRule implements QueryRewriteRule {
             return switch (result) {
                 case CatalogSchema.TableLookupResult.Found found -> toQualification(found.table());
                 case CatalogSchema.TableLookupResult.Ambiguous ambiguous -> {
-                    if (settings.qualificationFailureMode() == BuiltInRewriteSettings.QualificationFailureMode.DENY) {
+                    if (settings.qualificationFailureMode() == QualificationFailureMode.DENY) {
                         throw new RewriteDenyException(
                             ReasonCode.DENY_TABLE,
                             "Ambiguous unqualified table '" + ambiguous.name() + "' cannot be schema-qualified deterministically"
@@ -115,7 +110,7 @@ public final class SchemaQualificationRewriteRule implements QueryRewriteRule {
                     yield TableQualification.unresolved();
                 }
                 case CatalogSchema.TableLookupResult.NotFound notFound -> {
-                    if (settings.qualificationFailureMode() == BuiltInRewriteSettings.QualificationFailureMode.DENY) {
+                    if (settings.qualificationFailureMode() == QualificationFailureMode.DENY) {
                         throw new RewriteDenyException(
                             ReasonCode.DENY_TABLE,
                             "Unqualified table '" + notFound.name() + "' not found in catalog for schema qualification"

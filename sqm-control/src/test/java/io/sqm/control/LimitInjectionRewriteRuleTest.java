@@ -26,7 +26,7 @@ class LimitInjectionRewriteRuleTest {
     void deny_mode_rejects_non_literal_limit_expression() {
         var query = SqlQueryParser.standard().parse("select 1 limit (1 + 1)", PG_ANALYZE);
         var rule = LimitInjectionRewriteRule.of(
-            new BuiltInRewriteSettings(10, 10, BuiltInRewriteSettings.LimitExcessMode.DENY)
+            new BuiltInRewriteSettings(10, 10, LimitExcessMode.DENY)
         );
 
         var ex = assertThrows(RewriteDenyException.class, () -> rule.apply(query, PG_ANALYZE));
@@ -38,7 +38,7 @@ class LimitInjectionRewriteRuleTest {
     void deny_mode_rejects_limit_all() {
         var query = SqlQueryParser.standard().parse("select 1 limit all", PG_ANALYZE);
         var rule = LimitInjectionRewriteRule.of(
-            new BuiltInRewriteSettings(10, 10, BuiltInRewriteSettings.LimitExcessMode.DENY)
+            new BuiltInRewriteSettings(10, 10, LimitExcessMode.DENY)
         );
 
         var ex = assertThrows(RewriteDenyException.class, () -> rule.apply(query, PG_ANALYZE));
@@ -48,7 +48,7 @@ class LimitInjectionRewriteRuleTest {
 
     @Test
     void clamp_mode_clamps_select_composite_and_with_body_limits() {
-        var settings = new BuiltInRewriteSettings(1000, 10, BuiltInRewriteSettings.LimitExcessMode.CLAMP);
+        var settings = new BuiltInRewriteSettings(1000, 10, LimitExcessMode.CLAMP);
         var rule = LimitInjectionRewriteRule.of(settings);
 
         var select = SqlQueryParser.standard().parse("select 1 limit 99", PG_ANALYZE);
@@ -63,14 +63,14 @@ class LimitInjectionRewriteRuleTest {
         assertTrue(compositeResult.rewritten());
         assertTrue(withResult.rewritten());
         assertEquals(ReasonCode.REWRITE_LIMIT, selectResult.primaryReasonCode());
-        assertTrue(SqlQueryRenderer.postgresql().render(selectResult.query(), PG_ANALYZE).toLowerCase().contains("limit 10"));
-        assertTrue(SqlQueryRenderer.postgresql().render(compositeResult.query(), PG_ANALYZE).toLowerCase().contains("limit 10"));
-        assertTrue(SqlQueryRenderer.postgresql().render(withResult.query(), PG_ANALYZE).toLowerCase().contains("limit 10"));
+        assertTrue(SqlQueryRenderer.standard().render(selectResult.query(), PG_ANALYZE).sql().toLowerCase().contains("limit 10"));
+        assertTrue(SqlQueryRenderer.standard().render(compositeResult.query(), PG_ANALYZE).sql().toLowerCase().contains("limit 10"));
+        assertTrue(SqlQueryRenderer.standard().render(withResult.query(), PG_ANALYZE).sql().toLowerCase().contains("limit 10"));
     }
 
     @Test
     void max_limit_policy_keeps_queries_unchanged_when_within_bound_or_no_limit_after_injection() {
-        var settings = new BuiltInRewriteSettings(5, 10, BuiltInRewriteSettings.LimitExcessMode.DENY);
+        var settings = new BuiltInRewriteSettings(5, 10, LimitExcessMode.DENY);
         var rule = LimitInjectionRewriteRule.of(settings);
 
         var alreadyWithinLimit = SqlQueryParser.standard().parse("select 1 limit 5", PG_ANALYZE);
@@ -81,7 +81,7 @@ class LimitInjectionRewriteRuleTest {
 
         assertFalse(withinResult.rewritten());
         assertTrue(offsetResult.rewritten());
-        assertTrue(SqlQueryRenderer.postgresql().render(offsetResult.query(), PG_ANALYZE).toLowerCase().contains("limit 5"));
+        assertTrue(SqlQueryRenderer.standard().render(offsetResult.query(), PG_ANALYZE).sql().toLowerCase().contains("limit 5"));
     }
 }
 

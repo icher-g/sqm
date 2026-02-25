@@ -16,7 +16,7 @@ import java.util.Set;
 @FunctionalInterface
 public interface SqlQueryRewriter {
     /**
-     * Returns a rewriter composed from all currently available built-in rewrite rules.
+     * Returns a rewriter composed of all currently available built-in rewrite rules.
      *
      * @return built-in rewrite pipeline, or no-op when no built-ins are available yet
      */
@@ -25,7 +25,7 @@ public interface SqlQueryRewriter {
     }
 
     /**
-     * Returns a rewriter composed from all currently available built-in rewrite rules using explicit settings.
+     * Returns a rewriter composed of all currently available built-in rewrite rules using explicit settings.
      *
      * @param settings built-in rewrite settings
      * @return built-in rewrite pipeline
@@ -35,7 +35,7 @@ public interface SqlQueryRewriter {
     }
 
     /**
-     * Returns a schema-aware rewriter composed from all built-in rewrite rules available with catalog metadata.
+     * Returns a schema-aware rewriter composed of all built-in rewrite rules available with catalog metadata.
      *
      * @param schema catalog schema used for schema qualification
      * @return built-in rewrite pipeline
@@ -45,7 +45,7 @@ public interface SqlQueryRewriter {
     }
 
     /**
-     * Returns a schema-aware rewriter composed from all built-in rewrite rules available with catalog metadata.
+     * Returns a schema-aware rewriter composed of all built-in rewrite rules available with catalog metadata.
      *
      * @param schema catalog schema used for schema qualification
      * @param settings built-in rewrite settings
@@ -56,7 +56,7 @@ public interface SqlQueryRewriter {
     }
 
     /**
-     * Returns a rewriter composed from selected built-in rewrite rules.
+     * Returns a rewriter composed of selected built-in rewrite rules.
      *
      * @param rules built-in rewrite rules to enable
      * @return built-in rewrite pipeline
@@ -66,7 +66,7 @@ public interface SqlQueryRewriter {
     }
 
     /**
-     * Returns a rewriter composed from selected built-in rewrite rules using explicit settings.
+     * Returns a rewriter composed of selected built-in rewrite rules using explicit settings.
      *
      * @param settings built-in rewrite settings
      * @param rules built-in rewrite rules to enable
@@ -77,7 +77,7 @@ public interface SqlQueryRewriter {
     }
 
     /**
-     * Returns a rewriter composed from selected built-in rewrite rules.
+     * Returns a rewriter composed of selected built-in rewrite rules.
      *
      * @param rules built-in rewrite rules to enable
      * @return built-in rewrite pipeline
@@ -87,7 +87,7 @@ public interface SqlQueryRewriter {
     }
 
     /**
-     * Returns a rewriter composed from selected built-in rewrite rules using explicit settings.
+     * Returns a rewriter composed of selected built-in rewrite rules using explicit settings.
      *
      * @param settings built-in rewrite settings
      * @param rules built-in rewrite rules to enable
@@ -98,7 +98,7 @@ public interface SqlQueryRewriter {
     }
 
     /**
-     * Returns a schema-aware rewriter composed from selected built-in rewrite rules.
+     * Returns a schema-aware rewriter composed of selected built-in rewrite rules.
      *
      * @param schema catalog schema used for schema qualification
      * @param rules built-in rewrite rules to enable
@@ -109,7 +109,7 @@ public interface SqlQueryRewriter {
     }
 
     /**
-     * Returns a schema-aware rewriter composed from selected built-in rewrite rules using explicit settings.
+     * Returns a schema-aware rewriter composed of selected built-in rewrite rules using explicit settings.
      *
      * @param schema catalog schema used for schema qualification
      * @param settings built-in rewrite settings
@@ -121,7 +121,7 @@ public interface SqlQueryRewriter {
     }
 
     /**
-     * Returns a schema-aware rewriter composed from selected built-in rewrite rules using explicit settings.
+     * Returns a schema-aware rewriter composed of selected built-in rewrite rules using explicit settings.
      *
      * @param schema catalog schema used for schema qualification
      * @param settings built-in rewrite settings

@@ -140,7 +140,7 @@ class SqlQueryRewriterTest {
         assertTrue(schemaAll.rewritten());
         assertTrue(configured.rewritten());
         assertEquals(List.of("limit-injection", "schema-qualification"), configured.appliedRuleIds());
-        String rendered = SqlQueryRenderer.postgresql().render(configured.query(), ANALYZE).toLowerCase();
+        String rendered = SqlQueryRenderer.standard().render(configured.query(), ANALYZE).sql().toLowerCase();
         assertTrue(rendered.contains("public.users"));
         assertTrue(rendered.contains("limit 23"));
         assertThrows(NullPointerException.class, () -> SqlQueryRewriter.allBuiltIn((CatalogSchema) null));
@@ -167,7 +167,7 @@ class SqlQueryRewriterTest {
         var emptyListChain = SqlQueryRewriter.chain(List.of()).rewrite(query, ANALYZE);
 
         assertTrue(configured.rewritten());
-        assertTrue(SqlQueryRenderer.postgresql().render(configured.query(), ANALYZE).toLowerCase().contains("limit 11"));
+        assertTrue(SqlQueryRenderer.standard().render(configured.query(), ANALYZE).sql().toLowerCase().contains("limit 11"));
         assertTrue(schemaConfigured.rewritten());
         assertFalse(emptyVarargsChain.rewritten());
         assertFalse(emptyListChain.rewritten());

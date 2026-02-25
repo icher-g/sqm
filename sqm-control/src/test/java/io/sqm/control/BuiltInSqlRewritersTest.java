@@ -99,7 +99,7 @@ class BuiltInSqlRewritersTest {
 
         assertTrue(result.rewritten());
         assertEquals(List.of("limit-injection"), result.appliedRuleIds());
-        String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE);
+        String rendered = SqlQueryRenderer.standard().render(result.query(), POSTGRES_ANALYZE).sql();
         assertTrue(rendered.toLowerCase().contains("limit 42"));
     }
 
@@ -108,13 +108,13 @@ class BuiltInSqlRewritersTest {
         var query = SqlQueryParser.standard().parse("select 1 limit 99", POSTGRES_ANALYZE);
 
         var result = BuiltInSqlRewriters.of(
-            new BuiltInRewriteSettings(1000, 10, BuiltInRewriteSettings.LimitExcessMode.CLAMP),
+            new BuiltInRewriteSettings(1000, 10, LimitExcessMode.CLAMP),
             BuiltInRewriteRule.LIMIT_INJECTION
         ).rewrite(query, POSTGRES_ANALYZE);
 
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_LIMIT, result.primaryReasonCode());
-        String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE).toLowerCase();
+        String rendered = SqlQueryRenderer.standard().render(result.query(), POSTGRES_ANALYZE).sql().toLowerCase();
         assertTrue(rendered.contains("limit 10"));
     }
 
@@ -128,7 +128,7 @@ class BuiltInSqlRewritersTest {
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_QUALIFICATION, result.primaryReasonCode());
         assertEquals(List.of("schema-qualification"), result.appliedRuleIds());
-        String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE);
+        String rendered = SqlQueryRenderer.standard().render(result.query(), POSTGRES_ANALYZE).sql();
         assertTrue(rendered.toLowerCase().contains("from public.users"));
     }
 
@@ -141,9 +141,9 @@ class BuiltInSqlRewritersTest {
         var settings = new BuiltInRewriteSettings(
             1000,
             null,
-            BuiltInRewriteSettings.LimitExcessMode.DENY,
+            LimitExcessMode.DENY,
             "public",
-            BuiltInRewriteSettings.QualificationFailureMode.DENY
+            QualificationFailureMode.DENY
         );
         var query = SqlQueryParser.standard().parse("select id from users", POSTGRES_ANALYZE);
 
@@ -152,7 +152,7 @@ class BuiltInSqlRewritersTest {
 
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_QUALIFICATION, result.primaryReasonCode());
-        String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE).toLowerCase();
+        String rendered = SqlQueryRenderer.standard().render(result.query(), POSTGRES_ANALYZE).sql().toLowerCase();
         assertTrue(rendered.contains("from public.users"));
     }
 
@@ -169,16 +169,16 @@ class BuiltInSqlRewritersTest {
         var strict = new BuiltInRewriteSettings(
             1000,
             null,
-            BuiltInRewriteSettings.LimitExcessMode.DENY,
+            LimitExcessMode.DENY,
             null,
-            BuiltInRewriteSettings.QualificationFailureMode.DENY
+            QualificationFailureMode.DENY
         );
         var skip = new BuiltInRewriteSettings(
             1000,
             null,
-            BuiltInRewriteSettings.LimitExcessMode.DENY,
+            LimitExcessMode.DENY,
             null,
-            BuiltInRewriteSettings.QualificationFailureMode.SKIP
+            QualificationFailureMode.SKIP
         );
 
         assertThrows(
@@ -214,7 +214,7 @@ class BuiltInSqlRewritersTest {
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_LIMIT, result.primaryReasonCode());
         assertEquals(List.of("limit-injection", "schema-qualification", "column-qualification"), result.appliedRuleIds());
-        String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE).toLowerCase();
+        String rendered = SqlQueryRenderer.standard().render(result.query(), POSTGRES_ANALYZE).sql().toLowerCase();
         assertTrue(rendered.contains("from public.users"));
         assertTrue(rendered.contains("select users.id") || rendered.contains("select public.users.id") || rendered.contains("select id"));
         assertTrue(rendered.contains("limit 17"));
@@ -232,7 +232,7 @@ class BuiltInSqlRewritersTest {
 
         assertTrue(result.rewritten());
         assertEquals(List.of("schema-qualification", "column-qualification"), result.appliedRuleIds());
-        String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE).toLowerCase();
+        String rendered = SqlQueryRenderer.standard().render(result.query(), POSTGRES_ANALYZE).sql().toLowerCase();
         assertTrue(rendered.contains("select u.id"));
         assertTrue(rendered.contains("from public.users as u"));
     }
@@ -249,7 +249,7 @@ class BuiltInSqlRewritersTest {
         assertThrows(IllegalArgumentException.class,
             () -> BuiltInSqlRewriters.of(BuiltInRewriteRule.SCHEMA_QUALIFICATION));
         assertThrows(IllegalArgumentException.class,
-            () -> new BuiltInRewriteSettings(100, 10, BuiltInRewriteSettings.LimitExcessMode.DENY));
+            () -> new BuiltInRewriteSettings(100, 10, LimitExcessMode.DENY));
     }
 
     @Test
@@ -262,7 +262,7 @@ class BuiltInSqlRewritersTest {
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_CANONICALIZATION, result.primaryReasonCode());
         assertEquals(List.of("canonicalization"), result.appliedRuleIds());
-        String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE).toLowerCase();
+        String rendered = SqlQueryRenderer.standard().render(result.query(), POSTGRES_ANALYZE).sql().toLowerCase();
         assertTrue(rendered.contains("select 1"));
         assertFalse(rendered.contains("+"));
     }
@@ -278,7 +278,7 @@ class BuiltInSqlRewritersTest {
 
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_CANONICALIZATION, result.primaryReasonCode());
-        String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE);
+        String rendered = SqlQueryRenderer.standard().render(result.query(), POSTGRES_ANALYZE).sql();
         assertTrue(rendered.contains("WHERE active = TRUE"));
         assertFalse(rendered.contains("TRUE AND"));
         assertFalse(rendered.contains("OR FALSE"));
@@ -294,7 +294,7 @@ class BuiltInSqlRewritersTest {
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_IDENTIFIER_NORMALIZATION, result.primaryReasonCode());
         assertEquals(List.of("identifier-normalization"), result.appliedRuleIds());
-        String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE);
+        String rendered = SqlQueryRenderer.standard().render(result.query(), POSTGRES_ANALYZE).sql();
         assertTrue(rendered.toLowerCase().contains("from public.users as u"));
         assertTrue(rendered.toLowerCase().contains("select u.id as cnt"));
     }
@@ -316,9 +316,9 @@ class BuiltInSqlRewritersTest {
         var settings = new BuiltInRewriteSettings(
             1000,
             null,
-            BuiltInRewriteSettings.LimitExcessMode.DENY,
+            LimitExcessMode.DENY,
             null,
-            BuiltInRewriteSettings.QualificationFailureMode.DENY,
+            QualificationFailureMode.DENY,
             io.sqm.core.transform.IdentifierNormalizationCaseMode.UPPER
         );
 
@@ -327,7 +327,7 @@ class BuiltInSqlRewritersTest {
 
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_IDENTIFIER_NORMALIZATION, result.primaryReasonCode());
-        String rendered = SqlQueryRenderer.postgresql().render(result.query(), POSTGRES_ANALYZE);
+        String rendered = SqlQueryRenderer.standard().render(result.query(), POSTGRES_ANALYZE).sql();
         assertTrue(rendered.contains("SELECT U.ID AS CNT"));
         assertTrue(rendered.contains("FROM PUBLIC.USERS AS U"));
     }

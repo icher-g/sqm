@@ -50,8 +50,8 @@ public interface SqlQueryParser {
                 throw new IllegalArgumentException("Unsupported dialect: " + context.dialect());
             }
 
-            var parseContext = ParseContext.of(specsFactory.get());
-            var result = parseContext.parse(Query.class, sql);
+            var ctx = ParseContext.of(specsFactory.get());
+            var result = ctx.parse(Query.class, sql);
             if (result.isError() || result.value() == null) {
                 throw new IllegalArgumentException(result.errorMessage());
             }

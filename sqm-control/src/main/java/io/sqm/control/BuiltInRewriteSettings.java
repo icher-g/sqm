@@ -5,11 +5,11 @@ import io.sqm.core.transform.IdentifierNormalizationCaseMode;
 /**
  * Configuration for built-in middleware rewrite rules.
  *
- * @param defaultLimitInjectionValue default LIMIT value injected by {@link BuiltInRewriteRule#LIMIT_INJECTION}
- * @param maxAllowedLimit optional maximum allowed LIMIT value; {@code null} disables max-limit policy
- * @param limitExcessMode behavior when explicit LIMIT exceeds configured max
- * @param qualificationDefaultSchema optional preferred schema used to resolve ambiguous unqualified tables
- * @param qualificationFailureMode behavior when schema qualification cannot be resolved deterministically
+ * @param defaultLimitInjectionValue      default LIMIT value injected by {@link BuiltInRewriteRule#LIMIT_INJECTION}
+ * @param maxAllowedLimit                 optional maximum allowed LIMIT value; {@code null} disables max-limit policy
+ * @param limitExcessMode                 behavior when explicit LIMIT exceeds configured max
+ * @param qualificationDefaultSchema      optional preferred schema used to resolve ambiguous unqualified tables
+ * @param qualificationFailureMode        behavior when schema qualification cannot be resolved deterministically
  * @param identifierNormalizationCaseMode case mode for unquoted identifier normalization
  */
 public record BuiltInRewriteSettings(
@@ -21,50 +21,6 @@ public record BuiltInRewriteSettings(
     IdentifierNormalizationCaseMode identifierNormalizationCaseMode
 ) {
     private static final long DEFAULT_LIMIT_INJECTION_VALUE = 1000L;
-
-    /**
-     * Behavior mode for explicit LIMIT values that exceed configured max.
-     */
-    public enum LimitExcessMode {
-        /**
-         * Deny the query when explicit LIMIT exceeds configured max.
-         */
-        DENY,
-        /**
-         * Clamp the explicit LIMIT down to the configured max.
-         */
-        CLAMP
-    }
-
-    /**
-     * Behavior mode for qualification failures (missing or ambiguous table resolution).
-     */
-    public enum QualificationFailureMode {
-        /**
-         * Leave the table reference unchanged when qualification cannot be resolved deterministically.
-         */
-        SKIP,
-        /**
-         * Deny the query when qualification cannot be resolved deterministically.
-         */
-        DENY
-    }
-
-    /**
-     * Returns default built-in rewrite settings.
-     *
-     * @return default settings
-     */
-    public static BuiltInRewriteSettings defaults() {
-        return new BuiltInRewriteSettings(
-            DEFAULT_LIMIT_INJECTION_VALUE,
-            null,
-            LimitExcessMode.DENY,
-            null,
-            QualificationFailureMode.DENY,
-            IdentifierNormalizationCaseMode.LOWER
-        );
-    }
 
     /**
      * Creates settings with a custom default injected LIMIT and no max-limit policy.
@@ -86,8 +42,8 @@ public record BuiltInRewriteSettings(
      * Creates settings with explicit LIMIT policy and default qualification policy.
      *
      * @param defaultLimitInjectionValue default LIMIT value used by limit injection rewrite
-     * @param maxAllowedLimit optional maximum allowed LIMIT value
-     * @param limitExcessMode behavior when explicit LIMIT exceeds configured max
+     * @param maxAllowedLimit            optional maximum allowed LIMIT value
+     * @param limitExcessMode            behavior when explicit LIMIT exceeds configured max
      */
     public BuiltInRewriteSettings(
         long defaultLimitInjectionValue,
@@ -108,10 +64,10 @@ public record BuiltInRewriteSettings(
      * Creates settings with qualification policy and identifier normalization defaults.
      *
      * @param defaultLimitInjectionValue default LIMIT value used by limit injection rewrite
-     * @param maxAllowedLimit optional maximum allowed LIMIT value
-     * @param limitExcessMode behavior when explicit LIMIT exceeds configured max
+     * @param maxAllowedLimit            optional maximum allowed LIMIT value
+     * @param limitExcessMode            behavior when explicit LIMIT exceeds configured max
      * @param qualificationDefaultSchema optional preferred schema used to resolve ambiguous unqualified tables
-     * @param qualificationFailureMode behavior when qualification fails (missing/ambiguous)
+     * @param qualificationFailureMode   behavior when qualification fails (missing/ambiguous)
      */
     public BuiltInRewriteSettings(
         long defaultLimitInjectionValue,
@@ -133,11 +89,11 @@ public record BuiltInRewriteSettings(
     /**
      * Validates settings invariants.
      *
-     * @param defaultLimitInjectionValue default LIMIT value used by limit injection rewrite
-     * @param maxAllowedLimit optional maximum allowed LIMIT value
-     * @param limitExcessMode behavior when explicit LIMIT exceeds configured max
-     * @param qualificationDefaultSchema optional preferred schema used to resolve ambiguous unqualified tables
-     * @param qualificationFailureMode behavior when qualification fails (missing/ambiguous)
+     * @param defaultLimitInjectionValue      default LIMIT value used by limit injection rewrite
+     * @param maxAllowedLimit                 optional maximum allowed LIMIT value
+     * @param limitExcessMode                 behavior when explicit LIMIT exceeds configured max
+     * @param qualificationDefaultSchema      optional preferred schema used to resolve ambiguous unqualified tables
+     * @param qualificationFailureMode        behavior when qualification fails (missing/ambiguous)
      * @param identifierNormalizationCaseMode case mode for unquoted identifier normalization
      */
     public BuiltInRewriteSettings {
@@ -166,5 +122,56 @@ public record BuiltInRewriteSettings(
                 "defaultLimitInjectionValue must be <= maxAllowedLimit when limitExcessMode is DENY"
             );
         }
+    }
+
+    /**
+     * Returns default built-in rewrite settings.
+     *
+     * @return default settings
+     */
+    public static BuiltInRewriteSettings defaults() {
+        return new BuiltInRewriteSettings(
+            DEFAULT_LIMIT_INJECTION_VALUE,
+            null,
+            LimitExcessMode.DENY,
+            null,
+            QualificationFailureMode.DENY,
+            IdentifierNormalizationCaseMode.LOWER
+        );
+    }
+
+    /**
+     * Creates new built-in rewrite settings with provided {@link IdentifierNormalizationCaseMode} while preserving other parameters.
+     *
+     * @param mode new mode.
+     * @return updated settings
+     */
+    public BuiltInRewriteSettings withIdentifierNormalizationCaseMode(IdentifierNormalizationCaseMode mode) {
+        return new BuiltInRewriteSettings(
+            defaultLimitInjectionValue,
+            maxAllowedLimit,
+            limitExcessMode,
+            qualificationDefaultSchema,
+            qualificationFailureMode,
+            mode
+        );
+    }
+
+    /**
+     * Creates new built-in rewrite settings with provided default schema and failure mode while preserving other parameters.
+     *
+     * @param defaultSchema a default schema to be used in qualification rewrite.
+     * @param failureMode   a failure mode to be used in qualification rewrite.
+     * @return updated settings.
+     */
+    public BuiltInRewriteSettings withQualification(String defaultSchema, QualificationFailureMode failureMode) {
+        return new BuiltInRewriteSettings(
+            defaultLimitInjectionValue,
+            maxAllowedLimit,
+            limitExcessMode,
+            defaultSchema,
+            failureMode,
+            identifierNormalizationCaseMode
+        );
     }
 }

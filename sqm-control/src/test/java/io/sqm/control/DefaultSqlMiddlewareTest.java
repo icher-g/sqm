@@ -25,15 +25,11 @@ class DefaultSqlMiddlewareTest {
     );
 
     private static SqlMiddleware create(CatalogSchema schema) {
-        return SqlMiddleware.create(SqlMiddlewareConfig.forValidation(schema));
-    }
-
-    private static SqlMiddleware create(String dialect, CatalogSchema schema) {
-        return SqlMiddleware.create(SqlMiddlewareConfig.forValidation(dialect, schema));
+        return SqlMiddleware.create(SqlMiddlewareConfig.builder(schema).buildValidationConfig());
     }
 
     private static SqlMiddleware create(CatalogSchema schema, SchemaValidationSettings settings) {
-        return SqlMiddleware.create(SqlMiddlewareConfig.forValidation(null, schema, settings));
+        return SqlMiddleware.create(SqlMiddlewareConfig.builder(schema).validationSettings(settings).buildValidationConfig());
     }
 
     private static SqlMiddleware create(
@@ -41,7 +37,7 @@ class DefaultSqlMiddlewareTest {
         SchemaValidationSettings settings,
         RuntimeGuardrails guardrails
     ) {
-        return SqlMiddleware.create(SqlMiddlewareConfig.forValidation(null, schema, settings).withGuardrails(guardrails));
+        return SqlMiddleware.create(SqlMiddlewareConfig.builder(schema).validationSettings(settings).guardrails(guardrails).buildValidationConfig());
     }
 
     private static SqlMiddleware create(
@@ -53,27 +49,13 @@ class DefaultSqlMiddlewareTest {
         SqlQueryParser queryParser
     ) {
         return SqlMiddleware.create(
-            SqlMiddlewareConfig.forValidation(null, schema, settings)
-                .withGuardrails(guardrails)
-                .withAuditPublisher(auditPublisher)
-                .withExplainer(explainer)
-                .withQueryParser(queryParser)
-        );
-    }
-
-    private static SqlMiddleware create(
-        SqlDecisionEngine engine,
-        SqlDecisionExplainer explainer,
-        AuditEventPublisher auditPublisher,
-        RuntimeGuardrails guardrails,
-        SqlQueryParser queryParser
-    ) {
-        return SqlMiddleware.create(
-            SqlMiddlewareConfig.forEngine(engine)
-                .withExplainer(explainer)
-                .withAuditPublisher(auditPublisher)
-                .withGuardrails(guardrails)
-                .withQueryParser(queryParser)
+            SqlMiddlewareConfig.builder(schema)
+                .validationSettings(settings)
+                .guardrails(guardrails)
+                .auditPublisher(auditPublisher)
+                .explainer(explainer)
+                .queryParser(queryParser)
+                .buildValidationConfig()
         );
     }
 
@@ -130,7 +112,7 @@ class DefaultSqlMiddlewareTest {
 
     @Test
     void dialect_schema_factory_uses_dialect_aware_validation_wiring() {
-        var middleware = create("postgres", SCHEMA);
+        var middleware = create(SCHEMA);
 
         var result = middleware.analyze("select 1", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.ALLOW, result.kind());
@@ -138,39 +120,14 @@ class DefaultSqlMiddlewareTest {
 
     @Test
     void dialect_schema_factory_validates_required_arguments() {
-        assertThrows(NullPointerException.class, () -> create("postgresql", null));
-        assertThrows(NullPointerException.class, () -> SqlMiddlewareConfig.forValidation("postgresql", SCHEMA, null));
-        assertThrows(IllegalArgumentException.class, () -> SqlMiddlewareConfig.forValidation("mysql", SCHEMA));
+        assertThrows(NullPointerException.class, () -> create(null));
     }
 
     @Test
     void dialect_schema_factory_defaults_to_ansi_when_missing() {
-        var middleware = create(null, SCHEMA);
+        var middleware = create(SCHEMA);
 
         var result = middleware.analyze("select 1", ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.ALLOW, result.kind());
-    }
-
-    @Test
-    void schema_factory_validates_required_arguments() {
-        assertThrows(NullPointerException.class, () -> SqlMiddlewareConfig.forValidation(null));
-        assertThrows(NullPointerException.class, () -> SqlMiddlewareConfig.forValidation(null, SCHEMA, null));
-        assertThrows(NullPointerException.class,
-            () -> SqlMiddlewareConfig.forValidation(SCHEMA).withGuardrails(null));
-    }
-
-    @Test
-    void explicit_factory_validates_required_arguments() {
-        var engine = (SqlDecisionEngine) (query, context) -> DecisionResult.allow();
-        var explainer = SqlDecisionExplainer.basic();
-        var audit = AuditEventPublisher.noop();
-        var guardrails = RuntimeGuardrails.disabled();
-        var parser = SqlQueryParser.standard();
-
-        assertThrows(NullPointerException.class, () -> create(null, explainer, audit, guardrails, parser));
-        assertThrows(NullPointerException.class, () -> create(engine, null, audit, guardrails, parser));
-        assertThrows(NullPointerException.class, () -> create(engine, explainer, null, guardrails, parser));
-        assertThrows(NullPointerException.class, () -> create(engine, explainer, audit, null, parser));
-        assertThrows(NullPointerException.class, () -> create(engine, explainer, audit, guardrails, null));
     }
 }
