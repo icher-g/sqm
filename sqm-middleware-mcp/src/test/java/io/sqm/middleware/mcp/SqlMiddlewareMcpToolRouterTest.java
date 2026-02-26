@@ -6,6 +6,7 @@ import io.sqm.middleware.api.DecisionKindDto;
 import io.sqm.middleware.api.DecisionResultDto;
 import io.sqm.middleware.api.EnforceRequest;
 import io.sqm.middleware.api.ExecutionContextDto;
+import io.sqm.middleware.api.ExplainRequest;
 import io.sqm.middleware.api.ParameterizationModeDto;
 import io.sqm.middleware.api.ReasonCodeDto;
 import io.sqm.middleware.api.SqlMiddlewareService;
@@ -27,9 +28,11 @@ class SqlMiddlewareMcpToolRouterTest {
 
         var analyze = (DecisionResultDto) router.invoke(SqlMiddlewareMcpToolRouter.ANALYZE_TOOL, new AnalyzeRequest("select 1", context));
         var enforce = (DecisionResultDto) router.invoke(SqlMiddlewareMcpToolRouter.ENFORCE_TOOL, new EnforceRequest("select 1", context));
+        var explain = (DecisionExplanationDto) router.invoke(SqlMiddlewareMcpToolRouter.EXPLAIN_TOOL, new ExplainRequest("select 1", context));
 
         assertEquals(DecisionKindDto.ALLOW, analyze.kind());
         assertEquals(DecisionKindDto.REWRITE, enforce.kind());
+        assertEquals("ok", explain.explanation());
     }
 
     @Test
@@ -37,9 +40,13 @@ class SqlMiddlewareMcpToolRouterTest {
         var service = new StubService();
         var adapter = new SqlMiddlewareMcpAdapter(service);
         var router = new SqlMiddlewareMcpToolRouter(adapter);
+        var context = new ExecutionContextDto("postgresql", null, null, null, ParameterizationModeDto.OFF);
 
         assertThrows(IllegalArgumentException.class, () -> router.invoke("middleware.unknown", new Object()));
         assertThrows(IllegalArgumentException.class, () -> router.invoke(SqlMiddlewareMcpToolRouter.ANALYZE_TOOL, new Object()));
+        assertThrows(IllegalArgumentException.class, () -> router.invoke(SqlMiddlewareMcpToolRouter.ENFORCE_TOOL, new Object()));
+        assertThrows(IllegalArgumentException.class, () -> router.invoke(SqlMiddlewareMcpToolRouter.EXPLAIN_TOOL, new Object()));
+        assertThrows(NullPointerException.class, () -> router.invoke(null, new AnalyzeRequest("select 1", context)));
     }
 
     private static final class StubService implements SqlMiddlewareService {
