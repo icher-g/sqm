@@ -4,6 +4,11 @@ This document describes the core SQM AST (Abstract Syntax Tree) model: the node 
 
 The entire tree is rooted at `Node`. Everything that represents a piece of a SQL statement implements/extends `Node`.
 
+## Scope note
+
+`sqm-control` (SQL middleware framework) does not introduce additional AST node types.
+It composes parse/validate/rewrite/render/decision behavior on top of the existing SQM model described in this document.
+
 ---
 
 ## Node hierarchy

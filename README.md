@@ -48,6 +48,7 @@ Core components:
 - **Model** — unified AST representing any SQL query.
 - **Parsers** — turn SQL strings into model objects.
 - **Renderers** — convert model objects back into SQL (dialect-aware).
+- **Middleware** — policy decision pipeline (`parse -> validate -> rewrite -> render -> decision`).
 - **DSL Builders** — programmatic query construction.
 - **JSON Mixins** — serialization/deserialization for external tools.
 
@@ -123,6 +124,53 @@ if (pr.isError()) {
 }
 var query = pr.value();
 ```
+---
+
+### SQL Middleware Framework (`sqm-control`)
+
+SQM includes a framework layer for runtime SQL governance (including AI-generated SQL traffic).
+
+Entry points:
+
+- `analyze(sql, context)`
+- `enforce(sql, context)`
+- `explainDecision(sql, context)`
+
+Validation-only setup:
+
+```java
+var middleware = SqlMiddleware.create(
+    SqlMiddlewareConfig.builder(schema)
+        .validationSettings(SchemaValidationSettings.defaults())
+        .buildValidationConfig()
+);
+
+var decision = middleware.analyze(sql, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+```
+
+Full flow with rewrite + bind rendering:
+
+```java
+var middleware = SqlMiddleware.create(
+    SqlMiddlewareConfig.builder(schema)
+        .validationSettings(SchemaValidationSettings.defaults())
+        .builtInRewriteSettings(BuiltInRewriteSettings.defaults())
+        .rewriteRules(BuiltInRewriteRule.LIMIT_INJECTION, BuiltInRewriteRule.CANONICALIZATION)
+        .buildValidationAndRewriteConfig()
+);
+
+var decision = middleware.enforce(
+    sql,
+    ExecutionContext.of("postgresql", "agent", "tenant-a", ExecutionMode.EXECUTE, ParameterizationMode.BIND)
+);
+```
+
+See:
+
+- Wiki guide: `wiki-src/SQL-Middleware-Framework.md`
+- Example class: `examples/src/main/java/io/sqm/examples/Middleware_EndToEndPolicyFlow.java`
+- Integration tests: `sqm-it/src/test/java/io/sqm/it/PostgresMiddlewareIntegrationTest.java`
+
 ---
 
 ### SQL File Codegen (Maven)

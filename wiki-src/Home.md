@@ -8,6 +8,28 @@ SQM is a Java library for SQL modeling, parsing, rendering, validation, and code
 - [Examples Module Guide](Examples-Module-Guide)
 - [Troubleshooting](Troubleshooting)
 
+## Middleware Quickstart
+
+```java
+var middleware = SqlMiddleware.create(
+  SqlMiddlewareConfig.builder(schema)
+    .validationSettings(SchemaValidationSettings.defaults())
+    .builtInRewriteSettings(BuiltInRewriteSettings.defaults())
+    .rewriteRules(BuiltInRewriteRule.LIMIT_INJECTION)
+    .buildValidationAndRewriteConfig()
+);
+
+var decision = middleware.enforce(
+  sql,
+  ExecutionContext.of("postgresql", "agent", "tenant-a", ExecutionMode.EXECUTE, ParameterizationMode.BIND)
+);
+```
+
+More:
+
+- [SQL Middleware Framework](SQL-Middleware-Framework)
+- [SQL Middleware Policy Templates](SQL-Middleware-Policy-Templates)
+
 ## Feature Index
 
 - Core model and traversal:
@@ -16,6 +38,7 @@ SQM is a Java library for SQL modeling, parsing, rendering, validation, and code
 - SQL processing:
   - [Parsing SQL](Parsing-SQL)
   - [Rendering SQL](Rendering-SQL)
+  - [SQL Middleware Framework](SQL-Middleware-Framework)
 - Serialization:
   - [JSON Serialization](JSON-Serialization)
 - Semantic validation:
