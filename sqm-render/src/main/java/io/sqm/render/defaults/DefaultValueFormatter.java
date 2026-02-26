@@ -8,6 +8,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+/**
+ * Default value formatter implementation.
+ *
+ * @param dialect SQL dialect used for formatting dialect-specific literals.
+ */
 public record DefaultValueFormatter(SqlDialect dialect) implements ValueFormatter {
 
     private static final DateTimeFormatter TS_SECONDS = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

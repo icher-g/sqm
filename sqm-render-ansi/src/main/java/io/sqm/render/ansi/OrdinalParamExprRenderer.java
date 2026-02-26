@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders ordinal parameter expressions.
+ */
 public class OrdinalParamExprRenderer implements Renderer<OrdinalParamExpr> {
+    /**
+     * Creates an ordinal-parameter renderer.
+     */
+    public OrdinalParamExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

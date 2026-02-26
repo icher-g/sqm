@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders star arguments in function calls.
+ */
 public class FuncStarArgRenderer implements Renderer<FunctionExpr.Arg.StarArg> {
+    /**
+     * Creates a function-star-argument renderer.
+     */
+    public FuncStarArgRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

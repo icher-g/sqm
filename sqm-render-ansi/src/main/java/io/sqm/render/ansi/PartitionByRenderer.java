@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders PARTITION BY clauses.
+ */
 public class PartitionByRenderer implements Renderer<PartitionBy> {
+    /**
+     * Creates a PARTITION BY renderer.
+     */
+    public PartitionByRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

@@ -21,6 +21,13 @@ import static io.sqm.parser.spi.ParseResult.ok;
  */
 public class IntervalLiteralExprParser implements MatchableParser<IntervalLiteralExpr> {
     private static final Set<String> UNITS = Set.of("year", "month", "day", "hour", "minute", "second");
+
+    /**
+     * Creates an interval-literal parser.
+     */
+    public IntervalLiteralExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

@@ -7,7 +7,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders array literal expressions.
+ */
 public class ArrayExprRenderer implements Renderer<ArrayExpr> {
+    /**
+     * Creates an array-expression renderer.
+     */
+    public ArrayExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

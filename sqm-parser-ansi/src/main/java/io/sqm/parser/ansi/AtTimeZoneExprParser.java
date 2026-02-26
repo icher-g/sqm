@@ -27,6 +27,11 @@ public class AtTimeZoneExprParser implements MatchableParser<AtTimeZoneExpr>, In
 
     private final AtomicExprParser atomicParser;
 
+    /**
+     * Creates an AT TIME ZONE parser.
+     *
+     * @param atomicParser parser for atomic expressions
+     */
     public AtTimeZoneExprParser(AtomicExprParser atomicParser) {
         this.atomicParser = atomicParser;
     }

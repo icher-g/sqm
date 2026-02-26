@@ -47,6 +47,7 @@ public final class SchemaValidationRuleRegistry {
      * Creates default schema validation rule set with additional rules appended.
      *
      * @param functionCatalog function catalog used by function-signature rule.
+     * @param limits          structural limits used by structural validation rules.
      * @param additionalRules additional rules appended after default rules.
      * @return default rule registry.
      */
@@ -92,24 +93,12 @@ public final class SchemaValidationRuleRegistry {
     }
 
     /**
-     * Runs all matching rules for the provided node.
-     *
-     * @param node visited node.
-     * @param context validation context.
-     */
-    public void validate(Node node, SchemaValidationContext context) {
-        for (var rule : rules) {
-            applyRule(rule, node, context);
-        }
-    }
-
-    /**
      * Applies a typed rule when current node matches rule type.
      *
-     * @param rule typed rule.
-     * @param node node being validated.
+     * @param rule    typed rule.
+     * @param node    node being validated.
      * @param context validation context.
-     * @param <N> rule node type.
+     * @param <N>     rule node type.
      */
     private static <N extends Node> void applyRule(
         SchemaValidationRule<N> rule,
@@ -120,5 +109,17 @@ public final class SchemaValidationRuleRegistry {
             return;
         }
         rule.validate(rule.nodeType().cast(node), context);
+    }
+
+    /**
+     * Runs all matching rules for the provided node.
+     *
+     * @param node    visited node.
+     * @param context validation context.
+     */
+    public void validate(Node node, SchemaValidationContext context) {
+        for (var rule : rules) {
+            applyRule(rule, node, context);
+        }
     }
 }

@@ -118,6 +118,11 @@ public interface ParseContext {
     /**
      * Low-level entry point for parsing using a resolved {@link Parser}.
      * Handles call-stack management and finalization.
+        *
+        * @param parser resolved parser implementation
+        * @param spec textual specification to parse
+        * @param <T> node type
+        * @return parsing result
      */
     default <T extends Node> ParseResult<? extends T> parse(Parser<T> parser, String spec) {
         Objects.requireNonNull(spec, "spec cannot be null.");
@@ -155,6 +160,11 @@ public interface ParseContext {
     /**
      * Low-level entry point for parsing using a resolved {@link Parser}.
      * Handles call-stack management and finalization.
+        *
+        * @param parser resolved parser implementation
+        * @param cur cursor positioned at the current parse location
+        * @param <T> node type
+        * @return parsing result
      */
     default <T extends Node> ParseResult<? extends T> parse(Parser<T> parser, Cursor cur) {
         ParseResult<? extends T> result;
@@ -331,6 +341,7 @@ public interface ParseContext {
      *
      * @param cur a cursor
      * @param pr  a parsing result
+        * @param <T> parsed node type
      * @return the finalized parsing result
      */
     default <T> ParseResult<? extends T> finalize(Cursor cur, ParseResult<? extends T> pr) {

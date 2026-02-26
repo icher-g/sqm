@@ -11,7 +11,16 @@ import io.sqm.parser.spi.Parser;
 
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parser for AND-composed predicates.
+ */
 public class AndPredicateParser implements Parser<Predicate> {
+    /**
+     * Creates an AND-predicate parser.
+     */
+    public AndPredicateParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

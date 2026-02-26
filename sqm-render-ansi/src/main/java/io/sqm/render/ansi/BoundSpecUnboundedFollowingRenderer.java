@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders UNBOUNDED FOLLOWING window bounds.
+ */
 public class BoundSpecUnboundedFollowingRenderer implements Renderer<BoundSpec.UnboundedFollowing> {
+    /**
+     * Creates an UNBOUNDED FOLLOWING bound renderer.
+     */
+    public BoundSpecUnboundedFollowingRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

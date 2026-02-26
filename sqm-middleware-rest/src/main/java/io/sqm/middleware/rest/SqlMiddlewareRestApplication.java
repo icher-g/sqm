@@ -13,6 +13,12 @@ import org.springframework.context.annotation.Bean;
 public class SqlMiddlewareRestApplication {
 
     /**
+     * Creates the REST application configuration.
+     */
+    public SqlMiddlewareRestApplication() {
+    }
+
+    /**
      * Launches the REST application.
      *
      * @param args process arguments

@@ -9,10 +9,11 @@
         <version>${revision}</version>
     </parent>
     <artifactId>examples</artifactId>
-    <name>sqm :: examples</name>
+    <name>SQM (examples)</name>
     <packaging>jar</packaging>
     <properties>
         <maven.deploy.skip>true</maven.deploy.skip>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
     </properties>
     <dependencies>
         <!-- Depend on the modules that expose your model, DSL, renderers, parser, json mixins, etc. -->

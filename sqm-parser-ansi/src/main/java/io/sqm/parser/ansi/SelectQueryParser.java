@@ -10,7 +10,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses SELECT query statements.
+ */
 public class SelectQueryParser implements Parser<SelectQuery> {
+    /**
+     * Creates a select-query parser.
+     */
+    public SelectQueryParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

@@ -7,7 +7,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders IN and NOT IN predicates.
+ */
 public class InPredicateRenderer implements Renderer<InPredicate> {
+    /**
+     * Creates an IN-predicate renderer.
+     */
+    public InPredicateRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

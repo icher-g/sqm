@@ -18,6 +18,12 @@ import static io.sqm.parser.spi.ParseResult.ok;
  */
 public class RollupParser implements MatchableParser<GroupItem.Rollup> {
     /**
+     * Creates a rollup parser.
+     */
+    public RollupParser() {
+    }
+
+    /**
      * Performs a look-ahead test to determine whether this parser is applicable
      * at the current cursor position.
      *

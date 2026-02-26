@@ -10,7 +10,16 @@ import io.sqm.parser.spi.ParseResult;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses literal expressions.
+ */
 public class LiteralExprParser implements MatchableParser<LiteralExpr> {
+    /**
+     * Creates a literal expression parser.
+     */
+    public LiteralExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

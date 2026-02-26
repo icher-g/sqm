@@ -41,6 +41,8 @@ package io.sqm.parser.spi;
  * {@link #notMatched()} provide convenient creation of the two primary
  * outcomes.
  *
+ * @param match whether parser matched at current cursor position
+ * @param result parsing result when matched, otherwise {@code null}
  * @param <T> the type of AST node produced by the associated parser
  */
 public record MatchResult<T>(boolean match, ParseResult<T> result) {

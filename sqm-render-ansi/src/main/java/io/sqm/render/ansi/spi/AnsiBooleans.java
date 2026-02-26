@@ -2,7 +2,16 @@ package io.sqm.render.ansi.spi;
 
 import io.sqm.render.spi.Booleans;
 
+/**
+ * ANSI boolean literal and predicate behavior.
+ */
 public class AnsiBooleans implements Booleans {
+    /**
+     * Creates ANSI boolean behavior definition.
+     */
+    public AnsiBooleans() {
+    }
+
     @Override
     public String trueLiteral() {
         return "TRUE";

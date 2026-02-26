@@ -12,6 +12,12 @@ import io.sqm.render.spi.Renderer;
  */
 public class GroupingSetsRenderer implements Renderer<GroupItem.GroupingSets> {
     /**
+     * Creates a grouping-sets renderer.
+     */
+    public GroupingSetsRenderer() {
+    }
+
+    /**
      * Renders the node into an {@link SqlWriter}.
      *
      * @param node a node to render.

@@ -11,7 +11,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses frame bounds of the form {@code <expr> FOLLOWING}.
+ */
 public class BoundSpecFollowingParser implements Parser<BoundSpec.Following> {
+    /**
+     * Creates a following-bound parser.
+     */
+    public BoundSpecFollowingParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

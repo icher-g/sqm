@@ -70,7 +70,7 @@ public interface SqlDialect {
     Operators operators();
 
     /**
-     * Gets booleans that define boolean literals & predicate rules.
+     * Gets booleans that define boolean literals and predicate rules.
      *
      * @return booleans.
      */

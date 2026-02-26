@@ -214,6 +214,12 @@ public final class DefaultCatalogAccessPolicy implements CatalogAccessPolicy {
         private final Map<String, Set<String>> allowedFunctionsByPrincipal = new LinkedHashMap<>();
 
         /**
+         * Creates an empty access-policy builder.
+         */
+        public Builder() {
+        }
+
+        /**
          * Adds denied table key.
          *
          * @param tableKey table key in {@code table} or {@code schema.table} form.

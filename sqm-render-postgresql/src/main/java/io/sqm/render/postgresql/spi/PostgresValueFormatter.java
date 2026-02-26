@@ -19,6 +19,11 @@ public class PostgresValueFormatter implements ValueFormatter {
 
     private final DefaultValueFormatter base;
 
+    /**
+     * Creates a PostgreSQL value formatter.
+     *
+     * @param dialect SQL dialect used for fallback formatting.
+     */
     public PostgresValueFormatter(SqlDialect dialect) {
         base = new DefaultValueFormatter(dialect);
     }

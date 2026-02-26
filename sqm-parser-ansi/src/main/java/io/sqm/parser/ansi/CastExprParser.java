@@ -13,7 +13,16 @@ import io.sqm.parser.spi.ParseResult;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses {@code CAST(... AS ...)} expressions.
+ */
 public class CastExprParser implements MatchableParser<CastExpr>, InfixParser<Expression, CastExpr> {
+    /**
+     * Creates a cast expression parser.
+     */
+    public CastExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

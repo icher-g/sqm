@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders frame specifications that use BETWEEN bounds.
+ */
 public class FrameSpecBetweenRenderer implements Renderer<FrameSpec.Between> {
+    /**
+     * Creates a BETWEEN-frame renderer.
+     */
+    public FrameSpecBetweenRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

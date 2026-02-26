@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>sqm-middleware-core</artifactId>
-    <name>SQM Middleware Core</name>
+    <name>SQM (middleware-core)</name>
 
     <dependencies>
         <dependency>

@@ -8,6 +8,9 @@ import io.sqm.core.*;
  * Top-level: Expression family
  * =========================== */
 
+/**
+ * Jackson mixin root for expression polymorphism.
+ */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = ArithmeticExpr.class, name = "arithmetic"),
@@ -33,4 +36,10 @@ import io.sqm.core.*;
     @JsonSubTypes.Type(value = UnaryOperatorExpr.Impl.class, name = "unary-op"),
 })
 public abstract class ExpressionMixin extends CommonJsonMixin {
+
+    /**
+     * Creates expression mixin metadata.
+     */
+    protected ExpressionMixin() {
+    }
 }

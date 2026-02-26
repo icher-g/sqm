@@ -15,10 +15,18 @@ import java.util.Objects;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses exponentiation expressions.
+ */
 public class PowerArithmeticExprParser implements Parser<Expression> {
 
     private final PostfixExprParser postfixExprParser;
 
+    /**
+     * Creates an exponentiation parser.
+     *
+     * @param postfixExprParser parser for postfix expressions
+     */
     public PowerArithmeticExprParser(PostfixExprParser postfixExprParser) {
         this.postfixExprParser = postfixExprParser;
     }

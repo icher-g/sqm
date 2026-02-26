@@ -11,7 +11,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses single-bound frame specifications.
+ */
 public class FrameSpecSingleParser implements Parser<FrameSpec.Single> {
+    /**
+     * Creates a single frame-spec parser.
+     */
+    public FrameSpecSingleParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

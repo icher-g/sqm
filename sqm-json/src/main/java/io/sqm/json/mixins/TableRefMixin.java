@@ -8,6 +8,9 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.sqm.core.*;
 
+/**
+ * Jackson mixin root for table-reference polymorphism.
+ */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = QueryTable.Impl.class, name = "query_table"),
@@ -17,4 +20,10 @@ import io.sqm.core.*;
     @JsonSubTypes.Type(value = Lateral.Impl.class, name = "lateral")
 })
 public abstract class TableRefMixin extends CommonJsonMixin {
+
+    /**
+     * Creates table-reference mixin metadata.
+     */
+    protected TableRefMixin() {
+    }
 }

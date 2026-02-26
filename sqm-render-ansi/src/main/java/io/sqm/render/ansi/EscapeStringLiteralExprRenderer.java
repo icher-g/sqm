@@ -12,6 +12,12 @@ import io.sqm.render.spi.Renderer;
  */
 public class EscapeStringLiteralExprRenderer implements Renderer<EscapeStringLiteralExpr> {
     /**
+     * Creates an escape-string literal renderer.
+     */
+    public EscapeStringLiteralExprRenderer() {
+    }
+
+    /**
      * Renders the node into an {@link SqlWriter}.
      *
      * @param node a node to render.

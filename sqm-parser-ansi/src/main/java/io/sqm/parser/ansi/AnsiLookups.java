@@ -11,6 +11,12 @@ import static io.sqm.parser.core.OperatorTokens.*;
  * A default implementation of the lookups.
  */
 public class AnsiLookups implements Lookups {
+    /**
+     * Creates ANSI lookups.
+     */
+    public AnsiLookups() {
+    }
+
     private static Lookahead skipParenthesis(Cursor cur, Lookahead p) {
         if (cur.match(TokenType.LPAREN, p.current())) {
             p.increment();

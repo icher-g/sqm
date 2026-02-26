@@ -13,7 +13,16 @@ import io.sqm.parser.spi.ParseResult;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses subqueries used as table references.
+ */
 public class QueryTableParser implements MatchableParser<QueryTable> {
+    /**
+     * Creates a query-table parser.
+     */
+    public QueryTableParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

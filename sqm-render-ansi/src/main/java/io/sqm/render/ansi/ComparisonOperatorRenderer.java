@@ -4,8 +4,24 @@ import io.sqm.core.ComparisonOperator;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 
+/**
+ * Renders comparison operators using dialect-specific tokens.
+ */
 public class ComparisonOperatorRenderer {
 
+    /**
+     * Creates a comparison-operator renderer.
+     */
+    public ComparisonOperatorRenderer() {
+    }
+
+    /**
+     * Renders a comparison operator.
+     *
+     * @param op  the operator to render.
+     * @param ctx the active render context.
+     * @param w   the SQL writer.
+     */
     public void render(ComparisonOperator op, RenderContext ctx, SqlWriter w) {
         switch (op) {
             case EQ -> w.append(ctx.dialect().operators().eq());

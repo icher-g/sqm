@@ -22,6 +22,12 @@ import static io.sqm.parser.spi.ParseResult.ok;
 public class BinaryOperatorExprParser implements Parser<Expression>, InfixParser<Expression, BinaryOperatorExpr> {
 
     /**
+     * Creates a PostgreSQL binary operator parser.
+     */
+    public BinaryOperatorExprParser() {
+    }
+
+    /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
      * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.

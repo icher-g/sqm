@@ -13,10 +13,18 @@ import java.util.Set;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses array slice expressions.
+ */
 public class ArraySliceExprParser implements MatchableParser<ArraySliceExpr>, InfixParser<Expression, ArraySliceExpr> {
 
     private final AtomicExprParser atomicParser;
 
+    /**
+     * Creates an array slice parser.
+     *
+     * @param atomicParser parser for atomic expressions
+     */
     public ArraySliceExprParser(AtomicExprParser atomicParser) {
         this.atomicParser = atomicParser;
     }

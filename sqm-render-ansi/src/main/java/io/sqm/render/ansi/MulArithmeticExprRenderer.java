@@ -6,7 +6,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders multiplication arithmetic expressions.
+ */
 public class MulArithmeticExprRenderer implements Renderer<MulArithmeticExpr> {
+    /**
+     * Creates a multiplication-arithmetic renderer.
+     */
+    public MulArithmeticExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

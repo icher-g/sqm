@@ -11,7 +11,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses expression-based select items.
+ */
 public class ExprSelectItemParser implements Parser<ExprSelectItem> {
+    /**
+     * Creates an expression select-item parser.
+     */
+    public ExprSelectItemParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

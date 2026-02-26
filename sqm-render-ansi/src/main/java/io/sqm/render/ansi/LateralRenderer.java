@@ -7,7 +7,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders LATERAL table references.
+ */
 public class LateralRenderer implements Renderer<Lateral> {
+    /**
+     * Creates a lateral-table renderer.
+     */
+    public LateralRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

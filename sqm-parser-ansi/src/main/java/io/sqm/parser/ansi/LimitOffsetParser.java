@@ -11,7 +11,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses limit/offset clauses.
+ */
 public class LimitOffsetParser implements Parser<LimitOffset> {
+    /**
+     * Creates a limit/offset parser.
+     */
+    public LimitOffsetParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

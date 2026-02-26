@@ -16,6 +16,12 @@ import static io.sqm.parser.spi.ParseResult.ok;
  */
 public class EscapeStringLiteralExprParser implements MatchableParser<EscapeStringLiteralExpr> {
     /**
+     * Creates an escape-string literal parser.
+     */
+    public EscapeStringLiteralExprParser() {
+    }
+
+    /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
      * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.

@@ -8,6 +8,9 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.sqm.core.*;
 
+/**
+ * Jackson mixin root for arithmetic expression polymorphism.
+ */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = AddArithmeticExpr.Impl.class, name = "add"),
@@ -19,4 +22,10 @@ import io.sqm.core.*;
     @JsonSubTypes.Type(value = PowerArithmeticExpr.Impl.class, name = "pow")
 })
 public abstract class ArithmeticExprMixin extends CommonJsonMixin {
+
+    /**
+     * Creates arithmetic-expression mixin metadata.
+     */
+    protected ArithmeticExprMixin() {
+    }
 }

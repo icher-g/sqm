@@ -12,6 +12,12 @@ import java.util.Set;
  * <p>This type provides named factory methods for common middleware flows and fluent
  * customization methods for optional concerns (audit, explain, parser, guardrails),
  * avoiding large overload sets on {@link SqlMiddleware}.</p>
+ *
+ * @param engine decision engine used to evaluate parsed queries.
+ * @param explainer decision explainer used to enrich audit output.
+ * @param auditPublisher audit event publisher implementation.
+ * @param guardrails runtime guardrails applied before execution.
+ * @param queryParser SQL parser used to parse incoming query text.
  */
 public record SqlMiddlewareConfig(
     SqlDecisionEngine engine,

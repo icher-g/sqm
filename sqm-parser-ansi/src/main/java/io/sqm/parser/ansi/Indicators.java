@@ -6,7 +6,16 @@ import io.sqm.parser.core.TokenType;
 import java.util.EnumSet;
 import java.util.Set;
 
+/**
+ * Token indicator sets used by ANSI parser lookahead checks.
+ */
 public abstract class Indicators {
+    /**
+     * Creates an indicator constants holder.
+     */
+    protected Indicators() {
+    }
+
     /**
      * A set of tokens used to check if the {@link Cursor} contains operators used in composite query.
      */

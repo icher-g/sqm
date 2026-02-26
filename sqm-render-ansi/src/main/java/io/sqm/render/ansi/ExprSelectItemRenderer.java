@@ -6,7 +6,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders expression-based select items.
+ */
 public class ExprSelectItemRenderer implements Renderer<ExprSelectItem> {
+    /**
+     * Creates an expression-select-item renderer.
+     */
+    public ExprSelectItemRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

@@ -6,8 +6,24 @@ import io.sqm.parser.spi.ParseContext;
 
 import static io.sqm.parser.core.OperatorTokens.*;
 
+/**
+ * Parses comparison operator tokens into {@link ComparisonOperator} values.
+ */
 public class ComparisonOperatorParser {
+    /**
+     * Creates a comparison operator parser.
+     */
+    public ComparisonOperatorParser() {
+    }
 
+    /**
+     * Parses the current token sequence as a comparison operator.
+     *
+     * @param cur token cursor at the operator token
+     * @param ctx parsing context
+     * @return parsed comparison operator
+     */
+    @SuppressWarnings("unused")
     public ComparisonOperator parse(Cursor cur, ParseContext ctx) {
         if (cur.consumeIf(t -> isEq(t))) {
             return ComparisonOperator.EQ;

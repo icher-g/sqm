@@ -7,7 +7,16 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+/**
+ * Dispatches parsing for supported frame bound specifications.
+ */
 public class BoundSpecParser implements Parser<BoundSpec> {
+    /**
+     * Creates a frame bound parser.
+     */
+    public BoundSpecParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

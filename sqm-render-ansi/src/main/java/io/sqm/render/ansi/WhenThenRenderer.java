@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders CASE WHEN ... THEN ... arms.
+ */
 public class WhenThenRenderer implements Renderer<WhenThen> {
+    /**
+     * Creates a WHEN/THEN renderer.
+     */
+    public WhenThenRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

@@ -15,7 +15,16 @@ import static io.sqm.parser.core.OperatorTokens.isPercent;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses modulo arithmetic expressions.
+ */
 public class ModArithmeticExprParser implements Parser<ModArithmeticExpr>, InfixParser<Expression, ModArithmeticExpr> {
+    /**
+     * Creates a modulo expression parser.
+     */
+    public ModArithmeticExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

@@ -5,9 +5,18 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders comparison predicates.
+ */
 public class ComparisonPredicateRenderer implements Renderer<ComparisonPredicate> {
 
     private final ComparisonOperatorRenderer operatorRenderer = new ComparisonOperatorRenderer();
+
+    /**
+     * Creates a comparison-predicate renderer.
+     */
+    public ComparisonPredicateRenderer() {
+    }
 
     /**
      * Renders the node into an {@link SqlWriter}.

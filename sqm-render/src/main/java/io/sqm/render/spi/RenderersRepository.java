@@ -3,6 +3,9 @@ package io.sqm.render.spi;
 import io.sqm.core.Node;
 import io.sqm.core.repos.HandlersRepository;
 
+/**
+ * Repository of node renderers.
+ */
 public interface RenderersRepository extends HandlersRepository<Renderer<?>> {
     @Override
     <T extends Node> Renderer<T> get(Class<T> type);

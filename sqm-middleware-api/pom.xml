@@ -9,5 +9,5 @@
         <version>${revision}</version>
     </parent>
     <artifactId>sqm-middleware-api</artifactId>
-    <name>SQM Middleware API</name>
+    <name>SQM (middleware-api)</name>
 </project>

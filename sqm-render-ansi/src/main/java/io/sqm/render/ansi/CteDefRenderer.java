@@ -7,7 +7,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders common table expression (CTE) definitions.
+ */
 public class CteDefRenderer implements Renderer<CteDef> {
+    /**
+     * Creates a CTE-definition renderer.
+     */
+    public CteDefRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

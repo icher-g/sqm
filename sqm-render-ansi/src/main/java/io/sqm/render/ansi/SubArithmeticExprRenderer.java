@@ -6,7 +6,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders subtraction arithmetic expressions.
+ */
 public class SubArithmeticExprRenderer implements Renderer<SubArithmeticExpr> {
+    /**
+     * Creates a subtraction-arithmetic renderer.
+     */
+    public SubArithmeticExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

@@ -2,6 +2,9 @@ package io.sqm.parser.spi;
 
 import io.sqm.core.dialect.DialectCapabilities;
 
+/**
+ * Dialect-specific parser specification bundle.
+ */
 public interface Specs {
     /**
      * Gets a parser's repository.

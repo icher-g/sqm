@@ -7,7 +7,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders modulo arithmetic expressions.
+ */
 public class ModArithmeticExprRenderer implements Renderer<ModArithmeticExpr> {
+    /**
+     * Creates a modulo-arithmetic renderer.
+     */
+    public ModArithmeticExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

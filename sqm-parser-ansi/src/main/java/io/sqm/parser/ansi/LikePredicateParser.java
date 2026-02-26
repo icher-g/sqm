@@ -14,7 +14,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses {@code LIKE}, {@code ILIKE}, and {@code SIMILAR TO} predicates.
+ */
 public class LikePredicateParser implements Parser<LikePredicate>, InfixParser<Expression, LikePredicate> {
+    /**
+     * Creates a LIKE predicate parser.
+     */
+    public LikePredicateParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

@@ -14,10 +14,18 @@ import java.util.List;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parser for set-operation composite queries.
+ */
 public class CompositeQueryParser implements Parser<Query> {
 
     private final AtomicQueryParser atomicQueryParser;
 
+    /**
+     * Creates a composite-query parser.
+     *
+     * @param atomicQueryParser parser used for atomic query terms
+     */
     public CompositeQueryParser(AtomicQueryParser atomicQueryParser) {
         this.atomicQueryParser = atomicQueryParser;
     }

@@ -34,6 +34,13 @@ public interface SqlDecisionEngine {
      */
     DecisionResult evaluate(Query query, ExecutionContext context);
 
+    /**
+     * Default composed implementation of {@link SqlDecisionEngine}.
+     *
+     * @param queryValidator query validator used before and after rewrites
+     * @param queryRewriter query rewrite pipeline
+     * @param queryRenderer query renderer for rewritten output
+     */
     record Impl(SqlQueryValidator queryValidator, SqlQueryRewriter queryRewriter, SqlQueryRenderer queryRenderer) implements SqlDecisionEngine {
 
         /**

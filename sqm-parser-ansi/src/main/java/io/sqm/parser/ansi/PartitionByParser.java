@@ -14,7 +14,16 @@ import java.util.List;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses {@code PARTITION BY} clauses.
+ */
 public class PartitionByParser implements Parser<PartitionBy> {
+    /**
+     * Creates a partition-by parser.
+     */
+    public PartitionByParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

@@ -50,6 +50,7 @@ public final class Cursor {
      * Creates a new instance of {@link Cursor} from the provided specification.
      *
      * @param spec a specification.
+        * @param identifierQuoting identifier quoting rules used during lexing
      * @return a new instance of {@link Cursor}.
      */
     public static Cursor of(String spec, IdentifierQuoting identifierQuoting) {
@@ -329,6 +330,7 @@ public final class Cursor {
      *
      * @param message an error message to throw if the token is not matched.
      * @param types   a list of types to expect.
+     * @return consumed token
      */
     public Token expect(String message, TokenType... types) {
         return expect(message, Set.of(types));
@@ -339,6 +341,7 @@ public final class Cursor {
      *
      * @param message an error message to throw if the token is not matched.
      * @param types   a list of types to expect.
+     * @return consumed token
      */
     public Token expect(String message, Set<TokenType> types) {
         Token token = advance();
@@ -353,6 +356,7 @@ public final class Cursor {
      *
      * @param message an error message to throw if the token is not matched.
      * @param func    a custom validation function.
+     * @return consumed token
      */
     public Token expect(String message, Function<Token, Boolean> func) {
         Token token = advance();

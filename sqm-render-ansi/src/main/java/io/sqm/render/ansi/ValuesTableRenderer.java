@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders VALUES table references.
+ */
 public class ValuesTableRenderer implements Renderer<ValuesTable> {
+    /**
+     * Creates a VALUES-table renderer.
+     */
+    public ValuesTableRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

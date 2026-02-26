@@ -9,7 +9,16 @@ import io.sqm.parser.spi.Parser;
 
 import static io.sqm.parser.spi.ParseResult.error;
 
+/**
+ * Dispatches parsing for {@code OVER} specifications.
+ */
 public class OverSpecParser implements Parser<OverSpec> {
+    /**
+     * Creates an over-spec parser.
+     */
+    public OverSpecParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

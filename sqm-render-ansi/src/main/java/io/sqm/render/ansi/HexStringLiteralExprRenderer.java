@@ -10,6 +10,12 @@ import io.sqm.render.spi.Renderer;
  */
 public class HexStringLiteralExprRenderer implements Renderer<HexStringLiteralExpr> {
     /**
+     * Creates a hex-string literal renderer.
+     */
+    public HexStringLiteralExprRenderer() {
+    }
+
+    /**
      * Renders the node into an {@link SqlWriter}.
      *
      * @param node a node to render.

@@ -16,6 +16,12 @@ import static io.sqm.parser.spi.ParseResult.ok;
  */
 public class HexStringLiteralExprParser implements MatchableParser<HexStringLiteralExpr> {
     /**
+     * Creates a hex-string literal parser.
+     */
+    public HexStringLiteralExprParser() {
+    }
+
+    /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
      * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.

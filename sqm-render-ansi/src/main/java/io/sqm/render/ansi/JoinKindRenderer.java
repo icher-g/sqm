@@ -4,8 +4,25 @@ import io.sqm.core.JoinKind;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 
+/**
+ * Renders join kinds as ANSI SQL join keywords.
+ */
 public class JoinKindRenderer {
 
+    /**
+     * Creates a join-kind renderer.
+     */
+    public JoinKindRenderer() {
+    }
+
+    /**
+     * Renders a join kind.
+     *
+     * @param kind the join kind to render.
+     * @param ctx  the active render context.
+     * @param w    the SQL writer.
+     */
+    @SuppressWarnings("unused")
     public void render(JoinKind kind, RenderContext ctx, SqlWriter w) {
         switch (kind) {
             case INNER -> w.append("INNER JOIN");

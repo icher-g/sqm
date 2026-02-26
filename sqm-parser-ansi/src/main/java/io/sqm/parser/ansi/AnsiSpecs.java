@@ -8,6 +8,9 @@ import io.sqm.parser.spi.*;
 
 import java.util.Objects;
 
+/**
+ * Provides ANSI SQL parser specifications and dialect capabilities.
+ */
 public class AnsiSpecs implements Specs {
 
     private final SqlDialectVersion version;

@@ -11,7 +11,16 @@ import io.sqm.render.spi.Renderer;
 
 import java.util.stream.Collectors;
 
+/**
+ * Renders ORDER BY items.
+ */
 public class OrderItemRenderer implements Renderer<OrderItem> {
+    /**
+     * Creates an order-item renderer.
+     */
+    public OrderItemRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

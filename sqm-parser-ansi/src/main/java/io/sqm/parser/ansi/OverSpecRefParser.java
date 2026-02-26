@@ -9,7 +9,16 @@ import io.sqm.parser.spi.Parser;
 
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses named window references used in {@code OVER} clauses.
+ */
 public class OverSpecRefParser implements Parser<OverSpec.Ref> {
+    /**
+     * Creates an over-spec reference parser.
+     */
+    public OverSpecRefParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

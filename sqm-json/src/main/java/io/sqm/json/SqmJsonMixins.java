@@ -8,7 +8,7 @@ import io.sqm.core.*;
 import io.sqm.json.mixins.*;
 
 /**
- * Central place to build an ObjectMapper with all sqm MixIns & subtype aliases.
+ * Central place to build an ObjectMapper with all SQM mixins and subtype aliases.
  */
 public final class SqmJsonMixins {
 
@@ -69,6 +69,8 @@ public final class SqmJsonMixins {
 
     /**
      * Create a fresh ObjectMapper with all mixins and sensible modules.
+        *
+        * @return configured default object mapper
      */
     public static ObjectMapper createDefault() {
         ObjectMapper mapper = new ObjectMapper();
@@ -81,6 +83,8 @@ public final class SqmJsonMixins {
 
     /**
      * Convenience: pretty-printed mapper for debugging or fixtures.
+     *
+     * @return configured pretty-printing object mapper
      */
     public static ObjectMapper createPretty() {
         return createDefault().enable(SerializationFeature.INDENT_OUTPUT);

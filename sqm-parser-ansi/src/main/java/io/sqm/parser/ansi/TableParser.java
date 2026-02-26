@@ -15,7 +15,16 @@ import java.util.List;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses table references.
+ */
 public class TableParser implements MatchableParser<Table> {
+    /**
+     * Creates a table parser.
+     */
+    public TableParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

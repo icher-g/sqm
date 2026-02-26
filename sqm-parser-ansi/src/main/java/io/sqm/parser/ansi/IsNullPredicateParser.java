@@ -12,7 +12,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses {@code IS [NOT] NULL} predicates.
+ */
 public class IsNullPredicateParser implements Parser<IsNullPredicate>, InfixParser<Expression, IsNullPredicate> {
+    /**
+     * Creates an IS NULL predicate parser.
+     */
+    public IsNullPredicateParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders simple GROUP BY items.
+ */
 public class GroupItemRenderer implements Renderer<GroupItem.SimpleGroupItem> {
+    /**
+     * Creates a group-item renderer.
+     */
+    public GroupItemRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

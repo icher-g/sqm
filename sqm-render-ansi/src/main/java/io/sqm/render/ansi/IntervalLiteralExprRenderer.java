@@ -12,6 +12,12 @@ import io.sqm.render.spi.Renderer;
  */
 public class IntervalLiteralExprRenderer implements Renderer<IntervalLiteralExpr> {
     /**
+     * Creates an interval-literal renderer.
+     */
+    public IntervalLiteralExprRenderer() {
+    }
+
+    /**
      * Renders the node into an {@link SqlWriter}.
      *
      * @param node a node to render.

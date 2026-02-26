@@ -132,6 +132,12 @@ public final class Lexer {
     private final int len;
     private int pos = 0;
 
+    /**
+     * Creates lexer for the provided SQL text.
+     *
+     * @param s input SQL text
+     * @param identifierQuoting dialect-specific identifier quoting rules
+     */
     public Lexer(String s, IdentifierQuoting identifierQuoting) {
         this.s = s;
         this.len = s.length();
@@ -142,6 +148,7 @@ public final class Lexer {
      * Converts a string into a list of tokens.
      *
      * @param s a string to convert.
+        * @param identifierQuoting dialect-specific identifier quoting rules
      * @return a list of tokens.
      */
     public static List<Token> lexAll(String s, IdentifierQuoting identifierQuoting) {

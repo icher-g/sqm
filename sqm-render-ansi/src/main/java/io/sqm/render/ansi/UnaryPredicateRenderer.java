@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders unary predicates.
+ */
 public class UnaryPredicateRenderer implements Renderer<UnaryPredicate> {
+    /**
+     * Creates a unary-predicate renderer.
+     */
+    public UnaryPredicateRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

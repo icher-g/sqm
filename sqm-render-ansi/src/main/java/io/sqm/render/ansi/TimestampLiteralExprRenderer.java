@@ -11,6 +11,12 @@ import io.sqm.render.spi.Renderer;
  */
 public class TimestampLiteralExprRenderer implements Renderer<TimestampLiteralExpr> {
     /**
+     * Creates a timestamp-literal renderer.
+     */
+    public TimestampLiteralExprRenderer() {
+    }
+
+    /**
      * Renders the node into an {@link SqlWriter}.
      *
      * @param node a node to render.

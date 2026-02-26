@@ -16,6 +16,12 @@ import static io.sqm.parser.spi.ParseResult.ok;
  */
 public class SimpleGroupItemParser implements Parser<GroupItem.SimpleGroupItem> {
     /**
+     * Creates a simple-group-item parser.
+     */
+    public SimpleGroupItemParser() {
+    }
+
+    /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
      * @param cur a cursor containing tokens to parse

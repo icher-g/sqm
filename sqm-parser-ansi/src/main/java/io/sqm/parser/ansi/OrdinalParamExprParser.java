@@ -10,7 +10,16 @@ import io.sqm.parser.spi.ParseResult;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses ordinal parameter expressions such as {@code $1}.
+ */
 public class OrdinalParamExprParser implements MatchableParser<OrdinalParamExpr> {
+    /**
+     * Creates an ordinal-parameter parser.
+     */
+    public OrdinalParamExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

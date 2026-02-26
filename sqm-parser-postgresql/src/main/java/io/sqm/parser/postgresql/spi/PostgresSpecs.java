@@ -10,6 +10,10 @@ import io.sqm.core.postgresql.dialect.PostgresCapabilities;
 
 import java.util.Objects;
 
+/**
+ * PostgreSQL parser specifications, including parser registrations, lookups,
+ * dialect capabilities, and operator policy.
+ */
 public class PostgresSpecs implements Specs {
 
     private Lookups lookups;

@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>sqm-middleware-mcp</artifactId>
-    <name>SQM Middleware MCP Adapter</name>
+    <name>SQM (middleware-mcp-adapter)</name>
 
     <dependencies>
         <dependency>

@@ -13,7 +13,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses unary predicates.
+ */
 public class UnaryPredicateParser implements Parser<UnaryPredicate>, InfixParser<Expression, UnaryPredicate> {
+    /**
+     * Creates a unary-predicate parser.
+     */
+    public UnaryPredicateParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

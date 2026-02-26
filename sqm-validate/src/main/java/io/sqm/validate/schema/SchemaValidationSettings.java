@@ -95,6 +95,8 @@ public final class SchemaValidationSettings {
 
     /**
      * Returns configured structural validation limits.
+     *
+     * @return structural validation limits.
      */
     public SchemaValidationLimits limits() {
         return limits;
@@ -118,6 +120,12 @@ public final class SchemaValidationSettings {
         private String principal;
         private SchemaValidationLimits limits = SchemaValidationLimits.unlimited();
         private final List<SchemaValidationRule<? extends Node>> additionalRules = new ArrayList<>();
+
+        /**
+         * Creates a builder with default settings.
+         */
+        public Builder() {
+        }
 
         /**
          * Sets function catalog used by function-signature and aggregation rules.

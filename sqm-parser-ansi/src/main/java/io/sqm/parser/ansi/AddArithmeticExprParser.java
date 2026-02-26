@@ -13,7 +13,16 @@ import static io.sqm.parser.core.OperatorTokens.isPlus;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses binary addition expressions.
+ */
 public class AddArithmeticExprParser implements Parser<AddArithmeticExpr>, InfixParser<Expression, AddArithmeticExpr> {
+    /**
+     * Creates an addition expression parser.
+     */
+    public AddArithmeticExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

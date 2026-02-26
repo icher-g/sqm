@@ -6,7 +6,16 @@ import io.sqm.parser.spi.OperatorPolicy;
 
 import static io.sqm.parser.core.OperatorTokens.*;
 
+/**
+ * Defines generic binary operator handling rules for ANSI parsing.
+ */
 public class AnsiOperatorPolicy implements OperatorPolicy {
+    /**
+     * Creates an ANSI operator policy.
+     */
+    public AnsiOperatorPolicy() {
+    }
+
     private static boolean isBinaryOperatorToken(Token t) {
         return t.type() == TokenType.OPERATOR || t.type() == TokenType.QMARK;
     }

@@ -10,7 +10,16 @@ import io.sqm.parser.spi.ParseResult;
 import static io.sqm.parser.core.OperatorTokens.isStar;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses star function arguments ({@code *}).
+ */
 public class FuncStarArgParser implements MatchableParser<FunctionExpr.Arg.StarArg> {
+    /**
+     * Creates a function-star argument parser.
+     */
+    public FuncStarArgParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

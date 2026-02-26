@@ -21,7 +21,7 @@ import static io.sqm.parser.spi.ParseResult.ok;
  * that becomes the new LHS, and the loop continues. The loop stops when no
  * postfix construct matches.</p>
  *
- * <h3>Supported postfix constructs</h3>
+ * <h2>Supported postfix constructs</h2>
  * <ul>
  *   <li><b>Type casts</b> (e.g. {@code expr::type}, {@code a::int::text}) producing nested {@link CastExpr}.</li>
  *   <li><b>Array subscripts</b> (e.g. {@code arr[1][2]}) producing nested {@link ArraySubscriptExpr}.</li>

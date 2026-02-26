@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders PRECEDING window bounds.
+ */
 public class BoundSpecPrecedingRenderer implements Renderer<BoundSpec.Preceding> {
+    /**
+     * Creates a PRECEDING bound renderer.
+     */
+    public BoundSpecPrecedingRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

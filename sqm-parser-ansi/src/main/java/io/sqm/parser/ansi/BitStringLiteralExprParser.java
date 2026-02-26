@@ -16,6 +16,12 @@ import static io.sqm.parser.spi.ParseResult.ok;
  */
 public class BitStringLiteralExprParser implements MatchableParser<BitStringLiteralExpr> {
     /**
+     * Creates a bit string literal parser.
+     */
+    public BitStringLiteralExprParser() {
+    }
+
+    /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
      * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.

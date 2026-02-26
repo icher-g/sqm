@@ -53,6 +53,7 @@ public final class SchemaValidationContext {
      * @param schema schema used for table and column resolution.
      * @param functionCatalog function signature catalog used for return-type inference.
      * @param accessPolicy schema access policy.
+     * @param principal principal identifier used for access checks, may be {@code null}.
      */
     public SchemaValidationContext(
         CatalogSchema schema,

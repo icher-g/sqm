@@ -14,7 +14,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parser for quantified ANY/ALL predicates.
+ */
 public class AnyAllPredicateParser implements Parser<AnyAllPredicate>, InfixParser<Expression, AnyAllPredicate> {
+
+    /**
+     * Creates an ANY/ALL predicate parser.
+     */
+    public AnyAllPredicateParser() {
+    }
 
     private final ComparisonOperatorParser operatorParser = new ComparisonOperatorParser();
 

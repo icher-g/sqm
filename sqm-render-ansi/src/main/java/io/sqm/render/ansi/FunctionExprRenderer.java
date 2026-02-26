@@ -6,7 +6,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders scalar function expressions.
+ */
 public class FunctionExprRenderer implements Renderer<FunctionExpr> {
+    /**
+     * Creates a function-expression renderer.
+     */
+    public FunctionExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

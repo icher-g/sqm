@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders row-list expressions.
+ */
 public class RowListExprRenderer implements Renderer<RowListExpr> {
+    /**
+     * Creates a row-list-expression renderer.
+     */
+    public RowListExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

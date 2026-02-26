@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders derived query tables.
+ */
 public class QueryTableRenderer implements Renderer<QueryTable> {
+    /**
+     * Creates a query-table renderer.
+     */
+    public QueryTableRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

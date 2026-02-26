@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders NOT predicates.
+ */
 public class NotPredicateRenderer implements Renderer<NotPredicate> {
+    /**
+     * Creates a NOT-predicate renderer.
+     */
+    public NotPredicateRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

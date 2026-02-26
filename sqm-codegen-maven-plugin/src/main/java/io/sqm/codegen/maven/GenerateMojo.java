@@ -30,6 +30,12 @@ import java.util.stream.Stream;
 public class GenerateMojo extends AbstractMojo {
 
     /**
+     * Creates the SQL code generation Mojo.
+     */
+    public GenerateMojo() {
+    }
+
+    /**
      * Current Maven project.
      */
     @Parameter(defaultValue = "${project}", readonly = true, required = true)

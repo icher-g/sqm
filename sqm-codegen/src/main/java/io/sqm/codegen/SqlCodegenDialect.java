@@ -7,7 +7,14 @@ import java.util.Objects;
  * Supported dialects for SQL file code generation validation.
  */
 public enum SqlCodegenDialect {
+    /**
+     * ANSI SQL dialect.
+     */
     ANSI,
+
+    /**
+     * PostgreSQL dialect.
+     */
     POSTGRESQL;
 
     /**

@@ -14,9 +14,19 @@ import io.sqm.parser.spi.ParseResult;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * PostgreSQL cast parser supporting both ANSI {@code CAST(... AS ...)} and
+ * PostgreSQL-specific {@code ::} typecasts.
+ */
 public class CastExprParser implements MatchableParser<CastExpr>, InfixParser<Expression, CastExpr> {
 
     private final MatchableParser<CastExpr> ansiParser = new io.sqm.parser.ansi.CastExprParser();
+
+    /**
+     * Creates a PostgreSQL cast parser.
+     */
+    public CastExprParser() {
+    }
 
     /**
      * Parses the spec represented by the {@link Cursor} instance.

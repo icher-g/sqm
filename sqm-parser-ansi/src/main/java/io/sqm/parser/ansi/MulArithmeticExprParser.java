@@ -13,7 +13,16 @@ import static io.sqm.parser.core.OperatorTokens.isStar;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses multiplication arithmetic expressions.
+ */
 public class MulArithmeticExprParser implements Parser<MulArithmeticExpr>, InfixParser<Expression, MulArithmeticExpr> {
+    /**
+     * Creates a multiplication expression parser.
+     */
+    public MulArithmeticExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

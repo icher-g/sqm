@@ -41,6 +41,12 @@ import io.sqm.parser.spi.Parser;
 public class PredicateParser implements Parser<Predicate> {
 
     /**
+     * Creates a predicate parser.
+     */
+    public PredicateParser() {
+    }
+
+    /**
      * Parses a SQL {@link Predicate} by delegating to the {@link OrPredicate}
      * parser, which handles full predicate precedence (OR, AND, atomic forms).
      *
