@@ -50,6 +50,11 @@
         <module>sqm-catalog-postgresql</module>
         <module>sqm-codegen</module>
         <module>sqm-codegen-maven-plugin</module>
+        <module>sqm-middleware-api</module>
+        <module>sqm-middleware-core</module>
+        <module>sqm-middleware-rest</module>
+        <module>sqm-middleware-mcp</module>
+        <module>sqm-middleware-it</module>
         <module>sqm-it</module>
         <module>examples</module>
     </modules>
@@ -58,7 +63,6 @@
         <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.2</junit.version>
-        <spring.version>6.2.7</spring.version>
     </properties>
     <build>
         <pluginManagement>

@@ -276,3 +276,99 @@ if (decision.kind() == DecisionKind.DENY) {
 - Example class: `examples/src/main/java/io/sqm/examples/Middleware_EndToEndPolicyFlow.java`
 - Docker-backed middleware integration: `sqm-it/src/test/java/io/sqm/it/PostgresMiddlewareIntegrationTest.java`
 - Docker-free flow checks: `sqm-control/src/test/java/io/sqm/control/AiSqlMiddlewareFlowTest.java`
+
+## 8) Runtime Transport Hosts
+
+The middleware service can be hosted in two runtime transports:
+
+- REST host (`sqm-middleware-rest`) — Spring Boot HTTP API
+- MCP host (`sqm-middleware-mcp`) — long-running stdio JSON-RPC server
+
+Both hosts delegate to the same transport-neutral service (`SqlMiddlewareService`) so decision behavior remains parity-aligned.
+
+### 8.1 REST host
+
+Run:
+
+```bash
+mvn -pl sqm-middleware-rest -am spring-boot:run
+```
+
+Endpoints:
+
+- `POST /sqm/middleware/analyze`
+- `POST /sqm/middleware/enforce`
+- `POST /sqm/middleware/explain`
+
+### 8.2 MCP host (stdio JSON-RPC)
+
+Run:
+
+```bash
+mvn -pl sqm-middleware-mcp -am exec:java -Dexec.mainClass=io.sqm.middleware.mcp.SqlMiddlewareMcpApplication
+```
+
+The MCP host is a persistent process waiting for framed messages on stdin and writing framed responses on stdout.
+
+Frame format:
+
+```text
+Content-Length: <bytes>
+
+<json-rpc-body>
+```
+
+Common requests:
+
+`initialize`
+
+```text
+Content-Length: 58
+
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}
+```
+
+`tools/list`
+
+```text
+Content-Length: 58
+
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
+```
+
+`tools/call` (`middleware.enforce`)
+
+```text
+Content-Length: 205
+
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"middleware.enforce","arguments":{"sql":"select id from users","context":{"dialect":"postgresql","mode":"EXECUTE","parameterizationMode":"OFF"}}}}
+```
+
+Tool names:
+
+- `middleware.analyze`
+- `middleware.enforce`
+- `middleware.explain`
+
+### 8.3 Host configuration (REST + MCP)
+
+Both hosts load runtime configuration from Java system properties (or corresponding environment variables):
+
+- `sqm.middleware.schema.source` (`manual|json|jdbc`)
+- `sqm.middleware.schema.defaultJson.path` (optional file path used by `manual` source)
+- `sqm.middleware.schema.json.path`
+- `sqm.middleware.jdbc.url`, `sqm.middleware.jdbc.user`, `sqm.middleware.jdbc.password`
+- `sqm.middleware.jdbc.driver`, `sqm.middleware.jdbc.schemaPattern`
+- `sqm.middleware.rewrite.enabled`
+- `sqm.middleware.rewrite.rules` (comma-separated built-in names)
+- `sqm.middleware.validation.maxJoinCount`, `sqm.middleware.validation.maxSelectColumns`
+- `sqm.middleware.guardrails.maxSqlLength`, `sqm.middleware.guardrails.timeoutMillis`, `sqm.middleware.guardrails.maxRows`, `sqm.middleware.guardrails.explainDryRun`
+
+Optional rewrite setting keys:
+
+- `sqm.middleware.rewrite.defaultLimitInjectionValue`
+- `sqm.middleware.rewrite.maxAllowedLimit`
+- `sqm.middleware.rewrite.limitExcessMode`
+- `sqm.middleware.rewrite.qualificationDefaultSchema`
+- `sqm.middleware.rewrite.qualificationFailureMode`
+- `sqm.middleware.rewrite.identifierNormalizationCaseMode`
