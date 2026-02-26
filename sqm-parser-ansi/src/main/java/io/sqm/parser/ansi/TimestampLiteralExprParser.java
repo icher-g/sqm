@@ -17,6 +17,12 @@ import static io.sqm.parser.spi.ParseResult.ok;
  */
 public class TimestampLiteralExprParser implements MatchableParser<TimestampLiteralExpr> {
     /**
+     * Creates a timestamp-literal parser.
+     */
+    public TimestampLiteralExprParser() {
+    }
+
+    /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
      * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.

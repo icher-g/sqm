@@ -10,6 +10,9 @@ import io.sqm.core.ExprSelectItem;
 import io.sqm.core.QualifiedStarSelectItem;
 import io.sqm.core.StarSelectItem;
 
+/**
+ * Jackson mixin root for select-item polymorphism.
+ */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = ExprSelectItem.Impl.class, name = "expr"),
@@ -17,4 +20,10 @@ import io.sqm.core.StarSelectItem;
     @JsonSubTypes.Type(value = QualifiedStarSelectItem.Impl.class, name = "qualified_star")
 })
 public abstract class SelectItemMixin extends CommonJsonMixin {
+
+    /**
+     * Creates select-item mixin metadata.
+     */
+    protected SelectItemMixin() {
+    }
 }

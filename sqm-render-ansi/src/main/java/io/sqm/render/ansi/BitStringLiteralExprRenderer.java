@@ -10,6 +10,12 @@ import io.sqm.render.spi.Renderer;
  */
 public class BitStringLiteralExprRenderer implements Renderer<BitStringLiteralExpr> {
     /**
+     * Creates a bit-string literal renderer.
+     */
+    public BitStringLiteralExprRenderer() {
+    }
+
+    /**
      * Renders the node into an {@link SqlWriter}.
      *
      * @param node a node to render.

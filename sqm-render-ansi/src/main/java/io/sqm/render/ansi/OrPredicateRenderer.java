@@ -7,7 +7,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders OR predicates.
+ */
 public class OrPredicateRenderer implements Renderer<OrPredicate> {
+    /**
+     * Creates an OR-predicate renderer.
+     */
+    public OrPredicateRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

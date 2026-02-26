@@ -22,6 +22,7 @@ public record PreparedNode(Node node, List<Object> params) {
      * Creates a {@code PreparedNode} with no associated parameters.
      *
      * @param node the prepared node
+     * @return a prepared node with an empty parameter list.
      */
     public static PreparedNode of(Node node) {
         return new PreparedNode(node, List.of());
@@ -32,6 +33,7 @@ public record PreparedNode(Node node, List<Object> params) {
      *
      * @param node   the prepared node
      * @param params the parameters associated with the node
+     * @return a prepared node with associated parameters.
      */
     public static PreparedNode of(Node node, List<Object> params) {
         return new PreparedNode(node, params);

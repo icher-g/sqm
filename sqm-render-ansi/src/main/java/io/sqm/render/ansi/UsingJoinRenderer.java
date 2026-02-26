@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders USING join clauses.
+ */
 public class UsingJoinRenderer implements Renderer<UsingJoin> {
+    /**
+     * Creates a USING-join renderer.
+     */
+    public UsingJoinRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

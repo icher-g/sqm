@@ -12,6 +12,12 @@ import io.sqm.render.spi.Renderer;
  */
 public class DollarStringLiteralExprRenderer implements Renderer<DollarStringLiteralExpr> {
     /**
+     * Creates a dollar-string literal renderer.
+     */
+    public DollarStringLiteralExprRenderer() {
+    }
+
+    /**
      * Renders the node into an {@link SqlWriter}.
      *
      * @param node a node to render.

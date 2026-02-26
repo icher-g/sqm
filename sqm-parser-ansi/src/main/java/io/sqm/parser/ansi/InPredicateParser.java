@@ -13,7 +13,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses {@code [NOT] IN} predicates.
+ */
 public class InPredicateParser implements Parser<InPredicate>, InfixParser<Expression, InPredicate> {
+    /**
+     * Creates an IN-predicate parser.
+     */
+    public InPredicateParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

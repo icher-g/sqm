@@ -3,6 +3,9 @@ package io.sqm.parser.ansi;
 import io.sqm.parser.*;
 import io.sqm.parser.spi.ParsersRepository;
 
+/**
+ * Entry point for ANSI parser registrations.
+ */
 public final class Parsers {
 
     private static final ParsersRepository defaultRepository = registerDefaults(new DefaultParsersRepository());
@@ -10,6 +13,11 @@ public final class Parsers {
     private Parsers() {
     }
 
+    /**
+     * Returns the shared ANSI parsers repository.
+     *
+     * @return ANSI parsers repository
+     */
     public static ParsersRepository ansi() {
         return defaultRepository;
     }

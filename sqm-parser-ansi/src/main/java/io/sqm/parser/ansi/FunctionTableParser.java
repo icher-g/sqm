@@ -12,7 +12,16 @@ import io.sqm.parser.spi.ParseResult;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses function table references.
+ */
 public class FunctionTableParser implements MatchableParser<FunctionTable> {
+    /**
+     * Creates a function-table parser.
+     */
+    public FunctionTableParser() {
+    }
+
     /**
      * Performs a look-ahead test to determine whether this parser is applicable
      * at the current cursor position.

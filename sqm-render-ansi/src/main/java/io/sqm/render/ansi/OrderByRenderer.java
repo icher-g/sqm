@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders ORDER BY clauses.
+ */
 public class OrderByRenderer implements Renderer<OrderBy> {
+    /**
+     * Creates an ORDER BY renderer.
+     */
+    public OrderByRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

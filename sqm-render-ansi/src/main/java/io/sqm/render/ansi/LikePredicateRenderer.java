@@ -8,7 +8,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders LIKE-family predicates.
+ */
 public class LikePredicateRenderer implements Renderer<LikePredicate> {
+    /**
+     * Creates a LIKE-predicate renderer.
+     */
+    public LikePredicateRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

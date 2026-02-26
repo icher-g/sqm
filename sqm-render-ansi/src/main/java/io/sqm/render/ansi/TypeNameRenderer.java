@@ -9,9 +9,18 @@ import io.sqm.render.spi.Renderer;
 import java.util.Locale;
 import java.util.Set;
 
+/**
+ * Renders SQL type names.
+ */
 public class TypeNameRenderer implements Renderer<TypeName> {
 
     private static final Set<String> validTimeTypes = Set.of("time", "timestamp");
+
+    /**
+     * Creates a type-name renderer.
+     */
+    public TypeNameRenderer() {
+    }
 
     /**
      * Renders the node into an {@link SqlWriter}.

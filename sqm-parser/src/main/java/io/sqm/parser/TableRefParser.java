@@ -10,7 +10,16 @@ import io.sqm.parser.spi.Parser;
 
 import static io.sqm.parser.spi.ParseResult.error;
 
+/**
+ * Parser for SQL table-reference constructs.
+ */
 public class TableRefParser implements Parser<TableRef> {
+    /**
+     * Creates a table-reference parser.
+     */
+    public TableRefParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

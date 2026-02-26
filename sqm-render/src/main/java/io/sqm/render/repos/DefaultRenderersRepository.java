@@ -15,6 +15,12 @@ public final class DefaultRenderersRepository implements RenderersRepository {
     private final Map<Class<?>, Renderer<?>> renderers = new ConcurrentHashMap<>();
 
     /**
+     * Creates an empty renderers repository.
+     */
+    public DefaultRenderersRepository() {
+    }
+
+    /**
      * Gets a {@link Renderer}.
      *
      * @param type the type of the class which renderer is needed.

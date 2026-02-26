@@ -10,7 +10,16 @@ import io.sqm.parser.spi.ParseResult;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses named parameter expressions.
+ */
 public class NamedParamExprParser implements MatchableParser<NamedParamExpr> {
+    /**
+     * Creates a named-parameter parser.
+     */
+    public NamedParamExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

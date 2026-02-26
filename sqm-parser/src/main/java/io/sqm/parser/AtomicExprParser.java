@@ -48,6 +48,12 @@ import static io.sqm.parser.spi.ParseResult.error;
  */
 public class AtomicExprParser {
 
+    /**
+     * Creates an atomic-expression parser.
+     */
+    public AtomicExprParser() {
+    }
+
     private static boolean isUnaryOperator(Token t) {
         return OperatorTokens.is(t, "~") || OperatorTokens.is(t, "+");
     }

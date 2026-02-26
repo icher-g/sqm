@@ -5,10 +5,19 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders composite queries composed by set operators.
+ */
 public class CompositeQueryRenderer implements Renderer<CompositeQuery> {
 
     private final SetOperatorRenderer operatorRenderer = new SetOperatorRenderer();
     private final LimitOffsetRenderer limitOffsetRenderer = new LimitOffsetRenderer();
+
+    /**
+     * Creates a composite-query renderer.
+     */
+    public CompositeQueryRenderer() {
+    }
 
     /**
      * Renders the node into an {@link SqlWriter}.

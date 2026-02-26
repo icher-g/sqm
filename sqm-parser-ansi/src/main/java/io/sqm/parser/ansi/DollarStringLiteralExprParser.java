@@ -16,6 +16,12 @@ import static io.sqm.parser.spi.ParseResult.ok;
  */
 public class DollarStringLiteralExprParser implements MatchableParser<DollarStringLiteralExpr> {
     /**
+     * Creates a dollar-string literal parser.
+     */
+    public DollarStringLiteralExprParser() {
+    }
+
+    /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
      * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.

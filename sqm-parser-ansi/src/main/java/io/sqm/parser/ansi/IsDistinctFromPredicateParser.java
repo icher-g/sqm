@@ -13,7 +13,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses {@code IS [NOT] DISTINCT FROM} predicates.
+ */
 public class IsDistinctFromPredicateParser implements Parser<IsDistinctFromPredicate>, InfixParser<Expression, IsDistinctFromPredicate> {
+    /**
+     * Creates an IS DISTINCT FROM parser.
+     */
+    public IsDistinctFromPredicateParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

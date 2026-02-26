@@ -6,7 +6,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders CASE expressions.
+ */
 public class CaseExprRenderer implements Renderer<CaseExpr> {
+    /**
+     * Creates a CASE-expression renderer.
+     */
+    public CaseExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

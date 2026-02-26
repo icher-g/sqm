@@ -17,7 +17,16 @@ import java.util.List;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses SQL function expressions.
+ */
 public class FunctionExprParser implements MatchableParser<FunctionExpr> {
+    /**
+     * Creates a function expression parser.
+     */
+    public FunctionExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

@@ -12,6 +12,12 @@ import io.sqm.render.spi.Renderer;
  */
 public class CubeRenderer implements Renderer<GroupItem.Cube> {
     /**
+     * Creates a CUBE renderer.
+     */
+    public CubeRenderer() {
+    }
+
+    /**
      * Renders the node into an {@link SqlWriter}.
      *
      * @param node a node to render.

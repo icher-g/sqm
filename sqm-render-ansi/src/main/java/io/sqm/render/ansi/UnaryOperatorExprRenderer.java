@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders unary operator expressions.
+ */
 public class UnaryOperatorExprRenderer implements Renderer<UnaryOperatorExpr> {
+    /**
+     * Creates a unary-operator renderer.
+     */
+    public UnaryOperatorExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

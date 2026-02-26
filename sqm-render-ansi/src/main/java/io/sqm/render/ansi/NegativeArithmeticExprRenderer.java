@@ -6,7 +6,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders unary negative arithmetic expressions.
+ */
 public class NegativeArithmeticExprRenderer implements Renderer<NegativeArithmeticExpr> {
+    /**
+     * Creates a negative-arithmetic renderer.
+     */
+    public NegativeArithmeticExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

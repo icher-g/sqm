@@ -5,9 +5,18 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders ON join clauses.
+ */
 public class OnJoinRenderer implements Renderer<OnJoin> {
 
     private final JoinKindRenderer kindRenderer = new JoinKindRenderer();
+
+    /**
+     * Creates an ON-join renderer.
+     */
+    public OnJoinRenderer() {
+    }
 
     /**
      * Renders the node into an {@link SqlWriter}.

@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders star select items.
+ */
 public class StarSelectItemRenderer implements Renderer<StarSelectItem> {
+    /**
+     * Creates a star-select-item renderer.
+     */
+    public StarSelectItemRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

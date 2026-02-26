@@ -7,10 +7,19 @@ import io.sqm.parser.spi.OperatorPrecedence;
 
 import java.util.Locale;
 
+/**
+ * PostgreSQL operator policy that extends ANSI behavior with custom precedence
+ * handling for PostgreSQL operators.
+ */
 public class PostgresOperatorPolicy implements OperatorPolicy {
 
     private final OperatorPolicy ansiOperatorPolicy;
 
+    /**
+     * Creates PostgreSQL operator policy with ANSI fallback behavior.
+     *
+     * @param ansiOperatorPolicy base ANSI operator policy.
+     */
     public PostgresOperatorPolicy(OperatorPolicy ansiOperatorPolicy) {
         this.ansiOperatorPolicy = ansiOperatorPolicy;
     }

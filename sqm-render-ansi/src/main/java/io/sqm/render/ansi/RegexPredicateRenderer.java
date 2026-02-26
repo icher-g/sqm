@@ -7,7 +7,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders regular-expression predicates.
+ */
 public class RegexPredicateRenderer implements Renderer<RegexPredicate> {
+    /**
+     * Creates a regex-predicate renderer.
+     */
+    public RegexPredicateRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

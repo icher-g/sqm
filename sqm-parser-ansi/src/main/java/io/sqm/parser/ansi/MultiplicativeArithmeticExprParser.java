@@ -9,7 +9,15 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.core.OperatorTokens.*;
 import static io.sqm.parser.spi.ParseResult.error;
 
+/**
+ * Parses multiplicative arithmetic expressions.
+ */
 public class MultiplicativeArithmeticExprParser implements Parser<Expression> {
+    /**
+     * Creates a multiplicative expression parser.
+     */
+    public MultiplicativeArithmeticExprParser() {
+    }
 
     /**
      * Parses the spec represented by the {@link Cursor} instance.

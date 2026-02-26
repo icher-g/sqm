@@ -9,7 +9,16 @@ import io.sqm.parser.spi.Parser;
 
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses {@code CURRENT ROW} frame bounds.
+ */
 public class BoundSpecCurrentRowParser implements Parser<BoundSpec.CurrentRow> {
+    /**
+     * Creates a current-row bound parser.
+     */
+    public BoundSpecCurrentRowParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

@@ -6,9 +6,18 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders quantified comparison predicates with ANY and ALL.
+ */
 public class AnyAllPredicateRenderer implements Renderer<AnyAllPredicate> {
 
     private final ComparisonOperatorRenderer operatorRenderer = new ComparisonOperatorRenderer();
+
+    /**
+     * Creates an ANY/ALL-predicate renderer.
+     */
+    public AnyAllPredicateRenderer() {
+    }
 
     /**
      * Renders the node into an {@link SqlWriter}.

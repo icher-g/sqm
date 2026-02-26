@@ -10,7 +10,16 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+/**
+ * Parser for value-set expressions.
+ */
 public class ValueSetParser implements Parser<ValueSet> {
+    /**
+     * Creates a value-set parser.
+     */
+    public ValueSetParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

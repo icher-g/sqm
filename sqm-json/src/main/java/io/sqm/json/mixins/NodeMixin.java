@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.sqm.core.*;
 
+/**
+ * Jackson mixin root for SQM node polymorphism.
+ */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = TypeName.Impl.class, name = "typeName"),
@@ -24,4 +27,10 @@ import io.sqm.core.*;
     @JsonSubTypes.Type(value = LockingClause.Impl.class, name = "lockFor"),
 })
 public abstract class NodeMixin extends CommonJsonMixin {
+
+    /**
+     * Creates node mixin metadata.
+     */
+    protected NodeMixin() {
+    }
 }

@@ -8,6 +8,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+/**
+ * PostgreSQL identifier quoting rules.
+ */
 public class PostgresIdentifierQuoter implements IdentifierQuoter {
     // Unquoted identifiers must be simple and not reserved:
     private static final Pattern SIMPLE = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
@@ -35,6 +38,12 @@ public class PostgresIdentifierQuoter implements IdentifierQuoter {
             "LOCKED",
             "SHARE"
         ));
+    }
+
+    /**
+     * Creates PostgreSQL identifier quoter.
+     */
+    public PostgresIdentifierQuoter() {
     }
 
     /**

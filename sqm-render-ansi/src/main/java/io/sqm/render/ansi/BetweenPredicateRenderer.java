@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders BETWEEN predicates.
+ */
 public class BetweenPredicateRenderer implements Renderer<BetweenPredicate> {
+    /**
+     * Creates a BETWEEN-predicate renderer.
+     */
+    public BetweenPredicateRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

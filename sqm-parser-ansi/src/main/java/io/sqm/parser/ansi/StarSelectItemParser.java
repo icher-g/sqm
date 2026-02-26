@@ -10,7 +10,16 @@ import io.sqm.parser.spi.ParseResult;
 import static io.sqm.parser.core.OperatorTokens.isStar;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses unqualified star select items ({@code *}).
+ */
 public class StarSelectItemParser implements MatchableParser<StarSelectItem> {
+    /**
+     * Creates a star select-item parser.
+     */
+    public StarSelectItemParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

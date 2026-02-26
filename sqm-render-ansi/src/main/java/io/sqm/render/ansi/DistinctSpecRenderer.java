@@ -7,7 +7,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders DISTINCT and DISTINCT ON specifications.
+ */
 public class DistinctSpecRenderer implements Renderer<DistinctSpec> {
+    /**
+     * Creates a distinct-specification renderer.
+     */
+    public DistinctSpecRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

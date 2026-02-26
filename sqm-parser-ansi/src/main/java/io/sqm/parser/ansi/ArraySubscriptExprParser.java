@@ -16,10 +16,18 @@ import java.util.Set;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses array subscript expressions.
+ */
 public class ArraySubscriptExprParser implements MatchableParser<ArraySubscriptExpr>, InfixParser<Expression, ArraySubscriptExpr> {
 
     private final AtomicExprParser atomicParser;
 
+    /**
+     * Creates an array subscript parser.
+     *
+     * @param atomicParser parser for atomic expressions
+     */
     public ArraySubscriptExprParser(AtomicExprParser atomicParser) {
         this.atomicParser = atomicParser;
     }

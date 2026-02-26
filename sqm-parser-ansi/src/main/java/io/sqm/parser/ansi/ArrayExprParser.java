@@ -15,7 +15,16 @@ import java.util.List;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses ANSI array literal expressions.
+ */
 public class ArrayExprParser implements MatchableParser<ArrayExpr> {
+    /**
+     * Creates an array expression parser.
+     */
+    public ArrayExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

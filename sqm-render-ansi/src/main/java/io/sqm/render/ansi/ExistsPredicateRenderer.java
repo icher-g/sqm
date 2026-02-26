@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders EXISTS predicates.
+ */
 public class ExistsPredicateRenderer implements Renderer<ExistsPredicate> {
+    /**
+     * Creates an EXISTS-predicate renderer.
+     */
+    public ExistsPredicateRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

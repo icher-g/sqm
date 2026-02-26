@@ -18,6 +18,12 @@ import static io.sqm.parser.spi.ParseResult.ok;
  */
 public class CubeParser implements MatchableParser<GroupItem.Cube> {
     /**
+     * Creates a cube parser.
+     */
+    public CubeParser() {
+    }
+
+    /**
      * Performs a look-ahead test to determine whether this parser is applicable
      * at the current cursor position.
      *

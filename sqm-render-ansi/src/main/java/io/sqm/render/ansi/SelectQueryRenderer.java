@@ -5,9 +5,18 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders SELECT query statements.
+ */
 public class SelectQueryRenderer implements Renderer<SelectQuery> {
 
     private final LimitOffsetRenderer limitOffsetRenderer = new LimitOffsetRenderer();
+
+    /**
+     * Creates a SELECT-query renderer.
+     */
+    public SelectQueryRenderer() {
+    }
 
     /**
      * Renders the node into an {@link SqlWriter}.

@@ -10,6 +10,9 @@ import io.sqm.core.QueryExpr;
 import io.sqm.core.RowExpr;
 import io.sqm.core.RowListExpr;
 
+/**
+ * Jackson mixin root for value-set polymorphism.
+ */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = RowExpr.Impl.class, name = "row"),
@@ -17,4 +20,10 @@ import io.sqm.core.RowListExpr;
     @JsonSubTypes.Type(value = RowListExpr.Impl.class, name = "row_list")
 })
 public abstract class ValueSetMixin extends CommonJsonMixin {
+
+    /**
+     * Creates value-set mixin metadata.
+     */
+    protected ValueSetMixin() {
+    }
 }

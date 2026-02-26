@@ -33,37 +33,37 @@ public interface Operators {
     String eq();
 
     /**
-     * Gets an ANSI representation of != operator.
+        * Gets an ANSI representation of {@code !=} operator.
      *
-     * @return "<>" or "!="
+        * @return {@code "<>"} or {@code "!="}
      */
     String ne();
 
     /**
-     * Gets an ANSI representation of < operator.
+        * Gets an ANSI representation of {@code <} operator.
      *
-     * @return "<"
+        * @return {@code "<"}
      */
     String lt();
 
     /**
-     * Gets an ANSI representation of <= operator.
+        * Gets an ANSI representation of {@code <=} operator.
      *
-     * @return "<="
+        * @return {@code "<="}
      */
     String lte();
 
     /**
-     * Gets an ANSI representation of > operator.
+        * Gets an ANSI representation of {@code >} operator.
      *
-     * @return ">"
+        * @return {@code ">"}
      */
     String gt();
 
     /**
-     * Gets an ANSI representation of >= operator.
+        * Gets an ANSI representation of {@code >=} operator.
      *
-     * @return ">="
+        * @return {@code ">="}
      */
     String gte();
 

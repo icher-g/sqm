@@ -14,4 +14,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
     setterVisibility = JsonAutoDetect.Visibility.NONE
 )
 public abstract class CommonJsonMixin {
+
+    /**
+     * Creates base JSON mixin metadata container.
+     */
+    protected CommonJsonMixin() {
+    }
 }

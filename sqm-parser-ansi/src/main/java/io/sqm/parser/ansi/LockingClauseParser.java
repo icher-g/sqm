@@ -16,7 +16,16 @@ import java.util.List;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses row-locking clauses.
+ */
 public class LockingClauseParser implements Parser<LockingClause> {
+    /**
+     * Creates a locking-clause parser.
+     */
+    public LockingClauseParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

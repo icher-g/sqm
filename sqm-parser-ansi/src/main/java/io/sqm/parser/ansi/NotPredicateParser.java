@@ -38,6 +38,11 @@ public class NotPredicateParser implements Parser<Predicate> {
 
     private final AtomicPredicateParser atomicPredicateParser;
 
+    /**
+     * Creates a NOT-predicate parser.
+     *
+     * @param atomicPredicateParser parser for atomic predicates
+     */
     public NotPredicateParser(AtomicPredicateParser atomicPredicateParser) {
         this.atomicPredicateParser = atomicPredicateParser;
     }

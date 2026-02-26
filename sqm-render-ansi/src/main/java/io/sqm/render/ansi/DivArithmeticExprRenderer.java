@@ -6,7 +6,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders division arithmetic expressions.
+ */
 public class DivArithmeticExprRenderer implements Renderer<DivArithmeticExpr> {
+    /**
+     * Creates a division-arithmetic renderer.
+     */
+    public DivArithmeticExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

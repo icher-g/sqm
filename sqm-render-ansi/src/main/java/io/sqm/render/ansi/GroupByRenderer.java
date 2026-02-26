@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders GROUP BY clauses.
+ */
 public class GroupByRenderer implements Renderer<GroupBy> {
+    /**
+     * Creates a GROUP BY renderer.
+     */
+    public GroupByRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

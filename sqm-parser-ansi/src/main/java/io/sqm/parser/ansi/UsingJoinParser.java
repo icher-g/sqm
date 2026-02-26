@@ -19,7 +19,16 @@ import static io.sqm.parser.JoinParser.parseKind;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses joins with a {@code USING (...)} clause.
+ */
 public class UsingJoinParser implements MatchableParser<UsingJoin>, InfixParser<TableRef, UsingJoin> {
+    /**
+     * Creates a using-join parser.
+     */
+    public UsingJoinParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

@@ -4,8 +4,25 @@ import io.sqm.core.SetOperator;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 
+/**
+ * Renders set operators used by composite queries.
+ */
 public class SetOperatorRenderer {
 
+    /**
+     * Creates a set-operator renderer.
+     */
+    public SetOperatorRenderer() {
+    }
+
+    /**
+     * Renders a set operator token.
+     *
+     * @param op  the set operator.
+     * @param ctx the active render context.
+     * @param w   the SQL writer.
+     */
+    @SuppressWarnings("unused")
     public void render(SetOperator op, RenderContext ctx, SqlWriter w) {
         switch (op) {
             case UNION -> w.append("UNION");

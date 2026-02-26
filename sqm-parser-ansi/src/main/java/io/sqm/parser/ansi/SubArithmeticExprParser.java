@@ -13,7 +13,16 @@ import static io.sqm.parser.core.OperatorTokens.isMinus;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses binary subtraction expressions.
+ */
 public class SubArithmeticExprParser implements Parser<SubArithmeticExpr>, InfixParser<Expression, SubArithmeticExpr> {
+    /**
+     * Creates a subtraction expression parser.
+     */
+    public SubArithmeticExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

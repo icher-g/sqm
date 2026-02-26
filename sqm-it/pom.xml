@@ -9,8 +9,10 @@
         <version>${revision}</version>
     </parent>
     <artifactId>sqm-it</artifactId>
+    <name>SQM (integration-tests)</name>
     <properties>
         <maven.deploy.skip>true</maven.deploy.skip>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
         <testcontainers.version>1.21.3</testcontainers.version>
     </properties>
     <dependencies>

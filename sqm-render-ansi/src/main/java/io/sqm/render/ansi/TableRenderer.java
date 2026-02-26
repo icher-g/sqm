@@ -7,7 +7,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders table references.
+ */
 public class TableRenderer implements Renderer<Table> {
+    /**
+     * Creates a table renderer.
+     */
+    public TableRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

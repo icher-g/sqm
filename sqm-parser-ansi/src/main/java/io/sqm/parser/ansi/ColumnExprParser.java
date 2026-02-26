@@ -10,7 +10,16 @@ import io.sqm.parser.spi.ParseResult;
 
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parser for column-reference expressions.
+ */
 public class ColumnExprParser implements MatchableParser<ColumnExpr> {
+    /**
+     * Creates a column-expression parser.
+     */
+    public ColumnExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

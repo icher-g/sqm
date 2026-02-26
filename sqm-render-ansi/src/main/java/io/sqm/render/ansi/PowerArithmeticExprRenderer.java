@@ -7,7 +7,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders exponentiation arithmetic expressions.
+ */
 public class PowerArithmeticExprRenderer implements Renderer<PowerArithmeticExpr> {
+    /**
+     * Creates an exponentiation-arithmetic renderer.
+     */
+    public PowerArithmeticExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

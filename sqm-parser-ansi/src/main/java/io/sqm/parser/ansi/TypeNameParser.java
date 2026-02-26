@@ -16,7 +16,16 @@ import java.util.Set;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses SQL type names.
+ */
 public class TypeNameParser implements Parser<TypeName> {
+
+    /**
+     * Creates a type-name parser.
+     */
+    public TypeNameParser() {
+    }
 
     private static final Set<String> keywords = Set.of("double", "character", "national");
     private static final Set<String> validTimeTypes = Set.of("time", "timestamp");

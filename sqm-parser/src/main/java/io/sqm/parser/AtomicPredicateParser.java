@@ -66,6 +66,12 @@ public class AtomicPredicateParser {
     private static final Set<String> regexSymbols = Set.of("~", "!~", "~*", "!~*");
 
     /**
+     * Creates an atomic-predicate parser.
+     */
+    public AtomicPredicateParser() {
+    }
+
+    /**
      * Parses the next token sequence as an atomic predicate.
      *
      * <p>This method attempts the following alternatives, in order:</p>

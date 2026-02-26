@@ -7,6 +7,9 @@ import java.util.Objects;
 
 /**
  * Semantic validation issue collected during SQL file code generation.
+ *
+ * @param sqlFile SQL file path relative to configured SQL root.
+ * @param problem semantic validation problem.
  */
 public record SqlValidationIssue(Path sqlFile, ValidationProblem problem) {
     /**

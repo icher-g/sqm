@@ -15,7 +15,16 @@ import java.util.ArrayList;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parser for common table expression definitions.
+ */
 public class CteDefParser implements Parser<CteDef> {
+    /**
+     * Creates a CTE definition parser.
+     */
+    public CteDefParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

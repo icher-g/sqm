@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>sqm-middleware-rest</artifactId>
-    <name>SQM Middleware REST Adapter</name>
+    <name>SQM (middleware-rest-adapter)</name>
 
     <properties>
         <spring.boot.version>3.5.11</spring.boot.version>

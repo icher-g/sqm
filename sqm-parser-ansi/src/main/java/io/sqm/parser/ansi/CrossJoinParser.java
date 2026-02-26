@@ -12,7 +12,16 @@ import io.sqm.parser.spi.ParseResult;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parser for CROSS JOIN clauses.
+ */
 public class CrossJoinParser implements MatchableParser<CrossJoin> {
+    /**
+     * Creates a cross-join parser.
+     */
+    public CrossJoinParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

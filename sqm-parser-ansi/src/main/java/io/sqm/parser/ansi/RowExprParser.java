@@ -15,7 +15,16 @@ import java.util.Set;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses row value expressions.
+ */
 public class RowExprParser implements MatchableParser<RowExpr> {
+    /**
+     * Creates a row-expression parser.
+     */
+    public RowExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

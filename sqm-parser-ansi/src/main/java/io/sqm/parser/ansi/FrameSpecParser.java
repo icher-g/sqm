@@ -7,7 +7,16 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+/**
+ * Dispatches parsing for frame specifications.
+ */
 public class FrameSpecParser implements Parser<FrameSpec> {
+    /**
+     * Creates a frame specification parser.
+     */
+    public FrameSpecParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

@@ -7,7 +7,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders IS DISTINCT FROM predicates.
+ */
 public class IsDistinctFromPredicateRenderer implements Renderer<IsDistinctFromPredicate> {
+    /**
+     * Creates an IS DISTINCT FROM predicate renderer.
+     */
+    public IsDistinctFromPredicateRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

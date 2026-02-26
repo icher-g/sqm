@@ -14,6 +14,12 @@ import io.sqm.render.spi.Renderer;
 public class AtTimeZoneExprRenderer implements Renderer<AtTimeZoneExpr> {
 
     /**
+     * Creates an AT TIME ZONE renderer.
+     */
+    public AtTimeZoneExprRenderer() {
+    }
+
+    /**
      * Renders the node into an {@link SqlWriter}}.
      *
      * @param node a node to render

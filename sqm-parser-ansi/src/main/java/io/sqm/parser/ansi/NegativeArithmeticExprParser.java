@@ -13,7 +13,16 @@ import static io.sqm.parser.core.OperatorTokens.isMinus;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses unary negative arithmetic expressions.
+ */
 public class NegativeArithmeticExprParser implements Parser<NegativeArithmeticExpr> {
+    /**
+     * Creates a negative-expression parser.
+     */
+    public NegativeArithmeticExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

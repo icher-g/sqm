@@ -9,7 +9,16 @@ import io.sqm.parser.spi.Parser;
 
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses {@code UNBOUNDED PRECEDING} frame bounds.
+ */
 public class BoundSpecUnboundedPrecedingParser implements Parser<BoundSpec.UnboundedPreceding> {
+    /**
+     * Creates an unbounded-preceding bound parser.
+     */
+    public BoundSpecUnboundedPrecedingParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

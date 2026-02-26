@@ -10,7 +10,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders PostgreSQL {@code ::} cast expressions.
+ */
 public class CastExprRenderer implements Renderer<CastExpr> {
+    /**
+     * Creates a PostgreSQL cast-expression renderer.
+     */
+    public CastExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

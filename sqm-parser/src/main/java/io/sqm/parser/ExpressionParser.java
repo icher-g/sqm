@@ -7,7 +7,16 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+/**
+ * Entry-point parser for generic SQL expressions.
+ */
 public class ExpressionParser implements Parser<Expression> {
+    /**
+     * Creates an expression parser.
+     */
+    public ExpressionParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

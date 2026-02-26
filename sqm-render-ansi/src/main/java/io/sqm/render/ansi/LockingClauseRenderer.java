@@ -7,7 +7,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders row-locking clauses.
+ */
 public class LockingClauseRenderer implements Renderer<LockingClause> {
+    /**
+     * Creates a locking-clause renderer.
+     */
+    public LockingClauseRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

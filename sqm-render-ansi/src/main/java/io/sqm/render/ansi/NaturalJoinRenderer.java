@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders NATURAL JOIN clauses.
+ */
 public class NaturalJoinRenderer implements Renderer<NaturalJoin> {
+    /**
+     * Creates a natural-join renderer.
+     */
+    public NaturalJoinRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

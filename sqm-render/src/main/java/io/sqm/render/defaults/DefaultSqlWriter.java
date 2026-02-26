@@ -20,10 +20,21 @@ public class DefaultSqlWriter implements SqlWriter {
     private int indentLevel = 0;
     private boolean atLineStart = true;
 
+    /**
+     * Creates a SQL writer with default indentation size.
+     *
+     * @param ctx render context.
+     */
     public DefaultSqlWriter(RenderContext ctx) {
         this(ctx, 2);
     }
 
+    /**
+     * Creates a SQL writer with custom indentation size.
+     *
+     * @param ctx        render context.
+     * @param indentSize spaces per indentation level.
+     */
     public DefaultSqlWriter(RenderContext ctx, int indentSize) {
         this.ctx = ctx;
         this.indentSize = Math.max(0, indentSize);

@@ -12,7 +12,16 @@ import io.sqm.parser.spi.Parser;
 
 import static io.sqm.parser.spi.ParseResult.error;
 
+/**
+ * Parser for parameter expressions.
+ */
 public class ParamExprParser implements Parser<ParamExpr> {
+    /**
+     * Creates a parameter-expression parser.
+     */
+    public ParamExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

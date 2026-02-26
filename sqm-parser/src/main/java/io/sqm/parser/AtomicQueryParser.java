@@ -42,6 +42,12 @@ import static io.sqm.parser.spi.ParseResult.error;
 public class AtomicQueryParser {
 
     /**
+     * Creates an atomic-query parser.
+     */
+    public AtomicQueryParser() {
+    }
+
+    /**
      * Parses an atomic (non-composite) SQL query.
      *
      * @param cur the cursor providing access to the token stream

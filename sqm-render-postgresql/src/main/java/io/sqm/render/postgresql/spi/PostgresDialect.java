@@ -6,6 +6,9 @@ import io.sqm.core.postgresql.dialect.PostgresCapabilities;
 import io.sqm.render.postgresql.Renderers;
 import io.sqm.render.spi.*;
 
+/**
+ * PostgreSQL-specific SQL rendering dialect implementation.
+ */
 public class PostgresDialect implements SqlDialect {
 
     private final IdentifierQuoter quoter = new PostgresIdentifierQuoter();
@@ -74,7 +77,7 @@ public class PostgresDialect implements SqlDialect {
     }
 
     /**
-     * Gets booleans that define boolean literals & predicate rules.
+        * Gets booleans that define boolean literals and predicate rules.
      *
      * @return booleans.
      */
@@ -103,6 +106,11 @@ public class PostgresDialect implements SqlDialect {
         return paginationStyle;
     }
 
+    /**
+     * Returns dialect capabilities used for feature gating during rendering.
+     *
+     * @return dialect capabilities
+     */
     @Override
     public DialectCapabilities capabilities() {
         return capabilities;

@@ -18,6 +18,12 @@ import static io.sqm.parser.spi.ParseResult.ok;
  */
 public class GroupingSetParser implements MatchableParser<GroupItem.GroupingSet> {
     /**
+     * Creates a grouping-set parser.
+     */
+    public GroupingSetParser() {
+    }
+
+    /**
      * Performs a look-ahead test to determine whether this parser is applicable
      * at the current cursor position.
      *

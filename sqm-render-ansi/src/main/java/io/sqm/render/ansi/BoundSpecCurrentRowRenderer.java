@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders CURRENT ROW window bounds.
+ */
 public class BoundSpecCurrentRowRenderer implements Renderer<BoundSpec.CurrentRow> {
+    /**
+     * Creates a CURRENT ROW bound renderer.
+     */
+    public BoundSpecCurrentRowRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

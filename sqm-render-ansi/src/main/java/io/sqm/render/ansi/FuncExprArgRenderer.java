@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders expression arguments in function calls.
+ */
 public class FuncExprArgRenderer implements Renderer<FunctionExpr.Arg.ExprArg> {
+    /**
+     * Creates a function-expression-argument renderer.
+     */
+    public FuncExprArgRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

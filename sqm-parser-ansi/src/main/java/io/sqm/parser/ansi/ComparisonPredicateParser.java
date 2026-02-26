@@ -11,7 +11,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parser for comparison predicates.
+ */
 public class ComparisonPredicateParser implements Parser<ComparisonPredicate>, InfixParser<Expression, ComparisonPredicate> {
+    /**
+     * Creates a comparison-predicate parser.
+     */
+    public ComparisonPredicateParser() {
+    }
+
 
     private final ComparisonOperatorParser operatorParser = new ComparisonOperatorParser();
 

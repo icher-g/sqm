@@ -16,7 +16,16 @@ import java.util.List;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses queries with {@code WITH} clauses.
+ */
 public class WithQueryParser implements Parser<WithQuery> {
+    /**
+     * Creates a with-query parser.
+     */
+    public WithQueryParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders literal expressions.
+ */
 public class LiteralExprRenderer implements Renderer<LiteralExpr> {
+    /**
+     * Creates a literal-expression renderer.
+     */
+    public LiteralExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

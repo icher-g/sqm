@@ -91,7 +91,7 @@ public interface Parser<T extends Node> extends Handler<T> {
      * has already been consumed.
      *
      * @param firstPart already parsed first identifier part
-     * @param cur cursor positioned after the first part
+     * @param cur       cursor positioned after the first part
      * @return parsed qualified name
      */
     default QualifiedName parseQualifiedName(Identifier firstPart, Cursor cur) {
@@ -132,6 +132,8 @@ public interface Parser<T extends Node> extends Handler<T> {
     /**
      * Parses a list of items delimited by comma.
      *
+     * @param <R>   supertype of parsed items
+     * @param <C>   concrete parser target type
      * @param clazz a type of the item.
      * @param cur   a Cursor instance that contains a list of tokens representing the spec to be parsed.
      * @param ctx   a parser context containing parsers and lookups.

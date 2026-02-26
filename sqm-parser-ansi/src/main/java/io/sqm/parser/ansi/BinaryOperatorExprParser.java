@@ -15,7 +15,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parser for generic binary-operator expressions.
+ */
 public class BinaryOperatorExprParser implements Parser<Expression>, InfixParser<Expression, BinaryOperatorExpr> {
+    /**
+     * Creates a binary-operator expression parser.
+     */
+    public BinaryOperatorExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

@@ -11,7 +11,16 @@ import io.sqm.parser.spi.ParseResult;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses subqueries used as scalar query expressions.
+ */
 public class QueryExprParser implements MatchableParser<QueryExpr> {
+    /**
+     * Creates a query-expression parser.
+     */
+    public QueryExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

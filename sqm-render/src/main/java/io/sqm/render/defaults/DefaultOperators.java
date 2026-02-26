@@ -2,7 +2,16 @@ package io.sqm.render.defaults;
 
 import io.sqm.render.spi.Operators;
 
+/**
+ * Default SQL operator tokens.
+ */
 public class DefaultOperators implements Operators {
+
+    /**
+     * Creates default operator definitions.
+     */
+    public DefaultOperators() {
+    }
 
     @Override
     public String in() {

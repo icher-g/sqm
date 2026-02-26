@@ -14,7 +14,16 @@ import java.util.Set;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses ORDER BY item specifications.
+ */
 public class OrderItemParser implements Parser<OrderItem> {
+
+    /**
+     * Creates an order-item parser.
+     */
+    public OrderItemParser() {
+    }
 
     /**
      * Parses the spec represented by the {@link Cursor} instance.

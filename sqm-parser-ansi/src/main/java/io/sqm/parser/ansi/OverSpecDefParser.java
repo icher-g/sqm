@@ -13,7 +13,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses inline {@code OVER (...)} window specifications.
+ */
 public class OverSpecDefParser implements Parser<OverSpec.Def> {
+    /**
+     * Creates an over-spec definition parser.
+     */
+    public OverSpecDefParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

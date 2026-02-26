@@ -14,7 +14,16 @@ import java.util.List;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses {@code ORDER BY} clauses.
+ */
 public class OrderByParser implements Parser<OrderBy> {
+    /**
+     * Creates an order-by parser.
+     */
+    public OrderByParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

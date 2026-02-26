@@ -12,7 +12,16 @@ import io.sqm.parser.spi.ParseResult;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses {@code LATERAL} table references.
+ */
 public class LateralParser implements MatchableParser<Lateral> {
+    /**
+     * Creates a lateral parser.
+     */
+    public LateralParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

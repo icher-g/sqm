@@ -13,6 +13,9 @@ import java.util.Map;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parser for SQL JOIN clauses.
+ */
 public class JoinParser implements Parser<Join> {
 
     private static final Map<TokenType, JoinKind> token2join = Map.of(
@@ -21,6 +24,12 @@ public class JoinParser implements Parser<Join> {
         TokenType.RIGHT, JoinKind.RIGHT,
         TokenType.FULL, JoinKind.FULL
     );
+
+    /**
+     * Creates a join parser.
+     */
+    public JoinParser() {
+    }
 
     /**
      * Parses {@link JoinKind} from the {@link Cursor}.

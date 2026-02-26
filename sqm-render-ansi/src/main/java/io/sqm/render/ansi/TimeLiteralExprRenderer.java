@@ -11,6 +11,12 @@ import io.sqm.render.spi.Renderer;
  */
 public class TimeLiteralExprRenderer implements Renderer<TimeLiteralExpr> {
     /**
+     * Creates a time-literal renderer.
+     */
+    public TimeLiteralExprRenderer() {
+    }
+
+    /**
      * Renders the node into an {@link SqlWriter}.
      *
      * @param node a node to render.

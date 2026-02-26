@@ -8,7 +8,16 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+/**
+ * Entry-point parser for arithmetic expressions.
+ */
 public class ArithmeticExprParser implements Parser<Expression> {
+    /**
+     * Creates an arithmetic-expression parser.
+     */
+    public ArithmeticExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

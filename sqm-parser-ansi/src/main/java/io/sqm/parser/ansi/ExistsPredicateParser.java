@@ -11,7 +11,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses {@code [NOT] EXISTS (...)} predicates.
+ */
 public class ExistsPredicateParser implements Parser<ExistsPredicate> {
+    /**
+     * Creates an exists predicate parser.
+     */
+    public ExistsPredicateParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

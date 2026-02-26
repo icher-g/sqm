@@ -13,6 +13,12 @@ import io.sqm.render.spi.Renderer;
 public class CollateExprRenderer implements Renderer<CollateExpr> {
 
     /**
+     * Creates a COLLATE-expression renderer.
+     */
+    public CollateExprRenderer() {
+    }
+
+    /**
      * Renders the node into an {@link SqlWriter}.
      *
      * @param node a node to render.

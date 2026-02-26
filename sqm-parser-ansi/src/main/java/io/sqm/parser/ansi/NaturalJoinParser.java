@@ -12,7 +12,16 @@ import io.sqm.parser.spi.ParseResult;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses natural joins.
+ */
 public class NaturalJoinParser implements MatchableParser<NaturalJoin> {
+    /**
+     * Creates a natural-join parser.
+     */
+    public NaturalJoinParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

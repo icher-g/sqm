@@ -8,6 +8,9 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.sqm.core.*;
 
+/**
+ * Jackson mixin root for predicate polymorphism.
+ */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = AndPredicate.Impl.class, name = "and"),
@@ -24,4 +27,10 @@ import io.sqm.core.*;
     @JsonSubTypes.Type(value = UnaryPredicate.Impl.class, name = "unary")
 })
 public abstract class PredicateMixin extends CommonJsonMixin {
+
+    /**
+     * Creates predicate mixin metadata.
+     */
+    protected PredicateMixin() {
+    }
 }

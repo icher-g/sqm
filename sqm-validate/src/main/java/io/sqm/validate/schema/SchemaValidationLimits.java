@@ -51,6 +51,12 @@ public record SchemaValidationLimits(
         private Integer maxSelectColumns;
 
         /**
+         * Creates an empty limits builder.
+         */
+        public Builder() {
+        }
+
+        /**
          * Sets maximum join count allowed per SELECT query.
          *
          * @param maxJoinCount max join count, must be >= 0.

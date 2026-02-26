@@ -10,7 +10,16 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+/**
+ * Parser for SELECT-list items.
+ */
 public class SelectItemParser implements Parser<SelectItem> {
+    /**
+     * Creates a select-item parser.
+     */
+    public SelectItemParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

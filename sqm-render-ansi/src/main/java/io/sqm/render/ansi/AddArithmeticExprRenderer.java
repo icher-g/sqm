@@ -6,7 +6,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders additive arithmetic expressions.
+ */
 public class AddArithmeticExprRenderer implements Renderer<AddArithmeticExpr> {
+    /**
+     * Creates an additive-arithmetic renderer.
+     */
+    public AddArithmeticExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

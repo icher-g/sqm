@@ -14,6 +14,12 @@ import java.util.Optional;
  */
 public final class PostgresDistinctOnValidationRule implements SchemaValidationRule<SelectQuery> {
     /**
+     * Creates the DISTINCT ON validation rule.
+     */
+    public PostgresDistinctOnValidationRule() {
+    }
+
+    /**
      * Returns supported node type.
      *
      * @return select query type.

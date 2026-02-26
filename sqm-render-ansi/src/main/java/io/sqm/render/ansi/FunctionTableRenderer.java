@@ -7,7 +7,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders table-valued function references.
+ */
 public class FunctionTableRenderer implements Renderer<FunctionTable> {
+    /**
+     * Creates a function-table renderer.
+     */
+    public FunctionTableRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

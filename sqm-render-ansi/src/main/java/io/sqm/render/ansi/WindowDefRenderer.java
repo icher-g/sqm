@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders WINDOW definitions.
+ */
 public class WindowDefRenderer implements Renderer<WindowDef> {
+    /**
+     * Creates a window-definition renderer.
+     */
+    public WindowDefRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

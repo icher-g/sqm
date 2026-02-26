@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders named parameters for ANSI targets.
+ */
 public class NamedParamExprRenderer implements Renderer<NamedParamExpr> {
+    /**
+     * Creates a named-parameter renderer.
+     */
+    public NamedParamExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

@@ -10,7 +10,16 @@ import static io.sqm.parser.core.OperatorTokens.isMinus;
 import static io.sqm.parser.core.OperatorTokens.isPlus;
 import static io.sqm.parser.spi.ParseResult.error;
 
+/**
+ * Parses additive arithmetic expressions with {@code +} and {@code -} operators.
+ */
 public class AdditiveArithmeticExprParser implements Parser<Expression> {
+    /**
+     * Creates an additive arithmetic expression parser.
+     */
+    public AdditiveArithmeticExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

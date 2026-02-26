@@ -10,6 +10,9 @@ import io.sqm.core.AnonymousParamExpr;
 import io.sqm.core.NamedParamExpr;
 import io.sqm.core.OrdinalParamExpr;
 
+/**
+ * Jackson mixin root for parameter-expression polymorphism.
+ */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = AnonymousParamExpr.Impl.class, name = "anonymous-param"),
@@ -17,4 +20,10 @@ import io.sqm.core.OrdinalParamExpr;
     @JsonSubTypes.Type(value = OrdinalParamExpr.Impl.class, name = "ordinal-param")
 })
 public abstract class ParamExprMixin extends CommonJsonMixin {
+
+    /**
+     * Creates parameter-expression mixin metadata.
+     */
+    protected ParamExprMixin() {
+    }
 }

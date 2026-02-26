@@ -3,6 +3,9 @@ package io.sqm.render.ansi;
 import io.sqm.render.repos.DefaultRenderersRepository;
 import io.sqm.render.spi.RenderersRepository;
 
+/**
+ * Factory for ANSI renderers repository.
+ */
 public final class Renderers {
 
     private static RenderersRepository repository;
@@ -10,6 +13,11 @@ public final class Renderers {
     private Renderers() {
     }
 
+    /**
+     * Returns a singleton ANSI renderers repository.
+     *
+     * @return ANSI renderers repository.
+     */
     public static RenderersRepository ansi() {
         if (repository == null) {
             repository = registerDefaults(new DefaultRenderersRepository());

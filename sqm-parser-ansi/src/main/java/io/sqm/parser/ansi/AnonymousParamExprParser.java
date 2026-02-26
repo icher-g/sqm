@@ -10,7 +10,16 @@ import io.sqm.parser.spi.ParseResult;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parser for anonymous parameter expressions.
+ */
 public class AnonymousParamExprParser implements MatchableParser<AnonymousParamExpr> {
+    /**
+     * Creates an anonymous-parameter parser.
+     */
+    public AnonymousParamExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

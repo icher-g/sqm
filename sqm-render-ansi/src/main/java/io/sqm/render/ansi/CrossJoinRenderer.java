@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders CROSS JOIN clauses.
+ */
 public class CrossJoinRenderer implements Renderer<CrossJoin> {
+    /**
+     * Creates a cross-join renderer.
+     */
+    public CrossJoinRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

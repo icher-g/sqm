@@ -15,7 +15,16 @@ import static io.sqm.parser.JoinParser.parseKind;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses joins with an {@code ON} predicate.
+ */
 public class OnJoinParser implements MatchableParser<OnJoin>, InfixParser<TableRef, OnJoin> {
+
+    /**
+     * Creates an ON-join parser.
+     */
+    public OnJoinParser() {
+    }
 
     /**
      * Parses the spec represented by the {@link Cursor} instance.

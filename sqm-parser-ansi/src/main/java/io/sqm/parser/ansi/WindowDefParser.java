@@ -11,7 +11,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses named window definitions.
+ */
 public class WindowDefParser implements Parser<WindowDef> {
+    /**
+     * Creates a window-definition parser.
+     */
+    public WindowDefParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

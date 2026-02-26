@@ -39,6 +39,11 @@ public interface IdentifierQuoting {
      */
     boolean supports(char ch);
 
+    /**
+     * Default immutable identifier-quoting implementation.
+     *
+     * @param characters supported opening quote characters
+     */
     record Impl(Set<Character> characters) implements IdentifierQuoting {
 
         /**

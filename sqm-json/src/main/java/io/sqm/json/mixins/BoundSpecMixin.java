@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.sqm.core.BoundSpec;
 
+/**
+ * Jackson mixin root for window bound-spec polymorphism.
+ */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = BoundSpec.CurrentRow.Impl.class, name = "currentRow"),
@@ -13,4 +16,10 @@ import io.sqm.core.BoundSpec;
     @JsonSubTypes.Type(value = BoundSpec.UnboundedPreceding.Impl.class, name = "unboundedPreceding")
 })
 public class BoundSpecMixin extends CommonJsonMixin {
+
+    /**
+     * Creates bound-spec mixin metadata.
+     */
+    public BoundSpecMixin() {
+    }
 }

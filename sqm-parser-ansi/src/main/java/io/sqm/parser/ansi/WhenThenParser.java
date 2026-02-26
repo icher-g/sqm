@@ -12,7 +12,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses {@code WHEN ... THEN ...} clauses in CASE expressions.
+ */
 public class WhenThenParser implements Parser<WhenThen> {
+    /**
+     * Creates a when-then parser.
+     */
+    public WhenThenParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

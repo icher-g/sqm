@@ -13,7 +13,16 @@ import static io.sqm.parser.core.OperatorTokens.isSlash;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses binary division expressions.
+ */
 public class DivArithmeticExprParser implements Parser<DivArithmeticExpr>, InfixParser<Expression, DivArithmeticExpr> {
+    /**
+     * Creates a division expression parser.
+     */
+    public DivArithmeticExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

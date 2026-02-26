@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders scalar subquery expressions.
+ */
 public class QueryExprRenderer implements Renderer<QueryExpr> {
+    /**
+     * Creates a query-expression renderer.
+     */
+    public QueryExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

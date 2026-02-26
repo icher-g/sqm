@@ -14,7 +14,16 @@ import java.util.ArrayList;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses {@code CASE ... WHEN ... THEN ... ELSE ... END} expressions.
+ */
 public class CaseExprParser implements MatchableParser<CaseExpr> {
+    /**
+     * Creates a case expression parser.
+     */
+    public CaseExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

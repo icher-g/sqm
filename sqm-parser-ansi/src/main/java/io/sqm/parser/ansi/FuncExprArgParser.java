@@ -10,7 +10,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses function expression arguments.
+ */
 public class FuncExprArgParser implements Parser<FunctionExpr.Arg.ExprArg> {
+    /**
+     * Creates a function argument parser.
+     */
+    public FuncExprArgParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

@@ -12,7 +12,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses predicate disjunctions joined by {@code OR}.
+ */
 public class OrPredicateParser implements Parser<Predicate> {
+    /**
+     * Creates an OR-predicate parser.
+     */
+    public OrPredicateParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

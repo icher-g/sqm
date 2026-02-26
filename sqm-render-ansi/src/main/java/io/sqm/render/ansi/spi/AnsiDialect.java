@@ -9,6 +9,9 @@ import io.sqm.render.defaults.DefaultValueFormatter;
 import io.sqm.render.ansi.Renderers;
 import io.sqm.render.spi.*;
 
+/**
+ * ANSI SQL rendering dialect implementation.
+ */
 public class AnsiDialect implements SqlDialect {
 
     private final IdentifierQuoter quoter = new AnsiIdentifierQuoter();
@@ -36,6 +39,11 @@ public class AnsiDialect implements SqlDialect {
         this.capabilities = buildCapabilities(version);
     }
 
+    /**
+     * The name of the dialect.
+     *
+     * @return a name of the dialect.
+     */
     @Override
     public String name() {
         return "ansi";

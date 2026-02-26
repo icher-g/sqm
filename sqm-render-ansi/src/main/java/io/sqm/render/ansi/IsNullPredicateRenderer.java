@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders IS NULL and IS NOT NULL predicates.
+ */
 public class IsNullPredicateRenderer implements Renderer<IsNullPredicate> {
+    /**
+     * Creates an IS NULL predicate renderer.
+     */
+    public IsNullPredicateRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

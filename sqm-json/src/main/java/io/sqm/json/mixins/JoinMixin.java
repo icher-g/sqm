@@ -11,6 +11,9 @@ import io.sqm.core.NaturalJoin;
 import io.sqm.core.OnJoin;
 import io.sqm.core.UsingJoin;
 
+/**
+ * Jackson mixin root for join polymorphism.
+ */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = CrossJoin.Impl.class, name = "cross"),
@@ -19,4 +22,10 @@ import io.sqm.core.UsingJoin;
     @JsonSubTypes.Type(value = UsingJoin.Impl.class, name = "using")
 })
 public abstract class JoinMixin extends CommonJsonMixin {
+
+    /**
+     * Creates join mixin metadata.
+     */
+    protected JoinMixin() {
+    }
 }

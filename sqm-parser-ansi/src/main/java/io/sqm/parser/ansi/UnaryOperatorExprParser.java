@@ -12,7 +12,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses unary operator expressions.
+ */
 public class UnaryOperatorExprParser implements Parser<UnaryOperatorExpr> {
+    /**
+     * Creates a unary-operator expression parser.
+     */
+    public UnaryOperatorExprParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

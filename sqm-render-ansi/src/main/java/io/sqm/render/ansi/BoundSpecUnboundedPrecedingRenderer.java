@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders UNBOUNDED PRECEDING window bounds.
+ */
 public class BoundSpecUnboundedPrecedingRenderer implements Renderer<BoundSpec.UnboundedPreceding> {
+    /**
+     * Creates an UNBOUNDED PRECEDING bound renderer.
+     */
+    public BoundSpecUnboundedPrecedingRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

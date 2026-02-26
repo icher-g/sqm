@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders anonymous parameter expressions.
+ */
 public class AnonymousParamExprRenderer implements Renderer<AnonymousParamExpr> {
+    /**
+     * Creates an anonymous-parameter renderer.
+     */
+    public AnonymousParamExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

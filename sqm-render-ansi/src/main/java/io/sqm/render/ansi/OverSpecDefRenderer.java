@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders inline window OVER definitions.
+ */
 public class OverSpecDefRenderer implements Renderer<OverSpec.Def> {
+    /**
+     * Creates an OVER-definition renderer.
+     */
+    public OverSpecDefRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

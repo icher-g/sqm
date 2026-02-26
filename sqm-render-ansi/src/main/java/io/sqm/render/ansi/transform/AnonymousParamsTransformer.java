@@ -37,6 +37,12 @@ import java.util.Map;
 public final class AnonymousParamsTransformer extends RecursiveNodeTransformer {
 
     /**
+     * Creates a transformer that normalizes parameters to anonymous placeholders.
+     */
+    public AnonymousParamsTransformer() {
+    }
+
+    /**
      * Mapping from named parameter identifiers to their assigned positions.
      * <p>
      * Example: {@code "tenantId" -> 1}.

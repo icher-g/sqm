@@ -15,6 +15,12 @@ public class DefaultParsersRepository implements ParsersRepository {
 
     private final Map<Class<?>, Handler<?>> parsers = new ConcurrentHashMap<>();
 
+    /**
+     * Creates an empty parser repository.
+     */
+    public DefaultParsersRepository() {
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public <T extends Node> Parser<T> get(Class<T> type) {

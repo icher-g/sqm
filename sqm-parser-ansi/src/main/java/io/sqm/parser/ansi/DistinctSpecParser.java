@@ -12,7 +12,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parser for DISTINCT and DISTINCT ON specifications.
+ */
 public class DistinctSpecParser implements Parser<DistinctSpec> {
+    /**
+     * Creates a distinct-spec parser.
+     */
+    public DistinctSpecParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

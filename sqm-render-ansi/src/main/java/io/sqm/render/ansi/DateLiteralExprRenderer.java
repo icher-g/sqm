@@ -10,6 +10,12 @@ import io.sqm.render.spi.Renderer;
  */
 public class DateLiteralExprRenderer implements Renderer<DateLiteralExpr> {
     /**
+     * Creates a date-literal renderer.
+     */
+    public DateLiteralExprRenderer() {
+    }
+
+    /**
      * Renders the node into an {@link SqlWriter}.
      *
      * @param node a node to render.

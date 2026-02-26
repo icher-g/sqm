@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders frame specifications with a single bound.
+ */
 public class FrameSpecSingleRenderer implements Renderer<FrameSpec.Single> {
+    /**
+     * Creates a single-bound frame renderer.
+     */
+    public FrameSpecSingleRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

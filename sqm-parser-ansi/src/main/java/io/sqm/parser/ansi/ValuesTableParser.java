@@ -13,7 +13,16 @@ import java.util.List;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses table references based on {@code VALUES} expressions.
+ */
 public class ValuesTableParser implements MatchableParser<ValuesTable> {
+    /**
+     * Creates a values-table parser.
+     */
+    public ValuesTableParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

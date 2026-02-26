@@ -12,7 +12,16 @@ import io.sqm.parser.spi.Parser;
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parser for BETWEEN and NOT BETWEEN predicates.
+ */
 public class BetweenPredicateParser implements Parser<BetweenPredicate>, InfixParser<Expression, BetweenPredicate> {
+    /**
+     * Creates a BETWEEN predicate parser.
+     */
+    public BetweenPredicateParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

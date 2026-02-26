@@ -8,7 +8,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders binary operator expressions.
+ */
 public class BinaryOperatorExprRenderer implements Renderer<BinaryOperatorExpr> {
+    /**
+     * Creates a binary-operator renderer.
+     */
+    public BinaryOperatorExprRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

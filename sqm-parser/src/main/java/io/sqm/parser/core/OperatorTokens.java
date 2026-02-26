@@ -62,6 +62,9 @@ public final class OperatorTokens {
     }
 
     /**
+     * Checks whether token is {@code OPERATOR("=")}.
+     *
+     * @param t token to test
      * @return {@code true} if token is {@code OPERATOR("=")}
      */
     public static boolean isEq(Token t) {
@@ -69,6 +72,9 @@ public final class OperatorTokens {
     }
 
     /**
+     * Checks whether token is {@code OPERATOR("<>")}.
+     *
+     * @param t token to test
      * @return {@code true} if token is {@code OPERATOR("<>")}
      */
     public static boolean isNeqAngle(Token t) {
@@ -76,6 +82,9 @@ public final class OperatorTokens {
     }
 
     /**
+     * Checks whether token is {@code OPERATOR("!=")}.
+     *
+     * @param t token to test
      * @return {@code true} if token is {@code OPERATOR("!=")}
      */
     public static boolean isNeqBang(Token t) {
@@ -83,6 +92,9 @@ public final class OperatorTokens {
     }
 
     /**
+     * Checks whether token is {@code OPERATOR("<")}.
+     *
+     * @param t token to test
      * @return {@code true} if token is {@code OPERATOR("<")}
      */
     public static boolean isLt(Token t) {
@@ -90,6 +102,9 @@ public final class OperatorTokens {
     }
 
     /**
+     * Checks whether token is {@code OPERATOR("<=")}.
+     *
+     * @param t token to test
      * @return {@code true} if token is {@code OPERATOR("<=")}
      */
     public static boolean isLte(Token t) {
@@ -97,6 +112,9 @@ public final class OperatorTokens {
     }
 
     /**
+     * Checks whether token is {@code OPERATOR(">")}.
+     *
+     * @param t token to test
      * @return {@code true} if token is {@code OPERATOR(">")}
      */
     public static boolean isGt(Token t) {
@@ -104,6 +122,9 @@ public final class OperatorTokens {
     }
 
     /**
+     * Checks whether token is {@code OPERATOR(">=")}.
+     *
+     * @param t token to test
      * @return {@code true} if token is {@code OPERATOR(">=")}
      */
     public static boolean isGte(Token t) {
@@ -111,6 +132,9 @@ public final class OperatorTokens {
     }
 
     /**
+     * Checks whether token is {@code OPERATOR("+")}.
+     *
+     * @param t token to test
      * @return {@code true} if token is {@code OPERATOR("+")}
      */
     public static boolean isPlus(Token t) {
@@ -118,6 +142,9 @@ public final class OperatorTokens {
     }
 
     /**
+     * Checks whether token is {@code OPERATOR("-")}.
+     *
+     * @param t token to test
      * @return {@code true} if token is {@code OPERATOR("-")}
      */
     public static boolean isMinus(Token t) {
@@ -125,6 +152,9 @@ public final class OperatorTokens {
     }
 
     /**
+     * Checks whether token is {@code OPERATOR("*")}.
+     *
+     * @param t token to test
      * @return {@code true} if token is {@code OPERATOR("*")}
      */
     public static boolean isStar(Token t) {
@@ -132,6 +162,9 @@ public final class OperatorTokens {
     }
 
     /**
+     * Checks whether token is {@code OPERATOR("/")}.
+     *
+     * @param t token to test
      * @return {@code true} if token is {@code OPERATOR("/")}
      */
     public static boolean isSlash(Token t) {
@@ -139,6 +172,9 @@ public final class OperatorTokens {
     }
 
     /**
+     * Checks whether token is {@code OPERATOR("%")}.
+     *
+     * @param t token to test
      * @return {@code true} if token is {@code OPERATOR("%")}
      */
     public static boolean isPercent(Token t) {

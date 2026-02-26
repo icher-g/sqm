@@ -11,7 +11,16 @@ import io.sqm.parser.spi.ParseResult;
 import static io.sqm.parser.core.OperatorTokens.isStar;
 import static io.sqm.parser.spi.ParseResult.ok;
 
+/**
+ * Parses qualified star select items such as {@code t.*}.
+ */
 public class QualifiedStarSelectItemParser implements MatchableParser<QualifiedStarSelectItem> {
+    /**
+     * Creates a qualified-star select-item parser.
+     */
+    public QualifiedStarSelectItemParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *

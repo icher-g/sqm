@@ -5,7 +5,16 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
+/**
+ * Renders WITH queries and common table expressions.
+ */
 public class WithQueryRenderer implements Renderer<WithQuery> {
+    /**
+     * Creates a WITH-query renderer.
+     */
+    public WithQueryRenderer() {
+    }
+
     /**
      * Renders the node into an {@link SqlWriter}.
      *

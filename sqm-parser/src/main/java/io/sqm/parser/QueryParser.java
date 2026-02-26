@@ -9,7 +9,16 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
+/**
+ * Entry-point parser for SQL query nodes.
+ */
 public class QueryParser implements Parser<Query> {
+    /**
+     * Creates a query parser.
+     */
+    public QueryParser() {
+    }
+
     /**
      * Parses the spec represented by the {@link Cursor} instance.
      *
