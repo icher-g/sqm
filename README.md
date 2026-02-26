@@ -174,6 +174,124 @@ See:
 - Example class: `examples/src/main/java/io/sqm/examples/Middleware_EndToEndPolicyFlow.java`
 - Integration tests: `sqm-it/src/test/java/io/sqm/it/PostgresMiddlewareIntegrationTest.java`
 
+#### Transport Runtimes (REST + MCP)
+
+REST runtime (Spring Boot application):
+
+```bash
+mvn -pl sqm-middleware-rest -am spring-boot:run
+```
+
+HTTP endpoints:
+
+- `POST /sqm/middleware/analyze`
+- `POST /sqm/middleware/enforce`
+- `POST /sqm/middleware/explain`
+
+Example request body:
+
+```json
+{
+    "sql": "select id from users",
+    "context": {
+        "dialect": "postgresql",
+        "principal": "agent",
+        "tenant": "tenant-a",
+        "mode": "ANALYZE",
+        "parameterizationMode": "OFF"
+    }
+}
+```
+
+MCP runtime (long-running stdio JSON-RPC server):
+
+```bash
+mvn -pl sqm-middleware-mcp -am exec:java -Dexec.mainClass=io.sqm.middleware.mcp.SqlMiddlewareMcpApplication
+```
+
+MCP uses framed messages on stdio (`Content-Length` + JSON-RPC body).
+
+`initialize` request:
+
+```text
+Content-Length: 58
+
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}
+```
+
+`tools/list` request:
+
+```text
+Content-Length: 58
+
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
+```
+
+`tools/call` request (`middleware.analyze`):
+
+```text
+Content-Length: 205
+
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"middleware.analyze","arguments":{"sql":"select id from users","context":{"dialect":"postgresql","mode":"ANALYZE","parameterizationMode":"OFF"}}}}
+```
+
+Tool names exposed by MCP runtime:
+
+- `middleware.analyze`
+- `middleware.enforce`
+- `middleware.explain`
+
+Runtime configuration (applies to both REST and MCP hosts):
+
+- Schema source:
+    - `sqm.middleware.schema.source` (`manual` | `json` | `jdbc`)
+    - env: `SQM_MIDDLEWARE_SCHEMA_SOURCE`
+    - `manual` loads default schema from JSON file/resource, not from hardcoded Java model
+    - optional manual default JSON override: `sqm.middleware.schema.defaultJson.path` / `SQM_MIDDLEWARE_SCHEMA_DEFAULT_JSON_PATH`
+- JSON schema source:
+    - `sqm.middleware.schema.json.path`
+    - env: `SQM_MIDDLEWARE_SCHEMA_JSON_PATH`
+- JDBC schema source:
+    - `sqm.middleware.jdbc.url` / `SQM_MIDDLEWARE_JDBC_URL` (required for `jdbc` source)
+    - `sqm.middleware.jdbc.user` / `SQM_MIDDLEWARE_JDBC_USER`
+    - `sqm.middleware.jdbc.password` / `SQM_MIDDLEWARE_JDBC_PASSWORD`
+    - `sqm.middleware.jdbc.driver` / `SQM_MIDDLEWARE_JDBC_DRIVER` (optional class name)
+    - `sqm.middleware.jdbc.schemaPattern` / `SQM_MIDDLEWARE_JDBC_SCHEMA_PATTERN`
+- Rewrite and validation:
+    - `sqm.middleware.rewrite.enabled` / `SQM_MIDDLEWARE_REWRITE_ENABLED` (`true` by default)
+    - `sqm.middleware.rewrite.rules` / `SQM_MIDDLEWARE_REWRITE_RULES` (comma-separated built-in rule names)
+    - `sqm.middleware.validation.maxJoinCount` / `SQM_MIDDLEWARE_VALIDATION_MAX_JOIN_COUNT`
+    - `sqm.middleware.validation.maxSelectColumns` / `SQM_MIDDLEWARE_VALIDATION_MAX_SELECT_COLUMNS`
+- Guardrails:
+    - `sqm.middleware.guardrails.maxSqlLength` / `SQM_MIDDLEWARE_GUARDRAILS_MAX_SQL_LENGTH`
+    - `sqm.middleware.guardrails.timeoutMillis` / `SQM_MIDDLEWARE_GUARDRAILS_TIMEOUT_MILLIS`
+    - `sqm.middleware.guardrails.maxRows` / `SQM_MIDDLEWARE_GUARDRAILS_MAX_ROWS`
+    - `sqm.middleware.guardrails.explainDryRun` / `SQM_MIDDLEWARE_GUARDRAILS_EXPLAIN_DRY_RUN`
+
+Example (JSON schema source + rewrite rules):
+
+```bash
+mvn -pl sqm-middleware-rest -am spring-boot:run \
+    -Dsqm.middleware.schema.source=json \
+    -Dsqm.middleware.schema.json.path=./schema.json \
+    -Dsqm.middleware.rewrite.rules=LIMIT_INJECTION,CANONICALIZATION
+```
+
+Config templates included in the repo:
+
+- [sqm-middleware-rest/src/main/resources/application.properties](sqm-middleware-rest/src/main/resources/application.properties)
+- [sqm-middleware-mcp/.env.example](sqm-middleware-mcp/.env.example)
+
+Windows named-pipe bridge helpers:
+
+```powershell
+# terminal 1: start bridge (stdio MCP <-> named pipes)
+powershell -ExecutionPolicy Bypass -File .\scripts\start-mcp-named-pipe-bridge.ps1
+
+# terminal 2: run sample requests through the named pipes
+powershell -ExecutionPolicy Bypass -File .\scripts\test-mcp-named-pipe.ps1
+```
+
 ---
 
 ### SQL File Codegen (Maven)

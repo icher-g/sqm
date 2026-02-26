@@ -29,6 +29,16 @@
     <file url="file://$PROJECT_DIR$/sqm-it/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-json/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-json/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-middleware-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-middleware-api/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-middleware-core/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-middleware-core/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-middleware-it/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-middleware-it/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-middleware-mcp/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-middleware-mcp/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-middleware-rest/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-middleware-rest/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-parser-ansi/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-parser-ansi/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-parser-postgresql/src/main/java" charset="UTF-8" />
