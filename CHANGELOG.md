@@ -1,5 +1,23 @@
 ﻿# Changelog
 
+## [Unreleased]
+### Added
+- Middleware framework example in `examples`:
+  - `examples/src/main/java/io/sqm/examples/Middleware_EndToEndPolicyFlow.java`
+- Middleware wiki guide:
+  - `wiki-src/SQL-Middleware-Framework.md`
+- Middleware policy templates wiki guide:
+  - `wiki-src/SQL-Middleware-Policy-Templates.md`
+- PostgreSQL middleware integration tests (`sqm-it`):
+  - `sqm-it/src/test/java/io/sqm/it/PostgresMiddlewareIntegrationTest.java`
+- Docker-free middleware flow tests (`sqm-control`):
+  - `sqm-control/src/test/java/io/sqm/control/AiSqlMiddlewareFlowTest.java`
+
+### Changed
+- Updated wiki navigation and home quickstart to include middleware guidance.
+- Updated README with `sqm-control` middleware usage overview and links to example/tests.
+- Clarified `docs/MODEL.md` scope note: middleware composes behavior on top of existing AST nodes (no new node types introduced by middleware).
+
 ## [v0.3.0] - 2026-02-13
 ### Added
 - New module: `sqm-core-postgresql` for shared PostgreSQL model/capability artifacts reused across parser, renderer, and validator layers.

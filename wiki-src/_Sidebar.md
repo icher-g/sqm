@@ -6,6 +6,8 @@
 - [DSL Usage](DSL-Usage)
 - [Parsing SQL](Parsing-SQL)
 - [Rendering SQL](Rendering-SQL)
+- [SQL Middleware Framework](SQL-Middleware-Framework)
+- [SQL Middleware Policy Templates](SQL-Middleware-Policy-Templates)
 - [JSON Serialization](JSON-Serialization)
 - [Schema Validation](Schema-Validation)
 - [PostgreSQL Validation](PostgreSQL-Validation)

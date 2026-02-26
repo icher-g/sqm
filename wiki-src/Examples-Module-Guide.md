@@ -2,6 +2,25 @@
 
 The `examples` module demonstrates end-to-end SQM usage and code generation.
 
+## Middleware Example
+
+The examples module includes a middleware-focused walkthrough:
+
+- `examples/src/main/java/io/sqm/examples/Middleware_EndToEndPolicyFlow.java`
+
+It demonstrates:
+
+- validation-only flow (`buildValidationConfig` + `analyze`)
+- full flow with rewrites (`buildValidationAndRewriteConfig` + `enforce`)
+- bind parameterization output (`ParameterizationMode.BIND`)
+- custom extension points (`queryRewriter`, `explainer`, `auditPublisher`)
+
+Run all examples module tests/build:
+
+```bash
+mvn -pl examples -am test
+```
+
 ## Default Mode
 
 - Uses `sqm-codegen-maven-plugin` with `schemaProvider=json`
