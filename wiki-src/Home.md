@@ -14,7 +14,11 @@ SQM is a Java library for SQL modeling, parsing, rendering, validation, and code
 var middleware = SqlMiddleware.create(
   SqlMiddlewareConfig.builder(schema)
     .validationSettings(SchemaValidationSettings.defaults())
-    .builtInRewriteSettings(BuiltInRewriteSettings.defaults())
+    .builtInRewriteSettings(
+      BuiltInRewriteSettings.builder()
+        .defaultLimitInjectionValue(1000)
+        .build()
+    )
     .rewriteRules(BuiltInRewriteRule.LIMIT_INJECTION)
     .buildValidationAndRewriteConfig()
 );

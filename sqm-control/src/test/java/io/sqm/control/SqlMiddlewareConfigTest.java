@@ -76,4 +76,37 @@ class SqlMiddlewareConfigTest {
         assertNotNull(config.guardrails());
         assertNotNull(config.queryParser());
     }
+
+    @Test
+    void validation_and_rewrite_defaults_are_safe_when_rewrite_config_is_omitted() {
+        var middleware = SqlMiddleware.create(
+            SqlMiddlewareConfig.builder(SCHEMA)
+                .validationSettings(SchemaValidationSettings.defaults())
+                .buildValidationAndRewriteConfig()
+        );
+
+        var result = middleware.analyze("select id from users", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+
+        assertEquals(DecisionKind.REWRITE, result.kind());
+        assertEquals(ReasonCode.REWRITE_LIMIT, result.reasonCode());
+        assertNotNull(result.rewrittenSql());
+        assertTrue(result.rewrittenSql().toLowerCase().contains("limit"));
+    }
+
+    @Test
+    void validation_and_rewrite_with_explicit_empty_rules_uses_built_in_rewrites() {
+        var middleware = SqlMiddleware.create(
+            SqlMiddlewareConfig.builder(SCHEMA)
+                .validationSettings(SchemaValidationSettings.defaults())
+                .rewriteRules()
+                .buildValidationAndRewriteConfig()
+        );
+
+        var result = middleware.analyze("select id from users", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+
+        assertEquals(DecisionKind.REWRITE, result.kind());
+        assertEquals(ReasonCode.REWRITE_LIMIT, result.reasonCode());
+        assertNotNull(result.rewrittenSql());
+        assertTrue(result.rewrittenSql().toLowerCase().contains("limit"));
+    }
 }

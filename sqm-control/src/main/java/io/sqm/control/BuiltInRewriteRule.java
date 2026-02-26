@@ -1,12 +1,7 @@
 package io.sqm.control;
 
-import io.sqm.control.rewrite.BuiltInSqlRewriters;
-
 /**
  * Built-in AST rewrite rules planned for SQL middleware policy enforcement.
- *
- * <p>Only rules that are implemented and wired in the current version are selectable
- * through {@link BuiltInSqlRewriters#allAvailable()}.</p>
  */
 public enum BuiltInRewriteRule {
     /**

@@ -34,7 +34,9 @@ public final class LimitInjectionRewriteRule implements QueryRewriteRule {
      * @return rule instance
      */
     public static LimitInjectionRewriteRule of(long defaultLimit) {
-        BuiltInRewriteSettings settings = new BuiltInRewriteSettings(defaultLimit);
+        BuiltInRewriteSettings settings = BuiltInRewriteSettings.builder()
+            .defaultLimitInjectionValue(defaultLimit)
+            .build();
         return new LimitInjectionRewriteRule(LimitInjectionTransformer.of(defaultLimit), settings);
     }
 

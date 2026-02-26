@@ -98,7 +98,11 @@ public final class Middleware_EndToEndPolicyFlow {
         SqlMiddleware middleware = SqlMiddleware.create(
             SqlMiddlewareConfig.builder(schema)
                 .validationSettings(SchemaValidationSettings.defaults())
-                .builtInRewriteSettings(BuiltInRewriteSettings.defaults())
+                .builtInRewriteSettings(
+                    BuiltInRewriteSettings.builder()
+                        .defaultLimitInjectionValue(1000)
+                        .build()
+                )
                 .rewriteRules(BuiltInRewriteRule.LIMIT_INJECTION, BuiltInRewriteRule.CANONICALIZATION)
                 .guardrails(new RuntimeGuardrails(10_000, 1_000L, null, false))
                 .buildValidationAndRewriteConfig()

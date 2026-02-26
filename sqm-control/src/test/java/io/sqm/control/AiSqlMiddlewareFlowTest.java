@@ -74,7 +74,11 @@ class AiSqlMiddlewareFlowTest {
         var middleware = SqlMiddleware.create(
             SqlMiddlewareConfig.builder(SCHEMA)
                 .validationSettings(SchemaValidationSettings.defaults())
-                .builtInRewriteSettings(BuiltInRewriteSettings.defaults())
+                .builtInRewriteSettings(
+                    BuiltInRewriteSettings.builder()
+                        .qualificationFailureMode(QualificationFailureMode.SKIP)
+                        .build()
+                )
                 .rewriteRules(BuiltInRewriteRule.LIMIT_INJECTION)
                 .buildValidationAndRewriteConfig()
         );

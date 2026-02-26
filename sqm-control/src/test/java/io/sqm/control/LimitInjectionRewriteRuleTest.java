@@ -26,7 +26,11 @@ class LimitInjectionRewriteRuleTest {
     void deny_mode_rejects_non_literal_limit_expression() {
         var query = SqlQueryParser.standard().parse("select 1 limit (1 + 1)", PG_ANALYZE);
         var rule = LimitInjectionRewriteRule.of(
-            new BuiltInRewriteSettings(10, 10, LimitExcessMode.DENY)
+            BuiltInRewriteSettings.builder()
+                .defaultLimitInjectionValue(10)
+                .maxAllowedLimit(10)
+                .limitExcessMode(LimitExcessMode.DENY)
+                .build()
         );
 
         var ex = assertThrows(RewriteDenyException.class, () -> rule.apply(query, PG_ANALYZE));
@@ -38,7 +42,11 @@ class LimitInjectionRewriteRuleTest {
     void deny_mode_rejects_limit_all() {
         var query = SqlQueryParser.standard().parse("select 1 limit all", PG_ANALYZE);
         var rule = LimitInjectionRewriteRule.of(
-            new BuiltInRewriteSettings(10, 10, LimitExcessMode.DENY)
+            BuiltInRewriteSettings.builder()
+                .defaultLimitInjectionValue(10)
+                .maxAllowedLimit(10)
+                .limitExcessMode(LimitExcessMode.DENY)
+                .build()
         );
 
         var ex = assertThrows(RewriteDenyException.class, () -> rule.apply(query, PG_ANALYZE));
@@ -48,7 +56,11 @@ class LimitInjectionRewriteRuleTest {
 
     @Test
     void clamp_mode_clamps_select_composite_and_with_body_limits() {
-        var settings = new BuiltInRewriteSettings(1000, 10, LimitExcessMode.CLAMP);
+        var settings = BuiltInRewriteSettings.builder()
+            .defaultLimitInjectionValue(1000)
+            .maxAllowedLimit(10)
+            .limitExcessMode(LimitExcessMode.CLAMP)
+            .build();
         var rule = LimitInjectionRewriteRule.of(settings);
 
         var select = SqlQueryParser.standard().parse("select 1 limit 99", PG_ANALYZE);
@@ -70,7 +82,11 @@ class LimitInjectionRewriteRuleTest {
 
     @Test
     void max_limit_policy_keeps_queries_unchanged_when_within_bound_or_no_limit_after_injection() {
-        var settings = new BuiltInRewriteSettings(5, 10, LimitExcessMode.DENY);
+        var settings = BuiltInRewriteSettings.builder()
+            .defaultLimitInjectionValue(5)
+            .maxAllowedLimit(10)
+            .limitExcessMode(LimitExcessMode.DENY)
+            .build();
         var rule = LimitInjectionRewriteRule.of(settings);
 
         var alreadyWithinLimit = SqlQueryParser.standard().parse("select 1 limit 5", PG_ANALYZE);

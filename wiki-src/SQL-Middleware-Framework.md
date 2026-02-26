@@ -17,6 +17,8 @@ with framework entry points:
 - `ExecutionContext` — dialect, principal, tenant, mode, and parameterization mode.
 - `DecisionResult` — `ALLOW`, `DENY`, or `REWRITE` with reason code, optional rewritten SQL, params, fingerprint.
 - `SqlMiddlewareConfig.Builder` — composition point for default and custom middleware wiring.
+- `BuiltInRewriteRules` — source of built-in `QueryRewriteRule` lists.
+- `SqlQueryRewriter.builder()` — composes configured built-in/custom rules into an executable rewrite pipeline.
 
 ## Schema Source Options (Manual / JSON / DB)
 
@@ -97,7 +99,11 @@ Use this when you need normalized/restricted SQL output and deterministic reason
 var middleware = SqlMiddleware.create(
     SqlMiddlewareConfig.builder(schema)
         .validationSettings(SchemaValidationSettings.defaults())
-        .builtInRewriteSettings(BuiltInRewriteSettings.defaults())
+        .builtInRewriteSettings(
+            BuiltInRewriteSettings.builder()
+                .defaultLimitInjectionValue(1000)
+                .build()
+        )
         .rewriteRules(BuiltInRewriteRule.LIMIT_INJECTION, BuiltInRewriteRule.CANONICALIZATION)
         .buildValidationAndRewriteConfig()
 );

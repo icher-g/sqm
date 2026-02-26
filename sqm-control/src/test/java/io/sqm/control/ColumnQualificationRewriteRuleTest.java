@@ -35,13 +35,9 @@ class ColumnQualificationRewriteRuleTest {
             CatalogTable.of("public", "orders", CatalogColumn.of("id", CatalogType.LONG))
         );
         var strict = BuiltInRewriteSettings.defaults();
-        var skip = new BuiltInRewriteSettings(
-            strict.defaultLimitInjectionValue(),
-            strict.maxAllowedLimit(),
-            strict.limitExcessMode(),
-            strict.qualificationDefaultSchema(),
-            QualificationFailureMode.SKIP
-        );
+        var skip = BuiltInRewriteSettings.builder(strict)
+            .qualificationFailureMode(QualificationFailureMode.SKIP)
+            .build();
         var unresolvedQuery = SqlQueryParser.standard().parse("select id from users u", PG_ANALYZE);
         var ambiguousQuery = SqlQueryParser.standard().parse(
             "select id from users u join orders o on u.id = o.id",
