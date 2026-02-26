@@ -195,6 +195,33 @@ var middleware = SqlMiddleware.create(
 );
 ```
 
+### 5.3.1 Advanced: Compose from BuiltInRewriteRules Directly
+
+Use this when you want explicit control over how built-in rule lists are selected and composed.
+
+```java
+Set<BuiltInRewriteRule> selected = Set.of(
+    BuiltInRewriteRule.LIMIT_INJECTION,
+    BuiltInRewriteRule.CANONICALIZATION
+);
+
+List<QueryRewriteRule> builtInRules = BuiltInRewriteRules.selected(
+    BuiltInRewriteSettings.builder().defaultLimitInjectionValue(500).build(),
+    selected
+);
+
+SqlQueryRewriter rewriter = SqlQueryRewriter.chain(
+    builtInRules.toArray(QueryRewriteRule[]::new)
+);
+
+var middleware = SqlMiddleware.create(
+    SqlMiddlewareConfig.builder(schema)
+        .queryRewriter(rewriter)
+        .queryRenderer(SqlQueryRenderer.standard())
+        .buildValidationAndRewriteConfig()
+);
+```
+
 ### 5.4 Custom Renderer
 
 ```java

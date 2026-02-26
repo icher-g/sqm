@@ -133,4 +133,43 @@ class BuiltInRewriteRulesTest {
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_CANONICALIZATION, result.primaryReasonCode());
     }
+
+    @Test
+    void selected_rules_are_returned_in_definition_order_for_non_schema_and_schema_paths() {
+        var unordered = Set.of(
+            BuiltInRewriteRule.CANONICALIZATION,
+            BuiltInRewriteRule.LIMIT_INJECTION,
+            BuiltInRewriteRule.SCHEMA_QUALIFICATION,
+            BuiltInRewriteRule.COLUMN_QUALIFICATION
+        );
+
+        var nonSchemaRules = BuiltInRewriteRules.selected(
+            BuiltInRewriteSettings.builder().defaultLimitInjectionValue(12).build(),
+            Set.of(BuiltInRewriteRule.CANONICALIZATION, BuiltInRewriteRule.LIMIT_INJECTION)
+        );
+        var nonSchemaQuery = SqlQueryParser.standard().parse("select 1 + 0", POSTGRES_ANALYZE);
+        var nonSchemaResult = SqlQueryRewriter.chain(nonSchemaRules.toArray(QueryRewriteRule[]::new))
+            .rewrite(nonSchemaQuery, POSTGRES_ANALYZE);
+        assertEquals(List.of("limit-injection", "canonicalization"), nonSchemaResult.appliedRuleIds());
+
+        var schemaRules = BuiltInRewriteRules.selected(
+            SCHEMA,
+            BuiltInRewriteSettings.builder().defaultLimitInjectionValue(12).build(),
+            unordered
+        );
+        assertEquals(
+            List.of(
+                "LimitInjectionRewriteRule",
+                "SchemaQualificationRewriteRule",
+                "ColumnQualificationRewriteRule",
+                "CanonicalizationRewriteRule"
+            ),
+            schemaRules.stream().map(rule -> rule.getClass().getSimpleName()).toList()
+        );
+        var schemaQuery = SqlQueryParser.standard().parse("select id from users", POSTGRES_ANALYZE);
+        var schemaResult = SqlQueryRewriter.chain(schemaRules.toArray(QueryRewriteRule[]::new))
+            .rewrite(schemaQuery, POSTGRES_ANALYZE);
+        assertEquals(List.of("limit-injection", "schema-qualification", "column-qualification"),
+            schemaResult.appliedRuleIds());
+    }
 }

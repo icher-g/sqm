@@ -52,6 +52,9 @@ public final class BuiltInRewriteRules {
 
     /**
      * Returns selected non-schema-aware built-in rewrite rules in deterministic enum order.
+        *
+        * <p>Only the provided {@code rules} are returned. This method does not merge with the non-schema baseline
+        * pack from {@link #allAvailable(BuiltInRewriteSettings)}.</p>
      *
      * @param settings built-in rewrite settings
      * @param rules selected built-in rule identifiers
@@ -85,6 +88,9 @@ public final class BuiltInRewriteRules {
 
     /**
      * Returns selected schema-aware built-in rewrite rules in deterministic enum order.
+        *
+        * <p>Only the provided {@code rules} are returned. This method does not merge with the schema-aware baseline
+        * pack from {@link #allAvailable(CatalogSchema, BuiltInRewriteSettings)}.</p>
      *
      * @param schema catalog schema used by schema-aware rules
      * @param settings built-in rewrite settings
