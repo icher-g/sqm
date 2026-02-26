@@ -233,6 +233,12 @@ public record SqlMiddlewareConfig(
         /**
          * Builds validation+rewrite configuration with defaults for omitted optional components.
          *
+         * <p>When rewrite settings are not explicitly configured, {@link BuiltInRewriteSettings#defaults()} is used.
+         * When rewrite rules are not explicitly configured, all currently available schema-aware built-in rewrite
+         * rules are enabled by default.
+         * If rewrite rules are explicitly configured as empty, this method falls back to
+         * {@link #buildValidationConfig()} semantics.</p>
+         *
          * @return validation+rewrite middleware config
          */
         public SqlMiddlewareConfig buildValidationAndRewriteConfig() {
@@ -254,11 +260,19 @@ public record SqlMiddlewareConfig(
             }
 
             if (queryRewriter == null) {
-                queryRewriter = SqlQueryRewriter.builtIn(schema, rewriteSettings, rewriteRules);
-            }
+                if (rewriteSettings == null) {
+                    rewriteSettings = BuiltInRewriteSettings.defaults();
+                }
 
-            if (queryRewriter == null) {
-                queryRewriter = SqlQueryRewriter.noop();
+                if (rewriteRules == null) {
+                    rewriteRules = Set.of();
+                }
+
+                queryRewriter = SqlQueryRewriter.builder()
+                    .schema(schema)
+                    .settings(rewriteSettings)
+                    .rules(rewriteRules)
+                    .build();
             }
 
             if (guardrails == null) {

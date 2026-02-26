@@ -100,9 +100,7 @@ class SqlQueryRewriterTest {
         QueryRewriteRule nullResultRule = (q, c) -> null;
         SqlQueryRewriter rewriter = SqlQueryRewriter.chain(nullResultRule);
 
-        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.chain((List<QueryRewriteRule>) null));
-        //noinspection DataFlowIssue
-        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.chain(List.of((QueryRewriteRule) null)));
+        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.chain((QueryRewriteRule) null));
         assertThrows(NullPointerException.class, () -> SqlQueryRewriter.chain((QueryRewriteRule[]) null));
         assertThrows(NullPointerException.class, () -> rewriter.rewrite(null, ANALYZE));
         assertThrows(NullPointerException.class, () -> rewriter.rewrite(query, null));
@@ -110,31 +108,33 @@ class SqlQueryRewriterTest {
     }
 
     @Test
-    void built_in_factory_methods_delegate_and_validate_arguments() {
+    void builder_builds_and_validates_non_schema_rewriter() {
         Query query = Query.select(Expression.literal(1)).build();
 
-        QueryRewriteResult allBuiltIn = SqlQueryRewriter.allBuiltIn().rewrite(query, ANALYZE);
-        QueryRewriteResult noneSelected = SqlQueryRewriter.builtIn(Set.of()).rewrite(query, ANALYZE);
+        QueryRewriteResult allBuiltIn = SqlQueryRewriter.builder().build().rewrite(query, ANALYZE);
+        QueryRewriteResult noneSelected = SqlQueryRewriter.builder().rules(Set.of()).build().rewrite(query, ANALYZE);
 
         assertTrue(allBuiltIn.rewritten());
         assertEquals(ReasonCode.REWRITE_LIMIT, allBuiltIn.primaryReasonCode());
-        assertSame(query, noneSelected.query());
-        assertFalse(noneSelected.rewritten());
-        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn((BuiltInRewriteRule[]) null));
-        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn((Set<BuiltInRewriteRule>) null));
-        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn(new BuiltInRewriteSettings(5), (Set<BuiltInRewriteRule>) null));
+        assertTrue(noneSelected.rewritten());
+        assertEquals(ReasonCode.REWRITE_LIMIT, noneSelected.primaryReasonCode());
+        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builder().rules((BuiltInRewriteRule[]) null));
+        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builder().rules((Set<BuiltInRewriteRule>) null));
+        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builder().settings(null));
     }
 
     @Test
-    void schema_and_settings_built_in_factories_delegate() {
-        QueryRewriteResult schemaAll = SqlQueryRewriter.allBuiltIn(SCHEMA)
+    void builder_builds_schema_and_settings_rewriter() {
+        QueryRewriteResult schemaAll = SqlQueryRewriter.builder()
+            .schema(SCHEMA)
+            .build()
             .rewrite(SqlQueryParser.standard().parse("select id from users", ANALYZE), ANALYZE);
-        QueryRewriteResult configured = SqlQueryRewriter.builtIn(
-            SCHEMA,
-            new BuiltInRewriteSettings(23),
-            BuiltInRewriteRule.LIMIT_INJECTION,
-            BuiltInRewriteRule.SCHEMA_QUALIFICATION
-        ).rewrite(SqlQueryParser.standard().parse("select id from users", ANALYZE), ANALYZE);
+        QueryRewriteResult configured = SqlQueryRewriter.builder()
+            .schema(SCHEMA)
+            .settings(BuiltInRewriteSettings.builder().defaultLimitInjectionValue(23).build())
+            .rules(BuiltInRewriteRule.LIMIT_INJECTION, BuiltInRewriteRule.SCHEMA_QUALIFICATION)
+            .build()
+            .rewrite(SqlQueryParser.standard().parse("select id from users", ANALYZE), ANALYZE);
 
         assertTrue(schemaAll.rewritten());
         assertTrue(configured.rewritten());
@@ -142,41 +142,42 @@ class SqlQueryRewriterTest {
         String rendered = SqlQueryRenderer.standard().render(configured.query(), ANALYZE).sql().toLowerCase();
         assertTrue(rendered.contains("public.users"));
         assertTrue(rendered.contains("limit 23"));
-        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.allBuiltIn((CatalogSchema) null));
-        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.allBuiltIn(SCHEMA, null));
-        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn((BuiltInRewriteSettings) null, BuiltInRewriteRule.LIMIT_INJECTION));
-        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn(SCHEMA, (BuiltInRewriteRule[]) null));
-        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builtIn(SCHEMA, new BuiltInRewriteSettings(5), (Set<BuiltInRewriteRule>) null));
+        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builder().schema(null));
+        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builder().settings(null));
+        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builder().schema(SCHEMA).rules((BuiltInRewriteRule[]) null));
+        assertThrows(NullPointerException.class, () -> SqlQueryRewriter.builder().schema(SCHEMA).rules((Set<BuiltInRewriteRule>) null));
     }
 
     @Test
-    void settings_and_set_based_built_in_factories_delegate_and_empty_chain_is_noop() {
+    void builder_rules_set_and_empty_chain_is_noop() {
         Query query = Query.select(Expression.literal(1)).build();
 
-        var configured = SqlQueryRewriter.builtIn(
-            new BuiltInRewriteSettings(11),
-            Set.of(BuiltInRewriteRule.LIMIT_INJECTION)
-        ).rewrite(query, ANALYZE);
-        var schemaConfigured = SqlQueryRewriter.builtIn(
-            SCHEMA,
-            new BuiltInRewriteSettings(13),
-            Set.of(BuiltInRewriteRule.LIMIT_INJECTION, BuiltInRewriteRule.SCHEMA_QUALIFICATION)
-        ).rewrite(SqlQueryParser.standard().parse("select id from users", ANALYZE), ANALYZE);
+        var configured = SqlQueryRewriter.builder()
+            .settings(BuiltInRewriteSettings.builder().defaultLimitInjectionValue(11).build())
+            .rules(Set.of(BuiltInRewriteRule.LIMIT_INJECTION))
+            .build()
+            .rewrite(query, ANALYZE);
+        var schemaConfigured = SqlQueryRewriter.builder()
+            .schema(SCHEMA)
+            .settings(BuiltInRewriteSettings.builder().defaultLimitInjectionValue(13).build())
+            .rules(Set.of(BuiltInRewriteRule.LIMIT_INJECTION, BuiltInRewriteRule.SCHEMA_QUALIFICATION))
+            .build()
+            .rewrite(SqlQueryParser.standard().parse("select id from users", ANALYZE), ANALYZE);
         var emptyVarargsChain = SqlQueryRewriter.chain().rewrite(query, ANALYZE);
-        var emptyListChain = SqlQueryRewriter.chain(List.of()).rewrite(query, ANALYZE);
 
         assertTrue(configured.rewritten());
         assertTrue(SqlQueryRenderer.standard().render(configured.query(), ANALYZE).sql().toLowerCase().contains("limit 11"));
         assertTrue(schemaConfigured.rewritten());
         assertFalse(emptyVarargsChain.rewritten());
-        assertFalse(emptyListChain.rewritten());
     }
 
     @Test
     void built_in_identifier_normalization_rewrites_unquoted_names() {
-        var query = SqlQueryParser.standard().parse("select U.ID from Public.Users as U", ANALYZE);
+        var query = SqlQueryParser.standard().parse("select U.ID from Public.Users as U limit 5", ANALYZE);
 
-        var result = SqlQueryRewriter.builtIn(BuiltInRewriteRule.IDENTIFIER_NORMALIZATION)
+        var result = SqlQueryRewriter.builder()
+            .rules(BuiltInRewriteRule.IDENTIFIER_NORMALIZATION)
+            .build()
             .rewrite(query, ANALYZE);
 
         assertTrue(result.rewritten());

@@ -150,6 +150,9 @@ var decision = middleware.analyze(sql, ExecutionContext.of("postgresql", Executi
 
 Full flow with rewrite + bind rendering:
 
+`BuiltInRewriteRules` provides built-in rule lists, and `SqlQueryRewriter.builder()` composes
+those rules into the effective rewriter pipeline.
+
 ```java
 var middleware = SqlMiddleware.create(
     SqlMiddlewareConfig.builder(schema)

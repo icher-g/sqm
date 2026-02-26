@@ -4,6 +4,9 @@ This page provides copy-paste starter templates for common middleware rollout pr
 
 All templates use `SqlMiddlewareConfig.builder(schema)` and differ only in strictness and rewrite behavior.
 
+Built-in rewrite behavior is sourced from `BuiltInRewriteRules`; middleware composes selected rules into a
+rewriter through `SqlQueryRewriter.builder()` under the hood.
+
 `schema` can be created manually in code or loaded from JSON/JDBC.
 For alternatives, see:
 
@@ -68,7 +71,11 @@ Use when you want middleware to shape SQL before execution (e.g., inject `LIMIT`
 var middleware = SqlMiddleware.create(
     SqlMiddlewareConfig.builder(schema)
         .validationSettings(SchemaValidationSettings.defaults())
-        .builtInRewriteSettings(BuiltInRewriteSettings.defaults())
+        .builtInRewriteSettings(
+            BuiltInRewriteSettings.builder()
+                .defaultLimitInjectionValue(1000)
+                .build()
+        )
         .rewriteRules(BuiltInRewriteRule.LIMIT_INJECTION, BuiltInRewriteRule.CANONICALIZATION)
         .guardrails(new RuntimeGuardrails(10_000, 2_000L, 1000, false))
         .buildValidationAndRewriteConfig()
@@ -96,7 +103,11 @@ Use for canary rollout when you want execute-intent requests converted to `EXPLA
 var middleware = SqlMiddleware.create(
     SqlMiddlewareConfig.builder(schema)
         .validationSettings(SchemaValidationSettings.defaults())
-        .builtInRewriteSettings(BuiltInRewriteSettings.defaults())
+        .builtInRewriteSettings(
+            BuiltInRewriteSettings.builder()
+                .defaultLimitInjectionValue(1000)
+                .build()
+        )
         .rewriteRules(BuiltInRewriteRule.LIMIT_INJECTION)
         .guardrails(new RuntimeGuardrails(8_000, 1_000L, 200, true))
         .buildValidationAndRewriteConfig()

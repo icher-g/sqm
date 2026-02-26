@@ -1,11 +1,10 @@
 package io.sqm.control;
 
 import io.sqm.catalog.model.CatalogSchema;
+import io.sqm.control.rewrite.BuiltInRewriteRules;
 import io.sqm.core.Query;
-import io.sqm.control.rewrite.BuiltInSqlRewriters;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -16,120 +15,12 @@ import java.util.Set;
 @FunctionalInterface
 public interface SqlQueryRewriter {
     /**
-     * Returns a rewriter composed of all currently available built-in rewrite rules.
+     * Creates a builder for composing a rewriter from built-in rule sources and optional schema/settings context.
      *
-     * @return built-in rewrite pipeline, or no-op when no built-ins are available yet
+     * @return rewriter builder
      */
-    static SqlQueryRewriter allBuiltIn() {
-        return BuiltInSqlRewriters.allAvailable();
-    }
-
-    /**
-     * Returns a rewriter composed of all currently available built-in rewrite rules using explicit settings.
-     *
-     * @param settings built-in rewrite settings
-     * @return built-in rewrite pipeline
-     */
-    static SqlQueryRewriter allBuiltIn(BuiltInRewriteSettings settings) {
-        return BuiltInSqlRewriters.allAvailable(settings);
-    }
-
-    /**
-     * Returns a schema-aware rewriter composed of all built-in rewrite rules available with catalog metadata.
-     *
-     * @param schema catalog schema used for schema qualification
-     * @return built-in rewrite pipeline
-     */
-    static SqlQueryRewriter allBuiltIn(CatalogSchema schema) {
-        return BuiltInSqlRewriters.allAvailable(schema);
-    }
-
-    /**
-     * Returns a schema-aware rewriter composed of all built-in rewrite rules available with catalog metadata.
-     *
-     * @param schema catalog schema used for schema qualification
-     * @param settings built-in rewrite settings
-     * @return built-in rewrite pipeline
-     */
-    static SqlQueryRewriter allBuiltIn(CatalogSchema schema, BuiltInRewriteSettings settings) {
-        return BuiltInSqlRewriters.allAvailable(schema, settings);
-    }
-
-    /**
-     * Returns a rewriter composed of selected built-in rewrite rules.
-     *
-     * @param rules built-in rewrite rules to enable
-     * @return built-in rewrite pipeline
-     */
-    static SqlQueryRewriter builtIn(BuiltInRewriteRule... rules) {
-        return BuiltInSqlRewriters.of(rules);
-    }
-
-    /**
-     * Returns a rewriter composed of selected built-in rewrite rules using explicit settings.
-     *
-     * @param settings built-in rewrite settings
-     * @param rules built-in rewrite rules to enable
-     * @return built-in rewrite pipeline
-     */
-    static SqlQueryRewriter builtIn(BuiltInRewriteSettings settings, BuiltInRewriteRule... rules) {
-        return BuiltInSqlRewriters.of(settings, rules);
-    }
-
-    /**
-     * Returns a rewriter composed of selected built-in rewrite rules.
-     *
-     * @param rules built-in rewrite rules to enable
-     * @return built-in rewrite pipeline
-     */
-    static SqlQueryRewriter builtIn(Set<BuiltInRewriteRule> rules) {
-        return BuiltInSqlRewriters.of(rules);
-    }
-
-    /**
-     * Returns a rewriter composed of selected built-in rewrite rules using explicit settings.
-     *
-     * @param settings built-in rewrite settings
-     * @param rules built-in rewrite rules to enable
-     * @return built-in rewrite pipeline
-     */
-    static SqlQueryRewriter builtIn(BuiltInRewriteSettings settings, Set<BuiltInRewriteRule> rules) {
-        return BuiltInSqlRewriters.of(settings, rules);
-    }
-
-    /**
-     * Returns a schema-aware rewriter composed of selected built-in rewrite rules.
-     *
-     * @param schema catalog schema used for schema qualification
-     * @param rules built-in rewrite rules to enable
-     * @return built-in rewrite pipeline
-     */
-    static SqlQueryRewriter builtIn(CatalogSchema schema, BuiltInRewriteRule... rules) {
-        return BuiltInSqlRewriters.forSchema(schema, rules);
-    }
-
-    /**
-     * Returns a schema-aware rewriter composed of selected built-in rewrite rules using explicit settings.
-     *
-     * @param schema catalog schema used for schema qualification
-     * @param settings built-in rewrite settings
-     * @param rules built-in rewrite rules to enable
-     * @return built-in rewrite pipeline
-     */
-    static SqlQueryRewriter builtIn(CatalogSchema schema, BuiltInRewriteSettings settings, BuiltInRewriteRule... rules) {
-        return BuiltInSqlRewriters.forSchema(schema, settings, rules);
-    }
-
-    /**
-     * Returns a schema-aware rewriter composed of selected built-in rewrite rules using explicit settings.
-     *
-     * @param schema catalog schema used for schema qualification
-     * @param settings built-in rewrite settings
-     * @param rules built-in rewrite rules to enable
-     * @return built-in rewrite pipeline
-     */
-    static SqlQueryRewriter builtIn(CatalogSchema schema, BuiltInRewriteSettings settings, Set<BuiltInRewriteRule> rules) {
-        return BuiltInSqlRewriters.forSchema(schema, settings, rules);
+    static Builder builder() {
+        return new Builder();
     }
 
     /**
@@ -149,19 +40,7 @@ public interface SqlQueryRewriter {
      */
     static SqlQueryRewriter chain(QueryRewriteRule... rules) {
         Objects.requireNonNull(rules, "rules must not be null");
-        return chain(Arrays.asList(rules));
-    }
-
-    /**
-     * Returns a sequential rewriter that applies the provided rules in order.
-     *
-     * @param rules rewrite rules
-     * @return composed rewriter
-     */
-    static SqlQueryRewriter chain(List<? extends QueryRewriteRule> rules) {
-        Objects.requireNonNull(rules, "rules must not be null");
-
-        var copy = List.copyOf(rules);
+        var copy = List.of(rules);
         if (copy.isEmpty()) {
             return noop();
         }
@@ -206,4 +85,85 @@ public interface SqlQueryRewriter {
      * @return rewrite result
      */
     QueryRewriteResult rewrite(Query query, ExecutionContext context);
+
+    /**
+     * Builder for creating {@link SqlQueryRewriter} instances from a single configuration point.
+     *
+     * <p>Built-in rules are sourced from {@link BuiltInRewriteRules} and then composed in-order
+     * into a runnable rewriter.</p>
+     */
+    final class Builder {
+        private CatalogSchema schema;
+        private BuiltInRewriteSettings settings = BuiltInRewriteSettings.defaults();
+        private Set<BuiltInRewriteRule> rules = Set.of();
+
+        private Builder() {
+        }
+
+        /**
+         * Sets schema for schema-aware built-in rules.
+         *
+         * @param schema catalog schema
+         * @return builder instance
+         */
+        public Builder schema(CatalogSchema schema) {
+            this.schema = Objects.requireNonNull(schema, "schema must not be null");
+            return this;
+        }
+
+        /**
+         * Sets built-in rewrite settings.
+         *
+         * @param settings built-in rewrite settings
+         * @return builder instance
+         */
+        public Builder settings(BuiltInRewriteSettings settings) {
+            this.settings = Objects.requireNonNull(settings, "settings must not be null");
+            return this;
+        }
+
+        /**
+         * Sets built-in rules to add to the baseline built-in pack.
+         *
+         * @param rules rules to include
+         * @return builder instance
+         */
+        public Builder rules(BuiltInRewriteRule... rules) {
+            this.rules = Set.of(rules);
+            return this;
+        }
+
+        /**
+         * Sets built-in rules to add to the baseline built-in pack.
+         *
+         * @param rules rules to include
+         * @return builder instance
+         */
+        public Builder rules(Set<BuiltInRewriteRule> rules) {
+            this.rules = Set.copyOf(Objects.requireNonNull(rules, "rules must not be null"));
+            return this;
+        }
+
+        /**
+         * Builds the rewriter from configured schema/settings/rules.
+         *
+         * @return configured rewriter
+         */
+        public SqlQueryRewriter build() {
+            List<QueryRewriteRule> queryRules;
+
+            if (rules.isEmpty()) {
+                queryRules = schema == null
+                    ? BuiltInRewriteRules.allAvailable(settings)
+                    : BuiltInRewriteRules.allAvailable(schema, settings);
+            }
+            else {
+                queryRules = schema == null
+                    ? BuiltInRewriteRules.selected(settings, rules)
+                    : BuiltInRewriteRules.selected(schema, settings, rules);
+            }
+
+            return chain(queryRules.toArray(QueryRewriteRule[]::new));
+        }
+    }
 }

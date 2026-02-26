@@ -21,69 +21,27 @@ public record BuiltInRewriteSettings(
     IdentifierNormalizationCaseMode identifierNormalizationCaseMode
 ) {
     private static final long DEFAULT_LIMIT_INJECTION_VALUE = 1000L;
+    private static final LimitExcessMode DEFAULT_LIMIT_EXCESS_MODE = LimitExcessMode.DENY;
+    private static final QualificationFailureMode DEFAULT_QUALIFICATION_FAILURE_MODE = QualificationFailureMode.DENY;
+    private static final IdentifierNormalizationCaseMode DEFAULT_IDENTIFIER_NORMALIZATION_CASE_MODE = IdentifierNormalizationCaseMode.LOWER;
 
     /**
-     * Creates settings with a custom default injected LIMIT and no max-limit policy.
+     * Creates a builder initialized with default settings values.
      *
-     * @param defaultLimitInjectionValue default LIMIT value used by limit injection rewrite
+     * @return settings builder
      */
-    public BuiltInRewriteSettings(long defaultLimitInjectionValue) {
-        this(
-            defaultLimitInjectionValue,
-            null,
-            LimitExcessMode.DENY,
-            null,
-            QualificationFailureMode.DENY,
-            IdentifierNormalizationCaseMode.LOWER
-        );
+    public static Builder builder() {
+        return new Builder();
     }
 
     /**
-     * Creates settings with explicit LIMIT policy and default qualification policy.
+     * Creates a builder initialized from existing settings.
      *
-     * @param defaultLimitInjectionValue default LIMIT value used by limit injection rewrite
-     * @param maxAllowedLimit            optional maximum allowed LIMIT value
-     * @param limitExcessMode            behavior when explicit LIMIT exceeds configured max
+     * @param source source settings
+     * @return settings builder
      */
-    public BuiltInRewriteSettings(
-        long defaultLimitInjectionValue,
-        Integer maxAllowedLimit,
-        LimitExcessMode limitExcessMode
-    ) {
-        this(
-            defaultLimitInjectionValue,
-            maxAllowedLimit,
-            limitExcessMode,
-            null,
-            QualificationFailureMode.DENY,
-            IdentifierNormalizationCaseMode.LOWER
-        );
-    }
-
-    /**
-     * Creates settings with qualification policy and identifier normalization defaults.
-     *
-     * @param defaultLimitInjectionValue default LIMIT value used by limit injection rewrite
-     * @param maxAllowedLimit            optional maximum allowed LIMIT value
-     * @param limitExcessMode            behavior when explicit LIMIT exceeds configured max
-     * @param qualificationDefaultSchema optional preferred schema used to resolve ambiguous unqualified tables
-     * @param qualificationFailureMode   behavior when qualification fails (missing/ambiguous)
-     */
-    public BuiltInRewriteSettings(
-        long defaultLimitInjectionValue,
-        Integer maxAllowedLimit,
-        LimitExcessMode limitExcessMode,
-        String qualificationDefaultSchema,
-        QualificationFailureMode qualificationFailureMode
-    ) {
-        this(
-            defaultLimitInjectionValue,
-            maxAllowedLimit,
-            limitExcessMode,
-            qualificationDefaultSchema,
-            qualificationFailureMode,
-            IdentifierNormalizationCaseMode.LOWER
-        );
+    public static Builder builder(BuiltInRewriteSettings source) {
+        return new Builder(source);
     }
 
     /**
@@ -104,13 +62,13 @@ public record BuiltInRewriteSettings(
             throw new IllegalArgumentException("maxAllowedLimit must be > 0");
         }
         if (limitExcessMode == null) {
-            limitExcessMode = LimitExcessMode.DENY;
+            limitExcessMode = DEFAULT_LIMIT_EXCESS_MODE;
         }
         if (qualificationFailureMode == null) {
-            qualificationFailureMode = QualificationFailureMode.DENY;
+            qualificationFailureMode = DEFAULT_QUALIFICATION_FAILURE_MODE;
         }
         if (identifierNormalizationCaseMode == null) {
-            identifierNormalizationCaseMode = IdentifierNormalizationCaseMode.LOWER;
+            identifierNormalizationCaseMode = DEFAULT_IDENTIFIER_NORMALIZATION_CASE_MODE;
         }
         if (qualificationDefaultSchema != null && qualificationDefaultSchema.isBlank()) {
             qualificationDefaultSchema = null;
@@ -130,48 +88,112 @@ public record BuiltInRewriteSettings(
      * @return default settings
      */
     public static BuiltInRewriteSettings defaults() {
-        return new BuiltInRewriteSettings(
-            DEFAULT_LIMIT_INJECTION_VALUE,
-            null,
-            LimitExcessMode.DENY,
-            null,
-            QualificationFailureMode.DENY,
-            IdentifierNormalizationCaseMode.LOWER
-        );
+        return builder().build();
     }
 
     /**
-     * Creates new built-in rewrite settings with provided {@link IdentifierNormalizationCaseMode} while preserving other parameters.
-     *
-     * @param mode new mode.
-     * @return updated settings
+     * Builder for {@link BuiltInRewriteSettings}.
      */
-    public BuiltInRewriteSettings withIdentifierNormalizationCaseMode(IdentifierNormalizationCaseMode mode) {
-        return new BuiltInRewriteSettings(
-            defaultLimitInjectionValue,
-            maxAllowedLimit,
-            limitExcessMode,
-            qualificationDefaultSchema,
-            qualificationFailureMode,
-            mode
-        );
-    }
+    public static final class Builder {
+        private long defaultLimitInjectionValue = DEFAULT_LIMIT_INJECTION_VALUE;
+        private Integer maxAllowedLimit;
+        private LimitExcessMode limitExcessMode = DEFAULT_LIMIT_EXCESS_MODE;
+        private String qualificationDefaultSchema;
+        private QualificationFailureMode qualificationFailureMode = DEFAULT_QUALIFICATION_FAILURE_MODE;
+        private IdentifierNormalizationCaseMode identifierNormalizationCaseMode = DEFAULT_IDENTIFIER_NORMALIZATION_CASE_MODE;
 
-    /**
-     * Creates new built-in rewrite settings with provided default schema and failure mode while preserving other parameters.
-     *
-     * @param defaultSchema a default schema to be used in qualification rewrite.
-     * @param failureMode   a failure mode to be used in qualification rewrite.
-     * @return updated settings.
-     */
-    public BuiltInRewriteSettings withQualification(String defaultSchema, QualificationFailureMode failureMode) {
-        return new BuiltInRewriteSettings(
-            defaultLimitInjectionValue,
-            maxAllowedLimit,
-            limitExcessMode,
-            defaultSchema,
-            failureMode,
-            identifierNormalizationCaseMode
-        );
+        private Builder() {
+        }
+
+        private Builder(BuiltInRewriteSettings source) {
+            this.defaultLimitInjectionValue = source.defaultLimitInjectionValue();
+            this.maxAllowedLimit = source.maxAllowedLimit();
+            this.limitExcessMode = source.limitExcessMode();
+            this.qualificationDefaultSchema = source.qualificationDefaultSchema();
+            this.qualificationFailureMode = source.qualificationFailureMode();
+            this.identifierNormalizationCaseMode = source.identifierNormalizationCaseMode();
+        }
+
+        /**
+         * Sets default LIMIT value injected by {@link BuiltInRewriteRule#LIMIT_INJECTION}.
+         *
+         * @param value injected LIMIT value
+         * @return builder instance
+         */
+        public Builder defaultLimitInjectionValue(long value) {
+            this.defaultLimitInjectionValue = value;
+            return this;
+        }
+
+        /**
+         * Sets optional maximum allowed LIMIT value.
+         *
+         * @param value maximum allowed LIMIT, or {@code null} to disable max-limit policy
+         * @return builder instance
+         */
+        public Builder maxAllowedLimit(Integer value) {
+            this.maxAllowedLimit = value;
+            return this;
+        }
+
+        /**
+         * Sets behavior for explicit LIMIT values that exceed configured max limit.
+         *
+         * @param mode exceed-limit behavior
+         * @return builder instance
+         */
+        public Builder limitExcessMode(LimitExcessMode mode) {
+            this.limitExcessMode = mode;
+            return this;
+        }
+
+        /**
+         * Sets preferred schema used to resolve ambiguous unqualified tables.
+         *
+         * @param schema schema name
+         * @return builder instance
+         */
+        public Builder qualificationDefaultSchema(String schema) {
+            this.qualificationDefaultSchema = schema;
+            return this;
+        }
+
+        /**
+         * Sets behavior when schema qualification cannot be resolved deterministically.
+         *
+         * @param mode qualification failure behavior
+         * @return builder instance
+         */
+        public Builder qualificationFailureMode(QualificationFailureMode mode) {
+            this.qualificationFailureMode = mode;
+            return this;
+        }
+
+        /**
+         * Sets case mode for unquoted identifier normalization.
+         *
+         * @param mode identifier normalization case mode
+         * @return builder instance
+         */
+        public Builder identifierNormalizationCaseMode(IdentifierNormalizationCaseMode mode) {
+            this.identifierNormalizationCaseMode = mode;
+            return this;
+        }
+
+        /**
+         * Builds immutable rewrite settings.
+         *
+         * @return immutable settings
+         */
+        public BuiltInRewriteSettings build() {
+            return new BuiltInRewriteSettings(
+                defaultLimitInjectionValue,
+                maxAllowedLimit,
+                limitExcessMode,
+                qualificationDefaultSchema,
+                qualificationFailureMode,
+                identifierNormalizationCaseMode
+            );
+        }
     }
 }
