@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class AiSqlMiddlewareFlowTest {
+class AiSqlDecisionServiceFlowTest {
 
     private static final CatalogSchema SCHEMA = CatalogSchema.of(
         CatalogTable.of(
@@ -56,13 +56,13 @@ class AiSqlMiddlewareFlowTest {
 
     @Test
     void validation_only_flow_allows_complex_ai_style_sql() {
-        var middleware = SqlMiddleware.create(
-            SqlMiddlewareConfig.builder(SCHEMA)
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
                 .validationSettings(SchemaValidationSettings.defaults())
                 .buildValidationConfig()
         );
 
-        var decision = middleware.analyze(COMPLEX_SQL, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var decision = decisionService.analyze(COMPLEX_SQL, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
 
         assertEquals(DecisionKind.ALLOW, decision.kind());
         assertEquals(ReasonCode.NONE, decision.reasonCode());
@@ -71,8 +71,8 @@ class AiSqlMiddlewareFlowTest {
 
     @Test
     void full_flow_rewrites_to_bind_sql_for_execute_intent() {
-        var middleware = SqlMiddleware.create(
-            SqlMiddlewareConfig.builder(SCHEMA)
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
                 .validationSettings(SchemaValidationSettings.defaults())
                 .builtInRewriteSettings(
                     BuiltInRewriteSettings.builder()
@@ -91,7 +91,7 @@ class AiSqlMiddlewareFlowTest {
             ParameterizationMode.BIND
         );
 
-        var decision = middleware.enforce(COMPLEX_SQL, context);
+        var decision = decisionService.enforce(COMPLEX_SQL, context);
 
         assertEquals(DecisionKind.REWRITE, decision.kind());
         assertEquals(ReasonCode.REWRITE_LIMIT, decision.reasonCode());
@@ -102,13 +102,13 @@ class AiSqlMiddlewareFlowTest {
 
     @Test
     void execute_intent_denies_ddl_sql() {
-        var middleware = SqlMiddleware.create(
-            SqlMiddlewareConfig.builder(SCHEMA)
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
                 .validationSettings(SchemaValidationSettings.defaults())
                 .buildValidationConfig()
         );
 
-        var decision = middleware.enforce("drop table users", ExecutionContext.of("postgresql", ExecutionMode.EXECUTE));
+        var decision = decisionService.enforce("drop table users", ExecutionContext.of("postgresql", ExecutionMode.EXECUTE));
 
         assertEquals(DecisionKind.DENY, decision.kind());
         assertTrue(
@@ -118,3 +118,4 @@ class AiSqlMiddlewareFlowTest {
         );
     }
 }
+

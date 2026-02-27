@@ -1,17 +1,20 @@
 package io.sqm.control;
 
+import io.sqm.catalog.access.DefaultCatalogAccessPolicy;
 import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
-import io.sqm.core.Expression;
-import io.sqm.core.Query;
 import io.sqm.validate.schema.SchemaValidationLimits;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
+import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.select;
+import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SqlQueryValidatorTest {
@@ -28,7 +31,7 @@ class SqlQueryValidatorTest {
             .limits(SchemaValidationLimits.builder().maxSelectColumns(1).build())
             .build();
         var validator = SqlQueryValidator.standard(SCHEMA, settings);
-        var query = Query.select(Expression.literal(1), Expression.literal(2)).build();
+        var query = select(lit(1), lit(2)).build();
 
         var result = validator.validate(query, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
 
@@ -39,7 +42,7 @@ class SqlQueryValidatorTest {
     @Test
     void standard_returns_ok_for_valid_query() {
         var validator = SqlQueryValidator.standard(SCHEMA);
-        var query = Query.select(Expression.literal(1)).build();
+        var query = select(lit(1)).build();
 
         var result = validator.validate(query, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
 
@@ -55,11 +58,36 @@ class SqlQueryValidatorTest {
             SCHEMA,
             Map.of("ansi", SchemaValidationSettings::defaults)
         );
-        var query = Query.select(Expression.literal(1)).build();
+        var query = select(lit(1)).build();
 
         assertThrows(
             IllegalArgumentException.class,
             () -> validator.validate(query, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE))
         );
+    }
+
+    @Test
+    void standard_uses_execution_context_principal_for_principal_aware_policy() {
+        var policy = DefaultCatalogAccessPolicy.builder()
+            .denyTableForPrincipal("alice", "users")
+            .build();
+        var settings = SchemaValidationSettings.builder()
+            .accessPolicy(policy)
+            .build();
+        var validator = SqlQueryValidator.standard(SCHEMA, settings);
+        var query = select(col("id")).from(tbl("users")).build();
+
+        var denied = validator.validate(
+            query,
+            ExecutionContext.of("postgresql", "alice", null, ExecutionMode.ANALYZE)
+        );
+        assertEquals(ReasonCode.DENY_TABLE, denied.code());
+        assertTrue(denied.isFailed());
+
+        var allowed = validator.validate(
+            query,
+            ExecutionContext.of("postgresql", "bob", null, ExecutionMode.ANALYZE)
+        );
+        assertEquals(ReasonCode.NONE, allowed.code());
     }
 }

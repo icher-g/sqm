@@ -2,16 +2,17 @@ package io.sqm.control;
 
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.validate.schema.SchemaValidationSettings;
+import io.sqm.validate.schema.SchemaValidationSettingsLoader;
 
 import java.util.Objects;
 import java.util.Set;
 
 /**
- * Immutable configuration object for assembling {@link SqlMiddleware} instances.
+ * Immutable configuration object for assembling {@link SqlDecisionService} instances.
  *
  * <p>This type provides named factory methods for common middleware flows and fluent
  * customization methods for optional concerns (audit, explain, parser, guardrails),
- * avoiding large overload sets on {@link SqlMiddleware}.</p>
+ * avoiding large overload sets on {@link SqlDecisionService}.</p>
  *
  * @param engine decision engine used to evaluate parsed queries.
  * @param explainer decision explainer used to enrich audit output.
@@ -19,7 +20,7 @@ import java.util.Set;
  * @param guardrails runtime guardrails applied before execution.
  * @param queryParser SQL parser used to parse incoming query text.
  */
-public record SqlMiddlewareConfig(
+public record SqlDecisionServiceConfig(
     SqlDecisionEngine engine,
     SqlDecisionExplainer explainer,
     AuditEventPublisher auditPublisher,
@@ -35,7 +36,7 @@ public record SqlMiddlewareConfig(
      * @param guardrails     runtime guardrails
      * @param queryParser    SQL parser
      */
-    public SqlMiddlewareConfig {
+    public SqlDecisionServiceConfig {
         Objects.requireNonNull(engine, "engine must not be null");
         Objects.requireNonNull(queryParser, "queryParser must not be null");
     }
@@ -51,12 +52,13 @@ public record SqlMiddlewareConfig(
     }
 
     /**
-     * A builder class for composing SqlMiddlewareConfig.
+     * A builder class for composing {@link SqlDecisionServiceConfig}.
      */
     public static final class Builder {
-
         private final CatalogSchema schema;
         private SchemaValidationSettings validationSettings;
+        private String validationSettingsJson;
+        private String validationSettingsYaml;
         private BuiltInRewriteSettings rewriteSettings;
         private Set<BuiltInRewriteRule> rewriteRules;
         private SqlDecisionExplainer explainer;
@@ -84,6 +86,36 @@ public record SqlMiddlewareConfig(
          */
         public Builder validationSettings(SchemaValidationSettings validationSettings) {
             this.validationSettings = validationSettings;
+            return this;
+        }
+
+        /**
+         * Sets schema-validation settings in JSON format.
+         *
+         * <p>When explicit {@link #validationSettings(SchemaValidationSettings)} is not provided,
+         * this configuration text is loaded via {@link SchemaValidationSettingsLoader#fromJson(String)}
+         * and used to create validation settings (including access policy).</p>
+         *
+         * @param validationSettingsJson schema-validation settings JSON
+         * @return builder instance
+         */
+        public Builder validationSettingsJson(String validationSettingsJson) {
+            this.validationSettingsJson = validationSettingsJson;
+            return this;
+        }
+
+        /**
+         * Sets schema-validation settings in YAML format.
+         *
+         * <p>When explicit {@link #validationSettings(SchemaValidationSettings)} is not provided,
+         * this configuration text is loaded via {@link SchemaValidationSettingsLoader#fromYaml(String)}
+         * and used to create validation settings (including access policy).</p>
+         *
+         * @param validationSettingsYaml schema-validation settings YAML
+         * @return builder instance
+         */
+        public Builder validationSettingsYaml(String validationSettingsYaml) {
+            this.validationSettingsYaml = validationSettingsYaml;
             return this;
         }
 
@@ -191,18 +223,13 @@ public record SqlMiddlewareConfig(
          *
          * @return validation-only middleware config
          */
-        public SqlMiddlewareConfig buildValidationConfig() {
+        public SqlDecisionServiceConfig buildValidationConfig() {
             if (queryParser == null) {
                 queryParser = SqlQueryParser.standard();
             }
 
             if (queryValidator == null) {
-                if (validationSettings == null) {
-                    queryValidator = SqlQueryValidator.standard(schema);
-                }
-                else {
-                    queryValidator = SqlQueryValidator.standard(schema, validationSettings);
-                }
+                queryValidator = SqlQueryValidator.standard(schema, resolveValidationSettings());
             }
 
             if (queryRenderer == null) {
@@ -227,7 +254,7 @@ public record SqlMiddlewareConfig(
                 explainer = SqlDecisionExplainer.basic();
             }
 
-            return new SqlMiddlewareConfig(
+            return new SqlDecisionServiceConfig(
                 SqlDecisionEngine.of(queryValidator, queryRewriter, queryRenderer),
                 explainer,
                 eventPublisher,
@@ -247,18 +274,13 @@ public record SqlMiddlewareConfig(
          *
          * @return validation+rewrite middleware config
          */
-        public SqlMiddlewareConfig buildValidationAndRewriteConfig() {
+        public SqlDecisionServiceConfig buildValidationAndRewriteConfig() {
             if (queryParser == null) {
                 queryParser = SqlQueryParser.standard();
             }
 
             if (queryValidator == null) {
-                if (validationSettings == null) {
-                    queryValidator = SqlQueryValidator.standard(schema);
-                }
-                else {
-                    queryValidator = SqlQueryValidator.standard(schema, validationSettings);
-                }
+                queryValidator = SqlQueryValidator.standard(schema, resolveValidationSettings());
             }
 
             if (queryRenderer == null) {
@@ -293,7 +315,7 @@ public record SqlMiddlewareConfig(
                 explainer = SqlDecisionExplainer.basic();
             }
 
-            return new SqlMiddlewareConfig(
+            return new SqlDecisionServiceConfig(
                 SqlDecisionEngine.of(queryValidator, queryRewriter, queryRenderer),
                 explainer,
                 eventPublisher,
@@ -301,5 +323,46 @@ public record SqlMiddlewareConfig(
                 queryParser
             );
         }
+
+        private SchemaValidationSettings resolveValidationSettings() {
+            if (validationSettings != null) {
+                return validationSettings;
+            }
+            if (validationSettingsJson != null && !validationSettingsJson.isBlank()) {
+                return SchemaValidationSettingsLoader.fromJson(validationSettingsJson);
+            }
+            if (validationSettingsYaml != null && !validationSettingsYaml.isBlank()) {
+                return SchemaValidationSettingsLoader.fromYaml(validationSettingsYaml);
+            }
+
+            String json = firstNonBlank(
+                System.getProperty(ConfigKeys.VALIDATION_SETTINGS_JSON.property()),
+                System.getenv(ConfigKeys.VALIDATION_SETTINGS_JSON.env())
+            );
+            if (json != null) {
+                return SchemaValidationSettingsLoader.fromJson(json);
+            }
+
+            String yaml = firstNonBlank(
+                System.getProperty(ConfigKeys.VALIDATION_SETTINGS_YAML.property()),
+                System.getenv(ConfigKeys.VALIDATION_SETTINGS_YAML.env())
+            );
+            if (yaml != null) {
+                return SchemaValidationSettingsLoader.fromYaml(yaml);
+            }
+
+            return SchemaValidationSettings.defaults();
+        }
+
+        private static String firstNonBlank(String first, String second) {
+            if (first != null && !first.isBlank()) {
+                return first;
+            }
+            if (second != null && !second.isBlank()) {
+                return second;
+            }
+            return null;
+        }
     }
 }
+

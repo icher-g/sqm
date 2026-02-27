@@ -2,7 +2,7 @@
 
 This page provides copy-paste starter templates for common middleware rollout profiles.
 
-All templates use `SqlMiddlewareConfig.builder(schema)` and differ only in strictness and rewrite behavior.
+All templates use `SqlDecisionServiceConfig.builder(schema)` and differ only in strictness and rewrite behavior.
 
 Built-in rewrite behavior is sourced from `BuiltInRewriteRules`; middleware composes selected rules into a
 rewriter through `SqlQueryRewriter.builder()` under the hood.
@@ -45,8 +45,8 @@ Use when AI is allowed to query but never modify data.
 ```java
 // Schema source: use loadSchema(...) helper from snippet above.
 
-var middleware = SqlMiddleware.create(
-    SqlMiddlewareConfig.builder(schema)
+var middleware = SqlDecisionService.create(
+    SqlDecisionServiceConfig.builder(schema)
         .validationSettings(SchemaValidationSettings.defaults())
         .guardrails(new RuntimeGuardrails(10_000, 2_000L, 500, false))
         .buildValidationConfig()
@@ -68,8 +68,8 @@ Use when you want middleware to shape SQL before execution (e.g., inject `LIMIT`
 ```java
 // Schema source: use loadSchema(...) helper from snippet above.
 
-var middleware = SqlMiddleware.create(
-    SqlMiddlewareConfig.builder(schema)
+var middleware = SqlDecisionService.create(
+    SqlDecisionServiceConfig.builder(schema)
         .validationSettings(SchemaValidationSettings.defaults())
         .builtInRewriteSettings(
             BuiltInRewriteSettings.builder()
@@ -100,8 +100,8 @@ Use for canary rollout when you want execute-intent requests converted to `EXPLA
 ```java
 // Schema source: use loadSchema(...) helper from snippet above.
 
-var middleware = SqlMiddleware.create(
-    SqlMiddlewareConfig.builder(schema)
+var middleware = SqlDecisionService.create(
+    SqlDecisionServiceConfig.builder(schema)
         .validationSettings(SchemaValidationSettings.defaults())
         .builtInRewriteSettings(
             BuiltInRewriteSettings.builder()
@@ -138,8 +138,8 @@ SqlQueryValidator validator = (query, context) -> {
 
 QueryRewriteRule noopRule = (query, context) -> QueryRewriteResult.unchanged(query);
 
-var middleware = SqlMiddleware.create(
-    SqlMiddlewareConfig.builder(schema)
+var middleware = SqlDecisionService.create(
+    SqlDecisionServiceConfig.builder(schema)
         .queryValidator(validator)
         .queryRewriter(SqlQueryRewriter.chain(noopRule))
         .queryRenderer(SqlQueryRenderer.standard())
@@ -166,3 +166,4 @@ switch (decision.kind()) {
 
 - [SQL Middleware Framework](SQL-Middleware-Framework)
 - [Examples Module Guide](Examples-Module-Guide)
+

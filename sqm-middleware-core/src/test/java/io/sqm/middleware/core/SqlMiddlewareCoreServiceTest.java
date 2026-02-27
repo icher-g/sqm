@@ -11,8 +11,8 @@ class SqlMiddlewareCoreServiceTest {
 
     @Test
     void analyze_maps_context_and_returns_allow_decision() {
-        var middleware = new CapturingMiddleware();
-        var service = new SqlMiddlewareCoreService(middleware);
+        var decisionService = new CapturingMiddleware();
+        var service = new SqlMiddlewareCoreService(decisionService);
 
         var request = new AnalyzeRequest(
             "select 1",
@@ -23,16 +23,16 @@ class SqlMiddlewareCoreServiceTest {
 
         assertEquals(DecisionKindDto.ALLOW, result.kind());
         assertEquals(ReasonCodeDto.NONE, result.reasonCode());
-        assertEquals(ExecutionMode.ANALYZE, middleware.lastContext.mode());
-        assertEquals(ParameterizationMode.BIND, middleware.lastContext.parameterizationMode());
-        assertEquals("alice", middleware.lastContext.principal());
-        assertEquals("tenant-a", middleware.lastContext.tenant());
+        assertEquals(ExecutionMode.ANALYZE, decisionService.lastContext.mode());
+        assertEquals(ParameterizationMode.BIND, decisionService.lastContext.parameterizationMode());
+        assertEquals("alice", decisionService.lastContext.principal());
+        assertEquals("tenant-a", decisionService.lastContext.tenant());
     }
 
     @Test
     void enforce_uses_execute_mode_when_request_mode_is_blank() {
-        var middleware = new CapturingMiddleware();
-        var service = new SqlMiddlewareCoreService(middleware);
+        var decisionService = new CapturingMiddleware();
+        var service = new SqlMiddlewareCoreService(decisionService);
 
         var request = new EnforceRequest(
             "select 1",
@@ -41,14 +41,14 @@ class SqlMiddlewareCoreServiceTest {
 
         service.enforce(request);
 
-        assertEquals(ExecutionMode.EXECUTE, middleware.lastContext.mode());
-        assertEquals(ParameterizationMode.OFF, middleware.lastContext.parameterizationMode());
+        assertEquals(ExecutionMode.EXECUTE, decisionService.lastContext.mode());
+        assertEquals(ParameterizationMode.OFF, decisionService.lastContext.parameterizationMode());
     }
 
     @Test
     void explain_preserves_decision_and_explanation_shape() {
-        var middleware = new CapturingMiddleware();
-        var service = new SqlMiddlewareCoreService(middleware);
+        var decisionService = new CapturingMiddleware();
+        var service = new SqlMiddlewareCoreService(decisionService);
 
         var request = new ExplainRequest(
             "select 1",
@@ -62,8 +62,8 @@ class SqlMiddlewareCoreServiceTest {
 
     @Test
     void analyze_defaults_to_analyze_when_mode_is_missing() {
-        var middleware = new CapturingMiddleware();
-        var service = new SqlMiddlewareCoreService(middleware);
+        var decisionService = new CapturingMiddleware();
+        var service = new SqlMiddlewareCoreService(decisionService);
         var request = new AnalyzeRequest(
             "select 1",
             new ExecutionContextDto("postgresql", null, null, null, null)
@@ -71,13 +71,13 @@ class SqlMiddlewareCoreServiceTest {
 
         service.analyze(request);
 
-        assertEquals(ExecutionMode.ANALYZE, middleware.lastContext.mode());
+        assertEquals(ExecutionMode.ANALYZE, decisionService.lastContext.mode());
     }
 
     @Test
     void enforce_preserves_guidance_and_kind() {
-        var middleware = new CapturingMiddleware();
-        var service = new SqlMiddlewareCoreService(middleware);
+        var decisionService = new CapturingMiddleware();
+        var service = new SqlMiddlewareCoreService(decisionService);
 
         var request = new EnforceRequest(
             "delete from users",
@@ -92,7 +92,7 @@ class SqlMiddlewareCoreServiceTest {
         assertEquals("remove_dml", result.guidance().suggestedAction());
     }
 
-    private static final class CapturingMiddleware implements SqlMiddleware {
+    private static final class CapturingMiddleware implements SqlDecisionService {
 
         private ExecutionContext lastContext;
 
@@ -119,3 +119,4 @@ class SqlMiddlewareCoreServiceTest {
         }
     }
 }
+

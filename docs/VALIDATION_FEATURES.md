@@ -126,6 +126,63 @@ PostgreSQL-specific validation is implemented in a dedicated dialect module:
 Use `SchemaValidationSettings` to customize:
 - function catalog (`FunctionCatalog`)
 - additional rules (`SchemaValidationRule`)
+- access policy (`CatalogAccessPolicy`)
+
+### SchemaValidationSettingsLoader (JSON/YAML)
+
+`SchemaValidationSettingsLoader` can build `SchemaValidationSettings` from configuration text:
+
+- `SchemaValidationSettingsLoader.fromJson(...)`
+- `SchemaValidationSettingsLoader.fromYaml(...)`
+
+Example JSON access policy config:
+
+```json
+{
+  "accessPolicy": {
+    "deniedTables": ["users"],
+    "deniedColumns": ["users.secret"],
+    "allowedFunctions": ["count", "lower"],
+    "principals": [
+      {
+        "name": "analyst",
+        "deniedTables": ["payments"],
+        "deniedColumns": ["users.email"],
+        "allowedFunctions": ["sum", "avg"]
+      }
+    ]
+  },
+  "limits": {
+    "maxJoinCount": 5,
+    "maxSelectColumns": 50
+  }
+}
+```
+
+Equivalent YAML access policy config:
+
+```yaml
+accessPolicy:
+  deniedTables:
+    - users
+  deniedColumns:
+    - users.secret
+  allowedFunctions:
+    - count
+    - lower
+  principals:
+    - name: analyst
+      deniedTables:
+        - payments
+      deniedColumns:
+        - users.email
+      allowedFunctions:
+        - sum
+        - avg
+limits:
+  maxJoinCount: 5
+  maxSelectColumns: 50
+```
 
 ### SchemaValidationDialect
 

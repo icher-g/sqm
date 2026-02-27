@@ -4,8 +4,8 @@ import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
-import io.sqm.control.SqlMiddleware;
-import io.sqm.control.SqlMiddlewareConfig;
+import io.sqm.control.SqlDecisionService;
+import io.sqm.control.SqlDecisionServiceConfig;
 import io.sqm.middleware.api.AnalyzeRequest;
 import io.sqm.middleware.api.ExecutionContextDto;
 import io.sqm.middleware.api.SqlMiddlewareService;
@@ -25,7 +25,7 @@ class SqlMiddlewareServicesTest {
 
     @Test
     void create_from_config_returns_service() {
-        var config = SqlMiddlewareConfig.builder(SCHEMA).buildValidationConfig();
+        var config = SqlDecisionServiceConfig.builder(SCHEMA).buildValidationConfig();
 
         SqlMiddlewareService service = SqlMiddlewareServices.create(config);
 
@@ -35,20 +35,21 @@ class SqlMiddlewareServicesTest {
 
     @Test
     void create_from_middleware_returns_service() {
-        var middleware = SqlMiddleware.create(SqlMiddlewareConfig.builder(SCHEMA).buildValidationConfig());
+        var decisionService = SqlDecisionService.create(SqlDecisionServiceConfig.builder(SCHEMA).buildValidationConfig());
 
-        SqlMiddlewareService service = SqlMiddlewareServices.create(middleware);
+        SqlMiddlewareService service = SqlMiddlewareServices.create(decisionService);
 
         assertNotNull(service);
     }
 
     @Test
     void create_from_config_throws_on_null() {
-        assertThrows(NullPointerException.class, () -> SqlMiddlewareServices.create((SqlMiddlewareConfig) null));
+        assertThrows(NullPointerException.class, () -> SqlMiddlewareServices.create((SqlDecisionServiceConfig) null));
     }
 
     @Test
     void create_from_middleware_throws_on_null() {
-        assertThrows(NullPointerException.class, () -> SqlMiddlewareServices.create((SqlMiddleware) null));
+        assertThrows(NullPointerException.class, () -> SqlMiddlewareServices.create((SqlDecisionService) null));
     }
 }
+

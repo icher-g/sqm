@@ -6,7 +6,7 @@ import io.sqm.control.DecisionResult;
 import io.sqm.control.ExecutionContext;
 import io.sqm.control.ExecutionMode;
 import io.sqm.control.ParameterizationMode;
-import io.sqm.control.SqlMiddleware;
+import io.sqm.control.SqlDecisionService;
 import io.sqm.middleware.api.AnalyzeRequest;
 import io.sqm.middleware.api.DecisionExplanationDto;
 import io.sqm.middleware.api.DecisionGuidanceDto;
@@ -23,19 +23,19 @@ import io.sqm.middleware.api.SqlMiddlewareService;
 import java.util.Objects;
 
 /**
- * Default transport-neutral middleware service implementation backed by {@link SqlMiddleware}.
+ * Default transport-neutral middleware service implementation backed by {@link SqlDecisionService}.
  */
 public final class SqlMiddlewareCoreService implements SqlMiddlewareService {
 
-    private final SqlMiddleware middleware;
+    private final SqlDecisionService decisionService;
 
     /**
      * Creates a service backed by middleware.
      *
-     * @param middleware middleware implementation
+     * @param decisionService decision service implementation
      */
-    public SqlMiddlewareCoreService(SqlMiddleware middleware) {
-        this.middleware = Objects.requireNonNull(middleware, "middleware must not be null");
+    public SqlMiddlewareCoreService(SqlDecisionService decisionService) {
+        this.decisionService = Objects.requireNonNull(decisionService, "decisionService must not be null");
     }
 
     /**
@@ -48,7 +48,7 @@ public final class SqlMiddlewareCoreService implements SqlMiddlewareService {
     public DecisionResultDto analyze(AnalyzeRequest request) {
         Objects.requireNonNull(request, "request must not be null");
         var context = toExecutionContext(request.context(), ExecutionMode.ANALYZE);
-        var decision = middleware.analyze(request.sql(), context);
+        var decision = decisionService.analyze(request.sql(), context);
         return toDecisionResultDto(decision);
     }
 
@@ -62,7 +62,7 @@ public final class SqlMiddlewareCoreService implements SqlMiddlewareService {
     public DecisionResultDto enforce(EnforceRequest request) {
         Objects.requireNonNull(request, "request must not be null");
         var context = toExecutionContext(request.context(), ExecutionMode.EXECUTE);
-        var decision = middleware.enforce(request.sql(), context);
+        var decision = decisionService.enforce(request.sql(), context);
         return toDecisionResultDto(decision);
     }
 
@@ -76,7 +76,7 @@ public final class SqlMiddlewareCoreService implements SqlMiddlewareService {
     public DecisionExplanationDto explainDecision(ExplainRequest request) {
         Objects.requireNonNull(request, "request must not be null");
         var context = toExecutionContext(request.context(), ExecutionMode.ANALYZE);
-        var explanation = middleware.explainDecision(request.sql(), context);
+        var explanation = decisionService.explainDecision(request.sql(), context);
         return toDecisionExplanationDto(explanation);
     }
 
@@ -132,3 +132,4 @@ public final class SqlMiddlewareCoreService implements SqlMiddlewareService {
         );
     }
 }
+

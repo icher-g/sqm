@@ -7,6 +7,7 @@ import io.sqm.control.*;
 import io.sqm.middleware.api.SqlMiddlewareService;
 import io.sqm.validate.schema.SchemaValidationLimits;
 import io.sqm.validate.schema.SchemaValidationSettings;
+import io.sqm.validate.schema.SchemaValidationSettingsLoader;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -42,12 +43,12 @@ public final class SqlMiddlewareRuntimeFactory {
     public static SqlMiddlewareService createFromEnvironment() {
         var schema = loadSchema();
 
-        var builder = SqlMiddlewareConfig.builder(schema);
+        var builder = SqlDecisionServiceConfig.builder(schema);
 
         applyValidationSettings(builder);
         applyGuardrails(builder);
 
-        if (readBoolean("sqm.middleware.rewrite.enabled", "SQM_MIDDLEWARE_REWRITE_ENABLED", true)) {
+        if (readBoolean(ConfigKeys.REWRITE_ENABLED, true)) {
             applyRewriteCustomizations(builder);
             return SqlMiddlewareServices.create(builder.buildValidationAndRewriteConfig());
         }
@@ -56,7 +57,7 @@ public final class SqlMiddlewareRuntimeFactory {
     }
 
     private static CatalogSchema loadSchema() {
-        var source = readString("sqm.middleware.schema.source", "SQM_MIDDLEWARE_SCHEMA_SOURCE", "manual")
+        var source = readString(ConfigKeys.SCHEMA_SOURCE, "manual")
             .trim()
             .toLowerCase(Locale.ROOT);
 
@@ -70,8 +71,7 @@ public final class SqlMiddlewareRuntimeFactory {
 
     private static CatalogSchema loadDefaultJsonSchema() {
         var defaultPath = readString(
-            "sqm.middleware.schema.defaultJson.path",
-            "SQM_MIDDLEWARE_SCHEMA_DEFAULT_JSON_PATH",
+            ConfigKeys.SCHEMA_DEFAULT_JSON_PATH,
             null
         );
 
@@ -94,9 +94,14 @@ public final class SqlMiddlewareRuntimeFactory {
     }
 
     private static CatalogSchema loadJsonSchema() {
-        var path = readString("sqm.middleware.schema.json.path", "SQM_MIDDLEWARE_SCHEMA_JSON_PATH", null);
+        var path = readString(ConfigKeys.SCHEMA_JSON_PATH, null);
         if (path == null || path.isBlank()) {
-            throw new IllegalArgumentException("JSON schema source requires sqm.middleware.schema.json.path (or SQM_MIDDLEWARE_SCHEMA_JSON_PATH)");
+            throw new IllegalArgumentException(
+                "JSON schema source requires %s (or %s)".formatted(
+                    ConfigKeys.SCHEMA_JSON_PATH.property(),
+                    ConfigKeys.SCHEMA_JSON_PATH.env()
+                )
+            );
         }
         return loadJsonSchema(Path.of(path));
     }
@@ -110,11 +115,11 @@ public final class SqlMiddlewareRuntimeFactory {
     }
 
     private static CatalogSchema loadJdbcSchema() {
-        var url = required("sqm.middleware.jdbc.url", "SQM_MIDDLEWARE_JDBC_URL");
-        var user = readString("sqm.middleware.jdbc.user", "SQM_MIDDLEWARE_JDBC_USER", "");
-        var password = readString("sqm.middleware.jdbc.password", "SQM_MIDDLEWARE_JDBC_PASSWORD", "");
-        var schemaPattern = readString("sqm.middleware.jdbc.schemaPattern", "SQM_MIDDLEWARE_JDBC_SCHEMA_PATTERN", null);
-        var driverClass = readString("sqm.middleware.jdbc.driver", "SQM_MIDDLEWARE_JDBC_DRIVER", null);
+        var url = required(ConfigKeys.JDBC_URL);
+        var user = readString(ConfigKeys.JDBC_USER, "");
+        var password = readString(ConfigKeys.JDBC_PASSWORD, "");
+        var schemaPattern = readString(ConfigKeys.JDBC_SCHEMA_PATTERN, null);
+        var driverClass = readString(ConfigKeys.JDBC_DRIVER, null);
 
         if (driverClass != null && !driverClass.isBlank()) {
             try {
@@ -132,11 +137,15 @@ public final class SqlMiddlewareRuntimeFactory {
         }
     }
 
-    private static void applyValidationSettings(SqlMiddlewareConfig.Builder builder) {
-        Integer maxJoinCount = readIntNullable("sqm.middleware.validation.maxJoinCount", "SQM_MIDDLEWARE_VALIDATION_MAX_JOIN_COUNT");
-        Integer maxSelectColumns = readIntNullable("sqm.middleware.validation.maxSelectColumns", "SQM_MIDDLEWARE_VALIDATION_MAX_SELECT_COLUMNS");
+    private static void applyValidationSettings(SqlDecisionServiceConfig.Builder builder) {
+        var baseSettings = readValidationSettingsConfig();
+        Integer maxJoinCount = readIntNullable(ConfigKeys.VALIDATION_MAX_JOIN_COUNT);
+        Integer maxSelectColumns = readIntNullable(ConfigKeys.VALIDATION_MAX_SELECT_COLUMNS);
 
         if (maxJoinCount == null && maxSelectColumns == null) {
+            if (baseSettings != null) {
+                builder.validationSettings(baseSettings);
+            }
             return;
         }
 
@@ -148,18 +157,44 @@ public final class SqlMiddlewareRuntimeFactory {
             limitsBuilder.maxSelectColumns(maxSelectColumns);
         }
 
+        var limits = limitsBuilder.build();
+        if (baseSettings != null) {
+            builder.validationSettings(
+                SchemaValidationSettings.builder()
+                    .functionCatalog(baseSettings.functionCatalog())
+                    .accessPolicy(baseSettings.accessPolicy())
+                    .principal(baseSettings.principal())
+                    .limits(limits)
+                    .addRules(baseSettings.additionalRules())
+                    .build()
+            );
+            return;
+        }
+
         builder.validationSettings(
             SchemaValidationSettings.builder()
-                .limits(limitsBuilder.build())
+                .limits(limits)
                 .build()
         );
     }
 
-    private static void applyGuardrails(SqlMiddlewareConfig.Builder builder) {
-        Integer maxSqlLength = readIntNullable("sqm.middleware.guardrails.maxSqlLength", "SQM_MIDDLEWARE_GUARDRAILS_MAX_SQL_LENGTH");
-        Long timeoutMillis = readLongNullable("sqm.middleware.guardrails.timeoutMillis", "SQM_MIDDLEWARE_GUARDRAILS_TIMEOUT_MILLIS");
-        Integer maxRows = readIntNullable("sqm.middleware.guardrails.maxRows", "SQM_MIDDLEWARE_GUARDRAILS_MAX_ROWS");
-        boolean explainDryRun = readBoolean("sqm.middleware.guardrails.explainDryRun", "SQM_MIDDLEWARE_GUARDRAILS_EXPLAIN_DRY_RUN", false);
+    private static SchemaValidationSettings readValidationSettingsConfig() {
+        var json = readString(ConfigKeys.VALIDATION_SETTINGS_JSON, null);
+        if (json != null && !json.isBlank()) {
+            return SchemaValidationSettingsLoader.fromJson(json);
+        }
+        var yaml = readString(ConfigKeys.VALIDATION_SETTINGS_YAML, null);
+        if (yaml != null && !yaml.isBlank()) {
+            return SchemaValidationSettingsLoader.fromYaml(yaml);
+        }
+        return null;
+    }
+
+    private static void applyGuardrails(SqlDecisionServiceConfig.Builder builder) {
+        Integer maxSqlLength = readIntNullable(ConfigKeys.GUARDRAILS_MAX_SQL_LENGTH);
+        Long timeoutMillis = readLongNullable(ConfigKeys.GUARDRAILS_TIMEOUT_MILLIS);
+        Integer maxRows = readIntNullable(ConfigKeys.GUARDRAILS_MAX_ROWS);
+        boolean explainDryRun = readBoolean(ConfigKeys.GUARDRAILS_EXPLAIN_DRY_RUN, false);
 
         if (maxSqlLength == null && timeoutMillis == null && maxRows == null && !explainDryRun) {
             return;
@@ -168,7 +203,7 @@ public final class SqlMiddlewareRuntimeFactory {
         builder.guardrails(new RuntimeGuardrails(maxSqlLength, timeoutMillis, maxRows, explainDryRun));
     }
 
-    private static void applyRewriteCustomizations(SqlMiddlewareConfig.Builder builder) {
+    private static void applyRewriteCustomizations(SqlDecisionServiceConfig.Builder builder) {
         var rules = readRewriteRules();
         if (!rules.isEmpty()) {
             builder.rewriteRules(rules.toArray(BuiltInRewriteRule[]::new));
@@ -181,7 +216,7 @@ public final class SqlMiddlewareRuntimeFactory {
     }
 
     private static Set<BuiltInRewriteRule> readRewriteRules() {
-        var raw = readString("sqm.middleware.rewrite.rules", "SQM_MIDDLEWARE_REWRITE_RULES", null);
+        var raw = readString(ConfigKeys.REWRITE_RULES, null);
         if (raw == null || raw.isBlank()) {
             return Set.of();
         }
@@ -199,37 +234,37 @@ public final class SqlMiddlewareRuntimeFactory {
         boolean configured = false;
         var settingsBuilder = BuiltInRewriteSettings.builder();
 
-        Long defaultLimit = readLongNullable("sqm.middleware.rewrite.defaultLimitInjectionValue", "SQM_MIDDLEWARE_REWRITE_DEFAULT_LIMIT_INJECTION_VALUE");
+        Long defaultLimit = readLongNullable(ConfigKeys.REWRITE_DEFAULT_LIMIT_INJECTION_VALUE);
         if (defaultLimit != null) {
             settingsBuilder.defaultLimitInjectionValue(defaultLimit);
             configured = true;
         }
 
-        Integer maxAllowedLimit = readIntNullable("sqm.middleware.rewrite.maxAllowedLimit", "SQM_MIDDLEWARE_REWRITE_MAX_ALLOWED_LIMIT");
+        Integer maxAllowedLimit = readIntNullable(ConfigKeys.REWRITE_MAX_ALLOWED_LIMIT);
         if (maxAllowedLimit != null) {
             settingsBuilder.maxAllowedLimit(maxAllowedLimit);
             configured = true;
         }
 
-        var limitExcessMode = readEnumNullable("sqm.middleware.rewrite.limitExcessMode", "SQM_MIDDLEWARE_REWRITE_LIMIT_EXCESS_MODE", LimitExcessMode.class);
+        var limitExcessMode = readEnumNullable(ConfigKeys.REWRITE_LIMIT_EXCESS_MODE, LimitExcessMode.class);
         if (limitExcessMode != null) {
             settingsBuilder.limitExcessMode(limitExcessMode);
             configured = true;
         }
 
-        var qualificationDefaultSchema = readString("sqm.middleware.rewrite.qualificationDefaultSchema", "SQM_MIDDLEWARE_REWRITE_QUALIFICATION_DEFAULT_SCHEMA", null);
+        var qualificationDefaultSchema = readString(ConfigKeys.REWRITE_QUALIFICATION_DEFAULT_SCHEMA, null);
         if (qualificationDefaultSchema != null && !qualificationDefaultSchema.isBlank()) {
             settingsBuilder.qualificationDefaultSchema(qualificationDefaultSchema);
             configured = true;
         }
 
-        var qualificationFailureMode = readEnumNullable("sqm.middleware.rewrite.qualificationFailureMode", "SQM_MIDDLEWARE_REWRITE_QUALIFICATION_FAILURE_MODE", QualificationFailureMode.class);
+        var qualificationFailureMode = readEnumNullable(ConfigKeys.REWRITE_QUALIFICATION_FAILURE_MODE, QualificationFailureMode.class);
         if (qualificationFailureMode != null) {
             settingsBuilder.qualificationFailureMode(qualificationFailureMode);
             configured = true;
         }
 
-        var identifierCase = readString("sqm.middleware.rewrite.identifierNormalizationCaseMode", "SQM_MIDDLEWARE_REWRITE_IDENTIFIER_NORMALIZATION_CASE_MODE", null);
+        var identifierCase = readString(ConfigKeys.REWRITE_IDENTIFIER_NORMALIZATION_CASE_MODE, null);
         if (identifierCase != null && !identifierCase.isBlank()) {
             settingsBuilder.identifierNormalizationCaseMode(valueOf(identifierCase.toUpperCase(Locale.ROOT)));
             configured = true;
@@ -238,18 +273,18 @@ public final class SqlMiddlewareRuntimeFactory {
         return configured ? settingsBuilder.build() : null;
     }
 
-    private static String required(String propertyKey, String envKey) {
-        var value = readString(propertyKey, envKey, null);
+    private static String required(ConfigKeys.Key key) {
+        var value = readString(key, null);
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("Missing required configuration: " + propertyKey + " / " + envKey);
+            throw new IllegalArgumentException("Missing required configuration: " + key.property() + " / " + key.env());
         }
         return value;
     }
 
-    private static String readString(String propertyKey, String envKey, String defaultValue) {
-        var value = System.getProperty(propertyKey);
+    private static String readString(ConfigKeys.Key key, String defaultValue) {
+        var value = System.getProperty(key.property());
         if (value == null || value.isBlank()) {
-            value = System.getenv(envKey);
+            value = System.getenv(key.env());
         }
         if (value == null || value.isBlank()) {
             return defaultValue;
@@ -257,24 +292,24 @@ public final class SqlMiddlewareRuntimeFactory {
         return value;
     }
 
-    private static boolean readBoolean(String propertyKey, String envKey, boolean defaultValue) {
-        var raw = readString(propertyKey, envKey, null);
+    private static boolean readBoolean(ConfigKeys.Key key, boolean defaultValue) {
+        var raw = readString(key, null);
         return raw == null ? defaultValue : Boolean.parseBoolean(raw);
     }
 
-    private static Integer readIntNullable(String propertyKey, String envKey) {
-        var raw = readString(propertyKey, envKey, null);
+    private static Integer readIntNullable(ConfigKeys.Key key) {
+        var raw = readString(key, null);
         return raw == null ? null : Integer.valueOf(raw);
     }
 
-    private static Long readLongNullable(String propertyKey, String envKey) {
-        var raw = readString(propertyKey, envKey, null);
+    private static Long readLongNullable(ConfigKeys.Key key) {
+        var raw = readString(key, null);
         return raw == null ? null : Long.valueOf(raw);
     }
 
-    private static <E extends Enum<E>> E readEnumNullable(String propertyKey, String envKey, Class<E> enumType) {
+    private static <E extends Enum<E>> E readEnumNullable(ConfigKeys.Key key, Class<E> enumType) {
         Objects.requireNonNull(enumType, "enumType must not be null");
-        var raw = readString(propertyKey, envKey, null);
+        var raw = readString(key, null);
         if (raw == null || raw.isBlank()) {
             return null;
         }
@@ -334,3 +369,4 @@ public final class SqlMiddlewareRuntimeFactory {
         }
     }
 }
+
