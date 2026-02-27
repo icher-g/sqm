@@ -1,7 +1,7 @@
 # SQM — Structured Query Model for Java
 
 [![Build](https://github.com/icher-g/sqm/actions/workflows/publish-maven.yml/badge.svg?branch=main)](https://github.com/icher-g/sqm/actions/workflows/publish-maven.yml)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Packages](https://img.shields.io/badge/Maven-GitHub%20Packages-blue)](https://github.com/icher-g/sqm/packages)
 [![codecov](https://codecov.io/gh/icher-g/sqm/graph/badge.svg)](https://codecov.io/gh/icher-g/sqm)
 
@@ -1005,7 +1005,7 @@ mvn test
 
 ## 🪪 License
 
-Licensed under the **Apache License, Version 2.0**.  
+Licensed under the **MIT License**.  
 See [LICENSE](LICENSE) for details.
 
 ---
