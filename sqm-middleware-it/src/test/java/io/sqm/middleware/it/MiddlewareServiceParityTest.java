@@ -1,4 +1,4 @@
-package io.sqm.decisionService.it;
+package io.sqm.middleware.it;
 
 import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
@@ -8,10 +8,10 @@ import io.sqm.control.ExecutionContext;
 import io.sqm.control.ExecutionMode;
 import io.sqm.control.SqlDecisionService;
 import io.sqm.control.SqlDecisionServiceConfig;
-import io.sqm.decisionService.api.AnalyzeRequest;
-import io.sqm.decisionService.api.DecisionKindDto;
-import io.sqm.decisionService.api.ExecutionContextDto;
-import io.sqm.decisionService.core.SqlMiddlewareCoreService;
+import io.sqm.middleware.api.AnalyzeRequest;
+import io.sqm.middleware.api.DecisionKindDto;
+import io.sqm.middleware.api.ExecutionContextDto;
+import io.sqm.middleware.core.SqlMiddlewareCoreService;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,7 +31,7 @@ class MiddlewareServiceParityTest {
             SqlDecisionServiceConfig.builder(SCHEMA)
                 .buildValidationConfig()
         );
-        var service = new SqlMiddlewareCoreService(middleware);
+        var service = new SqlMiddlewareCoreService(decisionService);
         var sql = "select id from users";
 
         var direct = decisionService.analyze(sql, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
