@@ -139,7 +139,13 @@ public final class SchemaQueryValidator implements QueryValidator {
     public ValidationResult validate(Query query) {
         Objects.requireNonNull(query, "query");
         var visitor = new ValidationVisitor(
-            new SchemaValidationContext(schema, settings.functionCatalog(), settings.accessPolicy(), settings.principal()),
+            new SchemaValidationContext(
+                schema,
+                settings.functionCatalog(),
+                settings.accessPolicy(),
+                settings.tenant(),
+                settings.principal()
+            ),
             registry
         );
         query.accept(visitor);

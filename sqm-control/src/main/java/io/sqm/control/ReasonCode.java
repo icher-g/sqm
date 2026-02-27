@@ -60,6 +60,11 @@ public enum ReasonCode {
     DENY_VALIDATION,
 
     /**
+     * Query denied because tenant context is required but missing.
+     */
+    DENY_TENANT_REQUIRED,
+
+    /**
      * Query denied because SQL text exceeds configured maximum length.
      */
     DENY_MAX_SQL_LENGTH,

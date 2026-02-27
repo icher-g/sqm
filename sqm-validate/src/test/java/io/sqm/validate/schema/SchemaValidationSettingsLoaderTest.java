@@ -91,6 +91,70 @@ class SchemaValidationSettingsLoaderTest {
     }
 
     @Test
+    void loads_tenant_specific_policy_and_tenant_context() {
+        var yaml = """
+            tenant: tenant_a
+            accessPolicy:
+              deniedTables:
+                - global_blocked
+              tenants:
+                - name: tenant_a
+                  deniedTables:
+                    - users
+                  deniedColumns:
+                    - u.secret
+                  allowedFunctions:
+                    - length
+                  principals:
+                    - name: analyst
+                      deniedColumns:
+                        - u.email
+            """;
+
+        var settings = SchemaValidationSettingsLoader.fromYaml(yaml);
+
+        assertEquals("tenant_a", settings.tenant());
+        assertEquals(TenantRequirementMode.OPTIONAL, settings.tenantRequirementMode());
+        assertTrue(settings.accessPolicy().isTableDenied(null, null, null, "global_blocked"));
+        assertTrue(settings.accessPolicy().isTableDenied("tenant_a", null, null, "users"));
+        assertTrue(settings.accessPolicy().isColumnDenied("tenant_a", null, "u", "secret"));
+        assertTrue(settings.accessPolicy().isFunctionAllowed("tenant_a", null, "length"));
+        assertTrue(settings.accessPolicy().isColumnDenied("tenant_a", "analyst", "u", "email"));
+        assertFalse(settings.accessPolicy().isColumnDenied("tenant_a", "viewer", "u", "email"));
+        assertFalse(settings.accessPolicy().isTableDenied("tenant_b", null, null, "users"));
+    }
+
+    @Test
+    void loads_tenant_requirement_mode() {
+        var yaml = """
+            tenantRequirementMode: required
+            """;
+
+        var settings = SchemaValidationSettingsLoader.fromYaml(yaml);
+
+        assertEquals(TenantRequirementMode.REQUIRED, settings.tenantRequirementMode());
+    }
+
+    @Test
+    void rejects_duplicate_tenant_policy_names() {
+        var yaml = """
+            accessPolicy:
+              tenants:
+                - name: tenant_a
+                  deniedTables:
+                    - users
+                - name: tenant_a
+                  deniedTables:
+                    - orders
+            """;
+
+        var ex = assertThrows(IllegalArgumentException.class,
+            () -> SchemaValidationSettingsLoader.fromYaml(yaml));
+        assertTrue(ex.getMessage().contains("invalid"));
+        assertTrue(ex.getMessage().contains("tenant access policy already defined"));
+    }
+
+    @Test
     void rejects_unknown_property() {
         var json = """
             {

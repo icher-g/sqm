@@ -8,34 +8,27 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Default catalog access policy with optional principal-specific overrides.
+ * Default catalog access policy with optional principal- and tenant-specific overrides.
  *
  * <p>All keys are matched case-insensitively.</p>
  */
 public final class DefaultCatalogAccessPolicy implements CatalogAccessPolicy {
+    private static final String ANY_SCOPE = "*";
+    private static final String SEPARATOR = "|";
     private static final DefaultCatalogAccessPolicy ALLOW_ALL = builder().build();
 
-    private final Set<String> deniedTables;
-    private final Set<String> deniedColumns;
-    private final Set<String> allowedFunctions;
-    private final Map<String, Set<String>> deniedTablesByPrincipal;
-    private final Map<String, Set<String>> deniedColumnsByPrincipal;
-    private final Map<String, Set<String>> allowedFunctionsByPrincipal;
+    private final Map<String, Set<String>> deniedTablesByScope;
+    private final Map<String, Set<String>> deniedColumnsByScope;
+    private final Map<String, Set<String>> allowedFunctionsByScope;
 
     private DefaultCatalogAccessPolicy(
-        Set<String> deniedTables,
-        Set<String> deniedColumns,
-        Set<String> allowedFunctions,
-        Map<String, Set<String>> deniedTablesByPrincipal,
-        Map<String, Set<String>> deniedColumnsByPrincipal,
-        Map<String, Set<String>> allowedFunctionsByPrincipal
+        Map<String, Set<String>> deniedTablesByScope,
+        Map<String, Set<String>> deniedColumnsByScope,
+        Map<String, Set<String>> allowedFunctionsByScope
     ) {
-        this.deniedTables = normalizeAll(deniedTables);
-        this.deniedColumns = normalizeAll(deniedColumns);
-        this.allowedFunctions = normalizeAll(allowedFunctions);
-        this.deniedTablesByPrincipal = normalizePrincipalMap(deniedTablesByPrincipal);
-        this.deniedColumnsByPrincipal = normalizePrincipalMap(deniedColumnsByPrincipal);
-        this.allowedFunctionsByPrincipal = normalizePrincipalMap(allowedFunctionsByPrincipal);
+        this.deniedTablesByScope = immutableScopeRules(deniedTablesByScope);
+        this.deniedColumnsByScope = immutableScopeRules(deniedColumnsByScope);
+        this.allowedFunctionsByScope = immutableScopeRules(allowedFunctionsByScope);
     }
 
     /**
@@ -66,15 +59,30 @@ public final class DefaultCatalogAccessPolicy implements CatalogAccessPolicy {
      */
     @Override
     public boolean isTableDenied(String principal, String schemaName, String tableName) {
+        return isTableDenied(null, principal, schemaName, tableName);
+    }
+
+    /**
+     * Returns true when a table is denied for the tenant and principal.
+     *
+     * @param tenant tenant identifier, may be {@code null}.
+     * @param principal principal identifier, may be {@code null}.
+     * @param schemaName table schema, may be {@code null}.
+     * @param tableName table name.
+     * @return true when denied.
+     */
+    @Override
+    public boolean isTableDenied(String tenant, String principal, String schemaName, String tableName) {
         if (tableName == null) {
             return false;
         }
         var table = normalize(tableName);
-        if (containsTable(deniedTables, schemaName, table)) {
-            return true;
+        for (var scope : scopesInPrecedence(tenant, principal)) {
+            if (containsTable(deniedTablesByScope.getOrDefault(scope, Set.of()), schemaName, table)) {
+                return true;
+            }
         }
-        var principalRules = rulesForPrincipal(deniedTablesByPrincipal, principal);
-        return containsTable(principalRules, schemaName, table);
+        return false;
     }
 
     /**
@@ -87,15 +95,30 @@ public final class DefaultCatalogAccessPolicy implements CatalogAccessPolicy {
      */
     @Override
     public boolean isColumnDenied(String principal, String sourceName, String columnName) {
+        return isColumnDenied(null, principal, sourceName, columnName);
+    }
+
+    /**
+     * Returns true when a column is denied for the tenant and principal.
+     *
+     * @param tenant tenant identifier, may be {@code null}.
+     * @param principal principal identifier, may be {@code null}.
+     * @param sourceName source alias or table name, may be {@code null}.
+     * @param columnName column name.
+     * @return true when denied.
+     */
+    @Override
+    public boolean isColumnDenied(String tenant, String principal, String sourceName, String columnName) {
         if (columnName == null) {
             return false;
         }
         var column = normalize(columnName);
-        if (containsColumn(deniedColumns, sourceName, column)) {
-            return true;
+        for (var scope : scopesInPrecedence(tenant, principal)) {
+            if (containsColumn(deniedColumnsByScope.getOrDefault(scope, Set.of()), sourceName, column)) {
+                return true;
+            }
         }
-        var principalRules = rulesForPrincipal(deniedColumnsByPrincipal, principal);
-        return containsColumn(principalRules, sourceName, column);
+        return false;
     }
 
     /**
@@ -107,43 +130,32 @@ public final class DefaultCatalogAccessPolicy implements CatalogAccessPolicy {
      */
     @Override
     public boolean isFunctionAllowed(String principal, String functionName) {
+        return isFunctionAllowed(null, principal, functionName);
+    }
+
+    /**
+     * Returns true when a function is allowed for the tenant and principal.
+     *
+     * @param tenant tenant identifier, may be {@code null}.
+     * @param principal principal identifier, may be {@code null}.
+     * @param functionName function name.
+     * @return true when allowed.
+     */
+    @Override
+    public boolean isFunctionAllowed(String tenant, String principal, String functionName) {
         if (functionName == null) {
             return true;
         }
-        var principalRules = rulesForPrincipal(allowedFunctionsByPrincipal, principal);
-        var hasAllowlists = !allowedFunctions.isEmpty() || !allowedFunctionsByPrincipal.isEmpty();
-        if (!hasAllowlists) {
+        if (allowedFunctionsByScope.values().stream().allMatch(Set::isEmpty)) {
             return true;
         }
         var normalized = normalize(functionName);
-        return allowedFunctions.contains(normalized) || principalRules.contains(normalized);
-    }
-
-    /**
-     * Returns denied table keys.
-     *
-     * @return immutable set.
-     */
-    public Set<String> deniedTables() {
-        return deniedTables;
-    }
-
-    /**
-     * Returns denied column keys.
-     *
-     * @return immutable set.
-     */
-    public Set<String> deniedColumns() {
-        return deniedColumns;
-    }
-
-    /**
-     * Returns allowed function names.
-     *
-     * @return immutable set.
-     */
-    public Set<String> allowedFunctions() {
-        return allowedFunctions;
+        for (var scope : scopesInPrecedence(tenant, principal)) {
+            if (allowedFunctionsByScope.getOrDefault(scope, Set.of()).contains(normalized)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean containsTable(Set<String> rules, String schemaName, String table) {
@@ -166,52 +178,41 @@ public final class DefaultCatalogAccessPolicy implements CatalogAccessPolicy {
         return rules.contains(normalize(sourceName) + "." + column);
     }
 
-    private static Set<String> rulesForPrincipal(Map<String, Set<String>> rulesByPrincipal, String principal) {
-        if (principal == null || principal.isBlank()) {
-            return Set.of();
-        }
-        return rulesByPrincipal.getOrDefault(normalize(principal), Set.of());
+    private static java.util.List<String> scopesInPrecedence(String tenant, String principal) {
+        return java.util.List.of(
+            scopeKey(null, null),
+            scopeKey(null, principal),
+            scopeKey(tenant, null),
+            scopeKey(tenant, principal)
+        );
     }
 
-    private static Map<String, Set<String>> normalizePrincipalMap(Map<String, Set<String>> map) {
+    private static Map<String, Set<String>> immutableScopeRules(Map<String, Set<String>> map) {
         Objects.requireNonNull(map, "map");
-        var normalized = new LinkedHashMap<String, Set<String>>(map.size());
+        var immutable = new LinkedHashMap<String, Set<String>>(map.size());
         for (var entry : map.entrySet()) {
-            var principal = entry.getKey();
-            if (principal == null || principal.isBlank()) {
-                continue;
-            }
-            normalized.put(normalize(principal), normalizeAll(entry.getValue()));
+            immutable.put(entry.getKey(), Set.copyOf(entry.getValue()));
         }
-        return Map.copyOf(normalized);
-    }
-
-    private static Set<String> normalizeAll(Set<String> values) {
-        Objects.requireNonNull(values, "values");
-        var normalized = new LinkedHashSet<String>(values.size());
-        for (var value : values) {
-            if (value == null || value.isBlank()) {
-                continue;
-            }
-            normalized.add(normalize(value));
-        }
-        return Set.copyOf(normalized);
+        return Map.copyOf(immutable);
     }
 
     private static String normalize(String value) {
         return value.toLowerCase(Locale.ROOT);
     }
 
+    private static String scopeKey(String tenant, String principal) {
+        var normalizedTenant = tenant == null || tenant.isBlank() ? ANY_SCOPE : normalize(tenant);
+        var normalizedPrincipal = principal == null || principal.isBlank() ? ANY_SCOPE : normalize(principal);
+        return normalizedTenant + SEPARATOR + normalizedPrincipal;
+    }
+
     /**
      * Mutable builder for {@link DefaultCatalogAccessPolicy}.
      */
     public static final class Builder {
-        private final Set<String> deniedTables = new LinkedHashSet<>();
-        private final Set<String> deniedColumns = new LinkedHashSet<>();
-        private final Set<String> allowedFunctions = new LinkedHashSet<>();
-        private final Map<String, Set<String>> deniedTablesByPrincipal = new LinkedHashMap<>();
-        private final Map<String, Set<String>> deniedColumnsByPrincipal = new LinkedHashMap<>();
-        private final Map<String, Set<String>> allowedFunctionsByPrincipal = new LinkedHashMap<>();
+        private final Map<String, Set<String>> deniedTablesByScope = new LinkedHashMap<>();
+        private final Map<String, Set<String>> deniedColumnsByScope = new LinkedHashMap<>();
+        private final Map<String, Set<String>> allowedFunctionsByScope = new LinkedHashMap<>();
 
         /**
          * Creates an empty access-policy builder.
@@ -226,7 +227,7 @@ public final class DefaultCatalogAccessPolicy implements CatalogAccessPolicy {
          * @return this builder.
          */
         public Builder denyTable(String tableKey) {
-            deniedTables.add(Objects.requireNonNull(tableKey, "tableKey"));
+            addRule(deniedTablesByScope, scopeKey(null, null), tableKey);
             return this;
         }
 
@@ -237,7 +238,7 @@ public final class DefaultCatalogAccessPolicy implements CatalogAccessPolicy {
          * @return this builder.
          */
         public Builder denyColumn(String columnKey) {
-            deniedColumns.add(Objects.requireNonNull(columnKey, "columnKey"));
+            addRule(deniedColumnsByScope, scopeKey(null, null), columnKey);
             return this;
         }
 
@@ -248,7 +249,7 @@ public final class DefaultCatalogAccessPolicy implements CatalogAccessPolicy {
          * @return this builder.
          */
         public Builder allowFunction(String functionName) {
-            allowedFunctions.add(Objects.requireNonNull(functionName, "functionName"));
+            addRule(allowedFunctionsByScope, scopeKey(null, null), functionName);
             return this;
         }
 
@@ -260,7 +261,7 @@ public final class DefaultCatalogAccessPolicy implements CatalogAccessPolicy {
          * @return this builder.
          */
         public Builder denyTableForPrincipal(String principal, String tableKey) {
-            rulesFor(deniedTablesByPrincipal, principal).add(Objects.requireNonNull(tableKey, "tableKey"));
+            addRule(deniedTablesByScope, principalScope(principal), tableKey);
             return this;
         }
 
@@ -272,7 +273,7 @@ public final class DefaultCatalogAccessPolicy implements CatalogAccessPolicy {
          * @return this builder.
          */
         public Builder denyColumnForPrincipal(String principal, String columnKey) {
-            rulesFor(deniedColumnsByPrincipal, principal).add(Objects.requireNonNull(columnKey, "columnKey"));
+            addRule(deniedColumnsByScope, principalScope(principal), columnKey);
             return this;
         }
 
@@ -284,7 +285,82 @@ public final class DefaultCatalogAccessPolicy implements CatalogAccessPolicy {
          * @return this builder.
          */
         public Builder allowFunctionForPrincipal(String principal, String functionName) {
-            rulesFor(allowedFunctionsByPrincipal, principal).add(Objects.requireNonNull(functionName, "functionName"));
+            addRule(allowedFunctionsByScope, principalScope(principal), functionName);
+            return this;
+        }
+
+        /**
+         * Adds denied table key for a tenant.
+         *
+         * @param tenant tenant identifier.
+         * @param tableKey table key in {@code table} or {@code schema.table} form.
+         * @return this builder.
+         */
+        public Builder denyTableForTenant(String tenant, String tableKey) {
+            addRule(deniedTablesByScope, tenantScope(tenant), tableKey);
+            return this;
+        }
+
+        /**
+         * Adds denied column key for a tenant.
+         *
+         * @param tenant tenant identifier.
+         * @param columnKey column key in {@code column} or {@code source.column} form.
+         * @return this builder.
+         */
+        public Builder denyColumnForTenant(String tenant, String columnKey) {
+            addRule(deniedColumnsByScope, tenantScope(tenant), columnKey);
+            return this;
+        }
+
+        /**
+         * Adds allowed function name for a tenant.
+         *
+         * @param tenant tenant identifier.
+         * @param functionName function name.
+         * @return this builder.
+         */
+        public Builder allowFunctionForTenant(String tenant, String functionName) {
+            addRule(allowedFunctionsByScope, tenantScope(tenant), functionName);
+            return this;
+        }
+
+        /**
+         * Adds denied table key for a tenant and principal.
+         *
+         * @param tenant tenant identifier.
+         * @param principal principal identifier.
+         * @param tableKey table key in {@code table} or {@code schema.table} form.
+         * @return this builder.
+         */
+        public Builder denyTableForTenantPrincipal(String tenant, String principal, String tableKey) {
+            addRule(deniedTablesByScope, tenantPrincipalScope(tenant, principal), tableKey);
+            return this;
+        }
+
+        /**
+         * Adds denied column key for a tenant and principal.
+         *
+         * @param tenant tenant identifier.
+         * @param principal principal identifier.
+         * @param columnKey column key in {@code column} or {@code source.column} form.
+         * @return this builder.
+         */
+        public Builder denyColumnForTenantPrincipal(String tenant, String principal, String columnKey) {
+            addRule(deniedColumnsByScope, tenantPrincipalScope(tenant, principal), columnKey);
+            return this;
+        }
+
+        /**
+         * Adds allowed function name for a tenant and principal.
+         *
+         * @param tenant tenant identifier.
+         * @param principal principal identifier.
+         * @param functionName function name.
+         * @return this builder.
+         */
+        public Builder allowFunctionForTenantPrincipal(String tenant, String principal, String functionName) {
+            addRule(allowedFunctionsByScope, tenantPrincipalScope(tenant, principal), functionName);
             return this;
         }
 
@@ -295,19 +371,43 @@ public final class DefaultCatalogAccessPolicy implements CatalogAccessPolicy {
          */
         public DefaultCatalogAccessPolicy build() {
             return new DefaultCatalogAccessPolicy(
-                deniedTables,
-                deniedColumns,
-                allowedFunctions,
-                deniedTablesByPrincipal,
-                deniedColumnsByPrincipal,
-                allowedFunctionsByPrincipal
+                deniedTablesByScope,
+                deniedColumnsByScope,
+                allowedFunctionsByScope
             );
         }
 
-        private static Set<String> rulesFor(Map<String, Set<String>> rulesByPrincipal, String principal) {
-            Objects.requireNonNull(principal, "principal");
-            return rulesByPrincipal.computeIfAbsent(principal, key -> new LinkedHashSet<>());
+        private static void addRule(Map<String, Set<String>> rulesByScope, String scope, String rule) {
+            Objects.requireNonNull(scope, "scope");
+            Objects.requireNonNull(rule, "rule");
+            if (rule.isBlank()) {
+                return;
+            }
+            rulesByScope.computeIfAbsent(scope, ignored -> new LinkedHashSet<>()).add(normalize(rule));
+        }
+
+        private static String principalScope(String principal) {
+            if (principal == null || principal.isBlank()) {
+                throw new IllegalArgumentException("principal must not be blank");
+            }
+            return scopeKey(null, principal);
+        }
+
+        private static String tenantScope(String tenant) {
+            if (tenant == null || tenant.isBlank()) {
+                throw new IllegalArgumentException("tenant must not be blank");
+            }
+            return scopeKey(tenant, null);
+        }
+
+        private static String tenantPrincipalScope(String tenant, String principal) {
+            if (tenant == null || tenant.isBlank()) {
+                throw new IllegalArgumentException("tenant must not be blank");
+            }
+            if (principal == null || principal.isBlank()) {
+                throw new IllegalArgumentException("principal must not be blank");
+            }
+            return scopeKey(tenant, principal);
         }
     }
 }
-

@@ -18,6 +18,7 @@
 | `REWRITE_ENABLED`                            | `sqm.middleware.rewrite.enabled`                         | `SQM_MIDDLEWARE_REWRITE_ENABLED`                            |
 | `VALIDATION_MAX_JOIN_COUNT`                  | `sqm.middleware.validation.maxJoinCount`                 | `SQM_MIDDLEWARE_VALIDATION_MAX_JOIN_COUNT`                  |
 | `VALIDATION_MAX_SELECT_COLUMNS`              | `sqm.middleware.validation.maxSelectColumns`             | `SQM_MIDDLEWARE_VALIDATION_MAX_SELECT_COLUMNS`              |
+| `VALIDATION_TENANT_REQUIREMENT_MODE`         | `sqm.middleware.validation.tenantRequirementMode`        | `SQM_MIDDLEWARE_VALIDATION_TENANT_REQUIREMENT_MODE`         |
 | `GUARDRAILS_MAX_SQL_LENGTH`                  | `sqm.middleware.guardrails.maxSqlLength`                 | `SQM_MIDDLEWARE_GUARDRAILS_MAX_SQL_LENGTH`                  |
 | `GUARDRAILS_TIMEOUT_MILLIS`                  | `sqm.middleware.guardrails.timeoutMillis`                | `SQM_MIDDLEWARE_GUARDRAILS_TIMEOUT_MILLIS`                  |
 | `GUARDRAILS_MAX_ROWS`                        | `sqm.middleware.guardrails.maxRows`                      | `SQM_MIDDLEWARE_GUARDRAILS_MAX_ROWS`                        |
@@ -29,5 +30,4 @@
 | `REWRITE_QUALIFICATION_DEFAULT_SCHEMA`       | `sqm.middleware.rewrite.qualificationDefaultSchema`      | `SQM_MIDDLEWARE_REWRITE_QUALIFICATION_DEFAULT_SCHEMA`       |
 | `REWRITE_QUALIFICATION_FAILURE_MODE`         | `sqm.middleware.rewrite.qualificationFailureMode`        | `SQM_MIDDLEWARE_REWRITE_QUALIFICATION_FAILURE_MODE`         |
 | `REWRITE_IDENTIFIER_NORMALIZATION_CASE_MODE` | `sqm.middleware.rewrite.identifierNormalizationCaseMode` | `SQM_MIDDLEWARE_REWRITE_IDENTIFIER_NORMALIZATION_CASE_MODE` |
-
 

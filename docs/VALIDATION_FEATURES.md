@@ -139,6 +139,7 @@ Example JSON access policy config:
 
 ```json
 {
+  "tenantRequirementMode": "REQUIRED",
   "accessPolicy": {
     "deniedTables": ["users"],
     "deniedColumns": ["users.secret"],
@@ -149,6 +150,25 @@ Example JSON access policy config:
         "deniedTables": ["payments"],
         "deniedColumns": ["users.email"],
         "allowedFunctions": ["sum", "avg"]
+      }
+    ],
+    "tenants": [
+      {
+        "name": "tenant-a",
+        "deniedTables": ["payments"],
+        "deniedColumns": ["users.ssn"],
+        "allowedFunctions": ["count", "lower"],
+        "principals": [
+          {
+            "name": "analyst",
+            "deniedColumns": ["users.email"]
+          }
+        ]
+      },
+      {
+        "name": "tenant-b",
+        "deniedTables": ["audit_logs"],
+        "allowedFunctions": ["count"]
       }
     ]
   },
@@ -162,6 +182,7 @@ Example JSON access policy config:
 Equivalent YAML access policy config:
 
 ```yaml
+tenantRequirementMode: REQUIRED
 accessPolicy:
   deniedTables:
     - users
@@ -179,10 +200,34 @@ accessPolicy:
       allowedFunctions:
         - sum
         - avg
+  tenants:
+    - name: tenant-a
+      deniedTables:
+        - payments
+      deniedColumns:
+        - users.ssn
+      allowedFunctions:
+        - count
+        - lower
+      principals:
+        - name: analyst
+          deniedColumns:
+            - users.email
+    - name: tenant-b
+      deniedTables:
+        - audit_logs
+      allowedFunctions:
+        - count
 limits:
   maxJoinCount: 5
   maxSelectColumns: 50
 ```
+
+Access-policy evaluation precedence:
+
+- `global` + `principal` + `tenant` + `tenant+principal`
+- deny rules are additive across scopes
+- function allowlists are additive across scopes
 
 ### SchemaValidationDialect
 

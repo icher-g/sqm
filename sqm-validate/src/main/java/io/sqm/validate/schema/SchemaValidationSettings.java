@@ -21,6 +21,8 @@ public final class SchemaValidationSettings {
     private final FunctionCatalog functionCatalog;
     private final CatalogAccessPolicy accessPolicy;
     private final String principal;
+    private final String tenant;
+    private final TenantRequirementMode tenantRequirementMode;
     private final SchemaValidationLimits limits;
     private final List<SchemaValidationRule<? extends Node>> additionalRules;
 
@@ -28,12 +30,16 @@ public final class SchemaValidationSettings {
         FunctionCatalog functionCatalog,
         CatalogAccessPolicy accessPolicy,
         String principal,
+        String tenant,
+        TenantRequirementMode tenantRequirementMode,
         SchemaValidationLimits limits,
         List<SchemaValidationRule<? extends Node>> additionalRules
     ) {
         this.functionCatalog = Objects.requireNonNull(functionCatalog, "functionCatalog");
         this.accessPolicy = Objects.requireNonNull(accessPolicy, "accessPolicy");
         this.principal = normalizePrincipal(principal);
+        this.tenant = normalizeTenant(tenant);
+        this.tenantRequirementMode = Objects.requireNonNull(tenantRequirementMode, "tenantRequirementMode");
         this.limits = Objects.requireNonNull(limits, "limits");
         this.additionalRules = List.copyOf(additionalRules);
     }
@@ -94,6 +100,24 @@ public final class SchemaValidationSettings {
     }
 
     /**
+     * Returns tenant identifier used for tenant-aware access-policy checks.
+     *
+     * @return tenant identifier, may be {@code null}.
+     */
+    public String tenant() {
+        return tenant;
+    }
+
+    /**
+     * Returns tenant requirement mode.
+     *
+     * @return tenant requirement mode.
+     */
+    public TenantRequirementMode tenantRequirementMode() {
+        return tenantRequirementMode;
+    }
+
+    /**
      * Returns configured structural validation limits.
      *
      * @return structural validation limits.
@@ -118,6 +142,8 @@ public final class SchemaValidationSettings {
         private FunctionCatalog functionCatalog = DefaultFunctionCatalog.standard();
         private CatalogAccessPolicy accessPolicy = CatalogAccessPolicies.allowAll();
         private String principal;
+        private String tenant;
+        private TenantRequirementMode tenantRequirementMode = TenantRequirementMode.OPTIONAL;
         private SchemaValidationLimits limits = SchemaValidationLimits.unlimited();
         private final List<SchemaValidationRule<? extends Node>> additionalRules = new ArrayList<>();
 
@@ -157,6 +183,28 @@ public final class SchemaValidationSettings {
          */
         public Builder principal(String principal) {
             this.principal = normalizePrincipal(principal);
+            return this;
+        }
+
+        /**
+         * Sets default tenant identifier used for tenant-aware access checks.
+         *
+         * @param tenant tenant identifier, may be {@code null}.
+         * @return this builder.
+         */
+        public Builder tenant(String tenant) {
+            this.tenant = normalizeTenant(tenant);
+            return this;
+        }
+
+        /**
+         * Sets tenant requirement mode.
+         *
+         * @param tenantRequirementMode tenant requirement mode.
+         * @return this builder.
+         */
+        public Builder tenantRequirementMode(TenantRequirementMode tenantRequirementMode) {
+            this.tenantRequirementMode = Objects.requireNonNull(tenantRequirementMode, "tenantRequirementMode");
             return this;
         }
 
@@ -206,6 +254,8 @@ public final class SchemaValidationSettings {
                 functionCatalog,
                 accessPolicy,
                 principal,
+                tenant,
+                tenantRequirementMode,
                 limits,
                 additionalRules
             );
@@ -217,5 +267,12 @@ public final class SchemaValidationSettings {
             return null;
         }
         return principal;
+    }
+
+    private static String normalizeTenant(String tenant) {
+        if (tenant == null || tenant.isBlank()) {
+            return null;
+        }
+        return tenant;
     }
 }

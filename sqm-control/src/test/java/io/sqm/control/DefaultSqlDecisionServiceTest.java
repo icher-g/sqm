@@ -10,6 +10,7 @@ import io.sqm.validate.schema.SchemaValidationSettings;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -108,6 +109,53 @@ class DefaultSqlDecisionServiceTest {
         decisionService.analyze("select 1", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(1, audit.events().size());
         assertEquals(List.of(), audit.events().getFirst().appliedRules());
+    }
+
+    @Test
+    void audit_event_preserves_tenant_from_execution_context() {
+        var audit = InMemoryAuditEventPublisher.create();
+        var decisionService = create(
+            SCHEMA,
+            SchemaValidationSettings.defaults(),
+            RuntimeGuardrails.disabled(),
+            audit,
+            SqlDecisionExplainer.basic(),
+            SqlQueryParser.standard()
+        );
+
+        decisionService.analyze(
+            "select 1",
+            ExecutionContext.of("postgresql", "alice", "tenant_a", ExecutionMode.ANALYZE)
+        );
+
+        assertEquals(1, audit.events().size());
+        assertEquals("tenant_a", audit.events().getFirst().context().tenant());
+        assertEquals("alice", audit.events().getFirst().context().principal());
+    }
+
+    @Test
+    void explain_flow_passes_tenant_to_explainer_context() {
+        var seenTenant = new AtomicReference<String>();
+        var explainer = (SqlDecisionExplainer) (query, context, decision) -> {
+            seenTenant.set(context.tenant());
+            return "ok";
+        };
+        var decisionService = create(
+            SCHEMA,
+            SchemaValidationSettings.defaults(),
+            RuntimeGuardrails.disabled(),
+            AuditEventPublisher.noop(),
+            explainer,
+            SqlQueryParser.standard()
+        );
+
+        var explanation = decisionService.explainDecision(
+            "select 1",
+            ExecutionContext.of("postgresql", "alice", "tenant_a", ExecutionMode.EXECUTE)
+        );
+
+        assertEquals("tenant_a", seenTenant.get());
+        assertEquals("ok", explanation.explanation());
     }
 
     @Test

@@ -88,6 +88,14 @@ public final class ConfigKeys {
     );
 
     /**
+     * Runtime tenant requirement mode for validation settings.
+     */
+    public static final Key VALIDATION_TENANT_REQUIREMENT_MODE = Key.of(
+        "sqm.middleware.validation.tenantRequirementMode",
+        "SQM_MIDDLEWARE_VALIDATION_TENANT_REQUIREMENT_MODE"
+    );
+
+    /**
      * Runtime max SQL length guardrail.
      */
     public static final Key GUARDRAILS_MAX_SQL_LENGTH = Key.of(

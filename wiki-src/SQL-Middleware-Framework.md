@@ -68,6 +68,59 @@ See detailed provider docs:
 - [Schema Introspection](Schema-Introspection)
 - [SQL File Codegen Schema Validation](SQL-File-Codegen-Schema-Validation)
 
+## Tenant-Aware Validation Settings (JSON/YAML)
+
+Middleware can load tenant-scoped access rules (inside one access policy object) from inline config keys:
+
+- `sqm.validation.settings.json` / `SQM_VALIDATION_SETTINGS_JSON`
+- `sqm.validation.settings.yaml` / `SQM_VALIDATION_SETTINGS_YAML`
+- optional runtime strictness override:
+  - `sqm.middleware.validation.tenantRequirementMode`
+  - `SQM_MIDDLEWARE_VALIDATION_TENANT_REQUIREMENT_MODE`
+
+Example JSON:
+
+```json
+{
+  "tenantRequirementMode": "REQUIRED",
+  "accessPolicy": {
+    "tenants": [
+      {
+        "name": "tenant-a",
+        "deniedTables": ["payments"],
+        "deniedColumns": ["users.ssn"]
+      },
+      {
+        "name": "tenant-b",
+        "deniedTables": ["audit_logs"]
+      }
+    ]
+  }
+}
+```
+
+Equivalent YAML:
+
+```yaml
+tenantRequirementMode: REQUIRED
+accessPolicy:
+  tenants:
+    - name: tenant-a
+      deniedTables:
+        - payments
+      deniedColumns:
+        - users.ssn
+    - name: tenant-b
+      deniedTables:
+        - audit_logs
+```
+
+Evaluation precedence per request:
+
+- `global` + `principal` + `tenant` + `tenant+principal`
+- deny rules are additive across these scopes
+- function allowlists are additive across these scopes
+
 ## 1) Default Usage: Validation-Only Flow
 
 Use this when you only want policy validation without SQL rewriting.

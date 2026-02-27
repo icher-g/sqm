@@ -15,6 +15,7 @@ import java.util.Map;
 import static io.sqm.middleware.api.DecisionKindDto.DENY;
 import static io.sqm.middleware.api.ReasonCodeDto.DENY_MAX_SELECT_COLUMNS;
 import static io.sqm.middleware.api.ReasonCodeDto.DENY_TABLE;
+import static io.sqm.middleware.api.ReasonCodeDto.DENY_TENANT_REQUIRED;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SqlMiddlewareRuntimeFactoryTest {
@@ -187,6 +188,49 @@ class SqlMiddlewareRuntimeFactoryTest {
                 new AnalyzeRequest("select id from users", new ExecutionContextDto("postgresql", "bob", null, null, null))
             );
             assertNotSame(DENY, allowedForBob.kind());
+        });
+    }
+
+    @Test
+    void applies_tenant_aware_access_policy_from_settings_config() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.VALIDATION_SETTINGS_YAML.property(), """
+                accessPolicy:
+                  tenants:
+                    - name: tenant_a
+                      deniedTables:
+                        - users
+                """
+        ), () -> {
+            var service = SqlMiddlewareRuntimeFactory.createFromEnvironment();
+
+            var deniedForTenantA = service.analyze(
+                new AnalyzeRequest("select id from users", new ExecutionContextDto("postgresql", null, "tenant_a", null, null))
+            );
+            assertEquals(DENY, deniedForTenantA.kind());
+            assertEquals(DENY_TABLE, deniedForTenantA.reasonCode());
+
+            var allowedForTenantB = service.analyze(
+                new AnalyzeRequest("select id from users", new ExecutionContextDto("postgresql", null, "tenant_b", null, null))
+            );
+            assertNotSame(DENY, allowedForTenantB.kind());
+        });
+    }
+
+    @Test
+    void applies_required_tenant_mode_from_runtime_property() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.VALIDATION_TENANT_REQUIREMENT_MODE.property(), "required"
+        ), () -> {
+            var service = SqlMiddlewareRuntimeFactory.createFromEnvironment();
+
+            var denied = service.analyze(
+                new AnalyzeRequest("select 1", new ExecutionContextDto("postgresql", null, null, null, null))
+            );
+            assertEquals(DENY, denied.kind());
+            assertEquals(DENY_TENANT_REQUIRED, denied.reasonCode());
         });
     }
 

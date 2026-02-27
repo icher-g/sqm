@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.sqm.catalog.access.DefaultCatalogAccessPolicy;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -58,30 +59,14 @@ public final class SchemaValidationSettingsLoader {
     private static SchemaValidationSettings toSettings(SettingsConfig config) {
         var builder = SchemaValidationSettings.builder();
         builder.principal(config.principal);
+        builder.tenant(config.tenant);
+
+        if (config.tenantRequirementMode != null && !config.tenantRequirementMode.isBlank()) {
+            builder.tenantRequirementMode(TenantRequirementMode.valueOf(config.tenantRequirementMode.trim().toUpperCase()));
+        }
 
         if (config.accessPolicy != null) {
-            var policyBuilder = DefaultCatalogAccessPolicy.builder();
-            for (var table : safe(config.accessPolicy.deniedTables)) {
-                policyBuilder.denyTable(table);
-            }
-            for (var column : safe(config.accessPolicy.deniedColumns)) {
-                policyBuilder.denyColumn(column);
-            }
-            for (var functionName : safe(config.accessPolicy.allowedFunctions)) {
-                policyBuilder.allowFunction(functionName);
-            }
-            for (var principalRule : safePrincipalRules(config.accessPolicy.principals)) {
-                for (var table : safe(principalRule.deniedTables)) {
-                    policyBuilder.denyTableForPrincipal(principalRule.name, table);
-                }
-                for (var column : safe(principalRule.deniedColumns)) {
-                    policyBuilder.denyColumnForPrincipal(principalRule.name, column);
-                }
-                for (var functionName : safe(principalRule.allowedFunctions)) {
-                    policyBuilder.allowFunctionForPrincipal(principalRule.name, functionName);
-                }
-            }
-            builder.accessPolicy(policyBuilder.build());
+            builder.accessPolicy(toAccessPolicy(config.accessPolicy));
         }
 
         if (config.limits != null) {
@@ -106,19 +91,111 @@ public final class SchemaValidationSettingsLoader {
         return values == null ? List.of() : values;
     }
 
+    private static List<TenantPolicyConfig> safeTenantRules(List<TenantPolicyConfig> values) {
+        return values == null ? List.of() : values;
+    }
+
+    private static DefaultCatalogAccessPolicy toAccessPolicy(AccessPolicySection config) {
+        var policyBuilder = DefaultCatalogAccessPolicy.builder();
+        for (var table : safe(config.deniedTables())) {
+            policyBuilder.denyTable(table);
+        }
+        for (var column : safe(config.deniedColumns())) {
+            policyBuilder.denyColumn(column);
+        }
+        for (var functionName : safe(config.allowedFunctions())) {
+            policyBuilder.allowFunction(functionName);
+        }
+        for (var principalRule : safePrincipalRules(config.principals())) {
+            for (var table : safe(principalRule.deniedTables)) {
+                policyBuilder.denyTableForPrincipal(principalRule.name, table);
+            }
+            for (var column : safe(principalRule.deniedColumns)) {
+                policyBuilder.denyColumnForPrincipal(principalRule.name, column);
+            }
+            for (var functionName : safe(principalRule.allowedFunctions)) {
+                policyBuilder.allowFunctionForPrincipal(principalRule.name, functionName);
+            }
+        }
+        var tenantNames = new LinkedHashSet<String>();
+        for (var tenantRule : safeTenantRules(config.tenants())) {
+            var tenant = normalizeTenantName(tenantRule.name);
+            if (!tenantNames.add(tenant)) {
+                throw new IllegalArgumentException("tenant access policy already defined for tenant: " + tenant);
+            }
+            for (var table : safe(tenantRule.deniedTables)) {
+                policyBuilder.denyTableForTenant(tenant, table);
+            }
+            for (var column : safe(tenantRule.deniedColumns)) {
+                policyBuilder.denyColumnForTenant(tenant, column);
+            }
+            for (var functionName : safe(tenantRule.allowedFunctions)) {
+                policyBuilder.allowFunctionForTenant(tenant, functionName);
+            }
+            for (var principalRule : safePrincipalRules(tenantRule.principals)) {
+                for (var table : safe(principalRule.deniedTables)) {
+                    policyBuilder.denyTableForTenantPrincipal(tenant, principalRule.name, table);
+                }
+                for (var column : safe(principalRule.deniedColumns)) {
+                    policyBuilder.denyColumnForTenantPrincipal(tenant, principalRule.name, column);
+                }
+                for (var functionName : safe(principalRule.allowedFunctions)) {
+                    policyBuilder.allowFunctionForTenantPrincipal(tenant, principalRule.name, functionName);
+                }
+            }
+        }
+        return policyBuilder.build();
+    }
+
     @JsonIgnoreProperties()
     private static final class SettingsConfig {
         public String principal;
+        public String tenant;
+        public String tenantRequirementMode;
         public AccessPolicyConfig accessPolicy;
         public LimitsConfig limits;
     }
 
     @JsonIgnoreProperties()
-    private static final class AccessPolicyConfig {
+    private static final class AccessPolicyConfig implements AccessPolicySection {
         public List<String> deniedTables;
         public List<String> deniedColumns;
         public List<String> allowedFunctions;
         public List<PrincipalPolicyConfig> principals;
+        public List<TenantPolicyConfig> tenants;
+
+        @Override
+        public List<String> deniedTables() {
+            return deniedTables;
+        }
+
+        @Override
+        public List<String> deniedColumns() {
+            return deniedColumns;
+        }
+
+        @Override
+        public List<String> allowedFunctions() {
+            return allowedFunctions;
+        }
+
+        @Override
+        public List<PrincipalPolicyConfig> principals() {
+            return principals;
+        }
+
+        @Override
+        public List<TenantPolicyConfig> tenants() {
+            return tenants;
+        }
+    }
+
+    private interface AccessPolicySection {
+        List<String> deniedTables();
+        List<String> deniedColumns();
+        List<String> allowedFunctions();
+        List<PrincipalPolicyConfig> principals();
+        List<TenantPolicyConfig> tenants();
     }
 
     @JsonIgnoreProperties()
@@ -130,8 +207,49 @@ public final class SchemaValidationSettingsLoader {
     }
 
     @JsonIgnoreProperties()
+    private static final class TenantPolicyConfig implements AccessPolicySection {
+        public String name;
+        public List<String> deniedTables;
+        public List<String> deniedColumns;
+        public List<String> allowedFunctions;
+        public List<PrincipalPolicyConfig> principals;
+
+        @Override
+        public List<String> deniedTables() {
+            return deniedTables;
+        }
+
+        @Override
+        public List<String> deniedColumns() {
+            return deniedColumns;
+        }
+
+        @Override
+        public List<String> allowedFunctions() {
+            return allowedFunctions;
+        }
+
+        @Override
+        public List<PrincipalPolicyConfig> principals() {
+            return principals;
+        }
+
+        @Override
+        public List<TenantPolicyConfig> tenants() {
+            return List.of();
+        }
+    }
+
+    @JsonIgnoreProperties()
     private static final class LimitsConfig {
         public Integer maxJoinCount;
         public Integer maxSelectColumns;
+    }
+
+    private static String normalizeTenantName(String tenant) {
+        if (tenant == null || tenant.isBlank()) {
+            throw new IllegalArgumentException("tenant name must not be blank");
+        }
+        return tenant;
     }
 }

@@ -8,6 +8,7 @@ import io.sqm.middleware.api.SqlMiddlewareService;
 import io.sqm.validate.schema.SchemaValidationLimits;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.SchemaValidationSettingsLoader;
+import io.sqm.validate.schema.TenantRequirementMode;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -141,8 +142,9 @@ public final class SqlMiddlewareRuntimeFactory {
         var baseSettings = readValidationSettingsConfig();
         Integer maxJoinCount = readIntNullable(ConfigKeys.VALIDATION_MAX_JOIN_COUNT);
         Integer maxSelectColumns = readIntNullable(ConfigKeys.VALIDATION_MAX_SELECT_COLUMNS);
+        var tenantRequirementMode = readEnumNullable(ConfigKeys.VALIDATION_TENANT_REQUIREMENT_MODE, TenantRequirementMode.class);
 
-        if (maxJoinCount == null && maxSelectColumns == null) {
+        if (maxJoinCount == null && maxSelectColumns == null && tenantRequirementMode == null) {
             if (baseSettings != null) {
                 builder.validationSettings(baseSettings);
             }
@@ -164,6 +166,10 @@ public final class SqlMiddlewareRuntimeFactory {
                     .functionCatalog(baseSettings.functionCatalog())
                     .accessPolicy(baseSettings.accessPolicy())
                     .principal(baseSettings.principal())
+                    .tenant(baseSettings.tenant())
+                    .tenantRequirementMode(tenantRequirementMode == null
+                        ? baseSettings.tenantRequirementMode()
+                        : tenantRequirementMode)
                     .limits(limits)
                     .addRules(baseSettings.additionalRules())
                     .build()
@@ -173,6 +179,7 @@ public final class SqlMiddlewareRuntimeFactory {
 
         builder.validationSettings(
             SchemaValidationSettings.builder()
+                .tenantRequirementMode(tenantRequirementMode == null ? TenantRequirementMode.OPTIONAL : tenantRequirementMode)
                 .limits(limits)
                 .build()
         );
