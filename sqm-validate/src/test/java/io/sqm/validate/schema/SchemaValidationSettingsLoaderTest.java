@@ -155,6 +155,22 @@ class SchemaValidationSettingsLoaderTest {
     }
 
     @Test
+    void rejects_blank_tenant_policy_name() {
+        var yaml = """
+            accessPolicy:
+              tenants:
+                - name: " "
+                  deniedTables:
+                    - users
+            """;
+
+        var ex = assertThrows(IllegalArgumentException.class,
+            () -> SchemaValidationSettingsLoader.fromYaml(yaml));
+        assertTrue(ex.getMessage().contains("invalid"));
+        assertTrue(ex.getMessage().contains("tenant name must not be blank"));
+    }
+
+    @Test
     void rejects_unknown_property() {
         var json = """
             {

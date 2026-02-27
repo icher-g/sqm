@@ -235,6 +235,14 @@ class SqlMiddlewareRuntimeFactoryTest {
     }
 
     @Test
+    void throws_when_tenant_requirement_mode_is_invalid() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.VALIDATION_TENANT_REQUIREMENT_MODE.property(), "invalid_mode"
+        ), () -> assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
     void driver_manager_data_source_support_methods_are_covered() throws Exception {
         Class<?> dsClass = Class.forName("io.sqm.middleware.core.SqlMiddlewareRuntimeFactory$DriverManagerDataSource");
         var constructor = dsClass.getDeclaredConstructor(String.class, String.class, String.class);

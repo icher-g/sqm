@@ -152,6 +152,22 @@ class SqlQueryValidatorTest {
     }
 
     @Test
+    void standard_allows_required_tenant_when_execution_context_provides_tenant() {
+        var settings = SchemaValidationSettings.builder()
+            .tenantRequirementMode(TenantRequirementMode.REQUIRED)
+            .build();
+        var validator = SqlQueryValidator.standard(SCHEMA, settings);
+        var query = select(lit(1)).build();
+
+        var allowed = validator.validate(
+            query,
+            ExecutionContext.of("postgresql", "alice", "tenant_a", ExecutionMode.ANALYZE)
+        );
+
+        assertEquals(ReasonCode.NONE, allowed.code());
+    }
+
+    @Test
     void standard_uses_context_tenant_over_default_tenant_for_policy_resolution() {
         var policy = DefaultCatalogAccessPolicy.builder()
             .denyTableForTenant("tenant_a", "users")

@@ -3,6 +3,7 @@ package io.sqm.catalog.access;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DefaultCatalogAccessPolicyTest {
@@ -75,6 +76,23 @@ class DefaultCatalogAccessPolicyTest {
 
         assertTrue(policy.isFunctionAllowed("tenant_a", "alice", "lower"));
         assertFalse(policy.isFunctionAllowed("tenant_a", "bob", "lower"));
+    }
+
+    @Test
+    void blank_rules_are_ignored_and_scope_arguments_are_validated() {
+        var policy = DefaultCatalogAccessPolicy.builder()
+            .denyTable(" ")
+            .denyColumn(" ")
+            .allowFunction(" ")
+            .build();
+
+        assertFalse(policy.isTableDenied("alice", null, "users"));
+        assertFalse(policy.isColumnDenied("alice", "u", "secret"));
+        assertTrue(policy.isFunctionAllowed("alice", "lower"));
+
+        assertThrows(IllegalArgumentException.class, () -> DefaultCatalogAccessPolicy.builder().denyTableForTenant("", "users"));
+        assertThrows(IllegalArgumentException.class, () -> DefaultCatalogAccessPolicy.builder().denyColumnForPrincipal(" ", "u.secret"));
+        assertThrows(IllegalArgumentException.class, () -> DefaultCatalogAccessPolicy.builder().allowFunctionForTenantPrincipal("t1", "", "length"));
     }
 }
 
