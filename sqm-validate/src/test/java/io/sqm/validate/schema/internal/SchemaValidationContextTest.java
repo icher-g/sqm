@@ -174,6 +174,46 @@ class SchemaValidationContextTest {
     }
 
     @Test
+    void accessPolicyOverloadsDelegateWithTenantAndPrincipal() {
+        CatalogAccessPolicy policy = new CatalogAccessPolicy() {
+            @Override
+            public boolean isTableDenied(String principal, String schemaName, String tableName) {
+                return false;
+            }
+
+            @Override
+            public boolean isColumnDenied(String principal, String sourceName, String columnName) {
+                return false;
+            }
+
+            @Override
+            public boolean isFunctionAllowed(String principal, String functionName) {
+                return false;
+            }
+
+            @Override
+            public boolean isTableDenied(String tenant, String principal, String schemaName, String tableName) {
+                return "t1".equals(tenant) && "p1".equals(principal) && "users".equals(tableName);
+            }
+
+            @Override
+            public boolean isColumnDenied(String tenant, String principal, String sourceName, String columnName) {
+                return "t1".equals(tenant) && "p1".equals(principal) && "u".equals(sourceName) && "secret".equals(columnName);
+            }
+
+            @Override
+            public boolean isFunctionAllowed(String tenant, String principal, String functionName) {
+                return "t1".equals(tenant) && "p1".equals(principal) && "length".equals(functionName);
+            }
+        };
+        var context = new SchemaValidationContext(SCHEMA, name -> java.util.Optional.empty(), policy, "t1", "p1");
+
+        assertTrue(context.isTableDenied("public", "users"));
+        assertTrue(context.isColumnDenied(Identifier.of("u"), Identifier.of("secret")));
+        assertTrue(context.isFunctionAllowed("length"));
+    }
+
+    @Test
     void normalizeIdentifierRejectsNullIdentifier() {
         //noinspection DataFlowIssue
         assertThrows(NullPointerException.class, () -> SchemaValidationContext.normalize((Identifier) null));

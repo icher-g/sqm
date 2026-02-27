@@ -18,6 +18,7 @@ import io.sqm.control.SqlDecisionExplainer;
 import io.sqm.control.SqlDecisionService;
 import io.sqm.control.SqlDecisionServiceConfig;
 import io.sqm.validate.schema.SchemaValidationSettings;
+import io.sqm.validate.schema.SchemaValidationSettingsLoader;
 
 import java.util.List;
 
@@ -79,6 +80,7 @@ public final class Middleware_EndToEndPolicyFlow {
 
         runValidationOnlyFlow(schema, aiSql);
         runFullFlowWithRewrite(schema, aiSql);
+        runFlowWithTenantPoliciesFromConfig(schema);
         runFlowWithCustomExtensions(schema, aiSql);
     }
 
@@ -146,6 +148,41 @@ public final class Middleware_EndToEndPolicyFlow {
         );
 
         print("Custom extension points", decision);
+    }
+
+    private static void runFlowWithTenantPoliciesFromConfig(CatalogSchema schema) {
+        var yaml = """
+            tenantRequirementMode: REQUIRED
+            accessPolicy:
+              tenants:
+                - name: tenant-a
+                  deniedTables:
+                    - payments
+                - name: tenant-b
+                  deniedTables:
+                    - users
+            """;
+
+        var settings = SchemaValidationSettingsLoader.fromYaml(yaml);
+        SqlDecisionService decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(schema)
+                .validationSettings(settings)
+                .buildValidationConfig()
+        );
+
+        var sql = "select id from payments";
+
+        var deniedForTenantA = decisionService.analyze(
+            sql,
+            ExecutionContext.of("postgresql", "agent", "tenant-a", ExecutionMode.ANALYZE, ParameterizationMode.OFF)
+        );
+        print("Tenant policy from config (tenant-a denied)", deniedForTenantA);
+
+        var allowedForTenantB = decisionService.analyze(
+            sql,
+            ExecutionContext.of("postgresql", "agent", "tenant-b", ExecutionMode.ANALYZE, ParameterizationMode.OFF)
+        );
+        print("Tenant policy from config (tenant-b allowed)", allowedForTenantB);
     }
 
     private static void print(String label, DecisionResult decision) {

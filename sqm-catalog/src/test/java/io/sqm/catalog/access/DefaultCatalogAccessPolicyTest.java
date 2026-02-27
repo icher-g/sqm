@@ -3,6 +3,7 @@ package io.sqm.catalog.access;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DefaultCatalogAccessPolicyTest {
@@ -45,6 +46,53 @@ class DefaultCatalogAccessPolicyTest {
         assertTrue(policy.isFunctionAllowed("alice", "length"));
         assertFalse(policy.isFunctionAllowed("alice", "lower"));
         assertFalse(policy.isFunctionAllowed("bob", "length"));
+    }
+
+    @Test
+    void tenant_and_tenant_principal_rules_are_applied_for_matching_context_only() {
+        var policy = DefaultCatalogAccessPolicy.builder()
+            .denyTableForTenant("tenant_a", "orders")
+            .denyColumnForTenant("tenant_a", "u.secret")
+            .allowFunctionForTenant("tenant_a", "length")
+            .denyTableForTenantPrincipal("tenant_a", "alice", "users")
+            .denyColumnForTenantPrincipal("tenant_a", "alice", "u.email")
+            .allowFunctionForTenantPrincipal("tenant_a", "alice", "lower")
+            .build();
+
+        assertTrue(policy.isTableDenied("tenant_a", "bob", null, "orders"));
+        assertFalse(policy.isTableDenied("tenant_b", "bob", null, "orders"));
+
+        assertTrue(policy.isColumnDenied("tenant_a", "bob", "u", "secret"));
+        assertFalse(policy.isColumnDenied("tenant_b", "bob", "u", "secret"));
+
+        assertTrue(policy.isFunctionAllowed("tenant_a", "bob", "length"));
+        assertFalse(policy.isFunctionAllowed("tenant_b", "bob", "length"));
+
+        assertTrue(policy.isTableDenied("tenant_a", "alice", null, "users"));
+        assertFalse(policy.isTableDenied("tenant_a", "bob", null, "users"));
+
+        assertTrue(policy.isColumnDenied("tenant_a", "alice", "u", "email"));
+        assertFalse(policy.isColumnDenied("tenant_a", "bob", "u", "email"));
+
+        assertTrue(policy.isFunctionAllowed("tenant_a", "alice", "lower"));
+        assertFalse(policy.isFunctionAllowed("tenant_a", "bob", "lower"));
+    }
+
+    @Test
+    void blank_rules_are_ignored_and_scope_arguments_are_validated() {
+        var policy = DefaultCatalogAccessPolicy.builder()
+            .denyTable(" ")
+            .denyColumn(" ")
+            .allowFunction(" ")
+            .build();
+
+        assertFalse(policy.isTableDenied("alice", null, "users"));
+        assertFalse(policy.isColumnDenied("alice", "u", "secret"));
+        assertTrue(policy.isFunctionAllowed("alice", "lower"));
+
+        assertThrows(IllegalArgumentException.class, () -> DefaultCatalogAccessPolicy.builder().denyTableForTenant("", "users"));
+        assertThrows(IllegalArgumentException.class, () -> DefaultCatalogAccessPolicy.builder().denyColumnForPrincipal(" ", "u.secret"));
+        assertThrows(IllegalArgumentException.class, () -> DefaultCatalogAccessPolicy.builder().allowFunctionForTenantPrincipal("t1", "", "length"));
     }
 }
 

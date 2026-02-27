@@ -23,6 +23,7 @@ public final class SchemaValidationContext {
     private final CatalogSchema schema;
     private final FunctionCatalog functionCatalog;
     private final CatalogAccessPolicy accessPolicy;
+    private final String tenant;
     private final String principal;
     private final List<ValidationProblem> problems = new ArrayList<>();
     private final Deque<Scope> scopes = new ArrayDeque<>();
@@ -34,7 +35,7 @@ public final class SchemaValidationContext {
      * @param schema schema used for table and column resolution.
      */
     public SchemaValidationContext(CatalogSchema schema) {
-        this(schema, DefaultFunctionCatalog.standard(), CatalogAccessPolicies.allowAll(), null);
+        this(schema, DefaultFunctionCatalog.standard(), CatalogAccessPolicies.allowAll(), null, null);
     }
 
     /**
@@ -44,7 +45,7 @@ public final class SchemaValidationContext {
      * @param functionCatalog function signature catalog used for return-type inference.
      */
     public SchemaValidationContext(CatalogSchema schema, FunctionCatalog functionCatalog) {
-        this(schema, functionCatalog, CatalogAccessPolicies.allowAll(), null);
+        this(schema, functionCatalog, CatalogAccessPolicies.allowAll(), null, null);
     }
 
     /**
@@ -61,9 +62,29 @@ public final class SchemaValidationContext {
         CatalogAccessPolicy accessPolicy,
         String principal
     ) {
+        this(schema, functionCatalog, accessPolicy, null, principal);
+    }
+
+    /**
+     * Creates a context for the provided schema, function catalog, and access policy.
+     *
+     * @param schema schema used for table and column resolution.
+     * @param functionCatalog function signature catalog used for return-type inference.
+     * @param accessPolicy schema access policy.
+     * @param tenant tenant identifier used for access checks, may be {@code null}.
+     * @param principal principal identifier used for access checks, may be {@code null}.
+     */
+    public SchemaValidationContext(
+        CatalogSchema schema,
+        FunctionCatalog functionCatalog,
+        CatalogAccessPolicy accessPolicy,
+        String tenant,
+        String principal
+    ) {
         this.schema = Objects.requireNonNull(schema, "schema");
         this.functionCatalog = Objects.requireNonNull(functionCatalog, "functionCatalog");
         this.accessPolicy = Objects.requireNonNull(accessPolicy, "accessPolicy");
+        this.tenant = tenant;
         this.principal = principal;
     }
 
@@ -130,7 +151,7 @@ public final class SchemaValidationContext {
      * @return true when denied.
      */
     public boolean isTableDenied(String schemaName, String tableName) {
-        return accessPolicy.isTableDenied(principal, schemaName, tableName);
+        return accessPolicy.isTableDenied(tenant, principal, schemaName, tableName);
     }
 
     /**
@@ -141,7 +162,7 @@ public final class SchemaValidationContext {
      * @return true when denied.
      */
     public boolean isColumnDenied(String sourceName, String columnName) {
-        return accessPolicy.isColumnDenied(principal, sourceName, columnName);
+        return accessPolicy.isColumnDenied(tenant, principal, sourceName, columnName);
     }
 
     /**
@@ -153,6 +174,7 @@ public final class SchemaValidationContext {
      */
     public boolean isColumnDenied(Identifier sourceName, Identifier columnName) {
         return accessPolicy.isColumnDenied(
+            tenant,
             principal,
             sourceName == null ? null : sourceName.value(),
             columnName == null ? null : columnName.value()
@@ -166,7 +188,7 @@ public final class SchemaValidationContext {
      * @return true when allowed.
      */
     public boolean isFunctionAllowed(String functionName) {
-        return accessPolicy.isFunctionAllowed(principal, functionName);
+        return accessPolicy.isFunctionAllowed(tenant, principal, functionName);
     }
 
     /**

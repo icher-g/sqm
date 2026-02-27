@@ -1,7 +1,7 @@
 # SQM — Structured Query Model for Java
 
 [![Build](https://github.com/icher-g/sqm/actions/workflows/publish-maven.yml/badge.svg?branch=main)](https://github.com/icher-g/sqm/actions/workflows/publish-maven.yml)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Packages](https://img.shields.io/badge/Maven-GitHub%20Packages-blue)](https://github.com/icher-g/sqm/packages)
 [![codecov](https://codecov.io/gh/icher-g/sqm/graph/badge.svg)](https://codecov.io/gh/icher-g/sqm)
 
@@ -261,10 +261,13 @@ Complete generated key table (single source of truth):
     - `sqm.middleware.jdbc.driver` / `SQM_MIDDLEWARE_JDBC_DRIVER` (optional class name)
     - `sqm.middleware.jdbc.schemaPattern` / `SQM_MIDDLEWARE_JDBC_SCHEMA_PATTERN`
 - Rewrite and validation:
+    - `sqm.validation.settings.json` / `SQM_VALIDATION_SETTINGS_JSON` (inline JSON text for `SchemaValidationSettings`)
+    - `sqm.validation.settings.yaml` / `SQM_VALIDATION_SETTINGS_YAML` (inline YAML text for `SchemaValidationSettings`)
     - `sqm.middleware.rewrite.enabled` / `SQM_MIDDLEWARE_REWRITE_ENABLED` (`true` by default)
     - `sqm.middleware.rewrite.rules` / `SQM_MIDDLEWARE_REWRITE_RULES` (comma-separated built-in rule names)
     - `sqm.middleware.validation.maxJoinCount` / `SQM_MIDDLEWARE_VALIDATION_MAX_JOIN_COUNT`
     - `sqm.middleware.validation.maxSelectColumns` / `SQM_MIDDLEWARE_VALIDATION_MAX_SELECT_COLUMNS`
+    - `sqm.middleware.validation.tenantRequirementMode` / `SQM_MIDDLEWARE_VALIDATION_TENANT_REQUIREMENT_MODE` (`OPTIONAL` | `REQUIRED`)
 - Guardrails:
     - `sqm.middleware.guardrails.maxSqlLength` / `SQM_MIDDLEWARE_GUARDRAILS_MAX_SQL_LENGTH`
     - `sqm.middleware.guardrails.timeoutMillis` / `SQM_MIDDLEWARE_GUARDRAILS_TIMEOUT_MILLIS`
@@ -279,6 +282,65 @@ mvn -pl sqm-middleware-rest -am spring-boot:run \
     -Dsqm.middleware.schema.json.path=./schema.json \
     -Dsqm.middleware.rewrite.rules=LIMIT_INJECTION,CANONICALIZATION
 ```
+
+Validation settings example with tenant access policies (JSON):
+
+```json
+{
+  "tenantRequirementMode": "REQUIRED",
+  "accessPolicy": {
+    "deniedTables": ["users"],
+    "principals": [
+      {
+        "name": "analyst",
+        "deniedColumns": ["users.email"]
+      }
+    ],
+    "tenants": [
+      {
+        "name": "tenant-a",
+        "deniedTables": ["payments"],
+        "deniedColumns": ["users.ssn"],
+        "allowedFunctions": ["count", "lower"]
+      },
+      {
+        "name": "tenant-b",
+        "deniedTables": ["audit_logs"]
+      }
+    ]
+  }
+}
+```
+
+Equivalent YAML:
+
+```yaml
+tenantRequirementMode: REQUIRED
+accessPolicy:
+  deniedTables:
+    - users
+  principals:
+    - name: analyst
+      deniedColumns:
+        - users.email
+  tenants:
+    - name: tenant-a
+      deniedTables:
+        - payments
+      deniedColumns:
+        - users.ssn
+      allowedFunctions:
+        - count
+        - lower
+    - name: tenant-b
+      deniedTables:
+        - audit_logs
+```
+
+Policy evaluation precedence for a request:
+- `global rules` + `principal rules` + `tenant rules` + `tenant+principal rules`
+- deny rules are additive across scopes
+- function allowlists are additive across scopes
 
 Config templates included in the repo:
 
@@ -943,7 +1005,7 @@ mvn test
 
 ## 🪪 License
 
-Licensed under the **Apache License, Version 2.0**.  
+Licensed under the **MIT License**.  
 See [LICENSE](LICENSE) for details.
 
 ---

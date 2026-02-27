@@ -7,6 +7,7 @@ import io.sqm.validate.postgresql.PostgresValidationDialect;
 import io.sqm.validate.schema.SchemaQueryValidator;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
+import io.sqm.validate.schema.TenantRequirementMode;
 
 import java.util.Locale;
 import java.util.Map;
@@ -66,7 +67,13 @@ public interface SqlQueryValidator {
             }
 
             var baseSettings = specsFactory.get();
-            var effectiveSettings = withPrincipal(baseSettings, context.principal());
+            if (isTenantMissingAndRequired(baseSettings, context.tenant())) {
+                return QueryValidateResult.failure(
+                    ReasonCode.DENY_TENANT_REQUIRED,
+                    "Tenant context is required by validation settings"
+                );
+            }
+            var effectiveSettings = withPrincipalAndTenant(baseSettings, context.principal(), context.tenant());
             var validator = SchemaQueryValidator.of(schema, effectiveSettings);
             var result = validator.validate(sql);
             if (result.ok()) {
@@ -83,26 +90,45 @@ public interface SqlQueryValidator {
             .functionCatalog(dialect.functionCatalog())
             .accessPolicy(base.accessPolicy())
             .principal(base.principal())
+            .tenant(base.tenant())
+            .tenantRequirementMode(base.tenantRequirementMode())
             .limits(base.limits())
             .addRules(dialect.additionalRules())
             .addRules(base.additionalRules())
             .build();
     }
 
-    private static SchemaValidationSettings withPrincipal(SchemaValidationSettings settings, String principal) {
+    private static SchemaValidationSettings withPrincipalAndTenant(SchemaValidationSettings settings, String principal, String tenant) {
         var effectivePrincipal = (principal != null && !principal.isBlank())
             ? principal
             : settings.principal();
-        if (Objects.equals(effectivePrincipal, settings.principal())) {
+        var effectiveTenant = (tenant != null && !tenant.isBlank())
+            ? tenant
+            : settings.tenant();
+
+        if (Objects.equals(effectivePrincipal, settings.principal())
+            && Objects.equals(effectiveTenant, settings.tenant())) {
             return settings;
         }
         return SchemaValidationSettings.builder()
             .functionCatalog(settings.functionCatalog())
             .accessPolicy(settings.accessPolicy())
             .principal(effectivePrincipal)
+            .tenant(effectiveTenant)
+            .tenantRequirementMode(settings.tenantRequirementMode())
             .limits(settings.limits())
             .addRules(settings.additionalRules())
             .build();
+    }
+
+    private static boolean isTenantMissingAndRequired(SchemaValidationSettings settings, String tenant) {
+        if (settings.tenantRequirementMode() != TenantRequirementMode.REQUIRED) {
+            return false;
+        }
+        if (tenant != null && !tenant.isBlank()) {
+            return false;
+        }
+        return settings.tenant() == null || settings.tenant().isBlank();
     }
 
     private static ReasonCode mapReason(ValidationProblem.Code code) {

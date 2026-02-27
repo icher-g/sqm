@@ -6,6 +6,7 @@ import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.control.*;
 import io.sqm.validate.schema.SchemaValidationSettings;
+import io.sqm.validate.schema.SchemaValidationSettingsLoader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Testcontainers(disabledWithoutDocker = true)
@@ -201,6 +203,40 @@ class PostgresMiddlewareIntegrationTest {
 
         List<String> rows = executeQuery("select count(*) from users", List.of());
         assertEquals(List.of("3"), rows);
+    }
+
+    @Test
+    void tenant_specific_access_policy_denies_and_allows_by_tenant() throws Exception {
+        var yaml = """
+            accessPolicy:
+              tenants:
+                - name: tenant-a
+                  deniedTables:
+                    - payments
+            """;
+
+        var settings = SchemaValidationSettingsLoader.fromYaml(yaml);
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
+                .validationSettings(settings)
+                .buildValidationConfig()
+        );
+
+        var deniedForTenantA = decisionService.analyze(
+            "select id from payments",
+            ExecutionContext.of("postgresql", "agent", "tenant-a", ExecutionMode.ANALYZE, ParameterizationMode.OFF)
+        );
+        assertEquals(DecisionKind.DENY, deniedForTenantA.kind());
+        assertEquals(ReasonCode.DENY_TABLE, deniedForTenantA.reasonCode());
+
+        var allowedForTenantB = decisionService.analyze(
+            "select id from payments",
+            ExecutionContext.of("postgresql", "agent", "tenant-b", ExecutionMode.ANALYZE, ParameterizationMode.OFF)
+        );
+        assertNotEquals(DecisionKind.DENY, allowedForTenantB.kind());
+
+        List<String> rows = executeQuery("select id from payments order by id", List.of());
+        assertEquals(List.of("1000", "1001", "1002", "1003", "1004"), rows);
     }
 
     private Connection openConnection() throws Exception {

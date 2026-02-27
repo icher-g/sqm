@@ -67,6 +67,11 @@ public final class ReasonGuidanceCatalog {
                 "fix_validation_errors",
                 "Adjust query structure and references according to schema and validation errors."
             );
+            case DENY_TENANT_REQUIRED -> DecisionGuidance.retryable(
+                "Tenant context is required by policy.",
+                "provide_tenant",
+                "Set tenant in execution context before calling middleware."
+            );
             case DENY_MAX_SQL_LENGTH -> DecisionGuidance.retryable(
                 "The query text is too long.",
                 "shorten_sql",

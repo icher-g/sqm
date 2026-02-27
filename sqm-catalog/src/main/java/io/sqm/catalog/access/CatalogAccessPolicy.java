@@ -5,6 +5,19 @@ package io.sqm.catalog.access;
  */
 public interface CatalogAccessPolicy {
     /**
+     * Returns true when the table is denied for the given tenant and principal.
+     *
+     * @param tenant tenant identifier, may be {@code null}.
+     * @param principal principal identifier, may be {@code null}.
+     * @param schemaName table schema, may be {@code null}.
+     * @param tableName table name.
+     * @return true when denied.
+     */
+    default boolean isTableDenied(String tenant, String principal, String schemaName, String tableName) {
+        return isTableDenied(principal, schemaName, tableName);
+    }
+
+    /**
      * Returns true when the table is denied for the given principal.
      *
      * @param principal principal identifier, may be {@code null}.
@@ -15,6 +28,19 @@ public interface CatalogAccessPolicy {
     boolean isTableDenied(String principal, String schemaName, String tableName);
 
     /**
+     * Returns true when the source column is denied for the given tenant and principal.
+     *
+     * @param tenant tenant identifier, may be {@code null}.
+     * @param principal principal identifier, may be {@code null}.
+     * @param sourceName source alias or table name, may be {@code null}.
+     * @param columnName column name.
+     * @return true when denied.
+     */
+    default boolean isColumnDenied(String tenant, String principal, String sourceName, String columnName) {
+        return isColumnDenied(principal, sourceName, columnName);
+    }
+
+    /**
      * Returns true when the source column is denied for the given principal.
      *
      * @param principal principal identifier, may be {@code null}.
@@ -23,6 +49,18 @@ public interface CatalogAccessPolicy {
      * @return true when denied.
      */
     boolean isColumnDenied(String principal, String sourceName, String columnName);
+
+    /**
+     * Returns true when the function is allowed for the given tenant and principal.
+     *
+     * @param tenant tenant identifier, may be {@code null}.
+     * @param principal principal identifier, may be {@code null}.
+     * @param functionName function name.
+     * @return true when allowed.
+     */
+    default boolean isFunctionAllowed(String tenant, String principal, String functionName) {
+        return isFunctionAllowed(principal, functionName);
+    }
 
     /**
      * Returns true when the function is allowed for the given principal.

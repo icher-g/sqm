@@ -37,6 +37,25 @@ var settings = SchemaValidationSettings.builder()
 var validator = SchemaQueryValidator.of(schema, settings);
 ```
 
+### Load Settings from JSON/YAML (including tenant policies)
+
+```java
+String json = """
+{
+  "tenantRequirementMode": "REQUIRED",
+  "accessPolicy": {
+    "tenants": [
+      { "name": "tenant-a", "deniedTables": ["payments"] },
+      { "name": "tenant-b", "deniedColumns": ["users.ssn"] }
+    ]
+  }
+}
+""";
+
+var settings = SchemaValidationSettingsLoader.fromJson(json);
+var validator = SchemaQueryValidator.of(schema, settings);
+```
+
 ## Typical Problem Handling
 
 ```java
