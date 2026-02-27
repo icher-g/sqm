@@ -1,5 +1,8 @@
 package io.sqm.middleware.core;
 
+import io.sqm.control.ConfigKeys;
+import io.sqm.middleware.api.AnalyzeRequest;
+import io.sqm.middleware.api.ExecutionContextDto;
 import org.junit.jupiter.api.Test;
 
 import javax.sql.DataSource;
@@ -9,17 +12,16 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static io.sqm.middleware.api.DecisionKindDto.DENY;
+import static io.sqm.middleware.api.ReasonCodeDto.DENY_MAX_SELECT_COLUMNS;
+import static io.sqm.middleware.api.ReasonCodeDto.DENY_TABLE;
+import static org.junit.jupiter.api.Assertions.*;
 
 class SqlMiddlewareRuntimeFactoryTest {
 
     @Test
     void creates_service_with_default_manual_schema_when_no_properties_set() {
-        withProperty("sqm.middleware.schema.source", null, () -> {
+        withProperty(ConfigKeys.SCHEMA_SOURCE.property(), null, () -> {
             var service = SqlMiddlewareRuntimeFactory.createFromEnvironment();
             assertNotNull(service);
         });
@@ -27,25 +29,25 @@ class SqlMiddlewareRuntimeFactoryTest {
 
     @Test
     void throws_for_unknown_schema_source() {
-        withProperty("sqm.middleware.schema.source", "unknown", () ->
+        withProperty(ConfigKeys.SCHEMA_SOURCE.property(), "unknown", () ->
             assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment)
         );
     }
 
     @Test
     void supports_disabling_rewrite_pipeline_from_property() {
-        withProperty("sqm.middleware.rewrite.enabled", "false", () ->
+        withProperty(ConfigKeys.REWRITE_ENABLED.property(), "false", () ->
             assertDoesNotThrow(SqlMiddlewareRuntimeFactory::createFromEnvironment)
         );
     }
 
     @Test
     void applies_validation_and_guardrail_properties_without_errors() {
-        withProperty("sqm.middleware.validation.maxJoinCount", "3", () ->
-            withProperty("sqm.middleware.validation.maxSelectColumns", "20", () ->
-                withProperty("sqm.middleware.guardrails.maxSqlLength", "5000", () ->
-                    withProperty("sqm.middleware.guardrails.timeoutMillis", "2000", () ->
-                        withProperty("sqm.middleware.guardrails.maxRows", "100", () ->
+        withProperty(ConfigKeys.VALIDATION_MAX_JOIN_COUNT.property(), "3", () ->
+            withProperty(ConfigKeys.VALIDATION_MAX_SELECT_COLUMNS.property(), "20", () ->
+                withProperty(ConfigKeys.GUARDRAILS_MAX_SQL_LENGTH.property(), "5000", () ->
+                    withProperty(ConfigKeys.GUARDRAILS_TIMEOUT_MILLIS.property(), "2000", () ->
+                        withProperty(ConfigKeys.GUARDRAILS_MAX_ROWS.property(), "100", () ->
                             assertDoesNotThrow(SqlMiddlewareRuntimeFactory::createFromEnvironment)
                         )
                     )
@@ -57,81 +59,135 @@ class SqlMiddlewareRuntimeFactoryTest {
     @Test
     void throws_when_json_source_path_is_missing() {
         withProperties(Map.of(
-            "sqm.middleware.schema.source", "json",
-            "sqm.middleware.schema.json.path", ""
+            ConfigKeys.SCHEMA_SOURCE.property(), "json",
+            ConfigKeys.SCHEMA_JSON_PATH.property(), ""
         ), () -> assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
     }
 
     @Test
     void throws_when_json_source_path_does_not_exist() {
         withProperties(Map.of(
-            "sqm.middleware.schema.source", "json",
-            "sqm.middleware.schema.json.path", "./does-not-exist-schema.json"
+            ConfigKeys.SCHEMA_SOURCE.property(), "json",
+            ConfigKeys.SCHEMA_JSON_PATH.property(), "./does-not-exist-schema.json"
         ), () -> assertThrows(IllegalStateException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
     }
 
     @Test
     void throws_when_manual_default_json_path_does_not_exist() {
         withProperties(Map.of(
-            "sqm.middleware.schema.source", "manual",
-            "sqm.middleware.schema.defaultJson.path", "./missing-default-schema.json"
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.SCHEMA_DEFAULT_JSON_PATH.property(), "./missing-default-schema.json"
         ), () -> assertThrows(IllegalStateException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
     }
 
     @Test
     void throws_when_jdbc_source_url_is_missing() {
         withProperties(Map.of(
-            "sqm.middleware.schema.source", "jdbc",
-            "sqm.middleware.jdbc.url", ""
+            ConfigKeys.SCHEMA_SOURCE.property(), "jdbc",
+            ConfigKeys.JDBC_URL.property(), ""
         ), () -> assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
     }
 
     @Test
     void throws_when_jdbc_driver_class_is_invalid() {
         withProperties(Map.of(
-            "sqm.middleware.schema.source", "jdbc",
-            "sqm.middleware.jdbc.url", "jdbc:h2:mem:test",
-            "sqm.middleware.jdbc.driver", "com.example.MissingDriver"
+            ConfigKeys.SCHEMA_SOURCE.property(), "jdbc",
+            ConfigKeys.JDBC_URL.property(), "jdbc:h2:mem:test",
+            ConfigKeys.JDBC_DRIVER.property(), "com.example.MissingDriver"
         ), () -> assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
     }
 
     @Test
     void throws_when_rewrite_rule_name_is_invalid() {
         withProperties(Map.of(
-            "sqm.middleware.schema.source", "manual",
-            "sqm.middleware.rewrite.rules", "not_a_rule"
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.REWRITE_RULES.property(), "not_a_rule"
         ), () -> assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
     }
 
     @Test
     void throws_when_rewrite_enum_setting_is_invalid() {
         withProperties(Map.of(
-            "sqm.middleware.schema.source", "manual",
-            "sqm.middleware.rewrite.limitExcessMode", "not_a_mode"
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.REWRITE_LIMIT_EXCESS_MODE.property(), "not_a_mode"
         ), () -> assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
     }
 
     @Test
     void throws_when_identifier_case_mode_is_invalid() {
         withProperties(Map.of(
-            "sqm.middleware.schema.source", "manual",
-            "sqm.middleware.rewrite.identifierNormalizationCaseMode", "not_a_case_mode"
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.REWRITE_IDENTIFIER_NORMALIZATION_CASE_MODE.property(), "not_a_case_mode"
         ), () -> assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
     }
 
     @Test
     void applies_rewrite_and_guardrail_customizations_when_valid_values_present() {
         withProperties(Map.of(
-            "sqm.middleware.schema.source", "manual",
-            "sqm.middleware.rewrite.rules", "LIMIT_INJECTION,CANONICALIZATION",
-            "sqm.middleware.rewrite.defaultLimitInjectionValue", "100",
-            "sqm.middleware.rewrite.maxAllowedLimit", "1000",
-            "sqm.middleware.rewrite.limitExcessMode", "DENY",
-            "sqm.middleware.rewrite.qualificationDefaultSchema", "public",
-            "sqm.middleware.rewrite.qualificationFailureMode", "DENY",
-            "sqm.middleware.rewrite.identifierNormalizationCaseMode", "LOWER",
-            "sqm.middleware.guardrails.explainDryRun", "true"
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.REWRITE_RULES.property(), "LIMIT_INJECTION,CANONICALIZATION",
+            ConfigKeys.REWRITE_DEFAULT_LIMIT_INJECTION_VALUE.property(), "100",
+            ConfigKeys.REWRITE_MAX_ALLOWED_LIMIT.property(), "1000",
+            ConfigKeys.REWRITE_LIMIT_EXCESS_MODE.property(), "DENY",
+            ConfigKeys.REWRITE_QUALIFICATION_DEFAULT_SCHEMA.property(), "public",
+            ConfigKeys.REWRITE_QUALIFICATION_FAILURE_MODE.property(), "DENY",
+            ConfigKeys.REWRITE_IDENTIFIER_NORMALIZATION_CASE_MODE.property(), "LOWER",
+            ConfigKeys.GUARDRAILS_EXPLAIN_DRY_RUN.property(), "true"
         ), () -> assertDoesNotThrow(SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
+    void merges_validation_settings_config_with_limits_in_runtime_factory() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.VALIDATION_SETTINGS_YAML.property(), """
+                accessPolicy:
+                  deniedTables:
+                    - users
+                """,
+            ConfigKeys.VALIDATION_MAX_SELECT_COLUMNS.property(), "1"
+        ), () -> {
+            var service = SqlMiddlewareRuntimeFactory.createFromEnvironment();
+
+            var deniedTable = service.analyze(
+                new AnalyzeRequest("select id from users", new ExecutionContextDto("postgresql", null, null, null, null))
+            );
+            assertEquals(DENY, deniedTable.kind());
+            assertEquals(DENY_TABLE, deniedTable.reasonCode());
+
+            var deniedLimit = service.analyze(
+                new AnalyzeRequest("select 1, 2", new ExecutionContextDto("postgresql", null, null, null, null))
+            );
+            assertEquals(DENY, deniedLimit.kind());
+            assertEquals(DENY_MAX_SELECT_COLUMNS, deniedLimit.reasonCode());
+        });
+    }
+
+    @Test
+    void applies_principal_aware_access_policy_from_settings_config() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.VALIDATION_SETTINGS_YAML.property(), """
+                accessPolicy:
+                  principals:
+                    - name: alice
+                      deniedTables:
+                        - users
+                """
+        ), () -> {
+            var service = SqlMiddlewareRuntimeFactory.createFromEnvironment();
+
+            var deniedForAlice = service.analyze(
+                new AnalyzeRequest("select id from users", new ExecutionContextDto("postgresql", "alice", null, null, null))
+            );
+            assertEquals(DENY, deniedForAlice.kind());
+            assertEquals(DENY_TABLE, deniedForAlice.reasonCode());
+
+            var allowedForBob = service.analyze(
+                new AnalyzeRequest("select id from users", new ExecutionContextDto("postgresql", "bob", null, null, null))
+            );
+            assertNotSame(DENY, allowedForBob.kind());
+        });
     }
 
     @Test
@@ -203,3 +259,4 @@ class SqlMiddlewareRuntimeFactoryTest {
         }
     }
 }
+

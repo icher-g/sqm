@@ -65,7 +65,9 @@ public interface SqlQueryValidator {
                 throw new IllegalArgumentException("Unsupported dialect: " + context.dialect());
             }
 
-            var validator = SchemaQueryValidator.of(schema, specsFactory.get());
+            var baseSettings = specsFactory.get();
+            var effectiveSettings = withPrincipal(baseSettings, context.principal());
+            var validator = SchemaQueryValidator.of(schema, effectiveSettings);
             var result = validator.validate(sql);
             if (result.ok()) {
                 return QueryValidateResult.ok();
@@ -84,6 +86,22 @@ public interface SqlQueryValidator {
             .limits(base.limits())
             .addRules(dialect.additionalRules())
             .addRules(base.additionalRules())
+            .build();
+    }
+
+    private static SchemaValidationSettings withPrincipal(SchemaValidationSettings settings, String principal) {
+        var effectivePrincipal = (principal != null && !principal.isBlank())
+            ? principal
+            : settings.principal();
+        if (Objects.equals(effectivePrincipal, settings.principal())) {
+            return settings;
+        }
+        return SchemaValidationSettings.builder()
+            .functionCatalog(settings.functionCatalog())
+            .accessPolicy(settings.accessPolicy())
+            .principal(effectivePrincipal)
+            .limits(settings.limits())
+            .addRules(settings.additionalRules())
             .build();
     }
 

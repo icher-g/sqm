@@ -14,11 +14,11 @@ with framework entry points:
 
 ## Core Concepts
 
-- `ExecutionContext` — dialect, principal, tenant, mode, and parameterization mode.
-- `DecisionResult` — `ALLOW`, `DENY`, or `REWRITE` with reason code, optional rewritten SQL, params, fingerprint.
-- `SqlMiddlewareConfig.Builder` — composition point for default and custom middleware wiring.
-- `BuiltInRewriteRules` — source of built-in `QueryRewriteRule` lists.
-- `SqlQueryRewriter.builder()` — composes configured built-in/custom rules into an executable rewrite pipeline.
+- `ExecutionContext` â€” dialect, principal, tenant, mode, and parameterization mode.
+- `DecisionResult` â€” `ALLOW`, `DENY`, or `REWRITE` with reason code, optional rewritten SQL, params, fingerprint.
+- `SqlDecisionServiceConfig.Builder` â€” composition point for default and custom middleware wiring.
+- `BuiltInRewriteRules` â€” source of built-in `QueryRewriteRule` lists.
+- `SqlQueryRewriter.builder()` â€” composes configured built-in/custom rules into an executable rewrite pipeline.
 
 ## Schema Source Options (Manual / JSON / DB)
 
@@ -81,8 +81,8 @@ var schema = CatalogSchema.of(
     )
 );
 
-var middleware = SqlMiddleware.create(
-    SqlMiddlewareConfig.builder(schema)
+var middleware = SqlDecisionService.create(
+    SqlDecisionServiceConfig.builder(schema)
         .validationSettings(SchemaValidationSettings.defaults())
         .buildValidationConfig()
 );
@@ -96,8 +96,8 @@ var decision = middleware.analyze("select id, name from users where active = tru
 Use this when you need normalized/restricted SQL output and deterministic reason codes.
 
 ```java
-var middleware = SqlMiddleware.create(
-    SqlMiddlewareConfig.builder(schema)
+var middleware = SqlDecisionService.create(
+    SqlDecisionServiceConfig.builder(schema)
         .validationSettings(SchemaValidationSettings.defaults())
         .builtInRewriteSettings(
             BuiltInRewriteSettings.builder()
@@ -124,8 +124,8 @@ if (decision.kind() == DecisionKind.REWRITE) {
 
 `ExecutionContext` controls renderer output mode:
 
-- `ParameterizationMode.OFF` → inline literals in rewritten SQL
-- `ParameterizationMode.BIND` → placeholders + `DecisionResult.sqlParams()`
+- `ParameterizationMode.OFF` â†’ inline literals in rewritten SQL
+- `ParameterizationMode.BIND` â†’ placeholders + `DecisionResult.sqlParams()`
 
 This is renderer-driven behavior (not a standalone rewrite rule).
 
@@ -139,8 +139,8 @@ Guardrails are evaluated in middleware runtime flow:
 - optional `EXPLAIN` dry-run in `enforce(...)`
 
 ```java
-var middleware = SqlMiddleware.create(
-    SqlMiddlewareConfig.builder(schema)
+var middleware = SqlDecisionService.create(
+    SqlDecisionServiceConfig.builder(schema)
         .guardrails(new RuntimeGuardrails(10_000, 2_000L, 100, false))
         .buildValidationConfig()
 );
@@ -158,8 +158,8 @@ var parser = SqlQueryParser.dialectAware(Map.of(
     "postgresql", PostgresSpecs::new
 ));
 
-var middleware = SqlMiddleware.create(
-    SqlMiddlewareConfig.builder(schema)
+var middleware = SqlDecisionService.create(
+    SqlDecisionServiceConfig.builder(schema)
         .queryParser(parser)
         .buildValidationConfig()
 );
@@ -175,8 +175,8 @@ SqlQueryValidator validator = (query, context) -> {
     return QueryValidateResult.ok();
 };
 
-var middleware = SqlMiddleware.create(
-    SqlMiddlewareConfig.builder(schema)
+var middleware = SqlDecisionService.create(
+    SqlDecisionServiceConfig.builder(schema)
         .queryValidator(validator)
         .buildValidationConfig()
 );
@@ -187,8 +187,8 @@ var middleware = SqlMiddleware.create(
 ```java
 QueryRewriteRule noOpRule = (query, context) -> QueryRewriteResult.unchanged(query);
 
-var middleware = SqlMiddleware.create(
-    SqlMiddlewareConfig.builder(schema)
+var middleware = SqlDecisionService.create(
+    SqlDecisionServiceConfig.builder(schema)
         .queryRewriter(SqlQueryRewriter.chain(noOpRule))
         .queryRenderer(SqlQueryRenderer.standard())
         .buildValidationAndRewriteConfig()
@@ -214,8 +214,8 @@ SqlQueryRewriter rewriter = SqlQueryRewriter.chain(
     builtInRules.toArray(QueryRewriteRule[]::new)
 );
 
-var middleware = SqlMiddleware.create(
-    SqlMiddlewareConfig.builder(schema)
+var middleware = SqlDecisionService.create(
+    SqlDecisionServiceConfig.builder(schema)
         .queryRewriter(rewriter)
         .queryRenderer(SqlQueryRenderer.standard())
         .buildValidationAndRewriteConfig()
@@ -227,8 +227,8 @@ var middleware = SqlMiddleware.create(
 ```java
 SqlQueryRenderer renderer = SqlQueryRenderer.standard();
 
-var middleware = SqlMiddleware.create(
-    SqlMiddlewareConfig.builder(schema)
+var middleware = SqlDecisionService.create(
+    SqlDecisionServiceConfig.builder(schema)
         .queryRenderer(renderer)
         .buildValidationAndRewriteConfig()
 );
@@ -237,8 +237,8 @@ var middleware = SqlMiddleware.create(
 ### 5.5 Custom Explainer and Audit Publisher
 
 ```java
-var middleware = SqlMiddleware.create(
-    SqlMiddlewareConfig.builder(schema)
+var middleware = SqlDecisionService.create(
+    SqlDecisionServiceConfig.builder(schema)
         .explainer((query, ctx, decision) -> "kind=" + decision.kind() + ", reason=" + decision.reasonCode())
         .auditPublisher(event -> System.out.println(event.decision().kind() + " " + event.normalizedSql()))
         .buildValidationConfig()
@@ -281,8 +281,8 @@ if (decision.kind() == DecisionKind.DENY) {
 
 The middleware service can be hosted in two runtime transports:
 
-- REST host (`sqm-middleware-rest`) — Spring Boot HTTP API
-- MCP host (`sqm-middleware-mcp`) — long-running stdio JSON-RPC server
+- REST host (`sqm-middleware-rest`) â€” Spring Boot HTTP API
+- MCP host (`sqm-middleware-mcp`) â€” long-running stdio JSON-RPC server
 
 Both hosts delegate to the same transport-neutral service (`SqlMiddlewareService`) so decision behavior remains parity-aligned.
 
@@ -354,6 +354,9 @@ Tool names:
 
 Both hosts load runtime configuration from Java system properties (or corresponding environment variables):
 
+Complete generated key table (single source of truth):
+- `docs/MIDDLEWARE_CONFIG_KEYS.md` (generated from `ConfigKeys`; run `scripts/generate-middleware-config-keys-doc.ps1`)
+
 - `sqm.middleware.schema.source` (`manual|json|jdbc`)
 - `sqm.middleware.schema.defaultJson.path` (optional file path used by `manual` source)
 - `sqm.middleware.schema.json.path`
@@ -363,6 +366,8 @@ Both hosts load runtime configuration from Java system properties (or correspond
 - `sqm.middleware.rewrite.rules` (comma-separated built-in names)
 - `sqm.middleware.validation.maxJoinCount`, `sqm.middleware.validation.maxSelectColumns`
 - `sqm.middleware.guardrails.maxSqlLength`, `sqm.middleware.guardrails.timeoutMillis`, `sqm.middleware.guardrails.maxRows`, `sqm.middleware.guardrails.explainDryRun`
+- `sqm.validation.settings.json` / `SQM_VALIDATION_SETTINGS_JSON`
+- `sqm.validation.settings.yaml` / `SQM_VALIDATION_SETTINGS_YAML`
 
 Optional rewrite setting keys:
 
@@ -372,3 +377,64 @@ Optional rewrite setting keys:
 - `sqm.middleware.rewrite.qualificationDefaultSchema`
 - `sqm.middleware.rewrite.qualificationFailureMode`
 - `sqm.middleware.rewrite.identifierNormalizationCaseMode`
+
+### 8.4 Validation access policy config examples (JSON/YAML)
+
+`SqlDecisionServiceConfig.builder(schema)` now resolves validation settings in this order:
+
+1. explicit `validationSettings(...)`
+2. explicit `validationSettingsJson(...)` / `validationSettingsYaml(...)`
+3. runtime config keys:
+   - `sqm.validation.settings.json` or `SQM_VALIDATION_SETTINGS_JSON`
+   - `sqm.validation.settings.yaml` or `SQM_VALIDATION_SETTINGS_YAML`
+4. fallback: `SchemaValidationSettings.defaults()`
+
+Example JSON payload:
+
+```json
+{
+  "accessPolicy": {
+    "deniedTables": ["users"],
+    "deniedColumns": ["users.secret"],
+    "allowedFunctions": ["count", "lower"],
+    "principals": [
+      {
+        "name": "analyst",
+        "deniedTables": ["payments"],
+        "deniedColumns": ["users.email"],
+        "allowedFunctions": ["sum", "avg"]
+      }
+    ]
+  },
+  "limits": {
+    "maxJoinCount": 5,
+    "maxSelectColumns": 50
+  }
+}
+```
+
+Equivalent YAML payload:
+
+```yaml
+accessPolicy:
+  deniedTables:
+    - users
+  deniedColumns:
+    - users.secret
+  allowedFunctions:
+    - count
+    - lower
+  principals:
+    - name: analyst
+      deniedTables:
+        - payments
+      deniedColumns:
+        - users.email
+      allowedFunctions:
+        - sum
+        - avg
+limits:
+  maxJoinCount: 5
+  maxSelectColumns: 50
+```
+

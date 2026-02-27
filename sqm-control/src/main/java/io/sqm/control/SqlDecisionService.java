@@ -1,22 +1,22 @@
 package io.sqm.control;
 
-import io.sqm.control.impl.DefaultSqlMiddleware;
+import io.sqm.control.impl.DefaultSqlDecisionService;
 
 import java.util.Objects;
 
 /**
  * Framework entry points for middleware SQL analysis and enforcement flows.
  */
-public interface SqlMiddleware {
+public interface SqlDecisionService {
     /**
      * Creates middleware from a named configuration object.
      *
      * @param config middleware configuration
      * @return middleware instance
      */
-    static SqlMiddleware create(SqlMiddlewareConfig config) {
+    static SqlDecisionService create(SqlDecisionServiceConfig config) {
         Objects.requireNonNull(config, "config must not be null");
-        return new DefaultSqlMiddleware(
+        return new DefaultSqlDecisionService(
             config.engine(),
             config.explainer(),
             config.auditPublisher(),
@@ -55,3 +55,4 @@ public interface SqlMiddleware {
      */
     DecisionExplanation explainDecision(String sql, ExecutionContext context);
 }
+

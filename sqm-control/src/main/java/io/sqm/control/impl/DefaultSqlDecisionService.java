@@ -11,10 +11,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Default {@link SqlMiddleware} implementation that orchestrates parse, decision evaluation,
+ * Default {@link SqlDecisionService} implementation that orchestrates parse, decision evaluation,
  * runtime guardrails, explanation, and audit publishing.
  */
-public final class DefaultSqlMiddleware implements SqlMiddleware {
+public final class DefaultSqlDecisionService implements SqlDecisionService {
 
     private final SqlDecisionEngine engine;
     private final SqlDecisionExplainer explainer;
@@ -31,7 +31,7 @@ public final class DefaultSqlMiddleware implements SqlMiddleware {
      * @param guardrails     runtime guardrail settings
      * @param queryParser    parser used for ingress SQL parsing
      */
-    public DefaultSqlMiddleware(
+    public DefaultSqlDecisionService(
         SqlDecisionEngine engine,
         SqlDecisionExplainer explainer,
         AuditEventPublisher auditPublisher,
@@ -227,3 +227,4 @@ public final class DefaultSqlMiddleware implements SqlMiddleware {
     private record EvaluatedDecision(DecisionResult decision, Query query) {
     }
 }
+

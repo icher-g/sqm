@@ -4,7 +4,7 @@ import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
-import io.sqm.control.SqlMiddlewareConfig;
+import io.sqm.control.SqlDecisionServiceConfig;
 import io.sqm.middleware.api.AnalyzeRequest;
 import io.sqm.middleware.api.DecisionResultDto;
 import io.sqm.middleware.api.ExecutionContextDto;
@@ -29,7 +29,7 @@ class TransportParityIntegrationTest {
     @Test
     void rest_and_mcp_transports_match_core_service_for_same_request() {
         var service = SqlMiddlewareServices.create(
-            SqlMiddlewareConfig.builder(SCHEMA)
+            SqlDecisionServiceConfig.builder(SCHEMA)
                 .buildValidationAndRewriteConfig()
         );
 

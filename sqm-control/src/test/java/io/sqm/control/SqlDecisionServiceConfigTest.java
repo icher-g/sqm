@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class SqlMiddlewareConfigTest {
+class SqlDecisionServiceConfigTest {
     private static final CatalogSchema SCHEMA = CatalogSchema.of(
         CatalogTable.of("public", "users",
             CatalogColumn.of("id", CatalogType.LONG),
@@ -27,15 +27,15 @@ class SqlMiddlewareConfigTest {
             .limits(SchemaValidationLimits.builder().maxSelectColumns(1).build())
             .build();
 
-        var middleware = SqlMiddleware.create(
-            SqlMiddlewareConfig.builder(SCHEMA)
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
                 .validationSettings(settings)
                 .auditPublisher(audit)
                 .guardrails(guardrails)
                 .buildValidationConfig()
         );
 
-        var result = middleware.enforce("select 1, 2", ExecutionContext.of("postgresql", ExecutionMode.EXECUTE));
+        var result = decisionService.enforce("select 1, 2", ExecutionContext.of("postgresql", ExecutionMode.EXECUTE));
         assertEquals(DecisionKind.DENY, result.kind());
         assertEquals(ReasonCode.DENY_MAX_SELECT_COLUMNS, result.reasonCode());
         assertEquals(1, audit.events().size());
@@ -43,8 +43,8 @@ class SqlMiddlewareConfigTest {
 
     @Test
     void for_validation_and_rewrite_builds_rewrite_enabled_middleware() {
-        var middleware = SqlMiddleware.create(
-            SqlMiddlewareConfig.builder(SCHEMA)
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
                 .validationSettings(SchemaValidationSettings.defaults())
                 .builtInRewriteSettings(BuiltInRewriteSettings.defaults())
                 .rewriteRules(
@@ -54,7 +54,7 @@ class SqlMiddlewareConfigTest {
                 ).buildValidationAndRewriteConfig()
         );
 
-        var result = middleware.analyze("select id from users u", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var result = decisionService.analyze("select id from users u", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.REWRITE, result.kind());
         assertEquals(ReasonCode.REWRITE_LIMIT, result.reasonCode());
         assertNotNull(result.rewrittenSql());
@@ -66,9 +66,9 @@ class SqlMiddlewareConfigTest {
 
     @Test
     void builder_defaults_and_required_schema_are_enforced() {
-        assertThrows(NullPointerException.class, () -> SqlMiddlewareConfig.builder(null));
+        assertThrows(NullPointerException.class, () -> SqlDecisionServiceConfig.builder(null));
 
-        var config = SqlMiddlewareConfig.builder(SCHEMA).buildValidationConfig();
+        var config = SqlDecisionServiceConfig.builder(SCHEMA).buildValidationConfig();
 
         assertNotNull(config.engine());
         assertNotNull(config.explainer());
@@ -79,13 +79,13 @@ class SqlMiddlewareConfigTest {
 
     @Test
     void validation_and_rewrite_defaults_are_safe_when_rewrite_config_is_omitted() {
-        var middleware = SqlMiddleware.create(
-            SqlMiddlewareConfig.builder(SCHEMA)
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
                 .validationSettings(SchemaValidationSettings.defaults())
                 .buildValidationAndRewriteConfig()
         );
 
-        var result = middleware.analyze("select id from users", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var result = decisionService.analyze("select id from users", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
 
         assertEquals(DecisionKind.REWRITE, result.kind());
         assertEquals(ReasonCode.REWRITE_LIMIT, result.reasonCode());
@@ -95,18 +95,86 @@ class SqlMiddlewareConfigTest {
 
     @Test
     void validation_and_rewrite_with_explicit_empty_rules_uses_built_in_rewrites() {
-        var middleware = SqlMiddleware.create(
-            SqlMiddlewareConfig.builder(SCHEMA)
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
                 .validationSettings(SchemaValidationSettings.defaults())
                 .rewriteRules()
                 .buildValidationAndRewriteConfig()
         );
 
-        var result = middleware.analyze("select id from users", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var result = decisionService.analyze("select id from users", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
 
         assertEquals(DecisionKind.REWRITE, result.kind());
         assertEquals(ReasonCode.REWRITE_LIMIT, result.reasonCode());
         assertNotNull(result.rewrittenSql());
         assertTrue(result.rewrittenSql().toLowerCase().contains("limit"));
     }
+
+    @Test
+    void builder_loads_validation_settings_from_json_config() {
+        var json = """
+            {
+              "accessPolicy": {
+                "deniedTables": ["users"]
+              }
+            }
+            """;
+
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
+                .validationSettingsJson(json)
+                .buildValidationConfig()
+        );
+
+        var result = decisionService.analyze("select id from users", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        assertEquals(DecisionKind.DENY, result.kind());
+        assertEquals(ReasonCode.DENY_TABLE, result.reasonCode());
+    }
+
+    @Test
+    void builder_loads_validation_settings_from_yaml_config() {
+        var yaml = """
+            accessPolicy:
+              deniedTables:
+                - users
+            """;
+
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
+                .validationSettingsYaml(yaml)
+                .buildValidationConfig()
+        );
+
+        var result = decisionService.analyze("select id from users", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        assertEquals(DecisionKind.DENY, result.kind());
+        assertEquals(ReasonCode.DENY_TABLE, result.reasonCode());
+    }
+
+    @Test
+    void builder_uses_system_property_settings_when_explicit_settings_are_not_provided() {
+        var yaml = """
+            accessPolicy:
+              deniedTables:
+                - users
+            """;
+        var key = ConfigKeys.VALIDATION_SETTINGS_YAML.property();
+        var previous = System.getProperty(key);
+        try {
+            System.setProperty(key, yaml);
+            var decisionService = SqlDecisionService.create(
+                SqlDecisionServiceConfig.builder(SCHEMA).buildValidationConfig()
+            );
+
+            var result = decisionService.analyze("select id from users", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+            assertEquals(DecisionKind.DENY, result.kind());
+            assertEquals(ReasonCode.DENY_TABLE, result.reasonCode());
+        } finally {
+            if (previous == null) {
+                System.clearProperty(key);
+            } else {
+                System.setProperty(key, previous);
+            }
+        }
+    }
 }
+

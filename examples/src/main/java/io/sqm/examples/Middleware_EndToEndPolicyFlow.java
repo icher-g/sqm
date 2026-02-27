@@ -15,8 +15,8 @@ import io.sqm.control.QueryRewriteResult;
 import io.sqm.control.QueryRewriteRule;
 import io.sqm.control.RuntimeGuardrails;
 import io.sqm.control.SqlDecisionExplainer;
-import io.sqm.control.SqlMiddleware;
-import io.sqm.control.SqlMiddlewareConfig;
+import io.sqm.control.SqlDecisionService;
+import io.sqm.control.SqlDecisionServiceConfig;
 import io.sqm.validate.schema.SchemaValidationSettings;
 
 import java.util.List;
@@ -83,20 +83,20 @@ public final class Middleware_EndToEndPolicyFlow {
     }
 
     private static void runValidationOnlyFlow(CatalogSchema schema, String sql) {
-        SqlMiddleware middleware = SqlMiddleware.create(
-            SqlMiddlewareConfig.builder(schema)
+        SqlDecisionService decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(schema)
                 .validationSettings(SchemaValidationSettings.defaults())
                 .buildValidationConfig()
         );
 
-        DecisionResult decision = middleware.analyze(sql, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        DecisionResult decision = decisionService.analyze(sql, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
 
         print("Validation-only analyze", decision);
     }
 
     private static void runFullFlowWithRewrite(CatalogSchema schema, String sql) {
-        SqlMiddleware middleware = SqlMiddleware.create(
-            SqlMiddlewareConfig.builder(schema)
+        SqlDecisionService decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(schema)
                 .validationSettings(SchemaValidationSettings.defaults())
                 .builtInRewriteSettings(
                     BuiltInRewriteSettings.builder()
@@ -108,7 +108,7 @@ public final class Middleware_EndToEndPolicyFlow {
                 .buildValidationAndRewriteConfig()
         );
 
-        DecisionResult decision = middleware.enforce(
+        DecisionResult decision = decisionService.enforce(
             sql,
             ExecutionContext.of(
                 "postgresql",
@@ -130,8 +130,8 @@ public final class Middleware_EndToEndPolicyFlow {
             return QueryRewriteResult.rewritten(query, "tenant-guard", io.sqm.control.ReasonCode.REWRITE_CANONICALIZATION);
         };
 
-        SqlMiddleware middleware = SqlMiddleware.create(
-            SqlMiddlewareConfig.builder(schema)
+        SqlDecisionService decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(schema)
                 .validationSettings(SchemaValidationSettings.defaults())
                 .queryRewriter(io.sqm.control.SqlQueryRewriter.chain(addTenantGuard))
                 .queryRenderer(io.sqm.control.SqlQueryRenderer.standard())
@@ -140,7 +140,7 @@ public final class Middleware_EndToEndPolicyFlow {
                 .buildValidationAndRewriteConfig()
         );
 
-        DecisionResult decision = middleware.analyze(
+        DecisionResult decision = decisionService.analyze(
             sql,
             ExecutionContext.of("postgresql", "custom-user", "tenant-x", ExecutionMode.ANALYZE, ParameterizationMode.OFF)
         );
@@ -163,3 +163,4 @@ public final class Middleware_EndToEndPolicyFlow {
         return params == null ? "[]" : params.toString();
     }
 }
+

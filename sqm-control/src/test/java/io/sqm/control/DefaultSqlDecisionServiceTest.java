@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("SameParameterValue")
-class DefaultSqlMiddlewareTest {
+class DefaultSqlDecisionServiceTest {
 
     private static final CatalogSchema SCHEMA = CatalogSchema.of(
         CatalogTable.of("public", "users",
@@ -24,23 +24,23 @@ class DefaultSqlMiddlewareTest {
         )
     );
 
-    private static SqlMiddleware create(CatalogSchema schema) {
-        return SqlMiddleware.create(SqlMiddlewareConfig.builder(schema).buildValidationConfig());
+    private static SqlDecisionService create(CatalogSchema schema) {
+        return SqlDecisionService.create(SqlDecisionServiceConfig.builder(schema).buildValidationConfig());
     }
 
-    private static SqlMiddleware create(CatalogSchema schema, SchemaValidationSettings settings) {
-        return SqlMiddleware.create(SqlMiddlewareConfig.builder(schema).validationSettings(settings).buildValidationConfig());
+    private static SqlDecisionService create(CatalogSchema schema, SchemaValidationSettings settings) {
+        return SqlDecisionService.create(SqlDecisionServiceConfig.builder(schema).validationSettings(settings).buildValidationConfig());
     }
 
-    private static SqlMiddleware create(
+    private static SqlDecisionService create(
         CatalogSchema schema,
         SchemaValidationSettings settings,
         RuntimeGuardrails guardrails
     ) {
-        return SqlMiddleware.create(SqlMiddlewareConfig.builder(schema).validationSettings(settings).guardrails(guardrails).buildValidationConfig());
+        return SqlDecisionService.create(SqlDecisionServiceConfig.builder(schema).validationSettings(settings).guardrails(guardrails).buildValidationConfig());
     }
 
-    private static SqlMiddleware create(
+    private static SqlDecisionService create(
         CatalogSchema schema,
         SchemaValidationSettings settings,
         RuntimeGuardrails guardrails,
@@ -48,8 +48,8 @@ class DefaultSqlMiddlewareTest {
         SqlDecisionExplainer explainer,
         SqlQueryParser queryParser
     ) {
-        return SqlMiddleware.create(
-            SqlMiddlewareConfig.builder(schema)
+        return SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(schema)
                 .validationSettings(settings)
                 .guardrails(guardrails)
                 .auditPublisher(auditPublisher)
@@ -61,10 +61,10 @@ class DefaultSqlMiddlewareTest {
 
     @Test
     void default_factory_creates_working_middleware() {
-        var middleware = create(SCHEMA);
+        var decisionService = create(SCHEMA);
         var context = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
 
-        var result = middleware.analyze("select 1", context);
+        var result = decisionService.analyze("select 1", context);
         assertEquals(DecisionKind.ALLOW, result.kind());
     }
 
@@ -73,22 +73,22 @@ class DefaultSqlMiddlewareTest {
         var settings = SchemaValidationSettings.builder()
             .limits(SchemaValidationLimits.builder().maxSelectColumns(1).build())
             .build();
-        var middleware = create(SCHEMA, settings);
+        var decisionService = create(SCHEMA, settings);
 
-        var result = middleware.analyze("select 1, 2", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var result = decisionService.analyze("select 1, 2", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.DENY, result.kind());
         assertEquals(ReasonCode.DENY_MAX_SELECT_COLUMNS, result.reasonCode());
     }
 
     @Test
     void factory_applies_runtime_guardrails() {
-        var middleware = create(
+        var decisionService = create(
             SCHEMA,
             SchemaValidationSettings.defaults(),
             new RuntimeGuardrails(null, null, 100, false)
         );
 
-        var result = middleware.enforce("select 1", ExecutionContext.of("postgresql", ExecutionMode.EXECUTE));
+        var result = decisionService.enforce("select 1", ExecutionContext.of("postgresql", ExecutionMode.EXECUTE));
         assertEquals(DecisionKind.DENY, result.kind());
         assertEquals(ReasonCode.DENY_MAX_ROWS, result.reasonCode());
     }
@@ -96,7 +96,7 @@ class DefaultSqlMiddlewareTest {
     @Test
     void factory_allows_custom_audit_wiring() {
         var audit = InMemoryAuditEventPublisher.create();
-        var middleware = create(
+        var decisionService = create(
             SCHEMA,
             SchemaValidationSettings.defaults(),
             RuntimeGuardrails.disabled(),
@@ -105,16 +105,16 @@ class DefaultSqlMiddlewareTest {
             SqlQueryParser.standard()
         );
 
-        middleware.analyze("select 1", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        decisionService.analyze("select 1", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(1, audit.events().size());
         assertEquals(List.of(), audit.events().getFirst().appliedRules());
     }
 
     @Test
     void dialect_schema_factory_uses_dialect_aware_validation_wiring() {
-        var middleware = create(SCHEMA);
+        var decisionService = create(SCHEMA);
 
-        var result = middleware.analyze("select 1", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var result = decisionService.analyze("select 1", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.ALLOW, result.kind());
     }
 
@@ -125,9 +125,10 @@ class DefaultSqlMiddlewareTest {
 
     @Test
     void dialect_schema_factory_defaults_to_ansi_when_missing() {
-        var middleware = create(SCHEMA);
+        var decisionService = create(SCHEMA);
 
-        var result = middleware.analyze("select 1", ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
+        var result = decisionService.analyze("select 1", ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
         assertEquals(DecisionKind.ALLOW, result.kind());
     }
 }
+

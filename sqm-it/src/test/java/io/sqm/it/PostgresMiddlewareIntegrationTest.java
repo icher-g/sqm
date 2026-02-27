@@ -103,8 +103,8 @@ class PostgresMiddlewareIntegrationTest {
 
     @Test
     void validation_only_flow_allows_complex_sql_then_query_executes_on_postgres() throws Exception {
-        var middleware = SqlMiddleware.create(
-            SqlMiddlewareConfig.builder(SCHEMA)
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
                 .validationSettings(SchemaValidationSettings.defaults())
                 .buildValidationConfig()
         );
@@ -125,7 +125,7 @@ class PostgresMiddlewareIntegrationTest {
             order by total_amount desc, u.id asc
             """;
 
-        var decision = middleware.analyze(sql, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        var decision = decisionService.analyze(sql, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
 
         assertEquals(DecisionKind.ALLOW, decision.kind());
         assertEquals(ReasonCode.NONE, decision.reasonCode());
@@ -136,8 +136,8 @@ class PostgresMiddlewareIntegrationTest {
 
     @Test
     void full_flow_rewrites_with_bind_params_and_rewritten_query_executes_on_postgres() throws Exception {
-        var middleware = SqlMiddleware.create(
-            SqlMiddlewareConfig.builder(SCHEMA)
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
                 .validationSettings(SchemaValidationSettings.defaults())
                 .builtInRewriteSettings(BuiltInRewriteSettings.defaults())
                 .rewriteRules(BuiltInRewriteRule.LIMIT_INJECTION)
@@ -168,7 +168,7 @@ class PostgresMiddlewareIntegrationTest {
             ParameterizationMode.BIND
         );
 
-        var decision = middleware.enforce(sql, context);
+        var decision = decisionService.enforce(sql, context);
 
         assertEquals(DecisionKind.REWRITE, decision.kind());
         assertEquals(ReasonCode.REWRITE_LIMIT, decision.reasonCode());
@@ -182,15 +182,15 @@ class PostgresMiddlewareIntegrationTest {
 
     @Test
     void execute_intent_flow_denies_ddl_and_prevents_execution() throws Exception {
-        var middleware = SqlMiddleware.create(
-            SqlMiddlewareConfig.builder(SCHEMA)
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
                 .validationSettings(SchemaValidationSettings.defaults())
                 .buildValidationConfig()
         );
 
         String ddl = "drop table users";
 
-        var decision = middleware.enforce(ddl, ExecutionContext.of("postgresql", ExecutionMode.EXECUTE));
+        var decision = decisionService.enforce(ddl, ExecutionContext.of("postgresql", ExecutionMode.EXECUTE));
 
         assertEquals(DecisionKind.DENY, decision.kind());
         assertTrue(
@@ -244,3 +244,4 @@ class PostgresMiddlewareIntegrationTest {
         return String.valueOf(value);
     }
 }
+
