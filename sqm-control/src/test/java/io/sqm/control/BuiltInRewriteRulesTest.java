@@ -30,7 +30,7 @@ class BuiltInRewriteRulesTest {
     void all_available_returns_non_schema_rules_in_definition_order() {
         var rules = BuiltInRewriteRules.allAvailable(BuiltInRewriteSettings.defaults());
 
-        assertEquals(3, rules.size());
+        assertEquals(4, rules.size());
 
         var query = SqlQueryParser.standard().parse("select 1", POSTGRES_ANALYZE);
         var result = SqlQueryRewriter.chain(rules.toArray(QueryRewriteRule[]::new)).rewrite(query, POSTGRES_ANALYZE);
@@ -62,7 +62,7 @@ class BuiltInRewriteRulesTest {
     void all_available_schema_rules_include_qualification_rules() {
         var rules = BuiltInRewriteRules.allAvailable(SCHEMA, BuiltInRewriteSettings.defaults());
 
-        assertEquals(5, rules.size());
+        assertEquals(6, rules.size());
 
         var query = SqlQueryParser.standard().parse("select id from users limit 5", POSTGRES_ANALYZE);
         var result = SqlQueryRewriter.chain(rules.toArray(QueryRewriteRule[]::new)).rewrite(query, POSTGRES_ANALYZE);

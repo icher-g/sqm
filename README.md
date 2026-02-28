@@ -157,8 +157,16 @@ those rules into the effective rewriter pipeline.
 var middleware = SqlDecisionService.create(
     SqlDecisionServiceConfig.builder(schema)
         .validationSettings(SchemaValidationSettings.defaults())
-        .builtInRewriteSettings(BuiltInRewriteSettings.defaults())
-        .rewriteRules(BuiltInRewriteRule.LIMIT_INJECTION, BuiltInRewriteRule.CANONICALIZATION)
+        .builtInRewriteSettings(
+            BuiltInRewriteSettings.defaults()
+                .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
+                .tenantTablePolicy("public.orders", TenantRewriteTablePolicy.required("tenant_id"))
+        )
+        .rewriteRules(
+            BuiltInRewriteRule.TENANT_PREDICATE,
+            BuiltInRewriteRule.LIMIT_INJECTION,
+            BuiltInRewriteRule.CANONICALIZATION
+        )
         .buildValidationAndRewriteConfig()
 );
 
@@ -265,6 +273,9 @@ Complete generated key table (single source of truth):
     - `sqm.validation.settings.yaml` / `SQM_VALIDATION_SETTINGS_YAML` (inline YAML text for `SchemaValidationSettings`)
     - `sqm.middleware.rewrite.enabled` / `SQM_MIDDLEWARE_REWRITE_ENABLED` (`true` by default)
     - `sqm.middleware.rewrite.rules` / `SQM_MIDDLEWARE_REWRITE_RULES` (comma-separated built-in rule names)
+    - `sqm.middleware.rewrite.tenant.tablePolicies` / `SQM_MIDDLEWARE_REWRITE_TENANT_TABLE_POLICIES` (CSV: `schema.table:tenant_column[:REQUIRED|OPTIONAL|SKIP],...`)
+    - `sqm.middleware.rewrite.tenant.fallbackMode` / `SQM_MIDDLEWARE_REWRITE_TENANT_FALLBACK_MODE` (`DENY` | `SKIP`)
+    - `sqm.middleware.rewrite.tenant.ambiguityMode` / `SQM_MIDDLEWARE_REWRITE_TENANT_AMBIGUITY_MODE` (`DENY` | `SKIP`)
     - `sqm.middleware.validation.maxJoinCount` / `SQM_MIDDLEWARE_VALIDATION_MAX_JOIN_COUNT`
     - `sqm.middleware.validation.maxSelectColumns` / `SQM_MIDDLEWARE_VALIDATION_MAX_SELECT_COLUMNS`
     - `sqm.middleware.validation.tenantRequirementMode` / `SQM_MIDDLEWARE_VALIDATION_TENANT_REQUIREMENT_MODE` (`OPTIONAL` | `REQUIRED`)
@@ -280,7 +291,10 @@ Example (JSON schema source + rewrite rules):
 mvn -pl sqm-middleware-rest -am spring-boot:run \
     -Dsqm.middleware.schema.source=json \
     -Dsqm.middleware.schema.json.path=./schema.json \
-    -Dsqm.middleware.rewrite.rules=LIMIT_INJECTION,CANONICALIZATION
+    -Dsqm.middleware.rewrite.rules=TENANT_PREDICATE,LIMIT_INJECTION,CANONICALIZATION \
+    -Dsqm.middleware.rewrite.tenant.tablePolicies=public.users:tenant_id:REQUIRED,public.orders:tenant_id:OPTIONAL \
+    -Dsqm.middleware.rewrite.tenant.fallbackMode=DENY \
+    -Dsqm.middleware.rewrite.tenant.ambiguityMode=DENY
 ```
 
 Validation settings example with tenant access policies (JSON):

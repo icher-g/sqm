@@ -30,4 +30,7 @@
 | `REWRITE_QUALIFICATION_DEFAULT_SCHEMA`       | `sqm.middleware.rewrite.qualificationDefaultSchema`      | `SQM_MIDDLEWARE_REWRITE_QUALIFICATION_DEFAULT_SCHEMA`       |
 | `REWRITE_QUALIFICATION_FAILURE_MODE`         | `sqm.middleware.rewrite.qualificationFailureMode`        | `SQM_MIDDLEWARE_REWRITE_QUALIFICATION_FAILURE_MODE`         |
 | `REWRITE_IDENTIFIER_NORMALIZATION_CASE_MODE` | `sqm.middleware.rewrite.identifierNormalizationCaseMode` | `SQM_MIDDLEWARE_REWRITE_IDENTIFIER_NORMALIZATION_CASE_MODE` |
+| `REWRITE_TENANT_TABLE_POLICIES`              | `sqm.middleware.rewrite.tenant.tablePolicies`            | `SQM_MIDDLEWARE_REWRITE_TENANT_TABLE_POLICIES`              |
+| `REWRITE_TENANT_FALLBACK_MODE`               | `sqm.middleware.rewrite.tenant.fallbackMode`             | `SQM_MIDDLEWARE_REWRITE_TENANT_FALLBACK_MODE`               |
+| `REWRITE_TENANT_AMBIGUITY_MODE`              | `sqm.middleware.rewrite.tenant.ambiguityMode`            | `SQM_MIDDLEWARE_REWRITE_TENANT_AMBIGUITY_MODE`              |
 

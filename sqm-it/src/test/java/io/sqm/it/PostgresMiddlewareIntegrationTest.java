@@ -39,7 +39,8 @@ class PostgresMiddlewareIntegrationTest {
             CatalogColumn.of("id", CatalogType.LONG),
             CatalogColumn.of("name", CatalogType.STRING),
             CatalogColumn.of("active", CatalogType.BOOLEAN),
-            CatalogColumn.of("tier", CatalogType.STRING)
+            CatalogColumn.of("tier", CatalogType.STRING),
+            CatalogColumn.of("tenant_id", CatalogType.STRING)
         ),
         CatalogTable.of(
             "public",
@@ -47,14 +48,16 @@ class PostgresMiddlewareIntegrationTest {
             CatalogColumn.of("id", CatalogType.LONG),
             CatalogColumn.of("user_id", CatalogType.LONG),
             CatalogColumn.of("status", CatalogType.STRING),
-            CatalogColumn.of("amount", CatalogType.DECIMAL)
+            CatalogColumn.of("amount", CatalogType.DECIMAL),
+            CatalogColumn.of("tenant_id", CatalogType.STRING)
         ),
         CatalogTable.of(
             "public",
             "payments",
             CatalogColumn.of("id", CatalogType.LONG),
             CatalogColumn.of("order_id", CatalogType.LONG),
-            CatalogColumn.of("state", CatalogType.STRING)
+            CatalogColumn.of("state", CatalogType.STRING),
+            CatalogColumn.of("tenant_id", CatalogType.STRING)
         )
     );
 
@@ -69,37 +72,40 @@ class PostgresMiddlewareIntegrationTest {
                 "id bigint primary key," +
                 "name text not null," +
                 "active boolean not null," +
-                "tier text not null)");
+                "tier text not null," +
+                "tenant_id text not null)");
 
             statement.execute("create table orders (" +
                 "id bigint primary key," +
                 "user_id bigint not null references users(id)," +
                 "status text not null," +
-                "amount numeric(10,2) not null)");
+                "amount numeric(10,2) not null," +
+                "tenant_id text not null)");
 
             statement.execute("create table payments (" +
                 "id bigint primary key," +
                 "order_id bigint not null references orders(id)," +
-                "state text not null)");
+                "state text not null," +
+                "tenant_id text not null)");
 
-            statement.execute("insert into users(id, name, active, tier) values " +
-                "(1, 'Alice', true, 'gold')," +
-                "(2, 'Bob', true, 'silver')," +
-                "(3, 'Carol', false, 'gold')");
+            statement.execute("insert into users(id, name, active, tier, tenant_id) values " +
+                "(1, 'Alice', true, 'gold', 'tenant-a')," +
+                "(2, 'Bob', true, 'silver', 'tenant-a')," +
+                "(3, 'Carol', false, 'gold', 'tenant-b')");
 
-            statement.execute("insert into orders(id, user_id, status, amount) values " +
-                "(100, 1, 'PAID', 120.00)," +
-                "(101, 1, 'PAID', 35.50)," +
-                "(102, 2, 'PAID', 60.00)," +
-                "(103, 2, 'NEW', 15.00)," +
-                "(104, 3, 'PAID', 210.00)");
+            statement.execute("insert into orders(id, user_id, status, amount, tenant_id) values " +
+                "(100, 1, 'PAID', 120.00, 'tenant-a')," +
+                "(101, 1, 'PAID', 35.50, 'tenant-a')," +
+                "(102, 2, 'PAID', 60.00, 'tenant-a')," +
+                "(103, 2, 'NEW', 15.00, 'tenant-a')," +
+                "(104, 3, 'PAID', 210.00, 'tenant-b')");
 
-            statement.execute("insert into payments(id, order_id, state) values " +
-                "(1000, 100, 'SETTLED')," +
-                "(1001, 101, 'SETTLED')," +
-                "(1002, 102, 'SETTLED')," +
-                "(1003, 103, 'PENDING')," +
-                "(1004, 104, 'SETTLED')");
+            statement.execute("insert into payments(id, order_id, state, tenant_id) values " +
+                "(1000, 100, 'SETTLED', 'tenant-a')," +
+                "(1001, 101, 'SETTLED', 'tenant-a')," +
+                "(1002, 102, 'SETTLED', 'tenant-a')," +
+                "(1003, 103, 'PENDING', 'tenant-a')," +
+                "(1004, 104, 'SETTLED', 'tenant-b')");
         }
     }
 
@@ -237,6 +243,45 @@ class PostgresMiddlewareIntegrationTest {
 
         List<String> rows = executeQuery("select id from payments order by id", List.of());
         assertEquals(List.of("1000", "1001", "1002", "1003", "1004"), rows);
+    }
+
+    @Test
+    void tenant_predicate_rewrite_bind_mode_enforces_tenant_isolation_on_execution() throws Exception {
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
+                .validationSettings(SchemaValidationSettings.defaults())
+                .builtInRewriteSettings(
+                    BuiltInRewriteSettings.builder()
+                        .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
+                        .build()
+                )
+                .rewriteRules(BuiltInRewriteRule.TENANT_PREDICATE)
+                .buildValidationAndRewriteConfig()
+        );
+
+        String sql = "select u.id, u.name from users u order by u.id";
+        var tenantAContext = ExecutionContext.of(
+            "postgresql",
+            "agent",
+            "tenant-a",
+            ExecutionMode.EXECUTE,
+            ParameterizationMode.BIND
+        );
+
+        var tenantADecision = decisionService.enforce(sql, tenantAContext);
+
+        assertEquals(DecisionKind.REWRITE, tenantADecision.kind());
+        assertEquals(ReasonCode.REWRITE_TENANT_PREDICATE, tenantADecision.reasonCode());
+        assertTrue(tenantADecision.rewrittenSql().contains("?"));
+        assertEquals(List.of("tenant-a"), tenantADecision.sqlParams());
+        assertEquals(List.of("1|Alice", "2|Bob"), executeQuery(tenantADecision.rewrittenSql(), tenantADecision.sqlParams()));
+
+        var tenantBDecision = decisionService.enforce(
+            sql,
+            ExecutionContext.of("postgresql", "agent", "tenant-b", ExecutionMode.EXECUTE, ParameterizationMode.BIND)
+        );
+        assertEquals(List.of("tenant-b"), tenantBDecision.sqlParams());
+        assertEquals(List.of("3|Carol"), executeQuery(tenantBDecision.rewrittenSql(), tenantBDecision.sqlParams()));
     }
 
     private Connection openConnection() throws Exception {

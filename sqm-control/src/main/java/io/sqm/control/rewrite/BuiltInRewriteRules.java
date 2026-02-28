@@ -22,6 +22,7 @@ public final class BuiltInRewriteRules {
 
     private static final EnumSet<BuiltInRewriteRule> AVAILABLE_RULES = EnumSet.of(
         BuiltInRewriteRule.LIMIT_INJECTION,
+        BuiltInRewriteRule.TENANT_PREDICATE,
         BuiltInRewriteRule.IDENTIFIER_NORMALIZATION,
         BuiltInRewriteRule.CANONICALIZATION
     );
@@ -30,6 +31,7 @@ public final class BuiltInRewriteRules {
         BuiltInRewriteRule.LIMIT_INJECTION,
         BuiltInRewriteRule.SCHEMA_QUALIFICATION,
         BuiltInRewriteRule.COLUMN_QUALIFICATION,
+        BuiltInRewriteRule.TENANT_PREDICATE,
         BuiltInRewriteRule.IDENTIFIER_NORMALIZATION,
         BuiltInRewriteRule.CANONICALIZATION
     );
@@ -126,6 +128,7 @@ public final class BuiltInRewriteRules {
             case COLUMN_QUALIFICATION -> ColumnQualificationRewriteRule.of(
                 Objects.requireNonNull(schema, "schema must be provided for COLUMN_QUALIFICATION"),
                 settings);
+            case TENANT_PREDICATE -> TenantPredicateRewriteRule.of(settings);
             case IDENTIFIER_NORMALIZATION -> IdentifierNormalizationRewriteRule.of(settings);
             case CANONICALIZATION -> CanonicalizationRewriteRule.of();
         };

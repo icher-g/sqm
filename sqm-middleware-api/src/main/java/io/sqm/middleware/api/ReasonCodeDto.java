@@ -65,6 +65,16 @@ public enum ReasonCodeDto {
     DENY_TENANT_REQUIRED,
 
     /**
+     * Query denied because tenant table mapping is missing and fallback mode is DENY.
+     */
+    DENY_TENANT_MAPPING_MISSING,
+
+    /**
+     * Query denied because tenant table mapping is ambiguous and ambiguity mode is DENY.
+     */
+    DENY_TENANT_MAPPING_AMBIGUOUS,
+
+    /**
      * Query denied because SQL text exceeds configured maximum length.
      */
     DENY_MAX_SQL_LENGTH,
@@ -88,6 +98,11 @@ public enum ReasonCodeDto {
      * Query was rewritten to apply identifier qualification.
      */
     REWRITE_QUALIFICATION,
+
+    /**
+     * Query was rewritten to inject tenant predicate constraints.
+     */
+    REWRITE_TENANT_PREDICATE,
 
     /**
      * Query was rewritten to normalize identifier lexical form.

@@ -20,6 +20,11 @@ public enum BuiltInRewriteRule {
     COLUMN_QUALIFICATION,
 
     /**
+     * Injects tenant predicates into top-level table sources according to configured tenant table policies.
+     */
+    TENANT_PREDICATE,
+
+    /**
      * Normalizes identifier casing/quoting for stable rendering.
      */
     IDENTIFIER_NORMALIZATION,
