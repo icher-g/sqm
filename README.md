@@ -249,6 +249,35 @@ Tool names exposed by MCP runtime:
 - `middleware.enforce`
 - `middleware.explain`
 
+MCP lifecycle and protocol hardening:
+
+- `tools/list` and `tools/call` require `initialize` first (default behavior)
+- `shutdown` marks server as draining; further tool calls are rejected
+- `exit` terminates the serving loop
+- invalid framing is mapped to deterministic JSON-RPC errors with `error.data.category="INVALID_FRAME"`
+
+Transport error contracts:
+
+- REST error envelope:
+    - shape: `{"code":"...","message":"...","path":"..."}`
+    - examples:
+        - `UNAUTHORIZED` (`401`)
+        - `RATE_LIMIT_EXCEEDED` (`429`)
+        - `REQUEST_TOO_LARGE` (`413`)
+        - `INVALID_REQUEST` (`400`, malformed payload)
+- MCP JSON-RPC error mapping:
+    - parse error: `-32700`
+    - invalid request (protocol shape): `-32600`
+    - method not found: `-32601`
+    - invalid params/tool arguments: `-32602` with `error.data.category="INVALID_PARAMS"`
+    - internal failures: `-32603` with `error.data.category="INTERNAL_ERROR"`
+
+REST correlation id:
+
+- every `/sqm/middleware/**` response includes `X-Correlation-Id`
+- if client sends `X-Correlation-Id`, the same value is echoed back
+- if missing, runtime generates one per request
+
 Runtime configuration (applies to both REST and MCP hosts):
 
 Complete generated key table (single source of truth):
@@ -257,8 +286,18 @@ Complete generated key table (single source of truth):
 - Schema source:
     - `sqm.middleware.schema.source` (`manual` | `json` | `jdbc`)
     - env: `SQM_MIDDLEWARE_SCHEMA_SOURCE`
+    - `sqm.middleware.schema.bootstrap.failFast` / `SQM_MIDDLEWARE_SCHEMA_BOOTSTRAP_FAIL_FAST` (`true` by default)
+      - `true`: startup fails when schema bootstrap fails
+      - `false`: startup continues in degraded mode (not-ready, requests denied with pipeline error)
     - `manual` loads default schema from JSON file/resource, not from hardcoded Java model
     - optional manual default JSON override: `sqm.middleware.schema.defaultJson.path` / `SQM_MIDDLEWARE_SCHEMA_DEFAULT_JSON_PATH`
+- Runtime mode:
+    - `sqm.middleware.runtime.mode` / `SQM_MIDDLEWARE_RUNTIME_MODE` (`dev` | `production`)
+    - `sqm.middleware.productionMode` / `SQM_MIDDLEWARE_PRODUCTION_MODE` (`true` enables strict production mode)
+    - production mode is also activated by Spring profile `prod`/`production` (`spring.profiles.active` / `SPRING_PROFILES_ACTIVE`)
+    - in production mode:
+        - `sqm.middleware.schema.source` must be explicitly configured
+        - `manual` source requires explicit `sqm.middleware.schema.defaultJson.path` (bundled fallback is disallowed)
 - JSON schema source:
     - `sqm.middleware.schema.json.path`
     - env: `SQM_MIDDLEWARE_SCHEMA_JSON_PATH`
@@ -284,6 +323,24 @@ Complete generated key table (single source of truth):
     - `sqm.middleware.guardrails.timeoutMillis` / `SQM_MIDDLEWARE_GUARDRAILS_TIMEOUT_MILLIS`
     - `sqm.middleware.guardrails.maxRows` / `SQM_MIDDLEWARE_GUARDRAILS_MAX_ROWS`
     - `sqm.middleware.guardrails.explainDryRun` / `SQM_MIDDLEWARE_GUARDRAILS_EXPLAIN_DRY_RUN`
+- Audit:
+    - `sqm.middleware.audit.publisher` / `SQM_MIDDLEWARE_AUDIT_PUBLISHER` (`noop` | `logging` | `file`)
+    - `sqm.middleware.audit.logger.name` / `SQM_MIDDLEWARE_AUDIT_LOGGER_NAME`
+    - `sqm.middleware.audit.logger.level` / `SQM_MIDDLEWARE_AUDIT_LOGGER_LEVEL`
+    - `sqm.middleware.audit.file.path` / `SQM_MIDDLEWARE_AUDIT_FILE_PATH` (required for `file` mode)
+- Telemetry:
+    - `sqm.middleware.metrics.enabled` / `SQM_MIDDLEWARE_METRICS_ENABLED`
+    - `sqm.middleware.metrics.logger.name` / `SQM_MIDDLEWARE_METRICS_LOGGER_NAME`
+    - `sqm.middleware.metrics.logger.level` / `SQM_MIDDLEWARE_METRICS_LOGGER_LEVEL`
+- Host flow control:
+    - `sqm.middleware.host.maxInFlight` / `SQM_MIDDLEWARE_HOST_MAX_IN_FLIGHT`
+    - `sqm.middleware.host.acquireTimeoutMillis` / `SQM_MIDDLEWARE_HOST_ACQUIRE_TIMEOUT_MILLIS`
+    - `sqm.middleware.host.requestTimeoutMillis` / `SQM_MIDDLEWARE_HOST_REQUEST_TIMEOUT_MILLIS`
+- MCP protocol hardening:
+    - `sqm.middleware.mcp.maxContentLengthBytes` / `SQM_MIDDLEWARE_MCP_MAX_CONTENT_LENGTH_BYTES`
+    - `sqm.middleware.mcp.maxHeaderLineLengthBytes` / `SQM_MIDDLEWARE_MCP_MAX_HEADER_LINE_LENGTH_BYTES`
+    - `sqm.middleware.mcp.maxHeaderBytes` / `SQM_MIDDLEWARE_MCP_MAX_HEADER_BYTES`
+    - `sqm.middleware.mcp.requireInitializeBeforeTools` / `SQM_MIDDLEWARE_MCP_REQUIRE_INITIALIZE_BEFORE_TOOLS`
 
 Example (JSON schema source + rewrite rules):
 
@@ -296,6 +353,24 @@ mvn -pl sqm-middleware-rest -am spring-boot:run \
     -Dsqm.middleware.rewrite.tenant.fallbackMode=DENY \
     -Dsqm.middleware.rewrite.tenant.ambiguityMode=DENY
 ```
+
+Runtime status endpoints (REST host):
+
+- `GET /sqm/middleware/health`
+  - liveness-style signal (`status=UP`) + schema bootstrap diagnostics
+- `GET /sqm/middleware/readiness`
+  - readiness signal:
+    - `status=READY` when schema bootstrap is ready
+    - `status=NOT_READY` when started in degraded mode
+  - includes schema source, state, description, and optional error message
+
+Production operations docs:
+
+- NFR suite: `docs/MIDDLEWARE_NFR.md`
+- Deployment profiles/artifacts: `docs/MIDDLEWARE_DEPLOYMENT_PROFILES.md`
+- SLO/SLI: `docs/MIDDLEWARE_SLO_SLI.md`
+- Runbook: `docs/MIDDLEWARE_RUNBOOK.md`
+- Release checklist: `docs/MIDDLEWARE_RELEASE_CHECKLIST.md`
 
 Validation settings example with tenant access policies (JSON):
 

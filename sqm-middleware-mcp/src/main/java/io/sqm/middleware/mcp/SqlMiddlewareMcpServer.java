@@ -23,9 +23,16 @@ import java.util.Objects;
 public final class SqlMiddlewareMcpServer {
 
     private static final String JSON_RPC_VERSION = "2.0";
+    private static final int INVALID_REQUEST = -32600;
+    private static final int METHOD_NOT_FOUND = -32601;
+    private static final int INVALID_PARAMS = -32602;
+    private static final int INTERNAL_ERROR = -32603;
+    private static final int PARSE_ERROR = -32700;
+    private static final int SERVER_NOT_INITIALIZED = -32002;
 
     private final SqlMiddlewareMcpToolRouter router;
     private final ObjectMapper objectMapper;
+    private final SqlMiddlewareMcpServerOptions options;
 
     /**
      * Creates a server backed by tool router.
@@ -33,12 +40,21 @@ public final class SqlMiddlewareMcpServer {
      * @param router tool router
      */
     public SqlMiddlewareMcpServer(SqlMiddlewareMcpToolRouter router) {
-        this(router, new ObjectMapper());
+        this(router, new ObjectMapper(), SqlMiddlewareMcpServerOptions.defaults());
     }
 
     SqlMiddlewareMcpServer(SqlMiddlewareMcpToolRouter router, ObjectMapper objectMapper) {
+        this(router, objectMapper, SqlMiddlewareMcpServerOptions.defaults());
+    }
+
+    SqlMiddlewareMcpServer(
+        SqlMiddlewareMcpToolRouter router,
+        ObjectMapper objectMapper,
+        SqlMiddlewareMcpServerOptions options
+    ) {
         this.router = Objects.requireNonNull(router, "router must not be null");
         this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper must not be null");
+        this.options = Objects.requireNonNull(options, "options must not be null");
     }
 
     /**
@@ -55,11 +71,28 @@ public final class SqlMiddlewareMcpServer {
         var in = new BufferedInputStream(input);
         var out = new BufferedOutputStream(output);
         var running = true;
+        var initialized = false;
+        var shutdownRequested = false;
 
         while (running) {
-            var message = readFramedMessage(in);
-            if (message == null) {
-                break;
+            String message;
+            try {
+                message = readFramedMessage(in);
+                if (message == null) {
+                    break;
+                }
+            } catch (FramingException ex) {
+                writeError(
+                    out,
+                    null,
+                    INVALID_REQUEST,
+                    ex.getMessage(),
+                    Map.of("category", "INVALID_FRAME")
+                );
+                if (!ex.recoverable()) {
+                    break;
+                }
+                continue;
             }
 
             JsonNode request;
@@ -67,39 +100,62 @@ public final class SqlMiddlewareMcpServer {
                 request = objectMapper.readTree(message);
             }
             catch (Exception ex) {
-                writeError(out, null, -32700, "Parse error: " + ex.getMessage());
+                writeError(out, null, PARSE_ERROR, "Parse error: " + ex.getMessage());
                 continue;
             }
 
-            var method = textOrNull(request.get("method"));
+            var invalid = validateRequestShape(request);
+            if (invalid != null) {
+                writeError(out, invalid.id(), INVALID_REQUEST, invalid.message());
+                continue;
+            }
+
+            var method = request.path("method").asText();
             var id = request.get("id");
             var params = request.get("params");
 
-            if (method == null) {
-                if (id != null) {
-                    writeError(out, id, -32600, "Invalid Request: missing method");
-                }
-                continue;
-            }
-
             try {
                 switch (method) {
-                    case "initialize" -> writeResult(out, id, initializeResult());
-                    case "tools/list" -> writeResult(out, id, toolsListResult());
-                    case "tools/call" -> writeResult(out, id, handleToolsCall(params));
-                    case "shutdown" -> writeResult(out, id, null);
+                    case "initialize" -> {
+                        initialized = true;
+                        writeResult(out, id, initializeResult());
+                    }
+                    case "tools/list" -> {
+                        if (options.requireInitializeBeforeTools() && !initialized) {
+                            writeError(out, id, SERVER_NOT_INITIALIZED, "Server not initialized");
+                            continue;
+                        }
+                        if (shutdownRequested) {
+                            writeError(out, id, INVALID_REQUEST, "Server is shutting down");
+                            continue;
+                        }
+                        writeResult(out, id, toolsListResult());
+                    }
+                    case "tools/call" -> {
+                        if (options.requireInitializeBeforeTools() && !initialized) {
+                            writeError(out, id, SERVER_NOT_INITIALIZED, "Server not initialized");
+                            continue;
+                        }
+                        if (shutdownRequested) {
+                            writeError(out, id, INVALID_REQUEST, "Server is shutting down");
+                            continue;
+                        }
+                        writeResult(out, id, handleToolsCall(params));
+                    }
+                    case "shutdown" -> {
+                        shutdownRequested = true;
+                        writeResult(out, id, null);
+                    }
                     case "exit" -> running = false;
                     default -> {
                         if (id != null) {
-                            writeError(out, id, -32601, "Method not found: " + method);
+                            writeError(out, id, METHOD_NOT_FOUND, "Method not found: " + method);
                         }
                     }
                 }
             }
             catch (Exception ex) {
-                if (id != null) {
-                    writeError(out, id, -32000, ex.getMessage());
-                }
+                writeMappedError(out, id, ex);
             }
         }
     }
@@ -187,14 +243,49 @@ public final class SqlMiddlewareMcpServer {
     }
 
     private void writeError(OutputStream out, JsonNode id, int code, String message) throws IOException {
+        writeError(out, id, code, message, null);
+    }
+
+    private void writeError(OutputStream out, JsonNode id, int code, String message, Map<String, Object> data) throws IOException {
         var response = new LinkedHashMap<String, Object>();
         response.put("jsonrpc", JSON_RPC_VERSION);
         response.put("id", id == null ? null : objectMapper.treeToValue(id, Object.class));
-        response.put("error", Map.of(
-            "code", code,
-            "message", message
-        ));
+        var error = new LinkedHashMap<String, Object>();
+        error.put("code", code);
+        error.put("message", message);
+        if (data != null && !data.isEmpty()) {
+            error.put("data", data);
+        }
+        response.put("error", error);
         writeFramedMessage(out, objectMapper.writeValueAsBytes(response));
+    }
+
+    private void writeMappedError(OutputStream out, JsonNode id, Exception exception) throws IOException {
+        if (id == null) {
+            return;
+        }
+
+        if (exception instanceof IllegalArgumentException) {
+            writeError(
+                out,
+                id,
+                INVALID_PARAMS,
+                exception.getMessage(),
+                Map.of("category", "INVALID_PARAMS")
+            );
+            return;
+        }
+
+        writeError(
+            out,
+            id,
+            INTERNAL_ERROR,
+            "Internal error",
+            Map.of(
+                "category", "INTERNAL_ERROR",
+                "detail", exception.getMessage() == null ? "" : exception.getMessage()
+            )
+        );
     }
 
     private void writeFramedMessage(OutputStream out, byte[] json) throws IOException {
@@ -206,11 +297,16 @@ public final class SqlMiddlewareMcpServer {
 
     private String readFramedMessage(InputStream in) throws IOException {
         var contentLength = -1;
+        var headerBytes = 0;
 
         while (true) {
             var line = readHeaderLine(in);
             if (line == null) {
                 return null;
+            }
+            headerBytes += line.getBytes(StandardCharsets.UTF_8).length + 2;
+            if (headerBytes > options.maxHeaderBytes()) {
+                throw new FramingException("Header size exceeds configured max bytes", true);
             }
 
             if (line.isEmpty()) {
@@ -220,17 +316,28 @@ public final class SqlMiddlewareMcpServer {
             var lower = line.toLowerCase();
             if (lower.startsWith("content-length:")) {
                 var value = line.substring("Content-Length:".length()).trim();
-                contentLength = Integer.parseInt(value);
+                try {
+                    contentLength = Integer.parseInt(value);
+                } catch (NumberFormatException ex) {
+                    throw new FramingException("Invalid Content-Length value", true);
+                }
             }
         }
 
         if (contentLength < 0) {
-            throw new IOException("Missing Content-Length header");
+            throw new FramingException("Missing Content-Length header", true);
+        }
+        if (contentLength > options.maxContentLengthBytes()) {
+            discardBody(in, contentLength);
+            throw new FramingException(
+                "Content-Length exceeds configured max: " + options.maxContentLengthBytes(),
+                true
+            );
         }
 
         var body = in.readNBytes(contentLength);
         if (body.length != contentLength) {
-            throw new IOException("Unexpected EOF while reading framed message body");
+            throw new FramingException("Unexpected EOF while reading framed message body", false);
         }
         return new String(body, StandardCharsets.UTF_8);
     }
@@ -254,10 +361,36 @@ public final class SqlMiddlewareMcpServer {
             }
 
             bytes.write(current);
+            if (bytes.size() > options.maxHeaderLineLengthBytes()) {
+                throw new FramingException("Header line exceeds configured max bytes", true);
+            }
             previous = current;
         }
 
         return bytes.toString(StandardCharsets.UTF_8);
+    }
+
+    private InvalidRequest validateRequestShape(JsonNode request) {
+        if (request == null || !request.isObject()) {
+            return new InvalidRequest(null, "Invalid Request: payload must be an object");
+        }
+
+        var jsonrpcNode = request.get("jsonrpc");
+        if (jsonrpcNode == null || !JSON_RPC_VERSION.equals(textOrNull(jsonrpcNode))) {
+            return new InvalidRequest(request.get("id"), "Invalid Request: jsonrpc must be '2.0'");
+        }
+
+        var id = request.get("id");
+        if (id != null && !id.isTextual() && !id.isIntegralNumber() && !id.isFloatingPointNumber() && !id.isNull()) {
+            return new InvalidRequest(null, "Invalid Request: id must be string, number, or null");
+        }
+
+        var method = request.get("method");
+        if (method == null || !method.isTextual() || method.asText().isBlank()) {
+            return new InvalidRequest(id, "Invalid Request: missing method");
+        }
+
+        return null;
     }
 
     private String textOrNull(JsonNode node) {
@@ -265,5 +398,33 @@ public final class SqlMiddlewareMcpServer {
             return null;
         }
         return node.asText();
+    }
+
+    private void discardBody(InputStream in, int length) throws IOException {
+        int remaining = length;
+        byte[] buffer = new byte[Math.min(8192, Math.max(1, length))];
+        while (remaining > 0) {
+            int read = in.read(buffer, 0, Math.min(buffer.length, remaining));
+            if (read < 0) {
+                throw new FramingException("Unexpected EOF while discarding oversized frame body", false);
+            }
+            remaining -= read;
+        }
+    }
+
+    private record InvalidRequest(JsonNode id, String message) {
+    }
+
+    private static final class FramingException extends IOException {
+        private final boolean recoverable;
+
+        private FramingException(String message, boolean recoverable) {
+            super(message);
+            this.recoverable = recoverable;
+        }
+
+        private boolean recoverable() {
+            return recoverable;
+        }
     }
 }

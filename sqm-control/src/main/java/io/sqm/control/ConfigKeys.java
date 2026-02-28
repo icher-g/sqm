@@ -26,6 +26,18 @@ public final class ConfigKeys {
     public static final Key SCHEMA_SOURCE = Key.of("sqm.middleware.schema.source", "SQM_MIDDLEWARE_SCHEMA_SOURCE");
 
     /**
+     * Runtime mode selector.
+     *
+     * <p>Supported values: {@code dev}, {@code production}.</p>
+     */
+    public static final Key RUNTIME_MODE = Key.of("sqm.middleware.runtime.mode", "SQM_MIDDLEWARE_RUNTIME_MODE");
+
+    /**
+     * Explicit production-mode toggle.
+     */
+    public static final Key PRODUCTION_MODE = Key.of("sqm.middleware.productionMode", "SQM_MIDDLEWARE_PRODUCTION_MODE");
+
+    /**
      * Runtime path to default manual JSON schema.
      */
     public static final Key SCHEMA_DEFAULT_JSON_PATH = Key.of(
@@ -37,6 +49,16 @@ public final class ConfigKeys {
      * Runtime path to JSON schema source.
      */
     public static final Key SCHEMA_JSON_PATH = Key.of("sqm.middleware.schema.json.path", "SQM_MIDDLEWARE_SCHEMA_JSON_PATH");
+
+    /**
+     * Controls runtime startup behavior on schema bootstrap errors.
+     *
+     * <p>When {@code true}, startup fails fast. When {@code false}, runtime starts in degraded not-ready mode.</p>
+     */
+    public static final Key SCHEMA_BOOTSTRAP_FAIL_FAST = Key.of(
+        "sqm.middleware.schema.bootstrap.failFast",
+        "SQM_MIDDLEWARE_SCHEMA_BOOTSTRAP_FAIL_FAST"
+    );
 
     /**
      * Runtime JDBC URL for schema introspection.
@@ -204,6 +226,120 @@ public final class ConfigKeys {
     public static final Key REWRITE_TENANT_AMBIGUITY_MODE = Key.of(
         "sqm.middleware.rewrite.tenant.ambiguityMode",
         "SQM_MIDDLEWARE_REWRITE_TENANT_AMBIGUITY_MODE"
+    );
+
+    /**
+     * Audit publisher mode.
+     *
+     * <p>Supported values: {@code noop}, {@code logging}, {@code file}.</p>
+     */
+    public static final Key AUDIT_PUBLISHER_MODE = Key.of(
+        "sqm.middleware.audit.publisher",
+        "SQM_MIDDLEWARE_AUDIT_PUBLISHER"
+    );
+
+    /**
+     * Logger name used for logging audit publisher mode.
+     */
+    public static final Key AUDIT_LOGGER_NAME = Key.of(
+        "sqm.middleware.audit.logger.name",
+        "SQM_MIDDLEWARE_AUDIT_LOGGER_NAME"
+    );
+
+    /**
+     * Logger level used for logging audit publisher mode.
+     */
+    public static final Key AUDIT_LOGGER_LEVEL = Key.of(
+        "sqm.middleware.audit.logger.level",
+        "SQM_MIDDLEWARE_AUDIT_LOGGER_LEVEL"
+    );
+
+    /**
+     * Output file path used for file audit publisher mode.
+     */
+    public static final Key AUDIT_FILE_PATH = Key.of(
+        "sqm.middleware.audit.file.path",
+        "SQM_MIDDLEWARE_AUDIT_FILE_PATH"
+    );
+
+    /**
+     * Enables middleware telemetry emission.
+     */
+    public static final Key METRICS_ENABLED = Key.of(
+        "sqm.middleware.metrics.enabled",
+        "SQM_MIDDLEWARE_METRICS_ENABLED"
+    );
+
+    /**
+     * Logger name used for telemetry logging.
+     */
+    public static final Key METRICS_LOGGER_NAME = Key.of(
+        "sqm.middleware.metrics.logger.name",
+        "SQM_MIDDLEWARE_METRICS_LOGGER_NAME"
+    );
+
+    /**
+     * Logger level used for telemetry logging.
+     */
+    public static final Key METRICS_LOGGER_LEVEL = Key.of(
+        "sqm.middleware.metrics.logger.level",
+        "SQM_MIDDLEWARE_METRICS_LOGGER_LEVEL"
+    );
+
+    /**
+     * Maximum accepted MCP frame body size in bytes.
+     */
+    public static final Key MCP_MAX_CONTENT_LENGTH_BYTES = Key.of(
+        "sqm.middleware.mcp.maxContentLengthBytes",
+        "SQM_MIDDLEWARE_MCP_MAX_CONTENT_LENGTH_BYTES"
+    );
+
+    /**
+     * Maximum accepted MCP header line size in bytes.
+     */
+    public static final Key MCP_MAX_HEADER_LINE_LENGTH_BYTES = Key.of(
+        "sqm.middleware.mcp.maxHeaderLineLengthBytes",
+        "SQM_MIDDLEWARE_MCP_MAX_HEADER_LINE_LENGTH_BYTES"
+    );
+
+    /**
+     * Maximum accepted MCP total header size in bytes.
+     */
+    public static final Key MCP_MAX_HEADER_BYTES = Key.of(
+        "sqm.middleware.mcp.maxHeaderBytes",
+        "SQM_MIDDLEWARE_MCP_MAX_HEADER_BYTES"
+    );
+
+    /**
+     * When enabled, MCP tools require initialize handshake first.
+     */
+    public static final Key MCP_REQUIRE_INITIALIZE_BEFORE_TOOLS = Key.of(
+        "sqm.middleware.mcp.requireInitializeBeforeTools",
+        "SQM_MIDDLEWARE_MCP_REQUIRE_INITIALIZE_BEFORE_TOOLS"
+    );
+
+    /**
+     * Host-level maximum number of concurrent in-flight middleware requests.
+     */
+    public static final Key HOST_MAX_IN_FLIGHT = Key.of(
+        "sqm.middleware.host.maxInFlight",
+        "SQM_MIDDLEWARE_HOST_MAX_IN_FLIGHT"
+    );
+
+    /**
+     * Optional host-level semaphore acquire timeout in milliseconds.
+     */
+    public static final Key HOST_ACQUIRE_TIMEOUT_MILLIS = Key.of(
+        "sqm.middleware.host.acquireTimeoutMillis",
+        "SQM_MIDDLEWARE_HOST_ACQUIRE_TIMEOUT_MILLIS"
+    );
+
+    /**
+     * Optional host-level request timeout in milliseconds.
+     */
+    public static final Key HOST_REQUEST_TIMEOUT_MILLIS = Key.of(
+        "sqm.middleware.host.requestTimeoutMillis",
+        "SQM_MIDDLEWARE_HOST_REQUEST_TIMEOUT_MILLIS"
     );
 
     private ConfigKeys() {

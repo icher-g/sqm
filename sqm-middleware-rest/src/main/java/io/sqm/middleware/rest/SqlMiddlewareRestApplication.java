@@ -1,6 +1,7 @@
 package io.sqm.middleware.rest;
 
 import io.sqm.middleware.api.SqlMiddlewareService;
+import io.sqm.middleware.core.SqlMiddlewareRuntime;
 import io.sqm.middleware.core.SqlMiddlewareRuntimeFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -28,13 +29,24 @@ public class SqlMiddlewareRestApplication {
     }
 
     /**
-     * Provides default middleware service wiring for standalone runtime.
+     * Provides default middleware runtime wiring for standalone host.
      *
+     * @return middleware runtime with diagnostics
+     */
+    @Bean
+    public SqlMiddlewareRuntime sqlMiddlewareRuntime() {
+        return SqlMiddlewareRuntimeFactory.createRuntimeFromEnvironment();
+    }
+
+    /**
+     * Provides middleware service from runtime container.
+     *
+     * @param runtime middleware runtime container
      * @return middleware service
      */
     @Bean
-    public SqlMiddlewareService sqlMiddlewareService() {
-        return SqlMiddlewareRuntimeFactory.createFromEnvironment();
+    public SqlMiddlewareService sqlMiddlewareService(SqlMiddlewareRuntime runtime) {
+        return runtime.service();
     }
 
     /**

@@ -1,0 +1,33 @@
+name: Middleware NFR Nightly
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nfr-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Run middleware NFR tests
+        run: >
+          mvn -B -pl sqm-middleware-it -am test
+          -Dtest=NfrMiddlewareLoadTest,NfrMcpSoakTest
+          -Dsurefire.failIfNoSpecifiedTests=false
+          -Dsqm.nfr.concurrent.requests=400
+          -Dsqm.nfr.concurrent.threads=16
+          -Dsqm.nfr.max.p95.ms=300
+          -Dsqm.nfr.min.throughput.rps=220
+          -Dsqm.nfr.mcp.soak.iterations=2000
+          -Dsqm.nfr.mcp.soak.max.duration.ms=20000

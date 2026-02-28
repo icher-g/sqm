@@ -10,9 +10,11 @@ class SqlMiddlewareRestApplicationTest {
     @Test
     void bean_factory_methods_return_expected_types() {
         var app = new SqlMiddlewareRestApplication();
-        var service = app.sqlMiddlewareService();
+        var runtime = app.sqlMiddlewareRuntime();
+        var service = app.sqlMiddlewareService(runtime);
         var adapter = app.sqlMiddlewareRestAdapter(service);
 
+        assertNotNull(runtime);
         assertNotNull(service);
         assertNotNull(adapter);
     }
@@ -20,7 +22,7 @@ class SqlMiddlewareRestApplicationTest {
     @Test
     void rest_adapter_factory_accepts_external_service_instance() {
         var app = new SqlMiddlewareRestApplication();
-        SqlMiddlewareService service = app.sqlMiddlewareService();
+        SqlMiddlewareService service = app.sqlMiddlewareService(app.sqlMiddlewareRuntime());
 
         var adapter = app.sqlMiddlewareRestAdapter(service);
 

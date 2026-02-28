@@ -7,8 +7,13 @@ import io.sqm.middleware.api.ExecutionContextDto;
 import org.junit.jupiter.api.Test;
 
 import javax.sql.DataSource;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.Map;
@@ -16,6 +21,7 @@ import java.util.Map;
 import static io.sqm.middleware.api.DecisionKindDto.DENY;
 import static io.sqm.middleware.api.DecisionKindDto.REWRITE;
 import static io.sqm.middleware.api.ReasonCodeDto.DENY_MAX_SELECT_COLUMNS;
+import static io.sqm.middleware.api.ReasonCodeDto.DENY_PIPELINE_ERROR;
 import static io.sqm.middleware.api.ReasonCodeDto.DENY_TABLE;
 import static io.sqm.middleware.api.ReasonCodeDto.DENY_TENANT_REQUIRED;
 import static io.sqm.middleware.api.ReasonCodeDto.REWRITE_LIMIT;
@@ -74,6 +80,39 @@ class SqlMiddlewareRuntimeFactoryTest {
             ConfigKeys.SCHEMA_SOURCE.property(), "json",
             ConfigKeys.SCHEMA_JSON_PATH.property(), "./does-not-exist-schema.json"
         ), () -> assertThrows(IllegalStateException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
+    void create_runtime_reports_ready_schema_state_for_default_startup() {
+        withProperty(ConfigKeys.SCHEMA_SOURCE.property(), null, () -> {
+            var runtime = SqlMiddlewareRuntimeFactory.createRuntimeFromEnvironment();
+            assertTrue(runtime.schemaBootstrapStatus().ready());
+            assertEquals(SchemaBootstrapStatus.State.READY, runtime.schemaBootstrapStatus().state());
+            assertEquals("manual", runtime.schemaBootstrapStatus().source());
+            assertNull(runtime.schemaBootstrapStatus().error());
+        });
+    }
+
+    @Test
+    void create_runtime_reports_degraded_schema_state_when_fail_fast_disabled() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "json",
+            ConfigKeys.SCHEMA_JSON_PATH.property(), "./does-not-exist-schema.json",
+            ConfigKeys.SCHEMA_BOOTSTRAP_FAIL_FAST.property(), "false"
+        ), () -> {
+            var runtime = SqlMiddlewareRuntimeFactory.createRuntimeFromEnvironment();
+            assertFalse(runtime.schemaBootstrapStatus().ready());
+            assertEquals(SchemaBootstrapStatus.State.DEGRADED, runtime.schemaBootstrapStatus().state());
+            assertEquals("json", runtime.schemaBootstrapStatus().source());
+            assertNotNull(runtime.schemaBootstrapStatus().error());
+
+            var decision = runtime.service().analyze(
+                new AnalyzeRequest("select 1", new ExecutionContextDto("postgresql", null, null, null, null))
+            );
+            assertEquals(DENY, decision.kind());
+            assertEquals(DENY_PIPELINE_ERROR, decision.reasonCode());
+            assertNotNull(decision.message());
+        });
     }
 
     @Test
@@ -309,8 +348,117 @@ class SqlMiddlewareRuntimeFactoryTest {
     }
 
     @Test
+    void production_mode_requires_explicit_schema_source() {
+        withProperties(Map.of(
+            ConfigKeys.PRODUCTION_MODE.property(), "true"
+        ), () -> assertThrows(IllegalStateException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
+    void production_mode_disallows_bundled_manual_schema_fallback() {
+        withProperties(Map.of(
+            ConfigKeys.RUNTIME_MODE.property(), "production",
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.SCHEMA_DEFAULT_JSON_PATH.property(), ""
+        ), () -> assertThrows(IllegalStateException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
+    void prod_spring_profile_triggers_strict_mode_checks() {
+        withProperties(Map.of(
+            "spring.profiles.active", "prod"
+        ), () -> assertThrows(IllegalStateException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
+    void production_mode_allows_manual_source_with_explicit_schema_path() throws IOException {
+        var schemaPath = copyBundledDefaultSchemaToTempPath();
+        try {
+            withProperties(Map.of(
+                ConfigKeys.RUNTIME_MODE.property(), "production",
+                ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+                ConfigKeys.SCHEMA_DEFAULT_JSON_PATH.property(), schemaPath.toString()
+            ), () -> assertDoesNotThrow(SqlMiddlewareRuntimeFactory::createFromEnvironment));
+        } finally {
+            Files.deleteIfExists(schemaPath);
+        }
+    }
+
+    @Test
+    void throws_when_audit_mode_is_invalid() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.AUDIT_PUBLISHER_MODE.property(), "unknown"
+        ), () -> assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
+    void throws_when_file_audit_mode_missing_path() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.AUDIT_PUBLISHER_MODE.property(), "file",
+            ConfigKeys.AUDIT_FILE_PATH.property(), ""
+        ), () -> assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
+    void writes_audit_event_when_file_audit_mode_is_enabled() throws IOException {
+        var auditPath = Files.createTempFile("sqm-runtime-factory-audit", ".log");
+        try {
+            withProperties(Map.of(
+                ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+                ConfigKeys.AUDIT_PUBLISHER_MODE.property(), "file",
+                ConfigKeys.AUDIT_FILE_PATH.property(), auditPath.toString()
+            ), () -> {
+                var service = SqlMiddlewareRuntimeFactory.createFromEnvironment();
+                service.analyze(
+                    new AnalyzeRequest("select 1", new ExecutionContextDto("postgresql", "alice", "tenant-a", null, null))
+                );
+            });
+
+            var content = Files.readString(auditPath);
+            assertTrue(content.contains("\"decisionKind\":\""));
+            assertTrue(content.contains("\"principal\":\"alice\""));
+        } finally {
+            Files.deleteIfExists(auditPath);
+        }
+    }
+
+    @Test
+    void enables_metrics_logging_mode_without_errors() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.METRICS_ENABLED.property(), "true",
+            ConfigKeys.METRICS_LOGGER_LEVEL.property(), "FINE"
+        ), () -> {
+            var service = SqlMiddlewareRuntimeFactory.createFromEnvironment();
+            assertDoesNotThrow(() -> service.analyze(
+                new AnalyzeRequest("select 1", new ExecutionContextDto("postgresql", null, null, null, null))
+            ));
+        });
+    }
+
+    @Test
+    void enables_host_flow_control_with_valid_configuration() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.HOST_MAX_IN_FLIGHT.property(), "8",
+            ConfigKeys.HOST_ACQUIRE_TIMEOUT_MILLIS.property(), "0",
+            ConfigKeys.HOST_REQUEST_TIMEOUT_MILLIS.property(), "1000"
+        ), () -> assertDoesNotThrow(SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
+    void throws_when_host_flow_control_configuration_is_invalid() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.HOST_MAX_IN_FLIGHT.property(), "0"
+        ), () -> assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
     void driver_manager_data_source_support_methods_are_covered() throws Exception {
-        Class<?> dsClass = Class.forName("io.sqm.middleware.core.SqlMiddlewareRuntimeFactory$DriverManagerDataSource");
+        Class<?> dsClass = Class.forName("io.sqm.middleware.core.SchemaBootstrapLoader$DriverManagerDataSource");
         var constructor = dsClass.getDeclaredConstructor(String.class, String.class, String.class);
         constructor.setAccessible(true);
         var dataSource = (DataSource) constructor.newInstance("jdbc:invalid:test", "", "");
@@ -375,6 +523,17 @@ class SqlMiddlewareRuntimeFactoryTest {
                 }
             });
         }
+    }
+
+    private Path copyBundledDefaultSchemaToTempPath() throws IOException {
+        var target = Files.createTempFile("sqm-runtime-factory-test-schema", ".json");
+        try (InputStream in = SqlMiddlewareRuntimeFactory.class.getResourceAsStream("/io/sqm/middleware/core/default-schema.json")) {
+            if (in == null) {
+                throw new IllegalStateException("Missing bundled schema resource for test");
+            }
+            Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+        return target;
     }
 }
 

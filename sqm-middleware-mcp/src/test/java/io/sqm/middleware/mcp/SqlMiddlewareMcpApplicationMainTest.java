@@ -22,7 +22,7 @@ class SqlMiddlewareMcpApplicationMainTest {
     }
 
     @Test
-    void main_wraps_io_failure_from_server_loop() {
+    void main_handles_invalid_framing_without_crashing_process() {
         var originalIn = System.in;
         var originalOut = System.out;
         var originalSchemaSource = System.getProperty("sqm.middleware.schema.source");
@@ -31,12 +31,13 @@ class SqlMiddlewareMcpApplicationMainTest {
             System.setProperty("sqm.middleware.schema.source", "manual");
             System.setProperty("sqm.middleware.rewrite.enabled", "false");
             System.setIn(new ByteArrayInputStream("Content-Type: application/json\r\n\r\n{}".getBytes(StandardCharsets.UTF_8)));
-            System.setOut(new java.io.PrintStream(new ByteArrayOutputStream()));
+            var out = new ByteArrayOutputStream();
+            System.setOut(new java.io.PrintStream(out));
 
-            var error = assertThrows(IllegalStateException.class, () -> SqlMiddlewareMcpApplication.main(new String[0]));
-            assertTrue(error.getMessage().contains("Failed to run MCP stdio server"));
-            assertNotNull(error.getCause());
-            assertTrue(error.getCause().getMessage().contains("Missing Content-Length"));
+            assertDoesNotThrow(() -> SqlMiddlewareMcpApplication.main(new String[0]));
+            var payload = out.toString(StandardCharsets.UTF_8);
+            assertTrue(payload.contains("\"code\":-32600"));
+            assertTrue(payload.contains("INVALID_FRAME"));
         } finally {
             System.setIn(originalIn);
             System.setOut(originalOut);
