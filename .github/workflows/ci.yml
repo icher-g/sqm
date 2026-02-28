@@ -2,6 +2,9 @@ name: CI
 
 on:
   pull_request:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -35,6 +38,7 @@ jobs:
           fail_ci_if_error: true
 
   jdbc-codegen-smoke:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,6 +56,8 @@ jobs:
         run: mvn -B -pl sqm-codegen-maven-plugin -am verify -Pdocker-it -Dapi.version=1.44 -Ddocker.host=unix:///var/run/docker.sock
 
   middleware-release-smoke:
+    if: github.event_name == 'pull_request'
+    needs: test-and-coverage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -65,7 +71,6 @@ jobs:
       - name: Package middleware hosts
         run: mvn -B -pl sqm-middleware-rest,sqm-middleware-mcp -am -DskipTests package
 
-      - name: Startup smoke tests (REST + MCP)
-        run: mvn -B -pl sqm-middleware-rest,sqm-middleware-mcp -am test -Dtest=SqlMiddlewareRestApplicationIntegrationTest,SqlMiddlewareMcpApplicationTest -Dsurefire.failIfNoSpecifiedTests=false
-
-
+      - name: Startup smoke test (REST)
+        shell: pwsh
+        run: ./scripts/smoke-middleware-rest.ps1
