@@ -17,15 +17,22 @@ class BuiltInRewriteSettingsTest {
             .qualificationDefaultSchema(" ")
             .qualificationFailureMode(null)
             .identifierNormalizationCaseMode(null)
+            .tenantFallbackMode(null)
+            .tenantAmbiguityMode(null)
             .build();
 
         assertEquals(1000L, defaults.defaultLimitInjectionValue());
         assertEquals(LimitExcessMode.DENY, defaults.limitExcessMode());
         assertEquals(QualificationFailureMode.DENY, defaults.qualificationFailureMode());
         assertEquals(IdentifierNormalizationCaseMode.LOWER, defaults.identifierNormalizationCaseMode());
+        assertEquals(TenantRewriteFallbackMode.DENY, defaults.tenantFallbackMode());
+        assertEquals(TenantRewriteAmbiguityMode.DENY, defaults.tenantAmbiguityMode());
+        assertTrue(defaults.tenantTablePolicies().isEmpty());
         assertEquals(LimitExcessMode.DENY, withNullModes.limitExcessMode());
         assertEquals(QualificationFailureMode.DENY, withNullModes.qualificationFailureMode());
         assertEquals(IdentifierNormalizationCaseMode.LOWER, withNullModes.identifierNormalizationCaseMode());
+        assertEquals(TenantRewriteFallbackMode.DENY, withNullModes.tenantFallbackMode());
+        assertEquals(TenantRewriteAmbiguityMode.DENY, withNullModes.tenantAmbiguityMode());
         assertEquals(Integer.valueOf(50), withNullModes.maxAllowedLimit());
         assertNull(withNullModes.qualificationDefaultSchema());
     }
@@ -42,5 +49,52 @@ class BuiltInRewriteSettingsTest {
                 .limitExcessMode(LimitExcessMode.CLAMP)
                 .build());
     }
-}
 
+    @Test
+    void normalizes_and_validates_tenant_table_policies() {
+        var settings = BuiltInRewriteSettings.builder()
+            .tenantTablePolicy(" Public.Users ", TenantRewriteTablePolicy.of(" tenant_id ", TenantRewriteTableMode.OPTIONAL))
+            .build();
+
+        var policy = settings.tenantTablePolicies().get("public.users");
+        assertNotNull(policy);
+        assertEquals("tenant_id", policy.tenantColumn());
+        assertEquals(TenantRewriteTableMode.OPTIONAL, policy.mode());
+
+        assertThrows(UnsupportedOperationException.class, () -> settings.tenantTablePolicies().put(
+            "x.y",
+            TenantRewriteTablePolicy.required("tenant_id")
+        ));
+        assertThrows(IllegalArgumentException.class, () -> BuiltInRewriteSettings.builder()
+            .tenantTablePolicy("users", TenantRewriteTablePolicy.required("tenant_id"))
+            .build());
+        assertThrows(IllegalArgumentException.class, () -> BuiltInRewriteSettings.builder()
+            .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required(" "))
+            .build());
+    }
+
+    @Test
+    void builder_copy_preserves_values_and_denied_limit_invariant_is_enforced() {
+        var source = BuiltInRewriteSettings.builder()
+            .defaultLimitInjectionValue(10)
+            .maxAllowedLimit(100)
+            .limitExcessMode(LimitExcessMode.CLAMP)
+            .qualificationDefaultSchema("public")
+            .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
+            .tenantFallbackMode(TenantRewriteFallbackMode.SKIP)
+            .tenantAmbiguityMode(TenantRewriteAmbiguityMode.SKIP)
+            .build();
+
+        var copy = BuiltInRewriteSettings.builder(source).build();
+        assertEquals(source, copy);
+
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> BuiltInRewriteSettings.builder()
+                .defaultLimitInjectionValue(101)
+                .maxAllowedLimit(100)
+                .limitExcessMode(LimitExcessMode.DENY)
+                .build()
+        );
+    }
+}

@@ -72,6 +72,16 @@ public final class ReasonGuidanceCatalog {
                 "provide_tenant",
                 "Set tenant in execution context before calling middleware."
             );
+            case DENY_TENANT_MAPPING_MISSING -> DecisionGuidance.retryable(
+                "Tenant rewrite mapping is missing for one or more referenced tables.",
+                "configure_tenant_mapping",
+                "Add schema.table to tenant-column mapping or switch tenant fallback mode to SKIP."
+            );
+            case DENY_TENANT_MAPPING_AMBIGUOUS -> DecisionGuidance.retryable(
+                "Tenant rewrite mapping is ambiguous for an unqualified table reference.",
+                "disambiguate_tenant_mapping",
+                "Qualify table with schema or configure tenant ambiguity mode to SKIP."
+            );
             case DENY_MAX_SQL_LENGTH -> DecisionGuidance.retryable(
                 "The query text is too long.",
                 "shorten_sql",

@@ -180,6 +180,32 @@ public final class ConfigKeys {
         "SQM_MIDDLEWARE_REWRITE_IDENTIFIER_NORMALIZATION_CASE_MODE"
     );
 
+    /**
+     * Runtime tenant rewrite table policies list.
+     *
+     * <p>Format: {@code schema.table:tenant_column[:REQUIRED|OPTIONAL|SKIP],...}</p>
+     */
+    public static final Key REWRITE_TENANT_TABLE_POLICIES = Key.of(
+        "sqm.middleware.rewrite.tenant.tablePolicies",
+        "SQM_MIDDLEWARE_REWRITE_TENANT_TABLE_POLICIES"
+    );
+
+    /**
+     * Runtime tenant rewrite fallback mode for missing table mappings.
+     */
+    public static final Key REWRITE_TENANT_FALLBACK_MODE = Key.of(
+        "sqm.middleware.rewrite.tenant.fallbackMode",
+        "SQM_MIDDLEWARE_REWRITE_TENANT_FALLBACK_MODE"
+    );
+
+    /**
+     * Runtime tenant rewrite ambiguity mode for unresolved/ambiguous targets.
+     */
+    public static final Key REWRITE_TENANT_AMBIGUITY_MODE = Key.of(
+        "sqm.middleware.rewrite.tenant.ambiguityMode",
+        "SQM_MIDDLEWARE_REWRITE_TENANT_AMBIGUITY_MODE"
+    );
+
     private ConfigKeys() {
     }
 

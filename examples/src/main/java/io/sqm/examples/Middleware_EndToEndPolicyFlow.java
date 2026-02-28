@@ -17,6 +17,7 @@ import io.sqm.control.RuntimeGuardrails;
 import io.sqm.control.SqlDecisionExplainer;
 import io.sqm.control.SqlDecisionService;
 import io.sqm.control.SqlDecisionServiceConfig;
+import io.sqm.control.TenantRewriteTablePolicy;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.SchemaValidationSettingsLoader;
 
@@ -43,7 +44,8 @@ public final class Middleware_EndToEndPolicyFlow {
                 CatalogColumn.of("id", CatalogType.LONG),
                 CatalogColumn.of("name", CatalogType.STRING),
                 CatalogColumn.of("active", CatalogType.BOOLEAN),
-                CatalogColumn.of("tier", CatalogType.STRING)
+                CatalogColumn.of("tier", CatalogType.STRING),
+                CatalogColumn.of("tenant_id", CatalogType.STRING)
             ),
             CatalogTable.of(
                 "public",
@@ -51,14 +53,16 @@ public final class Middleware_EndToEndPolicyFlow {
                 CatalogColumn.of("id", CatalogType.LONG),
                 CatalogColumn.of("user_id", CatalogType.LONG),
                 CatalogColumn.of("status", CatalogType.STRING),
-                CatalogColumn.of("amount", CatalogType.DECIMAL)
+                CatalogColumn.of("amount", CatalogType.DECIMAL),
+                CatalogColumn.of("tenant_id", CatalogType.STRING)
             ),
             CatalogTable.of(
                 "public",
                 "payments",
                 CatalogColumn.of("id", CatalogType.LONG),
                 CatalogColumn.of("order_id", CatalogType.LONG),
-                CatalogColumn.of("state", CatalogType.STRING)
+                CatalogColumn.of("state", CatalogType.STRING),
+                CatalogColumn.of("tenant_id", CatalogType.STRING)
             )
         );
 
@@ -103,9 +107,15 @@ public final class Middleware_EndToEndPolicyFlow {
                 .builtInRewriteSettings(
                     BuiltInRewriteSettings.builder()
                         .defaultLimitInjectionValue(1000)
+                        .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
+                        .tenantTablePolicy("public.orders", TenantRewriteTablePolicy.required("tenant_id"))
                         .build()
                 )
-                .rewriteRules(BuiltInRewriteRule.LIMIT_INJECTION, BuiltInRewriteRule.CANONICALIZATION)
+                .rewriteRules(
+                    BuiltInRewriteRule.LIMIT_INJECTION,
+                    BuiltInRewriteRule.TENANT_PREDICATE,
+                    BuiltInRewriteRule.CANONICALIZATION
+                )
                 .guardrails(new RuntimeGuardrails(10_000, 1_000L, null, false))
                 .buildValidationAndRewriteConfig()
         );

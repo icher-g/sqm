@@ -277,7 +277,60 @@ public final class SqlMiddlewareRuntimeFactory {
             configured = true;
         }
 
+        var tenantPolicies = readTenantTablePolicies();
+        if (!tenantPolicies.isEmpty()) {
+            settingsBuilder.tenantTablePolicies(tenantPolicies);
+            configured = true;
+        }
+
+        var tenantFallbackMode = readEnumNullable(ConfigKeys.REWRITE_TENANT_FALLBACK_MODE, TenantRewriteFallbackMode.class);
+        if (tenantFallbackMode != null) {
+            settingsBuilder.tenantFallbackMode(tenantFallbackMode);
+            configured = true;
+        }
+
+        var tenantAmbiguityMode = readEnumNullable(ConfigKeys.REWRITE_TENANT_AMBIGUITY_MODE, TenantRewriteAmbiguityMode.class);
+        if (tenantAmbiguityMode != null) {
+            settingsBuilder.tenantAmbiguityMode(tenantAmbiguityMode);
+            configured = true;
+        }
+
         return configured ? settingsBuilder.build() : null;
+    }
+
+    private static Map<String, TenantRewriteTablePolicy> readTenantTablePolicies() {
+        var raw = readString(ConfigKeys.REWRITE_TENANT_TABLE_POLICIES, null);
+        if (raw == null || raw.isBlank()) {
+            return Map.of();
+        }
+
+        var entries = Arrays.stream(raw.split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .toList();
+
+        if (entries.isEmpty()) {
+            return Map.of();
+        }
+
+        var policies = new LinkedHashMap<String, TenantRewriteTablePolicy>(entries.size());
+        for (String entry : entries) {
+            var parts = entry.split(":");
+            if (parts.length < 2 || parts.length > 3) {
+                throw new IllegalArgumentException(
+                    "Invalid tenant table policy entry '%s'. Expected schema.table:tenant_column[:mode]".formatted(entry)
+                );
+            }
+
+            var table = parts[0].trim();
+            var tenantColumn = parts[1].trim();
+            var mode = parts.length == 3
+                ? TenantRewriteTableMode.valueOf(parts[2].trim().toUpperCase(Locale.ROOT))
+                : TenantRewriteTableMode.REQUIRED;
+
+            policies.put(table, TenantRewriteTablePolicy.of(tenantColumn, mode));
+        }
+        return Map.copyOf(policies);
     }
 
     private static String required(ConfigKeys.Key key) {

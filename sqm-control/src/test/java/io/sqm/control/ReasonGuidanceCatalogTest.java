@@ -20,7 +20,9 @@ class ReasonGuidanceCatalogTest {
             ReasonCode.DENY_TABLE,
             ReasonCode.DENY_COLUMN,
             ReasonCode.DENY_FUNCTION,
-            ReasonCode.DENY_TENANT_REQUIRED);
+            ReasonCode.DENY_TENANT_REQUIRED,
+            ReasonCode.DENY_TENANT_MAPPING_MISSING,
+            ReasonCode.DENY_TENANT_MAPPING_AMBIGUOUS);
 
         for (var reason : reasons) {
             var guidance = ReasonGuidanceCatalog.forReason(reason);

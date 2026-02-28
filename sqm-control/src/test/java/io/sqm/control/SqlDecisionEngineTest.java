@@ -2,10 +2,15 @@ package io.sqm.control;
 
 import io.sqm.core.Expression;
 import io.sqm.core.Query;
+import io.sqm.control.rewrite.TenantPredicateRewriteRule;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.select;
+import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -70,5 +75,35 @@ class SqlDecisionEngineTest {
         assertEquals("select ?", result.rewrittenSql());
         assertEquals(List.of(2L), result.sqlParams());
         assertTrue(result.message().contains("limit-injection"));
+    }
+
+    @Test
+    void evaluate_with_tenant_rewrite_emits_bind_params_in_deterministic_order() {
+        var input = select(col("u", "id"))
+            .from(tbl("public", "users").as("u"))
+            .where(col("u", "id").eq(lit(7)))
+            .build();
+
+        var settings = BuiltInRewriteSettings.builder()
+            .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
+            .build();
+
+        var engine = SqlDecisionEngine.of(
+            (q, context) -> QueryValidateResult.ok(),
+            SqlQueryRewriter.chain(TenantPredicateRewriteRule.of(settings)),
+            SqlQueryRenderer.standard()
+        );
+
+        var result = engine.evaluate(
+            input,
+            ExecutionContext.of("postgresql", null, "tenant_a", ExecutionMode.ANALYZE, ParameterizationMode.BIND)
+        );
+
+        assertEquals(DecisionKind.REWRITE, result.kind());
+        assertEquals(ReasonCode.REWRITE_TENANT_PREDICATE, result.reasonCode());
+        assertTrue(result.rewrittenSql().contains("?"));
+        assertEquals(2, result.sqlParams().size());
+        assertEquals(7L, ((Number) result.sqlParams().getFirst()).longValue());
+        assertEquals("tenant_a", result.sqlParams().get(1));
     }
 }

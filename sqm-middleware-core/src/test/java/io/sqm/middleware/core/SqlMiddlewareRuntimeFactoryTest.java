@@ -2,6 +2,7 @@ package io.sqm.middleware.core;
 
 import io.sqm.control.ConfigKeys;
 import io.sqm.middleware.api.AnalyzeRequest;
+import io.sqm.middleware.api.EnforceRequest;
 import io.sqm.middleware.api.ExecutionContextDto;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +14,11 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Map;
 
 import static io.sqm.middleware.api.DecisionKindDto.DENY;
+import static io.sqm.middleware.api.DecisionKindDto.REWRITE;
 import static io.sqm.middleware.api.ReasonCodeDto.DENY_MAX_SELECT_COLUMNS;
 import static io.sqm.middleware.api.ReasonCodeDto.DENY_TABLE;
 import static io.sqm.middleware.api.ReasonCodeDto.DENY_TENANT_REQUIRED;
+import static io.sqm.middleware.api.ReasonCodeDto.REWRITE_LIMIT;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SqlMiddlewareRuntimeFactoryTest {
@@ -123,18 +126,81 @@ class SqlMiddlewareRuntimeFactoryTest {
     }
 
     @Test
-    void applies_rewrite_and_guardrail_customizations_when_valid_values_present() {
+    void throws_when_tenant_table_policy_format_is_invalid() {
         withProperties(Map.of(
             ConfigKeys.SCHEMA_SOURCE.property(), "manual",
-            ConfigKeys.REWRITE_RULES.property(), "LIMIT_INJECTION,CANONICALIZATION",
-            ConfigKeys.REWRITE_DEFAULT_LIMIT_INJECTION_VALUE.property(), "100",
-            ConfigKeys.REWRITE_MAX_ALLOWED_LIMIT.property(), "1000",
-            ConfigKeys.REWRITE_LIMIT_EXCESS_MODE.property(), "DENY",
-            ConfigKeys.REWRITE_QUALIFICATION_DEFAULT_SCHEMA.property(), "public",
-            ConfigKeys.REWRITE_QUALIFICATION_FAILURE_MODE.property(), "DENY",
-            ConfigKeys.REWRITE_IDENTIFIER_NORMALIZATION_CASE_MODE.property(), "LOWER",
-            ConfigKeys.GUARDRAILS_EXPLAIN_DRY_RUN.property(), "true"
+            ConfigKeys.REWRITE_TENANT_TABLE_POLICIES.property(), "public.users"
+        ), () -> assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
+    void throws_when_tenant_table_policy_mode_is_invalid() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.REWRITE_TENANT_TABLE_POLICIES.property(), "public.users:tenant_id:broken"
+        ), () -> assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
+    void throws_when_tenant_fallback_mode_is_invalid() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.REWRITE_TENANT_FALLBACK_MODE.property(), "broken"
+        ), () -> assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
+    void throws_when_tenant_ambiguity_mode_is_invalid() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.REWRITE_TENANT_AMBIGUITY_MODE.property(), "broken"
+        ), () -> assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
+    void applies_rewrite_and_guardrail_customizations_when_valid_values_present() {
+        withProperties(Map.ofEntries(
+            Map.entry(ConfigKeys.SCHEMA_SOURCE.property(), "manual"),
+            Map.entry(ConfigKeys.REWRITE_RULES.property(), "LIMIT_INJECTION,CANONICALIZATION"),
+            Map.entry(ConfigKeys.REWRITE_DEFAULT_LIMIT_INJECTION_VALUE.property(), "100"),
+            Map.entry(ConfigKeys.REWRITE_MAX_ALLOWED_LIMIT.property(), "1000"),
+            Map.entry(ConfigKeys.REWRITE_LIMIT_EXCESS_MODE.property(), "DENY"),
+            Map.entry(ConfigKeys.REWRITE_QUALIFICATION_DEFAULT_SCHEMA.property(), "public"),
+            Map.entry(ConfigKeys.REWRITE_QUALIFICATION_FAILURE_MODE.property(), "DENY"),
+            Map.entry(ConfigKeys.REWRITE_IDENTIFIER_NORMALIZATION_CASE_MODE.property(), "LOWER"),
+            Map.entry(ConfigKeys.REWRITE_TENANT_TABLE_POLICIES.property(), "public.users:tenant_id:REQUIRED,public.events:tenant_key:OPTIONAL"),
+            Map.entry(ConfigKeys.REWRITE_TENANT_FALLBACK_MODE.property(), "SKIP"),
+            Map.entry(ConfigKeys.REWRITE_TENANT_AMBIGUITY_MODE.property(), "DENY"),
+            Map.entry(ConfigKeys.GUARDRAILS_EXPLAIN_DRY_RUN.property(), "true")
         ), () -> assertDoesNotThrow(SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
+    void parses_tenant_table_policy_without_explicit_mode_as_required() {
+        withProperties(Map.ofEntries(
+            Map.entry(ConfigKeys.SCHEMA_SOURCE.property(), "manual"),
+            Map.entry(ConfigKeys.REWRITE_RULES.property(), "TENANT_PREDICATE"),
+            Map.entry(ConfigKeys.REWRITE_TENANT_TABLE_POLICIES.property(), "public.users:tenant_id")
+        ), () -> assertDoesNotThrow(SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
+    void loads_limit_rewrite_settings_from_runtime_configuration() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.REWRITE_RULES.property(), "LIMIT_INJECTION",
+            ConfigKeys.REWRITE_DEFAULT_LIMIT_INJECTION_VALUE.property(), "123"
+        ), () -> {
+            var service = SqlMiddlewareRuntimeFactory.createFromEnvironment();
+            var result = service.enforce(
+                new EnforceRequest("select id from users", new ExecutionContextDto("postgresql", null, null, null, null))
+            );
+
+            assertEquals(REWRITE, result.kind(), () -> "reason=" + result.reasonCode() + " message=" + result.message());
+            assertEquals(REWRITE_LIMIT, result.reasonCode());
+            assertNotNull(result.rewrittenSql());
+            assertTrue(result.rewrittenSql().toLowerCase().contains("limit 123"));
+        });
     }
 
     @Test

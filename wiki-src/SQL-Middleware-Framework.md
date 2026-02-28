@@ -155,9 +155,14 @@ var middleware = SqlDecisionService.create(
         .builtInRewriteSettings(
             BuiltInRewriteSettings.builder()
                 .defaultLimitInjectionValue(1000)
+                .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
                 .build()
         )
-        .rewriteRules(BuiltInRewriteRule.LIMIT_INJECTION, BuiltInRewriteRule.CANONICALIZATION)
+        .rewriteRules(
+            BuiltInRewriteRule.LIMIT_INJECTION,
+            BuiltInRewriteRule.TENANT_PREDICATE,
+            BuiltInRewriteRule.CANONICALIZATION
+        )
         .buildValidationAndRewriteConfig()
 );
 
@@ -430,6 +435,18 @@ Optional rewrite setting keys:
 - `sqm.middleware.rewrite.qualificationDefaultSchema`
 - `sqm.middleware.rewrite.qualificationFailureMode`
 - `sqm.middleware.rewrite.identifierNormalizationCaseMode`
+- `sqm.middleware.rewrite.tenant.tablePolicies` (format: `schema.table:tenant_column[:REQUIRED|OPTIONAL|SKIP],...`)
+- `sqm.middleware.rewrite.tenant.fallbackMode` (`DENY|SKIP`)
+- `sqm.middleware.rewrite.tenant.ambiguityMode` (`DENY|SKIP`)
+
+Tenant rewrite example keys:
+
+```properties
+sqm.middleware.rewrite.rules=TENANT_PREDICATE,LIMIT_INJECTION
+sqm.middleware.rewrite.tenant.tablePolicies=public.users:tenant_id:REQUIRED,public.orders:tenant_id:OPTIONAL
+sqm.middleware.rewrite.tenant.fallbackMode=DENY
+sqm.middleware.rewrite.tenant.ambiguityMode=DENY
+```
 
 ### 8.4 Validation access policy config examples (JSON/YAML)
 
