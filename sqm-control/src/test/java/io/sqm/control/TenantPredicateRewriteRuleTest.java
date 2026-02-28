@@ -11,6 +11,7 @@ import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -237,5 +238,68 @@ class TenantPredicateRewriteRuleTest {
         assertTrue(rewritten.rewritten());
         assertEquals(List.of(), rendered.params());
         assertTrue(rendered.sql().toLowerCase().contains("'tenant_a'"));
+    }
+
+    @Test
+    void returns_unchanged_when_no_tenant_policies_are_configured() {
+        var rule = TenantPredicateRewriteRule.of(BuiltInRewriteSettings.defaults());
+        var query = select(col("u", "id"))
+            .from(tbl("public", "users").as("u"))
+            .build();
+
+        var result = rule.apply(query, TENANT_ANALYZE);
+        assertFalse(result.rewritten());
+    }
+
+    @Test
+    void skip_mode_never_injects_predicate() {
+        var settings = BuiltInRewriteSettings.builder()
+            .tenantTablePolicy("public.users", TenantRewriteTablePolicy.of("tenant_id", TenantRewriteTableMode.SKIP))
+            .build();
+        var rule = TenantPredicateRewriteRule.of(settings);
+        var query = select(col("u", "id"))
+            .from(tbl("public", "users").as("u"))
+            .build();
+
+        var result = rule.apply(query, TENANT_ANALYZE);
+        assertFalse(result.rewritten());
+    }
+
+    @Test
+    void preferred_schema_resolves_ambiguous_unqualified_table() {
+        var settings = BuiltInRewriteSettings.builder()
+            .qualificationDefaultSchema("tenant_b")
+            .tenantTablePolicy("tenant_a.users", TenantRewriteTablePolicy.required("tenant_a_id"))
+            .tenantTablePolicy("tenant_b.users", TenantRewriteTablePolicy.required("tenant_b_id"))
+            .build();
+        var rule = TenantPredicateRewriteRule.of(settings);
+
+        var query = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .build();
+
+        var result = rule.apply(query, TENANT_ANALYZE);
+        var rendered = SqlQueryRenderer.standard().render(result.query(), TENANT_ANALYZE).sql().toLowerCase();
+
+        assertTrue(result.rewritten());
+        assertTrue(rendered.contains("tenant_b_id"));
+        assertNotEquals(-1, rendered.indexOf("tenant_b_id"));
+    }
+
+    @Test
+    void injects_when_table_has_no_alias_using_table_name_as_qualifier() {
+        var settings = BuiltInRewriteSettings.builder()
+            .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
+            .build();
+        var rule = TenantPredicateRewriteRule.of(settings);
+        var query = select(col("users", "id"))
+            .from(tbl("public", "users"))
+            .build();
+
+        var result = rule.apply(query, TENANT_ANALYZE);
+        var rendered = SqlQueryRenderer.standard().render(result.query(), TENANT_ANALYZE).sql().toLowerCase();
+
+        assertTrue(result.rewritten());
+        assertTrue(rendered.contains("users.tenant_id"));
     }
 }

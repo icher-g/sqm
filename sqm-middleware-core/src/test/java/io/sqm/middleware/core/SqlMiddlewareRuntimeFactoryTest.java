@@ -176,6 +176,15 @@ class SqlMiddlewareRuntimeFactoryTest {
     }
 
     @Test
+    void parses_tenant_table_policy_without_explicit_mode_as_required() {
+        withProperties(Map.ofEntries(
+            Map.entry(ConfigKeys.SCHEMA_SOURCE.property(), "manual"),
+            Map.entry(ConfigKeys.REWRITE_RULES.property(), "TENANT_PREDICATE"),
+            Map.entry(ConfigKeys.REWRITE_TENANT_TABLE_POLICIES.property(), "public.users:tenant_id")
+        ), () -> assertDoesNotThrow(SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
     void loads_limit_rewrite_settings_from_runtime_configuration() {
         withProperties(Map.of(
             ConfigKeys.SCHEMA_SOURCE.property(), "manual",

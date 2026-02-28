@@ -72,5 +72,29 @@ class BuiltInRewriteSettingsTest {
             .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required(" "))
             .build());
     }
-}
 
+    @Test
+    void builder_copy_preserves_values_and_denied_limit_invariant_is_enforced() {
+        var source = BuiltInRewriteSettings.builder()
+            .defaultLimitInjectionValue(10)
+            .maxAllowedLimit(100)
+            .limitExcessMode(LimitExcessMode.CLAMP)
+            .qualificationDefaultSchema("public")
+            .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
+            .tenantFallbackMode(TenantRewriteFallbackMode.SKIP)
+            .tenantAmbiguityMode(TenantRewriteAmbiguityMode.SKIP)
+            .build();
+
+        var copy = BuiltInRewriteSettings.builder(source).build();
+        assertEquals(source, copy);
+
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> BuiltInRewriteSettings.builder()
+                .defaultLimitInjectionValue(101)
+                .maxAllowedLimit(100)
+                .limitExcessMode(LimitExcessMode.DENY)
+                .build()
+        );
+    }
+}
