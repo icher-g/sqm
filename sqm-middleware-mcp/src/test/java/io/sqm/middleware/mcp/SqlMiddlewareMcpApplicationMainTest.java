@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 
@@ -43,6 +44,33 @@ class SqlMiddlewareMcpApplicationMainTest {
             System.setOut(originalOut);
             restoreProperty("sqm.middleware.schema.source", originalSchemaSource);
             restoreProperty("sqm.middleware.rewrite.enabled", originalRewriteEnabled);
+        }
+    }
+
+    @Test
+    void read_options_uses_configured_properties() throws Exception {
+        var oldContentLength = System.getProperty("sqm.middleware.mcp.maxContentLengthBytes");
+        var oldHeaderLine = System.getProperty("sqm.middleware.mcp.maxHeaderLineLengthBytes");
+        var oldHeaderBytes = System.getProperty("sqm.middleware.mcp.maxHeaderBytes");
+        var oldRequireInit = System.getProperty("sqm.middleware.mcp.requireInitializeBeforeTools");
+        try {
+            System.setProperty("sqm.middleware.mcp.maxContentLengthBytes", "111");
+            System.setProperty("sqm.middleware.mcp.maxHeaderLineLengthBytes", "222");
+            System.setProperty("sqm.middleware.mcp.maxHeaderBytes", "333");
+            System.setProperty("sqm.middleware.mcp.requireInitializeBeforeTools", "FALSE");
+
+            Method readOptions = SqlMiddlewareMcpApplication.class.getDeclaredMethod("readOptions");
+            readOptions.setAccessible(true);
+            var options = (SqlMiddlewareMcpServerOptions) readOptions.invoke(null);
+            assertEquals(111, options.maxContentLengthBytes());
+            assertEquals(222, options.maxHeaderLineLengthBytes());
+            assertEquals(333, options.maxHeaderBytes());
+            assertFalse(options.requireInitializeBeforeTools());
+        } finally {
+            restoreProperty("sqm.middleware.mcp.maxContentLengthBytes", oldContentLength);
+            restoreProperty("sqm.middleware.mcp.maxHeaderLineLengthBytes", oldHeaderLine);
+            restoreProperty("sqm.middleware.mcp.maxHeaderBytes", oldHeaderBytes);
+            restoreProperty("sqm.middleware.mcp.requireInitializeBeforeTools", oldRequireInit);
         }
     }
 

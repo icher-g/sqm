@@ -416,6 +416,80 @@ class SqlMiddlewareMcpServerIntegrationTest {
         assertEquals("INVALID_FRAME", error.path("error").path("data").path("category").asText());
     }
 
+    @Test
+    void server_allows_tools_without_initialize_when_configured() throws Exception {
+        var options = new SqlMiddlewareMcpServerOptions(1024 * 1024, 8 * 1024, 16 * 1024, false);
+        var server = new SqlMiddlewareMcpServer(routerFor(new StubService()), MAPPER, options);
+        var input = new ByteArrayInputStream((
+            framedJson("""
+                {"jsonrpc":"2.0","id":81,"method":"tools/list","params":{}}
+                """)
+                + framedJson("""
+                {"jsonrpc":"2.0","method":"exit"}
+                """)
+        ).getBytes(StandardCharsets.UTF_8));
+        var output = new ByteArrayOutputStream();
+
+        server.serve(input, output);
+        var responses = parseFramedResponses(output.toByteArray());
+        assertEquals(1, responses.size());
+        assertTrue(responses.getFirst().has("result"));
+        assertFalse(responses.getFirst().has("error"));
+    }
+
+    @Test
+    void server_rejects_invalid_id_shape() throws Exception {
+        var server = new SqlMiddlewareMcpServer(routerFor(new StubService()), MAPPER);
+        var input = new ByteArrayInputStream((
+            framedJson("""
+                {"jsonrpc":"2.0","id":{},"method":"initialize","params":{}}
+                """)
+                + framedJson("""
+                {"jsonrpc":"2.0","method":"exit"}
+                """)
+        ).getBytes(StandardCharsets.UTF_8));
+        var output = new ByteArrayOutputStream();
+
+        server.serve(input, output);
+        var responses = parseFramedResponses(output.toByteArray());
+        assertEquals(1, responses.size());
+        assertEquals(-32600, responses.getFirst().path("error").path("code").asInt());
+    }
+
+    @Test
+    void server_rejects_when_header_line_exceeds_limit() throws Exception {
+        var options = new SqlMiddlewareMcpServerOptions(1024, 12, 1024, true);
+        var server = new SqlMiddlewareMcpServer(routerFor(new StubService()), MAPPER, options);
+        var body = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{}}";
+        var framed = "Content-Length: " + body.length() + "\r\nX-HEADER-TOO-LONG: abcdefghijklmnop\r\n\r\n" + body;
+        var input = new ByteArrayInputStream(framed.getBytes(StandardCharsets.UTF_8));
+        var output = new ByteArrayOutputStream();
+
+        server.serve(input, output);
+        var responses = parseFramedResponses(output.toByteArray());
+        assertFalse(responses.isEmpty());
+        var hasInvalidFrame = responses.stream()
+            .anyMatch(node -> "INVALID_FRAME".equals(node.path("error").path("data").path("category").asText()));
+        assertTrue(hasInvalidFrame);
+    }
+
+    @Test
+    void server_rejects_when_total_header_bytes_exceed_limit() throws Exception {
+        var options = new SqlMiddlewareMcpServerOptions(1024, 200, 24, true);
+        var server = new SqlMiddlewareMcpServer(routerFor(new StubService()), MAPPER, options);
+        var body = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{}}";
+        var framed = "X-A: 1\r\nX-B: 2\r\nContent-Length: " + body.length() + "\r\n\r\n" + body;
+        var input = new ByteArrayInputStream(framed.getBytes(StandardCharsets.UTF_8));
+        var output = new ByteArrayOutputStream();
+
+        server.serve(input, output);
+        var responses = parseFramedResponses(output.toByteArray());
+        assertFalse(responses.isEmpty());
+        var hasInvalidFrame = responses.stream()
+            .anyMatch(node -> "INVALID_FRAME".equals(node.path("error").path("data").path("category").asText()));
+        assertTrue(hasInvalidFrame);
+    }
+
     private SqlMiddlewareMcpToolRouter routerFor(SqlMiddlewareService service) {
         return new SqlMiddlewareMcpToolRouter(new SqlMiddlewareMcpAdapter(service));
     }

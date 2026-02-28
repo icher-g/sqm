@@ -58,6 +58,54 @@ class FlowControlSqlMiddlewareServiceTest {
         assertEquals(ReasonCodeDto.DENY_TIMEOUT, explanation.decision().reasonCode());
     }
 
+    @Test
+    void returns_pipeline_error_when_delegate_throws_in_enforce() {
+        var service = new FlowControlSqlMiddlewareService(new ThrowingService(), null, null, null);
+        var result = service.enforce(new EnforceRequest("select 1", new ExecutionContextDto("postgresql", null, null, null, null)));
+        assertEquals(DecisionKindDto.DENY, result.kind());
+        assertEquals(ReasonCodeDto.DENY_PIPELINE_ERROR, result.reasonCode());
+        assertTrue(result.message().contains("Pipeline failure"));
+    }
+
+    @Test
+    void returns_pipeline_error_explain_shape_when_delegate_throws_in_explain() {
+        var service = new FlowControlSqlMiddlewareService(new ThrowingService(), null, null, null);
+        var explanation = service.explainDecision(new ExplainRequest("select 1", new ExecutionContextDto("postgresql", null, null, null, null)));
+        assertEquals(DecisionKindDto.DENY, explanation.decision().kind());
+        assertEquals(ReasonCodeDto.DENY_PIPELINE_ERROR, explanation.decision().reasonCode());
+    }
+
+    @Test
+    void returns_pipeline_error_when_delegate_throws_inside_timed_execution() {
+        var service = new FlowControlSqlMiddlewareService(new ThrowingService(), null, null, 1000L);
+        var result = service.enforce(new EnforceRequest("select 1", new ExecutionContextDto("postgresql", null, null, null, null)));
+        assertEquals(DecisionKindDto.DENY, result.kind());
+        assertEquals(ReasonCodeDto.DENY_PIPELINE_ERROR, result.reasonCode());
+    }
+
+    @Test
+    void supports_blocking_acquire_with_timeout_then_recovers_after_release() throws Exception {
+        var blocking = new BlockingService();
+        var service = new FlowControlSqlMiddlewareService(blocking, 1, 5L, null);
+        var context = new ExecutionContextDto("postgresql", null, null, null, null);
+
+        var started = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        blocking.setLatches(started, release);
+        var t = Thread.startVirtualThread(() -> service.analyze(new AnalyzeRequest("select 1", context)));
+        assertTrue(started.await(1, TimeUnit.SECONDS));
+
+        var denied = service.analyze(new AnalyzeRequest("select 1", context));
+        assertEquals(DecisionKindDto.DENY, denied.kind());
+        assertEquals(ReasonCodeDto.DENY_PIPELINE_ERROR, denied.reasonCode());
+
+        release.countDown();
+        t.join();
+
+        var allowed = service.analyze(new AnalyzeRequest("select 1", context));
+        assertEquals(DecisionKindDto.ALLOW, allowed.kind());
+    }
+
     private static class StubService implements SqlMiddlewareService {
         @Override
         public DecisionResultDto analyze(AnalyzeRequest request) {
@@ -124,6 +172,18 @@ class FlowControlSqlMiddlewareServiceTest {
                 Thread.currentThread().interrupt();
             }
             return super.analyze(request);
+        }
+    }
+
+    private static final class ThrowingService extends StubService {
+        @Override
+        public DecisionResultDto enforce(EnforceRequest request) {
+            throw new IllegalStateException("boom");
+        }
+
+        @Override
+        public DecisionExplanationDto explainDecision(ExplainRequest request) {
+            throw new IllegalStateException("boom");
         }
     }
 }
