@@ -1,27 +1,17 @@
 package io.sqm.middleware.core;
 
-import io.sqm.catalog.jdbc.JdbcSchemaProvider;
-import io.sqm.catalog.model.CatalogSchema;
-import io.sqm.catalog.snapshot.JsonSchemaProvider;
 import io.sqm.control.*;
-import io.sqm.middleware.api.SqlMiddlewareService;
+import io.sqm.control.audit.FileAuditEventPublisher;
+import io.sqm.control.audit.LoggingAuditEventPublisher;
+import io.sqm.middleware.api.*;
 import io.sqm.validate.schema.SchemaValidationLimits;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.SchemaValidationSettingsLoader;
 import io.sqm.validate.schema.TenantRequirementMode;
 
-import javax.sql.DataSource;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static io.sqm.core.transform.IdentifierNormalizationCaseMode.valueOf;
@@ -30,8 +20,6 @@ import static io.sqm.core.transform.IdentifierNormalizationCaseMode.valueOf;
  * Shared runtime factory for building middleware service instances from external configuration.
  */
 public final class SqlMiddlewareRuntimeFactory {
-
-    private static final String DEFAULT_SCHEMA_RESOURCE = "/io/sqm/middleware/core/default-schema.json";
 
     private SqlMiddlewareRuntimeFactory() {
     }
@@ -42,100 +30,56 @@ public final class SqlMiddlewareRuntimeFactory {
      * @return configured middleware service
      */
     public static SqlMiddlewareService createFromEnvironment() {
-        var schema = loadSchema();
-
-        var builder = SqlDecisionServiceConfig.builder(schema);
-
-        applyValidationSettings(builder);
-        applyGuardrails(builder);
-
-        if (readBoolean(ConfigKeys.REWRITE_ENABLED, true)) {
-            applyRewriteCustomizations(builder);
-            return SqlMiddlewareServices.create(builder.buildValidationAndRewriteConfig());
-        }
-
-        return SqlMiddlewareServices.create(builder.buildValidationConfig());
+        return createRuntimeFromEnvironment().service();
     }
 
-    private static CatalogSchema loadSchema() {
-        var source = readString(ConfigKeys.SCHEMA_SOURCE, "manual")
+    /**
+     * Creates runtime container from system properties/environment.
+     *
+     * @return runtime container with service and bootstrap diagnostics
+     */
+    public static SqlMiddlewareRuntime createRuntimeFromEnvironment() {
+        validateProductionModeConfiguration();
+
+        var schemaSource = readString(ConfigKeys.SCHEMA_SOURCE, "manual")
             .trim()
             .toLowerCase(Locale.ROOT);
 
-        return switch (source) {
-            case "json" -> loadJsonSchema();
-            case "jdbc" -> loadJdbcSchema();
-            case "manual" -> loadDefaultJsonSchema();
-            default -> throw new IllegalArgumentException("Unsupported schema source: " + source + ". Supported: manual,json,jdbc");
-        };
-    }
+        var failFast = readBoolean(ConfigKeys.SCHEMA_BOOTSTRAP_FAIL_FAST, true);
 
-    private static CatalogSchema loadDefaultJsonSchema() {
-        var defaultPath = readString(
-            ConfigKeys.SCHEMA_DEFAULT_JSON_PATH,
-            null
-        );
-
-        if (defaultPath != null && !defaultPath.isBlank()) {
-            return loadJsonSchema(Path.of(defaultPath));
-        }
-
-        try (InputStream stream = SqlMiddlewareRuntimeFactory.class.getResourceAsStream(DEFAULT_SCHEMA_RESOURCE)) {
-            if (stream == null) {
-                throw new IllegalStateException("Missing bundled default schema resource: " + DEFAULT_SCHEMA_RESOURCE);
-            }
-
-            var tempFile = Files.createTempFile("sqm-default-schema", ".json");
-            Files.copy(stream, tempFile, StandardCopyOption.REPLACE_EXISTING);
-            tempFile.toFile().deleteOnExit();
-            return loadJsonSchema(tempFile);
-        } catch (IOException ex) {
-            throw new IllegalStateException("Failed to load bundled default schema JSON resource", ex);
-        }
-    }
-
-    private static CatalogSchema loadJsonSchema() {
-        var path = readString(ConfigKeys.SCHEMA_JSON_PATH, null);
-        if (path == null || path.isBlank()) {
-            throw new IllegalArgumentException(
-                "JSON schema source requires %s (or %s)".formatted(
-                    ConfigKeys.SCHEMA_JSON_PATH.property(),
-                    ConfigKeys.SCHEMA_JSON_PATH.env()
-                )
+        var schemaLoader = new SchemaBootstrapLoader(SqlMiddlewareRuntimeFactory::readString);
+        var bootstrap = schemaLoader.bootstrap(schemaSource, failFast);
+        if (!bootstrap.ready()) {
+            var message = bootstrap.degradedMessage();
+            var degradedService = applyTelemetry(applyFlowControl(new SchemaUnavailableSqlMiddlewareService(message)));
+            return new SqlMiddlewareRuntime(
+                degradedService,
+                SchemaBootstrapStatus.degraded(schemaSource, "schema source unavailable", message)
             );
         }
-        return loadJsonSchema(Path.of(path));
+
+        var schemaLoad = bootstrap.schemaLoad();
+        var builder = SqlDecisionServiceConfig.builder(schemaLoad.schema());
+
+        applyValidationSettings(builder);
+        applyGuardrails(builder);
+        applyAuditPublisher(builder);
+
+        var service = readBoolean(ConfigKeys.REWRITE_ENABLED, true)
+            ? createRewriteEnabledServiceWithCustomizations(builder)
+            : SqlMiddlewareServices.create(builder.buildValidationConfig());
+
+        service = applyFlowControl(service);
+
+        return new SqlMiddlewareRuntime(
+            applyTelemetry(service),
+            SchemaBootstrapStatus.ready(schemaSource, schemaLoad.description())
+        );
     }
 
-    private static CatalogSchema loadJsonSchema(Path path) {
-        try {
-            return JsonSchemaProvider.of(path).load();
-        } catch (SQLException ex) {
-            throw new IllegalStateException("Failed to load schema from JSON path: " + path, ex);
-        }
-    }
-
-    private static CatalogSchema loadJdbcSchema() {
-        var url = required(ConfigKeys.JDBC_URL);
-        var user = readString(ConfigKeys.JDBC_USER, "");
-        var password = readString(ConfigKeys.JDBC_PASSWORD, "");
-        var schemaPattern = readString(ConfigKeys.JDBC_SCHEMA_PATTERN, null);
-        var driverClass = readString(ConfigKeys.JDBC_DRIVER, null);
-
-        if (driverClass != null && !driverClass.isBlank()) {
-            try {
-                Class.forName(driverClass);
-            } catch (ClassNotFoundException ex) {
-                throw new IllegalArgumentException("JDBC driver class not found: " + driverClass, ex);
-            }
-        }
-
-        DataSource dataSource = new DriverManagerDataSource(url, user, password);
-        try {
-            return JdbcSchemaProvider.of(dataSource, schemaPattern).load();
-        } catch (SQLException ex) {
-            throw new IllegalStateException("Failed to load schema from JDBC metadata", ex);
-        }
+    private static SqlMiddlewareService createRewriteEnabledServiceWithCustomizations(SqlDecisionServiceConfig.Builder builder) {
+        applyRewriteCustomizations(builder);
+        return SqlMiddlewareServices.create(builder.buildValidationAndRewriteConfig());
     }
 
     private static void applyValidationSettings(SqlDecisionServiceConfig.Builder builder) {
@@ -298,6 +242,117 @@ public final class SqlMiddlewareRuntimeFactory {
         return configured ? settingsBuilder.build() : null;
     }
 
+    private static void validateProductionModeConfiguration() {
+        if (!isProductionMode()) {
+            return;
+        }
+
+        var configuredSchemaSource = readRaw(ConfigKeys.SCHEMA_SOURCE);
+        if (configuredSchemaSource == null || configuredSchemaSource.isBlank()) {
+            throw new IllegalStateException(
+                "Production mode requires explicit schema source via %s or %s. " +
+                    "Set one of: manual, json, jdbc.".formatted(
+                        ConfigKeys.SCHEMA_SOURCE.property(),
+                        ConfigKeys.SCHEMA_SOURCE.env()
+                    )
+            );
+        }
+
+        var source = configuredSchemaSource.trim().toLowerCase(Locale.ROOT);
+        if ("manual".equals(source)) {
+            var configuredDefaultPath = readRaw(ConfigKeys.SCHEMA_DEFAULT_JSON_PATH);
+            if (configuredDefaultPath == null || configuredDefaultPath.isBlank()) {
+                throw new IllegalStateException(
+                    "Production mode disallows bundled fallback schema for manual source. " +
+                        "Configure %s or %s to an explicit schema file path.".formatted(
+                            ConfigKeys.SCHEMA_DEFAULT_JSON_PATH.property(),
+                            ConfigKeys.SCHEMA_DEFAULT_JSON_PATH.env()
+                        )
+                );
+            }
+        }
+    }
+
+    private static void applyAuditPublisher(SqlDecisionServiceConfig.Builder builder) {
+        var mode = readString(ConfigKeys.AUDIT_PUBLISHER_MODE, "noop")
+            .trim()
+            .toLowerCase(Locale.ROOT);
+
+        switch (mode) {
+            case "noop" -> builder.auditPublisher(AuditEventPublisher.noop());
+            case "logging" -> {
+                var loggerName = readString(ConfigKeys.AUDIT_LOGGER_NAME, "io.sqm.middleware.audit");
+                var level = readLogLevelNullable(ConfigKeys.AUDIT_LOGGER_LEVEL);
+                var logger = Logger.getLogger(loggerName);
+                builder.auditPublisher(level == null
+                    ? LoggingAuditEventPublisher.of(logger)
+                    : LoggingAuditEventPublisher.of(logger, level));
+            }
+            case "file" -> {
+                var path = required(ConfigKeys.AUDIT_FILE_PATH);
+                builder.auditPublisher(FileAuditEventPublisher.of(Path.of(path)));
+            }
+            default -> throw new IllegalArgumentException(
+                "Unsupported audit publisher mode: " + mode + ". Supported: noop,logging,file"
+            );
+        }
+    }
+
+    private static SqlMiddlewareService applyTelemetry(SqlMiddlewareService service) {
+        if (!readBoolean(ConfigKeys.METRICS_ENABLED, false)) {
+            return service;
+        }
+        var loggerName = readString(ConfigKeys.METRICS_LOGGER_NAME, "io.sqm.middleware.metrics");
+        var level = readLogLevelNullable(ConfigKeys.METRICS_LOGGER_LEVEL);
+        var logger = Logger.getLogger(loggerName);
+        var telemetry = level == null
+            ? LoggingMiddlewareTelemetry.of(logger)
+            : LoggingMiddlewareTelemetry.of(logger, level);
+        return new ObservedSqlMiddlewareService(service, telemetry);
+    }
+
+    private static SqlMiddlewareService applyFlowControl(SqlMiddlewareService service) {
+        Integer maxInFlight = readIntNullable(ConfigKeys.HOST_MAX_IN_FLIGHT);
+        Long acquireTimeoutMillis = readLongNullable(ConfigKeys.HOST_ACQUIRE_TIMEOUT_MILLIS);
+        Long requestTimeoutMillis = readLongNullable(ConfigKeys.HOST_REQUEST_TIMEOUT_MILLIS);
+        if (maxInFlight == null && acquireTimeoutMillis == null && requestTimeoutMillis == null) {
+            return service;
+        }
+        return new FlowControlSqlMiddlewareService(
+            service,
+            maxInFlight,
+            acquireTimeoutMillis,
+            requestTimeoutMillis
+        );
+    }
+
+    private static boolean isProductionMode() {
+        if (readBoolean(ConfigKeys.PRODUCTION_MODE, false)) {
+            return true;
+        }
+
+        var runtimeMode = readString(ConfigKeys.RUNTIME_MODE, "dev");
+        if (runtimeMode != null && !runtimeMode.isBlank()) {
+            var normalized = runtimeMode.trim().toLowerCase(Locale.ROOT);
+            if ("production".equals(normalized) || "prod".equals(normalized)) {
+                return true;
+            }
+        }
+
+        var springProfiles = readString(
+            ConfigKeys.Key.of("spring.profiles.active", "SPRING_PROFILES_ACTIVE"),
+            null
+        );
+        if (springProfiles == null || springProfiles.isBlank()) {
+            return false;
+        }
+
+        return Arrays.stream(springProfiles.split(","))
+            .map(String::trim)
+            .map(s -> s.toLowerCase(Locale.ROOT))
+            .anyMatch(profile -> "production".equals(profile) || "prod".equals(profile));
+    }
+
     private static Map<String, TenantRewriteTablePolicy> readTenantTablePolicies() {
         var raw = readString(ConfigKeys.REWRITE_TENANT_TABLE_POLICIES, null);
         if (raw == null || raw.isBlank()) {
@@ -352,6 +407,14 @@ public final class SqlMiddlewareRuntimeFactory {
         return value;
     }
 
+    private static String readRaw(ConfigKeys.Key key) {
+        var value = System.getProperty(key.property());
+        if (value != null) {
+            return value;
+        }
+        return System.getenv(key.env());
+    }
+
     private static boolean readBoolean(ConfigKeys.Key key, boolean defaultValue) {
         var raw = readString(key, null);
         return raw == null ? defaultValue : Boolean.parseBoolean(raw);
@@ -376,57 +439,45 @@ public final class SqlMiddlewareRuntimeFactory {
         return Enum.valueOf(enumType, raw.trim().toUpperCase(Locale.ROOT));
     }
 
-    private record DriverManagerDataSource(String url, String user, String password) implements DataSource {
-        private DriverManagerDataSource(String url, String user, String password) {
-            this.url = Objects.requireNonNull(url, "url must not be null");
-            this.user = user;
-            this.password = password;
+    private static Level readLogLevelNullable(ConfigKeys.Key key) {
+        var raw = readString(key, null);
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        return Level.parse(raw.trim().toUpperCase(Locale.ROOT));
+    }
+
+    private record SchemaUnavailableSqlMiddlewareService(String errorMessage) implements SqlMiddlewareService {
+        private SchemaUnavailableSqlMiddlewareService(String errorMessage) {
+            this.errorMessage = Objects.requireNonNull(errorMessage, "errorMessage must not be null");
+        }
+
+        private static DecisionResultDto denied(String message) {
+            return new DecisionResultDto(
+                DecisionKindDto.DENY,
+                ReasonCodeDto.DENY_PIPELINE_ERROR,
+                message,
+                null,
+                List.of(),
+                null,
+                null
+            );
         }
 
         @Override
-        public Connection getConnection() throws SQLException {
-            return DriverManager.getConnection(url, user, password);
+        public DecisionResultDto analyze(AnalyzeRequest request) {
+            return denied(errorMessage);
         }
 
         @Override
-        public Connection getConnection(String username, String password) throws SQLException {
-            return DriverManager.getConnection(url, username, password);
+        public DecisionResultDto enforce(EnforceRequest request) {
+            return denied(errorMessage);
         }
 
         @Override
-        public <T> T unwrap(Class<T> iface) throws SQLException {
-            throw new SQLFeatureNotSupportedException("unwrap is not supported");
-        }
-
-        @Override
-        public boolean isWrapperFor(Class<?> iface) {
-            return false;
-        }
-
-        @Override
-        public PrintWriter getLogWriter() {
-            return DriverManager.getLogWriter();
-        }
-
-        @Override
-        public void setLogWriter(PrintWriter out) {
-            DriverManager.setLogWriter(out);
-        }
-
-        @Override
-        public int getLoginTimeout() {
-            return DriverManager.getLoginTimeout();
-        }
-
-        @Override
-        public void setLoginTimeout(int seconds) {
-            DriverManager.setLoginTimeout(seconds);
-        }
-
-        @Override
-        public Logger getParentLogger() {
-            return Logger.getLogger("global");
+        public DecisionExplanationDto explainDecision(ExplainRequest request) {
+            var result = denied(errorMessage);
+            return new DecisionExplanationDto(result, "Schema bootstrap failed; service is running in degraded not-ready mode.");
         }
     }
 }
-
