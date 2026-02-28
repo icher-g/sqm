@@ -198,20 +198,20 @@ public final class TenantPredicateRewriteRule implements QueryRewriteRule {
             return;
         }
 
-        TenantRewriteTablePolicy policy = resolvePolicy(table);
-        if (policy == null) {
+        ResolvedPolicy resolved = resolvePolicy(table);
+        if (resolved == null) {
             return;
         }
         Identifier qualifier = table.alias() != null ? table.alias() : table.name();
         targets.add(new Target(
-            tableKey(table.schema(), table.name()),
+            resolved.tableKey(),
             qualifier,
-            policy.tenantColumn(),
-            policy.mode()
+            resolved.policy().tenantColumn(),
+            resolved.policy().mode()
         ));
     }
 
-    private TenantRewriteTablePolicy resolvePolicy(Table table) {
+    private ResolvedPolicy resolvePolicy(Table table) {
         var policies = settings.tenantTablePolicies();
         String name = normalize(table.name().value());
 
@@ -226,7 +226,7 @@ public final class TenantPredicateRewriteRule implements QueryRewriteRule {
             String preferredKey = preferredSchema + "." + name;
             TenantRewriteTablePolicy preferred = policies.get(preferredKey);
             if (preferred != null) {
-                return preferred;
+                return new ResolvedPolicy(preferredKey, preferred);
             }
         }
 
@@ -239,7 +239,8 @@ public final class TenantPredicateRewriteRule implements QueryRewriteRule {
             return onMissingMapping(name, null);
         }
         if (matches.size() == 1) {
-            return matches.getFirst().getValue();
+            var match = matches.getFirst();
+            return new ResolvedPolicy(match.getKey(), match.getValue());
         }
         if (settings.tenantAmbiguityMode() == TenantRewriteAmbiguityMode.DENY) {
             throw new RewriteDenyException(
@@ -250,9 +251,9 @@ public final class TenantPredicateRewriteRule implements QueryRewriteRule {
         return null;
     }
 
-    private TenantRewriteTablePolicy onMissingMapping(String tableKey, TenantRewriteTablePolicy policy) {
+    private ResolvedPolicy onMissingMapping(String tableKey, TenantRewriteTablePolicy policy) {
         if (policy != null) {
-            return policy;
+            return new ResolvedPolicy(tableKey, policy);
         }
         if (settings.tenantFallbackMode() == TenantRewriteFallbackMode.DENY) {
             throw new RewriteDenyException(
@@ -293,5 +294,8 @@ public final class TenantPredicateRewriteRule implements QueryRewriteRule {
         private Predicate predicateForTenant(String tenant) {
             return ColumnExpr.of(qualifier, Identifier.of(tenantColumn)).eq(Expression.literal(tenant));
         }
+    }
+
+    private record ResolvedPolicy(String tableKey, TenantRewriteTablePolicy policy) {
     }
 }

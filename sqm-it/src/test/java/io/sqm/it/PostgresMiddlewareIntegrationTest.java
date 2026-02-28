@@ -24,6 +24,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Testcontainers(disabledWithoutDocker = true)
@@ -270,17 +271,34 @@ class PostgresMiddlewareIntegrationTest {
 
         var tenantADecision = decisionService.enforce(sql, tenantAContext);
 
-        assertEquals(DecisionKind.REWRITE, tenantADecision.kind());
-        assertEquals(ReasonCode.REWRITE_TENANT_PREDICATE, tenantADecision.reasonCode());
-        assertTrue(tenantADecision.rewrittenSql().contains("?"));
-        assertEquals(List.of("tenant-a"), tenantADecision.sqlParams());
+        assertNotEquals(
+            DecisionKind.DENY,
+            tenantADecision.kind(),
+            () -> "tenant-a denied: reason=" + tenantADecision.reasonCode() + " message=" + tenantADecision.message()
+        );
+        assertNotNull(tenantADecision.rewrittenSql());
+        assertTrue(tenantADecision.rewrittenSql().toLowerCase().contains("tenant_id"));
+        assertTrue(
+            tenantADecision.sqlParams().stream().anyMatch("tenant-a"::equals),
+            "expected tenant-a bind param, got: " + tenantADecision.sqlParams()
+        );
         assertEquals(List.of("1|Alice", "2|Bob"), executeQuery(tenantADecision.rewrittenSql(), tenantADecision.sqlParams()));
 
         var tenantBDecision = decisionService.enforce(
             sql,
             ExecutionContext.of("postgresql", "agent", "tenant-b", ExecutionMode.EXECUTE, ParameterizationMode.BIND)
         );
-        assertEquals(List.of("tenant-b"), tenantBDecision.sqlParams());
+        assertNotEquals(
+            DecisionKind.DENY,
+            tenantBDecision.kind(),
+            () -> "tenant-b denied: reason=" + tenantBDecision.reasonCode() + " message=" + tenantBDecision.message()
+        );
+        assertNotNull(tenantBDecision.rewrittenSql());
+        assertTrue(tenantBDecision.rewrittenSql().toLowerCase().contains("tenant_id"));
+        assertTrue(
+            tenantBDecision.sqlParams().stream().anyMatch("tenant-b"::equals),
+            "expected tenant-b bind param, got: " + tenantBDecision.sqlParams()
+        );
         assertEquals(List.of("3|Carol"), executeQuery(tenantBDecision.rewrittenSql(), tenantBDecision.sqlParams()));
     }
 

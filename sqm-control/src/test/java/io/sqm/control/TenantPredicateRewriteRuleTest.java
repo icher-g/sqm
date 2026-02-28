@@ -44,6 +44,26 @@ class TenantPredicateRewriteRuleTest {
     }
 
     @Test
+    void injects_for_unqualified_table_when_single_mapping_exists() {
+        var settings = BuiltInRewriteSettings.builder()
+            .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
+            .build();
+        var rule = TenantPredicateRewriteRule.of(settings);
+
+        var query = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .build();
+
+        var result = rule.apply(query, TENANT_ANALYZE);
+        var rendered = SqlQueryRenderer.standard().render(result.query(), TENANT_ANALYZE).sql().toLowerCase();
+
+        assertTrue(result.rewritten());
+        assertEquals(ReasonCode.REWRITE_TENANT_PREDICATE, result.primaryReasonCode());
+        assertTrue(rendered.contains("u.tenant_id"));
+        assertTrue(rendered.contains("'tenant_a'"));
+    }
+
+    @Test
     void appends_predicate_to_existing_where_clause() {
         var settings = BuiltInRewriteSettings.builder()
             .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
