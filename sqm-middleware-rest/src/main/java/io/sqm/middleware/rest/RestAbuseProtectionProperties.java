@@ -12,6 +12,8 @@ public class RestAbuseProtectionProperties {
     private int requestsPerWindow = 60;
     private int windowSeconds = 60;
     private long maxRequestBytes = 64 * 1024;
+    private boolean trustProxyHeaders;
+    private String clientIpHeader = "X-Forwarded-For";
 
     /**
      * Returns whether rate limiting is enabled.
@@ -83,5 +85,41 @@ public class RestAbuseProtectionProperties {
      */
     public void setMaxRequestBytes(long maxRequestBytes) {
         this.maxRequestBytes = maxRequestBytes;
+    }
+
+    /**
+     * Returns whether trusted proxy headers are used to resolve client IP for rate limiting.
+     *
+     * @return {@code true} when proxy headers are trusted
+     */
+    public boolean isTrustProxyHeaders() {
+        return trustProxyHeaders;
+    }
+
+    /**
+     * Sets whether trusted proxy headers are used to resolve client IP for rate limiting.
+     *
+     * @param trustProxyHeaders trust proxy headers flag
+     */
+    public void setTrustProxyHeaders(boolean trustProxyHeaders) {
+        this.trustProxyHeaders = trustProxyHeaders;
+    }
+
+    /**
+     * Returns header name used to resolve client IP when proxy headers are trusted.
+     *
+     * @return client IP header name
+     */
+    public String getClientIpHeader() {
+        return clientIpHeader;
+    }
+
+    /**
+     * Sets header name used to resolve client IP when proxy headers are trusted.
+     *
+     * @param clientIpHeader client IP header name
+     */
+    public void setClientIpHeader(String clientIpHeader) {
+        this.clientIpHeader = clientIpHeader;
     }
 }

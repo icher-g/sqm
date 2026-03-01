@@ -17,10 +17,14 @@ import java.util.Objects;
 public final class FileAuditEventPublisher implements AuditEventPublisher {
 
     private final Path outputPath;
+    private final long maxBytes;
+    private final int maxHistory;
     private final Object writeLock = new Object();
 
-    private FileAuditEventPublisher(Path outputPath) {
+    private FileAuditEventPublisher(Path outputPath, long maxBytes, int maxHistory) {
         this.outputPath = outputPath;
+        this.maxBytes = maxBytes;
+        this.maxHistory = maxHistory;
     }
 
     /**
@@ -31,7 +35,23 @@ public final class FileAuditEventPublisher implements AuditEventPublisher {
      */
     public static FileAuditEventPublisher of(Path outputPath) {
         Objects.requireNonNull(outputPath, "outputPath must not be null");
-        return new FileAuditEventPublisher(outputPath);
+        return new FileAuditEventPublisher(outputPath, 0, 0);
+    }
+
+    /**
+     * Creates a file-backed publisher with rotation/retention settings.
+     *
+     * @param outputPath output file path
+     * @param maxBytes maximum file size in bytes before rotation; {@code <= 0} disables rotation
+     * @param maxHistory number of rotated files retained; {@code 0} keeps no history files
+     * @return publisher instance
+     */
+    public static FileAuditEventPublisher of(Path outputPath, long maxBytes, int maxHistory) {
+        Objects.requireNonNull(outputPath, "outputPath must not be null");
+        if (maxHistory < 0) {
+            throw new IllegalArgumentException("maxHistory must be >= 0");
+        }
+        return new FileAuditEventPublisher(outputPath, maxBytes, maxHistory);
     }
 
     /**
@@ -49,6 +69,7 @@ public final class FileAuditEventPublisher implements AuditEventPublisher {
                 if (parent != null) {
                     Files.createDirectories(parent);
                 }
+                rotateIfNeeded(line.getBytes(StandardCharsets.UTF_8).length);
                 Files.writeString(
                     outputPath,
                     line,
@@ -61,6 +82,41 @@ public final class FileAuditEventPublisher implements AuditEventPublisher {
                 throw new IllegalStateException("Failed to append audit event to file: " + outputPath, ex);
             }
         }
+    }
+
+    private void rotateIfNeeded(int additionalBytes) throws IOException {
+        if (maxBytes <= 0 || !Files.exists(outputPath)) {
+            return;
+        }
+        long currentSize = Files.size(outputPath);
+        if (currentSize + additionalBytes <= maxBytes) {
+            return;
+        }
+
+        if (maxHistory <= 0) {
+            Files.deleteIfExists(outputPath);
+            return;
+        }
+
+        for (int index = maxHistory; index >= 1; index--) {
+            var target = rotatedPath(index);
+            if (index == 1) {
+                if (Files.exists(outputPath)) {
+                    Files.move(outputPath, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                }
+            } else {
+                var previous = rotatedPath(index - 1);
+                if (Files.exists(previous)) {
+                    Files.move(previous, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+        }
+    }
+
+    private Path rotatedPath(int index) {
+        var fileName = outputPath.getFileName();
+        var baseName = fileName == null ? "audit.log" : fileName.toString();
+        return outputPath.resolveSibling(baseName + "." + index);
     }
 
     private String toJsonLine(AuditEvent event) {

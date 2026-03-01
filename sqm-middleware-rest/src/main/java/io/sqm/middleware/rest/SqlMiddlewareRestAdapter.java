@@ -1,11 +1,6 @@
 package io.sqm.middleware.rest;
 
-import io.sqm.middleware.api.AnalyzeRequest;
-import io.sqm.middleware.api.DecisionExplanationDto;
-import io.sqm.middleware.api.DecisionResultDto;
-import io.sqm.middleware.api.EnforceRequest;
-import io.sqm.middleware.api.ExplainRequest;
-import io.sqm.middleware.api.SqlMiddlewareService;
+import io.sqm.middleware.api.*;
 
 import java.util.Objects;
 
@@ -32,6 +27,7 @@ public final class SqlMiddlewareRestAdapter {
      * @return decision payload
      */
     public DecisionResultDto analyze(AnalyzeRequest request) {
+        validateAnalyzeRequest(request);
         return service.analyze(request);
     }
 
@@ -42,6 +38,7 @@ public final class SqlMiddlewareRestAdapter {
      * @return decision payload
      */
     public DecisionResultDto enforce(EnforceRequest request) {
+        validateEnforceRequest(request);
         return service.enforce(request);
     }
 
@@ -52,6 +49,40 @@ public final class SqlMiddlewareRestAdapter {
      * @return explanation payload
      */
     public DecisionExplanationDto explain(ExplainRequest request) {
+        validateExplainRequest(request);
         return service.explainDecision(request);
+    }
+
+    private static void validateAnalyzeRequest(AnalyzeRequest request) {
+        if (request == null) {
+            throw new InvalidRequestException("Request body must not be null");
+        }
+        validateCommon(request.sql(), request.context());
+    }
+
+    private static void validateEnforceRequest(EnforceRequest request) {
+        if (request == null) {
+            throw new InvalidRequestException("Request body must not be null");
+        }
+        validateCommon(request.sql(), request.context());
+    }
+
+    private static void validateExplainRequest(ExplainRequest request) {
+        if (request == null) {
+            throw new InvalidRequestException("Request body must not be null");
+        }
+        validateCommon(request.sql(), request.context());
+    }
+
+    private static void validateCommon(String sql, ExecutionContextDto context) {
+        if (sql == null || sql.isBlank()) {
+            throw new InvalidRequestException("Field 'sql' must not be blank");
+        }
+        if (context == null) {
+            throw new InvalidRequestException("Field 'context' must not be null");
+        }
+        if (context.dialect() == null || context.dialect().isBlank()) {
+            throw new InvalidRequestException("Field 'context.dialect' must not be blank");
+        }
     }
 }

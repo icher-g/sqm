@@ -22,7 +22,7 @@ class RequestSizeFilterTest {
         var filter = new RequestSizeFilter(properties);
 
         var request = new MockHttpServletRequest();
-        request.setRequestURI("/sqm/middleware/analyze");
+        request.setRequestURI("/sqm/middleware/v1/analyze");
         request.setContent("payload".getBytes(StandardCharsets.UTF_8));
         var response = new MockHttpServletResponse();
         var called = new AtomicBoolean(false);
@@ -39,7 +39,7 @@ class RequestSizeFilterTest {
         var filter = new RequestSizeFilter(properties);
 
         var request = new MockHttpServletRequest();
-        request.setRequestURI("/sqm/middleware/analyze");
+        request.setRequestURI("/sqm/middleware/v1/analyze");
         request.setContent("payload".getBytes(StandardCharsets.UTF_8));
         var response = new MockHttpServletResponse();
 
@@ -55,7 +55,7 @@ class RequestSizeFilterTest {
         var filter = new RequestSizeFilter(properties);
 
         var original = new MockHttpServletRequest();
-        original.setRequestURI("/sqm/middleware/analyze");
+        original.setRequestURI("/sqm/middleware/v1/analyze");
         original.setContent("abc".getBytes(StandardCharsets.UTF_8));
         var request = new HttpServletRequestWrapper(original) {
             @Override

@@ -1,5 +1,6 @@
 package io.sqm.middleware.rest;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,6 +28,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class SqlMiddlewareRestStatusIntegrationTest {
 
+    static {
+        System.setProperty("sqm.middleware.schema.source", "manual");
+        System.clearProperty("sqm.middleware.schema.json.path");
+        System.clearProperty("sqm.middleware.schema.bootstrap.failFast");
+    }
+
     @LocalServerPort
     private int port;
 
@@ -36,7 +43,7 @@ class SqlMiddlewareRestStatusIntegrationTest {
     @Test
     void health_and_readiness_are_ready_when_schema_bootstrap_succeeds() {
         var health = restTemplate.getForEntity(
-            "http://localhost:" + port + "/sqm/middleware/health",
+            "http://localhost:" + port + "/sqm/middleware/v1/health",
             SqlMiddlewareStatusResponse.class
         );
         assertEquals(HttpStatus.OK, health.getStatusCode());
@@ -47,7 +54,7 @@ class SqlMiddlewareRestStatusIntegrationTest {
         assertNull(health.getBody().schemaErrorMessage());
 
         var readiness = restTemplate.getForEntity(
-            "http://localhost:" + port + "/sqm/middleware/readiness",
+            "http://localhost:" + port + "/sqm/middleware/v1/readiness",
             SqlMiddlewareStatusResponse.class
         );
         assertEquals(HttpStatus.OK, readiness.getStatusCode());
@@ -55,5 +62,12 @@ class SqlMiddlewareRestStatusIntegrationTest {
         assertEquals("READY", readiness.getBody().status());
         assertEquals("READY", readiness.getBody().schemaState());
         assertNull(readiness.getBody().schemaErrorMessage());
+    }
+
+    @AfterAll
+    static void clearSchemaBootstrapSystemProperties() {
+        System.clearProperty("sqm.middleware.schema.source");
+        System.clearProperty("sqm.middleware.schema.json.path");
+        System.clearProperty("sqm.middleware.schema.bootstrap.failFast");
     }
 }

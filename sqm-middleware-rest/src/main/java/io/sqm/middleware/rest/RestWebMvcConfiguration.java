@@ -33,7 +33,7 @@ public class RestWebMvcConfiguration implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(apiKeyAuthInterceptor).addPathPatterns("/sqm/middleware/**");
-        registry.addInterceptor(rateLimitInterceptor).addPathPatterns("/sqm/middleware/**");
+        registry.addInterceptor(apiKeyAuthInterceptor).addPathPatterns("/sqm/middleware/v1/**");
+        registry.addInterceptor(rateLimitInterceptor).addPathPatterns("/sqm/middleware/v1/**");
     }
 }

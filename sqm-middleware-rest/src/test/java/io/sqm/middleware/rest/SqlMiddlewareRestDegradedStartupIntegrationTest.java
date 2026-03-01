@@ -46,10 +46,10 @@ class SqlMiddlewareRestDegradedStartupIntegrationTest {
     @Test
     void readiness_reports_not_ready_and_analyze_denies_with_pipeline_error() {
         var readiness = restTemplate.getForEntity(
-            "http://localhost:" + port + "/sqm/middleware/readiness",
+            "http://localhost:" + port + "/sqm/middleware/v1/readiness",
             SqlMiddlewareStatusResponse.class
         );
-        assertEquals(HttpStatus.OK, readiness.getStatusCode());
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, readiness.getStatusCode());
         assertNotNull(readiness.getBody());
         assertEquals("NOT_READY", readiness.getBody().status());
         assertEquals("DEGRADED", readiness.getBody().schemaState());
@@ -57,7 +57,7 @@ class SqlMiddlewareRestDegradedStartupIntegrationTest {
 
         var request = new AnalyzeRequest("select 1", new ExecutionContextDto("postgresql", null, null, null, null));
         var analyze = restTemplate.postForEntity(
-            "http://localhost:" + port + "/sqm/middleware/analyze",
+            "http://localhost:" + port + "/sqm/middleware/v1/analyze",
             request,
             DecisionResultDto.class
         );

@@ -43,8 +43,8 @@ class SqlMiddlewareRestRateLimitIntegrationTest {
     void rejects_request_above_rate_limit() {
         var request = analyzeRequest();
 
-        var first = restTemplate.postForEntity(url("/sqm/middleware/analyze"), request, DecisionResultDto.class);
-        var second = restTemplate.postForEntity(url("/sqm/middleware/analyze"), request, RestErrorResponse.class);
+        var first = restTemplate.postForEntity(url("/sqm/middleware/v1/analyze"), request, DecisionResultDto.class);
+        var second = restTemplate.postForEntity(url("/sqm/middleware/v1/analyze"), request, RestErrorResponse.class);
 
         assertEquals(HttpStatus.OK, first.getStatusCode());
         assertEquals(HttpStatus.TOO_MANY_REQUESTS, second.getStatusCode());

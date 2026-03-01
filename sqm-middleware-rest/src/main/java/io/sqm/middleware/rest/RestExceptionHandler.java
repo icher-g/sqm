@@ -46,6 +46,22 @@ public final class RestExceptionHandler {
     }
 
     /**
+     * Handles request validation failures not mapped by explicit request exceptions.
+     *
+     * @param exception validation exception
+     * @param request HTTP request
+     * @return response entity with stable invalid-request payload
+     */
+    @ExceptionHandler({IllegalArgumentException.class, NullPointerException.class})
+    public ResponseEntity<RestErrorResponse> handleValidationException(
+        RuntimeException exception,
+        HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(new RestErrorResponse("INVALID_REQUEST", exception.getMessage(), request.getRequestURI()));
+    }
+
+    /**
      * Handles unclassified server failures.
      *
      * @param exception server exception

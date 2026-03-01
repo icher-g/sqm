@@ -33,6 +33,7 @@ public final class SqlMiddlewareMcpServer {
     private final SqlMiddlewareMcpToolRouter router;
     private final ObjectMapper objectMapper;
     private final SqlMiddlewareMcpServerOptions options;
+    private final String serverVersion;
 
     /**
      * Creates a server backed by tool router.
@@ -55,6 +56,7 @@ public final class SqlMiddlewareMcpServer {
         this.router = Objects.requireNonNull(router, "router must not be null");
         this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper must not be null");
         this.options = Objects.requireNonNull(options, "options must not be null");
+        this.serverVersion = resolveServerVersion();
     }
 
     /**
@@ -166,11 +168,25 @@ public final class SqlMiddlewareMcpServer {
             "capabilities", Map.of(
                 "tools", Map.of("listChanged", false)
             ),
-            "serverInfo", Map.of(
+                "serverInfo", Map.of(
                 "name", "sqm-middleware-mcp",
-                "version", "0.3.0-SNAPSHOT"
+                "version", serverVersion
             )
         );
+    }
+
+    private static String resolveServerVersion() {
+        var implementationVersion = SqlMiddlewareMcpServer.class.getPackage().getImplementationVersion();
+        if (implementationVersion != null && !implementationVersion.isBlank()) {
+            return implementationVersion;
+        }
+
+        var systemVersion = System.getProperty("sqm.version");
+        if (systemVersion != null && !systemVersion.isBlank()) {
+            return systemVersion;
+        }
+
+        return "dev";
     }
 
     private Object toolsListResult() {

@@ -47,7 +47,7 @@ class SqlMiddlewareRestSecurityIntegrationTest {
     void rejects_missing_api_key_with_401() {
         var request = analyzeRequest();
         ResponseEntity<RestErrorResponse> response = restTemplate.postForEntity(
-            url("/sqm/middleware/analyze"),
+            url("/sqm/middleware/v1/analyze"),
             request,
             RestErrorResponse.class
         );
@@ -66,7 +66,7 @@ class SqlMiddlewareRestSecurityIntegrationTest {
         headers.add("X-API-Key", "secret-key");
         var request = new HttpEntity<>(analyzeRequest(), headers);
         ResponseEntity<DecisionResultDto> response = restTemplate.exchange(
-            url("/sqm/middleware/analyze"),
+            url("/sqm/middleware/v1/analyze"),
             HttpMethod.POST,
             request,
             DecisionResultDto.class

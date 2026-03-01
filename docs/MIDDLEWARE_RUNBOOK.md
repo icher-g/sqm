@@ -24,7 +24,7 @@ Symptoms:
 
 Actions:
 1. Call:
-   - `GET /sqm/middleware/readiness`
+   - `GET /sqm/middleware/v1/readiness`
 2. Review:
    - `schemaSource`
    - `schemaState`

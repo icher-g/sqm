@@ -43,7 +43,7 @@ class SqlMiddlewareRestErrorContractIntegrationTest {
         var request = new HttpEntity<>("{\"sql\":", headers);
 
         var response = restTemplate.exchange(
-            "http://localhost:" + port + "/sqm/middleware/analyze",
+            "http://localhost:" + port + "/sqm/middleware/v1/analyze",
             HttpMethod.POST,
             request,
             RestErrorResponse.class
@@ -52,6 +52,28 @@ class SqlMiddlewareRestErrorContractIntegrationTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("INVALID_REQUEST", response.getBody().code());
-        assertEquals("/sqm/middleware/analyze", response.getBody().path());
+        assertEquals("/sqm/middleware/v1/analyze", response.getBody().path());
+    }
+
+    /**
+     * Verifies missing request context is returned as stable invalid-request payload.
+     */
+    @Test
+    void missing_context_returns_stable_error_contract() {
+        var headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        var request = new HttpEntity<>("{\"sql\":\"select 1\"}", headers);
+
+        var response = restTemplate.exchange(
+            "http://localhost:" + port + "/sqm/middleware/v1/analyze",
+            HttpMethod.POST,
+            request,
+            RestErrorResponse.class
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("INVALID_REQUEST", response.getBody().code());
+        assertEquals("/sqm/middleware/v1/analyze", response.getBody().path());
     }
 }
