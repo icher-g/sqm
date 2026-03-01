@@ -12,6 +12,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RateLimitInterceptorTest {
 
     @Test
+    void rejects_null_constructor_arguments() {
+        var properties = new RestAbuseProtectionProperties();
+        var limiter = new FixedWindowRateLimiter(1, 60, Clock.systemUTC());
+
+        assertThrows(NullPointerException.class, () -> new RateLimitInterceptor(null, limiter));
+        assertThrows(NullPointerException.class, () -> new RateLimitInterceptor(properties, null));
+    }
+
+    @Test
     void allows_when_rate_limit_is_disabled() {
         var properties = new RestAbuseProtectionProperties();
         properties.setRateLimitEnabled(false);
@@ -68,6 +77,25 @@ class RateLimitInterceptorTest {
 
         var first = request("10.0.0.1", null);
         var second = request("10.0.0.1", null);
+
+        assertTrue(interceptor.preHandle(first, new MockHttpServletResponse(), new Object()));
+        assertThrows(
+            RateLimitExceededException.class,
+            () -> interceptor.preHandle(second, new MockHttpServletResponse(), new Object())
+        );
+    }
+
+    @Test
+    void uses_first_non_blank_forwarded_ip_when_header_contains_empty_entries() {
+        var properties = new RestAbuseProtectionProperties();
+        properties.setRateLimitEnabled(true);
+        properties.setTrustProxyHeaders(true);
+        properties.setClientIpHeader("X-Forwarded-For");
+
+        var interceptor = new RateLimitInterceptor(properties, new FixedWindowRateLimiter(1, 60, Clock.systemUTC()));
+
+        var first = request("10.0.0.1", " , 7.7.7.7");
+        var second = request("10.0.0.2", "7.7.7.7, 8.8.8.8");
 
         assertTrue(interceptor.preHandle(first, new MockHttpServletResponse(), new Object()));
         assertThrows(

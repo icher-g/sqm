@@ -18,6 +18,17 @@ class SqlMiddlewareMcpServerIntegrationTest {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Test
+    void rejects_null_constructor_arguments() {
+        var router = routerFor(new StubService());
+        var options = SqlMiddlewareMcpServerOptions.defaults();
+
+        assertThrows(NullPointerException.class, () -> new SqlMiddlewareMcpServer(null));
+        assertThrows(NullPointerException.class, () -> new SqlMiddlewareMcpServer(router, null));
+        assertThrows(NullPointerException.class, () -> new SqlMiddlewareMcpServer(router, MAPPER, null));
+        assertThrows(NullPointerException.class, () -> new SqlMiddlewareMcpServer(null, MAPPER, options));
+    }
+
+    @Test
     void server_returns_initialize_and_tools_list_results_over_framed_protocol() throws Exception {
         var server = new SqlMiddlewareMcpServer(routerFor(new StubService()), MAPPER);
         var input = new ByteArrayInputStream((
@@ -53,6 +64,36 @@ class SqlMiddlewareMcpServerIntegrationTest {
         assertTrue(containsTool(tools, "middleware.analyze"));
         assertTrue(containsTool(tools, "middleware.enforce"));
         assertTrue(containsTool(tools, "middleware.explain"));
+    }
+
+    @Test
+    void initialize_uses_system_version_when_provided() throws Exception {
+        var previous = System.getProperty("sqm.version");
+        try {
+            System.setProperty("sqm.version", "1.2.3-test");
+            var server = new SqlMiddlewareMcpServer(routerFor(new StubService()), MAPPER);
+            var input = new ByteArrayInputStream((
+                framedJson("""
+                    {"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}
+                    """)
+                    + framedJson("""
+                    {"jsonrpc":"2.0","method":"exit"}
+                    """)
+            ).getBytes(StandardCharsets.UTF_8));
+            var output = new ByteArrayOutputStream();
+
+            server.serve(input, output);
+
+            var responses = parseFramedResponses(output.toByteArray());
+            assertEquals(1, responses.size());
+            assertEquals("1.2.3-test", responses.getFirst().path("result").path("serverInfo").path("version").asText());
+        } finally {
+            if (previous == null) {
+                System.clearProperty("sqm.version");
+            } else {
+                System.setProperty("sqm.version", previous);
+            }
+        }
     }
 
     @Test

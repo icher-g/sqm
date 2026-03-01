@@ -75,14 +75,7 @@ class FileAuditEventPublisherTest {
             assertTrue(content.contains("tenant\\t1"));
             assertTrue(content.contains("\"fingerprint\":\"\""));
         } finally {
-            Files.walk(dir)
-                .sorted(java.util.Comparator.reverseOrder())
-                .forEach(path -> {
-                    try {
-                        Files.deleteIfExists(path);
-                    } catch (Exception ignored) {
-                    }
-                });
+            deleteTree(dir);
         }
     }
 
@@ -100,14 +93,7 @@ class FileAuditEventPublisherTest {
             assertTrue(Files.exists(dir.resolve("audit.log.1")));
             assertTrue(Files.exists(dir.resolve("audit.log.2")));
         } finally {
-            Files.walk(dir)
-                .sorted(java.util.Comparator.reverseOrder())
-                .forEach(path -> {
-                    try {
-                        Files.deleteIfExists(path);
-                    } catch (Exception ignored) {
-                    }
-                });
+            deleteTree(dir);
         }
     }
 
@@ -123,14 +109,7 @@ class FileAuditEventPublisherTest {
             assertTrue(Files.exists(output));
             assertFalse(Files.exists(dir.resolve("audit.log.1")));
         } finally {
-            Files.walk(dir)
-                .sorted(java.util.Comparator.reverseOrder())
-                .forEach(path -> {
-                    try {
-                        Files.deleteIfExists(path);
-                    } catch (Exception ignored) {
-                    }
-                });
+            deleteTree(dir);
         }
     }
 
@@ -144,6 +123,27 @@ class FileAuditEventPublisherTest {
         }
     }
 
+    @Test
+    void rejects_null_path_in_rotating_factory() {
+        assertThrows(NullPointerException.class, () -> FileAuditEventPublisher.of(null, 1024, 1));
+    }
+
+    @Test
+    void does_not_rotate_when_file_is_within_max_bytes() throws Exception {
+        var dir = Files.createTempDirectory("sqm-audit-no-rotate");
+        var output = dir.resolve("audit.log");
+        try {
+            var publisher = FileAuditEventPublisher.of(output, 10_000, 2);
+            publisher.publish(event("select 1"));
+            publisher.publish(event("select 2"));
+
+            assertTrue(Files.exists(output));
+            assertFalse(Files.exists(dir.resolve("audit.log.1")));
+        } finally {
+            deleteTree(dir);
+        }
+    }
+
     private static AuditEvent event(String sql) {
         return new AuditEvent(
             sql,
@@ -154,5 +154,17 @@ class FileAuditEventPublisherTest {
             ExecutionContext.of("postgresql", "alice", "tenant-a", ExecutionMode.ANALYZE, ParameterizationMode.OFF),
             123L
         );
+    }
+
+    private static void deleteTree(java.nio.file.Path root) throws Exception {
+        try (var paths = Files.walk(root)) {
+            paths.sorted(java.util.Comparator.reverseOrder())
+                .forEach(path -> {
+                    try {
+                        Files.deleteIfExists(path);
+                    } catch (Exception ignored) {
+                    }
+                });
+        }
     }
 }
