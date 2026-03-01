@@ -45,7 +45,7 @@ class SqlMiddlewareRestRequestSizeIntegrationTest {
         );
 
         var response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/sqm/middleware/analyze",
+            "http://localhost:" + port + "/sqm/middleware/v1/analyze",
             request,
             RestErrorResponse.class
         );

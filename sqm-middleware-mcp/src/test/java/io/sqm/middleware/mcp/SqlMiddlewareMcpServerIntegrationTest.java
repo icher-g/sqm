@@ -42,6 +42,7 @@ class SqlMiddlewareMcpServerIntegrationTest {
         assertEquals("2.0", initialize.path("jsonrpc").asText());
         assertEquals(1, initialize.path("id").asInt());
         assertEquals("sqm-middleware-mcp", initialize.path("result").path("serverInfo").path("name").asText());
+        assertFalse(initialize.path("result").path("serverInfo").path("version").asText().isBlank());
 
         var toolsList = responses.get(1);
         assertEquals("2.0", toolsList.path("jsonrpc").asText());

@@ -1,9 +1,14 @@
-﻿# SQM - Structured Query Model for Java
+# SQM - Structured Query Model for Java
 
 [![Build](https://github.com/icher-g/sqm/actions/workflows/publish-maven.yml/badge.svg?branch=main)](https://github.com/icher-g/sqm/actions/workflows/publish-maven.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Packages](https://img.shields.io/badge/Maven-GitHub%20Packages-blue)](https://github.com/icher-g/sqm/packages)
 [![codecov](https://codecov.io/gh/icher-g/sqm/graph/badge.svg)](https://codecov.io/gh/icher-g/sqm)
+
+## Description
+
+**SQM (Structured Query Model)** is a Java framework for representing SQL as a typed immutable model and running end-to-end SQL pipelines.
+It supports parse, validate, transform/rewrite, render, serialize, and runtime policy enforcement across multiple dialects and transports.
 
 ## Wiki
 
@@ -12,9 +17,6 @@ Project wiki with feature guides and examples: https://github.com/icher-g/sqm/wi
 ## Contributor Rules
 
 Repository development rules for contributors and coding agents are defined in `AGENTS.md`.
-
-**SQM (Structured Query Model)** is a Java framework for representing SQL as a typed immutable model and running end-to-end SQL pipelines.
-It supports parse, validate, transform/rewrite, render, serialize, and runtime policy enforcement across multiple dialects and transports.
 
 ---
 
@@ -246,9 +248,14 @@ mvn -pl sqm-middleware-rest -am spring-boot:run
 
 HTTP endpoints:
 
-- `POST /sqm/middleware/analyze`
-- `POST /sqm/middleware/enforce`
-- `POST /sqm/middleware/explain`
+- `POST /sqm/middleware/v1/analyze`
+- `POST /sqm/middleware/v1/enforce`
+- `POST /sqm/middleware/v1/explain`
+
+Versioning:
+
+- REST API is path-versioned.
+- Current version: `v1` (no unversioned compatibility routes).
 
 Example request body:
 
@@ -328,7 +335,7 @@ Transport error contracts:
 
 REST correlation id:
 
-- every `/sqm/middleware/**` response includes `X-Correlation-Id`
+- every `/sqm/middleware/v1/**` response includes `X-Correlation-Id`
 - if client sends `X-Correlation-Id`, the same value is echoed back
 - if missing, runtime generates one per request
 
@@ -410,9 +417,9 @@ mvn -pl sqm-middleware-rest -am spring-boot:run \
 
 Runtime status endpoints (REST host):
 
-- `GET /sqm/middleware/health`
+- `GET /sqm/middleware/v1/health`
   - liveness-style signal (`status=UP`) + schema bootstrap diagnostics
-- `GET /sqm/middleware/readiness`
+- `GET /sqm/middleware/v1/readiness`
   - readiness signal:
     - `status=READY` when schema bootstrap is ready
     - `status=NOT_READY` when started in degraded mode

@@ -425,6 +425,47 @@ class SqlMiddlewareRuntimeFactoryTest {
     }
 
     @Test
+    void rotates_audit_file_when_rotation_configuration_is_enabled() throws IOException {
+        var dir = Files.createTempDirectory("sqm-runtime-factory-audit-rotate");
+        var auditPath = dir.resolve("audit.log");
+        try {
+            withProperties(Map.of(
+                ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+                ConfigKeys.AUDIT_PUBLISHER_MODE.property(), "file",
+                ConfigKeys.AUDIT_FILE_PATH.property(), auditPath.toString(),
+                ConfigKeys.AUDIT_FILE_MAX_BYTES.property(), "1",
+                ConfigKeys.AUDIT_FILE_MAX_HISTORY.property(), "1"
+            ), () -> {
+                var service = SqlMiddlewareRuntimeFactory.createFromEnvironment();
+                service.analyze(new AnalyzeRequest("select 1", new ExecutionContextDto("postgresql", "alice", "tenant-a", null, null)));
+                service.analyze(new AnalyzeRequest("select 1", new ExecutionContextDto("postgresql", "alice", "tenant-a", null, null)));
+            });
+
+            assertTrue(Files.exists(auditPath));
+            assertTrue(Files.exists(dir.resolve("audit.log.1")));
+        } finally {
+            Files.walk(dir)
+                .sorted(java.util.Comparator.reverseOrder())
+                .forEach(path -> {
+                    try {
+                        Files.deleteIfExists(path);
+                    } catch (IOException ignored) {
+                    }
+                });
+        }
+    }
+
+    @Test
+    void throws_when_audit_file_rotation_history_is_negative() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.AUDIT_PUBLISHER_MODE.property(), "file",
+            ConfigKeys.AUDIT_FILE_PATH.property(), "./audit.log",
+            ConfigKeys.AUDIT_FILE_MAX_HISTORY.property(), "-1"
+        ), () -> assertThrows(IllegalArgumentException.class, SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
     void enables_metrics_logging_mode_without_errors() {
         withProperties(Map.of(
             ConfigKeys.SCHEMA_SOURCE.property(), "manual",
@@ -444,6 +485,15 @@ class SqlMiddlewareRuntimeFactoryTest {
             ConfigKeys.SCHEMA_SOURCE.property(), "manual",
             ConfigKeys.HOST_MAX_IN_FLIGHT.property(), "8",
             ConfigKeys.HOST_ACQUIRE_TIMEOUT_MILLIS.property(), "0",
+            ConfigKeys.HOST_REQUEST_TIMEOUT_MILLIS.property(), "1000"
+        ), () -> assertDoesNotThrow(SqlMiddlewareRuntimeFactory::createFromEnvironment));
+    }
+
+    @Test
+    void host_request_timeout_takes_precedence_over_guardrails_timeout() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.GUARDRAILS_TIMEOUT_MILLIS.property(), "2000",
             ConfigKeys.HOST_REQUEST_TIMEOUT_MILLIS.property(), "1000"
         ), () -> assertDoesNotThrow(SqlMiddlewareRuntimeFactory::createFromEnvironment));
     }

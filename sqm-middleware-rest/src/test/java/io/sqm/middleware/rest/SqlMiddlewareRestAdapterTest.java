@@ -13,6 +13,7 @@ import io.sqm.middleware.api.SqlMiddlewareService;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SqlMiddlewareRestAdapterTest {
 
@@ -29,6 +30,44 @@ class SqlMiddlewareRestAdapterTest {
         assertEquals("analyze", analyze.message());
         assertEquals(DecisionKindDto.DENY, enforce.kind());
         assertEquals("explain", explain.explanation());
+    }
+
+    @Test
+    void rejects_blank_sql_with_invalid_request_exception() {
+        var adapter = new SqlMiddlewareRestAdapter(new StubService());
+        var ctx = new ExecutionContextDto("postgresql", null, null, null, null);
+
+        var error = assertThrows(
+            InvalidRequestException.class,
+            () -> adapter.analyze(new AnalyzeRequest(" ", ctx))
+        );
+
+        assertEquals("INVALID_REQUEST", error.code());
+    }
+
+    @Test
+    void rejects_missing_context_with_invalid_request_exception() {
+        var adapter = new SqlMiddlewareRestAdapter(new StubService());
+
+        var error = assertThrows(
+            InvalidRequestException.class,
+            () -> adapter.enforce(new EnforceRequest("select 1", null))
+        );
+
+        assertEquals("INVALID_REQUEST", error.code());
+    }
+
+    @Test
+    void rejects_blank_context_dialect_with_invalid_request_exception() {
+        var adapter = new SqlMiddlewareRestAdapter(new StubService());
+        var ctx = new ExecutionContextDto(" ", null, null, null, null);
+
+        var error = assertThrows(
+            InvalidRequestException.class,
+            () -> adapter.explain(new ExplainRequest("select 1", ctx))
+        );
+
+        assertEquals("INVALID_REQUEST", error.code());
     }
 
     private static final class StubService implements SqlMiddlewareService {

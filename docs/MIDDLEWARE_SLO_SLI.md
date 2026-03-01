@@ -30,8 +30,8 @@ This document defines PR1.10 SLI/SLO baselines for middleware hosts.
 - Telemetry logs (`sqm.middleware.metrics.*`)
 - Audit events (`sqm.middleware.audit.*`)
 - REST status endpoints:
-  - `/sqm/middleware/health`
-  - `/sqm/middleware/readiness`
+  - `/sqm/middleware/v1/health`
+  - `/sqm/middleware/v1/readiness`
 - MCP startup diagnostics stderr line (schema bootstrap state/source/error)
 
 ## Alert Suggestions

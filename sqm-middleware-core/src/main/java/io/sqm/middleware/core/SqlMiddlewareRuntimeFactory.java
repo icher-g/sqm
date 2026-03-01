@@ -144,8 +144,14 @@ public final class SqlMiddlewareRuntimeFactory {
     private static void applyGuardrails(SqlDecisionServiceConfig.Builder builder) {
         Integer maxSqlLength = readIntNullable(ConfigKeys.GUARDRAILS_MAX_SQL_LENGTH);
         Long timeoutMillis = readLongNullable(ConfigKeys.GUARDRAILS_TIMEOUT_MILLIS);
+        Long hostRequestTimeoutMillis = readLongNullable(ConfigKeys.HOST_REQUEST_TIMEOUT_MILLIS);
         Integer maxRows = readIntNullable(ConfigKeys.GUARDRAILS_MAX_ROWS);
         boolean explainDryRun = readBoolean(ConfigKeys.GUARDRAILS_EXPLAIN_DRY_RUN, false);
+
+        // Host-level timeout has precedence to avoid nested timeout wrappers (engine + host).
+        if (hostRequestTimeoutMillis != null) {
+            timeoutMillis = null;
+        }
 
         if (maxSqlLength == null && timeoutMillis == null && maxRows == null && !explainDryRun) {
             return;
@@ -290,7 +296,13 @@ public final class SqlMiddlewareRuntimeFactory {
             }
             case "file" -> {
                 var path = required(ConfigKeys.AUDIT_FILE_PATH);
-                builder.auditPublisher(FileAuditEventPublisher.of(Path.of(path)));
+                var maxBytes = readLongNullable(ConfigKeys.AUDIT_FILE_MAX_BYTES);
+                var maxHistory = readIntNullable(ConfigKeys.AUDIT_FILE_MAX_HISTORY);
+                builder.auditPublisher(FileAuditEventPublisher.of(
+                    Path.of(path),
+                    maxBytes == null ? 0L : maxBytes,
+                    maxHistory == null ? 0 : maxHistory
+                ));
             }
             default -> throw new IllegalArgumentException(
                 "Unsupported audit publisher mode: " + mode + ". Supported: noop,logging,file"

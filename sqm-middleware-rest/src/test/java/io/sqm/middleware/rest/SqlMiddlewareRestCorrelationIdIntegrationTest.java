@@ -43,7 +43,7 @@ class SqlMiddlewareRestCorrelationIdIntegrationTest {
         var request = new HttpEntity<>(analyzeRequest(), headers);
 
         var response = restTemplate.exchange(
-            url("/sqm/middleware/analyze"),
+            url("/sqm/middleware/v1/analyze"),
             HttpMethod.POST,
             request,
             DecisionResultDto.class
@@ -56,7 +56,7 @@ class SqlMiddlewareRestCorrelationIdIntegrationTest {
     @Test
     void generates_correlation_id_when_missing() {
         var response = restTemplate.postForEntity(
-            url("/sqm/middleware/analyze"),
+            url("/sqm/middleware/v1/analyze"),
             analyzeRequest(),
             DecisionResultDto.class
         );

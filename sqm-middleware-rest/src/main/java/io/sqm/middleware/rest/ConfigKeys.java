@@ -55,6 +55,16 @@ public final class ConfigKeys {
      */
     public static final String ABUSE_MAX_REQUEST_BYTES = ABUSE_PREFIX + ".maxRequestBytes";
 
+    /**
+     * Enables trusted proxy header resolution for rate-limiting client identity.
+     */
+    public static final String ABUSE_TRUST_PROXY_HEADERS = ABUSE_PREFIX + ".trustProxyHeaders";
+
+    /**
+     * Header name used for extracting client IP when proxy headers are trusted.
+     */
+    public static final String ABUSE_CLIENT_IP_HEADER = ABUSE_PREFIX + ".clientIpHeader";
+
     private ConfigKeys() {
     }
 }

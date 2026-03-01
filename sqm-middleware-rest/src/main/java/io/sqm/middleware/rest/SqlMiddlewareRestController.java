@@ -16,7 +16,7 @@ import java.util.Objects;
  * HTTP controller exposing SQL middleware operations.
  */
 @RestController
-@RequestMapping("/sqm/middleware")
+@RequestMapping("/sqm/middleware/v1")
 public final class SqlMiddlewareRestController {
 
     private final SqlMiddlewareRestAdapter adapter;

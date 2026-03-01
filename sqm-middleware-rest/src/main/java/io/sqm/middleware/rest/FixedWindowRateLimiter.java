@@ -4,16 +4,20 @@ import java.time.Clock;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Fixed-window per-key rate limiter.
  */
 public final class FixedWindowRateLimiter {
 
+    private static final int EVICTION_CHECK_EVERY_CALLS = 256;
+
     private final int requestsPerWindow;
     private final long windowMillis;
     private final Clock clock;
     private final ConcurrentHashMap<String, Window> windows = new ConcurrentHashMap<>();
+    private final AtomicLong callCounter = new AtomicLong();
 
     /**
      * Creates fixed-window limiter.
@@ -44,6 +48,9 @@ public final class FixedWindowRateLimiter {
         var limiterKey = key == null || key.isBlank() ? "unknown" : key;
         var now = clock.millis();
         var windowStart = (now / windowMillis) * windowMillis;
+
+        maybeEvict(windowStart);
+
         var window = windows.compute(limiterKey, (k, previous) -> {
             if (previous == null || previous.startMillis != windowStart) {
                 return new Window(windowStart, new AtomicInteger(0));
@@ -51,6 +58,19 @@ public final class FixedWindowRateLimiter {
             return previous;
         });
         return window.count.incrementAndGet() <= requestsPerWindow;
+    }
+
+    private void maybeEvict(long currentWindowStart) {
+        if (callCounter.incrementAndGet() % EVICTION_CHECK_EVERY_CALLS != 0) {
+            return;
+        }
+        // Keep only the current/previous window to avoid unbounded key growth while tolerating clock skew.
+        var minRetainedWindowStart = currentWindowStart - windowMillis;
+        windows.entrySet().removeIf(entry -> entry.getValue().startMillis < minRetainedWindowStart);
+    }
+
+    int trackedKeyCount() {
+        return windows.size();
     }
 
     private record Window(long startMillis, AtomicInteger count) {

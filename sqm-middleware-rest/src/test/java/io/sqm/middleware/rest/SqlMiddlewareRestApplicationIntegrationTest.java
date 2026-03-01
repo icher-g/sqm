@@ -41,7 +41,7 @@ class SqlMiddlewareRestApplicationIntegrationTest {
         );
 
         var response = restTemplate.postForEntity(
-            baseUrl() + "/sqm/middleware/analyze",
+            baseUrl() + "/sqm/middleware/v1/analyze",
             request,
             DecisionResultDto.class
         );
@@ -60,7 +60,7 @@ class SqlMiddlewareRestApplicationIntegrationTest {
         );
 
         var response = restTemplate.postForEntity(
-            baseUrl() + "/sqm/middleware/explain",
+            baseUrl() + "/sqm/middleware/v1/explain",
             request,
             DecisionExplanationDto.class
         );
@@ -79,7 +79,7 @@ class SqlMiddlewareRestApplicationIntegrationTest {
         );
 
         var response = restTemplate.postForEntity(
-            baseUrl() + "/sqm/middleware/enforce",
+            baseUrl() + "/sqm/middleware/v1/enforce",
             request,
             DecisionResultDto.class
         );

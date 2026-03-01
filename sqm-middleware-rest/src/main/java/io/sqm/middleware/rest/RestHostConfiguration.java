@@ -85,7 +85,7 @@ public class RestHostConfiguration {
     public FilterRegistrationBean<RequestSizeFilter> requestSizeFilterRegistration(RestAbuseProtectionProperties properties) {
         var registration = new FilterRegistrationBean<>(new RequestSizeFilter(properties));
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
-        registration.addUrlPatterns("/sqm/middleware/*");
+        registration.addUrlPatterns("/sqm/middleware/v1/*");
         return registration;
     }
 
@@ -98,7 +98,7 @@ public class RestHostConfiguration {
     public FilterRegistrationBean<CorrelationIdFilter> correlationIdFilterRegistration() {
         var registration = new FilterRegistrationBean<>(new CorrelationIdFilter());
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
-        registration.addUrlPatterns("/sqm/middleware/*");
+        registration.addUrlPatterns("/sqm/middleware/v1/*");
         return registration;
     }
 

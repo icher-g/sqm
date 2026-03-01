@@ -85,4 +85,74 @@ class FileAuditEventPublisherTest {
                 });
         }
     }
+
+    @Test
+    void rotates_when_max_bytes_is_exceeded_and_retains_history() throws Exception {
+        var dir = Files.createTempDirectory("sqm-audit-rotate");
+        var output = dir.resolve("audit.log");
+        try {
+            var publisher = FileAuditEventPublisher.of(output, 1, 2);
+            publisher.publish(event("select 1"));
+            publisher.publish(event("select 2"));
+            publisher.publish(event("select 3"));
+
+            assertTrue(Files.exists(output));
+            assertTrue(Files.exists(dir.resolve("audit.log.1")));
+            assertTrue(Files.exists(dir.resolve("audit.log.2")));
+        } finally {
+            Files.walk(dir)
+                .sorted(java.util.Comparator.reverseOrder())
+                .forEach(path -> {
+                    try {
+                        Files.deleteIfExists(path);
+                    } catch (Exception ignored) {
+                    }
+                });
+        }
+    }
+
+    @Test
+    void rotates_without_history_when_max_history_is_zero() throws Exception {
+        var dir = Files.createTempDirectory("sqm-audit-rotate-zero");
+        var output = dir.resolve("audit.log");
+        try {
+            var publisher = FileAuditEventPublisher.of(output, 1, 0);
+            publisher.publish(event("select 1"));
+            publisher.publish(event("select 2"));
+
+            assertTrue(Files.exists(output));
+            assertFalse(Files.exists(dir.resolve("audit.log.1")));
+        } finally {
+            Files.walk(dir)
+                .sorted(java.util.Comparator.reverseOrder())
+                .forEach(path -> {
+                    try {
+                        Files.deleteIfExists(path);
+                    } catch (Exception ignored) {
+                    }
+                });
+        }
+    }
+
+    @Test
+    void rejects_negative_max_history() throws Exception {
+        var output = Files.createTempFile("sqm-audit", ".log");
+        try {
+            assertThrows(IllegalArgumentException.class, () -> FileAuditEventPublisher.of(output, 10, -1));
+        } finally {
+            Files.deleteIfExists(output);
+        }
+    }
+
+    private static AuditEvent event(String sql) {
+        return new AuditEvent(
+            sql,
+            sql,
+            java.util.List.of(ReasonCode.NONE),
+            null,
+            DecisionResult.allow(),
+            ExecutionContext.of("postgresql", "alice", "tenant-a", ExecutionMode.ANALYZE, ParameterizationMode.OFF),
+            123L
+        );
+    }
 }

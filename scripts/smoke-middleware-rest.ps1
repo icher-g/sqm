@@ -25,8 +25,8 @@ try {
             throw "REST smoke check failed: Maven process exited early with code $($process.ExitCode)."
         }
         try {
-            $health = Invoke-RestMethod -Method Get -Uri "http://localhost:$Port/sqm/middleware/health"
-            $readiness = Invoke-RestMethod -Method Get -Uri "http://localhost:$Port/sqm/middleware/readiness"
+            $health = Invoke-RestMethod -Method Get -Uri "http://localhost:$Port/sqm/middleware/v1/health"
+            $readiness = Invoke-RestMethod -Method Get -Uri "http://localhost:$Port/sqm/middleware/v1/readiness"
             if ($health.status -eq "UP" -and ($readiness.status -eq "READY" -or $readiness.status -eq "NOT_READY")) {
                 $ready = $true
                 break

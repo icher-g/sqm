@@ -263,6 +263,22 @@ public final class ConfigKeys {
     );
 
     /**
+     * Maximum audit file size in bytes before rotation.
+     */
+    public static final Key AUDIT_FILE_MAX_BYTES = Key.of(
+        "sqm.middleware.audit.file.maxBytes",
+        "SQM_MIDDLEWARE_AUDIT_FILE_MAX_BYTES"
+    );
+
+    /**
+     * Number of rotated audit files to retain.
+     */
+    public static final Key AUDIT_FILE_MAX_HISTORY = Key.of(
+        "sqm.middleware.audit.file.maxHistory",
+        "SQM_MIDDLEWARE_AUDIT_FILE_MAX_HISTORY"
+    );
+
+    /**
      * Enables middleware telemetry emission.
      */
     public static final Key METRICS_ENABLED = Key.of(
