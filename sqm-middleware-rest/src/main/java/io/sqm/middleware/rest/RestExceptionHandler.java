@@ -14,6 +14,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public final class RestExceptionHandler {
 
     /**
+     * Creates REST exception handler.
+     */
+    public RestExceptionHandler() {
+    }
+
+    /**
      * Handles stable request exceptions.
      *
      * @param exception request exception
@@ -38,7 +44,7 @@ public final class RestExceptionHandler {
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<RestErrorResponse> handleUnreadablePayload(
-        HttpMessageNotReadableException exception,
+        @SuppressWarnings("unused") HttpMessageNotReadableException exception,
         HttpServletRequest request
     ) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

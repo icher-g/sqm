@@ -16,6 +16,12 @@ public class RestSecurityProperties {
     private List<String> apiKeys = new ArrayList<>();
 
     /**
+     * Creates REST security properties holder.
+     */
+    public RestSecurityProperties() {
+    }
+
+    /**
      * Returns whether API-key authentication is enabled.
      *
      * @return {@code true} when API-key auth is active

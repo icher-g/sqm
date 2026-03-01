@@ -7,7 +7,14 @@ import org.springframework.http.HttpStatus;
  */
 public abstract class RestRequestException extends RuntimeException {
 
+    /**
+     * Stable machine-readable error code exposed by REST error responses.
+     */
     private final String code;
+
+    /**
+     * HTTP status returned for this request error.
+     */
     private final HttpStatus status;
 
     /**
