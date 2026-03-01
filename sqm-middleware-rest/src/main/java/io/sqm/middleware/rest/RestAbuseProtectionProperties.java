@@ -16,6 +16,12 @@ public class RestAbuseProtectionProperties {
     private String clientIpHeader = "X-Forwarded-For";
 
     /**
+     * Creates abuse-protection properties holder.
+     */
+    public RestAbuseProtectionProperties() {
+    }
+
+    /**
      * Returns whether rate limiting is enabled.
      *
      * @return {@code true} when enabled

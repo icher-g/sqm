@@ -11,6 +11,7 @@ Agents should read it first and follow it throughout the task.
 
 ## Minimum Requirements
 - Every new public class or public method must include JavaDoc.
+- Avoid Javadoc warnings by documenting explicit public no-arg constructors and public fields/record components (`@param`/`@return` where applicable).
 - Every new behavior must be covered by tests; prefer unit tests close to the change.
 - Avoid instantiating `Impl` classes directly; use interface `of(...)` factories.
 - Preserve node immutability contracts: transformers must return new nodes when changed and the same instance when unchanged.

@@ -18,6 +18,12 @@ import java.time.Clock;
 public class RestHostConfiguration {
 
     /**
+     * Creates REST host configuration.
+     */
+    public RestHostConfiguration() {
+    }
+
+    /**
      * Creates security filter chain that delegates endpoint auth to interceptors.
      *
      * @param http security builder

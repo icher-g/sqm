@@ -26,6 +26,12 @@ public final class CorrelationIdFilter extends OncePerRequestFilter {
     public static final String MDC_KEY = "correlationId";
 
     /**
+     * Creates correlation-id propagation filter.
+     */
+    public CorrelationIdFilter() {
+    }
+
+    /**
      * Populates correlation id from request header or generates one when missing.
      *
      * @param request HTTP request

@@ -1,22 +1,60 @@
 ﻿# Changelog
 
 ## [Unreleased]
+
+## [v0.3.1] - 2026-03-01
 ### Added
+- New framework modules introduced in this release:
+  - `sqm-control`
+  - `sqm-middleware-api`
+  - `sqm-middleware-core`
+  - `sqm-middleware-rest`
+  - `sqm-middleware-mcp`
+  - `sqm-middleware-it`
+- First release of SQL decision/middleware pipeline capabilities:
+  - parse -> validate -> rewrite -> render -> decision
+  - unified runtime config, guardrails, and built-in rewrite wiring
 - Middleware framework example in `examples`:
   - `examples/src/main/java/io/sqm/examples/Middleware_EndToEndPolicyFlow.java`
-- Middleware wiki guide:
+- Middleware wiki guides:
   - `wiki-src/SQL-Middleware-Framework.md`
-- Middleware policy templates wiki guide:
   - `wiki-src/SQL-Middleware-Policy-Templates.md`
 - PostgreSQL middleware integration tests (`sqm-it`):
   - `sqm-it/src/test/java/io/sqm/it/PostgresMiddlewareIntegrationTest.java`
 - Docker-free middleware flow tests (`sqm-control`):
   - `sqm-control/src/test/java/io/sqm/control/AiSqlMiddlewareFlowTest.java`
+- Runtime/ops documentation:
+  - `docs/MIDDLEWARE_CONFIG_KEYS.md`
+  - `docs/MIDDLEWARE_DEPLOYMENT_PROFILES.md`
+  - `docs/MIDDLEWARE_RELEASE_CHECKLIST.md`
+  - `docs/MIDDLEWARE_NFR.md`
+  - `docs/MIDDLEWARE_RUNBOOK.md`
+  - `docs/MIDDLEWARE_SLO_SLI.md`
 
 ### Changed
-- Updated wiki navigation and home quickstart to include middleware guidance.
-- Updated README with `sqm-control` middleware usage overview and links to example/tests.
-- Clarified `docs/MODEL.md` scope note: middleware composes behavior on top of existing AST nodes (no new node types introduced by middleware).
+- Middleware/control baseline hardened for production-readiness:
+  - strict production-mode config checks and schema bootstrap diagnostics
+  - structured REST error contract and transport-level hardening
+  - host flow control (in-flight limits, acquire timeout, request timeout)
+  - telemetry/audit publisher wiring from centralized config keys
+- REST host updates:
+  - path-versioned API under `/sqm/middleware/v1/*`
+  - readiness semantics aligned with bootstrap status (`200` when ready, `503` when not ready)
+  - proxy-aware rate-limiting client key resolution (`X-Forwarded-For` style support)
+  - request validation and correlation-id behavior hardened
+- MCP host updates:
+  - framing/protocol hardening and deterministic JSON-RPC error mapping
+  - server version metadata resolution from build/package or `sqm.version`
+- Audit durability updates:
+  - file audit publisher supports optional rotation/retention (`maxBytes`, `maxHistory`)
+- Core model/DSL cleanup:
+  - identifier/qualified-name migration stabilized and docs/examples refreshed
+  - builder-first model creation patterns expanded in tests/examples
+- CI and release smoke improvements for middleware and codegen flows.
+
+### Documentation
+- Updated README and wiki navigation to reflect middleware architecture, modules, and versioned REST routes.
+- Clarified model scope note in `docs/MODEL.md`: middleware composes behavior on top of existing AST nodes.
 
 ## [v0.3.0] - 2026-02-13
 ### Added

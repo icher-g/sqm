@@ -1,6 +1,7 @@
 package io.sqm.middleware.rest;
 
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,13 +26,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         "sqm.middleware.rest.abuse.rateLimitEnabled=false"
     }
 )
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class SqlMiddlewareRestStatusIntegrationTest {
 
-    static {
-        System.setProperty("sqm.middleware.schema.source", "manual");
-        System.clearProperty("sqm.middleware.schema.json.path");
-        System.clearProperty("sqm.middleware.schema.bootstrap.failFast");
+    private static final String SCHEMA_SOURCE_KEY = "sqm.middleware.schema.source";
+    private static final String SCHEMA_JSON_PATH_KEY = "sqm.middleware.schema.json.path";
+    private static final String SCHEMA_FAIL_FAST_KEY = "sqm.middleware.schema.bootstrap.failFast";
+
+    @BeforeAll
+    static void setupSchemaBootstrapProperties() {
+        System.setProperty(SCHEMA_SOURCE_KEY, "manual");
+        System.clearProperty(SCHEMA_JSON_PATH_KEY);
+        System.clearProperty(SCHEMA_FAIL_FAST_KEY);
+    }
+
+    @AfterAll
+    static void clearSchemaBootstrapProperties() {
+        System.clearProperty(SCHEMA_SOURCE_KEY);
+        System.clearProperty(SCHEMA_JSON_PATH_KEY);
+        System.clearProperty(SCHEMA_FAIL_FAST_KEY);
     }
 
     @LocalServerPort
@@ -64,10 +77,4 @@ class SqlMiddlewareRestStatusIntegrationTest {
         assertNull(readiness.getBody().schemaErrorMessage());
     }
 
-    @AfterAll
-    static void clearSchemaBootstrapSystemProperties() {
-        System.clearProperty("sqm.middleware.schema.source");
-        System.clearProperty("sqm.middleware.schema.json.path");
-        System.clearProperty("sqm.middleware.schema.bootstrap.failFast");
-    }
 }
