@@ -1,4 +1,4 @@
-# SQM — Structured Query Model for Java
+﻿# SQM - Structured Query Model for Java
 
 [![Build](https://github.com/icher-g/sqm/actions/workflows/publish-maven.yml/badge.svg?branch=main)](https://github.com/icher-g/sqm/actions/workflows/publish-maven.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -9,55 +9,109 @@
 
 Project wiki with feature guides and examples: https://github.com/icher-g/sqm/wiki
 
-**SQM (Structured Query Model)** is a lightweight Java library for modeling SQL queries as composable, strongly-typed objects.  
-It enables **bidirectional transformations** between SQL, JSON, and DSL forms — making it ideal for query generation, analysis, rewriting, and serialization across dialects.
+## Contributor Rules
+
+Repository development rules for contributors and coding agents are defined in `AGENTS.md`.
+
+**SQM (Structured Query Model)** is a Java framework for representing SQL as a typed immutable model and running end-to-end SQL pipelines.
+It supports parse, validate, transform/rewrite, render, serialize, and runtime policy enforcement across multiple dialects and transports.
 
 ---
 
-## ✨ Features
+## Features
 
-- 🧩 **Structured model** — fully object-oriented representation of SQL (Query, Table, Column, Predicate, Join, etc.)
-- 🔁 **Bidirectional flow** — parse SQL → model → render SQL again (and JSON/DSL support)
-- 🧠 **Dialect-aware parsing/rendering** — ANSI core + PostgreSQL, etc.
-- 🧪 **Extensive test coverage** — golden-file round-trip tests and property-based validation
-- 🧰 **Builder DSL** — fluent helpers for programmatic query construction
-- 🧾 **JSON serialization** — Jackson mixins for all core model types
-- 🧱 **Extensible** — custom functions, renderers, pagination styles, and dialects
+- **Typed immutable SQL model** - composable AST for queries, expressions, predicates, joins, and dialect-specific nodes.
+- **Dialect support** - ANSI + PostgreSQL parser/renderer/spec implementations.
+- **Validation framework** - schema-aware query validation with configurable limits and access policies (principal/tenant aware).
+- **Rewrite and normalization pipeline** - built-in and custom rewrite rules (limit injection, qualification, canonicalization, tenant predicate, etc.).
+- **Middleware decision engine** - analyze/enforce/explain workflow with guardrails, telemetry, auditing, and flow control.
+- **Transport hosts** - REST and MCP runtimes for externalized middleware usage.
+- **DSL and code generation** - fluent query construction plus SQL-file-to-Java generation.
+- **JSON support** - model serialization/deserialization via Jackson mixins.
+- **Extensibility** - registries/contracts for dialects, functions, validation rules, and rewrite strategies.
 
 ---
 
-## 🧭 Architecture Overview
+## Architecture Overview
 
+Base SQL model flow:
+
+```text
+       ┌─────────────┐
+       │   SQL Text  │
+       └──────┬──────┘
+              │ parse
+              ▼
+       ┌─────────────┐
+       │    Model    │ <───> JSON / DSL
+       └──────┬──────┘
+              │ transform / rewrite / optimize
+              ▼
+       ┌─────────────┐
+       │    Model    │
+       └──────┬──────┘
+              │ render
+              ▼
+       ┌─────────────┐
+       │   SQL Text  │
+       └─────────────┘
 ```
-        ┌─────────────┐
-        │   SQL Text  │
-        └──────┬──────┘
-               │  parse
-               ▼
-        ┌─────────────┐
-        │    Model    │   ←→   JSON / DSL
-        └──────┬──────┘
-               │  render
-               ▼
-        ┌─────────────┐
-        │   SQL Text  │
-        └─────────────┘
+
+Middleware decision flow:
+
+```text
+       ┌─────────────┐
+       │   SQL Text  │
+       └──────┬──────┘
+              │ parse
+              ▼
+       ┌─────────────┐
+       │    Model    │
+       └──────┬──────┘
+              │ validate
+              ▼
+       ┌─────────────┐
+       │ Guardrails  │
+       │ + Policies  │
+       └──────┬──────┘
+              │ transform / rewrite / optimize
+              ▼
+       ┌─────────────┐
+       │  Rewritten  │
+       │    Model    │
+       └──────┬──────┘
+              │ render
+              ▼
+       ┌─────────────┐
+       │   SQL Text  │
+       │ + Bind Data │
+       └──────┬──────┘
+              │ decide
+              ▼
+       ┌─────────────┐
+       │  Decision   │
+       │ allow/deny/ │
+       │   rewrite   │
+       └─────────────┘
 ```
 
 Core components:
-- **Model** — unified AST representing any SQL query.
-- **Parsers** — turn SQL strings into model objects.
-- **Renderers** — convert model objects back into SQL (dialect-aware).
-- **Middleware** — policy decision pipeline (`parse -> validate -> rewrite -> render -> decision`).
-- **DSL Builders** — programmatic query construction.
-- **JSON Mixins** — serialization/deserialization for external tools.
+- **Model (sqm-core)** - AST nodes, visitor/transformer infrastructure, match API, DSL primitives.
+- **Parsers (sqm-parser-*)** - dialect parsing into model nodes.
+- **Renderers (sqm-render-*)** - dialect rendering from model nodes.
+- **Validation (sqm-validate*)** - schema/function/access-policy semantic checks.
+- **Catalog (sqm-catalog*)** - schema sources (JSON/JDBC) and type mapping.
+- **Control/Middleware (sqm-control, sqm-middleware-*)** - decision engine, rewrites, runtime hosts, telemetry/audit.
+- **JSON (sqm-json)** - serialization mixins.
+- **Codegen (sqm-codegen*)** - SQL file code generation and plugin integration.
+- **Integration tests (sqm-it)** - cross-module/runtime verification.
 
 ---
 
 ## Model Hierarchy
 
 SQM defines a rich, type-safe model (AST) to represent SQL queries internally.
-This model is shared between the DSL, parser, and renderer modules.
+This model is shared across DSL, parser, renderer, validator, transform/rewrite, middleware, JSON, and codegen modules.
 
 ➡️ [View the full hierarchy in docs/MODEL.md](docs/MODEL.md)
 
@@ -178,9 +232,9 @@ var decision = middleware.enforce(
 
 See:
 
-- Wiki guide: `wiki-src/SQL-Middleware-Framework.md`
-- Example class: `examples/src/main/java/io/sqm/examples/Middleware_EndToEndPolicyFlow.java`
-- Integration tests: `sqm-it/src/test/java/io/sqm/it/PostgresMiddlewareIntegrationTest.java`
+- Wiki guide: [wiki-src/SQL-Middleware-Framework.md](wiki-src/SQL-Middleware-Framework.md)
+- Example class: [examples/src/main/java/io/sqm/examples/Middleware_EndToEndPolicyFlow.java](examples/src/main/java/io/sqm/examples/Middleware_EndToEndPolicyFlow.java)
+- Integration tests: [sqm-it/src/test/java/io/sqm/it/PostgresMiddlewareIntegrationTest.java](sqm-it/src/test/java/io/sqm/it/PostgresMiddlewareIntegrationTest.java)
 
 #### Transport Runtimes (REST + MCP)
 
@@ -281,7 +335,7 @@ REST correlation id:
 Runtime configuration (applies to both REST and MCP hosts):
 
 Complete generated key table (single source of truth):
-- `docs/MIDDLEWARE_CONFIG_KEYS.md` (generated from `ConfigKeys`; run `scripts/generate-middleware-config-keys-doc.ps1`)
+- [docs/MIDDLEWARE_CONFIG_KEYS.md](docs/MIDDLEWARE_CONFIG_KEYS.md) (generated from `ConfigKeys`; run `scripts/generate-middleware-config-keys-doc.ps1`)
 
 - Schema source:
     - `sqm.middleware.schema.source` (`manual` | `json` | `jdbc`)
@@ -366,11 +420,11 @@ Runtime status endpoints (REST host):
 
 Production operations docs:
 
-- NFR suite: `docs/MIDDLEWARE_NFR.md`
-- Deployment profiles/artifacts: `docs/MIDDLEWARE_DEPLOYMENT_PROFILES.md`
-- SLO/SLI: `docs/MIDDLEWARE_SLO_SLI.md`
-- Runbook: `docs/MIDDLEWARE_RUNBOOK.md`
-- Release checklist: `docs/MIDDLEWARE_RELEASE_CHECKLIST.md`
+- NFR suite: [docs/MIDDLEWARE_NFR.md](docs/MIDDLEWARE_NFR.md)
+- Deployment profiles/artifacts: [docs/MIDDLEWARE_DEPLOYMENT_PROFILES.md](docs/MIDDLEWARE_DEPLOYMENT_PROFILES.md)
+- SLO/SLI: [docs/MIDDLEWARE_SLO_SLI.md](docs/MIDDLEWARE_SLO_SLI.md)
+- Runbook: [docs/MIDDLEWARE_RUNBOOK.md](docs/MIDDLEWARE_RUNBOOK.md)
+- Release checklist: [docs/MIDDLEWARE_RELEASE_CHECKLIST.md](docs/MIDDLEWARE_RELEASE_CHECKLIST.md)
 
 Validation settings example with tenant access policies (JSON):
 
@@ -501,7 +555,7 @@ The schema can be loaded from:
 - JDBC introspection (`JdbcSchemaProvider`) with optional local cache reuse
 
 See full setup and all configuration options in:
-- `docs/SQL_FILE_CODEGEN_SCHEMA_VALIDATION.md`
+- [docs/SQL_FILE_CODEGEN_SCHEMA_VALIDATION.md](docs/SQL_FILE_CODEGEN_SCHEMA_VALIDATION.md)
 
 Quick-start (JSON snapshot):
 
@@ -606,7 +660,7 @@ var validator1 = SchemaQueryValidator.of(schema, settings);
 var validator2 = SchemaQueryValidator.of(schema, myDialect); // SchemaValidationDialect
 ```
 
-See full validation features and planned improvements in `docs/VALIDATION_FEATURES.md`.
+See full validation features and planned improvements in [docs/VALIDATION_FEATURES.md](docs/VALIDATION_FEATURES.md).
 
 ### Serialize to JSON
 
@@ -644,14 +698,14 @@ Output example:
 
 ---
 
-### 🧮 Collectors & Transformers
+### Collectors & Transformers
 
 The SQM model provides powerful traversal and transformation mechanisms built on top of the **Visitor pattern**.  
 Two common examples are *collectors* (for extracting information from a query tree) and *transformers* (for producing modified copies).
 
 ---
 
-#### 🧩 Column Collector Example
+#### Column Collector Example
 
 A **collector** walks through the query tree and gathers information, such as all referenced column names.  
 Collectors typically extend `RecursiveNodeVisitor<R>` and accumulate results internally.
@@ -691,7 +745,7 @@ The recursive base visitor (`RecursiveNodeVisitor`) ensures all sub-nodes are vi
 
 ---
 
-#### 🔄 Column Transformer Example
+#### Column Transformer Example
 
 A **transformer** produces a modified copy of the query tree.  
 Transformers extend `RecursiveNodeTransformer` (a subclass of `NodeTransformer<Node>`) and return new node instances where changes are required.
@@ -718,11 +772,11 @@ Query transformed = transformer.transform(originalQuery);
 ```
 
 The `RecursiveNodeTransformer` automatically handles traversal and reconstruction of immutable nodes.  
-You only override methods for nodes you wish to modify — all others are traversed and returned unchanged.
+You only override methods for nodes you wish to modify - all others are traversed and returned unchanged.
 
 ---
 
-#### ⚙️ Summary
+#### Summary
 
 | Concept                             | Description                                                  |
 |-------------------------------------|--------------------------------------------------------------|
@@ -734,7 +788,7 @@ You only override methods for nodes you wish to modify — all others are traver
 
 ---
 
-#### 💡 Typical Use Cases
+#### Typical Use Cases
 
 - Collect all referenced tables or columns in a query.  
 - Rewrite column names, table aliases, or function calls.  
@@ -781,12 +835,12 @@ The `Match` interface also includes an internal `sneakyThrow(Throwable)` helper 
 
 Each major SQM node type has its own specialized matcher interface:
 
-* **`QueryMatch<R>`** — matches query subtypes (`SelectQuery`, `WithQuery`, `CompositeQuery`).
-* **`JoinMatch<R>`** — matches join types (`OnJoin`, `UsingJoin`, `NaturalJoin`, `CrossJoin`).
-* **`ExpressionMatch<R>`** — matches expression types (`CaseExpr`, `ColumnExpr`, `FunctionExpr`, etc.).
-* **`PredicateMatch<R>`** — matches predicate kinds (`BetweenPredicate`, `InPredicate`, `LikePredicate`, etc.).
-* **`SelectItemMatch<R>`** — matches select item types (`ExprSelectItem`, `StarSelectItem`, `QualifiedStarSelectItem`).
-* **`TableMatch<R>`** — matches table reference types (`Table`, `QueryTable`, `ValuesTable`).
+* **`QueryMatch<R>`** - matches query subtypes (`SelectQuery`, `WithQuery`, `CompositeQuery`).
+* **`JoinMatch<R>`** - matches join types (`OnJoin`, `UsingJoin`, `NaturalJoin`, `CrossJoin`).
+* **`ExpressionMatch<R>`** - matches expression types (`CaseExpr`, `ColumnExpr`, `FunctionExpr`, etc.).
+* **`PredicateMatch<R>`** - matches predicate kinds (`BetweenPredicate`, `InPredicate`, `LikePredicate`, etc.).
+* **`SelectItemMatch<R>`** - matches select item types (`ExprSelectItem`, `StarSelectItem`, `QualifiedStarSelectItem`).
+* **`TableMatch<R>`** - matches table reference types (`Table`, `QueryTable`, `ValuesTable`).
 * etc.
 
 Each provides fluent methods corresponding to their subtype structure. For example:
@@ -894,7 +948,7 @@ NamedParamExpr.of("name")
 ---
 
 ##### **3. Anonymous Parameters**
-Parameters without names — the typical `?` placeholder:
+Parameters without names - the typical `?` placeholder:
 
 ```sql
 WHERE a = ?
@@ -980,18 +1034,18 @@ Arithmetic nodes allow SQL engines and transformations to handle numeric operati
 
 **Unary**
 
-- `-a` → `NegativeArithmeticExpr`
+- `-a` -> `NegativeArithmeticExpr`
 
 **Additive**
 
-- `a + b` → `AddArithmeticExpr`
-- `a - b` → `SubArithmeticExpr`
+- `a + b` -> `AddArithmeticExpr`
+- `a - b` -> `SubArithmeticExpr`
 
 **Multiplicative**
 
-- `a * b` → `MulArithmeticExpr`
-- `a / b` → `DivArithmeticExpr`
-- `a % b` → `ModArithmeticExpr`
+- `a * b` -> `MulArithmeticExpr`
+- `a / b` -> `DivArithmeticExpr`
+- `a % b` -> `ModArithmeticExpr`
 
 #### Example
 
@@ -1013,27 +1067,37 @@ price + quantity * 2
 
 ---
 
-## 🧩 Core Modules
+## Core Modules
 
-| Module                     | Description                           |
-|----------------------------|---------------------------------------|
-| `sqm-core`                 | Core model, renderers, DSL            |
-| `sqm-parser`               | Base SQL parser interfaces            |
-| `sqm-parser-ansi`          | ANSI SQL parser implementation        |
-| `sqm-parser-postgresql`    | PostgreSQL SQL parser implementation  |
-| `sqm-render`               | Base SQL renderer interfaces          |
-| `sqm-render-ansi`          | ANSI SQL renderer                     |
-| `sqm-render-postgresql`    | PostgreSQL SQL renderer               |
-| `sqm-json`                 | JSON serialization mixins             |
-| `sqm-codegen`              | SQL-to-DSL Java source generator      |
-| `sqm-codegen-maven-plugin` | Maven plugin for SQL file codegen     |
-| `sqm-validate`             | Schema-aware semantic query validator |
-| `sqm-it`                   | SQM integration tests                 |
-| `examples`                 | Code Examples                         |
+| Module                     | Description                                                                 |
+|----------------------------|-----------------------------------------------------------------------------|
+| `sqm-core`                 | Core SQL model (AST), visitors/transformers, match API, base DSL primitives |
+| `sqm-core-postgresql`      | PostgreSQL-specific model capabilities                                      |
+| `sqm-parser`               | Parser SPI and shared parser contracts                                      |
+| `sqm-parser-ansi`          | ANSI parser implementation                                                  |
+| `sqm-parser-postgresql`    | PostgreSQL parser implementation                                            |
+| `sqm-render`               | Renderer SPI and shared rendering contracts                                 |
+| `sqm-render-ansi`          | ANSI renderer implementation                                                |
+| `sqm-render-postgresql`    | PostgreSQL renderer implementation                                          |
+| `sqm-json`                 | Jackson mixins and JSON serialization support                               |
+| `sqm-catalog`              | Schema/catalog model and providers (JSON/JDBC)                              |
+| `sqm-catalog-postgresql`   | PostgreSQL catalog-specific implementations                                 |
+| `sqm-validate`             | Schema-aware semantic validator                                             |
+| `sqm-validate-postgresql`  | PostgreSQL validation extensions                                            |
+| `sqm-control`              | Decision engine, rewrites, guardrails, audit abstractions                   |
+| `sqm-middleware-api`       | Transport-neutral middleware request/response contracts                     |
+| `sqm-middleware-core`      | Runtime factory/services (flow control, telemetry, bootstrap)               |
+| `sqm-middleware-rest`      | Spring Boot REST host adapter                                               |
+| `sqm-middleware-mcp`       | MCP stdio host adapter                                                      |
+| `sqm-codegen`              | SQL-to-Java query model/code generation                                     |
+| `sqm-codegen-maven-plugin` | Maven plugin for SQL file code generation                                   |
+| `sqm-it`                   | Cross-module SQL integration tests                                          |
+| `sqm-middleware-it`        | Middleware end-to-end integration/NFR tests                                 |
+| `examples`                 | Usage examples and reference flows                                          |
 
 ---
 
-## 🧱 Example Use Cases
+## Example Use Cases
 
 - Building complex SQL dynamically in backend applications
 - Converting SQL text into structured form for static analysis or auditing
@@ -1043,17 +1107,18 @@ price + quantity * 2
 
 ---
 
-## 🧪 Testing & Validation
+## Testing & Validation
 
 SQM includes:
-- Round-trip tests: SQL → Model → SQL (golden files)
+- Round-trip tests: SQL -> Model -> SQL (golden files)
 - Fuzz & property tests: verify idempotency and equivalence
 - Renderer compatibility checks per dialect
 - JSON serialization consistency tests
+- Middleware runtime integration and NFR suites
 
 ---
 
-## 🛠 Development Setup
+## Development Setup
 
 ```bash
 git clone https://github.com/icher-g/sqm.git
@@ -1068,45 +1133,45 @@ mvn test
 
 ---
 
-## 📦 Maven Coordinates
+## Maven Coordinates
 
 ```xml
 <dependency>
   <groupId>io.sqm</groupId>
   <artifactId>sqm-core</artifactId>
-  <version>0.2.0-SNAPSHOT</version>
+  <version>${project.version}</version>
 </dependency>
 ```
 
----
-
-## 🧭 Roadmap
-
-- [X] Add support for parsing parameters in query (WHERE q = ?)
-- [X] Arithmetic operations in SQL statements (SELECT salary + bonus AS total_income)
-- [X] PostgresSQL support: update model, add renderer / parser
-- [ ] MySQL support: update model, add renderer / parser
-- [ ] Query optimizer
-- [X] Query validator
-- [ ] Add support for INSERT | UPDATE | DELETE | MERGE
+Current development version in this repository: `0.3.0-SNAPSHOT`.
 
 ---
 
-## 🪪 License
+## Roadmap
+
+Roadmap is tracked in project docs and GitHub issues:
+
+- [docs/ROADMAP.md](docs/ROADMAP.md)
+- https://github.com/icher-g/sqm/issues
+
+---
+
+## License
 
 Licensed under the **MIT License**.  
 See [LICENSE](LICENSE) for details.
 
 ---
 
-## 📚 Learn More
+## Learn More
 
-- [Documentation (coming soon)](https://icher-g.github.io/sqm)
+- [Project wiki](https://github.com/icher-g/sqm/wiki)
+- [Project docs folder](docs)
 - [Project examples](examples/src/main/java/io/sqm/examples)
 - [GitHub Issues](https://github.com/icher-g/sqm/issues)
 
 ---
 
-### 🧠 About
+### About
 
 **SQM (Structured Query Model)** is developed and maintained by [icher-g](https://github.com/icher-g).
