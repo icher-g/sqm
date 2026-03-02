@@ -1,5 +1,4 @@
-package io.sqm.middleware.rest;
-
+package io.sqm.middleware.rest.ratelimit;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
@@ -92,3 +91,4 @@ class FixedWindowRateLimiterTest {
         assertTrue(limiter.trackedKeyCount() < 520);
     }
 }
+
