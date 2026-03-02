@@ -4,7 +4,7 @@ import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
-import io.sqm.control.SqlDecisionServiceConfig;
+import io.sqm.control.config.SqlDecisionServiceConfig;
 import io.sqm.middleware.api.AnalyzeRequest;
 import io.sqm.middleware.api.DecisionResultDto;
 import io.sqm.middleware.api.ExecutionContextDto;
@@ -51,3 +51,4 @@ class TransportParityIntegrationTest {
         assertEquals(direct.rewrittenSql(), mcp.rewrittenSql());
     }
 }
+

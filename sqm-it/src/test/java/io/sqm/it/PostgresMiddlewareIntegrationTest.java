@@ -4,7 +4,16 @@ import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
-import io.sqm.control.*;
+import io.sqm.control.config.SqlDecisionServiceConfig;
+import io.sqm.control.decision.DecisionKind;
+import io.sqm.control.decision.ReasonCode;
+import io.sqm.control.execution.ExecutionContext;
+import io.sqm.control.execution.ExecutionMode;
+import io.sqm.control.execution.ParameterizationMode;
+import io.sqm.control.rewrite.BuiltInRewriteRule;
+import io.sqm.control.rewrite.BuiltInRewriteSettings;
+import io.sqm.control.rewrite.TenantRewriteTablePolicy;
+import io.sqm.control.service.SqlDecisionService;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.SchemaValidationSettingsLoader;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,10 +31,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers(disabledWithoutDocker = true)
 class PostgresMiddlewareIntegrationTest {

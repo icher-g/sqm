@@ -1,15 +1,9 @@
 package io.sqm.control.rewrite;
 
 import io.sqm.catalog.model.CatalogSchema;
-import io.sqm.control.BuiltInRewriteRule;
-import io.sqm.control.BuiltInRewriteSettings;
-import io.sqm.control.QueryRewriteRule;
+import io.sqm.control.pipeline.QueryRewriteRule;
 
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Source of built-in {@link QueryRewriteRule} instances used by middleware rewrite pipelines.
@@ -54,12 +48,12 @@ public final class BuiltInRewriteRules {
 
     /**
      * Returns selected non-schema-aware built-in rewrite rules in deterministic enum order.
-        *
-        * <p>Only the provided {@code rules} are returned. This method does not merge with the non-schema baseline
-        * pack from {@link #allAvailable(BuiltInRewriteSettings)}.</p>
+     *
+     * <p>Only the provided {@code rules} are returned. This method does not merge with the non-schema baseline
+     * pack from {@link #allAvailable(BuiltInRewriteSettings)}.</p>
      *
      * @param settings built-in rewrite settings
-     * @param rules selected built-in rule identifiers
+     * @param rules    selected built-in rule identifiers
      * @return immutable list of rewrite rules
      */
     public static List<QueryRewriteRule> selected(BuiltInRewriteSettings settings, Set<BuiltInRewriteRule> rules) {
@@ -76,7 +70,7 @@ public final class BuiltInRewriteRules {
     /**
      * Returns all schema-aware built-in rewrite rules in deterministic enum order.
      *
-     * @param schema catalog schema used by schema-aware rules
+     * @param schema   catalog schema used by schema-aware rules
      * @param settings built-in rewrite settings
      * @return immutable list of rewrite rules
      */
@@ -90,13 +84,13 @@ public final class BuiltInRewriteRules {
 
     /**
      * Returns selected schema-aware built-in rewrite rules in deterministic enum order.
-        *
-        * <p>Only the provided {@code rules} are returned. This method does not merge with the schema-aware baseline
-        * pack from {@link #allAvailable(CatalogSchema, BuiltInRewriteSettings)}.</p>
      *
-     * @param schema catalog schema used by schema-aware rules
+     * <p>Only the provided {@code rules} are returned. This method does not merge with the schema-aware baseline
+     * pack from {@link #allAvailable(CatalogSchema, BuiltInRewriteSettings)}.</p>
+     *
+     * @param schema   catalog schema used by schema-aware rules
      * @param settings built-in rewrite settings
-     * @param rules selected built-in rule identifiers
+     * @param rules    selected built-in rule identifiers
      * @return immutable list of rewrite rules
      */
     public static List<QueryRewriteRule> selected(CatalogSchema schema, BuiltInRewriteSettings settings, Set<BuiltInRewriteRule> rules) {
@@ -134,3 +128,7 @@ public final class BuiltInRewriteRules {
         };
     }
 }
+
+
+
+

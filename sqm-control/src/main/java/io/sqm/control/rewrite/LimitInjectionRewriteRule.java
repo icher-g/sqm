@@ -1,14 +1,11 @@
 package io.sqm.control.rewrite;
 
-import io.sqm.control.*;
-import io.sqm.core.CompositeQuery;
-import io.sqm.core.Expression;
-import io.sqm.core.LimitOffset;
-import io.sqm.core.LiteralExpr;
-import io.sqm.core.Query;
-import io.sqm.core.SelectQuery;
-import io.sqm.core.SelectQueryBuilder;
-import io.sqm.core.WithQuery;
+import io.sqm.control.decision.ReasonCode;
+import io.sqm.control.execution.ExecutionContext;
+import io.sqm.control.pipeline.QueryRewriteResult;
+import io.sqm.control.pipeline.QueryRewriteRule;
+import io.sqm.control.pipeline.RewriteDenyException;
+import io.sqm.core.*;
 import io.sqm.core.transform.LimitInjectionTransformer;
 
 import java.util.Objects;
@@ -55,6 +52,17 @@ public final class LimitInjectionRewriteRule implements QueryRewriteRule {
         return new LimitInjectionRewriteRule(LimitInjectionTransformer.of(defaultLimit), settings);
     }
 
+    private static String printableLimit(long limit) {
+        return limit == Long.MAX_VALUE ? "ALL" : Long.toString(limit);
+    }
+
+    private static Long numericLiteral(Expression expression) {
+        if (expression instanceof LiteralExpr literalExpr && literalExpr.value() instanceof Number n) {
+            return n.longValue();
+        }
+        return null;
+    }
+
     /**
      * Returns a stable rule identifier.
      *
@@ -68,7 +76,7 @@ public final class LimitInjectionRewriteRule implements QueryRewriteRule {
     /**
      * Applies limit injection and reports a rewrite only when the AST actually changes.
      *
-     * @param query parsed query model
+     * @param query   parsed query model
      * @param context execution context
      * @return rewrite result
      */
@@ -174,15 +182,7 @@ public final class LimitInjectionRewriteRule implements QueryRewriteRule {
             default -> query;
         };
     }
-
-    private static String printableLimit(long limit) {
-        return limit == Long.MAX_VALUE ? "ALL" : Long.toString(limit);
-    }
-
-    private static Long numericLiteral(Expression expression) {
-        if (expression instanceof LiteralExpr literalExpr && literalExpr.value() instanceof Number n) {
-            return n.longValue();
-        }
-        return null;
-    }
 }
+
+
+

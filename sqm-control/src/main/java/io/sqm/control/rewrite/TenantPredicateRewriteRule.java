@@ -1,13 +1,13 @@
 package io.sqm.control.rewrite;
 
-import io.sqm.control.*;
+import io.sqm.control.decision.ReasonCode;
+import io.sqm.control.execution.ExecutionContext;
+import io.sqm.control.pipeline.QueryRewriteResult;
+import io.sqm.control.pipeline.QueryRewriteRule;
+import io.sqm.control.pipeline.RewriteDenyException;
 import io.sqm.core.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Built-in rewrite rule that injects tenant predicates into top-level {@link SelectQuery} table sources.
@@ -31,6 +31,89 @@ public final class TenantPredicateRewriteRule implements QueryRewriteRule {
         return new TenantPredicateRewriteRule(Objects.requireNonNull(settings, "settings must not be null"));
     }
 
+    private static boolean isAlreadyConstrained(Predicate where, Target target, String tenant) {
+        if (where == null) {
+            return false;
+        }
+        for (Predicate conjunct : conjunctionTerms(where)) {
+            if (isTenantEqualityPredicate(conjunct, target, tenant)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static List<Predicate> conjunctionTerms(Predicate predicate) {
+        if (predicate instanceof AndPredicate and) {
+            var terms = new ArrayList<Predicate>();
+            terms.addAll(conjunctionTerms(and.lhs()));
+            terms.addAll(conjunctionTerms(and.rhs()));
+            return terms;
+        }
+        return List.of(predicate);
+    }
+
+    private static boolean isTenantEqualityPredicate(Predicate predicate, Target target, String tenant) {
+        if (!(predicate instanceof ComparisonPredicate comparison)) {
+            return false;
+        }
+        if (comparison.operator() != ComparisonOperator.EQ) {
+            return false;
+        }
+        return matchesColumnToTenantLiteral(comparison.lhs(), comparison.rhs(), target, tenant)
+            || matchesColumnToTenantLiteral(comparison.rhs(), comparison.lhs(), target, tenant);
+    }
+
+    private static boolean matchesColumnToTenantLiteral(
+        Expression maybeColumn,
+        Expression maybeLiteral,
+        Target target,
+        String tenant
+    ) {
+        if (!(maybeColumn instanceof ColumnExpr column)) {
+            return false;
+        }
+        if (!(maybeLiteral instanceof LiteralExpr literal) || !(literal.value() instanceof String value)) {
+            return false;
+        }
+        if (!Objects.equals(value, tenant)) {
+            return false;
+        }
+        if (!equalsIgnoreCase(column.name().value(), target.tenantColumn())) {
+            return false;
+        }
+        if (column.tableAlias() == null) {
+            return false;
+        }
+        return equalsIgnoreCase(column.tableAlias().value(), target.qualifier().value());
+    }
+
+    private static String tableKey(Identifier schema, Identifier table) {
+        return normalize(schema.value()) + "." + normalize(table.value());
+    }
+
+    private static String normalizeContextTenant(String tenant) {
+        if (tenant == null || tenant.isBlank()) {
+            return null;
+        }
+        return tenant;
+    }
+
+    private static String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static Predicate and(Predicate lhs, Predicate rhs) {
+        return lhs == null ? rhs : lhs.and(rhs);
+    }
+
+    private static boolean equalsIgnoreCase(String left, String right) {
+        return left != null && left.equalsIgnoreCase(right);
+    }
+
     /**
      * Returns stable rewrite-rule id.
      *
@@ -44,7 +127,7 @@ public final class TenantPredicateRewriteRule implements QueryRewriteRule {
     /**
      * Applies tenant predicate rewrite on top-level {@link SelectQuery} only.
      *
-     * @param query parsed query model
+     * @param query   parsed query model
      * @param context execution context
      * @return rewrite result
      */
@@ -118,63 +201,6 @@ public final class TenantPredicateRewriteRule implements QueryRewriteRule {
         return SelectQueryBuilder.of(select)
             .where(where)
             .build();
-    }
-
-    private static boolean isAlreadyConstrained(Predicate where, Target target, String tenant) {
-        if (where == null) {
-            return false;
-        }
-        for (Predicate conjunct : conjunctionTerms(where)) {
-            if (isTenantEqualityPredicate(conjunct, target, tenant)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static List<Predicate> conjunctionTerms(Predicate predicate) {
-        if (predicate instanceof AndPredicate and) {
-            var terms = new ArrayList<Predicate>();
-            terms.addAll(conjunctionTerms(and.lhs()));
-            terms.addAll(conjunctionTerms(and.rhs()));
-            return terms;
-        }
-        return List.of(predicate);
-    }
-
-    private static boolean isTenantEqualityPredicate(Predicate predicate, Target target, String tenant) {
-        if (!(predicate instanceof ComparisonPredicate comparison)) {
-            return false;
-        }
-        if (comparison.operator() != ComparisonOperator.EQ) {
-            return false;
-        }
-        return matchesColumnToTenantLiteral(comparison.lhs(), comparison.rhs(), target, tenant)
-            || matchesColumnToTenantLiteral(comparison.rhs(), comparison.lhs(), target, tenant);
-    }
-
-    private static boolean matchesColumnToTenantLiteral(
-        Expression maybeColumn,
-        Expression maybeLiteral,
-        Target target,
-        String tenant
-    ) {
-        if (!(maybeColumn instanceof ColumnExpr column)) {
-            return false;
-        }
-        if (!(maybeLiteral instanceof LiteralExpr literal) || !(literal.value() instanceof String value)) {
-            return false;
-        }
-        if (!Objects.equals(value, tenant)) {
-            return false;
-        }
-        if (!equalsIgnoreCase(column.name().value(), target.tenantColumn())) {
-            return false;
-        }
-        if (column.tableAlias() == null) {
-            return false;
-        }
-        return equalsIgnoreCase(column.tableAlias().value(), target.qualifier().value());
     }
 
     private List<Target> collectTargets(SelectQuery select) {
@@ -264,32 +290,6 @@ public final class TenantPredicateRewriteRule implements QueryRewriteRule {
         return null;
     }
 
-    private static String tableKey(Identifier schema, Identifier table) {
-        return normalize(schema.value()) + "." + normalize(table.value());
-    }
-
-    private static String normalizeContextTenant(String tenant) {
-        if (tenant == null || tenant.isBlank()) {
-            return null;
-        }
-        return tenant;
-    }
-
-    private static String normalize(String value) {
-        if (value == null) {
-            return null;
-        }
-        return value.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private static Predicate and(Predicate lhs, Predicate rhs) {
-        return lhs == null ? rhs : lhs.and(rhs);
-    }
-
-    private static boolean equalsIgnoreCase(String left, String right) {
-        return left != null && left.equalsIgnoreCase(right);
-    }
-
     private record Target(String tableKey, Identifier qualifier, String tenantColumn, TenantRewriteTableMode mode) {
         private Predicate predicateForTenant(String tenant) {
             return ColumnExpr.of(qualifier, Identifier.of(tenantColumn)).eq(Expression.literal(tenant));
@@ -299,3 +299,6 @@ public final class TenantPredicateRewriteRule implements QueryRewriteRule {
     private record ResolvedPolicy(String tableKey, TenantRewriteTablePolicy policy) {
     }
 }
+
+
+

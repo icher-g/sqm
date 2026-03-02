@@ -1,7 +1,7 @@
 package io.sqm.middleware.core;
 
-import io.sqm.control.SqlDecisionService;
-import io.sqm.control.SqlDecisionServiceConfig;
+import io.sqm.control.config.SqlDecisionServiceConfig;
+import io.sqm.control.service.SqlDecisionService;
 import io.sqm.middleware.api.SqlMiddlewareService;
 
 import java.util.Objects;
@@ -36,4 +36,3 @@ public final class SqlMiddlewareServices {
         return new SqlMiddlewareCoreService(decisionService);
     }
 }
-

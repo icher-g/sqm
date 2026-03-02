@@ -1,5 +1,13 @@
 package io.sqm.control;
 
+import io.sqm.control.audit.*;
+import io.sqm.control.config.*;
+import io.sqm.control.decision.*;
+import io.sqm.control.execution.*;
+import io.sqm.control.pipeline.*;
+import io.sqm.control.rewrite.*;
+import io.sqm.control.service.*;
+
 import io.sqm.control.rewrite.LimitInjectionRewriteRule;
 import org.junit.jupiter.api.Test;
 
@@ -99,5 +107,25 @@ class LimitInjectionRewriteRuleTest {
         assertTrue(offsetResult.rewritten());
         assertTrue(SqlQueryRenderer.standard().render(offsetResult.query(), PG_ANALYZE).sql().toLowerCase().contains("limit 5"));
     }
+
+    @Test
+    void clamp_mode_caps_default_limit_injected_from_settings() {
+        var rule = LimitInjectionRewriteRule.of(
+            BuiltInRewriteSettings.builder()
+                .defaultLimitInjectionValue(100)
+                .maxAllowedLimit(7)
+                .limitExcessMode(LimitExcessMode.CLAMP)
+                .build()
+        );
+
+        var query = SqlQueryParser.standard().parse("select 1", PG_ANALYZE);
+        var result = rule.apply(query, PG_ANALYZE);
+        var rendered = SqlQueryRenderer.standard().render(result.query(), PG_ANALYZE).sql().toLowerCase();
+
+        assertTrue(result.rewritten());
+        assertTrue(rendered.contains("limit 7"));
+    }
 }
+
+
 

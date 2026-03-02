@@ -1,6 +1,6 @@
 package io.sqm.middleware.core;
 
-import io.sqm.control.ConfigKeys;
+import io.sqm.control.config.ConfigKeys;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
@@ -82,3 +82,4 @@ class SchemaBootstrapLoaderTest {
         return target;
     }
 }
+

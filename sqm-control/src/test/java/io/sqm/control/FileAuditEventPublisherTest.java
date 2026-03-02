@@ -1,5 +1,13 @@
 package io.sqm.control;
 
+import io.sqm.control.audit.*;
+import io.sqm.control.config.*;
+import io.sqm.control.decision.*;
+import io.sqm.control.execution.*;
+import io.sqm.control.pipeline.*;
+import io.sqm.control.rewrite.*;
+import io.sqm.control.service.*;
+
 import io.sqm.control.audit.FileAuditEventPublisher;
 import org.junit.jupiter.api.Test;
 
@@ -144,6 +152,18 @@ class FileAuditEventPublisherTest {
         }
     }
 
+    @Test
+    void publishes_to_relative_file_without_parent_directory() throws Exception {
+        var output = java.nio.file.Path.of("sqm-audit-relative-" + System.nanoTime() + ".log");
+        try {
+            var publisher = FileAuditEventPublisher.of(output);
+            publisher.publish(event("select 1"));
+            assertTrue(Files.exists(output));
+        } finally {
+            Files.deleteIfExists(output);
+        }
+    }
+
     private static AuditEvent event(String sql) {
         return new AuditEvent(
             sql,
@@ -168,3 +188,5 @@ class FileAuditEventPublisherTest {
         }
     }
 }
+
+

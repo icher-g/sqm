@@ -1,5 +1,13 @@
 package io.sqm.control;
 
+import io.sqm.control.audit.*;
+import io.sqm.control.config.*;
+import io.sqm.control.decision.*;
+import io.sqm.control.execution.*;
+import io.sqm.control.pipeline.*;
+import io.sqm.control.rewrite.*;
+import io.sqm.control.service.*;
+
 import io.sqm.control.rewrite.TenantPredicateRewriteRule;
 import org.junit.jupiter.api.Test;
 
@@ -302,4 +310,61 @@ class TenantPredicateRewriteRuleTest {
         assertTrue(result.rewritten());
         assertTrue(rendered.contains("users.tenant_id"));
     }
+
+    @Test
+    void rewrites_top_level_select_inside_with_query() {
+        var settings = BuiltInRewriteSettings.builder()
+            .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
+            .tenantFallbackMode(TenantRewriteFallbackMode.SKIP)
+            .build();
+        var rule = TenantPredicateRewriteRule.of(settings);
+
+        var query = SqlQueryParser.standard().parse(
+            "with x as (select 1) select u.id from public.users u",
+            TENANT_ANALYZE
+        );
+
+        var result = rule.apply(query, TENANT_ANALYZE);
+        var rendered = SqlQueryRenderer.standard().render(result.query(), TENANT_ANALYZE).sql().toLowerCase();
+
+        assertTrue(result.rewritten());
+        assertTrue(rendered.contains("u.tenant_id"));
+    }
+
+    @Test
+    void supports_lateral_table_targets() {
+        var settings = BuiltInRewriteSettings.builder()
+            .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
+            .build();
+        var rule = TenantPredicateRewriteRule.of(settings);
+
+        var query = SqlQueryParser.standard().parse(
+            "select u.id from lateral public.users u",
+            TENANT_ANALYZE
+        );
+
+        var result = rule.apply(query, TENANT_ANALYZE);
+        var rendered = SqlQueryRenderer.standard().render(result.query(), TENANT_ANALYZE).sql().toLowerCase();
+
+        assertTrue(result.rewritten());
+        assertTrue(rendered.contains("u.tenant_id"));
+    }
+
+    @Test
+    void skips_when_existing_constraint_uses_reversed_literal_equals_column() {
+        var settings = BuiltInRewriteSettings.builder()
+            .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
+            .build();
+        var rule = TenantPredicateRewriteRule.of(settings);
+
+        var query = select(col("u", "id"))
+            .from(tbl("public", "users").as("u"))
+            .where(lit("tenant_a").eq(col("u", "tenant_id")))
+            .build();
+
+        var result = rule.apply(query, TENANT_ANALYZE);
+        assertFalse(result.rewritten());
+    }
 }
+
+

@@ -1,9 +1,9 @@
 package io.sqm.control.rewrite;
 
-import io.sqm.control.ExecutionContext;
-import io.sqm.control.QueryRewriteResult;
-import io.sqm.control.QueryRewriteRule;
-import io.sqm.control.ReasonCode;
+import io.sqm.control.decision.ReasonCode;
+import io.sqm.control.execution.ExecutionContext;
+import io.sqm.control.pipeline.QueryRewriteResult;
+import io.sqm.control.pipeline.QueryRewriteRule;
 import io.sqm.core.Query;
 import io.sqm.core.transform.ArithmeticSimplifier;
 import io.sqm.core.transform.BooleanPredicateSimplifier;
@@ -55,7 +55,7 @@ public final class CanonicalizationRewriteRule implements QueryRewriteRule {
     /**
      * Applies canonicalization and reports a rewrite only when the AST actually changes.
      *
-     * @param query parsed query model
+     * @param query   parsed query model
      * @param context execution context
      * @return rewrite result
      */
@@ -72,3 +72,7 @@ public final class CanonicalizationRewriteRule implements QueryRewriteRule {
         return QueryRewriteResult.rewritten(transformed, id(), ReasonCode.REWRITE_CANONICALIZATION);
     }
 }
+
+
+
+

@@ -1,6 +1,6 @@
 package io.sqm.middleware.rest;
 
-import io.sqm.control.ConfigKeys;
+import io.sqm.control.config.ConfigKeys;
 import io.sqm.middleware.api.SqlMiddlewareService;
 import io.sqm.middleware.core.SqlMiddlewareRuntime;
 import io.sqm.middleware.core.SqlMiddlewareRuntimeFactory;
@@ -110,5 +110,6 @@ public class SqlMiddlewareRestApplication {
         return envValue != null && !envValue.isBlank();
     }
 }
+
 
 

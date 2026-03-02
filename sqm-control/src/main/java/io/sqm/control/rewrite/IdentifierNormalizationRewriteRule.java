@@ -1,10 +1,9 @@
 package io.sqm.control.rewrite;
 
-import io.sqm.control.ExecutionContext;
-import io.sqm.control.QueryRewriteResult;
-import io.sqm.control.QueryRewriteRule;
-import io.sqm.control.ReasonCode;
-import io.sqm.control.BuiltInRewriteSettings;
+import io.sqm.control.decision.ReasonCode;
+import io.sqm.control.execution.ExecutionContext;
+import io.sqm.control.pipeline.QueryRewriteResult;
+import io.sqm.control.pipeline.QueryRewriteRule;
 import io.sqm.core.Query;
 import io.sqm.core.transform.IdentifierNormalizationTransformer;
 
@@ -63,3 +62,7 @@ public final class IdentifierNormalizationRewriteRule implements QueryRewriteRul
         return QueryRewriteResult.rewritten(transformed, id(), ReasonCode.REWRITE_IDENTIFIER_NORMALIZATION);
     }
 }
+
+
+
+

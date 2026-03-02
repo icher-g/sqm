@@ -1,6 +1,6 @@
 package io.sqm.middleware.core;
 
-import io.sqm.control.ConfigKeys;
+import io.sqm.control.config.ConfigKeys;
 import io.sqm.middleware.api.AnalyzeRequest;
 import io.sqm.middleware.api.EnforceRequest;
 import io.sqm.middleware.api.ExecutionContextDto;
@@ -586,4 +586,5 @@ class SqlMiddlewareRuntimeFactoryTest {
         return target;
     }
 }
+
 
