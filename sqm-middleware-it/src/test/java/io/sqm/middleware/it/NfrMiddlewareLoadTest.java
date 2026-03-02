@@ -10,8 +10,8 @@ import io.sqm.middleware.api.ExecutionContextDto;
 import io.sqm.middleware.core.SqlMiddlewareServices;
 import io.sqm.middleware.mcp.SqlMiddlewareMcpAdapter;
 import io.sqm.middleware.mcp.SqlMiddlewareMcpToolRouter;
-import io.sqm.middleware.rest.SqlMiddlewareRestAdapter;
-import io.sqm.middleware.rest.SqlMiddlewareRestController;
+import io.sqm.middleware.rest.adapter.SqlMiddlewareRestAdapter;
+import io.sqm.middleware.rest.controller.SqlMiddlewareRestController;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
