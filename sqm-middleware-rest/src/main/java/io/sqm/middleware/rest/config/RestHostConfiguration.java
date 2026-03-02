@@ -1,5 +1,10 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.config;
 
+import io.sqm.middleware.rest.filter.CorrelationIdFilter;
+import io.sqm.middleware.rest.filter.RequestSizeFilter;
+import io.sqm.middleware.rest.ratelimit.FixedWindowRateLimiter;
+import io.sqm.middleware.rest.ratelimit.RateLimitInterceptor;
+import io.sqm.middleware.rest.security.ApiKeyAuthInterceptor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -109,3 +114,5 @@ public class RestHostConfiguration {
     }
 
 }
+
+

@@ -1,10 +1,11 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.controller;
 
 import io.sqm.middleware.api.AnalyzeRequest;
 import io.sqm.middleware.api.DecisionExplanationDto;
 import io.sqm.middleware.api.DecisionResultDto;
 import io.sqm.middleware.api.EnforceRequest;
 import io.sqm.middleware.api.ExplainRequest;
+import io.sqm.middleware.rest.adapter.SqlMiddlewareRestAdapter;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -63,3 +64,5 @@ public final class SqlMiddlewareRestController {
         return adapter.explain(request);
     }
 }
+
+

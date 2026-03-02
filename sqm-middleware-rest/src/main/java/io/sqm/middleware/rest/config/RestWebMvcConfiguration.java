@@ -1,5 +1,7 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.config;
 
+import io.sqm.middleware.rest.ratelimit.RateLimitInterceptor;
+import io.sqm.middleware.rest.security.ApiKeyAuthInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -37,3 +39,5 @@ public class RestWebMvcConfiguration implements WebMvcConfigurer {
         registry.addInterceptor(rateLimitInterceptor).addPathPatterns("/sqm/middleware/v1/**");
     }
 }
+
+

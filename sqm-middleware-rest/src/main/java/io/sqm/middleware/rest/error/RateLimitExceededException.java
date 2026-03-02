@@ -1,4 +1,4 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.error;
 
 import org.springframework.http.HttpStatus;
 
@@ -16,3 +16,5 @@ public final class RateLimitExceededException extends RestRequestException {
         super("RATE_LIMIT_EXCEEDED", HttpStatus.TOO_MANY_REQUESTS, message);
     }
 }
+
+

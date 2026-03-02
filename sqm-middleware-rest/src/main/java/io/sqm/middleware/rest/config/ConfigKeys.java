@@ -1,4 +1,4 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.config;
 
 /**
  * Property keys used by the REST host module.
@@ -68,3 +68,5 @@ public final class ConfigKeys {
     private ConfigKeys() {
     }
 }
+
+

@@ -1,4 +1,4 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -58,3 +58,5 @@ public final class CorrelationIdFilter extends OncePerRequestFilter {
         }
     }
 }
+
+

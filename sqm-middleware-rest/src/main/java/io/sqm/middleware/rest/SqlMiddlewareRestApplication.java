@@ -4,6 +4,7 @@ import io.sqm.control.ConfigKeys;
 import io.sqm.middleware.api.SqlMiddlewareService;
 import io.sqm.middleware.core.SqlMiddlewareRuntime;
 import io.sqm.middleware.core.SqlMiddlewareRuntimeFactory;
+import io.sqm.middleware.rest.adapter.SqlMiddlewareRestAdapter;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -109,3 +110,5 @@ public class SqlMiddlewareRestApplication {
         return envValue != null && !envValue.isBlank();
     }
 }
+
+

@@ -1,4 +1,4 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -75,3 +75,5 @@ public class RestSecurityProperties {
         this.apiKeys = apiKeys == null ? new ArrayList<>() : new ArrayList<>(apiKeys);
     }
 }
+
+

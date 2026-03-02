@@ -1,4 +1,4 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.model;
 
 /**
  * REST host status response for health/readiness diagnostics.
@@ -17,4 +17,6 @@ public record SqlMiddlewareStatusResponse(
     String schemaErrorMessage
 ) {
 }
+
+
 

@@ -1,6 +1,7 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.error;
 
 import jakarta.servlet.http.HttpServletRequest;
+import io.sqm.middleware.rest.model.RestErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -80,3 +81,5 @@ public final class RestExceptionHandler {
             .body(new RestErrorResponse("INTERNAL_ERROR", exception.getMessage(), request.getRequestURI()));
     }
 }
+
+

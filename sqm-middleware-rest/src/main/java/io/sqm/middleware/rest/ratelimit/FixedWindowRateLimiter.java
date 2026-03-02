@@ -1,4 +1,4 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.ratelimit;
 
 import java.time.Clock;
 import java.util.Objects;
@@ -76,3 +76,5 @@ public final class FixedWindowRateLimiter {
     private record Window(long startMillis, AtomicInteger count) {
     }
 }
+
+
