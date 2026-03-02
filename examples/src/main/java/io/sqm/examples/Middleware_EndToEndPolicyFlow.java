@@ -4,20 +4,20 @@ import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
-import io.sqm.control.AuditEventPublisher;
-import io.sqm.control.BuiltInRewriteRule;
-import io.sqm.control.BuiltInRewriteSettings;
-import io.sqm.control.DecisionResult;
-import io.sqm.control.ExecutionContext;
-import io.sqm.control.ExecutionMode;
-import io.sqm.control.ParameterizationMode;
-import io.sqm.control.QueryRewriteResult;
-import io.sqm.control.QueryRewriteRule;
-import io.sqm.control.RuntimeGuardrails;
-import io.sqm.control.SqlDecisionExplainer;
-import io.sqm.control.SqlDecisionService;
-import io.sqm.control.SqlDecisionServiceConfig;
-import io.sqm.control.TenantRewriteTablePolicy;
+import io.sqm.control.audit.AuditEventPublisher;
+import io.sqm.control.rewrite.BuiltInRewriteRule;
+import io.sqm.control.rewrite.BuiltInRewriteSettings;
+import io.sqm.control.decision.DecisionResult;
+import io.sqm.control.execution.ExecutionContext;
+import io.sqm.control.execution.ExecutionMode;
+import io.sqm.control.execution.ParameterizationMode;
+import io.sqm.control.pipeline.QueryRewriteResult;
+import io.sqm.control.pipeline.QueryRewriteRule;
+import io.sqm.control.config.RuntimeGuardrails;
+import io.sqm.control.service.SqlDecisionExplainer;
+import io.sqm.control.service.SqlDecisionService;
+import io.sqm.control.config.SqlDecisionServiceConfig;
+import io.sqm.control.rewrite.TenantRewriteTablePolicy;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.SchemaValidationSettingsLoader;
 
@@ -139,14 +139,14 @@ public final class Middleware_EndToEndPolicyFlow {
             if (context.tenant() == null || context.tenant().isBlank()) {
                 return QueryRewriteResult.unchanged(query);
             }
-            return QueryRewriteResult.rewritten(query, "tenant-guard", io.sqm.control.ReasonCode.REWRITE_CANONICALIZATION);
+            return QueryRewriteResult.rewritten(query, "tenant-guard", io.sqm.control.decision.ReasonCode.REWRITE_CANONICALIZATION);
         };
 
         SqlDecisionService decisionService = SqlDecisionService.create(
             SqlDecisionServiceConfig.builder(schema)
                 .validationSettings(SchemaValidationSettings.defaults())
-                .queryRewriter(io.sqm.control.SqlQueryRewriter.chain(addTenantGuard))
-                .queryRenderer(io.sqm.control.SqlQueryRenderer.standard())
+                .queryRewriter(io.sqm.control.pipeline.SqlQueryRewriter.chain(addTenantGuard))
+                .queryRenderer(io.sqm.control.pipeline.SqlQueryRenderer.standard())
                 .auditPublisher(AuditEventPublisher.noop())
                 .explainer(SqlDecisionExplainer.basic())
                 .buildValidationAndRewriteConfig()
@@ -210,4 +210,5 @@ public final class Middleware_EndToEndPolicyFlow {
         return params == null ? "[]" : params.toString();
     }
 }
+
 

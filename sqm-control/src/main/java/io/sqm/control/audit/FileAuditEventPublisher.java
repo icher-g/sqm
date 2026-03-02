@@ -1,8 +1,5 @@
 package io.sqm.control.audit;
 
-import io.sqm.control.AuditEvent;
-import io.sqm.control.AuditEventPublisher;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -42,7 +39,7 @@ public final class FileAuditEventPublisher implements AuditEventPublisher {
      * Creates a file-backed publisher with rotation/retention settings.
      *
      * @param outputPath output file path
-     * @param maxBytes maximum file size in bytes before rotation; {@code <= 0} disables rotation
+     * @param maxBytes   maximum file size in bytes before rotation; {@code <= 0} disables rotation
      * @param maxHistory number of rotated files retained; {@code 0} keeps no history files
      * @return publisher instance
      */
@@ -52,6 +49,19 @@ public final class FileAuditEventPublisher implements AuditEventPublisher {
             throw new IllegalArgumentException("maxHistory must be >= 0");
         }
         return new FileAuditEventPublisher(outputPath, maxBytes, maxHistory);
+    }
+
+    private static String nullToEmpty(String value) {
+        return value == null ? "" : value;
+    }
+
+    private static String escapeJson(String value) {
+        return value
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\r", "\\r")
+            .replace("\n", "\\n")
+            .replace("\t", "\\t");
     }
 
     /**
@@ -104,7 +114,8 @@ public final class FileAuditEventPublisher implements AuditEventPublisher {
                 if (Files.exists(outputPath)) {
                     Files.move(outputPath, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 }
-            } else {
+            }
+            else {
                 var previous = rotatedPath(index - 1);
                 if (Files.exists(previous)) {
                     Files.move(previous, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
@@ -136,17 +147,8 @@ public final class FileAuditEventPublisher implements AuditEventPublisher {
             + "\"sql\":\"" + escapeJson(event.normalizedSql()) + "\""
             + "}";
     }
-
-    private static String nullToEmpty(String value) {
-        return value == null ? "" : value;
-    }
-
-    private static String escapeJson(String value) {
-        return value
-            .replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-            .replace("\r", "\\r")
-            .replace("\n", "\\n")
-            .replace("\t", "\\t");
-    }
 }
+
+
+
+

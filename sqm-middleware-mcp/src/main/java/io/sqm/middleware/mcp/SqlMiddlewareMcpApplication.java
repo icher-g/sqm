@@ -1,6 +1,6 @@
 package io.sqm.middleware.mcp;
 
-import io.sqm.control.ConfigKeys;
+import io.sqm.control.config.ConfigKeys;
 import io.sqm.middleware.core.SqlMiddlewareRuntimeFactory;
 
 import java.io.IOException;
@@ -71,3 +71,4 @@ public final class SqlMiddlewareMcpApplication {
         return null;
     }
 }
+

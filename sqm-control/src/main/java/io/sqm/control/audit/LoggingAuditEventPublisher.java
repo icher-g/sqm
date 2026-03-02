@@ -1,8 +1,5 @@
 package io.sqm.control.audit;
 
-import io.sqm.control.AuditEvent;
-import io.sqm.control.AuditEventPublisher;
-
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,7 +30,7 @@ public final class LoggingAuditEventPublisher implements AuditEventPublisher {
      * Creates logging publisher with explicit level.
      *
      * @param logger target logger
-     * @param level log level
+     * @param level  log level
      * @return publisher instance
      */
     public static LoggingAuditEventPublisher of(Logger logger, Level level) {
@@ -57,4 +54,8 @@ public final class LoggingAuditEventPublisher implements AuditEventPublisher {
             + " durationNanos=" + event.durationNanos());
     }
 }
+
+
+
+
 

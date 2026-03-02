@@ -4,7 +4,7 @@ import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
-import io.sqm.control.SqlDecisionServiceConfig;
+import io.sqm.control.config.SqlDecisionServiceConfig;
 import io.sqm.middleware.api.AnalyzeRequest;
 import io.sqm.middleware.api.ExecutionContextDto;
 import io.sqm.middleware.core.SqlMiddlewareServices;
@@ -132,3 +132,4 @@ class NfrMiddlewareLoadTest {
     private record RunResult(long p95Millis, long throughputRps) {
     }
 }
+

@@ -3,7 +3,7 @@ package io.sqm.middleware.core;
 import io.sqm.catalog.jdbc.JdbcSchemaProvider;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.snapshot.JsonSchemaProvider;
-import io.sqm.control.ConfigKeys;
+import io.sqm.control.config.ConfigKeys;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -247,3 +247,4 @@ final class SchemaBootstrapLoader {
         }
     }
 }
+

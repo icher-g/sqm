@@ -1,12 +1,12 @@
 package io.sqm.middleware.core;
 
-import io.sqm.control.DecisionExplanation;
-import io.sqm.control.DecisionGuidance;
-import io.sqm.control.DecisionResult;
-import io.sqm.control.ExecutionContext;
-import io.sqm.control.ExecutionMode;
-import io.sqm.control.ParameterizationMode;
-import io.sqm.control.SqlDecisionService;
+import io.sqm.control.decision.DecisionExplanation;
+import io.sqm.control.decision.DecisionGuidance;
+import io.sqm.control.decision.DecisionResult;
+import io.sqm.control.execution.ExecutionContext;
+import io.sqm.control.execution.ExecutionMode;
+import io.sqm.control.execution.ParameterizationMode;
+import io.sqm.control.service.SqlDecisionService;
 import io.sqm.middleware.api.AnalyzeRequest;
 import io.sqm.middleware.api.DecisionExplanationDto;
 import io.sqm.middleware.api.DecisionGuidanceDto;
@@ -132,4 +132,5 @@ public final class SqlMiddlewareCoreService implements SqlMiddlewareService {
         );
     }
 }
+
 

@@ -1,5 +1,6 @@
 package io.sqm.control;
 
+import io.sqm.control.execution.ParameterizationMode;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,3 +15,5 @@ class ParameterizationModeTest {
         );
     }
 }
+
+

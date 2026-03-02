@@ -48,7 +48,7 @@ class SqlMiddlewareRestApplicationTest {
 
             SqlMiddlewareRestApplication.applySpringFallbackProperty(
                 env,
-                io.sqm.control.ConfigKeys.Key.of(key, "SQM_TEST_ENV_" + System.nanoTime())
+                io.sqm.control.config.ConfigKeys.Key.of(key, "SQM_TEST_ENV_" + System.nanoTime())
             );
 
             assertEquals("from-spring", System.getProperty(key));
@@ -66,7 +66,7 @@ class SqlMiddlewareRestApplicationTest {
 
             SqlMiddlewareRestApplication.applySpringFallbackProperty(
                 env,
-                io.sqm.control.ConfigKeys.Key.of(key, "SQM_TEST_ENV_" + System.nanoTime())
+                io.sqm.control.config.ConfigKeys.Key.of(key, "SQM_TEST_ENV_" + System.nanoTime())
             );
 
             assertEquals("from-jvm", System.getProperty(key));
@@ -75,4 +75,5 @@ class SqlMiddlewareRestApplicationTest {
         }
     }
 }
+
 

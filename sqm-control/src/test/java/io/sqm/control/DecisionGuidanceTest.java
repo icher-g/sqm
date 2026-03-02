@@ -1,5 +1,6 @@
 package io.sqm.control;
 
+import io.sqm.control.decision.DecisionGuidance;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -24,3 +25,5 @@ class DecisionGuidanceTest {
             () -> DecisionGuidance.terminal("hint", " "));
     }
 }
+
+

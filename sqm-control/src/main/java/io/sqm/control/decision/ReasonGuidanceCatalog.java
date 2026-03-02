@@ -1,0 +1,106 @@
+package io.sqm.control.decision;
+
+/**
+ * Default guidance mapping for reason codes.
+ */
+public final class ReasonGuidanceCatalog {
+    private ReasonGuidanceCatalog() {
+    }
+
+    /**
+     * Returns default guidance for a reason code.
+     *
+     * @param reasonCode reason code
+     * @return mapped guidance or {@code null} if no default guidance is defined
+     */
+    public static DecisionGuidance forReason(ReasonCode reasonCode) {
+        if (reasonCode == null) {
+            throw new IllegalArgumentException("reasonCode must not be null");
+        }
+        return switch (reasonCode) {
+            case DENY_DDL -> DecisionGuidance.retryable(
+                "DDL statements are blocked in this context.",
+                "remove_ddl",
+                "Rewrite as a read-only SELECT query and do not use CREATE/ALTER/DROP."
+            );
+            case DENY_DML -> DecisionGuidance.retryable(
+                "DML statements are blocked in this context.",
+                "remove_dml",
+                "Rewrite as a read-only SELECT query and do not use INSERT/UPDATE/DELETE."
+            );
+            case DENY_TABLE -> DecisionGuidance.retryable(
+                "One or more referenced tables are not allowed.",
+                "use_allowed_tables",
+                "Use only tables explicitly allowed by policy."
+            );
+            case DENY_COLUMN -> DecisionGuidance.retryable(
+                "One or more referenced columns are not allowed.",
+                "remove_restricted_columns",
+                "Remove denied columns from SELECT, WHERE, GROUP BY, and ORDER BY."
+            );
+            case DENY_FUNCTION -> DecisionGuidance.retryable(
+                "One or more functions are not allowed.",
+                "replace_denied_functions",
+                "Replace denied functions with policy-approved alternatives."
+            );
+            case DENY_MAX_JOINS -> DecisionGuidance.retryable(
+                "The query exceeds the maximum allowed number of joins.",
+                "reduce_joins",
+                "Reduce the number of joins and request only essential tables."
+            );
+            case DENY_MAX_SELECT_COLUMNS -> DecisionGuidance.retryable(
+                "The query projects too many columns.",
+                "reduce_projection",
+                "Select only required columns and avoid SELECT *."
+            );
+            case DENY_UNSUPPORTED_DIALECT_FEATURE -> DecisionGuidance.retryable(
+                "The query uses features unsupported by the selected dialect.",
+                "use_supported_syntax",
+                "Rewrite the query using syntax supported by the target dialect."
+            );
+            case DENY_PIPELINE_ERROR -> DecisionGuidance.terminal(
+                "The middleware failed to process this query.",
+                "report_pipeline_error"
+            );
+            case DENY_VALIDATION -> DecisionGuidance.retryable(
+                "The query failed semantic validation.",
+                "fix_validation_errors",
+                "Adjust query structure and references according to schema and validation errors."
+            );
+            case DENY_TENANT_REQUIRED -> DecisionGuidance.retryable(
+                "Tenant context is required by policy.",
+                "provide_tenant",
+                "Set tenant in execution context before calling middleware."
+            );
+            case DENY_TENANT_MAPPING_MISSING -> DecisionGuidance.retryable(
+                "Tenant rewrite mapping is missing for one or more referenced tables.",
+                "configure_tenant_mapping",
+                "Add schema.table to tenant-column mapping or switch tenant fallback mode to SKIP."
+            );
+            case DENY_TENANT_MAPPING_AMBIGUOUS -> DecisionGuidance.retryable(
+                "Tenant rewrite mapping is ambiguous for an unqualified table reference.",
+                "disambiguate_tenant_mapping",
+                "Qualify table with schema or configure tenant ambiguity mode to SKIP."
+            );
+            case DENY_MAX_SQL_LENGTH -> DecisionGuidance.retryable(
+                "The query text is too long.",
+                "shorten_sql",
+                "Reduce query length by removing unnecessary clauses or splitting the request."
+            );
+            case DENY_TIMEOUT -> DecisionGuidance.retryable(
+                "The query evaluation timed out.",
+                "simplify_query",
+                "Simplify query complexity and avoid expensive constructs."
+            );
+            case DENY_MAX_ROWS -> DecisionGuidance.retryable(
+                "The query exceeds row-limit guardrails.",
+                "reduce_limit",
+                "Add or lower LIMIT so it is within allowed maximum rows."
+            );
+            default -> null;
+        };
+    }
+}
+
+
+
