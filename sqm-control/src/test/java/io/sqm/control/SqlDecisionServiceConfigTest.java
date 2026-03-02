@@ -184,6 +184,43 @@ class SqlDecisionServiceConfigTest {
             }
         }
     }
+
+    @Test
+    void builder_prefers_json_system_property_over_yaml_system_property() {
+        var jsonKey = ConfigKeys.VALIDATION_SETTINGS_JSON.property();
+        var yamlKey = ConfigKeys.VALIDATION_SETTINGS_YAML.property();
+        var previousJson = System.getProperty(jsonKey);
+        var previousYaml = System.getProperty(yamlKey);
+        try {
+            System.setProperty(jsonKey, """
+                {"accessPolicy":{"deniedTables":["users"]}}
+                """);
+            System.setProperty(yamlKey, """
+                accessPolicy:
+                  deniedTables:
+                    - events
+                """);
+
+            var decisionService = SqlDecisionService.create(
+                SqlDecisionServiceConfig.builder(SCHEMA).buildValidationConfig()
+            );
+
+            var result = decisionService.analyze("select id from users", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+            assertEquals(DecisionKind.DENY, result.kind());
+            assertEquals(ReasonCode.DENY_TABLE, result.reasonCode());
+        } finally {
+            if (previousJson == null) {
+                System.clearProperty(jsonKey);
+            } else {
+                System.setProperty(jsonKey, previousJson);
+            }
+            if (previousYaml == null) {
+                System.clearProperty(yamlKey);
+            } else {
+                System.setProperty(yamlKey, previousYaml);
+            }
+        }
+    }
 }
 
 
