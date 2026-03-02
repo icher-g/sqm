@@ -1,6 +1,14 @@
 package io.sqm.middleware.core;
 
 import io.sqm.control.*;
+import io.sqm.control.decision.DecisionExplanation;
+import io.sqm.control.decision.DecisionGuidance;
+import io.sqm.control.decision.DecisionResult;
+import io.sqm.control.decision.ReasonCode;
+import io.sqm.control.execution.ExecutionContext;
+import io.sqm.control.execution.ExecutionMode;
+import io.sqm.control.execution.ParameterizationMode;
+import io.sqm.control.service.SqlDecisionService;
 import io.sqm.middleware.api.*;
 import org.junit.jupiter.api.Test;
 
