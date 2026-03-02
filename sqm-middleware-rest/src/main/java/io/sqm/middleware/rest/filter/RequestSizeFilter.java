@@ -1,4 +1,4 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.filter;
 
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
@@ -8,6 +8,8 @@ import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
+import io.sqm.middleware.rest.config.RestAbuseProtectionProperties;
+import io.sqm.middleware.rest.error.RequestTooLargeException;
 import org.springframework.http.MediaType;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -128,3 +130,5 @@ public final class RequestSizeFilter extends OncePerRequestFilter {
         }
     }
 }
+
+

@@ -1,8 +1,10 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.security;
 
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import io.sqm.middleware.rest.config.RestSecurityProperties;
+import io.sqm.middleware.rest.error.UnauthorizedRequestException;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.Objects;
@@ -60,3 +62,5 @@ public final class ApiKeyAuthInterceptor implements HandlerInterceptor {
         return true;
     }
 }
+
+

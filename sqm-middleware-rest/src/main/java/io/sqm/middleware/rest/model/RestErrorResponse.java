@@ -1,4 +1,4 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.model;
 
 /**
  * Stable error response payload returned by REST host endpoints.
@@ -9,3 +9,5 @@ package io.sqm.middleware.rest;
  */
 public record RestErrorResponse(String code, String message, String path) {
 }
+
+

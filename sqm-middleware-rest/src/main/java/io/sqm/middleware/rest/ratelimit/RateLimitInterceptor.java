@@ -1,8 +1,10 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.ratelimit;
 
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import io.sqm.middleware.rest.config.RestAbuseProtectionProperties;
+import io.sqm.middleware.rest.error.RateLimitExceededException;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.Objects;
@@ -74,3 +76,5 @@ public final class RateLimitInterceptor implements HandlerInterceptor {
         return null;
     }
 }
+
+

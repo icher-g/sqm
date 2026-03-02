@@ -1,6 +1,7 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.controller;
 
 import io.sqm.middleware.core.SqlMiddlewareRuntime;
+import io.sqm.middleware.rest.model.SqlMiddlewareStatusResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -62,4 +63,6 @@ public final class SqlMiddlewareStatusController {
         return ResponseEntity.status(schema.ready() ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE).body(response);
     }
 }
+
+
 

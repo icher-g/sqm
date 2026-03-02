@@ -1,4 +1,4 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.error;
 
 import org.springframework.http.HttpStatus;
 
@@ -48,3 +48,5 @@ public abstract class RestRequestException extends RuntimeException {
         return status;
     }
 }
+
+

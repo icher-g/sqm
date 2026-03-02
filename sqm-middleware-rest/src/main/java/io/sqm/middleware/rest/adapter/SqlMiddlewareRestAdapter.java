@@ -1,6 +1,7 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.adapter;
 
 import io.sqm.middleware.api.*;
+import io.sqm.middleware.rest.error.InvalidRequestException;
 
 import java.util.Objects;
 
@@ -86,3 +87,5 @@ public final class SqlMiddlewareRestAdapter {
         }
     }
 }
+
+

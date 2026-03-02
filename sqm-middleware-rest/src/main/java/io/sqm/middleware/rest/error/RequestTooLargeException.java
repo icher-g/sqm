@@ -1,4 +1,4 @@
-package io.sqm.middleware.rest;
+package io.sqm.middleware.rest.error;
 
 import org.springframework.http.HttpStatus;
 
@@ -16,3 +16,5 @@ public final class RequestTooLargeException extends RestRequestException {
         super("REQUEST_TOO_LARGE", HttpStatus.PAYLOAD_TOO_LARGE, message);
     }
 }
+
+
