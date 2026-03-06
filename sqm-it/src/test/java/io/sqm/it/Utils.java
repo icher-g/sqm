@@ -5,8 +5,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import io.sqm.core.Query;
 import io.sqm.json.SqmJsonMixins;
 import io.sqm.parser.ansi.AnsiSpecs;
+import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.render.ansi.spi.AnsiDialect;
+import io.sqm.render.mysql.spi.MySqlDialect;
 import io.sqm.render.spi.RenderContext;
 
 public final class Utils {
@@ -23,8 +25,23 @@ public final class Utils {
         return normalizeSql(s.sql());
     }
 
+    public static String renderMySql(Query q) {
+        var r = RenderContext.of(new MySqlDialect());
+        var s = r.render(q);
+        return normalizeSql(s.sql());
+    }
+
     public static Query parse(String sql) {
         var ctx = ParseContext.of(new AnsiSpecs());
+        var pr = ctx.parse(Query.class, sql);
+        if (pr.isError()) {
+            throw new RuntimeException(pr.errorMessage());
+        }
+        return pr.value();
+    }
+
+    public static Query parseMySql(String sql) {
+        var ctx = ParseContext.of(new MySqlSpecs());
         var pr = ctx.parse(Query.class, sql);
         if (pr.isError()) {
             throw new RuntimeException(pr.errorMessage());

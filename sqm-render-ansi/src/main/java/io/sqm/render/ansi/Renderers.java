@@ -25,6 +25,15 @@ public final class Renderers {
         return repository;
     }
 
+    /**
+     * Returns a new ANSI renderers repository instance with default registrations.
+     *
+     * @return isolated ANSI renderers repository.
+     */
+    public static RenderersRepository ansiCopy() {
+        return registerDefaults(new DefaultRenderersRepository());
+    }
+
     private static RenderersRepository registerDefaults(RenderersRepository r) {
         return r
             .register(new AndPredicateRenderer())
@@ -117,3 +126,4 @@ public final class Renderers {
             .register(new PowerArithmeticExprRenderer());
     }
 }
+

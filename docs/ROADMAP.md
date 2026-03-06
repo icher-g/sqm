@@ -18,6 +18,8 @@ Priority levels:
 - Define `MySqlSpecs` feature matrix.
 - Cover core query syntax parity with existing ANSI/PostgreSQL flows.
 - Add integration tests in `sqm-it` for round-trip parse/render.
+- Detailed design: [R1_MYSQL_DIALECT_SUPPORT_DESIGN.md](R1_MYSQL_DIALECT_SUPPORT_DESIGN.md)
+- Delivery split: `R1A` baseline + `R1B` common MySQL-specific features (both required to close R1).
 
 ### Epic R2: SQL Server Dialect Support
 - Add `sqm-parser-sqlserver` and `sqm-render-sqlserver`.

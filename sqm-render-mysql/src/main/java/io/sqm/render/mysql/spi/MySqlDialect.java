@@ -1,0 +1,143 @@
+package io.sqm.render.mysql.spi;
+
+import io.sqm.core.dialect.DialectCapabilities;
+import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.mysql.dialect.MySqlCapabilities;
+import io.sqm.render.defaults.DefaultOperators;
+import io.sqm.render.defaults.DefaultValueFormatter;
+import io.sqm.render.mysql.Renderers;
+import io.sqm.render.ansi.spi.AnsiBooleans;
+import io.sqm.render.ansi.spi.AnsiNullSorting;
+import io.sqm.render.spi.*;
+
+/**
+ * MySQL SQL rendering dialect implementation.
+ */
+public class MySqlDialect implements SqlDialect {
+
+    private final IdentifierQuoter quoter;
+    private final ValueFormatter formatter = new DefaultValueFormatter(this);
+    private final Operators operators = new DefaultOperators();
+    private final Booleans booleans = new AnsiBooleans();
+    private final NullSorting nullSorting = new AnsiNullSorting();
+    private final PaginationStyle paginationStyle = new MySqlPaginationStyle();
+    private final RenderersRepository repository = Renderers.mysql();
+    private final DialectCapabilities capabilities;
+
+    /**
+     * Creates a MySQL dialect for baseline version 8.0 with backtick identifier quoting.
+     */
+    public MySqlDialect() {
+        this(SqlDialectVersion.of(8, 0), false);
+    }
+
+    /**
+     * Creates a MySQL dialect for a specific version with backtick identifier quoting.
+     *
+     * @param version MySQL version used to evaluate feature availability.
+     */
+    public MySqlDialect(SqlDialectVersion version) {
+        this(version, false);
+    }
+
+    /**
+     * Creates a MySQL dialect for a specific version and quote mode.
+     *
+     * @param version        MySQL version used to evaluate feature availability.
+     * @param ansiQuotesMode if {@code true}, double-quote identifiers are supported by the quoter.
+     */
+    public MySqlDialect(SqlDialectVersion version, boolean ansiQuotesMode) {
+        this.capabilities = MySqlCapabilities.of(version);
+        this.quoter = new MySqlIdentifierQuoter(ansiQuotesMode);
+    }
+
+    /**
+     * Returns the dialect name.
+     *
+     * @return dialect name.
+     */
+    @Override
+    public String name() {
+        return "MySQL";
+    }
+
+    /**
+     * Returns identifier quoter.
+     *
+     * @return identifier quoter.
+     */
+    @Override
+    public IdentifierQuoter quoter() {
+        return quoter;
+    }
+
+    /**
+     * Returns value formatter.
+     *
+     * @return value formatter.
+     */
+    @Override
+    public ValueFormatter formatter() {
+        return formatter;
+    }
+
+    /**
+     * Returns operators configuration.
+     *
+     * @return operators configuration.
+     */
+    @Override
+    public Operators operators() {
+        return operators;
+    }
+
+    /**
+     * Returns booleans configuration.
+     *
+     * @return booleans configuration.
+     */
+    @Override
+    public Booleans booleans() {
+        return booleans;
+    }
+
+    /**
+     * Returns null sorting configuration.
+     *
+     * @return null sorting configuration.
+     */
+    @Override
+    public NullSorting nullSorting() {
+        return nullSorting;
+    }
+
+    /**
+     * Returns pagination style.
+     *
+     * @return pagination style.
+     */
+    @Override
+    public PaginationStyle paginationStyle() {
+        return paginationStyle;
+    }
+
+    /**
+     * Returns MySQL feature capabilities.
+     *
+     * @return feature capabilities.
+     */
+    @Override
+    public DialectCapabilities capabilities() {
+        return capabilities;
+    }
+
+    /**
+     * Returns renderers repository.
+     *
+     * @return renderers repository.
+     */
+    @Override
+    public RenderersRepository renderers() {
+        return repository;
+    }
+}
