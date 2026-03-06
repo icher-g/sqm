@@ -14,6 +14,12 @@ class MySqlLimitOffsetRendererTest {
     private final RenderContext context = RenderContext.of(new MySqlDialect());
 
     @Test
+    void rendersNothingForEmptyLimitOffset() {
+        var sql = normalize(context.render(LimitOffset.of(null, null, false)).sql());
+        assertEquals("", sql);
+    }
+
+    @Test
     void rendersLimitOnly() {
         var sql = normalize(context.render(LimitOffset.of(10L, null)).sql());
         assertEquals("LIMIT 10", sql);
@@ -41,3 +47,4 @@ class MySqlLimitOffsetRendererTest {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
+

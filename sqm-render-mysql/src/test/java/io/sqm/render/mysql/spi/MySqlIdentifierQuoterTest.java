@@ -16,8 +16,42 @@ class MySqlIdentifierQuoterTest {
 
         assertTrue(quoter.supports(QuoteStyle.BACKTICK));
         assertTrue(quoter.supports(QuoteStyle.NONE));
+        assertTrue(quoter.supports(null));
         assertFalse(quoter.supports(QuoteStyle.DOUBLE_QUOTE));
         assertEquals("`order`", quoter.quote("order"));
+    }
+
+    @Test
+    void quote_escapes_backticks_and_qualify_quotes_parts() {
+        var quoter = new MySqlIdentifierQuoter();
+
+        assertEquals("`a``b`", quoter.quote("a`b"));
+        assertEquals("`t`", quoter.qualify(null, "t"));
+        assertEquals("`t`", quoter.qualify("", "t"));
+        assertEquals("`s`.`t`", quoter.qualify("s", "t"));
+    }
+
+    @Test
+    void needsQuoting_and_quoteIfNeeded_cover_all_branches() {
+        var quoter = new MySqlIdentifierQuoter();
+
+        assertTrue(quoter.needsQuoting(null));
+        assertTrue(quoter.needsQuoting(""));
+        assertTrue(quoter.needsQuoting("a-b"));
+        assertTrue(quoter.needsQuoting("key"));
+        assertFalse(quoter.needsQuoting("abc_1"));
+
+        assertEquals("abc_1", quoter.quoteIfNeeded("abc_1"));
+        assertEquals("`key`", quoter.quoteIfNeeded("key"));
+    }
+
+    @Test
+    void quote_style_none_and_backtick_paths() {
+        var quoter = new MySqlIdentifierQuoter();
+
+        assertEquals("`key`", quoter.quote("key", QuoteStyle.NONE));
+        assertEquals("abc", quoter.quote("abc", QuoteStyle.NONE));
+        assertEquals("`abc`", quoter.quote("abc", QuoteStyle.BACKTICK));
     }
 
     @Test
@@ -33,5 +67,7 @@ class MySqlIdentifierQuoterTest {
 
         assertTrue(quoter.supports(QuoteStyle.DOUBLE_QUOTE));
         assertEquals("\"id\"", quoter.quote("id", QuoteStyle.DOUBLE_QUOTE));
+        assertEquals("\"a\"\"b\"", quoter.quote("a\"b", QuoteStyle.DOUBLE_QUOTE));
     }
 }
+

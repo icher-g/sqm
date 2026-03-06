@@ -4,7 +4,9 @@ import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.core.dialect.SqlFeature;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MySqlCapabilitiesTest {
@@ -33,5 +35,20 @@ class MySqlCapabilitiesTest {
         assertFalse(capabilities.supports(SqlFeature.POSTGRES_TYPECAST));
         assertFalse(capabilities.supports(SqlFeature.DOLLAR_STRING_LITERAL));
         assertFalse(capabilities.supports(SqlFeature.ARRAY_LITERAL));
+    }
+
+    @Test
+    void latest_matches_mysql_8_0_feature_support() {
+        var latest = MySqlCapabilities.latest();
+        var expected = MySqlCapabilities.of(SqlDialectVersion.of(8, 0));
+
+        assertEquals(expected.supports(SqlFeature.DATE_TYPED_LITERAL), latest.supports(SqlFeature.DATE_TYPED_LITERAL));
+        assertEquals(expected.supports(SqlFeature.LOCKING_CLAUSE), latest.supports(SqlFeature.LOCKING_CLAUSE));
+        assertEquals(expected.supports(SqlFeature.DISTINCT_ON), latest.supports(SqlFeature.DISTINCT_ON));
+    }
+
+    @Test
+    void rejects_null_version() {
+        assertThrows(NullPointerException.class, () -> MySqlCapabilities.of(null));
     }
 }

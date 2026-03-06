@@ -62,4 +62,44 @@ class MySqlLimitOffsetParserTest {
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("FETCH"));
     }
+
+    @Test
+    void errorsOnFetchAfterLimitExpression() {
+        var result = ctx.parse(parser, "LIMIT 10 FETCH FIRST 5 ROWS ONLY");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("FETCH"));
+    }
+
+    @Test
+    void errorsOnCommaFormCombinedWithOffset() {
+        var result = ctx.parse(parser, "LIMIT 5, 10 OFFSET 1");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("OFFSET/FETCH"));
+    }
+
+    @Test
+    void errorsOnCommaFormCombinedWithFetch() {
+        var result = ctx.parse(parser, "LIMIT 5, 10 FETCH FIRST 1 ROWS ONLY");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("OFFSET/FETCH"));
+    }
+
+    @Test
+    void errorsWhenLimitExpressionInvalid() {
+        var result = ctx.parse(parser, "LIMIT");
+
+        assertTrue(result.isError());
+    }
+
+    @Test
+    void errorsWhenOffsetExpressionInvalid() {
+        var result = ctx.parse(parser, "LIMIT 10 OFFSET");
+
+        assertTrue(result.isError());
+    }
 }
+
+
