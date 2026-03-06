@@ -43,4 +43,16 @@ class MySqlGroupByParserTest {
         assertNotNull(result.errorMessage());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected ROLLUP after WITH"));
     }
+
+    @Test
+    void rejectsGroupByWithoutItems() {
+        var result = ctx.parse(GroupBy.class, "GROUP BY");
+
+        assertTrue(result.isError());
+    }
+
+    @Test
+    void targetTypeIsGroupBy() {
+        assertEquals(GroupBy.class, new MySqlGroupByParser().targetType());
+    }
 }

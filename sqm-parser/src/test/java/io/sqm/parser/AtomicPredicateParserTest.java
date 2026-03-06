@@ -364,7 +364,11 @@ class AtomicPredicateParserTest {
                 cur.advance();
                 negated = true;
             }
-            cur.expect("Expected LIKE", TokenType.LIKE);
+            if (cur.matchAny(TokenType.LIKE, TokenType.ILIKE, TokenType.SIMILAR)) {
+                cur.advance();
+            } else {
+                throw new IllegalStateException("Expected LIKE/ILIKE/SIMILAR");
+            }
             var pattern = ctx.parse(Expression.class, cur);
             if (pattern.isError()) {
                 return ParseResult.error(pattern);
@@ -484,4 +488,6 @@ class AtomicPredicateParserTest {
         }
     }
 }
+
+
 

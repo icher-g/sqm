@@ -4,9 +4,12 @@ import io.sqm.core.Predicate;
 import io.sqm.core.RegexMode;
 import io.sqm.core.RegexPredicate;
 import io.sqm.parser.ansi.AnsiSpecs;
+import io.sqm.parser.core.Cursor;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
+
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -56,6 +59,58 @@ class MySqlRegexPredicateParserTest {
     @Test
     void ansiDialectDoesNotAcceptMysqlRegexpKeywordForms() {
         var result = ParseContext.of(new AnsiSpecs()).parse(Predicate.class, "name REGEXP '^a'");
+
+        assertTrue(result.isError());
+    }
+
+    @Test
+    void parserTargetTypeIsRegexPredicate() {
+        var parser = new MySqlRegexPredicateParser();
+        assertEquals(RegexPredicate.class, parser.targetType());
+    }
+
+    @Test
+    void parseInfixFailsWhenRegexFeatureIsUnsupported() {
+        var parser = new MySqlRegexPredicateParser();
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var cur = Cursor.of("REGEXP '^a'", ctx.identifierQuoting());
+
+        var result = parser.parse(io.sqm.dsl.Dsl.col("name"), cur, ctx);
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("not supported by this dialect"));
+    }
+
+    @Test
+    void parseInfixFailsWhenKeywordIsNotRegexpOrRlike() {
+        var parser = new MySqlRegexPredicateParser();
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var cur = Cursor.of("NOT LIKE '^a'", ctx.identifierQuoting());
+
+        var error = org.junit.jupiter.api.Assertions.assertThrows(io.sqm.parser.core.ParserException.class,
+            () -> parser.parse(io.sqm.dsl.Dsl.col("name"), cur, ctx));
+
+        assertTrue(error.getMessage().contains("Expected REGEXP or RLIKE"));
+    }
+
+    @Test
+    void parseInfixFailsWhenPatternIsMissing() {
+        var parser = new MySqlRegexPredicateParser();
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var cur = Cursor.of("REGEXP", ctx.identifierQuoting());
+
+        var result = parser.parse(io.sqm.dsl.Dsl.col("name"), cur, ctx);
+
+        assertTrue(result.isError());
+    }
+
+    @Test
+    void parseEntryFailsWhenLeftExpressionCannotBeParsed() {
+        var parser = new MySqlRegexPredicateParser();
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var cur = Cursor.of(")", ctx.identifierQuoting());
+
+        var result = parser.parse(cur, ctx);
 
         assertTrue(result.isError());
     }

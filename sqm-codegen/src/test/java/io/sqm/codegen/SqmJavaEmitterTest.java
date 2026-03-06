@@ -208,4 +208,18 @@ class SqmJavaEmitterTest {
         assertTrue(source.contains("tbl(\"public\", \"ta\\\"b\")"));
         assertTrue(source.contains("window(\"w\\\"1\", over())"));
     }
+    @Test
+    void emitQuery_usesGenericNodePathForNonSelectQueries() {
+        Query query = compose(
+            java.util.List.of(
+                select(star()).from(tbl("t1")).build(),
+                select(star()).from(tbl("t2")).build()
+            ),
+            java.util.List.of(io.sqm.core.SetOperator.UNION)
+        );
+
+        var error = assertThrows(IllegalStateException.class, () -> emitter.emitQuery(query));
+        assertTrue(error.getMessage().contains("Unsupported node"));
+    }
 }
+

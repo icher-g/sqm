@@ -1,5 +1,8 @@
 package io.sqm.render.mysql;
 
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
+import io.sqm.render.ansi.spi.AnsiDialect;
+import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.mysql.spi.MySqlDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.Test;
@@ -10,6 +13,7 @@ import static io.sqm.dsl.Dsl.rollup;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class MySqlGroupByRendererTest {
 
@@ -37,6 +41,24 @@ class MySqlGroupByRendererTest {
         var sql = normalize(ctx.render(query).sql());
 
         assertEquals("SELECT department FROM employees GROUP BY department", sql);
+    }
+
+    @Test
+    void rejectsRollupWhenDialectDoesNotSupportIt() {
+        var query = select(col("department"))
+            .from(tbl("employees"))
+            .groupBy(rollup(group("department")))
+            .build();
+        var renderer = new MySqlGroupByRenderer();
+        var ansiCtx = RenderContext.of(new AnsiDialect());
+
+        assertThrows(UnsupportedDialectFeatureException.class,
+            () -> renderer.render(query.groupBy(), ansiCtx, new DefaultSqlWriter(ansiCtx)));
+    }
+
+    @Test
+    void targetTypeIsGroupBy() {
+        assertEquals(io.sqm.core.GroupBy.class, new MySqlGroupByRenderer().targetType());
     }
 
     private String normalize(String sql) {
