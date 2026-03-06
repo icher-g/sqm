@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
@@ -37,6 +37,7 @@
         <module>sqm-core</module>
         <module>sqm-control</module>
         <module>sqm-core-postgresql</module>
+        <module>sqm-core-mysql</module>
         <module>sqm-render</module>
         <module>sqm-parser</module>
         <module>sqm-json</module>
@@ -44,7 +45,9 @@
         <module>sqm-parser-ansi</module>
         <module>sqm-validate</module>
         <module>sqm-parser-postgresql</module>
+        <module>sqm-parser-mysql</module>
         <module>sqm-render-postgresql</module>
+        <module>sqm-render-mysql</module>
         <module>sqm-validate-postgresql</module>
         <module>sqm-catalog</module>
         <module>sqm-catalog-postgresql</module>
@@ -103,8 +106,8 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.6.3</version>
-                <configuration>
+                    <version>3.11.2</version>
+                    <configuration>
                     <skip>${maven.javadoc.skip}</skip>
                 </configuration>
                 <executions>
@@ -165,3 +168,6 @@
         </plugins>
     </build>
 </project>
+
+
+

@@ -22,6 +22,15 @@ public final class Parsers {
         return defaultRepository;
     }
 
+    /**
+     * Returns a new ANSI parsers repository instance with default registrations.
+     *
+     * @return isolated ANSI parsers repository.
+     */
+    public static ParsersRepository ansiCopy() {
+        return registerDefaults(new DefaultParsersRepository());
+    }
+
     private static ParsersRepository registerDefaults(ParsersRepository r) {
         var atomicExprParser = new AtomicExprParser();
         var atomicPredicateParser = new AtomicPredicateParser();
@@ -134,3 +143,4 @@ public final class Parsers {
             .register(new PowerArithmeticExprParser(postfixExprParser));
     }
 }
+
