@@ -32,6 +32,13 @@ public interface Operators {
      */
     String eq();
 
+
+    /**
+     * Gets a dialect representation of null-safe equality operator.
+     *
+     * @return null-safe equality operator text.
+     */
+    String nullSafeEq();
     /**
         * Gets an ANSI representation of {@code !=} operator.
      *

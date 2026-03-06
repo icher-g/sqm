@@ -7,19 +7,19 @@ Priority levels:
 - `P2` = nice to have / strategic
 
 ## Goals
-- Expand dialect coverage beyond ANSI/PostgreSQL.
+- Expand dialect coverage beyond ANSI/PostgreSQL/MySQL.
 - Add first-class DDL model/parse/render support.
 - Keep middleware and validation usable across dialects.
 
 ## P0 (Required)
 
-### Epic R1: MySQL Dialect Support
+### Epic R1: MySQL Dialect Support (Completed)
 - Add `sqm-parser-mysql` and `sqm-render-mysql`.
 - Define `MySqlSpecs` feature matrix.
 - Cover core query syntax parity with existing ANSI/PostgreSQL flows.
 - Add integration tests in `sqm-it` for round-trip parse/render.
 - Detailed design: [R1_MYSQL_DIALECT_SUPPORT_DESIGN.md](R1_MYSQL_DIALECT_SUPPORT_DESIGN.md)
-- Delivery split: `R1A` baseline + `R1B` common MySQL-specific features (both required to close R1).
+- Delivery split: `R1A` baseline + `R1B` common MySQL-specific features (completed).
 
 ### Epic R2: SQL Server Dialect Support
 - Add `sqm-parser-sqlserver` and `sqm-render-sqlserver`.
@@ -78,17 +78,17 @@ Priority levels:
 - Ensure parser/render/validate/rewrite parity with existing query flows.
 
 ## Suggested Implementation Order
-1. `R1` MySQL
-2. `R2` SQL Server
-3. `R3` DDL MVP core
-4. `R4` DDL middleware controls
-5. `R6` DDL expansion
-6. `R5` Oracle
-7. `R7` catalog unification
-8. `R8`/`R9`/`R10` as capacity permits
+1. `R2` SQL Server
+2. `R3` DDL MVP core
+3. `R4` DDL middleware controls
+4. `R6` DDL expansion
+5. `R5` Oracle
+6. `R7` catalog unification
+7. `R8`/`R9`/`R10` as capacity permits
 
 ## Exit Criteria Per Epic
 - Model + parser + renderer + tests + docs complete.
 - Visitor/transformer/match/json coverage for every new node.
 - Integration tests added (`sqm-it`, and middleware IT where relevant).
 - README/wiki/docs updated with examples.
+

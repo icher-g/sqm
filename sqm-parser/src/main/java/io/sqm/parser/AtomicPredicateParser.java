@@ -64,6 +64,7 @@ import static io.sqm.parser.spi.ParseResult.error;
 public class AtomicPredicateParser {
 
     private static final Set<String> regexSymbols = Set.of("~", "!~", "~*", "!~*");
+    private static final Set<String> regexKeywords = Set.of("REGEXP", "RLIKE");
 
     /**
      * Creates an atomic-predicate parser.
@@ -218,6 +219,10 @@ public class AtomicPredicateParser {
             if (cur.matchAny(1, TokenType.LIKE, TokenType.ILIKE, TokenType.SIMILAR)) {
                 return ctx.parse(LikePredicate.class, leftExpr.value(), cur);
             }
+
+            if (looksLikeRegexKeyword(cur, 1)) {
+                return ctx.parse(RegexPredicate.class, leftExpr.value(), cur);
+            }
         }
 
         if (cur.match(TokenType.IN)) {
@@ -261,7 +266,19 @@ public class AtomicPredicateParser {
             return ctx.parse(RegexPredicate.class, leftExpr.value(), cur);
         }
 
+        if (looksLikeRegexKeyword(cur, 0)) {
+            return ctx.parse(RegexPredicate.class, leftExpr.value(), cur);
+        }
+
         // Unary predicate fallback (boolean expression in predicate position)
         return ctx.parse(UnaryPredicate.class, leftExpr.value(), cur);
     }
+
+    private boolean looksLikeRegexKeyword(Cursor cur, int offset) {
+        if (!cur.match(TokenType.IDENT, offset)) {
+            return false;
+        }
+        return regexKeywords.contains(cur.peek(offset).lexeme().toUpperCase(java.util.Locale.ROOT));
+    }
 }
+

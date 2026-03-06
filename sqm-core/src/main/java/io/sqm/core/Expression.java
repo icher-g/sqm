@@ -384,6 +384,26 @@ public sealed interface Expression extends Node
     }
 
     /**
+     * Creates a comparison predicate with {@link ComparisonOperator#NULL_SAFE_EQ} between current expression and the provided one.
+     *
+     * @param other an expression to compare to.
+     * @return A newly created instance of a comparison predicate.
+     */
+    default ComparisonPredicate nullSafeEq(Expression other) {
+        return ComparisonPredicate.of(this, ComparisonOperator.NULL_SAFE_EQ, other);
+    }
+
+    /**
+     * Creates a comparison predicate with {@link ComparisonOperator#NULL_SAFE_EQ} between current expression and the provided one.
+     *
+     * @param scalar a scalar to compare to.
+     * @return A newly created instance of a comparison predicate.
+     */
+    default ComparisonPredicate nullSafeEq(Object scalar) {
+        return ComparisonPredicate.of(this, ComparisonOperator.NULL_SAFE_EQ, Expression.literal(scalar));
+    }
+
+    /**
      * Creates a comparison predicate with {@link ComparisonOperator#NE} between current expression and the provided one.
      *
      * @param other an expression to compare to.

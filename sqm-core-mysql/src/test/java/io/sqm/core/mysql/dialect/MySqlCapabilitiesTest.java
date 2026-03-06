@@ -21,9 +21,14 @@ class MySqlCapabilitiesTest {
         assertTrue(capabilities.supports(SqlFeature.BIT_STRING_LITERAL));
         assertTrue(capabilities.supports(SqlFeature.HEX_STRING_LITERAL));
         assertTrue(capabilities.supports(SqlFeature.LOCKING_CLAUSE));
+        assertTrue(capabilities.supports(SqlFeature.LOCKING_SHARE));
+        assertTrue(capabilities.supports(SqlFeature.LOCKING_NOWAIT));
+        assertTrue(capabilities.supports(SqlFeature.LOCKING_SKIP_LOCKED));
         assertTrue(capabilities.supports(SqlFeature.GROUPING_SETS));
         assertTrue(capabilities.supports(SqlFeature.ROLLUP));
         assertTrue(capabilities.supports(SqlFeature.CUBE));
+        assertTrue(capabilities.supports(SqlFeature.NULL_SAFE_EQUALITY_PREDICATE));
+        assertTrue(capabilities.supports(SqlFeature.REGEX_PREDICATE));
     }
 
     @Test
@@ -44,7 +49,12 @@ class MySqlCapabilitiesTest {
 
         assertEquals(expected.supports(SqlFeature.DATE_TYPED_LITERAL), latest.supports(SqlFeature.DATE_TYPED_LITERAL));
         assertEquals(expected.supports(SqlFeature.LOCKING_CLAUSE), latest.supports(SqlFeature.LOCKING_CLAUSE));
+        assertEquals(expected.supports(SqlFeature.LOCKING_SHARE), latest.supports(SqlFeature.LOCKING_SHARE));
+        assertEquals(expected.supports(SqlFeature.LOCKING_NOWAIT), latest.supports(SqlFeature.LOCKING_NOWAIT));
+        assertEquals(expected.supports(SqlFeature.LOCKING_SKIP_LOCKED), latest.supports(SqlFeature.LOCKING_SKIP_LOCKED));
         assertEquals(expected.supports(SqlFeature.DISTINCT_ON), latest.supports(SqlFeature.DISTINCT_ON));
+        assertEquals(expected.supports(SqlFeature.NULL_SAFE_EQUALITY_PREDICATE), latest.supports(SqlFeature.NULL_SAFE_EQUALITY_PREDICATE));
+        assertEquals(expected.supports(SqlFeature.REGEX_PREDICATE), latest.supports(SqlFeature.REGEX_PREDICATE));
     }
 
     @Test

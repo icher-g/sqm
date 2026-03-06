@@ -3,7 +3,6 @@ package io.sqm.render.mysql.spi;
 import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.core.mysql.dialect.MySqlCapabilities;
-import io.sqm.render.defaults.DefaultOperators;
 import io.sqm.render.defaults.DefaultValueFormatter;
 import io.sqm.render.mysql.Renderers;
 import io.sqm.render.ansi.spi.AnsiBooleans;
@@ -17,7 +16,7 @@ public class MySqlDialect implements SqlDialect {
 
     private final IdentifierQuoter quoter;
     private final ValueFormatter formatter = new DefaultValueFormatter(this);
-    private final Operators operators = new DefaultOperators();
+    private final Operators operators = new MySqlOperators();
     private final Booleans booleans = new AnsiBooleans();
     private final NullSorting nullSorting = new AnsiNullSorting();
     private final PaginationStyle paginationStyle = new MySqlPaginationStyle();
@@ -141,3 +140,5 @@ public class MySqlDialect implements SqlDialect {
         return repository;
     }
 }
+
+

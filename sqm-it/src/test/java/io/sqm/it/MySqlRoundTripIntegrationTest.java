@@ -52,6 +52,54 @@ class MySqlRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTrip_nullSafeEqualityPredicate() {
+        String sql = "SELECT id FROM users WHERE deleted_at <=> NULL";
+
+        Query parsed = Utils.parseMySql(sql);
+        String rendered = Utils.renderMySql(parsed);
+        Query reparsed = Utils.parseMySql(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals("SELECT id FROM users WHERE deleted_at <=> NULL", Utils.normalizeSql(rendered));
+    }
+
+    @Test
+    void roundTrip_mysqlRlikeCanonicalizesToRegexp() {
+        String sql = "SELECT id FROM users WHERE name RLIKE '^a'";
+
+        Query parsed = Utils.parseMySql(sql);
+        String rendered = Utils.renderMySql(parsed);
+        Query reparsed = Utils.parseMySql(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals("SELECT id FROM users WHERE name REGEXP '^a'", Utils.normalizeSql(rendered));
+    }
+
+    @Test
+    void roundTrip_forShareSkipLocked() {
+        String sql = "SELECT id FROM jobs FOR SHARE SKIP LOCKED";
+
+        Query parsed = Utils.parseMySql(sql);
+        String rendered = Utils.renderMySql(parsed);
+        Query reparsed = Utils.parseMySql(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals("SELECT id FROM jobs FOR SHARE SKIP LOCKED", Utils.normalizeSql(rendered));
+    }
+
+    @Test
+    void roundTrip_groupByWithRollupCanonicalForm() {
+        String sql = "SELECT department, status FROM employees GROUP BY department, status WITH ROLLUP";
+
+        Query parsed = Utils.parseMySql(sql);
+        String rendered = Utils.renderMySql(parsed);
+        Query reparsed = Utils.parseMySql(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals("SELECT department, status FROM employees GROUP BY department, status WITH ROLLUP", Utils.normalizeSql(rendered));
+    }
+
+    @Test
     void parser_rejects_distinct_on() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(Query.class, "SELECT DISTINCT ON (id) id FROM users");
@@ -67,3 +115,5 @@ class MySqlRoundTripIntegrationTest {
         assertTrue(result.isError());
     }
 }
+
+

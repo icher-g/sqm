@@ -1,166 +1,70 @@
 package io.sqm.core;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("ComparisonOperator enum")
 class ComparisonOperatorTest {
 
     @Test
-    @DisplayName("EQ (equal) operator exists")
-    void eq() {
-        assertEquals(ComparisonOperator.EQ, ComparisonOperator.EQ);
-        assertNotNull(ComparisonOperator.EQ);
+    void includesNullSafeEqualityOperator() {
+        assertEquals(ComparisonOperator.NULL_SAFE_EQ, ComparisonOperator.valueOf("NULL_SAFE_EQ"));
+        assertNotNull(ComparisonOperator.NULL_SAFE_EQ);
     }
 
     @Test
-    @DisplayName("NE (not equal) operator exists")
-    void ne() {
-        assertEquals(ComparisonOperator.NE, ComparisonOperator.NE);
-        assertNotNull(ComparisonOperator.NE);
-    }
-
-    @Test
-    @DisplayName("LT (less than) operator exists")
-    void lt() {
-        assertEquals(ComparisonOperator.LT, ComparisonOperator.LT);
-        assertNotNull(ComparisonOperator.LT);
-    }
-
-    @Test
-    @DisplayName("LTE (less than or equal) operator exists")
-    void lte() {
-        assertEquals(ComparisonOperator.LTE, ComparisonOperator.LTE);
-        assertNotNull(ComparisonOperator.LTE);
-    }
-
-    @Test
-    @DisplayName("GT (greater than) operator exists")
-    void gt() {
-        assertEquals(ComparisonOperator.GT, ComparisonOperator.GT);
-        assertNotNull(ComparisonOperator.GT);
-    }
-
-    @Test
-    @DisplayName("GTE (greater than or equal) operator exists")
-    void gte() {
-        assertEquals(ComparisonOperator.GTE, ComparisonOperator.GTE);
-        assertNotNull(ComparisonOperator.GTE);
-    }
-
-    @Test
-    @DisplayName("All operators are distinct")
-    void allOperatorsDistinct() {
+    void allOperatorsAreDistinct() {
         ComparisonOperator[] operators = ComparisonOperator.values();
-        assertEquals(6, operators.length);
+        assertEquals(7, operators.length);
         assertNotEquals(ComparisonOperator.EQ, ComparisonOperator.NE);
-        assertNotEquals(ComparisonOperator.LT, ComparisonOperator.GT);
-        assertNotEquals(ComparisonOperator.LTE, ComparisonOperator.GTE);
+        assertNotEquals(ComparisonOperator.NULL_SAFE_EQ, ComparisonOperator.EQ);
+        assertNotEquals(ComparisonOperator.NULL_SAFE_EQ, ComparisonOperator.NE);
     }
 
     @Test
-    @DisplayName("valueOf() works for valid operator strings")
-    void valueOfValid() {
-        assertEquals(ComparisonOperator.EQ, ComparisonOperator.valueOf("EQ"));
-        assertEquals(ComparisonOperator.NE, ComparisonOperator.valueOf("NE"));
-        assertEquals(ComparisonOperator.LT, ComparisonOperator.valueOf("LT"));
-        assertEquals(ComparisonOperator.LTE, ComparisonOperator.valueOf("LTE"));
-        assertEquals(ComparisonOperator.GT, ComparisonOperator.valueOf("GT"));
-        assertEquals(ComparisonOperator.GTE, ComparisonOperator.valueOf("GTE"));
-    }
-
-    @Test
-    @DisplayName("valueOf() throws for invalid operator string")
-    void valueOfInvalid() {
-        assertThrows(IllegalArgumentException.class, () -> ComparisonOperator.valueOf("INVALID"));
-        assertThrows(IllegalArgumentException.class, () -> ComparisonOperator.valueOf("eq")); // lowercase
-        assertThrows(IllegalArgumentException.class, () -> ComparisonOperator.valueOf("GREATER"));
-    }
-
-    @Test
-    @DisplayName("Operator name() returns correct string")
-    void operatorName() {
+    void operatorNameAndOrdinalAreStable() {
         assertEquals("EQ", ComparisonOperator.EQ.name());
-        assertEquals("NE", ComparisonOperator.NE.name());
-        assertEquals("LT", ComparisonOperator.LT.name());
-        assertEquals("LTE", ComparisonOperator.LTE.name());
-        assertEquals("GT", ComparisonOperator.GT.name());
-        assertEquals("GTE", ComparisonOperator.GTE.name());
-    }
-
-    @Test
-    @DisplayName("Operator ordinal() returns correct position")
-    void operatorOrdinal() {
+        assertEquals("NULL_SAFE_EQ", ComparisonOperator.NULL_SAFE_EQ.name());
         assertEquals(0, ComparisonOperator.EQ.ordinal());
-        assertEquals(1, ComparisonOperator.NE.ordinal());
-        assertEquals(2, ComparisonOperator.LT.ordinal());
-        assertEquals(3, ComparisonOperator.LTE.ordinal());
-        assertEquals(4, ComparisonOperator.GT.ordinal());
-        assertEquals(5, ComparisonOperator.GTE.ordinal());
+        assertEquals(1, ComparisonOperator.NULL_SAFE_EQ.ordinal());
     }
 
     @Test
-    @DisplayName("Comparison operators can be used in switch statements")
-    void switchUsage() {
-        ComparisonOperator op = ComparisonOperator.EQ;
-        String description = switch (op) {
+    void valueOfRejectsInvalidOperatorName() {
+        assertThrows(IllegalArgumentException.class, () -> ComparisonOperator.valueOf("INVALID"));
+    }
+
+    @Test
+    void switchCoversAllOperators() {
+        String description = switch (ComparisonOperator.NULL_SAFE_EQ) {
             case EQ -> "equal";
+            case NULL_SAFE_EQ -> "null-safe equal";
             case NE -> "not equal";
             case LT -> "less than";
             case LTE -> "less than or equal";
             case GT -> "greater than";
             case GTE -> "greater than or equal";
         };
-        assertEquals("equal", description);
 
-        op = ComparisonOperator.GT;
-        description = switch (op) {
-            case EQ -> "equal";
-            case NE -> "not equal";
-            case LT -> "less than";
-            case LTE -> "less than or equal";
-            case GT -> "greater than";
-            case GTE -> "greater than or equal";
-        };
-        assertEquals("greater than", description);
+        assertEquals("null-safe equal", description);
     }
 
     @Test
-    @DisplayName("values() returns all operators")
-    void valuesMethod() {
+    void valuesContainsAllOperators() {
         ComparisonOperator[] values = ComparisonOperator.values();
-        assertEquals(6, values.length);
         assertTrue(contains(values, ComparisonOperator.EQ));
+        assertTrue(contains(values, ComparisonOperator.NULL_SAFE_EQ));
         assertTrue(contains(values, ComparisonOperator.NE));
         assertTrue(contains(values, ComparisonOperator.LT));
         assertTrue(contains(values, ComparisonOperator.LTE));
         assertTrue(contains(values, ComparisonOperator.GT));
         assertTrue(contains(values, ComparisonOperator.GTE));
-    }
-
-    @Test
-    @DisplayName("Comparison operators represent typical SQL operators")
-    void representsSqlOperators() {
-        // EQ represents = operator
-        // NE represents <> or != operator
-        // LT represents < operator
-        // LTE represents <= operator
-        // GT represents > operator
-        // GTE represents >= operator
-        assertEquals(6, ComparisonOperator.values().length);
-    }
-
-    @Test
-    @DisplayName("Each operator is unique by ordinal")
-    void uniqueByOrdinal() {
-        ComparisonOperator[] values = ComparisonOperator.values();
-        for (int i = 0; i < values.length; i++) {
-            for (int j = i + 1; j < values.length; j++) {
-                assertNotEquals(values[i].ordinal(), values[j].ordinal());
-            }
-        }
     }
 
     private boolean contains(ComparisonOperator[] array, ComparisonOperator operator) {

@@ -132,9 +132,14 @@ public enum SqlFeature {
      */
     IS_DISTINCT_FROM_PREDICATE("PostgreSQL IS DISTINCT FROM predicate"),
     /**
-     * PostgreSQL regex predicate operators (~, ~*, !~, !~*).
+     * MySQL null-safe equality predicate ({@code <=>}).
      */
-    REGEX_PREDICATE("PostgreSQL regex predicate"),
+    NULL_SAFE_EQUALITY_PREDICATE("MySQL null-safe equality predicate"),
+    /**
+     * Regex predicate operators and keyword forms (for example PostgreSQL {@code ~},
+     * {@code !~}, {@code ~*}, {@code !~*} and MySQL {@code REGEXP}/{@code RLIKE}).
+     */
+    REGEX_PREDICATE("Regex predicate"),
     /**
      * PostgreSQL :: typecast operator syntax.
      */

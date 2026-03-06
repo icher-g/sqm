@@ -1,5 +1,7 @@
 package io.sqm.parser.mysql;
 
+import io.sqm.core.GroupBy;
+import io.sqm.core.GroupItem;
 import io.sqm.core.LimitOffset;
 import io.sqm.core.Query;
 import io.sqm.core.dialect.SqlDialectVersion;
@@ -8,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -86,5 +89,23 @@ class MySqlSpecsTest {
 
         assertTrue(result.ok());
         assertEquals(LimitOffset.of(10L, 5L), result.value());
+    }
+
+    @Test
+    void parseContext_usesMysqlGroupByParser_forWithRollup() {
+        var ctx = io.sqm.parser.spi.ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(GroupBy.class, "GROUP BY dept, status WITH ROLLUP");
+
+        assertTrue(result.ok());
+        assertInstanceOf(GroupItem.Rollup.class, result.value().items().getFirst());
+    }
+
+    @Test
+    void parseContext_usesMysqlRegexPredicateParser() {
+        var ctx = io.sqm.parser.spi.ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(io.sqm.core.Predicate.class, "name RLIKE '^a'");
+
+        assertTrue(result.ok());
+        assertInstanceOf(io.sqm.core.RegexPredicate.class, result.value());
     }
 }

@@ -30,6 +30,7 @@ public class ComparisonOperatorRenderer {
             case LTE -> w.append(ctx.dialect().operators().lte());
             case GT -> w.append(ctx.dialect().operators().gt());
             case GTE -> w.append(ctx.dialect().operators().gte());
+            case NULL_SAFE_EQ -> w.append(ctx.dialect().operators().nullSafeEq());
             default -> throw new IllegalStateException("Unexpected value: " + op);
         }
     }
