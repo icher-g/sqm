@@ -34,6 +34,11 @@ public class DefaultOperators implements Operators {
     }
 
     @Override
+    public String nullSafeEq() {
+        return "IS NOT DISTINCT FROM";
+    }
+
+    @Override
     public String ne() {
         return "<>"; // ANSI standard, not "!="
     }

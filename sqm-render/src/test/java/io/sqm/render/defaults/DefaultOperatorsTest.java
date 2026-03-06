@@ -15,6 +15,7 @@ class DefaultOperatorsTest {
         assertEquals("BETWEEN", ops.between());
         assertEquals("=", ops.eq());
         assertEquals("<>", ops.ne());
+        assertEquals("IS NOT DISTINCT FROM", ops.nullSafeEq());
         assertEquals("<", ops.lt());
         assertEquals("<=", ops.lte());
         assertEquals(">", ops.gt());

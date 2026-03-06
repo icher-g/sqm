@@ -27,6 +27,8 @@ public class ComparisonPredicateRenderer implements Renderer<ComparisonPredicate
      */
     @Override
     public void render(ComparisonPredicate node, RenderContext ctx, SqlWriter w) {
+        node.operator().assertSupported(ctx.dialect().capabilities(), ctx.dialect().name());
+
         w.append(node.lhs()).space();
         operatorRenderer.render(node.operator(), ctx, w);
         w.space().append(node.rhs());

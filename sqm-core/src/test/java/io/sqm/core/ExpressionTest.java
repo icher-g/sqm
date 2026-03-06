@@ -112,6 +112,12 @@ class ExpressionTest {
     }
 
     @Test
+    void nullSafeEq() {
+        assertInstanceOf(ComparisonPredicate.class, Expression.literal(1).nullSafeEq(Expression.literal(1)));
+        assertInstanceOf(ComparisonPredicate.class, Expression.literal(1).nullSafeEq(1));
+    }
+
+    @Test
     void lt() {
         assertInstanceOf(ComparisonPredicate.class, Expression.literal(1).lt(Expression.literal(2)));
         assertInstanceOf(ComparisonPredicate.class, Expression.literal(1).lt(2));

@@ -33,9 +33,14 @@ public final class MySqlCapabilities {
                 SqlFeature.BIT_STRING_LITERAL,
                 SqlFeature.HEX_STRING_LITERAL,
                 SqlFeature.LOCKING_CLAUSE,
+                SqlFeature.LOCKING_SHARE,
+                SqlFeature.LOCKING_NOWAIT,
+                SqlFeature.LOCKING_SKIP_LOCKED,
                 SqlFeature.GROUPING_SETS,
                 SqlFeature.ROLLUP,
-                SqlFeature.CUBE
+                SqlFeature.CUBE,
+                SqlFeature.NULL_SAFE_EQUALITY_PREDICATE,
+                SqlFeature.REGEX_PREDICATE
             )
             .build();
     }
@@ -49,3 +54,4 @@ public final class MySqlCapabilities {
         return of(LATEST_SUPPORTED);
     }
 }
+

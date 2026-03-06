@@ -1,0 +1,55 @@
+package io.sqm.render.mysql;
+
+import io.sqm.core.RegexMode;
+import io.sqm.core.RegexPredicate;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
+import io.sqm.render.SqlWriter;
+import io.sqm.render.spi.RenderContext;
+import io.sqm.render.spi.Renderer;
+
+/**
+ * Renders MySQL REGEXP/RLIKE predicates.
+ */
+public class MySqlRegexPredicateRenderer implements Renderer<RegexPredicate> {
+
+    /**
+     * Creates a MySQL regex-predicate renderer.
+     */
+    public MySqlRegexPredicateRenderer() {
+    }
+
+    /**
+     * Renders the node into an {@link SqlWriter}.
+     *
+     * @param node a node to render.
+     * @param ctx  a render context.
+     * @param w    a writer.
+     */
+    @Override
+    public void render(RegexPredicate node, RenderContext ctx, SqlWriter w) {
+        if (!ctx.dialect().capabilities().supports(SqlFeature.REGEX_PREDICATE)) {
+            throw new UnsupportedDialectFeatureException("MySQL REGEXP/RLIKE predicate", ctx.dialect().name());
+        }
+        if (node.mode() != RegexMode.MATCH) {
+            throw new UnsupportedDialectFeatureException("MySQL regex mode " + node.mode(), ctx.dialect().name());
+        }
+
+        w.append(node.value()).space();
+        if (node.negated()) {
+            w.append("NOT ");
+        }
+        w.append("REGEXP").space().append(node.pattern());
+    }
+
+    /**
+     * Gets the target type this handler can handle.
+     *
+     * @return an entity type to be handled by the handler.
+     */
+    @Override
+    public Class<? extends RegexPredicate> targetType() {
+        return RegexPredicate.class;
+    }
+}
+

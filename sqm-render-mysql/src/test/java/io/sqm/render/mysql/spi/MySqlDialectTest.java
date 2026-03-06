@@ -4,7 +4,6 @@ import io.sqm.core.QuoteStyle;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.render.ansi.spi.AnsiBooleans;
 import io.sqm.render.ansi.spi.AnsiNullSorting;
-import io.sqm.render.defaults.DefaultOperators;
 import io.sqm.render.defaults.DefaultValueFormatter;
 import org.junit.jupiter.api.Test;
 
@@ -22,8 +21,9 @@ class MySqlDialectTest {
         assertEquals("MySQL", dialect.name());
         assertInstanceOf(MySqlIdentifierQuoter.class, dialect.quoter());
         assertInstanceOf(DefaultValueFormatter.class, dialect.formatter());
-        assertInstanceOf(DefaultOperators.class, dialect.operators());
+        assertInstanceOf(MySqlOperators.class, dialect.operators());
         assertInstanceOf(AnsiBooleans.class, dialect.booleans());
+        assertEquals("<=>", dialect.operators().nullSafeEq());
         assertInstanceOf(AnsiNullSorting.class, dialect.nullSorting());
         assertInstanceOf(MySqlPaginationStyle.class, dialect.paginationStyle());
         assertNotNull(dialect.renderers());
@@ -39,4 +39,5 @@ class MySqlDialectTest {
         assertTrue(ansiQuotes.quoter().supports(QuoteStyle.DOUBLE_QUOTE));
     }
 }
+
 

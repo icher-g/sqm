@@ -10,7 +10,7 @@ import java.util.Set;
  */
 public final class OperatorTokens {
 
-    private static final Set<String> COMPARISON = Set.of("=", "<>", "!=", "<", "<=", ">", ">=");
+    private static final Set<String> COMPARISON = Set.of("=", "<=>", "<>", "!=", "<", "<=", ">", ">=");
     private static final Set<String> ARITHMETIC = Set.of("+", "-", "*", "/", "%");
     private static final Set<String> REGEX = Set.of("~", "~*", "!~", "!~*");
 
@@ -30,7 +30,7 @@ public final class OperatorTokens {
 
     /**
      * Returns {@code true} if the given token represents one of the comparison operators:
-     * {@code =}, {@code <>}, {@code !=}, {@code <}, {@code <=}, {@code >}, {@code >=}.
+     * {@code =}, {@code <=>}, {@code <>}, {@code !=}, {@code <}, {@code <=}, {@code >}, {@code >=}.
      *
      * @param t token to test
      * @return {@code true} if token is a comparison operator
@@ -69,6 +69,16 @@ public final class OperatorTokens {
      */
     public static boolean isEq(Token t) {
         return is(t, "=");
+    }
+
+    /**
+     * Checks whether token is {@code OPERATOR("<=>")}.
+     *
+     * @param t token to test
+     * @return {@code true} if token is {@code OPERATOR("<=>")}
+     */
+    public static boolean isNullSafeEq(Token t) {
+        return is(t, "<=>");
     }
 
     /**
@@ -181,3 +191,5 @@ public final class OperatorTokens {
         return is(t, "%");
     }
 }
+
+

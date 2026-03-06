@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### Added
+- MySQL R1 dialect delivery across parser/renderer/spec modules:
+  - `sqm-core-mysql`
+  - `sqm-parser-mysql`
+  - `sqm-render-mysql`
+- MySQL round-trip integration coverage in `sqm-it`.
+- MySQL R1B feature coverage:
+  - null-safe equality predicate (`<=>`)
+  - regex predicates (`REGEXP`, `RLIKE`)
+  - locking modifiers (`FOR SHARE`, `NOWAIT`, `SKIP LOCKED`)
+  - `GROUP BY ... WITH ROLLUP`
+
+### Changed
+- Dialect docs and roadmap updated to reflect MySQL R1 completion and canonical MySQL behavior.
+
 ## [v0.3.1] - 2026-03-01
 ### Added
 - New framework modules introduced in this release:

@@ -65,4 +65,12 @@ class ComparisonOperatorRendererTest {
         renderer.render(ComparisonOperator.GTE, ctx, w);
         assertEquals(">=", w.toText(null).sql());
     }
+
+    @Test
+    @DisplayName("NULL_SAFE_EQ operator renders as ANSI equivalent")
+    void nullSafeEq_operator() {
+        SqlWriter w = new DefaultSqlWriter(ctx);
+        renderer.render(ComparisonOperator.NULL_SAFE_EQ, ctx, w);
+        assertEquals("IS NOT DISTINCT FROM", w.toText(null).sql());
+    }
 }

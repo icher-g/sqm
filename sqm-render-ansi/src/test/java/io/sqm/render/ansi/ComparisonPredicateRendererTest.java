@@ -1,6 +1,9 @@
 package io.sqm.render.ansi;
 
+import io.sqm.core.ComparisonOperator;
+import io.sqm.core.ComparisonPredicate;
 import io.sqm.core.Predicate;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.DisplayName;
@@ -182,5 +185,12 @@ class ComparisonPredicateRendererTest {
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> col("c").eq(row(1, 2)));
             assertTrue(ex.getMessage().contains("EQ"));
         }
+    }
+
+    @Test
+    void nullSafeEq_isRejectedByAnsiDialect() {
+        ComparisonPredicate predicate = ComparisonPredicate.of(col("a"), ComparisonOperator.NULL_SAFE_EQ, col("b"));
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> render(predicate));
     }
 }

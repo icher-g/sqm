@@ -23,7 +23,7 @@ Repository development rules for contributors and coding agents are defined in `
 ## Features
 
 - **Typed immutable SQL model** - composable AST for queries, expressions, predicates, joins, and dialect-specific nodes.
-- **Dialect support** - ANSI + PostgreSQL parser/renderer/spec implementations.
+- **Dialect support** - ANSI + PostgreSQL + MySQL parser/renderer/spec implementations.
 - **Validation framework** - schema-aware query validation with configurable limits and access policies (principal/tenant aware).
 - **Rewrite and normalization pipeline** - built-in and custom rewrite rules (limit injection, qualification, canonicalization, tenant predicate, etc.).
 - **Middleware decision engine** - analyze/enforce/explain workflow with guardrails, telemetry, auditing, and flow control.
@@ -615,6 +615,32 @@ Highlights:
 - ORDER BY ... USING
 - SELECT locking clauses (FOR UPDATE/SHARE, NOWAIT, SKIP LOCKED)
 
+### MySQL Dialect Support
+
+SQM includes MySQL parsing and rendering with dialect-specific capabilities.
+
+```java
+var sql = """
+    SELECT id, name
+    FROM users
+    WHERE email <=> ? AND name RLIKE '^adm'
+    GROUP BY role, region WITH ROLLUP
+    FOR SHARE SKIP LOCKED
+""";
+
+var parseCtx = ParseContext.of(new MySqlSpecs());
+var query = parseCtx.parse(Query.class, sql).value();
+
+var renderCtx = RenderContext.of(new MySqlDialect());
+var rendered = renderCtx.render(query).sql();
+```
+
+Highlights:
+- MySQL null-safe equality (`<=>`)
+- Regex predicates (`REGEXP`, `RLIKE`) with canonical rendering
+- Locking modifiers (`FOR SHARE`, `NOWAIT`, `SKIP LOCKED`)
+- `GROUP BY ... WITH ROLLUP` parsing and canonical rendering
+
 ### Schema Validation (sqm-validate)
 
 SQM includes semantic query validation against a provided schema model.
@@ -1079,12 +1105,15 @@ price + quantity * 2
 | Module                     | Description                                                                 |
 |----------------------------|-----------------------------------------------------------------------------|
 | `sqm-core`                 | Core SQL model (AST), visitors/transformers, match API, base DSL primitives |
+| `sqm-core-mysql`           | MySQL-specific model capabilities                                            |
 | `sqm-core-postgresql`      | PostgreSQL-specific model capabilities                                      |
 | `sqm-parser`               | Parser SPI and shared parser contracts                                      |
 | `sqm-parser-ansi`          | ANSI parser implementation                                                  |
+| `sqm-parser-mysql`         | MySQL parser implementation                                                 |
 | `sqm-parser-postgresql`    | PostgreSQL parser implementation                                            |
 | `sqm-render`               | Renderer SPI and shared rendering contracts                                 |
 | `sqm-render-ansi`          | ANSI renderer implementation                                                |
+| `sqm-render-mysql`         | MySQL renderer implementation                                               |
 | `sqm-render-postgresql`    | PostgreSQL renderer implementation                                          |
 | `sqm-json`                 | Jackson mixins and JSON serialization support                               |
 | `sqm-catalog`              | Schema/catalog model and providers (JSON/JDBC)                              |
@@ -1108,7 +1137,7 @@ price + quantity * 2
 
 - Building complex SQL dynamically in backend applications
 - Converting SQL text into structured form for static analysis or auditing
-- Generating dialect-specific SQL (PostgreSQL, SQL Server, etc.)
+- Generating dialect-specific SQL (PostgreSQL, MySQL, SQL Server, etc.)
 - Visual query builders or query explorers
 - Integrating with DSL or JSON-based query definitions
 
@@ -1182,3 +1211,4 @@ See [LICENSE](LICENSE) for details.
 ### About
 
 **SQM (Structured Query Model)** is developed and maintained by [icher-g](https://github.com/icher-g).
+

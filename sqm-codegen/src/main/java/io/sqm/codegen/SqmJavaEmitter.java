@@ -341,6 +341,7 @@ final class SqmJavaEmitter {
             String fn = switch (p.operator()) {
                 case EQ -> "eq";
                 case NE -> "ne";
+                case NULL_SAFE_EQ -> "nullSafeEq";
                 case LT -> "lt";
                 case LTE -> "lte";
                 case GT -> "gt";

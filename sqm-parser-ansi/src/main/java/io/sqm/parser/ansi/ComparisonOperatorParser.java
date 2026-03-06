@@ -25,24 +25,33 @@ public class ComparisonOperatorParser {
      */
     @SuppressWarnings("unused")
     public ComparisonOperator parse(Cursor cur, ParseContext ctx) {
+        ComparisonOperator operator;
         if (cur.consumeIf(t -> isEq(t))) {
-            return ComparisonOperator.EQ;
+            operator = ComparisonOperator.EQ;
         }
-        if (cur.consumeIf(t -> isNeqAngle(t)) || cur.consumeIf(t -> isNeqBang(t))) {
-            return ComparisonOperator.NE;
+        else if (cur.consumeIf(t -> isNullSafeEq(t))) {
+            operator = ComparisonOperator.NULL_SAFE_EQ;
         }
-        if (cur.consumeIf(t -> isGt(t))) {
-            return ComparisonOperator.GT;
+        else if (cur.consumeIf(t -> isNeqAngle(t)) || cur.consumeIf(t -> isNeqBang(t))) {
+            operator = ComparisonOperator.NE;
         }
-        if (cur.consumeIf(t -> isGte(t))) {
-            return ComparisonOperator.GTE;
+        else if (cur.consumeIf(t -> isGt(t))) {
+            operator = ComparisonOperator.GT;
         }
-        if (cur.consumeIf(t -> isLt(t))) {
-            return ComparisonOperator.LT;
+        else if (cur.consumeIf(t -> isGte(t))) {
+            operator = ComparisonOperator.GTE;
         }
-        if (cur.consumeIf(t -> isLte(t))) {
-            return ComparisonOperator.LTE;
+        else if (cur.consumeIf(t -> isLt(t))) {
+            operator = ComparisonOperator.LT;
         }
-        throw new UnsupportedOperationException("The specified comparison operator is not supported: " + cur.peek().lexeme());
+        else if (cur.consumeIf(t -> isLte(t))) {
+            operator = ComparisonOperator.LTE;
+        }
+        else {
+            throw new UnsupportedOperationException("The specified comparison operator is not supported: " + cur.peek().lexeme());
+        }
+
+        operator.assertSupported(ctx.capabilities());
+        return operator;
     }
 }

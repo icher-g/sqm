@@ -22,6 +22,7 @@ class OperatorTokensTest {
     @Test
     void isComparison_identifiesComparisonOperators() {
         assertTrue(OperatorTokens.isComparison(new Token(TokenType.OPERATOR, "=", 0)));
+        assertTrue(OperatorTokens.isComparison(new Token(TokenType.OPERATOR, "<=>", 0)));
         assertTrue(OperatorTokens.isComparison(new Token(TokenType.OPERATOR, "<>", 0)));
         assertTrue(OperatorTokens.isComparison(new Token(TokenType.OPERATOR, "!=", 0)));
         assertTrue(OperatorTokens.isComparison(new Token(TokenType.OPERATOR, "<", 0)));
@@ -72,6 +73,13 @@ class OperatorTokensTest {
         assertTrue(OperatorTokens.isEq(new Token(TokenType.OPERATOR, "=", 0)));
         assertFalse(OperatorTokens.isEq(new Token(TokenType.OPERATOR, "!=", 0)));
         assertFalse(OperatorTokens.isEq(new Token(TokenType.OPERATOR, "<>", 0)));
+    }
+
+    @Test
+    void isNullSafeEq_identifiesNullSafeEqualityOperator() {
+        assertTrue(OperatorTokens.isNullSafeEq(new Token(TokenType.OPERATOR, "<=>", 0)));
+        assertFalse(OperatorTokens.isNullSafeEq(new Token(TokenType.OPERATOR, "=", 0)));
+        assertFalse(OperatorTokens.isNullSafeEq(new Token(TokenType.OPERATOR, "<>", 0)));
     }
 
     @Test
@@ -167,3 +175,5 @@ class OperatorTokensTest {
         assertTrue(OperatorTokens.is(new Token(TokenType.OPERATOR, "&&", 0), "&&"));
     }
 }
+
+

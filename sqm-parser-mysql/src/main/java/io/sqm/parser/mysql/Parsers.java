@@ -23,7 +23,8 @@ public final class Parsers {
 
     private static ParsersRepository registerDefaults(ParsersRepository repository) {
         return repository
-            .register(new MySqlLimitOffsetParser());
+            .register(new MySqlLimitOffsetParser())
+            .register(new MySqlGroupByParser())
+            .register(new MySqlRegexPredicateParser());
     }
 }
-
