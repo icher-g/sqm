@@ -13,6 +13,8 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
     private final List<SelectItem> items = new ArrayList<>();
     private final List<Join> joins = new ArrayList<>();
     private final List<WindowDef> windows = new ArrayList<>();
+    private final List<SelectModifier> modifiers = new ArrayList<>();
+    private final List<String> optimizerHints = new ArrayList<>();
     private GroupBy groupBy;
     private OrderBy orderBy;
     private TableRef tableRef;
@@ -46,6 +48,8 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
         this.limitOffset = query.limitOffset();
         this.lockingClause = query.lockFor();
         this.windows.addAll(query.windows());
+        this.modifiers.addAll(query.modifiers());
+        this.optimizerHints.addAll(query.optimizerHints());
     }
 
     @Override
@@ -122,6 +126,20 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
     }
 
     @Override
+    public SelectQueryBuilder selectModifiers(List<SelectModifier> modifiers) {
+        Objects.requireNonNull(modifiers, "modifiers must not be null");
+        this.modifiers.addAll(modifiers);
+        return this;
+    }
+
+    @Override
+    public SelectQueryBuilder optimizerHints(List<String> hints) {
+        Objects.requireNonNull(hints, "hints must not be null");
+        this.optimizerHints.addAll(hints);
+        return this;
+    }
+
+    @Override
     public SelectQueryBuilder limitOffset(LimitOffset limitOffset) {
         this.limitOffset = limitOffset;
         return this;
@@ -151,7 +169,9 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
             distinctSpec,
             limitOffset,
             lockingClause,
-            windows
+            windows,
+            modifiers,
+            optimizerHints
         );
     }
 }

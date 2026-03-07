@@ -40,7 +40,10 @@ public final class MySqlCapabilities {
                 SqlFeature.ROLLUP,
                 SqlFeature.CUBE,
                 SqlFeature.NULL_SAFE_EQUALITY_PREDICATE,
-                SqlFeature.REGEX_PREDICATE
+                SqlFeature.REGEX_PREDICATE,
+                SqlFeature.TABLE_INDEX_HINT,
+                SqlFeature.CALC_FOUND_ROWS_MODIFIER,
+                SqlFeature.OPTIMIZER_HINT_COMMENT
             )
             .build();
     }
@@ -54,4 +57,3 @@ public final class MySqlCapabilities {
         return of(LATEST_SUPPORTED);
     }
 }
-

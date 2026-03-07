@@ -66,7 +66,7 @@ public class AtomicQueryParser {
         }
 
         // SELECT ...
-        if (cur.match(TokenType.SELECT)) {
+        if (cur.match(TokenType.SELECT) || (cur.match(TokenType.COMMENT_HINT) && cur.match(TokenType.SELECT, 1))) {
             return ctx.parse(SelectQuery.class, cur);
         }
 

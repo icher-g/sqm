@@ -449,7 +449,7 @@ class LexerTest {
 
     @Test
     void lexer_throwsOnUnexpectedCharacter() {
-        assertThrows(ParserException.class, () -> Lexer.lexAll("SELECT §", quoting)); // § character
+        assertThrows(ParserException.class, () -> Lexer.lexAll("SELECT Ã‚Â§", quoting)); // Ã‚Â§ character
     }
 
     @Test
@@ -558,6 +558,19 @@ class LexerTest {
         assertEquals(TokenType.RENAME, tokens.get(13).type());
     }
 
+    @Test
+    void lexer_emitsLeadingOptimizerHintCommentToken() {
+        List<Token> tokens = Lexer.lexAll("/*+ MAX_EXECUTION_TIME(1000) */ SELECT 1", quoting);
+        assertEquals(TokenType.COMMENT_HINT, tokens.get(0).type());
+        assertEquals("MAX_EXECUTION_TIME(1000)", tokens.get(0).lexeme());
+        assertEquals(TokenType.SELECT, tokens.get(1).type());
+    }
+
+    @Test
+    void lexer_throwsOnUnterminatedOptimizerHintComment() {
+        assertThrows(ParserException.class, () -> Lexer.lexAll("SELECT /*+ BKA(users)", quoting));
+    }
+
     private static class TestIdentifierQuoting implements IdentifierQuoting {
         /**
          * Checks whether the given character can start a quoted identifier.
@@ -570,5 +583,20 @@ class LexerTest {
         public boolean supports(char ch) {
             return ch == '"' || ch == '`' || ch == '[';
         }
+    }
+    @Test
+    void lexer_emitsOptimizerHintCommentToken() {
+        List<Token> tokens = Lexer.lexAll("SELECT /*+ BKA(users) */ id FROM users", quoting);
+        assertEquals(TokenType.SELECT, tokens.get(0).type());
+        assertEquals(TokenType.COMMENT_HINT, tokens.get(1).type());
+        assertEquals("BKA(users)", tokens.get(1).lexeme());
+    }
+
+    @Test
+    void lexer_keepsRegularBlockCommentSkipped() {
+        List<Token> tokens = Lexer.lexAll("SELECT /* regular */ id FROM users", quoting);
+        assertEquals(TokenType.SELECT, tokens.get(0).type());
+        assertEquals(TokenType.IDENT, tokens.get(1).type());
+        assertEquals("id", tokens.get(1).lexeme());
     }
 }

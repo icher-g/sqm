@@ -3,6 +3,8 @@ package io.sqm.core.internal;
 import io.sqm.core.*;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -87,7 +89,7 @@ class SelectQueryImplTest {
         assertEquals(1, withSelect.items().size());
         assertEquals(0, base.joins().size());
         assertEquals(tbl("users"), withLimit.from());
-        assertEquals(10L, ((Number) ((LiteralExpr) withLimit.limitOffset().limit()).value()).longValue());
+        assertEquals(10L, ((Number) ((io.sqm.core.LiteralExpr) withLimit.limitOffset().limit()).value()).longValue());
         assertNull(base.limitOffset());
     }
 
@@ -103,5 +105,71 @@ class SelectQueryImplTest {
         assertThrows(UnsupportedOperationException.class, () -> query.windows().add(
             window("w2", OverSpec.def((PartitionBy) null, null, null, null))
         ));
+    }
+
+    @Test
+    void modifiers_and_optimizer_hints_are_copied() {
+        var query = SelectQuery.of(
+            List.of(col("id").toSelectItem()),
+            tbl("users"),
+            List.of(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(SelectModifier.CALC_FOUND_ROWS),
+            List.of("MAX_EXECUTION_TIME(1000)")
+        );
+
+        assertEquals(SelectModifier.CALC_FOUND_ROWS, query.modifiers().getFirst());
+        assertEquals("MAX_EXECUTION_TIME(1000)", query.optimizerHints().getFirst());
+        assertThrows(UnsupportedOperationException.class, () -> query.modifiers().add(SelectModifier.CALC_FOUND_ROWS));
+        assertThrows(UnsupportedOperationException.class, () -> query.optimizerHints().add("BKA(users)"));
+    }
+
+    @Test
+    void legacyFactoryUsesEmptyModifierAndHintLists() {
+        var query = SelectQuery.of(
+            List.of(col("id").toSelectItem()),
+            tbl("users"),
+            List.of(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of()
+        );
+
+        assertEquals(List.of(), query.modifiers());
+        assertEquals(List.of(), query.optimizerHints());
+    }
+
+    @Test
+    void nullModifierAndHintListsDefaultToEmpty() {
+        var query = SelectQuery.of(
+            List.of(col("id").toSelectItem()),
+            tbl("users"),
+            List.of(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of(),
+            null,
+            null
+        );
+
+        assertEquals(List.of(), query.modifiers());
+        assertEquals(List.of(), query.optimizerHints());
     }
 }

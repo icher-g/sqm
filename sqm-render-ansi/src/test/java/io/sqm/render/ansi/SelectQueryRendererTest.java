@@ -193,10 +193,10 @@ public class SelectQueryRendererTest {
     }
 
     @Nested
-    @DisplayName("OFFSET … FETCH style")
+    @DisplayName("OFFSET Ã¢â‚¬Â¦ FETCH style")
     class OffsetFetchStyle {
         @Test
-        @DisplayName("ORDER BY present -> 'ORDER BY … OFFSET m ROWS FETCH NEXT n ROWS ONLY'")
+        @DisplayName("ORDER BY present -> 'ORDER BY Ã¢â‚¬Â¦ OFFSET m ROWS FETCH NEXT n ROWS ONLY'")
         void offsetFetch_ok() {
             var ctx = ctxWith(offsetFetch());
 
@@ -211,11 +211,11 @@ public class SelectQueryRendererTest {
             assertTrue(sql.contains("ORDER BY"), "must include ORDER BY");
             assertTrue(sql.contains("OFFSET 5 ROWS"), "must include OFFSET 5 ROWS");
             assertTrue(sql.contains("FETCH NEXT 10 ROWS ONLY"), "must include FETCH NEXT 10 ROWS ONLY");
-            assertTrue(sql.indexOf("ORDER BY") < sql.indexOf("OFFSET"), "ORDER BY must precede OFFSET … FETCH");
+            assertTrue(sql.indexOf("ORDER BY") < sql.indexOf("OFFSET"), "ORDER BY must precede OFFSET Ã¢â‚¬Â¦ FETCH");
         }
 
         @Test
-        @DisplayName("Only OFFSET -> 'ORDER BY … OFFSET m ROWS'")
+        @DisplayName("Only OFFSET -> 'ORDER BY Ã¢â‚¬Â¦ OFFSET m ROWS'")
         void onlyOffset_ok() {
             var ctx = ctxWith(offsetFetch());
 
@@ -237,7 +237,7 @@ public class SelectQueryRendererTest {
     class TopStyle {
 
         @Test
-        @DisplayName("LIMIT -> 'SELECT TOP n …' injected in head")
+        @DisplayName("LIMIT -> 'SELECT TOP n Ã¢â‚¬Â¦' injected in head")
         void top_in_head() {
             var ctx = ctxWith(topOnly());
 
@@ -266,5 +266,56 @@ public class SelectQueryRendererTest {
             UnsupportedOperationException ex = assertThrows(UnsupportedOperationException.class, () -> ctx.render(q));
             assertTrue(ex.getMessage().toLowerCase().contains("offset"), "message should mention OFFSET not supported");
         }
+    }
+    @Test
+    @DisplayName("Renderer target type is SelectQuery")
+    void targetTypeIsSelectQuery() {
+        assertEquals(io.sqm.core.SelectQuery.class, new SelectQueryRenderer().targetType());
+    }
+
+    @Test
+    @DisplayName("Rejects SQL_CALC_FOUND_ROWS modifier when capability is unavailable")
+    void rejects_calc_found_rows_modifier() {
+        var q = io.sqm.core.SelectQuery.of(
+            java.util.List.of(col("t", "c").toSelectItem()),
+            tbl("t"),
+            java.util.List.of(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            java.util.List.of(),
+            java.util.List.of(io.sqm.core.SelectModifier.CALC_FOUND_ROWS),
+            java.util.List.of()
+        );
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new AnsiDialect()).render(q));
+    }
+
+    @Test
+    @DisplayName("Rejects optimizer hint comments when capability is unavailable")
+    void rejects_optimizer_hints() {
+        var q = io.sqm.core.SelectQuery.of(
+            java.util.List.of(col("t", "c").toSelectItem()),
+            tbl("t"),
+            java.util.List.of(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            java.util.List.of(),
+            java.util.List.of(),
+            java.util.List.of("MAX_EXECUTION_TIME(1000)")
+        );
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new AnsiDialect()).render(q));
     }
 }

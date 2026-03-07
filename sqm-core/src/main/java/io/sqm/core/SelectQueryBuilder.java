@@ -4,6 +4,7 @@ import io.sqm.core.internal.SelectQueryBuilderImpl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Mutable builder for constructing immutable {@link SelectQuery} instances efficiently.
@@ -200,6 +201,44 @@ public interface SelectQueryBuilder {
      */
     default SelectQueryBuilder distinct(Expression... items) {
         return distinct(List.of(items));
+    }
+
+    /**
+     * Appends select-level modifiers.
+     *
+     * @param modifiers modifiers to append
+     * @return this builder
+     */
+    SelectQueryBuilder selectModifiers(List<SelectModifier> modifiers);
+
+    /**
+     * Appends a select-level modifier.
+     *
+     * @param modifier modifier to append
+     * @return this builder
+     */
+    default SelectQueryBuilder selectModifier(SelectModifier modifier) {
+        Objects.requireNonNull(modifier, "modifier must not be null");
+        return selectModifiers(List.of(modifier));
+    }
+
+    /**
+     * Appends optimizer hint bodies (without comment delimiters).
+     *
+     * @param hints hint bodies
+     * @return this builder
+     */
+    SelectQueryBuilder optimizerHints(List<String> hints);
+
+    /**
+     * Appends one optimizer hint body (without comment delimiters).
+     *
+     * @param hint hint body
+     * @return this builder
+     */
+    default SelectQueryBuilder optimizerHint(String hint) {
+        Objects.requireNonNull(hint, "hint must not be null");
+        return optimizerHints(List.of(hint));
     }
 
     /**

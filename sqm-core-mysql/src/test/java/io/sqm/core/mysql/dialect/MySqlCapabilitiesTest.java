@@ -29,6 +29,9 @@ class MySqlCapabilitiesTest {
         assertTrue(capabilities.supports(SqlFeature.CUBE));
         assertTrue(capabilities.supports(SqlFeature.NULL_SAFE_EQUALITY_PREDICATE));
         assertTrue(capabilities.supports(SqlFeature.REGEX_PREDICATE));
+        assertTrue(capabilities.supports(SqlFeature.CALC_FOUND_ROWS_MODIFIER));
+        assertTrue(capabilities.supports(SqlFeature.OPTIMIZER_HINT_COMMENT));
+        assertTrue(capabilities.supports(SqlFeature.TABLE_INDEX_HINT));
     }
 
     @Test
@@ -55,6 +58,9 @@ class MySqlCapabilitiesTest {
         assertEquals(expected.supports(SqlFeature.DISTINCT_ON), latest.supports(SqlFeature.DISTINCT_ON));
         assertEquals(expected.supports(SqlFeature.NULL_SAFE_EQUALITY_PREDICATE), latest.supports(SqlFeature.NULL_SAFE_EQUALITY_PREDICATE));
         assertEquals(expected.supports(SqlFeature.REGEX_PREDICATE), latest.supports(SqlFeature.REGEX_PREDICATE));
+        assertEquals(expected.supports(SqlFeature.CALC_FOUND_ROWS_MODIFIER), latest.supports(SqlFeature.CALC_FOUND_ROWS_MODIFIER));
+        assertEquals(expected.supports(SqlFeature.OPTIMIZER_HINT_COMMENT), latest.supports(SqlFeature.OPTIMIZER_HINT_COMMENT));
+        assertEquals(expected.supports(SqlFeature.TABLE_INDEX_HINT), latest.supports(SqlFeature.TABLE_INDEX_HINT));
     }
 
     @Test

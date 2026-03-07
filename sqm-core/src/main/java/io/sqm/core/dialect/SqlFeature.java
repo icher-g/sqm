@@ -136,6 +136,18 @@ public enum SqlFeature {
      */
     NULL_SAFE_EQUALITY_PREDICATE("MySQL null-safe equality predicate"),
     /**
+     * MySQL table index hints ({@code USE/IGNORE/FORCE INDEX}).
+     */
+    TABLE_INDEX_HINT("MySQL table index hints"),
+    /**
+     * MySQL {@code SQL_CALC_FOUND_ROWS} SELECT modifier.
+     */
+    CALC_FOUND_ROWS_MODIFIER("MySQL SQL_CALC_FOUND_ROWS modifier"),
+    /**
+     * Optimizer hint comments ({@code /*+ ... *\/}).
+     */
+    OPTIMIZER_HINT_COMMENT("optimizer hint comment"),
+    /**
      * Regex predicate operators and keyword forms (for example PostgreSQL {@code ~},
      * {@code !~}, {@code ~*}, {@code !~*} and MySQL {@code REGEXP}/{@code RLIKE}).
      */
@@ -191,3 +203,6 @@ public enum SqlFeature {
         return description;
     }
 }
+
+
+

@@ -25,6 +25,8 @@ public final class Parsers {
         return repository
             .register(new MySqlLimitOffsetParser())
             .register(new MySqlGroupByParser())
-            .register(new MySqlRegexPredicateParser());
+            .register(new MySqlRegexPredicateParser())
+            .register(new MySqlTableParser())
+            .register(new MySqlSelectQueryParser());
     }
 }

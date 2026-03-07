@@ -1,6 +1,18 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.*;
+import io.sqm.core.CrossJoin;
+import io.sqm.core.DistinctSpec;
+import io.sqm.core.GroupBy;
+import io.sqm.core.Join;
+import io.sqm.core.LimitOffset;
+import io.sqm.core.LockingClause;
+import io.sqm.core.OrderBy;
+import io.sqm.core.Predicate;
+import io.sqm.core.SelectQuery;
+import io.sqm.core.SelectQueryBuilder;
+import io.sqm.core.SelectItem;
+import io.sqm.core.TableRef;
+import io.sqm.core.WindowDef;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
@@ -29,10 +41,19 @@ public class SelectQueryParser implements Parser<SelectQuery> {
      */
     @Override
     public ParseResult<SelectQuery> parse(Cursor cur, ParseContext ctx) {
-        // SELECT
+        var q = SelectQuery.builder();
+
+        var beforeSelect = parseBeforeSelectKeyword(cur, ctx, q);
+        if (beforeSelect.isError()) {
+            return error(beforeSelect);
+        }
+
         cur.expect("Expected SELECT at the beginning of a query", TokenType.SELECT);
 
-        var q = SelectQuery.builder();
+        var afterSelect = parseAfterSelectKeyword(cur, ctx, q);
+        if (afterSelect.isError()) {
+            return error(afterSelect);
+        }
 
         // DISTINCT
         if (cur.match(TokenType.DISTINCT)) {
@@ -113,7 +134,7 @@ public class SelectQueryParser implements Parser<SelectQuery> {
                 }
                 q.window(wr.value());
             }
-            while (cur.consumeIf(TokenType.COMMA)); // WINDOW w1 AS (PARTITION BY dept ORDER BY salary DESC), w2 AS (ORDER BY salary DESC);
+            while (cur.consumeIf(TokenType.COMMA));
         }
 
         // ORDER BY (optional)
@@ -145,6 +166,31 @@ public class SelectQueryParser implements Parser<SelectQuery> {
         }
 
         return ok(q.build());
+    }
+
+    /**
+     * Hook for dialect-specific tokens that may appear before {@code SELECT}.
+     *
+     * @param cur token cursor.
+     * @param ctx parse context.
+     * @param q   mutable query builder.
+     * @return parsing result.
+     */
+    protected ParseResult<Void> parseBeforeSelectKeyword(Cursor cur, ParseContext ctx, SelectQueryBuilder q) {
+        return ok(null);
+    }
+
+    /**
+     * Hook for dialect-specific tokens that may appear after {@code SELECT}
+     * and before DISTINCT / projection list.
+     *
+     * @param cur token cursor.
+     * @param ctx parse context.
+     * @param q   mutable query builder.
+     * @return parsing result.
+     */
+    protected ParseResult<Void> parseAfterSelectKeyword(Cursor cur, ParseContext ctx, SelectQueryBuilder q) {
+        return ok(null);
     }
 
     /**

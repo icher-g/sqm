@@ -45,7 +45,42 @@ public non-sealed interface SelectQuery extends Query {
         LimitOffset limitOffset,
         LockingClause lockFor,
         List<WindowDef> windows) {
-        return new Impl(items, from, joins, where, groupBy, having, orderBy, distinct, limitOffset, lockFor, windows);
+        return new Impl(items, from, joins, where, groupBy, having, orderBy, distinct, limitOffset, lockFor, windows, List.of(), List.of());
+    }
+
+    /**
+     * Creates an immutable {@link SelectQuery} from all SELECT clause parts, including select modifiers and optimizer hints.
+     *
+     * @param items select items (must not be {@code null})
+     * @param from FROM table reference, or {@code null}
+     * @param joins joins (must not be {@code null})
+     * @param where WHERE predicate, or {@code null}
+     * @param groupBy GROUP BY clause, or {@code null}
+     * @param having HAVING predicate, or {@code null}
+     * @param orderBy ORDER BY clause, or {@code null}
+     * @param distinct DISTINCT specification, or {@code null}
+     * @param limitOffset LIMIT/OFFSET specification, or {@code null}
+     * @param lockFor locking clause, or {@code null}
+     * @param windows WINDOW clause definitions (must not be {@code null})
+     * @param modifiers select modifiers
+     * @param optimizerHints optimizer hints (without comment delimiters)
+     * @return immutable {@link SelectQuery} instance
+     */
+    static SelectQuery of(
+        List<SelectItem> items,
+        TableRef from,
+        List<Join> joins,
+        Predicate where,
+        GroupBy groupBy,
+        Predicate having,
+        OrderBy orderBy,
+        DistinctSpec distinct,
+        LimitOffset limitOffset,
+        LockingClause lockFor,
+        List<WindowDef> windows,
+        List<SelectModifier> modifiers,
+        List<String> optimizerHints) {
+        return new Impl(items, from, joins, where, groupBy, having, orderBy, distinct, limitOffset, lockFor, windows, modifiers, optimizerHints);
     }
 
     /**
@@ -135,6 +170,26 @@ public non-sealed interface SelectQuery extends Query {
     LockingClause lockFor();
 
     /**
+     * Returns select-level modifiers.
+     *
+     * @return immutable list of select modifiers.
+     */
+    default List<SelectModifier> modifiers() {
+        return List.of();
+    }
+
+    /**
+     * Returns optimizer hints attached to this query.
+     * <p>
+     * Values do not include comment delimiters and are rendered as {@code /*+ ... *\/} by supporting renderers.
+     *
+     * @return immutable list of optimizer hints.
+     */
+    default List<String> optimizerHints() {
+        return List.of();
+    }
+
+    /**
      * Accepts a {@link NodeVisitor} and dispatches control to the
      * visitor method corresponding to the concrete subtype.
      *
@@ -161,6 +216,8 @@ public non-sealed interface SelectQuery extends Query {
      * @param limitOffset LIMIT/OFFSET specification, or {@code null}
      * @param lockFor locking clause, or {@code null}
      * @param windows WINDOW clause definitions (immutable copy)
+     * @param modifiers select modifiers (immutable copy)
+     * @param optimizerHints optimizer hints (immutable copy)
      */
     record Impl(List<SelectItem> items,
                 TableRef from,
@@ -172,7 +229,9 @@ public non-sealed interface SelectQuery extends Query {
                 DistinctSpec distinct,
                 LimitOffset limitOffset,
                 LockingClause lockFor,
-                List<WindowDef> windows) implements SelectQuery {
+                List<WindowDef> windows,
+                List<SelectModifier> modifiers,
+                List<String> optimizerHints) implements SelectQuery {
 
         /**
          * Creates an immutable {@link SelectQuery} implementation and defensively copies list inputs.
@@ -181,6 +240,25 @@ public non-sealed interface SelectQuery extends Query {
             items = List.copyOf(items);
             joins = List.copyOf(joins);
             windows = List.copyOf(windows);
+            modifiers = modifiers == null ? List.of() : List.copyOf(modifiers);
+            optimizerHints = optimizerHints == null ? List.of() : List.copyOf(optimizerHints);
+        }
+
+        /**
+         * Creates an immutable {@link SelectQuery} implementation without select modifiers and optimizer hints.
+         */
+        public Impl(List<SelectItem> items,
+                    TableRef from,
+                    List<Join> joins,
+                    Predicate where,
+                    GroupBy groupBy,
+                    Predicate having,
+                    OrderBy orderBy,
+                    DistinctSpec distinct,
+                    LimitOffset limitOffset,
+                    LockingClause lockFor,
+                    List<WindowDef> windows) {
+            this(items, from, joins, where, groupBy, having, orderBy, distinct, limitOffset, lockFor, windows, List.of(), List.of());
         }
     }
 }

@@ -135,7 +135,7 @@ public final class Lexer {
     /**
      * Creates lexer for the provided SQL text.
      *
-     * @param s input SQL text
+     * @param s                 input SQL text
      * @param identifierQuoting dialect-specific identifier quoting rules
      */
     public Lexer(String s, IdentifierQuoting identifierQuoting) {
@@ -147,8 +147,8 @@ public final class Lexer {
     /**
      * Converts a string into a list of tokens.
      *
-     * @param s a string to convert.
-        * @param identifierQuoting dialect-specific identifier quoting rules
+     * @param s                 a string to convert.
+     * @param identifierQuoting dialect-specific identifier quoting rules
      * @return a list of tokens.
      */
     public static List<Token> lexAll(String s, IdentifierQuoting identifierQuoting) {
@@ -176,6 +176,14 @@ public final class Lexer {
     private static TokenType keywordOf(String keyword) {
         String k = keyword.toUpperCase(Locale.ROOT);
         return KEYWORDS.get(k);
+    }
+
+    private static boolean isDollarTagStart(char c) {
+        return Character.isLetter(c) || c == '_';
+    }
+
+    private static boolean isDollarTagPart(char c) {
+        return Character.isLetterOrDigit(c) || c == '_';
     }
 
     /**
@@ -231,6 +239,14 @@ public final class Lexer {
 
         // punctuation/operators
         switch (c) {
+            case '/':
+                if (peekNext() == '*') {
+                    var hint = readCommentHint();
+                    if (hint != null) {
+                        return hint;
+                    }
+                }
+                break;
             case '$':
                 var dollarString = readDollarString();
                 if (dollarString != null) {
@@ -376,12 +392,22 @@ public final class Lexer {
         return new Token(DOLLAR_STRING, raw, start);
     }
 
-    private static boolean isDollarTagStart(char c) {
-        return Character.isLetter(c) || c == '_';
-    }
-
-    private static boolean isDollarTagPart(char c) {
-        return Character.isLetterOrDigit(c) || c == '_';
+    private Token readCommentHint() {
+        int start = pos;
+        if (!(pos + 2 < len && s.charAt(pos) == '/' && s.charAt(pos + 1) == '*' && s.charAt(pos + 2) == '+')) {
+            return null;
+        }
+        int contentStart = pos + 3;
+        int i = contentStart;
+        while (i + 1 < len && !(s.charAt(i) == '*' && s.charAt(i + 1) == '/')) {
+            i++;
+        }
+        if (i + 1 >= len) {
+            throw new ParserException("Unterminated optimizer hint comment", start);
+        }
+        String hint = s.substring(contentStart, i).trim();
+        pos = i + 2;
+        return new Token(COMMENT_HINT, hint, start);
     }
 
     private void skipWSandComments() {
@@ -399,6 +425,10 @@ public final class Lexer {
             }
             // /* block comment */
             if (c == '/' && pos + 1 < len && s.charAt(pos + 1) == '*') {
+                // Keep optimizer hint comments (/*+ ... */) for parser handling.
+                if (pos + 2 < len && s.charAt(pos + 2) == '+') {
+                    break;
+                }
                 pos += 2;
                 while (pos + 1 < len && !(s.charAt(pos) == '*' && s.charAt(pos + 1) == '/')) pos++;
                 if (pos + 1 >= len) throw new ParserException("Unterminated block comment", pos);
