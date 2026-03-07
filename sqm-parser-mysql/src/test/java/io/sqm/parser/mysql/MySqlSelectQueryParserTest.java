@@ -50,6 +50,20 @@ class MySqlSelectQueryParserTest {
     }
 
     @Test
+    void parsesMultipleOptimizerHintsAndCalcFoundRows() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Query.class,
+            "/*+ SET_VAR(sort_buffer_size=16M) */ SELECT /*+ BKA(users) */ SQL_CALC_FOUND_ROWS id FROM users");
+
+        assertTrue(result.ok());
+        var select = (SelectQuery) result.value();
+        assertEquals(2, select.optimizerHints().size());
+        assertEquals("SET_VAR(sort_buffer_size=16M)", select.optimizerHints().get(0));
+        assertEquals("BKA(users)", select.optimizerHints().get(1));
+        assertEquals(SelectModifier.CALC_FOUND_ROWS, select.modifiers().getFirst());
+    }
+
+    @Test
     void parserRejectsSqlCalcFoundRowsWhenCapabilityIsMissing() {
         var parser = new MySqlSelectQueryParser();
         var ctx = ParseContext.of(new AnsiSpecs());
@@ -66,6 +80,18 @@ class MySqlSelectQueryParserTest {
         var parser = new MySqlSelectQueryParser();
         var ctx = ParseContext.of(new AnsiSpecs());
         var cur = Cursor.of("SELECT /*+ BKA(users) */ id FROM users", ctx.identifierQuoting());
+
+        var result = parser.parse(cur, ctx);
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Optimizer hint comments"));
+    }
+
+    @Test
+    void parserRejectsLeadingOptimizerHintWhenCapabilityIsMissing() {
+        var parser = new MySqlSelectQueryParser();
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var cur = Cursor.of("/*+ BKA(users) */ SELECT id FROM users", ctx.identifierQuoting());
 
         var result = parser.parse(cur, ctx);
 

@@ -75,6 +75,12 @@ class TableRendererTest {
         assertTrue(sql.contains("AS \"u\""));
     }
     @Test
+    @DisplayName("Returns table target type")
+    void target_type_is_table() {
+        assertEquals(Table.class, new TableRenderer().targetType());
+    }
+
+    @Test
     @DisplayName("Rejects table index hints in ANSI renderer")
     void rejects_index_hints() {
         var table = Table.of(

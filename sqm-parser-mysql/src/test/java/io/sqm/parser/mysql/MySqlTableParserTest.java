@@ -49,6 +49,39 @@ class MySqlTableParserTest {
     }
 
     @Test
+    void parsesGroupByKeyHintAndMultipleIndexes() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Table.class, "users FORCE KEY FOR GROUP BY (idx_a, idx_b)");
+
+        assertTrue(result.ok());
+        var hint = result.value().indexHints().getFirst();
+        assertEquals(Table.IndexHintType.FORCE, hint.type());
+        assertEquals(Table.IndexHintScope.GROUP_BY, hint.scope());
+        assertEquals(2, hint.indexes().size());
+        assertEquals("idx_a", hint.indexes().get(0).value());
+        assertEquals("idx_b", hint.indexes().get(1).value());
+    }
+
+    @Test
+    void parsesAliasBeforeIndexHint() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Table.class, "users u USE INDEX (idx_users_name)");
+
+        assertTrue(result.ok());
+        assertEquals("u", result.value().alias().value());
+        assertEquals(Table.IndexHintType.USE, result.value().indexHints().getFirst().type());
+    }
+
+    @Test
+    void rejectsInvalidIndexHintScope() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Table.class, "users USE INDEX FOR WHERE (idx_users_name)");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected JOIN, ORDER BY or GROUP BY"));
+    }
+
+    @Test
     void parserRejectsIndexHintsWhenCapabilityIsMissing() {
         var parser = new MySqlTableParser();
         var ctx = ParseContext.of(new AnsiSpecs());

@@ -94,7 +94,8 @@ public class MySqlTableParser extends TableParser {
             return error("Expected USE, IGNORE or FORCE", cur.fullPos());
         }
 
-        if (!(cur.match(TokenType.IDENT) && ("INDEX".equalsIgnoreCase(cur.peek().lexeme()) || "KEY".equalsIgnoreCase(cur.peek().lexeme())))) {
+        if (!(cur.match(TokenType.IDENT) && "INDEX".equalsIgnoreCase(cur.peek().lexeme())
+            || cur.match(TokenType.KEY))) {
             return error("Expected INDEX or KEY in table index hint", cur.fullPos());
         }
         cur.advance();

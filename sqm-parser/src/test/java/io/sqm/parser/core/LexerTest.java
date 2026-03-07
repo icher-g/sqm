@@ -449,7 +449,7 @@ class LexerTest {
 
     @Test
     void lexer_throwsOnUnexpectedCharacter() {
-        assertThrows(ParserException.class, () -> Lexer.lexAll("SELECT Â§", quoting)); // Â§ character
+        assertThrows(ParserException.class, () -> Lexer.lexAll("SELECT Ã‚Â§", quoting)); // Ã‚Â§ character
     }
 
     @Test
@@ -556,6 +556,19 @@ class LexerTest {
         assertEquals(TokenType.REVOKE, tokens.get(11).type());
         assertEquals(TokenType.COMMENT, tokens.get(12).type());
         assertEquals(TokenType.RENAME, tokens.get(13).type());
+    }
+
+    @Test
+    void lexer_emitsLeadingOptimizerHintCommentToken() {
+        List<Token> tokens = Lexer.lexAll("/*+ MAX_EXECUTION_TIME(1000) */ SELECT 1", quoting);
+        assertEquals(TokenType.COMMENT_HINT, tokens.get(0).type());
+        assertEquals("MAX_EXECUTION_TIME(1000)", tokens.get(0).lexeme());
+        assertEquals(TokenType.SELECT, tokens.get(1).type());
+    }
+
+    @Test
+    void lexer_throwsOnUnterminatedOptimizerHintComment() {
+        assertThrows(ParserException.class, () -> Lexer.lexAll("SELECT /*+ BKA(users)", quoting));
     }
 
     private static class TestIdentifierQuoting implements IdentifierQuoting {

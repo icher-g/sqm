@@ -2,8 +2,12 @@ package io.sqm.core;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static io.sqm.dsl.Dsl.tbl;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TableTest {
 
@@ -66,6 +70,7 @@ class TableTest {
         assertEquals(QuoteStyle.DOUBLE_QUOTE, table.name().quoteStyle());
         assertEquals(QuoteStyle.BACKTICK, table.alias().quoteStyle());
     }
+
     @Test
     void index_hints_are_immutable_and_preserved_by_mutators() {
         var table = tbl("users")
@@ -78,9 +83,45 @@ class TableTest {
         assertEquals(Table.IndexHintType.USE, table.indexHints().get(0).type());
         assertEquals(Table.IndexHintType.IGNORE, table.indexHints().get(1).type());
         assertThrows(UnsupportedOperationException.class, () -> table.indexHints().add(
-            new Table.IndexHint(Table.IndexHintType.FORCE, Table.IndexHintScope.DEFAULT, java.util.List.of(Identifier.of("idx")))
+            new Table.IndexHint(Table.IndexHintType.FORCE, Table.IndexHintScope.DEFAULT, List.of(Identifier.of("idx")))
         ));
         assertEquals("u", table.alias().value());
         assertEquals("app", table.schema().value());
+    }
+
+    @Test
+    void withIdentifierMutatorsPreserveIndexHints() {
+        var table = tbl("users")
+            .forceIndex("idx_users_id")
+            .as(Identifier.of("u"))
+            .inSchema(Identifier.of("app"));
+
+        assertEquals("u", table.alias().value());
+        assertEquals("app", table.schema().value());
+        assertEquals(Table.IndexHintType.FORCE, table.indexHints().getFirst().type());
+    }
+
+    @Test
+    void ofTreatsNullIndexHintsAsEmptyList() {
+        var table = Table.of(null, Identifier.of("users"), null, Table.Inheritance.DEFAULT, null);
+        assertEquals(List.of(), table.indexHints());
+    }
+
+    @Test
+    void indexHintDefaultsNullScopeAndCopiesIndexes() {
+        var indexes = new java.util.ArrayList<>(List.of(Identifier.of("idx_users_name")));
+        var hint = new Table.IndexHint(Table.IndexHintType.USE, null, indexes);
+        indexes.add(Identifier.of("idx_users_email"));
+
+        assertEquals(Table.IndexHintScope.DEFAULT, hint.scope());
+        assertEquals(1, hint.indexes().size());
+        assertEquals("idx_users_name", hint.indexes().getFirst().value());
+        assertThrows(UnsupportedOperationException.class, () -> hint.indexes().add(Identifier.of("idx_other")));
+    }
+
+    @Test
+    void indexHintRejectsEmptyIndexes() {
+        assertThrows(IllegalArgumentException.class,
+            () -> new Table.IndexHint(Table.IndexHintType.USE, Table.IndexHintScope.DEFAULT, List.of()));
     }
 }
