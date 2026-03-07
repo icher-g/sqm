@@ -1,0 +1,73 @@
+package io.sqm.render.mysql;
+
+import io.sqm.core.SelectModifier;
+import io.sqm.core.SelectQuery;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
+import io.sqm.dsl.Dsl;
+import io.sqm.render.ansi.spi.AnsiDialect;
+import io.sqm.render.mysql.spi.MySqlDialect;
+import io.sqm.render.spi.RenderContext;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class MySqlSelectQueryRendererTest {
+
+    @Test
+    void rendersSqlCalcFoundRowsAndOptimizerHints() {
+        SelectQuery query = SelectQuery.of(
+            List.of(Dsl.col("id").toSelectItem()),
+            Dsl.tbl("users"),
+            List.of(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(SelectModifier.CALC_FOUND_ROWS),
+            List.of("MAX_EXECUTION_TIME(1000)")
+        );
+
+        var sql = RenderContext.of(new MySqlDialect()).render(query).sql();
+
+        assertTrue(sql.startsWith("SELECT /*+ MAX_EXECUTION_TIME(1000) */ SQL_CALC_FOUND_ROWS id"));
+        assertTrue(sql.contains("FROM users"));
+    }
+
+    @Test
+    void rejectsCalcFoundRowsInUnsupportedDialect() {
+        SelectQuery query = SelectQuery.of(
+            List.of(Dsl.col("id").toSelectItem()),
+            Dsl.tbl("users"),
+            List.of(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(SelectModifier.CALC_FOUND_ROWS),
+            List.of()
+        );
+
+        var renderer = new MySqlSelectQueryRenderer();
+        var ctx = RenderContext.of(new AnsiDialect());
+
+        assertThrows(UnsupportedDialectFeatureException.class,
+            () -> renderer.render(query, ctx, new io.sqm.render.defaults.DefaultSqlWriter(ctx)));
+    }
+
+    @Test
+    void targetTypeIsSelectQuery() {
+        assertEquals(SelectQuery.class, new MySqlSelectQueryRenderer().targetType());
+    }
+}

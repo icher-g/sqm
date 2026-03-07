@@ -50,6 +50,11 @@ public class TableRenderer implements Renderer<Table> {
         if (alias != null) {
             w.space().append("AS").space().append(renderIdentifier(alias, quoter));
         }
+
+        if (!node.indexHints().isEmpty()
+            && !ctx.dialect().capabilities().supports(SqlFeature.TABLE_INDEX_HINT)) {
+            throw new UnsupportedDialectFeatureException("table index hints", ctx.dialect().name());
+        }
     }
 
     /**

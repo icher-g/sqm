@@ -3,6 +3,8 @@ package io.sqm.render.mysql;
 import io.sqm.core.GroupBy;
 import io.sqm.core.LimitOffset;
 import io.sqm.core.RegexPredicate;
+import io.sqm.core.SelectQuery;
+import io.sqm.core.Table;
 import io.sqm.render.spi.RenderersRepository;
 import org.junit.jupiter.api.Test;
 
@@ -23,5 +25,11 @@ class RenderersIsolationTest {
 
         assertInstanceOf(io.sqm.render.ansi.RegexPredicateRenderer.class, ansi.require(RegexPredicate.class));
         assertInstanceOf(MySqlRegexPredicateRenderer.class, mysql.require(RegexPredicate.class));
+
+        assertInstanceOf(io.sqm.render.ansi.TableRenderer.class, ansi.require(Table.class));
+        assertInstanceOf(MySqlTableRenderer.class, mysql.require(Table.class));
+
+        assertInstanceOf(io.sqm.render.ansi.SelectQueryRenderer.class, ansi.require(SelectQuery.class));
+        assertInstanceOf(MySqlSelectQueryRenderer.class, mysql.require(SelectQuery.class));
     }
 }

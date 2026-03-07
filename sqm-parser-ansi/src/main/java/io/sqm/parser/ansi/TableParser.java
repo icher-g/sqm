@@ -42,13 +42,12 @@ public class TableParser implements MatchableParser<Table> {
             }
             inheritance = Table.Inheritance.ONLY;
         }
-        // first identifier
+
         var t = cur.expect("Expected identifier", TokenType.IDENT);
 
         List<Identifier> parts = new ArrayList<>();
         parts.add(toIdentifier(t));
 
-        // dot-separated identifiers
         while (cur.consumeIf(TokenType.DOT)) {
             t = cur.expect("Expected identifier after '.'", TokenType.IDENT);
             parts.add(toIdentifier(t));
@@ -65,10 +64,6 @@ public class TableParser implements MatchableParser<Table> {
             inheritance = Table.Inheritance.INCLUDE_DESCENDANTS;
         }
 
-        // optional alias: AS identifier | bare identifier
-        Identifier alias = parseAliasIdentifier(cur);
-
-        // Map parts → schema + name
         Identifier name = parts.getLast();
         Identifier schema = null;
         if (parts.size() == 2) {
@@ -78,6 +73,26 @@ public class TableParser implements MatchableParser<Table> {
             schema = Identifier.of(String.join(".", parts.subList(0, parts.size() - 1).stream().map(Identifier::value).toList()));
         }
 
+        return parseAfterQualifiedName(cur, ctx, schema, name, inheritance);
+    }
+
+    /**
+     * Parses table suffix tokens after base table name is resolved.
+     *
+     * @param cur         token cursor.
+     * @param ctx         parse context.
+     * @param schema      resolved table schema, or {@code null}.
+     * @param name        resolved table name.
+     * @param inheritance resolved inheritance mode.
+     * @return parsing result.
+     */
+    protected ParseResult<Table> parseAfterQualifiedName(
+        Cursor cur,
+        ParseContext ctx,
+        Identifier schema,
+        Identifier name,
+        Table.Inheritance inheritance) {
+        Identifier alias = parseAliasIdentifier(cur);
         return ok(Table.of(schema, name, alias, inheritance));
     }
 

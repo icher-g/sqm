@@ -521,6 +521,10 @@ public enum TokenType {
      */
     KEY,
     /**
+     * Optimizer hint comment token ({@code /*+ ... *\/}).
+     */
+    COMMENT_HINT,
+    /**
      * End-of-file token.
      */
     EOF

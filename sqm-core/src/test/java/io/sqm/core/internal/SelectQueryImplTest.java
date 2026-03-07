@@ -104,4 +104,27 @@ class SelectQueryImplTest {
             window("w2", OverSpec.def((PartitionBy) null, null, null, null))
         ));
     }
+    @Test
+    void modifiers_and_optimizer_hints_are_copied() {
+        var query = SelectQuery.of(
+            java.util.List.of(col("id").toSelectItem()),
+            tbl("users"),
+            java.util.List.of(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            java.util.List.of(),
+            java.util.List.of(SelectModifier.CALC_FOUND_ROWS),
+            java.util.List.of("MAX_EXECUTION_TIME(1000)")
+        );
+
+        assertEquals(SelectModifier.CALC_FOUND_ROWS, query.modifiers().getFirst());
+        assertEquals("MAX_EXECUTION_TIME(1000)", query.optimizerHints().getFirst());
+        assertThrows(UnsupportedOperationException.class, () -> query.modifiers().add(SelectModifier.CALC_FOUND_ROWS));
+        assertThrows(UnsupportedOperationException.class, () -> query.optimizerHints().add("BKA(users)"));
+    }
 }

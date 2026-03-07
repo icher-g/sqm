@@ -48,6 +48,28 @@ class SelectQueryBuilderTest {
         assertThrows(NullPointerException.class, () -> builder.join((Join) null));
         assertThrows(NullPointerException.class, () -> builder.window((WindowDef) null));
     }
+    @Test
+    void supports_select_modifiers_and_optimizer_hints() {
+        var query = SelectQuery.builder()
+            .select(col("id"))
+            .from(TableRef.table(Identifier.of("users")))
+            .selectModifier(SelectModifier.CALC_FOUND_ROWS)
+            .optimizerHint("MAX_EXECUTION_TIME(1000)")
+            .build();
+
+        assertEquals(1, query.modifiers().size());
+        assertEquals(SelectModifier.CALC_FOUND_ROWS, query.modifiers().getFirst());
+        assertEquals(1, query.optimizerHints().size());
+        assertEquals("MAX_EXECUTION_TIME(1000)", query.optimizerHints().getFirst());
+    }
+
+    @Test
+    void select_modifier_and_optimizer_hint_validate_null() {
+        var builder = SelectQuery.builder().select(col("id"));
+
+        assertThrows(NullPointerException.class, () -> builder.selectModifier(null));
+        assertThrows(NullPointerException.class, () -> builder.optimizerHint(null));
+        assertThrows(NullPointerException.class, () -> builder.selectModifiers(null));
+        assertThrows(NullPointerException.class, () -> builder.optimizerHints(null));
+    }
 }
-
-

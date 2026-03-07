@@ -108,4 +108,22 @@ class MySqlSpecsTest {
         assertTrue(result.ok());
         assertInstanceOf(io.sqm.core.RegexPredicate.class, result.value());
     }
+    @Test
+    void parseContext_usesMysqlSelectQueryParser_forSqlCalcFoundRows() {
+        var ctx = io.sqm.parser.spi.ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Query.class, "SELECT SQL_CALC_FOUND_ROWS id FROM users");
+
+        assertTrue(result.ok());
+        var select = assertInstanceOf(io.sqm.core.SelectQuery.class, result.value());
+        assertEquals(io.sqm.core.SelectModifier.CALC_FOUND_ROWS, select.modifiers().getFirst());
+    }
+
+    @Test
+    void parseContext_usesMysqlTableParser_forIndexHints() {
+        var ctx = io.sqm.parser.spi.ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(io.sqm.core.Table.class, "users USE INDEX (idx_users_name)");
+
+        assertTrue(result.ok());
+        assertEquals(io.sqm.core.Table.IndexHintType.USE, result.value().indexHints().getFirst().type());
+    }
 }

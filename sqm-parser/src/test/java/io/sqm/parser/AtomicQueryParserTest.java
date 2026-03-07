@@ -31,6 +31,15 @@ class AtomicQueryParserTest {
     }
 
     @Test
+    void parsesSelectQueryWithLeadingOptimizerHint() {
+        var ctx = contextWithAtomicQueryParsers();
+        var result = ctx.parse(Query.class, "/*+ BKA(users) */ SELECT");
+
+        assertTrue(result.ok());
+        assertInstanceOf(SelectQuery.class, result.value());
+    }
+
+    @Test
     void errorsWhenNotStartingWithSelectOrParen() {
         var ctx = contextWithAtomicQueryParsers();
         var result = ctx.parse(Query.class, "FROM");
@@ -60,6 +69,9 @@ class AtomicQueryParserTest {
     private static final class SelectQueryStubParser implements io.sqm.parser.spi.Parser<SelectQuery> {
         @Override
         public ParseResult<? extends SelectQuery> parse(Cursor cur, ParseContext ctx) {
+            if (cur.match(TokenType.COMMENT_HINT)) {
+                cur.advance();
+            }
             cur.expect("Expected SELECT", TokenType.SELECT);
             return ParseResult.ok(Query.select().build());
         }
@@ -70,3 +82,4 @@ class AtomicQueryParserTest {
         }
     }
 }
+

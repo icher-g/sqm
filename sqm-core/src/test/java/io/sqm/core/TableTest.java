@@ -66,4 +66,21 @@ class TableTest {
         assertEquals(QuoteStyle.DOUBLE_QUOTE, table.name().quoteStyle());
         assertEquals(QuoteStyle.BACKTICK, table.alias().quoteStyle());
     }
+    @Test
+    void index_hints_are_immutable_and_preserved_by_mutators() {
+        var table = tbl("users")
+            .useIndex("idx_users_name")
+            .ignoreIndex("idx_users_email")
+            .as("u")
+            .inSchema("app");
+
+        assertEquals(2, table.indexHints().size());
+        assertEquals(Table.IndexHintType.USE, table.indexHints().get(0).type());
+        assertEquals(Table.IndexHintType.IGNORE, table.indexHints().get(1).type());
+        assertThrows(UnsupportedOperationException.class, () -> table.indexHints().add(
+            new Table.IndexHint(Table.IndexHintType.FORCE, Table.IndexHintScope.DEFAULT, java.util.List.of(Identifier.of("idx")))
+        ));
+        assertEquals("u", table.alias().value());
+        assertEquals("app", table.schema().value());
+    }
 }

@@ -449,7 +449,7 @@ class LexerTest {
 
     @Test
     void lexer_throwsOnUnexpectedCharacter() {
-        assertThrows(ParserException.class, () -> Lexer.lexAll("SELECT §", quoting)); // § character
+        assertThrows(ParserException.class, () -> Lexer.lexAll("SELECT Â§", quoting)); // Â§ character
     }
 
     @Test
@@ -570,5 +570,20 @@ class LexerTest {
         public boolean supports(char ch) {
             return ch == '"' || ch == '`' || ch == '[';
         }
+    }
+    @Test
+    void lexer_emitsOptimizerHintCommentToken() {
+        List<Token> tokens = Lexer.lexAll("SELECT /*+ BKA(users) */ id FROM users", quoting);
+        assertEquals(TokenType.SELECT, tokens.get(0).type());
+        assertEquals(TokenType.COMMENT_HINT, tokens.get(1).type());
+        assertEquals("BKA(users)", tokens.get(1).lexeme());
+    }
+
+    @Test
+    void lexer_keepsRegularBlockCommentSkipped() {
+        List<Token> tokens = Lexer.lexAll("SELECT /* regular */ id FROM users", quoting);
+        assertEquals(TokenType.SELECT, tokens.get(0).type());
+        assertEquals(TokenType.IDENT, tokens.get(1).type());
+        assertEquals("id", tokens.get(1).lexeme());
     }
 }

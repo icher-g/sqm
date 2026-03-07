@@ -28,6 +28,8 @@ public final class Renderers {
         return renderersRepository
             .register(new MySqlLimitOffsetRenderer())
             .register(new MySqlGroupByRenderer())
-            .register(new MySqlRegexPredicateRenderer());
+            .register(new MySqlRegexPredicateRenderer())
+            .register(new MySqlTableRenderer())
+            .register(new MySqlSelectQueryRenderer());
     }
 }

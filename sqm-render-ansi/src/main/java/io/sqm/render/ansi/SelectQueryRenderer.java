@@ -1,6 +1,9 @@
 package io.sqm.render.ansi;
 
+import io.sqm.core.SelectModifier;
 import io.sqm.core.SelectQuery;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -9,8 +12,6 @@ import io.sqm.render.spi.Renderer;
  * Renders SELECT query statements.
  */
 public class SelectQueryRenderer implements Renderer<SelectQuery> {
-
-    private final LimitOffsetRenderer limitOffsetRenderer = new LimitOffsetRenderer();
 
     /**
      * Creates a SELECT-query renderer.
@@ -27,8 +28,20 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
      */
     @Override
     public void render(SelectQuery node, RenderContext ctx, SqlWriter w) {
-        // SELECT
+        if (!node.optimizerHints().isEmpty()
+            && !ctx.dialect().capabilities().supports(SqlFeature.OPTIMIZER_HINT_COMMENT)) {
+            throw new UnsupportedDialectFeatureException("optimizer hint comments", ctx.dialect().name());
+        }
+
+        if (node.modifiers().contains(SelectModifier.CALC_FOUND_ROWS)
+            && !ctx.dialect().capabilities().supports(SqlFeature.CALC_FOUND_ROWS_MODIFIER)) {
+            throw new UnsupportedDialectFeatureException("SQL_CALC_FOUND_ROWS", ctx.dialect().name());
+        }
+
         w.append("SELECT");
+
+        renderAfterSelectKeyword(node, ctx, w);
+
         if (node.distinct() != null) {
             w.space().append(node.distinct());
         }
@@ -36,7 +49,6 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
         var ps = ctx.dialect().paginationStyle();
         var limitOffset = node.limitOffset();
 
-        // Inject TOP n into the head if dialect supports TOP and there's no OFFSET
         if (ps.supportsTop()
             && limitOffset != null
             && limitOffset.limit() != null
@@ -47,60 +59,62 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
         }
 
         w.space();
-        w.comma(node.items()); // each column rendered via its own registered renderer
+        w.comma(node.items());
 
-        // FROM
         if (node.from() != null) {
             w.newline().append("FROM").space();
-            w.append(node.from()); // table (with optional schema/alias) rendered by its renderer
+            w.append(node.from());
         }
 
-        // JOINS
         if (node.joins() != null) {
             for (var j : node.joins()) {
                 w.newline();
-                w.append(j); // each join rendered by AnsiTableJoinRenderer (or dialect-specific)
+                w.append(j);
             }
         }
 
-        // WHERE
         if (node.where() != null) {
             w.newline().append("WHERE").space();
-            w.append(node.where()); // delegate to filter renderer (composite/single/etc.)
+            w.append(node.where());
         }
 
-        // GROUP BY
         if (node.groupBy() != null) {
             w.newline().append(node.groupBy());
         }
 
-        // HAVING
         if (node.having() != null) {
             w.newline().append("HAVING").space();
             w.append(node.having());
         }
 
-        // WINDOW
         if (node.windows() != null) {
             for (var window : node.windows()) {
                 w.newline().append(window);
             }
         }
 
-        // ORDER BY
         if (node.orderBy() != null) {
             w.newline().append(node.orderBy());
         }
 
-        // Pagination tail — pick the right style
         if (limitOffset != null) {
-            limitOffsetRenderer.render(limitOffset, ctx, w);
+            w.append(limitOffset);
         }
 
-        // Locking clause (FOR UPDATE, FOR SHARE, etc.)
         if (node.lockFor() != null) {
             w.newline().append(node.lockFor());
         }
+    }
+
+    /**
+     * Hook for dialect-specific rendering right after the {@code SELECT} keyword.
+     *
+     * @param node query node.
+     * @param ctx  render context.
+     * @param w    sql writer.
+     */
+    protected void renderAfterSelectKeyword(SelectQuery node, RenderContext ctx, SqlWriter w) {
+        // no-op by default
     }
 
     /**
