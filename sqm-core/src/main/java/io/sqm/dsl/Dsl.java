@@ -34,6 +34,29 @@ public final class Dsl {
     private Dsl() {
     }
 
+    /* ========================= Identifiers ========================= */
+
+    /**
+     * Creates an identifier helper value.
+     *
+     * @param value identifier text
+     * @return quote-aware identifier with default quote style
+     */
+    public static Identifier id(String value) {
+        return Identifier.of(value);
+    }
+
+    /**
+     * Creates an identifier helper value with an explicit quote style.
+     *
+     * @param value identifier text
+     * @param quoteStyle identifier quote style
+     * @return quote-aware identifier with requested quote style
+     */
+    public static Identifier id(String value, QuoteStyle quoteStyle) {
+        return Identifier.of(value, quoteStyle);
+    }
+
     /* ========================= Tables ========================= */
 
     /**
@@ -421,6 +444,38 @@ public final class Dsl {
         return Expression.rows(List.of(rows));
     }
 
+    /**
+     * Creates an {@code UPDATE} assignment using a string column name and expression value.
+     *
+     * @param column target column name
+     * @param value assigned expression
+     * @return an assignment
+     */
+    public static Assignment set(String column, Expression value) {
+        return Assignment.of(Identifier.of(column), value);
+    }
+
+    /**
+     * Creates an {@code UPDATE} assignment using a quote-aware column identifier.
+     *
+     * @param column target column identifier
+     * @param value assigned expression
+     * @return an assignment
+     */
+    public static Assignment set(Identifier column, Expression value) {
+        return Assignment.of(column, value);
+    }
+
+    /**
+     * Creates an {@code UPDATE} assignment using a string column name and literal value.
+     *
+     * @param column target column name
+     * @param value assigned literal value
+     * @return an assignment
+     */
+    public static Assignment set(String column, Object value) {
+        return set(column, lit(value));
+    }
     /* ========================= Arrays ========================= */
 
     /**
@@ -1321,7 +1376,68 @@ public final class Dsl {
      */
     public static ExistsPredicate notExists(Query subquery) {
         return Predicate.notExists(subquery);
+    }    /* ========================= DML ========================= */
+
+    /**
+     * Creates an {@link InsertStatement} builder for the provided table.
+     *
+     * @param table target table
+     * @return an insert statement builder
+     */
+    public static InsertStatement.Builder insert(Table table) {
+        return InsertStatement.builder(table);
     }
+
+    /**
+     * Creates an {@link InsertStatement} builder for the provided table name.
+     *
+     * @param table target table name
+     * @return an insert statement builder
+     */
+    public static InsertStatement.Builder insert(String table) {
+        return insert(tbl(table));
+    }
+
+    /**
+     * Creates an {@link UpdateStatement} builder for the provided table.
+     *
+     * @param table target table
+     * @return an update statement builder
+     */
+    public static UpdateStatement.Builder update(Table table) {
+        return UpdateStatement.builder(table);
+    }
+
+    /**
+     * Creates an {@link UpdateStatement} builder for the provided table name.
+     *
+     * @param table target table name
+     * @return an update statement builder
+     */
+    public static UpdateStatement.Builder update(String table) {
+        return update(tbl(table));
+    }
+
+    /**
+     * Creates a {@link DeleteStatement} builder for the provided table.
+     *
+     * @param table target table
+     * @return a delete statement builder
+     */
+    public static DeleteStatement.Builder delete(Table table) {
+        return DeleteStatement.builder(table);
+    }
+
+    /**
+     * Creates a {@link DeleteStatement} builder for the provided table name.
+     *
+     * @param table target table name
+     * @return a delete statement builder
+     */
+    public static DeleteStatement.Builder delete(String table) {
+        return delete(tbl(table));
+    }
+
 
     /* ========================= Query ========================= */
 
@@ -1612,3 +1728,5 @@ public final class Dsl {
         return targets;
     }
 }
+
+

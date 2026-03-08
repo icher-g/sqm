@@ -62,6 +62,7 @@ public final class Lexer {
         KEYWORDS.put("RECURSIVE", RECURSIVE);
         KEYWORDS.put("SELECT", SELECT);
         KEYWORDS.put("FROM", FROM);
+        KEYWORDS.put("INTO", INTO);
         KEYWORDS.put("LATERAL", LATERAL);
         KEYWORDS.put("WHERE", WHERE);
         KEYWORDS.put("GROUP", GROUP);
@@ -98,6 +99,7 @@ public final class Lexer {
         KEYWORDS.put("ORDINALITY", ORDINALITY);
         KEYWORDS.put("GROUPING", GROUPING);
         KEYWORDS.put("SETS", SETS);
+        KEYWORDS.put("SET", SET);
         KEYWORDS.put("ROLLUP", ROLLUP);
         KEYWORDS.put("CUBE", CUBE);
         KEYWORDS.put("WINDOW", WINDOW);
@@ -506,3 +508,5 @@ public final class Lexer {
         throw new IllegalArgumentException("Unterminated backtick-quoted identifier starting at " + start);
     }
 }
+
+

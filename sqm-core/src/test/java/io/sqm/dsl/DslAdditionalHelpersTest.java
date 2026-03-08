@@ -89,14 +89,14 @@ class DslAdditionalHelpersTest {
 
     @Test
     void typedIdentifierHelpersForTableColumnCastAndOperator() {
-        var table = tbl(Identifier.of("Users"));
-        var qualifiedTable = tbl(Identifier.of("Public"), Identifier.of("Users"));
-        var column = col(Identifier.of("ID"));
-        var qualifiedColumn = col(Identifier.of("U"), Identifier.of("ID"));
+        var table = tbl(id("Users"));
+        var qualifiedTable = tbl(id("Public"), id("Users"));
+        var column = col(id("ID"));
+        var qualifiedColumn = col(id("U"), id("ID"));
         var castExpr = cast(lit(1), type(QualifiedName.of("pg_catalog", "int4")));
         var bareOp = op("+");
         var schemaOp = op("pg_catalog", "@>");
-        var typedSchemaOp = op(QualifiedName.of(Identifier.of("pg_catalog")), "||");
+        var typedSchemaOp = op(QualifiedName.of(id("pg_catalog")), "||");
 
         assertEquals("Users", table.name().value());
         assertEquals("Public", qualifiedTable.schema().value());
@@ -106,6 +106,38 @@ class DslAdditionalHelpersTest {
         assertNull(bareOp.schemaName());
         assertEquals(List.of("pg_catalog"), schemaOp.schemaName().values());
         assertEquals(List.of("pg_catalog"), typedSchemaOp.schemaName().values());
+
+        var quotedId = id("U", QuoteStyle.BACKTICK);
+        assertEquals(QuoteStyle.BACKTICK, quotedId.quoteStyle());
+    }
+
+    @Test
+    void dmlHelpersBuildInsertUpdateAndAssignments() {
+        var insert = insert("users")
+            .columns(id("id"))
+            .values(row(lit(1)))
+            .build();
+        var assignment = set("name", "alice");
+        var updateStatement = update("users")
+            .set(assignment)
+            .where(col("id").eq(lit(1)))
+            .build();
+
+        assertEquals("users", insert.table().name().value());
+        assertEquals(1, insert.columns().size());
+        assertEquals("name", assignment.column().value());
+        assertEquals("users", updateStatement.table().name().value());
+        assertEquals(1, updateStatement.assignments().size());
+        assertNotNull(updateStatement.where());
+    }
+    @Test
+    void dmlDeleteHelperBuildsDeleteStatement() {
+        var statement = delete("users")
+            .where(col("id").eq(lit(1)))
+            .build();
+
+        assertEquals("users", statement.table().name().value());
+        assertNotNull(statement.where());
     }
 
     @Test
@@ -152,3 +184,5 @@ class DslAdditionalHelpersTest {
         assertEquals("wq", window("wq", over()).name().value());
     }
 }
+
+

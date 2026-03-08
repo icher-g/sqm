@@ -13,12 +13,20 @@ Priority levels:
 
 ## P0 (Required)
 
+### Epic R0: DML Foundation (Completed)
+- Statement-level model introduced (Statement) with query and DML statement families.
+- Core neutral DML nodes delivered: InsertStatement, UpdateStatement, DeleteStatement.
+- ANSI baseline parser/renderer support delivered for INSERT/UPDATE/DELETE.
+- Node-contract support delivered (visitor/transformer/match/json).
+- Integration coverage delivered in sqm-it (statement round-trip).
+- Compatibility boundaries and deferred DML extensions are tracked in GitHub issues.
+- RETURNING/OUTPUT support remains deferred to post-R1 dialect work items tracked in GitHub issues.
+
 ### Epic R1: MySQL Dialect Support (Completed)
 - Add `sqm-parser-mysql` and `sqm-render-mysql`.
 - Define `MySqlSpecs` feature matrix.
 - Cover core query syntax parity with existing ANSI/PostgreSQL flows.
 - Add integration tests in `sqm-it` for round-trip parse/render.
-- Detailed design: [R1_MYSQL_DIALECT_SUPPORT_DESIGN.md](R1_MYSQL_DIALECT_SUPPORT_DESIGN.md)
 - Delivery split: `R1A` baseline + `R1B` common MySQL-specific features (completed).
 
 ### Epic R2: SQL Server Dialect Support
@@ -73,8 +81,8 @@ Priority levels:
   - canonical forms for cache/fingerprint stability
 - Keep optimizer opt-in and deterministic.
 
-### Epic R10: DML Command Model Expansion
-- Add first-class `INSERT`, `UPDATE`, `DELETE`, `MERGE` model breadth where missing.
+### Epic R10: DML Advanced Expansion
+- Expand beyond DML-R1 baseline with advanced dialect-specific DML features (for example PostgreSQL `RETURNING`, SQL Server `OUTPUT`, MySQL upsert/multi-table forms, and MERGE-family support where applicable).
 - Ensure parser/render/validate/rewrite parity with existing query flows.
 
 ## Suggested Implementation Order

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static io.sqm.dsl.Dsl.id;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class DefaultSqlWriterTest {
@@ -40,6 +41,31 @@ class DefaultSqlWriterTest {
         writer.comma(List.of(Dsl.col("b"), Dsl.col("c")), true);
 
         assertEquals("a (b), (c)", writer.toText(List.of()).sql());
+    }
+
+    @Test
+    void appendsNodeUsingExplicitTypeRenderer() {
+        var dialect = new RenderTestDialect()
+            .register(new RowValuesRootRenderer())
+            .register(new RowExprRenderer());
+        var ctx = RenderContext.of(dialect);
+        var writer = new DefaultSqlWriter(ctx);
+
+        var value = Dsl.row(1);
+        writer.append(io.sqm.core.RowValues.class, value);
+
+        assertEquals("ROW-VALUES-STUB", writer.toText(List.of()).sql());
+    }
+
+    @Test
+    void appendsCommaSeparatedIdentifiers() {
+        var dialect = new RenderTestDialect();
+        var ctx = RenderContext.of(dialect);
+        var writer = new DefaultSqlWriter(ctx);
+
+        writer.comma(List.of(id("id"), id("name")), ctx.dialect().quoter());
+
+        assertEquals("\"id\", \"name\"", writer.toText(List.of()).sql());
     }
 
     @Test
@@ -99,6 +125,30 @@ class DefaultSqlWriterTest {
         }
     }
 
+    private static final class RowExprRenderer implements Renderer<io.sqm.core.RowExpr> {
+        @Override
+        public void render(io.sqm.core.RowExpr node, RenderContext ctx, SqlWriter w) {
+            w.append("ROW-EXPR-STUB");
+        }
+
+        @Override
+        public Class<io.sqm.core.RowExpr> targetType() {
+            return io.sqm.core.RowExpr.class;
+        }
+    }
+
+    private static final class RowValuesRootRenderer implements Renderer<io.sqm.core.RowValues> {
+        @Override
+        public void render(io.sqm.core.RowValues node, RenderContext ctx, SqlWriter w) {
+            w.append("ROW-VALUES-STUB");
+        }
+
+        @Override
+        public Class<io.sqm.core.RowValues> targetType() {
+            return io.sqm.core.RowValues.class;
+        }
+    }
+
     private static final class LiteralRenderer implements Renderer<LiteralExpr> {
         @Override
         public void render(LiteralExpr node, RenderContext ctx, SqlWriter w) {
@@ -123,4 +173,3 @@ class DefaultSqlWriterTest {
         }
     }
 }
-

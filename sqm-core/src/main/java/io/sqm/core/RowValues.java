@@ -17,7 +17,7 @@ package io.sqm.core;
  * {@link QueryExpr} to reflect SQL grammar restrictions of constructs such as
  * {@code VALUES}, which may contain only row value expressions.
  */
-public sealed interface RowValues extends ValueSet
+public sealed interface RowValues extends ValueSet, InsertSource
     permits RowExpr, RowListExpr {
 }
 
