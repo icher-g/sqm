@@ -79,6 +79,11 @@ class StatementRendererTest {
         assertEquals("DELETE-STUB", sql);
     }
 
+    @Test
+    void exposesStatementTargetType() {
+        assertEquals(Statement.class, new StatementRenderer().targetType());
+    }
+
     private static final class SelectRenderer implements Renderer<io.sqm.core.SelectQuery> {
         @Override
         public void render(io.sqm.core.SelectQuery node, RenderContext ctx, SqlWriter w) {

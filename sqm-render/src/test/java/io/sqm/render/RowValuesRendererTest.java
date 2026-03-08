@@ -37,6 +37,11 @@ class RowValuesRendererTest {
         assertEquals("ROW-LIST-STUB", sql);
     }
 
+    @Test
+    void exposesRowValuesTargetType() {
+        assertEquals(RowValues.class, new RowValuesRenderer().targetType());
+    }
+
     private static final class RowExprRenderer implements Renderer<io.sqm.core.RowExpr> {
         @Override
         public void render(io.sqm.core.RowExpr node, RenderContext ctx, SqlWriter w) {

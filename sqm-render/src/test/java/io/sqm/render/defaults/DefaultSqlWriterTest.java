@@ -1,8 +1,11 @@
 package io.sqm.render.defaults;
 
 import io.sqm.core.ColumnExpr;
+import io.sqm.core.Identifier;
 import io.sqm.core.LiteralExpr;
+import io.sqm.core.Node;
 import io.sqm.core.OrdinalParamExpr;
+import io.sqm.core.QuoteStyle;
 import io.sqm.dsl.Dsl;
 import io.sqm.render.RenderTestDialect;
 import io.sqm.render.SqlText;
@@ -69,6 +72,28 @@ class DefaultSqlWriterTest {
     }
 
     @Test
+    void appendsQuotedIdentifiersWithStyleFallback() {
+        var dialect = new RenderTestDialect();
+        var ctx = RenderContext.of(dialect);
+        var writer = new DefaultSqlWriter(ctx);
+
+        writer.comma(List.of(
+            Identifier.of("standard", QuoteStyle.DOUBLE_QUOTE),
+            Identifier.of("legacy", QuoteStyle.BACKTICK)),
+            ctx.dialect().quoter());
+
+        assertEquals("\"standard\", \"legacy\"", writer.toText(List.of()).sql());
+    }
+
+    @Test
+    void defaultAppendWithExplicitTypeFallsBackToAppendNode() {
+        var writer = new MinimalWriter();
+        writer.append(ColumnExpr.class, Dsl.col("x"));
+
+        assertEquals("x", writer.sql());
+    }
+
+    @Test
     void supportsSingleLineMode() {
         var dialect = new RenderTestDialect()
             .register(new ColumnRenderer());
@@ -111,6 +136,65 @@ class DefaultSqlWriterTest {
 
         assertEquals("$1", text.sql());
         assertEquals(List.of(10), text.params());
+    }
+
+    private static final class MinimalWriter implements SqlWriter {
+        private final StringBuilder sb = new StringBuilder();
+
+        @Override
+        public SqlWriter append(String s) {
+            if (s != null) {
+                sb.append(s);
+            }
+            return this;
+        }
+
+        @Override
+        public <T extends Node> SqlWriter append(T node) {
+            if (node instanceof ColumnExpr c) {
+                sb.append(c.name().value());
+            }
+            return this;
+        }
+
+        @Override
+        public void singleLine() {
+        }
+
+        @Override
+        public void multiLine() {
+        }
+
+        @Override
+        public SqlWriter space() {
+            sb.append(' ');
+            return this;
+        }
+
+        @Override
+        public SqlWriter newline() {
+            sb.append('\n');
+            return this;
+        }
+
+        @Override
+        public SqlWriter indent() {
+            return this;
+        }
+
+        @Override
+        public SqlWriter outdent() {
+            return this;
+        }
+
+        @Override
+        public SqlText toText(List<Object> params) {
+            return new io.sqm.render.RenderResult(sb.toString(), params);
+        }
+
+        String sql() {
+            return sb.toString();
+        }
     }
 
     private static final class ColumnRenderer implements Renderer<ColumnExpr> {

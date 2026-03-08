@@ -4,7 +4,11 @@ import io.sqm.core.UpdateStatement;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class UpdateStatementParserTest {
 
@@ -48,7 +52,33 @@ class UpdateStatementParserTest {
         assertTrue(result.isError());
         assertEquals("Expected SET after UPDATE table at 18", result.errorMessage());
     }
+
+    @Test
+    void rejectsUpdateWithoutAssignments() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(UpdateStatement.class, "UPDATE users SET");
+
+        assertTrue(result.isError());
+    }
+
+    @Test
+    void rejectsUpdateWithInvalidWhereClause() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' WHERE");
+
+        assertTrue(result.isError());
+    }
+
+    @Test
+    void rejectsUpdateWithInvalidTable() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(UpdateStatement.class, "UPDATE SET name = 'alice'");
+
+        assertTrue(result.isError());
+    }
+
+    @Test
+    void exposesUpdateStatementTargetType() {
+        assertEquals(UpdateStatement.class, new UpdateStatementParser().targetType());
+    }
 }
-
-
-

@@ -24,6 +24,17 @@ class DeleteStatementTest {
     }
 
     @Test
+    void supportsOfOverloadAndBuilderMutator() {
+        var statement = DeleteStatement.of(tbl("users"));
+        assertNull(statement.where());
+
+        var built = DeleteStatement.builder(tbl("users"))
+            .table(tbl("accounts"))
+            .build();
+        assertEquals("accounts", built.table().name().value());
+    }
+
+    @Test
     void equalityAndHashDependOnShape() {
         var first = delete(tbl("users"))
             .where(col("id").eq(lit(1)))
@@ -44,5 +55,7 @@ class DeleteStatementTest {
     void validatesRequiredMembers() {
         assertThrows(NullPointerException.class, () -> DeleteStatement.of(null, null));
         assertThrows(NullPointerException.class, () -> DeleteStatement.of(null));
+        //noinspection WriteOnlyObject
+        assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).table(null));
     }
 }

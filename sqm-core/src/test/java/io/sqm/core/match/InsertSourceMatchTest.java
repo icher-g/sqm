@@ -14,7 +14,7 @@ class InsertSourceMatchTest {
     @Test
     void matchesQueryAndRowShapes() {
         InsertSource query = select(lit(1)).build();
-        InsertSource rows = rows(
+        InsertSource rowList = rows(
             row(lit(1)),
             row(lit(2)));
 
@@ -22,8 +22,45 @@ class InsertSourceMatchTest {
             .query(ignored -> "QUERY")
             .otherwise(ignored -> "OTHER"));
 
-        assertEquals("ROWS", Match.<String>insertSource(rows)
+        assertEquals("ROWS", Match.<String>insertSource(rowList)
             .rows(ignored -> "ROWS")
             .otherwise(ignored -> "OTHER"));
+    }
+
+    @Test
+    void matchesSingleRowAndRowValuesBranches() {
+        InsertSource row = row(lit(1));
+
+        assertEquals("ROW", Match.<String>insertSource(row)
+            .row(ignored -> "ROW")
+            .otherwise(ignored -> "OTHER"));
+
+        assertEquals("ROW-VALUES", Match.<String>insertSource(row)
+            .rowValues(ignored -> "ROW-VALUES")
+            .otherwise(ignored -> "OTHER"));
+    }
+
+    @Test
+    void keepsFirstMatchedResult() {
+        InsertSource row = row(lit(1));
+
+        var result = Match.<String>insertSource(row)
+            .rowValues(ignored -> "FIRST")
+            .row(ignored -> "SECOND")
+            .otherwise(ignored -> "OTHER");
+
+        assertEquals("FIRST", result);
+    }
+
+    @Test
+    void fallsBackWhenNoBranchMatches() {
+        InsertSource source = select(lit(1)).build();
+
+        var result = Match.<String>insertSource(source)
+            .row(ignored -> "ROW")
+            .rows(ignored -> "ROWS")
+            .otherwise(ignored -> "OTHER");
+
+        assertEquals("OTHER", result);
     }
 }

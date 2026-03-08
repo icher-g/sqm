@@ -30,6 +30,23 @@ class InsertStatementTest {
     }
 
     @Test
+    void supportsOfOverloadAndBuilderConvenienceMethods() {
+        var source = row(lit(1));
+        var ofStatement = InsertStatement.of(tbl("users"), source);
+
+        assertEquals(0, ofStatement.columns().size());
+        assertInstanceOf(RowExpr.class, ofStatement.source());
+
+        var built = InsertStatement.builder(tbl("users"))
+            .columns(Identifier.of("id"))
+            .query(io.sqm.dsl.Dsl.select(lit(1)).build())
+            .build();
+
+        assertEquals(1, built.columns().size());
+        assertInstanceOf(io.sqm.core.SelectQuery.class, built.source());
+    }
+
+    @Test
     void equalityAndHashDependOnShape() {
         var first = insert(tbl("users"))
             .columns(Identifier.of("id"))
@@ -54,5 +71,8 @@ class InsertStatementTest {
         assertThrows(NullPointerException.class, () -> InsertStatement.of(null, java.util.List.of(), row(lit(1))));
         assertThrows(NullPointerException.class, () -> InsertStatement.of(tbl("users"), java.util.List.of(), null));
         assertThrows(IllegalStateException.class, () -> insert(tbl("users")).build());
+        assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).table(null));
+        assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).columns((Identifier[]) null));
+        assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).source(null));
     }
 }

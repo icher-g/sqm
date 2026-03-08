@@ -30,6 +30,17 @@ class UpdateStatementTest {
     }
 
     @Test
+    void supportsOfOverloadAndBuilderConvenienceMethods() {
+        var statement = UpdateStatement.of(tbl("users"), List.of(set("name", lit("alice"))));
+        assertNull(statement.where());
+
+        var built = UpdateStatement.builder(tbl("users"))
+            .set(Identifier.of("name"), lit("alice"))
+            .build();
+        assertEquals(1, built.assignments().size());
+    }
+
+    @Test
     void equalityAndHashDependOnShape() {
         var first = update(tbl("users"))
             .set(set("name", lit("alice")))
@@ -55,5 +66,8 @@ class UpdateStatementTest {
         assertThrows(NullPointerException.class, () -> UpdateStatement.of(tbl("users"), null, null));
         assertThrows(IllegalArgumentException.class, () -> UpdateStatement.of(tbl("users"), List.of(), null));
         assertThrows(IllegalStateException.class, () -> update(tbl("users")).build());
+        assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).table(null));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).assignments(null));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).set(null));
     }
 }
