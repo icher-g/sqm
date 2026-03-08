@@ -40,4 +40,20 @@ class InsertStatementTransformerTest {
 
         assertNotSame(statement, transformed);
     }
+    @Test
+    void rebuildsStatementWhenSourceChanges() {
+        var statement = insert(tbl("users"))
+            .values(row(lit(1)))
+            .build();
+
+        Node transformed = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitLiteralExpr(io.sqm.core.LiteralExpr literalExpr) {
+                return lit(2);
+            }
+        }.transform(statement);
+
+        assertNotSame(statement, transformed);
+    }
 }
+

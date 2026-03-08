@@ -40,4 +40,40 @@ class UpdateStatementTransformerTest {
 
         assertNotSame(statement, transformed);
     }
+    @Test
+    void rebuildsStatementWhenWhereChanges() {
+        var statement = update(tbl("users"))
+            .set(set("name", lit("alice")))
+            .where(io.sqm.dsl.Dsl.col("id").eq(lit(1)))
+            .build();
+
+        Node transformed = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitLiteralExpr(LiteralExpr literalExpr) {
+                if (literalExpr.value() instanceof Integer) {
+                    return lit(2);
+                }
+                return literalExpr;
+            }
+        }.transform(statement);
+
+        assertNotSame(statement, transformed);
+    }
+
+    @Test
+    void rebuildsStatementWhenTargetTableChanges() {
+        var statement = update(tbl("users"))
+            .set(set("name", lit("alice")))
+            .build();
+
+        Node transformed = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitTable(io.sqm.core.Table table) {
+                return table.inSchema("public");
+            }
+        }.transform(statement);
+
+        assertNotSame(statement, transformed);
+    }
 }
+

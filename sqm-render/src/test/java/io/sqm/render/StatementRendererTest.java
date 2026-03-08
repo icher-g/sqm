@@ -1,9 +1,12 @@
 package io.sqm.render;
 
+import io.sqm.core.Node;
 import io.sqm.core.Statement;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static io.sqm.dsl.Dsl.delete;
 import static io.sqm.dsl.Dsl.id;
@@ -13,6 +16,7 @@ import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.update;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 class StatementRendererTest {
 
@@ -80,8 +84,96 @@ class StatementRendererTest {
     }
 
     @Test
+    void delegatesQueryBranchWhenInvokedDirectly() {
+        var writer = new RecordingWriter();
+        var ctx = RenderContext.of(new RenderTestDialect());
+
+        new StatementRenderer().render(select(lit(1)).build(), ctx, writer);
+
+        assertInstanceOf(io.sqm.core.Query.class, writer.lastNode);
+    }
+
+    @Test
+    void delegatesInsertBranchWhenInvokedDirectly() {
+        var writer = new RecordingWriter();
+        var ctx = RenderContext.of(new RenderTestDialect());
+
+        new StatementRenderer().render(insert("users").values(row(lit(1))).build(), ctx, writer);
+
+        assertInstanceOf(io.sqm.core.InsertStatement.class, writer.lastNode);
+    }
+
+    @Test
+    void delegatesUpdateBranchWhenInvokedDirectly() {
+        var writer = new RecordingWriter();
+        var ctx = RenderContext.of(new RenderTestDialect());
+
+        new StatementRenderer().render(update("users").set(id("name"), lit("alice")).build(), ctx, writer);
+
+        assertInstanceOf(io.sqm.core.UpdateStatement.class, writer.lastNode);
+    }
+
+    @Test
+    void delegatesDeleteBranchWhenInvokedDirectly() {
+        var writer = new RecordingWriter();
+        var ctx = RenderContext.of(new RenderTestDialect());
+
+        new StatementRenderer().render(delete("users").build(), ctx, writer);
+
+        assertInstanceOf(io.sqm.core.DeleteStatement.class, writer.lastNode);
+    }
+
+    @Test
     void exposesStatementTargetType() {
         assertEquals(Statement.class, new StatementRenderer().targetType());
+    }
+
+    private static final class RecordingWriter implements SqlWriter {
+        private Node lastNode;
+
+        @Override
+        public SqlWriter append(String s) {
+            return this;
+        }
+
+        @Override
+        public <T extends Node> SqlWriter append(T node) {
+            this.lastNode = node;
+            return this;
+        }
+
+        @Override
+        public void singleLine() {
+        }
+
+        @Override
+        public void multiLine() {
+        }
+
+        @Override
+        public SqlWriter space() {
+            return this;
+        }
+
+        @Override
+        public SqlWriter newline() {
+            return this;
+        }
+
+        @Override
+        public SqlWriter indent() {
+            return this;
+        }
+
+        @Override
+        public SqlWriter outdent() {
+            return this;
+        }
+
+        @Override
+        public SqlText toText(List<Object> params) {
+            return new RenderResult("", params);
+        }
     }
 
     private static final class SelectRenderer implements Renderer<io.sqm.core.SelectQuery> {

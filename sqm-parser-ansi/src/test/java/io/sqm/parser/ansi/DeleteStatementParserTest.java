@@ -52,4 +52,25 @@ class DeleteStatementParserTest {
         assertTrue(result.isError());
         assertEquals("Expected FROM after DELETE at 7", result.errorMessage());
     }
+
+    @Test
+    void rejectsDeleteWithoutTable() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM WHERE id = 1");
+
+        assertTrue(result.isError());
+    }
+
+    @Test
+    void rejectsDeleteWithInvalidWhereExpression() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM users WHERE");
+
+        assertTrue(result.isError());
+    }
+
+    @Test
+    void exposesDeleteStatementTargetType() {
+        assertEquals(DeleteStatement.class, new DeleteStatementParser().targetType());
+    }
 }

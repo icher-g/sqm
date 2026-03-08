@@ -34,4 +34,18 @@ class DeleteStatementTransformerTest {
 
         assertNotSame(statement, transformed);
     }
+    @Test
+    void rebuildsStatementWhenWhereChanges() {
+        var statement = delete(tbl("users")).where(io.sqm.dsl.Dsl.col("id").eq(io.sqm.dsl.Dsl.lit(1))).build();
+
+        Node transformed = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitLiteralExpr(io.sqm.core.LiteralExpr literalExpr) {
+                return io.sqm.dsl.Dsl.lit(2);
+            }
+        }.transform(statement);
+
+        assertNotSame(statement, transformed);
+    }
 }
+

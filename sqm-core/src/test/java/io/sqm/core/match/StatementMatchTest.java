@@ -13,6 +13,7 @@ import static io.sqm.dsl.Dsl.tbl;
 import static io.sqm.dsl.Dsl.update;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class StatementMatchTest {
 
@@ -70,6 +71,21 @@ class StatementMatchTest {
     }
 
     @Test
+    void keepsFirstMatchedResultAcrossMultipleBranches() {
+        Statement statement = insert(tbl("users"))
+            .values(row(lit(1)))
+            .build();
+
+        var out = Match
+            .<String>statement(statement)
+            .insert(i -> "FIRST")
+            .query(q -> "SECOND")
+            .otherwise(ignored -> "OTHER");
+
+        assertEquals("FIRST", out);
+    }
+
+    @Test
     void fallsBackWhenNoBranchMatches() {
         Statement statement = select(lit(1)).build();
 
@@ -78,6 +94,26 @@ class StatementMatchTest {
             .otherwise(ignored -> "OTHER");
 
         assertEquals("OTHER", out);
+    }
+
+    @Test
+    void supportsOtherwiseEmptyAndOrElseVariants() {
+        Statement statement = select(lit(1)).build();
+
+        var empty = StatementMatch.<String>match(statement)
+            .insert(i -> "INSERT")
+            .otherwiseEmpty();
+        assertTrue(empty.isEmpty());
+
+        var orElse = StatementMatch.<String>match(statement)
+            .insert(i -> "INSERT")
+            .orElse("DEFAULT");
+        assertEquals("DEFAULT", orElse);
+
+        var orElseGet = StatementMatch.<String>match(statement)
+            .insert(i -> "INSERT")
+            .orElseGet(() -> "LAZY");
+        assertEquals("LAZY", orElseGet);
     }
 
     @Test
