@@ -221,21 +221,52 @@ public interface Match<T, R> {
         throw (E) t;
     }
 
+    /**
+     * Finalizes the match and applies the fallback function when no prior arm matched.
+     *
+     * @param f fallback function evaluated with the original matched value
+     * @return match result
+     */
     R otherwise(Function<T, R> f);
 
+    /**
+     * Finalizes the match and returns an {@link Optional} result.
+     *
+     * @return optional match result, empty when no arm matched
+     */
     default Optional<R> otherwiseEmpty() {
         return Optional.ofNullable(otherwise(j -> null));
     }
 
+    /**
+     * Finalizes the match and returns a default value when no arm matched.
+     *
+     * @param defaultValue value returned when no arm matched
+     * @return match result or {@code defaultValue}
+     */
     default R orElse(R defaultValue) {
         return otherwise(j -> defaultValue);
     }
 
+    /**
+     * Finalizes the match and lazily returns a supplied default when no arm matched.
+     *
+     * @param s supplier used to compute a default result
+     * @return match result or supplied default value
+     */
     default R orElseGet(Supplier<R> s) {
         return otherwise(j -> s.get());
     }
 
+    /**
+     * Finalizes the match and throws an exception supplied by {@code ex} when no arm matched.
+     *
+     * @param ex supplier providing the exception to throw
+     * @param <X> exception type
+     * @return match result when an arm matched
+     */
     default <X extends Throwable> R orElseThrow(Supplier<X> ex) {
         return otherwise(j -> sneakyThrow(ex.get()));
     }
 }
+

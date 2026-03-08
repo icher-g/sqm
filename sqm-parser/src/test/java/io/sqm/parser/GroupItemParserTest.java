@@ -128,7 +128,7 @@ class GroupItemParserTest {
     private static final class GroupingSetParser implements MatchableParser<GroupItem.GroupingSet> {
         @Override
         public boolean match(Cursor cur, ParseContext ctx) {
-            return cur.match(TokenType.IDENT) && "set".equals(cur.peek().lexeme());
+            return cur.match(TokenType.SET);
         }
 
         @Override
