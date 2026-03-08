@@ -33,6 +33,57 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
+     * Visits a dialect-neutral {@link InsertStatement}.
+     *
+     * @param statement insert statement being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitInsertStatement(InsertStatement statement) {
+        accept(statement.table());
+        accept(statement.source());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a dialect-neutral {@link UpdateStatement}.
+     *
+     * @param statement update statement being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitUpdateStatement(UpdateStatement statement) {
+        accept(statement.table());
+        statement.assignments().forEach(this::accept);
+        accept(statement.where());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a dialect-neutral {@link DeleteStatement}.
+     *
+     * @param statement delete statement being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitDeleteStatement(DeleteStatement statement) {
+        accept(statement.table());
+        accept(statement.where());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a single {@link Assignment}.
+     *
+     * @param assignment assignment being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitAssignment(Assignment assignment) {
+        accept(assignment.value());
+        return defaultResult();
+    }
+    /**
      * Visits a {@link CaseExpr} node representing a {@code CASE WHEN ... THEN ... END} expression.
      *
      * @param c the case expression
@@ -1254,3 +1305,4 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         return defaultResult();
     }
 }
+

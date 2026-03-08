@@ -337,6 +337,10 @@ public enum TokenType {
      */
     FROM,
     /**
+     * INTO keyword token.
+     */
+    INTO,
+    /**
      * LATERAL keyword token.
      */
     LATERAL,
@@ -428,6 +432,10 @@ public enum TokenType {
      * SETS keyword token.
      */
     SETS,
+    /**
+     * SET keyword token.
+     */
+    SET,
     /**
      * ROLLUP keyword token.
      */

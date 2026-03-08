@@ -53,6 +53,73 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
+     * Visits a dialect-neutral {@link InsertStatement}.
+     *
+     * @param statement insert statement to transform
+     * @return transformed insert statement, or the original instance if unchanged
+     */
+    @Override
+    public Node visitInsertStatement(InsertStatement statement) {
+        var table = apply(statement.table());
+        var source = apply(statement.source());
+        if (table != statement.table() || source != statement.source()) {
+            return InsertStatement.of(table, statement.columns(), source);
+        }
+        return statement;
+    }
+
+    /**
+     * Visits a dialect-neutral {@link UpdateStatement}.
+     *
+     * @param statement update statement to transform
+     * @return transformed update statement, or the original instance if unchanged
+     */
+    @Override
+    public Node visitUpdateStatement(UpdateStatement statement) {
+        var table = apply(statement.table());
+        List<Assignment> assignments = new ArrayList<>(statement.assignments().size());
+        boolean changed = table != statement.table();
+        changed |= apply(statement.assignments(), assignments);
+        var where = apply(statement.where());
+        changed |= where != statement.where();
+        if (changed) {
+            return UpdateStatement.of(table, assignments, where);
+        }
+        return statement;
+    }
+
+    /**
+     * Visits a dialect-neutral {@link DeleteStatement}.
+     *
+     * @param statement delete statement to transform
+     * @return transformed delete statement, or the original instance if unchanged
+     */
+    @Override
+    public Node visitDeleteStatement(DeleteStatement statement) {
+        var table = apply(statement.table());
+        var where = apply(statement.where());
+        if (table != statement.table() || where != statement.where()) {
+            return DeleteStatement.of(table, where);
+        }
+        return statement;
+    }
+
+    /**
+     * Visits a single {@link Assignment}.
+     *
+     * @param assignment assignment to transform
+     * @return transformed assignment, or the original instance if unchanged
+     */
+    @Override
+    public Node visitAssignment(Assignment assignment) {
+        var value = apply(assignment.value());
+        if (value != assignment.value()) {
+            return Assignment.of(assignment.column(), value);
+        }
+        return assignment;
+    }
+
+    /**
      * Visits a {@link CaseExpr} node representing a {@code CASE WHEN ... THEN ... END} expression.
      *
      * @param c the case expression
@@ -1322,6 +1389,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
      * @param expr the array slice expression to visit
      * @return the original expression if unchanged, or a new transformed expression
      */
+    @SuppressWarnings("DataFlowIssue")
     @Override
     public Node visitArraySliceExpr(ArraySliceExpr expr) {
         var baseExpr = apply(expr.base());

@@ -296,6 +296,10 @@ public non-sealed interface Table extends TableRef {
 
         /**
          * Creates a USE INDEX hint.
+         *
+         * @param scope hint scope.
+         * @param indexes target index identifiers.
+         * @return index hint.
          */
         public static IndexHint use(IndexHintScope scope, List<Identifier> indexes) {
             return new IndexHint(IndexHintType.USE, scope, indexes);
@@ -303,6 +307,10 @@ public non-sealed interface Table extends TableRef {
 
         /**
          * Creates an IGNORE INDEX hint.
+         *
+         * @param scope hint scope.
+         * @param indexes target index identifiers.
+         * @return index hint.
          */
         public static IndexHint ignore(IndexHintScope scope, List<Identifier> indexes) {
             return new IndexHint(IndexHintType.IGNORE, scope, indexes);
@@ -310,6 +318,10 @@ public non-sealed interface Table extends TableRef {
 
         /**
          * Creates a FORCE INDEX hint.
+         *
+         * @param scope hint scope.
+         * @param indexes target index identifiers.
+         * @return index hint.
          */
         public static IndexHint force(IndexHintScope scope, List<Identifier> indexes) {
             return new IndexHint(IndexHintType.FORCE, scope, indexes);
@@ -349,9 +361,15 @@ public non-sealed interface Table extends TableRef {
 
         /**
          * Creates a table implementation without index hints.
+         *
+         * @param schema table schema identifier
+         * @param name table name identifier
+         * @param alias table alias identifier
+         * @param inheritance table inheritance behavior
          */
         public Impl(Identifier schema, Identifier name, Identifier alias, Inheritance inheritance) {
             this(schema, name, alias, inheritance, List.of());
         }
     }
 }
+

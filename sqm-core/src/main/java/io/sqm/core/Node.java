@@ -8,8 +8,8 @@ import java.util.Arrays;
 /**
  * Represents a generic element of the SQM (Structured Query Model) tree.
  * <p>
- * All elements of a parsed or programmatically constructed SQL query—
- * such as expressions, predicates, table references, and query blocks—
+ * All elements of a parsed or programmatically constructed SQL query -
+ * such as expressions, predicates, table references, and query blocks -
  * implement this interface. It serves as the common root for the
  * entire model hierarchy.
  * </p>
@@ -21,7 +21,7 @@ import java.util.Arrays;
  * to be applied to nodes without modifying their internal structure.
  * </p>
  */
-public sealed interface Node extends Serializable permits BoundSpec, CteDef, DialectNode, DistinctSpec, Expression, FrameSpec, FromItem, GroupBy, GroupItem, LimitOffset, LockingClause, OrderBy, OrderItem, OverSpec, PartitionBy, Query, SelectItem, TypeName, WhenThen, WindowDef {
+public sealed interface Node extends Serializable permits Assignment, BoundSpec, CteDef, DialectNode, DistinctSpec, Expression, FrameSpec, FromItem, GroupBy, GroupItem, InsertSource, LimitOffset, LockingClause, OrderBy, OrderItem, OverSpec, PartitionBy, SelectItem, Statement, TypeName, WhenThen, WindowDef {
     /**
      * Accepts a {@link NodeVisitor} that performs an operation on this node.
      * <p>
@@ -32,8 +32,8 @@ public sealed interface Node extends Serializable permits BoundSpec, CteDef, Dia
      *
      * @param v   the visitor instance to accept (must not be {@code null})
      * @param <R> the result type produced by the visitor
-     * @return the result of the visitor’s operation on this node,
-     * or {@code null} if the visitor’s return type is {@link Void}
+     * @return the result of the visitor's operation on this node,
+     * or {@code null} if the visitor's return type is {@link Void}
      */
     <R> R accept(NodeVisitor<R> v);
 

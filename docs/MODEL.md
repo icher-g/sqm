@@ -74,19 +74,27 @@ Node
 │  │  │  └─ OrPredicate
 │  │  └─ UnaryPredicate
 │  └─ ValueSet
-│     ├─ RowExpr
 │     ├─ QueryExpr
-│     └─ RowListExpr
+│     └─ RowValues
+│        ├─ RowExpr
+│        └─ RowListExpr
 ├─ TypeName
 ├─ DistinctSpec
 ├─ SelectItem
 │  ├─ ExprSelectItem
 │  ├─ StarSelectItem
 │  └─ QualifiedStarSelectItem
-├─ Query
-│  ├─ CompositeQuery
-│  ├─ SelectQuery
-│  └─ WithQuery
+├─ Statement
+│  ├─ Query
+│  │  ├─ CompositeQuery
+│  │  ├─ SelectQuery
+│  │  └─ WithQuery
+│  ├─ InsertStatement
+│  ├─ UpdateStatement
+│  └─ DeleteStatement
+├─ InsertSource
+│  ├─ Query
+│  └─ RowValues
 ├─ CteDef
 ├─ FromItem
 │  ├─ Join
@@ -101,6 +109,7 @@ Node
 │     │  └─ ValuesTable
 │     ├─ Lateral
 │     └─ Table
+├─ Assignment
 ├─ GroupBy
 ├─ GroupItem
 │  ├─ GroupItem.SimpleGroupItem
@@ -278,6 +287,15 @@ graph TD
 - **Node**  
   The common base for all AST nodes. Enables generic traversal, transformation and rendering across the entire model.
 
+- **Statement**  
+  Base type for top-level SQL statements (`Query`, `InsertStatement`, `UpdateStatement`, `DeleteStatement`).
+
+- **Assignment**  
+  Represents a single `column = expression` item used in `UPDATE` assignments.
+
+- **InsertSource**  
+  Base type for INSERT value sources (`Query` and `RowValues`).
+
 ---
 
 ### Expressions
@@ -440,6 +458,9 @@ graph TD
     - CompositeQuery – `UNION`, `INTERSECT`, `EXCEPT`
     - SelectQuery – main SELECT form
     - WithQuery – WITH + child query
+- **InsertStatement** - `INSERT INTO <table> [(columns...)] <source>` where source is `VALUES (...)` or a query.
+- **UpdateStatement** - `UPDATE <table> SET c1 = expr [, ...] [WHERE ...]`.
+- **DeleteStatement** - `DELETE FROM <table> [WHERE ...]`.
 - **CteDef** – CTE definition
 
 ---

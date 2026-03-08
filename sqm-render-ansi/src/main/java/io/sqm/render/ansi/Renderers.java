@@ -1,5 +1,8 @@
 package io.sqm.render.ansi;
 
+import io.sqm.render.QueryRenderer;
+import io.sqm.render.RowValuesRenderer;
+import io.sqm.render.StatementRenderer;
 import io.sqm.render.repos.DefaultRenderersRepository;
 import io.sqm.render.spi.RenderersRepository;
 
@@ -36,6 +39,9 @@ public final class Renderers {
 
     private static RenderersRepository registerDefaults(RenderersRepository r) {
         return r
+            .register(new StatementRenderer())
+            .register(new QueryRenderer())
+            .register(new RowValuesRenderer())
             .register(new AndPredicateRenderer())
             .register(new OrPredicateRenderer())
             .register(new AnyAllPredicateRenderer())
@@ -48,6 +54,7 @@ public final class Renderers {
             .register(new CteDefRenderer())
             .register(new ExistsPredicateRenderer())
             .register(new ExprSelectItemRenderer())
+            .register(new AssignmentRenderer())
             .register(new FunctionExprRenderer())
             .register(new GroupByRenderer())
             .register(new GroupingSetsRenderer())
@@ -78,6 +85,9 @@ public final class Renderers {
             .register(new RowExprRenderer())
             .register(new RowListExprRenderer())
             .register(new SelectQueryRenderer())
+            .register(new InsertStatementRenderer())
+            .register(new UpdateStatementRenderer())
+            .register(new DeleteStatementRenderer())
             .register(new StarSelectItemRenderer())
             .register(new TableRenderer())
             .register(new UsingJoinRenderer())
@@ -126,4 +136,3 @@ public final class Renderers {
             .register(new PowerArithmeticExprRenderer());
     }
 }
-

@@ -186,6 +186,28 @@ public class NodeSubtypesJsonTest {
         assertTrue(json.contains("\"arrayDims\" : 1"));
     }
 
+
+    @Test
+    @DisplayName("Assignment: polymorphic deserialization as Node")
+    void assignment_asNode() throws Exception {
+        var assignment = set("name", lit("alice"));
+
+        String json = mapper.writeValueAsString(assignment);
+        Node back = mapper.readValue(json, Node.class);
+
+        assertInstanceOf(Assignment.class, back);
+        assertEquals(assignment, back);
+    }
+
+    @Test
+    @DisplayName("Assignment: direct root round-trip")
+    void assignment_asAssignmentRoot() throws Exception {
+        var assignment = set("name", lit("alice"));
+
+        var back = roundTrip(assignment, Assignment.class);
+
+        assertEquals(assignment, back);
+    }
     /* ==================== DistinctSpec Tests ==================== */
 
     @Test
@@ -399,6 +421,7 @@ public class NodeSubtypesJsonTest {
         assertTrue(node.has("limitOffset"));
     }
 }
+
 
 
 

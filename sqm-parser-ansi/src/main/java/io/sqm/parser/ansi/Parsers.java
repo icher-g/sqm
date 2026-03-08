@@ -37,6 +37,10 @@ public final class Parsers {
         var atomicQueryParser = new AtomicQueryParser();
         var postfixExprParser = new PostfixExprParser(atomicExprParser);
         return r
+            .register(new StatementParser())
+            .register(new InsertStatementParser())
+            .register(new UpdateStatementParser())
+            .register(new DeleteStatementParser())
             .register(new QueryParser())
             .register(new WithQueryParser())
             .register(new CompositeQueryParser(atomicQueryParser))
@@ -46,6 +50,7 @@ public final class Parsers {
             .register(new CaseExprParser())
             .register(new FunctionExprParser())
             .register(new PredicateParser())
+            .register(new AssignmentParser())
             .register(new ValueSetParser())
             .register(new ColumnExprParser())
             .register(new LiteralExprParser())

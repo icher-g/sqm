@@ -1,6 +1,8 @@
 package io.sqm.render;
 
+import io.sqm.core.Identifier;
 import io.sqm.core.Node;
+import io.sqm.render.spi.IdentifierQuoter;
 import io.sqm.render.spi.Renderer;
 
 import java.util.List;
@@ -25,6 +27,18 @@ public interface SqlWriter {
      * @return this.
      */
     <T extends Node> SqlWriter append(T node);
+
+    /**
+     * Appends a node using an explicit target type renderer.
+     *
+     * @param type explicit renderer type key
+     * @param node node instance to render
+     * @param <T> node type
+     * @return this.
+     */
+    default <T extends Node> SqlWriter append(Class<T> type, T node) {
+        return append(node);
+    }
 
     /**
      * Appends a node to the query inside the parentheses. The node will be rendered with the {@link Renderer} interface.
@@ -98,6 +112,35 @@ public interface SqlWriter {
     }
 
     /**
+     * Appends a list of identifiers separated by comma.
+     *
+     * @param parts a list of identifiers to append.
+     * @param quoter dialect-specific identifier quoter.
+     * @return this.
+     */
+    default SqlWriter comma(List<Identifier> parts, IdentifierQuoter quoter) {
+        if (parts == null || parts.isEmpty()) return this;
+        for (int i = 0; i < parts.size(); i++) {
+            if (i > 0) {
+                append(",").space();
+            }
+            Identifier identifier = parts.get(i);
+            if (identifier.quoted()) {
+                if (quoter.supports(identifier.quoteStyle())) {
+                    append(quoter.quote(identifier.value(), identifier.quoteStyle()));
+                }
+                else {
+                    append(quoter.quote(identifier.value()));
+                }
+            }
+            else {
+                append(quoter.quoteIfNeeded(identifier.value()));
+            }
+        }
+        return this;
+    }
+
+    /**
      * Indicates whether the call to {@link SqlWriter#newline()} should be ignored and new line should not be added.
      */
     void singleLine();
@@ -126,6 +169,7 @@ public interface SqlWriter {
      *
      * @return this.
      */
+    @SuppressWarnings("UnusedReturnValue")
     SqlWriter indent();
 
     /**

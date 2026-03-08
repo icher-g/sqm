@@ -22,7 +22,7 @@ Repository development rules for contributors and coding agents are defined in `
 
 ## Features
 
-- **Typed immutable SQL model** - composable AST for queries, expressions, predicates, joins, and dialect-specific nodes.
+- **Typed immutable SQL model** - composable AST for statements (queries + DML), expressions, predicates, joins, and dialect-specific nodes.
 - **Dialect support** - ANSI + PostgreSQL + MySQL parser/renderer/spec implementations.
 - **Validation framework** - schema-aware query validation with configurable limits and access policies (principal/tenant aware).
 - **Rewrite and normalization pipeline** - built-in and custom rewrite rules (limit injection, qualification, canonicalization, tenant predicate, etc.).
@@ -112,10 +112,27 @@ Core components:
 
 ## Model Hierarchy
 
-SQM defines a rich, type-safe model (AST) to represent SQL queries internally.
+SQM defines a rich, type-safe model (AST) to represent SQL statements internally.
 This model is shared across DSL, parser, renderer, validator, transform/rewrite, middleware, JSON, and codegen modules.
 
 ➡️ [View the full hierarchy in docs/MODEL.md](docs/MODEL.md)
+
+## DML Statement Support
+
+DML foundation is delivered with a statement-level model and ANSI baseline parser/renderer support for:
+
+- `INSERT INTO ... VALUES (...)` and `INSERT INTO ... SELECT ...`
+- `UPDATE ... SET ... [WHERE ...]`
+- `DELETE FROM ... [WHERE ...]`
+
+Scope boundary:
+
+- Baseline DML is cross-dialect through ANSI base components.
+- Dialect-specific DML extensions (for example MySQL upsert or PostgreSQL `RETURNING`) are tracked separately and intentionally deferred from DML-R1.
+
+Reference docs:
+
+- DML follow-up details are tracked in GitHub issues/epics (no local interim epic markdown is kept).
 
 ---
 

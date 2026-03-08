@@ -1,0 +1,76 @@
+package io.sqm.parser.ansi;
+
+import io.sqm.core.DeleteStatement;
+import io.sqm.core.Statement;
+import io.sqm.parser.spi.ParseContext;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class DeleteStatementParserTest {
+
+    @Test
+    void parsesDeleteWithWhere() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM users WHERE id = 1");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var statement = result.value();
+        assertEquals("users", statement.table().name().value());
+        assertNotNull(statement.where());
+    }
+
+    @Test
+    void parsesDeleteWithoutWhere() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM users");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var statement = result.value();
+        assertEquals("users", statement.table().name().value());
+        assertNull(statement.where());
+    }
+
+    @Test
+    void statementEntryPointParsesDelete() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(Statement.class, "DELETE FROM users");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertInstanceOf(DeleteStatement.class, result.value());
+    }
+
+    @Test
+    void rejectsDeleteWithoutFromKeyword() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE users WHERE id = 1");
+
+        assertTrue(result.isError());
+        assertEquals("Expected FROM after DELETE at 7", result.errorMessage());
+    }
+
+    @Test
+    void rejectsDeleteWithoutTable() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM WHERE id = 1");
+
+        assertTrue(result.isError());
+    }
+
+    @Test
+    void rejectsDeleteWithInvalidWhereExpression() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM users WHERE");
+
+        assertTrue(result.isError());
+    }
+
+    @Test
+    void exposesDeleteStatementTargetType() {
+        assertEquals(DeleteStatement.class, new DeleteStatementParser().targetType());
+    }
+}

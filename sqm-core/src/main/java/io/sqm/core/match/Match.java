@@ -52,6 +52,39 @@ public interface Match<T, R> {
     }
 
     /**
+     * Creates a new matcher for the given {@link InsertSource}.
+     *
+     * @param source the insert source to match on
+     * @param <R> the result type
+     * @return a new {@code InsertSourceMatch} for {@code source}
+     */
+    static <R> InsertSourceMatch<R> insertSource(InsertSource source) {
+        return InsertSourceMatch.match(source);
+    }
+
+    /**
+     * Creates a new matcher for the given {@link Assignment}.
+     *
+     * @param assignment the assignment to match on
+     * @param <R> the result type
+     * @return a new {@code AssignmentMatch} for {@code assignment}
+     */
+    static <R> AssignmentMatch<R> assignment(Assignment assignment) {
+        return AssignmentMatch.match(assignment);
+    }
+
+    /**
+     * Creates a new matcher for the given {@link Statement}.
+     *
+     * @param statement the statement to match on
+     * @param <R> the result type
+     * @return a new {@code StatementMatch} for {@code statement}
+     */
+    static <R> StatementMatch<R> statement(Statement statement) {
+        return StatementMatch.match(statement);
+    }
+
+    /**
      * Creates a new matcher for the given {@link Query}.
      *
      * @param q   the query to match on
@@ -183,76 +216,54 @@ public interface Match<T, R> {
         return GroupItemMatch.match(gi);
     }
 
-    /**
-     * Throws any {@link Throwable} without declaring or wrapping it.
-     * <p>
-     * This "sneaky throw" helper is used by {@link #orElseThrow(Supplier)}
-     * to rethrow checked exceptions in a type-safe way without polluting
-     * the interface with {@code throws} declarations.
-     *
-     * @param t   the throwable to rethrow
-     * @param <E> the compile-time type of the throwable
-     * @param <R> the dummy return type to allow expression use
-     * @return never returns normally; always throws the provided exception
-     * @throws E the given throwable, rethrown as-is
-     */
     @SuppressWarnings("unchecked")
     private static <E extends Throwable, R> R sneakyThrow(Throwable t) throws E {
-        throw (E) t; // never returns
+        throw (E) t;
     }
 
     /**
-     * Terminal operation for this match chain.
-     * <p>
-     * Executes the first matching branch that was previously registered.
-     * If none of the registered type handlers matched the input object,
-     * the given fallback function will be applied.
+     * Finalizes the match and applies the fallback function when no prior arm matched.
      *
-     * @param f a function providing a fallback value if no match occurred
-     * @return the computed result, never {@code null} unless produced by the handler
+     * @param f fallback function evaluated with the original matched value
+     * @return match result
      */
     R otherwise(Function<T, R> f);
 
     /**
-     * Terminal operation that resolves to an empty {@link Optional}
-     * if no match occurred, or an {@code Optional} containing the result otherwise.
+     * Finalizes the match and returns an {@link Optional} result.
      *
-     * @return an {@code Optional} of the matched result
+     * @return optional match result, empty when no arm matched
      */
     default Optional<R> otherwiseEmpty() {
         return Optional.ofNullable(otherwise(j -> null));
     }
 
     /**
-     * Terminal operation that returns a default value if no match occurred.
+     * Finalizes the match and returns a default value when no arm matched.
      *
-     * @param defaultValue the value to return if no branch matched
-     * @return the matched result or the provided default value
+     * @param defaultValue value returned when no arm matched
+     * @return match result or {@code defaultValue}
      */
     default R orElse(R defaultValue) {
         return otherwise(j -> defaultValue);
     }
 
     /**
-     * Terminal operation that obtains a default value from a {@link Supplier}
-     * if no match occurred.
+     * Finalizes the match and lazily returns a supplied default when no arm matched.
      *
-     * @param s the supplier of a default value
-     * @return the matched result or the supplier’s value
+     * @param s supplier used to compute a default result
+     * @return match result or supplied default value
      */
     default R orElseGet(Supplier<R> s) {
         return otherwise(j -> s.get());
     }
 
     /**
-     * Terminal operation that throws an exception if no match occurred.
-     * <p>
-     * This method uses {@link #sneakyThrow(Throwable)} internally to allow
-     * rethrowing any checked exception without declaring it.
+     * Finalizes the match and throws an exception supplied by {@code ex} when no arm matched.
      *
-     * @param ex  supplier that provides an exception to throw
-     * @param <X> the type of the exception to throw
-     * @return never returns normally
+     * @param ex supplier providing the exception to throw
+     * @param <X> exception type
+     * @return match result when an arm matched
      */
     default <X extends Throwable> R orElseThrow(Supplier<X> ex) {
         return otherwise(j -> sneakyThrow(ex.get()));

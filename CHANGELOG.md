@@ -1,8 +1,14 @@
-﻿# Changelog
+# Changelog
 
 ## [Unreleased]
 
 ### Added
+- DML-R1 statement foundation delivery:
+  - statement root support (`Statement`) with query + DML dispatch
+  - neutral core `InsertStatement`, `UpdateStatement`, `DeleteStatement` model nodes
+  - ANSI baseline parser/renderer for INSERT/UPDATE/DELETE
+  - DML node-contract coverage (visitor/transformer/match/json)
+  - statement round-trip integration coverage in `sqm-it`
 - MySQL R1 dialect delivery across parser/renderer/spec modules:
   - `sqm-core-mysql`
   - `sqm-parser-mysql`
@@ -15,6 +21,7 @@
   - `GROUP BY ... WITH ROLLUP`
 
 ### Changed
+- DML-R1 documentation updated to reflect delivered statement-model support and deferred `RETURNING`/`OUTPUT` extensions.
 - Dialect docs and roadmap updated to reflect MySQL R1 completion and canonical MySQL behavior.
 
 ## [v0.3.1] - 2026-03-01
@@ -176,7 +183,7 @@
 - Initial public release of **SQM (Structured Query Model)**.
 - Introduced full immutable AST model (`Node` hierarchy) for SQL representation.
 - Added pattern-matching API (`matchX()` methods) for type-safe traversal and extraction.
-- Implemented **ANSI SQL parser** (`sqm-parser` module) converting SQL â†’ SQM AST.
+- Implemented **ANSI SQL parser** (`sqm-parser` module) converting SQL → SQM AST.
 - Implemented **ANSI SQL renderer** (`sqm-render-ansi` module) with dialect-based repository.
 - Implemented **PostgreSQL SQL renderer** (`sqm-render-postgresql` module).
 - Added **CTE**, **window functions**, **composite queries**, and **joins** support.
@@ -199,4 +206,5 @@
 - [ ] Query optimizer and validator
 
 ---
+
 

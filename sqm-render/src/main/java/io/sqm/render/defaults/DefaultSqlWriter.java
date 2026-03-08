@@ -57,6 +57,13 @@ public class DefaultSqlWriter implements SqlWriter {
     }
 
     @Override
+    public <T extends Node> SqlWriter append(Class<T> type, T node) {
+        var r = ctx.dialect().renderers().require(type);
+        r.render(node, ctx, this);
+        return this;
+    }
+
+    @Override
     public void singleLine() {
         singleLine++;
     }
