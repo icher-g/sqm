@@ -1,9 +1,15 @@
 package io.sqm.validate.schema.rule;
 
 import io.sqm.core.CteDef;
+import io.sqm.core.DeleteStatement;
+import io.sqm.core.InsertStatement;
 import io.sqm.core.Query;
+import io.sqm.core.Statement;
+import io.sqm.core.UpdateStatement;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
+
+import java.util.Optional;
 
 /**
  * Validates CTE definition metadata against CTE body shape.
@@ -41,10 +47,7 @@ final class CteDefinitionValidationRule implements SchemaValidationRule<CteDef> 
         if (node.columnAliases() == null || node.columnAliases().isEmpty() || node.body() == null) {
             return;
         }
-        if (!(node.body() instanceof Query query)) {
-            return;
-        }
-        var projectionArity = projectionShapeInspector.projectionArity(query);
+        var projectionArity = projectionArity(node.body());
         if (projectionArity.isEmpty()) {
             return;
         }
@@ -60,5 +63,27 @@ final class CteDefinitionValidationRule implements SchemaValidationRule<CteDef> 
             node,
             "cte.columns"
         );
+    }
+
+    /**
+     * Returns projection arity for query-backed or writable CTE bodies.
+     *
+     * @param body CTE body statement.
+     * @return projection arity when determinable.
+     */
+    private Optional<Integer> projectionArity(Statement body) {
+        if (body instanceof Query query) {
+            return projectionShapeInspector.projectionArity(query);
+        }
+        if (body instanceof InsertStatement insert) {
+            return Optional.of(insert.returning().size());
+        }
+        if (body instanceof UpdateStatement update) {
+            return Optional.of(update.returning().size());
+        }
+        if (body instanceof DeleteStatement delete) {
+            return Optional.of(delete.returning().size());
+        }
+        return Optional.empty();
     }
 }
