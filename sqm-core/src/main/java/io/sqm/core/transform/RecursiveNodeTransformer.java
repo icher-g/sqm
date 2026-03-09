@@ -102,9 +102,13 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     @Override
     public Node visitDeleteStatement(DeleteStatement statement) {
         var table = apply(statement.table());
+        List<TableRef> using = new ArrayList<>(statement.using().size());
+        boolean changed = table != statement.table();
+        changed |= apply(statement.using(), using);
         var where = apply(statement.where());
-        if (table != statement.table() || where != statement.where()) {
-            return DeleteStatement.of(table, where);
+        changed |= where != statement.where();
+        if (changed) {
+            return DeleteStatement.of(table, using, where);
         }
         return statement;
     }
@@ -1534,6 +1538,3 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         return expr;
     }
 }
-
-
-

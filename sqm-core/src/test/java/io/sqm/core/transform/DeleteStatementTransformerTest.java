@@ -13,7 +13,9 @@ class DeleteStatementTransformerTest {
 
     @Test
     void preservesIdentityWhenChildrenDoNotChange() {
-        var statement = delete(tbl("users")).build();
+        var statement = delete(tbl("users"))
+            .using(tbl("source_users"))
+            .build();
 
         Node transformed = new RecursiveNodeTransformer() {
         }.transform(statement);
@@ -34,6 +36,7 @@ class DeleteStatementTransformerTest {
 
         assertNotSame(statement, transformed);
     }
+
     @Test
     void rebuildsStatementWhenWhereChanges() {
         var statement = delete(tbl("users")).where(io.sqm.dsl.Dsl.col("id").eq(io.sqm.dsl.Dsl.lit(1))).build();
@@ -47,5 +50,23 @@ class DeleteStatementTransformerTest {
 
         assertNotSame(statement, transformed);
     }
-}
 
+    @Test
+    void rebuildsStatementWhenUsingChanges() {
+        var statement = delete(tbl("users"))
+            .using(tbl("source_users"))
+            .build();
+
+        Node transformed = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitTable(Table table) {
+                if ("source_users".equals(table.name().value())) {
+                    return tbl("alt_source");
+                }
+                return table;
+            }
+        }.transform(statement);
+
+        assertNotSame(statement, transformed);
+    }
+}

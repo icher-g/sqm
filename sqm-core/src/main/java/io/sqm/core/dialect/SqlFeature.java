@@ -52,6 +52,10 @@ public enum SqlFeature {
      */
     UPDATE_FROM("PostgreSQL UPDATE ... FROM clause"),
     /**
+     * PostgreSQL DELETE ... USING clause support for join-like delete sources.
+     */
+    DELETE_USING("PostgreSQL DELETE ... USING clause"),
+    /**
      * PostgreSQL ORDER BY ... USING operator syntax for custom sort ordering.
      */
     ORDER_BY_USING("PostgreSQL ORDER BY ... USING <operator>"),

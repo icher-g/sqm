@@ -70,6 +70,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitDeleteStatement(DeleteStatement statement) {
         accept(statement.table());
+        statement.using().forEach(this::accept);
         accept(statement.where());
         return defaultResult();
     }
@@ -1307,4 +1308,3 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         return defaultResult();
     }
 }
-

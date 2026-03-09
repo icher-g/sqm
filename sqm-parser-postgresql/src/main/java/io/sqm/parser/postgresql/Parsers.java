@@ -25,6 +25,7 @@ public class Parsers {
         return r
             .register(new InsertStatementParser())
             .register(new UpdateStatementParser())
+            .register(new DeleteStatementParser())
             .register(new BinaryOperatorExprParser())
             .register(new CastExprParser());
     }

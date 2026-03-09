@@ -32,6 +32,7 @@ class DeleteStatementParserTest {
         assertTrue(result.ok(), result.errorMessage());
         var statement = result.value();
         assertEquals("users", statement.table().name().value());
+        assertTrue(statement.using().isEmpty());
         assertNull(statement.where());
     }
 
@@ -74,3 +75,6 @@ class DeleteStatementParserTest {
         assertEquals(DeleteStatement.class, new DeleteStatementParser().targetType());
     }
 }
+
+
+
