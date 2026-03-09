@@ -1,9 +1,13 @@
 package io.sqm.render.ansi;
 
+import io.sqm.core.TableRef;
 import io.sqm.core.UpdateStatement;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
+
+import java.util.List;
 
 /**
  * Renders baseline ANSI {@code UPDATE} statements.
@@ -29,8 +33,23 @@ public class UpdateStatementRenderer implements Renderer<UpdateStatement> {
         w.space().append("SET").space();
         w.comma(node.assignments());
 
+        renderFrom(node.from(), ctx, w);
+
         if (node.where() != null) {
             w.space().append("WHERE").space().append(node.where());
+        }
+    }
+
+    /**
+     * Renders optional {@code FROM} sources.
+     *
+     * @param from from sources
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected void renderFrom(List<TableRef> from, RenderContext ctx, SqlWriter w) {
+        if (!from.isEmpty()) {
+            throw new UnsupportedDialectFeatureException("UPDATE ... FROM", ctx.dialect().name());
         }
     }
 
@@ -44,3 +63,4 @@ public class UpdateStatementRenderer implements Renderer<UpdateStatement> {
         return UpdateStatement.class;
     }
 }
+

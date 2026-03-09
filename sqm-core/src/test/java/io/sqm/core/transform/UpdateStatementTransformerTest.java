@@ -17,6 +17,7 @@ class UpdateStatementTransformerTest {
     void preservesIdentityWhenChildrenDoNotChange() {
         var statement = update(tbl("users"))
             .set(set("name", lit("alice")))
+            .from(tbl("source_users"))
             .build();
 
         Node transformed = new RecursiveNodeTransformer() {
@@ -40,6 +41,7 @@ class UpdateStatementTransformerTest {
 
         assertNotSame(statement, transformed);
     }
+
     @Test
     void rebuildsStatementWhenWhereChanges() {
         var statement = update(tbl("users"))
@@ -54,6 +56,26 @@ class UpdateStatementTransformerTest {
                     return lit(2);
                 }
                 return literalExpr;
+            }
+        }.transform(statement);
+
+        assertNotSame(statement, transformed);
+    }
+
+    @Test
+    void rebuildsStatementWhenFromChanges() {
+        var statement = update(tbl("users"))
+            .set(set("name", lit("alice")))
+            .from(tbl("source_users"))
+            .build();
+
+        Node transformed = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitTable(io.sqm.core.Table table) {
+                if ("source_users".equals(table.name().value())) {
+                    return tbl("alt_source");
+                }
+                return table;
             }
         }.transform(statement);
 
@@ -76,4 +98,3 @@ class UpdateStatementTransformerTest {
         assertNotSame(statement, transformed);
     }
 }
-

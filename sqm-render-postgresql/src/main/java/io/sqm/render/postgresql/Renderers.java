@@ -27,6 +27,7 @@ public final class Renderers {
     private static RenderersRepository registerDefaults(RenderersRepository r) {
         return r
             .register(new InsertStatementRenderer())
+            .register(new UpdateStatementRenderer())
             .register(new CastExprRenderer());
     }
 }

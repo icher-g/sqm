@@ -4,6 +4,8 @@ import io.sqm.core.UpdateStatement;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,6 +23,7 @@ class UpdateStatementParserTest {
         var statement = result.value();
         assertEquals("users", statement.table().name().value());
         assertEquals(2, statement.assignments().size());
+        assertTrue(statement.from().isEmpty());
         assertNotNull(statement.where());
     }
 
@@ -32,6 +35,7 @@ class UpdateStatementParserTest {
         assertTrue(result.ok(), result.errorMessage());
         var statement = result.value();
         assertEquals(1, statement.assignments().size());
+        assertTrue(statement.from().isEmpty());
         assertNull(statement.where());
     }
 
@@ -62,6 +66,15 @@ class UpdateStatementParserTest {
     }
 
     @Test
+    void rejectsUpdateFromInAnsiDialect() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' FROM src_users");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).startsWith("UPDATE ... FROM is not supported by this dialect"));
+    }
+
+    @Test
     void rejectsUpdateWithInvalidWhereClause() {
         var ctx = ParseContext.of(new AnsiSpecs());
         var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' WHERE");
@@ -82,3 +95,4 @@ class UpdateStatementParserTest {
         assertEquals(UpdateStatement.class, new UpdateStatementParser().targetType());
     }
 }
+
