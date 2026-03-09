@@ -345,6 +345,10 @@ public enum TokenType {
      */
     LATERAL,
     /**
+     * RETURNING keyword token.
+     */
+    RETURNING,
+    /**
      * WHERE keyword token.
      */
     WHERE,
@@ -537,3 +541,6 @@ public enum TokenType {
      */
     EOF
 }
+
+
+

@@ -7,6 +7,7 @@ import io.sqm.core.Query;
 import io.sqm.core.RowExpr;
 import io.sqm.core.RowListExpr;
 import io.sqm.core.RowValues;
+import io.sqm.core.SelectItem;
 import io.sqm.core.Table;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -64,7 +65,26 @@ public class InsertStatementParser implements Parser<InsertStatement> {
             return error(source);
         }
 
-        return ok(InsertStatement.of(table.value(), columns, source.value()));
+        var returning = parseReturning(cur, ctx);
+        if (returning.isError()) {
+            return error(returning);
+        }
+
+        return ok(InsertStatement.of(table.value(), columns, source.value(), returning.value()));
+    }
+
+    /**
+     * Parses optional {@code RETURNING} clause.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return returning projection list, or empty list when omitted
+     */
+    protected ParseResult<List<SelectItem>> parseReturning(Cursor cur, ParseContext ctx) {
+        if (cur.match(TokenType.RETURNING)) {
+            return error("INSERT ... RETURNING is not supported by this dialect", cur.fullPos());
+        }
+        return ok(List.of());
     }
 
     private ParseResult<List<Identifier>> parseTargetColumns(Cursor cur) {

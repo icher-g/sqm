@@ -2,6 +2,7 @@ package io.sqm.core;
 
 import org.junit.jupiter.api.Test;
 
+import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.row;
@@ -21,12 +22,15 @@ class InsertStatementTest {
             .values(rows(
                 row(lit(1), lit("alice")),
                 row(lit(2), lit("bob"))))
+            .returning(col("id").toSelectItem())
             .build();
 
         assertEquals("users", statement.table().name().value());
         assertEquals(2, statement.columns().size());
         assertInstanceOf(RowListExpr.class, statement.source());
+        assertEquals(1, statement.returning().size());
         assertThrows(UnsupportedOperationException.class, () -> statement.columns().add(Identifier.of("x")));
+        assertThrows(UnsupportedOperationException.class, () -> statement.returning().add(col("name").toSelectItem()));
     }
 
     @Test
@@ -40,9 +44,11 @@ class InsertStatementTest {
         var built = InsertStatement.builder(tbl("users"))
             .columns(Identifier.of("id"))
             .query(io.sqm.dsl.Dsl.select(lit(1)).build())
+            .returning(col("id").toSelectItem())
             .build();
 
         assertEquals(1, built.columns().size());
+        assertEquals(1, built.returning().size());
         assertInstanceOf(io.sqm.core.SelectQuery.class, built.source());
     }
 
@@ -51,10 +57,12 @@ class InsertStatementTest {
         var first = insert(tbl("users"))
             .columns(Identifier.of("id"))
             .values(row(lit(1)))
+            .returning(col("id").toSelectItem())
             .build();
         var second = insert(tbl("users"))
             .columns(Identifier.of("id"))
             .values(row(lit(1)))
+            .returning(col("id").toSelectItem())
             .build();
         var third = insert(tbl("users"))
             .columns(Identifier.of("id"))
@@ -74,5 +82,6 @@ class InsertStatementTest {
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).table(null));
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).columns((Identifier[]) null));
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).source(null));
+        assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).returning((SelectItem[]) null));
     }
 }

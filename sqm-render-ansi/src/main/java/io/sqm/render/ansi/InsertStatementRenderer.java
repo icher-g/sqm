@@ -4,9 +4,13 @@ import io.sqm.core.InsertSource;
 import io.sqm.core.InsertStatement;
 import io.sqm.core.Query;
 import io.sqm.core.RowValues;
+import io.sqm.core.SelectItem;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
+
+import java.util.List;
 
 /**
  * Renders baseline ANSI {@code INSERT} statements.
@@ -37,6 +41,20 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
         }
 
         renderSource(node.source(), w);
+        renderReturning(node.returning(), ctx, w);
+    }
+
+    /**
+     * Renders optional {@code RETURNING} clause.
+     *
+     * @param returning returning projection items
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected void renderReturning(List<SelectItem> returning, RenderContext ctx, SqlWriter w) {
+        if (!returning.isEmpty()) {
+            throw new UnsupportedDialectFeatureException("INSERT ... RETURNING", ctx.dialect().name());
+        }
     }
 
     private void renderSource(InsertSource source, SqlWriter w) {

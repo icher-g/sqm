@@ -43,6 +43,7 @@ class PostgresSpecsTest {
         assertTrue(specs.capabilities().supports(SqlFeature.INTERVAL_LITERAL));
         assertTrue(specs.capabilities().supports(SqlFeature.DISTINCT_ON));
         assertTrue(specs.capabilities().supports(SqlFeature.ORDER_BY_USING));
+        assertTrue(specs.capabilities().supports(SqlFeature.DML_RETURNING));
         assertTrue(specs.capabilities().supports(SqlFeature.CTE_MATERIALIZATION));
         assertTrue(specs.capabilities().supports(SqlFeature.FUNCTION_TABLE));
         assertTrue(specs.capabilities().supports(SqlFeature.FUNCTION_TABLE_ORDINALITY));
@@ -65,3 +66,4 @@ class PostgresSpecsTest {
         assertFalse(specs.capabilities().supports(SqlFeature.LATERAL));
     }
 }
+

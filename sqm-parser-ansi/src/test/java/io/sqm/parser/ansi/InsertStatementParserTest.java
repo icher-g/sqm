@@ -85,6 +85,15 @@ class InsertStatementParserTest {
     }
 
     @Test
+    void rejectsInsertReturningInAnsiDialect() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users VALUES (1) RETURNING id");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("INSERT ... RETURNING is not supported by this dialect"));
+    }
+
+    @Test
     void exposesInsertStatementTargetType() {
         assertEquals(InsertStatement.class, new InsertStatementParser().targetType());
     }

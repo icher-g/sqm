@@ -29,13 +29,25 @@ Priority levels:
 - Add integration tests in `sqm-it` for round-trip parse/render.
 - Delivery split: `R1A` baseline + `R1B` common MySQL-specific features (completed).
 
-### Epic R2: SQL Server Dialect Support
+### Epic R2: PostgreSQL DML Extensions
+- Implement PostgreSQL-specific DML features on top of ANSI DML baseline.
+- Initial scope: `INSERT ... RETURNING`, `UPDATE ... FROM`, `DELETE ... USING`, `INSERT ... ON CONFLICT`.
+- Enforce parser/render capability gating and deterministic SQL output.
+- Add integration round-trip coverage in `sqm-it`.
+
+### Epic R3: MySQL DML Extensions
+- Implement MySQL-specific DML features on top of ANSI DML baseline.
+- Initial scope: `INSERT ... ON DUPLICATE KEY UPDATE`, `INSERT IGNORE`, `REPLACE INTO`, multi-table `UPDATE`/`DELETE`.
+- Enforce parser/render capability gating and deterministic SQL output.
+- Add integration round-trip coverage in `sqm-it`.
+
+### Epic R4: SQL Server Dialect Support
 - Add `sqm-parser-sqlserver` and `sqm-render-sqlserver`.
 - Define `SqlServerSpecs`.
 - Support SQL Server pagination/identifier/function differences.
 - Add integration round-trip tests and middleware smoke coverage.
 
-### Epic R3: DDL MVP (Cross-Dialect Core)
+### Epic R5: DDL MVP (Cross-Dialect Core)
 - Extend `sqm-core` with DDL nodes:
   - `CreateTable`, `AlterTable`, `DropTable`
   - column defs, constraints (PK/FK/unique/check), index basics
@@ -43,7 +55,7 @@ Priority levels:
 - Add visitor/transformer/match/json support for all new DDL nodes.
 - Add baseline semantic validation for DDL shape and references.
 
-### Epic R4: Middleware DDL Policy Controls
+### Epic R6: Middleware DDL Policy Controls
 - Add explicit DDL decision controls in `sqm-control`:
   - allowlist/denylist by operation (`CREATE`, `ALTER`, `DROP`)
   - scope by principal/tenant/object
@@ -52,51 +64,52 @@ Priority levels:
 
 ## P1 (High Value)
 
-### Epic R5: Oracle Dialect Support
+### Epic R7: Oracle Dialect Support
 - Add parser/renderer/specs modules for Oracle-specific syntax.
 - Focus on top query constructs and compatibility gaps.
 
-### Epic R6: DDL Coverage Expansion
+### Epic R8: DDL Coverage Expansion
 - Add:
   - `CreateSchema`, `DropSchema`
   - `CreateIndex`, `DropIndex`, `Rename`
   - richer `AlterTable` actions
 - Expand validation and cross-dialect render fallback behavior.
 
-### Epic R7: Catalog/Introspection Unification for New Dialects
+### Epic R9: Catalog/Introspection Unification for New Dialects
 - Provide dialect-aware type mapping packs.
 - Ensure catalog schema loading supports new dialect quirks.
 - Add conformance tests per dialect for schema/validator interplay.
 
 ## P2 (Nice to Have)
 
-### Epic R8: Cloud Dialect Packs
+### Epic R10: Cloud Dialect Packs
 - Evaluate `Snowflake`, `BigQuery`, `Trino/Presto` packs.
 - Prioritize read-only query support first.
 
-### Epic R9: Query Optimization/Normalization Packs
+### Epic R11: Query Optimization/Normalization Packs
 - Optional optimizer passes:
   - predicate simplification
   - projection pruning
   - canonical forms for cache/fingerprint stability
 - Keep optimizer opt-in and deterministic.
 
-### Epic R10: DML Advanced Expansion
+### Epic R12: DML Advanced Expansion
 - Expand beyond DML-R1 baseline with advanced dialect-specific DML features (for example PostgreSQL `RETURNING`, SQL Server `OUTPUT`, MySQL upsert/multi-table forms, and MERGE-family support where applicable).
 - Ensure parser/render/validate/rewrite parity with existing query flows.
 
 ## Suggested Implementation Order
-1. `R2` SQL Server
-2. `R3` DDL MVP core
-3. `R4` DDL middleware controls
-4. `R6` DDL expansion
-5. `R5` Oracle
-6. `R7` catalog unification
-7. `R8`/`R9`/`R10` as capacity permits
+1. `R2` PostgreSQL DML extensions
+2. `R3` MySQL DML extensions
+3. `R4` SQL Server
+4. `R5` DDL MVP core
+5. `R6` DDL middleware controls
+6. `R8` DDL expansion
+7. `R7` Oracle
+8. `R9` catalog unification
+9. `R10`/`R11`/`R12` as capacity permits
 
 ## Exit Criteria Per Epic
 - Model + parser + renderer + tests + docs complete.
 - Visitor/transformer/match/json coverage for every new node.
 - Integration tests added (`sqm-it`, and middleware IT where relevant).
 - README/wiki/docs updated with examples.
-
