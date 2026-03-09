@@ -693,6 +693,63 @@ class SchemaQueryValidatorTest {
         assertTrue(result.ok());
     }
 
+
+    @Test
+    void validate_acceptsMatchingWritableInsertCteColumnAliasCount() {
+        Query query = with(
+            cte("ins",
+                insert("users")
+                    .columns(id("name"))
+                    .values(row(lit("alice")))
+                    .returning(col("id").toSelectItem(), col("name").toSelectItem())
+                    .build()
+            ).columnAliases("id", "name")
+        ).body(
+            select(col("i", "id")).from(tbl("ins").as("i")).build()
+        );
+
+        var result = validator.validate(query);
+        assertTrue(result.problems().stream()
+            .noneMatch(p -> p.code() == ValidationProblem.Code.CTE_COLUMN_ALIAS_COUNT_MISMATCH));
+    }
+
+    @Test
+    void validate_reportsWritableUpdateCteColumnAliasCountMismatch() {
+        Query query = with(
+            cte("upd",
+                update("users")
+                    .set(id("name"), lit("alice"))
+                    .where(col("id").eq(lit(1)))
+                    .returning(col("id").toSelectItem(), col("name").toSelectItem())
+                    .build()
+            ).columnAliases("id")
+        ).body(
+            select(col("u", "id")).from(tbl("upd").as("u")).build()
+        );
+
+        var result = validator.validate(query);
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.CTE_COLUMN_ALIAS_COUNT_MISMATCH));
+    }
+
+    @Test
+    void validate_acceptsMatchingWritableDeleteCteColumnAliasCount() {
+        Query query = with(
+            cte("del",
+                delete("users")
+                    .where(col("id").eq(lit(1)))
+                    .returning(col("id").toSelectItem())
+                    .build()
+            ).columnAliases("id")
+        ).body(
+            select(col("d", "id")).from(tbl("del").as("d")).build()
+        );
+
+        var result = validator.validate(query);
+        assertTrue(result.problems().stream()
+            .noneMatch(p -> p.code() == ValidationProblem.Code.CTE_COLUMN_ALIAS_COUNT_MISMATCH));
+    }
     @Test
     void validate_reportsDuplicateCteNamesInWithBlock() {
         Query query = with(
@@ -1907,4 +1964,8 @@ class SchemaQueryValidatorTest {
         assertTrue(result.ok());
     }
 }
+
+
+
+
 
