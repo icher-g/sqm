@@ -35,7 +35,8 @@ public interface Parser<T extends Node> extends Handler<T> {
                 return Double.valueOf(lexeme);
             }
             return Long.valueOf(lexeme);
-        } catch (NumberFormatException nfe) {
+        }
+        catch (NumberFormatException nfe) {
             // fallback to string if something exotic slips through
             return lexeme;
         }
@@ -70,6 +71,21 @@ public interface Parser<T extends Node> extends Handler<T> {
             case '[' -> QuoteStyle.BRACKETS;
             case null, default -> QuoteStyle.NONE;
         });
+    }
+
+    /**
+     * Parses a comma-delimited list of identifiers preserving quote metadata.
+     *
+     * @param cur cursor positioned at the first identifier
+     * @param expectedIdentifierMessage error message used when identifier is missing
+     * @return immutable list of parsed identifiers
+     */
+    default List<Identifier> parseIdentifierItems(Cursor cur, String expectedIdentifierMessage) {
+        List<Identifier> items = new ArrayList<>();
+        do {
+            items.add(toIdentifier(cur.expect(expectedIdentifierMessage, TokenType.IDENT)));
+        } while (cur.consumeIf(TokenType.COMMA));
+        return List.copyOf(items);
     }
 
     /**
@@ -117,11 +133,7 @@ public interface Parser<T extends Node> extends Handler<T> {
         if (cur.consumeIf(TokenType.AS) || cur.match(TokenType.IDENT)) {
             alias = toIdentifier(cur.expect("Expected identifier", TokenType.IDENT));
             if (cur.consumeIf(TokenType.LPAREN)) {
-                columnNames = new ArrayList<>();
-                do {
-                    var column = cur.expect("Expected identifier", TokenType.IDENT);
-                    columnNames.add(toIdentifier(column));
-                } while (cur.consumeIf(TokenType.COMMA));
+                columnNames = parseIdentifierItems(cur, "Expected identifier");
                 cur.expect("Expected )", TokenType.RPAREN);
             }
         }

@@ -56,6 +56,17 @@ class InsertStatementRendererTest {
     }
 
     @Test
+    void rejectsInsertOnConflictInAnsiDialect() {
+        var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
+        InsertStatement statement = insert("users")
+            .values(row(lit(1)))
+            .onConflictDoNothing(id("id"))
+            .build();
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> ctx.render(statement));
+    }
+
+    @Test
     void statementRootRenderingSupportsInsert() {
         var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
         Statement statement = insert("users")

@@ -1,7 +1,10 @@
 package io.sqm.render.ansi;
 
+import io.sqm.core.Assignment;
+import io.sqm.core.Identifier;
 import io.sqm.core.InsertSource;
 import io.sqm.core.InsertStatement;
+import io.sqm.core.Predicate;
 import io.sqm.core.Query;
 import io.sqm.core.RowValues;
 import io.sqm.core.SelectItem;
@@ -41,7 +44,34 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
         }
 
         renderSource(node.source(), w);
+        renderOnConflict(node.conflictTarget(),
+            node.onConflictAction(),
+            node.conflictUpdateAssignments(),
+            node.conflictUpdateWhere(),
+            ctx,
+            w);
         renderReturning(node.returning(), ctx, w);
+    }
+
+    /**
+     * Renders optional {@code ON CONFLICT} clause.
+     *
+     * @param target conflict target
+     * @param action conflict action
+     * @param assignments conflict-update assignments
+     * @param where conflict-update predicate
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected void renderOnConflict(List<Identifier> target,
+                                    InsertStatement.OnConflictAction action,
+                                    List<Assignment> assignments,
+                                    Predicate where,
+                                    RenderContext ctx,
+                                    SqlWriter w) {
+        if (action != InsertStatement.OnConflictAction.NONE) {
+            throw new UnsupportedDialectFeatureException("INSERT ... ON CONFLICT", ctx.dialect().name());
+        }
     }
 
     /**
@@ -82,4 +112,3 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
         return InsertStatement.class;
     }
 }
-

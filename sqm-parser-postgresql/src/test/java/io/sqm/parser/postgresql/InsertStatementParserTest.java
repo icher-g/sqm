@@ -4,6 +4,7 @@ import io.sqm.core.InsertStatement;
 import io.sqm.core.RowExpr;
 import io.sqm.core.Statement;
 import io.sqm.core.dialect.DialectCapabilities;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.Lookups;
@@ -15,9 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class InsertStatementParserTest {
 
@@ -33,12 +32,61 @@ class InsertStatementParserTest {
     }
 
     @Test
+    void parsesInsertOnConflictDoNothing() {
+        var ctx = ParseContext.of(new PostgresSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users VALUES (1) ON CONFLICT (id) DO NOTHING");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var statement = result.value();
+        assertEquals(InsertStatement.OnConflictAction.DO_NOTHING, statement.onConflictAction());
+        assertEquals(1, statement.conflictTarget().size());
+    }
+
+    @Test
+    void parsesInsertOnConflictDoNothingWithoutTarget() {
+        var ctx = ParseContext.of(new PostgresSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users VALUES (1) ON CONFLICT DO NOTHING");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var statement = result.value();
+        assertEquals(InsertStatement.OnConflictAction.DO_NOTHING, statement.onConflictAction());
+        assertTrue(statement.conflictTarget().isEmpty());
+    }
+
+    @Test
+    void parsesInsertOnConflictDoUpdate() {
+        var ctx = ParseContext.of(new PostgresSpecs());
+        var result = ctx.parse(InsertStatement.class,
+            "INSERT INTO users VALUES (1, 'alice') ON CONFLICT (id) DO UPDATE SET name = 'alice2' WHERE id = 1");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var statement = result.value();
+        assertEquals(InsertStatement.OnConflictAction.DO_UPDATE, statement.onConflictAction());
+        assertEquals(1, statement.conflictUpdateAssignments().size());
+        assertNotNull(statement.conflictUpdateWhere());
+    }
+
+    @Test
+    void parsesInsertOnConflictDoUpdateWithoutWhere() {
+        var ctx = ParseContext.of(new PostgresSpecs());
+        var result = ctx.parse(InsertStatement.class,
+            "INSERT INTO users VALUES (1, 'alice') ON CONFLICT (id) DO UPDATE SET name = 'alice2'");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var statement = result.value();
+        assertEquals(InsertStatement.OnConflictAction.DO_UPDATE, statement.onConflictAction());
+        assertEquals(1, statement.conflictUpdateAssignments().size());
+        assertNull(statement.conflictUpdateWhere());
+    }
+
+    @Test
     void parsesInsertWithoutReturning() {
         var ctx = ParseContext.of(new PostgresSpecs());
         var result = ctx.parse(InsertStatement.class, "INSERT INTO users VALUES (1)");
 
         assertTrue(result.ok(), result.errorMessage());
         assertTrue(result.value().returning().isEmpty());
+        assertEquals(InsertStatement.OnConflictAction.NONE, result.value().onConflictAction());
     }
 
     @Test
@@ -61,9 +109,26 @@ class InsertStatementParserTest {
     }
 
     @Test
+    void rejectsOnConflictWhenCapabilitiesDoNotSupportIt() {
+        var ctx = ParseContext.of(new NoOnConflictPostgresSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users VALUES (1) ON CONFLICT (id) DO NOTHING");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("INSERT ... ON CONFLICT is not supported by this dialect"));
+    }
+
+    @Test
     void rejectsInvalidReturningItems() {
         var ctx = ParseContext.of(new PostgresSpecs());
         var result = ctx.parse(InsertStatement.class, "INSERT INTO users VALUES (1) RETURNING )");
+
+        assertTrue(result.isError());
+    }
+
+    @Test
+    void rejectsInvalidOnConflictTarget() {
+        var ctx = ParseContext.of(new PostgresSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users VALUES (1) ON CONFLICT () DO NOTHING");
 
         assertTrue(result.isError());
     }
@@ -88,7 +153,36 @@ class InsertStatementParserTest {
 
         @Override
         public DialectCapabilities capabilities() {
-            return feature -> false;
+            return feature -> feature != SqlFeature.DML_RETURNING && delegate.capabilities().supports(feature);
+        }
+
+        @Override
+        public OperatorPolicy operatorPolicy() {
+            return delegate.operatorPolicy();
+        }
+    }
+
+    private static final class NoOnConflictPostgresSpecs implements Specs {
+        private final PostgresSpecs delegate = new PostgresSpecs();
+
+        @Override
+        public ParsersRepository parsers() {
+            return delegate.parsers();
+        }
+
+        @Override
+        public Lookups lookups() {
+            return delegate.lookups();
+        }
+
+        @Override
+        public IdentifierQuoting identifierQuoting() {
+            return delegate.identifierQuoting();
+        }
+
+        @Override
+        public DialectCapabilities capabilities() {
+            return feature -> feature != SqlFeature.INSERT_ON_CONFLICT && delegate.capabilities().supports(feature);
         }
 
         @Override

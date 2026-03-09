@@ -1,8 +1,10 @@
 package io.sqm.parser.ansi;
 
+import io.sqm.core.Assignment;
 import io.sqm.core.Identifier;
 import io.sqm.core.InsertSource;
 import io.sqm.core.InsertStatement;
+import io.sqm.core.Predicate;
 import io.sqm.core.Query;
 import io.sqm.core.RowExpr;
 import io.sqm.core.RowListExpr;
@@ -15,7 +17,6 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static io.sqm.parser.spi.ParseResult.error;
@@ -65,12 +66,71 @@ public class InsertStatementParser implements Parser<InsertStatement> {
             return error(source);
         }
 
+        var conflict = parseOnConflict(cur, ctx);
+        if (conflict.isError()) {
+            return error(conflict);
+        }
+
         var returning = parseReturning(cur, ctx);
         if (returning.isError()) {
             return error(returning);
         }
 
-        return ok(InsertStatement.of(table.value(), columns, source.value(), returning.value()));
+        return ok(InsertStatement.of(table.value(),
+            columns,
+            source.value(),
+            conflict.value().target(),
+            conflict.value().action(),
+            conflict.value().assignments(),
+            conflict.value().where(),
+            returning.value()));
+    }
+
+    /**
+     * Parses optional {@code ON CONFLICT} clause.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return conflict-clause details, or no-conflict details when omitted
+     */
+    protected ParseResult<OnConflictClause> parseOnConflict(Cursor cur, ParseContext ctx) {
+        if (cur.match(TokenType.ON)) {
+            return error("INSERT ... ON CONFLICT is not supported by this dialect", cur.fullPos());
+        }
+        return ok(noOnConflictClause());
+    }
+
+    /**
+     * Creates no-conflict clause details.
+     *
+     * @return no-conflict clause
+     */
+    protected final OnConflictClause noOnConflictClause() {
+        return OnConflictClause.none();
+    }
+
+    /**
+     * Creates {@code ON CONFLICT ... DO NOTHING} clause details.
+     *
+     * @param target conflict target
+     * @return parsed clause details
+     */
+    protected final OnConflictClause onConflictDoNothingClause(List<Identifier> target) {
+        return new OnConflictClause(List.copyOf(target), InsertStatement.OnConflictAction.DO_NOTHING, List.of(), null);
+    }
+
+    /**
+     * Creates {@code ON CONFLICT ... DO UPDATE SET ...} clause details.
+     *
+     * @param target      conflict target
+     * @param assignments update assignments
+     * @param where       optional conflict-update predicate
+     * @return parsed clause details
+     */
+    protected final OnConflictClause onConflictDoUpdateClause(List<Identifier> target,
+                                                              List<Assignment> assignments,
+                                                              Predicate where) {
+        return new OnConflictClause(List.copyOf(target), InsertStatement.OnConflictAction.DO_UPDATE, List.copyOf(assignments), where);
     }
 
     /**
@@ -88,12 +148,7 @@ public class InsertStatementParser implements Parser<InsertStatement> {
     }
 
     private ParseResult<List<Identifier>> parseTargetColumns(Cursor cur) {
-        List<Identifier> columns = new ArrayList<>();
-        do {
-            columns.add(toIdentifier(cur.expect("Expected target column", TokenType.IDENT)));
-        } while (cur.consumeIf(TokenType.COMMA));
-
-        return ok(List.copyOf(columns));
+        return ok(parseIdentifierItems(cur, "Expected target column"));
     }
 
     private ParseResult<? extends InsertSource> parseInsertSource(Cursor cur, ParseContext ctx) {
@@ -126,5 +181,17 @@ public class InsertStatementParser implements Parser<InsertStatement> {
     @Override
     public Class<InsertStatement> targetType() {
         return InsertStatement.class;
+    }
+
+    /**
+     * Parsed optional ON CONFLICT clause details.
+     */
+    protected record OnConflictClause(List<Identifier> target,
+                                      InsertStatement.OnConflictAction action,
+                                      List<Assignment> assignments,
+                                      Predicate where) {
+        private static OnConflictClause none() {
+            return new OnConflictClause(List.of(), InsertStatement.OnConflictAction.NONE, List.of(), null);
+        }
     }
 }

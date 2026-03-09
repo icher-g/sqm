@@ -48,6 +48,10 @@ public enum SqlFeature {
      */
     DML_RETURNING("DML RETURNING clause"),
     /**
+     * PostgreSQL INSERT ... ON CONFLICT clause support for upsert semantics.
+     */
+    INSERT_ON_CONFLICT("PostgreSQL INSERT ... ON CONFLICT clause"),
+    /**
      * PostgreSQL UPDATE ... FROM clause support for join-like update sources.
      */
     UPDATE_FROM("PostgreSQL UPDATE ... FROM clause"),
