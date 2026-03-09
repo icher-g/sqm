@@ -1,10 +1,12 @@
 package io.sqm.parser.postgresql;
 
 import io.sqm.core.CteDef;
+import io.sqm.core.DeleteStatement;
 import io.sqm.core.Identifier;
 import io.sqm.core.InsertStatement;
 import io.sqm.core.Query;
 import io.sqm.core.Statement;
+import io.sqm.core.UpdateStatement;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
@@ -60,16 +62,31 @@ public class CteDefParser extends io.sqm.parser.ansi.CteDefParser {
             return ok(Query.cte(name, query, aliases, materialization));
         }
 
+        if (!ctx.capabilities().supports(SqlFeature.DML_RETURNING)) {
+            return error("Writable CTE DML RETURNING is not supported by this dialect", cur.fullPos());
+        }
+
         if (body instanceof InsertStatement insert) {
-            if (!ctx.capabilities().supports(SqlFeature.DML_RETURNING)) {
-                return error("INSERT ... RETURNING is not supported by this dialect", cur.fullPos());
-            }
             if (insert.returning().isEmpty()) {
                 return error("Writable CTE INSERT requires RETURNING", cur.fullPos());
             }
             return ok(Query.cte(name, insert, aliases, materialization));
         }
 
-        return error("Writable CTE supports only INSERT ... RETURNING in this dialect", cur.fullPos());
+        if (body instanceof UpdateStatement update) {
+            if (update.returning().isEmpty()) {
+                return error("Writable CTE UPDATE requires RETURNING", cur.fullPos());
+            }
+            return ok(Query.cte(name, update, aliases, materialization));
+        }
+
+        if (body instanceof DeleteStatement delete) {
+            if (delete.returning().isEmpty()) {
+                return error("Writable CTE DELETE requires RETURNING", cur.fullPos());
+            }
+            return ok(Query.cte(name, delete, aliases, materialization));
+        }
+
+        return error("Writable CTE supports only INSERT, UPDATE, or DELETE with RETURNING in this dialect", cur.fullPos());
     }
 }

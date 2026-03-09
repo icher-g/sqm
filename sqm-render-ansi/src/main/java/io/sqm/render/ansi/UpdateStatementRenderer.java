@@ -1,5 +1,6 @@
 package io.sqm.render.ansi;
 
+import io.sqm.core.SelectItem;
 import io.sqm.core.TableRef;
 import io.sqm.core.UpdateStatement;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
@@ -38,6 +39,8 @@ public class UpdateStatementRenderer implements Renderer<UpdateStatement> {
         if (node.where() != null) {
             w.space().append("WHERE").space().append(node.where());
         }
+
+        renderReturning(node.returning(), ctx, w);
     }
 
     /**
@@ -54,6 +57,19 @@ public class UpdateStatementRenderer implements Renderer<UpdateStatement> {
     }
 
     /**
+     * Renders optional {@code RETURNING} projection items.
+     *
+     * @param returning returning projection items
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected void renderReturning(List<SelectItem> returning, RenderContext ctx, SqlWriter w) {
+        if (!returning.isEmpty()) {
+            throw new UnsupportedDialectFeatureException("UPDATE ... RETURNING", ctx.dialect().name());
+        }
+    }
+
+    /**
      * Gets the target type this handler can handle.
      *
      * @return an entity type to be handled by the handler.
@@ -63,4 +79,3 @@ public class UpdateStatementRenderer implements Renderer<UpdateStatement> {
         return UpdateStatement.class;
     }
 }
-

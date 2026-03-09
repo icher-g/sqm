@@ -68,6 +68,14 @@ class PostgresDmlRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTripUpdateReturningStatement() {
+        assertRoundTrip(
+            "UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id, name",
+            "UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id, name"
+        );
+    }
+
+    @Test
     void roundTripDeleteUsingStatement() {
         assertRoundTrip(
             "DELETE FROM users USING source_users AS src WHERE users.id = src.id",
@@ -76,10 +84,34 @@ class PostgresDmlRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTripDeleteReturningStatement() {
+        assertRoundTrip(
+            "DELETE FROM users WHERE id = 1 RETURNING id, name",
+            "DELETE FROM users WHERE id = 1 RETURNING id, name"
+        );
+    }
+
+    @Test
     void roundTripWritableCteInsertReturningStatement() {
         assertRoundTrip(
             "WITH ins AS ( INSERT INTO users (name) VALUES ('alice') RETURNING id ) SELECT id FROM ins",
             "WITH ins AS ( INSERT INTO users (name) VALUES ('alice') RETURNING id ) SELECT id FROM ins"
+        );
+    }
+
+    @Test
+    void roundTripWritableCteUpdateReturningStatement() {
+        assertRoundTrip(
+            "WITH upd AS ( UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id ) SELECT id FROM upd",
+            "WITH upd AS ( UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id ) SELECT id FROM upd"
+        );
+    }
+
+    @Test
+    void roundTripWritableCteDeleteReturningStatement() {
+        assertRoundTrip(
+            "WITH del AS ( DELETE FROM users WHERE id = 1 RETURNING id ) SELECT id FROM del",
+            "WITH del AS ( DELETE FROM users WHERE id = 1 RETURNING id ) SELECT id FROM del"
         );
     }
 
@@ -108,6 +140,14 @@ class PostgresDmlRoundTripIntegrationTest {
     }
 
     @Test
+    void rejectsUpdateReturningForAnsiDialect() {
+        assertRejectedByAnsi(
+            "UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id",
+            "UPDATE ... RETURNING is not supported by this dialect"
+        );
+    }
+
+    @Test
     void rejectsDeleteUsingForAnsiDialect() {
         assertRejectedByAnsi(
             "DELETE FROM users USING source_users AS src WHERE users.id = src.id",
@@ -116,8 +156,46 @@ class PostgresDmlRoundTripIntegrationTest {
     }
 
     @Test
+    void rejectsDeleteReturningForAnsiDialect() {
+        assertRejectedByAnsi(
+            "DELETE FROM users WHERE id = 1 RETURNING id",
+            "DELETE ... RETURNING is not supported by this dialect"
+        );
+    }
+
+    @Test
     void rejectsWritableCteInsertReturningForAnsiDialect() {
         var postgresSql = "WITH ins AS ( INSERT INTO users (name) VALUES ('alice') RETURNING id ) SELECT id FROM ins";
+
+        var ansiParseContext = ParseContext.of(new AnsiSpecs());
+        var ansiResult = ansiParseContext.parse(Statement.class, postgresSql);
+        assertTrue(ansiResult.isError());
+
+        var pgParsed = parseContext.parse(Statement.class, postgresSql);
+        assertTrue(pgParsed.ok(), pgParsed.errorMessage());
+
+        var ansiRenderContext = RenderContext.of(new AnsiDialect());
+        assertThrows(UnsupportedDialectFeatureException.class, () -> ansiRenderContext.render(pgParsed.value()));
+    }
+
+    @Test
+    void rejectsWritableCteUpdateReturningForAnsiDialect() {
+        var postgresSql = "WITH upd AS ( UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id ) SELECT id FROM upd";
+
+        var ansiParseContext = ParseContext.of(new AnsiSpecs());
+        var ansiResult = ansiParseContext.parse(Statement.class, postgresSql);
+        assertTrue(ansiResult.isError());
+
+        var pgParsed = parseContext.parse(Statement.class, postgresSql);
+        assertTrue(pgParsed.ok(), pgParsed.errorMessage());
+
+        var ansiRenderContext = RenderContext.of(new AnsiDialect());
+        assertThrows(UnsupportedDialectFeatureException.class, () -> ansiRenderContext.render(pgParsed.value()));
+    }
+
+    @Test
+    void rejectsWritableCteDeleteReturningForAnsiDialect() {
+        var postgresSql = "WITH del AS ( DELETE FROM users WHERE id = 1 RETURNING id ) SELECT id FROM del";
 
         var ansiParseContext = ParseContext.of(new AnsiSpecs());
         var ansiResult = ansiParseContext.parse(Statement.class, postgresSql);
@@ -168,4 +246,3 @@ class PostgresDmlRoundTripIntegrationTest {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
-

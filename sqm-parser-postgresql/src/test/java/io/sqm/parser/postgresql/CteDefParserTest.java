@@ -1,8 +1,10 @@
 package io.sqm.parser.postgresql;
 
 import io.sqm.core.CteDef;
+import io.sqm.core.DeleteStatement;
 import io.sqm.core.InsertStatement;
 import io.sqm.core.Statement;
+import io.sqm.core.UpdateStatement;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
@@ -57,6 +59,28 @@ class CteDefParserTest {
     }
 
     @Test
+    @DisplayName("Parses writable UPDATE CTE with RETURNING")
+    void parses_writable_update_cte_with_returning() {
+        var res = parse("upd AS (UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id)");
+        assertTrue(res.ok(), () -> String.valueOf(res.errorMessage()));
+
+        var body = res.value().body();
+        assertInstanceOf(UpdateStatement.class, body);
+        assertEquals(1, ((UpdateStatement) body).returning().size());
+    }
+
+    @Test
+    @DisplayName("Parses writable DELETE CTE with RETURNING")
+    void parses_writable_delete_cte_with_returning() {
+        var res = parse("del AS (DELETE FROM users WHERE id = 1 RETURNING id)");
+        assertTrue(res.ok(), () -> String.valueOf(res.errorMessage()));
+
+        var body = res.value().body();
+        assertInstanceOf(DeleteStatement.class, body);
+        assertEquals(1, ((DeleteStatement) body).returning().size());
+    }
+
+    @Test
     @DisplayName("Rejects writable INSERT CTE without RETURNING")
     void rejects_writable_insert_cte_without_returning() {
         var res = parse("ins AS (INSERT INTO users (name) VALUES ('alice'))");
@@ -65,10 +89,19 @@ class CteDefParserTest {
     }
 
     @Test
-    @DisplayName("Rejects writable UPDATE CTE until RETURNING model is available")
-    void rejects_writable_update_cte() {
-        var res = parse("u AS (UPDATE users SET name = 'alice' WHERE id = 1)");
+    @DisplayName("Rejects writable UPDATE CTE without RETURNING")
+    void rejects_writable_update_cte_without_returning() {
+        var res = parse("upd AS (UPDATE users SET name = 'alice' WHERE id = 1)");
         assertTrue(res.isError());
+        assertTrue(String.valueOf(res.errorMessage()).contains("requires RETURNING"));
+    }
+
+    @Test
+    @DisplayName("Rejects writable DELETE CTE without RETURNING")
+    void rejects_writable_delete_cte_without_returning() {
+        var res = parse("del AS (DELETE FROM users WHERE id = 1)");
+        assertTrue(res.isError());
+        assertTrue(String.valueOf(res.errorMessage()).contains("requires RETURNING"));
     }
 
     @Test
@@ -76,6 +109,22 @@ class CteDefParserTest {
     void parses_writable_insert_cte_through_statement_entrypoint() {
         var statement = ctx.parse(Statement.class,
             "WITH ins AS (INSERT INTO users (name) VALUES ('alice') RETURNING id) SELECT id FROM ins");
+        assertTrue(statement.ok(), () -> String.valueOf(statement.errorMessage()));
+    }
+
+    @Test
+    @DisplayName("Supports writable UPDATE CTE through statement entrypoint")
+    void parses_writable_update_cte_through_statement_entrypoint() {
+        var statement = ctx.parse(Statement.class,
+            "WITH upd AS (UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id) SELECT id FROM upd");
+        assertTrue(statement.ok(), () -> String.valueOf(statement.errorMessage()));
+    }
+
+    @Test
+    @DisplayName("Supports writable DELETE CTE through statement entrypoint")
+    void parses_writable_delete_cte_through_statement_entrypoint() {
+        var statement = ctx.parse(Statement.class,
+            "WITH del AS (DELETE FROM users WHERE id = 1 RETURNING id) SELECT id FROM del");
         assertTrue(statement.ok(), () -> String.valueOf(statement.errorMessage()));
     }
 }

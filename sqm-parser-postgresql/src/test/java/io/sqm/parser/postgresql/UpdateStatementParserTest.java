@@ -31,6 +31,17 @@ class UpdateStatementParserTest {
         assertEquals(1, statement.assignments().size());
         assertEquals(1, statement.from().size());
         assertNotNull(statement.where());
+        assertTrue(statement.returning().isEmpty());
+    }
+
+    @Test
+    void parsesUpdateReturning() {
+        var ctx = ParseContext.of(new PostgresSpecs());
+        var result = ctx.parse(UpdateStatement.class,
+            "UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id, name");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(2, result.value().returning().size());
     }
 
     @Test
@@ -40,6 +51,7 @@ class UpdateStatementParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertTrue(result.value().from().isEmpty());
+        assertTrue(result.value().returning().isEmpty());
         assertNull(result.value().table().alias());
     }
 
@@ -65,11 +77,12 @@ class UpdateStatementParserTest {
     @Test
     void statementEntryPointParsesUpdateFrom() {
         var ctx = ParseContext.of(new PostgresSpecs());
-        var result = ctx.parse(Statement.class, "UPDATE users SET name = src.name FROM source_users src WHERE users.id = src.id");
+        var result = ctx.parse(Statement.class, "UPDATE users SET name = src.name FROM source_users src WHERE users.id = src.id RETURNING id");
 
         assertTrue(result.ok(), result.errorMessage());
         assertInstanceOf(UpdateStatement.class, result.value());
         assertEquals(1, ((UpdateStatement) result.value()).from().size());
+        assertEquals(1, ((UpdateStatement) result.value()).returning().size());
     }
 
     @Test
@@ -79,6 +92,15 @@ class UpdateStatementParserTest {
 
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("UPDATE ... FROM is not supported by this dialect"));
+    }
+
+    @Test
+    void rejectsUpdateReturningWhenCapabilitiesDoNotSupportIt() {
+        var ctx = ParseContext.of(new NoReturningPostgresSpecs());
+        var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' RETURNING id");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("UPDATE ... RETURNING is not supported by this dialect"));
     }
 
     @Test
@@ -115,6 +137,35 @@ class UpdateStatementParserTest {
         @Override
         public DialectCapabilities capabilities() {
             return feature -> feature != SqlFeature.UPDATE_FROM && delegate.capabilities().supports(feature);
+        }
+
+        @Override
+        public OperatorPolicy operatorPolicy() {
+            return delegate.operatorPolicy();
+        }
+    }
+
+    private static final class NoReturningPostgresSpecs implements Specs {
+        private final PostgresSpecs delegate = new PostgresSpecs();
+
+        @Override
+        public ParsersRepository parsers() {
+            return delegate.parsers();
+        }
+
+        @Override
+        public Lookups lookups() {
+            return delegate.lookups();
+        }
+
+        @Override
+        public IdentifierQuoting identifierQuoting() {
+            return delegate.identifierQuoting();
+        }
+
+        @Override
+        public DialectCapabilities capabilities() {
+            return feature -> feature != SqlFeature.DML_RETURNING && delegate.capabilities().supports(feature);
         }
 
         @Override

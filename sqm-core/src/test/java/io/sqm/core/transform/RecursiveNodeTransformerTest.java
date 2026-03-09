@@ -1290,6 +1290,63 @@ class RecursiveNodeTransformerTest {
         var unchanged = e.accept(increaseTransformer);
         assertSame(e, unchanged);
     }
+
+    @Test
+    void visitUpdateStatement() {
+        var statement = update("users")
+            .set(id("name"), lit("alice"))
+            .where(col("id").eq(lit(1)))
+            .returning(col("id").toSelectItem())
+            .build();
+        var transformer = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitColumnExpr(ColumnExpr c) {
+                if ("id".equals(c.name().value())) {
+                    return col("user_id");
+                }
+                return c;
+            }
+        };
+
+        var transformed = (UpdateStatement) statement.accept(transformer);
+        assertNotSame(statement, transformed);
+        assertEquals("user_id", transformed.where().matchPredicate()
+            .comparison(cmp -> cmp.lhs().matchExpression().column(c -> c.name().value()).orElse(null))
+            .orElse(null));
+        assertEquals("user_id", transformed.returning().getFirst().matchSelectItem()
+            .expr(e -> e.expr().matchExpression().column(c -> c.name().value()).orElse(null))
+            .orElse(null));
+
+        var unchanged = (UpdateStatement) statement.accept(new NothingTransformer());
+        assertSame(statement, unchanged);
+    }
+
+    @Test
+    void visitDeleteStatement() {
+        var statement = delete("users")
+            .where(col("id").eq(lit(1)))
+            .returning(col("id").toSelectItem())
+            .build();
+        var transformer = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitColumnExpr(ColumnExpr c) {
+                if ("id".equals(c.name().value())) {
+                    return col("user_id");
+                }
+                return c;
+            }
+        };
+
+        var transformed = (DeleteStatement) statement.accept(transformer);
+        assertNotSame(statement, transformed);
+        assertEquals("user_id", transformed.where().matchPredicate()
+            .comparison(cmp -> cmp.lhs().matchExpression().column(c -> c.name().value()).orElse(null))
+            .orElse(null));
+        assertEquals("user_id", transformed.returning().getFirst().matchSelectItem()
+            .expr(e -> e.expr().matchExpression().column(c -> c.name().value()).orElse(null))
+            .orElse(null));
+
+        var unchanged = (DeleteStatement) statement.accept(new NothingTransformer());
+        assertSame(statement, unchanged);
+    }
 }
-
-

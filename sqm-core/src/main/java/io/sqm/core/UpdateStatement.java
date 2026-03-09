@@ -18,11 +18,30 @@ public non-sealed interface UpdateStatement extends Statement {
      * @param assignments update assignments
      * @param from optional FROM sources
      * @param where optional predicate
+     * @param returning optional returning projection items
+     * @return immutable update statement
+     */
+    static UpdateStatement of(Table table,
+                              List<Assignment> assignments,
+                              List<TableRef> from,
+                              Predicate where,
+                              List<SelectItem> returning) {
+        return new Impl(table, assignments, from, where, returning);
+    }
+
+    /**
+     * Creates an immutable update statement.
+     *
+     * @param table target table
+     * @param assignments update assignments
+     * @param from optional FROM sources
+     * @param where optional predicate
      * @return immutable update statement
      */
     static UpdateStatement of(Table table, List<Assignment> assignments, List<TableRef> from, Predicate where) {
-        return new Impl(table, assignments, from, where);
+        return of(table, assignments, from, where, List.of());
     }
+
 
     /**
      * Creates an immutable update statement.
@@ -33,8 +52,9 @@ public non-sealed interface UpdateStatement extends Statement {
      * @return immutable update statement
      */
     static UpdateStatement of(Table table, List<Assignment> assignments, Predicate where) {
-        return new Impl(table, assignments, List.of(), where);
+        return of(table, assignments, List.of(), where, List.of());
     }
+
 
     /**
      * Creates an immutable update statement without a {@code WHERE} clause.
@@ -44,7 +64,7 @@ public non-sealed interface UpdateStatement extends Statement {
      * @return immutable update statement
      */
     static UpdateStatement of(Table table, List<Assignment> assignments) {
-        return new Impl(table, assignments, List.of(), null);
+        return of(table, assignments, List.of(), null, List.of());
     }
 
     /**
@@ -86,6 +106,13 @@ public non-sealed interface UpdateStatement extends Statement {
     Predicate where();
 
     /**
+     * Returns optional {@code RETURNING} projection items.
+     *
+     * @return immutable returning projection list
+     */
+    List<SelectItem> returning();
+
+    /**
      * Accepts a {@link NodeVisitor}.
      *
      * @param visitor visitor instance
@@ -105,6 +132,7 @@ public non-sealed interface UpdateStatement extends Statement {
         private final List<Assignment> assignments = new ArrayList<>();
         private final List<TableRef> from = new ArrayList<>();
         private Predicate where;
+        private final List<SelectItem> returning = new ArrayList<>();
 
         /**
          * Creates a builder initialized with a target table.
@@ -197,6 +225,30 @@ public non-sealed interface UpdateStatement extends Statement {
         }
 
         /**
+         * Replaces optional {@code RETURNING} projection items.
+         *
+         * @param returning returning items
+         * @return this builder
+         */
+        public Builder returning(List<SelectItem> returning) {
+            Objects.requireNonNull(returning, "returning");
+            this.returning.clear();
+            this.returning.addAll(returning);
+            return this;
+        }
+
+        /**
+         * Replaces optional {@code RETURNING} projection items.
+         *
+         * @param returning returning items
+         * @return this builder
+         */
+        public Builder returning(SelectItem... returning) {
+            Objects.requireNonNull(returning, "returning");
+            return returning(List.of(returning));
+        }
+
+        /**
          * Builds an immutable update statement.
          *
          * @return immutable update statement
@@ -208,7 +260,7 @@ public non-sealed interface UpdateStatement extends Statement {
             if (assignments.isEmpty()) {
                 throw new IllegalStateException("at least one assignment is required");
             }
-            return UpdateStatement.of(table, assignments, from, where);
+            return UpdateStatement.of(table, assignments, from, where, returning);
         }
     }
 
@@ -219,8 +271,13 @@ public non-sealed interface UpdateStatement extends Statement {
      * @param assignments assignments
      * @param from optional from sources
      * @param where optional predicate
+     * @param returning optional returning projection items
      */
-    record Impl(Table table, List<Assignment> assignments, List<TableRef> from, Predicate where) implements UpdateStatement {
+    record Impl(Table table,
+                List<Assignment> assignments,
+                List<TableRef> from,
+                Predicate where,
+                List<SelectItem> returning) implements UpdateStatement {
         /**
          * Creates an immutable update statement implementation.
          */
@@ -228,6 +285,7 @@ public non-sealed interface UpdateStatement extends Statement {
             Objects.requireNonNull(table, "table");
             assignments = List.copyOf(Objects.requireNonNull(assignments, "assignments"));
             from = from == null ? List.of() : List.copyOf(from);
+            returning = returning == null ? List.of() : List.copyOf(returning);
             if (assignments.isEmpty()) {
                 throw new IllegalArgumentException("assignments must not be empty");
             }

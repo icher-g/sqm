@@ -20,6 +20,7 @@ class DeleteStatementVisitorTest {
         var statement = delete(tbl("users"))
             .using(tbl("source_users"))
             .where(col("id").eq(lit(1)))
+            .returning(col("id").toSelectItem())
             .build();
         var visits = new ArrayList<String>();
 
@@ -43,5 +44,6 @@ class DeleteStatementVisitorTest {
         }.accept(statement);
 
         assertEquals(List.of("delete", "table", "table"), visits.subList(0, 3));
+        assertEquals("id", statement.returning().getFirst().matchSelectItem().expr(e -> e.expr().matchExpression().column(c -> c.name().value()).orElse(null)).orElse(null));
     }
 }

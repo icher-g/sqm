@@ -1,7 +1,6 @@
 package io.sqm.render.postgresql;
 
 import io.sqm.core.CteDef;
-import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.postgresql.spi.PostgresDialect;
 import io.sqm.render.spi.RenderContext;
@@ -71,6 +70,37 @@ class CteDefRendererTest {
     }
 
     @Test
+    @DisplayName("Writable CTE UPDATE with RETURNING renders in PostgreSQL")
+    void writable_cte_update_with_returning_renders() {
+        var cte = cte("upd",
+            update("users")
+                .set(id("name"), lit("alice"))
+                .where(col("id").eq(lit(1)))
+                .returning(col("id").toSelectItem())
+                .build()
+        );
+
+        var sql = normalize(render(cte));
+        assertTrue(sql.startsWith("upd AS ("));
+        assertTrue(sql.contains("UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id"));
+    }
+
+    @Test
+    @DisplayName("Writable CTE DELETE with RETURNING renders in PostgreSQL")
+    void writable_cte_delete_with_returning_renders() {
+        var cte = cte("del",
+            delete("users")
+                .where(col("id").eq(lit(1)))
+                .returning(col("id").toSelectItem())
+                .build()
+        );
+
+        var sql = normalize(render(cte));
+        assertTrue(sql.startsWith("del AS ("));
+        assertTrue(sql.contains("DELETE FROM users WHERE id = 1 RETURNING id"));
+    }
+
+    @Test
     @DisplayName("Writable CTE INSERT without RETURNING is rejected")
     void writable_cte_insert_without_returning_rejected() {
         var cte = cte("ins",
@@ -84,16 +114,27 @@ class CteDefRendererTest {
     }
 
     @Test
-    @DisplayName("Writable CTE UPDATE is rejected")
-    void writable_cte_update_rejected() {
+    @DisplayName("Writable CTE UPDATE without RETURNING is rejected")
+    void writable_cte_update_without_returning_rejected() {
         var cte = cte("upd",
             update("users")
                 .set(id("name"), lit("alice"))
-                .where(col("id").eq(1))
+                .where(col("id").eq(lit(1)))
                 .build()
         );
 
-        assertThrows(UnsupportedDialectFeatureException.class, () -> render(cte));
+        assertThrows(IllegalArgumentException.class, () -> render(cte));
+    }
+
+    @Test
+    @DisplayName("Writable CTE DELETE without RETURNING is rejected")
+    void writable_cte_delete_without_returning_rejected() {
+        var cte = cte("del",
+            delete("users")
+                .where(col("id").eq(lit(1)))
+                .build()
+        );
+
+        assertThrows(IllegalArgumentException.class, () -> render(cte));
     }
 }
-

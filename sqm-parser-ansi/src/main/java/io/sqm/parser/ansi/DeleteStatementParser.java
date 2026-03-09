@@ -2,6 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.DeleteStatement;
 import io.sqm.core.Predicate;
+import io.sqm.core.SelectItem;
 import io.sqm.core.Table;
 import io.sqm.core.TableRef;
 import io.sqm.parser.core.Cursor;
@@ -58,7 +59,12 @@ public class DeleteStatementParser implements Parser<DeleteStatement> {
             where = whereResult.value();
         }
 
-        return ok(DeleteStatement.of(tableResult.value(), usingResult.value(), where));
+        var returningResult = parseReturning(cur, ctx);
+        if (returningResult.isError()) {
+            return error(returningResult);
+        }
+
+        return ok(DeleteStatement.of(tableResult.value(), usingResult.value(), where, returningResult.value()));
     }
 
     /**
@@ -71,6 +77,20 @@ public class DeleteStatementParser implements Parser<DeleteStatement> {
     protected ParseResult<List<TableRef>> parseUsing(Cursor cur, ParseContext ctx) {
         if (cur.match(TokenType.USING)) {
             return error("DELETE ... USING is not supported by this dialect", cur.fullPos());
+        }
+        return ok(List.of());
+    }
+
+    /**
+     * Parses optional {@code RETURNING} projection items.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return parsed RETURNING items or empty list when omitted
+     */
+    protected ParseResult<List<SelectItem>> parseReturning(Cursor cur, ParseContext ctx) {
+        if (cur.match(TokenType.RETURNING)) {
+            return error("DELETE ... RETURNING is not supported by this dialect", cur.fullPos());
         }
         return ok(List.of());
     }

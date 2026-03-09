@@ -32,6 +32,20 @@ class UpdateStatementRendererTest {
     }
 
     @Test
+    void rendersUpdateReturning() {
+        var ctx = RenderContext.of(new PostgresDialect());
+        UpdateStatement statement = update("users")
+            .set(id("name"), lit("alice"))
+            .where(col("id").eq(lit(1)))
+            .returning(col("id").toSelectItem(), col("name").toSelectItem())
+            .build();
+
+        var sql = normalize(ctx.render(statement).sql());
+
+        assertEquals("UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id, name", sql);
+    }
+
+    @Test
     void rendersUpdateWithoutFrom() {
         var ctx = RenderContext.of(new PostgresDialect());
         UpdateStatement statement = update("users")
@@ -56,8 +70,20 @@ class UpdateStatementRendererTest {
         assertThrows(UnsupportedDialectFeatureException.class, () -> renderer.render(statement, ansiCtx, writer));
     }
 
+    @Test
+    void rejectsUpdateReturningWhenDialectDoesNotSupportIt() {
+        var renderer = new UpdateStatementRenderer();
+        var ansiCtx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
+        var writer = new DefaultSqlWriter(ansiCtx);
+        UpdateStatement statement = update("users")
+            .set(id("name"), lit("alice"))
+            .returning(col("id").toSelectItem())
+            .build();
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> renderer.render(statement, ansiCtx, writer));
+    }
+
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
-

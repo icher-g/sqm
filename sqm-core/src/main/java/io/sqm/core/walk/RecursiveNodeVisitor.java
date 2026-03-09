@@ -60,6 +60,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         statement.assignments().forEach(this::accept);
         statement.from().forEach(this::accept);
         accept(statement.where());
+        statement.returning().forEach(this::accept);
         return defaultResult();
     }
 
@@ -74,6 +75,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         accept(statement.table());
         statement.using().forEach(this::accept);
         accept(statement.where());
+        statement.returning().forEach(this::accept);
         return defaultResult();
     }
 

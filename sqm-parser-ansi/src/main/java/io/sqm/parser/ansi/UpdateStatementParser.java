@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.Predicate;
+import io.sqm.core.SelectItem;
 import io.sqm.core.Table;
 import io.sqm.core.TableRef;
 import io.sqm.core.UpdateStatement;
@@ -64,7 +65,12 @@ public class UpdateStatementParser implements Parser<UpdateStatement> {
             where = whereResult.value();
         }
 
-        return ok(UpdateStatement.of(table.value(), assignmentsResult.value(), fromResult.value(), where));
+        var returningResult = parseReturning(cur, ctx);
+        if (returningResult.isError()) {
+            return error(returningResult);
+        }
+
+        return ok(UpdateStatement.of(table.value(), assignmentsResult.value(), fromResult.value(), where, returningResult.value()));
     }
 
     /**
@@ -77,6 +83,20 @@ public class UpdateStatementParser implements Parser<UpdateStatement> {
     protected ParseResult<List<TableRef>> parseFrom(Cursor cur, ParseContext ctx) {
         if (cur.match(TokenType.FROM)) {
             return error("UPDATE ... FROM is not supported by this dialect", cur.fullPos());
+        }
+        return ok(List.of());
+    }
+
+    /**
+     * Parses optional {@code RETURNING} projection items.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return parsed RETURNING items or empty list when omitted
+     */
+    protected ParseResult<List<SelectItem>> parseReturning(Cursor cur, ParseContext ctx) {
+        if (cur.match(TokenType.RETURNING)) {
+            return error("UPDATE ... RETURNING is not supported by this dialect", cur.fullPos());
         }
         return ok(List.of());
     }
