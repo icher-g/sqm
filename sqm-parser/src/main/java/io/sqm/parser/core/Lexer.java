@@ -64,6 +64,7 @@ public final class Lexer {
         KEYWORDS.put("FROM", FROM);
         KEYWORDS.put("INTO", INTO);
         KEYWORDS.put("LATERAL", LATERAL);
+        KEYWORDS.put("RETURNING", RETURNING);
         KEYWORDS.put("WHERE", WHERE);
         KEYWORDS.put("GROUP", GROUP);
         KEYWORDS.put("HAVING", HAVING);

@@ -20,7 +20,20 @@ public non-sealed interface InsertStatement extends Statement {
      * @return immutable insert statement
      */
     static InsertStatement of(Table table, List<Identifier> columns, InsertSource source) {
-        return new Impl(table, columns, source);
+        return new Impl(table, columns, source, List.of());
+    }
+
+    /**
+     * Creates an immutable insert statement with a {@code RETURNING} projection list.
+     *
+     * @param table target table
+     * @param columns target columns, or empty when omitted
+     * @param source insert source
+     * @param returning returning projection list, or empty when omitted
+     * @return immutable insert statement
+     */
+    static InsertStatement of(Table table, List<Identifier> columns, InsertSource source, List<SelectItem> returning) {
+        return new Impl(table, columns, source, returning);
     }
 
     /**
@@ -31,7 +44,20 @@ public non-sealed interface InsertStatement extends Statement {
      * @return immutable insert statement
      */
     static InsertStatement of(Table table, InsertSource source) {
-        return new Impl(table, List.of(), source);
+        return new Impl(table, List.of(), source, List.of());
+    }
+
+    /**
+     * Creates an immutable insert statement without an explicit column list and with
+     * optional {@code RETURNING} items.
+     *
+     * @param table target table
+     * @param source insert source
+     * @param returning returning projection list, or empty when omitted
+     * @return immutable insert statement
+     */
+    static InsertStatement of(Table table, InsertSource source, List<SelectItem> returning) {
+        return new Impl(table, List.of(), source, returning);
     }
 
     /**
@@ -66,6 +92,13 @@ public non-sealed interface InsertStatement extends Statement {
     InsertSource source();
 
     /**
+     * Returns optional {@code RETURNING} projection items.
+     *
+     * @return immutable returning item list
+     */
+    List<SelectItem> returning();
+
+    /**
      * Accepts a {@link NodeVisitor}.
      *
      * @param visitor visitor instance
@@ -84,6 +117,7 @@ public non-sealed interface InsertStatement extends Statement {
         private Table table;
         private final List<Identifier> columns = new ArrayList<>();
         private InsertSource source;
+        private final List<SelectItem> returning = new ArrayList<>();
 
         /**
          * Creates a builder initialized with a target table.
@@ -161,6 +195,30 @@ public non-sealed interface InsertStatement extends Statement {
         }
 
         /**
+         * Replaces the {@code RETURNING} projection list.
+         *
+         * @param returning returning projection list
+         * @return this builder
+         */
+        public Builder returning(List<SelectItem> returning) {
+            Objects.requireNonNull(returning, "returning");
+            this.returning.clear();
+            this.returning.addAll(returning);
+            return this;
+        }
+
+        /**
+         * Replaces the {@code RETURNING} projection list.
+         *
+         * @param returning returning projection items
+         * @return this builder
+         */
+        public Builder returning(SelectItem... returning) {
+            Objects.requireNonNull(returning, "returning");
+            return returning(List.of(returning));
+        }
+
+        /**
          * Builds an immutable insert statement.
          *
          * @return immutable insert statement
@@ -172,7 +230,7 @@ public non-sealed interface InsertStatement extends Statement {
             if (source == null) {
                 throw new IllegalStateException("source must be set");
             }
-            return InsertStatement.of(table, columns, source);
+            return InsertStatement.of(table, columns, source, returning);
         }
     }
 
@@ -182,8 +240,9 @@ public non-sealed interface InsertStatement extends Statement {
      * @param table target table
      * @param columns target columns
      * @param source insert source
+     * @param returning returning projection list
      */
-    record Impl(Table table, List<Identifier> columns, InsertSource source) implements InsertStatement {
+    record Impl(Table table, List<Identifier> columns, InsertSource source, List<SelectItem> returning) implements InsertStatement {
         /**
          * Creates an immutable insert statement implementation.
          */
@@ -191,6 +250,7 @@ public non-sealed interface InsertStatement extends Statement {
             Objects.requireNonNull(table, "table");
             Objects.requireNonNull(source, "source");
             columns = columns == null ? List.of() : List.copyOf(columns);
+            returning = returning == null ? List.of() : List.copyOf(returning);
         }
     }
 }

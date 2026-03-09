@@ -458,7 +458,7 @@ graph TD
     - CompositeQuery – `UNION`, `INTERSECT`, `EXCEPT`
     - SelectQuery – main SELECT form
     - WithQuery – WITH + child query
-- **InsertStatement** - `INSERT INTO <table> [(columns...)] <source>` where source is `VALUES (...)` or a query.
+- **InsertStatement** - `INSERT INTO <table> [(columns...)] <source> [RETURNING ...]` where source is `VALUES (...)` or a query.
 - **UpdateStatement** - `UPDATE <table> SET c1 = expr [, ...] [WHERE ...]`.
 - **DeleteStatement** - `DELETE FROM <table> [WHERE ...]`.
 - **CteDef** – CTE definition

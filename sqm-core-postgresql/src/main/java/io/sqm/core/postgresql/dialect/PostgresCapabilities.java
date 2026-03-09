@@ -41,6 +41,7 @@ public final class PostgresCapabilities {
                 SqlFeature.ESCAPE_STRING_LITERAL,
                 SqlFeature.DOLLAR_STRING_LITERAL,
                 SqlFeature.DISTINCT_ON,
+                SqlFeature.DML_RETURNING,
                 SqlFeature.ORDER_BY_USING,
                 SqlFeature.LOCKING_CLAUSE,
                 SqlFeature.LOCKING_SHARE,

@@ -62,8 +62,11 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitInsertStatement(InsertStatement statement) {
         var table = apply(statement.table());
         var source = apply(statement.source());
-        if (table != statement.table() || source != statement.source()) {
-            return InsertStatement.of(table, statement.columns(), source);
+        List<SelectItem> returning = new ArrayList<>(statement.returning().size());
+        boolean changed = table != statement.table() || source != statement.source();
+        changed |= apply(statement.returning(), returning);
+        if (changed) {
+            return InsertStatement.of(table, statement.columns(), source, returning);
         }
         return statement;
     }

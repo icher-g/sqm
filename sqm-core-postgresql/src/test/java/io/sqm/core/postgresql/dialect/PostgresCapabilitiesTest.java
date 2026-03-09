@@ -18,6 +18,7 @@ class PostgresCapabilitiesTest {
         assertTrue(capabilities.supports(SqlFeature.INTERVAL_LITERAL));
         assertTrue(capabilities.supports(SqlFeature.DISTINCT_ON));
         assertTrue(capabilities.supports(SqlFeature.ORDER_BY_USING));
+        assertTrue(capabilities.supports(SqlFeature.DML_RETURNING));
         assertTrue(capabilities.supports(SqlFeature.CTE_MATERIALIZATION));
         assertTrue(capabilities.supports(SqlFeature.FUNCTION_TABLE));
         assertTrue(capabilities.supports(SqlFeature.FUNCTION_TABLE_ORDINALITY));
@@ -45,3 +46,4 @@ class PostgresCapabilitiesTest {
         assertFalse(capabilities.supports(SqlFeature.LATERAL));
     }
 }
+

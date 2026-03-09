@@ -1,5 +1,6 @@
 package io.sqm.core.walk;
 
+import io.sqm.core.ExprSelectItem;
 import io.sqm.core.InsertStatement;
 import io.sqm.core.Table;
 import org.junit.jupiter.api.Test;
@@ -7,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.row;
@@ -19,6 +21,7 @@ class InsertStatementVisitorTest {
     void recursiveVisitorTraversesInsertChildren() {
         var statement = insert(tbl("users"))
             .values(row(lit(1), lit("alice")))
+            .returning(col("id").toSelectItem())
             .build();
         var visits = new ArrayList<String>();
 
@@ -45,8 +48,14 @@ class InsertStatementVisitorTest {
                 visits.add("row");
                 return super.visitRowExpr(rowExpr);
             }
+
+            @Override
+            public Void visitExprSelectItem(ExprSelectItem i) {
+                visits.add("returning");
+                return super.visitExprSelectItem(i);
+            }
         }.accept(statement);
 
-        assertEquals(List.of("insert", "table", "row"), visits);
+        assertEquals(List.of("insert", "table", "row", "returning"), visits);
     }
 }
