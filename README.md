@@ -131,13 +131,12 @@ PostgreSQL DML extensions are also delivered for:
 - `UPDATE ... FROM`
 - `DELETE ... USING`
 - `INSERT ... ON CONFLICT DO NOTHING / DO UPDATE`
-- writable CTE `INSERT ... RETURNING` shapes
+- writable CTE `INSERT ... RETURNING`, `UPDATE ... RETURNING`, and `DELETE ... RETURNING` shapes
 
 Current PostgreSQL scope boundary:
 
 - Baseline DML is cross-dialect through ANSI base components.
-- PostgreSQL writable CTE coverage currently prioritizes `INSERT ... RETURNING`.
-- PostgreSQL writable `UPDATE ... RETURNING` and `DELETE ... RETURNING` CTE shapes are not modeled yet.
+- PostgreSQL writable CTE coverage includes `INSERT ... RETURNING`, `UPDATE ... RETURNING`, and `DELETE ... RETURNING`.
 - MySQL-specific DML extensions continue in separate follow-up epic work.
 
 Reference docs:
@@ -171,6 +170,8 @@ UPDATE users u SET name = src.name FROM source_users src WHERE u.id = src.id
 DELETE FROM users USING source_users src WHERE users.id = src.id
 INSERT INTO users (id, name) VALUES (1, 'alice') ON CONFLICT (id) DO UPDATE SET name = 'alice2'
 WITH ins AS ( INSERT INTO users (name) VALUES ('alice') RETURNING id ) SELECT id FROM ins
+WITH upd AS ( UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id ) SELECT id FROM upd
+WITH del AS ( DELETE FROM users WHERE id = 1 RETURNING id ) SELECT id FROM del
 ```
 
 ---

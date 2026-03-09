@@ -17,11 +17,28 @@ public non-sealed interface DeleteStatement extends Statement {
      * @param table target table
      * @param using optional USING sources
      * @param where optional predicate
+     * @param returning optional returning projection items
+     * @return immutable delete statement
+     */
+    static DeleteStatement of(Table table,
+                              List<TableRef> using,
+                              Predicate where,
+                              List<SelectItem> returning) {
+        return new Impl(table, using, where, returning);
+    }
+
+    /**
+     * Creates an immutable delete statement.
+     *
+     * @param table target table
+     * @param using optional USING sources
+     * @param where optional predicate
      * @return immutable delete statement
      */
     static DeleteStatement of(Table table, List<TableRef> using, Predicate where) {
-        return new Impl(table, using, where);
+        return of(table, using, where, List.of());
     }
+
 
     /**
      * Creates an immutable delete statement.
@@ -31,7 +48,7 @@ public non-sealed interface DeleteStatement extends Statement {
      * @return immutable delete statement
      */
     static DeleteStatement of(Table table, Predicate where) {
-        return new Impl(table, List.of(), where);
+        return of(table, List.of(), where, List.of());
     }
 
     /**
@@ -41,7 +58,7 @@ public non-sealed interface DeleteStatement extends Statement {
      * @return immutable delete statement
      */
     static DeleteStatement of(Table table) {
-        return new Impl(table, List.of(), null);
+        return of(table, List.of(), null, List.of());
     }
 
     /**
@@ -76,6 +93,13 @@ public non-sealed interface DeleteStatement extends Statement {
     Predicate where();
 
     /**
+     * Returns optional {@code RETURNING} projection items.
+     *
+     * @return immutable returning projection list
+     */
+    List<SelectItem> returning();
+
+    /**
      * Accepts a {@link NodeVisitor}.
      *
      * @param visitor visitor instance
@@ -94,6 +118,7 @@ public non-sealed interface DeleteStatement extends Statement {
         private Table table;
         private final List<TableRef> using = new ArrayList<>();
         private Predicate where;
+        private final List<SelectItem> returning = new ArrayList<>();
 
         /**
          * Creates a builder initialized with a target table.
@@ -151,6 +176,30 @@ public non-sealed interface DeleteStatement extends Statement {
         }
 
         /**
+         * Replaces optional {@code RETURNING} projection items.
+         *
+         * @param returning returning items
+         * @return this builder
+         */
+        public Builder returning(List<SelectItem> returning) {
+            Objects.requireNonNull(returning, "returning");
+            this.returning.clear();
+            this.returning.addAll(returning);
+            return this;
+        }
+
+        /**
+         * Replaces optional {@code RETURNING} projection items.
+         *
+         * @param returning returning items
+         * @return this builder
+         */
+        public Builder returning(SelectItem... returning) {
+            Objects.requireNonNull(returning, "returning");
+            return returning(List.of(returning));
+        }
+
+        /**
          * Builds an immutable delete statement.
          *
          * @return immutable delete statement
@@ -159,7 +208,7 @@ public non-sealed interface DeleteStatement extends Statement {
             if (table == null) {
                 throw new IllegalStateException("table must be set");
             }
-            return DeleteStatement.of(table, using, where);
+            return DeleteStatement.of(table, using, where, returning);
         }
     }
 
@@ -169,14 +218,19 @@ public non-sealed interface DeleteStatement extends Statement {
      * @param table target table
      * @param using optional using sources
      * @param where optional predicate
+     * @param returning optional returning projection items
      */
-    record Impl(Table table, List<TableRef> using, Predicate where) implements DeleteStatement {
+    record Impl(Table table,
+                List<TableRef> using,
+                Predicate where,
+                List<SelectItem> returning) implements DeleteStatement {
         /**
          * Creates an immutable delete statement implementation.
          */
         public Impl {
             Objects.requireNonNull(table, "table");
             using = using == null ? List.of() : List.copyOf(using);
+            returning = returning == null ? List.of() : List.copyOf(returning);
         }
     }
 }

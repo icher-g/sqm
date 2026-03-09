@@ -23,6 +23,7 @@ class UpdateStatementVisitorTest {
             .set(set("name", lit("alice")))
             .from(tbl("source_users"))
             .where(col("id").eq(lit(1)))
+            .returning(col("id").toSelectItem())
             .build();
         var visits = new ArrayList<String>();
 
@@ -52,5 +53,6 @@ class UpdateStatementVisitorTest {
         }.accept(statement);
 
         assertEquals(List.of("update", "table", "assignment", "table"), visits.subList(0, 4));
+        assertEquals("id", statement.returning().getFirst().matchSelectItem().expr(e -> e.expr().matchExpression().column(c -> c.name().value()).orElse(null)).orElse(null));
     }
 }

@@ -1,5 +1,6 @@
 package io.sqm.render.postgresql;
 
+import io.sqm.core.SelectItem;
 import io.sqm.core.TableRef;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
@@ -35,5 +36,23 @@ public class UpdateStatementRenderer extends io.sqm.render.ansi.UpdateStatementR
             throw new UnsupportedDialectFeatureException("UPDATE ... FROM", ctx.dialect().name());
         }
         w.space().append("FROM").space().comma(from);
+    }
+
+    /**
+     * Renders optional PostgreSQL {@code RETURNING} clause.
+     *
+     * @param returning returning projection items
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    @Override
+    protected void renderReturning(List<SelectItem> returning, RenderContext ctx, SqlWriter w) {
+        if (returning.isEmpty()) {
+            return;
+        }
+        if (!ctx.dialect().capabilities().supports(SqlFeature.DML_RETURNING)) {
+            throw new UnsupportedDialectFeatureException("UPDATE ... RETURNING", ctx.dialect().name());
+        }
+        w.space().append("RETURNING").space().comma(returning);
     }
 }

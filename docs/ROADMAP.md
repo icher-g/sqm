@@ -32,7 +32,7 @@ Priority levels:
 ### Epic R2: PostgreSQL DML Extensions (Completed)
 - Implement PostgreSQL-specific DML features on top of ANSI DML baseline.
 - Delivered scope: `INSERT ... RETURNING`, `UPDATE ... FROM`, `DELETE ... USING`, `INSERT ... ON CONFLICT`.
-- Writable CTE support delivered for PostgreSQL `INSERT ... RETURNING` shapes.
+- Writable CTE support delivered for PostgreSQL `INSERT ... RETURNING`, `UPDATE ... RETURNING`, and `DELETE ... RETURNING` shapes.
 - Parser/render capability gating and deterministic SQL output delivered.
 - Integration round-trip coverage delivered in `sqm-it`.
 - Alias/keyword ambiguity hardening added for PostgreSQL DML target parsing.

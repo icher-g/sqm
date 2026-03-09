@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.delete;
+import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,10 +30,23 @@ class DeleteStatementRendererTest {
     }
 
     @Test
+    void rendersDeleteReturning() {
+        var ctx = RenderContext.of(new PostgresDialect());
+        DeleteStatement statement = delete("users")
+            .where(col("id").eq(lit(1)))
+            .returning(col("id").toSelectItem(), col("name").toSelectItem())
+            .build();
+
+        var sql = normalize(ctx.render(statement).sql());
+
+        assertEquals("DELETE FROM users WHERE id = 1 RETURNING id, name", sql);
+    }
+
+    @Test
     void rendersDeleteWithoutUsing() {
         var ctx = RenderContext.of(new PostgresDialect());
         DeleteStatement statement = delete("users")
-            .where(col("id").eq(io.sqm.dsl.Dsl.lit(1)))
+            .where(col("id").eq(lit(1)))
             .build();
 
         var sql = normalize(ctx.render(statement).sql());
@@ -47,6 +61,18 @@ class DeleteStatementRendererTest {
         var writer = new DefaultSqlWriter(ansiCtx);
         DeleteStatement statement = delete("users")
             .using(tbl("source_users").as("src"))
+            .build();
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> renderer.render(statement, ansiCtx, writer));
+    }
+
+    @Test
+    void rejectsDeleteReturningWhenDialectDoesNotSupportIt() {
+        var renderer = new DeleteStatementRenderer();
+        var ansiCtx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
+        var writer = new DefaultSqlWriter(ansiCtx);
+        DeleteStatement statement = delete("users")
+            .returning(col("id").toSelectItem())
             .build();
 
         assertThrows(UnsupportedDialectFeatureException.class, () -> renderer.render(statement, ansiCtx, writer));

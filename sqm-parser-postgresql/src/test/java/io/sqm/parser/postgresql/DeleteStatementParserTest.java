@@ -30,6 +30,17 @@ class DeleteStatementParserTest {
         assertEquals("users", statement.table().name().value());
         assertEquals(1, statement.using().size());
         assertNotNull(statement.where());
+        assertTrue(statement.returning().isEmpty());
+    }
+
+    @Test
+    void parsesDeleteReturning() {
+        var ctx = ParseContext.of(new PostgresSpecs());
+        var result = ctx.parse(DeleteStatement.class,
+            "DELETE FROM users WHERE id = 1 RETURNING id, name");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(2, result.value().returning().size());
     }
 
     @Test
@@ -39,6 +50,7 @@ class DeleteStatementParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertTrue(result.value().using().isEmpty());
+        assertTrue(result.value().returning().isEmpty());
         assertNull(result.value().table().alias());
     }
 
@@ -65,11 +77,12 @@ class DeleteStatementParserTest {
     @Test
     void statementEntryPointParsesDeleteUsing() {
         var ctx = ParseContext.of(new PostgresSpecs());
-        var result = ctx.parse(Statement.class, "DELETE FROM users USING source_users s WHERE users.id = s.id");
+        var result = ctx.parse(Statement.class, "DELETE FROM users USING source_users s WHERE users.id = s.id RETURNING id");
 
         assertTrue(result.ok(), result.errorMessage());
         assertInstanceOf(DeleteStatement.class, result.value());
         assertEquals(1, ((DeleteStatement) result.value()).using().size());
+        assertEquals(1, ((DeleteStatement) result.value()).returning().size());
     }
 
     @Test
@@ -79,6 +92,15 @@ class DeleteStatementParserTest {
 
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("DELETE ... USING is not supported by this dialect"));
+    }
+
+    @Test
+    void rejectsDeleteReturningWhenCapabilitiesDoNotSupportIt() {
+        var ctx = ParseContext.of(new NoReturningPostgresSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM users WHERE id = 1 RETURNING id");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("DELETE ... RETURNING is not supported by this dialect"));
     }
 
     @Test
@@ -115,6 +137,35 @@ class DeleteStatementParserTest {
         @Override
         public DialectCapabilities capabilities() {
             return feature -> feature != SqlFeature.DELETE_USING && delegate.capabilities().supports(feature);
+        }
+
+        @Override
+        public OperatorPolicy operatorPolicy() {
+            return delegate.operatorPolicy();
+        }
+    }
+
+    private static final class NoReturningPostgresSpecs implements Specs {
+        private final PostgresSpecs delegate = new PostgresSpecs();
+
+        @Override
+        public ParsersRepository parsers() {
+            return delegate.parsers();
+        }
+
+        @Override
+        public Lookups lookups() {
+            return delegate.lookups();
+        }
+
+        @Override
+        public IdentifierQuoting identifierQuoting() {
+            return delegate.identifierQuoting();
+        }
+
+        @Override
+        public DialectCapabilities capabilities() {
+            return feature -> feature != SqlFeature.DML_RETURNING && delegate.capabilities().supports(feature);
         }
 
         @Override
