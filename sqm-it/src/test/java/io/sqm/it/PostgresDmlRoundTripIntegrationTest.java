@@ -76,6 +76,14 @@ class PostgresDmlRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTripWritableCteInsertReturningStatement() {
+        assertRoundTrip(
+            "WITH ins AS ( INSERT INTO users (name) VALUES ('alice') RETURNING id ) SELECT id FROM ins",
+            "WITH ins AS ( INSERT INTO users (name) VALUES ('alice') RETURNING id ) SELECT id FROM ins"
+        );
+    }
+
+    @Test
     void rejectsInsertReturningForAnsiDialect() {
         assertRejectedByAnsi(
             "INSERT INTO users (name) VALUES ('alice') RETURNING id",
@@ -105,6 +113,21 @@ class PostgresDmlRoundTripIntegrationTest {
             "DELETE FROM users USING source_users AS src WHERE users.id = src.id",
             "DELETE ... USING is not supported by this dialect"
         );
+    }
+
+    @Test
+    void rejectsWritableCteInsertReturningForAnsiDialect() {
+        var postgresSql = "WITH ins AS ( INSERT INTO users (name) VALUES ('alice') RETURNING id ) SELECT id FROM ins";
+
+        var ansiParseContext = ParseContext.of(new AnsiSpecs());
+        var ansiResult = ansiParseContext.parse(Statement.class, postgresSql);
+        assertTrue(ansiResult.isError());
+
+        var pgParsed = parseContext.parse(Statement.class, postgresSql);
+        assertTrue(pgParsed.ok(), pgParsed.errorMessage());
+
+        var ansiRenderContext = RenderContext.of(new AnsiDialect());
+        assertThrows(UnsupportedDialectFeatureException.class, () -> ansiRenderContext.render(pgParsed.value()));
     }
 
     private void assertRoundTrip(String originalSql, String expectedCanonicalSql) {
@@ -145,3 +168,4 @@ class PostgresDmlRoundTripIntegrationTest {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
+

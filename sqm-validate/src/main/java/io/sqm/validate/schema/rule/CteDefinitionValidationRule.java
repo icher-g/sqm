@@ -1,6 +1,7 @@
 package io.sqm.validate.schema.rule;
 
 import io.sqm.core.CteDef;
+import io.sqm.core.Query;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
 
@@ -40,7 +41,10 @@ final class CteDefinitionValidationRule implements SchemaValidationRule<CteDef> 
         if (node.columnAliases() == null || node.columnAliases().isEmpty() || node.body() == null) {
             return;
         }
-        var projectionArity = projectionShapeInspector.projectionArity(node.body());
+        if (!(node.body() instanceof Query query)) {
+            return;
+        }
+        var projectionArity = projectionShapeInspector.projectionArity(query);
         if (projectionArity.isEmpty()) {
             return;
         }

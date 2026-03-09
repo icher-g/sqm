@@ -107,4 +107,21 @@ class CteDefRendererTest {
         var sql = normalize(render(cte));
         assertTrue(sql.startsWith("\"MyCte\" (\"id\", \"name\") AS ("), "CTE header quote conversion expected");
     }
+
+    @Test
+    @DisplayName("Writable CTE INSERT is rejected by ANSI renderer")
+    void writable_cte_insert_rejected() {
+        var cte = CteDef.of(
+            id("ins"),
+            insert("users")
+                .columns(id("name"))
+                .values(row(lit("alice")))
+                .returning(col("id").toSelectItem())
+                .build(),
+            List.of(),
+            CteDef.Materialization.DEFAULT
+        );
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> render(cte));
+    }
 }

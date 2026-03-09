@@ -66,12 +66,35 @@ public sealed interface Query extends Statement, InsertSource permits CompositeQ
     /**
      * Creates a common table expression definition with identifier metadata.
      *
+     * @param name CTE name identifier.
+     * @param body statement body.
+     * @return A newly created CTE definition.
+     */
+    static CteDef cte(Identifier name, Statement body) {
+        return CteDef.of(name, body);
+    }
+
+    /**
+     * Creates a common table expression definition with identifier metadata.
+     *
      * @param name          CTE name identifier.
      * @param body          query body.
      * @param columnAliases column alias identifiers.
      * @return A newly created CTE definition.
      */
     static CteDef cte(Identifier name, Query body, List<Identifier> columnAliases) {
+        return CteDef.of(name, body, columnAliases);
+    }
+
+    /**
+     * Creates a common table expression definition with identifier metadata.
+     *
+     * @param name          CTE name identifier.
+     * @param body          statement body.
+     * @param columnAliases column alias identifiers.
+     * @return A newly created CTE definition.
+     */
+    static CteDef cte(Identifier name, Statement body, List<Identifier> columnAliases) {
         return CteDef.of(name, body, columnAliases);
     }
 
@@ -85,6 +108,19 @@ public sealed interface Query extends Statement, InsertSource permits CompositeQ
      * @return A newly created CTE definition.
      */
     static CteDef cte(Identifier name, Query body, List<Identifier> columnAliases, CteDef.Materialization materialization) {
+        return CteDef.of(name, body, columnAliases, materialization);
+    }
+
+    /**
+     * Creates a common table expression definition with identifier metadata.
+     *
+     * @param name            CTE name identifier.
+     * @param body            statement body.
+     * @param columnAliases   column alias identifiers.
+     * @param materialization materialization hint.
+     * @return A newly created CTE definition.
+     */
+    static CteDef cte(Identifier name, Statement body, List<Identifier> columnAliases, CteDef.Materialization materialization) {
         return CteDef.of(name, body, columnAliases, materialization);
     }
 

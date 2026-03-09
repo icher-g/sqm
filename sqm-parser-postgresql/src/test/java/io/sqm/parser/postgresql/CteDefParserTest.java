@@ -1,7 +1,8 @@
 package io.sqm.parser.postgresql;
 
 import io.sqm.core.CteDef;
-import io.sqm.parser.ansi.CteDefParser;
+import io.sqm.core.InsertStatement;
+import io.sqm.core.Statement;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CteDefParserTest {
@@ -41,5 +43,39 @@ class CteDefParserTest {
     void rejects_not_without_materialized() {
         var res = parse("t AS NOT (SELECT 1)");
         assertTrue(res.isError());
+    }
+
+    @Test
+    @DisplayName("Parses writable INSERT CTE with RETURNING")
+    void parses_writable_insert_cte_with_returning() {
+        var res = parse("ins AS (INSERT INTO users (name) VALUES ('alice') RETURNING id)");
+        assertTrue(res.ok(), () -> String.valueOf(res.errorMessage()));
+
+        var body = res.value().body();
+        assertInstanceOf(InsertStatement.class, body);
+        assertEquals(1, ((InsertStatement) body).returning().size());
+    }
+
+    @Test
+    @DisplayName("Rejects writable INSERT CTE without RETURNING")
+    void rejects_writable_insert_cte_without_returning() {
+        var res = parse("ins AS (INSERT INTO users (name) VALUES ('alice'))");
+        assertTrue(res.isError());
+        assertTrue(String.valueOf(res.errorMessage()).contains("requires RETURNING"));
+    }
+
+    @Test
+    @DisplayName("Rejects writable UPDATE CTE until RETURNING model is available")
+    void rejects_writable_update_cte() {
+        var res = parse("u AS (UPDATE users SET name = 'alice' WHERE id = 1)");
+        assertTrue(res.isError());
+    }
+
+    @Test
+    @DisplayName("Supports writable INSERT CTE through statement entrypoint")
+    void parses_writable_insert_cte_through_statement_entrypoint() {
+        var statement = ctx.parse(Statement.class,
+            "WITH ins AS (INSERT INTO users (name) VALUES ('alice') RETURNING id) SELECT id FROM ins");
+        assertTrue(statement.ok(), () -> String.valueOf(statement.errorMessage()));
     }
 }

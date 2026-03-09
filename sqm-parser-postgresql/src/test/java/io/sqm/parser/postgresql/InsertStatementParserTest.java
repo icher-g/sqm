@@ -87,6 +87,26 @@ class InsertStatementParserTest {
         assertTrue(result.ok(), result.errorMessage());
         assertTrue(result.value().returning().isEmpty());
         assertEquals(InsertStatement.OnConflictAction.NONE, result.value().onConflictAction());
+        assertNull(result.value().table().alias());
+    }
+
+    @Test
+    void parsesQuotedKeywordAliasForInsertTarget() {
+        var ctx = ParseContext.of(new PostgresSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users AS \"returning\" VALUES (1)");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertNotNull(result.value().table().alias());
+        assertEquals("returning", result.value().table().alias().value());
+    }
+
+    @Test
+    void rejectsKeywordAliasForInsertTargetAfterAs() {
+        var ctx = ParseContext.of(new PostgresSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users AS VALUES (1)");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected alias after AS"));
     }
 
     @Test

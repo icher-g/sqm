@@ -125,14 +125,53 @@ DML foundation is delivered with a statement-level model and ANSI baseline parse
 - `UPDATE ... SET ... [WHERE ...]`
 - `DELETE FROM ... [WHERE ...]`
 
-Scope boundary:
+PostgreSQL DML extensions are also delivered for:
+
+- `INSERT ... RETURNING`
+- `UPDATE ... FROM`
+- `DELETE ... USING`
+- `INSERT ... ON CONFLICT DO NOTHING / DO UPDATE`
+- writable CTE `INSERT ... RETURNING` shapes
+
+Current PostgreSQL scope boundary:
 
 - Baseline DML is cross-dialect through ANSI base components.
-- Dialect-specific DML extensions (for example MySQL upsert or PostgreSQL `RETURNING`) are tracked separately and intentionally deferred from DML-R1.
+- PostgreSQL writable CTE coverage currently prioritizes `INSERT ... RETURNING`.
+- PostgreSQL writable `UPDATE ... RETURNING` and `DELETE ... RETURNING` CTE shapes are not modeled yet.
+- MySQL-specific DML extensions continue in separate follow-up epic work.
 
 Reference docs:
 
 - DML follow-up details are tracked in GitHub issues/epics (no local interim epic markdown is kept).
+
+### PostgreSQL DML Example
+
+```java
+var parseCtx = ParseContext.of(new PostgresSpecs());
+var renderCtx = RenderContext.of(new PostgresDialect());
+
+var statement = parseCtx.parse(Statement.class, """
+    WITH ins AS (
+        INSERT INTO users (name)
+        VALUES ('alice')
+        RETURNING id
+    )
+    SELECT id FROM ins
+    """).value();
+
+var sql = renderCtx.render(statement).sql();
+System.out.println(sql);
+```
+
+Supported PostgreSQL DML examples include:
+
+```sql
+INSERT INTO users (name) VALUES ('alice') RETURNING id
+UPDATE users u SET name = src.name FROM source_users src WHERE u.id = src.id
+DELETE FROM users USING source_users src WHERE users.id = src.id
+INSERT INTO users (id, name) VALUES (1, 'alice') ON CONFLICT (id) DO UPDATE SET name = 'alice2'
+WITH ins AS ( INSERT INTO users (name) VALUES ('alice') RETURNING id ) SELECT id FROM ins
+```
 
 ---
 

@@ -26,6 +26,7 @@ public final class Renderers {
 
     private static RenderersRepository registerDefaults(RenderersRepository r) {
         return r
+            .register(new CteDefRenderer())
             .register(new InsertStatementRenderer())
             .register(new UpdateStatementRenderer())
             .register(new DeleteStatementRenderer())

@@ -788,10 +788,13 @@ class RecursiveNodeTransformerTest {
             }
         };
         var with1 = (WithQuery) with.accept(columnTransformer);
-        assertEquals("c11", with1.ctes().getFirst().body().matchQuery()
-            .select(s -> s.items().getFirst().matchSelectItem()
-                .expr(e -> e.expr().matchExpression()
-                    .column(c -> c.name().value())
+        assertEquals("c11", with1.ctes().getFirst().body().matchStatement()
+            .query(q -> q.matchQuery()
+                .select(s -> s.items().getFirst().matchSelectItem()
+                    .expr(e -> e.expr().matchExpression()
+                        .column(c -> c.name().value())
+                        .orElse(null)
+                    )
                     .orElse(null)
                 )
                 .orElse(null)

@@ -40,6 +40,26 @@ class UpdateStatementParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertTrue(result.value().from().isEmpty());
+        assertNull(result.value().table().alias());
+    }
+
+    @Test
+    void parsesQuotedKeywordAliasForUpdateTarget() {
+        var ctx = ParseContext.of(new PostgresSpecs());
+        var result = ctx.parse(UpdateStatement.class, "UPDATE users AS \"set\" SET name = 'alice'");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertNotNull(result.value().table().alias());
+        assertEquals("set", result.value().table().alias().value());
+    }
+
+    @Test
+    void rejectsKeywordAliasForUpdateTargetAfterAs() {
+        var ctx = ParseContext.of(new PostgresSpecs());
+        var result = ctx.parse(UpdateStatement.class, "UPDATE users AS SET name = 'alice'");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected alias after AS"));
     }
 
     @Test

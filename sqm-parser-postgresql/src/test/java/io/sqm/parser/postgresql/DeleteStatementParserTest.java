@@ -39,6 +39,27 @@ class DeleteStatementParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertTrue(result.value().using().isEmpty());
+        assertNull(result.value().table().alias());
+    }
+
+    @Test
+    void parsesQuotedKeywordAliasForDeleteTarget() {
+        var ctx = ParseContext.of(new PostgresSpecs());
+        var result = ctx.parse(DeleteStatement.class,
+            "DELETE FROM users AS \"using\" USING source_users src WHERE \"using\".id = src.id");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertNotNull(result.value().table().alias());
+        assertEquals("using", result.value().table().alias().value());
+    }
+
+    @Test
+    void rejectsKeywordAliasForDeleteTargetAfterAs() {
+        var ctx = ParseContext.of(new PostgresSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM users AS USING WHERE id = 1");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected alias after AS"));
     }
 
     @Test

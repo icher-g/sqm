@@ -4,9 +4,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static io.sqm.dsl.Dsl.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class CteDefTest {
 
@@ -14,10 +15,13 @@ class CteDefTest {
     void of() {
         var cte = CteDef.of(Identifier.of("name"), Query.select(Expression.literal(1)).build(), List.of(Identifier.of("c1")));
         assertEquals("name", cte.name().value());
-        assertEquals(1, cte.body().matchQuery()
-            .select(s -> s.items().getFirst().matchSelectItem()
-                .expr(e -> e.expr().matchExpression()
-                    .literal(l -> l.value())
+        assertEquals(1, cte.body().matchStatement()
+            .query(q -> q.matchQuery()
+                .select(s -> s.items().getFirst().matchSelectItem()
+                    .expr(e -> e.expr().matchExpression()
+                        .literal(l -> l.value())
+                        .orElse(null)
+                    )
                     .orElse(null)
                 )
                 .orElse(null)
@@ -33,10 +37,13 @@ class CteDefTest {
         var body = Query.select(Expression.literal(1)).build();
         var cte = CteDef.of(Identifier.of("name")).body(body);
         assertEquals("name", cte.name().value());
-        assertEquals(1, cte.body().matchQuery()
-            .select(s -> s.items().getFirst().matchSelectItem()
-                .expr(e -> e.expr().matchExpression()
-                    .literal(l -> l.value())
+        assertEquals(1, cte.body().matchStatement()
+            .query(q -> q.matchQuery()
+                .select(s -> s.items().getFirst().matchSelectItem()
+                    .expr(e -> e.expr().matchExpression()
+                        .literal(l -> l.value())
+                        .orElse(null)
+                    )
                     .orElse(null)
                 )
                 .orElse(null)
@@ -45,6 +52,19 @@ class CteDefTest {
         );
         assertNull(cte.columnAliases());
         assertEquals(CteDef.Materialization.DEFAULT, cte.materialization());
+    }
+
+    @Test
+    void bodyStatementOverload() {
+        var body = insert("users")
+            .columns(id("name"))
+            .values(row(lit("alice")))
+            .returning(col("id").toSelectItem())
+            .build();
+
+        var cte = CteDef.of(Identifier.of("ins")).body(body);
+        assertEquals("ins", cte.name().value());
+        assertInstanceOf(InsertStatement.class, cte.body());
     }
 
     @Test
