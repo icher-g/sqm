@@ -24,6 +24,7 @@ public class Parsers {
     private static ParsersRepository registerDefaults(ParsersRepository r) {
         return r
             .register(new InsertStatementParser())
+            .register(new UpdateStatementParser())
             .register(new BinaryOperatorExprParser())
             .register(new CastExprParser());
     }

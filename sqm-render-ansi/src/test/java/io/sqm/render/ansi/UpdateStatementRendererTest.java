@@ -57,7 +57,24 @@ class UpdateStatementRendererTest {
         assertInstanceOf(UpdateStatementRenderer.class, repo.require(UpdateStatement.class));
     }
 
+    @Test
+    void rejectsUpdateFromWhenDialectDoesNotSupportIt() {
+        var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
+        UpdateStatement statement = update("users")
+            .set(id("name"), lit("alice"))
+            .from(io.sqm.dsl.Dsl.tbl("source_users"))
+            .build();
+
+        var renderer = new UpdateStatementRenderer();
+        var writer = new io.sqm.render.defaults.DefaultSqlWriter(ctx);
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+            io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> renderer.render(statement, ctx, writer)
+        );
+    }
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
+

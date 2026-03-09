@@ -81,12 +81,14 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitUpdateStatement(UpdateStatement statement) {
         var table = apply(statement.table());
         List<Assignment> assignments = new ArrayList<>(statement.assignments().size());
+        List<TableRef> from = new ArrayList<>(statement.from().size());
         boolean changed = table != statement.table();
         changed |= apply(statement.assignments(), assignments);
+        changed |= apply(statement.from(), from);
         var where = apply(statement.where());
         changed |= where != statement.where();
         if (changed) {
-            return UpdateStatement.of(table, assignments, where);
+            return UpdateStatement.of(table, assignments, from, where);
         }
         return statement;
     }
@@ -1532,4 +1534,6 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         return expr;
     }
 }
+
+
 

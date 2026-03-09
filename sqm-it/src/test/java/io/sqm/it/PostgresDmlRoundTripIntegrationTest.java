@@ -37,6 +37,13 @@ class PostgresDmlRoundTripIntegrationTest {
         );
     }
 
+    @Test
+    void roundTripUpdateFromStatement() {
+        assertRoundTrip(
+            "UPDATE users SET name = src.name FROM source_users AS src WHERE users.id = src.id",
+            "UPDATE users SET name = src.name FROM source_users AS src WHERE users.id = src.id"
+        );
+    }
     private void assertRoundTrip(String originalSql, String expectedCanonicalSql) {
         var parsed = parseContext.parse(Statement.class, originalSql);
         assertTrue(parsed.ok(), parsed.errorMessage());
@@ -62,3 +69,5 @@ class PostgresDmlRoundTripIntegrationTest {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
+
+

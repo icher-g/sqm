@@ -459,7 +459,7 @@ graph TD
     - SelectQuery – main SELECT form
     - WithQuery – WITH + child query
 - **InsertStatement** - `INSERT INTO <table> [(columns...)] <source> [RETURNING ...]` where source is `VALUES (...)` or a query.
-- **UpdateStatement** - `UPDATE <table> SET c1 = expr [, ...] [WHERE ...]`.
+- **UpdateStatement** - `UPDATE <table> SET c1 = expr [, ...] [FROM ...] [WHERE ...]`.
 - **DeleteStatement** - `DELETE FROM <table> [WHERE ...]`.
 - **CteDef** – CTE definition
 
@@ -521,4 +521,5 @@ graph TD
 ### Pagination
 
 - **LimitOffset** – LIMIT/OFFSET model  
+
 

@@ -16,11 +16,24 @@ public non-sealed interface UpdateStatement extends Statement {
      *
      * @param table target table
      * @param assignments update assignments
+     * @param from optional FROM sources
+     * @param where optional predicate
+     * @return immutable update statement
+     */
+    static UpdateStatement of(Table table, List<Assignment> assignments, List<TableRef> from, Predicate where) {
+        return new Impl(table, assignments, from, where);
+    }
+
+    /**
+     * Creates an immutable update statement.
+     *
+     * @param table target table
+     * @param assignments update assignments
      * @param where optional predicate
      * @return immutable update statement
      */
     static UpdateStatement of(Table table, List<Assignment> assignments, Predicate where) {
-        return new Impl(table, assignments, where);
+        return new Impl(table, assignments, List.of(), where);
     }
 
     /**
@@ -31,7 +44,7 @@ public non-sealed interface UpdateStatement extends Statement {
      * @return immutable update statement
      */
     static UpdateStatement of(Table table, List<Assignment> assignments) {
-        return new Impl(table, assignments, null);
+        return new Impl(table, assignments, List.of(), null);
     }
 
     /**
@@ -59,6 +72,13 @@ public non-sealed interface UpdateStatement extends Statement {
     List<Assignment> assignments();
 
     /**
+     * Returns optional {@code FROM} sources.
+     *
+     * @return immutable from source list
+     */
+    List<TableRef> from();
+
+    /**
      * Returns the optional {@code WHERE} predicate.
      *
      * @return predicate or {@code null}
@@ -83,6 +103,7 @@ public non-sealed interface UpdateStatement extends Statement {
     final class Builder {
         private Table table;
         private final List<Assignment> assignments = new ArrayList<>();
+        private final List<TableRef> from = new ArrayList<>();
         private Predicate where;
 
         /**
@@ -116,6 +137,30 @@ public non-sealed interface UpdateStatement extends Statement {
             this.assignments.clear();
             this.assignments.addAll(assignments);
             return this;
+        }
+
+        /**
+         * Replaces optional {@code FROM} sources.
+         *
+         * @param from from sources
+         * @return this builder
+         */
+        public Builder from(List<TableRef> from) {
+            Objects.requireNonNull(from, "from");
+            this.from.clear();
+            this.from.addAll(from);
+            return this;
+        }
+
+        /**
+         * Replaces optional {@code FROM} sources.
+         *
+         * @param from from sources
+         * @return this builder
+         */
+        public Builder from(TableRef... from) {
+            Objects.requireNonNull(from, "from");
+            return from(List.of(from));
         }
 
         /**
@@ -163,7 +208,7 @@ public non-sealed interface UpdateStatement extends Statement {
             if (assignments.isEmpty()) {
                 throw new IllegalStateException("at least one assignment is required");
             }
-            return UpdateStatement.of(table, assignments, where);
+            return UpdateStatement.of(table, assignments, from, where);
         }
     }
 
@@ -172,15 +217,17 @@ public non-sealed interface UpdateStatement extends Statement {
      *
      * @param table target table
      * @param assignments assignments
+     * @param from optional from sources
      * @param where optional predicate
      */
-    record Impl(Table table, List<Assignment> assignments, Predicate where) implements UpdateStatement {
+    record Impl(Table table, List<Assignment> assignments, List<TableRef> from, Predicate where) implements UpdateStatement {
         /**
          * Creates an immutable update statement implementation.
          */
         public Impl {
             Objects.requireNonNull(table, "table");
             assignments = List.copyOf(Objects.requireNonNull(assignments, "assignments"));
+            from = from == null ? List.of() : List.copyOf(from);
             if (assignments.isEmpty()) {
                 throw new IllegalArgumentException("assignments must not be empty");
             }

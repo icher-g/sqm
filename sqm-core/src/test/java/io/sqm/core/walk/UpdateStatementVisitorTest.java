@@ -21,6 +21,7 @@ class UpdateStatementVisitorTest {
     void recursiveVisitorTraversesUpdateChildren() {
         var statement = update(tbl("users"))
             .set(set("name", lit("alice")))
+            .from(tbl("source_users"))
             .where(col("id").eq(lit(1)))
             .build();
         var visits = new ArrayList<String>();
@@ -50,6 +51,6 @@ class UpdateStatementVisitorTest {
             }
         }.accept(statement);
 
-        assertEquals(List.of("update", "table", "assignment"), visits.subList(0, 3));
+        assertEquals(List.of("update", "table", "assignment", "table"), visits.subList(0, 4));
     }
 }
