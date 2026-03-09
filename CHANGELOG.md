@@ -14,6 +14,13 @@
   - `sqm-parser-mysql`
   - `sqm-render-mysql`
 - MySQL round-trip integration coverage in `sqm-it`.
+- PostgreSQL DML extension delivery:
+  - `INSERT ... RETURNING`
+  - `UPDATE ... FROM`
+  - `DELETE ... USING`
+  - `INSERT ... ON CONFLICT DO NOTHING / DO UPDATE`
+  - writable CTE `INSERT ... RETURNING` support
+  - PostgreSQL DML round-trip integration coverage in `sqm-it`
 - MySQL R1B feature coverage:
   - null-safe equality predicate (`<=>`)
   - regex predicates (`REGEXP`, `RLIKE`)
@@ -22,7 +29,8 @@
 
 ### Changed
 - DML-R1 documentation updated to reflect delivered statement-model support and deferred `RETURNING`/`OUTPUT` extensions.
-- Dialect docs and roadmap updated to reflect MySQL R1 completion and canonical MySQL behavior.
+- Dialect docs and roadmap updated to reflect MySQL R1 completion and PostgreSQL DML extension completion.
+- PostgreSQL documentation now clarifies current writable CTE scope boundaries around `INSERT ... RETURNING` support.
 
 ## [v0.3.1] - 2026-03-01
 ### Added

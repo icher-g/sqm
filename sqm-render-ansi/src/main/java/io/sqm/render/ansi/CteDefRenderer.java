@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.CteDef;
+import io.sqm.core.Query;
+import io.sqm.core.Statement;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
@@ -60,7 +62,22 @@ public class CteDefRenderer implements Renderer<CteDef> {
         }
 
         w.space();
-        w.append(node.body(), true, true);
+        renderBody(node.body(), ctx, w);
+    }
+
+    /**
+     * Renders CTE body.
+     *
+     * @param body CTE body statement.
+     * @param ctx render context.
+     * @param w SQL writer.
+     */
+    protected void renderBody(Statement body, RenderContext ctx, SqlWriter w) {
+        if (body instanceof Query query) {
+            w.append(query, true, true);
+            return;
+        }
+        throw new UnsupportedDialectFeatureException("Writable CTE DML", ctx.dialect().name());
     }
 
     /**

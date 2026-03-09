@@ -1,14 +1,10 @@
 package io.sqm.validate.schema.rule;
 
-import io.sqm.core.CompositeQuery;
-import io.sqm.core.Query;
-import io.sqm.core.SetOperator;
-import io.sqm.core.Table;
-import io.sqm.core.WithQuery;
+import io.sqm.catalog.model.CatalogType;
+import io.sqm.core.*;
 import io.sqm.core.walk.RecursiveNodeVisitor;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
-import io.sqm.catalog.model.CatalogType;
 import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 import java.util.HashSet;
@@ -42,6 +38,121 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
     }
 
     /**
+     * Validates that non-recursive WITH does not contain direct self-references.
+     *
+     * @param node    with query node.
+     * @param context schema validation context.
+     */
+    private static void validateNonRecursiveSelfReference(WithQuery node, SchemaValidationContext context) {
+        if (node.recursive()) {
+            return;
+        }
+        for (var cte : node.ctes()) {
+            if (cte == null || cte.name() == null || cte.body() == null) {
+                continue;
+            }
+            if (!containsUnqualifiedTableReference(cte.body(), cte.name().value())) {
+                continue;
+            }
+            context.addProblem(
+                ValidationProblem.Code.CTE_RECURSION_NOT_ALLOWED,
+                "CTE '" + cte.name().value() + "' references itself but WITH is not recursive",
+                cte,
+                "with.cte"
+            );
+        }
+    }
+
+    /**
+     * Validates one anchor/term projection type pair.
+     *
+     * @param cte         recursive CTE.
+     * @param termIndex   term index within composite query.
+     * @param anchorTypes anchor projection types.
+     * @param termTypes   recursive term projection types.
+     * @param context     schema validation context.
+     */
+    private static void validateRecursiveTypePair(
+        io.sqm.core.CteDef cte,
+        int termIndex,
+        List<Optional<CatalogType>> anchorTypes,
+        List<Optional<CatalogType>> termTypes,
+        SchemaValidationContext context
+    ) {
+        var width = Math.min(anchorTypes.size(), termTypes.size());
+        for (int c = 0; c < width; c++) {
+            if (anchorTypes.get(c).isEmpty() || termTypes.get(c).isEmpty()) {
+                continue;
+            }
+            var anchorType = anchorTypes.get(c).get();
+            var termType = termTypes.get(c).get();
+            if (CatalogTypeSemantics.comparable(anchorType, termType)) {
+                continue;
+            }
+            context.addProblem(
+                ValidationProblem.Code.CTE_RECURSIVE_TYPE_MISMATCH,
+                "Recursive CTE '" + cte.name().value() + "' term "
+                    + (termIndex + 1)
+                    + ", column "
+                    + (c + 1)
+                    + " has incompatible type "
+                    + termType
+                    + " (anchor type: "
+                    + anchorType
+                    + ")",
+                cte,
+                "with.cte"
+            );
+        }
+    }
+
+    /**
+     * Reports recursive CTE structure problem.
+     *
+     * @param cte     CTE node.
+     * @param message diagnostic message.
+     * @param context validation context.
+     */
+    private static void reportRecursiveStructure(
+        io.sqm.core.CteDef cte,
+        String message,
+        SchemaValidationContext context
+    ) {
+        context.addProblem(
+            ValidationProblem.Code.CTE_RECURSIVE_STRUCTURE_INVALID,
+            message,
+            cte,
+            "with.cte"
+        );
+    }
+
+    /**
+     * Returns whether set operator is valid for recursive CTE composition.
+     *
+     * @param op set operator.
+     * @return true when recursive-compatible.
+     */
+    private static boolean isRecursiveSetOperator(SetOperator op) {
+        return op == SetOperator.UNION || op == SetOperator.UNION_ALL;
+    }
+
+    /**
+     * Checks whether query contains an unqualified table reference matching target CTE name.
+     *
+     * <p>Nested WITH blocks are intentionally skipped to avoid false positives due to
+     * inner-scope shadowing.</p>
+     *
+     * @param statement statement to inspect.
+     * @param cteName   CTE name.
+     * @return true when matching table reference is found.
+     */
+    private static boolean containsUnqualifiedTableReference(Statement statement, String cteName) {
+        var visitor = new CteReferenceVisitor(normalize(cteName));
+        statement.accept(visitor);
+        return visitor.found();
+    }
+
+    /**
      * Returns supported node type.
      *
      * @return with query type.
@@ -54,7 +165,7 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
     /**
      * Validates CTE name uniqueness and recursion safety inside one WITH block.
      *
-     * @param node with query node.
+     * @param node    with query node.
      * @param context schema validation context.
      */
     @Override
@@ -80,35 +191,9 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
     }
 
     /**
-     * Validates that non-recursive WITH does not contain direct self-references.
-     *
-     * @param node with query node.
-     * @param context schema validation context.
-     */
-    private static void validateNonRecursiveSelfReference(WithQuery node, SchemaValidationContext context) {
-        if (node.recursive()) {
-            return;
-        }
-        for (var cte : node.ctes()) {
-            if (cte == null || cte.name() == null || cte.body() == null) {
-                continue;
-            }
-            if (!containsUnqualifiedTableReference(cte.body(), cte.name().value())) {
-                continue;
-            }
-            context.addProblem(
-                ValidationProblem.Code.CTE_RECURSION_NOT_ALLOWED,
-                "CTE '" + cte.name().value() + "' references itself but WITH is not recursive",
-                cte,
-                "with.cte"
-            );
-        }
-    }
-
-    /**
      * Validates recursive CTE structural requirements.
      *
-     * @param node with query node.
+     * @param node    with query node.
      * @param context schema validation context.
      */
     private void validateRecursiveCteStructure(WithQuery node, SchemaValidationContext context) {
@@ -129,7 +214,7 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
     /**
      * Validates one recursive CTE.
      *
-     * @param cte recursive CTE.
+     * @param cte     recursive CTE.
      * @param context schema validation context.
      */
     private void validateRecursiveCte(io.sqm.core.CteDef cte, SchemaValidationContext context) {
@@ -180,9 +265,9 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
     /**
      * Validates projection arity compatibility between recursive CTE terms.
      *
-     * @param cte recursive CTE.
+     * @param cte       recursive CTE.
      * @param composite recursive CTE body.
-     * @param context schema validation context.
+     * @param context   schema validation context.
      */
     private void validateRecursiveTermProjectionArity(
         io.sqm.core.CteDef cte,
@@ -217,9 +302,9 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
     /**
      * Validates projection type compatibility between anchor and recursive terms.
      *
-     * @param cte recursive CTE.
+     * @param cte       recursive CTE.
      * @param composite recursive CTE body.
-     * @param context schema validation context.
+     * @param context   schema validation context.
      */
     private void validateRecursiveTermProjectionTypes(
         io.sqm.core.CteDef cte,
@@ -237,95 +322,6 @@ final class WithQueryValidationRule implements SchemaValidationRule<WithQuery> {
             }
             validateRecursiveTypePair(cte, i, anchorTypes.get(), termTypes.get(), context);
         }
-    }
-
-    /**
-     * Validates one anchor/term projection type pair.
-     *
-     * @param cte recursive CTE.
-     * @param termIndex term index within composite query.
-     * @param anchorTypes anchor projection types.
-     * @param termTypes recursive term projection types.
-     * @param context schema validation context.
-     */
-    private static void validateRecursiveTypePair(
-        io.sqm.core.CteDef cte,
-        int termIndex,
-        List<Optional<CatalogType>> anchorTypes,
-        List<Optional<CatalogType>> termTypes,
-        SchemaValidationContext context
-    ) {
-        var width = Math.min(anchorTypes.size(), termTypes.size());
-        for (int c = 0; c < width; c++) {
-            if (anchorTypes.get(c).isEmpty() || termTypes.get(c).isEmpty()) {
-                continue;
-            }
-            var anchorType = anchorTypes.get(c).get();
-            var termType = termTypes.get(c).get();
-            if (CatalogTypeSemantics.comparable(anchorType, termType)) {
-                continue;
-            }
-            context.addProblem(
-                ValidationProblem.Code.CTE_RECURSIVE_TYPE_MISMATCH,
-                "Recursive CTE '" + cte.name().value() + "' term "
-                    + (termIndex + 1)
-                    + ", column "
-                    + (c + 1)
-                    + " has incompatible type "
-                    + termType
-                    + " (anchor type: "
-                    + anchorType
-                    + ")",
-                cte,
-                "with.cte"
-            );
-        }
-    }
-
-    /**
-     * Reports recursive CTE structure problem.
-     *
-     * @param cte CTE node.
-     * @param message diagnostic message.
-     * @param context validation context.
-     */
-    private static void reportRecursiveStructure(
-        io.sqm.core.CteDef cte,
-        String message,
-        SchemaValidationContext context
-    ) {
-        context.addProblem(
-            ValidationProblem.Code.CTE_RECURSIVE_STRUCTURE_INVALID,
-            message,
-            cte,
-            "with.cte"
-        );
-    }
-
-    /**
-     * Returns whether set operator is valid for recursive CTE composition.
-     *
-     * @param op set operator.
-     * @return true when recursive-compatible.
-     */
-    private static boolean isRecursiveSetOperator(SetOperator op) {
-        return op == SetOperator.UNION || op == SetOperator.UNION_ALL;
-    }
-
-    /**
-     * Checks whether query contains an unqualified table reference matching target CTE name.
-     *
-     * <p>Nested WITH blocks are intentionally skipped to avoid false positives due to
-     * inner-scope shadowing.</p>
-     *
-     * @param query query to inspect.
-     * @param cteName CTE name.
-     * @return true when matching table reference is found.
-     */
-    private static boolean containsUnqualifiedTableReference(Query query, String cteName) {
-        var visitor = new CteReferenceVisitor(normalize(cteName));
-        query.accept(visitor);
-        return visitor.found();
     }
 
     /**

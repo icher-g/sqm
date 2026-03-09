@@ -66,7 +66,7 @@ public non-sealed interface CteDef extends Node {
      * @return a newly created CTE definition.
      */
     static CteDef of(Identifier name) {
-        return of(name, null, null, Materialization.DEFAULT);
+        return of(name, (Statement) null, null, Materialization.DEFAULT);
     }
 
     /**
@@ -77,6 +77,17 @@ public non-sealed interface CteDef extends Node {
      * @return a newly created CTE definition.
      */
     static CteDef of(Identifier name, Query body) {
+        return of(name, (Statement) body, null, Materialization.DEFAULT);
+    }
+
+    /**
+     * Creates a CTE definition with the provided name identifier.
+     *
+     * @param name the CTE name identifier.
+     * @param body a statement wrapped by the CTE.
+     * @return a newly created CTE definition.
+     */
+    static CteDef of(Identifier name, Statement body) {
         return of(name, body, null, Materialization.DEFAULT);
     }
 
@@ -89,6 +100,18 @@ public non-sealed interface CteDef extends Node {
      * @return a newly created CTE definition.
      */
     static CteDef of(Identifier name, Query body, List<Identifier> columnAliases) {
+        return of(name, (Statement) body, columnAliases, Materialization.DEFAULT);
+    }
+
+    /**
+     * Creates a CTE definition with the provided name identifier.
+     *
+     * @param name the CTE name identifier.
+     * @param body a statement wrapped by the CTE.
+     * @param columnAliases a list of column alias identifiers.
+     * @return a newly created CTE definition.
+     */
+    static CteDef of(Identifier name, Statement body, List<Identifier> columnAliases) {
         return of(name, body, columnAliases, Materialization.DEFAULT);
     }
 
@@ -102,6 +125,19 @@ public non-sealed interface CteDef extends Node {
      * @return a newly created CTE definition.
      */
     static CteDef of(Identifier name, Query body, List<Identifier> columnAliases, Materialization materialization) {
+        return of(name, (Statement) body, columnAliases, materialization);
+    }
+
+    /**
+     * Creates a CTE definition with the provided name identifier.
+     *
+     * @param name the CTE name identifier.
+     * @param body a statement wrapped by the CTE.
+     * @param columnAliases a list of column alias identifiers.
+     * @param materialization materialization hint.
+     * @return a newly created CTE definition.
+     */
+    static CteDef of(Identifier name, Statement body, List<Identifier> columnAliases, Materialization materialization) {
         return new Impl(name, body, columnAliases, materialization);
     }
 
@@ -113,11 +149,11 @@ public non-sealed interface CteDef extends Node {
     Identifier name();
 
     /**
-     * Gets a query wrapped by the current CTE.
+     * Gets a statement wrapped by the current CTE.
      *
-     * @return a query.
+     * @return a statement.
      */
-    Query body();
+    Statement body();
 
     /**
      * Gets a list of column aliases used in the CTE.
@@ -151,6 +187,16 @@ public non-sealed interface CteDef extends Node {
      * @return this.
      */
     default CteDef body(Query body) {
+        return body((Statement) body);
+    }
+
+    /**
+     * Adds statement body to CTE statement.
+     *
+     * @param body a statement body.
+     * @return this.
+     */
+    default CteDef body(Statement body) {
         return of(name(), body, columnAliases(), materialization());
     }
 
@@ -245,16 +291,16 @@ public non-sealed interface CteDef extends Node {
      * </pre>
      *
      * @param name the name of the CTE statement.
-     * @param body a query wrapped by the current CTE.
+     * @param body a statement wrapped by the current CTE.
      * @param columnAliases a list of column aliases used in the CTE.
      * @param materialization materialization hint.
      */
-    record Impl(Identifier name, Query body, List<Identifier> columnAliases, Materialization materialization) implements CteDef {
+    record Impl(Identifier name, Statement body, List<Identifier> columnAliases, Materialization materialization) implements CteDef {
         /**
          * Creates a CTE implementation.
          *
          * @param name                   CTE name identifier
-         * @param body                   query body
+         * @param body                   statement body
          * @param columnAliases          CTE column alias identifiers
          * @param materialization        materialization hint
          */

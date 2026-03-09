@@ -23,6 +23,7 @@ public class Parsers {
 
     private static ParsersRepository registerDefaults(ParsersRepository r) {
         return r
+            .register(new CteDefParser())
             .register(new InsertStatementParser())
             .register(new UpdateStatementParser())
             .register(new DeleteStatementParser())

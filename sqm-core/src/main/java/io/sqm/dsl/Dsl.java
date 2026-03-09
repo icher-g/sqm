@@ -1510,6 +1510,17 @@ public final class Dsl {
     }
 
     /**
+     * Creates a query that represents a CTE statement.
+     *
+     * @param name the name of the CTE statement.
+     * @param body a statement wrapped by the CTE.
+     * @return a CTE query.
+     */
+    public static CteDef cte(String name, Statement body) {
+        return Query.cte(Identifier.of(name), body);
+    }
+
+    /**
      * Creates a CTE definition with the provided name and materialization hint.
      * <p>Example:</p>
      * <pre>
@@ -1535,6 +1546,24 @@ public final class Dsl {
 
     /**
      * Creates a CTE definition with the provided name and materialization hint.
+     *
+     * @param name            the CTE name.
+     * @param body            a statement wrapped by the CTE.
+     * @param columnAliases   a list of column aliases.
+     * @param materialization materialization hint.
+     * @return a CTE definition.
+     */
+    public static CteDef cte(String name, Statement body, List<String> columnAliases, CteDef.Materialization materialization) {
+        return Query.cte(
+            Identifier.of(name),
+            body,
+            columnAliases == null ? null : columnAliases.stream().map(Identifier::of).toList(),
+            materialization
+        );
+    }
+
+    /**
+     * Creates a CTE definition with the provided name and materialization hint.
      * <p>Example:</p>
      * <pre>
      *     {@code
@@ -1548,6 +1577,22 @@ public final class Dsl {
      * @return a CTE definition.
      */
     public static CteDef cte(String name, Query body, List<String> columnAliases) {
+        return Query.cte(
+            Identifier.of(name),
+            body,
+            columnAliases == null ? null : columnAliases.stream().map(Identifier::of).toList()
+        );
+    }
+
+    /**
+     * Creates a CTE definition with the provided name and column aliases.
+     *
+     * @param name          the CTE name.
+     * @param body          a statement wrapped by the CTE.
+     * @param columnAliases a list of column aliases.
+     * @return a CTE definition.
+     */
+    public static CteDef cte(String name, Statement body, List<String> columnAliases) {
         return Query.cte(
             Identifier.of(name),
             body,
@@ -1728,5 +1773,4 @@ public final class Dsl {
         return targets;
     }
 }
-
 

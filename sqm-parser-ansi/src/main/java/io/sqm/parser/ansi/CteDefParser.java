@@ -3,6 +3,7 @@ package io.sqm.parser.ansi;
 import io.sqm.core.CteDef;
 import io.sqm.core.Identifier;
 import io.sqm.core.Query;
+import io.sqm.core.Statement;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -11,6 +12,7 @@ import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
@@ -38,11 +40,7 @@ public class CteDefParser implements Parser<CteDef> {
         var aliases = new ArrayList<Identifier>();
 
         if (cur.consumeIf(TokenType.LPAREN)) {
-            do {
-                var alias = cur.expect("Expected column name", TokenType.IDENT);
-                aliases.add(toIdentifier(alias));
-            } while (cur.consumeIf(TokenType.COMMA));
-
+            aliases = new ArrayList<>(parseIdentifierItems(cur, "Expected column name"));
             cur.expect("Expected ')'", TokenType.RPAREN);
         }
 
@@ -66,13 +64,47 @@ public class CteDefParser implements Parser<CteDef> {
         }
         cur.expect("Expected '(' before CTE subquery", TokenType.LPAREN);
 
-        var body = ctx.parse(Query.class, cur);
+        var body = parseBody(cur, ctx);
         if (body.isError()) {
             return error(body);
         }
 
         cur.expect("Expected ')' after CTE subquery", TokenType.RPAREN);
-        return ok(Query.cte(name, body.value(), aliases, materialization));
+        return createCte(name, body.value(), aliases, materialization, ctx, cur);
+    }
+
+    /**
+     * Parses CTE body statement.
+     *
+     * @param cur token cursor positioned at CTE body start.
+     * @param ctx parse context.
+     * @return parsed statement body.
+     */
+    protected ParseResult<? extends Statement> parseBody(Cursor cur, ParseContext ctx) {
+        return ctx.parse(Query.class, cur);
+    }
+
+    /**
+     * Creates CTE node from parsed parts.
+     *
+     * @param name CTE name.
+     * @param body parsed body statement.
+     * @param aliases column aliases.
+     * @param materialization materialization hint.
+     * @param ctx parse context.
+     * @param cur token cursor.
+     * @return parsed CTE definition.
+     */
+    protected ParseResult<CteDef> createCte(Identifier name,
+                                            Statement body,
+                                            List<Identifier> aliases,
+                                            CteDef.Materialization materialization,
+                                            ParseContext ctx,
+                                            Cursor cur) {
+        if (body instanceof Query query) {
+            return ok(Query.cte(name, query, aliases, materialization));
+        }
+        return error("Writable CTE DML is not supported by this dialect", cur.fullPos());
     }
 
     /**

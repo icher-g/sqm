@@ -40,4 +40,11 @@ class CteDefParserTest {
         assertEquals(QuoteStyle.DOUBLE_QUOTE, cte.columnAliases().get(0).quoteStyle());
         assertEquals(QuoteStyle.DOUBLE_QUOTE, cte.columnAliases().get(1).quoteStyle());
     }
+
+    @Test
+    @DisplayName("Rejects writable INSERT CTE in ANSI")
+    void rejects_writable_insert_cte() {
+        var res = ctx.parse(parser, "ins AS (INSERT INTO users (name) VALUES ('alice') RETURNING id)");
+        assertTrue(res.isError());
+    }
 }
