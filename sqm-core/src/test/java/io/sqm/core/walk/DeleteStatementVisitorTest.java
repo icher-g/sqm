@@ -18,6 +18,7 @@ class DeleteStatementVisitorTest {
     @Test
     void recursiveVisitorTraversesDeleteChildren() {
         var statement = delete(tbl("users"))
+            .using(tbl("source_users"))
             .where(col("id").eq(lit(1)))
             .build();
         var visits = new ArrayList<String>();
@@ -41,6 +42,6 @@ class DeleteStatementVisitorTest {
             }
         }.accept(statement);
 
-        assertEquals(List.of("delete", "table"), visits.subList(0, 2));
+        assertEquals(List.of("delete", "table", "table"), visits.subList(0, 3));
     }
 }

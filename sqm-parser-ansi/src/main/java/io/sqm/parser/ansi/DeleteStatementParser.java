@@ -3,11 +3,14 @@ package io.sqm.parser.ansi;
 import io.sqm.core.DeleteStatement;
 import io.sqm.core.Predicate;
 import io.sqm.core.Table;
+import io.sqm.core.TableRef;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
+
+import java.util.List;
 
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
@@ -40,6 +43,11 @@ public class DeleteStatementParser implements Parser<DeleteStatement> {
             return error(tableResult);
         }
 
+        var usingResult = parseUsing(cur, ctx);
+        if (usingResult.isError()) {
+            return error(usingResult);
+        }
+
         Predicate where = null;
 
         if (cur.consumeIf(TokenType.WHERE)) {
@@ -50,7 +58,21 @@ public class DeleteStatementParser implements Parser<DeleteStatement> {
             where = whereResult.value();
         }
 
-        return ok(DeleteStatement.of(tableResult.value(), where));
+        return ok(DeleteStatement.of(tableResult.value(), usingResult.value(), where));
+    }
+
+    /**
+     * Parses optional {@code USING} sources.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return parsed USING sources or empty list when omitted
+     */
+    protected ParseResult<List<TableRef>> parseUsing(Cursor cur, ParseContext ctx) {
+        if (cur.match(TokenType.USING)) {
+            return error("DELETE ... USING is not supported by this dialect", cur.fullPos());
+        }
+        return ok(List.of());
     }
 
     /**

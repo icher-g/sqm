@@ -28,6 +28,7 @@ public final class Renderers {
         return r
             .register(new InsertStatementRenderer())
             .register(new UpdateStatementRenderer())
+            .register(new DeleteStatementRenderer())
             .register(new CastExprRenderer());
     }
 }

@@ -2,6 +2,8 @@ package io.sqm.core;
 
 import io.sqm.core.walk.NodeVisitor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -13,11 +15,23 @@ public non-sealed interface DeleteStatement extends Statement {
      * Creates an immutable delete statement.
      *
      * @param table target table
+     * @param using optional USING sources
+     * @param where optional predicate
+     * @return immutable delete statement
+     */
+    static DeleteStatement of(Table table, List<TableRef> using, Predicate where) {
+        return new Impl(table, using, where);
+    }
+
+    /**
+     * Creates an immutable delete statement.
+     *
+     * @param table target table
      * @param where optional predicate
      * @return immutable delete statement
      */
     static DeleteStatement of(Table table, Predicate where) {
-        return new Impl(table, where);
+        return new Impl(table, List.of(), where);
     }
 
     /**
@@ -27,7 +41,7 @@ public non-sealed interface DeleteStatement extends Statement {
      * @return immutable delete statement
      */
     static DeleteStatement of(Table table) {
-        return new Impl(table, null);
+        return new Impl(table, List.of(), null);
     }
 
     /**
@@ -46,6 +60,13 @@ public non-sealed interface DeleteStatement extends Statement {
      * @return target table
      */
     Table table();
+
+    /**
+     * Returns optional {@code USING} sources.
+     *
+     * @return immutable using source list
+     */
+    List<TableRef> using();
 
     /**
      * Returns the optional {@code WHERE} predicate.
@@ -71,6 +92,7 @@ public non-sealed interface DeleteStatement extends Statement {
      */
     final class Builder {
         private Table table;
+        private final List<TableRef> using = new ArrayList<>();
         private Predicate where;
 
         /**
@@ -94,6 +116,30 @@ public non-sealed interface DeleteStatement extends Statement {
         }
 
         /**
+         * Replaces optional {@code USING} sources.
+         *
+         * @param using using sources
+         * @return this builder
+         */
+        public Builder using(List<TableRef> using) {
+            Objects.requireNonNull(using, "using");
+            this.using.clear();
+            this.using.addAll(using);
+            return this;
+        }
+
+        /**
+         * Replaces optional {@code USING} sources.
+         *
+         * @param using using sources
+         * @return this builder
+         */
+        public Builder using(TableRef... using) {
+            Objects.requireNonNull(using, "using");
+            return using(List.of(using));
+        }
+
+        /**
          * Sets the optional {@code WHERE} predicate.
          *
          * @param where predicate or {@code null}
@@ -113,7 +159,7 @@ public non-sealed interface DeleteStatement extends Statement {
             if (table == null) {
                 throw new IllegalStateException("table must be set");
             }
-            return DeleteStatement.of(table, where);
+            return DeleteStatement.of(table, using, where);
         }
     }
 
@@ -121,14 +167,16 @@ public non-sealed interface DeleteStatement extends Statement {
      * Default immutable delete statement implementation.
      *
      * @param table target table
+     * @param using optional using sources
      * @param where optional predicate
      */
-    record Impl(Table table, Predicate where) implements DeleteStatement {
+    record Impl(Table table, List<TableRef> using, Predicate where) implements DeleteStatement {
         /**
          * Creates an immutable delete statement implementation.
          */
         public Impl {
             Objects.requireNonNull(table, "table");
+            using = using == null ? List.of() : List.copyOf(using);
         }
     }
 }

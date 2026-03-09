@@ -43,6 +43,7 @@ public final class PostgresCapabilities {
                 SqlFeature.DISTINCT_ON,
                 SqlFeature.DML_RETURNING,
                 SqlFeature.UPDATE_FROM,
+                SqlFeature.DELETE_USING,
                 SqlFeature.ORDER_BY_USING,
                 SqlFeature.LOCKING_CLAUSE,
                 SqlFeature.LOCKING_SHARE,
