@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class InsertStatementTest {
 
@@ -50,6 +51,17 @@ class InsertStatementTest {
         assertEquals(1, built.columns().size());
         assertEquals(1, built.returning().size());
         assertInstanceOf(io.sqm.core.SelectQuery.class, built.source());
+    }
+
+    @Test
+    void normalizesNullColumnsAndReturningInFactories() {
+        var statement = InsertStatement.of(tbl("users"), null, row(lit(1)), null);
+        var statementWithReturningOverload = InsertStatement.of(tbl("users"), row(lit(1)), null);
+
+        assertTrue(statement.columns().isEmpty());
+        assertTrue(statement.returning().isEmpty());
+        assertTrue(statementWithReturningOverload.columns().isEmpty());
+        assertTrue(statementWithReturningOverload.returning().isEmpty());
     }
 
     @Test
