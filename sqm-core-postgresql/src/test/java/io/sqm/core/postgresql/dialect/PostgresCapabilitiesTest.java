@@ -19,6 +19,7 @@ class PostgresCapabilitiesTest {
         assertTrue(capabilities.supports(SqlFeature.DISTINCT_ON));
         assertTrue(capabilities.supports(SqlFeature.ORDER_BY_USING));
         assertTrue(capabilities.supports(SqlFeature.DML_RETURNING));
+        assertTrue(capabilities.supports(SqlFeature.INSERT_ON_CONFLICT));
         assertTrue(capabilities.supports(SqlFeature.UPDATE_FROM));
         assertTrue(capabilities.supports(SqlFeature.DELETE_USING));
         assertTrue(capabilities.supports(SqlFeature.CTE_MATERIALIZATION));
@@ -38,6 +39,7 @@ class PostgresCapabilitiesTest {
     void supports_respects_min_versions() {
         var capabilities = PostgresCapabilities.of(SqlDialectVersion.of(9, 0));
 
+        assertTrue(capabilities.supports(SqlFeature.INSERT_ON_CONFLICT));
         assertFalse(capabilities.supports(SqlFeature.CTE_MATERIALIZATION));
         assertFalse(capabilities.supports(SqlFeature.FUNCTION_TABLE_ORDINALITY));
         assertFalse(capabilities.supports(SqlFeature.GROUPING_SETS));
@@ -48,8 +50,3 @@ class PostgresCapabilitiesTest {
         assertFalse(capabilities.supports(SqlFeature.LATERAL));
     }
 }
-
-
-
-
-

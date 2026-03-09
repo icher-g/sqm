@@ -5,7 +5,10 @@ import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.core.dialect.SqlFeature;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PostgresSpecsTest {
 
@@ -44,6 +47,7 @@ class PostgresSpecsTest {
         assertTrue(specs.capabilities().supports(SqlFeature.DISTINCT_ON));
         assertTrue(specs.capabilities().supports(SqlFeature.ORDER_BY_USING));
         assertTrue(specs.capabilities().supports(SqlFeature.DML_RETURNING));
+        assertTrue(specs.capabilities().supports(SqlFeature.INSERT_ON_CONFLICT));
         assertTrue(specs.capabilities().supports(SqlFeature.UPDATE_FROM));
         assertTrue(specs.capabilities().supports(SqlFeature.DELETE_USING));
         assertTrue(specs.capabilities().supports(SqlFeature.CTE_MATERIALIZATION));
@@ -60,6 +64,7 @@ class PostgresSpecsTest {
     @Test
     void capabilities_respect_min_versions() {
         var specs = new PostgresSpecs(SqlDialectVersion.of(9, 0));
+        assertTrue(specs.capabilities().supports(SqlFeature.INSERT_ON_CONFLICT));
         assertFalse(specs.capabilities().supports(SqlFeature.CTE_MATERIALIZATION));
         assertFalse(specs.capabilities().supports(SqlFeature.FUNCTION_TABLE_ORDINALITY));
         assertFalse(specs.capabilities().supports(SqlFeature.GROUPING_SETS));
@@ -68,8 +73,3 @@ class PostgresSpecsTest {
         assertFalse(specs.capabilities().supports(SqlFeature.LATERAL));
     }
 }
-
-
-
-
-

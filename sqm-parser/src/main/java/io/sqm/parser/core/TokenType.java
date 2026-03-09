@@ -205,6 +205,18 @@ public enum TokenType {
      */
     ON,
     /**
+     * CONFLICT keyword token.
+     */
+    CONFLICT,
+    /**
+     * DO keyword token.
+     */
+    DO,
+    /**
+     * NOTHING keyword token.
+     */
+    NOTHING,
+    /**
      * AS keyword token.
      */
     AS,
@@ -541,6 +553,8 @@ public enum TokenType {
      */
     EOF
 }
+
+
 
 
 

@@ -40,6 +40,9 @@ public final class Lexer {
         KEYWORDS.put("USING", USING);
         KEYWORDS.put("NATURAL", NATURAL);
         KEYWORDS.put("ON", ON);
+        KEYWORDS.put("CONFLICT", CONFLICT);
+        KEYWORDS.put("DO", DO);
+        KEYWORDS.put("NOTHING", NOTHING);
         KEYWORDS.put("AS", AS);
         KEYWORDS.put("DISTINCT", DISTINCT);
         KEYWORDS.put("EXISTS", EXISTS);
@@ -509,5 +512,3 @@ public final class Lexer {
         throw new IllegalArgumentException("Unterminated backtick-quoted identifier starting at " + start);
     }
 }
-
-

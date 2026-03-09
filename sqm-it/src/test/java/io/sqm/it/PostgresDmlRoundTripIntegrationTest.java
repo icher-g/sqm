@@ -3,15 +3,21 @@ package io.sqm.it;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.sqm.core.Statement;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.json.SqmJsonMixins;
+import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.ParseContext;
+import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.postgresql.spi.PostgresDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PostgresDmlRoundTripIntegrationTest {
@@ -38,6 +44,22 @@ class PostgresDmlRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTripInsertOnConflictDoNothingStatement() {
+        assertRoundTrip(
+            "INSERT INTO users (id, name) VALUES (1, 'alice') ON CONFLICT (id) DO NOTHING",
+            "INSERT INTO users (id, name) VALUES (1, 'alice') ON CONFLICT (id) DO NOTHING"
+        );
+    }
+
+    @Test
+    void roundTripInsertOnConflictDoUpdateStatement() {
+        assertRoundTrip(
+            "INSERT INTO users (id, name) VALUES (1, 'alice') ON CONFLICT (id) DO UPDATE SET name = 'alice2' WHERE id = 1",
+            "INSERT INTO users (id, name) VALUES (1, 'alice') ON CONFLICT (id) DO UPDATE SET name = 'alice2' WHERE id = 1"
+        );
+    }
+
+    @Test
     void roundTripUpdateFromStatement() {
         assertRoundTrip(
             "UPDATE users SET name = src.name FROM source_users AS src WHERE users.id = src.id",
@@ -52,6 +74,39 @@ class PostgresDmlRoundTripIntegrationTest {
             "DELETE FROM users USING source_users AS src WHERE users.id = src.id"
         );
     }
+
+    @Test
+    void rejectsInsertReturningForAnsiDialect() {
+        assertRejectedByAnsi(
+            "INSERT INTO users (name) VALUES ('alice') RETURNING id",
+            "INSERT ... RETURNING is not supported by this dialect"
+        );
+    }
+
+    @Test
+    void rejectsInsertOnConflictForAnsiDialect() {
+        assertRejectedByAnsi(
+            "INSERT INTO users (id, name) VALUES (1, 'alice') ON CONFLICT (id) DO NOTHING",
+            "INSERT ... ON CONFLICT is not supported by this dialect"
+        );
+    }
+
+    @Test
+    void rejectsUpdateFromForAnsiDialect() {
+        assertRejectedByAnsi(
+            "UPDATE users SET name = src.name FROM source_users AS src WHERE users.id = src.id",
+            "UPDATE ... FROM is not supported by this dialect"
+        );
+    }
+
+    @Test
+    void rejectsDeleteUsingForAnsiDialect() {
+        assertRejectedByAnsi(
+            "DELETE FROM users USING source_users AS src WHERE users.id = src.id",
+            "DELETE ... USING is not supported by this dialect"
+        );
+    }
+
     private void assertRoundTrip(String originalSql, String expectedCanonicalSql) {
         var parsed = parseContext.parse(Statement.class, originalSql);
         assertTrue(parsed.ok(), parsed.errorMessage());
@@ -62,6 +117,19 @@ class PostgresDmlRoundTripIntegrationTest {
         var reparsed = parseContext.parse(Statement.class, rendered);
         assertTrue(reparsed.ok(), reparsed.errorMessage());
         assertEquals(canonicalJson(parsed.value()), canonicalJson(reparsed.value()));
+    }
+
+    private void assertRejectedByAnsi(String postgresSql, String expectedParseMessagePart) {
+        var ansiParseContext = ParseContext.of(new AnsiSpecs());
+        var ansiResult = ansiParseContext.parse(Statement.class, postgresSql);
+        assertTrue(ansiResult.isError());
+        assertTrue(Objects.requireNonNull(ansiResult.errorMessage()).contains(expectedParseMessagePart));
+
+        var pgParsed = parseContext.parse(Statement.class, postgresSql);
+        assertTrue(pgParsed.ok(), pgParsed.errorMessage());
+
+        var ansiRenderContext = RenderContext.of(new AnsiDialect());
+        assertThrows(UnsupportedDialectFeatureException.class, () -> ansiRenderContext.render(pgParsed.value()));
     }
 
     private static String canonicalJson(Statement statement) {
@@ -77,7 +145,3 @@ class PostgresDmlRoundTripIntegrationTest {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
-
-
-
-

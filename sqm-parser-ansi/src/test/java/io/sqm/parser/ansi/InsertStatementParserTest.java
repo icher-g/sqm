@@ -35,6 +35,7 @@ class InsertStatementParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertInstanceOf(RowExpr.class, result.value().source());
+        assertEquals(InsertStatement.OnConflictAction.NONE, result.value().onConflictAction());
     }
 
     @Test
@@ -91,6 +92,15 @@ class InsertStatementParserTest {
 
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("INSERT ... RETURNING is not supported by this dialect"));
+    }
+
+    @Test
+    void rejectsInsertOnConflictInAnsiDialect() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users VALUES (1) ON CONFLICT (id) DO NOTHING");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("INSERT ... ON CONFLICT is not supported by this dialect"));
     }
 
     @Test

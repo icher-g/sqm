@@ -42,6 +42,8 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     public R visitInsertStatement(InsertStatement statement) {
         accept(statement.table());
         accept(statement.source());
+        statement.conflictUpdateAssignments().forEach(this::accept);
+        accept(statement.conflictUpdateWhere());
         statement.returning().forEach(this::accept);
         return defaultResult();
     }
