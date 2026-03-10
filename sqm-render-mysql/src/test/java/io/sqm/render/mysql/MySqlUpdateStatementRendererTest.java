@@ -1,6 +1,7 @@
 package io.sqm.render.mysql;
 
 import io.sqm.core.UpdateStatement;
+import io.sqm.render.SqlWriter;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.mysql.spi.MySqlDialect;
 import io.sqm.render.spi.RenderContext;
@@ -33,6 +34,21 @@ class MySqlUpdateStatementRendererTest {
     }
 
     @Test
+    void rendersPlainUpdateWithoutJoins() {
+        var statement = update(tbl("users"))
+            .set(id("name"), lit("alice"))
+            .build();
+
+        var renderer = new MySqlUpdateStatementRenderer();
+        var ctx = RenderContext.of(new MySqlDialect());
+        SqlWriter writer = new io.sqm.render.defaults.DefaultSqlWriter(ctx);
+
+        renderer.render(statement, ctx, writer);
+
+        assertEquals("UPDATE users SET name = 'alice'", normalize(writer.toText(java.util.List.of()).sql()));
+    }
+
+    @Test
     void rejectsJoinedUpdateInDialectWithoutCapability() {
         UpdateStatement statement = update(tbl("users"))
             .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
@@ -50,3 +66,4 @@ class MySqlUpdateStatementRendererTest {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
+

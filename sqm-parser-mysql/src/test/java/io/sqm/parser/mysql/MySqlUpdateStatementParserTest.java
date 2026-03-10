@@ -28,6 +28,15 @@ class MySqlUpdateStatementParserTest {
     }
 
     @Test
+    void parsesStandardUpdateWithoutJoins() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice'");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertTrue(result.value().joins().isEmpty());
+    }
+
+    @Test
     void statementEntryPointParsesMysqlJoinedUpdate() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(Statement.class,
@@ -35,6 +44,14 @@ class MySqlUpdateStatementParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertInstanceOf(UpdateStatement.class, result.value());
+    }
+
+    @Test
+    void rejectsInvalidJoinedUpdate() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(UpdateStatement.class, "UPDATE users INNER JOIN orders SET name = 'alice'");
+
+        assertTrue(result.isError());
     }
 
     @Test

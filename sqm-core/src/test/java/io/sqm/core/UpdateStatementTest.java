@@ -58,10 +58,35 @@ class UpdateStatementTest {
     }
 
     @Test
-    void normalizesNullFromAndJoinsInFactory() {
-        var statement = UpdateStatement.of(tbl("users"), List.of(set("name", lit("alice"))), null, null, null, List.of());
+    void supportsFactoryOverloadsWithFromAndReturning() {
+        var statement = UpdateStatement.of(
+            tbl("users"),
+            List.of(set("name", lit("alice"))),
+            List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))),
+            List.of(tbl("src_users")),
+            col("users", "id").eq(lit(1)),
+            List.of(io.sqm.core.ExprSelectItem.of(col("users", "id"), null)));
+
+        assertEquals(1, statement.joins().size());
+        assertEquals(1, statement.from().size());
+        assertEquals(1, statement.returning().size());
+
+        var withoutReturning = UpdateStatement.of(
+            tbl("users"),
+            List.of(set("name", lit("alice"))),
+            List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))),
+            List.of(tbl("src_users")),
+            col("users", "id").eq(lit(1)));
+
+        assertTrue(withoutReturning.returning().isEmpty());
+    }
+
+    @Test
+    void normalizesNullFromJoinsAndReturningInFactory() {
+        var statement = UpdateStatement.of(tbl("users"), List.of(set("name", lit("alice"))), null, null, null, null);
         assertTrue(statement.joins().isEmpty());
         assertTrue(statement.from().isEmpty());
+        assertTrue(statement.returning().isEmpty());
     }
 
     @Test
@@ -97,8 +122,10 @@ class UpdateStatementTest {
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).table(null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).assignments(null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).joins((Join[]) null));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).join(null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).from((TableRef[]) null));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).returning((SelectItem[]) null));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).returning((List<SelectItem>) null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).set(null));
     }
 }
-

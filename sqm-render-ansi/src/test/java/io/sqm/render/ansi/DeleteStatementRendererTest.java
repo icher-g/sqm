@@ -86,6 +86,25 @@ class DeleteStatementRendererTest {
         );
     }
 
+    @Test
+    void rejectsDeleteReturningWhenDialectDoesNotSupportIt() {
+        var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
+        DeleteStatement statement = DeleteStatement.of(
+            tbl("users"),
+            java.util.List.of(),
+            java.util.List.of(),
+            null,
+            java.util.List.of(io.sqm.core.ExprSelectItem.of(col("id"), null)));
+
+        var renderer = new DeleteStatementRenderer();
+        var writer = new io.sqm.render.defaults.DefaultSqlWriter(ctx);
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+            io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> renderer.render(statement, ctx, writer)
+        );
+    }
+
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
     }

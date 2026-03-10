@@ -28,6 +28,16 @@ class MySqlDeleteStatementParserTest {
     }
 
     @Test
+    void parsesDeleteUsingWithoutJoins() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM users USING users WHERE users.id = 1");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(1, result.value().using().size());
+        assertTrue(result.value().joins().isEmpty());
+    }
+
+    @Test
     void statementEntryPointParsesMysqlDeleteUsingJoin() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(Statement.class,
@@ -45,6 +55,14 @@ class MySqlDeleteStatementParserTest {
 
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("requires USING"));
+    }
+
+    @Test
+    void rejectsDeleteUsingWithoutSource() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM users USING");
+
+        assertTrue(result.isError());
     }
 
     @Test

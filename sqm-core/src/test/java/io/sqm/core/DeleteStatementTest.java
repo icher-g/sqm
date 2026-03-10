@@ -51,10 +51,33 @@ class DeleteStatementTest {
     }
 
     @Test
-    void normalizesNullUsingAndJoinsInFactory() {
-        var statement = DeleteStatement.of(tbl("users"), null, null, null, List.of());
+    void supportsFactoryOverloadsWithUsingJoinsAndReturning() {
+        var statement = DeleteStatement.of(
+            tbl("users"),
+            List.of(tbl("users")),
+            List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))),
+            col("users", "id").eq(lit(1)),
+            List.of(io.sqm.core.ExprSelectItem.of(col("users", "id"), null)));
+
+        assertEquals(1, statement.using().size());
+        assertEquals(1, statement.joins().size());
+        assertEquals(1, statement.returning().size());
+
+        var withoutReturning = DeleteStatement.of(
+            tbl("users"),
+            List.of(tbl("users")),
+            List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))),
+            col("users", "id").eq(lit(1)));
+
+        assertTrue(withoutReturning.returning().isEmpty());
+    }
+
+    @Test
+    void normalizesNullUsingJoinsAndReturningInFactory() {
+        var statement = DeleteStatement.of(tbl("users"), null, null, null, null);
         assertTrue(statement.using().isEmpty());
         assertTrue(statement.joins().isEmpty());
+        assertTrue(statement.returning().isEmpty());
     }
 
     @Test
@@ -86,5 +109,8 @@ class DeleteStatementTest {
         assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).using((TableRef[]) null));
         assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).using((List<TableRef>) null));
         assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).joins((Join[]) null));
+        assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).join(null));
+        assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).returning((SelectItem[]) null));
+        assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).returning((List<SelectItem>) null));
     }
 }

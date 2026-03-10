@@ -1,6 +1,7 @@
 package io.sqm.render.mysql;
 
 import io.sqm.core.DeleteStatement;
+import io.sqm.render.SqlWriter;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.mysql.spi.MySqlDialect;
 import io.sqm.render.spi.RenderContext;
@@ -32,6 +33,35 @@ class MySqlDeleteStatementRendererTest {
     }
 
     @Test
+    void rendersPlainDeleteWithoutUsingOrJoins() {
+        var statement = delete(tbl("users")).build();
+
+        var renderer = new MySqlDeleteStatementRenderer();
+        var ctx = RenderContext.of(new MySqlDialect());
+        SqlWriter writer = new io.sqm.render.defaults.DefaultSqlWriter(ctx);
+
+        renderer.render(statement, ctx, writer);
+
+        assertEquals("DELETE FROM users", normalize(writer.toText(java.util.List.of()).sql()));
+    }
+
+    @Test
+    void rendersDeleteUsingWithoutJoins() {
+        var statement = delete(tbl("users"))
+            .using(tbl("users"))
+            .where(col("users", "id").eq(lit(1)))
+            .build();
+
+        var renderer = new MySqlDeleteStatementRenderer();
+        var ctx = RenderContext.of(new MySqlDialect());
+        SqlWriter writer = new io.sqm.render.defaults.DefaultSqlWriter(ctx);
+
+        renderer.render(statement, ctx, writer);
+
+        assertEquals("DELETE FROM users USING users WHERE users.id = 1", normalize(writer.toText(java.util.List.of()).sql()));
+    }
+
+    @Test
     void rejectsDeleteUsingJoinInDialectWithoutCapability() {
         DeleteStatement statement = delete(tbl("users"))
             .using(tbl("users"))
@@ -45,7 +75,24 @@ class MySqlDeleteStatementRendererTest {
             () -> renderer.render(statement, ctx, new io.sqm.render.defaults.DefaultSqlWriter(ctx)));
     }
 
+    @Test
+    void rejectsDeleteJoinWithoutCapabilityEvenWhenUsingIsEmpty() {
+        DeleteStatement statement = DeleteStatement.of(
+            tbl("users"),
+            java.util.List.of(),
+            java.util.List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))),
+            null,
+            java.util.List.of());
+
+        var renderer = new MySqlDeleteStatementRenderer();
+        var ctx = RenderContext.of(new AnsiDialect());
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> renderer.render(statement, ctx, new io.sqm.render.defaults.DefaultSqlWriter(ctx)));
+    }
+
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
+

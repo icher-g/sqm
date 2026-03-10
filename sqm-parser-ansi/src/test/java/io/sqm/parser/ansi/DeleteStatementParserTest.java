@@ -67,12 +67,30 @@ class DeleteStatementParserTest {
     }
 
     @Test
-    void rejectsDeleteJoinInAnsiDialect() {
+    void rejectsDeleteUsingInAnsiDialect() {
         var ctx = ParseContext.of(new AnsiSpecs());
         var result = ctx.parse(DeleteStatement.class, "DELETE FROM users USING users JOIN orders ON users.id = orders.user_id");
 
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("DELETE ... USING is not supported by this dialect"));
+    }
+
+    @Test
+    void rejectsDeleteJoinInAnsiDialectWithoutUsing() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM users JOIN orders ON users.id = orders.user_id");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("DELETE ... JOIN is not supported by this dialect"));
+    }
+
+    @Test
+    void rejectsDeleteReturningInAnsiDialect() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM users RETURNING id");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("DELETE ... RETURNING is not supported by this dialect"));
     }
 
     @Test
