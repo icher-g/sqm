@@ -1,6 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.JoinKind;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 
@@ -29,6 +31,12 @@ public class JoinKindRenderer {
             case LEFT -> w.append("LEFT JOIN");
             case RIGHT -> w.append("RIGHT JOIN");
             case FULL -> w.append("FULL JOIN");
+            case STRAIGHT -> {
+                if (!ctx.dialect().capabilities().supports(SqlFeature.STRAIGHT_JOIN)) {
+                    throw new UnsupportedDialectFeatureException("STRAIGHT_JOIN", ctx.dialect().name());
+                }
+                w.append("STRAIGHT_JOIN");
+            }
             default -> throw new IllegalStateException("Unexpected value: " + kind);
         }
     }

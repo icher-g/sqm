@@ -88,6 +88,18 @@ class MySqlRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTrip_straightJoin() {
+        String sql = "SELECT u.id FROM users AS u STRAIGHT_JOIN orders AS o ON u.id = o.user_id";
+
+        Query parsed = Utils.parseMySql(sql);
+        String rendered = Utils.renderMySql(parsed);
+        Query reparsed = Utils.parseMySql(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals("SELECT u.id FROM users AS u STRAIGHT_JOIN orders AS o ON u.id = o.user_id", Utils.normalizeSql(rendered));
+    }
+
+    @Test
     void roundTrip_groupByWithRollupCanonicalForm() {
         String sql = "SELECT department, status FROM employees GROUP BY department, status WITH ROLLUP";
 

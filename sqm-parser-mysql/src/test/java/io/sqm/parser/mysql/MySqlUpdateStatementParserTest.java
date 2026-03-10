@@ -52,6 +52,17 @@ class MySqlUpdateStatementParserTest {
     }
 
     @Test
+    void parsesStraightJoinedUpdateStatement() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(UpdateStatement.class,
+            "UPDATE users AS u STRAIGHT_JOIN orders AS o ON u.id = o.user_id SET u.name = 'alice' WHERE o.state = 'closed'");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(io.sqm.core.JoinKind.STRAIGHT, ((io.sqm.core.OnJoin) result.value().joins().getFirst()).kind());
+        assertEquals(java.util.List.of("u", "name"), result.value().assignments().getFirst().column().values());
+    }
+
+    @Test
     void parsesStandardUpdateWithoutJoins() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice'");
@@ -107,6 +118,16 @@ class MySqlUpdateStatementParserTest {
     }
 
     @Test
+    void parserRejectsStraightJoinedUpdateWhenCapabilityIsMissing() {
+        var ctx = ParseContext.of(new NoStraightJoinMySqlSpecs());
+        var result = ctx.parse(UpdateStatement.class,
+            "UPDATE users AS u STRAIGHT_JOIN orders AS o ON u.id = o.user_id SET u.name = 'alice'");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("STRAIGHT_JOIN"));
+    }
+
+    @Test
     void rejectsUpdateReturningInMysql57() {
         var ctx = ParseContext.of(new MySqlSpecs(SqlDialectVersion.of(5, 7)));
         var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' RETURNING id");
@@ -120,6 +141,14 @@ class MySqlUpdateStatementParserTest {
         public DialectCapabilities capabilities() {
             var delegate = super.capabilities();
             return feature -> feature == SqlFeature.DML_RETURNING || delegate.supports(feature);
+        }
+    }
+
+    private static final class NoStraightJoinMySqlSpecs extends MySqlSpecs {
+        @Override
+        public DialectCapabilities capabilities() {
+            var delegate = super.capabilities();
+            return feature -> feature != SqlFeature.STRAIGHT_JOIN && delegate.supports(feature);
         }
     }
 }

@@ -118,15 +118,19 @@ class DslAdditionalHelpersTest {
             .values(row(lit(1)))
             .build();
         var assignment = set("u", "name", "alice");
+        var straightJoin = straight(tbl("orders").as("o")).on(col("o", "user_id").eq(col("users", "id")));
         var updateStatement = update("users")
             .set(assignment)
+            .join(straightJoin)
             .where(col("id").eq(lit(1)))
             .build();
 
         assertEquals("users", insert.table().name().value());
         assertEquals(1, insert.columns().size());
         assertEquals(List.of("u", "name"), assignment.column().values());
+        assertEquals(JoinKind.STRAIGHT, straightJoin.kind());
         assertEquals("users", updateStatement.table().name().value());
+        assertEquals(JoinKind.STRAIGHT, assertInstanceOf(OnJoin.class, updateStatement.joins().getFirst()).kind());
         assertEquals(1, updateStatement.assignments().size());
         assertNotNull(updateStatement.where());
     }

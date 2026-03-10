@@ -34,6 +34,6 @@ public abstract class Indicators {
      * A set of tokens used to check if the {@link Cursor} is on a JOIN.
      */
     public static final Set<TokenType> JOIN = EnumSet.of(
-        TokenType.JOIN, TokenType.INNER, TokenType.LEFT, TokenType.RIGHT, TokenType.FULL, TokenType.CROSS, TokenType.USING, TokenType.NATURAL
+        TokenType.JOIN, TokenType.INNER, TokenType.LEFT, TokenType.RIGHT, TokenType.FULL, TokenType.CROSS, TokenType.STRAIGHT, TokenType.USING, TokenType.NATURAL
     );
 }

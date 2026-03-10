@@ -48,6 +48,7 @@ public final class MySqlCapabilities {
                 SqlFeature.INSERT_ON_DUPLICATE_KEY_UPDATE,
                 SqlFeature.REPLACE_INTO,
                 SqlFeature.UPDATE_JOIN,
+                SqlFeature.STRAIGHT_JOIN,
                 SqlFeature.DELETE_USING_JOIN
             )
             .build();

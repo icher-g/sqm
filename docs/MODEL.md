@@ -471,7 +471,7 @@ graph TD
     - Join
         - CrossJoin
         - NaturalJoin
-        - OnJoin
+        - OnJoin (`INNER`, `LEFT`, `RIGHT`, `FULL`, and dialect-gated `STRAIGHT_JOIN`)
         - UsingJoin
     - TableRef
         - **AliasedTableRef** – base interface for table references that support both aliases and column aliases (derived column lists)

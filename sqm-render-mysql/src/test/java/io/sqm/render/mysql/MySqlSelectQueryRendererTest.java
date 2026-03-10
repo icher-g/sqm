@@ -67,7 +67,37 @@ class MySqlSelectQueryRendererTest {
     }
 
     @Test
+    void rendersStraightJoin() {
+        var query = Dsl.select(Dsl.col("u", "id"))
+            .from(Dsl.tbl("users").as("u"))
+            .join(Dsl.straight(Dsl.tbl("orders").as("o")).on(Dsl.col("u", "id").eq(Dsl.col("o", "user_id"))))
+            .build();
+
+        var sql = RenderContext.of(new MySqlDialect()).render(query).sql();
+
+        assertEquals("SELECT u.id FROM users AS u STRAIGHT_JOIN orders AS o ON u.id = o.user_id", normalize(sql));
+    }
+
+    @Test
+    void rejectsStraightJoinInUnsupportedDialect() {
+        var query = Dsl.select(Dsl.col("u", "id"))
+            .from(Dsl.tbl("users").as("u"))
+            .join(Dsl.straight(Dsl.tbl("orders").as("o")).on(Dsl.col("u", "id").eq(Dsl.col("o", "user_id"))))
+            .build();
+
+        var renderer = new MySqlSelectQueryRenderer();
+        var ctx = RenderContext.of(new AnsiDialect());
+
+        assertThrows(UnsupportedDialectFeatureException.class,
+            () -> renderer.render(query, ctx, new io.sqm.render.defaults.DefaultSqlWriter(ctx)));
+    }
+
+    @Test
     void targetTypeIsSelectQuery() {
         assertEquals(SelectQuery.class, new MySqlSelectQueryRenderer().targetType());
+    }
+
+    private static String normalize(String sql) {
+        return sql.replaceAll("\\s+", " ").trim();
     }
 }

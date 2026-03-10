@@ -14,6 +14,7 @@ import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.id;
 import static io.sqm.dsl.Dsl.inner;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.straight;
 import static io.sqm.dsl.Dsl.tbl;
 import static io.sqm.dsl.Dsl.update;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -70,6 +71,21 @@ class MySqlUpdateStatementRendererTest {
     }
 
     @Test
+    void rendersStraightJoinedUpdateWithQualifiedAssignmentTarget() {
+        var statement = update(tbl("users").as("u"))
+            .join(straight(tbl("orders").as("o")).on(col("u", "id").eq(col("o", "user_id"))))
+            .set(io.sqm.core.QualifiedName.of("u", "name"), lit("alice"))
+            .where(col("o", "state").eq(lit("closed")))
+            .build();
+
+        var sql = RenderContext.of(new MySqlDialect()).render(statement).sql();
+
+        assertEquals(
+            "UPDATE users AS u STRAIGHT_JOIN orders AS o ON u.id = o.user_id SET u.name = 'alice' WHERE o.state = 'closed'",
+            normalize(sql));
+    }
+
+    @Test
     void rendersPlainUpdateWithoutJoins() {
         var statement = update(tbl("users"))
             .set(id("name"), lit("alice"))
@@ -96,6 +112,17 @@ class MySqlUpdateStatementRendererTest {
 
         assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
             () -> renderer.render(statement, ctx, new io.sqm.render.defaults.DefaultSqlWriter(ctx)));
+    }
+
+    @Test
+    void rejectsStraightJoinedUpdateWithoutStraightJoinCapability() {
+        UpdateStatement statement = update(tbl("users").as("u"))
+            .join(straight(tbl("orders").as("o")).on(col("u", "id").eq(col("o", "user_id"))))
+            .set(io.sqm.core.QualifiedName.of("u", "name"), lit("alice"))
+            .build();
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new NoStraightJoinMySqlDialect()).render(statement));
     }
 
     @Test
@@ -141,6 +168,14 @@ class MySqlUpdateStatementRendererTest {
         public DialectCapabilities capabilities() {
             var delegate = super.capabilities();
             return feature -> feature == SqlFeature.DML_RETURNING || delegate.supports(feature);
+        }
+    }
+
+    private static final class NoStraightJoinMySqlDialect extends MySqlDialect {
+        @Override
+        public DialectCapabilities capabilities() {
+            var delegate = super.capabilities();
+            return feature -> feature != SqlFeature.STRAIGHT_JOIN && delegate.supports(feature);
         }
     }
 }

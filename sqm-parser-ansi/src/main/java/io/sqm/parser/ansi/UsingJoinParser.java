@@ -39,10 +39,12 @@ public class UsingJoinParser implements MatchableParser<UsingJoin>, InfixParser<
     @Override
     public ParseResult<UsingJoin> parse(Cursor cur, ParseContext ctx) {
         // JOIN customers USING (customer_id, region_id);
-        JoinKind kind = parseKind(cur);
+        JoinKind kind = parseKind(cur, ctx);
 
-        // JOIN keyword
-        cur.expect("Expected JOIN", TokenType.JOIN);
+        // STRAIGHT_JOIN is encoded as a standalone keyword in MySQL.
+        if (kind != JoinKind.STRAIGHT) {
+            cur.expect("Expected JOIN", TokenType.JOIN);
+        }
 
         var table = ctx.parse(TableRef.class, cur);
         if (table.isError()) {

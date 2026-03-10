@@ -76,6 +76,14 @@ class MySqlDmlRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTripStraightJoinedUpdateWithQualifiedAssignmentTarget() {
+        assertRoundTrip(
+            "UPDATE users AS u STRAIGHT_JOIN orders AS o ON u.id = o.user_id SET u.name = 'alice' WHERE o.state = 'closed'",
+            "UPDATE users AS u STRAIGHT_JOIN orders AS o ON u.id = o.user_id SET u.name = 'alice' WHERE o.state = 'closed'"
+        );
+    }
+
+    @Test
     void roundTripDeleteUsingJoinStatement() {
         assertRoundTrip(
             "DELETE FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'",

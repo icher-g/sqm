@@ -31,12 +31,15 @@
   - `INSERT ... ON DUPLICATE KEY UPDATE`
   - `REPLACE INTO`
   - joined `UPDATE`
+  - qualified joined-`UPDATE` assignment targets
+  - `STRAIGHT_JOIN`
   - canonical `DELETE FROM ... USING ... JOIN ...`
   - alias/index-hint hardening and round-trip integration coverage
 
 ### Changed
 - DML documentation updated to reflect delivered ANSI, PostgreSQL, and MySQL statement support.
 - MySQL docs now reflect delivered DML extensions, canonical alias/index-hint rendering, and current `RETURNING` limitations by version.
+- MySQL roadmap/docs now reflect post-R3 join-semantic hardening with qualified update targets and `STRAIGHT_JOIN`.
 - Dialect docs and roadmap updated to reflect MySQL R1/R3 completion and PostgreSQL DML extension completion.
 - PostgreSQL documentation now reflects full writable CTE `INSERT ... RETURNING`, `UPDATE ... RETURNING`, and `DELETE ... RETURNING` support.
 ## [v0.3.1] - 2026-03-01

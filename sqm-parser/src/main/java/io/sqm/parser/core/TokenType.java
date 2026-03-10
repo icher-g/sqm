@@ -193,6 +193,10 @@ public enum TokenType {
      */
     CROSS,
     /**
+     * STRAIGHT_JOIN keyword token.
+     */
+    STRAIGHT,
+    /**
      * USING keyword token.
      */
     USING,

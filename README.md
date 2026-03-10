@@ -139,15 +139,17 @@ MySQL DML extensions are delivered for:
 - `INSERT ... ON DUPLICATE KEY UPDATE`
 - `REPLACE INTO`
 - joined `UPDATE`
+- qualified joined-`UPDATE` assignment targets
 - canonical `DELETE FROM ... USING ... JOIN ...`
 - alias and index-hint canonicalization for prioritized joined DML edge cases
+- `STRAIGHT_JOIN`
 
 Current scope boundary:
 
 - Baseline DML is cross-dialect through ANSI base components.
 - PostgreSQL writable CTE coverage includes `INSERT ... RETURNING`, `UPDATE ... RETURNING`, and `DELETE ... RETURNING`.
 - MySQL `RETURNING` remains capability-gated and unsupported for current supported MySQL versions.
-- MySQL joined DML support covers join-based target/source forms, but not qualified multi-target assignment semantics such as `SET t1.col = ..., t2.col = ...`.
+- MySQL joined DML support includes qualified assignment targets such as `SET u.name = ...`.
 
 ### PostgreSQL DML Example
 
@@ -204,6 +206,7 @@ INSERT IGNORE INTO users (id, name) VALUES (1, 'alice')
 INSERT INTO users (id, name) VALUES (1, 'alice') ON DUPLICATE KEY UPDATE name = 'alice2'
 REPLACE INTO users (id, name) VALUES (1, 'alice')
 UPDATE users AS u USE INDEX (idx_users_name) INNER JOIN orders AS o FORCE INDEX FOR JOIN (idx_orders_user) ON u.id = o.user_id SET name = 'alice' WHERE o.state = 'closed'
+UPDATE users AS u STRAIGHT_JOIN orders AS o ON u.id = o.user_id SET u.name = 'alice' WHERE o.state = 'closed'
 DELETE FROM users AS u USE INDEX (idx_users_name) USING users AS u USE INDEX (idx_users_name) INNER JOIN orders AS o FORCE INDEX FOR JOIN (idx_orders_user) ON u.id = o.user_id WHERE o.state = 'closed'
 ```
 
@@ -730,6 +733,7 @@ Highlights:
 - Regex predicates (`REGEXP`, `RLIKE`) with canonical rendering
 - Locking modifiers (`FOR SHARE`, `NOWAIT`, `SKIP LOCKED`)
 - `GROUP BY ... WITH ROLLUP` parsing and canonical rendering
+- `STRAIGHT_JOIN` parsing and canonical rendering
 
 ### Schema Validation (sqm-validate)
 

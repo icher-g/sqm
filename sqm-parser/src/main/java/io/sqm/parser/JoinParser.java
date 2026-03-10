@@ -1,7 +1,9 @@
 package io.sqm.parser;
 
 import io.sqm.core.*;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.ParserException;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchResult;
 import io.sqm.parser.spi.ParseContext;
@@ -22,7 +24,8 @@ public class JoinParser implements Parser<Join> {
         TokenType.INNER, JoinKind.INNER,
         TokenType.LEFT, JoinKind.LEFT,
         TokenType.RIGHT, JoinKind.RIGHT,
-        TokenType.FULL, JoinKind.FULL
+        TokenType.FULL, JoinKind.FULL,
+        TokenType.STRAIGHT, JoinKind.STRAIGHT
     );
 
     /**
@@ -35,12 +38,17 @@ public class JoinParser implements Parser<Join> {
      * Parses {@link JoinKind} from the {@link Cursor}.
      *
      * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.
+     * @param ctx the parse context.
      * @return a parsed join kind.
      */
-    public static JoinKind parseKind(Cursor cur) {
+    public static JoinKind parseKind(Cursor cur, ParseContext ctx) {
         JoinKind kind = JoinKind.INNER;
-        if (cur.matchAny(TokenType.INNER, TokenType.LEFT, TokenType.RIGHT, TokenType.FULL, TokenType.CROSS)) {
-            kind = token2join.get(cur.advance().type());
+        if (cur.matchAny(TokenType.INNER, TokenType.LEFT, TokenType.RIGHT, TokenType.FULL, TokenType.CROSS, TokenType.STRAIGHT)) {
+            var token = cur.advance().type();
+            if (token == TokenType.STRAIGHT && !ctx.capabilities().supports(SqlFeature.STRAIGHT_JOIN)) {
+                throw new ParserException("STRAIGHT_JOIN is not supported by this dialect", cur.fullPos());
+            }
+            kind = token2join.get(token);
             cur.consumeIf(TokenType.OUTER); // LEFT/RIGHT/FULL OUTER
         }
         return kind;
@@ -65,10 +73,12 @@ public class JoinParser implements Parser<Join> {
             return matched.result();
         }
 
-        JoinKind kind = parseKind(cur);
+        JoinKind kind = parseKind(cur, ctx);
 
-        // JOIN keyword
-        cur.expect("Expected JOIN", TokenType.JOIN);
+        // STRAIGHT_JOIN is a standalone keyword; other join kinds still require JOIN.
+        if (kind != JoinKind.STRAIGHT) {
+            cur.expect("Expected JOIN", TokenType.JOIN);
+        }
 
         var table = ctx.parse(TableRef.class, cur);
         if (table.isError()) {
