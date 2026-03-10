@@ -5,8 +5,11 @@ import io.sqm.core.UpdateStatement;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.Test;
 
+import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.id;
+import static io.sqm.dsl.Dsl.inner;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.tbl;
 import static io.sqm.dsl.Dsl.update;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -58,6 +61,23 @@ class UpdateStatementRendererTest {
     }
 
     @Test
+    void rejectsUpdateJoinWhenDialectDoesNotSupportIt() {
+        var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
+        UpdateStatement statement = update(tbl("users"))
+            .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
+            .set(id("name"), lit("alice"))
+            .build();
+
+        var renderer = new UpdateStatementRenderer();
+        var writer = new io.sqm.render.defaults.DefaultSqlWriter(ctx);
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+            io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> renderer.render(statement, ctx, writer)
+        );
+    }
+
+    @Test
     void rejectsUpdateFromWhenDialectDoesNotSupportIt() {
         var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
         UpdateStatement statement = update("users")
@@ -73,8 +93,8 @@ class UpdateStatementRendererTest {
             () -> renderer.render(statement, ctx, writer)
         );
     }
+
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
-

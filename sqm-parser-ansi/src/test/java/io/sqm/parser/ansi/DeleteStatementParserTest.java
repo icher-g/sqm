@@ -5,6 +5,8 @@ import io.sqm.core.Statement;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,6 +23,7 @@ class DeleteStatementParserTest {
         assertTrue(result.ok(), result.errorMessage());
         var statement = result.value();
         assertEquals("users", statement.table().name().value());
+        assertTrue(statement.joins().isEmpty());
         assertNotNull(statement.where());
     }
 
@@ -33,6 +36,7 @@ class DeleteStatementParserTest {
         var statement = result.value();
         assertEquals("users", statement.table().name().value());
         assertTrue(statement.using().isEmpty());
+        assertTrue(statement.joins().isEmpty());
         assertNull(statement.where());
     }
 
@@ -63,6 +67,15 @@ class DeleteStatementParserTest {
     }
 
     @Test
+    void rejectsDeleteJoinInAnsiDialect() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM users USING users JOIN orders ON users.id = orders.user_id");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("DELETE ... USING is not supported by this dialect"));
+    }
+
+    @Test
     void rejectsDeleteWithInvalidWhereExpression() {
         var ctx = ParseContext.of(new AnsiSpecs());
         var result = ctx.parse(DeleteStatement.class, "DELETE FROM users WHERE");
@@ -75,6 +88,3 @@ class DeleteStatementParserTest {
         assertEquals(DeleteStatement.class, new DeleteStatementParser().targetType());
     }
 }
-
-
-

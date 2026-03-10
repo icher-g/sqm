@@ -4,6 +4,8 @@ import io.sqm.core.LiteralExpr;
 import io.sqm.core.Node;
 import org.junit.jupiter.api.Test;
 
+import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.inner;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
@@ -16,6 +18,7 @@ class UpdateStatementTransformerTest {
     @Test
     void preservesIdentityWhenChildrenDoNotChange() {
         var statement = update(tbl("users"))
+            .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
             .set(set("name", lit("alice")))
             .from(tbl("source_users"))
             .build();
@@ -56,6 +59,26 @@ class UpdateStatementTransformerTest {
                     return lit(2);
                 }
                 return literalExpr;
+            }
+        }.transform(statement);
+
+        assertNotSame(statement, transformed);
+    }
+
+    @Test
+    void rebuildsStatementWhenJoinChanges() {
+        var statement = update(tbl("users"))
+            .join(inner(tbl("source_users")).on(col("users", "id").eq(col("source_users", "id"))))
+            .set(set("name", lit("alice")))
+            .build();
+
+        Node transformed = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitTable(io.sqm.core.Table table) {
+                if ("source_users".equals(table.name().value())) {
+                    return tbl("alt_source");
+                }
+                return table;
             }
         }.transform(statement);
 

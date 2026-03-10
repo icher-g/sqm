@@ -56,6 +56,22 @@ class MySqlDmlRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTripJoinedUpdateStatement() {
+        assertRoundTrip(
+            "UPDATE users INNER JOIN orders ON users.id = orders.user_id SET name = 'alice' WHERE orders.state = 'closed'",
+            "UPDATE users INNER JOIN orders ON users.id = orders.user_id SET name = 'alice' WHERE orders.state = 'closed'"
+        );
+    }
+
+    @Test
+    void roundTripDeleteUsingJoinStatement() {
+        assertRoundTrip(
+            "DELETE FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'",
+            "DELETE FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'"
+        );
+    }
+
+    @Test
     void rejectsPostgresOnConflictSyntax() {
         var result = parseContext.parse(Statement.class, "INSERT INTO users VALUES (1) ON CONFLICT (id) DO NOTHING");
 

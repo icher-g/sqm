@@ -1,10 +1,12 @@
 package io.sqm.parser.mysql;
 
+import io.sqm.core.DeleteStatement;
 import io.sqm.core.GroupBy;
-import io.sqm.core.InsertStatement;
 import io.sqm.core.GroupItem;
+import io.sqm.core.InsertStatement;
 import io.sqm.core.LimitOffset;
 import io.sqm.core.Query;
+import io.sqm.core.UpdateStatement;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
 import org.junit.jupiter.api.Test;
@@ -109,6 +111,7 @@ class MySqlSpecsTest {
         assertTrue(result.ok());
         assertInstanceOf(io.sqm.core.RegexPredicate.class, result.value());
     }
+
     @Test
     void parseContext_usesMysqlSelectQueryParser_forSqlCalcFoundRows() {
         var ctx = io.sqm.parser.spi.ParseContext.of(new MySqlSpecs());
@@ -135,5 +138,25 @@ class MySqlSpecsTest {
 
         assertTrue(result.ok());
         assertEquals(InsertStatement.InsertMode.IGNORE, result.value().insertMode());
+    }
+
+    @Test
+    void parseContext_usesMysqlUpdateParser_forJoinedUpdate() {
+        var ctx = io.sqm.parser.spi.ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(UpdateStatement.class,
+            "UPDATE users INNER JOIN orders ON users.id = orders.user_id SET name = 'alice'");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(1, result.value().joins().size());
+    }
+
+    @Test
+    void parseContext_usesMysqlDeleteParser_forUsingJoinDelete() {
+        var ctx = io.sqm.parser.spi.ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(DeleteStatement.class,
+            "DELETE FROM users USING users INNER JOIN orders ON users.id = orders.user_id");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(1, result.value().joins().size());
     }
 }

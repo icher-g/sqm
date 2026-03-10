@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.inner;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
@@ -20,6 +21,7 @@ class UpdateStatementTest {
     @Test
     void builderCreatesImmutableUpdateStatement() {
         var statement = update(tbl("users"))
+            .join(inner(tbl("orders").as("o")).on(col("users", "id").eq(col("o", "user_id"))))
             .set(set("name", lit("alice")))
             .from(tbl("source_users"))
             .where(col("id").eq(lit(1)))
@@ -28,39 +30,50 @@ class UpdateStatementTest {
         assertEquals("users", statement.table().name().value());
         assertEquals(1, statement.assignments().size());
         assertEquals("name", statement.assignments().getFirst().column().value());
+        assertEquals(1, statement.joins().size());
         assertEquals(1, statement.from().size());
         assertThrows(UnsupportedOperationException.class, () -> statement.assignments().add(set("x", lit(1))));
+        assertThrows(UnsupportedOperationException.class, () -> statement.joins().add(inner(tbl("x")).on(col("x", "id").eq(col("users", "id")))));
         assertThrows(UnsupportedOperationException.class, () -> statement.from().add(tbl("x")));
     }
 
     @Test
     void supportsOfOverloadAndBuilderConvenienceMethods() {
-        var statement = UpdateStatement.of(tbl("users"), List.of(set("name", lit("alice"))));
+        var statement = UpdateStatement.of(
+            tbl("users"),
+            List.of(set("name", lit("alice"))),
+            List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))));
         assertNull(statement.where());
         assertTrue(statement.from().isEmpty());
+        assertEquals(1, statement.joins().size());
 
         var built = UpdateStatement.builder(tbl("users"))
             .set(Identifier.of("name"), lit("alice"))
+            .joins(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
             .from(tbl("src"))
             .build();
         assertEquals(1, built.assignments().size());
+        assertEquals(1, built.joins().size());
         assertEquals(1, built.from().size());
     }
 
     @Test
-    void normalizesNullFromInFactory() {
-        var statement = UpdateStatement.of(tbl("users"), List.of(set("name", lit("alice"))), null, null);
+    void normalizesNullFromAndJoinsInFactory() {
+        var statement = UpdateStatement.of(tbl("users"), List.of(set("name", lit("alice"))), null, null, null, List.of());
+        assertTrue(statement.joins().isEmpty());
         assertTrue(statement.from().isEmpty());
     }
 
     @Test
     void equalityAndHashDependOnShape() {
         var first = update(tbl("users"))
+            .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
             .set(set("name", lit("alice")))
             .from(tbl("source_users"))
             .where(col("id").eq(lit(1)))
             .build();
         var second = update(tbl("users"))
+            .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
             .set(set("name", lit("alice")))
             .from(tbl("source_users"))
             .where(col("id").eq(lit(1)))
@@ -77,13 +90,15 @@ class UpdateStatementTest {
 
     @Test
     void validatesRequiredMembers() {
-        assertThrows(NullPointerException.class, () -> UpdateStatement.of(null, List.of(set("name", lit("alice"))), null));
-        assertThrows(NullPointerException.class, () -> UpdateStatement.of(tbl("users"), null, null));
-        assertThrows(IllegalArgumentException.class, () -> UpdateStatement.of(tbl("users"), List.of(), null));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.of(null, List.of(set("name", lit("alice"))), (Predicate) null));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.of(tbl("users"), null, (Predicate) null));
+        assertThrows(IllegalArgumentException.class, () -> UpdateStatement.of(tbl("users"), List.of(), (Predicate) null));
         assertThrows(IllegalStateException.class, () -> update(tbl("users")).build());
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).table(null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).assignments(null));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).joins((Join[]) null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).from((TableRef[]) null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).set(null));
     }
 }
+

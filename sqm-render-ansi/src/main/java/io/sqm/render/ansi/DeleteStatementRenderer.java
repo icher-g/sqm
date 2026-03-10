@@ -1,6 +1,7 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.DeleteStatement;
+import io.sqm.core.Join;
 import io.sqm.core.SelectItem;
 import io.sqm.core.TableRef;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
@@ -33,6 +34,7 @@ public class DeleteStatementRenderer implements Renderer<DeleteStatement> {
         w.append("DELETE FROM").space().append(node.table());
 
         renderUsing(node.using(), ctx, w);
+        renderJoins(node.joins(), ctx, w);
 
         if (node.where() != null) {
             w.space().append("WHERE").space().append(node.where());
@@ -51,6 +53,19 @@ public class DeleteStatementRenderer implements Renderer<DeleteStatement> {
     protected void renderUsing(List<TableRef> using, RenderContext ctx, SqlWriter w) {
         if (!using.isEmpty()) {
             throw new UnsupportedDialectFeatureException("DELETE ... USING", ctx.dialect().name());
+        }
+    }
+
+    /**
+     * Renders optional joined sources attached to the {@code USING} clause.
+     *
+     * @param joins joined sources
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected void renderJoins(List<Join> joins, RenderContext ctx, SqlWriter w) {
+        if (!joins.isEmpty()) {
+            throw new UnsupportedDialectFeatureException("DELETE ... JOIN", ctx.dialect().name());
         }
     }
 

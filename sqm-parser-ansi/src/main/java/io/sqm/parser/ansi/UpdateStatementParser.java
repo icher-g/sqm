@@ -1,5 +1,6 @@
 package io.sqm.parser.ansi;
 
+import io.sqm.core.Join;
 import io.sqm.core.Predicate;
 import io.sqm.core.SelectItem;
 import io.sqm.core.Table;
@@ -43,6 +44,11 @@ public class UpdateStatementParser implements Parser<UpdateStatement> {
             return error(table);
         }
 
+        var joinsResult = parseJoins(cur, ctx);
+        if (joinsResult.isError()) {
+            return error(joinsResult);
+        }
+
         cur.expect("Expected SET after UPDATE table", TokenType.SET);
 
         var assignmentsResult = parseItems(io.sqm.core.Assignment.class, cur, ctx);
@@ -70,7 +76,21 @@ public class UpdateStatementParser implements Parser<UpdateStatement> {
             return error(returningResult);
         }
 
-        return ok(UpdateStatement.of(table.value(), assignmentsResult.value(), fromResult.value(), where, returningResult.value()));
+        return ok(UpdateStatement.of(table.value(), assignmentsResult.value(), joinsResult.value(), fromResult.value(), where, returningResult.value()));
+    }
+
+    /**
+     * Parses optional joined sources attached to the target table.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return joined sources or empty list when omitted
+     */
+    protected ParseResult<List<Join>> parseJoins(Cursor cur, ParseContext ctx) {
+        if (cur.matchAny(Indicators.JOIN)) {
+            return error("UPDATE ... JOIN is not supported by this dialect", cur.fullPos());
+        }
+        return ok(List.of());
     }
 
     /**

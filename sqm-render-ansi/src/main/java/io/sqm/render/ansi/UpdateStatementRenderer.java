@@ -1,5 +1,6 @@
 package io.sqm.render.ansi;
 
+import io.sqm.core.Join;
 import io.sqm.core.SelectItem;
 import io.sqm.core.TableRef;
 import io.sqm.core.UpdateStatement;
@@ -31,6 +32,9 @@ public class UpdateStatementRenderer implements Renderer<UpdateStatement> {
     @Override
     public void render(UpdateStatement node, RenderContext ctx, SqlWriter w) {
         w.append("UPDATE").space().append(node.table());
+
+        renderJoins(node.joins(), ctx, w);
+
         w.space().append("SET").space();
         w.comma(node.assignments());
 
@@ -41,6 +45,19 @@ public class UpdateStatementRenderer implements Renderer<UpdateStatement> {
         }
 
         renderReturning(node.returning(), ctx, w);
+    }
+
+    /**
+     * Renders optional joined sources attached to the target table.
+     *
+     * @param joins joined sources
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected void renderJoins(List<Join> joins, RenderContext ctx, SqlWriter w) {
+        if (!joins.isEmpty()) {
+            throw new UnsupportedDialectFeatureException("UPDATE ... JOIN", ctx.dialect().name());
+        }
     }
 
     /**

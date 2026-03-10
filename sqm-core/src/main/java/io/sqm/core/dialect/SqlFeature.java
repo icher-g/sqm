@@ -64,6 +64,14 @@ public enum SqlFeature {
      */
     REPLACE_INTO("MySQL REPLACE INTO statement"),
     /**
+     * MySQL joined UPDATE support for join-based write operations.
+     */
+    UPDATE_JOIN("MySQL UPDATE ... JOIN"),
+    /**
+     * MySQL DELETE ... USING with joined sources support.
+     */
+    DELETE_USING_JOIN("MySQL DELETE ... USING ... JOIN"),
+    /**
      * PostgreSQL UPDATE ... FROM clause support for join-like update sources.
      */
     UPDATE_FROM("PostgreSQL UPDATE ... FROM clause"),

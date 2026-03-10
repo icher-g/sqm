@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.inner;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
@@ -20,6 +21,7 @@ class UpdateStatementVisitorTest {
     @Test
     void recursiveVisitorTraversesUpdateChildren() {
         var statement = update(tbl("users"))
+            .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
             .set(set("name", lit("alice")))
             .from(tbl("source_users"))
             .where(col("id").eq(lit(1)))
@@ -52,7 +54,7 @@ class UpdateStatementVisitorTest {
             }
         }.accept(statement);
 
-        assertEquals(List.of("update", "table", "assignment", "table"), visits.subList(0, 4));
+        assertEquals(List.of("update", "table", "assignment", "table", "table"), visits.subList(0, 5));
         assertEquals("id", statement.returning().getFirst().matchSelectItem().expr(e -> e.expr().matchExpression().column(c -> c.name().value()).orElse(null)).orElse(null));
     }
 }

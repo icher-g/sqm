@@ -35,6 +35,8 @@ class MySqlCapabilitiesTest {
         assertTrue(capabilities.supports(SqlFeature.INSERT_IGNORE));
         assertTrue(capabilities.supports(SqlFeature.INSERT_ON_DUPLICATE_KEY_UPDATE));
         assertTrue(capabilities.supports(SqlFeature.REPLACE_INTO));
+        assertTrue(capabilities.supports(SqlFeature.UPDATE_JOIN));
+        assertTrue(capabilities.supports(SqlFeature.DELETE_USING_JOIN));
     }
 
     @Test
@@ -67,6 +69,8 @@ class MySqlCapabilitiesTest {
         assertEquals(expected.supports(SqlFeature.INSERT_IGNORE), latest.supports(SqlFeature.INSERT_IGNORE));
         assertEquals(expected.supports(SqlFeature.INSERT_ON_DUPLICATE_KEY_UPDATE), latest.supports(SqlFeature.INSERT_ON_DUPLICATE_KEY_UPDATE));
         assertEquals(expected.supports(SqlFeature.REPLACE_INTO), latest.supports(SqlFeature.REPLACE_INTO));
+        assertEquals(expected.supports(SqlFeature.UPDATE_JOIN), latest.supports(SqlFeature.UPDATE_JOIN));
+        assertEquals(expected.supports(SqlFeature.DELETE_USING_JOIN), latest.supports(SqlFeature.DELETE_USING_JOIN));
     }
 
     @Test
@@ -74,4 +78,3 @@ class MySqlCapabilitiesTest {
         assertThrows(NullPointerException.class, () -> MySqlCapabilities.of(null));
     }
 }
-
