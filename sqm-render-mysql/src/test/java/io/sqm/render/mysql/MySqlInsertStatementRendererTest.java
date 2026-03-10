@@ -6,11 +6,13 @@ import io.sqm.render.mysql.spi.MySqlDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.Test;
 
+import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.id;
 import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
+import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -67,6 +69,33 @@ class MySqlInsertStatementRendererTest {
     }
 
     @Test
+    void rejectsOnDuplicateKeyUpdateWithConflictTarget() {
+        var statement = insert("users")
+            .values(row(lit(1)))
+            .onConflictDoUpdate(java.util.List.of(id("id")), java.util.List.of(set("name", lit("alice2"))))
+            .build();
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new MySqlDialect()).render(statement));
+    }
+
+    @Test
+    void rejectsOnDuplicateKeyUpdateWithWhereClause() {
+        InsertStatement statement = InsertStatement.of(
+            tbl("users"),
+            java.util.List.of(),
+            row(lit(1)),
+            java.util.List.of(),
+            InsertStatement.OnConflictAction.DO_UPDATE,
+            java.util.List.of(set("name", lit("alice2"))),
+            col("id").eq(lit(1)),
+            java.util.List.of());
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new MySqlDialect()).render(statement));
+    }
+
+    @Test
     void rejectsInsertIgnoreInDialectWithoutCapability() {
         InsertStatement statement = insert("users")
             .ignore()
@@ -85,6 +114,20 @@ class MySqlInsertStatementRendererTest {
         InsertStatement statement = insert("users")
             .replace()
             .values(row(lit(1)))
+            .build();
+
+        var renderer = new MySqlInsertStatementRenderer();
+        var ctx = RenderContext.of(new AnsiDialect());
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> renderer.render(statement, ctx, new io.sqm.render.defaults.DefaultSqlWriter(ctx)));
+    }
+
+    @Test
+    void rejectsOnDuplicateKeyUpdateInDialectWithoutCapability() {
+        InsertStatement statement = insert("users")
+            .values(row(lit(1)))
+            .onConflictDoUpdate(java.util.List.of(set("name", lit("alice2"))))
             .build();
 
         var renderer = new MySqlInsertStatementRenderer();

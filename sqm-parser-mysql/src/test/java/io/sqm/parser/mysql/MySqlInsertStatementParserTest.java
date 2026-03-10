@@ -18,6 +18,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MySqlInsertStatementParserTest {
 
     @Test
+    void parsesPlainInsertValuesStatement() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users VALUES (1)");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(InsertStatement.InsertMode.STANDARD, result.value().insertMode());
+        assertEquals(InsertStatement.OnConflictAction.NONE, result.value().onConflictAction());
+        assertInstanceOf(RowExpr.class, result.value().source());
+    }
+
+    @Test
     void parsesInsertIgnoreValuesStatement() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(InsertStatement.class, "INSERT IGNORE INTO users (id) VALUES (1)");
@@ -77,6 +88,15 @@ class MySqlInsertStatementParserTest {
     }
 
     @Test
+    void rejectsOnClauseWithoutDuplicateKeyword() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users VALUES (1) ON KEY UPDATE id = 2");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected DUPLICATE after ON"));
+    }
+
+    @Test
     void parserRejectsInsertIgnoreWhenCapabilityIsMissing() {
         var parser = new MySqlInsertStatementParser();
         var ctx = ParseContext.of(new AnsiSpecs());
@@ -99,4 +119,18 @@ class MySqlInsertStatementParserTest {
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("REPLACE INTO"));
     }
+
+    @Test
+    void parserRejectsOnDuplicateWhenCapabilityIsMissing() {
+        var parser = new MySqlInsertStatementParser();
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var cur = Cursor.of("INSERT INTO users VALUES (1) ON DUPLICATE KEY UPDATE id = 2", ctx.identifierQuoting());
+
+        var result = parser.parse(cur, ctx);
+
+        assertTrue(result.isError());
+        assertTrue(result.errorMessage() != null && !Objects.requireNonNull(result.errorMessage()).isBlank());
+    }
 }
+
+

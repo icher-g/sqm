@@ -12,6 +12,7 @@ import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -63,6 +64,47 @@ class InsertStatementTest {
         assertEquals(InsertStatement.OnConflictAction.DO_NOTHING, built.onConflictAction());
         assertEquals(1, built.returning().size());
         assertInstanceOf(io.sqm.core.SelectQuery.class, built.source());
+    }
+
+    @Test
+    void builderSupportsListAndVarargConvenienceOverloads() {
+        var statement = InsertStatement.builder(tbl("users"))
+            .replace()
+            .standard()
+            .columns(java.util.List.of(Identifier.of("id"), Identifier.of("name")))
+            .values(row(lit(1), lit("alice")))
+            .onConflictDoUpdate(set("name", lit("alice2")))
+            .onConflictDoNothing()
+            .returning(java.util.List.of(col("id").toSelectItem()))
+            .build();
+
+        assertEquals(InsertStatement.InsertMode.STANDARD, statement.insertMode());
+        assertEquals(2, statement.columns().size());
+        assertEquals(InsertStatement.OnConflictAction.DO_NOTHING, statement.onConflictAction());
+        assertTrue(statement.conflictTarget().isEmpty());
+        assertTrue(statement.conflictUpdateAssignments().isEmpty());
+        assertNull(statement.conflictUpdateWhere());
+        assertEquals(1, statement.returning().size());
+    }
+
+    @Test
+    void factoryOverloadsDefaultToStandardMode() {
+        var statementWithColumns = InsertStatement.of(
+            tbl("users"),
+            java.util.List.of(Identifier.of("id")),
+            row(lit(1)),
+            java.util.List.of(col("id").toSelectItem()));
+        var statementWithoutColumns = InsertStatement.of(
+            tbl("users"),
+            row(lit(1)),
+            java.util.List.of(col("id").toSelectItem()));
+
+        assertEquals(InsertStatement.InsertMode.STANDARD, statementWithColumns.insertMode());
+        assertEquals(1, statementWithColumns.columns().size());
+        assertEquals(1, statementWithColumns.returning().size());
+        assertEquals(InsertStatement.InsertMode.STANDARD, statementWithoutColumns.insertMode());
+        assertTrue(statementWithoutColumns.columns().isEmpty());
+        assertEquals(1, statementWithoutColumns.returning().size());
     }
 
     @Test
@@ -123,6 +165,6 @@ class InsertStatementTest {
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).returning((SelectItem[]) null));
         assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(tbl("users"), java.util.List.of(), row(lit(1)), java.util.List.of(), InsertStatement.OnConflictAction.DO_UPDATE, java.util.List.of(), null, java.util.List.of()));
         assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(tbl("users"), java.util.List.of(), row(lit(1)), java.util.List.of(Identifier.of("id")), InsertStatement.OnConflictAction.NONE, java.util.List.of(), null, java.util.List.of()));
+        assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(tbl("users"), java.util.List.of(), row(lit(1)), java.util.List.of(), InsertStatement.OnConflictAction.DO_NOTHING, java.util.List.of(set("id", lit(2))), null, java.util.List.of()));
     }
 }
-

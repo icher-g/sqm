@@ -45,6 +45,28 @@ class InsertStatementRendererTest {
     }
 
     @Test
+    void rejectsInsertIgnoreInAnsiDialect() {
+        var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
+        InsertStatement statement = insert("users")
+            .ignore()
+            .values(row(lit(1)))
+            .build();
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> ctx.render(statement));
+    }
+
+    @Test
+    void rejectsReplaceIntoInAnsiDialect() {
+        var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
+        InsertStatement statement = insert("users")
+            .replace()
+            .values(row(lit(1)))
+            .build();
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> ctx.render(statement));
+    }
+
+    @Test
     void rejectsInsertReturningInAnsiDialect() {
         var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
         InsertStatement statement = insert("users")
