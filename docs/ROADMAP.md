@@ -45,6 +45,11 @@ Priority levels:
 - Alias/index-hint hardening added for prioritized MySQL joined DML target/source shapes.
 - Version-aware MySQL `RETURNING` gating is explicit and remains unsupported for current supported MySQL versions.
 
+### Epic MYSQL-R2: MySQL Join Semantics Hardening (Completed)
+- Delivered scope: qualified MySQL joined-`UPDATE` assignment targets and `STRAIGHT_JOIN`.
+- Parser/render capability gating and deterministic canonical SQL output delivered.
+- Integration round-trip coverage delivered in `sqm-it`.
+
 ### Epic R4: SQL Server Dialect Support
 - Add `sqm-parser-sqlserver` and `sqm-render-sqlserver`.
 - Define `SqlServerSpecs`.

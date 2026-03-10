@@ -37,6 +37,7 @@ public final class Lexer {
         KEYWORDS.put("FULL", FULL);
         KEYWORDS.put("OUTER", OUTER);
         KEYWORDS.put("CROSS", CROSS);
+        KEYWORDS.put("STRAIGHT_JOIN", STRAIGHT);
         KEYWORDS.put("USING", USING);
         KEYWORDS.put("NATURAL", NATURAL);
         KEYWORDS.put("ON", ON);

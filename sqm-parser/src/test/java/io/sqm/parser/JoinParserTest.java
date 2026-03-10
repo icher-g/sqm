@@ -21,7 +21,7 @@ class JoinParserTest {
     @Test
     void parseKindDefaultsToInnerWhenNoPrefix() {
         var cur = Cursor.of("JOIN t", IdentifierQuoting.of('"'));
-        var kind = JoinParser.parseKind(cur);
+        var kind = JoinParser.parseKind(cur, contextWithJoinParsers());
 
         assertEquals(JoinKind.INNER, kind);
         assertTrue(cur.match(TokenType.JOIN));
@@ -30,7 +30,7 @@ class JoinParserTest {
     @Test
     void parseKindConsumesOuterKeywordWhenPresent() {
         var cur = Cursor.of("LEFT OUTER JOIN t", IdentifierQuoting.of('"'));
-        var kind = JoinParser.parseKind(cur);
+        var kind = JoinParser.parseKind(cur, contextWithJoinParsers());
 
         assertEquals(JoinKind.LEFT, kind);
         assertTrue(cur.match(TokenType.JOIN));

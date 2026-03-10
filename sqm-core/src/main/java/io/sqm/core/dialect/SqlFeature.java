@@ -68,6 +68,10 @@ public enum SqlFeature {
      */
     UPDATE_JOIN("MySQL UPDATE ... JOIN"),
     /**
+     * MySQL STRAIGHT_JOIN support for fixed join-order execution.
+     */
+    STRAIGHT_JOIN("MySQL STRAIGHT_JOIN"),
+    /**
      * MySQL DELETE ... USING with joined sources support.
      */
     DELETE_USING_JOIN("MySQL DELETE ... USING ... JOIN"),

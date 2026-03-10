@@ -19,5 +19,9 @@ public enum JoinKind {
     /**
      * Full join
      */
-    FULL
+    FULL,
+    /**
+     * MySQL STRAIGHT_JOIN
+     */
+    STRAIGHT
 }

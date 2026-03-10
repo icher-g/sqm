@@ -629,6 +629,16 @@ public final class Dsl {
     }
 
     /**
+     * Creates a MySQL {@code STRAIGHT_JOIN} with the provided table.
+     *
+     * @param table a table to join with.
+     * @return a straight join.
+     */
+    public static OnJoin straight(TableRef table) {
+        return OnJoin.of(table, JoinKind.STRAIGHT, null);
+    }
+
+    /**
      * Creates a natural join with the provided table.
      *
      * @param table a table to join with.

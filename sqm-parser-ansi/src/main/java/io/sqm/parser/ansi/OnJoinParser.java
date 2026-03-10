@@ -36,10 +36,12 @@ public class OnJoinParser implements MatchableParser<OnJoin>, InfixParser<TableR
     @Override
     public ParseResult<OnJoin> parse(Cursor cur, ParseContext ctx) {
         // Optional join kind
-        JoinKind kind = parseKind(cur);
+        JoinKind kind = parseKind(cur, ctx);
 
-        // JOIN keyword
-        cur.expect("Expected JOIN", TokenType.JOIN);
+        // STRAIGHT_JOIN is encoded as a standalone keyword in MySQL.
+        if (kind != JoinKind.STRAIGHT) {
+            cur.expect("Expected JOIN", TokenType.JOIN);
+        }
 
         // Table
         var table = ctx.parse(TableRef.class, cur);
