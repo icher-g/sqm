@@ -2,7 +2,9 @@ package io.sqm.parser.mysql;
 
 import io.sqm.core.Statement;
 import io.sqm.core.UpdateStatement;
+import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
@@ -58,6 +60,15 @@ class MySqlUpdateStatementParserTest {
     }
 
     @Test
+    void parsesUpdateReturningWhenCapabilityIsEnabled() {
+        var ctx = ParseContext.of(new ReturningMySqlSpecs());
+        var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' RETURNING id");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(1, result.value().returning().size());
+    }
+
+    @Test
     void statementEntryPointParsesMysqlJoinedUpdate() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(Statement.class,
@@ -93,6 +104,12 @@ class MySqlUpdateStatementParserTest {
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("UPDATE ... RETURNING"));
     }
+
+    private static final class ReturningMySqlSpecs extends MySqlSpecs {
+        @Override
+        public DialectCapabilities capabilities() {
+            var delegate = super.capabilities();
+            return feature -> feature == SqlFeature.DML_RETURNING || delegate.supports(feature);
+        }
+    }
 }
-
-

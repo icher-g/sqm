@@ -2,7 +2,9 @@ package io.sqm.parser.mysql;
 
 import io.sqm.core.DeleteStatement;
 import io.sqm.core.Statement;
+import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
@@ -60,6 +62,15 @@ class MySqlDeleteStatementParserTest {
     }
 
     @Test
+    void parsesDeleteReturningWhenCapabilityIsEnabled() {
+        var ctx = ParseContext.of(new ReturningMySqlSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM users WHERE users.id = 1 RETURNING id");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(1, result.value().returning().size());
+    }
+
+    @Test
     void statementEntryPointParsesMysqlDeleteUsingJoin() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(Statement.class,
@@ -104,5 +115,13 @@ class MySqlDeleteStatementParserTest {
 
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("DELETE ... RETURNING"));
+    }
+
+    private static final class ReturningMySqlSpecs extends MySqlSpecs {
+        @Override
+        public DialectCapabilities capabilities() {
+            var delegate = super.capabilities();
+            return feature -> feature == SqlFeature.DML_RETURNING || delegate.supports(feature);
+        }
     }
 }

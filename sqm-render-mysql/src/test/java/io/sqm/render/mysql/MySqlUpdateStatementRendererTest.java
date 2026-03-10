@@ -1,7 +1,9 @@
 package io.sqm.render.mysql;
 
 import io.sqm.core.UpdateStatement;
+import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.mysql.spi.MySqlDialect;
@@ -103,9 +105,27 @@ class MySqlUpdateStatementRendererTest {
             () -> RenderContext.of(new MySqlDialect(SqlDialectVersion.of(5, 7))).render(statement));
     }
 
+    @Test
+    void rendersUpdateReturningWhenCapabilityIsEnabled() {
+        UpdateStatement statement = update(tbl("users"))
+            .set(id("name"), lit("alice"))
+            .returning(col("id").toSelectItem())
+            .build();
+
+        var sql = RenderContext.of(new ReturningMySqlDialect()).render(statement).sql();
+
+        assertEquals("UPDATE users SET name = 'alice' RETURNING id", normalize(sql));
+    }
+
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
     }
+
+    private static final class ReturningMySqlDialect extends MySqlDialect {
+        @Override
+        public DialectCapabilities capabilities() {
+            var delegate = super.capabilities();
+            return feature -> feature == SqlFeature.DML_RETURNING || delegate.supports(feature);
+        }
+    }
 }
-
-
