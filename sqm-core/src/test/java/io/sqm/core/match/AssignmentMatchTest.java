@@ -10,10 +10,10 @@ class AssignmentMatchTest {
 
     @Test
     void matchesAssignment() {
-        var assignment = set("name", lit("alice"));
+        var assignment = set("u", "name", lit("alice"));
 
-        assertEquals("name", Match.<String>assignment(assignment)
-            .assignment(a -> a.column().value())
+        assertEquals("u.name", Match.<String>assignment(assignment)
+            .assignment(a -> String.join(".", a.column().values()))
             .otherwise(ignored -> "other"));
     }
 }

@@ -25,14 +25,7 @@ public class FunctionExprRenderer implements Renderer<FunctionExpr> {
      */
     @Override
     public void render(FunctionExpr node, RenderContext ctx, SqlWriter w) {
-        // Render qualified function name with quote preservation/fallback per part.
-        var quoter = ctx.dialect().quoter();
-        var parts = node.name().parts();
-        for (int i = 0; i < parts.size(); i++) {
-            if (i > 0) w.append(".");
-            w.append(renderIdentifier(parts.get(i), quoter));
-        }
-
+        w.append(renderQualifiedName(node.name(), ctx.dialect().quoter()));
         w.append("(");
 
         if (node.distinctArg() != null && node.distinctArg()) {

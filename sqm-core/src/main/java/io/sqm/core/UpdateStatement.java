@@ -296,6 +296,17 @@ public non-sealed interface UpdateStatement extends Statement {
         /**
          * Appends one assignment.
          *
+         * @param column target column qualified name
+         * @param value assigned expression
+         * @return this builder
+         */
+        public Builder set(QualifiedName column, Expression value) {
+            return set(Assignment.of(column, value));
+        }
+
+        /**
+         * Appends one assignment.
+         *
          * @param column target column
          * @param value assigned expression
          * @return this builder

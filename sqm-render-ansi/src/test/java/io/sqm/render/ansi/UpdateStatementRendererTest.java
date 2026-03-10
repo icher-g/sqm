@@ -31,6 +31,18 @@ class UpdateStatementRendererTest {
     }
 
     @Test
+    void rendersUpdateWithQualifiedAssignmentTarget() {
+        var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
+        UpdateStatement statement = update(tbl("users").as("u"))
+            .set(io.sqm.core.QualifiedName.of("u", "name"), lit("alice"))
+            .build();
+
+        var sql = normalize(ctx.render(statement).sql());
+
+        assertEquals("UPDATE users AS u SET u.name = 'alice'", sql);
+    }
+
+    @Test
     void rendersUpdateWithoutWhere() {
         var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
         UpdateStatement statement = update("users")

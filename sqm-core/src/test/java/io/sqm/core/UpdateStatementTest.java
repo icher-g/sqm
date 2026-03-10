@@ -29,7 +29,7 @@ class UpdateStatementTest {
 
         assertEquals("users", statement.table().name().value());
         assertEquals(1, statement.assignments().size());
-        assertEquals("name", statement.assignments().getFirst().column().value());
+        assertEquals(List.of("name"), statement.assignments().getFirst().column().values());
         assertEquals(1, statement.joins().size());
         assertEquals(1, statement.from().size());
         assertThrows(UnsupportedOperationException.class, () -> statement.assignments().add(set("x", lit(1))));
@@ -48,11 +48,12 @@ class UpdateStatementTest {
         assertEquals(1, statement.joins().size());
 
         var built = UpdateStatement.builder(tbl("users"))
-            .set(Identifier.of("name"), lit("alice"))
+            .set(QualifiedName.of("u", "name"), lit("alice"))
             .joins(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
             .from(tbl("src"))
             .build();
         assertEquals(1, built.assignments().size());
+        assertEquals(List.of("u", "name"), built.assignments().getFirst().column().values());
         assertEquals(1, built.joins().size());
         assertEquals(1, built.from().size());
     }

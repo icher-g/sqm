@@ -232,6 +232,16 @@ public final class IdentifierNormalizationTransformer extends RecursiveNodeTrans
     }
 
     @Override
+    public Node visitAssignment(Assignment assignment) {
+        var column = normalizeQualifiedName(assignment.column());
+        var value = apply(assignment.value());
+        if (column == assignment.column() && value == assignment.value()) {
+            return assignment;
+        }
+        return Assignment.of(column, value);
+    }
+
+    @Override
     public Node visitTypeName(TypeName typeName) {
         var qualifiedName = normalizeQualifiedName(typeName.qualifiedName());
         List<Expression> modifiers = new ArrayList<>();

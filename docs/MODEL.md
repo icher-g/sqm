@@ -291,7 +291,7 @@ graph TD
   Base type for top-level SQL statements (`Query`, `InsertStatement`, `UpdateStatement`, `DeleteStatement`).
 
 - **Assignment**  
-  Represents a single `column = expression` item used in `UPDATE` assignments.
+  Represents a single qualified target `column = expression` item used in `UPDATE` assignments.
 
 - **InsertSource**  
   Base type for INSERT value sources (`Query` and `RowValues`).

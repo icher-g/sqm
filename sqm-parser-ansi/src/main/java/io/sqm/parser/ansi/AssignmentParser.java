@@ -30,7 +30,8 @@ public class AssignmentParser implements Parser<Assignment> {
      */
     @Override
     public ParseResult<? extends Assignment> parse(Cursor cur, ParseContext ctx) {
-        var column = toIdentifier(cur.expect("Expected assignment target column", TokenType.IDENT));
+        var first = cur.expect("Expected assignment target column", TokenType.IDENT);
+        var column = parseQualifiedName(toIdentifier(first), cur);
         var eq = cur.expect("Expected = in assignment", TokenType.OPERATOR);
         if (!"=".equals(eq.lexeme())) {
             return error("Expected = in assignment", eq.pos());

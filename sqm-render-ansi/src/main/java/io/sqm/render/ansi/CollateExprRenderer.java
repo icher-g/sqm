@@ -45,10 +45,4 @@ public class CollateExprRenderer implements Renderer<CollateExpr> {
     public Class<? extends CollateExpr> targetType() {
         return CollateExpr.class;
     }
-
-    private String renderQualifiedName(io.sqm.core.QualifiedName name, io.sqm.render.spi.IdentifierQuoter quoter) {
-        return name.parts().stream()
-            .map(part -> renderIdentifier(part, quoter))
-            .collect(java.util.stream.Collectors.joining("."));
-    }
 }

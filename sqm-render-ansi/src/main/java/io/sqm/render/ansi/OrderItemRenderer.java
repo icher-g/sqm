@@ -9,7 +9,6 @@ import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
-import java.util.stream.Collectors;
 
 /**
  * Renders ORDER BY items.
@@ -41,12 +40,7 @@ public class OrderItemRenderer implements Renderer<OrderItem> {
         // COLLATE (if any) - typically placed right after the expr
         var collate = node.collate();
         if (collate != null) {
-            var quoter = ctx.dialect().quoter();
-            w.space().append("COLLATE").space().append(
-                collate.parts().stream()
-                    .map(part -> renderIdentifier(part, quoter))
-                    .collect(Collectors.joining("."))
-            );
+            w.space().append("COLLATE").space().append(renderQualifiedName(collate, ctx.dialect().quoter()));
         }
 
         var usingOperator = node.usingOperator();

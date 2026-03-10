@@ -43,15 +43,7 @@ public class BinaryOperatorExprRenderer implements Renderer<BinaryOperatorExpr> 
 
         w.append("OPERATOR(");
         if (operatorName.schemaName() != null) {
-            var quoter = ctx.dialect().quoter();
-            var parts = operatorName.schemaName().parts();
-            for (int i = 0; i < parts.size(); i++) {
-                if (i > 0) {
-                    w.append(".");
-                }
-                w.append(renderIdentifier(parts.get(i), quoter));
-            }
-            w.append(".");
+            w.append(renderQualifiedName(operatorName.schemaName(), ctx.dialect().quoter())).append(".");
         }
         w.append(operatorName.symbol()).append(")");
     }
