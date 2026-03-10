@@ -1,6 +1,7 @@
 package io.sqm.render.mysql;
 
 import io.sqm.core.InsertStatement;
+import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.mysql.spi.MySqlDialect;
 import io.sqm.render.spi.RenderContext;
@@ -137,7 +138,30 @@ class MySqlInsertStatementRendererTest {
             () -> renderer.render(statement, ctx, new io.sqm.render.defaults.DefaultSqlWriter(ctx)));
     }
 
+    @Test
+    void rejectsInsertReturningInMysql80Renderer() {
+        InsertStatement statement = insert("users")
+            .values(row(lit(1)))
+            .returning(col("id").toSelectItem())
+            .build();
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new MySqlDialect()).render(statement));
+    }
+
+    @Test
+    void rejectsInsertReturningInMysql57Renderer() {
+        InsertStatement statement = insert("users")
+            .values(row(lit(1)))
+            .returning(col("id").toSelectItem())
+            .build();
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new MySqlDialect(SqlDialectVersion.of(5, 7))).render(statement));
+    }
+
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
+

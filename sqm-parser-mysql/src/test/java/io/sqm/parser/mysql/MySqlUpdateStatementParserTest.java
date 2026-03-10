@@ -28,12 +28,33 @@ class MySqlUpdateStatementParserTest {
     }
 
     @Test
+    void parsesJoinedUpdateWithAliasAndIndexHints() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(UpdateStatement.class,
+            "UPDATE users USE INDEX (idx_users_name) AS u INNER JOIN orders FORCE INDEX FOR JOIN (idx_orders_user) AS o ON u.id = o.user_id SET name = 'alice' WHERE o.state = 'closed'");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals("u", result.value().table().alias().value());
+        assertEquals(1, result.value().table().indexHints().size());
+        assertEquals(1, result.value().joins().size());
+    }
+
+    @Test
     void parsesStandardUpdateWithoutJoins() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice'");
 
         assertTrue(result.ok(), result.errorMessage());
         assertTrue(result.value().joins().isEmpty());
+    }
+
+    @Test
+    void rejectsUpdateReturningInMysql80() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' RETURNING id");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("UPDATE ... RETURNING"));
     }
 
     @Test
@@ -63,4 +84,15 @@ class MySqlUpdateStatementParserTest {
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("UPDATE ... JOIN"));
     }
+
+    @Test
+    void rejectsUpdateReturningInMysql57() {
+        var ctx = ParseContext.of(new MySqlSpecs(SqlDialectVersion.of(5, 7)));
+        var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' RETURNING id");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("UPDATE ... RETURNING"));
+    }
 }
+
+

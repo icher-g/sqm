@@ -28,6 +28,19 @@ class MySqlDeleteStatementParserTest {
     }
 
     @Test
+    void parsesDeleteUsingJoinWithAliasAndIndexHints() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(DeleteStatement.class,
+            "DELETE FROM users USE INDEX (idx_users_name) AS u USING users USE INDEX (idx_users_name) AS u INNER JOIN orders FORCE INDEX FOR JOIN (idx_orders_user) AS o ON u.id = o.user_id WHERE o.state = 'closed'");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals("u", result.value().table().alias().value());
+        assertEquals(1, result.value().table().indexHints().size());
+        assertEquals("u", result.value().using().getFirst().matchTableRef().table(t -> t.alias().value()).orElse(null));
+        assertEquals(1, result.value().joins().size());
+    }
+
+    @Test
     void parsesDeleteUsingWithoutJoins() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(DeleteStatement.class, "DELETE FROM users USING users WHERE users.id = 1");
@@ -35,6 +48,15 @@ class MySqlDeleteStatementParserTest {
         assertTrue(result.ok(), result.errorMessage());
         assertEquals(1, result.value().using().size());
         assertTrue(result.value().joins().isEmpty());
+    }
+
+    @Test
+    void rejectsDeleteReturningInMysql80() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM users WHERE users.id = 1 RETURNING id");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("DELETE ... RETURNING"));
     }
 
     @Test
@@ -73,5 +95,14 @@ class MySqlDeleteStatementParserTest {
 
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("DELETE ... USING"));
+    }
+
+    @Test
+    void rejectsDeleteReturningInMysql57() {
+        var ctx = ParseContext.of(new MySqlSpecs(SqlDialectVersion.of(5, 7)));
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM users WHERE users.id = 1 RETURNING id");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("DELETE ... RETURNING"));
     }
 }

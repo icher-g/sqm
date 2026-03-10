@@ -1,6 +1,7 @@
 package io.sqm.render.mysql;
 
 import io.sqm.core.UpdateStatement;
+import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.mysql.spi.MySqlDialect;
@@ -34,6 +35,24 @@ class MySqlUpdateStatementRendererTest {
     }
 
     @Test
+    void rendersJoinedUpdateWithAliasAndIndexHintsCanonically() {
+        var statement = update(tbl("users").as("u").useIndex("idx_users_name"))
+            .join(inner(tbl("orders").as("o").addIndexHint(io.sqm.core.Table.IndexHint.force(
+                io.sqm.core.Table.IndexHintScope.JOIN,
+                java.util.List.of(io.sqm.core.Identifier.of("idx_orders_user")))))
+                .on(col("u", "id").eq(col("o", "user_id"))))
+            .set(id("name"), lit("alice"))
+            .where(col("o", "state").eq(lit("closed")))
+            .build();
+
+        var sql = RenderContext.of(new MySqlDialect()).render(statement).sql();
+
+        assertEquals(
+            "UPDATE users AS u USE INDEX (idx_users_name) INNER JOIN orders AS o FORCE INDEX FOR JOIN (idx_orders_user) ON u.id = o.user_id SET name = 'alice' WHERE o.state = 'closed'",
+            normalize(sql));
+    }
+
+    @Test
     void rendersPlainUpdateWithoutJoins() {
         var statement = update(tbl("users"))
             .set(id("name"), lit("alice"))
@@ -62,8 +81,31 @@ class MySqlUpdateStatementRendererTest {
             () -> renderer.render(statement, ctx, new io.sqm.render.defaults.DefaultSqlWriter(ctx)));
     }
 
+    @Test
+    void rejectsUpdateReturningInMysql80Renderer() {
+        UpdateStatement statement = update(tbl("users"))
+            .set(id("name"), lit("alice"))
+            .returning(col("id").toSelectItem())
+            .build();
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new MySqlDialect()).render(statement));
+    }
+
+    @Test
+    void rejectsUpdateReturningInMysql57Renderer() {
+        UpdateStatement statement = update(tbl("users"))
+            .set(id("name"), lit("alice"))
+            .returning(col("id").toSelectItem())
+            .build();
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new MySqlDialect(SqlDialectVersion.of(5, 7))).render(statement));
+    }
+
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
+
 

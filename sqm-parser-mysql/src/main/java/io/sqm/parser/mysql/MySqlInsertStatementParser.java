@@ -2,6 +2,7 @@ package io.sqm.parser.mysql;
 
 import io.sqm.core.Assignment;
 import io.sqm.core.InsertStatement.InsertMode;
+import io.sqm.core.SelectItem;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -81,5 +82,27 @@ public class MySqlInsertStatementParser extends io.sqm.parser.ansi.InsertStateme
             return error(assignments);
         }
         return ok(onConflictDoUpdateClause(List.of(), assignments.value(), null));
+    }
+
+    /**
+     * Parses optional MySQL {@code RETURNING} clause.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return returning projection list, or empty list when omitted
+     */
+    @Override
+    protected ParseResult<List<SelectItem>> parseReturning(Cursor cur, ParseContext ctx) {
+        if (!cur.consumeIf(TokenType.RETURNING)) {
+            return ok(List.of());
+        }
+        if (!ctx.capabilities().supports(SqlFeature.DML_RETURNING)) {
+            return error("INSERT ... RETURNING is not supported by this dialect", cur.fullPos());
+        }
+        var returningResult = parseItems(SelectItem.class, cur, ctx);
+        if (returningResult.isError()) {
+            return error(returningResult);
+        }
+        return ok(List.copyOf(returningResult.value()));
     }
 }

@@ -37,11 +37,13 @@ Priority levels:
 - Integration round-trip coverage delivered in `sqm-it`.
 - Alias/keyword ambiguity hardening added for PostgreSQL DML target parsing.
 
-### Epic R3: MySQL DML Extensions
-- Implement MySQL-specific DML features on top of ANSI DML baseline.
-- Initial scope: `INSERT ... ON DUPLICATE KEY UPDATE`, `INSERT IGNORE`, `REPLACE INTO`, multi-table `UPDATE`/`DELETE`.
-- Enforce parser/render capability gating and deterministic SQL output.
-- Add integration round-trip coverage in `sqm-it`.
+### Epic R3: MySQL DML Extensions (Completed)
+- Implemented MySQL-specific DML features on top of ANSI DML baseline.
+- Delivered scope: `INSERT ... ON DUPLICATE KEY UPDATE`, `INSERT IGNORE`, `REPLACE INTO`, joined `UPDATE`, canonical `DELETE FROM ... USING ... JOIN ...`.
+- Parser/render capability gating and deterministic SQL output delivered.
+- Integration round-trip coverage delivered in `sqm-it`.
+- Alias/index-hint hardening added for prioritized MySQL joined DML target/source shapes.
+- Version-aware MySQL `RETURNING` gating is explicit and remains unsupported for current supported MySQL versions.
 
 ### Epic R4: SQL Server Dialect Support
 - Add `sqm-parser-sqlserver` and `sqm-render-sqlserver`.
@@ -96,19 +98,17 @@ Priority levels:
 - Keep optimizer opt-in and deterministic.
 
 ### Epic R12: DML Advanced Expansion
-- Expand beyond DML-R1 baseline with advanced dialect-specific DML features (for example PostgreSQL `RETURNING`, SQL Server `OUTPUT`, MySQL upsert/multi-table forms, and MERGE-family support where applicable).
+- Expand beyond the delivered DML baseline with advanced dialect-specific DML features (for example SQL Server `OUTPUT`, richer MySQL assignment/target variants, and MERGE-family support where applicable).
 - Ensure parser/render/validate/rewrite parity with existing query flows.
 
 ## Suggested Implementation Order
-1. `R2` PostgreSQL DML extensions
-2. `R3` MySQL DML extensions
-3. `R4` SQL Server
-4. `R5` DDL MVP core
-5. `R6` DDL middleware controls
-6. `R8` DDL expansion
-7. `R7` Oracle
-8. `R9` catalog unification
-9. `R10`/`R11`/`R12` as capacity permits
+1. `R4` SQL Server
+2. `R5` DDL MVP core
+3. `R6` DDL middleware controls
+4. `R8` DDL expansion
+5. `R7` Oracle
+6. `R9` catalog unification
+7. `R10`/`R11`/`R12` as capacity permits
 
 ## Exit Criteria Per Epic
 - Model + parser + renderer + tests + docs complete.

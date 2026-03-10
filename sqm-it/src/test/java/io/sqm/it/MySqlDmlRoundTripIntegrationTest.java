@@ -3,9 +3,12 @@ package io.sqm.it;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.sqm.core.Statement;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.json.SqmJsonMixins;
+import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.spi.ParseContext;
+import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.mysql.spi.MySqlDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MySqlDmlRoundTripIntegrationTest {
@@ -64,10 +68,69 @@ class MySqlDmlRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTripJoinedUpdateWithAliasAndIndexHintsCanonicalizesOrder() {
+        assertRoundTrip(
+            "UPDATE users USE INDEX (idx_users_name) AS u INNER JOIN orders FORCE INDEX FOR JOIN (idx_orders_user) AS o ON u.id = o.user_id SET name = 'alice' WHERE o.state = 'closed'",
+            "UPDATE users AS u USE INDEX (idx_users_name) INNER JOIN orders AS o FORCE INDEX FOR JOIN (idx_orders_user) ON u.id = o.user_id SET name = 'alice' WHERE o.state = 'closed'"
+        );
+    }
+
+    @Test
     void roundTripDeleteUsingJoinStatement() {
         assertRoundTrip(
             "DELETE FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'",
             "DELETE FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'"
+        );
+    }
+
+    @Test
+    void roundTripDeleteUsingJoinWithAliasAndIndexHintsCanonicalizesOrder() {
+        assertRoundTrip(
+            "DELETE FROM users USE INDEX (idx_users_name) AS u USING users USE INDEX (idx_users_name) AS u INNER JOIN orders FORCE INDEX FOR JOIN (idx_orders_user) AS o ON u.id = o.user_id WHERE o.state = 'closed'",
+            "DELETE FROM users AS u USE INDEX (idx_users_name) USING users AS u USE INDEX (idx_users_name) INNER JOIN orders AS o FORCE INDEX FOR JOIN (idx_orders_user) ON u.id = o.user_id WHERE o.state = 'closed'"
+        );
+    }
+
+    @Test
+    void rejectsInsertIgnoreForAnsiDialect() {
+        assertRejectedByAnsi(
+            "INSERT IGNORE INTO users (id, name) VALUES (1, 'alice')"
+        );
+    }
+
+    @Test
+    void rejectsReplaceIntoForAnsiDialect() {
+        var ansiParseContext = ParseContext.of(new AnsiSpecs());
+        var ansiResult = ansiParseContext.parse(Statement.class, "REPLACE INTO users (id, name) VALUES (1, 'alice')");
+        assertTrue(ansiResult.isError());
+
+        var mysqlParsed = parseContext.parse(Statement.class, "REPLACE INTO users (id, name) VALUES (1, 'alice')");
+        assertTrue(mysqlParsed.ok(), mysqlParsed.errorMessage());
+
+        var ansiRenderContext = RenderContext.of(new AnsiDialect());
+        assertThrows(UnsupportedDialectFeatureException.class, () -> ansiRenderContext.render(mysqlParsed.value()));
+    }
+
+    @Test
+    void rejectsInsertOnDuplicateKeyUpdateForAnsiDialect() {
+        assertRejectedByAnsi(
+            "INSERT INTO users (id, name) VALUES (1, 'alice') ON DUPLICATE KEY UPDATE name = 'alice2'"
+        );
+    }
+
+    @Test
+    void rejectsJoinedUpdateForAnsiDialect() {
+        assertRejectedByAnsi(
+            "UPDATE users INNER JOIN orders ON users.id = orders.user_id SET name = 'alice' WHERE orders.state = 'closed'",
+            "UPDATE ... JOIN is not supported by this dialect"
+        );
+    }
+
+    @Test
+    void rejectsDeleteUsingJoinForAnsiDialect() {
+        assertRejectedByAnsi(
+            "DELETE FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'",
+            "DELETE ... USING is not supported by this dialect"
         );
     }
 
@@ -91,6 +154,31 @@ class MySqlDmlRoundTripIntegrationTest {
         assertEquals(canonicalJson(parsed.value()), canonicalJson(reparsed.value()));
     }
 
+    private void assertRejectedByAnsi(String mysqlSql) {
+        var ansiParseContext = ParseContext.of(new AnsiSpecs());
+        var ansiResult = ansiParseContext.parse(Statement.class, mysqlSql);
+        assertTrue(ansiResult.isError());
+
+        var mysqlParsed = parseContext.parse(Statement.class, mysqlSql);
+        assertTrue(mysqlParsed.ok(), mysqlParsed.errorMessage());
+
+        var ansiRenderContext = RenderContext.of(new AnsiDialect());
+        assertThrows(UnsupportedDialectFeatureException.class, () -> ansiRenderContext.render(mysqlParsed.value()));
+    }
+
+    private void assertRejectedByAnsi(String mysqlSql, String expectedParseMessagePart) {
+        var ansiParseContext = ParseContext.of(new AnsiSpecs());
+        var ansiResult = ansiParseContext.parse(Statement.class, mysqlSql);
+        assertTrue(ansiResult.isError());
+        assertTrue(Objects.requireNonNull(ansiResult.errorMessage()).contains(expectedParseMessagePart));
+
+        var mysqlParsed = parseContext.parse(Statement.class, mysqlSql);
+        assertTrue(mysqlParsed.ok(), mysqlParsed.errorMessage());
+
+        var ansiRenderContext = RenderContext.of(new AnsiDialect());
+        assertThrows(UnsupportedDialectFeatureException.class, () -> ansiRenderContext.render(mysqlParsed.value()));
+    }
+
     private static String canonicalJson(Statement statement) {
         try {
             return MAPPER.writeValueAsString(statement);
@@ -104,3 +192,5 @@ class MySqlDmlRoundTripIntegrationTest {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
+
+

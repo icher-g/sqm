@@ -83,6 +83,38 @@ class MySqlTableParserTest {
     }
 
     @Test
+    void parsesAliasAfterIndexHint() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Table.class, "users USE INDEX (idx_users_name) AS u");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals("u", result.value().alias().value());
+        assertEquals(Table.IndexHintType.USE, result.value().indexHints().getFirst().type());
+    }
+
+    @Test
+    void parsesIndexHintsSplitAroundAlias() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Table.class, "users USE INDEX (idx_a) AS u FORCE INDEX FOR JOIN (idx_b)");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals("u", result.value().alias().value());
+        assertEquals(2, result.value().indexHints().size());
+        assertEquals(Table.IndexHintType.USE, result.value().indexHints().get(0).type());
+        assertEquals(Table.IndexHintType.FORCE, result.value().indexHints().get(1).type());
+        assertEquals(Table.IndexHintScope.JOIN, result.value().indexHints().get(1).scope());
+    }
+
+    @Test
+    void rejectsAsWithoutAliasAfterIndexHint() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Table.class, "users USE INDEX (idx_users_name) AS");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected alias after AS"));
+    }
+
+    @Test
     void rejectsIndexHintWithoutIndexOrKeyKeyword() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(Table.class, "users USE (idx_users_name)");
