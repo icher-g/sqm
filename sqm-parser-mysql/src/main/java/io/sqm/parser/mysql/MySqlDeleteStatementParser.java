@@ -28,6 +28,25 @@ public class MySqlDeleteStatementParser extends io.sqm.parser.ansi.DeleteStateme
     }
 
     /**
+     * Parses tokens that may appear after {@code DELETE} and before {@code FROM}.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return parsed optimizer hints or an empty list when omitted
+     */
+    @Override
+    protected ParseResult<List<String>> parseAfterDeleteKeyword(Cursor cur, ParseContext ctx) {
+        var hints = new ArrayList<String>();
+        while (cur.match(TokenType.COMMENT_HINT)) {
+            if (!ctx.capabilities().supports(SqlFeature.OPTIMIZER_HINT_COMMENT)) {
+                return error("Optimizer hint comments are not supported by this dialect", cur.fullPos());
+            }
+            hints.add(cur.advance().lexeme());
+        }
+        return ok(List.copyOf(hints));
+    }
+
+    /**
      * Parses optional MySQL {@code USING} sources.
      *
      * @param cur token cursor

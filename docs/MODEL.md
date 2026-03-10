@@ -459,8 +459,8 @@ graph TD
     - SelectQuery – main SELECT form
     - WithQuery – WITH + child query
 - **InsertStatement** - `INSERT INTO <table> [(columns...)] <source> [RETURNING ...]` where source is `VALUES (...)` or a query.
-- **UpdateStatement** - `UPDATE <table> SET c1 = expr [, ...] [FROM ...] [WHERE ...]`.
-- **DeleteStatement** - `DELETE FROM <table> [USING ...] [WHERE ...]`.
+- **UpdateStatement** - `UPDATE [/*+ ... */] <table> SET c1 = expr [, ...] [FROM ...] [WHERE ...]`, with optional optimizer hints stored as immutable hint strings.
+- **DeleteStatement** - `DELETE [/*+ ... */] FROM <table> [USING ...] [WHERE ...]`, with optional optimizer hints stored as immutable hint strings.
 - **CteDef** – CTE definition
 
 ---

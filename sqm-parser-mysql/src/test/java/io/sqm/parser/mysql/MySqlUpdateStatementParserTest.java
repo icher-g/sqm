@@ -42,6 +42,16 @@ class MySqlUpdateStatementParserTest {
     }
 
     @Test
+    void parsesOptimizerHintAfterUpdateKeyword() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(UpdateStatement.class,
+            "UPDATE /*+ BKA(users) */ users SET name = 'alice'");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(java.util.List.of("BKA(users)"), result.value().optimizerHints());
+    }
+
+    @Test
     void parsesJoinedUpdateWithQualifiedAssignmentTarget() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(UpdateStatement.class,
@@ -128,6 +138,16 @@ class MySqlUpdateStatementParserTest {
     }
 
     @Test
+    void parserRejectsUpdateOptimizerHintWhenCapabilityIsMissing() {
+        var ctx = ParseContext.of(new NoOptimizerHintMySqlSpecs());
+        var result = ctx.parse(UpdateStatement.class,
+            "UPDATE /*+ BKA(users) */ users SET name = 'alice'");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Optimizer hint comments"));
+    }
+
+    @Test
     void rejectsUpdateReturningInMysql57() {
         var ctx = ParseContext.of(new MySqlSpecs(SqlDialectVersion.of(5, 7)));
         var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' RETURNING id");
@@ -149,6 +169,14 @@ class MySqlUpdateStatementParserTest {
         public DialectCapabilities capabilities() {
             var delegate = super.capabilities();
             return feature -> feature != SqlFeature.STRAIGHT_JOIN && delegate.supports(feature);
+        }
+    }
+
+    private static final class NoOptimizerHintMySqlSpecs extends MySqlSpecs {
+        @Override
+        public DialectCapabilities capabilities() {
+            var delegate = super.capabilities();
+            return feature -> feature != SqlFeature.OPTIMIZER_HINT_COMMENT && delegate.supports(feature);
         }
     }
 }

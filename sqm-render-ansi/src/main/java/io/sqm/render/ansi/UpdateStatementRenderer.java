@@ -31,7 +31,11 @@ public class UpdateStatementRenderer implements Renderer<UpdateStatement> {
      */
     @Override
     public void render(UpdateStatement node, RenderContext ctx, SqlWriter w) {
-        w.append("UPDATE").space().append(node.table());
+        w.append("UPDATE");
+
+        renderAfterUpdateKeyword(node, ctx, w);
+
+        w.space().append(node.table());
 
         renderJoins(node.joins(), ctx, w);
 
@@ -57,6 +61,19 @@ public class UpdateStatementRenderer implements Renderer<UpdateStatement> {
     protected void renderJoins(List<Join> joins, RenderContext ctx, SqlWriter w) {
         if (!joins.isEmpty()) {
             throw new UnsupportedDialectFeatureException("UPDATE ... JOIN", ctx.dialect().name());
+        }
+    }
+
+    /**
+     * Renders tokens that may appear after {@code UPDATE} and before the target table.
+     *
+     * @param node update statement
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected void renderAfterUpdateKeyword(UpdateStatement node, RenderContext ctx, SqlWriter w) {
+        if (!node.optimizerHints().isEmpty()) {
+            throw new UnsupportedDialectFeatureException("UPDATE optimizer hints", ctx.dialect().name());
         }
     }
 

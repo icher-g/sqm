@@ -20,6 +20,7 @@ class DeleteStatementTest {
     @Test
     void builderCreatesImmutableDeleteStatement() {
         var statement = delete(tbl("users"))
+            .optimizerHint("BKA(users)")
             .using(tbl("users"))
             .join(inner(tbl("orders").as("o")).on(col("users", "id").eq(col("o", "user_id"))))
             .where(col("id").eq(lit(1)))
@@ -27,10 +28,12 @@ class DeleteStatementTest {
 
         assertEquals("users", statement.table().name().value());
         assertEquals(col("id").eq(lit(1)), statement.where());
+        assertEquals(List.of("BKA(users)"), statement.optimizerHints());
         assertEquals(1, statement.using().size());
         assertEquals(1, statement.joins().size());
         assertThrows(UnsupportedOperationException.class, () -> statement.using().add(tbl("x")));
         assertThrows(UnsupportedOperationException.class, () -> statement.joins().add(inner(tbl("x")).on(col("x", "id").eq(col("users", "id")))));
+        assertThrows(UnsupportedOperationException.class, () -> statement.optimizerHints().add("NO_ICP(users)"));
     }
 
     @Test
@@ -42,10 +45,12 @@ class DeleteStatementTest {
 
         var built = DeleteStatement.builder(tbl("users"))
             .table(tbl("accounts"))
+            .optimizerHints(List.of("MAX_EXECUTION_TIME(1000)"))
             .using(tbl("src"))
             .joins(inner(tbl("audit")).on(col("src", "id").eq(col("audit", "account_id"))))
             .build();
         assertEquals("accounts", built.table().name().value());
+        assertEquals(List.of("MAX_EXECUTION_TIME(1000)"), built.optimizerHints());
         assertEquals(1, built.using().size());
         assertEquals(1, built.joins().size());
     }
@@ -74,10 +79,11 @@ class DeleteStatementTest {
 
     @Test
     void normalizesNullUsingJoinsAndReturningInFactory() {
-        var statement = DeleteStatement.of(tbl("users"), null, null, null, null);
+        var statement = DeleteStatement.of(tbl("users"), null, null, null, null, null);
         assertTrue(statement.using().isEmpty());
         assertTrue(statement.joins().isEmpty());
         assertTrue(statement.returning().isEmpty());
+        assertTrue(statement.optimizerHints().isEmpty());
     }
 
     @Test
@@ -112,5 +118,7 @@ class DeleteStatementTest {
         assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).join(null));
         assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).returning((SelectItem[]) null));
         assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).returning((List<SelectItem>) null));
+        assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).optimizerHints(null));
+        assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).optimizerHint(null));
     }
 }

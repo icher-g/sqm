@@ -84,6 +84,14 @@ class MySqlDmlRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTripJoinedUpdateWithOptimizerHint() {
+        assertRoundTrip(
+            "UPDATE /*+ BKA(users) */ users INNER JOIN orders ON users.id = orders.user_id SET name = 'alice' WHERE orders.state = 'closed'",
+            "UPDATE /*+ BKA(users) */ users INNER JOIN orders ON users.id = orders.user_id SET name = 'alice' WHERE orders.state = 'closed'"
+        );
+    }
+
+    @Test
     void roundTripDeleteUsingJoinStatement() {
         assertRoundTrip(
             "DELETE FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'",
@@ -96,6 +104,14 @@ class MySqlDmlRoundTripIntegrationTest {
         assertRoundTrip(
             "DELETE FROM users USE INDEX (idx_users_name) AS u USING users USE INDEX (idx_users_name) AS u INNER JOIN orders FORCE INDEX FOR JOIN (idx_orders_user) AS o ON u.id = o.user_id WHERE o.state = 'closed'",
             "DELETE FROM users AS u USE INDEX (idx_users_name) USING users AS u USE INDEX (idx_users_name) INNER JOIN orders AS o FORCE INDEX FOR JOIN (idx_orders_user) ON u.id = o.user_id WHERE o.state = 'closed'"
+        );
+    }
+
+    @Test
+    void roundTripDeleteWithOptimizerHint() {
+        assertRoundTrip(
+            "DELETE /*+ BKA(users) */ FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'",
+            "DELETE /*+ BKA(users) */ FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'"
         );
     }
 

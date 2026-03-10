@@ -38,6 +38,12 @@ public class DeleteStatementParser implements Parser<DeleteStatement> {
     @Override
     public ParseResult<? extends DeleteStatement> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected DELETE", TokenType.DELETE);
+
+        var optimizerHintsResult = parseAfterDeleteKeyword(cur, ctx);
+        if (optimizerHintsResult.isError()) {
+            return error(optimizerHintsResult);
+        }
+
         cur.expect("Expected FROM after DELETE", TokenType.FROM);
 
         var tableResult = ctx.parse(Table.class, cur);
@@ -70,7 +76,25 @@ public class DeleteStatementParser implements Parser<DeleteStatement> {
             return error(returningResult);
         }
 
-        return ok(DeleteStatement.of(tableResult.value(), usingResult.value(), joinsResult.value(), where, returningResult.value()));
+        return ok(DeleteStatement.of(
+            tableResult.value(),
+            usingResult.value(),
+            joinsResult.value(),
+            where,
+            returningResult.value(),
+            optimizerHintsResult.value()
+        ));
+    }
+
+    /**
+     * Parses tokens that may appear after {@code DELETE} and before {@code FROM}.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return parsed optimizer hints or an empty list when omitted
+     */
+    protected ParseResult<List<String>> parseAfterDeleteKeyword(Cursor cur, ParseContext ctx) {
+        return ok(List.of());
     }
 
     /**

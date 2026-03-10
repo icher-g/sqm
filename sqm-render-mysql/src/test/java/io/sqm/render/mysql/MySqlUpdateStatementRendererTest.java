@@ -25,6 +25,7 @@ class MySqlUpdateStatementRendererTest {
     @Test
     void rendersJoinedUpdateStatement() {
         var statement = update(tbl("users"))
+            .optimizerHint("BKA(users)")
             .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
             .set(id("name"), lit("alice"))
             .where(col("orders", "state").eq(lit("closed")))
@@ -33,7 +34,7 @@ class MySqlUpdateStatementRendererTest {
         var sql = RenderContext.of(new MySqlDialect()).render(statement).sql();
 
         assertEquals(
-            "UPDATE users INNER JOIN orders ON users.id = orders.user_id SET name = 'alice' WHERE orders.state = 'closed'",
+            "UPDATE /*+ BKA(users) */ users INNER JOIN orders ON users.id = orders.user_id SET name = 'alice' WHERE orders.state = 'closed'",
             normalize(sql));
     }
 
@@ -88,6 +89,7 @@ class MySqlUpdateStatementRendererTest {
     @Test
     void rendersPlainUpdateWithoutJoins() {
         var statement = update(tbl("users"))
+            .optimizerHint("MAX_EXECUTION_TIME(1000)")
             .set(id("name"), lit("alice"))
             .build();
 
@@ -97,12 +99,13 @@ class MySqlUpdateStatementRendererTest {
 
         renderer.render(statement, ctx, writer);
 
-        assertEquals("UPDATE users SET name = 'alice'", normalize(writer.toText(java.util.List.of()).sql()));
+        assertEquals("UPDATE /*+ MAX_EXECUTION_TIME(1000) */ users SET name = 'alice'", normalize(writer.toText(java.util.List.of()).sql()));
     }
 
     @Test
     void rejectsJoinedUpdateInDialectWithoutCapability() {
         UpdateStatement statement = update(tbl("users"))
+            .optimizerHint("BKA(users)")
             .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
             .set(id("name"), lit("alice"))
             .build();
@@ -112,6 +115,17 @@ class MySqlUpdateStatementRendererTest {
 
         assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
             () -> renderer.render(statement, ctx, new io.sqm.render.defaults.DefaultSqlWriter(ctx)));
+    }
+
+    @Test
+    void rejectsUpdateOptimizerHintsWithoutCapability() {
+        UpdateStatement statement = update(tbl("users"))
+            .optimizerHint("BKA(users)")
+            .set(id("name"), lit("alice"))
+            .build();
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new NoOptimizerHintMySqlDialect()).render(statement));
     }
 
     @Test
@@ -176,6 +190,14 @@ class MySqlUpdateStatementRendererTest {
         public DialectCapabilities capabilities() {
             var delegate = super.capabilities();
             return feature -> feature != SqlFeature.STRAIGHT_JOIN && delegate.supports(feature);
+        }
+    }
+
+    private static final class NoOptimizerHintMySqlDialect extends MySqlDialect {
+        @Override
+        public DialectCapabilities capabilities() {
+            var delegate = super.capabilities();
+            return feature -> feature != SqlFeature.OPTIMIZER_HINT_COMMENT && delegate.supports(feature);
         }
     }
 }

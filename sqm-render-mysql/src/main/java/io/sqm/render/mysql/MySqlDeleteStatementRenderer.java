@@ -1,5 +1,6 @@
 package io.sqm.render.mysql;
 
+import io.sqm.core.DeleteStatement;
 import io.sqm.core.Join;
 import io.sqm.core.SelectItem;
 import io.sqm.core.TableRef;
@@ -19,6 +20,24 @@ public class MySqlDeleteStatementRenderer extends io.sqm.render.ansi.DeleteState
      * Creates a MySQL delete renderer.
      */
     public MySqlDeleteStatementRenderer() {
+    }
+
+    /**
+     * Renders MySQL-specific tokens after {@code DELETE}.
+     *
+     * @param node delete statement
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    @Override
+    protected void renderAfterDeleteKeyword(DeleteStatement node, RenderContext ctx, SqlWriter w) {
+        if (!node.optimizerHints().isEmpty() && !ctx.dialect().capabilities().supports(SqlFeature.OPTIMIZER_HINT_COMMENT)) {
+            throw new UnsupportedDialectFeatureException("DELETE optimizer hints", ctx.dialect().name());
+        }
+
+        for (var hint : node.optimizerHints()) {
+            w.space().append("/*+ ").append(hint).append(" */");
+        }
     }
 
     /**

@@ -27,6 +27,25 @@ public class MySqlUpdateStatementParser extends io.sqm.parser.ansi.UpdateStateme
     }
 
     /**
+     * Parses tokens that may appear after {@code UPDATE} and before the target table.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return parsed optimizer hints or an empty list when omitted
+     */
+    @Override
+    protected ParseResult<List<String>> parseAfterUpdateKeyword(Cursor cur, ParseContext ctx) {
+        var hints = new ArrayList<String>();
+        while (cur.match(TokenType.COMMENT_HINT)) {
+            if (!ctx.capabilities().supports(SqlFeature.OPTIMIZER_HINT_COMMENT)) {
+                return error("Optimizer hint comments are not supported by this dialect", cur.fullPos());
+            }
+            hints.add(cur.advance().lexeme());
+        }
+        return ok(List.copyOf(hints));
+    }
+
+    /**
      * Parses optional joined sources attached to the target table.
      *
      * @param cur token cursor

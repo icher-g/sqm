@@ -31,7 +31,11 @@ public class DeleteStatementRenderer implements Renderer<DeleteStatement> {
      */
     @Override
     public void render(DeleteStatement node, RenderContext ctx, SqlWriter w) {
-        w.append("DELETE FROM").space().append(node.table());
+        w.append("DELETE");
+
+        renderAfterDeleteKeyword(node, ctx, w);
+
+        w.space().append("FROM").space().append(node.table());
 
         renderUsing(node.using(), ctx, w);
         renderJoins(node.joins(), ctx, w);
@@ -53,6 +57,19 @@ public class DeleteStatementRenderer implements Renderer<DeleteStatement> {
     protected void renderUsing(List<TableRef> using, RenderContext ctx, SqlWriter w) {
         if (!using.isEmpty()) {
             throw new UnsupportedDialectFeatureException("DELETE ... USING", ctx.dialect().name());
+        }
+    }
+
+    /**
+     * Renders tokens that may appear after {@code DELETE} and before {@code FROM}.
+     *
+     * @param node delete statement
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected void renderAfterDeleteKeyword(DeleteStatement node, RenderContext ctx, SqlWriter w) {
+        if (!node.optimizerHints().isEmpty()) {
+            throw new UnsupportedDialectFeatureException("DELETE optimizer hints", ctx.dialect().name());
         }
     }
 
