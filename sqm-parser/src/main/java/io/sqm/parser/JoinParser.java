@@ -38,6 +38,7 @@ public class JoinParser implements Parser<Join> {
      * Parses {@link JoinKind} from the {@link Cursor}.
      *
      * @param cur a Cursor instance that contains a list of tokens representing the spec to be parsed.
+     * @param ctx the parse context.
      * @return a parsed join kind.
      */
     public static JoinKind parseKind(Cursor cur, ParseContext ctx) {

@@ -41,9 +41,11 @@ class SqmJavaEmitterTest {
                 left(tbl("orders").as("o")).on(col("o", "uid").eq(col("u", "id"))),
                 right(tbl("right_t").as("r")).on(col("r", "uid").eq(col("u", "id"))),
                 full(tbl("full_t").as("f")).on(col("f", "uid").eq(col("u", "id"))),
+                straight(tbl("plan_locked").as("pl")).on(col("pl", "uid").eq(col("u", "id"))),
                 cross(tbl("cross_t")),
                 natural(tbl("natural_t")),
-                inner(tbl("using_t")).using("uid")
+                inner(tbl("using_t")).using("uid"),
+                straight(tbl("using_plan_locked")).using("uid")
             )
             .where(
                 col("u", "name").like("%a%").escape("\\")
@@ -93,6 +95,7 @@ class SqmJavaEmitterTest {
         assertTrue(source.contains("left("));
         assertTrue(source.contains("right("));
         assertTrue(source.contains("full("));
+        assertTrue(source.contains("straight("));
         assertTrue(source.contains("cross("));
         assertTrue(source.contains("natural("));
         assertTrue(source.contains(".using(\"uid\")"));

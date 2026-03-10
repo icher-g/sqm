@@ -1,6 +1,7 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.JoinKind;
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.ansi.spi.AnsiDialect;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -52,13 +54,20 @@ class JoinKindRendererTest {
     }
 
     @Test
-    @DisplayName("All join kinds render with JOIN keyword")
+    @DisplayName("ANSI-supported join kinds render with JOIN keyword")
     void all_join_kinds_contain_join() {
-        for (JoinKind kind : JoinKind.values()) {
+        for (JoinKind kind : new JoinKind[]{JoinKind.INNER, JoinKind.LEFT, JoinKind.RIGHT, JoinKind.FULL}) {
             SqlWriter w = new DefaultSqlWriter(ctx);
             renderer.render(kind, ctx, w);
             String result = w.toText(null).sql();
             assertTrue(result.contains("JOIN"), kind + " should render with JOIN keyword");
         }
+    }
+
+    @Test
+    @DisplayName("STRAIGHT_JOIN is rejected in ANSI dialect")
+    void straight_join_is_rejected_for_ansi() {
+        SqlWriter w = new DefaultSqlWriter(ctx);
+        assertThrows(UnsupportedDialectFeatureException.class, () -> renderer.render(JoinKind.STRAIGHT, ctx, w));
     }
 }

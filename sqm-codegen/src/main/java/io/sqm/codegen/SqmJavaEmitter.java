@@ -247,6 +247,7 @@ final class SqmJavaEmitter {
                 case LEFT -> "left";
                 case RIGHT -> "right";
                 case FULL -> "full";
+                case STRAIGHT -> "straight";
             };
             String out = fn + "(" + emitNode(j.right()) + ")";
             if (j.on() != null) {
@@ -272,6 +273,7 @@ final class SqmJavaEmitter {
                 case LEFT -> "left";
                 case RIGHT -> "right";
                 case FULL -> "full";
+                case STRAIGHT -> "straight";
             };
             return fn + "(" + emitNode(j.right()) + ")"
                 + ".using(" + joinInline(j.usingColumns().stream().map(DslEmitterVisitor::quote).toList()) + ")";
