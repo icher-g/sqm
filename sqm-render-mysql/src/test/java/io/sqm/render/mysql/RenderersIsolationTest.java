@@ -1,6 +1,7 @@
 package io.sqm.render.mysql;
 
 import io.sqm.core.GroupBy;
+import io.sqm.core.InsertStatement;
 import io.sqm.core.LimitOffset;
 import io.sqm.core.RegexPredicate;
 import io.sqm.core.SelectQuery;
@@ -16,6 +17,9 @@ class RenderersIsolationTest {
     void mysqlRegistry_doesNotMutateAnsiRegistry() {
         RenderersRepository ansi = io.sqm.render.ansi.Renderers.ansi();
         RenderersRepository mysql = Renderers.mysql();
+
+        assertInstanceOf(io.sqm.render.ansi.InsertStatementRenderer.class, ansi.require(InsertStatement.class));
+        assertInstanceOf(MySqlInsertStatementRenderer.class, mysql.require(InsertStatement.class));
 
         assertInstanceOf(io.sqm.render.ansi.LimitOffsetRenderer.class, ansi.require(LimitOffset.class));
         assertInstanceOf(MySqlLimitOffsetRenderer.class, mysql.require(LimitOffset.class));

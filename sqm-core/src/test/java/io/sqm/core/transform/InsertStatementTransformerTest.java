@@ -1,5 +1,6 @@
 package io.sqm.core.transform;
 
+import io.sqm.core.InsertStatement;
 import io.sqm.core.Node;
 import io.sqm.core.Table;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -47,10 +49,11 @@ class InsertStatementTransformerTest {
     @Test
     void rebuildsStatementWhenSourceChanges() {
         var statement = insert(tbl("users"))
+            .ignore()
             .values(row(lit(1)))
             .build();
 
-        Node transformed = new RecursiveNodeTransformer() {
+        var transformed = (InsertStatement) new RecursiveNodeTransformer() {
             @Override
             public Node visitLiteralExpr(io.sqm.core.LiteralExpr literalExpr) {
                 return lit(2);
@@ -58,6 +61,7 @@ class InsertStatementTransformerTest {
         }.transform(statement);
 
         assertNotSame(statement, transformed);
+        assertEquals(InsertStatement.InsertMode.IGNORE, transformed.insertMode());
     }
 
     @Test

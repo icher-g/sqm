@@ -20,6 +20,7 @@ class InsertStatementTest {
     @Test
     void builderCreatesImmutableInsertStatement() {
         var statement = insert(tbl("users"))
+            .ignore()
             .columns(Identifier.of("id"), Identifier.of("name"))
             .values(rows(
                 row(lit(1), lit("alice")),
@@ -28,6 +29,7 @@ class InsertStatementTest {
             .returning(col("id").toSelectItem())
             .build();
 
+        assertEquals(InsertStatement.InsertMode.IGNORE, statement.insertMode());
         assertEquals("users", statement.table().name().value());
         assertEquals(2, statement.columns().size());
         assertInstanceOf(RowListExpr.class, statement.source());
@@ -43,8 +45,9 @@ class InsertStatementTest {
     @Test
     void supportsOfOverloadAndBuilderConvenienceMethods() {
         var source = row(lit(1));
-        var ofStatement = InsertStatement.of(tbl("users"), source);
+        var ofStatement = InsertStatement.of(InsertStatement.InsertMode.REPLACE, tbl("users"), source);
 
+        assertEquals(InsertStatement.InsertMode.REPLACE, ofStatement.insertMode());
         assertEquals(0, ofStatement.columns().size());
         assertInstanceOf(RowExpr.class, ofStatement.source());
 
@@ -55,6 +58,7 @@ class InsertStatementTest {
             .returning(col("id").toSelectItem())
             .build();
 
+        assertEquals(InsertStatement.InsertMode.STANDARD, built.insertMode());
         assertEquals(1, built.columns().size());
         assertEquals(InsertStatement.OnConflictAction.DO_NOTHING, built.onConflictAction());
         assertEquals(1, built.returning().size());
@@ -63,14 +67,16 @@ class InsertStatementTest {
 
     @Test
     void normalizesNullCollectionsInFactories() {
-        var statement = InsertStatement.of(tbl("users"), null, row(lit(1)), null, null, null, null, null);
-        var statementWithReturningOverload = InsertStatement.of(tbl("users"), row(lit(1)), null);
+        var statement = InsertStatement.of(InsertStatement.InsertMode.IGNORE, tbl("users"), null, row(lit(1)), null, null, null, null, null);
+        var statementWithReturningOverload = InsertStatement.of(InsertStatement.InsertMode.REPLACE, tbl("users"), row(lit(1)), null);
 
+        assertEquals(InsertStatement.InsertMode.IGNORE, statement.insertMode());
         assertTrue(statement.columns().isEmpty());
         assertTrue(statement.conflictTarget().isEmpty());
         assertEquals(InsertStatement.OnConflictAction.NONE, statement.onConflictAction());
         assertTrue(statement.conflictUpdateAssignments().isEmpty());
         assertTrue(statement.returning().isEmpty());
+        assertEquals(InsertStatement.InsertMode.REPLACE, statementWithReturningOverload.insertMode());
         assertTrue(statementWithReturningOverload.columns().isEmpty());
         assertTrue(statementWithReturningOverload.returning().isEmpty());
     }
@@ -78,12 +84,14 @@ class InsertStatementTest {
     @Test
     void equalityAndHashDependOnShape() {
         var first = insert(tbl("users"))
+            .ignore()
             .columns(Identifier.of("id"))
             .values(row(lit(1)))
             .onConflictDoNothing(Identifier.of("id"))
             .returning(col("id").toSelectItem())
             .build();
         var second = insert(tbl("users"))
+            .ignore()
             .columns(Identifier.of("id"))
             .values(row(lit(1)))
             .onConflictDoNothing(Identifier.of("id"))
@@ -91,7 +99,9 @@ class InsertStatementTest {
             .build();
         var third = insert(tbl("users"))
             .columns(Identifier.of("id"))
-            .query(io.sqm.dsl.Dsl.select(lit(1)).build())
+            .values(row(lit(1)))
+            .onConflictDoNothing(Identifier.of("id"))
+            .returning(col("id").toSelectItem())
             .build();
 
         assertEquals(first, second);
@@ -101,10 +111,13 @@ class InsertStatementTest {
 
     @Test
     void validatesRequiredMembers() {
+        var defaultModeStatement = InsertStatement.of(null, tbl("users"), row(lit(1)));
+        assertEquals(InsertStatement.InsertMode.STANDARD, defaultModeStatement.insertMode());
         assertThrows(NullPointerException.class, () -> InsertStatement.of(null, java.util.List.of(), row(lit(1))));
         assertThrows(NullPointerException.class, () -> InsertStatement.of(tbl("users"), java.util.List.of(), null));
         assertThrows(IllegalStateException.class, () -> insert(tbl("users")).build());
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).table(null));
+        assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).insertMode(null));
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).columns((Identifier[]) null));
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).source(null));
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).returning((SelectItem[]) null));
@@ -112,3 +125,4 @@ class InsertStatementTest {
         assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(tbl("users"), java.util.List.of(), row(lit(1)), java.util.List.of(Identifier.of("id")), InsertStatement.OnConflictAction.NONE, java.util.List.of(), null, java.util.List.of()));
     }
 }
+

@@ -70,7 +70,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         changed |= conflictWhere != statement.conflictUpdateWhere();
         changed |= apply(statement.returning(), returning);
         if (changed) {
-            return InsertStatement.of(table,
+            return InsertStatement.of(
+                statement.insertMode(),
+                table,
                 statement.columns(),
                 source,
                 statement.conflictTarget(),
@@ -1553,5 +1555,3 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         return expr;
     }
 }
-
-

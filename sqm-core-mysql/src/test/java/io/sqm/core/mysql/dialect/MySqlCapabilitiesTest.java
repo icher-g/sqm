@@ -32,6 +32,9 @@ class MySqlCapabilitiesTest {
         assertTrue(capabilities.supports(SqlFeature.CALC_FOUND_ROWS_MODIFIER));
         assertTrue(capabilities.supports(SqlFeature.OPTIMIZER_HINT_COMMENT));
         assertTrue(capabilities.supports(SqlFeature.TABLE_INDEX_HINT));
+        assertTrue(capabilities.supports(SqlFeature.INSERT_IGNORE));
+        assertTrue(capabilities.supports(SqlFeature.INSERT_ON_DUPLICATE_KEY_UPDATE));
+        assertTrue(capabilities.supports(SqlFeature.REPLACE_INTO));
     }
 
     @Test
@@ -61,6 +64,9 @@ class MySqlCapabilitiesTest {
         assertEquals(expected.supports(SqlFeature.CALC_FOUND_ROWS_MODIFIER), latest.supports(SqlFeature.CALC_FOUND_ROWS_MODIFIER));
         assertEquals(expected.supports(SqlFeature.OPTIMIZER_HINT_COMMENT), latest.supports(SqlFeature.OPTIMIZER_HINT_COMMENT));
         assertEquals(expected.supports(SqlFeature.TABLE_INDEX_HINT), latest.supports(SqlFeature.TABLE_INDEX_HINT));
+        assertEquals(expected.supports(SqlFeature.INSERT_IGNORE), latest.supports(SqlFeature.INSERT_IGNORE));
+        assertEquals(expected.supports(SqlFeature.INSERT_ON_DUPLICATE_KEY_UPDATE), latest.supports(SqlFeature.INSERT_ON_DUPLICATE_KEY_UPDATE));
+        assertEquals(expected.supports(SqlFeature.REPLACE_INTO), latest.supports(SqlFeature.REPLACE_INTO));
     }
 
     @Test
@@ -68,3 +74,4 @@ class MySqlCapabilitiesTest {
         assertThrows(NullPointerException.class, () -> MySqlCapabilities.of(null));
     }
 }
+

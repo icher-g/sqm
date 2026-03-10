@@ -24,7 +24,7 @@ public class StatementParser implements Parser<Statement> {
 
     @Override
     public ParseResult<? extends Statement> parse(Cursor cur, ParseContext ctx) {
-        if (cur.match(TokenType.INSERT)) {
+        if (cur.match(TokenType.INSERT) || cur.match(TokenType.REPLACE)) {
             return ctx.parse(InsertStatement.class, cur);
         }
         if (cur.match(TokenType.UPDATE)) {

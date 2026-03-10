@@ -14,13 +14,44 @@ public non-sealed interface InsertStatement extends Statement {
     /**
      * Creates an immutable insert statement.
      *
+     * @param insertMode insert mode
+     * @param table      target table
+     * @param columns    target columns, or empty when omitted
+     * @param source     insert source
+     * @return immutable insert statement
+     */
+    static InsertStatement of(InsertMode insertMode, Table table, List<Identifier> columns, InsertSource source) {
+        return of(insertMode, table, columns, source, List.of(), OnConflictAction.NONE, List.of(), null, List.of());
+    }
+
+    /**
+     * Creates an immutable insert statement.
+     *
      * @param table   target table
      * @param columns target columns, or empty when omitted
      * @param source  insert source
      * @return immutable insert statement
      */
     static InsertStatement of(Table table, List<Identifier> columns, InsertSource source) {
-        return of(table, columns, source, List.of(), OnConflictAction.NONE, List.of(), null, List.of());
+        return of(InsertMode.STANDARD, table, columns, source);
+    }
+
+    /**
+     * Creates an immutable insert statement with a {@code RETURNING} projection list.
+     *
+     * @param insertMode insert mode
+     * @param table      target table
+     * @param columns    target columns, or empty when omitted
+     * @param source     insert source
+     * @param returning  returning projection list, or empty when omitted
+     * @return immutable insert statement
+     */
+    static InsertStatement of(InsertMode insertMode,
+                              Table table,
+                              List<Identifier> columns,
+                              InsertSource source,
+                              List<SelectItem> returning) {
+        return of(insertMode, table, columns, source, List.of(), OnConflictAction.NONE, List.of(), null, returning);
     }
 
     /**
@@ -33,7 +64,19 @@ public non-sealed interface InsertStatement extends Statement {
      * @return immutable insert statement
      */
     static InsertStatement of(Table table, List<Identifier> columns, InsertSource source, List<SelectItem> returning) {
-        return of(table, columns, source, List.of(), OnConflictAction.NONE, List.of(), null, returning);
+        return of(InsertMode.STANDARD, table, columns, source, returning);
+    }
+
+    /**
+     * Creates an immutable insert statement without an explicit column list.
+     *
+     * @param insertMode insert mode
+     * @param table      target table
+     * @param source     insert source
+     * @return immutable insert statement
+     */
+    static InsertStatement of(InsertMode insertMode, Table table, InsertSource source) {
+        return of(insertMode, table, List.of(), source, List.of(), OnConflictAction.NONE, List.of(), null, List.of());
     }
 
     /**
@@ -44,7 +87,21 @@ public non-sealed interface InsertStatement extends Statement {
      * @return immutable insert statement
      */
     static InsertStatement of(Table table, InsertSource source) {
-        return of(table, List.of(), source, List.of(), OnConflictAction.NONE, List.of(), null, List.of());
+        return of(InsertMode.STANDARD, table, source);
+    }
+
+    /**
+     * Creates an immutable insert statement without an explicit column list and with
+     * optional {@code RETURNING} items.
+     *
+     * @param insertMode insert mode
+     * @param table      target table
+     * @param source     insert source
+     * @param returning  returning projection list, or empty when omitted
+     * @return immutable insert statement
+     */
+    static InsertStatement of(InsertMode insertMode, Table table, InsertSource source, List<SelectItem> returning) {
+        return of(insertMode, table, List.of(), source, List.of(), OnConflictAction.NONE, List.of(), null, returning);
     }
 
     /**
@@ -57,7 +114,41 @@ public non-sealed interface InsertStatement extends Statement {
      * @return immutable insert statement
      */
     static InsertStatement of(Table table, InsertSource source, List<SelectItem> returning) {
-        return of(table, List.of(), source, List.of(), OnConflictAction.NONE, List.of(), null, returning);
+        return of(InsertMode.STANDARD, table, source, returning);
+    }
+
+    /**
+     * Creates an immutable insert statement with optional {@code ON CONFLICT} and {@code RETURNING} clauses.
+     *
+     * @param insertMode                insert mode
+     * @param table                     target table
+     * @param columns                   target columns, or empty when omitted
+     * @param source                    insert source
+     * @param conflictTarget            conflict target columns, or empty when omitted
+     * @param onConflictAction          on-conflict action
+     * @param conflictUpdateAssignments conflict-update assignments, or empty when omitted
+     * @param conflictUpdateWhere       optional conflict-update predicate
+     * @param returning                 returning projection list, or empty when omitted
+     * @return immutable insert statement
+     */
+    static InsertStatement of(InsertMode insertMode,
+                              Table table,
+                              List<Identifier> columns,
+                              InsertSource source,
+                              List<Identifier> conflictTarget,
+                              OnConflictAction onConflictAction,
+                              List<Assignment> conflictUpdateAssignments,
+                              Predicate conflictUpdateWhere,
+                              List<SelectItem> returning) {
+        return new Impl(insertMode,
+            table,
+            columns,
+            source,
+            conflictTarget,
+            onConflictAction,
+            conflictUpdateAssignments,
+            conflictUpdateWhere,
+            returning);
     }
 
     /**
@@ -74,14 +165,22 @@ public non-sealed interface InsertStatement extends Statement {
      * @return immutable insert statement
      */
     static InsertStatement of(Table table,
-        List<Identifier> columns,
-        InsertSource source,
-        List<Identifier> conflictTarget,
-        OnConflictAction onConflictAction,
-        List<Assignment> conflictUpdateAssignments,
-        Predicate conflictUpdateWhere,
-        List<SelectItem> returning) {
-        return new Impl(table, columns, source, conflictTarget, onConflictAction, conflictUpdateAssignments, conflictUpdateWhere, returning);
+                              List<Identifier> columns,
+                              InsertSource source,
+                              List<Identifier> conflictTarget,
+                              OnConflictAction onConflictAction,
+                              List<Assignment> conflictUpdateAssignments,
+                              Predicate conflictUpdateWhere,
+                              List<SelectItem> returning) {
+        return of(InsertMode.STANDARD,
+            table,
+            columns,
+            source,
+            conflictTarget,
+            onConflictAction,
+            conflictUpdateAssignments,
+            conflictUpdateWhere,
+            returning);
     }
 
     /**
@@ -100,6 +199,13 @@ public non-sealed interface InsertStatement extends Statement {
      * @return target table
      */
     Table table();
+
+    /**
+     * Returns the insert mode.
+     *
+     * @return insert mode
+     */
+    InsertMode insertMode();
 
     /**
      * Returns explicitly targeted columns.
@@ -181,6 +287,24 @@ public non-sealed interface InsertStatement extends Statement {
     }
 
     /**
+     * Describes the leading keyword variant used by the insert statement.
+     */
+    enum InsertMode {
+        /**
+         * Standard {@code INSERT INTO}.
+         */
+        STANDARD,
+        /**
+         * MySQL {@code INSERT IGNORE INTO}.
+         */
+        IGNORE,
+        /**
+         * MySQL {@code REPLACE INTO}.
+         */
+        REPLACE
+    }
+
+    /**
      * Mutable builder for constructing immutable {@link InsertStatement} instances.
      */
     final class Builder {
@@ -188,6 +312,7 @@ public non-sealed interface InsertStatement extends Statement {
         private final List<Identifier> conflictTarget = new ArrayList<>();
         private final List<Assignment> conflictUpdateAssignments = new ArrayList<>();
         private final List<SelectItem> returning = new ArrayList<>();
+        private InsertMode insertMode = InsertMode.STANDARD;
         private Table table;
         private InsertSource source;
         private OnConflictAction onConflictAction = OnConflictAction.NONE;
@@ -211,6 +336,44 @@ public non-sealed interface InsertStatement extends Statement {
         public Builder table(Table table) {
             this.table = Objects.requireNonNull(table, "table");
             return this;
+        }
+
+        /**
+         * Sets the insert mode.
+         *
+         * @param insertMode insert mode
+         * @return this builder
+         */
+        public Builder insertMode(InsertMode insertMode) {
+            this.insertMode = Objects.requireNonNull(insertMode, "insertMode");
+            return this;
+        }
+
+        /**
+         * Configures standard {@code INSERT INTO} mode.
+         *
+         * @return this builder
+         */
+        public Builder standard() {
+            return insertMode(InsertMode.STANDARD);
+        }
+
+        /**
+         * Configures MySQL {@code INSERT IGNORE INTO} mode.
+         *
+         * @return this builder
+         */
+        public Builder ignore() {
+            return insertMode(InsertMode.IGNORE);
+        }
+
+        /**
+         * Configures MySQL {@code REPLACE INTO} mode.
+         *
+         * @return this builder
+         */
+        public Builder replace() {
+            return insertMode(InsertMode.REPLACE);
         }
 
         /**
@@ -393,7 +556,9 @@ public non-sealed interface InsertStatement extends Statement {
             if (source == null) {
                 throw new IllegalStateException("source must be set");
             }
-            return InsertStatement.of(table,
+            return InsertStatement.of(
+                insertMode,
+                table,
                 columns,
                 source,
                 conflictTarget,
@@ -407,6 +572,7 @@ public non-sealed interface InsertStatement extends Statement {
     /**
      * Default immutable implementation of {@link InsertStatement}.
      *
+     * @param insertMode                insert mode
      * @param table                     target table
      * @param columns                   target columns
      * @param source                    insert source
@@ -416,7 +582,8 @@ public non-sealed interface InsertStatement extends Statement {
      * @param conflictUpdateWhere       optional conflict-update predicate
      * @param returning                 returning projection list
      */
-    record Impl(Table table,
+    record Impl(InsertMode insertMode,
+                Table table,
                 List<Identifier> columns,
                 InsertSource source,
                 List<Identifier> conflictTarget,
@@ -428,6 +595,7 @@ public non-sealed interface InsertStatement extends Statement {
          * Creates an immutable insert statement implementation.
          */
         public Impl {
+            insertMode = insertMode == null ? InsertMode.STANDARD : insertMode;
             Objects.requireNonNull(table, "table");
             Objects.requireNonNull(source, "source");
             columns = columns == null ? List.of() : List.copyOf(columns);

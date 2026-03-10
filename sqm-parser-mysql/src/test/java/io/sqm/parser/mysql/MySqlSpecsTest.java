@@ -1,6 +1,7 @@
 package io.sqm.parser.mysql;
 
 import io.sqm.core.GroupBy;
+import io.sqm.core.InsertStatement;
 import io.sqm.core.GroupItem;
 import io.sqm.core.LimitOffset;
 import io.sqm.core.Query;
@@ -125,5 +126,14 @@ class MySqlSpecsTest {
 
         assertTrue(result.ok());
         assertEquals(io.sqm.core.Table.IndexHintType.USE, result.value().indexHints().getFirst().type());
+    }
+
+    @Test
+    void parseContext_usesMysqlInsertParser_forInsertIgnore() {
+        var ctx = io.sqm.parser.spi.ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT IGNORE INTO users VALUES (1)");
+
+        assertTrue(result.ok());
+        assertEquals(InsertStatement.InsertMode.IGNORE, result.value().insertMode());
     }
 }

@@ -43,7 +43,10 @@ public final class MySqlCapabilities {
                 SqlFeature.REGEX_PREDICATE,
                 SqlFeature.TABLE_INDEX_HINT,
                 SqlFeature.CALC_FOUND_ROWS_MODIFIER,
-                SqlFeature.OPTIMIZER_HINT_COMMENT
+                SqlFeature.OPTIMIZER_HINT_COMMENT,
+                SqlFeature.INSERT_IGNORE,
+                SqlFeature.INSERT_ON_DUPLICATE_KEY_UPDATE,
+                SqlFeature.REPLACE_INTO
             )
             .build();
     }
