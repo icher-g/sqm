@@ -137,12 +137,13 @@ MySQL DML extensions are delivered for:
 
 - `INSERT IGNORE`
 - `INSERT ... ON DUPLICATE KEY UPDATE`
-- `REPLACE INTO`
-- joined `UPDATE`
-- qualified joined-`UPDATE` assignment targets
-- canonical `DELETE FROM ... USING ... JOIN ...`
-- alias and index-hint canonicalization for prioritized joined DML edge cases
-- `STRAIGHT_JOIN`
+  - `REPLACE INTO`
+  - joined `UPDATE`
+  - qualified joined-`UPDATE` assignment targets
+  - optimizer hint comments on `SELECT`, `UPDATE`, and `DELETE`
+  - canonical `DELETE FROM ... USING ... JOIN ...`
+  - alias and index-hint canonicalization for prioritized joined DML edge cases
+  - `STRAIGHT_JOIN`
 
 Current scope boundary:
 
@@ -203,12 +204,14 @@ Supported MySQL DML examples include:
 
 ```sql
 INSERT IGNORE INTO users (id, name) VALUES (1, 'alice')
-INSERT INTO users (id, name) VALUES (1, 'alice') ON DUPLICATE KEY UPDATE name = 'alice2'
-REPLACE INTO users (id, name) VALUES (1, 'alice')
-UPDATE users AS u USE INDEX (idx_users_name) INNER JOIN orders AS o FORCE INDEX FOR JOIN (idx_orders_user) ON u.id = o.user_id SET name = 'alice' WHERE o.state = 'closed'
-UPDATE users AS u STRAIGHT_JOIN orders AS o ON u.id = o.user_id SET u.name = 'alice' WHERE o.state = 'closed'
-DELETE FROM users AS u USE INDEX (idx_users_name) USING users AS u USE INDEX (idx_users_name) INNER JOIN orders AS o FORCE INDEX FOR JOIN (idx_orders_user) ON u.id = o.user_id WHERE o.state = 'closed'
-```
+  INSERT INTO users (id, name) VALUES (1, 'alice') ON DUPLICATE KEY UPDATE name = 'alice2'
+  REPLACE INTO users (id, name) VALUES (1, 'alice')
+  UPDATE /*+ BKA(users) */ users INNER JOIN orders ON users.id = orders.user_id SET name = 'alice' WHERE orders.state = 'closed'
+  UPDATE users AS u USE INDEX (idx_users_name) INNER JOIN orders AS o FORCE INDEX FOR JOIN (idx_orders_user) ON u.id = o.user_id SET name = 'alice' WHERE o.state = 'closed'
+  UPDATE users AS u STRAIGHT_JOIN orders AS o ON u.id = o.user_id SET u.name = 'alice' WHERE o.state = 'closed'
+  DELETE /*+ BKA(users) */ FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'
+  DELETE FROM users AS u USE INDEX (idx_users_name) USING users AS u USE INDEX (idx_users_name) INNER JOIN orders AS o FORCE INDEX FOR JOIN (idx_orders_user) ON u.id = o.user_id WHERE o.state = 'closed'
+  ```
 
 ---
 
@@ -729,11 +732,12 @@ var rendered = renderCtx.render(query).sql();
 ```
 
 Highlights:
-- MySQL null-safe equality (`<=>`)
-- Regex predicates (`REGEXP`, `RLIKE`) with canonical rendering
-- Locking modifiers (`FOR SHARE`, `NOWAIT`, `SKIP LOCKED`)
-- `GROUP BY ... WITH ROLLUP` parsing and canonical rendering
-- `STRAIGHT_JOIN` parsing and canonical rendering
+  - MySQL null-safe equality (`<=>`)
+  - Regex predicates (`REGEXP`, `RLIKE`) with canonical rendering
+  - Locking modifiers (`FOR SHARE`, `NOWAIT`, `SKIP LOCKED`)
+  - `GROUP BY ... WITH ROLLUP` parsing and canonical rendering
+  - optimizer hint comments for `SELECT`, `UPDATE`, and `DELETE`
+  - `STRAIGHT_JOIN` parsing and canonical rendering
 
 ### Schema Validation (sqm-validate)
 

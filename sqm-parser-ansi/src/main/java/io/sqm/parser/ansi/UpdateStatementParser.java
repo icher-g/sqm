@@ -39,6 +39,11 @@ public class UpdateStatementParser implements Parser<UpdateStatement> {
     public ParseResult<? extends UpdateStatement> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected UPDATE", TokenType.UPDATE);
 
+        var optimizerHintsResult = parseAfterUpdateKeyword(cur, ctx);
+        if (optimizerHintsResult.isError()) {
+            return error(optimizerHintsResult);
+        }
+
         var table = ctx.parse(Table.class, cur);
         if (table.isError()) {
             return error(table);
@@ -76,7 +81,26 @@ public class UpdateStatementParser implements Parser<UpdateStatement> {
             return error(returningResult);
         }
 
-        return ok(UpdateStatement.of(table.value(), assignmentsResult.value(), joinsResult.value(), fromResult.value(), where, returningResult.value()));
+        return ok(UpdateStatement.of(
+            table.value(),
+            assignmentsResult.value(),
+            joinsResult.value(),
+            fromResult.value(),
+            where,
+            returningResult.value(),
+            optimizerHintsResult.value()
+        ));
+    }
+
+    /**
+     * Parses tokens that may appear after {@code UPDATE} and before the target table.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return parsed optimizer hints or an empty list when omitted
+     */
+    protected ParseResult<List<String>> parseAfterUpdateKeyword(Cursor cur, ParseContext ctx) {
+        return ok(List.of());
     }
 
     /**

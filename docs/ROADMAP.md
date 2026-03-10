@@ -50,6 +50,12 @@ Priority levels:
 - Parser/render capability gating and deterministic canonical SQL output delivered.
 - Integration round-trip coverage delivered in `sqm-it`.
 
+### Epic MYSQL-R2B: MySQL Optimizer Hint Context Expansion (Completed)
+- Delivered scope: optimizer hint comments in MySQL `SELECT`, `UPDATE`, and `DELETE` statement contexts.
+- Core statement models now retain immutable optimizer hint bodies where those contexts are supported.
+- Parser/render capability gating and deterministic canonical SQL output delivered.
+- Integration round-trip coverage delivered in `sqm-it`.
+
 ### Epic R4: SQL Server Dialect Support
 - Add `sqm-parser-sqlserver` and `sqm-render-sqlserver`.
 - Define `SqlServerSpecs`.

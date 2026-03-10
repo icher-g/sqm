@@ -19,6 +19,26 @@ public non-sealed interface DeleteStatement extends Statement {
      * @param joins optional joined sources attached to the USING clause
      * @param where optional predicate
      * @param returning optional returning projection items
+     * @param optimizerHints optimizer hints (without comment delimiters)
+     * @return immutable delete statement
+     */
+    static DeleteStatement of(Table table,
+                              List<TableRef> using,
+                              List<Join> joins,
+                              Predicate where,
+                              List<SelectItem> returning,
+                              List<String> optimizerHints) {
+        return new Impl(table, using, joins, where, returning, optimizerHints);
+    }
+
+    /**
+     * Creates an immutable delete statement.
+     *
+     * @param table target table
+     * @param using optional USING sources
+     * @param joins optional joined sources attached to the USING clause
+     * @param where optional predicate
+     * @param returning optional returning projection items
      * @return immutable delete statement
      */
     static DeleteStatement of(Table table,
@@ -26,7 +46,7 @@ public non-sealed interface DeleteStatement extends Statement {
                               List<Join> joins,
                               Predicate where,
                               List<SelectItem> returning) {
-        return new Impl(table, using, joins, where, returning);
+        return of(table, using, joins, where, returning, List.of());
     }
 
     /**
@@ -42,7 +62,7 @@ public non-sealed interface DeleteStatement extends Statement {
                               List<TableRef> using,
                               Predicate where,
                               List<SelectItem> returning) {
-        return of(table, using, List.of(), where, returning);
+        return of(table, using, List.of(), where, returning, List.of());
     }
 
     /**
@@ -55,7 +75,7 @@ public non-sealed interface DeleteStatement extends Statement {
      * @return immutable delete statement
      */
     static DeleteStatement of(Table table, List<TableRef> using, List<Join> joins, Predicate where) {
-        return of(table, using, joins, where, List.of());
+        return of(table, using, joins, where, List.of(), List.of());
     }
 
     /**
@@ -67,7 +87,7 @@ public non-sealed interface DeleteStatement extends Statement {
      * @return immutable delete statement
      */
     static DeleteStatement of(Table table, List<TableRef> using, Predicate where) {
-        return of(table, using, List.of(), where, List.of());
+        return of(table, using, List.of(), where, List.of(), List.of());
     }
 
     /**
@@ -78,7 +98,7 @@ public non-sealed interface DeleteStatement extends Statement {
      * @return immutable delete statement
      */
     static DeleteStatement of(Table table, Predicate where) {
-        return of(table, List.of(), List.of(), where, List.of());
+        return of(table, List.of(), List.of(), where, List.of(), List.of());
     }
 
     /**
@@ -88,7 +108,7 @@ public non-sealed interface DeleteStatement extends Statement {
      * @return immutable delete statement
      */
     static DeleteStatement of(Table table) {
-        return of(table, List.of(), List.of(), null, List.of());
+        return of(table, List.of(), List.of(), null, List.of(), List.of());
     }
 
     /**
@@ -137,6 +157,13 @@ public non-sealed interface DeleteStatement extends Statement {
     List<SelectItem> returning();
 
     /**
+     * Returns optimizer hints attached to this statement.
+     *
+     * @return immutable optimizer hint list
+     */
+    List<String> optimizerHints();
+
+    /**
      * Accepts a {@link NodeVisitor}.
      *
      * @param visitor visitor instance
@@ -157,6 +184,7 @@ public non-sealed interface DeleteStatement extends Statement {
         private final List<Join> joins = new ArrayList<>();
         private Predicate where;
         private final List<SelectItem> returning = new ArrayList<>();
+        private final List<String> optimizerHints = new ArrayList<>();
 
         /**
          * Creates a builder initialized with a target table.
@@ -273,6 +301,30 @@ public non-sealed interface DeleteStatement extends Statement {
         }
 
         /**
+         * Replaces optimizer hints attached to this statement.
+         *
+         * @param optimizerHints optimizer hints (without comment delimiters)
+         * @return this builder
+         */
+        public Builder optimizerHints(List<String> optimizerHints) {
+            Objects.requireNonNull(optimizerHints, "optimizerHints");
+            this.optimizerHints.clear();
+            this.optimizerHints.addAll(optimizerHints);
+            return this;
+        }
+
+        /**
+         * Appends one optimizer hint.
+         *
+         * @param optimizerHint optimizer hint (without comment delimiters)
+         * @return this builder
+         */
+        public Builder optimizerHint(String optimizerHint) {
+            this.optimizerHints.add(Objects.requireNonNull(optimizerHint, "optimizerHint"));
+            return this;
+        }
+
+        /**
          * Builds an immutable delete statement.
          *
          * @return immutable delete statement
@@ -281,7 +333,7 @@ public non-sealed interface DeleteStatement extends Statement {
             if (table == null) {
                 throw new IllegalStateException("table must be set");
             }
-            return DeleteStatement.of(table, using, joins, where, returning);
+            return DeleteStatement.of(table, using, joins, where, returning, optimizerHints);
         }
     }
 
@@ -293,12 +345,14 @@ public non-sealed interface DeleteStatement extends Statement {
      * @param joins optional joined sources attached to the USING clause
      * @param where optional predicate
      * @param returning optional returning projection items
+     * @param optimizerHints optimizer hints (without comment delimiters)
      */
     record Impl(Table table,
                 List<TableRef> using,
                 List<Join> joins,
                 Predicate where,
-                List<SelectItem> returning) implements DeleteStatement {
+                List<SelectItem> returning,
+                List<String> optimizerHints) implements DeleteStatement {
         /**
          * Creates an immutable delete statement implementation.
          */
@@ -307,6 +361,7 @@ public non-sealed interface DeleteStatement extends Statement {
             using = using == null ? List.of() : List.copyOf(using);
             joins = joins == null ? List.of() : List.copyOf(joins);
             returning = returning == null ? List.of() : List.copyOf(returning);
+            optimizerHints = optimizerHints == null ? List.of() : List.copyOf(optimizerHints);
         }
     }
 }

@@ -2,6 +2,7 @@ package io.sqm.render.mysql;
 
 import io.sqm.core.Join;
 import io.sqm.core.SelectItem;
+import io.sqm.core.UpdateStatement;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
@@ -18,6 +19,24 @@ public class MySqlUpdateStatementRenderer extends io.sqm.render.ansi.UpdateState
      * Creates a MySQL update renderer.
      */
     public MySqlUpdateStatementRenderer() {
+    }
+
+    /**
+     * Renders MySQL-specific tokens after {@code UPDATE}.
+     *
+     * @param node update statement
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    @Override
+    protected void renderAfterUpdateKeyword(UpdateStatement node, RenderContext ctx, SqlWriter w) {
+        if (!node.optimizerHints().isEmpty() && !ctx.dialect().capabilities().supports(SqlFeature.OPTIMIZER_HINT_COMMENT)) {
+            throw new UnsupportedDialectFeatureException("UPDATE optimizer hints", ctx.dialect().name());
+        }
+
+        for (var hint : node.optimizerHints()) {
+            w.space().append("/*+ ").append(hint).append(" */");
+        }
     }
 
     /**

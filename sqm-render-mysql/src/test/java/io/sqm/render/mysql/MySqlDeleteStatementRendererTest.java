@@ -27,6 +27,7 @@ class MySqlDeleteStatementRendererTest {
     @Test
     void rendersDeleteUsingJoinStatement() {
         var statement = delete(tbl("users"))
+            .optimizerHint("BKA(users)")
             .using(tbl("users"))
             .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
             .where(col("orders", "state").eq(lit("closed")))
@@ -35,7 +36,7 @@ class MySqlDeleteStatementRendererTest {
         var sql = RenderContext.of(new MySqlDialect()).render(statement).sql();
 
         assertEquals(
-            "DELETE FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'",
+            "DELETE /*+ BKA(users) */ FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'",
             normalize(sql));
     }
 
@@ -63,7 +64,9 @@ class MySqlDeleteStatementRendererTest {
 
     @Test
     void rendersPlainDeleteWithoutUsingOrJoins() {
-        var statement = delete(tbl("users")).build();
+        var statement = delete(tbl("users"))
+            .optimizerHint("MAX_EXECUTION_TIME(1000)")
+            .build();
 
         var renderer = new MySqlDeleteStatementRenderer();
         var ctx = RenderContext.of(new MySqlDialect());
@@ -71,7 +74,7 @@ class MySqlDeleteStatementRendererTest {
 
         renderer.render(statement, ctx, writer);
 
-        assertEquals("DELETE FROM users", normalize(writer.toText(java.util.List.of()).sql()));
+        assertEquals("DELETE /*+ MAX_EXECUTION_TIME(1000) */ FROM users", normalize(writer.toText(java.util.List.of()).sql()));
     }
 
     @Test
@@ -93,6 +96,7 @@ class MySqlDeleteStatementRendererTest {
     @Test
     void rejectsDeleteUsingJoinInDialectWithoutCapability() {
         DeleteStatement statement = delete(tbl("users"))
+            .optimizerHint("BKA(users)")
             .using(tbl("users"))
             .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
             .build();
@@ -102,6 +106,16 @@ class MySqlDeleteStatementRendererTest {
 
         assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
             () -> renderer.render(statement, ctx, new io.sqm.render.defaults.DefaultSqlWriter(ctx)));
+    }
+
+    @Test
+    void rejectsDeleteOptimizerHintsWithoutCapability() {
+        DeleteStatement statement = delete(tbl("users"))
+            .optimizerHint("BKA(users)")
+            .build();
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new NoOptimizerHintMySqlDialect()).render(statement));
     }
 
     @Test
@@ -163,6 +177,14 @@ class MySqlDeleteStatementRendererTest {
         public DialectCapabilities capabilities() {
             var delegate = super.capabilities();
             return feature -> feature == SqlFeature.DML_RETURNING || delegate.supports(feature);
+        }
+    }
+
+    private static final class NoOptimizerHintMySqlDialect extends MySqlDialect {
+        @Override
+        public DialectCapabilities capabilities() {
+            var delegate = super.capabilities();
+            return feature -> feature != SqlFeature.OPTIMIZER_HINT_COMMENT && delegate.supports(feature);
         }
     }
 }

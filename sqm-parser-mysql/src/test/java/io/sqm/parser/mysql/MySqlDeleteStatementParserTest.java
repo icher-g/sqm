@@ -43,6 +43,16 @@ class MySqlDeleteStatementParserTest {
     }
 
     @Test
+    void parsesOptimizerHintAfterDeleteKeyword() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(DeleteStatement.class,
+            "DELETE /*+ BKA(users) */ FROM users WHERE users.id = 1");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(java.util.List.of("BKA(users)"), result.value().optimizerHints());
+    }
+
+    @Test
     void parsesDeleteUsingWithoutJoins() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(DeleteStatement.class, "DELETE FROM users USING users WHERE users.id = 1");
@@ -109,6 +119,16 @@ class MySqlDeleteStatementParserTest {
     }
 
     @Test
+    void parserRejectsDeleteOptimizerHintWhenCapabilityIsMissing() {
+        var ctx = ParseContext.of(new NoOptimizerHintMySqlSpecs());
+        var result = ctx.parse(DeleteStatement.class,
+            "DELETE /*+ BKA(users) */ FROM users WHERE users.id = 1");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Optimizer hint comments"));
+    }
+
+    @Test
     void rejectsDeleteReturningInMysql57() {
         var ctx = ParseContext.of(new MySqlSpecs(SqlDialectVersion.of(5, 7)));
         var result = ctx.parse(DeleteStatement.class, "DELETE FROM users WHERE users.id = 1 RETURNING id");
@@ -122,6 +142,14 @@ class MySqlDeleteStatementParserTest {
         public DialectCapabilities capabilities() {
             var delegate = super.capabilities();
             return feature -> feature == SqlFeature.DML_RETURNING || delegate.supports(feature);
+        }
+    }
+
+    private static final class NoOptimizerHintMySqlSpecs extends MySqlSpecs {
+        @Override
+        public DialectCapabilities capabilities() {
+            var delegate = super.capabilities();
+            return feature -> feature != SqlFeature.OPTIMIZER_HINT_COMMENT && delegate.supports(feature);
         }
     }
 }

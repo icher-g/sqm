@@ -105,7 +105,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         changed |= where != statement.where();
         changed |= apply(statement.returning(), returning);
         if (changed) {
-            return UpdateStatement.of(table, assignments, joins, from, where, returning);
+            return UpdateStatement.of(table, assignments, joins, from, where, returning, statement.optimizerHints());
         }
         return statement;
     }
@@ -129,7 +129,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         changed |= where != statement.where();
         changed |= apply(statement.returning(), returning);
         if (changed) {
-            return DeleteStatement.of(table, using, joins, where, returning);
+            return DeleteStatement.of(table, using, joins, where, returning, statement.optimizerHints());
         }
         return statement;
     }
