@@ -251,4 +251,18 @@ class IdentifierNormalizationTransformerTest {
         assertInstanceOf(io.sqm.core.CollateExpr.class, collateOut);
         assertEquals(java.util.List.of("pg_catalog", "c"), collateOut.collation().values());
     }
+
+    @Test
+    void normalizes_assignment_targets_and_preserves_normalized_assignments() {
+        var tx = new IdentifierNormalizationTransformer();
+        var mixed = Assignment.of(QualifiedName.of("U", "NAME"), lit("alice"));
+        var normalized = Assignment.of(QualifiedName.of("u", "name"), lit("alice"));
+
+        var mixedOut = tx.apply(mixed);
+        var normalizedOut = tx.apply(normalized);
+
+        assertEquals(java.util.List.of("u", "name"), mixedOut.column().values());
+        assertEquals("alice", ((LiteralExpr) mixedOut.value()).value());
+        assertSame(normalized, normalizedOut);
+    }
 }

@@ -2,6 +2,7 @@ package io.sqm.render.spi;
 
 import io.sqm.core.Expression;
 import io.sqm.core.Identifier;
+import io.sqm.core.QualifiedName;
 import io.sqm.core.QuoteStyle;
 import io.sqm.core.RowExpr;
 import io.sqm.core.ValuesTable;
@@ -53,6 +54,20 @@ class RendererDefaultsTest {
         assertEquals("`x`", renderer.renderIdentifier(Identifier.of("x", QuoteStyle.BACKTICK), preservingQuoter));
         assertEquals("\"x\"", renderer.renderIdentifier(Identifier.of("x", QuoteStyle.BACKTICK), fallbackQuoter));
         assertEquals("plain", renderer.renderIdentifier(Identifier.of("plain"), preservingQuoter));
+    }
+
+    @Test
+    void renderQualifiedNamePreservesEachPartOrFallsBackByQuoterSupport() {
+        var renderer = new ValuesTableRenderer();
+        var preservingQuoter = new PreservingQuoter(true);
+        var fallbackQuoter = new PreservingQuoter(false);
+        var qualifiedName = QualifiedName.of(
+            Identifier.of("schema", QuoteStyle.BACKTICK),
+            Identifier.of("table")
+        );
+
+        assertEquals("`schema`.table", renderer.renderQualifiedName(qualifiedName, preservingQuoter));
+        assertEquals("\"schema\".table", renderer.renderQualifiedName(qualifiedName, fallbackQuoter));
     }
 
     private static final class ValuesTableRenderer implements Renderer<ValuesTable> {
