@@ -8,6 +8,7 @@ import io.sqm.core.LimitOffset;
 import io.sqm.core.Query;
 import io.sqm.core.UpdateStatement;
 import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
 import org.junit.jupiter.api.Test;
 
@@ -52,6 +53,7 @@ class MySqlSpecsTest {
 
         assertSame(specs.capabilities(), specs.capabilities());
         assertSame(specs.operatorPolicy(), specs.operatorPolicy());
+        assertFalse(specs.capabilities().supports(SqlFeature.DML_RETURNING));
     }
 
     @Test

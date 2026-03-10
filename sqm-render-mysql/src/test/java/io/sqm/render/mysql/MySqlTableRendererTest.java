@@ -26,6 +26,19 @@ class MySqlTableRendererTest {
     }
 
     @Test
+    void rendersAliasBeforeMultipleIndexHintsCanonically() {
+        var table = Table.of(null, Identifier.of("users"), Identifier.of("u"), Table.Inheritance.DEFAULT,
+            List.of(
+                Table.IndexHint.use(Table.IndexHintScope.DEFAULT, List.of(Identifier.of("idx_a"))),
+                Table.IndexHint.force(Table.IndexHintScope.JOIN, List.of(Identifier.of("idx_b")))
+            ));
+
+        var sql = RenderContext.of(new MySqlDialect()).render(table).sql();
+
+        assertEquals("users AS u USE INDEX (idx_a) FORCE INDEX FOR JOIN (idx_b)", normalize(sql));
+    }
+
+    @Test
     void rendersTableWithScopedIndexHint() {
         var table = Table.of(null, Identifier.of("users"), null, Table.Inheritance.DEFAULT,
             List.of(new Table.IndexHint(Table.IndexHintType.FORCE, Table.IndexHintScope.ORDER_BY, List.of(Identifier.of("idx_order")))));
@@ -64,5 +77,9 @@ class MySqlTableRendererTest {
     @Test
     void targetTypeIsTable() {
         assertEquals(Table.class, new MySqlTableRenderer().targetType());
+    }
+
+    private static String normalize(String sql) {
+        return sql.replaceAll("\\s+", " ").trim();
     }
 }

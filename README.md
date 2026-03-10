@@ -125,7 +125,7 @@ DML foundation is delivered with a statement-level model and ANSI baseline parse
 - `UPDATE ... SET ... [WHERE ...]`
 - `DELETE FROM ... [WHERE ...]`
 
-PostgreSQL DML extensions are also delivered for:
+PostgreSQL DML extensions are delivered for:
 
 - `INSERT ... RETURNING`
 - `UPDATE ... FROM`
@@ -133,15 +133,21 @@ PostgreSQL DML extensions are also delivered for:
 - `INSERT ... ON CONFLICT DO NOTHING / DO UPDATE`
 - writable CTE `INSERT ... RETURNING`, `UPDATE ... RETURNING`, and `DELETE ... RETURNING` shapes
 
-Current PostgreSQL scope boundary:
+MySQL DML extensions are delivered for:
+
+- `INSERT IGNORE`
+- `INSERT ... ON DUPLICATE KEY UPDATE`
+- `REPLACE INTO`
+- joined `UPDATE`
+- canonical `DELETE FROM ... USING ... JOIN ...`
+- alias and index-hint canonicalization for prioritized joined DML edge cases
+
+Current scope boundary:
 
 - Baseline DML is cross-dialect through ANSI base components.
 - PostgreSQL writable CTE coverage includes `INSERT ... RETURNING`, `UPDATE ... RETURNING`, and `DELETE ... RETURNING`.
-- MySQL-specific DML extensions continue in separate follow-up epic work.
-
-Reference docs:
-
-- DML follow-up details are tracked in GitHub issues/epics (no local interim epic markdown is kept).
+- MySQL `RETURNING` remains capability-gated and unsupported for current supported MySQL versions.
+- MySQL joined DML support covers join-based target/source forms, but not qualified multi-target assignment semantics such as `SET t1.col = ..., t2.col = ...`.
 
 ### PostgreSQL DML Example
 
@@ -172,6 +178,33 @@ INSERT INTO users (id, name) VALUES (1, 'alice') ON CONFLICT (id) DO UPDATE SET 
 WITH ins AS ( INSERT INTO users (name) VALUES ('alice') RETURNING id ) SELECT id FROM ins
 WITH upd AS ( UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id ) SELECT id FROM upd
 WITH del AS ( DELETE FROM users WHERE id = 1 RETURNING id ) SELECT id FROM del
+```
+
+### MySQL DML Example
+
+```java
+var parseCtx = ParseContext.of(new MySqlSpecs());
+var renderCtx = RenderContext.of(new MySqlDialect());
+
+var statement = parseCtx.parse(Statement.class, """
+    UPDATE users USE INDEX (idx_users_name) AS u
+    INNER JOIN orders FORCE INDEX FOR JOIN (idx_orders_user) AS o ON u.id = o.user_id
+    SET name = 'alice'
+    WHERE o.state = 'closed'
+    """).value();
+
+var sql = renderCtx.render(statement).sql();
+System.out.println(sql);
+```
+
+Supported MySQL DML examples include:
+
+```sql
+INSERT IGNORE INTO users (id, name) VALUES (1, 'alice')
+INSERT INTO users (id, name) VALUES (1, 'alice') ON DUPLICATE KEY UPDATE name = 'alice2'
+REPLACE INTO users (id, name) VALUES (1, 'alice')
+UPDATE users AS u USE INDEX (idx_users_name) INNER JOIN orders AS o FORCE INDEX FOR JOIN (idx_orders_user) ON u.id = o.user_id SET name = 'alice' WHERE o.state = 'closed'
+DELETE FROM users AS u USE INDEX (idx_users_name) USING users AS u USE INDEX (idx_users_name) INNER JOIN orders AS o FORCE INDEX FOR JOIN (idx_orders_user) ON u.id = o.user_id WHERE o.state = 'closed'
 ```
 
 ---

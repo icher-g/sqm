@@ -26,12 +26,19 @@
   - regex predicates (`REGEXP`, `RLIKE`)
   - locking modifiers (`FOR SHARE`, `NOWAIT`, `SKIP LOCKED`)
   - `GROUP BY ... WITH ROLLUP`
+- MySQL DML extension delivery:
+  - `INSERT IGNORE`
+  - `INSERT ... ON DUPLICATE KEY UPDATE`
+  - `REPLACE INTO`
+  - joined `UPDATE`
+  - canonical `DELETE FROM ... USING ... JOIN ...`
+  - alias/index-hint hardening and round-trip integration coverage
 
 ### Changed
-- DML-R1 documentation updated to reflect delivered statement-model support and deferred `RETURNING`/`OUTPUT` extensions.
-- Dialect docs and roadmap updated to reflect MySQL R1 completion and PostgreSQL DML extension completion.
+- DML documentation updated to reflect delivered ANSI, PostgreSQL, and MySQL statement support.
+- MySQL docs now reflect delivered DML extensions, canonical alias/index-hint rendering, and current `RETURNING` limitations by version.
+- Dialect docs and roadmap updated to reflect MySQL R1/R3 completion and PostgreSQL DML extension completion.
 - PostgreSQL documentation now reflects full writable CTE `INSERT ... RETURNING`, `UPDATE ... RETURNING`, and `DELETE ... RETURNING` support.
-
 ## [v0.3.1] - 2026-03-01
 ### Added
 - New framework modules introduced in this release:
@@ -214,5 +221,4 @@
 - [ ] Query optimizer and validator
 
 ---
-
 

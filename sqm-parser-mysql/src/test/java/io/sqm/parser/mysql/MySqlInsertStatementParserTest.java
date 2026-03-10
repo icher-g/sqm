@@ -3,6 +3,9 @@ package io.sqm.parser.mysql;
 import io.sqm.core.InsertStatement;
 import io.sqm.core.RowExpr;
 import io.sqm.core.Statement;
+import io.sqm.core.dialect.DialectCapabilities;
+import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
@@ -57,6 +60,33 @@ class MySqlInsertStatementParserTest {
         assertEquals(InsertStatement.OnConflictAction.DO_UPDATE, result.value().onConflictAction());
         assertTrue(result.value().conflictTarget().isEmpty());
         assertEquals(1, result.value().conflictUpdateAssignments().size());
+    }
+
+    @Test
+    void parsesInsertReturningWhenCapabilityIsEnabled() {
+        var ctx = ParseContext.of(new ReturningMySqlSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users VALUES (1) RETURNING id");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(1, result.value().returning().size());
+    }
+
+    @Test
+    void rejectsInsertReturningInMysql80() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users VALUES (1) RETURNING id");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("INSERT ... RETURNING"));
+    }
+
+    @Test
+    void rejectsInsertReturningInMysql57() {
+        var ctx = ParseContext.of(new MySqlSpecs(SqlDialectVersion.of(5, 7)));
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users VALUES (1) RETURNING id");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("INSERT ... RETURNING"));
     }
 
     @Test
@@ -131,6 +161,12 @@ class MySqlInsertStatementParserTest {
         assertTrue(result.isError());
         assertTrue(result.errorMessage() != null && !Objects.requireNonNull(result.errorMessage()).isBlank());
     }
+
+    private static final class ReturningMySqlSpecs extends MySqlSpecs {
+        @Override
+        public DialectCapabilities capabilities() {
+            var delegate = super.capabilities();
+            return feature -> feature == SqlFeature.DML_RETURNING || delegate.supports(feature);
+        }
+    }
 }
-
-

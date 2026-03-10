@@ -1,9 +1,11 @@
 package io.sqm.parser.mysql;
 
 import io.sqm.core.Join;
+import io.sqm.core.SelectItem;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.ansi.Indicators;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
@@ -49,5 +51,27 @@ public class MySqlUpdateStatementParser extends io.sqm.parser.ansi.UpdateStateme
             joins.add(join.value());
         }
         return ok(List.copyOf(joins));
+    }
+
+    /**
+     * Parses optional MySQL {@code RETURNING} clause.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return returning projection list, or empty list when omitted
+     */
+    @Override
+    protected ParseResult<List<SelectItem>> parseReturning(Cursor cur, ParseContext ctx) {
+        if (!cur.consumeIf(TokenType.RETURNING)) {
+            return ok(List.of());
+        }
+        if (!ctx.capabilities().supports(SqlFeature.DML_RETURNING)) {
+            return error("UPDATE ... RETURNING is not supported by this dialect", cur.fullPos());
+        }
+        var returningResult = parseItems(SelectItem.class, cur, ctx);
+        if (returningResult.isError()) {
+            return error(returningResult);
+        }
+        return ok(List.copyOf(returningResult.value()));
     }
 }
