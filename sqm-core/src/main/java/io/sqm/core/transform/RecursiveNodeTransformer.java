@@ -94,16 +94,18 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitUpdateStatement(UpdateStatement statement) {
         var table = apply(statement.table());
         List<Assignment> assignments = new ArrayList<>(statement.assignments().size());
+        List<Join> joins = new ArrayList<>(statement.joins().size());
         List<TableRef> from = new ArrayList<>(statement.from().size());
         List<SelectItem> returning = new ArrayList<>(statement.returning().size());
         boolean changed = table != statement.table();
         changed |= apply(statement.assignments(), assignments);
+        changed |= apply(statement.joins(), joins);
         changed |= apply(statement.from(), from);
         var where = apply(statement.where());
         changed |= where != statement.where();
         changed |= apply(statement.returning(), returning);
         if (changed) {
-            return UpdateStatement.of(table, assignments, from, where, returning);
+            return UpdateStatement.of(table, assignments, joins, from, where, returning);
         }
         return statement;
     }
@@ -118,21 +120,22 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitDeleteStatement(DeleteStatement statement) {
         var table = apply(statement.table());
         List<TableRef> using = new ArrayList<>(statement.using().size());
+        List<Join> joins = new ArrayList<>(statement.joins().size());
         List<SelectItem> returning = new ArrayList<>(statement.returning().size());
         boolean changed = table != statement.table();
         changed |= apply(statement.using(), using);
+        changed |= apply(statement.joins(), joins);
         var where = apply(statement.where());
         changed |= where != statement.where();
         changed |= apply(statement.returning(), returning);
         if (changed) {
-            return DeleteStatement.of(table, using, where, returning);
+            return DeleteStatement.of(table, using, joins, where, returning);
         }
         return statement;
     }
 
     /**
-     * Visits a single {@link Assignment}.
-     *
+     * Visits a single {@link Assignment}.     *
      * @param assignment assignment to transform
      * @return transformed assignment, or the original instance if unchanged
      */

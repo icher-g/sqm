@@ -9,6 +9,7 @@ import java.util.List;
 
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.delete;
+import static io.sqm.dsl.Dsl.inner;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,7 +19,8 @@ class DeleteStatementVisitorTest {
     @Test
     void recursiveVisitorTraversesDeleteChildren() {
         var statement = delete(tbl("users"))
-            .using(tbl("source_users"))
+            .using(tbl("users"))
+            .join(inner(tbl("source_users")).on(col("users", "id").eq(col("source_users", "user_id"))))
             .where(col("id").eq(lit(1)))
             .returning(col("id").toSelectItem())
             .build();
@@ -43,7 +45,7 @@ class DeleteStatementVisitorTest {
             }
         }.accept(statement);
 
-        assertEquals(List.of("delete", "table", "table"), visits.subList(0, 3));
+        assertEquals(List.of("delete", "table", "table", "table"), visits.subList(0, 4));
         assertEquals("id", statement.returning().getFirst().matchSelectItem().expr(e -> e.expr().matchExpression().column(c -> c.name().value()).orElse(null)).orElse(null));
     }
 }

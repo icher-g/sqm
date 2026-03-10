@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.DeleteStatement;
+import io.sqm.core.Join;
 import io.sqm.core.Predicate;
 import io.sqm.core.SelectItem;
 import io.sqm.core.Table;
@@ -49,6 +50,11 @@ public class DeleteStatementParser implements Parser<DeleteStatement> {
             return error(usingResult);
         }
 
+        var joinsResult = parseJoins(cur, ctx, !usingResult.value().isEmpty());
+        if (joinsResult.isError()) {
+            return error(joinsResult);
+        }
+
         Predicate where = null;
 
         if (cur.consumeIf(TokenType.WHERE)) {
@@ -64,7 +70,7 @@ public class DeleteStatementParser implements Parser<DeleteStatement> {
             return error(returningResult);
         }
 
-        return ok(DeleteStatement.of(tableResult.value(), usingResult.value(), where, returningResult.value()));
+        return ok(DeleteStatement.of(tableResult.value(), usingResult.value(), joinsResult.value(), where, returningResult.value()));
     }
 
     /**
@@ -77,6 +83,21 @@ public class DeleteStatementParser implements Parser<DeleteStatement> {
     protected ParseResult<List<TableRef>> parseUsing(Cursor cur, ParseContext ctx) {
         if (cur.match(TokenType.USING)) {
             return error("DELETE ... USING is not supported by this dialect", cur.fullPos());
+        }
+        return ok(List.of());
+    }
+
+    /**
+     * Parses optional joined sources attached to the {@code USING} clause.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @param hasUsing whether a {@code USING} clause was already parsed
+     * @return parsed joins or empty list when omitted
+     */
+    protected ParseResult<List<Join>> parseJoins(Cursor cur, ParseContext ctx, boolean hasUsing) {
+        if (cur.matchAny(Indicators.JOIN)) {
+            return error("DELETE ... JOIN is not supported by this dialect", cur.fullPos());
         }
         return ok(List.of());
     }

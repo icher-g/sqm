@@ -7,7 +7,9 @@ import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.delete;
+import static io.sqm.dsl.Dsl.inner;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
@@ -51,7 +53,6 @@ class DeleteStatementRendererTest {
         assertInstanceOf(DeleteStatementRenderer.class, repo.require(DeleteStatement.class));
     }
 
-
     @Test
     void rejectsDeleteUsingWhenDialectDoesNotSupportIt() {
         var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
@@ -67,9 +68,44 @@ class DeleteStatementRendererTest {
             () -> renderer.render(statement, ctx, writer)
         );
     }
+
+    @Test
+    void rejectsDeleteJoinWhenDialectDoesNotSupportIt() {
+        var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
+        DeleteStatement statement = delete(tbl("users"))
+            .using(tbl("users"))
+            .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
+            .build();
+
+        var renderer = new DeleteStatementRenderer();
+        var writer = new io.sqm.render.defaults.DefaultSqlWriter(ctx);
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+            io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> renderer.render(statement, ctx, writer)
+        );
+    }
+
+    @Test
+    void rejectsDeleteReturningWhenDialectDoesNotSupportIt() {
+        var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
+        DeleteStatement statement = DeleteStatement.of(
+            tbl("users"),
+            java.util.List.of(),
+            java.util.List.of(),
+            null,
+            java.util.List.of(io.sqm.core.ExprSelectItem.of(col("id"), null)));
+
+        var renderer = new DeleteStatementRenderer();
+        var writer = new io.sqm.render.defaults.DefaultSqlWriter(ctx);
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+            io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> renderer.render(statement, ctx, writer)
+        );
+    }
+
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
-
-

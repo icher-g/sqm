@@ -4,8 +4,7 @@ import io.sqm.core.Node;
 import io.sqm.core.Table;
 import org.junit.jupiter.api.Test;
 
-import static io.sqm.dsl.Dsl.delete;
-import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -14,7 +13,8 @@ class DeleteStatementTransformerTest {
     @Test
     void preservesIdentityWhenChildrenDoNotChange() {
         var statement = delete(tbl("users"))
-            .using(tbl("source_users"))
+            .using(tbl("users"))
+            .join(inner(tbl("source_users")).on(col("users", "id").eq(col("source_users", "id"))))
             .build();
 
         Node transformed = new RecursiveNodeTransformer() {
@@ -55,6 +55,26 @@ class DeleteStatementTransformerTest {
     void rebuildsStatementWhenUsingChanges() {
         var statement = delete(tbl("users"))
             .using(tbl("source_users"))
+            .build();
+
+        Node transformed = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitTable(Table table) {
+                if ("source_users".equals(table.name().value())) {
+                    return tbl("alt_source");
+                }
+                return table;
+            }
+        }.transform(statement);
+
+        assertNotSame(statement, transformed);
+    }
+
+    @Test
+    void rebuildsStatementWhenJoinChanges() {
+        var statement = delete(tbl("users"))
+            .using(tbl("users"))
+            .join(inner(tbl("source_users")).on(col("users", "id").eq(col("source_users", "id"))))
             .build();
 
         Node transformed = new RecursiveNodeTransformer() {

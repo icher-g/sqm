@@ -16,6 +16,26 @@ public non-sealed interface UpdateStatement extends Statement {
      *
      * @param table target table
      * @param assignments update assignments
+     * @param joins optional joined sources attached to the target table
+     * @param from optional FROM sources
+     * @param where optional predicate
+     * @param returning optional returning projection items
+     * @return immutable update statement
+     */
+    static UpdateStatement of(Table table,
+                              List<Assignment> assignments,
+                              List<Join> joins,
+                              List<TableRef> from,
+                              Predicate where,
+                              List<SelectItem> returning) {
+        return new Impl(table, assignments, joins, from, where, returning);
+    }
+
+    /**
+     * Creates an immutable update statement.
+     *
+     * @param table target table
+     * @param assignments update assignments
      * @param from optional FROM sources
      * @param where optional predicate
      * @param returning optional returning projection items
@@ -26,7 +46,25 @@ public non-sealed interface UpdateStatement extends Statement {
                               List<TableRef> from,
                               Predicate where,
                               List<SelectItem> returning) {
-        return new Impl(table, assignments, from, where, returning);
+        return of(table, assignments, List.of(), from, where, returning);
+    }
+
+    /**
+     * Creates an immutable update statement.
+     *
+     * @param table target table
+     * @param assignments update assignments
+     * @param joins optional joined sources attached to the target table
+     * @param from optional FROM sources
+     * @param where optional predicate
+     * @return immutable update statement
+     */
+    static UpdateStatement of(Table table,
+                              List<Assignment> assignments,
+                              List<Join> joins,
+                              List<TableRef> from,
+                              Predicate where) {
+        return of(table, assignments, joins, from, where, List.of());
     }
 
     /**
@@ -39,9 +77,8 @@ public non-sealed interface UpdateStatement extends Statement {
      * @return immutable update statement
      */
     static UpdateStatement of(Table table, List<Assignment> assignments, List<TableRef> from, Predicate where) {
-        return of(table, assignments, from, where, List.of());
+        return of(table, assignments, List.of(), from, where, List.of());
     }
-
 
     /**
      * Creates an immutable update statement.
@@ -52,9 +89,20 @@ public non-sealed interface UpdateStatement extends Statement {
      * @return immutable update statement
      */
     static UpdateStatement of(Table table, List<Assignment> assignments, Predicate where) {
-        return of(table, assignments, List.of(), where, List.of());
+        return of(table, assignments, List.of(), List.of(), where, List.of());
     }
 
+    /**
+     * Creates an immutable update statement without a {@code WHERE} clause.
+     *
+     * @param table target table
+     * @param assignments update assignments
+     * @param joins optional joined sources attached to the target table
+     * @return immutable update statement
+     */
+    static UpdateStatement of(Table table, List<Assignment> assignments, List<Join> joins) {
+        return of(table, assignments, joins, List.of(), null, List.of());
+    }
 
     /**
      * Creates an immutable update statement without a {@code WHERE} clause.
@@ -64,7 +112,7 @@ public non-sealed interface UpdateStatement extends Statement {
      * @return immutable update statement
      */
     static UpdateStatement of(Table table, List<Assignment> assignments) {
-        return of(table, assignments, List.of(), null, List.of());
+        return of(table, assignments, List.of());
     }
 
     /**
@@ -90,6 +138,13 @@ public non-sealed interface UpdateStatement extends Statement {
      * @return update assignments
      */
     List<Assignment> assignments();
+
+    /**
+     * Returns optional joined sources attached to the target table.
+     *
+     * @return immutable join list
+     */
+    List<Join> joins();
 
     /**
      * Returns optional {@code FROM} sources.
@@ -130,6 +185,7 @@ public non-sealed interface UpdateStatement extends Statement {
     final class Builder {
         private Table table;
         private final List<Assignment> assignments = new ArrayList<>();
+        private final List<Join> joins = new ArrayList<>();
         private final List<TableRef> from = new ArrayList<>();
         private Predicate where;
         private final List<SelectItem> returning = new ArrayList<>();
@@ -164,6 +220,41 @@ public non-sealed interface UpdateStatement extends Statement {
             Objects.requireNonNull(assignments, "assignments");
             this.assignments.clear();
             this.assignments.addAll(assignments);
+            return this;
+        }
+
+        /**
+         * Replaces joined sources attached to the target table.
+         *
+         * @param joins joins to use
+         * @return this builder
+         */
+        public Builder joins(List<Join> joins) {
+            Objects.requireNonNull(joins, "joins");
+            this.joins.clear();
+            this.joins.addAll(joins);
+            return this;
+        }
+
+        /**
+         * Replaces joined sources attached to the target table.
+         *
+         * @param joins joins to use
+         * @return this builder
+         */
+        public Builder joins(Join... joins) {
+            Objects.requireNonNull(joins, "joins");
+            return joins(List.of(joins));
+        }
+
+        /**
+         * Appends one join attached to the target table.
+         *
+         * @param join join to append
+         * @return this builder
+         */
+        public Builder join(Join join) {
+            this.joins.add(Objects.requireNonNull(join, "join"));
             return this;
         }
 
@@ -260,7 +351,7 @@ public non-sealed interface UpdateStatement extends Statement {
             if (assignments.isEmpty()) {
                 throw new IllegalStateException("at least one assignment is required");
             }
-            return UpdateStatement.of(table, assignments, from, where, returning);
+            return UpdateStatement.of(table, assignments, joins, from, where, returning);
         }
     }
 
@@ -269,12 +360,14 @@ public non-sealed interface UpdateStatement extends Statement {
      *
      * @param table target table
      * @param assignments assignments
+     * @param joins optional joined sources attached to the target table
      * @param from optional from sources
      * @param where optional predicate
      * @param returning optional returning projection items
      */
     record Impl(Table table,
                 List<Assignment> assignments,
+                List<Join> joins,
                 List<TableRef> from,
                 Predicate where,
                 List<SelectItem> returning) implements UpdateStatement {
@@ -284,6 +377,7 @@ public non-sealed interface UpdateStatement extends Statement {
         public Impl {
             Objects.requireNonNull(table, "table");
             assignments = List.copyOf(Objects.requireNonNull(assignments, "assignments"));
+            joins = joins == null ? List.of() : List.copyOf(joins);
             from = from == null ? List.of() : List.copyOf(from);
             returning = returning == null ? List.of() : List.copyOf(returning);
             if (assignments.isEmpty()) {

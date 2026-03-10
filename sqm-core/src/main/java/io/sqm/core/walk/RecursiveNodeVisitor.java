@@ -58,6 +58,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     public R visitUpdateStatement(UpdateStatement statement) {
         accept(statement.table());
         statement.assignments().forEach(this::accept);
+        statement.joins().forEach(this::accept);
         statement.from().forEach(this::accept);
         accept(statement.where());
         statement.returning().forEach(this::accept);
@@ -74,6 +75,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     public R visitDeleteStatement(DeleteStatement statement) {
         accept(statement.table());
         statement.using().forEach(this::accept);
+        statement.joins().forEach(this::accept);
         accept(statement.where());
         statement.returning().forEach(this::accept);
         return defaultResult();
