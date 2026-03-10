@@ -17,7 +17,7 @@ class AssignmentParserTest {
         var result = ctx.parse(Assignment.class, "name = 'alice'");
 
         assertTrue(result.ok(), result.errorMessage());
-        assertEquals("name", result.value().column().value());
+        assertEquals(java.util.List.of("name"), result.value().column().values());
     }
 
     @Test

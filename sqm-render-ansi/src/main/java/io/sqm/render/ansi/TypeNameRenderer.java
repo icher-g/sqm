@@ -31,16 +31,12 @@ public class TypeNameRenderer implements Renderer<TypeName> {
      */
     @Override
     public void render(TypeName node, RenderContext ctx, SqlWriter w) {
-        if (node.keyword().isPresent())
+        if (node.keyword().isPresent()) {
             w.append(node.keyword().get().sql());
-        else
-            // write multipart identifiers with quote preservation/fallback
-            for (int i = 0; i < node.qualifiedName().parts().size(); i++) {
-                if (i > 0) {
-                    w.append(".");
-                }
-                w.append(renderIdentifier(node.qualifiedName().parts().get(i), ctx.dialect().quoter()));
-            }
+        }
+        else {
+            w.append(renderQualifiedName(node.qualifiedName(), ctx.dialect().quoter()));
+        }
 
         if (!node.modifiers().isEmpty()) {
             // add modifiers: numeric(10,2)

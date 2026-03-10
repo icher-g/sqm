@@ -63,6 +63,15 @@ class MySqlInsertStatementParserTest {
     }
 
     @Test
+    void parsesOnDuplicateKeyUpdateWithQualifiedTarget() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users (id, name) VALUES (1, 'alice') ON DUPLICATE KEY UPDATE users.name = 'alice2'");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(java.util.List.of("users", "name"), result.value().conflictUpdateAssignments().getFirst().column().values());
+    }
+
+    @Test
     void parsesInsertReturningWhenCapabilityIsEnabled() {
         var ctx = ParseContext.of(new ReturningMySqlSpecs());
         var result = ctx.parse(InsertStatement.class, "INSERT INTO users VALUES (1) RETURNING id");

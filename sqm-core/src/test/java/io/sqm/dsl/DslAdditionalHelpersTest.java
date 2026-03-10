@@ -117,7 +117,7 @@ class DslAdditionalHelpersTest {
             .columns(id("id"))
             .values(row(lit(1)))
             .build();
-        var assignment = set("name", "alice");
+        var assignment = set("u", "name", "alice");
         var updateStatement = update("users")
             .set(assignment)
             .where(col("id").eq(lit(1)))
@@ -125,7 +125,7 @@ class DslAdditionalHelpersTest {
 
         assertEquals("users", insert.table().name().value());
         assertEquals(1, insert.columns().size());
-        assertEquals("name", assignment.column().value());
+        assertEquals(List.of("u", "name"), assignment.column().values());
         assertEquals("users", updateStatement.table().name().value());
         assertEquals(1, updateStatement.assignments().size());
         assertNotNull(updateStatement.where());

@@ -42,6 +42,16 @@ class MySqlUpdateStatementParserTest {
     }
 
     @Test
+    void parsesJoinedUpdateWithQualifiedAssignmentTarget() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(UpdateStatement.class,
+            "UPDATE users AS u INNER JOIN orders AS o ON u.id = o.user_id SET u.name = 'alice' WHERE o.state = 'closed'");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(java.util.List.of("u", "name"), result.value().assignments().getFirst().column().values());
+    }
+
+    @Test
     void parsesStandardUpdateWithoutJoins() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice'");

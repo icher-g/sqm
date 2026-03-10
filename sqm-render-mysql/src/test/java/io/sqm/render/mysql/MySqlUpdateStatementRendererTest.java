@@ -55,6 +55,21 @@ class MySqlUpdateStatementRendererTest {
     }
 
     @Test
+    void rendersJoinedUpdateWithQualifiedAssignmentTarget() {
+        var statement = update(tbl("users").as("u"))
+            .join(inner(tbl("orders").as("o")).on(col("u", "id").eq(col("o", "user_id"))))
+            .set(io.sqm.core.QualifiedName.of("u", "name"), lit("alice"))
+            .where(col("o", "state").eq(lit("closed")))
+            .build();
+
+        var sql = RenderContext.of(new MySqlDialect()).render(statement).sql();
+
+        assertEquals(
+            "UPDATE users AS u INNER JOIN orders AS o ON u.id = o.user_id SET u.name = 'alice' WHERE o.state = 'closed'",
+            normalize(sql));
+    }
+
+    @Test
     void rendersPlainUpdateWithoutJoins() {
         var statement = update(tbl("users"))
             .set(id("name"), lit("alice"))

@@ -467,6 +467,41 @@ public final class Dsl {
     }
 
     /**
+     * Creates an {@code UPDATE} assignment using a qualified target name.
+     *
+     * @param column target column qualified name
+     * @param value assigned expression
+     * @return an assignment
+     */
+    public static Assignment set(QualifiedName column, Expression value) {
+        return Assignment.of(column, value);
+    }
+
+    /**
+     * Creates an {@code UPDATE} assignment using a table/alias and column name.
+     *
+     * @param qualifier table or alias qualifier
+     * @param column target column name
+     * @param value assigned expression
+     * @return an assignment
+     */
+    public static Assignment set(String qualifier, String column, Expression value) {
+        return set(QualifiedName.of(qualifier, column), value);
+    }
+
+    /**
+     * Creates an {@code UPDATE} assignment using a table/alias and column name with a literal value.
+     *
+     * @param qualifier table or alias qualifier
+     * @param column target column name
+     * @param value assigned literal value
+     * @return an assignment
+     */
+    public static Assignment set(String qualifier, String column, Object value) {
+        return set(qualifier, column, lit(value));
+    }
+
+    /**
      * Creates an {@code UPDATE} assignment using a string column name and literal value.
      *
      * @param column target column name
@@ -1773,4 +1808,3 @@ public final class Dsl {
         return targets;
     }
 }
-

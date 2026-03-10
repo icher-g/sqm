@@ -3,6 +3,7 @@ package io.sqm.render.spi;
 import io.sqm.core.AliasedTableRef;
 import io.sqm.core.Identifier;
 import io.sqm.core.Node;
+import io.sqm.core.QualifiedName;
 import io.sqm.core.repos.Handler;
 import io.sqm.render.SqlWriter;
 
@@ -60,5 +61,18 @@ public interface Renderer<T extends Node> extends Handler<T> {
             return quoter.quote(identifier.value());
         }
         return quoter.quoteIfNeeded(identifier.value());
+    }
+
+    /**
+     * Renders a qualified name preserving quote metadata on each identifier part.
+     *
+     * @param qualifiedName qualified name to render.
+     * @param quoter dialect identifier quoter.
+     * @return a rendered qualified name.
+     */
+    default String renderQualifiedName(QualifiedName qualifiedName, IdentifierQuoter quoter) {
+        return qualifiedName.parts().stream()
+            .map(part -> renderIdentifier(part, quoter))
+            .collect(java.util.stream.Collectors.joining("."));
     }
 }

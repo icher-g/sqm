@@ -13,20 +13,31 @@ public non-sealed interface Assignment extends Node {
     /**
      * Creates an immutable assignment.
      *
+     * @param column target column qualified name
+     * @param value assigned expression
+     * @return immutable assignment
+     */
+    static Assignment of(QualifiedName column, Expression value) {
+        return new Impl(column, value);
+    }
+
+    /**
+     * Creates an immutable assignment.
+     *
      * @param column target column identifier
      * @param value assigned expression
      * @return immutable assignment
      */
     static Assignment of(Identifier column, Expression value) {
-        return new Impl(column, value);
+        return of(QualifiedName.of(column), value);
     }
 
     /**
-     * Returns the target column identifier.
+     * Returns the target column qualified name.
      *
      * @return target column
      */
-    Identifier column();
+    QualifiedName column();
 
     /**
      * Returns the assigned expression.
@@ -60,10 +71,10 @@ public non-sealed interface Assignment extends Node {
     /**
      * Default immutable assignment implementation.
      *
-     * @param column target column identifier
+     * @param column target column qualified name
      * @param value assigned expression
      */
-    record Impl(Identifier column, Expression value) implements Assignment {
+    record Impl(QualifiedName column, Expression value) implements Assignment {
         /**
          * Creates an immutable assignment implementation.
          */

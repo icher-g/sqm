@@ -29,6 +29,15 @@ class UpdateStatementParserTest {
     }
 
     @Test
+    void parsesUpdateWithQualifiedAssignmentTarget() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(UpdateStatement.class, "UPDATE users AS u SET u.name = 'alice'");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(java.util.List.of("u", "name"), result.value().assignments().getFirst().column().values());
+    }
+
+    @Test
     void parsesUpdateWithoutWhere() {
         var ctx = ParseContext.of(new AnsiSpecs());
         var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice'");

@@ -25,7 +25,7 @@ public class AssignmentRenderer implements Renderer<Assignment> {
      */
     @Override
     public void render(Assignment node, RenderContext ctx, SqlWriter w) {
-        w.append(renderIdentifier(node.column(), ctx.dialect().quoter()))
+        w.append(renderQualifiedName(node.column(), ctx.dialect().quoter()))
             .space()
             .append("=")
             .space()

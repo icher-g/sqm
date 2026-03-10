@@ -61,6 +61,19 @@ class MySqlInsertStatementRendererTest {
     }
 
     @Test
+    void rendersOnDuplicateKeyUpdateWithQualifiedTarget() {
+        var statement = insert("users")
+            .columns(id("id"), id("name"))
+            .values(row(lit(1), lit("alice")))
+            .onConflictDoUpdate(java.util.List.of(set("users", "name", lit("alice2"))))
+            .build();
+
+        var sql = RenderContext.of(new MySqlDialect()).render(statement).sql();
+
+        assertEquals("INSERT INTO users (id, name) VALUES (1, 'alice') ON DUPLICATE KEY UPDATE users.name = 'alice2'", normalize(sql));
+    }
+
+    @Test
     void rejectsPostgresOnConflictShapeInMysqlRenderer() {
         var statement = insert("users")
             .values(row(lit(1)))
