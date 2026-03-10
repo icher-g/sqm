@@ -1,16 +1,7 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.Assignment;
-import io.sqm.core.Identifier;
-import io.sqm.core.InsertSource;
-import io.sqm.core.InsertStatement;
-import io.sqm.core.Predicate;
-import io.sqm.core.Query;
-import io.sqm.core.RowExpr;
-import io.sqm.core.RowListExpr;
-import io.sqm.core.RowValues;
-import io.sqm.core.SelectItem;
-import io.sqm.core.Table;
+import io.sqm.core.*;
+import io.sqm.core.InsertStatement.InsertMode;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
@@ -42,7 +33,11 @@ public class InsertStatementParser implements Parser<InsertStatement> {
      */
     @Override
     public ParseResult<? extends InsertStatement> parse(Cursor cur, ParseContext ctx) {
-        cur.expect("Expected INSERT", TokenType.INSERT);
+        var insertMode = parseInsertMode(cur, ctx);
+        if (insertMode.isError()) {
+            return error(insertMode);
+        }
+
         cur.expect("Expected INTO after INSERT", TokenType.INTO);
 
         var table = ctx.parse(Table.class, cur);
@@ -76,7 +71,9 @@ public class InsertStatementParser implements Parser<InsertStatement> {
             return error(returning);
         }
 
-        return ok(InsertStatement.of(table.value(),
+        return ok(InsertStatement.of(
+            insertMode.value(),
+            table.value(),
             columns,
             source.value(),
             conflict.value().target(),
@@ -84,6 +81,18 @@ public class InsertStatementParser implements Parser<InsertStatement> {
             conflict.value().assignments(),
             conflict.value().where(),
             returning.value()));
+    }
+
+    /**
+     * Parses the leading insert mode.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return parsed insert mode
+     */
+    protected ParseResult<InsertMode> parseInsertMode(Cursor cur, ParseContext ctx) {
+        cur.expect("Expected INSERT", TokenType.INSERT);
+        return ok(InsertMode.STANDARD);
     }
 
     /**
@@ -128,8 +137,8 @@ public class InsertStatementParser implements Parser<InsertStatement> {
      * @return parsed clause details
      */
     protected final OnConflictClause onConflictDoUpdateClause(List<Identifier> target,
-                                                              List<Assignment> assignments,
-                                                              Predicate where) {
+        List<Assignment> assignments,
+        Predicate where) {
         return new OnConflictClause(List.copyOf(target), InsertStatement.OnConflictAction.DO_UPDATE, List.copyOf(assignments), where);
     }
 
@@ -147,11 +156,24 @@ public class InsertStatementParser implements Parser<InsertStatement> {
         return ok(List.of());
     }
 
-    private ParseResult<List<Identifier>> parseTargetColumns(Cursor cur) {
+    /**
+     * Parses insert target columns.
+     *
+     * @param cur token cursor
+     * @return parsed target columns
+     */
+    protected final ParseResult<List<Identifier>> parseTargetColumns(Cursor cur) {
         return ok(parseIdentifierItems(cur, "Expected target column"));
     }
 
-    private ParseResult<? extends InsertSource> parseInsertSource(Cursor cur, ParseContext ctx) {
+    /**
+     * Parses the insert source.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return parsed insert source
+     */
+    protected final ParseResult<? extends InsertSource> parseInsertSource(Cursor cur, ParseContext ctx) {
         if (cur.consumeIf(TokenType.VALUES)) {
             return parseValuesSource(cur, ctx);
         }
@@ -185,6 +207,11 @@ public class InsertStatementParser implements Parser<InsertStatement> {
 
     /**
      * Parsed optional ON CONFLICT clause details.
+     *
+     * @param target      conflict target
+     * @param action      an {@code ON CONFLICT} action.
+     * @param assignments update assignments
+     * @param where       optional conflict-update predicate
      */
     protected record OnConflictClause(List<Identifier> target,
                                       InsertStatement.OnConflictAction action,

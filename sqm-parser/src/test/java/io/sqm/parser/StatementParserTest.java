@@ -47,6 +47,15 @@ class StatementParserTest {
     }
 
     @Test
+    void delegatesReplaceToInsertParser() {
+        var ctx = contextWithStatementParsers();
+        var result = ctx.parse(Statement.class, "REPLACE");
+
+        assertTrue(result.ok());
+        assertInstanceOf(InsertStatement.class, result.value());
+    }
+
+    @Test
     void delegatesToUpdateParser() {
         var ctx = contextWithStatementParsers();
         var result = ctx.parse(Statement.class, "UPDATE");
@@ -89,6 +98,10 @@ class StatementParserTest {
     private static final class InsertStubParser implements Parser<InsertStatement> {
         @Override
         public ParseResult<? extends InsertStatement> parse(Cursor cur, ParseContext ctx) {
+            if (cur.match(TokenType.REPLACE)) {
+                cur.expect("Expected REPLACE", TokenType.REPLACE);
+                return ParseResult.ok(io.sqm.dsl.Dsl.insert("users").replace().values(io.sqm.dsl.Dsl.row(io.sqm.dsl.Dsl.lit(1))).build());
+            }
             cur.expect("Expected INSERT", TokenType.INSERT);
             return ParseResult.ok(io.sqm.dsl.Dsl.insert("users").values(io.sqm.dsl.Dsl.row(io.sqm.dsl.Dsl.lit(1))).build());
         }

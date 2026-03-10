@@ -5,6 +5,7 @@ import io.sqm.core.Table;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.ansi.TableParser;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.Token;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
@@ -42,11 +43,12 @@ public class MySqlTableParser extends TableParser {
         Identifier schema,
         Identifier name,
         Table.Inheritance inheritance) {
+
         var hints = new ArrayList<Table.IndexHint>();
         Identifier alias = null;
 
         while (true) {
-            if (isIndexHintKeyword(cur)) {
+            if (cur.matchAny(TokenType.USE, TokenType.IGNORE, TokenType.FORCE)) {
                 if (!ctx.capabilities().supports(SqlFeature.TABLE_INDEX_HINT)) {
                     return error("Table index hints are not supported by this dialect", cur.fullPos());
                 }
@@ -68,39 +70,30 @@ public class MySqlTableParser extends TableParser {
     }
 
     private boolean looksLikeAliasStart(Cursor cur) {
-        return cur.match(TokenType.AS) || (cur.match(TokenType.IDENT) && !isIndexHintKeyword(cur));
-    }
-
-    private boolean isIndexHintKeyword(Cursor cur) {
-        return cur.match(TokenType.IDENT)
-            && ("USE".equalsIgnoreCase(cur.peek().lexeme())
-            || "IGNORE".equalsIgnoreCase(cur.peek().lexeme())
-            || "FORCE".equalsIgnoreCase(cur.peek().lexeme()));
+        return cur.match(TokenType.AS) || cur.match(TokenType.IDENT);
     }
 
     private ParseResult<Table.IndexHint> parseIndexHint(Cursor cur) {
-        var typeToken = cur.expect("Expected index hint type", TokenType.IDENT);
-        Table.IndexHintType type;
-        if ("USE".equalsIgnoreCase(typeToken.lexeme())) {
-            type = Table.IndexHintType.USE;
-        }
-        else if ("IGNORE".equalsIgnoreCase(typeToken.lexeme())) {
-            type = Table.IndexHintType.IGNORE;
-        }
-        else if ("FORCE".equalsIgnoreCase(typeToken.lexeme())) {
-            type = Table.IndexHintType.FORCE;
-        }
-        else {
+        var typeToken = readIndexHintType(cur);
+        if (typeToken == null) {
             return error("Expected USE, IGNORE or FORCE", cur.fullPos());
         }
 
-        if (!(cur.match(TokenType.IDENT) && "INDEX".equalsIgnoreCase(cur.peek().lexeme())
-            || cur.match(TokenType.KEY))) {
-            return error("Expected INDEX or KEY in table index hint", cur.fullPos());
+        Table.IndexHintType type = switch (typeToken.type()) {
+            case USE -> Table.IndexHintType.USE;
+            case IGNORE -> Table.IndexHintType.IGNORE;
+            case FORCE -> Table.IndexHintType.FORCE;
+            default -> null;
+        };
+
+        if (type == null) {
+            return error("Expected USE, IGNORE or FORCE", cur.fullPos());
         }
-        cur.advance();
+
+        cur.expect("Expected INDEX or KEY in table index hint", TokenType.KEY, TokenType.INDEX);
 
         Table.IndexHintScope scope = Table.IndexHintScope.DEFAULT;
+
         if (cur.consumeIf(TokenType.FOR)) {
             if (cur.consumeIf(TokenType.JOIN)) {
                 scope = Table.IndexHintScope.JOIN;
@@ -119,13 +112,16 @@ public class MySqlTableParser extends TableParser {
         }
 
         cur.expect("Expected ( after INDEX hint", TokenType.LPAREN);
-        var indexes = new ArrayList<Identifier>();
-        indexes.add(toIdentifier(cur.expect("Expected index identifier", TokenType.IDENT)));
-        while (cur.consumeIf(TokenType.COMMA)) {
-            indexes.add(toIdentifier(cur.expect("Expected index identifier", TokenType.IDENT)));
-        }
+        var indexes = parseIdentifierItems(cur, "Expected index identifier");
         cur.expect("Expected ) after INDEX hint", TokenType.RPAREN);
 
         return ok(new Table.IndexHint(type, scope, indexes));
+    }
+
+    private Token readIndexHintType(Cursor cur) {
+        if (cur.matchAny(TokenType.USE, TokenType.IGNORE, TokenType.FORCE)) {
+            return cur.advance();
+        }
+        return null;
     }
 }

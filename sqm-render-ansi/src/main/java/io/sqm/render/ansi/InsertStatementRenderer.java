@@ -35,7 +35,7 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
      */
     @Override
     public void render(InsertStatement node, RenderContext ctx, SqlWriter w) {
-        w.append("INSERT INTO").space().append(node.table());
+        renderInsertPrefix(node, ctx, w);
 
         if (!node.columns().isEmpty()) {
             w.space().append("(");
@@ -51,6 +51,20 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
             ctx,
             w);
         renderReturning(node.returning(), ctx, w);
+    }
+
+    /**
+     * Renders the leading insert keywords.
+     *
+     * @param node insert statement
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected void renderInsertPrefix(InsertStatement node, RenderContext ctx, SqlWriter w) {
+        if (node.insertMode() != InsertStatement.InsertMode.STANDARD) {
+            throw new UnsupportedDialectFeatureException(unsupportedInsertModeName(node.insertMode()), ctx.dialect().name());
+        }
+        w.append("INSERT INTO").space().append(node.table());
     }
 
     /**
@@ -100,6 +114,14 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
         }
 
         throw new IllegalArgumentException("Unsupported INSERT source: " + source.getClass().getName());
+    }
+
+    private static String unsupportedInsertModeName(InsertStatement.InsertMode insertMode) {
+        return switch (insertMode) {
+            case STANDARD -> "INSERT INTO";
+            case IGNORE -> "INSERT IGNORE";
+            case REPLACE -> "REPLACE INTO";
+        };
     }
 
     /**

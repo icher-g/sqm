@@ -1,6 +1,7 @@
 package io.sqm.parser.mysql;
 
 import io.sqm.core.GroupBy;
+import io.sqm.core.InsertStatement;
 import io.sqm.core.LimitOffset;
 import io.sqm.core.RegexPredicate;
 import io.sqm.core.SelectQuery;
@@ -16,6 +17,9 @@ class ParsersIsolationTest {
     void mysqlRegistry_doesNotMutateAnsiRegistry() {
         ParsersRepository ansi = io.sqm.parser.ansi.Parsers.ansi();
         ParsersRepository mysql = Parsers.mysql();
+
+        assertInstanceOf(io.sqm.parser.ansi.InsertStatementParser.class, ansi.require(InsertStatement.class));
+        assertInstanceOf(MySqlInsertStatementParser.class, mysql.require(InsertStatement.class));
 
         assertInstanceOf(io.sqm.parser.ansi.LimitOffsetParser.class, ansi.require(LimitOffset.class));
         assertInstanceOf(MySqlLimitOffsetParser.class, mysql.require(LimitOffset.class));

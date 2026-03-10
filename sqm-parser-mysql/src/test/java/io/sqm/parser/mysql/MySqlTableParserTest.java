@@ -26,6 +26,16 @@ class MySqlTableParserTest {
     }
 
     @Test
+    void parsesUseKeyHint() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Table.class, "users USE KEY (idx_users_name)");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(Table.IndexHintType.USE, result.value().indexHints().getFirst().type());
+        assertEquals("idx_users_name", result.value().indexHints().getFirst().indexes().getFirst().value());
+    }
+
+    @Test
     void parsesForceIndexForJoinHint() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(Table.class, "users u FORCE INDEX FOR JOIN (idx_join)");
@@ -70,6 +80,15 @@ class MySqlTableParserTest {
         assertTrue(result.ok());
         assertEquals("u", result.value().alias().value());
         assertEquals(Table.IndexHintType.USE, result.value().indexHints().getFirst().type());
+    }
+
+    @Test
+    void rejectsIndexHintWithoutIndexOrKeyKeyword() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Table.class, "users USE (idx_users_name)");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected INDEX or KEY"));
     }
 
     @Test

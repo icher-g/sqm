@@ -43,6 +43,10 @@ public final class Lexer {
         KEYWORDS.put("CONFLICT", CONFLICT);
         KEYWORDS.put("DO", DO);
         KEYWORDS.put("NOTHING", NOTHING);
+        KEYWORDS.put("IGNORE", IGNORE);
+        KEYWORDS.put("DUPLICATE", DUPLICATE);
+        KEYWORDS.put("USE", USE);
+        KEYWORDS.put("FORCE", FORCE);
         KEYWORDS.put("AS", AS);
         KEYWORDS.put("DISTINCT", DISTINCT);
         KEYWORDS.put("EXISTS", EXISTS);
@@ -127,6 +131,7 @@ public final class Lexer {
         KEYWORDS.put("UPDATE", UPDATE);
         KEYWORDS.put("SHARE", SHARE);
         KEYWORDS.put("KEY", KEY);
+        KEYWORDS.put("INDEX", INDEX);
         KEYWORDS.put("OF", OF);
         KEYWORDS.put("NOWAIT", NOWAIT);
         KEYWORDS.put("SKIP", SKIP);

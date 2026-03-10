@@ -39,6 +39,18 @@ class InsertStatementParserTest {
     }
 
     @Test
+    void parsesInsertWithoutTargetColumns() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users SELECT id FROM source_users");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(InsertStatement.InsertMode.STANDARD, result.value().insertMode());
+        assertTrue(result.value().columns().isEmpty());
+        assertTrue(result.value().returning().isEmpty());
+        assertInstanceOf(SelectQuery.class, result.value().source());
+    }
+
+    @Test
     void parsesInsertSelectWithTargetColumns() {
         var ctx = ParseContext.of(new AnsiSpecs());
         var result = ctx.parse(InsertStatement.class, "INSERT INTO users (id) SELECT id FROM source_users");
@@ -66,6 +78,15 @@ class InsertStatementParserTest {
 
         assertTrue(result.isError());
         assertEquals("Expected INTO after INSERT at 7", result.errorMessage());
+    }
+
+    @Test
+    void rejectsReplaceKeywordInAnsiDialect() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(InsertStatement.class, "REPLACE INTO users VALUES (1)");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected INSERT"));
     }
 
     @Test

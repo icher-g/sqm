@@ -26,6 +26,7 @@ public final class Renderers {
 
     private static RenderersRepository registerDefaults(RenderersRepository renderersRepository) {
         return renderersRepository
+            .register(new MySqlInsertStatementRenderer())
             .register(new MySqlLimitOffsetRenderer())
             .register(new MySqlGroupByRenderer())
             .register(new MySqlRegexPredicateRenderer())

@@ -52,6 +52,18 @@ public enum SqlFeature {
      */
     INSERT_ON_CONFLICT("PostgreSQL INSERT ... ON CONFLICT clause"),
     /**
+     * MySQL INSERT IGNORE clause support.
+     */
+    INSERT_IGNORE("MySQL INSERT IGNORE clause"),
+    /**
+     * MySQL INSERT ... ON DUPLICATE KEY UPDATE clause support.
+     */
+    INSERT_ON_DUPLICATE_KEY_UPDATE("MySQL INSERT ... ON DUPLICATE KEY UPDATE clause"),
+    /**
+     * MySQL REPLACE INTO statement support.
+     */
+    REPLACE_INTO("MySQL REPLACE INTO statement"),
+    /**
      * PostgreSQL UPDATE ... FROM clause support for join-like update sources.
      */
     UPDATE_FROM("PostgreSQL UPDATE ... FROM clause"),

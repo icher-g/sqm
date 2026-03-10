@@ -538,7 +538,7 @@ class LexerTest {
     @Test
     void lexer_recognizes_dml_and_ddl_keywords() {
         List<Token> tokens = Lexer.lexAll(
-            "INSERT UPDATE DELETE MERGE TRUNCATE REPLACE COPY CREATE ALTER DROP GRANT REVOKE COMMENT RENAME RETURNING",
+            "INSERT UPDATE DELETE MERGE TRUNCATE REPLACE COPY CREATE ALTER DROP GRANT REVOKE COMMENT RENAME RETURNING IGNORE DUPLICATE USE FORCE INDEX",
             quoting
         );
 
@@ -557,6 +557,11 @@ class LexerTest {
         assertEquals(TokenType.COMMENT, tokens.get(12).type());
         assertEquals(TokenType.RENAME, tokens.get(13).type());
         assertEquals(TokenType.RETURNING, tokens.get(14).type());
+        assertEquals(TokenType.IGNORE, tokens.get(15).type());
+        assertEquals(TokenType.DUPLICATE, tokens.get(16).type());
+        assertEquals(TokenType.USE, tokens.get(17).type());
+        assertEquals(TokenType.FORCE, tokens.get(18).type());
+        assertEquals(TokenType.INDEX, tokens.get(19).type());
     }
 
     @Test
@@ -601,4 +606,9 @@ class LexerTest {
         assertEquals("id", tokens.get(1).lexeme());
     }
 }
+
+
+
+
+
 

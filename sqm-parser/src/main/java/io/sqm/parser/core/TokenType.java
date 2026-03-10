@@ -217,6 +217,22 @@ public enum TokenType {
      */
     NOTHING,
     /**
+     * IGNORE keyword token.
+     */
+    IGNORE,
+    /**
+     * DUPLICATE keyword token.
+     */
+    DUPLICATE,
+    /**
+     * USE keyword token.
+     */
+    USE,
+    /**
+     * FORCE keyword token.
+     */
+    FORCE,
+    /**
      * AS keyword token.
      */
     AS,
@@ -545,6 +561,10 @@ public enum TokenType {
      */
     KEY,
     /**
+     * INDEX keyword token.
+     */
+    INDEX,
+    /**
      * Optimizer hint comment token ({@code /*+ ... *\/}).
      */
     COMMENT_HINT,
@@ -553,8 +573,3 @@ public enum TokenType {
      */
     EOF
 }
-
-
-
-
-
