@@ -1,7 +1,11 @@
 package io.sqm.parser;
 
 import io.sqm.core.*;
+import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.VersionedDialectCapabilities;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.ParserException;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.InfixParser;
@@ -9,6 +13,8 @@ import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
+import io.sqm.parser.spi.ParsersRepository;
+import io.sqm.parser.spi.Specs;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -34,6 +40,23 @@ class JoinParserTest {
 
         assertEquals(JoinKind.LEFT, kind);
         assertTrue(cur.match(TokenType.JOIN));
+    }
+
+    @Test
+    void parseKindParsesStraightWhenDialectSupportsIt() {
+        var cur = Cursor.of("STRAIGHT_JOIN t", IdentifierQuoting.of('"'));
+
+        var kind = JoinParser.parseKind(cur, contextWithJoinParsers());
+
+        assertEquals(JoinKind.STRAIGHT, kind);
+        assertTrue(cur.match(TokenType.IDENT));
+    }
+
+    @Test
+    void parseKindRejectsStraightWhenDialectDoesNotSupportIt() {
+        var cur = Cursor.of("STRAIGHT_JOIN t", IdentifierQuoting.of('"'));
+
+        assertThrows(ParserException.class, () -> JoinParser.parseKind(cur, ParseContext.of(new NoStraightJoinSpecs())));
     }
 
     @Test
@@ -77,6 +100,18 @@ class JoinParserTest {
         assertTrue(result.ok());
         var join = assertInstanceOf(OnJoin.class, result.value());
         assertEquals(JoinKind.RIGHT, join.kind());
+        assertNotNull(join.on());
+    }
+
+    @Test
+    void parsesStraightJoinWithoutAdditionalJoinKeyword() {
+        var ctx = contextWithJoinParsers();
+
+        var result = ctx.parse(Join.class, "STRAIGHT_JOIN t ON");
+
+        assertTrue(result.ok());
+        var join = assertInstanceOf(OnJoin.class, result.value());
+        assertEquals(JoinKind.STRAIGHT, join.kind());
         assertNotNull(join.on());
     }
 
@@ -225,6 +260,41 @@ class JoinParserTest {
         @Override
         public Class<TableRef> targetType() {
             return TableRef.class;
+        }
+    }
+
+    private static final class NoStraightJoinSpecs implements Specs {
+        private final ParsersRepository parsers = new DefaultParsersRepository();
+
+        @Override
+        public ParsersRepository parsers() {
+            return parsers;
+        }
+
+        @Override
+        public io.sqm.parser.spi.Lookups lookups() {
+            throw new UnsupportedOperationException("lookups are not used in this test");
+        }
+
+        @Override
+        public IdentifierQuoting identifierQuoting() {
+            return IdentifierQuoting.of('"');
+        }
+
+        @Override
+        public io.sqm.core.dialect.DialectCapabilities capabilities() {
+            return VersionedDialectCapabilities.builder(SqlDialectVersion.minimum())
+                .supports(SqlDialectVersion.minimum(),
+                    java.util.Arrays.stream(SqlFeature.values())
+                        .filter(feature -> feature != SqlFeature.STRAIGHT_JOIN)
+                        .toArray(SqlFeature[]::new)
+                )
+                .build();
+        }
+
+        @Override
+        public io.sqm.parser.spi.OperatorPolicy operatorPolicy() {
+            return token -> false;
         }
     }
 }

@@ -1,7 +1,11 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.JoinKind;
+import io.sqm.core.dialect.DialectCapabilities;
+import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
+import io.sqm.core.dialect.VersionedDialectCapabilities;
 import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.ansi.spi.AnsiDialect;
@@ -69,5 +73,25 @@ class JoinKindRendererTest {
     void straight_join_is_rejected_for_ansi() {
         SqlWriter w = new DefaultSqlWriter(ctx);
         assertThrows(UnsupportedDialectFeatureException.class, () -> renderer.render(JoinKind.STRAIGHT, ctx, w));
+    }
+
+    @Test
+    @DisplayName("STRAIGHT join kind renders when the dialect supports it")
+    void straight_join_renders_when_supported() {
+        var straightCtx = RenderContext.of(new StraightAnsiDialect());
+        SqlWriter w = new DefaultSqlWriter(straightCtx);
+
+        renderer.render(JoinKind.STRAIGHT, straightCtx, w);
+
+        assertEquals("STRAIGHT_JOIN", w.toText(null).sql());
+    }
+
+    private static final class StraightAnsiDialect extends AnsiDialect {
+        @Override
+        public DialectCapabilities capabilities() {
+            return VersionedDialectCapabilities.builder(SqlDialectVersion.of(2016))
+                .supports(SqlDialectVersion.minimum(), SqlFeature.values())
+                .build();
+        }
     }
 }
