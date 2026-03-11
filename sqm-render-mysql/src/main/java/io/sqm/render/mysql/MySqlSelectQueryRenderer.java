@@ -26,9 +26,7 @@ public class MySqlSelectQueryRenderer extends SelectQueryRenderer {
      */
     @Override
     protected void renderAfterSelectKeyword(SelectQuery node, RenderContext ctx, SqlWriter w) {
-        for (var hint : node.optimizerHints()) {
-            w.space().append("/*+ ").append(hint).append(" */");
-        }
+        MySqlOptimizerHintRendererSupport.renderHints(node.optimizerHints(), "SELECT optimizer hints", ctx, w);
 
         for (var modifier : node.modifiers()) {
             if (modifier == SelectModifier.CALC_FOUND_ROWS) {

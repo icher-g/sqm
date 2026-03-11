@@ -31,13 +31,7 @@ public class MySqlDeleteStatementRenderer extends io.sqm.render.ansi.DeleteState
      */
     @Override
     protected void renderAfterDeleteKeyword(DeleteStatement node, RenderContext ctx, SqlWriter w) {
-        if (!node.optimizerHints().isEmpty() && !ctx.dialect().capabilities().supports(SqlFeature.OPTIMIZER_HINT_COMMENT)) {
-            throw new UnsupportedDialectFeatureException("DELETE optimizer hints", ctx.dialect().name());
-        }
-
-        for (var hint : node.optimizerHints()) {
-            w.space().append("/*+ ").append(hint).append(" */");
-        }
+        MySqlOptimizerHintRendererSupport.renderHints(node.optimizerHints(), "DELETE optimizer hints", ctx, w);
     }
 
     /**

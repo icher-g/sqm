@@ -239,6 +239,19 @@ public final class SchemaQueryValidator implements QueryValidator {
         }
 
         /**
+         * Validates table-level rules after visiting attached metadata.
+         *
+         * @param table table reference.
+         * @return default result.
+         */
+        @Override
+        public Void visitTable(Table table) {
+            super.visitTable(table);
+            registry.validate(table, context);
+            return defaultResult();
+        }
+
+        /**
          * Validates function signature constraints after traversing arguments.
          *
          * @param f function expression.

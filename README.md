@@ -255,6 +255,10 @@ var ansiQuotesCtx = ParseContext.of(
 
 `ANSI_QUOTES` mode enables double-quoted identifiers during parsing while the default behavior remains backtick-only.
 
+MySQL rendering also supports opt-in optimizer-hint normalization through
+`MySqlOptimizerHintNormalizationPolicy`, while the default dialect behavior
+preserves hint bodies exactly as stored on the statement model.
+
 **Rendered (ANSI):**
 
 ```sql
@@ -750,7 +754,7 @@ Highlights:
   - optimizer hint comments for `SELECT`, `UPDATE`, and `DELETE`
   - `STRAIGHT_JOIN` parsing and canonical rendering
   - selected MySQL built-in JSON/date/string functions, including `JSON_EXTRACT`, `JSON_OBJECT`, `DATE_ADD`, `DATE_SUB`, `CONCAT_WS`, and `SUBSTRING_INDEX`
-  - MySQL interval literals in date arithmetic function arguments, including canonical `INTERVAL '...'` and MySQL input forms like `INTERVAL 1 DAY`
+  - MySQL interval literals in date arithmetic function arguments, including canonical `INTERVAL '...'` and MySQL input forms like `INTERVAL 1 DAY` and `INTERVAL -1 DAY`
 
 ### Schema Validation (sqm-validate)
 
@@ -803,6 +807,10 @@ var settings = SchemaValidationSettings.builder()
 var validator1 = SchemaQueryValidator.of(schema, settings);
 var validator2 = SchemaQueryValidator.of(schema, myDialect); // SchemaValidationDialect
 ```
+
+For optional dialect-specific validation, `sqm-validate-mysql` currently adds
+early detection for overlapping `USE INDEX` and `FORCE INDEX` combinations on
+the same effective MySQL table-hint scope.
 
 See full validation features and planned improvements in [docs/VALIDATION_FEATURES.md](docs/VALIDATION_FEATURES.md).
 
@@ -1230,6 +1238,7 @@ price + quantity * 2
 | `sqm-catalog`              | Schema/catalog model and providers (JSON/JDBC)                              |
 | `sqm-catalog-postgresql`   | PostgreSQL catalog-specific implementations                                 |
 | `sqm-validate`             | Schema-aware semantic validator                                             |
+| `sqm-validate-mysql`       | MySQL validation extensions                                                 |
 | `sqm-validate-postgresql`  | PostgreSQL validation extensions                                            |
 | `sqm-control`              | Decision engine, rewrites, guardrails, audit abstractions                   |
 | `sqm-middleware-api`       | Transport-neutral middleware request/response contracts                     |

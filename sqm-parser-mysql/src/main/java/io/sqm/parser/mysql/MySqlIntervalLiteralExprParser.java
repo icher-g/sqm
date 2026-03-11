@@ -24,6 +24,10 @@ public class MySqlIntervalLiteralExprParser extends IntervalLiteralExprParser {
      */
     @Override
     protected String parseLiteralValue(Cursor cur) {
+        if (cur.match(TokenType.OPERATOR) && "-".equals(cur.peek().lexeme()) && cur.match(TokenType.NUMBER, 1)) {
+            cur.advance();
+            return "-" + cur.advance().lexeme();
+        }
         if (cur.match(TokenType.NUMBER)) {
             return cur.advance().lexeme();
         }

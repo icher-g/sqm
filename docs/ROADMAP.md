@@ -64,6 +64,15 @@ Priority levels:
 ### Epic MYSQL-R2D: MySQL Built-in Function Coverage (Completed)
 - Delivered scope: explicit MySQL parser/renderer coverage for prioritized built-in JSON/date/string functions.
 - Coverage includes prioritized built-ins such as `JSON_EXTRACT`, `JSON_OBJECT`, `DATE_ADD`, `DATE_SUB`, `CONCAT_WS`, and `SUBSTRING_INDEX`.
+- MySQL interval coverage includes canonical `INTERVAL '...'` literals plus MySQL input forms such as `INTERVAL 1 DAY` and `INTERVAL -1 DAY`.
+
+### Epic MYSQL-R2E: MySQL Validation Hardening (Completed)
+- Delivered scope: optional MySQL schema-validation rule for conflicting index-hint combinations.
+- `sqm-validate-mysql` now reports overlapping `USE INDEX` + `FORCE INDEX` combinations on the same effective table scope before execution.
+
+### Epic MYSQL-R2F: MySQL Optimizer Hint Normalization (Completed)
+- Delivered scope: opt-in MySQL optimizer-hint normalization policy for rendering.
+- Default rendering remains pass-through, while explicit policies can trim or normalize hint-body whitespace for `SELECT`, `UPDATE`, and `DELETE`.
 - MySQL interval literal support covers both canonical `INTERVAL '...'` and MySQL input forms like `INTERVAL 1 DAY`, which render back to the quoted canonical form.
 
 ### Epic R4: SQL Server Dialect Support

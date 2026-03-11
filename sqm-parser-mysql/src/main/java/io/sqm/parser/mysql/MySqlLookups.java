@@ -54,6 +54,12 @@ public class MySqlLookups extends AnsiLookups {
         if (!keyword.equalsIgnoreCase("interval")) {
             return false;
         }
+        if (cur.match(TokenType.OPERATOR, pos.current() + 1)
+            && "-".equals(cur.peek(pos.current() + 1).lexeme())
+            && cur.match(TokenType.NUMBER, pos.current() + 2)) {
+            pos.increment(3);
+            return true;
+        }
         if (cur.match(TokenType.NUMBER, pos.current() + 1)) {
             pos.increment(2);
             return true;

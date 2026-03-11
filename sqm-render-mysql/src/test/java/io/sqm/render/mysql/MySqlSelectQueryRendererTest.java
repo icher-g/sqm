@@ -6,6 +6,7 @@ import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.dsl.Dsl;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.mysql.spi.MySqlDialect;
+import io.sqm.render.mysql.spi.MySqlOptimizerHintNormalizationPolicy;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.Test;
 
@@ -39,6 +40,55 @@ class MySqlSelectQueryRendererTest {
 
         assertTrue(sql.startsWith("SELECT /*+ MAX_EXECUTION_TIME(1000) */ SQL_CALC_FOUND_ROWS id"));
         assertTrue(sql.contains("FROM users"));
+    }
+
+    @Test
+    void preservesOptimizerHintsByDefault() {
+        SelectQuery query = SelectQuery.of(
+            List.of(Dsl.col("id").toSelectItem()),
+            Dsl.tbl("users"),
+            List.of(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(),
+            List.of("  MAX_EXECUTION_TIME(1000)\n   BKA(users)  ")
+        );
+
+        var sql = RenderContext.of(new MySqlDialect()).render(query).sql();
+
+        assertTrue(sql.startsWith("SELECT /*+   MAX_EXECUTION_TIME(1000)\n   BKA(users)   */ id"));
+    }
+
+    @Test
+    void normalizesOptimizerHintsWhenPolicyIsEnabled() {
+        SelectQuery query = SelectQuery.of(
+            List.of(Dsl.col("id").toSelectItem()),
+            Dsl.tbl("users"),
+            List.of(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(),
+            List.of("  MAX_EXECUTION_TIME(1000)\n   BKA(users)  ")
+        );
+
+        var sql = RenderContext.of(new MySqlDialect(
+            io.sqm.core.dialect.SqlDialectVersion.of(8, 0),
+            MySqlOptimizerHintNormalizationPolicy.NORMALIZE_WHITESPACE
+        )).render(query).sql();
+
+        assertTrue(sql.startsWith("SELECT /*+ MAX_EXECUTION_TIME(1000) BKA(users) */ id"));
     }
 
     @Test

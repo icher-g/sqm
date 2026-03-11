@@ -30,13 +30,7 @@ public class MySqlUpdateStatementRenderer extends io.sqm.render.ansi.UpdateState
      */
     @Override
     protected void renderAfterUpdateKeyword(UpdateStatement node, RenderContext ctx, SqlWriter w) {
-        if (!node.optimizerHints().isEmpty() && !ctx.dialect().capabilities().supports(SqlFeature.OPTIMIZER_HINT_COMMENT)) {
-            throw new UnsupportedDialectFeatureException("UPDATE optimizer hints", ctx.dialect().name());
-        }
-
-        for (var hint : node.optimizerHints()) {
-            w.space().append("/*+ ").append(hint).append(" */");
-        }
+        MySqlOptimizerHintRendererSupport.renderHints(node.optimizerHints(), "UPDATE optimizer hints", ctx, w);
     }
 
     /**
