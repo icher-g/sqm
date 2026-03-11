@@ -145,6 +145,30 @@ class MySqlRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTrip_signedUnquotedMysqlIntervalCanonicalizesToQuotedForm() {
+        String sql = "SELECT DATE_SUB(created_at, INTERVAL -1 DAY) AS prev_day FROM users";
+
+        Query parsed = Utils.parseMySql(sql);
+        String rendered = Utils.renderMySql(parsed);
+        Query reparsed = Utils.parseMySql(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals("SELECT DATE_SUB(created_at, INTERVAL '-1' DAY) AS prev_day FROM users", Utils.normalizeSql(rendered));
+    }
+
+    @Test
+    void roundTrip_mysqlBitAndHexLiterals() {
+        String sql = "SELECT B'1010' AS bits, X'FF' AS hex_value FROM users";
+
+        Query parsed = Utils.parseMySql(sql);
+        String rendered = Utils.renderMySql(parsed);
+        Query reparsed = Utils.parseMySql(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals("SELECT B'1010' AS bits, X'FF' AS hex_value FROM users", Utils.normalizeSql(rendered));
+    }
+
+    @Test
     void parser_rejects_distinct_on() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(Query.class, "SELECT DISTINCT ON (id) id FROM users");

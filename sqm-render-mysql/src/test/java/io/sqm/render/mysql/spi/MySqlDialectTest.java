@@ -34,9 +34,17 @@ class MySqlDialectTest {
     void constructors_with_version_and_ansi_mode_are_usable() {
         var versioned = new MySqlDialect(SqlDialectVersion.of(8, 0));
         var ansiQuotes = new MySqlDialect(SqlDialectVersion.of(8, 0), true);
+        var normalized = new MySqlDialect(
+            SqlDialectVersion.of(8, 0),
+            MySqlOptimizerHintNormalizationPolicy.NORMALIZE_WHITESPACE
+        );
 
         assertEquals("MySQL", versioned.name());
         assertTrue(ansiQuotes.quoter().supports(QuoteStyle.DOUBLE_QUOTE));
+        assertEquals(
+            MySqlOptimizerHintNormalizationPolicy.NORMALIZE_WHITESPACE,
+            normalized.optimizerHintNormalizationPolicy()
+        );
     }
 }
 

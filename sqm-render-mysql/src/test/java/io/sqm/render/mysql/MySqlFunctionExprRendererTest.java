@@ -1,5 +1,7 @@
 package io.sqm.render.mysql;
 
+import io.sqm.core.BitStringLiteralExpr;
+import io.sqm.core.HexStringLiteralExpr;
 import io.sqm.dsl.Dsl;
 import io.sqm.render.mysql.spi.MySqlDialect;
 import io.sqm.render.spi.RenderContext;
@@ -26,5 +28,13 @@ class MySqlFunctionExprRendererTest {
         var sql = RenderContext.of(new MySqlDialect()).render(function).sql();
 
         assertEquals("DATE_ADD(created_at, INTERVAL '1' DAY)", sql);
+    }
+
+    @Test
+    void rendersBitAndHexLiterals() {
+        var ctx = RenderContext.of(new MySqlDialect());
+
+        assertEquals("B'1010'", ctx.render(BitStringLiteralExpr.of("1010")).sql());
+        assertEquals("X'FF'", ctx.render(HexStringLiteralExpr.of("FF")).sql());
     }
 }

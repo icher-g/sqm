@@ -9,6 +9,7 @@ import io.sqm.core.dialect.SqlFeature;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.mysql.spi.MySqlDialect;
+import io.sqm.render.mysql.spi.MySqlOptimizerHintNormalizationPolicy;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.Test;
 
@@ -75,6 +76,23 @@ class MySqlDeleteStatementRendererTest {
         renderer.render(statement, ctx, writer);
 
         assertEquals("DELETE /*+ MAX_EXECUTION_TIME(1000) */ FROM users", normalize(writer.toText(java.util.List.of()).sql()));
+    }
+
+    @Test
+    void normalizesDeleteOptimizerHintsWhenPolicyIsEnabled() {
+        var statement = delete(tbl("users"))
+            .optimizerHint("  MAX_EXECUTION_TIME(1000)\n   BKA(users)  ")
+            .build();
+
+        var sql = RenderContext.of(new MySqlDialect(
+            SqlDialectVersion.of(8, 0),
+            MySqlOptimizerHintNormalizationPolicy.NORMALIZE_WHITESPACE
+        )).render(statement).sql();
+
+        assertEquals(
+            "DELETE /*+ MAX_EXECUTION_TIME(1000) BKA(users) */ FROM users",
+            normalize(sql)
+        );
     }
 
     @Test

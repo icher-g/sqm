@@ -198,4 +198,15 @@ class MySqlSpecsTest {
         assertEquals("1", interval.value());
         assertEquals("DAY", interval.qualifier().orElseThrow());
     }
+
+    @Test
+    void parseContext_usesMysqlLookupsForSignedUnquotedIntervalLiteral() {
+        var ctx = io.sqm.parser.spi.ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(io.sqm.core.Expression.class, "INTERVAL -1 DAY");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var interval = assertInstanceOf(io.sqm.core.IntervalLiteralExpr.class, result.value());
+        assertEquals("-1", interval.value());
+        assertEquals("DAY", interval.qualifier().orElseThrow());
+    }
 }

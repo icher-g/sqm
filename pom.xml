@@ -49,6 +49,7 @@
         <module>sqm-render-postgresql</module>
         <module>sqm-render-mysql</module>
         <module>sqm-validate-postgresql</module>
+        <module>sqm-validate-mysql</module>
         <module>sqm-catalog</module>
         <module>sqm-catalog-postgresql</module>
         <module>sqm-codegen</module>

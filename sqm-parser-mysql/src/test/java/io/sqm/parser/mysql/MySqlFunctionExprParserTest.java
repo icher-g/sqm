@@ -69,6 +69,18 @@ class MySqlFunctionExprParserTest {
     }
 
     @Test
+    void parsesDateSubWithSignedUnquotedIntervalLiteralArgument() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(FunctionExpr.class, "DATE_SUB(created_at, INTERVAL -1 DAY)");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var function = result.value();
+        var interval = assertInstanceOf(IntervalLiteralExpr.class, ((FunctionExpr.Arg.ExprArg) function.args().get(1)).expr());
+        assertEquals("-1", interval.value());
+        assertEquals("DAY", interval.qualifier().orElseThrow());
+    }
+
+    @Test
     void parsesStringFunctions() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var concatResult = ctx.parse(FunctionExpr.class, "CONCAT_WS('-', first_name, last_name)");

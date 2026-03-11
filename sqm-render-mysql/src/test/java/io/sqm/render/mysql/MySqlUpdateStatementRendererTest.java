@@ -7,6 +7,7 @@ import io.sqm.core.dialect.SqlFeature;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.mysql.spi.MySqlDialect;
+import io.sqm.render.mysql.spi.MySqlOptimizerHintNormalizationPolicy;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.Test;
 
@@ -100,6 +101,24 @@ class MySqlUpdateStatementRendererTest {
         renderer.render(statement, ctx, writer);
 
         assertEquals("UPDATE /*+ MAX_EXECUTION_TIME(1000) */ users SET name = 'alice'", normalize(writer.toText(java.util.List.of()).sql()));
+    }
+
+    @Test
+    void normalizesUpdateOptimizerHintsWhenPolicyIsEnabled() {
+        var statement = update(tbl("users"))
+            .optimizerHint("  MAX_EXECUTION_TIME(1000)\n   BKA(users)  ")
+            .set(id("name"), lit("alice"))
+            .build();
+
+        var sql = RenderContext.of(new MySqlDialect(
+            SqlDialectVersion.of(8, 0),
+            MySqlOptimizerHintNormalizationPolicy.NORMALIZE_WHITESPACE
+        )).render(statement).sql();
+
+        assertEquals(
+            "UPDATE /*+ MAX_EXECUTION_TIME(1000) BKA(users) */ users SET name = 'alice'",
+            normalize(sql)
+        );
     }
 
     @Test
