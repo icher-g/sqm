@@ -46,4 +46,23 @@ class MySqlSqlTypeMapperTest {
         assertEquals(CatalogType.STRING, mapper.map("enum", Types.OTHER));
         assertEquals(CatalogType.TIME, mapper.map("time", Types.OTHER));
     }
+
+    @Test
+    void map_trims_native_type_names_before_matching() {
+        assertEquals(CatalogType.INTEGER, mapper.map("  integer unsigned  ", Types.OTHER));
+        assertEquals(CatalogType.STRING, mapper.map("  varchar  ", Types.OTHER));
+        assertEquals(CatalogType.TIMESTAMP, mapper.map("  timestamp  ", Types.OTHER));
+    }
+
+    @Test
+    void map_covers_remaining_jdbc_fallback_buckets() {
+        assertEquals(CatalogType.INTEGER, mapper.map("unknown_smallint", Types.SMALLINT));
+        assertEquals(CatalogType.DECIMAL, mapper.map("unknown_float", Types.FLOAT));
+        assertEquals(CatalogType.BOOLEAN, mapper.map("unknown_bool", Types.BIT));
+        assertEquals(CatalogType.STRING, mapper.map("unknown_nvarchar", Types.NVARCHAR));
+        assertEquals(CatalogType.DATE, mapper.map("unknown_date", Types.DATE));
+        assertEquals(CatalogType.TIME, mapper.map("unknown_time_tz", Types.TIME_WITH_TIMEZONE));
+        assertEquals(CatalogType.TIMESTAMP, mapper.map("unknown_timestamp_tz", Types.TIMESTAMP_WITH_TIMEZONE));
+        assertEquals(CatalogType.BYTES, mapper.map("unknown_varbinary", Types.VARBINARY));
+    }
 }

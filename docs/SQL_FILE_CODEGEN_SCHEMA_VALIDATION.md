@@ -4,7 +4,7 @@ This document describes schema-backed validation in `sqm-codegen-maven-plugin` a
 
 ## Overview
 
-`sqm-codegen-maven-plugin:generate` can validate parsed SQL query models against a database schema before emitting Java sources.
+`sqm-codegen-maven-plugin:generate` can validate parsed SQL statement models against a database schema before emitting Java sources.
 
 Schema source options:
 
