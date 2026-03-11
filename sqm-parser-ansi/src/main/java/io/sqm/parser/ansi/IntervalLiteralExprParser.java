@@ -44,9 +44,9 @@ public class IntervalLiteralExprParser implements MatchableParser<IntervalLitera
         if (!keyword.lexeme().equalsIgnoreCase("interval")) {
             return error("Expected INTERVAL literal but found '" + keyword.lexeme() + "'", cur.fullPos());
         }
-        var literal = cur.expect("Expected string literal after INTERVAL", TokenType.STRING);
+        var literalValue = parseLiteralValue(cur);
         Optional<String> qualifier = parseQualifier(cur);
-        return qualifier.map(s -> ok(IntervalLiteralExpr.of(literal.lexeme(), s))).orElseGet(() -> ok(IntervalLiteralExpr.of(literal.lexeme())));
+        return qualifier.map(s -> ok(IntervalLiteralExpr.of(literalValue, s))).orElseGet(() -> ok(IntervalLiteralExpr.of(literalValue)));
     }
 
     /**
@@ -75,7 +75,25 @@ public class IntervalLiteralExprParser implements MatchableParser<IntervalLitera
             && cur.match(TokenType.STRING, 1);
     }
 
-    private Optional<String> parseQualifier(Cursor cur) {
+    /**
+     * Parses the interval literal body immediately following the {@code INTERVAL}
+     * keyword.
+     *
+     * @param cur current token cursor
+     * @return interval literal value without surrounding quotes
+     */
+    protected String parseLiteralValue(Cursor cur) {
+        return cur.expect("Expected string literal after INTERVAL", TokenType.STRING).lexeme();
+    }
+
+    /**
+     * Parses an optional interval qualifier such as {@code DAY} or
+     * {@code DAY TO SECOND}.
+     *
+     * @param cur current token cursor
+     * @return optional parsed qualifier
+     */
+    protected Optional<String> parseQualifier(Cursor cur) {
         if (!cur.match(TokenType.IDENT)) {
             return Optional.empty();
         }
@@ -94,7 +112,13 @@ public class IntervalLiteralExprParser implements MatchableParser<IntervalLitera
         return Optional.of(first);
     }
 
-    private boolean isUnit(String value) {
+    /**
+     * Returns whether the supplied value is a supported interval unit token.
+     *
+     * @param value candidate interval unit
+     * @return {@code true} when the token is a supported unit
+     */
+    protected boolean isUnit(String value) {
         return UNITS.contains(value.toLowerCase(Locale.ROOT));
     }
 }

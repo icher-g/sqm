@@ -10,7 +10,10 @@ import io.sqm.core.UpdateStatement;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
+import io.sqm.parser.mysql.spi.MySqlSqlMode;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -67,16 +70,29 @@ class MySqlSpecsTest {
 
     @Test
     void identifierQuoting_supportsDoubleQuoteWhenAnsiQuotesModeEnabled() {
-        var specs = new MySqlSpecs(SqlDialectVersion.of(8, 0), true);
+        var specs = new MySqlSpecs(SqlDialectVersion.of(8, 0), Set.of(MySqlSqlMode.ANSI_QUOTES));
         var quoting = specs.identifierQuoting();
 
         assertTrue(quoting.supports('`'));
         assertTrue(quoting.supports('"'));
+        assertEquals(Set.of(MySqlSqlMode.ANSI_QUOTES), specs.sqlModes());
     }
 
     @Test
     void constructor_rejectsNullVersion() {
         assertThrows(NullPointerException.class, () -> new MySqlSpecs(null, false));
+    }
+
+    @Test
+    void constructor_rejectsNullSqlModes() {
+        assertThrows(NullPointerException.class, () -> new MySqlSpecs(SqlDialectVersion.of(8, 0), null));
+    }
+
+    @Test
+    void booleanAnsiQuotesConstructorMapsToSqlMode() {
+        var specs = new MySqlSpecs(SqlDialectVersion.of(8, 0), true);
+
+        assertEquals(Set.of(MySqlSqlMode.ANSI_QUOTES), specs.sqlModes());
     }
 
     @Test
@@ -160,5 +176,26 @@ class MySqlSpecsTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertEquals(1, result.value().joins().size());
+    }
+
+    @Test
+    void parseContext_respectsAnsiQuotesSqlModeForQuotedIdentifiers() {
+        var ctx = io.sqm.parser.spi.ParseContext.of(new MySqlSpecs(SqlDialectVersion.of(8, 0), Set.of(MySqlSqlMode.ANSI_QUOTES)));
+        var result = ctx.parse(Query.class, "SELECT \"id\" FROM \"users\"");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var query = assertInstanceOf(io.sqm.core.SelectQuery.class, result.value());
+        assertEquals("users", query.from().matchTableRef().table(t -> t.name().value()).orElseThrow(IllegalStateException::new));
+    }
+
+    @Test
+    void parseContext_usesMysqlLookupsForUnquotedIntervalLiteral() {
+        var ctx = io.sqm.parser.spi.ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(io.sqm.core.Expression.class, "INTERVAL 1 DAY");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var interval = assertInstanceOf(io.sqm.core.IntervalLiteralExpr.class, result.value());
+        assertEquals("1", interval.value());
+        assertEquals("DAY", interval.qualifier().orElseThrow());
     }
 }

@@ -56,6 +56,16 @@ Priority levels:
 - Parser/render capability gating and deterministic canonical SQL output delivered.
 - Integration round-trip coverage delivered in `sqm-it`.
 
+### Epic MYSQL-R2C: MySQL SQL Mode-Aware Parser Options (Completed)
+- Delivered scope: explicit SQL-mode parser options in `MySqlSpecs`.
+- `ANSI_QUOTES` is modeled as a first-class parser mode and enables double-quoted identifiers during parsing.
+- Default parser behavior remains backward compatible with backtick-only MySQL identifier quoting.
+
+### Epic MYSQL-R2D: MySQL Built-in Function Coverage (Completed)
+- Delivered scope: explicit MySQL parser/renderer coverage for prioritized built-in JSON/date/string functions.
+- Coverage includes prioritized built-ins such as `JSON_EXTRACT`, `JSON_OBJECT`, `DATE_ADD`, `DATE_SUB`, `CONCAT_WS`, and `SUBSTRING_INDEX`.
+- MySQL interval literal support covers both canonical `INTERVAL '...'` and MySQL input forms like `INTERVAL 1 DAY`, which render back to the quoted canonical form.
+
 ### Epic R4: SQL Server Dialect Support
 - Add `sqm-parser-sqlserver` and `sqm-render-sqlserver`.
 - Define `SqlServerSpecs`.

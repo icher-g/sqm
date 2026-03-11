@@ -244,6 +244,17 @@ var sql = ctx.render(q).sql();
 System.out.println(sql);
 ```
 
+Explicit MySQL SQL-mode parser options are available through `MySqlSpecs`:
+
+```java
+var defaultCtx = ParseContext.of(new MySqlSpecs());
+var ansiQuotesCtx = ParseContext.of(
+    new MySqlSpecs(SqlDialectVersion.of(8, 0), java.util.Set.of(MySqlSqlMode.ANSI_QUOTES))
+);
+```
+
+`ANSI_QUOTES` mode enables double-quoted identifiers during parsing while the default behavior remains backtick-only.
+
 **Rendered (ANSI):**
 
 ```sql
@@ -738,6 +749,8 @@ Highlights:
   - `GROUP BY ... WITH ROLLUP` parsing and canonical rendering
   - optimizer hint comments for `SELECT`, `UPDATE`, and `DELETE`
   - `STRAIGHT_JOIN` parsing and canonical rendering
+  - selected MySQL built-in JSON/date/string functions, including `JSON_EXTRACT`, `JSON_OBJECT`, `DATE_ADD`, `DATE_SUB`, `CONCAT_WS`, and `SUBSTRING_INDEX`
+  - MySQL interval literals in date arithmetic function arguments, including canonical `INTERVAL '...'` and MySQL input forms like `INTERVAL 1 DAY`
 
 ### Schema Validation (sqm-validate)
 

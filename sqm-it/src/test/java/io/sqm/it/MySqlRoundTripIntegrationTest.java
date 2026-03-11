@@ -112,6 +112,39 @@ class MySqlRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTrip_mysqlBuiltInFunctions() {
+        String sql = """
+            SELECT JSON_EXTRACT(payload, '$.user.id') AS user_id,
+                   DATE_ADD(created_at, INTERVAL '1' DAY) AS next_day,
+                   CONCAT_WS('-', first_name, last_name) AS display_name
+            FROM users
+            """.trim();
+
+        Query parsed = Utils.parseMySql(sql);
+        String rendered = Utils.renderMySql(parsed);
+        Query reparsed = Utils.parseMySql(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals(
+            "SELECT JSON_EXTRACT(payload, '$.user.id') AS user_id, DATE_ADD(created_at, INTERVAL '1' DAY) AS next_day, "
+                + "CONCAT_WS('-', first_name, last_name) AS display_name FROM users",
+            Utils.normalizeSql(rendered)
+        );
+    }
+
+    @Test
+    void roundTrip_unquotedMysqlIntervalCanonicalizesToQuotedForm() {
+        String sql = "SELECT DATE_ADD(created_at, INTERVAL 1 DAY) AS next_day FROM users";
+
+        Query parsed = Utils.parseMySql(sql);
+        String rendered = Utils.renderMySql(parsed);
+        Query reparsed = Utils.parseMySql(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals("SELECT DATE_ADD(created_at, INTERVAL '1' DAY) AS next_day FROM users", Utils.normalizeSql(rendered));
+    }
+
+    @Test
     void parser_rejects_distinct_on() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(Query.class, "SELECT DISTINCT ON (id) id FROM users");
