@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [v0.3.2] - 2026-03-11
+
 ### Added
 - New module: `sqm-catalog-mysql` with dedicated MySQL SQL-type mapping for JDBC schema introspection and codegen plugin validation.
 - DML-R1 statement foundation delivery:
@@ -61,6 +63,7 @@
 - Middleware docs and examples now reflect MySQL and DML transport coverage across core, REST, and MCP adapters.
 - Dialect docs and roadmap updated to reflect MySQL R1/R3 completion and PostgreSQL DML extension completion.
 - PostgreSQL documentation now reflects full writable CTE `INSERT ... RETURNING`, `UPDATE ... RETURNING`, and `DELETE ... RETURNING` support.
+
 ## [v0.3.1] - 2026-03-01
 ### Added
 - New framework modules introduced in this release:

@@ -766,7 +766,7 @@ Add dependency:
 <dependency>
   <groupId>io.sqm</groupId>
   <artifactId>sqm-validate</artifactId>
-  <version>0.3.1</version>
+  <version>0.3.2</version>
 </dependency>
 ```
 
@@ -1300,7 +1300,7 @@ mvn test
 </dependency>
 ```
 
-Current version in this repository: `0.3.1-SNAPSHOT`.
+Current version in this repository: `0.3.2`.
 
 ---
 
