@@ -20,7 +20,12 @@ class SqlCodegenDialectTest {
     }
 
     @Test
+    void from_resolvesMySql() {
+        assertEquals(SqlCodegenDialect.MYSQL, SqlCodegenDialect.from("mysql"));
+    }
+
+    @Test
     void from_throwsOnUnsupportedDialect() {
-        assertThrows(IllegalArgumentException.class, () -> SqlCodegenDialect.from("mysql"));
+        assertThrows(IllegalArgumentException.class, () -> SqlCodegenDialect.from("sqlite"));
     }
 }

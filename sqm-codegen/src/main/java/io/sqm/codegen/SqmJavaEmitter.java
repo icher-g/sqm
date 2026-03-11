@@ -8,14 +8,35 @@ import java.util.List;
 final class SqmJavaEmitter {
     private final DslEmitterVisitor visitor = new DslEmitterVisitor();
 
-    String emitQuery(Query query) {
-        if (query instanceof SelectQuery selectQuery) {
+    String emitStatement(Statement statement) {
+        if (statement instanceof SelectQuery selectQuery) {
             return visitor.emitTopLevelSelectQuery(selectQuery);
         }
-        return visitor.emitNode(query);
+        return visitor.emitNode(statement);
+    }
+
+    String emitQuery(Query query) {
+        return emitStatement(query);
     }
 
     private static final class DslEmitterVisitor extends RecursiveNodeVisitor<String> {
+        private static String emitIdentifier(Identifier value) {
+            return value.quoteStyle() == QuoteStyle.NONE
+                ? "id(" + quote(value.value()) + ")"
+                : "id(" + quote(value.value()) + ", QuoteStyle." + value.quoteStyle().name() + ")";
+        }
+
+        private static String emitIdentifierList(List<Identifier> values) {
+            return "java.util.List.of(" + joinInline(values.stream().map(DslEmitterVisitor::emitIdentifier).toList()) + ")";
+        }
+
+        private static String emitQualifiedName(QualifiedName value) {
+            return "QualifiedName.of(" + joinInline(value.parts().stream().map(DslEmitterVisitor::emitIdentifier).toList()) + ")";
+        }
+
+        private static String emitStringList(List<String> values) {
+            return "java.util.List.of(" + joinInline(values.stream().map(DslEmitterVisitor::quote).toList()) + ")";
+        }
 
         private static String emitLockMode(LockMode mode) {
             return switch (mode) {
@@ -140,6 +161,132 @@ final class SqmJavaEmitter {
         @Override
         public String visitSelectQuery(SelectQuery q) {
             return emitSelectQuery(q, "select(\n");
+        }
+
+        @Override
+        public String visitInsertStatement(InsertStatement statement) {
+            var sb = new StringBuilder("insert(").append(emitNode(statement.table())).append(")");
+            if (statement.insertMode() == InsertStatement.InsertMode.IGNORE) {
+                sb.append(".ignore()");
+            }
+            if (statement.insertMode() == InsertStatement.InsertMode.REPLACE) {
+                sb.append(".replace()");
+            }
+            if (!statement.columns().isEmpty()) {
+                sb.append(".columns(")
+                    .append(joinInline(statement.columns().stream().map(DslEmitterVisitor::emitIdentifier).toList()))
+                    .append(")");
+            }
+            if (statement.source() instanceof Query query) {
+                sb.append(".query(").append(emitNode(query)).append(")");
+            }
+            else {
+                sb.append(".values(").append(emitNode(statement.source())).append(")");
+            }
+            switch (statement.onConflictAction()) {
+                case NONE -> {
+                }
+                case DO_NOTHING -> {
+                    if (statement.conflictTarget().isEmpty()) {
+                        sb.append(".onConflictDoNothing()");
+                    }
+                    else {
+                        sb.append(".onConflictDoNothing(")
+                            .append(joinInline(statement.conflictTarget().stream().map(DslEmitterVisitor::emitIdentifier).toList()))
+                            .append(")");
+                    }
+                }
+                case DO_UPDATE -> {
+                    if (statement.conflictTarget().isEmpty() && statement.conflictUpdateWhere() == null) {
+                        sb.append(".onConflictDoUpdate(")
+                            .append(joinInline(statement.conflictUpdateAssignments().stream().map(this::emitNode).toList()))
+                            .append(")");
+                    }
+                    else {
+                        sb.append(".onConflictDoUpdate(")
+                            .append(emitIdentifierList(statement.conflictTarget()))
+                            .append(", java.util.List.of(")
+                            .append(joinInline(statement.conflictUpdateAssignments().stream().map(this::emitNode).toList()))
+                            .append("), ")
+                            .append(statement.conflictUpdateWhere() == null ? "null" : emitNode(statement.conflictUpdateWhere()))
+                            .append(")");
+                    }
+                }
+            }
+            if (!statement.returning().isEmpty()) {
+                sb.append(".returning(")
+                    .append(joinInline(statement.returning().stream().map(this::emitNode).toList()))
+                    .append(")");
+            }
+            sb.append(".build()");
+            return sb.toString();
+        }
+
+        @Override
+        public String visitUpdateStatement(UpdateStatement statement) {
+            var sb = new StringBuilder("update(").append(emitNode(statement.table())).append(")");
+            if (!statement.optimizerHints().isEmpty()) {
+                sb.append(".optimizerHints(").append(emitStringList(statement.optimizerHints())).append(")");
+            }
+            if (!statement.joins().isEmpty()) {
+                sb.append(".joins(")
+                    .append(joinInline(statement.joins().stream().map(this::emitNode).toList()))
+                    .append(")");
+            }
+            for (var assignment : statement.assignments()) {
+                sb.append(".set(").append(emitNode(assignment)).append(")");
+            }
+            if (!statement.from().isEmpty()) {
+                sb.append(".from(")
+                    .append(joinInline(statement.from().stream().map(this::emitNode).toList()))
+                    .append(")");
+            }
+            if (statement.where() != null) {
+                sb.append(".where(").append(emitNode(statement.where())).append(")");
+            }
+            if (!statement.returning().isEmpty()) {
+                sb.append(".returning(")
+                    .append(joinInline(statement.returning().stream().map(this::emitNode).toList()))
+                    .append(")");
+            }
+            sb.append(".build()");
+            return sb.toString();
+        }
+
+        @Override
+        public String visitDeleteStatement(DeleteStatement statement) {
+            var sb = new StringBuilder("delete(").append(emitNode(statement.table())).append(")");
+            if (!statement.optimizerHints().isEmpty()) {
+                sb.append(".optimizerHints(").append(emitStringList(statement.optimizerHints())).append(")");
+            }
+            if (!statement.using().isEmpty()) {
+                sb.append(".using(")
+                    .append(joinInline(statement.using().stream().map(this::emitNode).toList()))
+                    .append(")");
+            }
+            if (!statement.joins().isEmpty()) {
+                sb.append(".joins(")
+                    .append(joinInline(statement.joins().stream().map(this::emitNode).toList()))
+                    .append(")");
+            }
+            if (statement.where() != null) {
+                sb.append(".where(").append(emitNode(statement.where())).append(")");
+            }
+            if (!statement.returning().isEmpty()) {
+                sb.append(".returning(")
+                    .append(joinInline(statement.returning().stream().map(this::emitNode).toList()))
+                    .append(")");
+            }
+            sb.append(".build()");
+            return sb.toString();
+        }
+
+        @Override
+        public String visitAssignment(Assignment assignment) {
+            var target = assignment.column().parts().size() == 1
+                ? emitIdentifier(assignment.column().parts().getFirst())
+                : emitQualifiedName(assignment.column());
+            return "set(" + target + ", " + emitNode(assignment.value()) + ")";
         }
 
         private String emitSelectQuery(SelectQuery q, String selectPrefix) {

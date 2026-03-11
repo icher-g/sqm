@@ -9,7 +9,7 @@ import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.validate.api.ValidationProblem;
-import io.sqm.validate.schema.SchemaQueryValidator;
+import io.sqm.validate.schema.SchemaStatementValidator;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -32,7 +32,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsUnsupportedLateralInPostgres90() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 0)));
         Query query = select(star()).from(tbl("users").lateral()).build();
 
         var result = validator.validate(query);
@@ -42,7 +42,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsUnsupportedWithOrdinalityInPostgres93() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 3)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 3)));
         Query query = select(star())
             .from(tbl(func("unnest", arg(array(lit(1L))))).as("u").withOrdinality())
             .build();
@@ -54,7 +54,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsUnsupportedCteMaterializationInPostgres90() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 0)));
         Query query = with(
             cte(
                 "u",
@@ -71,7 +71,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsUnsupportedLockModeInPostgres90() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 0)));
         Query query = select(star())
             .from(tbl("users").as("u"))
             .lockFor(keyShare(), List.of(), false, false)
@@ -84,7 +84,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsUnsupportedGroupingSetsInPostgres90() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 0)));
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
             .groupBy(groupingSets(group("u", "id")))
@@ -97,7 +97,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_acceptsPostgres12Features() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = with(
             cte(
                 "u",
@@ -120,7 +120,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsPostgresFunctionSignatureMismatch() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(func("generate_series", arg(lit("a")), arg(lit("b"))))
             .from(tbl("users").as("u"))
             .build();
@@ -134,7 +134,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_usesPostgresFunctionReturnTypeForLimitInference() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(star())
             .from(tbl("users").as("u"))
             .limit(func("to_jsonb", arg(col("u", "id"))))
@@ -148,7 +148,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsDistinctOnLeftmostOrderByMismatch() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(col("u", "name"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "name")))
@@ -164,7 +164,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsDistinctOnOrderByOrdinalOutOfRange() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(col("u", "name"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "name")))
@@ -180,7 +180,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsDistinctOnOrderByOrdinalPointingToNonExpressionSelectItem() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(star(), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "id")))
@@ -196,7 +196,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_acceptsDistinctOnWithMatchingLeftmostOrderBy() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(col("u", "name"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "name")))
@@ -211,7 +211,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_acceptsDistinctOnWithMatchingOrderByOrdinal() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(col("u", "name"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "name")))
@@ -226,7 +226,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsInvalidOrderByUsingWithDirection() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
             .orderBy(order(col("u", "id")).using(">").asc())
@@ -241,7 +241,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsInvalidLateralBaseTableInSupportedVersion() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(star()).from(tbl("users").lateral()).build();
 
         var result = validator.validate(query);
@@ -253,7 +253,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsInvalidLockingWithDistinct() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "id")))
@@ -268,7 +268,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsInvalidLockingWithGroupBy() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
             .groupBy(group("u", "id"))
@@ -284,7 +284,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsInvalidLockingWithWindowClause() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
             .window(window("w", partition(col("u", "id"))))
@@ -300,7 +300,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsInvalidLockingWithoutFrom() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(lit(1L))
             .lockFor(update(), List.of(), false, false)
             .build();
@@ -314,7 +314,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsInvalidOrderByUsingBlankOperator() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
             .orderBy(order(col("u", "id")).using(" "))
@@ -329,7 +329,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsInvalidNestedLateralWrappers() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(star()).from(tbl("users").lateral().lateral()).build();
 
         var result = validator.validate(query);
@@ -341,7 +341,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsInvalidDuplicateLockTargets() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(star())
             .from(tbl("users").as("u"))
             .lockFor(update(), ofTables("u", "u"), false, false)
@@ -356,7 +356,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsInvalidLockTargetOnNullableSideOfLeftJoin() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(star())
             .from(tbl("users").as("u"))
             .join(left(tbl("users").as("o")).on(col("o", "id").eq(col("u", "id"))))
@@ -372,7 +372,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsInvalidLockTargetOnNullableSideOfRightJoin() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(star())
             .from(tbl("users").as("u"))
             .join(right(tbl("users").as("o")).on(col("o", "id").eq(col("u", "id"))))
@@ -388,7 +388,7 @@ class PostgresValidationDialectTest {
 
     @Test
     void validate_reportsInvalidLockTargetOnNullableSideOfFullJoin() {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(star())
             .from(tbl("users").as("u"))
             .join(full(tbl("users").as("o")).on(col("o", "id").eq(col("u", "id"))))
@@ -438,3 +438,4 @@ class PostgresValidationDialectTest {
             && clausePath.equals(p.clausePath()));
     }
 }
+

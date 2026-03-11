@@ -3,10 +3,11 @@ package io.sqm.control.pipeline;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.control.decision.ReasonCode;
 import io.sqm.control.execution.ExecutionContext;
-import io.sqm.core.Query;
+import io.sqm.core.Statement;
 import io.sqm.validate.api.ValidationProblem;
+import io.sqm.validate.mysql.MySqlValidationDialect;
 import io.sqm.validate.postgresql.PostgresValidationDialect;
-import io.sqm.validate.schema.SchemaQueryValidator;
+import io.sqm.validate.schema.SchemaStatementValidator;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.TenantRequirementMode;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
@@ -17,9 +18,9 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * Validates parsed query models against schema and dialect policies.
+ * Validates parsed statement models against schema and dialect policies.
  */
-public interface SqlQueryValidator {
+public interface SqlStatementValidator {
 
     /**
      * Creates the default dialect-aware validator for the provided schema.
@@ -27,7 +28,7 @@ public interface SqlQueryValidator {
      * @param schema catalog schema
      * @return query validator
      */
-    static SqlQueryValidator standard(CatalogSchema schema) {
+    static SqlStatementValidator standard(CatalogSchema schema) {
         var settings = SchemaValidationSettings.defaults();
         return standard(schema, settings);
     }
@@ -39,9 +40,10 @@ public interface SqlQueryValidator {
      * @param settings validation settings
      * @return query validator
      */
-    static SqlQueryValidator standard(CatalogSchema schema, SchemaValidationSettings settings) {
+    static SqlStatementValidator standard(CatalogSchema schema, SchemaValidationSettings settings) {
         return dialectAware(schema, Map.of(
             "ansi", () -> settings,
+            "mysql", () -> mergeDialectSettings(settings, MySqlValidationDialect.of()),
             "postgresql", () -> mergeDialectSettings(settings, PostgresValidationDialect.of()),
             "postgres", () -> mergeDialectSettings(settings, PostgresValidationDialect.of())
         ));
@@ -54,7 +56,7 @@ public interface SqlQueryValidator {
      * @param specsByDialect mapping of normalized dialect names to settings suppliers
      * @return query validator
      */
-    static SqlQueryValidator dialectAware(CatalogSchema schema, Map<String, Supplier<SchemaValidationSettings>> specsByDialect) {
+    static SqlStatementValidator dialectAware(CatalogSchema schema, Map<String, Supplier<SchemaValidationSettings>> specsByDialect) {
         Objects.requireNonNull(schema, "schema must not be null");
         Objects.requireNonNull(specsByDialect, "specsByDialect must not be null");
         var mappings = Map.copyOf(specsByDialect);
@@ -70,20 +72,20 @@ public interface SqlQueryValidator {
 
             var baseSettings = specsFactory.get();
             if (isTenantMissingAndRequired(baseSettings, context.tenant())) {
-                return QueryValidateResult.failure(
+                return StatementValidateResult.failure(
                     ReasonCode.DENY_TENANT_REQUIRED,
                     "Tenant context is required by validation settings"
                 );
             }
             var effectiveSettings = withPrincipalAndTenant(baseSettings, context.principal(), context.tenant());
-            var validator = SchemaQueryValidator.of(schema, effectiveSettings);
+            var validator = SchemaStatementValidator.of(schema, effectiveSettings);
             var result = validator.validate(sql);
             if (result.ok()) {
-                return QueryValidateResult.ok();
+                return StatementValidateResult.ok();
             }
 
             var first = result.problems().getFirst();
-            return QueryValidateResult.failure(mapReason(first.code()), first.message());
+            return StatementValidateResult.failure(mapReason(first.code()), first.message());
         };
     }
 
@@ -148,13 +150,13 @@ public interface SqlQueryValidator {
     }
 
     /**
-     * Validates query model for the provided execution context.
+     * Validates statement model for the provided execution context.
      *
-     * @param query   query model
+     * @param query   statement model
      * @param context execution context
      * @return validation result
      */
-    QueryValidateResult validate(Query query, ExecutionContext context);
+    StatementValidateResult validate(Statement query, ExecutionContext context);
 }
 
 

@@ -23,7 +23,7 @@ public final class ReportingQueries {
     /**
      * SQL source: reporting/kitchen_sink.sql
      *
-     * @return query model for this SQL source.
+     * @return statement model for this SQL source.
      */
     public static SelectQuery kitchenSink() {
         var builder = SelectQuery.builder();

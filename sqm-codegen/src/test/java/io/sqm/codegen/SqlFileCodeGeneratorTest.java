@@ -1,5 +1,6 @@
 package io.sqm.codegen;
 
+import io.sqm.catalog.SchemaProvider;
 import io.sqm.catalog.snapshot.JsonSchemaProvider;
 import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,6 +120,49 @@ class SqlFileCodeGeneratorTest {
         var generated = SqlFileCodeGenerator.of(pgOptions).generate();
 
         assertEquals(1, generated.size());
+    }
+
+    @Test
+    void generate_supportsMySqlDialectSpecificQueries() throws IOException {
+        var sqlDir = tempDir.resolve("sql-mysql");
+        var outputDir = tempDir.resolve("generated-mysql");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(
+            sqlDir.resolve("user").resolve("null_safe_lookup.sql"),
+            "select * from `users` where `name` <=> :name"
+        );
+
+        var options = SqlFileCodegenOptions.of(sqlDir, outputDir, "io.sqm.codegen.generated", SqlCodegenDialect.MYSQL);
+        var generated = SqlFileCodeGenerator.of(options).generate();
+
+        assertEquals(1, generated.size());
+        var generatedFile = outputDir.resolve(Path.of("io", "sqm", "codegen", "generated", "UserQueries.java"));
+        var source = Files.readString(generatedFile);
+        assertTrue(source.contains("public static SelectQuery nullSafeLookup()"));
+        assertTrue(source.contains("nullSafeEq(param(\"name\"))"));
+    }
+
+    @Test
+    void generate_emitsStatementMethodsForDmlFiles() throws IOException {
+        var sqlDir = tempDir.resolve("sql-dml");
+        var outputDir = tempDir.resolve("generated-dml");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(sqlDir.resolve("user").resolve("insert_user.sql"), "insert into users (id, name) values (1, 'alice')");
+        Files.writeString(sqlDir.resolve("user").resolve("update_user.sql"), "update users set name = 'bob' where id = 1");
+        Files.writeString(sqlDir.resolve("user").resolve("delete_user.sql"), "delete from users where id = 1");
+
+        var options = SqlFileCodegenOptions.of(sqlDir, outputDir, "io.sqm.codegen.generated", SqlCodegenDialect.ANSI);
+        var generated = SqlFileCodeGenerator.of(options).generate();
+
+        assertEquals(1, generated.size());
+        var generatedFile = outputDir.resolve(Path.of("io", "sqm", "codegen", "generated", "UserQueries.java"));
+        var source = Files.readString(generatedFile);
+        assertTrue(source.contains("public static DeleteStatement deleteUser()"));
+        assertTrue(source.contains("public static InsertStatement insertUser()"));
+        assertTrue(source.contains("public static UpdateStatement updateUser()"));
+        assertTrue(source.contains("return delete(tbl(\"users\"))"));
+        assertTrue(source.contains("return insert(tbl(\"users\"))"));
+        assertTrue(source.contains("return update(tbl(\"users\"))"));
     }
 
     @Test
@@ -367,6 +412,61 @@ class SqlFileCodeGeneratorTest {
         assertEquals(1, issues.size());
         assertEquals("user/find_active.sql", issues.getFirst().sqlFile().toString().replace('\\', '/'));
         assertEquals("COLUMN_NOT_FOUND", issues.getFirst().problem().code().name());
+    }
+
+    @Test
+    void generate_validates_mysql_dml_against_schema_provider() throws Exception {
+        var sqlDir = tempDir.resolve("sql-mysql-schema");
+        var outputDir = tempDir.resolve("generated-mysql-schema");
+        var schemaSnapshot = tempDir.resolve("schema-mysql.json");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(sqlDir.resolve("user").resolve("insert_user.sql"), "insert into users (id, name) values (1, 'alice')");
+
+        JsonSchemaProvider.of(schemaSnapshot).save(CatalogSchema.of(
+            CatalogTable.of("public", "users",
+                CatalogColumn.of("id", CatalogType.LONG),
+                CatalogColumn.of("name", CatalogType.STRING)
+            )
+        ));
+
+        var options = SqlFileCodegenOptions.of(
+            sqlDir,
+            outputDir,
+            "io.sqm.codegen.generated",
+            SqlCodegenDialect.MYSQL,
+            false,
+            JsonSchemaProvider.of(schemaSnapshot)
+        );
+
+        var generated = SqlFileCodeGenerator.of(options).generate();
+
+        assertEquals(1, generated.size());
+        assertTrue(Files.readString(generated.getFirst()).contains("public static InsertStatement insertUser()"));
+    }
+
+    @Test
+    void generate_wraps_schema_provider_sql_exception() throws IOException {
+        var sqlDir = tempDir.resolve("sql-schema-provider-error");
+        var outputDir = tempDir.resolve("generated-schema-provider-error");
+        writeSql(sqlDir.resolve("user").resolve("find_by_id.sql"), "select * from users where id = :id");
+
+        SchemaProvider failingProvider = () -> {
+            throw new SQLException("boom");
+        };
+
+        var options = SqlFileCodegenOptions.of(
+            sqlDir,
+            outputDir,
+            "io.sqm.codegen.generated",
+            SqlCodegenDialect.MYSQL,
+            false,
+            failingProvider
+        );
+
+        var error = assertThrows(SqlFileCodegenException.class, () -> SqlFileCodeGenerator.of(options));
+
+        assertTrue(error.getMessage().contains("Failed to load schema for validation"));
+        assertTrue(error.getMessage().contains("boom"));
     }
 
     private Map<String, String> generateAndReadSources(Path sqlDir, Path outputDir) throws IOException {

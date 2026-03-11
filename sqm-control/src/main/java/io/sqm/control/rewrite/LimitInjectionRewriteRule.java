@@ -2,8 +2,8 @@ package io.sqm.control.rewrite;
 
 import io.sqm.control.decision.ReasonCode;
 import io.sqm.control.execution.ExecutionContext;
-import io.sqm.control.pipeline.QueryRewriteResult;
-import io.sqm.control.pipeline.QueryRewriteRule;
+import io.sqm.control.pipeline.StatementRewriteResult;
+import io.sqm.control.pipeline.StatementRewriteRule;
 import io.sqm.control.pipeline.RewriteDenyException;
 import io.sqm.core.*;
 import io.sqm.core.transform.LimitInjectionTransformer;
@@ -13,7 +13,7 @@ import java.util.Objects;
 /**
  * Middleware rewrite rule that injects a default LIMIT using SQM core transformer support.
  */
-public final class LimitInjectionRewriteRule implements QueryRewriteRule {
+public final class LimitInjectionRewriteRule implements StatementRewriteRule {
     private static final String RULE_ID = "limit-injection";
 
     private final LimitInjectionTransformer transformer;
@@ -76,21 +76,25 @@ public final class LimitInjectionRewriteRule implements QueryRewriteRule {
     /**
      * Applies limit injection and reports a rewrite only when the AST actually changes.
      *
-     * @param query   parsed query model
+     * @param statement parsed statement model
      * @param context execution context
      * @return rewrite result
      */
     @Override
-    public QueryRewriteResult apply(Query query, ExecutionContext context) {
-        Objects.requireNonNull(query, "query must not be null");
+    public StatementRewriteResult apply(Statement statement, ExecutionContext context) {
+        Objects.requireNonNull(statement, "statement must not be null");
         Objects.requireNonNull(context, "context must not be null");
+
+        if (!(statement instanceof Query query)) {
+            return StatementRewriteResult.unchanged(statement);
+        }
 
         Query transformed = transformer.apply(query);
         transformed = enforceMaxLimitPolicy(transformed);
         if (transformed == query) {
-            return QueryRewriteResult.unchanged(transformed);
+            return StatementRewriteResult.unchanged(transformed);
         }
-        return QueryRewriteResult.rewritten(transformed, id(), ReasonCode.REWRITE_LIMIT);
+        return StatementRewriteResult.rewritten(transformed, id(), ReasonCode.REWRITE_LIMIT);
     }
 
     private Query enforceMaxLimitPolicy(Query query) {

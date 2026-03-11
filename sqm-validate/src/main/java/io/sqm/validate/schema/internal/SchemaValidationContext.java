@@ -1,5 +1,6 @@
 package io.sqm.validate.schema.internal;
 
+import io.sqm.catalog.model.CatalogTable;
 import io.sqm.core.*;
 import io.sqm.catalog.access.CatalogAccessPolicies;
 import io.sqm.catalog.access.CatalogAccessPolicy;
@@ -424,6 +425,61 @@ public final class SchemaValidationContext {
     }
 
     /**
+     * Resolves a qualified assignment target against the current DML scope.
+     *
+     * @param column       assignment target column name.
+     * @param reportErrors whether lookup failures should be recorded as problems.
+     * @param node         source node for structured problem reporting.
+     * @param clausePath   clause/path hint to attach to reported problems.
+     * @return resolved column metadata when available.
+     */
+    public Optional<CatalogColumn> resolveCurrentScopeColumn(
+        QualifiedName column,
+        boolean reportErrors,
+        Node node,
+        String clausePath
+    ) {
+        Objects.requireNonNull(column, "column");
+        var parts = column.parts();
+        if (parts.size() == 1) {
+            return resolveCurrentScopeColumn(null, parts.getFirst(), reportErrors, node, clausePath);
+        }
+        if (parts.size() == 2) {
+            return resolveCurrentScopeColumn(parts.getFirst(), parts.get(1), reportErrors, node, clausePath);
+        }
+        if (reportErrors) {
+            addProblem(
+                ValidationProblem.Code.COLUMN_NOT_FOUND,
+                "Invalid qualified column reference: " + String.join(".", column.values()),
+                node,
+                clausePath
+            );
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Resolves a physical target-table column directly from the catalog.
+     *
+     * @param table target table.
+     * @param column column identifier.
+     * @return resolved catalog column when the physical table is known.
+     */
+    public Optional<CatalogColumn> resolvePhysicalTableColumn(Table table, Identifier column) {
+        if (table == null || column == null) {
+            return Optional.empty();
+        }
+        var lookup = schema.resolve(table.schema() == null ? null : table.schema().value(), table.name().value());
+        if (!(lookup instanceof CatalogSchema.TableLookupResult.Found(CatalogTable table1))) {
+            return Optional.empty();
+        }
+        var normalizedColumn = normalize(column);
+        return table1.columns().stream()
+            .filter(candidate -> normalize(candidate.name()).equals(normalizedColumn))
+            .findFirst();
+    }
+
+    /**
      * Infers expression type when it can be derived from schema or literal value.
      *
      * @param expression expression to analyze.
@@ -706,6 +762,94 @@ public final class SchemaValidationContext {
                     "Ambiguous column reference: " + column.name().value(),
                     column,
                     "column.reference"
+                );
+            }
+            return Optional.empty();
+        }
+        return Optional.of(matches.getFirst());
+    }
+
+    /**
+     * Resolves a column against current-scope sources only and reports DML-specific clause paths.
+     *
+     * @param sourceAlias optional source alias qualifier.
+     * @param columnName column identifier.
+     * @param reportErrors whether lookup failures should be recorded as problems.
+     * @param node source node for structured problem reporting.
+     * @param clausePath clause/path hint.
+     * @return resolved column metadata when available.
+     */
+    private Optional<CatalogColumn> resolveCurrentScopeColumn(
+        Identifier sourceAlias,
+        Identifier columnName,
+        boolean reportErrors,
+        Node node,
+        String clausePath
+    ) {
+        if (columnName == null) {
+            return Optional.empty();
+        }
+        if (sourceAlias != null) {
+            var source = findSource(sourceAlias, ScopeResolutionMode.CURRENT_SCOPE);
+            if (source.isEmpty()) {
+                if (reportErrors) {
+                    addProblem(
+                        ValidationProblem.Code.UNKNOWN_TABLE_ALIAS,
+                        "Unknown table alias: " + sourceAlias.value(),
+                        node,
+                        clausePath
+                    );
+                }
+                return Optional.empty();
+            }
+            var resolvedSource = source.get();
+            if (!resolvedSource.strictColumns()) {
+                return Optional.empty();
+            }
+            var dbColumn = resolvedSource.columns().get(normalize(columnName));
+            if (dbColumn == null && reportErrors) {
+                addProblem(
+                    ValidationProblem.Code.COLUMN_NOT_FOUND,
+                    "Column not found: " + sourceAlias.value() + "." + columnName.value(),
+                    node,
+                    clausePath
+                );
+            }
+            return Optional.ofNullable(dbColumn);
+        }
+
+        var matches = new ArrayList<CatalogColumn>();
+        var unknownSourceVisible = false;
+        for (var scope : iterScopes(ScopeResolutionMode.CURRENT_SCOPE)) {
+            for (var source : scope.sources) {
+                if (!source.strictColumns()) {
+                    unknownSourceVisible = true;
+                    continue;
+                }
+                var dbColumn = source.columns().get(normalize(columnName));
+                if (dbColumn != null) {
+                    matches.add(dbColumn);
+                }
+            }
+        }
+        if (matches.isEmpty()) {
+            if (reportErrors && !unknownSourceVisible) {
+                addProblem(
+                    ValidationProblem.Code.COLUMN_NOT_FOUND,
+                    "Column not found: " + columnName.value(),
+                    node,
+                    clausePath
+                );
+            }
+            return Optional.empty();
+        }
+        if (matches.size() > 1) {
+            if (reportErrors) {
+                addProblem(
+                    ValidationProblem.Code.COLUMN_AMBIGUOUS,
+                    "Ambiguous column reference: " + columnName.value(),
+                    node,
+                    clausePath
                 );
             }
             return Optional.empty();

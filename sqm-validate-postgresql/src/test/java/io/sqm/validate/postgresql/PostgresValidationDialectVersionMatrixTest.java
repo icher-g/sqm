@@ -9,7 +9,7 @@ import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.validate.api.ValidationProblem;
-import io.sqm.validate.schema.SchemaQueryValidator;
+import io.sqm.validate.schema.SchemaStatementValidator;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -37,7 +37,7 @@ class PostgresValidationDialectVersionMatrixTest {
         Query query,
         boolean expectedUnsupported
     ) {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(version));
+            var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(version));
         var result = validator.validate(query);
 
         var unsupportedCount = result.problems().stream()
@@ -52,7 +52,7 @@ class PostgresValidationDialectVersionMatrixTest {
         String name,
         Query query
     ) {
-        var validator = SchemaQueryValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 0)));
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 0)));
         var result = validator.validate(query);
 
         var unsupportedCount = result.problems().stream()
@@ -222,3 +222,4 @@ class PostgresValidationDialectVersionMatrixTest {
         );
     }
 }
+

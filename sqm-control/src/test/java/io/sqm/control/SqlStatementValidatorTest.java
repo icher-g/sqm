@@ -1,18 +1,16 @@
 package io.sqm.control;
 
-import io.sqm.control.audit.*;
-import io.sqm.control.config.*;
-import io.sqm.control.decision.*;
-import io.sqm.control.execution.*;
-import io.sqm.control.pipeline.*;
-import io.sqm.control.rewrite.*;
-import io.sqm.control.service.*;
-
 import io.sqm.catalog.access.DefaultCatalogAccessPolicy;
 import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
+import io.sqm.control.decision.ReasonCode;
+import io.sqm.control.execution.ExecutionContext;
+import io.sqm.control.execution.ExecutionMode;
+import io.sqm.control.pipeline.SqlStatementValidator;
+import io.sqm.core.Identifier;
+import io.sqm.core.UpdateStatement;
 import io.sqm.validate.schema.SchemaValidationLimits;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.TenantRequirementMode;
@@ -24,9 +22,12 @@ import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.tbl;
-import static org.junit.jupiter.api.Assertions.*;
+import static io.sqm.dsl.Dsl.update;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class SqlQueryValidatorTest {
+class SqlStatementValidatorTest {
     private static final CatalogSchema SCHEMA = CatalogSchema.of(
         CatalogTable.of("public", "users",
             CatalogColumn.of("id", CatalogType.LONG),
@@ -39,7 +40,7 @@ class SqlQueryValidatorTest {
         var settings = SchemaValidationSettings.builder()
             .limits(SchemaValidationLimits.builder().maxSelectColumns(1).build())
             .build();
-        var validator = SqlQueryValidator.standard(SCHEMA, settings);
+        var validator = SqlStatementValidator.standard(SCHEMA, settings);
         var query = select(lit(1), lit(2)).build();
 
         var result = validator.validate(query, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
@@ -50,7 +51,7 @@ class SqlQueryValidatorTest {
 
     @Test
     void standard_returns_ok_for_valid_query() {
-        var validator = SqlQueryValidator.standard(SCHEMA);
+        var validator = SqlStatementValidator.standard(SCHEMA);
         var query = select(lit(1)).build();
 
         var result = validator.validate(query, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
@@ -59,11 +60,37 @@ class SqlQueryValidatorTest {
     }
 
     @Test
-    void dialect_aware_validates_configuration_and_dialect_resolution() {
-        assertThrows(NullPointerException.class, () -> SqlQueryValidator.dialectAware(null, Map.of()));
-        assertThrows(NullPointerException.class, () -> SqlQueryValidator.dialectAware(SCHEMA, null));
+    void standard_supports_mysql_dialect_validation() {
+        var validator = SqlStatementValidator.standard(SCHEMA);
+        var statement = update("users")
+            .set(Identifier.of("name"), lit("alice"))
+            .where(col("id").eq(lit(1)))
+            .build();
 
-        var validator = SqlQueryValidator.dialectAware(
+        var result = validator.validate(statement, ExecutionContext.of("mysql", ExecutionMode.ANALYZE));
+
+        assertEquals(ReasonCode.NONE, result.code());
+    }
+
+    @Test
+    void standard_reports_dml_assignment_validation_failures() {
+        var validator = SqlStatementValidator.standard(SCHEMA);
+        UpdateStatement statement = update("users")
+            .set(Identifier.of("missing_col"), lit("alice"))
+            .build();
+
+        var result = validator.validate(statement, ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
+
+        assertEquals(ReasonCode.DENY_VALIDATION, result.code());
+        assertTrue(result.isFailed());
+    }
+
+    @Test
+    void dialect_aware_validates_configuration_and_dialect_resolution() {
+        assertThrows(NullPointerException.class, () -> SqlStatementValidator.dialectAware(null, Map.of()));
+        assertThrows(NullPointerException.class, () -> SqlStatementValidator.dialectAware(SCHEMA, null));
+
+        var validator = SqlStatementValidator.dialectAware(
             SCHEMA,
             Map.of("ansi", SchemaValidationSettings::defaults)
         );
@@ -83,7 +110,7 @@ class SqlQueryValidatorTest {
         var settings = SchemaValidationSettings.builder()
             .accessPolicy(policy)
             .build();
-        var validator = SqlQueryValidator.standard(SCHEMA, settings);
+        var validator = SqlStatementValidator.standard(SCHEMA, settings);
         var query = select(col("id")).from(tbl("users")).build();
 
         var denied = validator.validate(
@@ -108,7 +135,7 @@ class SqlQueryValidatorTest {
         var settings = SchemaValidationSettings.builder()
             .accessPolicy(policy)
             .build();
-        var validator = SqlQueryValidator.standard(SCHEMA, settings);
+        var validator = SqlStatementValidator.standard(SCHEMA, settings);
         var query = select(col("id")).from(tbl("users")).build();
 
         var denied = validator.validate(
@@ -130,7 +157,7 @@ class SqlQueryValidatorTest {
         var settings = SchemaValidationSettings.builder()
             .tenantRequirementMode(TenantRequirementMode.REQUIRED)
             .build();
-        var validator = SqlQueryValidator.standard(SCHEMA, settings);
+        var validator = SqlStatementValidator.standard(SCHEMA, settings);
         var query = select(lit(1)).build();
 
         var denied = validator.validate(
@@ -148,7 +175,7 @@ class SqlQueryValidatorTest {
             .tenantRequirementMode(TenantRequirementMode.REQUIRED)
             .tenant("tenant_a")
             .build();
-        var validator = SqlQueryValidator.standard(SCHEMA, settings);
+        var validator = SqlStatementValidator.standard(SCHEMA, settings);
         var query = select(lit(1)).build();
 
         var allowed = validator.validate(
@@ -164,7 +191,7 @@ class SqlQueryValidatorTest {
         var settings = SchemaValidationSettings.builder()
             .tenantRequirementMode(TenantRequirementMode.REQUIRED)
             .build();
-        var validator = SqlQueryValidator.standard(SCHEMA, settings);
+        var validator = SqlStatementValidator.standard(SCHEMA, settings);
         var query = select(lit(1)).build();
 
         var allowed = validator.validate(
@@ -184,7 +211,7 @@ class SqlQueryValidatorTest {
             .tenant("tenant_b")
             .accessPolicy(policy)
             .build();
-        var validator = SqlQueryValidator.standard(SCHEMA, settings);
+        var validator = SqlStatementValidator.standard(SCHEMA, settings);
         var query = select(col("id")).from(tbl("users")).build();
 
         var denied = validator.validate(
@@ -200,5 +227,3 @@ class SqlQueryValidatorTest {
         assertEquals(ReasonCode.NONE, allowed.code());
     }
 }
-
-

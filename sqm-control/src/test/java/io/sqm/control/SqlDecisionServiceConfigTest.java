@@ -82,7 +82,7 @@ class SqlDecisionServiceConfigTest {
         assertNotNull(config.explainer());
         assertNotNull(config.auditPublisher());
         assertNotNull(config.guardrails());
-        assertNotNull(config.queryParser());
+        assertNotNull(config.statementParser());
     }
 
     @Test
@@ -220,6 +220,48 @@ class SqlDecisionServiceConfigTest {
                 System.setProperty(yamlKey, previousYaml);
             }
         }
+    }
+
+    @Test
+    void explicit_validation_settings_take_precedence_over_text_and_system_properties() {
+        var yaml = """
+            accessPolicy:
+              deniedTables:
+                - users
+            """;
+        var key = ConfigKeys.VALIDATION_SETTINGS_YAML.property();
+        var previous = System.getProperty(key);
+        try {
+            System.setProperty(key, yaml);
+            var decisionService = SqlDecisionService.create(
+                SqlDecisionServiceConfig.builder(SCHEMA)
+                    .validationSettings(SchemaValidationSettings.defaults())
+                    .validationSettingsJson("{\"accessPolicy\":{\"deniedTables\":[\"users\"]}}")
+                    .validationSettingsYaml(yaml)
+                    .buildValidationConfig()
+            );
+
+            var result = decisionService.analyze("select id from users", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+            assertEquals(DecisionKind.ALLOW, result.kind());
+        } finally {
+            if (previous == null) {
+                System.clearProperty(key);
+            } else {
+                System.setProperty(key, previous);
+            }
+        }
+    }
+
+    @Test
+    void builder_uses_default_guard_components_for_rewrite_config() {
+        var config = SqlDecisionServiceConfig.builder(SCHEMA)
+            .statementParser(SqlStatementParser.standard())
+            .statementRenderer(SqlStatementRenderer.standard())
+            .buildValidationAndRewriteConfig();
+
+        assertEquals(RuntimeGuardrails.disabled(), config.guardrails());
+        assertNotNull(config.auditPublisher());
+        assertNotNull(config.explainer());
     }
 }
 

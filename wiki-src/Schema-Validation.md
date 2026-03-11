@@ -12,7 +12,7 @@ CatalogSchema schema = CatalogSchema.of(
   )
 );
 
-var validator = SchemaQueryValidator.of(schema);
+var validator = SchemaStatementValidator.of(schema);
 var result = validator.validate(query);
 if (!result.ok()) {
   result.problems().forEach(System.out::println);
@@ -34,7 +34,7 @@ var settings = SchemaValidationSettings.builder()
   .functionCatalog(customCatalog)
   .addRule(customRule)
   .build();
-var validator = SchemaQueryValidator.of(schema, settings);
+var validator = SchemaStatementValidator.of(schema, settings);
 ```
 
 ### Load Settings from JSON/YAML (including tenant policies)
@@ -53,7 +53,7 @@ String json = """
 """;
 
 var settings = SchemaValidationSettingsLoader.fromJson(json);
-var validator = SchemaQueryValidator.of(schema, settings);
+var validator = SchemaStatementValidator.of(schema, settings);
 ```
 
 ## Typical Problem Handling
@@ -75,3 +75,4 @@ if (!result.ok()) {
 
 - [PostgreSQL Validation](PostgreSQL-Validation)
 - [Schema Introspection](Schema-Introspection)
+

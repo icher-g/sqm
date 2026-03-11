@@ -24,7 +24,7 @@ public final class UserQueries {
     /**
      * SQL source: user/a_find_by_id.sql
      *
-     * @return query model for this SQL source.
+     * @return statement model for this SQL source.
      */
     public static SelectQuery aFindById() {
         var builder = SelectQuery.builder();
@@ -48,7 +48,7 @@ public final class UserQueries {
     /**
      * SQL source: user/z_list_active.sql
      *
-     * @return query model for this SQL source.
+     * @return statement model for this SQL source.
      */
     public static SelectQuery zListActive() {
         var builder = SelectQuery.builder();

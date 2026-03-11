@@ -317,7 +317,7 @@ var decision = middleware.analyze(sql, ExecutionContext.of("postgresql", Executi
 
 Full flow with rewrite + bind rendering:
 
-`BuiltInRewriteRules` provides built-in rule lists, and `SqlQueryRewriter.builder()` composes
+`BuiltInRewriteRules` provides built-in rule lists, and `SqlStatementRewriter.builder()` composes
 those rules into the effective rewriter pipeline.
 
 ```java
@@ -777,7 +777,7 @@ import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
-import io.sqm.validate.schema.SchemaQueryValidator;
+import io.sqm.validate.schema.SchemaStatementValidator;
 
 CatalogSchema schema = CatalogSchema.of(
     CatalogTable.of("public", "users",
@@ -786,7 +786,7 @@ CatalogSchema schema = CatalogSchema.of(
     )
 );
 
-var validator = SchemaQueryValidator.of(schema);
+var validator = SchemaStatementValidator.of(schema);
 var result = validator.validate(query);
 
 if (!result.ok()) {
@@ -804,8 +804,8 @@ var settings = SchemaValidationSettings.builder()
     .addRule(customRule)
     .build();
 
-var validator1 = SchemaQueryValidator.of(schema, settings);
-var validator2 = SchemaQueryValidator.of(schema, myDialect); // SchemaValidationDialect
+var validator1 = SchemaStatementValidator.of(schema, settings);
+var validator2 = SchemaStatementValidator.of(schema, myDialect); // SchemaValidationDialect
 ```
 
 For optional dialect-specific validation, `sqm-validate-mysql` currently adds

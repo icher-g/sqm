@@ -17,8 +17,8 @@ with framework entry points:
 - `ExecutionContext` â€” dialect, principal, tenant, mode, and parameterization mode.
 - `DecisionResult` â€” `ALLOW`, `DENY`, or `REWRITE` with reason code, optional rewritten SQL, params, fingerprint.
 - `SqlDecisionServiceConfig.Builder` â€” composition point for default and custom middleware wiring.
-- `BuiltInRewriteRules` â€” source of built-in `QueryRewriteRule` lists.
-- `SqlQueryRewriter.builder()` â€” composes configured built-in/custom rules into an executable rewrite pipeline.
+- `BuiltInRewriteRules` â€” source of built-in `StatementRewriteRule` lists.
+- `SqlStatementRewriter.builder()` â€” composes configured built-in/custom rules into an executable rewrite pipeline.
 
 ## Schema Source Options (Manual / JSON / DB)
 
@@ -211,14 +211,14 @@ All major pipeline components are replaceable.
 ### 5.1 Custom Parser
 
 ```java
-var parser = SqlQueryParser.dialectAware(Map.of(
+var parser = SqlStatementParser.dialectAware(Map.of(
     "ansi", AnsiSpecs::new,
     "postgresql", PostgresSpecs::new
 ));
 
 var middleware = SqlDecisionService.create(
     SqlDecisionServiceConfig.builder(schema)
-        .queryParser(parser)
+    .statementParser(parser)
         .buildValidationConfig()
 );
 ```
@@ -226,16 +226,16 @@ var middleware = SqlDecisionService.create(
 ### 5.2 Custom Validator
 
 ```java
-SqlQueryValidator validator = (query, context) -> {
+SqlStatementValidator validator = (query, context) -> {
     if (context.tenant() == null) {
-        return QueryValidateResult.failure(ReasonCode.DENY_VALIDATION, "tenant is required");
+        return StatementValidateResult.failure(ReasonCode.DENY_VALIDATION, "tenant is required");
     }
-    return QueryValidateResult.ok();
+    return StatementValidateResult.ok();
 };
 
 var middleware = SqlDecisionService.create(
     SqlDecisionServiceConfig.builder(schema)
-        .queryValidator(validator)
+    .statementValidator(validator)
         .buildValidationConfig()
 );
 ```
@@ -243,12 +243,12 @@ var middleware = SqlDecisionService.create(
 ### 5.3 Custom Rewriter
 
 ```java
-QueryRewriteRule noOpRule = (query, context) -> QueryRewriteResult.unchanged(query);
+StatementRewriteRule noOpRule = (query, context) -> StatementRewriteResult.unchanged(query);
 
 var middleware = SqlDecisionService.create(
     SqlDecisionServiceConfig.builder(schema)
-        .queryRewriter(SqlQueryRewriter.chain(noOpRule))
-        .queryRenderer(SqlQueryRenderer.standard())
+        .statementRewriter(SqlStatementRewriter.chain(noOpRule))
+    .statementRenderer(SqlStatementRenderer.standard())
         .buildValidationAndRewriteConfig()
 );
 ```
@@ -263,19 +263,19 @@ Set<BuiltInRewriteRule> selected = Set.of(
     BuiltInRewriteRule.CANONICALIZATION
 );
 
-List<QueryRewriteRule> builtInRules = BuiltInRewriteRules.selected(
+List<StatementRewriteRule> builtInRules = BuiltInRewriteRules.selected(
     BuiltInRewriteSettings.builder().defaultLimitInjectionValue(500).build(),
     selected
 );
 
-SqlQueryRewriter rewriter = SqlQueryRewriter.chain(
-    builtInRules.toArray(QueryRewriteRule[]::new)
+SqlStatementRewriter rewriter = SqlStatementRewriter.chain(
+    builtInRules.toArray(StatementRewriteRule[]::new)
 );
 
 var middleware = SqlDecisionService.create(
     SqlDecisionServiceConfig.builder(schema)
-        .queryRewriter(rewriter)
-        .queryRenderer(SqlQueryRenderer.standard())
+        .statementRewriter(rewriter)
+    .statementRenderer(SqlStatementRenderer.standard())
         .buildValidationAndRewriteConfig()
 );
 ```
@@ -283,11 +283,11 @@ var middleware = SqlDecisionService.create(
 ### 5.4 Custom Renderer
 
 ```java
-SqlQueryRenderer renderer = SqlQueryRenderer.standard();
+SqlStatementRenderer renderer = SqlStatementRenderer.standard();
 
 var middleware = SqlDecisionService.create(
     SqlDecisionServiceConfig.builder(schema)
-        .queryRenderer(renderer)
+    .statementRenderer(renderer)
         .buildValidationAndRewriteConfig()
 );
 ```
@@ -507,4 +507,5 @@ limits:
   maxJoinCount: 5
   maxSelectColumns: 50
 ```
+
 

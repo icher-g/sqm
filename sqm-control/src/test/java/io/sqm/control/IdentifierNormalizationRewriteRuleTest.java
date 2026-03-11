@@ -8,6 +8,7 @@ import io.sqm.control.pipeline.*;
 import io.sqm.control.rewrite.*;
 import io.sqm.control.service.*;
 
+import io.sqm.core.Query;
 import io.sqm.control.rewrite.IdentifierNormalizationRewriteRule;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +20,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class IdentifierNormalizationRewriteRuleTest {
     private static final ExecutionContext POSTGRES_ANALYZE = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
 
+    private static Query parseQuery(String sql) {
+        return (Query) SqlStatementParser.standard().parse(sql, POSTGRES_ANALYZE);
+    }
+
     @Test
     void rewrites_unquoted_identifiers() {
-        var query = SqlQueryParser.standard().parse("select U.ID from Public.Users as U", POSTGRES_ANALYZE);
+        var query = parseQuery("select U.ID from Public.Users as U");
 
         var result = IdentifierNormalizationRewriteRule.of().apply(query, POSTGRES_ANALYZE);
 
@@ -32,7 +37,7 @@ class IdentifierNormalizationRewriteRuleTest {
 
     @Test
     void leaves_quoted_identifiers_unchanged() {
-        var query = SqlQueryParser.standard().parse("select \"U\".\"ID\" from \"Public\".\"Users\" as \"U\"", POSTGRES_ANALYZE);
+        var query = parseQuery("select \"U\".\"ID\" from \"Public\".\"Users\" as \"U\"");
 
         var result = IdentifierNormalizationRewriteRule.of().apply(query, POSTGRES_ANALYZE);
 
@@ -43,7 +48,7 @@ class IdentifierNormalizationRewriteRuleTest {
     @Test
     void validates_null_arguments() {
         var rule = IdentifierNormalizationRewriteRule.of();
-        var query = SqlQueryParser.standard().parse("select 1", POSTGRES_ANALYZE);
+        var query = parseQuery("select 1");
 
         assertThrows(NullPointerException.class, () -> rule.apply(null, POSTGRES_ANALYZE));
         assertThrows(NullPointerException.class, () -> rule.apply(query, null));

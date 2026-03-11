@@ -2,17 +2,17 @@ package io.sqm.control.rewrite;
 
 import io.sqm.control.decision.ReasonCode;
 import io.sqm.control.execution.ExecutionContext;
-import io.sqm.control.pipeline.QueryRewriteResult;
-import io.sqm.control.pipeline.QueryRewriteRule;
+import io.sqm.control.pipeline.StatementRewriteResult;
+import io.sqm.control.pipeline.StatementRewriteRule;
 import io.sqm.control.pipeline.RewriteDenyException;
 import io.sqm.core.*;
 
 import java.util.*;
 
 /**
- * Built-in rewrite rule that injects tenant predicates into top-level {@link SelectQuery} table sources.
+ * Built-in rewrite rule that injects tenant predicates into supported top-level statements.
  */
-public final class TenantPredicateRewriteRule implements QueryRewriteRule {
+public final class TenantPredicateRewriteRule implements StatementRewriteRule {
     private static final String RULE_ID = "tenant-predicate";
 
     private final BuiltInRewriteSettings settings;
@@ -125,31 +125,33 @@ public final class TenantPredicateRewriteRule implements QueryRewriteRule {
     }
 
     /**
-     * Applies tenant predicate rewrite on top-level {@link SelectQuery} only.
+     * Applies tenant predicate rewrite on supported top-level statements.
      *
-     * @param query   parsed query model
+     * @param statement parsed statement model
      * @param context execution context
      * @return rewrite result
      */
     @Override
-    public QueryRewriteResult apply(Query query, ExecutionContext context) {
-        Objects.requireNonNull(query, "query must not be null");
+    public StatementRewriteResult apply(Statement statement, ExecutionContext context) {
+        Objects.requireNonNull(statement, "statement must not be null");
         Objects.requireNonNull(context, "context must not be null");
 
         if (settings.tenantTablePolicies().isEmpty()) {
-            return QueryRewriteResult.unchanged(query);
+            return StatementRewriteResult.unchanged(statement);
         }
 
-        Query rewritten = switch (query) {
+        Statement rewritten = switch (statement) {
             case SelectQuery select -> rewriteSelect(select, context);
             case WithQuery with -> rewriteWith(with, context);
-            default -> query;
+            case UpdateStatement update -> rewriteUpdate(update, context);
+            case DeleteStatement delete -> rewriteDelete(delete, context);
+            default -> statement;
         };
 
-        if (rewritten == query) {
-            return QueryRewriteResult.unchanged(query);
+        if (rewritten == statement) {
+            return StatementRewriteResult.unchanged(statement);
         }
-        return QueryRewriteResult.rewritten(rewritten, id(), ReasonCode.REWRITE_TENANT_PREDICATE);
+        return StatementRewriteResult.rewritten(rewritten, id(), ReasonCode.REWRITE_TENANT_PREDICATE);
     }
 
     private Query rewriteWith(WithQuery with, ExecutionContext context) {
@@ -162,14 +164,62 @@ public final class TenantPredicateRewriteRule implements QueryRewriteRule {
 
     private Query rewriteSelect(SelectQuery select, ExecutionContext context) {
         List<Target> targets = collectTargets(select);
-        if (targets.isEmpty()) {
+        Predicate tenantPredicate = tenantPredicate(select.where(), targets, context);
+
+        if (tenantPredicate == null) {
             return select;
+        }
+
+        Predicate where = select.where() == null ? tenantPredicate : select.where().and(tenantPredicate);
+        return SelectQueryBuilder.of(select)
+            .where(where)
+            .build();
+    }
+
+    private UpdateStatement rewriteUpdate(UpdateStatement update, ExecutionContext context) {
+        List<Target> targets = collectTargets(update);
+        Predicate tenantPredicate = tenantPredicate(update.where(), targets, context);
+        if (tenantPredicate == null) {
+            return update;
+        }
+
+        Predicate where = update.where() == null ? tenantPredicate : update.where().and(tenantPredicate);
+        return UpdateStatement.builder(update.table())
+            .assignments(update.assignments())
+            .joins(update.joins())
+            .from(update.from())
+            .where(where)
+            .returning(update.returning())
+            .optimizerHints(update.optimizerHints())
+            .build();
+    }
+
+    private DeleteStatement rewriteDelete(DeleteStatement delete, ExecutionContext context) {
+        List<Target> targets = collectTargets(delete);
+        Predicate tenantPredicate = tenantPredicate(delete.where(), targets, context);
+        if (tenantPredicate == null) {
+            return delete;
+        }
+
+        Predicate where = delete.where() == null ? tenantPredicate : delete.where().and(tenantPredicate);
+        return DeleteStatement.builder(delete.table())
+            .using(delete.using())
+            .joins(delete.joins())
+            .where(where)
+            .returning(delete.returning())
+            .optimizerHints(delete.optimizerHints())
+            .build();
+    }
+
+    private Predicate tenantPredicate(Predicate where, List<Target> targets, ExecutionContext context) {
+        if (targets.isEmpty()) {
+            return null;
         }
 
         String tenant = normalizeContextTenant(context.tenant());
         Predicate tenantPredicate = null;
         for (Target target : targets) {
-            if (tenant != null && isAlreadyConstrained(select.where(), target, tenant)) {
+            if (tenant != null && isAlreadyConstrained(where, target, tenant)) {
                 continue;
             }
             switch (target.mode()) {
@@ -192,15 +242,7 @@ public final class TenantPredicateRewriteRule implements QueryRewriteRule {
                 }
             }
         }
-
-        if (tenantPredicate == null) {
-            return select;
-        }
-
-        Predicate where = select.where() == null ? tenantPredicate : select.where().and(tenantPredicate);
-        return SelectQueryBuilder.of(select)
-            .where(where)
-            .build();
+        return tenantPredicate;
     }
 
     private List<Target> collectTargets(SelectQuery select) {
@@ -210,6 +252,44 @@ public final class TenantPredicateRewriteRule implements QueryRewriteRule {
             addTargetFromTableRef(targets, join.right());
         }
         return List.copyOf(targets);
+    }
+
+    private List<Target> collectTargets(UpdateStatement update) {
+        var targets = new ArrayList<Target>();
+        addTargetFromTable(targets, update.table());
+        for (Join join : update.joins()) {
+            addTargetFromTableRef(targets, join.right());
+        }
+        for (TableRef fromItem : update.from()) {
+            addTargetFromTableRef(targets, fromItem);
+        }
+        return List.copyOf(targets);
+    }
+
+    private List<Target> collectTargets(DeleteStatement delete) {
+        var targets = new ArrayList<Target>();
+        addTargetFromTable(targets, delete.table());
+        for (TableRef usingItem : delete.using()) {
+            addTargetFromTableRef(targets, usingItem);
+        }
+        for (Join join : delete.joins()) {
+            addTargetFromTableRef(targets, join.right());
+        }
+        return List.copyOf(targets);
+    }
+
+    private void addTargetFromTable(List<Target> targets, Table table) {
+        ResolvedPolicy resolved = resolvePolicy(table);
+        if (resolved == null) {
+            return;
+        }
+        Identifier qualifier = table.alias() != null ? table.alias() : table.name();
+        targets.add(new Target(
+            resolved.tableKey(),
+            qualifier,
+            resolved.policy().tenantColumn(),
+            resolved.policy().mode()
+        ));
     }
 
     private void addTargetFromTableRef(List<Target> targets, TableRef ref) {
@@ -224,17 +304,7 @@ public final class TenantPredicateRewriteRule implements QueryRewriteRule {
             return;
         }
 
-        ResolvedPolicy resolved = resolvePolicy(table);
-        if (resolved == null) {
-            return;
-        }
-        Identifier qualifier = table.alias() != null ? table.alias() : table.name();
-        targets.add(new Target(
-            resolved.tableKey(),
-            qualifier,
-            resolved.policy().tenantColumn(),
-            resolved.policy().mode()
-        ));
+        addTargetFromTable(targets, table);
     }
 
     private ResolvedPolicy resolvePolicy(Table table) {

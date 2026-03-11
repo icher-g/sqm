@@ -3,6 +3,7 @@ package io.sqm.validate.schema.internal;
 import io.sqm.catalog.access.CatalogAccessPolicy;
 import io.sqm.core.Identifier;
 import io.sqm.core.Query;
+import io.sqm.core.QualifiedName;
 import io.sqm.core.TableRef;
 import io.sqm.core.TypeKeyword;
 import io.sqm.catalog.model.CatalogColumn;
@@ -217,6 +218,130 @@ class SchemaValidationContextTest {
     void normalizeIdentifierRejectsNullIdentifier() {
         //noinspection DataFlowIssue
         assertThrows(NullPointerException.class, () -> SchemaValidationContext.normalize((Identifier) null));
+    }
+
+    @Test
+    void resolveCurrentScopeColumn_reportsInvalidQualifiedNameAndUnknownAlias() {
+        var context = new SchemaValidationContext(SCHEMA);
+
+        var invalidQualified = context.resolveCurrentScopeColumn(
+            QualifiedName.of(Identifier.of("a"), Identifier.of("b"), Identifier.of("c")),
+            true,
+            col("id"),
+            "dml.assignment"
+        );
+        assertTrue(invalidQualified.isEmpty());
+        assertTrue(context.problems().stream()
+            .anyMatch(problem -> problem.code() == ValidationProblem.Code.COLUMN_NOT_FOUND
+                && "dml.assignment".equals(problem.clausePath())));
+
+        context.pushScope();
+        try {
+            context.registerTableRef(tbl("users").as("u"));
+            var unknownAlias = context.resolveCurrentScopeColumn(
+                QualifiedName.of(Identifier.of("missing"), Identifier.of("id")),
+                true,
+                col("id"),
+                "dml.assignment"
+            );
+
+            assertTrue(unknownAlias.isEmpty());
+            assertTrue(context.problems().stream()
+                .anyMatch(problem -> problem.code() == ValidationProblem.Code.UNKNOWN_TABLE_ALIAS
+                    && "dml.assignment".equals(problem.clausePath())));
+        } finally {
+            context.popScope();
+        }
+    }
+
+    @Test
+    void resolvePhysicalTableColumn_returnsEmpty_for_missing_table_or_column() {
+        var context = new SchemaValidationContext(SCHEMA);
+
+        assertTrue(context.resolvePhysicalTableColumn(tbl("users"), Identifier.of("missing")).isEmpty());
+        assertTrue(context.resolvePhysicalTableColumn(tbl("missing"), Identifier.of("id")).isEmpty());
+    }
+
+    @Test
+    void null_and_empty_helpers_return_empty_results() {
+        var context = new SchemaValidationContext(SCHEMA);
+
+        assertTrue(context.sourceKey(null).isEmpty());
+        assertEquals(0, context.countStrictSourcesWithColumn((Identifier) null, null));
+        assertTrue(context.sourceColumnType("u", (Identifier) null).isEmpty());
+        assertTrue(context.sourceColumnType(null, "id").isEmpty());
+        assertTrue(context.currentScopeSourceKeys().isEmpty());
+        assertTrue(context.inferProjectionTypes(null).isEmpty());
+    }
+
+    @Test
+    void inferType_supports_query_expr_power_and_unknown_casts() {
+        var context = new SchemaValidationContext(SCHEMA);
+
+        assertEquals(
+            CatalogType.LONG,
+            context.inferType(expr(select(col("id")).from(tbl("users")).build())).orElseThrow()
+        );
+        assertEquals(CatalogType.DECIMAL, context.inferType(lit(2).pow(lit(2.5))).orElseThrow());
+        assertEquals(CatalogType.INTEGER, context.inferType(lit(2).pow(lit(3))).orElseThrow());
+        assertEquals(CatalogType.UNKNOWN, context.inferType(lit("x").cast(type("mystery_type"))).orElseThrow());
+    }
+
+    @Test
+    void inferSingleColumnType_handles_composite_with_and_multi_projection_cases() {
+        var context = new SchemaValidationContext(SCHEMA);
+
+        assertEquals(
+            CatalogType.LONG,
+            context.inferSingleColumnType(
+                compose(
+                    java.util.List.of(
+                        select(col("id")).from(tbl("users")).build(),
+                        select(col("id")).from(tbl("users")).build()
+                    ),
+                    java.util.List.of(io.sqm.core.SetOperator.UNION)
+                )
+            ).orElseThrow()
+        );
+        assertEquals(
+            CatalogType.LONG,
+            context.inferSingleColumnType(
+                io.sqm.core.WithQuery.of(
+                    java.util.List.of(io.sqm.core.CteDef.of(Identifier.of("x"), select(lit(1)).build())),
+                    select(col("id")).from(tbl("users")).build()
+                )
+            ).orElseThrow()
+        );
+        assertTrue(
+            context.inferSingleColumnType(
+                select(col("id"), col("name")).from(tbl("users")).build()
+            ).isEmpty()
+        );
+    }
+
+    @Test
+    void with_scope_registration_keeps_operations_safe() {
+        var context = new SchemaValidationContext(SCHEMA);
+        context.pushWithScope();
+        try {
+            context.registerCte(
+                io.sqm.core.CteDef.of(
+                    Identifier.of("recent_users"),
+                    select(col("id")).from(tbl("users")).build(),
+                    java.util.List.of(Identifier.of("id"))
+                )
+            );
+        } finally {
+            context.popWithScope();
+        }
+
+        context.registerCte(
+            io.sqm.core.CteDef.of(
+                Identifier.of("ignored_without_scope"),
+                select(col("id")).from(tbl("users")).build(),
+                java.util.List.of(Identifier.of("id"))
+            )
+        );
     }
 }
 

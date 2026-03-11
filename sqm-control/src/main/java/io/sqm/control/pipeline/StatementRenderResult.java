@@ -11,7 +11,7 @@ import java.util.List;
  * @param sql    a rendered SQL
  * @param params a list of params if the {@link ExecutionContext#parameterizationMode()} returns {@link ParameterizationMode#BIND}.
  */
-public record QueryRenderResult(String sql, List<Object> params) {
+public record StatementRenderResult(String sql, List<Object> params) {
 
     /**
      * Creates a new instance from the provided SQL.
@@ -19,8 +19,8 @@ public record QueryRenderResult(String sql, List<Object> params) {
      * @param sql a SQL.
      * @return a new instance.
      */
-    public static QueryRenderResult of(String sql) {
-        return new QueryRenderResult(sql, List.of());
+    public static StatementRenderResult of(String sql) {
+        return new StatementRenderResult(sql, List.of());
     }
 
     /**
@@ -30,8 +30,8 @@ public record QueryRenderResult(String sql, List<Object> params) {
      * @param params a list of parameters used in the SQL.
      * @return a new instance.
      */
-    public static QueryRenderResult of(String sql, List<Object> params) {
-        return new QueryRenderResult(sql, params);
+    public static StatementRenderResult of(String sql, List<Object> params) {
+        return new StatementRenderResult(sql, params);
     }
 }
 

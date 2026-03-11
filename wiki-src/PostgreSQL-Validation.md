@@ -15,7 +15,7 @@
 ## Usage
 
 ```java
-var validator = SchemaQueryValidator.of(schema, PostgresValidationDialect.of());
+var validator = SchemaStatementValidator.of(schema, PostgresValidationDialect.of());
 var result = validator.validate(query);
 ```
 
@@ -30,4 +30,5 @@ var result = validator.validate(query);
 
 - `docs/VALIDATION_FEATURES.md`
 - [Schema Validation](Schema-Validation)
+
 

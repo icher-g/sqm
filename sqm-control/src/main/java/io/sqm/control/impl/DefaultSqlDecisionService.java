@@ -5,7 +5,6 @@ import io.sqm.control.config.*;
 import io.sqm.control.decision.*;
 import io.sqm.control.execution.*;
 import io.sqm.control.pipeline.*;
-import io.sqm.control.rewrite.*;
 import io.sqm.control.service.*;
 
 import io.sqm.core.*;
@@ -27,7 +26,7 @@ public final class DefaultSqlDecisionService implements SqlDecisionService {
     private final SqlDecisionExplainer explainer;
     private final AuditEventPublisher auditPublisher;
     private final RuntimeGuardrails guardrails;
-    private final SqlQueryParser queryParser;
+    private final SqlStatementParser statementParser;
 
     /**
      * Creates a middleware instance with explicit component wiring.
@@ -36,24 +35,24 @@ public final class DefaultSqlDecisionService implements SqlDecisionService {
      * @param explainer      explainer used by {@link #explainDecision(String, ExecutionContext)}
      * @param auditPublisher audit sink for emitted audit events
      * @param guardrails     runtime guardrail settings
-     * @param queryParser    parser used for ingress SQL parsing
+     * @param statementParser parser used for ingress SQL parsing
      */
     public DefaultSqlDecisionService(
         SqlDecisionEngine engine,
         SqlDecisionExplainer explainer,
         AuditEventPublisher auditPublisher,
         RuntimeGuardrails guardrails,
-        SqlQueryParser queryParser
+        SqlStatementParser statementParser
     ) {
         this.engine = engine;
         this.explainer = explainer;
         this.auditPublisher = auditPublisher;
         this.guardrails = guardrails;
-        this.queryParser = queryParser;
+        this.statementParser = statementParser;
     }
 
-    private static Long extractLimit(Query query) {
-        return switch (query) {
+    private static Long extractLimit(Statement statement) {
+        return switch (statement) {
             case SelectQuery select -> extractLimit(select.limitOffset());
             case CompositeQuery composite -> extractLimit(composite.limitOffset());
             case WithQuery with -> with.body() == null ? null : extractLimit(with.body());
@@ -96,9 +95,9 @@ public final class DefaultSqlDecisionService implements SqlDecisionService {
     public DecisionExplanation explainDecision(String sql, ExecutionContext context) {
         var evaluated = evaluate(sql, context, ExecutionMode.ANALYZE);
         var decision = evaluated.decision();
-        var explanation = evaluated.query() == null
+        var explanation = evaluated.statement() == null
             ? null
-            : explainer.explain(evaluated.query(), context.withExecutionMode(ExecutionMode.ANALYZE), decision);
+            : explainer.explain(evaluated.statement(), context.withExecutionMode(ExecutionMode.ANALYZE), decision);
         if (explanation == null || explanation.isBlank()) {
             explanation = "Decision=%s, reason=%s".formatted(decision.kind(), decision.reasonCode());
         }
@@ -109,24 +108,24 @@ public final class DefaultSqlDecisionService implements SqlDecisionService {
         validateInput(sql, context);
         var contextWithMode = context.withExecutionMode(mode);
         var startedNanos = System.nanoTime();
-        Query query = null;
+        Statement statement = null;
 
         var decision = precheckSqlLength(sql);
         if (decision == null) {
             try {
-                query = queryParser.parse(sql, contextWithMode);
+                statement = statementParser.parse(sql, contextWithMode);
             } catch (RuntimeException ex) {
                 decision = DecisionResult.deny(ReasonCode.DENY_PIPELINE_ERROR, ex.getMessage());
             }
         }
         if (decision == null) {
-            decision = evaluateWithTimeout(query, contextWithMode);
-            decision = applyMaxRowsGuardrail(query, decision);
+            decision = evaluateWithTimeout(statement, contextWithMode);
+            decision = applyMaxRowsGuardrail(statement, decision);
             decision = applyExplainDryRun(sql, mode, decision);
         }
 
         emitAuditEvent(sql, contextWithMode, decision, System.nanoTime() - startedNanos);
-        return new EvaluatedDecision(decision, query);
+        return new EvaluatedDecision(decision, statement);
     }
 
     private DecisionResult precheckSqlLength(String sql) {
@@ -142,17 +141,17 @@ public final class DefaultSqlDecisionService implements SqlDecisionService {
         );
     }
 
-    private DecisionResult evaluateWithTimeout(Query query, ExecutionContext contextWithMode) {
+    private DecisionResult evaluateWithTimeout(Statement statement, ExecutionContext contextWithMode) {
         if (guardrails.timeoutMillis() == null) {
             try {
-                return Objects.requireNonNull(engine.evaluate(query, contextWithMode), "engine must return a decision");
+                return Objects.requireNonNull(engine.evaluate(statement, contextWithMode), "engine must return a decision");
             } catch (RuntimeException ex) {
                 return DecisionResult.deny(ReasonCode.DENY_PIPELINE_ERROR, ex.getMessage());
             }
         }
 
         try (var executor = Executors.newSingleThreadExecutor()) {
-            var future = executor.submit(() -> Objects.requireNonNull(engine.evaluate(query, contextWithMode), "engine must return a decision"));
+            var future = executor.submit(() -> Objects.requireNonNull(engine.evaluate(statement, contextWithMode), "engine must return a decision"));
             try {
                 return future.get(guardrails.timeoutMillis(), TimeUnit.MILLISECONDS);
             } catch (TimeoutException ex) {
@@ -175,12 +174,12 @@ public final class DefaultSqlDecisionService implements SqlDecisionService {
         }
     }
 
-    private DecisionResult applyMaxRowsGuardrail(Query query, DecisionResult decision) {
+    private DecisionResult applyMaxRowsGuardrail(Statement statement, DecisionResult decision) {
         if (guardrails.maxRows() == null || decision.kind() == DecisionKind.DENY) {
             return decision;
         }
 
-        var detectedLimit = extractLimit(query);
+        var detectedLimit = extractLimit(statement);
         if (detectedLimit == null) {
             return DecisionResult.deny(
                 ReasonCode.DENY_MAX_ROWS,
@@ -231,7 +230,7 @@ public final class DefaultSqlDecisionService implements SqlDecisionService {
         }
     }
 
-    private record EvaluatedDecision(DecisionResult decision, Query query) {
+    private record EvaluatedDecision(DecisionResult decision, Statement statement) {
     }
 }
 

@@ -11,8 +11,8 @@ import io.sqm.control.decision.DecisionResult;
 import io.sqm.control.execution.ExecutionContext;
 import io.sqm.control.execution.ExecutionMode;
 import io.sqm.control.execution.ParameterizationMode;
-import io.sqm.control.pipeline.QueryRewriteResult;
-import io.sqm.control.pipeline.QueryRewriteRule;
+import io.sqm.control.pipeline.StatementRewriteResult;
+import io.sqm.control.pipeline.StatementRewriteRule;
 import io.sqm.control.config.RuntimeGuardrails;
 import io.sqm.control.service.SqlDecisionExplainer;
 import io.sqm.control.service.SqlDecisionService;
@@ -135,18 +135,18 @@ public final class Middleware_EndToEndPolicyFlow {
     }
 
     private static void runFlowWithCustomExtensions(CatalogSchema schema, String sql) {
-        QueryRewriteRule addTenantGuard = (query, context) -> {
+        StatementRewriteRule addTenantGuard = (query, context) -> {
             if (context.tenant() == null || context.tenant().isBlank()) {
-                return QueryRewriteResult.unchanged(query);
+                return StatementRewriteResult.unchanged(query);
             }
-            return QueryRewriteResult.rewritten(query, "tenant-guard", io.sqm.control.decision.ReasonCode.REWRITE_CANONICALIZATION);
+            return StatementRewriteResult.rewritten(query, "tenant-guard", io.sqm.control.decision.ReasonCode.REWRITE_CANONICALIZATION);
         };
 
         SqlDecisionService decisionService = SqlDecisionService.create(
             SqlDecisionServiceConfig.builder(schema)
                 .validationSettings(SchemaValidationSettings.defaults())
-                .queryRewriter(io.sqm.control.pipeline.SqlQueryRewriter.chain(addTenantGuard))
-                .queryRenderer(io.sqm.control.pipeline.SqlQueryRenderer.standard())
+                .statementRewriter(io.sqm.control.pipeline.SqlStatementRewriter.chain(addTenantGuard))
+                .statementRenderer(io.sqm.control.pipeline.SqlStatementRenderer.standard())
                 .auditPublisher(AuditEventPublisher.noop())
                 .explainer(SqlDecisionExplainer.basic())
                 .buildValidationAndRewriteConfig()

@@ -1,8 +1,9 @@
 package io.sqm.control.pipeline;
 
 import io.sqm.control.execution.ExecutionContext;
-import io.sqm.core.Query;
+import io.sqm.core.Statement;
 import io.sqm.render.ansi.spi.AnsiDialect;
+import io.sqm.render.mysql.spi.MySqlDialect;
 import io.sqm.render.postgresql.spi.PostgresDialect;
 import io.sqm.render.spi.ParameterizationMode;
 import io.sqm.render.spi.RenderContext;
@@ -15,21 +16,22 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * Renders SQM {@link Query} models to SQL text for a target execution context.
+ * Renders SQM {@link Statement} models to SQL text for a target execution context.
  */
 @FunctionalInterface
-public interface SqlQueryRenderer {
+public interface SqlStatementRenderer {
     /**
      * Creates the default dialect-aware renderer used by middleware.
      *
      * <p>The returned renderer resolves the render dialect from {@link ExecutionContext#dialect()} and supports
-     * ANSI plus PostgreSQL aliases ({@code postgresql}, {@code postgres}).</p>
+     * ANSI, MySQL, plus PostgreSQL aliases ({@code postgresql}, {@code postgres}).</p>
      *
      * @return dialect-aware renderer
      */
-    static SqlQueryRenderer standard() {
+    static SqlStatementRenderer standard() {
         return dialectAware(Map.of(
             "ansi", AnsiDialect::new,
+            "mysql", MySqlDialect::new,
             "postgresql", PostgresDialect::new,
             "postgres", PostgresDialect::new
         ));
@@ -41,7 +43,7 @@ public interface SqlQueryRenderer {
      * @param specsByDialect mapping of normalized dialect names to parser specs factories
      * @return dialect-aware parser
      */
-    static SqlQueryRenderer dialectAware(Map<String, Supplier<SqlDialect>> specsByDialect) {
+    static SqlStatementRenderer dialectAware(Map<String, Supplier<SqlDialect>> specsByDialect) {
         Objects.requireNonNull(specsByDialect, "specsByDialect must not be null");
         var mappings = Map.copyOf(specsByDialect);
 
@@ -57,7 +59,7 @@ public interface SqlQueryRenderer {
             var ctx = RenderContext.of(specsFactory.get());
             var result = ctx.render(sql, renderOptions(context));
 
-            return QueryRenderResult.of(result.sql(), result.params());
+            return StatementRenderResult.of(result.sql(), result.params());
         };
     }
 
@@ -69,13 +71,13 @@ public interface SqlQueryRenderer {
     }
 
     /**
-     * Renders a query model to SQL text for the provided execution context.
+     * Renders a statement model to SQL text for the provided execution context.
      *
-     * @param query   query model to render
+     * @param query   statement model to render
      * @param context execution context
      * @return rendered SQL text
      */
-    QueryRenderResult render(Query query, ExecutionContext context);
+    StatementRenderResult render(Statement query, ExecutionContext context);
 }
 
 

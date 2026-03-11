@@ -1,18 +1,22 @@
 package io.sqm.control;
 
-import io.sqm.control.audit.*;
-import io.sqm.control.config.*;
-import io.sqm.control.decision.*;
-import io.sqm.control.execution.*;
-import io.sqm.control.pipeline.*;
-import io.sqm.control.rewrite.*;
-import io.sqm.control.service.*;
-
 import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
+import io.sqm.control.decision.ReasonCode;
+import io.sqm.control.execution.ExecutionContext;
+import io.sqm.control.execution.ExecutionMode;
+import io.sqm.control.pipeline.SqlStatementParser;
+import io.sqm.control.pipeline.SqlStatementRenderer;
+import io.sqm.control.pipeline.SqlStatementRewriter;
+import io.sqm.control.rewrite.BuiltInRewriteRule;
 import io.sqm.control.rewrite.BuiltInRewriteRules;
+import io.sqm.control.rewrite.BuiltInRewriteSettings;
+import io.sqm.control.rewrite.QualificationFailureMode;
+import io.sqm.control.pipeline.RewriteDenyException;
+import io.sqm.control.pipeline.StatementRewriteRule;
+import io.sqm.core.Query;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -34,14 +38,18 @@ class BuiltInRewriteRulesTest {
 
     private static final ExecutionContext POSTGRES_ANALYZE = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
 
+    private static Query parseQuery(String sql) {
+        return (Query) SqlStatementParser.standard().parse(sql, POSTGRES_ANALYZE);
+    }
+
     @Test
     void all_available_returns_non_schema_rules_in_definition_order() {
         var rules = BuiltInRewriteRules.allAvailable(BuiltInRewriteSettings.defaults());
 
         assertEquals(4, rules.size());
 
-        var query = SqlQueryParser.standard().parse("select 1", POSTGRES_ANALYZE);
-        var result = SqlQueryRewriter.chain(rules.toArray(QueryRewriteRule[]::new)).rewrite(query, POSTGRES_ANALYZE);
+        var query = parseQuery("select 1");
+        var result = SqlStatementRewriter.chain(rules.toArray(StatementRewriteRule[]::new)).rewrite(query, POSTGRES_ANALYZE);
 
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_LIMIT, result.primaryReasonCode());
@@ -56,13 +64,13 @@ class BuiltInRewriteRulesTest {
             Set.of(BuiltInRewriteRule.CANONICALIZATION, BuiltInRewriteRule.LIMIT_INJECTION)
         );
 
-        var query = SqlQueryParser.standard().parse("select 1 + 0", POSTGRES_ANALYZE);
-        var result = SqlQueryRewriter.chain(rules.toArray(QueryRewriteRule[]::new)).rewrite(query, POSTGRES_ANALYZE);
+        var query = parseQuery("select 1 + 0");
+        var result = SqlStatementRewriter.chain(rules.toArray(StatementRewriteRule[]::new)).rewrite(query, POSTGRES_ANALYZE);
 
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_LIMIT, result.primaryReasonCode());
         assertEquals(List.of("limit-injection", "canonicalization"), result.appliedRuleIds());
-        String rendered = SqlQueryRenderer.standard().render(result.query(), POSTGRES_ANALYZE).sql().toLowerCase();
+        String rendered = SqlStatementRenderer.standard().render(result.statement(), POSTGRES_ANALYZE).sql().toLowerCase();
         assertTrue(rendered.contains("limit 42"));
     }
 
@@ -72,8 +80,8 @@ class BuiltInRewriteRulesTest {
 
         assertEquals(6, rules.size());
 
-        var query = SqlQueryParser.standard().parse("select id from users limit 5", POSTGRES_ANALYZE);
-        var result = SqlQueryRewriter.chain(rules.toArray(QueryRewriteRule[]::new)).rewrite(query, POSTGRES_ANALYZE);
+        var query = parseQuery("select id from users limit 5");
+        var result = SqlStatementRewriter.chain(rules.toArray(StatementRewriteRule[]::new)).rewrite(query, POSTGRES_ANALYZE);
 
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_QUALIFICATION, result.primaryReasonCode());
@@ -85,7 +93,7 @@ class BuiltInRewriteRulesTest {
         var unresolvedSchema = CatalogSchema.of(
             CatalogTable.of("public", "other", CatalogColumn.of("id", CatalogType.LONG))
         );
-        var query = SqlQueryParser.standard().parse("select id from users limit 5", POSTGRES_ANALYZE);
+        var query = parseQuery("select id from users limit 5");
 
         var strictRules = BuiltInRewriteRules.selected(
             unresolvedSchema,
@@ -100,10 +108,10 @@ class BuiltInRewriteRulesTest {
 
         assertThrows(
             RewriteDenyException.class,
-            () -> SqlQueryRewriter.chain(strictRules.toArray(QueryRewriteRule[]::new)).rewrite(query, POSTGRES_ANALYZE)
+            () -> SqlStatementRewriter.chain(strictRules.toArray(StatementRewriteRule[]::new)).rewrite(query, POSTGRES_ANALYZE)
         );
 
-        var skipResult = SqlQueryRewriter.chain(skipRules.toArray(QueryRewriteRule[]::new)).rewrite(query, POSTGRES_ANALYZE);
+        var skipResult = SqlStatementRewriter.chain(skipRules.toArray(StatementRewriteRule[]::new)).rewrite(query, POSTGRES_ANALYZE);
         assertFalse(skipResult.rewritten());
     }
 
@@ -136,7 +144,7 @@ class BuiltInRewriteRulesTest {
             BuiltInRewriteSettings.defaults(),
             Set.of(BuiltInRewriteRule.CANONICALIZATION)
         );
-        var result = SqlQueryRewriter.chain(rules.toArray(QueryRewriteRule[]::new)).rewrite(query, POSTGRES_ANALYZE);
+        var result = SqlStatementRewriter.chain(rules.toArray(StatementRewriteRule[]::new)).rewrite(query, POSTGRES_ANALYZE);
 
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_CANONICALIZATION, result.primaryReasonCode());
@@ -155,8 +163,8 @@ class BuiltInRewriteRulesTest {
             BuiltInRewriteSettings.builder().defaultLimitInjectionValue(12).build(),
             Set.of(BuiltInRewriteRule.CANONICALIZATION, BuiltInRewriteRule.LIMIT_INJECTION)
         );
-        var nonSchemaQuery = SqlQueryParser.standard().parse("select 1 + 0", POSTGRES_ANALYZE);
-        var nonSchemaResult = SqlQueryRewriter.chain(nonSchemaRules.toArray(QueryRewriteRule[]::new))
+        var nonSchemaQuery = parseQuery("select 1 + 0");
+        var nonSchemaResult = SqlStatementRewriter.chain(nonSchemaRules.toArray(StatementRewriteRule[]::new))
             .rewrite(nonSchemaQuery, POSTGRES_ANALYZE);
         assertEquals(List.of("limit-injection", "canonicalization"), nonSchemaResult.appliedRuleIds());
 
@@ -174,12 +182,10 @@ class BuiltInRewriteRulesTest {
             ),
             schemaRules.stream().map(rule -> rule.getClass().getSimpleName()).toList()
         );
-        var schemaQuery = SqlQueryParser.standard().parse("select id from users", POSTGRES_ANALYZE);
-        var schemaResult = SqlQueryRewriter.chain(schemaRules.toArray(QueryRewriteRule[]::new))
+        var schemaQuery = parseQuery("select id from users");
+        var schemaResult = SqlStatementRewriter.chain(schemaRules.toArray(StatementRewriteRule[]::new))
             .rewrite(schemaQuery, POSTGRES_ANALYZE);
         assertEquals(List.of("limit-injection", "schema-qualification", "column-qualification"),
             schemaResult.appliedRuleIds());
     }
 }
-
-

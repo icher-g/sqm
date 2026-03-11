@@ -3,6 +3,7 @@ package io.sqm.codegen;
 import io.sqm.core.Identifier;
 import io.sqm.core.OrderItem;
 import io.sqm.core.Query;
+import io.sqm.core.QuoteStyle;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -211,6 +212,51 @@ class SqmJavaEmitterTest {
         assertTrue(source.contains("tbl(\"public\", \"ta\\\"b\")"));
         assertTrue(source.contains("window(\"w\\\"1\", over())"));
     }
+
+    @Test
+    void emitStatement_coversDmlStatements() {
+        var insert = insert(tbl("users"))
+            .ignore()
+            .columns(id("id"), id("name", QuoteStyle.BACKTICK))
+            .values(row(lit(1), lit("alice")))
+            .returning(col("id").toSelectItem())
+            .build();
+        var update = update(tbl("users"))
+            .optimizerHint("MAX_EXECUTION_TIME(1000)")
+            .set(set("u", "name", lit("alice")))
+            .from(tbl("src"))
+            .where(col("u", "id").eq(lit(1)))
+            .returning(col("u", "id").toSelectItem())
+            .build();
+        var delete = delete(tbl("users"))
+            .optimizerHint("BKA(users)")
+            .using(tbl("audit"))
+            .where(col("users", "id").eq(col("audit", "user_id")))
+            .returning(col("users", "id").toSelectItem())
+            .build();
+
+        var insertSource = emitter.emitStatement(insert);
+        var updateSource = emitter.emitStatement(update);
+        var deleteSource = emitter.emitStatement(delete);
+
+        assertTrue(insertSource.contains("insert(tbl(\"users\"))"));
+        assertTrue(insertSource.contains(".ignore()"));
+        assertTrue(insertSource.contains(".columns(id(\"id\"), id(\"name\", QuoteStyle.BACKTICK))"));
+        assertTrue(insertSource.contains(".values(row(lit(1), lit(\"alice\")))"));
+        assertTrue(insertSource.contains(".returning(col(\"id\"))"));
+
+        assertTrue(updateSource.contains("update(tbl(\"users\"))"));
+        assertTrue(updateSource.contains(".optimizerHints(java.util.List.of(\"MAX_EXECUTION_TIME(1000)\"))"));
+        assertTrue(updateSource.contains(".set(set(QualifiedName.of(id(\"u\"), id(\"name\")), lit(\"alice\")))"));
+        assertTrue(updateSource.contains(".from(tbl(\"src\"))"));
+        assertTrue(updateSource.contains(".returning(col(\"u\", \"id\"))"));
+
+        assertTrue(deleteSource.contains("delete(tbl(\"users\"))"));
+        assertTrue(deleteSource.contains(".optimizerHints(java.util.List.of(\"BKA(users)\"))"));
+        assertTrue(deleteSource.contains(".using(tbl(\"audit\"))"));
+        assertTrue(deleteSource.contains(".returning(col(\"users\", \"id\"))"));
+    }
+
     @Test
     void emitQuery_usesGenericNodePathForNonSelectQueries() {
         Query query = compose(
@@ -223,6 +269,70 @@ class SqmJavaEmitterTest {
 
         var error = assertThrows(IllegalStateException.class, () -> emitter.emitQuery(query));
         assertTrue(error.getMessage().contains("Unsupported node"));
+    }
+
+    @Test
+    void emitStatement_coversInsertConflictVariants_and_additional_lock_modes() {
+        var insertDoNothing = insert(tbl("users"))
+            .replace()
+            .columns(id("id"))
+            .query(select(lit(1)).build())
+            .onConflictDoNothing(id("id"))
+            .build();
+        var insertDoUpdate = insert(tbl("users"))
+            .columns(id("id"), id("name"))
+            .values(row(lit(1), lit("alice")))
+            .onConflictDoUpdate(
+                java.util.List.of(id("id")),
+                java.util.List.of(set("name", lit("updated"))),
+                col("name").isNotNull()
+            )
+            .build();
+        var noKeyUpdateLock = select(star()).from(tbl("users")).lockFor(noKeyUpdate(), ofTables("users"), false, true).build();
+        var shareLock = select(star()).from(tbl("users")).lockFor(share(), ofTables("users"), false, false).build();
+        var keyShareLock = select(star()).from(tbl("users")).lockFor(keyShare(), ofTables("users"), true, false).build();
+
+        var doNothingSource = emitter.emitStatement(insertDoNothing);
+        var doUpdateSource = emitter.emitStatement(insertDoUpdate);
+
+        assertTrue(doNothingSource.contains(".replace()"));
+        assertTrue(doNothingSource.contains(".query(select("));
+        assertTrue(doNothingSource.contains(".onConflictDoNothing(id(\"id\"))"));
+
+        assertTrue(doUpdateSource.contains(".onConflictDoUpdate(java.util.List.of(id(\"id\")), java.util.List.of("));
+        assertTrue(doUpdateSource.contains("set(id(\"name\"), lit(\"updated\"))"));
+        assertTrue(doUpdateSource.contains("col(\"name\").isNotNull()"));
+
+        assertTrue(emitter.emitQuery(noKeyUpdateLock).contains(".lockFor(noKeyUpdate(), ofTables(\"users\"), false, true)"));
+        assertTrue(emitter.emitQuery(shareLock).contains(".lockFor(share(), ofTables(\"users\"), false, false)"));
+        assertTrue(emitter.emitQuery(keyShareLock).contains(".lockFor(keyShare(), ofTables(\"users\"), true, false)"));
+    }
+
+    @Test
+    void emitQuery_covers_remaining_window_distinct_and_limit_variants() {
+        var baseFrameOnly = emitter.emitQuery(
+            select(func("f").over(over("base", rows(currentRow())))).from(tbl("t")).build()
+        );
+        var baseOrderOnly = emitter.emitQuery(
+            select(func("f").over(over("base", orderBy(order(col("x")))))).from(tbl("t")).build()
+        );
+        var partitionFrameOnly = emitter.emitQuery(
+            select(func("f").over(over(partition(col("p")), rows(currentRow())))).from(tbl("t")).build()
+        );
+        var plainExcludeNoOthers = emitter.emitQuery(
+            select(func("f").over(over(orderBy(order(col("x"))), rows(currentRow()), excludeNoOthers()))).from(tbl("t")).build()
+        );
+        var distinctOn = emitter.emitQuery(
+            select(star()).from(tbl("t")).distinct(distinctOn(col("t", "id"))).build()
+        );
+        var limitAllNoOffset = emitter.emitQuery(select(star()).from(tbl("t")).limitOffset(limitAll()).build());
+
+        assertTrue(baseFrameOnly.contains("over(\"base\", rows(currentRow()))"));
+        assertTrue(baseOrderOnly.contains("over(\"base\", orderBy("));
+        assertTrue(partitionFrameOnly.contains("over(partition("));
+        assertTrue(plainExcludeNoOthers.contains("excludeNoOthers()"));
+        assertTrue(distinctOn.contains(".distinct(col(\"t\", \"id\"))"));
+        assertTrue(limitAllNoOffset.contains(".limitOffset(limitAll())"));
     }
 }
 

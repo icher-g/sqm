@@ -1,13 +1,13 @@
 package io.sqm.control.pipeline;
 
 import io.sqm.control.execution.ExecutionContext;
-import io.sqm.core.Query;
+import io.sqm.core.Statement;
 
 /**
- * Applies a deterministic policy rewrite to a parsed SQM {@link Query}.
+ * Applies a deterministic policy rewrite to a parsed SQM {@link Statement}.
  */
 @FunctionalInterface
-public interface QueryRewriteRule {
+public interface StatementRewriteRule {
 
     /**
      * Returns a stable identifier for this rule.
@@ -19,13 +19,13 @@ public interface QueryRewriteRule {
     }
 
     /**
-     * Applies the rule to the provided query model.
+     * Applies the rule to the provided statement model.
      *
-     * @param query   parsed query model
+     * @param statement parsed statement model
      * @param context execution context
      * @return rewrite result
      */
-    QueryRewriteResult apply(Query query, ExecutionContext context);
+    StatementRewriteResult apply(Statement statement, ExecutionContext context);
 }
 
 

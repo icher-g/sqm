@@ -5,7 +5,7 @@ This page provides copy-paste starter templates for common middleware rollout pr
 All templates use `SqlDecisionServiceConfig.builder(schema)` and differ only in strictness and rewrite behavior.
 
 Built-in rewrite behavior is sourced from `BuiltInRewriteRules`; middleware composes selected rules into a
-rewriter through `SqlQueryRewriter.builder()` under the hood.
+rewriter through `SqlStatementRewriter.builder()` under the hood.
 
 `schema` can be created manually in code or loaded from JSON/JDBC.
 For alternatives, see:
@@ -129,20 +129,20 @@ Use when you need business-specific rules beyond built-ins.
 ```java
 // Schema source: use loadSchema(...) helper from snippet above.
 
-SqlQueryValidator validator = (query, context) -> {
+SqlStatementValidator validator = (query, context) -> {
     if (context.tenant() == null || context.tenant().isBlank()) {
-        return QueryValidateResult.failure(ReasonCode.DENY_VALIDATION, "tenant is required");
+        return StatementValidateResult.failure(ReasonCode.DENY_VALIDATION, "tenant is required");
     }
-    return QueryValidateResult.ok();
+    return StatementValidateResult.ok();
 };
 
-QueryRewriteRule noopRule = (query, context) -> QueryRewriteResult.unchanged(query);
+StatementRewriteRule noopRule = (query, context) -> StatementRewriteResult.unchanged(query);
 
 var middleware = SqlDecisionService.create(
     SqlDecisionServiceConfig.builder(schema)
-        .queryValidator(validator)
-        .queryRewriter(SqlQueryRewriter.chain(noopRule))
-        .queryRenderer(SqlQueryRenderer.standard())
+    .statementValidator(validator)
+        .statementRewriter(SqlStatementRewriter.chain(noopRule))
+    .statementRenderer(SqlStatementRenderer.standard())
         .buildValidationAndRewriteConfig()
 );
 ```
@@ -166,4 +166,5 @@ switch (decision.kind()) {
 
 - [SQL Middleware Framework](SQL-Middleware-Framework)
 - [Examples Module Guide](Examples-Module-Guide)
+
 

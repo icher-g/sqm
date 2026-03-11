@@ -4,10 +4,11 @@ import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.control.decision.ReasonCode;
 import io.sqm.control.execution.ExecutionContext;
-import io.sqm.control.pipeline.QueryRewriteResult;
-import io.sqm.control.pipeline.QueryRewriteRule;
+import io.sqm.control.pipeline.StatementRewriteResult;
+import io.sqm.control.pipeline.StatementRewriteRule;
 import io.sqm.control.pipeline.RewriteDenyException;
 import io.sqm.core.Query;
+import io.sqm.core.Statement;
 import io.sqm.core.transform.ColumnQualification;
 import io.sqm.core.transform.ColumnQualificationResolver;
 import io.sqm.core.transform.ColumnQualificationTransformer;
@@ -18,7 +19,7 @@ import java.util.Objects;
 /**
  * Middleware rewrite rule that qualifies unqualified columns using catalog metadata and visible table bindings.
  */
-public final class ColumnQualificationRewriteRule implements QueryRewriteRule {
+public final class ColumnQualificationRewriteRule implements StatementRewriteRule {
     private static final String RULE_ID = "column-qualification";
 
     private final ColumnQualificationTransformer transformer;
@@ -114,20 +115,24 @@ public final class ColumnQualificationRewriteRule implements QueryRewriteRule {
     /**
      * Applies column qualification and reports a rewrite only when the AST actually changes.
      *
-     * @param query   parsed query model
+     * @param statement parsed statement model
      * @param context execution context
      * @return rewrite result
      */
     @Override
-    public QueryRewriteResult apply(Query query, ExecutionContext context) {
-        Objects.requireNonNull(query, "query must not be null");
+    public StatementRewriteResult apply(Statement statement, ExecutionContext context) {
+        Objects.requireNonNull(statement, "statement must not be null");
         Objects.requireNonNull(context, "context must not be null");
+
+        if (!(statement instanceof Query query)) {
+            return StatementRewriteResult.unchanged(statement);
+        }
 
         Query transformed = transformer.apply(query);
         if (transformed == query) {
-            return QueryRewriteResult.unchanged(transformed);
+            return StatementRewriteResult.unchanged(transformed);
         }
-        return QueryRewriteResult.rewritten(transformed, id(), ReasonCode.REWRITE_QUALIFICATION);
+        return StatementRewriteResult.rewritten(transformed, id(), ReasonCode.REWRITE_QUALIFICATION);
     }
 }
 
