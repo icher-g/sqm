@@ -137,6 +137,32 @@ class GenerateMojoTest {
     }
 
     @Test
+    void mysqlDialectGeneratesSources() throws Exception {
+        var sqlDir = tempDir.resolve("sql-mysql");
+        var outDir = tempDir.resolve("generated-mysql");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(
+            sqlDir.resolve("user/null_safe_lookup.sql"),
+            "select * from `users` where `name` <=> :name",
+            StandardCharsets.UTF_8
+        );
+
+        var mojo = new GenerateMojo();
+        setField(mojo, "project", new MavenProject());
+        setField(mojo, "skip", false);
+        setField(mojo, "dialect", "mysql");
+        setField(mojo, "basePackage", "io.sqm.codegen.generated");
+        setField(mojo, "sqlDirectory", sqlDir.toString());
+        setField(mojo, "generatedSourcesDirectory", outDir.toString());
+        setField(mojo, "cleanupStaleFiles", true);
+        setField(mojo, "includeGenerationTimestamp", false);
+
+        mojo.execute();
+
+        assertTrue(Files.exists(outDir.resolve("io/sqm/codegen/generated/UserQueries.java")));
+    }
+
+    @Test
     void includeGenerationTimestampAddsGeneratedDateMetadata() throws Exception {
         var sqlDir = tempDir.resolve("sql-date");
         var outDir = tempDir.resolve("generated-date");

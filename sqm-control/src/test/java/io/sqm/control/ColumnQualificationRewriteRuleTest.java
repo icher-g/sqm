@@ -13,6 +13,7 @@ import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.control.rewrite.ColumnQualificationRewriteRule;
+import io.sqm.core.Query;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,18 +21,22 @@ import static org.junit.jupiter.api.Assertions.*;
 class ColumnQualificationRewriteRuleTest {
     private static final ExecutionContext PG_ANALYZE = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
 
+    private static Query parseQuery(String sql) {
+        return (Query) SqlStatementParser.standard().parse(sql, PG_ANALYZE);
+    }
+
     @Test
     void qualifies_columns_using_visible_table_aliases_and_catalog_metadata() {
         var schema = CatalogSchema.of(CatalogTable.of("public", "users", CatalogColumn.of("id", CatalogType.LONG)));
         var settings = BuiltInRewriteSettings.defaults();
         var rule = ColumnQualificationRewriteRule.of(schema, settings);
-        var query = SqlQueryParser.standard().parse("select id from users u", PG_ANALYZE);
+        var query = parseQuery("select id from users u");
 
         var result = rule.apply(query, PG_ANALYZE);
 
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_QUALIFICATION, result.primaryReasonCode());
-        String rendered = SqlQueryRenderer.standard().render(result.query(), PG_ANALYZE).sql().toLowerCase();
+        String rendered = SqlStatementRenderer.standard().render(result.statement(), PG_ANALYZE).sql().toLowerCase();
         assertTrue(rendered.contains("select u.id"));
     }
 
@@ -46,11 +51,8 @@ class ColumnQualificationRewriteRuleTest {
         var skip = BuiltInRewriteSettings.builder(strict)
             .qualificationFailureMode(QualificationFailureMode.SKIP)
             .build();
-        var unresolvedQuery = SqlQueryParser.standard().parse("select id from users u", PG_ANALYZE);
-        var ambiguousQuery = SqlQueryParser.standard().parse(
-            "select id from users u join orders o on u.id = o.id",
-            PG_ANALYZE
-        );
+        var unresolvedQuery = parseQuery("select id from users u");
+        var ambiguousQuery = parseQuery("select id from users u join orders o on u.id = o.id");
 
         var unresolvedError = assertThrows(
             RewriteDenyException.class,

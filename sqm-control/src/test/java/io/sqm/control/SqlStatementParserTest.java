@@ -1,13 +1,9 @@
 package io.sqm.control;
 
-import io.sqm.control.audit.*;
-import io.sqm.control.config.*;
-import io.sqm.control.decision.*;
-import io.sqm.control.execution.*;
-import io.sqm.control.pipeline.*;
-import io.sqm.control.rewrite.*;
-import io.sqm.control.service.*;
-
+import io.sqm.control.execution.ExecutionContext;
+import io.sqm.control.execution.ExecutionMode;
+import io.sqm.control.pipeline.SqlStatementParser;
+import io.sqm.core.InsertStatement;
 import io.sqm.core.Query;
 import io.sqm.parser.ansi.AnsiSpecs;
 import org.junit.jupiter.api.Test;
@@ -17,11 +13,11 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class SqlQueryParserTest {
+class SqlStatementParserTest {
 
     @Test
     void parses_postgresql_query() {
-        var parser = SqlQueryParser.standard();
+        var parser = SqlStatementParser.standard();
         var context = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
 
         var query = parser.parse("select 1", context);
@@ -30,7 +26,7 @@ class SqlQueryParserTest {
 
     @Test
     void parses_postgres_alias_dialect() {
-        var parser = SqlQueryParser.standard();
+        var parser = SqlStatementParser.standard();
         var context = ExecutionContext.of("postgres", ExecutionMode.ANALYZE);
 
         var query = parser.parse("select 1", context);
@@ -38,16 +34,26 @@ class SqlQueryParserTest {
     }
 
     @Test
-    void rejects_unsupported_dialect() {
-        var parser = SqlQueryParser.standard();
+    void parses_mysql_query() {
+        var parser = SqlStatementParser.standard();
         var context = ExecutionContext.of("mysql", ExecutionMode.ANALYZE);
 
-        assertThrows(IllegalArgumentException.class, () -> parser.parse("select 1", context));
+        var query = parser.parse("select 1", context);
+        assertInstanceOf(Query.class, query);
+    }
+
+    @Test
+    void parses_mysql_insert_statement() {
+        var parser = SqlStatementParser.standard();
+        var context = ExecutionContext.of("mysql", ExecutionMode.ANALYZE);
+
+        var statement = parser.parse("insert into users (id, name) values (1, 'alice')", context);
+        assertInstanceOf(InsertStatement.class, statement);
     }
 
     @Test
     void rejects_parse_errors() {
-        var parser = SqlQueryParser.standard();
+        var parser = SqlStatementParser.standard();
         var context = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
 
         assertThrows(IllegalArgumentException.class, () -> parser.parse("select from", context));
@@ -55,7 +61,7 @@ class SqlQueryParserTest {
 
     @Test
     void validates_null_arguments() {
-        var parser = SqlQueryParser.standard();
+        var parser = SqlStatementParser.standard();
         var context = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
 
         assertThrows(NullPointerException.class, () -> parser.parse(null, context));
@@ -64,13 +70,11 @@ class SqlQueryParserTest {
 
     @Test
     void custom_dialect_aware_factory_validates_configuration() {
-        assertThrows(NullPointerException.class, () -> SqlQueryParser.dialectAware(null));
+        assertThrows(NullPointerException.class, () -> SqlStatementParser.dialectAware(null));
 
-        var parser = SqlQueryParser.dialectAware(Map.of("ansi", AnsiSpecs::new));
+        var parser = SqlStatementParser.dialectAware(Map.of("ansi", AnsiSpecs::new));
         var context = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
 
         assertThrows(IllegalArgumentException.class, () -> parser.parse("select 1", context));
     }
 }
-
-

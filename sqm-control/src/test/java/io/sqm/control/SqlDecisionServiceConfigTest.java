@@ -82,7 +82,7 @@ class SqlDecisionServiceConfigTest {
         assertNotNull(config.explainer());
         assertNotNull(config.auditPublisher());
         assertNotNull(config.guardrails());
-        assertNotNull(config.queryParser());
+        assertNotNull(config.statementParser());
     }
 
     @Test

@@ -55,7 +55,7 @@ class DefaultSqlDecisionServiceTest {
         RuntimeGuardrails guardrails,
         AuditEventPublisher auditPublisher,
         SqlDecisionExplainer explainer,
-        SqlQueryParser queryParser
+        SqlStatementParser statementParser
     ) {
         return SqlDecisionService.create(
             SqlDecisionServiceConfig.builder(schema)
@@ -63,7 +63,7 @@ class DefaultSqlDecisionServiceTest {
                 .guardrails(guardrails)
                 .auditPublisher(auditPublisher)
                 .explainer(explainer)
-                .queryParser(queryParser)
+                .statementParser(statementParser)
                 .buildValidationConfig()
         );
     }
@@ -111,7 +111,7 @@ class DefaultSqlDecisionServiceTest {
             RuntimeGuardrails.disabled(),
             audit,
             SqlDecisionExplainer.basic(),
-            SqlQueryParser.standard()
+            SqlStatementParser.standard()
         );
 
         decisionService.analyze("select 1", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
@@ -128,7 +128,7 @@ class DefaultSqlDecisionServiceTest {
             RuntimeGuardrails.disabled(),
             audit,
             SqlDecisionExplainer.basic(),
-            SqlQueryParser.standard()
+            SqlStatementParser.standard()
         );
 
         decisionService.analyze(
@@ -154,7 +154,7 @@ class DefaultSqlDecisionServiceTest {
             RuntimeGuardrails.disabled(),
             AuditEventPublisher.noop(),
             explainer,
-            SqlQueryParser.standard()
+            SqlStatementParser.standard()
         );
 
         var explanation = decisionService.explainDecision(
@@ -184,6 +184,27 @@ class DefaultSqlDecisionServiceTest {
         var decisionService = create(SCHEMA);
 
         var result = decisionService.analyze("select 1", ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
+        assertEquals(DecisionKind.ALLOW, result.kind());
+    }
+
+    @Test
+    void default_factory_supports_mysql_select_flow() {
+        var decisionService = create(SCHEMA);
+
+        var result = decisionService.analyze("select 1", ExecutionContext.of("mysql", ExecutionMode.ANALYZE));
+
+        assertEquals(DecisionKind.ALLOW, result.kind());
+    }
+
+    @Test
+    void default_factory_supports_dml_flow_without_query_guardrails() {
+        var decisionService = create(SCHEMA);
+
+        var result = decisionService.analyze(
+            "update users set name = 'alice' where id = 1",
+            ExecutionContext.of("mysql", ExecutionMode.ANALYZE)
+        );
+
         assertEquals(DecisionKind.ALLOW, result.kind());
     }
 }

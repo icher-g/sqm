@@ -1,29 +1,22 @@
 package io.sqm.control;
 
-import io.sqm.control.audit.*;
-import io.sqm.control.config.*;
-import io.sqm.control.decision.*;
-import io.sqm.control.execution.*;
-import io.sqm.control.pipeline.*;
-import io.sqm.control.rewrite.*;
-import io.sqm.control.service.*;
-
+import io.sqm.control.execution.ExecutionContext;
+import io.sqm.control.execution.ExecutionMode;
+import io.sqm.control.pipeline.StatementRewriteResult;
+import io.sqm.control.pipeline.StatementRewriteRule;
 import io.sqm.core.Expression;
 import io.sqm.core.Query;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class QueryRewriteRuleTest {
+class StatementRewriteRuleTest {
 
     @Test
     void default_id_uses_implementing_class_simple_name() {
-        QueryRewriteRule rule = (query, context) -> QueryRewriteResult.unchanged(query);
+        StatementRewriteRule rule = (statement, context) -> StatementRewriteResult.unchanged(statement);
 
         assertEquals(rule.getClass().getSimpleName(), rule.id());
-        // also execute apply to keep interface method line exercised in patch coverage
         rule.apply(Query.select(Expression.literal(1)).build(), ExecutionContext.of("ansi", ExecutionMode.ANALYZE));
     }
 }
-
-

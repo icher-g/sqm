@@ -1,16 +1,16 @@
 package io.sqm.control.rewrite;
 
 import io.sqm.catalog.model.CatalogSchema;
-import io.sqm.control.pipeline.QueryRewriteRule;
+import io.sqm.control.pipeline.StatementRewriteRule;
 
 import java.util.*;
 
 /**
- * Source of built-in {@link QueryRewriteRule} instances used by middleware rewrite pipelines.
+ * Source of built-in {@link StatementRewriteRule} instances used by middleware rewrite pipelines.
  *
- * <p>This class does not construct {@code SqlQueryRewriter} instances directly. Callers select
+ * <p>This class does not construct {@code SqlStatementRewriter} instances directly. Callers select
  * baseline or subset rule packs through this type, then compose them into a rewriter via
- * {@code SqlQueryRewriter.chain(...)} or equivalent orchestration code.</p>
+ * {@code SqlStatementRewriter.chain(...)} or equivalent orchestration code.</p>
  */
 public final class BuiltInRewriteRules {
 
@@ -39,7 +39,7 @@ public final class BuiltInRewriteRules {
      * @param settings built-in rewrite settings
      * @return immutable list of rewrite rules
      */
-    public static List<QueryRewriteRule> allAvailable(BuiltInRewriteSettings settings) {
+    public static List<StatementRewriteRule> allAvailable(BuiltInRewriteSettings settings) {
         Objects.requireNonNull(settings, "settings must not be null");
         return AVAILABLE_RULES.stream()
             .map(rule -> toRule(rule, settings, null))
@@ -56,7 +56,7 @@ public final class BuiltInRewriteRules {
      * @param rules    selected built-in rule identifiers
      * @return immutable list of rewrite rules
      */
-    public static List<QueryRewriteRule> selected(BuiltInRewriteSettings settings, Set<BuiltInRewriteRule> rules) {
+    public static List<StatementRewriteRule> selected(BuiltInRewriteSettings settings, Set<BuiltInRewriteRule> rules) {
         Objects.requireNonNull(settings, "settings must not be null");
         Objects.requireNonNull(rules, "rules must not be null");
         ensureSupported(rules, AVAILABLE_RULES);
@@ -74,7 +74,7 @@ public final class BuiltInRewriteRules {
      * @param settings built-in rewrite settings
      * @return immutable list of rewrite rules
      */
-    public static List<QueryRewriteRule> allAvailable(CatalogSchema schema, BuiltInRewriteSettings settings) {
+    public static List<StatementRewriteRule> allAvailable(CatalogSchema schema, BuiltInRewriteSettings settings) {
         Objects.requireNonNull(schema, "schema must not be null");
         Objects.requireNonNull(settings, "settings must not be null");
         return SCHEMA_AVAILABLE_RULES.stream()
@@ -93,7 +93,7 @@ public final class BuiltInRewriteRules {
      * @param rules    selected built-in rule identifiers
      * @return immutable list of rewrite rules
      */
-    public static List<QueryRewriteRule> selected(CatalogSchema schema, BuiltInRewriteSettings settings, Set<BuiltInRewriteRule> rules) {
+    public static List<StatementRewriteRule> selected(CatalogSchema schema, BuiltInRewriteSettings settings, Set<BuiltInRewriteRule> rules) {
         Objects.requireNonNull(schema, "schema must not be null");
         Objects.requireNonNull(settings, "settings must not be null");
         Objects.requireNonNull(rules, "rules must not be null");
@@ -113,7 +113,7 @@ public final class BuiltInRewriteRules {
         }
     }
 
-    private static QueryRewriteRule toRule(BuiltInRewriteRule rule, BuiltInRewriteSettings settings, CatalogSchema schema) {
+    private static StatementRewriteRule toRule(BuiltInRewriteRule rule, BuiltInRewriteSettings settings, CatalogSchema schema) {
         return switch (rule) {
             case LIMIT_INJECTION -> LimitInjectionRewriteRule.of(settings);
             case SCHEMA_QUALIFICATION -> SchemaQualificationRewriteRule.of(

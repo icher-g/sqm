@@ -8,15 +8,15 @@ import io.sqm.control.decision.ReasonCode;
  * @param code    validation outcome reason code
  * @param message validation message for failed outcomes
  */
-public record QueryValidateResult(ReasonCode code, String message) {
+public record StatementValidateResult(ReasonCode code, String message) {
 
     /**
      * Creates a successful validation result.
      *
      * @return successful validation result
      */
-    public static QueryValidateResult ok() {
-        return new QueryValidateResult(ReasonCode.NONE, null);
+    public static StatementValidateResult ok() {
+        return new StatementValidateResult(ReasonCode.NONE, null);
     }
 
     /**
@@ -26,8 +26,8 @@ public record QueryValidateResult(ReasonCode code, String message) {
      * @param message failure message
      * @return failed validation result
      */
-    public static QueryValidateResult failure(ReasonCode code, String message) {
-        return new QueryValidateResult(code, message);
+    public static StatementValidateResult failure(ReasonCode code, String message) {
+        return new StatementValidateResult(code, message);
     }
 
     /**

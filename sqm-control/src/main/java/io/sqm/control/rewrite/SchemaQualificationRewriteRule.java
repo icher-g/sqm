@@ -4,11 +4,11 @@ import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.control.decision.ReasonCode;
 import io.sqm.control.execution.ExecutionContext;
-import io.sqm.control.pipeline.QueryRewriteResult;
-import io.sqm.control.pipeline.QueryRewriteRule;
+import io.sqm.control.pipeline.StatementRewriteResult;
+import io.sqm.control.pipeline.StatementRewriteRule;
 import io.sqm.control.pipeline.RewriteDenyException;
 import io.sqm.core.Identifier;
-import io.sqm.core.Query;
+import io.sqm.core.Statement;
 import io.sqm.core.transform.SchemaQualificationTransformer;
 import io.sqm.core.transform.TableQualification;
 import io.sqm.core.transform.TableSchemaResolver;
@@ -18,7 +18,7 @@ import java.util.Objects;
 /**
  * Middleware rewrite rule that schema-qualifies unqualified tables using catalog metadata.
  */
-public final class SchemaQualificationRewriteRule implements QueryRewriteRule {
+public final class SchemaQualificationRewriteRule implements StatementRewriteRule {
     private static final String RULE_ID = "schema-qualification";
 
     private final SchemaQualificationTransformer transformer;
@@ -117,20 +117,20 @@ public final class SchemaQualificationRewriteRule implements QueryRewriteRule {
     /**
      * Applies schema qualification and reports a rewrite only when the AST actually changes.
      *
-     * @param query   parsed query model
+     * @param statement parsed statement model
      * @param context execution context
      * @return rewrite result
      */
     @Override
-    public QueryRewriteResult apply(Query query, ExecutionContext context) {
-        Objects.requireNonNull(query, "query must not be null");
+    public StatementRewriteResult apply(Statement statement, ExecutionContext context) {
+        Objects.requireNonNull(statement, "statement must not be null");
         Objects.requireNonNull(context, "context must not be null");
 
-        Query transformed = transformer.apply(query);
-        if (transformed == query) {
-            return QueryRewriteResult.unchanged(transformed);
+        Statement transformed = (Statement) transformer.transform(statement);
+        if (transformed == statement) {
+            return StatementRewriteResult.unchanged(transformed);
         }
-        return QueryRewriteResult.rewritten(transformed, id(), ReasonCode.REWRITE_QUALIFICATION);
+        return StatementRewriteResult.rewritten(transformed, id(), ReasonCode.REWRITE_QUALIFICATION);
     }
 }
 

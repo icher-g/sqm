@@ -125,6 +125,7 @@ Priority levels:
   - predicate simplification
   - projection pruning
   - canonical forms for cache/fingerprint stability
+- Optional follow-up: evaluate a `StatementFingerprint` abstraction for `INSERT`/`UPDATE`/`DELETE`, but only after explicit normalization semantics are defined for DML.
 - Keep optimizer opt-in and deterministic.
 
 ### Epic R12: DML Advanced Expansion

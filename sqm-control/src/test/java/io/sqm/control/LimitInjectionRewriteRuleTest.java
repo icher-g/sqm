@@ -8,6 +8,7 @@ import io.sqm.control.pipeline.*;
 import io.sqm.control.rewrite.*;
 import io.sqm.control.service.*;
 
+import io.sqm.core.Query;
 import io.sqm.control.rewrite.LimitInjectionRewriteRule;
 import org.junit.jupiter.api.Test;
 
@@ -19,10 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class LimitInjectionRewriteRuleTest {
     private static final ExecutionContext PG_ANALYZE = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
 
+    private static Query parseQuery(String sql) {
+        return (Query) SqlStatementParser.standard().parse(sql, PG_ANALYZE);
+    }
+
     @Test
     void id_and_null_arguments_are_validated() {
         var rule = LimitInjectionRewriteRule.of(10);
-        var query = SqlQueryParser.standard().parse("select 1", PG_ANALYZE);
+        var query = parseQuery("select 1");
 
         assertEquals("limit-injection", rule.id());
         assertThrows(NullPointerException.class, () -> rule.apply(null, PG_ANALYZE));
@@ -32,7 +37,7 @@ class LimitInjectionRewriteRuleTest {
 
     @Test
     void deny_mode_rejects_non_literal_limit_expression() {
-        var query = SqlQueryParser.standard().parse("select 1 limit (1 + 1)", PG_ANALYZE);
+        var query = parseQuery("select 1 limit (1 + 1)");
         var rule = LimitInjectionRewriteRule.of(
             BuiltInRewriteSettings.builder()
                 .defaultLimitInjectionValue(10)
@@ -48,7 +53,7 @@ class LimitInjectionRewriteRuleTest {
 
     @Test
     void deny_mode_rejects_limit_all() {
-        var query = SqlQueryParser.standard().parse("select 1 limit all", PG_ANALYZE);
+        var query = parseQuery("select 1 limit all");
         var rule = LimitInjectionRewriteRule.of(
             BuiltInRewriteSettings.builder()
                 .defaultLimitInjectionValue(10)
@@ -71,9 +76,9 @@ class LimitInjectionRewriteRuleTest {
             .build();
         var rule = LimitInjectionRewriteRule.of(settings);
 
-        var select = SqlQueryParser.standard().parse("select 1 limit 99", PG_ANALYZE);
-        var composite = SqlQueryParser.standard().parse("select 1 union all select 2 limit all", PG_ANALYZE);
-        var withQuery = SqlQueryParser.standard().parse("with x as (select 1) select 1 limit 77", PG_ANALYZE);
+        var select = parseQuery("select 1 limit 99");
+        var composite = parseQuery("select 1 union all select 2 limit all");
+        var withQuery = parseQuery("with x as (select 1) select 1 limit 77");
 
         var selectResult = rule.apply(select, PG_ANALYZE);
         var compositeResult = rule.apply(composite, PG_ANALYZE);
@@ -83,9 +88,9 @@ class LimitInjectionRewriteRuleTest {
         assertTrue(compositeResult.rewritten());
         assertTrue(withResult.rewritten());
         assertEquals(ReasonCode.REWRITE_LIMIT, selectResult.primaryReasonCode());
-        assertTrue(SqlQueryRenderer.standard().render(selectResult.query(), PG_ANALYZE).sql().toLowerCase().contains("limit 10"));
-        assertTrue(SqlQueryRenderer.standard().render(compositeResult.query(), PG_ANALYZE).sql().toLowerCase().contains("limit 10"));
-        assertTrue(SqlQueryRenderer.standard().render(withResult.query(), PG_ANALYZE).sql().toLowerCase().contains("limit 10"));
+        assertTrue(SqlStatementRenderer.standard().render(selectResult.statement(), PG_ANALYZE).sql().toLowerCase().contains("limit 10"));
+        assertTrue(SqlStatementRenderer.standard().render(compositeResult.statement(), PG_ANALYZE).sql().toLowerCase().contains("limit 10"));
+        assertTrue(SqlStatementRenderer.standard().render(withResult.statement(), PG_ANALYZE).sql().toLowerCase().contains("limit 10"));
     }
 
     @Test
@@ -97,15 +102,15 @@ class LimitInjectionRewriteRuleTest {
             .build();
         var rule = LimitInjectionRewriteRule.of(settings);
 
-        var alreadyWithinLimit = SqlQueryParser.standard().parse("select 1 limit 5", PG_ANALYZE);
-        var offsetOnly = SqlQueryParser.standard().parse("select 1 offset 3", PG_ANALYZE);
+        var alreadyWithinLimit = parseQuery("select 1 limit 5");
+        var offsetOnly = parseQuery("select 1 offset 3");
 
         var withinResult = rule.apply(alreadyWithinLimit, PG_ANALYZE);
         var offsetResult = rule.apply(offsetOnly, PG_ANALYZE);
 
         assertFalse(withinResult.rewritten());
         assertTrue(offsetResult.rewritten());
-        assertTrue(SqlQueryRenderer.standard().render(offsetResult.query(), PG_ANALYZE).sql().toLowerCase().contains("limit 5"));
+        assertTrue(SqlStatementRenderer.standard().render(offsetResult.statement(), PG_ANALYZE).sql().toLowerCase().contains("limit 5"));
     }
 
     @Test
@@ -118,9 +123,9 @@ class LimitInjectionRewriteRuleTest {
                 .build()
         );
 
-        var query = SqlQueryParser.standard().parse("select 1", PG_ANALYZE);
+        var query = parseQuery("select 1");
         var result = rule.apply(query, PG_ANALYZE);
-        var rendered = SqlQueryRenderer.standard().render(result.query(), PG_ANALYZE).sql().toLowerCase();
+        var rendered = SqlStatementRenderer.standard().render(result.statement(), PG_ANALYZE).sql().toLowerCase();
 
         assertTrue(result.rewritten());
         assertTrue(rendered.contains("limit 7"));

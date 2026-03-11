@@ -2,9 +2,9 @@ package io.sqm.control.rewrite;
 
 import io.sqm.control.decision.ReasonCode;
 import io.sqm.control.execution.ExecutionContext;
-import io.sqm.control.pipeline.QueryRewriteResult;
-import io.sqm.control.pipeline.QueryRewriteRule;
-import io.sqm.core.Query;
+import io.sqm.control.pipeline.StatementRewriteResult;
+import io.sqm.control.pipeline.StatementRewriteRule;
+import io.sqm.core.Statement;
 import io.sqm.core.transform.IdentifierNormalizationTransformer;
 
 import java.util.Objects;
@@ -14,7 +14,7 @@ import java.util.Objects;
  *
  * <p>Quoted identifiers are preserved exactly.</p>
  */
-public final class IdentifierNormalizationRewriteRule implements QueryRewriteRule {
+public final class IdentifierNormalizationRewriteRule implements StatementRewriteRule {
     private static final String RULE_ID = "identifier-normalization";
 
     private final IdentifierNormalizationTransformer transformer;
@@ -51,15 +51,15 @@ public final class IdentifierNormalizationRewriteRule implements QueryRewriteRul
     }
 
     @Override
-    public QueryRewriteResult apply(Query query, ExecutionContext context) {
-        Objects.requireNonNull(query, "query must not be null");
+    public StatementRewriteResult apply(Statement statement, ExecutionContext context) {
+        Objects.requireNonNull(statement, "statement must not be null");
         Objects.requireNonNull(context, "context must not be null");
 
-        Query transformed = (Query) transformer.transform(query);
-        if (transformed == query) {
-            return QueryRewriteResult.unchanged(transformed);
+        Statement transformed = (Statement) transformer.transform(statement);
+        if (transformed == statement) {
+            return StatementRewriteResult.unchanged(transformed);
         }
-        return QueryRewriteResult.rewritten(transformed, id(), ReasonCode.REWRITE_IDENTIFIER_NORMALIZATION);
+        return StatementRewriteResult.rewritten(transformed, id(), ReasonCode.REWRITE_IDENTIFIER_NORMALIZATION);
     }
 }
 

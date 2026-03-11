@@ -3,6 +3,7 @@ package io.sqm.codegen;
 import io.sqm.core.Identifier;
 import io.sqm.core.OrderItem;
 import io.sqm.core.Query;
+import io.sqm.core.QuoteStyle;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -211,6 +212,51 @@ class SqmJavaEmitterTest {
         assertTrue(source.contains("tbl(\"public\", \"ta\\\"b\")"));
         assertTrue(source.contains("window(\"w\\\"1\", over())"));
     }
+
+    @Test
+    void emitStatement_coversDmlStatements() {
+        var insert = insert(tbl("users"))
+            .ignore()
+            .columns(id("id"), id("name", QuoteStyle.BACKTICK))
+            .values(row(lit(1), lit("alice")))
+            .returning(col("id").toSelectItem())
+            .build();
+        var update = update(tbl("users"))
+            .optimizerHint("MAX_EXECUTION_TIME(1000)")
+            .set(set("u", "name", lit("alice")))
+            .from(tbl("src"))
+            .where(col("u", "id").eq(lit(1)))
+            .returning(col("u", "id").toSelectItem())
+            .build();
+        var delete = delete(tbl("users"))
+            .optimizerHint("BKA(users)")
+            .using(tbl("audit"))
+            .where(col("users", "id").eq(col("audit", "user_id")))
+            .returning(col("users", "id").toSelectItem())
+            .build();
+
+        var insertSource = emitter.emitStatement(insert);
+        var updateSource = emitter.emitStatement(update);
+        var deleteSource = emitter.emitStatement(delete);
+
+        assertTrue(insertSource.contains("insert(tbl(\"users\"))"));
+        assertTrue(insertSource.contains(".ignore()"));
+        assertTrue(insertSource.contains(".columns(id(\"id\"), id(\"name\", QuoteStyle.BACKTICK))"));
+        assertTrue(insertSource.contains(".values(row(lit(1), lit(\"alice\")))"));
+        assertTrue(insertSource.contains(".returning(col(\"id\"))"));
+
+        assertTrue(updateSource.contains("update(tbl(\"users\"))"));
+        assertTrue(updateSource.contains(".optimizerHints(java.util.List.of(\"MAX_EXECUTION_TIME(1000)\"))"));
+        assertTrue(updateSource.contains(".set(set(QualifiedName.of(id(\"u\"), id(\"name\")), lit(\"alice\")))"));
+        assertTrue(updateSource.contains(".from(tbl(\"src\"))"));
+        assertTrue(updateSource.contains(".returning(col(\"u\", \"id\"))"));
+
+        assertTrue(deleteSource.contains("delete(tbl(\"users\"))"));
+        assertTrue(deleteSource.contains(".optimizerHints(java.util.List.of(\"BKA(users)\"))"));
+        assertTrue(deleteSource.contains(".using(tbl(\"audit\"))"));
+        assertTrue(deleteSource.contains(".returning(col(\"users\", \"id\"))"));
+    }
+
     @Test
     void emitQuery_usesGenericNodePathForNonSelectQueries() {
         Query query = compose(

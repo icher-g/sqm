@@ -1,18 +1,20 @@
 package io.sqm.codegen;
 
-import io.sqm.core.Query;
+import io.sqm.core.SelectQuery;
+import io.sqm.core.Statement;
 import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.core.Lexer;
 import io.sqm.parser.core.Token;
 import io.sqm.parser.core.TokenType;
+import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
-import io.sqm.validate.api.QueryValidator;
 import io.sqm.validate.api.ValidationProblem;
+import io.sqm.validate.mysql.MySqlValidationDialect;
 import io.sqm.validate.postgresql.PostgresValidationDialect;
-import io.sqm.validate.schema.SchemaQueryValidator;
+import io.sqm.validate.schema.SchemaStatementValidator;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Generates deterministic Java query classes from {@code *.sql} files.
+ * Generates deterministic Java statement classes from {@code *.sql} files.
  */
 public final class SqlFileCodeGenerator {
     private static final Pattern NAMED_PARAMETER_PATTERN = Pattern.compile(":([A-Za-z_][A-Za-z0-9_]*)");
@@ -46,7 +48,7 @@ public final class SqlFileCodeGenerator {
     private final SqlFileCodegenOptions options;
     private final List<ParseStage> parseStages;
     private final SqmJavaEmitter emitter;
-    private final QueryValidator schemaValidator;
+    private final SchemaStatementValidator schemaValidator;
     private final List<SqlValidationIssue> validationIssues;
 
     private SqlFileCodeGenerator(SqlFileCodegenOptions options) {
@@ -121,13 +123,19 @@ public final class SqlFileCodeGenerator {
     private static List<ParseStage> parseStagesFor(SqlCodegenDialect dialect) {
         var ansi = ParseContext.of(new AnsiSpecs());
         var postgres = ParseContext.of(new PostgresSpecs());
+        var mysql = ParseContext.of(new MySqlSpecs());
         return switch (dialect) {
             case ANSI -> List.of(
                 new ParseStage("ansi", ansi),
-                new ParseStage("postgresql", postgres)
+                new ParseStage("postgresql", postgres),
+                new ParseStage("mysql", mysql)
             );
             case POSTGRESQL -> List.of(
                 new ParseStage("postgresql", postgres),
+                new ParseStage("ansi", ansi)
+            );
+            case MYSQL -> List.of(
+                new ParseStage("mysql", mysql),
                 new ParseStage("ansi", ansi)
             );
         };
@@ -192,7 +200,7 @@ public final class SqlFileCodeGenerator {
         return new LineColumn(line, column);
     }
 
-    private static QueryValidator createSchemaValidator(SqlFileCodegenOptions options) {
+    private static SchemaStatementValidator createSchemaValidator(SqlFileCodegenOptions options) {
         var provider = options.schemaProvider().orElse(null);
         if (provider == null) {
             return null;
@@ -200,8 +208,9 @@ public final class SqlFileCodeGenerator {
         try {
             var schema = provider.load();
             return switch (options.dialect()) {
-                case ANSI -> SchemaQueryValidator.of(schema);
-                case POSTGRESQL -> SchemaQueryValidator.of(schema, PostgresValidationDialect.of());
+                case ANSI -> SchemaStatementValidator.of(schema);
+                case POSTGRESQL -> SchemaStatementValidator.of(schema, PostgresValidationDialect.of());
+                case MYSQL -> SchemaStatementValidator.of(schema, MySqlValidationDialect.of());
             };
         } catch (SQLException ex) {
             throw new SqlFileCodegenException("Failed to load schema for validation: " + ex.getMessage());
@@ -333,22 +342,22 @@ public final class SqlFileCodeGenerator {
         var methodName = NameNormalizer.toMethodName(baseName);
         try {
             var sql = Files.readString(sqlFile, StandardCharsets.UTF_8);
-            var query = parseSql(relativePath, sql);
+            var statement = parseSql(relativePath, sql);
             var params = extractNamedParameters(sql);
             var hash = sha256(sql);
             var folder = relativePath.getParent();
-            return new SqlSourceFile(relativePath, folder == null ? Path.of("") : folder, methodName, query, params, hash);
+            return new SqlSourceFile(relativePath, folder == null ? Path.of("") : folder, methodName, statement, params, hash);
         } catch (IOException ex) {
             throw new IllegalStateException("Failed to read SQL file " + sqlFile, ex);
         }
     }
 
-    private Query parseSql(Path relativePath, String sql) {
+    private Statement parseSql(Path relativePath, String sql) {
         var attempts = new ArrayList<ParseAttempt>(parseStages.size());
         for (var stage : parseStages) {
-            var result = stage.context().parse(Query.class, sql);
+            var result = stage.context().parse(Statement.class, sql);
             if (result.ok() && result.value() != null) {
-                validateQuery(relativePath, result.value());
+                validateStatement(relativePath, result.value());
                 return result.value();
             }
             attempts.add(new ParseAttempt(stage.name(), result, stage.context().identifierQuoting()));
@@ -364,11 +373,11 @@ public final class SqlFileCodeGenerator {
         throw parseError(relativePath, sql, bestAttempt);
     }
 
-    private void validateQuery(Path relativePath, Query query) {
+    private void validateStatement(Path relativePath, Statement statement) {
         if (schemaValidator == null) {
             return;
         }
-        var result = schemaValidator.validate(query);
+        var result = schemaValidator.validate(statement);
         if (result.ok()) {
             return;
         }
@@ -486,25 +495,25 @@ public final class SqlFileCodeGenerator {
         code.append(INDENT).append("private ").append(group.className()).append("() {").append(NEWLINE);
         code.append(INDENT).append("}").append(NEWLINE).append(NEWLINE);
         for (var file : group.files()) {
-            String queryExpression;
+            String statementExpression;
             try {
-                queryExpression = emitter.emitQuery(file.query());
+                statementExpression = emitter.emitStatement(file.statement());
             } catch (IllegalStateException ex) {
                 throw new SqlFileCodegenException(normalizePath(file.relativePath()) + ": " + ex.getMessage());
             }
             code.append(INDENT).append("/**").append(NEWLINE);
             code.append(INDENT).append(" * SQL source: ").append(normalizePath(file.relativePath())).append(NEWLINE);
             code.append(INDENT).append(" *").append(NEWLINE);
-            code.append(INDENT).append(" * @return query model for this SQL source.").append(NEWLINE);
+            code.append(INDENT).append(" * @return statement model for this SQL source.").append(NEWLINE);
             code.append(INDENT).append(" */").append(NEWLINE);
             code.append(INDENT).append("public static ")
-                .append(file.query().getTopLevelInterface().getSimpleName()).append(" ")
+                .append(file.statement().getTopLevelInterface().getSimpleName()).append(" ")
                 .append(file.methodName()).append("() {").append(NEWLINE);
-            if (file.query() instanceof io.sqm.core.SelectQuery) {
+            if (file.statement() instanceof SelectQuery) {
                 code.append(INDENT).append(INDENT).append("var builder = SelectQuery.builder();").append(NEWLINE);
             }
             code.append(INDENT).append(INDENT).append("return ")
-                .append(indentContinuationLines(queryExpression, 8))
+                .append(indentContinuationLines(statementExpression, 8))
                 .append(";").append(NEWLINE);
             code.append(INDENT).append("}").append(NEWLINE).append(NEWLINE);
             code.append(INDENT).append("/**").append(NEWLINE);
@@ -548,7 +557,7 @@ public final class SqlFileCodeGenerator {
     }
 }
 
-record SqlSourceFile(Path relativePath, Path folder, String methodName, Query query, Set<String> parameters, String sqlHash) {
+record SqlSourceFile(Path relativePath, Path folder, String methodName, Statement statement, Set<String> parameters, String sqlHash) {
 }
 
 record SqlFolderGroup(Path folder, String className, List<SqlSourceFile> files) {
@@ -557,7 +566,7 @@ record SqlFolderGroup(Path folder, String className, List<SqlSourceFile> files) 
 record ParseStage(String name, ParseContext context) {
 }
 
-record ParseAttempt(String stage, ParseResult<? extends Query> result, IdentifierQuoting identifierQuoting) {
+record ParseAttempt(String stage, ParseResult<? extends Statement> result, IdentifierQuoting identifierQuoting) {
 }
 
 record LineColumn(int line, int column) {

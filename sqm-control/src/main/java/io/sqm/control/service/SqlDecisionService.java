@@ -26,7 +26,7 @@ public interface SqlDecisionService {
             config.explainer(),
             config.auditPublisher(),
             config.guardrails(),
-            config.queryParser()
+            config.statementParser()
         );
     }
 

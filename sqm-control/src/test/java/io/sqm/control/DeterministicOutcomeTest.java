@@ -359,7 +359,7 @@ class DeterministicOutcomeTest {
     }
 
     @Test
-    void unsupported_dialect_yields_deterministic_pipeline_deny_outcome() {
+    void mysql_dialect_yields_deterministic_pipeline_rewrite_outcome() {
         var decisionService = SqlDecisionService.create(
             SqlDecisionServiceConfig.builder(SCHEMA)
                 .validationSettings(SchemaValidationSettings.defaults())
@@ -368,6 +368,29 @@ class DeterministicOutcomeTest {
                 .buildValidationAndRewriteConfig()
         );
         var context = ExecutionContext.of("mysql", ExecutionMode.ANALYZE);
+        var sql = "select id from users";
+
+        var baseline = decisionService.analyze(sql, context);
+
+        assertEquals(DecisionKind.REWRITE, baseline.kind());
+        assertEquals(ReasonCode.REWRITE_LIMIT, baseline.reasonCode());
+
+        for (int i = 0; i < REPEAT_RUNS; i++) {
+            var next = decisionService.analyze(sql, context);
+            assertSameDecisionShape(baseline, next);
+        }
+    }
+
+    @Test
+    void unsupported_dialect_yields_deterministic_pipeline_deny_outcome() {
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
+                .validationSettings(SchemaValidationSettings.defaults())
+                .builtInRewriteSettings(BuiltInRewriteSettings.defaults())
+                .rewriteRules(BuiltInRewriteRule.LIMIT_INJECTION)
+                .buildValidationAndRewriteConfig()
+        );
+        var context = ExecutionContext.of("sqlite", ExecutionMode.ANALYZE);
         var sql = "select id from users";
 
         var baseline = decisionService.analyze(sql, context);

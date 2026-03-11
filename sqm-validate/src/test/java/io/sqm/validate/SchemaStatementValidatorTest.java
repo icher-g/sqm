@@ -7,7 +7,7 @@ import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.*;
 import io.sqm.validate.api.ValidationProblem;
-import io.sqm.validate.schema.SchemaQueryValidator;
+import io.sqm.validate.schema.SchemaStatementValidator;
 import io.sqm.validate.schema.SchemaValidationLimits;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
@@ -22,7 +22,7 @@ import java.util.List;
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-class SchemaQueryValidatorTest {
+class SchemaStatementValidatorTest {
     // Touch file to force test recompilation after Dsl.select(...) return-type refactor.
 
     private static final CatalogSchema SCHEMA = CatalogSchema.of(
@@ -43,7 +43,7 @@ class SchemaQueryValidatorTest {
         )
     );
 
-    private final SchemaQueryValidator validator = SchemaQueryValidator.of(SCHEMA);
+    private final SchemaStatementValidator validator = SchemaStatementValidator.of(SCHEMA);
 
     @Test
     void validate_okForExistingTablesAndColumns() {
@@ -74,7 +74,7 @@ class SchemaQueryValidatorTest {
         var settings = SchemaValidationSettings.builder()
             .accessPolicy(DefaultCatalogAccessPolicy.builder().denyTable("orders").build())
             .build();
-        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+        var policyValidator = SchemaStatementValidator.of(SCHEMA, settings);
 
         Query query = select(star()).from(tbl("orders").as("o")).build();
         var result = policyValidator.validate(query);
@@ -102,7 +102,7 @@ class SchemaQueryValidatorTest {
             .principal("alice")
             .accessPolicy(policy)
             .build();
-        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+        var policyValidator = SchemaStatementValidator.of(SCHEMA, settings);
 
         Query query = select(star()).from(tbl("orders").as("o")).build();
         var result = policyValidator.validate(query);
@@ -117,7 +117,7 @@ class SchemaQueryValidatorTest {
         var settings = SchemaValidationSettings.builder()
             .accessPolicy(DefaultCatalogAccessPolicy.builder().denyColumn("u.status").build())
             .build();
-        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+        var policyValidator = SchemaStatementValidator.of(SCHEMA, settings);
 
         Query query = select(col("u", "status")).from(tbl("users").as("u")).build();
         var result = policyValidator.validate(query);
@@ -259,7 +259,7 @@ class SchemaQueryValidatorTest {
         var settings = SchemaValidationSettings.builder()
             .accessPolicy(DefaultCatalogAccessPolicy.builder().allowFunction("length").build())
             .build();
-        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+        var policyValidator = SchemaStatementValidator.of(SCHEMA, settings);
 
         Query query = select(func("lower", arg(col("u", "name"))))
             .from(tbl("users").as("u"))
@@ -276,7 +276,7 @@ class SchemaQueryValidatorTest {
         var settings = SchemaValidationSettings.builder()
             .accessPolicy(DefaultCatalogAccessPolicy.builder().allowFunction("length").build())
             .build();
-        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+        var policyValidator = SchemaStatementValidator.of(SCHEMA, settings);
 
         Query query = select(func("length", arg(col("u", "name"))))
             .from(tbl("users").as("u"))
@@ -292,7 +292,7 @@ class SchemaQueryValidatorTest {
         var settings = SchemaValidationSettings.builder()
             .limits(SchemaValidationLimits.builder().maxJoinCount(1).build())
             .build();
-        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+        var policyValidator = SchemaStatementValidator.of(SCHEMA, settings);
 
         Query query = select(star())
             .from(tbl("users").as("u"))
@@ -311,7 +311,7 @@ class SchemaQueryValidatorTest {
         var settings = SchemaValidationSettings.builder()
             .limits(SchemaValidationLimits.builder().maxJoinCount(1).build())
             .build();
-        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+        var policyValidator = SchemaStatementValidator.of(SCHEMA, settings);
 
         Query query = select(star())
             .from(tbl("users").as("u"))
@@ -328,7 +328,7 @@ class SchemaQueryValidatorTest {
         var settings = SchemaValidationSettings.builder()
             .limits(SchemaValidationLimits.builder().maxSelectColumns(2).build())
             .build();
-        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+        var policyValidator = SchemaStatementValidator.of(SCHEMA, settings);
 
         Query query = select(col("u", "id"), col("u", "name"), col("u", "status"))
             .from(tbl("users").as("u"))
@@ -345,7 +345,7 @@ class SchemaQueryValidatorTest {
         var settings = SchemaValidationSettings.builder()
             .limits(SchemaValidationLimits.builder().maxSelectColumns(2).build())
             .build();
-        var policyValidator = SchemaQueryValidator.of(SCHEMA, settings);
+        var policyValidator = SchemaStatementValidator.of(SCHEMA, settings);
 
         Query query = select(col("u", "id"), col("u", "name"))
             .from(tbl("users").as("u"))
@@ -1249,7 +1249,7 @@ class SchemaQueryValidatorTest {
         FunctionCatalog catalog = name -> "lower".equalsIgnoreCase(name)
             ? java.util.Optional.of(FunctionSignature.of(1, 1, FunctionArgKind.NUMERIC_EXPR))
             : java.util.Optional.empty();
-        var customValidator = SchemaQueryValidator.of(SCHEMA, catalog);
+        var customValidator = SchemaStatementValidator.of(SCHEMA, catalog);
 
         Query query = select(
             func("lower", arg(col("u", "name")))
@@ -1267,7 +1267,7 @@ class SchemaQueryValidatorTest {
         FunctionCatalog catalog = name -> "my_agg".equalsIgnoreCase(name)
             ? java.util.Optional.of(FunctionSignature.ofAggregate(1, 1, FunctionArgKind.ANY_EXPR))
             : java.util.Optional.empty();
-        var customValidator = SchemaQueryValidator.of(SCHEMA, catalog);
+        var customValidator = SchemaStatementValidator.of(SCHEMA, catalog);
 
         Query query = select(
             col("u", "status"),
@@ -1286,7 +1286,7 @@ class SchemaQueryValidatorTest {
         FunctionCatalog catalog = name -> "my_agg".equalsIgnoreCase(name)
             ? java.util.Optional.of(FunctionSignature.of(1, 1, FunctionArgKind.ANY_EXPR))
             : java.util.Optional.empty();
-        var customValidator = SchemaQueryValidator.of(SCHEMA, catalog);
+        var customValidator = SchemaStatementValidator.of(SCHEMA, catalog);
 
         Query query = select(
             col("u", "status"),
@@ -1307,7 +1307,7 @@ class SchemaQueryValidatorTest {
         FunctionCatalog catalog = name -> "f_any".equalsIgnoreCase(name)
             ? java.util.Optional.of(FunctionSignature.of(1, 1, FunctionArgKind.ANY_EXPR))
             : java.util.Optional.empty();
-        var customValidator = SchemaQueryValidator.of(SCHEMA, catalog);
+        var customValidator = SchemaStatementValidator.of(SCHEMA, catalog);
 
         Query query = select(func("f_any", starArg())).from(tbl("users").as("u")).build();
         var result = customValidator.validate(query);
@@ -1322,7 +1322,7 @@ class SchemaQueryValidatorTest {
         FunctionCatalog catalog = name -> "f_star_or_expr".equalsIgnoreCase(name)
             ? java.util.Optional.of(FunctionSignature.of(1, 1, FunctionArgKind.STAR_OR_EXPR))
             : java.util.Optional.empty();
-        var customValidator = SchemaQueryValidator.of(SCHEMA, catalog);
+        var customValidator = SchemaStatementValidator.of(SCHEMA, catalog);
 
         Query query = select(func("f_star_or_expr", starArg())).from(tbl("users").as("u")).build();
         var result = customValidator.validate(query);
@@ -1357,7 +1357,7 @@ class SchemaQueryValidatorTest {
 
     @Test
     void validate_acceptsSettingsFactoryWithDefaultBehavior() {
-        var customValidator = SchemaQueryValidator.of(SCHEMA, SchemaValidationSettings.defaults());
+        var customValidator = SchemaStatementValidator.of(SCHEMA, SchemaValidationSettings.defaults());
         Query query = select(star()).from(tbl("users").as("u")).build();
 
         var result = customValidator.validate(query);
@@ -1395,7 +1395,7 @@ class SchemaQueryValidatorTest {
             }
         };
 
-        var customValidator = SchemaQueryValidator.of(SCHEMA, dialect);
+        var customValidator = SchemaStatementValidator.of(SCHEMA, dialect);
         Query query = select(star()).from(tbl("users").as("u")).build();
         var result = customValidator.validate(query);
 
@@ -1896,7 +1896,7 @@ class SchemaQueryValidatorTest {
         FunctionCatalog catalog = name -> "foo".equalsIgnoreCase(name)
             ? java.util.Optional.of(FunctionSignature.of(1, 1, CatalogType.STRING, FunctionArgKind.ANY_EXPR))
             : java.util.Optional.empty();
-        var customValidator = SchemaQueryValidator.of(SCHEMA, catalog);
+        var customValidator = SchemaStatementValidator.of(SCHEMA, catalog);
 
         Query query = select(star())
             .from(tbl("users").as("u"))
@@ -1914,7 +1914,7 @@ class SchemaQueryValidatorTest {
         CatalogSchema unknownSchema = CatalogSchema.of(
             CatalogTable.of("public", "events", CatalogColumn.of("payload", CatalogType.UNKNOWN))
         );
-        var unknownValidator = SchemaQueryValidator.of(unknownSchema);
+        var unknownValidator = SchemaStatementValidator.of(unknownSchema);
 
         Query query = select(star())
             .from(tbl("events").as("e"))
@@ -1964,6 +1964,7 @@ class SchemaQueryValidatorTest {
         assertTrue(result.ok());
     }
 }
+
 
 
 

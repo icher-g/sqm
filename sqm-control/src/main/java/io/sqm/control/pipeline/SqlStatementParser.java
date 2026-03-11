@@ -1,8 +1,9 @@
 package io.sqm.control.pipeline;
 
 import io.sqm.control.execution.ExecutionContext;
-import io.sqm.core.Query;
+import io.sqm.core.Statement;
 import io.sqm.parser.ansi.AnsiSpecs;
+import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.Specs;
@@ -13,21 +14,22 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * Parses SQL text into SQM {@link Query} models.
+ * Parses SQL text into SQM {@link Statement} models.
  */
 @FunctionalInterface
-public interface SqlQueryParser {
+public interface SqlStatementParser {
     /**
      * Creates the default dialect-aware parser used by middleware.
      *
      * <p>The returned parser resolves the parser dialect from {@link ExecutionContext#dialect()} and supports
-     * ANSI plus PostgreSQL aliases ({@code postgresql}, {@code postgres}).</p>
+     * ANSI, MySQL, plus PostgreSQL aliases ({@code postgresql}, {@code postgres}).</p>
      *
      * @return dialect-aware parser
      */
-    static SqlQueryParser standard() {
+    static SqlStatementParser standard() {
         return dialectAware(Map.of(
             "ansi", AnsiSpecs::new,
+            "mysql", MySqlSpecs::new,
             "postgresql", PostgresSpecs::new,
             "postgres", PostgresSpecs::new
         ));
@@ -39,7 +41,7 @@ public interface SqlQueryParser {
      * @param specsByDialect mapping of normalized dialect names to parser specs factories
      * @return dialect-aware parser
      */
-    static SqlQueryParser dialectAware(Map<String, Supplier<Specs>> specsByDialect) {
+    static SqlStatementParser dialectAware(Map<String, Supplier<Specs>> specsByDialect) {
         Objects.requireNonNull(specsByDialect, "specsByDialect must not be null");
         var mappings = Map.copyOf(specsByDialect);
         return (sql, context) -> {
@@ -52,7 +54,7 @@ public interface SqlQueryParser {
             }
 
             var ctx = ParseContext.of(specsFactory.get());
-            var result = ctx.parse(Query.class, sql);
+            var result = ctx.parse(Statement.class, sql);
             if (result.isError() || result.value() == null) {
                 throw new IllegalArgumentException(result.errorMessage());
             }
@@ -61,13 +63,13 @@ public interface SqlQueryParser {
     }
 
     /**
-     * Parses SQL text into a query model for the provided execution context.
+     * Parses SQL text into a statement model for the provided execution context.
      *
      * @param sql     input SQL
      * @param context execution context
-     * @return parsed query model
+     * @return parsed statement model
      */
-    Query parse(String sql, ExecutionContext context);
+    Statement parse(String sql, ExecutionContext context);
 }
 
 

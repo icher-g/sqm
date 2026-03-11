@@ -121,6 +121,49 @@ class SqlFileCodeGeneratorTest {
     }
 
     @Test
+    void generate_supportsMySqlDialectSpecificQueries() throws IOException {
+        var sqlDir = tempDir.resolve("sql-mysql");
+        var outputDir = tempDir.resolve("generated-mysql");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(
+            sqlDir.resolve("user").resolve("null_safe_lookup.sql"),
+            "select * from `users` where `name` <=> :name"
+        );
+
+        var options = SqlFileCodegenOptions.of(sqlDir, outputDir, "io.sqm.codegen.generated", SqlCodegenDialect.MYSQL);
+        var generated = SqlFileCodeGenerator.of(options).generate();
+
+        assertEquals(1, generated.size());
+        var generatedFile = outputDir.resolve(Path.of("io", "sqm", "codegen", "generated", "UserQueries.java"));
+        var source = Files.readString(generatedFile);
+        assertTrue(source.contains("public static SelectQuery nullSafeLookup()"));
+        assertTrue(source.contains("nullSafeEq(param(\"name\"))"));
+    }
+
+    @Test
+    void generate_emitsStatementMethodsForDmlFiles() throws IOException {
+        var sqlDir = tempDir.resolve("sql-dml");
+        var outputDir = tempDir.resolve("generated-dml");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(sqlDir.resolve("user").resolve("insert_user.sql"), "insert into users (id, name) values (1, 'alice')");
+        Files.writeString(sqlDir.resolve("user").resolve("update_user.sql"), "update users set name = 'bob' where id = 1");
+        Files.writeString(sqlDir.resolve("user").resolve("delete_user.sql"), "delete from users where id = 1");
+
+        var options = SqlFileCodegenOptions.of(sqlDir, outputDir, "io.sqm.codegen.generated", SqlCodegenDialect.ANSI);
+        var generated = SqlFileCodeGenerator.of(options).generate();
+
+        assertEquals(1, generated.size());
+        var generatedFile = outputDir.resolve(Path.of("io", "sqm", "codegen", "generated", "UserQueries.java"));
+        var source = Files.readString(generatedFile);
+        assertTrue(source.contains("public static DeleteStatement deleteUser()"));
+        assertTrue(source.contains("public static InsertStatement insertUser()"));
+        assertTrue(source.contains("public static UpdateStatement updateUser()"));
+        assertTrue(source.contains("return delete(tbl(\"users\"))"));
+        assertTrue(source.contains("return insert(tbl(\"users\"))"));
+        assertTrue(source.contains("return update(tbl(\"users\"))"));
+    }
+
+    @Test
     void generate_emitsOverClause() throws IOException {
         var sqlDir = tempDir.resolve("sql");
         var outputDir = tempDir.resolve("generated");

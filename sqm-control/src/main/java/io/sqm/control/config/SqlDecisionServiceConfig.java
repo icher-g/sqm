@@ -2,10 +2,10 @@ package io.sqm.control.config;
 
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.control.audit.AuditEventPublisher;
-import io.sqm.control.pipeline.SqlQueryParser;
-import io.sqm.control.pipeline.SqlQueryRenderer;
-import io.sqm.control.pipeline.SqlQueryRewriter;
-import io.sqm.control.pipeline.SqlQueryValidator;
+import io.sqm.control.pipeline.SqlStatementParser;
+import io.sqm.control.pipeline.SqlStatementRenderer;
+import io.sqm.control.pipeline.SqlStatementRewriter;
+import io.sqm.control.pipeline.SqlStatementValidator;
 import io.sqm.control.rewrite.BuiltInRewriteRule;
 import io.sqm.control.rewrite.BuiltInRewriteSettings;
 import io.sqm.control.service.SqlDecisionEngine;
@@ -24,18 +24,18 @@ import java.util.Set;
  * customization methods for optional concerns (audit, explain, parser, guardrails),
  * avoiding large overload sets on {@link SqlDecisionService}.</p>
  *
- * @param engine         decision engine used to evaluate parsed queries.
+ * @param engine         decision engine used to evaluate parsed statements.
  * @param explainer      decision explainer used to enrich audit output.
  * @param auditPublisher audit event publisher implementation.
  * @param guardrails     runtime guardrails applied before execution.
- * @param queryParser    SQL parser used to parse incoming query text.
+ * @param statementParser SQL parser used to parse incoming statement text.
  */
 public record SqlDecisionServiceConfig(
     SqlDecisionEngine engine,
     SqlDecisionExplainer explainer,
     AuditEventPublisher auditPublisher,
     RuntimeGuardrails guardrails,
-    SqlQueryParser queryParser) {
+    SqlStatementParser statementParser) {
 
     /**
      * Validates required configuration fields.
@@ -44,11 +44,11 @@ public record SqlDecisionServiceConfig(
      * @param explainer      explanation strategy
      * @param auditPublisher audit publisher
      * @param guardrails     runtime guardrails
-     * @param queryParser    SQL parser
+     * @param statementParser SQL parser
      */
     public SqlDecisionServiceConfig {
         Objects.requireNonNull(engine, "engine must not be null");
-        Objects.requireNonNull(queryParser, "queryParser must not be null");
+        Objects.requireNonNull(statementParser, "statementParser must not be null");
     }
 
     /**
@@ -74,10 +74,10 @@ public record SqlDecisionServiceConfig(
         private SqlDecisionExplainer explainer;
         private AuditEventPublisher eventPublisher;
         private RuntimeGuardrails guardrails;
-        private SqlQueryParser queryParser;
-        private SqlQueryValidator queryValidator;
-        private SqlQueryRenderer queryRenderer;
-        private SqlQueryRewriter queryRewriter;
+        private SqlStatementParser statementParser;
+        private SqlStatementValidator statementValidator;
+        private SqlStatementRenderer statementRenderer;
+        private SqlStatementRewriter statementRewriter;
 
         /**
          * Creates a builder bound to a catalog schema.
@@ -197,44 +197,44 @@ public record SqlDecisionServiceConfig(
         /**
          * Sets custom SQL parser.
          *
-         * @param queryParser SQL parser
+         * @param statementParser SQL parser
          * @return builder instance
          */
-        public Builder queryParser(SqlQueryParser queryParser) {
-            this.queryParser = queryParser;
+        public Builder statementParser(SqlStatementParser statementParser) {
+            this.statementParser = statementParser;
             return this;
         }
 
         /**
          * Sets custom query validator.
          *
-         * @param queryValidator query validator
+         * @param statementValidator statement validator
          * @return builder instance
          */
-        public Builder queryValidator(SqlQueryValidator queryValidator) {
-            this.queryValidator = queryValidator;
+        public Builder statementValidator(SqlStatementValidator statementValidator) {
+            this.statementValidator = statementValidator;
             return this;
         }
 
         /**
          * Sets custom query renderer.
          *
-         * @param queryRenderer query renderer
+         * @param statementRenderer query renderer
          * @return builder instance
          */
-        public Builder queryRenderer(SqlQueryRenderer queryRenderer) {
-            this.queryRenderer = queryRenderer;
+        public Builder statementRenderer(SqlStatementRenderer statementRenderer) {
+            this.statementRenderer = statementRenderer;
             return this;
         }
 
         /**
-         * Sets custom query rewriter.
+         * Sets custom statement rewriter.
          *
-         * @param sqlQueryRewriter query rewriter
+         * @param statementRewriter statement rewriter
          * @return builder instance
          */
-        public Builder queryRewriter(SqlQueryRewriter sqlQueryRewriter) {
-            this.queryRewriter = sqlQueryRewriter;
+        public Builder statementRewriter(SqlStatementRewriter statementRewriter) {
+            this.statementRewriter = statementRewriter;
             return this;
         }
 
@@ -244,22 +244,22 @@ public record SqlDecisionServiceConfig(
          * @return validation-only middleware config
          */
         public SqlDecisionServiceConfig buildValidationConfig() {
-            if (queryParser == null) {
-                queryParser = SqlQueryParser.standard();
+            if (statementParser == null) {
+                statementParser = SqlStatementParser.standard();
             }
 
-            if (queryValidator == null) {
-                queryValidator = SqlQueryValidator.standard(schema, resolveValidationSettings());
+            if (statementValidator == null) {
+                statementValidator = SqlStatementValidator.standard(schema, resolveValidationSettings());
             }
 
-            if (queryRenderer == null) {
-                queryRenderer = (query, context) -> {
-                    throw new IllegalStateException("queryRenderer must be configured when rewrite rules are enabled");
+            if (statementRenderer == null) {
+                statementRenderer = (query, context) -> {
+                    throw new IllegalStateException("statementRenderer must be configured when rewrite rules are enabled");
                 };
             }
 
-            if (queryRewriter == null) {
-                queryRewriter = SqlQueryRewriter.noop();
+            if (statementRewriter == null) {
+                statementRewriter = SqlStatementRewriter.noop();
             }
 
             if (guardrails == null) {
@@ -275,11 +275,11 @@ public record SqlDecisionServiceConfig(
             }
 
             return new SqlDecisionServiceConfig(
-                SqlDecisionEngine.of(queryValidator, queryRewriter, queryRenderer),
+                SqlDecisionEngine.of(statementValidator, statementRewriter, statementRenderer),
                 explainer,
                 eventPublisher,
                 guardrails,
-                queryParser
+                statementParser
             );
         }
 
@@ -295,19 +295,19 @@ public record SqlDecisionServiceConfig(
          * @return validation+rewrite middleware config
          */
         public SqlDecisionServiceConfig buildValidationAndRewriteConfig() {
-            if (queryParser == null) {
-                queryParser = SqlQueryParser.standard();
+            if (statementParser == null) {
+                statementParser = SqlStatementParser.standard();
             }
 
-            if (queryValidator == null) {
-                queryValidator = SqlQueryValidator.standard(schema, resolveValidationSettings());
+            if (statementValidator == null) {
+                statementValidator = SqlStatementValidator.standard(schema, resolveValidationSettings());
             }
 
-            if (queryRenderer == null) {
-                queryRenderer = SqlQueryRenderer.standard();
+            if (statementRenderer == null) {
+                statementRenderer = SqlStatementRenderer.standard();
             }
 
-            if (queryRewriter == null) {
+            if (statementRewriter == null) {
                 if (rewriteSettings == null) {
                     rewriteSettings = BuiltInRewriteSettings.defaults();
                 }
@@ -316,7 +316,7 @@ public record SqlDecisionServiceConfig(
                     rewriteRules = Set.of();
                 }
 
-                queryRewriter = SqlQueryRewriter.builder()
+                statementRewriter = SqlStatementRewriter.builder()
                     .schema(schema)
                     .settings(rewriteSettings)
                     .rules(rewriteRules)
@@ -336,11 +336,11 @@ public record SqlDecisionServiceConfig(
             }
 
             return new SqlDecisionServiceConfig(
-                SqlDecisionEngine.of(queryValidator, queryRewriter, queryRenderer),
+                SqlDecisionEngine.of(statementValidator, statementRewriter, statementRenderer),
                 explainer,
                 eventPublisher,
                 guardrails,
-                queryParser
+                statementParser
             );
         }
 
@@ -375,7 +375,3 @@ public record SqlDecisionServiceConfig(
         }
     }
 }
-
-
-
-

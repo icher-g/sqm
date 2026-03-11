@@ -23,7 +23,7 @@ public final class AnalyticsQueries {
     /**
      * SQL source: analytics/ranked.sql
      *
-     * @return query model for this SQL source.
+     * @return statement model for this SQL source.
      */
     public static SelectQuery ranked() {
         var builder = SelectQuery.builder();

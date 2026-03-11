@@ -60,6 +60,8 @@ public final class SchemaValidationRuleRegistry {
         var scalarSubqueryShapeValidator = new DefaultScalarSubqueryShapeValidator(projectionShapeInspector);
         var rules = new ArrayList<>(List.of(
             new StructuralLimitsValidationRule(limits),
+            new InsertStatementValidationRule(),
+            new AssignmentTargetValidationRule(),
             new ColumnReferenceValidationRule(),
             new ColumnAccessValidationRule(),
             new ComparisonTypeValidationRule(scalarSubqueryShapeValidator),

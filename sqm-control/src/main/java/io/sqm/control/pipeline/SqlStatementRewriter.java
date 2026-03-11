@@ -6,7 +6,7 @@ import io.sqm.control.execution.ExecutionContext;
 import io.sqm.control.rewrite.BuiltInRewriteRule;
 import io.sqm.control.rewrite.BuiltInRewriteRules;
 import io.sqm.control.rewrite.BuiltInRewriteSettings;
-import io.sqm.core.Query;
+import io.sqm.core.Statement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,10 +14,10 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Composes and applies query rewrite rules before final decision rendering.
+ * Composes and applies statement rewrite rules before final decision rendering.
  */
 @FunctionalInterface
-public interface SqlQueryRewriter {
+public interface SqlStatementRewriter {
     /**
      * Creates a builder for composing a rewriter from built-in rule sources and optional schema/settings context.
      *
@@ -28,12 +28,12 @@ public interface SqlQueryRewriter {
     }
 
     /**
-     * Returns a rewriter that leaves queries unchanged.
+     * Returns a rewriter that leaves statements unchanged.
      *
      * @return no-op rewriter
      */
-    static SqlQueryRewriter noop() {
-        return (query, context) -> QueryRewriteResult.unchanged(query);
+    static SqlStatementRewriter noop() {
+        return (statement, context) -> StatementRewriteResult.unchanged(statement);
     }
 
     /**
@@ -42,32 +42,32 @@ public interface SqlQueryRewriter {
      * @param rules rewrite rules
      * @return composed rewriter
      */
-    static SqlQueryRewriter chain(QueryRewriteRule... rules) {
+    static SqlStatementRewriter chain(StatementRewriteRule... rules) {
         Objects.requireNonNull(rules, "rules must not be null");
         var copy = List.of(rules);
         if (copy.isEmpty()) {
             return noop();
         }
 
-        for (QueryRewriteRule rule : copy) {
+        for (StatementRewriteRule rule : copy) {
             Objects.requireNonNull(rule, "rules must not contain null values");
         }
 
-        return (query, context) -> {
-            Objects.requireNonNull(query, "query must not be null");
+        return (statement, context) -> {
+            Objects.requireNonNull(statement, "statement must not be null");
             Objects.requireNonNull(context, "context must not be null");
 
-            Query current = query;
+            Statement current = statement;
             boolean rewritten = false;
             List<String> appliedRuleIds = new ArrayList<>();
             ReasonCode primaryReasonCode = ReasonCode.NONE;
 
-            for (QueryRewriteRule rule : copy) {
-                QueryRewriteResult result = Objects.requireNonNull(
+            for (StatementRewriteRule rule : copy) {
+                StatementRewriteResult result = Objects.requireNonNull(
                     rule.apply(current, context),
                     "rewrite rule must not return null"
                 );
-                current = result.query();
+                current = result.statement();
                 if (result.rewritten() && !rewritten) {
                     primaryReasonCode = result.primaryReasonCode();
                 }
@@ -76,22 +76,22 @@ public interface SqlQueryRewriter {
             }
 
             return rewritten
-                ? new QueryRewriteResult(current, true, appliedRuleIds, primaryReasonCode)
-                : QueryRewriteResult.unchanged(current);
+                ? new StatementRewriteResult(current, true, appliedRuleIds, primaryReasonCode)
+                : StatementRewriteResult.unchanged(current);
         };
     }
 
     /**
-     * Rewrites the provided query model for the given execution context.
+     * Rewrites the provided statement model for the given execution context.
      *
-     * @param query   parsed query model
+     * @param statement parsed statement model
      * @param context execution context
      * @return rewrite result
      */
-    QueryRewriteResult rewrite(Query query, ExecutionContext context);
+    StatementRewriteResult rewrite(Statement statement, ExecutionContext context);
 
     /**
-     * Builder for creating {@link SqlQueryRewriter} instances from a single configuration point.
+     * Builder for creating {@link SqlStatementRewriter} instances from a single configuration point.
      *
      * <p>Built-in rules are sourced from {@link BuiltInRewriteRules} and then composed in-order
      * into a runnable rewriter.</p>
@@ -153,21 +153,21 @@ public interface SqlQueryRewriter {
          *
          * @return configured rewriter
          */
-        public SqlQueryRewriter build() {
-            List<QueryRewriteRule> queryRules;
+        public SqlStatementRewriter build() {
+            List<StatementRewriteRule> statementRules;
 
             if (rules.isEmpty()) {
-                queryRules = schema == null
+                statementRules = schema == null
                     ? BuiltInRewriteRules.allAvailable(settings)
                     : BuiltInRewriteRules.allAvailable(schema, settings);
             }
             else {
-                queryRules = schema == null
+                statementRules = schema == null
                     ? BuiltInRewriteRules.selected(settings, rules)
                     : BuiltInRewriteRules.selected(schema, settings, rules);
             }
 
-            return chain(queryRules.toArray(QueryRewriteRule[]::new));
+            return chain(statementRules.toArray(StatementRewriteRule[]::new));
         }
     }
 }

@@ -8,6 +8,7 @@ import io.sqm.control.pipeline.*;
 import io.sqm.control.rewrite.*;
 import io.sqm.control.service.*;
 
+import io.sqm.core.Query;
 import io.sqm.control.rewrite.TenantPredicateRewriteRule;
 import org.junit.jupiter.api.Test;
 
@@ -31,6 +32,10 @@ class TenantPredicateRewriteRuleTest {
         ExecutionMode.ANALYZE
     );
 
+    private static Query parseQuery(String sql) {
+        return (Query) SqlStatementParser.standard().parse(sql, TENANT_ANALYZE);
+    }
+
     @Test
     void injects_tenant_predicate_into_top_level_select_tables() {
         var settings = BuiltInRewriteSettings.builder()
@@ -43,7 +48,7 @@ class TenantPredicateRewriteRuleTest {
             .build();
 
         var result = rule.apply(query, TENANT_ANALYZE);
-        var rendered = SqlQueryRenderer.standard().render(result.query(), TENANT_ANALYZE).sql().toLowerCase();
+        var rendered = SqlStatementRenderer.standard().render(result.statement(), TENANT_ANALYZE).sql().toLowerCase();
 
         assertTrue(result.rewritten());
         assertEquals("tenant-predicate", result.appliedRuleIds().getFirst());
@@ -64,7 +69,7 @@ class TenantPredicateRewriteRuleTest {
             .build();
 
         var result = rule.apply(query, TENANT_ANALYZE);
-        var rendered = SqlQueryRenderer.standard().render(result.query(), TENANT_ANALYZE).sql().toLowerCase();
+        var rendered = SqlStatementRenderer.standard().render(result.statement(), TENANT_ANALYZE).sql().toLowerCase();
 
         assertTrue(result.rewritten());
         assertEquals(ReasonCode.REWRITE_TENANT_PREDICATE, result.primaryReasonCode());
@@ -85,7 +90,7 @@ class TenantPredicateRewriteRuleTest {
             .build();
 
         var result = rule.apply(query, TENANT_ANALYZE);
-        var rendered = SqlQueryRenderer.standard().render(result.query(), TENANT_ANALYZE).sql().toLowerCase();
+        var rendered = SqlStatementRenderer.standard().render(result.statement(), TENANT_ANALYZE).sql().toLowerCase();
 
         assertTrue(result.rewritten());
         assertTrue(rendered.contains("u.active = true"));
@@ -197,7 +202,7 @@ class TenantPredicateRewriteRuleTest {
             .build();
 
         var result = rule.apply(query, TENANT_ANALYZE);
-        var rendered = SqlQueryRenderer.standard().render(result.query(), TENANT_ANALYZE).sql().toLowerCase();
+        var rendered = SqlStatementRenderer.standard().render(result.statement(), TENANT_ANALYZE).sql().toLowerCase();
 
         assertTrue(result.rewritten());
         assertTrue(rendered.contains("u.tenant_id = 'tenant_a'"));
@@ -218,7 +223,7 @@ class TenantPredicateRewriteRuleTest {
             .build();
 
         var rewritten = rule.apply(query, bindContext);
-        var rendered = SqlQueryRenderer.standard().render(rewritten.query(), bindContext);
+        var rendered = SqlStatementRenderer.standard().render(rewritten.statement(), bindContext);
 
         assertTrue(rewritten.rewritten());
         assertEquals(ReasonCode.REWRITE_TENANT_PREDICATE, rewritten.primaryReasonCode());
@@ -241,7 +246,7 @@ class TenantPredicateRewriteRuleTest {
             .build();
 
         var rewritten = rule.apply(query, TENANT_ANALYZE);
-        var rendered = SqlQueryRenderer.standard().render(rewritten.query(), TENANT_ANALYZE);
+        var rendered = SqlStatementRenderer.standard().render(rewritten.statement(), TENANT_ANALYZE);
 
         assertTrue(rewritten.rewritten());
         assertEquals(List.of(), rendered.params());
@@ -287,7 +292,7 @@ class TenantPredicateRewriteRuleTest {
             .build();
 
         var result = rule.apply(query, TENANT_ANALYZE);
-        var rendered = SqlQueryRenderer.standard().render(result.query(), TENANT_ANALYZE).sql().toLowerCase();
+        var rendered = SqlStatementRenderer.standard().render(result.statement(), TENANT_ANALYZE).sql().toLowerCase();
 
         assertTrue(result.rewritten());
         assertTrue(rendered.contains("tenant_b_id"));
@@ -305,7 +310,7 @@ class TenantPredicateRewriteRuleTest {
             .build();
 
         var result = rule.apply(query, TENANT_ANALYZE);
-        var rendered = SqlQueryRenderer.standard().render(result.query(), TENANT_ANALYZE).sql().toLowerCase();
+        var rendered = SqlStatementRenderer.standard().render(result.statement(), TENANT_ANALYZE).sql().toLowerCase();
 
         assertTrue(result.rewritten());
         assertTrue(rendered.contains("users.tenant_id"));
@@ -319,13 +324,10 @@ class TenantPredicateRewriteRuleTest {
             .build();
         var rule = TenantPredicateRewriteRule.of(settings);
 
-        var query = SqlQueryParser.standard().parse(
-            "with x as (select 1) select u.id from public.users u",
-            TENANT_ANALYZE
-        );
+        var query = parseQuery("with x as (select 1) select u.id from public.users u");
 
         var result = rule.apply(query, TENANT_ANALYZE);
-        var rendered = SqlQueryRenderer.standard().render(result.query(), TENANT_ANALYZE).sql().toLowerCase();
+        var rendered = SqlStatementRenderer.standard().render(result.statement(), TENANT_ANALYZE).sql().toLowerCase();
 
         assertTrue(result.rewritten());
         assertTrue(rendered.contains("u.tenant_id"));
@@ -338,13 +340,10 @@ class TenantPredicateRewriteRuleTest {
             .build();
         var rule = TenantPredicateRewriteRule.of(settings);
 
-        var query = SqlQueryParser.standard().parse(
-            "select u.id from lateral public.users u",
-            TENANT_ANALYZE
-        );
+        var query = parseQuery("select u.id from lateral public.users u");
 
         var result = rule.apply(query, TENANT_ANALYZE);
-        var rendered = SqlQueryRenderer.standard().render(result.query(), TENANT_ANALYZE).sql().toLowerCase();
+        var rendered = SqlStatementRenderer.standard().render(result.statement(), TENANT_ANALYZE).sql().toLowerCase();
 
         assertTrue(result.rewritten());
         assertTrue(rendered.contains("u.tenant_id"));

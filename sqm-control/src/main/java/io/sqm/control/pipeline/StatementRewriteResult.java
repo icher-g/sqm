@@ -1,21 +1,21 @@
 package io.sqm.control.pipeline;
 
 import io.sqm.control.decision.ReasonCode;
-import io.sqm.core.Query;
+import io.sqm.core.Statement;
 
 import java.util.List;
 import java.util.Objects;
 
 /**
- * Result of applying one or more query rewrite rules.
+ * Result of applying one or more statement rewrite rules.
  *
- * @param query             resulting query model after rewrite evaluation
+ * @param statement         resulting statement model after rewrite evaluation
  * @param rewritten         whether any rewrite was applied
  * @param appliedRuleIds    identifiers of applied rewrite rules in application order
  * @param primaryReasonCode primary rewrite reason code, or {@link ReasonCode#NONE} when unchanged
  */
-public record QueryRewriteResult(
-    Query query,
+public record StatementRewriteResult(
+    Statement statement,
     boolean rewritten,
     List<String> appliedRuleIds,
     ReasonCode primaryReasonCode
@@ -24,13 +24,13 @@ public record QueryRewriteResult(
     /**
      * Validates and normalizes the rewrite result.
      *
-     * @param query             resulting query model
+     * @param statement         resulting statement model
      * @param rewritten         whether any rewrite was applied
      * @param appliedRuleIds    identifiers of applied rewrite rules
      * @param primaryReasonCode primary reason code for rewrite decisions
      */
-    public QueryRewriteResult {
-        Objects.requireNonNull(query, "query must not be null");
+    public StatementRewriteResult {
+        Objects.requireNonNull(statement, "statement must not be null");
         Objects.requireNonNull(appliedRuleIds, "appliedRuleIds must not be null");
         Objects.requireNonNull(primaryReasonCode, "primaryReasonCode must not be null");
         appliedRuleIds = List.copyOf(appliedRuleIds);
@@ -56,23 +56,23 @@ public record QueryRewriteResult(
     /**
      * Creates a result representing no rewrite.
      *
-     * @param query query model
+     * @param statement statement model
      * @return unchanged rewrite result
      */
-    public static QueryRewriteResult unchanged(Query query) {
-        return new QueryRewriteResult(query, false, List.of(), ReasonCode.NONE);
+    public static StatementRewriteResult unchanged(Statement statement) {
+        return new StatementRewriteResult(statement, false, List.of(), ReasonCode.NONE);
     }
 
     /**
      * Creates a result representing a rewrite by a single rule.
      *
-     * @param query      rewritten query model
+     * @param statement  rewritten statement model
      * @param ruleId     applied rule identifier
      * @param reasonCode primary rewrite reason code
      * @return rewritten result
      */
-    public static QueryRewriteResult rewritten(Query query, String ruleId, ReasonCode reasonCode) {
-        return new QueryRewriteResult(query, true, List.of(ruleId), reasonCode);
+    public static StatementRewriteResult rewritten(Statement statement, String ruleId, ReasonCode reasonCode) {
+        return new StatementRewriteResult(statement, true, List.of(ruleId), reasonCode);
     }
 }
 

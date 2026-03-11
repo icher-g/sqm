@@ -11,7 +11,7 @@ It is currently dialect-agnostic by default (core SQL semantics), with extension
 ## Public API
 
 - Main validator:
-  - `io.sqm.validate.schema.SchemaQueryValidator`
+  - `io.sqm.validate.schema.SchemaStatementValidator`
 - Schema model:
   - `io.sqm.catalog.model.CatalogSchema`
   - `io.sqm.catalog.model.CatalogTable`
@@ -237,12 +237,12 @@ Use `SchemaValidationDialect` to package dialect-specific behavior:
 - additional rules
 
 Create validator with:
-- `SchemaQueryValidator.of(schema, settings)`
-- `SchemaQueryValidator.of(schema, dialect)`
+- `SchemaStatementValidator.of(schema, settings)`
+- `SchemaStatementValidator.of(schema, dialect)`
 
 Default behavior is unchanged when using:
-- `SchemaQueryValidator.of(schema)`
-- `SchemaQueryValidator.of(schema, functionCatalog)`
+- `SchemaStatementValidator.of(schema)`
+- `SchemaStatementValidator.of(schema, functionCatalog)`
 
 ## Known Constraints (Current State)
 

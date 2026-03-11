@@ -1,16 +1,24 @@
 package io.sqm.control;
 
-import io.sqm.control.audit.*;
-import io.sqm.control.config.*;
-import io.sqm.control.decision.*;
-import io.sqm.control.execution.*;
-import io.sqm.control.pipeline.*;
-import io.sqm.control.rewrite.*;
-import io.sqm.control.service.*;
-
+import io.sqm.control.decision.DecisionKind;
+import io.sqm.control.decision.ReasonCode;
+import io.sqm.control.execution.ExecutionContext;
+import io.sqm.control.execution.ExecutionMode;
+import io.sqm.control.execution.ParameterizationMode;
+import io.sqm.control.pipeline.SqlStatementRenderer;
+import io.sqm.control.pipeline.SqlStatementRewriter;
+import io.sqm.control.pipeline.SqlStatementValidator;
+import io.sqm.control.pipeline.StatementRenderResult;
+import io.sqm.control.pipeline.StatementRewriteResult;
+import io.sqm.control.pipeline.StatementValidateResult;
+import io.sqm.control.rewrite.BuiltInRewriteSettings;
+import io.sqm.control.rewrite.TenantPredicateRewriteRule;
+import io.sqm.control.rewrite.TenantRewriteTablePolicy;
+import io.sqm.control.service.SqlDecisionEngine;
+import io.sqm.core.DeleteStatement;
 import io.sqm.core.Expression;
 import io.sqm.core.Query;
-import io.sqm.control.rewrite.TenantPredicateRewriteRule;
+import io.sqm.core.UpdateStatement;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,7 +27,9 @@ import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.update;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -27,9 +37,9 @@ class SqlDecisionEngineTest {
 
     @Test
     void factory_validates_required_dependencies() {
-        var validator = (SqlQueryValidator) (query, context) -> QueryValidateResult.ok();
-        var rewriter = SqlQueryRewriter.noop();
-        var renderer = (SqlQueryRenderer) (query, context) -> QueryRenderResult.of("select 1");
+        var validator = (SqlStatementValidator) (query, context) -> StatementValidateResult.ok();
+        var rewriter = SqlStatementRewriter.noop();
+        var renderer = (SqlStatementRenderer) (query, context) -> StatementRenderResult.of("select 1");
 
         assertThrows(NullPointerException.class, () -> SqlDecisionEngine.of(null, rewriter, renderer));
         assertThrows(NullPointerException.class, () -> SqlDecisionEngine.of(validator, null, renderer));
@@ -46,12 +56,12 @@ class SqlDecisionEngineTest {
             (q, context) -> {
                 validatorCall[0]++;
                 if (validatorCall[0] == 1) {
-                    return QueryValidateResult.ok();
+                    return StatementValidateResult.ok();
                 }
-                return QueryValidateResult.failure(ReasonCode.DENY_MAX_SELECT_COLUMNS, "too many columns");
+                return StatementValidateResult.failure(ReasonCode.DENY_MAX_SELECT_COLUMNS, "too many columns");
             },
-            (q, context) -> QueryRewriteResult.rewritten(rewritten, "r1", ReasonCode.REWRITE_LIMIT),
-            (q, context) -> QueryRenderResult.of("select 2")
+            (q, context) -> StatementRewriteResult.rewritten(rewritten, "r1", ReasonCode.REWRITE_LIMIT),
+            (q, context) -> StatementRenderResult.of("select 2")
         );
 
         var result = engine.evaluate(query, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
@@ -68,9 +78,9 @@ class SqlDecisionEngineTest {
         var rewritten = Query.select(Expression.literal(2)).build();
 
         var engine = SqlDecisionEngine.of(
-            (q, context) -> QueryValidateResult.ok(),
-            (q, context) -> QueryRewriteResult.rewritten(rewritten, "limit-injection", ReasonCode.REWRITE_LIMIT),
-            (q, context) -> QueryRenderResult.of("select ?", List.of(2L))
+            (q, context) -> StatementValidateResult.ok(),
+            (q, context) -> StatementRewriteResult.rewritten(rewritten, "limit-injection", ReasonCode.REWRITE_LIMIT),
+            (q, context) -> StatementRenderResult.of("select ?", List.of(2L))
         );
 
         var result = engine.evaluate(
@@ -83,6 +93,7 @@ class SqlDecisionEngineTest {
         assertEquals("select ?", result.rewrittenSql());
         assertEquals(List.of(2L), result.sqlParams());
         assertTrue(result.message().contains("limit-injection"));
+        assertTrue(result.fingerprint() != null && !result.fingerprint().isBlank());
     }
 
     @Test
@@ -97,9 +108,9 @@ class SqlDecisionEngineTest {
             .build();
 
         var engine = SqlDecisionEngine.of(
-            (q, context) -> QueryValidateResult.ok(),
-            SqlQueryRewriter.chain(TenantPredicateRewriteRule.of(settings)),
-            SqlQueryRenderer.standard()
+            (q, context) -> StatementValidateResult.ok(),
+            SqlStatementRewriter.chain(TenantPredicateRewriteRule.of(settings)),
+            SqlStatementRenderer.standard()
         );
 
         var result = engine.evaluate(
@@ -114,6 +125,46 @@ class SqlDecisionEngineTest {
         assertEquals(7L, ((Number) result.sqlParams().getFirst()).longValue());
         assertEquals("tenant_a", result.sqlParams().get(1));
     }
+
+    @Test
+    void evaluate_rewrites_dml_statement_when_statement_rewriter_changes_it() {
+        UpdateStatement input = update("users")
+            .set(io.sqm.core.Identifier.of("name"), lit("alice"))
+            .where(col("id").eq(lit(1)))
+            .build();
+        UpdateStatement rewritten = update("users")
+            .set(io.sqm.core.Identifier.of("name"), lit("alice"))
+            .where(col("id").eq(lit(1)).and(col("tenant_id").eq(lit("tenant_a"))))
+            .build();
+
+        var engine = SqlDecisionEngine.of(
+            (q, context) -> StatementValidateResult.ok(),
+            (q, context) -> StatementRewriteResult.rewritten(rewritten, "tenant-guard", ReasonCode.REWRITE_TENANT_PREDICATE),
+            SqlStatementRenderer.standard()
+        );
+
+        var result = engine.evaluate(
+            input,
+            ExecutionContext.of("mysql", "alice", "tenant_a", ExecutionMode.ANALYZE)
+        );
+
+        assertEquals(DecisionKind.REWRITE, result.kind());
+        assertEquals(ReasonCode.REWRITE_TENANT_PREDICATE, result.reasonCode());
+        assertTrue(result.rewrittenSql().toLowerCase().contains("tenant_id"));
+        assertNull(result.fingerprint());
+    }
+
+    @Test
+    void evaluate_allows_dml_statement_without_statement_rewrite_path() {
+        var engine = SqlDecisionEngine.of(
+            (q, context) -> StatementValidateResult.ok(),
+            SqlStatementRewriter.noop(),
+            SqlStatementRenderer.standard()
+        );
+
+        var result = engine.evaluate(DeleteStatement.of(tbl("users")), ExecutionContext.of("mysql", ExecutionMode.ANALYZE));
+
+        assertEquals(DecisionKind.ALLOW, result.kind());
+        assertEquals(ReasonCode.NONE, result.reasonCode());
+    }
 }
-
-
