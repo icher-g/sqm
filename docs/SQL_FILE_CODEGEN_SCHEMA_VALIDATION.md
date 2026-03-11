@@ -4,7 +4,7 @@ This document describes schema-backed validation in `sqm-codegen-maven-plugin` a
 
 ## Overview
 
-`sqm-codegen-maven-plugin:generate` can validate parsed SQL query models against a database schema before emitting Java sources.
+`sqm-codegen-maven-plugin:generate` can validate parsed SQL statement models against a database schema before emitting Java sources.
 
 Schema source options:
 
@@ -54,13 +54,30 @@ Validation is executed after parsing and before Java emission.
 </plugin>
 ```
 
+### 3) JDBC validation for MySQL
+
+```xml
+<plugin>
+  <groupId>io.sqm</groupId>
+  <artifactId>sqm-codegen-maven-plugin</artifactId>
+  <version>${project.version}</version>
+  <configuration>
+    <dialect>mysql</dialect>
+    <schemaProvider>jdbc</schemaProvider>
+    <schemaJdbcUrl>jdbc:mysql://localhost:3306/app</schemaJdbcUrl>
+    <schemaJdbcServerId>app-db</schemaJdbcServerId>
+    <schemaJdbcCatalog>app</schemaJdbcCatalog>
+  </configuration>
+</plugin>
+```
+
 ## Full Plugin Configuration
 
 ### Base codegen options
 
 - `sqm.codegen.skip` (`false`)
 - `sqm.codegen.dialect` (`ansi`)  
-  Supported: `ansi`, `postgresql` (`postgres`, `pg` aliases).
+  Supported: `ansi`, `postgresql` (`postgres`, `pg` aliases), `mysql`.
 - `sqm.codegen.basePackage` (`io.sqm.codegen.generated`)
 - `sqm.codegen.sqlDirectory` (`${project.basedir}/src/main/sql`)
 - `sqm.codegen.generatedSourcesDirectory` (`${project.build.directory}/generated-sources/sqm-codegen`)
@@ -98,6 +115,20 @@ Validation is executed after parsing and before Java emission.
 - `sqm.codegen.tableExcludePatterns` (optional comma-separated regex list)
 - `sqm.codegen.schemaCacheExpectedDatabaseProduct` (optional)
 - `sqm.codegen.schemaCacheExpectedDatabaseMajorVersion` (optional)
+
+## Supported Schema Provider Combinations
+
+| Parse/validation dialect | `schemaProvider=json` | `schemaProvider=jdbc` | JDBC type mapper |
+| --- | --- | --- | --- |
+| `ansi` | Supported | Supported | default JDBC mapper |
+| `postgresql` | Supported | Supported | PostgreSQL-aware mapper |
+| `mysql` | Supported | Supported | MySQL-aware mapper |
+
+Current JDBC constraint:
+
+- PostgreSQL gets a dedicated native type mapper.
+- MySQL now gets a dedicated native type mapper via `sqm-catalog-mysql`.
+- The plugin bundles PostgreSQL and MySQL JDBC drivers so either JDBC URL family can be used without adding a separate driver dependency to the consuming build.
 
 ## Credential Resolution (JDBC)
 

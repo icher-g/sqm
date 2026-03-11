@@ -1,5 +1,9 @@
 package io.sqm.codegen.maven;
 
+import io.sqm.catalog.jdbc.DefaultSqlTypeMapper;
+import io.sqm.catalog.mysql.MySqlSqlTypeMapper;
+import io.sqm.catalog.postgresql.PostgresSqlTypeMapper;
+import io.sqm.codegen.SqlCodegenDialect;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -7,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -347,6 +352,51 @@ class GenerateMojoTest {
     }
 
     @Test
+    void jdbcSchemaProvider_acceptsMysqlDialectWhenCacheIsPresent() throws Exception {
+        var sqlDir = tempDir.resolve("sql-jdbc-mysql-cache");
+        var outDir = tempDir.resolve("generated-jdbc-mysql-cache");
+        var cacheFile = tempDir.resolve("schema-mysql-cache.json");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(
+            sqlDir.resolve("user/find_by_email.sql"),
+            "select u.id from users u where u.email = :email",
+            StandardCharsets.UTF_8
+        );
+        Files.writeString(cacheFile, """
+            {
+              "tables": [
+                {
+                  "name": "users",
+                  "columns": [
+                    { "name": "id", "type": "LONG" },
+                    { "name": "email", "type": "STRING" }
+                  ]
+                }
+              ]
+            }
+            """, StandardCharsets.UTF_8);
+
+        var mojo = new GenerateMojo();
+        setField(mojo, "project", new MavenProject());
+        setField(mojo, "skip", false);
+        setField(mojo, "dialect", "mysql");
+        setField(mojo, "basePackage", "io.sqm.codegen.generated");
+        setField(mojo, "sqlDirectory", sqlDir.toString());
+        setField(mojo, "generatedSourcesDirectory", outDir.toString());
+        setField(mojo, "cleanupStaleFiles", true);
+        setField(mojo, "includeGenerationTimestamp", false);
+        setField(mojo, "schemaProvider", "jdbc");
+        setField(mojo, "schemaJdbcUrl", "jdbc:mysql://invalid-host:3306/invalid");
+        setField(mojo, "schemaCachePath", cacheFile.toString());
+        setField(mojo, "schemaCacheRefresh", false);
+        setField(mojo, "schemaCacheWrite", true);
+
+        mojo.execute();
+
+        assertTrue(Files.exists(outDir.resolve("io/sqm/codegen/generated/UserQueries.java")));
+    }
+
+    @Test
     void semanticValidationCanBeConfiguredAsNonFailingAndWritesReport() throws Exception {
         var sqlDir = tempDir.resolve("sql-schema-non-fail");
         var outDir = tempDir.resolve("generated-schema-non-fail");
@@ -441,9 +491,24 @@ class GenerateMojoTest {
         assertTrue(error.getMessage().contains("Failed to load schema for validation"));
     }
 
+    @Test
+    void jdbcTypeMapper_follows_codegen_dialect() throws Exception {
+        var mojo = new GenerateMojo();
+
+        assertInstanceOf(PostgresSqlTypeMapper.class, invokeJdbcTypeMapper(mojo, SqlCodegenDialect.POSTGRESQL));
+        assertInstanceOf(MySqlSqlTypeMapper.class, invokeJdbcTypeMapper(mojo, SqlCodegenDialect.MYSQL));
+        assertInstanceOf(DefaultSqlTypeMapper.class, invokeJdbcTypeMapper(mojo, SqlCodegenDialect.ANSI));
+    }
+
     private static void setField(Object target, String fieldName, Object value) throws Exception {
         Field field = target.getClass().getDeclaredField(fieldName);
         field.setAccessible(true);
         field.set(target, value);
+    }
+
+    private static Object invokeJdbcTypeMapper(GenerateMojo mojo, SqlCodegenDialect dialect) throws Exception {
+        Method method = GenerateMojo.class.getDeclaredMethod("resolveJdbcTypeMapper", SqlCodegenDialect.class);
+        method.setAccessible(true);
+        return method.invoke(mojo, dialect);
     }
 }

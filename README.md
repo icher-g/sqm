@@ -24,11 +24,11 @@ Repository development rules for contributors and coding agents are defined in `
 
 - **Typed immutable SQL model** - composable AST for statements (queries + DML), expressions, predicates, joins, and dialect-specific nodes.
 - **Dialect support** - ANSI + PostgreSQL + MySQL parser/renderer/spec implementations.
-- **Validation framework** - schema-aware query validation with configurable limits and access policies (principal/tenant aware).
+- **Validation framework** - schema-aware statement validation with configurable limits and access policies (principal/tenant aware).
 - **Rewrite and normalization pipeline** - built-in and custom rewrite rules (limit injection, qualification, canonicalization, tenant predicate, etc.).
 - **Middleware decision engine** - analyze/enforce/explain workflow with guardrails, telemetry, auditing, and flow control.
 - **Transport hosts** - REST and MCP runtimes for externalized middleware usage.
-- **DSL and code generation** - fluent query construction plus SQL-file-to-Java generation.
+- **DSL and code generation** - fluent SQL construction plus SQL-file-to-Java generation for queries and DML statements.
 - **JSON support** - model serialization/deserialization via Jackson mixins.
 - **Extensibility** - registries/contracts for dialects, functions, validation rules, and rewrite strategies.
 
@@ -372,12 +372,12 @@ Example request body:
 
 ```json
 {
-    "sql": "select id from users",
+    "sql": "insert ignore into users (id, name) values (1, 'alice')",
     "context": {
-        "dialect": "postgresql",
-        "principal": "agent",
+        "dialect": "mysql",
+        "principal": "agent-app",
         "tenant": "tenant-a",
-        "mode": "ANALYZE",
+        "mode": "EXECUTE",
         "parameterizationMode": "OFF"
     }
 }
@@ -412,7 +412,7 @@ Content-Length: 58
 ```text
 Content-Length: 205
 
-{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"middleware.analyze","arguments":{"sql":"select id from users","context":{"dialect":"postgresql","mode":"ANALYZE","parameterizationMode":"OFF"}}}}
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"middleware.analyze","arguments":{"sql":"delete from users where id = 1","context":{"dialect":"mysql","mode":"ANALYZE","parameterizationMode":"OFF"}}}}
 ```
 
 Tool names exposed by MCP runtime:
@@ -758,7 +758,7 @@ Highlights:
 
 ### Schema Validation (sqm-validate)
 
-SQM includes semantic query validation against a provided schema model.
+SQM includes semantic statement validation against a provided schema model.
 
 Add dependency:
 
@@ -1236,6 +1236,7 @@ price + quantity * 2
 | `sqm-render-postgresql`    | PostgreSQL renderer implementation                                          |
 | `sqm-json`                 | Jackson mixins and JSON serialization support                               |
 | `sqm-catalog`              | Schema/catalog model and providers (JSON/JDBC)                              |
+| `sqm-catalog-mysql`        | MySQL catalog-specific implementations                                      |
 | `sqm-catalog-postgresql`   | PostgreSQL catalog-specific implementations                                 |
 | `sqm-validate`             | Schema-aware semantic validator                                             |
 | `sqm-validate-mysql`       | MySQL validation extensions                                                 |
@@ -1245,7 +1246,7 @@ price + quantity * 2
 | `sqm-middleware-core`      | Runtime factory/services (flow control, telemetry, bootstrap)               |
 | `sqm-middleware-rest`      | Spring Boot REST host adapter                                               |
 | `sqm-middleware-mcp`       | MCP stdio host adapter                                                      |
-| `sqm-codegen`              | SQL-to-Java query model/code generation                                     |
+| `sqm-codegen`              | SQL-to-Java statement model/code generation                                 |
 | `sqm-codegen-maven-plugin` | Maven plugin for SQL file code generation                                   |
 | `sqm-it`                   | Cross-module SQL integration tests                                          |
 | `sqm-middleware-it`        | Middleware end-to-end integration/NFR tests                                 |
@@ -1308,7 +1309,11 @@ Current version in this repository: `0.3.1-SNAPSHOT`.
 Roadmap is tracked in project docs and GitHub issues:
 
 - [docs/ROADMAP.md](docs/ROADMAP.md)
+- [docs/DOWNSTREAM_SUPPORT_MATRIX.md](docs/DOWNSTREAM_SUPPORT_MATRIX.md)
 - https://github.com/icher-g/sqm/issues
+
+Current downstream support spans ANSI, PostgreSQL, and MySQL query and DML flows across
+validation, control/middleware, code generation, and Maven plugin schema-backed generation.
 
 ---
 

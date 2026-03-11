@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- New module: `sqm-catalog-mysql` with dedicated MySQL SQL-type mapping for JDBC schema introspection and codegen plugin validation.
 - DML-R1 statement foundation delivery:
   - statement root support (`Statement`) with query + DML dispatch
   - neutral core `InsertStatement`, `UpdateStatement`, `DeleteStatement` model nodes
@@ -47,6 +48,8 @@
 - MySQL renderer now supports explicit optimizer-hint normalization policies, with default pass-through behavior and opt-in whitespace trimming/normalization.
 
 ### Changed
+- `sqm-codegen-maven-plugin` now selects JDBC schema type mapping by configured dialect and uses dedicated MySQL/PostgreSQL catalog mappers where available.
+- Downstream support documentation now includes a repository-owned support matrix covering ANSI, PostgreSQL, and MySQL query/DML support across validation, control, codegen, plugin, and middleware modules.
 - DML documentation updated to reflect delivered ANSI, PostgreSQL, and MySQL statement support.
 - MySQL docs now reflect delivered DML extensions, canonical alias/index-hint rendering, and current `RETURNING` limitations by version.
 - MySQL roadmap/docs now reflect post-R3 join-semantic hardening with qualified update targets and `STRAIGHT_JOIN`.
@@ -55,6 +58,7 @@
 - MySQL docs and roadmap now reflect prioritized built-in function coverage and canonical rendering of quoted and unquoted MySQL interval-literal date-function inputs.
 - MySQL docs now describe the optional `sqm-validate-mysql` index-hint validation layer.
 - MySQL docs and roadmap now reflect opt-in optimizer-hint normalization controls.
+- Middleware docs and examples now reflect MySQL and DML transport coverage across core, REST, and MCP adapters.
 - Dialect docs and roadmap updated to reflect MySQL R1/R3 completion and PostgreSQL DML extension completion.
 - PostgreSQL documentation now reflects full writable CTE `INSERT ... RETURNING`, `UPDATE ... RETURNING`, and `DELETE ... RETURNING` support.
 ## [v0.3.1] - 2026-03-01
