@@ -94,6 +94,7 @@ class DslAdditionalHelpersTest {
         var column = col(id("ID"));
         var qualifiedColumn = col(id("U"), id("ID"));
         var castExpr = cast(lit(1), type(QualifiedName.of("pg_catalog", "int4")));
+        var interval = interval("1", "DAY");
         var bareOp = op("+");
         var schemaOp = op("pg_catalog", "@>");
         var typedSchemaOp = op(QualifiedName.of(id("pg_catalog")), "||");
@@ -103,6 +104,8 @@ class DslAdditionalHelpersTest {
         assertEquals("ID", column.name().value());
         assertEquals("U", qualifiedColumn.tableAlias().value());
         assertEquals(List.of("pg_catalog", "int4"), castExpr.type().qualifiedName().values());
+        assertEquals("1", interval.value());
+        assertEquals("DAY", interval.qualifier().orElseThrow());
         assertNull(bareOp.schemaName());
         assertEquals(List.of("pg_catalog"), schemaOp.schemaName().values());
         assertEquals(List.of("pg_catalog"), typedSchemaOp.schemaName().values());

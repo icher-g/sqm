@@ -30,6 +30,7 @@ public final class MySqlCapabilities {
                 SqlFeature.DATE_TYPED_LITERAL,
                 SqlFeature.TIME_TYPED_LITERAL,
                 SqlFeature.TIMESTAMP_TYPED_LITERAL,
+                SqlFeature.INTERVAL_LITERAL,
                 SqlFeature.BIT_STRING_LITERAL,
                 SqlFeature.HEX_STRING_LITERAL,
                 SqlFeature.LOCKING_CLAUSE,

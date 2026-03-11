@@ -253,6 +253,27 @@ public final class Dsl {
     }
 
     /**
+     * Creates an {@code INTERVAL '...'} literal without a qualifier.
+     *
+     * @param value interval literal value without surrounding quotes
+     * @return interval literal expression
+     */
+    public static IntervalLiteralExpr interval(String value) {
+        return IntervalLiteralExpr.of(value);
+    }
+
+    /**
+     * Creates an {@code INTERVAL '...'} literal with a qualifier.
+     *
+     * @param value interval literal value without surrounding quotes
+     * @param qualifier interval qualifier such as {@code DAY}
+     * @return interval literal expression
+     */
+    public static IntervalLiteralExpr interval(String value, String qualifier) {
+        return IntervalLiteralExpr.of(value, qualifier);
+    }
+
+    /**
      * Creates a bare operator name (for example {@code +}, {@code ->}, {@code @>}).
      *
      * @param symbol operator symbol token

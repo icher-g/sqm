@@ -36,12 +36,20 @@
   - `STRAIGHT_JOIN`
   - canonical `DELETE FROM ... USING ... JOIN ...`
   - alias/index-hint hardening and round-trip integration coverage
+- MySQL SQL-mode-aware parser options:
+  - explicit `MySqlSqlMode` support in `MySqlSpecs`
+  - `ANSI_QUOTES` parser mode for double-quoted identifiers
+- MySQL built-in function coverage:
+  - prioritized JSON/date/string function support for `JSON_EXTRACT`, `JSON_OBJECT`, `DATE_ADD`, `DATE_SUB`, `CONCAT_WS`, and `SUBSTRING_INDEX`
+  - MySQL interval literal support for date-arithmetic function arguments, including MySQL input forms like `INTERVAL 1 DAY`
 
 ### Changed
 - DML documentation updated to reflect delivered ANSI, PostgreSQL, and MySQL statement support.
 - MySQL docs now reflect delivered DML extensions, canonical alias/index-hint rendering, and current `RETURNING` limitations by version.
 - MySQL roadmap/docs now reflect post-R3 join-semantic hardening with qualified update targets and `STRAIGHT_JOIN`.
 - MySQL docs and roadmap now reflect optimizer hint support across `SELECT`, `UPDATE`, and `DELETE`.
+- MySQL parser docs now describe explicit SQL-mode configuration via `MySqlSpecs`.
+- MySQL docs and roadmap now reflect prioritized built-in function coverage and canonical rendering of quoted and unquoted MySQL interval-literal date-function inputs.
 - Dialect docs and roadmap updated to reflect MySQL R1/R3 completion and PostgreSQL DML extension completion.
 - PostgreSQL documentation now reflects full writable CTE `INSERT ... RETURNING`, `UPDATE ... RETURNING`, and `DELETE ... RETURNING` support.
 ## [v0.3.1] - 2026-03-01
