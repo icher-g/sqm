@@ -239,6 +239,13 @@ class DefaultSqlDecisionServiceTest {
         assertEquals(ReasonCode.REWRITE_EXPLAIN_DRY_RUN, result.reasonCode());
         assertTrue(result.rewrittenSql().startsWith("EXPLAIN "));
     }
+
+    @Test
+    void analyze_rejects_blank_sql() {
+        var decisionService = create(SCHEMA);
+
+        assertThrows(IllegalArgumentException.class, () -> decisionService.analyze("   ", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE)));
+    }
 }
 
 

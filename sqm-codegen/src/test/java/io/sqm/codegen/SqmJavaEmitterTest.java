@@ -307,5 +307,32 @@ class SqmJavaEmitterTest {
         assertTrue(emitter.emitQuery(shareLock).contains(".lockFor(share(), ofTables(\"users\"), false, false)"));
         assertTrue(emitter.emitQuery(keyShareLock).contains(".lockFor(keyShare(), ofTables(\"users\"), true, false)"));
     }
+
+    @Test
+    void emitQuery_covers_remaining_window_distinct_and_limit_variants() {
+        var baseFrameOnly = emitter.emitQuery(
+            select(func("f").over(over("base", rows(currentRow())))).from(tbl("t")).build()
+        );
+        var baseOrderOnly = emitter.emitQuery(
+            select(func("f").over(over("base", orderBy(order(col("x")))))).from(tbl("t")).build()
+        );
+        var partitionFrameOnly = emitter.emitQuery(
+            select(func("f").over(over(partition(col("p")), rows(currentRow())))).from(tbl("t")).build()
+        );
+        var plainExcludeNoOthers = emitter.emitQuery(
+            select(func("f").over(over(orderBy(order(col("x"))), rows(currentRow()), excludeNoOthers()))).from(tbl("t")).build()
+        );
+        var distinctOn = emitter.emitQuery(
+            select(star()).from(tbl("t")).distinct(distinctOn(col("t", "id"))).build()
+        );
+        var limitAllNoOffset = emitter.emitQuery(select(star()).from(tbl("t")).limitOffset(limitAll()).build());
+
+        assertTrue(baseFrameOnly.contains("over(\"base\", rows(currentRow()))"));
+        assertTrue(baseOrderOnly.contains("over(\"base\", orderBy("));
+        assertTrue(partitionFrameOnly.contains("over(partition("));
+        assertTrue(plainExcludeNoOthers.contains("excludeNoOthers()"));
+        assertTrue(distinctOn.contains(".distinct(col(\"t\", \"id\"))"));
+        assertTrue(limitAllNoOffset.contains(".limitOffset(limitAll())"));
+    }
 }
 

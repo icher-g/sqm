@@ -251,6 +251,18 @@ class SqlDecisionServiceConfigTest {
             }
         }
     }
+
+    @Test
+    void builder_uses_default_guard_components_for_rewrite_config() {
+        var config = SqlDecisionServiceConfig.builder(SCHEMA)
+            .statementParser(SqlStatementParser.standard())
+            .statementRenderer(SqlStatementRenderer.standard())
+            .buildValidationAndRewriteConfig();
+
+        assertEquals(RuntimeGuardrails.disabled(), config.guardrails());
+        assertNotNull(config.auditPublisher());
+        assertNotNull(config.explainer());
+    }
 }
 
 

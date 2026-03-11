@@ -17,6 +17,7 @@ import java.util.List;
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.delete;
 import static io.sqm.dsl.Dsl.id;
+import static io.sqm.dsl.Dsl.inner;
 import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.row;
@@ -33,6 +34,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TenantPredicateRewriteRuleTest {
     private static final ExecutionContext TENANT_ANALYZE = ExecutionContext.of(
         "postgresql",
+        null,
+        "tenant_a",
+        ExecutionMode.ANALYZE
+    );
+    private static final ExecutionContext MYSQL_TENANT_ANALYZE = ExecutionContext.of(
+        "mysql",
         null,
         "tenant_a",
         ExecutionMode.ANALYZE
@@ -411,6 +418,39 @@ class TenantPredicateRewriteRuleTest {
 
         assertFalse(result.rewritten());
         assertEquals(statement, result.statement());
+    }
+
+    @Test
+    void update_and_delete_include_join_and_using_targets_when_configured() {
+        var settings = BuiltInRewriteSettings.builder()
+            .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
+            .tenantTablePolicy("public.orders", TenantRewriteTablePolicy.of("tenant_id", TenantRewriteTableMode.OPTIONAL))
+            .build();
+        var rule = TenantPredicateRewriteRule.of(settings);
+
+        var updateStatement = update(tbl("public", "users").as("u"))
+            .joins(inner(tbl("public", "orders").as("o")).on(col("o", "user_id").eq(col("u", "id"))))
+            .set(set("u", "name", lit("alice")))
+            .where(col("u", "id").eq(lit(1L)))
+            .build();
+        var deleteStatement = delete(tbl("public", "users").as("u"))
+            .using(tbl("public", "orders").as("o"))
+            .where(col("o", "user_id").eq(col("u", "id")))
+            .build();
+
+        var updateRendered = SqlStatementRenderer.standard()
+            .render(rule.apply(updateStatement, MYSQL_TENANT_ANALYZE).statement(), MYSQL_TENANT_ANALYZE)
+            .sql()
+            .toLowerCase();
+        var deleteRendered = SqlStatementRenderer.standard()
+            .render(rule.apply(deleteStatement, MYSQL_TENANT_ANALYZE).statement(), MYSQL_TENANT_ANALYZE)
+            .sql()
+            .toLowerCase();
+
+        assertTrue(updateRendered.contains("u.tenant_id"));
+        assertTrue(updateRendered.contains("o.tenant_id"));
+        assertTrue(deleteRendered.contains("u.tenant_id"));
+        assertTrue(deleteRendered.contains("o.tenant_id"));
     }
 }
 
