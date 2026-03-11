@@ -75,6 +75,12 @@ Priority levels:
 - Default rendering remains pass-through, while explicit policies can trim or normalize hint-body whitespace for `SELECT`, `UPDATE`, and `DELETE`.
 - MySQL interval literal support covers both canonical `INTERVAL '...'` and MySQL input forms like `INTERVAL 1 DAY`, which render back to the quoted canonical form.
 
+### Epic R3X: Downstream MySQL and DML Parity (Completed)
+- Delivered statement-aware downstream support for ANSI, PostgreSQL, and MySQL query/DML flows in `sqm-validate`, `sqm-control`, and `sqm-codegen`.
+- `sqm-codegen-maven-plugin` now supports schema-backed MySQL code generation with dedicated PostgreSQL and MySQL catalog mappers.
+- Middleware adapters (`sqm-middleware-core`, `sqm-middleware-rest`, `sqm-middleware-mcp`) now include MySQL and DML transport coverage.
+- A repository-owned downstream support matrix documents the supported dialect/statement combinations and is regression-checked in tests.
+
 ### Epic R4: SQL Server Dialect Support
 - Add `sqm-parser-sqlserver` and `sqm-render-sqlserver`.
 - Define `SqlServerSpecs`.

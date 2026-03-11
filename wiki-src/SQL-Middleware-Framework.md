@@ -178,6 +178,15 @@ if (decision.kind() == DecisionKind.REWRITE) {
 }
 ```
 
+MySQL DML flows are supported through the same middleware entry points:
+
+```java
+var mysqlDecision = middleware.enforce(
+    "insert ignore into users (id, name) values (1, 'alice')",
+    ExecutionContext.of("mysql", "agent", "tenant-a", ExecutionMode.EXECUTE, ParameterizationMode.OFF)
+);
+```
+
 ## 3) Parameterization Modes
 
 `ExecutionContext` controls renderer output mode:
@@ -400,6 +409,14 @@ Content-Length: 58
 Content-Length: 205
 
 {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"middleware.enforce","arguments":{"sql":"select id from users","context":{"dialect":"postgresql","mode":"EXECUTE","parameterizationMode":"OFF"}}}}
+```
+
+`tools/call` (`middleware.explain`) with MySQL DML
+
+```text
+Content-Length: 225
+
+{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"middleware.explain","arguments":{"sql":"delete from users where id = 1","context":{"dialect":"mysql","mode":"ANALYZE","parameterizationMode":"OFF"}}}}
 ```
 
 Tool names:

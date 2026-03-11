@@ -102,6 +102,34 @@ class SqlMiddlewareRestApplicationIntegrationTest {
         );
     }
 
+    @Test
+    void mysql_dml_requests_are_supported_over_real_http_endpoints() {
+        var context = new ExecutionContextDto("mysql", "agent", "tenant-a", ExecutionModeDto.EXECUTE, ParameterizationModeDto.OFF);
+        var analyze = restTemplate.postForEntity(
+            baseUrl() + "/sqm/middleware/v1/analyze",
+            new AnalyzeRequest("insert ignore into users (id, name) values (1, 'alice')", context),
+            DecisionResultDto.class
+        );
+        var enforce = restTemplate.postForEntity(
+            baseUrl() + "/sqm/middleware/v1/enforce",
+            new EnforceRequest("update users set name = 'alice' where id = 1", context),
+            DecisionResultDto.class
+        );
+        var explain = restTemplate.postForEntity(
+            baseUrl() + "/sqm/middleware/v1/explain",
+            new ExplainRequest("delete from users where id = 1", context),
+            DecisionExplanationDto.class
+        );
+
+        assertEquals(HttpStatus.OK, analyze.getStatusCode());
+        assertEquals(HttpStatus.OK, enforce.getStatusCode());
+        assertEquals(HttpStatus.OK, explain.getStatusCode());
+        assertNotNull(analyze.getBody());
+        assertNotNull(enforce.getBody());
+        assertNotNull(explain.getBody());
+        assertNotNull(explain.getBody().decision());
+    }
+
     private String baseUrl() {
         return "http://localhost:" + port;
     }

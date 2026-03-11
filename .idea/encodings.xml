@@ -11,6 +11,8 @@
     <file url="file://$PROJECT_DIR$/sqlmodel-parser-spring/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqlmodel-spring/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqlmodel-spring/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-catalog-mysql/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-catalog-mysql/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-catalog-postgresql/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-catalog-postgresql/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-catalog/src/main/java" charset="UTF-8" />

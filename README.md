@@ -1236,6 +1236,7 @@ price + quantity * 2
 | `sqm-render-postgresql`    | PostgreSQL renderer implementation                                          |
 | `sqm-json`                 | Jackson mixins and JSON serialization support                               |
 | `sqm-catalog`              | Schema/catalog model and providers (JSON/JDBC)                              |
+| `sqm-catalog-mysql`        | MySQL catalog-specific implementations                                      |
 | `sqm-catalog-postgresql`   | PostgreSQL catalog-specific implementations                                 |
 | `sqm-validate`             | Schema-aware semantic validator                                             |
 | `sqm-validate-mysql`       | MySQL validation extensions                                                 |
@@ -1308,7 +1309,11 @@ Current version in this repository: `0.3.1-SNAPSHOT`.
 Roadmap is tracked in project docs and GitHub issues:
 
 - [docs/ROADMAP.md](docs/ROADMAP.md)
+- [docs/DOWNSTREAM_SUPPORT_MATRIX.md](docs/DOWNSTREAM_SUPPORT_MATRIX.md)
 - https://github.com/icher-g/sqm/issues
+
+Current downstream support spans ANSI, PostgreSQL, and MySQL query and DML flows across
+validation, control/middleware, code generation, and Maven plugin schema-backed generation.
 
 ---
 

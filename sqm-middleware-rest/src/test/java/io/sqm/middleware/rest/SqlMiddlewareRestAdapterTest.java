@@ -20,6 +20,8 @@ import io.sqm.middleware.api.ReasonCodeDto;
 import io.sqm.middleware.api.SqlMiddlewareService;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -100,6 +102,20 @@ class SqlMiddlewareRestAdapterTest {
         assertNotNull(explain.getMessage());
     }
 
+    @Test
+    void delegates_mysql_dml_requests_without_changing_payload() {
+        var service = new CapturingService();
+        var adapter = new SqlMiddlewareRestAdapter(service);
+        var context = new ExecutionContextDto("mysql", "api-user", "tenant-mysql", null, null);
+        var request = new EnforceRequest("insert ignore into users (id, name) values (1, 'alice')", context);
+
+        var result = adapter.enforce(request);
+
+        assertEquals(DecisionKindDto.ALLOW, result.kind());
+        assertEquals("mysql", service.lastEnforce.context().dialect());
+        assertEquals("insert ignore into users (id, name) values (1, 'alice')", service.lastEnforce.sql());
+    }
+
     private static final class StubService implements SqlMiddlewareService {
 
         @Override
@@ -125,6 +141,29 @@ class SqlMiddlewareRestAdapterTest {
             return new DecisionExplanationDto(
                 new DecisionResultDto(DecisionKindDto.ALLOW, ReasonCodeDto.NONE, null, null, java.util.List.of(), null, null),
                 "explain"
+            );
+        }
+    }
+
+    private static final class CapturingService implements SqlMiddlewareService {
+        private EnforceRequest lastEnforce;
+
+        @Override
+        public DecisionResultDto analyze(AnalyzeRequest request) {
+            return new DecisionResultDto(DecisionKindDto.ALLOW, ReasonCodeDto.NONE, null, null, List.of(), null, null);
+        }
+
+        @Override
+        public DecisionResultDto enforce(EnforceRequest request) {
+            lastEnforce = request;
+            return new DecisionResultDto(DecisionKindDto.ALLOW, ReasonCodeDto.NONE, "ok", null, List.of(), null, null);
+        }
+
+        @Override
+        public DecisionExplanationDto explainDecision(ExplainRequest request) {
+            return new DecisionExplanationDto(
+                new DecisionResultDto(DecisionKindDto.ALLOW, ReasonCodeDto.NONE, null, null, List.of(), null, null),
+                "ok"
             );
         }
     }

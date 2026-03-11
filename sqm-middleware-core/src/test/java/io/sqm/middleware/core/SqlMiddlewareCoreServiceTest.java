@@ -99,6 +99,30 @@ class SqlMiddlewareCoreServiceTest {
         assertEquals("remove_dml", result.guidance().suggestedAction());
     }
 
+    @Test
+    void analyze_and_enforce_preserve_mysql_dml_context() {
+        var decisionService = new CapturingMiddleware();
+        var service = new SqlMiddlewareCoreService(decisionService);
+        var analyzeRequest = new AnalyzeRequest(
+            "insert ignore into users (id, name) values (1, 'alice')",
+            new ExecutionContextDto("mysql", "api-user", "tenant-mysql", ExecutionModeDto.ANALYZE, ParameterizationModeDto.OFF)
+        );
+        var enforceRequest = new EnforceRequest(
+            "update users set name = 'alice' where id = 1",
+            new ExecutionContextDto("mysql", "api-user", "tenant-mysql", ExecutionModeDto.EXECUTE, ParameterizationModeDto.BIND)
+        );
+
+        service.analyze(analyzeRequest);
+        assertEquals("mysql", decisionService.lastContext.dialect());
+        assertEquals(ExecutionMode.ANALYZE, decisionService.lastContext.mode());
+        assertEquals("tenant-mysql", decisionService.lastContext.tenant());
+
+        service.enforce(enforceRequest);
+        assertEquals("mysql", decisionService.lastContext.dialect());
+        assertEquals(ExecutionMode.EXECUTE, decisionService.lastContext.mode());
+        assertEquals(ParameterizationMode.BIND, decisionService.lastContext.parameterizationMode());
+    }
+
     private static final class CapturingMiddleware implements SqlDecisionService {
 
         private ExecutionContext lastContext;

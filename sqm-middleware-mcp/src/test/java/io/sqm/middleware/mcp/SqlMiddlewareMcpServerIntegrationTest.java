@@ -142,6 +142,41 @@ class SqlMiddlewareMcpServerIntegrationTest {
     }
 
     @Test
+    void server_routes_mysql_dml_requests_through_tool_calls() throws Exception {
+        var service = new CapturingService();
+        var server = new SqlMiddlewareMcpServer(routerFor(service), MAPPER);
+        var input = new ByteArrayInputStream((
+            framedJson("""
+                {"jsonrpc":"2.0","id":90,"method":"initialize","params":{}}
+                """)
+                + framedJson("""
+                {"jsonrpc":"2.0","id":91,"method":"tools/call","params":{"name":"middleware.analyze","arguments":{"sql":"insert ignore into users (id, name) values (1, 'alice')","context":{"dialect":"mysql","mode":"ANALYZE","parameterizationMode":"OFF"}}}}
+                """)
+                + framedJson("""
+                {"jsonrpc":"2.0","id":92,"method":"tools/call","params":{"name":"middleware.enforce","arguments":{"sql":"update users set name = 'alice' where id = 1","context":{"dialect":"mysql","mode":"EXECUTE","parameterizationMode":"OFF"}}}}
+                """)
+                + framedJson("""
+                {"jsonrpc":"2.0","id":93,"method":"tools/call","params":{"name":"middleware.explain","arguments":{"sql":"delete from users where id = 1","context":{"dialect":"mysql","mode":"ANALYZE","parameterizationMode":"OFF"}}}}
+                """)
+                + framedJson("""
+                {"jsonrpc":"2.0","method":"exit"}
+                """)
+        ).getBytes(StandardCharsets.UTF_8));
+        var output = new ByteArrayOutputStream();
+
+        server.serve(input, output);
+
+        var responses = parseFramedResponses(output.toByteArray());
+        assertEquals(4, responses.size());
+        assertEquals("ALLOW", responses.get(1).path("result").path("structuredContent").path("kind").asText());
+        assertEquals("ALLOW", responses.get(2).path("result").path("structuredContent").path("kind").asText());
+        assertEquals("ALLOW", responses.get(3).path("result").path("structuredContent").path("decision").path("kind").asText());
+        assertEquals("mysql", service.lastAnalyze.context().dialect());
+        assertEquals("mysql", service.lastEnforce.context().dialect());
+        assertEquals("mysql", service.lastExplain.context().dialect());
+    }
+
+    @Test
     void server_returns_json_rpc_error_for_unknown_method() throws Exception {
         var server = new SqlMiddlewareMcpServer(routerFor(new StubService()), MAPPER);
         var input = new ByteArrayInputStream((
@@ -627,6 +662,33 @@ class SqlMiddlewareMcpServerIntegrationTest {
         @Override
         public DecisionExplanationDto explainDecision(ExplainRequest request) {
             throw new IllegalStateException("boom");
+        }
+    }
+
+    private static final class CapturingService implements SqlMiddlewareService {
+        private AnalyzeRequest lastAnalyze;
+        private EnforceRequest lastEnforce;
+        private ExplainRequest lastExplain;
+
+        @Override
+        public DecisionResultDto analyze(AnalyzeRequest request) {
+            lastAnalyze = request;
+            return new DecisionResultDto(DecisionKindDto.ALLOW, ReasonCodeDto.NONE, "ok", null, List.of(), null, null);
+        }
+
+        @Override
+        public DecisionResultDto enforce(EnforceRequest request) {
+            lastEnforce = request;
+            return new DecisionResultDto(DecisionKindDto.ALLOW, ReasonCodeDto.NONE, "ok", null, List.of(), null, null);
+        }
+
+        @Override
+        public DecisionExplanationDto explainDecision(ExplainRequest request) {
+            lastExplain = request;
+            return new DecisionExplanationDto(
+                new DecisionResultDto(DecisionKindDto.ALLOW, ReasonCodeDto.NONE, "ok", null, List.of(), null, null),
+                "mysql dml ok"
+            );
         }
     }
 }

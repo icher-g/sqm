@@ -2,7 +2,11 @@ package io.sqm.codegen.maven;
 
 import io.sqm.codegen.*;
 import io.sqm.catalog.SchemaProvider;
+import io.sqm.catalog.jdbc.DefaultSqlTypeMapper;
 import io.sqm.catalog.jdbc.JdbcSchemaProvider;
+import io.sqm.catalog.jdbc.SqlTypeMapper;
+import io.sqm.catalog.mysql.MySqlSqlTypeMapper;
+import io.sqm.catalog.postgresql.PostgresSqlTypeMapper;
 import io.sqm.catalog.snapshot.JsonSchemaProvider;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -299,7 +303,7 @@ public class GenerateMojo extends AbstractMojo {
 
         try {
             SqlCodegenDialect resolvedDialect = SqlCodegenDialect.from(dialect);
-            SchemaProvider resolvedSchemaProvider = resolveSchemaProvider();
+            SchemaProvider resolvedSchemaProvider = resolveSchemaProvider(resolvedDialect);
             SqlFileCodegenOptions options = SqlFileCodegenOptions.of(
                 Path.of(sqlDirectory),
                 Path.of(generatedSourcesDirectory),
@@ -329,12 +333,12 @@ public class GenerateMojo extends AbstractMojo {
         }
     }
 
-    private SchemaProvider resolveSchemaProvider() {
+    private SchemaProvider resolveSchemaProvider(SqlCodegenDialect resolvedDialect) {
         var kind = (schemaProvider == null ? "none" : schemaProvider.trim().toLowerCase(Locale.ROOT));
         return switch (kind) {
             case "", "none" -> null;
             case "json" -> resolveJsonSchemaProvider();
-            case "jdbc" -> resolveJdbcSchemaProvider();
+            case "jdbc" -> resolveJdbcSchemaProvider(resolvedDialect);
             default -> throw new IllegalArgumentException(
                 "Unsupported schema provider: " + schemaProvider + ". Supported values: none, json, jdbc"
             );
@@ -350,7 +354,7 @@ public class GenerateMojo extends AbstractMojo {
         return JsonSchemaProvider.of(Path.of(schemaSnapshotPath));
     }
 
-    private SchemaProvider resolveJdbcSchemaProvider() {
+    private SchemaProvider resolveJdbcSchemaProvider(SqlCodegenDialect resolvedDialect) {
         if (schemaJdbcUrl == null || schemaJdbcUrl.isBlank()) {
             throw new IllegalArgumentException(
                 "sqm.codegen.schemaJdbcUrl is required when sqm.codegen.schemaProvider=jdbc"
@@ -363,7 +367,7 @@ public class GenerateMojo extends AbstractMojo {
             normalizeBlank(schemaJdbcCatalog),
             normalizeBlank(schemaJdbcSchemaPattern),
             List.of("TABLE", "VIEW", "MATERIALIZED VIEW", "FOREIGN TABLE"),
-            io.sqm.catalog.postgresql.PostgresSqlTypeMapper.standard()
+            resolveJdbcTypeMapper(resolvedDialect)
         );
         var filteredProvider = filteredProvider(jdbcProvider);
         var cachePath = resolveSchemaCachePath();
@@ -439,6 +443,14 @@ public class GenerateMojo extends AbstractMojo {
             schemaCacheExpectedDatabaseMajorVersion,
             0L
         );
+    }
+
+    private SqlTypeMapper resolveJdbcTypeMapper(SqlCodegenDialect resolvedDialect) {
+        return switch (Objects.requireNonNull(resolvedDialect, "resolvedDialect")) {
+            case POSTGRESQL -> PostgresSqlTypeMapper.standard();
+            case MYSQL -> MySqlSqlTypeMapper.standard();
+            case ANSI -> DefaultSqlTypeMapper.standard();
+        };
     }
 
     private void writeValidationReport(List<SqlValidationIssue> issues) {
