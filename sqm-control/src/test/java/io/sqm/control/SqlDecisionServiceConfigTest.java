@@ -221,6 +221,36 @@ class SqlDecisionServiceConfigTest {
             }
         }
     }
+
+    @Test
+    void explicit_validation_settings_take_precedence_over_text_and_system_properties() {
+        var yaml = """
+            accessPolicy:
+              deniedTables:
+                - users
+            """;
+        var key = ConfigKeys.VALIDATION_SETTINGS_YAML.property();
+        var previous = System.getProperty(key);
+        try {
+            System.setProperty(key, yaml);
+            var decisionService = SqlDecisionService.create(
+                SqlDecisionServiceConfig.builder(SCHEMA)
+                    .validationSettings(SchemaValidationSettings.defaults())
+                    .validationSettingsJson("{\"accessPolicy\":{\"deniedTables\":[\"users\"]}}")
+                    .validationSettingsYaml(yaml)
+                    .buildValidationConfig()
+            );
+
+            var result = decisionService.analyze("select id from users", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+            assertEquals(DecisionKind.ALLOW, result.kind());
+        } finally {
+            if (previous == null) {
+                System.clearProperty(key);
+            } else {
+                System.setProperty(key, previous);
+            }
+        }
+    }
 }
 
 

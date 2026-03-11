@@ -3,6 +3,7 @@ package io.sqm.validate.schema.internal;
 import io.sqm.catalog.access.CatalogAccessPolicy;
 import io.sqm.core.Identifier;
 import io.sqm.core.Query;
+import io.sqm.core.QualifiedName;
 import io.sqm.core.TableRef;
 import io.sqm.core.TypeKeyword;
 import io.sqm.catalog.model.CatalogColumn;
@@ -217,6 +218,48 @@ class SchemaValidationContextTest {
     void normalizeIdentifierRejectsNullIdentifier() {
         //noinspection DataFlowIssue
         assertThrows(NullPointerException.class, () -> SchemaValidationContext.normalize((Identifier) null));
+    }
+
+    @Test
+    void resolveCurrentScopeColumn_reportsInvalidQualifiedNameAndUnknownAlias() {
+        var context = new SchemaValidationContext(SCHEMA);
+
+        var invalidQualified = context.resolveCurrentScopeColumn(
+            QualifiedName.of(Identifier.of("a"), Identifier.of("b"), Identifier.of("c")),
+            true,
+            col("id"),
+            "dml.assignment"
+        );
+        assertTrue(invalidQualified.isEmpty());
+        assertTrue(context.problems().stream()
+            .anyMatch(problem -> problem.code() == ValidationProblem.Code.COLUMN_NOT_FOUND
+                && "dml.assignment".equals(problem.clausePath())));
+
+        context.pushScope();
+        try {
+            context.registerTableRef(tbl("users").as("u"));
+            var unknownAlias = context.resolveCurrentScopeColumn(
+                QualifiedName.of(Identifier.of("missing"), Identifier.of("id")),
+                true,
+                col("id"),
+                "dml.assignment"
+            );
+
+            assertTrue(unknownAlias.isEmpty());
+            assertTrue(context.problems().stream()
+                .anyMatch(problem -> problem.code() == ValidationProblem.Code.UNKNOWN_TABLE_ALIAS
+                    && "dml.assignment".equals(problem.clausePath())));
+        } finally {
+            context.popScope();
+        }
+    }
+
+    @Test
+    void resolvePhysicalTableColumn_returnsEmpty_for_missing_table_or_column() {
+        var context = new SchemaValidationContext(SCHEMA);
+
+        assertTrue(context.resolvePhysicalTableColumn(tbl("users"), Identifier.of("missing")).isEmpty());
+        assertTrue(context.resolvePhysicalTableColumn(tbl("missing"), Identifier.of("id")).isEmpty());
     }
 }
 

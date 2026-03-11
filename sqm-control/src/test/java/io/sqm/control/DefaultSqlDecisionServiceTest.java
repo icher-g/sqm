@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("SameParameterValue")
@@ -206,6 +207,37 @@ class DefaultSqlDecisionServiceTest {
         );
 
         assertEquals(DecisionKind.ALLOW, result.kind());
+    }
+
+    @Test
+    void explainDecision_falls_back_when_explainer_returns_blank() {
+        var decisionService = create(
+            SCHEMA,
+            SchemaValidationSettings.defaults(),
+            RuntimeGuardrails.disabled(),
+            AuditEventPublisher.noop(),
+            (statement, context, decision) -> "   ",
+            SqlStatementParser.standard()
+        );
+
+        var explanation = decisionService.explainDecision("select 1", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+
+        assertTrue(explanation.explanation().contains("Decision=ALLOW"));
+    }
+
+    @Test
+    void enforce_rewrites_to_explain_in_dry_run_mode() {
+        var decisionService = create(
+            SCHEMA,
+            SchemaValidationSettings.defaults(),
+            new RuntimeGuardrails(null, null, null, true)
+        );
+
+        var result = decisionService.enforce("select 1 limit 1", ExecutionContext.of("postgresql", ExecutionMode.EXECUTE));
+
+        assertEquals(DecisionKind.REWRITE, result.kind());
+        assertEquals(ReasonCode.REWRITE_EXPLAIN_DRY_RUN, result.reasonCode());
+        assertTrue(result.rewrittenSql().startsWith("EXPLAIN "));
     }
 }
 

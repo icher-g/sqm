@@ -270,5 +270,42 @@ class SqmJavaEmitterTest {
         var error = assertThrows(IllegalStateException.class, () -> emitter.emitQuery(query));
         assertTrue(error.getMessage().contains("Unsupported node"));
     }
+
+    @Test
+    void emitStatement_coversInsertConflictVariants_and_additional_lock_modes() {
+        var insertDoNothing = insert(tbl("users"))
+            .replace()
+            .columns(id("id"))
+            .query(select(lit(1)).build())
+            .onConflictDoNothing(id("id"))
+            .build();
+        var insertDoUpdate = insert(tbl("users"))
+            .columns(id("id"), id("name"))
+            .values(row(lit(1), lit("alice")))
+            .onConflictDoUpdate(
+                java.util.List.of(id("id")),
+                java.util.List.of(set("name", lit("updated"))),
+                col("name").isNotNull()
+            )
+            .build();
+        var noKeyUpdateLock = select(star()).from(tbl("users")).lockFor(noKeyUpdate(), ofTables("users"), false, true).build();
+        var shareLock = select(star()).from(tbl("users")).lockFor(share(), ofTables("users"), false, false).build();
+        var keyShareLock = select(star()).from(tbl("users")).lockFor(keyShare(), ofTables("users"), true, false).build();
+
+        var doNothingSource = emitter.emitStatement(insertDoNothing);
+        var doUpdateSource = emitter.emitStatement(insertDoUpdate);
+
+        assertTrue(doNothingSource.contains(".replace()"));
+        assertTrue(doNothingSource.contains(".query(select("));
+        assertTrue(doNothingSource.contains(".onConflictDoNothing(id(\"id\"))"));
+
+        assertTrue(doUpdateSource.contains(".onConflictDoUpdate(java.util.List.of(id(\"id\")), java.util.List.of("));
+        assertTrue(doUpdateSource.contains("set(id(\"name\"), lit(\"updated\"))"));
+        assertTrue(doUpdateSource.contains("col(\"name\").isNotNull()"));
+
+        assertTrue(emitter.emitQuery(noKeyUpdateLock).contains(".lockFor(noKeyUpdate(), ofTables(\"users\"), false, true)"));
+        assertTrue(emitter.emitQuery(shareLock).contains(".lockFor(share(), ofTables(\"users\"), false, false)"));
+        assertTrue(emitter.emitQuery(keyShareLock).contains(".lockFor(keyShare(), ofTables(\"users\"), true, false)"));
+    }
 }
 

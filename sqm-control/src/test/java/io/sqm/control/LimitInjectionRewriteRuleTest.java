@@ -12,6 +12,9 @@ import io.sqm.core.Query;
 import io.sqm.control.rewrite.LimitInjectionRewriteRule;
 import org.junit.jupiter.api.Test;
 
+import static io.sqm.dsl.Dsl.insert;
+import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.row;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -129,6 +132,19 @@ class LimitInjectionRewriteRuleTest {
 
         assertTrue(result.rewritten());
         assertTrue(rendered.contains("limit 7"));
+    }
+
+    @Test
+    void leaves_non_query_statements_unchanged() {
+        var rule = LimitInjectionRewriteRule.of(10);
+        var statement = insert("users")
+            .values(row(lit(1L)))
+            .build();
+
+        var result = rule.apply(statement, PG_ANALYZE);
+
+        assertFalse(result.rewritten());
+        assertEquals(statement, result.statement());
     }
 }
 

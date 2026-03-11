@@ -15,9 +15,15 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.delete;
+import static io.sqm.dsl.Dsl.id;
+import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.select;
+import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.update;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -363,6 +369,48 @@ class TenantPredicateRewriteRuleTest {
 
         var result = rule.apply(query, TENANT_ANALYZE);
         assertFalse(result.rewritten());
+    }
+
+    @Test
+    void injects_tenant_predicate_into_update_and_delete_statements() {
+        var settings = BuiltInRewriteSettings.builder()
+            .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
+            .build();
+        var rule = TenantPredicateRewriteRule.of(settings);
+
+        var updateStatement = update(tbl("public", "users").as("u"))
+            .set(set("u", "name", lit("alice")))
+            .where(col("u", "id").eq(lit(1L)))
+            .build();
+        var deleteStatement = delete(tbl("public", "users").as("u"))
+            .where(col("u", "id").eq(lit(1L)))
+            .build();
+
+        var updateResult = rule.apply(updateStatement, TENANT_ANALYZE);
+        var deleteResult = rule.apply(deleteStatement, TENANT_ANALYZE);
+
+        assertTrue(updateResult.rewritten());
+        assertTrue(deleteResult.rewritten());
+        assertTrue(SqlStatementRenderer.standard().render(updateResult.statement(), TENANT_ANALYZE).sql().toLowerCase().contains("u.tenant_id"));
+        assertTrue(SqlStatementRenderer.standard().render(deleteResult.statement(), TENANT_ANALYZE).sql().toLowerCase().contains("u.tenant_id"));
+    }
+
+    @Test
+    void leaves_insert_statements_unchanged() {
+        var settings = BuiltInRewriteSettings.builder()
+            .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
+            .build();
+        var rule = TenantPredicateRewriteRule.of(settings);
+
+        var statement = insert(tbl("public", "users").as("u"))
+            .columns(id("id"), id("name"))
+            .values(row(lit(1L), lit("alice")))
+            .build();
+
+        var result = rule.apply(statement, TENANT_ANALYZE);
+
+        assertFalse(result.rewritten());
+        assertEquals(statement, result.statement());
     }
 }
 

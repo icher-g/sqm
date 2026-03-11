@@ -65,6 +65,22 @@ class SchemaStatementValidatorDmlTest {
     }
 
     @Test
+    void validate_reports_duplicate_insert_target_column() {
+        var validator = SchemaStatementValidator.of(SCHEMA);
+        var statement = insert("users")
+            .columns(id("id"), id("id"))
+            .values(row(lit(1L), lit(2L)))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(problem -> problem.code() == ValidationProblem.Code.COLUMN_AMBIGUOUS
+                && "insert.columns".equals(problem.clausePath())));
+    }
+
+    @Test
     void validate_reports_missing_update_assignment_target() {
         var validator = SchemaStatementValidator.of(SCHEMA);
         var statement = update(tbl("users").as("u"))
@@ -77,6 +93,22 @@ class SchemaStatementValidatorDmlTest {
         assertFalse(result.ok());
         assertTrue(result.problems().stream()
             .anyMatch(problem -> problem.code() == ValidationProblem.Code.COLUMN_NOT_FOUND
+                && "dml.assignment".equals(problem.clausePath())));
+    }
+
+    @Test
+    void validate_reports_unknown_update_assignment_alias() {
+        var validator = SchemaStatementValidator.of(SCHEMA);
+        var statement = update(tbl("users").as("u"))
+            .set(set("missing", "name", lit("alice")))
+            .where(col("u", "id").eq(lit(1L)))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(problem -> problem.code() == ValidationProblem.Code.UNKNOWN_TABLE_ALIAS
                 && "dml.assignment".equals(problem.clausePath())));
     }
 
