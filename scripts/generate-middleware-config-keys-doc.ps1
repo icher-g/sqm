@@ -1,6 +1,6 @@
 ﻿param(
     [string]$SourcePath = "sqm-control/src/main/java/io/sqm/control/ConfigKeys.java",
-    [string]$OutputPath = "docs/MIDDLEWARE_CONFIG_KEYS.md"
+    [string]$OutputPath = "docs/middleware/MIDDLEWARE_CONFIG_KEYS.md"
 )
 
 Set-StrictMode -Version Latest
