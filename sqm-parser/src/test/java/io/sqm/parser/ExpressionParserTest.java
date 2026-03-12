@@ -1,6 +1,7 @@
 package io.sqm.parser;
 
 import io.sqm.core.BinaryOperatorExpr;
+import io.sqm.core.ConcatExpr;
 import io.sqm.core.Expression;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -15,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for ExpressionParser.
- * Note: This is a simple wrapper class that delegates to BinaryOperatorExpr parsing.
+ * Note: This is a simple wrapper class that delegates to ConcatExpr parsing.
  * More comprehensive expression parsing tests are in sqm-parser-ansi module.
  */
 class ExpressionParserTest {
@@ -43,8 +44,8 @@ class ExpressionParserTest {
     }
 
     @Test
-    void delegatesToBinaryOperatorExprParser() {
-        var ctx = contextWithBinaryOperatorParser(new BinaryOperatorOkParser());
+    void delegatesToConcatExprParser() {
+        var ctx = contextWithConcatParser(new ConcatOkParser());
 
         var result = ctx.parse(Expression.class, "bin");
 
@@ -53,45 +54,45 @@ class ExpressionParserTest {
     }
 
     @Test
-    void propagatesBinaryOperatorErrors() {
-        var ctx = contextWithBinaryOperatorParser(new BinaryOperatorErrorParser());
+    void propagatesConcatErrors() {
+        var ctx = contextWithConcatParser(new ConcatErrorParser());
 
         var result = ctx.parse(Expression.class, "bin");
 
         assertTrue(result.isError());
-        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("binary error"));
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("concat error"));
     }
 
-    private static ParseContext contextWithBinaryOperatorParser(Parser<BinaryOperatorExpr> binaryParser) {
+    private static ParseContext contextWithConcatParser(Parser<?> concatParser) {
         var repo = new DefaultParsersRepository()
             .register(Expression.class, new ExpressionParser())
-            .register(BinaryOperatorExpr.class, binaryParser);
+            .register(ConcatExpr.class, concatParser);
         return TestSupport.context(repo);
     }
 
-    private static final class BinaryOperatorOkParser implements Parser<BinaryOperatorExpr> {
+    private static final class ConcatOkParser implements Parser<Expression> {
         @Override
-        public ParseResult<? extends BinaryOperatorExpr> parse(Cursor cur, ParseContext ctx) {
+        public ParseResult<? extends Expression> parse(Cursor cur, ParseContext ctx) {
             cur.expect("Expected marker", TokenType.IDENT);
             return ParseResult.ok(BinaryOperatorExpr.of(Expression.literal(1), "+", Expression.literal(2)));
         }
 
         @Override
-        public Class<BinaryOperatorExpr> targetType() {
-            return BinaryOperatorExpr.class;
+        public Class<? extends Expression> targetType() {
+            return ConcatExpr.class;
         }
     }
 
-    private static final class BinaryOperatorErrorParser implements Parser<BinaryOperatorExpr> {
+    private static final class ConcatErrorParser implements Parser<Expression> {
         @Override
-        public ParseResult<? extends BinaryOperatorExpr> parse(Cursor cur, ParseContext ctx) {
+        public ParseResult<? extends Expression> parse(Cursor cur, ParseContext ctx) {
             cur.expect("Expected marker", TokenType.IDENT);
-            return ParseResult.error("binary error", 0);
+            return ParseResult.error("concat error", 0);
         }
 
         @Override
-        public Class<BinaryOperatorExpr> targetType() {
-            return BinaryOperatorExpr.class;
+        public Class<? extends Expression> targetType() {
+            return ConcatExpr.class;
         }
     }
 }

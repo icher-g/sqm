@@ -46,6 +46,17 @@ public interface ExpressionMatch<R> extends Match<Expression, R> {
     ExpressionMatch<R> cast(Function<CastExpr, R> f);
 
     /**
+     * Matches a {@link ConcatExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * dialect-neutral string concatenation.</p>
+     *
+     * @param f a mapping function applied to the matched {@link ConcatExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    ExpressionMatch<R> concat(Function<ConcatExpr, R> f);
+
+    /**
      * Matches a {@link CollateExpr} expression.
      *
      * <p>This matcher is invoked when the inspected expression represents

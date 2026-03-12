@@ -276,6 +276,16 @@ public interface ExpressionVisitor<R> {
     R visitCastExpr(CastExpr expr);
 
     /**
+     * Visits a {@link ConcatExpr}.
+     * <p>
+     * This represents dialect-neutral string concatenation of one or more expressions.
+     *
+     * @param expr concatenation expression being visited
+     * @return visitor result
+     */
+    R visitConcatExpr(ConcatExpr expr);
+
+    /**
      * Visits a {@link CollateExpr}.
      * <p>
      * This represents an expression with an explicit collation applied,

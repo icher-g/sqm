@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests JSON serialization/deserialization for Expression subtypes:
- * CastExpr, ArrayExpr, BinaryOperatorExpr, UnaryOperatorExpr.
+ * CastExpr, ConcatExpr, ArrayExpr, BinaryOperatorExpr, UnaryOperatorExpr.
  */
 public class ExpressionSubtypesJsonTest {
 
@@ -108,6 +108,23 @@ public class ExpressionSubtypesJsonTest {
     }
 
     /* ==================== CollateExpr Tests ==================== */
+
+    @Test
+    @DisplayName("ConcatExpr: concatenate multiple expressions")
+    void concatExpr_multipleArgs() throws Exception {
+        var expr = concat(col("first_name"), lit(" "), col("last_name"));
+
+        var back = roundTrip(expr, ConcatExpr.class);
+
+        assertNotNull(back);
+        assertEquals(3, back.args().size());
+        assertInstanceOf(ColumnExpr.class, back.args().getFirst());
+        assertInstanceOf(LiteralExpr.class, back.args().get(1));
+
+        JsonNode node = toTree(expr);
+        assertEquals("concat", node.path("kind").asText());
+        assertEquals(3, node.path("args").size());
+    }
 
     @Test
     @DisplayName("CollateExpr: collate column")

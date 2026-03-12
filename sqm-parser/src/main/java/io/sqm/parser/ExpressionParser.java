@@ -1,6 +1,6 @@
 package io.sqm.parser;
 
-import io.sqm.core.BinaryOperatorExpr;
+import io.sqm.core.ConcatExpr;
 import io.sqm.core.Expression;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
@@ -26,7 +26,7 @@ public class ExpressionParser implements Parser<Expression> {
      */
     @Override
     public ParseResult<? extends Expression> parse(Cursor cur, ParseContext ctx) {
-        return ctx.parse(BinaryOperatorExpr.class, cur);
+        return ctx.parse(ConcatExpr.class, cur);
     }
 
     /**

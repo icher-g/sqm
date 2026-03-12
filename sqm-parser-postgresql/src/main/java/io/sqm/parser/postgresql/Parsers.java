@@ -27,6 +27,7 @@ public class Parsers {
             .register(new InsertStatementParser())
             .register(new UpdateStatementParser())
             .register(new DeleteStatementParser())
+            .register(new ConcatExprParser())
             .register(new BinaryOperatorExprParser())
             .register(new CastExprParser());
     }

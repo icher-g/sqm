@@ -1,6 +1,7 @@
 package io.sqm.render.mysql;
 
 import io.sqm.core.BitStringLiteralExpr;
+import io.sqm.core.ConcatExpr;
 import io.sqm.core.HexStringLiteralExpr;
 import io.sqm.dsl.Dsl;
 import io.sqm.render.mysql.spi.MySqlDialect;
@@ -14,10 +15,12 @@ class MySqlFunctionExprRendererTest {
     @Test
     void rendersJsonAndStringFunctions() {
         var jsonExtract = Dsl.func("JSON_EXTRACT", Dsl.arg(Dsl.col("payload")), Dsl.arg(Dsl.lit("$.user.id")));
+        var concat = ConcatExpr.of(Dsl.col("first_name"), Dsl.lit(" "), Dsl.col("last_name"));
         var concatWs = Dsl.func("CONCAT_WS", Dsl.arg(Dsl.lit("-")), Dsl.arg(Dsl.col("first_name")), Dsl.arg(Dsl.col("last_name")));
         var ctx = RenderContext.of(new MySqlDialect());
 
         assertEquals("JSON_EXTRACT(payload, '$.user.id')", ctx.render(jsonExtract).sql());
+        assertEquals("CONCAT(first_name, ' ', last_name)", ctx.render(concat).sql());
         assertEquals("CONCAT_WS('-', first_name, last_name)", ctx.render(concatWs).sql());
     }
 

@@ -31,6 +31,7 @@ public final class Renderers {
             .register(new MySqlDeleteStatementRenderer())
             .register(new MySqlLimitOffsetRenderer())
             .register(new MySqlGroupByRenderer())
+            .register(new MySqlConcatExprRenderer())
             .register(new MySqlRegexPredicateRenderer())
             .register(new MySqlTableRenderer())
             .register(new MySqlSelectQueryRenderer());

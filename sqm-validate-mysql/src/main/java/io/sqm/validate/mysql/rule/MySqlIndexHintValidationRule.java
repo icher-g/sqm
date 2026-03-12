@@ -19,6 +19,12 @@ import java.util.Map;
  */
 public final class MySqlIndexHintValidationRule implements SchemaValidationRule<Table> {
     /**
+     * Creates a MySQL index-hint validation rule.
+     */
+    public MySqlIndexHintValidationRule() {
+    }
+
+    /**
      * Returns the node type handled by this rule.
      *
      * @return handled node type.

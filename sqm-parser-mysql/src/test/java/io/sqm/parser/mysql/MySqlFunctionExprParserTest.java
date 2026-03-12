@@ -1,12 +1,16 @@
 package io.sqm.parser.mysql;
 
 import io.sqm.core.ColumnExpr;
+import io.sqm.core.ConcatExpr;
+import io.sqm.core.Expression;
 import io.sqm.core.FunctionExpr;
 import io.sqm.core.IntervalLiteralExpr;
 import io.sqm.core.LiteralExpr;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
+
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -83,12 +87,35 @@ class MySqlFunctionExprParserTest {
     @Test
     void parsesStringFunctions() {
         var ctx = ParseContext.of(new MySqlSpecs());
-        var concatResult = ctx.parse(FunctionExpr.class, "CONCAT_WS('-', first_name, last_name)");
+        var concatResult = ctx.parse(Expression.class, "CONCAT(first_name, ' ', last_name)");
+        var concatWsResult = ctx.parse(FunctionExpr.class, "CONCAT_WS('-', first_name, last_name)");
         var substringResult = ctx.parse(FunctionExpr.class, "SUBSTRING_INDEX(email, '@', 1)");
 
         assertTrue(concatResult.ok(), concatResult.errorMessage());
+        assertTrue(concatWsResult.ok(), concatWsResult.errorMessage());
         assertTrue(substringResult.ok(), substringResult.errorMessage());
-        assertEquals("CONCAT_WS", concatResult.value().name().values().getLast());
+
+        var concatExpr = assertInstanceOf(ConcatExpr.class, concatResult.value());
+        assertEquals(3, concatExpr.args().size());
+        assertEquals("CONCAT_WS", concatWsResult.value().name().values().getLast());
         assertEquals("SUBSTRING_INDEX", substringResult.value().name().values().getLast());
+    }
+
+    @Test
+    void parseConcatRequiresAtLeastOneArgument() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Expression.class, "CONCAT()");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).startsWith("CONCAT requires at least one argument"));
+    }
+
+    @Test
+    void nonConcatExpressionsFallBackToRegularExpressionParsing() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Expression.class, "first_name");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertInstanceOf(ColumnExpr.class, result.value());
     }
 }

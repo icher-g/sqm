@@ -20,6 +20,7 @@ Node
 ├─ Expression
 │  ├─ CaseExpr
 │  ├─ CastExpr
+│  ├─ ConcatExpr
 │  ├─ CollateExpr
 │  ├─ ArrayExpr
 │  ├─ ArraySubscriptExpr
@@ -151,6 +152,7 @@ graph TD
 
   Expression --> CaseExpr
   Expression --> CastExpr
+  Expression --> ConcatExpr
   Expression --> CollateExpr
   Expression --> ArrayExpr
   Expression --> ArraySubscriptExpr
@@ -367,6 +369,11 @@ graph TD
 - **CastExpr**
   Type cast expression (`CAST(<expr> AS <type>)` or dialect-specific shorthand).
   The cast target type is represented by a `TypeName`.
+
+- **ConcatExpr**
+  Dialect-neutral string concatenation expression. Rendered by dialects using
+  either infix operator syntax such as `a || b` or function syntax such as
+  `CONCAT(a, b)`.
 
 - **CollateExpr**
   Collation selection expression (`<expr> COLLATE <collation>`).
