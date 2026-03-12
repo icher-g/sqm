@@ -122,6 +122,18 @@ public class ExpressionMatchTest {
     }
 
     @Test
+    void concat_is_not_applied_when_already_matched() {
+        var expr = concat(col("first_name"), lit(" "), col("last_name"));
+        String out = Match
+            .<String>expression(expr)
+            .valueSet(v -> "V")
+            .concat(c -> "C")
+            .orElse("OTHER");
+
+        assertEquals("C", out);
+    }
+
+    @Test
     void collate_is_not_applied_when_already_matched() {
         var expr = col("name");
         String out = Match

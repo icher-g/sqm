@@ -221,4 +221,11 @@ class ExpressionTest {
         assertEquals(4, expr.lhs().matchExpression().literal(l -> l.value()).orElse(null));
         assertEquals(2, expr.rhs().matchExpression().literal(l -> l.value()).orElse(null));
     }
+
+    @Test
+    void concatExpression() {
+        var expr = col("first_name").concat(lit(" "));
+        assertInstanceOf(ConcatExpr.class, expr);
+        assertEquals(2, expr.args().size());
+    }
 }

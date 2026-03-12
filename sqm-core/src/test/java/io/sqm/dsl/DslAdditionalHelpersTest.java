@@ -98,6 +98,8 @@ class DslAdditionalHelpersTest {
         var bareOp = op("+");
         var schemaOp = op("pg_catalog", "@>");
         var typedSchemaOp = op(QualifiedName.of(id("pg_catalog")), "||");
+        var concatExpr = concat(col("first_name"), lit(" "), col("last_name"));
+        var concatListExpr = concat(List.of(col("first_name"), lit(" "), col("last_name")));
 
         assertEquals("Users", table.name().value());
         assertEquals("Public", qualifiedTable.schema().value());
@@ -109,6 +111,8 @@ class DslAdditionalHelpersTest {
         assertNull(bareOp.schemaName());
         assertEquals(List.of("pg_catalog"), schemaOp.schemaName().values());
         assertEquals(List.of("pg_catalog"), typedSchemaOp.schemaName().values());
+        assertEquals(3, concatExpr.args().size());
+        assertEquals(3, concatListExpr.args().size());
 
         var quotedId = id("U", QuoteStyle.BACKTICK);
         assertEquals(QuoteStyle.BACKTICK, quotedId.quoteStyle());

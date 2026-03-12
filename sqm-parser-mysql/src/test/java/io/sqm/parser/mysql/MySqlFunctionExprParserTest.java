@@ -10,6 +10,8 @@ import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -97,5 +99,23 @@ class MySqlFunctionExprParserTest {
         assertEquals(3, concatExpr.args().size());
         assertEquals("CONCAT_WS", concatWsResult.value().name().values().getLast());
         assertEquals("SUBSTRING_INDEX", substringResult.value().name().values().getLast());
+    }
+
+    @Test
+    void parseConcatRequiresAtLeastOneArgument() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Expression.class, "CONCAT()");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).startsWith("CONCAT requires at least one argument"));
+    }
+
+    @Test
+    void nonConcatExpressionsFallBackToRegularExpressionParsing() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Expression.class, "first_name");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertInstanceOf(ColumnExpr.class, result.value());
     }
 }
