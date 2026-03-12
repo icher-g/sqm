@@ -88,6 +88,7 @@ Priority levels:
 - Deliver reusable transpilation rule contracts and a registry that assembles concrete source/target execution plans from shared rules.
 - Support exact, approximate, and unsupported outcomes with explicit diagnostics and rewrite reporting.
 - Deliver an initial PostgreSQL <-> MySQL transpilation slice focused on a small exact subset plus explicit unsupported cases.
+- Backlog follow-up: consolidate dialect identity usage across modules around shared `SqlDialectId` instead of mixed raw strings and service-specific dialect naming.
 
 ### Epic R5: SQL Server Dialect Support
 - Add `sqm-parser-sqlserver` and `sqm-render-sqlserver`.
