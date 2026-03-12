@@ -28,7 +28,7 @@ var result = validator.validate(query);
 
 ## See Also
 
-- `docs/VALIDATION_FEATURES.md`
+- `docs/validation/VALIDATION_FEATURES.md`
 - [Schema Validation](Schema-Validation)
 
 

@@ -8,6 +8,7 @@ Priority levels:
 
 ## Goals
 - Expand dialect coverage beyond ANSI/PostgreSQL/MySQL.
+- Add first-class SQL transpilation before expanding to additional dialect families.
 - Add first-class DDL model/parse/render support.
 - Keep middleware and validation usable across dialects.
 
@@ -81,13 +82,20 @@ Priority levels:
 - Middleware adapters (`sqm-middleware-core`, `sqm-middleware-rest`, `sqm-middleware-mcp`) now include MySQL and DML transport coverage.
 - A repository-owned downstream support matrix documents the supported dialect/statement combinations and is regression-checked in tests.
 
-### Epic R4: SQL Server Dialect Support
+### Epic R4: SQL Transpilation Foundation
+- Add `sqm-transpile` as a dedicated module for source-to-target SQL conversion.
+- Introduce a first-class transpilation pipeline: parse source dialect, normalize, rewrite to target semantics, validate target, render target.
+- Deliver reusable transpilation rule contracts and a registry that assembles concrete source/target execution plans from shared rules.
+- Support exact, approximate, and unsupported outcomes with explicit diagnostics and rewrite reporting.
+- Deliver an initial PostgreSQL <-> MySQL transpilation slice focused on a small exact subset plus explicit unsupported cases.
+
+### Epic R5: SQL Server Dialect Support
 - Add `sqm-parser-sqlserver` and `sqm-render-sqlserver`.
 - Define `SqlServerSpecs`.
 - Support SQL Server pagination/identifier/function differences.
 - Add integration round-trip tests and middleware smoke coverage.
 
-### Epic R5: DDL MVP (Cross-Dialect Core)
+### Epic R6: DDL MVP (Cross-Dialect Core)
 - Extend `sqm-core` with DDL nodes:
   - `CreateTable`, `AlterTable`, `DropTable`
   - column defs, constraints (PK/FK/unique/check), index basics
@@ -95,7 +103,7 @@ Priority levels:
 - Add visitor/transformer/match/json support for all new DDL nodes.
 - Add baseline semantic validation for DDL shape and references.
 
-### Epic R6: Middleware DDL Policy Controls
+### Epic R7: Middleware DDL Policy Controls
 - Add explicit DDL decision controls in `sqm-control`:
   - allowlist/denylist by operation (`CREATE`, `ALTER`, `DROP`)
   - scope by principal/tenant/object
@@ -104,29 +112,29 @@ Priority levels:
 
 ## P1 (High Value)
 
-### Epic R7: Oracle Dialect Support
+### Epic R8: Oracle Dialect Support
 - Add parser/renderer/specs modules for Oracle-specific syntax.
 - Focus on top query constructs and compatibility gaps.
 
-### Epic R8: DDL Coverage Expansion
+### Epic R9: DDL Coverage Expansion
 - Add:
   - `CreateSchema`, `DropSchema`
   - `CreateIndex`, `DropIndex`, `Rename`
   - richer `AlterTable` actions
 - Expand validation and cross-dialect render fallback behavior.
 
-### Epic R9: Catalog/Introspection Unification for New Dialects
+### Epic R10: Catalog/Introspection Unification for New Dialects
 - Provide dialect-aware type mapping packs.
 - Ensure catalog schema loading supports new dialect quirks.
 - Add conformance tests per dialect for schema/validator interplay.
 
 ## P2 (Nice to Have)
 
-### Epic R10: Cloud Dialect Packs
+### Epic R11: Cloud Dialect Packs
 - Evaluate `Snowflake`, `BigQuery`, `Trino/Presto` packs.
 - Prioritize read-only query support first.
 
-### Epic R11: Query Optimization/Normalization Packs
+### Epic R12: Query Optimization/Normalization Packs
 - Optional optimizer passes:
   - predicate simplification
   - projection pruning
@@ -134,18 +142,19 @@ Priority levels:
 - Optional follow-up: evaluate a `StatementFingerprint` abstraction for `INSERT`/`UPDATE`/`DELETE`, but only after explicit normalization semantics are defined for DML.
 - Keep optimizer opt-in and deterministic.
 
-### Epic R12: DML Advanced Expansion
+### Epic R13: DML Advanced Expansion
 - Expand beyond the delivered DML baseline with advanced dialect-specific DML features (for example SQL Server `OUTPUT`, richer MySQL assignment/target variants, and MERGE-family support where applicable).
 - Ensure parser/render/validate/rewrite parity with existing query flows.
 
 ## Suggested Implementation Order
-1. `R4` SQL Server
-2. `R5` DDL MVP core
-3. `R6` DDL middleware controls
-4. `R8` DDL expansion
-5. `R7` Oracle
-6. `R9` catalog unification
-7. `R10`/`R11`/`R12` as capacity permits
+1. `R4` SQL transpilation foundation
+2. `R5` SQL Server
+3. `R6` DDL MVP core
+4. `R7` DDL middleware controls
+5. `R9` DDL expansion
+6. `R8` Oracle
+7. `R10` catalog unification
+8. `R11`/`R12`/`R13` as capacity permits
 
 ## Exit Criteria Per Epic
 - Model + parser + renderer + tests + docs complete.

@@ -9,7 +9,7 @@ SQM represents queries as immutable, typed nodes.
 - `Predicate`: `AND/OR`, comparison, `IN`, `EXISTS`, etc.
 - `TableRef` and joins
 
-Detailed hierarchy: `docs/MODEL.md`.
+Detailed hierarchy: `docs/model/MODEL.md`.
 
 ## Traversal
 

@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DownstreamSupportMatrixTest {
 
-    private static final Path MATRIX_PATH = Path.of("..", "docs", "DOWNSTREAM_SUPPORT_MATRIX.md");
+    private static final Path MATRIX_PATH = Path.of("..", "docs", "downstream", "DOWNSTREAM_SUPPORT_MATRIX.md");
     private static final List<String> SUPPORTED_STATUS_VALUES = List.of("Yes", "No");
 
     @Test

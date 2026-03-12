@@ -115,7 +115,7 @@ Core components:
 SQM defines a rich, type-safe model (AST) to represent SQL statements internally.
 This model is shared across DSL, parser, renderer, validator, transform/rewrite, middleware, JSON, and codegen modules.
 
-➡️ [View the full hierarchy in docs/MODEL.md](docs/MODEL.md)
+➡️ [View the full hierarchy in docs/model/MODEL.md](docs/model/MODEL.md)
 
 ## DML Statement Support
 
@@ -453,7 +453,7 @@ REST correlation id:
 Runtime configuration (applies to both REST and MCP hosts):
 
 Complete generated key table (single source of truth):
-- [docs/MIDDLEWARE_CONFIG_KEYS.md](docs/MIDDLEWARE_CONFIG_KEYS.md) (generated from `ConfigKeys`; run `scripts/generate-middleware-config-keys-doc.ps1`)
+- [docs/middleware/MIDDLEWARE_CONFIG_KEYS.md](docs/middleware/MIDDLEWARE_CONFIG_KEYS.md) (generated from `ConfigKeys`; run `scripts/generate-middleware-config-keys-doc.ps1`)
 
 - Schema source:
     - `sqm.middleware.schema.source` (`manual` | `json` | `jdbc`)
@@ -538,11 +538,11 @@ Runtime status endpoints (REST host):
 
 Production operations docs:
 
-- NFR suite: [docs/MIDDLEWARE_NFR.md](docs/MIDDLEWARE_NFR.md)
-- Deployment profiles/artifacts: [docs/MIDDLEWARE_DEPLOYMENT_PROFILES.md](docs/MIDDLEWARE_DEPLOYMENT_PROFILES.md)
-- SLO/SLI: [docs/MIDDLEWARE_SLO_SLI.md](docs/MIDDLEWARE_SLO_SLI.md)
-- Runbook: [docs/MIDDLEWARE_RUNBOOK.md](docs/MIDDLEWARE_RUNBOOK.md)
-- Release checklist: [docs/MIDDLEWARE_RELEASE_CHECKLIST.md](docs/MIDDLEWARE_RELEASE_CHECKLIST.md)
+- NFR suite: [docs/middleware/MIDDLEWARE_NFR.md](docs/middleware/MIDDLEWARE_NFR.md)
+- Deployment profiles/artifacts: [docs/middleware/MIDDLEWARE_DEPLOYMENT_PROFILES.md](docs/middleware/MIDDLEWARE_DEPLOYMENT_PROFILES.md)
+- SLO/SLI: [docs/middleware/MIDDLEWARE_SLO_SLI.md](docs/middleware/MIDDLEWARE_SLO_SLI.md)
+- Runbook: [docs/middleware/MIDDLEWARE_RUNBOOK.md](docs/middleware/MIDDLEWARE_RUNBOOK.md)
+- Release checklist: [docs/middleware/MIDDLEWARE_RELEASE_CHECKLIST.md](docs/middleware/MIDDLEWARE_RELEASE_CHECKLIST.md)
 
 Validation settings example with tenant access policies (JSON):
 
@@ -673,7 +673,7 @@ The schema can be loaded from:
 - JDBC introspection (`JdbcSchemaProvider`) with optional local cache reuse
 
 See full setup and all configuration options in:
-- [docs/SQL_FILE_CODEGEN_SCHEMA_VALIDATION.md](docs/SQL_FILE_CODEGEN_SCHEMA_VALIDATION.md)
+- [docs/codegen/SQL_FILE_CODEGEN_SCHEMA_VALIDATION.md](docs/codegen/SQL_FILE_CODEGEN_SCHEMA_VALIDATION.md)
 
 Quick-start (JSON snapshot):
 
@@ -812,7 +812,7 @@ For optional dialect-specific validation, `sqm-validate-mysql` currently adds
 early detection for overlapping `USE INDEX` and `FORCE INDEX` combinations on
 the same effective MySQL table-hint scope.
 
-See full validation features and planned improvements in [docs/VALIDATION_FEATURES.md](docs/VALIDATION_FEATURES.md).
+See full validation features and planned improvements in [docs/validation/VALIDATION_FEATURES.md](docs/validation/VALIDATION_FEATURES.md).
 
 ### Serialize to JSON
 
@@ -1308,8 +1308,8 @@ Current version in this repository: `0.3.2`.
 
 Roadmap is tracked in project docs and GitHub issues:
 
-- [docs/ROADMAP.md](docs/ROADMAP.md)
-- [docs/DOWNSTREAM_SUPPORT_MATRIX.md](docs/DOWNSTREAM_SUPPORT_MATRIX.md)
+- [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md)
+- [docs/downstream/DOWNSTREAM_SUPPORT_MATRIX.md](docs/downstream/DOWNSTREAM_SUPPORT_MATRIX.md)
 - https://github.com/icher-g/sqm/issues
 
 Current downstream support spans ANSI, PostgreSQL, and MySQL query and DML flows across

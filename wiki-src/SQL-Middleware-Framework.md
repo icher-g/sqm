@@ -431,7 +431,7 @@ Tool names:
 Both hosts load runtime configuration from Java system properties (or corresponding environment variables):
 
 Complete generated key table (single source of truth):
-- `docs/MIDDLEWARE_CONFIG_KEYS.md` (generated from `ConfigKeys`; run `scripts/generate-middleware-config-keys-doc.ps1`)
+- `docs/middleware/MIDDLEWARE_CONFIG_KEYS.md` (generated from `ConfigKeys`; run `scripts/generate-middleware-config-keys-doc.ps1`)
 
 - `sqm.middleware.schema.source` (`manual|json|jdbc`)
 - `sqm.middleware.schema.defaultJson.path` (optional file path used by `manual` source)

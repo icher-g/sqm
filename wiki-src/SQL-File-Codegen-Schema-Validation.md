@@ -2,7 +2,7 @@
 
 Codegen can validate parsed SQL against schema metadata before emitting Java.
 
-Detailed reference: `docs/SQL_FILE_CODEGEN_SCHEMA_VALIDATION.md`.
+Detailed reference: `docs/codegen/SQL_FILE_CODEGEN_SCHEMA_VALIDATION.md`.
 
 ## Providers
 
