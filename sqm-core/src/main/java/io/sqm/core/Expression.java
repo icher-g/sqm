@@ -9,7 +9,7 @@ import java.util.List;
  * Any value-producing node (scalar or boolean).
  */
 public sealed interface Expression extends Node
-    permits ArithmeticExpr, ArrayExpr, ArraySliceExpr, ArraySubscriptExpr, AtTimeZoneExpr, BinaryOperatorExpr, CaseExpr, CastExpr, CollateExpr, ColumnExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, ParamExpr, Predicate, UnaryOperatorExpr, ValueSet {
+    permits ArithmeticExpr, ArrayExpr, ArraySliceExpr, ArraySubscriptExpr, AtTimeZoneExpr, BinaryOperatorExpr, CaseExpr, CastExpr, CollateExpr, ColumnExpr, ConcatExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, ParamExpr, Predicate, UnaryOperatorExpr, ValueSet {
 
     /**
      * Creates a literal expression.
@@ -815,6 +815,19 @@ public sealed interface Expression extends Node
      */
     default CastExpr cast(TypeName type) {
         return CastExpr.of(this, type);
+    }
+
+    /**
+     * Creates a concatenation expression that appends the given expression to this expression.
+     * <p>
+     * This models semantic string concatenation independent of whether the target dialect
+     * uses operator syntax such as {@code ||} or function syntax such as {@code CONCAT(...)}.
+     *
+     * @param other expression to append
+     * @return concatenation expression
+     */
+    default ConcatExpr concat(Expression other) {
+        return ConcatExpr.of(this, other);
     }
 
     /**

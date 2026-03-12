@@ -119,6 +119,7 @@ public final class Renderers {
             .register(new BinaryOperatorExprRenderer())
             .register(new UnaryOperatorExprRenderer())
             .register(new CastExprRenderer())
+            .register(new ConcatExprRenderer())
             .register(new CollateExprRenderer())
             .register(new AtTimeZoneExprRenderer())
             .register(new ArrayExprRenderer())

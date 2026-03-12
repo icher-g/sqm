@@ -62,6 +62,24 @@ public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
     }
 
     /**
+     * Matches a {@link ConcatExpr} expression.
+     *
+     * <p>This matcher is invoked when the inspected expression represents
+     * dialect-neutral string concatenation.</p>
+     *
+     * @param f a mapping function applied to the matched {@link ConcatExpr}
+     * @return an {@link ExpressionMatch} representing this match branch
+     */
+    @Override
+    public ExpressionMatch<R> concat(Function<ConcatExpr, R> f) {
+        if (!matched && expr instanceof ConcatExpr concatExpr) {
+            result = f.apply(concatExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
      * Matches a {@link CollateExpr} expression.
      *
      * <p>This matcher is invoked when the inspected expression represents

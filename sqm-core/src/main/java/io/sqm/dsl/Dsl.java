@@ -597,6 +597,26 @@ public final class Dsl {
         return CastExpr.of(expr, type);
     }
 
+    /**
+     * Creates a string concatenation expression.
+     *
+     * @param args concatenated expressions
+     * @return concatenation expression
+     */
+    public static ConcatExpr concat(Expression... args) {
+        return ConcatExpr.of(args);
+    }
+
+    /**
+     * Creates a string concatenation expression.
+     *
+     * @param args concatenated expressions
+     * @return concatenation expression
+     */
+    public static ConcatExpr concat(List<Expression> args) {
+        return ConcatExpr.of(args);
+    }
+
     /* ========================= Joins ========================= */
 
     /**

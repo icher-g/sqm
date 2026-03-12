@@ -1121,6 +1121,20 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
+     * Visits a {@link ConcatExpr}.
+     * <p>
+     * The visitor is applied recursively to each concatenated expression.
+     *
+     * @param expr concatenation expression being visited
+     * @return the visitor result produced by {@link #defaultResult()}
+     */
+    @Override
+    public R visitConcatExpr(ConcatExpr expr) {
+        expr.args().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
      * Visits a {@link CollateExpr}.
      * <p>
      * The visitor is applied recursively to the operand expression.

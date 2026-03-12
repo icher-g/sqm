@@ -1307,6 +1307,25 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
+     * Transforms a {@link ConcatExpr}.
+     * <p>
+     * The transformer is applied recursively to each concatenated expression.
+     * If no arguments change, the original instance is returned to preserve structural sharing.
+     *
+     * @param expr concatenation expression being transformed
+     * @return transformed concatenation expression, or the original instance if unchanged
+     */
+    @Override
+    public Node visitConcatExpr(ConcatExpr expr) {
+        List<Expression> args = new ArrayList<>(expr.args().size());
+        boolean changed = apply(expr.args(), args);
+        if (changed) {
+            return ConcatExpr.of(args);
+        }
+        return expr;
+    }
+
+    /**
      * Transforms a {@link CollateExpr}.
      * <p>
      * The transformer is applied recursively to the operand expression.

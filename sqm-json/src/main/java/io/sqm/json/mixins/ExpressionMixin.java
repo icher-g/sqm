@@ -17,6 +17,7 @@ import io.sqm.core.*;
     @JsonSubTypes.Type(value = ParamExpr.class, name = "param"),
     @JsonSubTypes.Type(value = CaseExpr.Impl.class, name = "case"),
     @JsonSubTypes.Type(value = CastExpr.Impl.class, name = "cast"),
+    @JsonSubTypes.Type(value = ConcatExpr.Impl.class, name = "concat"),
     @JsonSubTypes.Type(value = ArrayExpr.Impl.class, name = "array"),
     @JsonSubTypes.Type(value = ArraySubscriptExpr.Impl.class, name = "array-subscript"),
     @JsonSubTypes.Type(value = ArraySliceExpr.Impl.class, name = "array-slice"),

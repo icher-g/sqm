@@ -2,6 +2,7 @@ package io.sqm.parser.postgresql;
 
 import io.sqm.core.BinaryOperatorExpr;
 import io.sqm.core.ColumnExpr;
+import io.sqm.core.ConcatExpr;
 import io.sqm.core.Expression;
 import io.sqm.parser.core.ParserException;
 import io.sqm.parser.core.Cursor;
@@ -26,15 +27,15 @@ public class CustomOperatorPrecedenceParserTest {
     void higher_tier_operator_binds_tighter_than_lower_tier() {
         var expr = parseExpr("a || b ## c");
 
-        assertInstanceOf(BinaryOperatorExpr.class, expr);
-        var outer = (BinaryOperatorExpr) expr;
-        assertEquals("||", outer.operator().text());
+        assertInstanceOf(ConcatExpr.class, expr);
+        var outer = (ConcatExpr) expr;
+        assertEquals(2, outer.args().size());
 
-        assertInstanceOf(ColumnExpr.class, outer.left());
-        assertEquals("a", ((ColumnExpr) outer.left()).name().value());
+        assertInstanceOf(ColumnExpr.class, outer.args().get(0));
+        assertEquals("a", ((ColumnExpr) outer.args().get(0)).name().value());
 
-        assertInstanceOf(BinaryOperatorExpr.class, outer.right());
-        var inner = (BinaryOperatorExpr) outer.right();
+        assertInstanceOf(BinaryOperatorExpr.class, outer.args().get(1));
+        var inner = (BinaryOperatorExpr) outer.args().get(1);
         assertEquals("##", inner.operator().text());
 
         assertInstanceOf(ColumnExpr.class, inner.left());
@@ -84,19 +85,15 @@ public class CustomOperatorPrecedenceParserTest {
     void recursion_binds_higher_precedence_inside_lower_precedence_chain() {
         var expr = parseExpr("a || b ## c || d");
 
-        assertInstanceOf(BinaryOperatorExpr.class, expr);
-        var outer = (BinaryOperatorExpr) expr;
-        assertEquals("||", outer.operator().text());
+        assertInstanceOf(ConcatExpr.class, expr);
+        var outer = (ConcatExpr) expr;
+        assertEquals(3, outer.args().size());
 
-        assertInstanceOf(BinaryOperatorExpr.class, outer.left());
-        var left = (BinaryOperatorExpr) outer.left();
-        assertEquals("||", left.operator().text());
+        assertInstanceOf(ColumnExpr.class, outer.args().get(0));
+        assertEquals("a", ((ColumnExpr) outer.args().get(0)).name().value());
 
-        assertInstanceOf(ColumnExpr.class, left.left());
-        assertEquals("a", ((ColumnExpr) left.left()).name().value());
-
-        assertInstanceOf(BinaryOperatorExpr.class, left.right());
-        var nested = (BinaryOperatorExpr) left.right();
+        assertInstanceOf(BinaryOperatorExpr.class, outer.args().get(1));
+        var nested = (BinaryOperatorExpr) outer.args().get(1);
         assertEquals("##", nested.operator().text());
 
         assertInstanceOf(ColumnExpr.class, nested.left());
@@ -104,8 +101,8 @@ public class CustomOperatorPrecedenceParserTest {
         assertInstanceOf(ColumnExpr.class, nested.right());
         assertEquals("c", ((ColumnExpr) nested.right()).name().value());
 
-        assertInstanceOf(ColumnExpr.class, outer.right());
-        assertEquals("d", ((ColumnExpr) outer.right()).name().value());
+        assertInstanceOf(ColumnExpr.class, outer.args().get(2));
+        assertEquals("d", ((ColumnExpr) outer.args().get(2)).name().value());
     }
 
     @Test
@@ -154,21 +151,16 @@ public class CustomOperatorPrecedenceParserTest {
     void low_precedence_chain_is_left_associative() {
         var expr = parseExpr("a || b || c");
 
-        assertInstanceOf(BinaryOperatorExpr.class, expr);
-        var outer = (BinaryOperatorExpr) expr;
-        assertEquals("||", outer.operator().text());
+        assertInstanceOf(ConcatExpr.class, expr);
+        var outer = (ConcatExpr) expr;
+        assertEquals(3, outer.args().size());
 
-        assertInstanceOf(BinaryOperatorExpr.class, outer.left());
-        var inner = (BinaryOperatorExpr) outer.left();
-        assertEquals("||", inner.operator().text());
-
-        assertInstanceOf(ColumnExpr.class, inner.left());
-        assertEquals("a", ((ColumnExpr) inner.left()).name().value());
-        assertInstanceOf(ColumnExpr.class, inner.right());
-        assertEquals("b", ((ColumnExpr) inner.right()).name().value());
-
-        assertInstanceOf(ColumnExpr.class, outer.right());
-        assertEquals("c", ((ColumnExpr) outer.right()).name().value());
+        assertInstanceOf(ColumnExpr.class, outer.args().get(0));
+        assertEquals("a", ((ColumnExpr) outer.args().get(0)).name().value());
+        assertInstanceOf(ColumnExpr.class, outer.args().get(1));
+        assertEquals("b", ((ColumnExpr) outer.args().get(1)).name().value());
+        assertInstanceOf(ColumnExpr.class, outer.args().get(2));
+        assertEquals("c", ((ColumnExpr) outer.args().get(2)).name().value());
     }
 
     @Test
