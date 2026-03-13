@@ -15,8 +15,8 @@ public final class Transpile_PostgresToMySqlApproximate {
      */
     public static void main(String[] args) {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .options(new TranspileOptions(true, false, true, true))
             .build();
 
@@ -34,3 +34,4 @@ public final class Transpile_PostgresToMySqlApproximate {
         );
     }
 }
+

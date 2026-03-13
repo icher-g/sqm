@@ -19,8 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MySqlToPostgresNullSafeComparisonRuleTest {
     private static final TranspileContext CONTEXT = new TranspileContext(
-        SqlDialectId.of("mysql"),
-        SqlDialectId.of("postgresql"),
+        SqlDialectId.MYSQL,
+        SqlDialectId.POSTGRESQL,
         TranspileOptions.defaults(),
         Optional.empty(),
         Optional.empty()
@@ -79,7 +79,8 @@ class MySqlToPostgresNullSafeComparisonRuleTest {
         var rule = new MySqlToPostgresNullSafeComparisonRule();
 
         assertEquals("mysql-to-postgres-null-safe-comparison", rule.id());
-        assertTrue(rule.sourceDialects().contains(SqlDialectId.of("mysql")));
-        assertTrue(rule.targetDialects().contains(SqlDialectId.of("postgresql")));
+        assertTrue(rule.sourceDialects().contains(SqlDialectId.MYSQL));
+        assertTrue(rule.targetDialects().contains(SqlDialectId.POSTGRESQL));
     }
 }
+

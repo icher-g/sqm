@@ -7,6 +7,7 @@ import io.sqm.control.execution.*;
 import io.sqm.control.pipeline.*;
 import io.sqm.control.rewrite.*;
 import io.sqm.control.service.*;
+import io.sqm.core.dialect.SqlDialectId;
 
 import org.junit.jupiter.api.Test;
 
@@ -22,15 +23,16 @@ class ExecutionContextTest {
 
     @Test
     void of_minimal() {
-        var context = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
+        var context = ExecutionContext.of(SqlDialectId.POSTGRESQL, ExecutionMode.ANALYZE);
         assertEquals("postgresql", context.dialect());
+        assertEquals(SqlDialectId.POSTGRESQL, context.dialectId());
         assertEquals(ExecutionMode.ANALYZE, context.mode());
         assertEquals(ParameterizationMode.OFF, context.parameterizationMode());
     }
 
     @Test
     void with_parameterization_mode_preserves_other_fields() {
-        var context = ExecutionContext.of("postgresql", "alice", "tenant-a", ExecutionMode.EXECUTE);
+        var context = ExecutionContext.of(SqlDialectId.POSTGRESQL, "alice", "tenant-a", ExecutionMode.EXECUTE);
 
         var bindContext = context.withParameterizationMode(ParameterizationMode.BIND);
 
@@ -44,7 +46,7 @@ class ExecutionContextTest {
     @Test
     void of_full_supports_explicit_parameterization_mode() {
         var context = ExecutionContext.of(
-            "postgresql",
+            SqlDialectId.POSTGRESQL,
             "alice",
             "tenant-a",
             ExecutionMode.ANALYZE,
@@ -68,7 +70,7 @@ class ExecutionContextTest {
 
     @Test
     void serializable_roundtrip_preserves_equality() throws Exception {
-        var original = ExecutionContext.of("postgresql", "alice", "tenant-a", ExecutionMode.EXECUTE);
+        var original = ExecutionContext.of(SqlDialectId.POSTGRESQL, "alice", "tenant-a", ExecutionMode.EXECUTE);
 
         var bytes = new ByteArrayOutputStream();
         try (var out = new ObjectOutputStream(bytes)) {
@@ -82,6 +84,14 @@ class ExecutionContextTest {
 
         assertEquals(original, restored);
         assertEquals(original.hashCode(), restored.hashCode());
+    }
+
+    @Test
+    void constructorNormalizesDialectAliases() {
+        var context = ExecutionContext.of("postgres", ExecutionMode.EXECUTE);
+
+        assertEquals("postgresql", context.dialect());
+        assertEquals(SqlDialectId.POSTGRESQL, context.dialectId());
     }
 }
 

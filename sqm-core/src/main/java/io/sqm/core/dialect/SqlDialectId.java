@@ -1,5 +1,6 @@
 package io.sqm.core.dialect;
 
+import java.io.Serializable;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -8,7 +9,22 @@ import java.util.Objects;
  *
  * @param value normalized dialect identifier
  */
-public record SqlDialectId(String value) {
+public record SqlDialectId(String value) implements Serializable {
+    /**
+     * Built-in ANSI dialect identifier.
+     */
+    public static final SqlDialectId ANSI = new SqlDialectId("ansi");
+
+    /**
+     * Built-in MySQL dialect identifier.
+     */
+    public static final SqlDialectId MYSQL = new SqlDialectId("mysql");
+
+    /**
+     * Built-in PostgreSQL dialect identifier.
+     */
+    public static final SqlDialectId POSTGRESQL = new SqlDialectId("postgresql");
+
     /**
      * Creates a normalized dialect identifier.
      *
@@ -30,9 +46,11 @@ public record SqlDialectId(String value) {
     public static SqlDialectId of(String value) {
         Objects.requireNonNull(value, "value");
         var normalized = value.trim().toLowerCase(Locale.ROOT);
-        return new SqlDialectId(switch (normalized) {
-            case "postgres" -> "postgresql";
-            default -> normalized;
-        });
+        return switch (normalized) {
+            case "ansi" -> ANSI;
+            case "mysql" -> MYSQL;
+            case "postgres", "postgresql" -> POSTGRESQL;
+            default -> new SqlDialectId(normalized);
+        };
     }
 }

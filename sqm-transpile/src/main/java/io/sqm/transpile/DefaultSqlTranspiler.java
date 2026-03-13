@@ -198,30 +198,45 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
     }
 
     private static Supplier<Specs> defaultParserFactory(SqlDialectId dialectId) {
-        return switch (dialectId.value()) {
-            case "ansi" -> AnsiSpecs::new;
-            case "mysql" -> MySqlSpecs::new;
-            case "postgresql" -> PostgresSpecs::new;
-            default -> throw new IllegalArgumentException("Unsupported source dialect: " + dialectId.value());
-        };
+        if (SqlDialectId.ANSI.equals(dialectId)) {
+            return AnsiSpecs::new;
+        }
+        if (SqlDialectId.MYSQL.equals(dialectId)) {
+            return MySqlSpecs::new;
+        }
+        if (SqlDialectId.POSTGRESQL.equals(dialectId)) {
+            return PostgresSpecs::new;
+        }
+        throw new IllegalArgumentException("Unsupported source dialect: " + dialectId.value());
     }
 
     private static Supplier<SqlDialect> defaultRendererFactory(SqlDialectId dialectId) {
-        return switch (dialectId.value()) {
-            case "ansi" -> AnsiDialect::new;
-            case "mysql" -> MySqlDialect::new;
-            case "postgresql" -> PostgresDialect::new;
-            default -> throw new IllegalArgumentException("Unsupported target dialect: " + dialectId.value());
-        };
+        if (SqlDialectId.ANSI.equals(dialectId)) {
+            return AnsiDialect::new;
+        }
+        if (SqlDialectId.MYSQL.equals(dialectId)) {
+            return MySqlDialect::new;
+        }
+        if (SqlDialectId.POSTGRESQL.equals(dialectId)) {
+            return PostgresDialect::new;
+        }
+        throw new IllegalArgumentException("Unsupported target dialect: " + dialectId.value());
     }
 
     private static Supplier<SchemaValidationSettings> defaultValidationFactory(SqlDialectId dialectId) {
-        return () -> mergeDialectSettings(switch (dialectId.value()) {
-            case "mysql" -> MySqlValidationDialect.of();
-            case "postgresql" -> PostgresValidationDialect.of();
-            case "ansi" -> null;
-            default -> throw new IllegalArgumentException("Unsupported validation dialect: " + dialectId.value());
-        });
+        return () -> mergeDialectSettings(
+            SqlDialectId.MYSQL.equals(dialectId)
+                ? MySqlValidationDialect.of()
+                : SqlDialectId.POSTGRESQL.equals(dialectId)
+                ? PostgresValidationDialect.of()
+                : SqlDialectId.ANSI.equals(dialectId)
+                ? null
+                : unsupportedValidationDialect(dialectId)
+        );
+    }
+
+    private static SchemaValidationDialect unsupportedValidationDialect(SqlDialectId dialectId) {
+        throw new IllegalArgumentException("Unsupported validation dialect: " + dialectId.value());
     }
 
     private static SchemaValidationSettings mergeDialectSettings(SchemaValidationDialect dialect) {

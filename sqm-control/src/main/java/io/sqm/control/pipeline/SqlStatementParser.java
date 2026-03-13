@@ -2,16 +2,17 @@ package io.sqm.control.pipeline;
 
 import io.sqm.control.execution.ExecutionContext;
 import io.sqm.core.Statement;
+import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.Specs;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Parses SQL text into SQM {@link Statement} models.
@@ -27,28 +28,21 @@ public interface SqlStatementParser {
      * @return dialect-aware parser
      */
     static SqlStatementParser standard() {
-        return dialectAware(Map.of(
-            "ansi", AnsiSpecs::new,
-            "mysql", MySqlSpecs::new,
-            "postgresql", PostgresSpecs::new,
-            "postgres", PostgresSpecs::new
+        return dialectAwareIds(Map.of(
+            SqlDialectId.ANSI, AnsiSpecs::new,
+            SqlDialectId.MYSQL, MySqlSpecs::new,
+            SqlDialectId.POSTGRESQL, PostgresSpecs::new
         ));
     }
 
-    /**
-     * Creates a dialect-aware parser with custom dialect mappings.
-     *
-     * @param specsByDialect mapping of normalized dialect names to parser specs factories
-     * @return dialect-aware parser
-     */
-    static SqlStatementParser dialectAware(Map<String, Supplier<Specs>> specsByDialect) {
+    private static SqlStatementParser dialectAwareIds(Map<SqlDialectId, Supplier<Specs>> specsByDialect) {
         Objects.requireNonNull(specsByDialect, "specsByDialect must not be null");
         var mappings = Map.copyOf(specsByDialect);
         return (sql, context) -> {
             Objects.requireNonNull(sql, "sql must not be null");
             Objects.requireNonNull(context, "context must not be null");
 
-            var specsFactory = mappings.get(context.dialect().toLowerCase(Locale.ROOT));
+            var specsFactory = mappings.get(context.dialectId());
             if (specsFactory == null) {
                 throw new IllegalArgumentException("Unsupported dialect: " + context.dialect());
             }
@@ -60,6 +54,22 @@ public interface SqlStatementParser {
             }
             return result.value();
         };
+    }
+
+    /**
+     * Creates a dialect-aware parser with custom dialect mappings.
+     *
+     * @param specsByDialect mapping of normalized dialect names to parser specs factories
+     * @return dialect-aware parser
+     */
+    static SqlStatementParser dialectAware(Map<String, Supplier<Specs>> specsByDialect) {
+        Objects.requireNonNull(specsByDialect, "specsByDialect must not be null");
+        var normalized = specsByDialect.entrySet().stream()
+            .collect(Collectors.toUnmodifiableMap(
+                entry -> SqlDialectId.of(entry.getKey()),
+                Map.Entry::getValue
+            ));
+        return dialectAwareIds(normalized);
     }
 
     /**

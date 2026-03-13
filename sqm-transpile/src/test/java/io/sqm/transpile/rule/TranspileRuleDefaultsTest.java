@@ -29,12 +29,12 @@ class TranspileRuleDefaultsTest {
 
             @Override
             public Set<SqlDialectId> sourceDialects() {
-                return Set.of(SqlDialectId.of("ansi"));
+                return Set.of(SqlDialectId.ANSI);
             }
 
             @Override
             public Set<SqlDialectId> targetDialects() {
-                return Set.of(SqlDialectId.of("mysql"));
+                return Set.of(SqlDialectId.MYSQL);
             }
 
             @Override
@@ -43,11 +43,11 @@ class TranspileRuleDefaultsTest {
             }
         };
 
-        assertTrue(rule.supports(SqlDialectId.of("ansi"), SqlDialectId.of("mysql")));
-        assertFalse(rule.supports(SqlDialectId.of("postgresql"), SqlDialectId.of("mysql")));
+        assertTrue(rule.supports(SqlDialectId.ANSI, SqlDialectId.MYSQL));
+        assertFalse(rule.supports(SqlDialectId.POSTGRESQL, SqlDialectId.MYSQL));
         assertTrue(rule.supports(new TranspileContext(
-            SqlDialectId.of("ansi"),
-            SqlDialectId.of("mysql"),
+            SqlDialectId.ANSI,
+            SqlDialectId.MYSQL,
             TranspileOptions.defaults(),
             Optional.empty(),
             Optional.empty()
@@ -62,7 +62,7 @@ class TranspileRuleDefaultsTest {
         TranspileRule first = rule("first", 0, statement);
 
         var rules = DefaultTranspileRuleRegistry.of(List.of(later, first, earlier))
-            .rulesFor(SqlDialectId.of("ansi"), SqlDialectId.of("mysql"));
+            .rulesFor(SqlDialectId.ANSI, SqlDialectId.MYSQL);
 
         assertEquals(List.of("first", "a-rule", "z-rule"), rules.stream().map(TranspileRule::id).toList());
     }
@@ -96,3 +96,4 @@ class TranspileRuleDefaultsTest {
         };
     }
 }
+

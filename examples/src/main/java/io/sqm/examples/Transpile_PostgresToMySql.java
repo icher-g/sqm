@@ -14,8 +14,8 @@ public final class Transpile_PostgresToMySql {
      */
     public static void main(String[] args) {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile(
@@ -28,3 +28,4 @@ public final class Transpile_PostgresToMySql {
         System.out.println(result.sql().orElse("<no sql>"));
     }
 }
+

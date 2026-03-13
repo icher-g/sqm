@@ -4,6 +4,7 @@ import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.control.decision.ReasonCode;
 import io.sqm.control.execution.ExecutionContext;
 import io.sqm.core.Statement;
+import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.mysql.MySqlValidationDialect;
 import io.sqm.validate.postgresql.PostgresValidationDialect;
@@ -12,10 +13,10 @@ import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.TenantRequirementMode;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Validates parsed statement models against schema and dialect policies.
@@ -41,22 +42,14 @@ public interface SqlStatementValidator {
      * @return query validator
      */
     static SqlStatementValidator standard(CatalogSchema schema, SchemaValidationSettings settings) {
-        return dialectAware(schema, Map.of(
-            "ansi", () -> settings,
-            "mysql", () -> mergeDialectSettings(settings, MySqlValidationDialect.of()),
-            "postgresql", () -> mergeDialectSettings(settings, PostgresValidationDialect.of()),
-            "postgres", () -> mergeDialectSettings(settings, PostgresValidationDialect.of())
+        return dialectAwareIds(schema, Map.of(
+            SqlDialectId.ANSI, () -> settings,
+            SqlDialectId.MYSQL, () -> mergeDialectSettings(settings, MySqlValidationDialect.of()),
+            SqlDialectId.POSTGRESQL, () -> mergeDialectSettings(settings, PostgresValidationDialect.of())
         ));
     }
 
-    /**
-     * Creates a dialect-aware validator with custom dialect settings mappings.
-     *
-     * @param schema         catalog schema
-     * @param specsByDialect mapping of normalized dialect names to settings suppliers
-     * @return query validator
-     */
-    static SqlStatementValidator dialectAware(CatalogSchema schema, Map<String, Supplier<SchemaValidationSettings>> specsByDialect) {
+    private static SqlStatementValidator dialectAwareIds(CatalogSchema schema, Map<SqlDialectId, Supplier<SchemaValidationSettings>> specsByDialect) {
         Objects.requireNonNull(schema, "schema must not be null");
         Objects.requireNonNull(specsByDialect, "specsByDialect must not be null");
         var mappings = Map.copyOf(specsByDialect);
@@ -65,7 +58,7 @@ public interface SqlStatementValidator {
             Objects.requireNonNull(sql, "sql must not be null");
             Objects.requireNonNull(context, "context must not be null");
 
-            var specsFactory = mappings.get(context.dialect().toLowerCase(Locale.ROOT));
+            var specsFactory = mappings.get(context.dialectId());
             if (specsFactory == null) {
                 throw new IllegalArgumentException("Unsupported dialect: " + context.dialect());
             }
@@ -87,6 +80,24 @@ public interface SqlStatementValidator {
             var first = result.problems().getFirst();
             return StatementValidateResult.failure(mapReason(first.code()), first.message());
         };
+    }
+
+    /**
+     * Creates a dialect-aware validator with custom dialect settings mappings.
+     *
+     * @param schema         catalog schema
+     * @param specsByDialect mapping of normalized dialect names to settings suppliers
+     * @return query validator
+     */
+    static SqlStatementValidator dialectAware(CatalogSchema schema, Map<String, Supplier<SchemaValidationSettings>> specsByDialect) {
+        Objects.requireNonNull(schema, "schema must not be null");
+        Objects.requireNonNull(specsByDialect, "specsByDialect must not be null");
+        var normalized = specsByDialect.entrySet().stream()
+            .collect(Collectors.toUnmodifiableMap(
+                entry -> SqlDialectId.of(entry.getKey()),
+                Map.Entry::getValue
+            ));
+        return dialectAwareIds(schema, normalized);
     }
 
     private static SchemaValidationSettings mergeDialectSettings(SchemaValidationSettings base, SchemaValidationDialect dialect) {

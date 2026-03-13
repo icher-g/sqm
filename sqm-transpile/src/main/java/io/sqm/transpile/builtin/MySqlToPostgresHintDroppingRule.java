@@ -28,12 +28,12 @@ public final class MySqlToPostgresHintDroppingRule implements TranspileRule {
 
     @Override
     public Set<SqlDialectId> sourceDialects() {
-        return Set.of(SqlDialectId.of("mysql"));
+        return Set.of(SqlDialectId.MYSQL);
     }
 
     @Override
     public Set<SqlDialectId> targetDialects() {
-        return Set.of(SqlDialectId.of("postgresql"));
+        return Set.of(SqlDialectId.POSTGRESQL);
     }
 
     @Override
