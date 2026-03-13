@@ -140,6 +140,90 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
+    void transpilesMySqlRegexPredicateToPostgresRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users WHERE name REGEXP '^al.*'");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT * FROM users WHERE name ~ '^al.*'"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
+    void transpilesMySqlNullSafeEqualityToPostgresDistinctness() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users WHERE first_name <=> last_name");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT * FROM users WHERE first_name IS NOT DISTINCT FROM last_name"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
+    void transpilesNegatedMySqlNullSafeEqualityToPostgresDistinctness() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users WHERE NOT (first_name <=> last_name)");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT * FROM users WHERE first_name IS DISTINCT FROM last_name"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
+    void transpilesMySqlNullSafeEqualityInsideJoinPredicate() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile(
+            "SELECT * FROM users u JOIN profiles p ON u.profile_id <=> p.id"
+        );
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT * FROM users AS u INNER JOIN profiles AS p ON u.profile_id IS NOT DISTINCT FROM p.id"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
+    void transpilesNegatedMySqlNullSafeEqualityInsideCompoundPredicate() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile(
+            "SELECT * FROM users WHERE active = TRUE AND NOT (first_name <=> last_name)"
+        );
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT * FROM users WHERE active = TRUE AND first_name IS DISTINCT FROM last_name"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
     void validatesAgainstTargetSchemaWhenProvided() {
         var schema = CatalogSchema.of(
             CatalogTable.of(
@@ -623,6 +707,171 @@ class DefaultSqlTranspilerTest {
 
         assertEquals(TranspileStatus.UNSUPPORTED, result.status());
         assertEquals("UNSUPPORTED_POSTGRES_OPERATOR_FAMILY", result.problems().getFirst().code());
+    }
+
+    @Test
+    void mysqlOptimizerHintIsDroppedWithWarningBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT /*+ NO_RANGE_OPTIMIZATION(users) */ * FROM users");
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        assertEquals(normalizeSql("SELECT * FROM users"), normalizeSql(result.sql().orElseThrow()));
+        assertEquals("MYSQL_HINTS_DROPPED", result.warnings().getFirst().code());
+    }
+
+    @Test
+    void mysqlLeadingOptimizerHintIsDroppedWithWarningBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile("/*+ MAX_EXECUTION_TIME(1000) */ SELECT id FROM users");
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        assertEquals(normalizeSql("SELECT id FROM users"), normalizeSql(result.sql().orElseThrow()));
+        assertEquals("MYSQL_HINTS_DROPPED", result.warnings().getFirst().code());
+    }
+
+    @Test
+    void mysqlIndexHintIsDroppedWithWarningBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users USE INDEX (idx_users_name)");
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        assertEquals(normalizeSql("SELECT * FROM users"), normalizeSql(result.sql().orElseThrow()));
+        assertEquals("MYSQL_HINTS_DROPPED", result.warnings().getFirst().code());
+    }
+
+    @Test
+    void mysqlForceIndexHintIsDroppedWithWarningBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users FORCE INDEX FOR JOIN (idx_users_name)");
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        assertEquals(normalizeSql("SELECT * FROM users"), normalizeSql(result.sql().orElseThrow()));
+        assertEquals("MYSQL_HINTS_DROPPED", result.warnings().getFirst().code());
+    }
+
+    @Test
+    void mysqlIgnoreIndexHintIsDroppedWithWarningBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users IGNORE INDEX FOR ORDER BY (idx_users_name)");
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        assertEquals(normalizeSql("SELECT * FROM users"), normalizeSql(result.sql().orElseThrow()));
+        assertEquals("MYSQL_HINTS_DROPPED", result.warnings().getFirst().code());
+    }
+
+    @Test
+    void droppedMySqlHintsCanBeRejectedByWarningPolicy() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .options(new TranspileOptions(false, true, true, true))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users USE INDEX (idx_users_name)");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("WARNINGS_NOT_ALLOWED", result.problems().getFirst().code());
+        assertEquals("MYSQL_HINTS_DROPPED", result.warnings().getFirst().code());
+    }
+
+    @Test
+    void mysqlOnDuplicateKeyUpdateIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile(
+            "INSERT INTO users (id, name) VALUES (1, 'alice') ON DUPLICATE KEY UPDATE name = 'alice2'"
+        );
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_ON_DUPLICATE_KEY_UPDATE", result.problems().getFirst().code());
+    }
+
+    @Test
+    void mysqlInsertIgnoreIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile("INSERT IGNORE INTO users (id) VALUES (1)");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_INSERT_IGNORE", result.problems().getFirst().code());
+    }
+
+    @Test
+    void mysqlReplaceIntoIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile("REPLACE INTO users (id) VALUES (1)");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_REPLACE_INTO", result.problems().getFirst().code());
+    }
+
+    @Test
+    void mysqlJsonFunctionFamilyIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT JSON_EXTRACT(payload, '$.user.id') FROM users");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_MYSQL_JSON_FUNCTION", result.problems().getFirst().code());
+    }
+
+    @Test
+    void mysqlJsonObjectFunctionFamilyIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT JSON_OBJECT('id', user_id, 'name', user_name) FROM users");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_MYSQL_JSON_FUNCTION", result.problems().getFirst().code());
+    }
+
+    @Test
+    void mysqlJsonArrayFunctionFamilyIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.of("postgresql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT JSON_ARRAY(user_id, user_name) FROM users");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_MYSQL_JSON_FUNCTION", result.problems().getFirst().code());
     }
 
     private static TranspileRule approximateRule() {

@@ -24,4 +24,21 @@ class DefaultTranspileRuleRegistryDefaultsTest {
             rules.stream().map(TranspileRule::id).sorted().toList()
         );
     }
+
+    @Test
+    void defaultsIncludeMySqlToPostgresBuiltIns() {
+        var rules = DefaultTranspileRuleRegistry.defaults()
+            .rulesFor(SqlDialectId.of("mysql"), SqlDialectId.of("postgresql"));
+
+        assertEquals(
+            java.util.List.of(
+                "mysql-to-postgres-hint-dropping",
+                "mysql-to-postgres-insert-mode-unsupported",
+                "mysql-to-postgres-json-function-unsupported",
+                "mysql-to-postgres-null-safe-comparison",
+                "mysql-to-postgres-on-duplicate-key-unsupported"
+            ),
+            rules.stream().map(TranspileRule::id).sorted().toList()
+        );
+    }
 }

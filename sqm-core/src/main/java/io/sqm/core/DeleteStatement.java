@@ -122,6 +122,16 @@ public non-sealed interface DeleteStatement extends Statement {
     }
 
     /**
+     * Creates a mutable builder initialized from an existing delete statement snapshot.
+     *
+     * @param statement source delete statement
+     * @return builder initialized with the statement state
+     */
+    static Builder builder(DeleteStatement statement) {
+        return new Builder(statement);
+    }
+
+    /**
      * Returns the delete target table.
      *
      * @return target table
@@ -193,6 +203,20 @@ public non-sealed interface DeleteStatement extends Statement {
          */
         private Builder(Table table) {
             this.table = Objects.requireNonNull(table, "table");
+        }
+
+        /**
+         * Creates a builder initialized from an existing delete statement snapshot.
+         *
+         * @param statement source delete statement
+         */
+        private Builder(DeleteStatement statement) {
+            this(Objects.requireNonNull(statement, "statement").table());
+            this.using.addAll(statement.using());
+            this.joins.addAll(statement.joins());
+            this.where = statement.where();
+            this.returning.addAll(statement.returning());
+            this.optimizerHints.addAll(statement.optimizerHints());
         }
 
         /**
@@ -321,6 +345,16 @@ public non-sealed interface DeleteStatement extends Statement {
          */
         public Builder optimizerHint(String optimizerHint) {
             this.optimizerHints.add(Objects.requireNonNull(optimizerHint, "optimizerHint"));
+            return this;
+        }
+
+        /**
+         * Clears optimizer hints attached to this statement.
+         *
+         * @return this builder
+         */
+        public Builder clearOptimizerHints() {
+            this.optimizerHints.clear();
             return this;
         }
 

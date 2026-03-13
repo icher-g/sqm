@@ -148,6 +148,16 @@ public non-sealed interface UpdateStatement extends Statement {
     }
 
     /**
+     * Creates a mutable builder initialized from an existing update statement snapshot.
+     *
+     * @param statement source update statement
+     * @return builder initialized with the statement state
+     */
+    static Builder builder(UpdateStatement statement) {
+        return new Builder(statement);
+    }
+
+    /**
      * Returns the update target table.
      *
      * @return target table
@@ -227,6 +237,21 @@ public non-sealed interface UpdateStatement extends Statement {
          */
         private Builder(Table table) {
             this.table = Objects.requireNonNull(table, "table");
+        }
+
+        /**
+         * Creates a builder initialized from an existing update statement snapshot.
+         *
+         * @param statement source update statement
+         */
+        private Builder(UpdateStatement statement) {
+            this(Objects.requireNonNull(statement, "statement").table());
+            this.assignments.addAll(statement.assignments());
+            this.joins.addAll(statement.joins());
+            this.from.addAll(statement.from());
+            this.where = statement.where();
+            this.returning.addAll(statement.returning());
+            this.optimizerHints.addAll(statement.optimizerHints());
         }
 
         /**
@@ -401,6 +426,16 @@ public non-sealed interface UpdateStatement extends Statement {
          */
         public Builder optimizerHint(String optimizerHint) {
             this.optimizerHints.add(Objects.requireNonNull(optimizerHint, "optimizerHint"));
+            return this;
+        }
+
+        /**
+         * Clears optimizer hints attached to this statement.
+         *
+         * @return this builder
+         */
+        public Builder clearOptimizerHints() {
+            this.optimizerHints.clear();
             return this;
         }
 

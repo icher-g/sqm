@@ -93,6 +93,16 @@ public non-sealed interface SelectQuery extends Query {
     }
 
     /**
+     * Creates a mutable builder initialized from an existing {@link SelectQuery}.
+     *
+     * @param query source query
+     * @return builder initialized with the query state
+     */
+    static SelectQueryBuilder builder(SelectQuery query) {
+        return SelectQueryBuilder.of(query);
+    }
+
+    /**
      * Gets a list of select items to be used in the SELECT clause.
      *
      * @return immutable list of select items

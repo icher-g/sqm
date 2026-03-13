@@ -1240,6 +1240,14 @@ For the current PostgreSQL -> MySQL slice, the following items remain intentiona
 - PostgreSQL `RETURNING` remains unsupported for the current MySQL target slice.
 - Date/time arithmetic, time zone conversion, lock-clause translation, and broader JSON rewrites are still backlog items rather than part of the initial slice.
 
+For the current MySQL -> PostgreSQL slice, the following items remain intentionally out of scope or only partially covered and should stay visible as follow-up backlog:
+
+- MySQL null-safe equality with `<=>` is covered for exact rewrites, but broader query-shape coverage should continue to grow through joins, subqueries, and more complex boolean compositions.
+- MySQL optimizer comments and table index hints are currently dropped with warnings rather than preserved or rewritten semantically, including leading hints and `USE`/`FORCE`/`IGNORE INDEX` variants.
+- MySQL JSON function handling is intentionally conservative and currently rejects the broader `JSON_*` function family rather than attempting partial PostgreSQL rewrites.
+- MySQL `ON DUPLICATE KEY UPDATE`, `INSERT IGNORE`, and `REPLACE` remain unsupported rather than being lowered to PostgreSQL conflict-handling forms.
+- Collation-sensitive string behavior, date/time arithmetic, lock/modifier translation, and JSON semantic rewrites are still backlog items rather than part of the initial slice.
+
 ### Practical Rule of Thumb
 
 Use this decision rule when a new conversion appears:

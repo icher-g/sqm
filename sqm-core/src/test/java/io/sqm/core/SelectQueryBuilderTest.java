@@ -72,4 +72,22 @@ class SelectQueryBuilderTest {
         assertThrows(NullPointerException.class, () -> builder.selectModifiers(null));
         assertThrows(NullPointerException.class, () -> builder.optimizerHints(null));
     }
+
+    @Test
+    void builderCanCopyExistingQuery() {
+        var original = SelectQuery.builder()
+            .select(col("id"))
+            .from(TableRef.table(Identifier.of("users")))
+            .optimizerHint("MAX_EXECUTION_TIME(1000)")
+            .build();
+
+        var copied = SelectQuery.builder(original)
+            .clearOptimizerHints()
+            .build();
+
+        assertEquals(java.util.List.of("MAX_EXECUTION_TIME(1000)"), original.optimizerHints());
+        assertEquals(java.util.List.of(), copied.optimizerHints());
+        assertEquals(original.items(), copied.items());
+        assertEquals(original.from(), copied.from());
+    }
 }
