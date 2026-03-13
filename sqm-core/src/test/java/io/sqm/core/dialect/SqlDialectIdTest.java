@@ -12,6 +12,9 @@ class SqlDialectIdTest {
         assertEquals("mysql", SqlDialectId.of("  MySQL ").value());
         assertEquals("postgresql", SqlDialectId.of("postgres").value());
         assertEquals("postgresql", SqlDialectId.of("PostgreSQL").value());
+        assertEquals(SqlDialectId.ANSI, SqlDialectId.of("ansi"));
+        assertEquals(SqlDialectId.MYSQL, SqlDialectId.of("mysql"));
+        assertEquals(SqlDialectId.POSTGRESQL, SqlDialectId.of("postgresql"));
     }
 
     @Test

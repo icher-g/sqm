@@ -18,6 +18,7 @@ import io.sqm.control.service.SqlDecisionExplainer;
 import io.sqm.control.service.SqlDecisionService;
 import io.sqm.control.config.SqlDecisionServiceConfig;
 import io.sqm.control.rewrite.TenantRewriteTablePolicy;
+import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.SchemaValidationSettingsLoader;
 
@@ -95,7 +96,7 @@ public final class Middleware_EndToEndPolicyFlow {
                 .buildValidationConfig()
         );
 
-        DecisionResult decision = decisionService.analyze(sql, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+        DecisionResult decision = decisionService.analyze(sql, ExecutionContext.of(SqlDialectId.POSTGRESQL, ExecutionMode.ANALYZE));
 
         print("Validation-only analyze", decision);
     }
@@ -123,7 +124,7 @@ public final class Middleware_EndToEndPolicyFlow {
         DecisionResult decision = decisionService.enforce(
             sql,
             ExecutionContext.of(
-                "postgresql",
+                SqlDialectId.POSTGRESQL,
                 "ai-agent",
                 "tenant-a",
                 ExecutionMode.EXECUTE,
@@ -154,7 +155,7 @@ public final class Middleware_EndToEndPolicyFlow {
 
         DecisionResult decision = decisionService.analyze(
             sql,
-            ExecutionContext.of("postgresql", "custom-user", "tenant-x", ExecutionMode.ANALYZE, ParameterizationMode.OFF)
+            ExecutionContext.of(SqlDialectId.POSTGRESQL, "custom-user", "tenant-x", ExecutionMode.ANALYZE, ParameterizationMode.OFF)
         );
 
         print("Custom extension points", decision);
@@ -184,13 +185,13 @@ public final class Middleware_EndToEndPolicyFlow {
 
         var deniedForTenantA = decisionService.analyze(
             sql,
-            ExecutionContext.of("postgresql", "agent", "tenant-a", ExecutionMode.ANALYZE, ParameterizationMode.OFF)
+            ExecutionContext.of(SqlDialectId.POSTGRESQL, "agent", "tenant-a", ExecutionMode.ANALYZE, ParameterizationMode.OFF)
         );
         print("Tenant policy from config (tenant-a denied)", deniedForTenantA);
 
         var allowedForTenantB = decisionService.analyze(
             sql,
-            ExecutionContext.of("postgresql", "agent", "tenant-b", ExecutionMode.ANALYZE, ParameterizationMode.OFF)
+            ExecutionContext.of(SqlDialectId.POSTGRESQL, "agent", "tenant-b", ExecutionMode.ANALYZE, ParameterizationMode.OFF)
         );
         print("Tenant policy from config (tenant-b allowed)", allowedForTenantB);
     }

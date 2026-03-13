@@ -9,7 +9,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
     @Test
     void defaultsIncludePostgresToMySqlBuiltIns() {
         var rules = DefaultTranspileRuleRegistry.defaults()
-            .rulesFor(SqlDialectId.of("postgresql"), SqlDialectId.of("mysql"));
+            .rulesFor(SqlDialectId.POSTGRESQL, SqlDialectId.MYSQL);
 
         assertEquals(
             java.util.List.of(
@@ -28,7 +28,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
     @Test
     void defaultsIncludeMySqlToPostgresBuiltIns() {
         var rules = DefaultTranspileRuleRegistry.defaults()
-            .rulesFor(SqlDialectId.of("mysql"), SqlDialectId.of("postgresql"));
+            .rulesFor(SqlDialectId.MYSQL, SqlDialectId.POSTGRESQL);
 
         assertEquals(
             java.util.List.of(
@@ -42,3 +42,4 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         );
     }
 }
+

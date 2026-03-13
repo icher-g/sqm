@@ -13,8 +13,8 @@ class SqlTranspilerIntegrationTest {
     @Test
     void transpilesPostgresConcatQueryToMySqlSqlText() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile(
@@ -31,8 +31,8 @@ class SqlTranspilerIntegrationTest {
     @Test
     void transpilesPostgresIlikeQueryToMySqlSqlTextWithWarningWhenEnabled() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .options(new TranspileOptions(true, false, true, true))
             .build();
 
@@ -48,3 +48,4 @@ class SqlTranspilerIntegrationTest {
         assertEquals("APPROXIMATE_ILIKE_LOWERING", result.warnings().getFirst().code());
     }
 }
+

@@ -30,8 +30,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void transpilesAnsiConcatToMySqlRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("ansi"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile("SELECT first_name || ' ' || last_name AS full_name FROM users");
@@ -46,8 +46,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void transpilesPostgresConcatToMySqlRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile("SELECT first_name || ' ' || last_name AS full_name FROM users");
@@ -62,8 +62,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void transpilesPostgresRegexPredicateToMySqlRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users WHERE name ~ '^al.*'");
@@ -78,8 +78,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void transpilesNegatedPostgresRegexPredicateToMySqlRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users WHERE name !~ '^al.*'");
@@ -94,8 +94,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void transpilesPostgresIsNotDistinctFromToMySqlNullSafeEquality() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users WHERE first_name IS NOT DISTINCT FROM last_name");
@@ -110,8 +110,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void transpilesPostgresIsDistinctFromToNegatedMySqlNullSafeEquality() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users WHERE first_name IS DISTINCT FROM last_name");
@@ -126,8 +126,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void transpilesMySqlConcatToPostgreSqlRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgres"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile("SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM users");
@@ -142,8 +142,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void transpilesMySqlRegexPredicateToPostgresRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users WHERE name REGEXP '^al.*'");
@@ -158,8 +158,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void transpilesMySqlNullSafeEqualityToPostgresDistinctness() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users WHERE first_name <=> last_name");
@@ -174,8 +174,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void transpilesNegatedMySqlNullSafeEqualityToPostgresDistinctness() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users WHERE NOT (first_name <=> last_name)");
@@ -190,8 +190,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void transpilesMySqlNullSafeEqualityInsideJoinPredicate() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile(
@@ -208,8 +208,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void transpilesNegatedMySqlNullSafeEqualityInsideCompoundPredicate() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile(
@@ -233,8 +233,8 @@ class DefaultSqlTranspilerTest {
             )
         );
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("ansi"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .targetSchema(schema)
             .build();
 
@@ -256,12 +256,12 @@ class DefaultSqlTranspilerTest {
 
             @Override
             public Set<SqlDialectId> sourceDialects() {
-                return Set.of(SqlDialectId.of("ansi"));
+                return Set.of(SqlDialectId.ANSI);
             }
 
             @Override
             public Set<SqlDialectId> targetDialects() {
-                return Set.of(SqlDialectId.of("mysql"));
+                return Set.of(SqlDialectId.MYSQL);
             }
 
             @Override
@@ -271,8 +271,8 @@ class DefaultSqlTranspilerTest {
         };
 
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("ansi"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
             .registry(DefaultTranspileRuleRegistry.of(List.of(rule)))
             .build();
 
@@ -340,8 +340,8 @@ class DefaultSqlTranspilerTest {
         };
 
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("ansi"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
             .registry(DefaultTranspileRuleRegistry.of(List.of(skippedRule, supportedRule)))
             .build();
 
@@ -354,18 +354,18 @@ class DefaultSqlTranspilerTest {
     @Test
     void buildRequiresConfiguredDialects() {
         assertThrows(IllegalStateException.class, () -> SqlTranspiler.builder()
-            .targetDialect(SqlDialectId.of("mysql"))
+            .targetDialect(SqlDialectId.MYSQL)
             .build());
         assertThrows(IllegalStateException.class, () -> SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("ansi"))
+            .sourceDialect(SqlDialectId.ANSI)
             .build());
     }
 
     @Test
     void parseFailureReturnsParseFailedStatus() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("ansi"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile("SELECT FROM");
@@ -379,8 +379,8 @@ class DefaultSqlTranspilerTest {
     void approximateRewriteIsRejectedWhenDisabled() {
         var statement = Dsl.select(Dsl.col("first_name")).from(Dsl.tbl("users")).build();
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("ansi"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
             .registry(DefaultTranspileRuleRegistry.of(approximateRule()))
             .build();
 
@@ -423,8 +423,8 @@ class DefaultSqlTranspilerTest {
         };
 
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("ansi"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
             .options(new TranspileOptions(false, true, true, true))
             .registry(DefaultTranspileRuleRegistry.of(warningRule))
             .build();
@@ -438,8 +438,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void postgresIlikeCanBeLoweredApproximatelyWhenEnabled() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .options(new TranspileOptions(true, false, true, true))
             .build();
 
@@ -456,8 +456,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void postgresNotIlikeCanBeLoweredApproximatelyWhenEnabled() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .options(new TranspileOptions(true, false, true, true))
             .build();
 
@@ -473,8 +473,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void postgresIlikeEscapeIsPreservedInApproximateRewrite() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .options(new TranspileOptions(true, false, true, true))
             .build();
 
@@ -490,8 +490,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void postgresIlikeIsRejectedByDefaultApproximatePolicy() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users WHERE name ILIKE 'al%'");
@@ -504,8 +504,8 @@ class DefaultSqlTranspilerTest {
     void renderCanBeSkippedByOptions() {
         var statement = Dsl.select(Dsl.col("first_name")).from(Dsl.tbl("users")).build();
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("ansi"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
             .options(new TranspileOptions(false, false, true, false))
             .build();
 
@@ -527,8 +527,8 @@ class DefaultSqlTranspilerTest {
         };
 
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("ansi"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
             .renderer(() -> failingDialect)
             .build();
 
@@ -550,8 +550,8 @@ class DefaultSqlTranspilerTest {
         SchemaValidationSettings settings = SchemaValidationSettings.defaults();
 
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("ansi"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
             .parser(() -> {
                 parserUsed.set(true);
                 return specs;
@@ -580,8 +580,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void transpileResultContainsSourceAndTranspiledAstOnSuccess() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("ansi"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile("SELECT first_name FROM users");
@@ -594,8 +594,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void postgresReturningIsRejectedBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile("INSERT INTO users (name) VALUES ('alice') RETURNING id");
@@ -612,8 +612,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void postgresReturningInsideWritableCteIsRejectedBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile(
@@ -627,8 +627,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void postgresDistinctOnIsRejectedBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile(
@@ -647,8 +647,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void postgresSimilarToIsRejectedBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users WHERE name SIMILAR TO 'a.*'");
@@ -660,8 +660,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void postgresInsensitiveRegexVariantIsRejectedBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users WHERE name ~* '^al.*'");
@@ -673,8 +673,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void postgresNegatedInsensitiveRegexVariantIsRejectedBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users WHERE name !~* '^al.*'");
@@ -686,8 +686,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void postgresJsonOperatorFamilyIsRejectedBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile("SELECT payload ->> 'name' FROM users");
@@ -699,8 +699,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void postgresArrayOverlapOperatorFamilyIsRejectedBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("postgresql"))
-            .targetDialect(SqlDialectId.of("mysql"))
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users WHERE tags && other_tags");
@@ -712,8 +712,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void mysqlOptimizerHintIsDroppedWithWarningBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile("SELECT /*+ NO_RANGE_OPTIMIZATION(users) */ * FROM users");
@@ -726,8 +726,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void mysqlLeadingOptimizerHintIsDroppedWithWarningBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile("/*+ MAX_EXECUTION_TIME(1000) */ SELECT id FROM users");
@@ -740,8 +740,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void mysqlIndexHintIsDroppedWithWarningBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users USE INDEX (idx_users_name)");
@@ -754,8 +754,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void mysqlForceIndexHintIsDroppedWithWarningBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users FORCE INDEX FOR JOIN (idx_users_name)");
@@ -768,8 +768,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void mysqlIgnoreIndexHintIsDroppedWithWarningBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users IGNORE INDEX FOR ORDER BY (idx_users_name)");
@@ -782,8 +782,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void droppedMySqlHintsCanBeRejectedByWarningPolicy() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .options(new TranspileOptions(false, true, true, true))
             .build();
 
@@ -797,8 +797,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void mysqlOnDuplicateKeyUpdateIsRejectedBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile(
@@ -812,8 +812,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void mysqlInsertIgnoreIsRejectedBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile("INSERT IGNORE INTO users (id) VALUES (1)");
@@ -825,8 +825,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void mysqlReplaceIntoIsRejectedBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile("REPLACE INTO users (id) VALUES (1)");
@@ -838,8 +838,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void mysqlJsonFunctionFamilyIsRejectedBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile("SELECT JSON_EXTRACT(payload, '$.user.id') FROM users");
@@ -851,8 +851,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void mysqlJsonObjectFunctionFamilyIsRejectedBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile("SELECT JSON_OBJECT('id', user_id, 'name', user_name) FROM users");
@@ -864,8 +864,8 @@ class DefaultSqlTranspilerTest {
     @Test
     void mysqlJsonArrayFunctionFamilyIsRejectedBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("mysql"))
-            .targetDialect(SqlDialectId.of("postgresql"))
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
             .build();
 
         var result = transpiler.transpile("SELECT JSON_ARRAY(user_id, user_name) FROM users");
@@ -902,3 +902,4 @@ class DefaultSqlTranspilerTest {
         return sql.replaceAll("\\s+", " ").trim();
     }
 }
+
