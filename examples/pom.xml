@@ -44,6 +44,11 @@
             <artifactId>sqm-control</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.sqm</groupId>
+            <artifactId>sqm-transpile</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- Test stack -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

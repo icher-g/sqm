@@ -42,6 +42,8 @@ More:
 - SQL processing:
   - [Parsing SQL](Parsing-SQL)
   - [Rendering SQL](Rendering-SQL)
+  - [SQL Transpilation](SQL-Transpilation)
+  - [SQL Transpilation Examples](SQL-Transpilation-Examples)
   - [SQL Middleware Framework](SQL-Middleware-Framework)
 - Serialization:
   - [JSON Serialization](JSON-Serialization)

@@ -6,6 +6,8 @@
 - [DSL Usage](DSL-Usage)
 - [Parsing SQL](Parsing-SQL)
 - [Rendering SQL](Rendering-SQL)
+- [SQL Transpilation](SQL-Transpilation)
+- [SQL Transpilation Examples](SQL-Transpilation-Examples)
 - [SQL Middleware Framework](SQL-Middleware-Framework)
 - [SQL Middleware Policy Templates](SQL-Middleware-Policy-Templates)
 - [JSON Serialization](JSON-Serialization)

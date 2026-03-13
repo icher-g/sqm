@@ -1248,6 +1248,119 @@ For the current MySQL -> PostgreSQL slice, the following items remain intentiona
 - MySQL `ON DUPLICATE KEY UPDATE`, `INSERT IGNORE`, and `REPLACE` remain unsupported rather than being lowered to PostgreSQL conflict-handling forms.
 - Collation-sensitive string behavior, date/time arithmetic, lock/modifier translation, and JSON semantic rewrites are still backlog items rather than part of the initial slice.
 
+## Initial Rule Matrix
+
+The current initial transpilation slice should stay explicit about what is exact, what is approximate, and what is intentionally unsupported.
+
+### PostgreSQL -> MySQL
+
+| Category | Source construct | Current handling | Notes |
+|----------|------------------|------------------|-------|
+| Exact | `ConcatExpr` / string concatenation | Shared semantic node rendered as `CONCAT(...)` | Handled through `sqm-core`, not a pair-specific rule |
+| Exact | `IS NOT DISTINCT FROM` | Rewritten to MySQL null-safe equality | Uses canonical distinctness semantics |
+| Exact | `IS DISTINCT FROM` | Rewritten to `NOT (<=>)` form | Preserves exact distinctness semantics |
+| Exact | Regex predicate subset | Rendered through existing regex semantic support | Limited to the subset that already maps cleanly |
+| Approximate | `ILIKE` | Lowered to `LOWER(lhs) LIKE LOWER(rhs)` with warning | Includes `NOT ILIKE` and `ESCAPE`; collation and indexing may differ |
+| Unsupported | `RETURNING` | Rejected with structured transpilation problem | No safe current MySQL equivalent in this slice |
+| Unsupported | `DISTINCT ON` | Rejected with structured transpilation problem | Query-shape semantics, not a token substitution |
+| Unsupported | `SIMILAR TO` | Rejected with structured transpilation problem | No safe equivalent in current scope |
+| Unsupported | Representative PostgreSQL operator families | Rejected with structured transpilation problem | Includes representative JSON and specialized operator cases |
+| Unsupported | PostgreSQL case-insensitive regex variants | Rejected with structured transpilation problem | `~*` and `!~*` remain backlog |
+
+### MySQL -> PostgreSQL
+
+| Category | Source construct | Current handling | Notes |
+|----------|------------------|------------------|-------|
+| Exact | `ConcatExpr` / string concatenation | Shared semantic node rendered with `||` | Handled through `sqm-core`, not a pair-specific rule |
+| Exact | `<=>` | Rewritten to PostgreSQL distinctness predicates | Uses canonical SQM semantic form before render |
+| Exact | Regex predicate subset | Rendered through existing regex semantic support | Limited to the subset that already maps cleanly |
+| Approximate | Optimizer comments and index hints | Dropped with warning | Rewritten out of the AST so resulting SQL stays executable |
+| Unsupported | `ON DUPLICATE KEY UPDATE` | Rejected with structured transpilation problem | No exact PostgreSQL lowering in the initial slice |
+| Unsupported | `INSERT IGNORE` / `REPLACE` | Rejected with structured transpilation problem | Conflict-handling semantics remain backlog |
+| Unsupported | MySQL JSON function family | Rejected with structured transpilation problem | Intentionally conservative to avoid misleading rewrites |
+
+## Contribution Guidelines
+
+Transpilation changes should stay predictable for contributors and users. The following rules are the recommended contribution contract for new semantic nodes and transpilation rules.
+
+### When To Add A Core Semantic Node
+
+Add or promote a `sqm-core` node when most of the following are true:
+
+- the concept exists in at least two dialects
+- the concept can be described semantically rather than by token spelling
+- at least two parsers can map into the node naturally
+- at least two renderers can emit dialect syntax from the same node
+- keeping the concept out of `sqm-core` would create repeated pairwise rules
+
+`ConcatExpr` is the first-wave example of this pattern:
+
+- PostgreSQL `||` parses to `ConcatExpr`
+- MySQL `CONCAT(...)` parses to `ConcatExpr`
+- renderers emit dialect syntax from the shared semantic node
+
+### When To Add A Transpilation Rule
+
+Add a transpilation rule when any of the following are true:
+
+- the feature is pair-specific
+- the feature is only approximately portable
+- the feature has no safe target equivalent
+- the feature is target-capability driven rather than just syntax driven
+- the feature would make `sqm-core` vendor-shaped instead of semantic
+
+Examples:
+
+- `ILIKE` lowering remains a rule because it is approximate in MySQL
+- optimizer/index hint dropping remains a rule because it is target-specific behavior
+- `RETURNING` rejection remains a rule because it is explicitly unsupported in the current slice
+
+### Rule Authoring Checklist
+
+When adding a new rule:
+
+- prefer reusable applicability across dialect sets over a one-off pair lock unless the rule is truly pair-specific
+- keep `id()` stable and descriptive
+- choose the right fidelity: `EXACT`, `APPROXIMATE`, or `UNSUPPORTED`
+- emit warnings for non-blocking information loss
+- emit blocking problems for unsupported behavior
+- preserve immutability: unchanged input should return the same instance; changed input should return a new statement
+- add focused unit tests for changed, unchanged, and unsupported or warning paths
+- add or update an end-to-end `DefaultSqlTranspilerTest` case when the rule affects the public pipeline
+
+### Target Validation Responsibilities
+
+Target validation remains a required phase of transpilation rather than an optional renderer concern.
+
+Contributors should assume this order:
+
+1. parse with source dialect
+2. normalize or transpile through ordered rules
+3. validate against target dialect and optional target schema
+4. render only if the target AST is valid
+
+That means:
+
+- rules should not assume renderers will silently fix unsupported target constructs
+- renderers should stay strict and reject unsupported target features
+- validation failures should be surfaced as `TranspileResult` diagnostics rather than late rendering surprises
+
+## Publishing GitHub Issues
+
+The transpilation epic and stories can be published from the markdown source in `docs/epics/R4_SQL_TRANSPILATION_FOUNDATION.md`.
+
+Recommended commands:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\create-github-issues-from-epic-md.ps1 -Path docs\epics\R4_SQL_TRANSPILATION_FOUNDATION.md -WhatIf
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\create-github-issues-from-epic-md.ps1 -Path docs\epics\R4_SQL_TRANSPILATION_FOUNDATION.md
+```
+
+The generic GitHub issue publisher in `scripts/create-github-issues-from-epic-md.ps1` should be used directly. Epic markdown is treated as publish-once planning input rather than something that is repeatedly republished after future scope changes.
+
 ### Practical Rule of Thumb
 
 Use this decision rule when a new conversion appears:
@@ -1270,7 +1383,7 @@ The intent is not to prove full semantic equivalence for every item. The intent 
 
 | Feature                               | PostgreSQL form                                                   | MySQL form                                                                    | Candidate core node?                    | Recommendation                                                | Notes                                                                                                                                                                       |
 |---------------------------------------|-------------------------------------------------------------------|-------------------------------------------------------------------------------|-----------------------------------------|---------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| String concatenation                  | `a \|\| b`                                                        | `CONCAT(a, b)`                                                                | Yes                                     | Introduce `ConcatExpr` now                                     | This is the strongest current candidate. It should be modeled directly in `sqm-core` instead of relying on transpile rules for the normal PostgreSQL/MySQL path.            |
+| String concatenation                  | `a \|\| b`                                                        | `CONCAT(a, b)`                                                                | Yes                                     | Introduce `ConcatExpr` now                                    | This is the strongest current candidate. It should be modeled directly in `sqm-core` instead of relying on transpile rules for the normal PostgreSQL/MySQL path.            |
 | Regex match                           | `a ~ b`, `a ~* b`, `a !~ b`, `a !~* b`                            | `a REGEXP b`, `a NOT REGEXP b`                                                | Already consolidated                    | Keep current approach                                         | SQM already models this through `RegexPredicate`, which is a good example of a successful semantic abstraction over different surface syntax.                               |
 | Null-safe comparison                  | `a IS NOT DISTINCT FROM b` and related distinctness predicates    | `a <=> b`                                                                     | Partially                               | Reuse existing semantic abstractions before adding more nodes | SQM already has `IsDistinctFromPredicate` and null-safe comparison support. The next question is canonicalization policy, not necessarily a new node.                       |
 | Case-insensitive pattern match        | `a ILIKE b`                                                       | no direct syntax equivalent                                                   | Maybe                                   | Keep in transpilation for now                                 | The concept is semantic, but target behavior often requires approximate rewrites such as `LOWER(a) LIKE LOWER(b)`, which may differ in collation and indexing behavior.     |
