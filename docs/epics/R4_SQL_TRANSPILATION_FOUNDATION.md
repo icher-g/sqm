@@ -148,6 +148,17 @@ As a SQM user, I want a small but reliable PostgreSQL-to-MySQL transpilation sli
 
 #### Acceptance Criteria
 - An initial exact subset is supported for PostgreSQL to MySQL transpilation.
+- The initial exact subset explicitly includes:
+  - shared semantic-node rendering such as `ConcatExpr`
+  - null-safe comparison rules where PostgreSQL and MySQL syntax differ but semantics are portable enough to model exactly
+  - regex predicate cases that already map cleanly through existing SQM semantic nodes
+- The initial approximate subset explicitly includes:
+  - PostgreSQL `ILIKE` rewrite support for MySQL with warning diagnostics
+- The initial unsupported subset explicitly includes:
+  - PostgreSQL `RETURNING`
+  - PostgreSQL `DISTINCT ON`
+  - PostgreSQL `SIMILAR TO`
+  - representative PostgreSQL-specific operator families, including JSON/operator cases that do not have a safe MySQL equivalent
 - String concatenation is handled through `ConcatExpr`, not through a pair-specific transpile rule.
 - A small number of explicit unsupported cases are reported clearly, including representative PostgreSQL-only features without a safe MySQL equivalent.
 - End-to-end tests cover parse, transpile, validate, render, and diagnostics for this slice.
@@ -171,6 +182,14 @@ As a SQM user, I want a small but reliable MySQL-to-PostgreSQL transpilation sli
 
 #### Acceptance Criteria
 - An initial exact subset is supported for MySQL to PostgreSQL transpilation.
+- The initial exact subset explicitly includes:
+  - shared semantic-node rendering such as `ConcatExpr`
+  - MySQL null-safe comparison syntax mapped into the canonical SQM semantic form and rendered as PostgreSQL syntax
+  - regex predicate cases that already map cleanly through existing SQM semantic nodes
+- The initial unsupported subset explicitly includes:
+  - MySQL optimizer/index hints
+  - MySQL `ON DUPLICATE KEY UPDATE` when no exact PostgreSQL rewrite is implemented
+  - representative MySQL-specific JSON/function/operator cases that do not have a safe PostgreSQL equivalent
 - Shared semantic constructs such as `ConcatExpr` render correctly in PostgreSQL output.
 - Unsupported MySQL-only features in the selected slice are reported explicitly.
 - End-to-end tests cover parse, transpile, validate, render, and diagnostics for this slice.
@@ -195,6 +214,7 @@ As a contributor, I want clear transpilation architecture and story-level guidan
 - Documentation explains when to add a core semantic node versus a transpilation rule.
 - Documentation explains reusable rule applicability and target validation responsibilities.
 - Documentation references `ConcatExpr` as the first-wave semantic-node example.
+- Documentation includes a maintained matrix of exact, approximate, and unsupported PostgreSQL/MySQL and MySQL/PostgreSQL rules in the initial slice.
 - Publishing instructions exist for creating epic and story issues from the markdown source.
 
 #### Labels

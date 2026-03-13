@@ -44,6 +44,86 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
+    void transpilesPostgresConcatToMySqlRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT first_name || ' ' || last_name AS full_name FROM users");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM users"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
+    void transpilesPostgresRegexPredicateToMySqlRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users WHERE name ~ '^al.*'");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT * FROM users WHERE name REGEXP '^al.*'"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
+    void transpilesNegatedPostgresRegexPredicateToMySqlRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users WHERE name !~ '^al.*'");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT * FROM users WHERE name NOT REGEXP '^al.*'"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
+    void transpilesPostgresIsNotDistinctFromToMySqlNullSafeEquality() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users WHERE first_name IS NOT DISTINCT FROM last_name");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT * FROM users WHERE first_name <=> last_name"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
+    void transpilesPostgresIsDistinctFromToNegatedMySqlNullSafeEquality() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users WHERE first_name IS DISTINCT FROM last_name");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT * FROM users WHERE NOT (first_name <=> last_name)"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
     void transpilesMySqlConcatToPostgreSqlRendering() {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.of("mysql"))
@@ -272,6 +352,71 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
+    void postgresIlikeCanBeLoweredApproximatelyWhenEnabled() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .options(new TranspileOptions(true, false, true, true))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users WHERE name ILIKE 'al%'");
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        assertEquals(
+            normalizeSql("SELECT * FROM users WHERE LOWER(name) LIKE LOWER('al%')"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+        assertEquals("APPROXIMATE_ILIKE_LOWERING", result.warnings().getFirst().code());
+    }
+
+    @Test
+    void postgresNotIlikeCanBeLoweredApproximatelyWhenEnabled() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .options(new TranspileOptions(true, false, true, true))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users WHERE name NOT ILIKE 'al%'");
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        assertEquals(
+            normalizeSql("SELECT * FROM users WHERE LOWER(name) NOT LIKE LOWER('al%')"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
+    void postgresIlikeEscapeIsPreservedInApproximateRewrite() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .options(new TranspileOptions(true, false, true, true))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users WHERE name ILIKE 'a!_%' ESCAPE '!'");
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        assertEquals(
+            normalizeSql("SELECT * FROM users WHERE LOWER(name) LIKE LOWER('a!_%') ESCAPE '!'"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
+    void postgresIlikeIsRejectedByDefaultApproximatePolicy() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users WHERE name ILIKE 'al%'");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("APPROXIMATE_REWRITE_DISABLED", result.problems().getLast().code());
+    }
+
+    @Test
     void renderCanBeSkippedByOptions() {
         var statement = Dsl.select(Dsl.col("first_name")).from(Dsl.tbl("users")).build();
         var transpiler = SqlTranspiler.builder()
@@ -360,6 +505,124 @@ class DefaultSqlTranspilerTest {
         assertTrue(result.success());
         assertNotNull(result.sourceAst().orElse(null));
         assertNotNull(result.transpiledAst().orElse(null));
+    }
+
+    @Test
+    void postgresReturningIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .build();
+
+        var result = transpiler.transpile("INSERT INTO users (name) VALUES ('alice') RETURNING id");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertTrue(result.sql().isEmpty());
+        assertEquals("UNSUPPORTED_RETURNING", result.problems().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "postgres-to-mysql-returning-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
+    void postgresReturningInsideWritableCteIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .build();
+
+        var result = transpiler.transpile(
+            "WITH ins AS (INSERT INTO users (name) VALUES ('alice') RETURNING id) SELECT id FROM ins"
+        );
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_RETURNING", result.problems().getFirst().code());
+    }
+
+    @Test
+    void postgresDistinctOnIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .build();
+
+        var result = transpiler.transpile(
+            "SELECT DISTINCT ON (user_id) user_id, created_at FROM orders ORDER BY user_id, created_at DESC"
+        );
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertTrue(result.sql().isEmpty());
+        assertEquals("UNSUPPORTED_DISTINCT_ON", result.problems().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "postgres-to-mysql-distinct-on-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
+    void postgresSimilarToIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users WHERE name SIMILAR TO 'a.*'");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_SIMILAR_TO", result.problems().getFirst().code());
+    }
+
+    @Test
+    void postgresInsensitiveRegexVariantIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users WHERE name ~* '^al.*'");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_REGEX_VARIANT", result.problems().getFirst().code());
+    }
+
+    @Test
+    void postgresNegatedInsensitiveRegexVariantIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users WHERE name !~* '^al.*'");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_REGEX_VARIANT", result.problems().getFirst().code());
+    }
+
+    @Test
+    void postgresJsonOperatorFamilyIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT payload ->> 'name' FROM users");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_POSTGRES_OPERATOR_FAMILY", result.problems().getFirst().code());
+    }
+
+    @Test
+    void postgresArrayOverlapOperatorFamilyIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("postgresql"))
+            .targetDialect(SqlDialectId.of("mysql"))
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM users WHERE tags && other_tags");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_POSTGRES_OPERATOR_FAMILY", result.problems().getFirst().code());
     }
 
     private static TranspileRule approximateRule() {
