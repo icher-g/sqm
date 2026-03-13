@@ -1,6 +1,13 @@
 package io.sqm.transpile.rule;
 
 import io.sqm.core.dialect.SqlDialectId;
+import io.sqm.transpile.builtin.PostgresToMySqlIlikeRule;
+import io.sqm.transpile.builtin.PostgresToMySqlNullSafeComparisonRule;
+import io.sqm.transpile.builtin.PostgresToMySqlDistinctOnUnsupportedRule;
+import io.sqm.transpile.builtin.PostgresToMySqlOperatorFamilyUnsupportedRule;
+import io.sqm.transpile.builtin.PostgresToMySqlRegexVariantUnsupportedRule;
+import io.sqm.transpile.builtin.PostgresToMySqlReturningUnsupportedRule;
+import io.sqm.transpile.builtin.PostgresToMySqlSimilarToUnsupportedRule;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -18,12 +25,20 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
     }
 
     /**
-     * Returns an empty registry.
+     * Returns the default built-in registry.
      *
-     * @return empty rule registry
+     * @return default rule registry
      */
     public static DefaultTranspileRuleRegistry defaults() {
-        return new DefaultTranspileRuleRegistry(List.of());
+        return new DefaultTranspileRuleRegistry(List.of(
+            new PostgresToMySqlNullSafeComparisonRule(),
+            new PostgresToMySqlIlikeRule(),
+            new PostgresToMySqlReturningUnsupportedRule(),
+            new PostgresToMySqlDistinctOnUnsupportedRule(),
+            new PostgresToMySqlSimilarToUnsupportedRule(),
+            new PostgresToMySqlRegexVariantUnsupportedRule(),
+            new PostgresToMySqlOperatorFamilyUnsupportedRule()
+        ));
     }
 
     /**

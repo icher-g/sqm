@@ -1229,6 +1229,17 @@ Examples include:
 - dialect-specific JSON/operator families
 - planner or execution semantics that are not just syntax differences
 
+## Current Slice Backlog And Limitations
+
+For the current PostgreSQL -> MySQL slice, the following items remain intentionally out of scope or only partially covered and should stay visible as follow-up backlog:
+
+- PostgreSQL case-insensitive regex variants such as `~*` and `!~*` are currently reported as unsupported rather than rewritten.
+- PostgreSQL operator-family handling is still representative rather than exhaustive; additional array, range, JSON-path, and custom-operator cases may need explicit rejection rules.
+- PostgreSQL `ILIKE` is currently lowered through `LOWER(...) LIKE LOWER(...)`, which is useful but still approximate because collation, locale, and index behavior can differ.
+- PostgreSQL `DISTINCT ON` remains unsupported unless and until an explicit opt-in approximate rewrite strategy is added.
+- PostgreSQL `RETURNING` remains unsupported for the current MySQL target slice.
+- Date/time arithmetic, time zone conversion, lock-clause translation, and broader JSON rewrites are still backlog items rather than part of the initial slice.
+
 ### Practical Rule of Thumb
 
 Use this decision rule when a new conversion appears:
