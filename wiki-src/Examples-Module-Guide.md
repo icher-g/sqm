@@ -2,6 +2,19 @@
 
 The `examples` module demonstrates end-to-end SQM usage and code generation.
 
+## Transpilation Examples
+
+The examples module includes runnable transpilation walkthroughs:
+
+- `examples/src/main/java/io/sqm/examples/Transpile_PostgresToMySql.java`
+- `examples/src/main/java/io/sqm/examples/Transpile_PostgresToMySqlApproximate.java`
+
+They demonstrate:
+
+- exact PostgreSQL -> MySQL transpilation
+- result-status inspection
+- warning handling for approximate rewrites such as `ILIKE`
+
 ## Middleware Example
 
 The examples module includes a middleware-focused walkthrough:

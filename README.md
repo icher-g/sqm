@@ -26,6 +26,7 @@ Repository development rules for contributors and coding agents are defined in `
 - **Dialect support** - ANSI + PostgreSQL + MySQL parser/renderer/spec implementations.
 - **Validation framework** - schema-aware statement validation with configurable limits and access policies (principal/tenant aware).
 - **Rewrite and normalization pipeline** - built-in and custom rewrite rules (limit injection, qualification, canonicalization, tenant predicate, etc.).
+- **SQL transpilation** - source-to-target PostgreSQL/MySQL conversion with exact, approximate, and unsupported diagnostics.
 - **Middleware decision engine** - analyze/enforce/explain workflow with guardrails, telemetry, auditing, and flow control.
 - **Transport hosts** - REST and MCP runtimes for externalized middleware usage.
 - **DSL and code generation** - fluent SQL construction plus SQL-file-to-Java generation for queries and DML statements.
@@ -102,6 +103,7 @@ Core components:
 - **Parsers (sqm-parser-*)** - dialect parsing into model nodes.
 - **Renderers (sqm-render-*)** - dialect rendering from model nodes.
 - **Validation (sqm-validate*)** - schema/function/access-policy semantic checks.
+- **Transpilation (sqm-transpile)** - source-to-target dialect conversion with rule diagnostics.
 - **Catalog (sqm-catalog*)** - schema sources (JSON/JDBC) and type mapping.
 - **Control/Middleware (sqm-control, sqm-middleware-*)** - decision engine, rewrites, runtime hosts, telemetry/audit.
 - **JSON (sqm-json)** - serialization mixins.
@@ -258,6 +260,30 @@ var ansiQuotesCtx = ParseContext.of(
 MySQL rendering also supports opt-in optimizer-hint normalization through
 `MySqlOptimizerHintNormalizationPolicy`, while the default dialect behavior
 preserves hint bodies exactly as stored on the statement model.
+
+### Transpile SQL Between Dialects
+
+```java
+var transpiler = SqlTranspiler.builder()
+    .sourceDialect(SqlDialectId.of("postgresql"))
+    .targetDialect(SqlDialectId.of("mysql"))
+    .build();
+
+var result = transpiler.transpile(
+    "SELECT first_name || ' ' || last_name AS full_name FROM users"
+);
+
+System.out.println(result.status());
+System.out.println(result.sql().orElseThrow());
+```
+
+Expected SQL:
+
+```sql
+SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM users
+```
+
+Approximate rewrites such as PostgreSQL `ILIKE` are disabled by default and must be enabled through `TranspileOptions`.
 
 **Rendered (ANSI):**
 
@@ -1241,6 +1267,7 @@ price + quantity * 2
 | `sqm-validate`             | Schema-aware semantic validator                                             |
 | `sqm-validate-mysql`       | MySQL validation extensions                                                 |
 | `sqm-validate-postgresql`  | PostgreSQL validation extensions                                            |
+| `sqm-transpile`            | Source-to-target SQL transpilation and rule diagnostics                     |
 | `sqm-control`              | Decision engine, rewrites, guardrails, audit abstractions                   |
 | `sqm-middleware-api`       | Transport-neutral middleware request/response contracts                     |
 | `sqm-middleware-core`      | Runtime factory/services (flow control, telemetry, bootstrap)               |
@@ -1328,6 +1355,7 @@ See [LICENSE](LICENSE) for details.
 
 - [Project wiki](https://github.com/icher-g/sqm/wiki)
 - [Project docs folder](docs)
+- [Transpilation usage doc](docs/transpilation/SQL_TRANSPILATION_USAGE.md)
 - [Project examples](examples/src/main/java/io/sqm/examples)
 - [GitHub Issues](https://github.com/icher-g/sqm/issues)
 
