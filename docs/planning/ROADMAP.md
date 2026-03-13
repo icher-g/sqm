@@ -82,7 +82,7 @@ Priority levels:
 - Middleware adapters (`sqm-middleware-core`, `sqm-middleware-rest`, `sqm-middleware-mcp`) now include MySQL and DML transport coverage.
 - A repository-owned downstream support matrix documents the supported dialect/statement combinations and is regression-checked in tests.
 
-### Epic R4: SQL Transpilation Foundation
+### Epic R4: SQL Transpilation Foundation (Completed)
 - Add `sqm-transpile` as a dedicated module for source-to-target SQL conversion.
 - Introduce a first-class transpilation pipeline: parse source dialect, normalize, rewrite to target semantics, validate target, render target.
 - Deliver reusable transpilation rule contracts and a registry that assembles concrete source/target execution plans from shared rules.
