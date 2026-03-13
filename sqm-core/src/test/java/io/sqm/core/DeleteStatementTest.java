@@ -121,4 +121,21 @@ class DeleteStatementTest {
         assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).optimizerHints(null));
         assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).optimizerHint(null));
     }
+
+    @Test
+    void builderCanCopyExistingStatement() {
+        var original = delete(tbl("users"))
+            .optimizerHint("BKA(users)")
+            .using(tbl("source_users"))
+            .build();
+
+        var copied = DeleteStatement.builder(original)
+            .clearOptimizerHints()
+            .build();
+
+        assertEquals(List.of("BKA(users)"), original.optimizerHints());
+        assertTrue(copied.optimizerHints().isEmpty());
+        assertEquals(original.using(), copied.using());
+        assertEquals(original.table(), copied.table());
+    }
 }

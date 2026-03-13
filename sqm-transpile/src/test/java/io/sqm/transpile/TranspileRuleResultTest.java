@@ -34,6 +34,16 @@ class TranspileRuleResultTest {
         var rewritten = TranspileRuleResult.rewritten(statement, RewriteFidelity.EXACT, "Rewrite");
         assertTrue(rewritten.changed());
 
+        var rewrittenWithWarning = TranspileRuleResult.rewrittenWithWarning(
+            statement,
+            RewriteFidelity.EXACT,
+            "WARN",
+            "Hint dropped",
+            "Rewrite with warning"
+        );
+        assertTrue(rewrittenWithWarning.changed());
+        assertEquals("WARN", rewrittenWithWarning.warnings().getFirst().code());
+
         var unsupported = TranspileRuleResult.unsupported(statement, "UNSUPPORTED", "No mapping");
         assertEquals(RewriteFidelity.UNSUPPORTED, unsupported.fidelity());
         assertEquals("UNSUPPORTED", unsupported.problems().getFirst().code());

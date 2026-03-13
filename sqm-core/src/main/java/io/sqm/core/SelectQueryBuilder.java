@@ -242,6 +242,13 @@ public interface SelectQueryBuilder {
     }
 
     /**
+     * Clears optimizer hint bodies currently held by the builder.
+     *
+     * @return this builder
+     */
+    SelectQueryBuilder clearOptimizerHints();
+
+    /**
      * Sets the limit/offset clause.
      *
      * @param limitOffset limit/offset clause, may be {@code null}

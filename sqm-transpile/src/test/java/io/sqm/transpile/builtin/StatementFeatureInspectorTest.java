@@ -1,0 +1,131 @@
+package io.sqm.transpile.builtin;
+
+import io.sqm.core.BinaryOperatorExpr;
+import io.sqm.core.DeleteStatement;
+import io.sqm.core.FunctionExpr;
+import io.sqm.core.InsertStatement;
+import io.sqm.core.LikeMode;
+import io.sqm.core.QualifiedName;
+import io.sqm.core.SelectQuery;
+import io.sqm.core.UpdateStatement;
+import io.sqm.dsl.Dsl;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class StatementFeatureInspectorTest {
+
+    @Test
+    void detectsReturningDistinctOnLikeModesAndBinaryOperators() {
+        var insert = InsertStatement.of(
+            InsertStatement.InsertMode.STANDARD,
+            Dsl.tbl("users"),
+            List.of(Dsl.id("id")),
+            Dsl.rows(Dsl.row(Dsl.lit(1))),
+            null,
+            InsertStatement.OnConflictAction.NONE,
+            List.of(),
+            null,
+            List.of(Dsl.col("id").toSelectItem())
+        );
+        var update = UpdateStatement.builder(Dsl.tbl("users"))
+            .set(Dsl.set("name", Dsl.lit("alice")))
+            .returning(Dsl.col("id").toSelectItem())
+            .build();
+        var delete = DeleteStatement.builder(Dsl.tbl("users"))
+            .returning(Dsl.col("id").toSelectItem())
+            .build();
+        var distinctOn = SelectQuery.builder()
+            .select(Dsl.col("name"))
+            .from(Dsl.tbl("users"))
+            .distinct(Dsl.col("user_id"))
+            .build();
+        var ilike = Dsl.select(Dsl.col("name"))
+            .from(Dsl.tbl("users"))
+            .where(Dsl.col("name").ilike("al%"))
+            .build();
+        var operator = Dsl.select(BinaryOperatorExpr.of(Dsl.col("payload"), io.sqm.core.OperatorName.of("->>"), Dsl.lit("name")))
+            .from(Dsl.tbl("users"))
+            .build();
+
+        assertTrue(StatementFeatureInspector.hasReturning(insert));
+        assertTrue(StatementFeatureInspector.hasReturning(update));
+        assertTrue(StatementFeatureInspector.hasReturning(delete));
+        assertTrue(StatementFeatureInspector.hasDistinctOn(distinctOn));
+        assertTrue(StatementFeatureInspector.hasLikeMode(ilike, LikeMode.ILIKE));
+        assertTrue(StatementFeatureInspector.hasAnyBinaryOperator(operator, Set.of("->>")));
+
+        assertFalse(StatementFeatureInspector.hasReturning(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()));
+        assertFalse(StatementFeatureInspector.hasDistinctOn(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()));
+        assertFalse(StatementFeatureInspector.hasLikeMode(ilike, LikeMode.LIKE));
+        assertFalse(StatementFeatureInspector.hasAnyBinaryOperator(operator, Set.of("@>")));
+    }
+
+    @Test
+    void detectsFunctionsHintsInsertModesAndConflictActions() {
+        var functionQuery = Dsl.select(FunctionExpr.of(
+                QualifiedName.of("json_extract"),
+                List.of(FunctionExpr.Arg.expr(Dsl.col("payload")), FunctionExpr.Arg.expr(Dsl.lit("$.id"))),
+                false,
+                null,
+                null,
+                null
+            ))
+            .from(Dsl.tbl("users").useIndex("idx_users_name"))
+            .build();
+        var hintedSelect = SelectQuery.builder()
+            .select(Dsl.col("id"))
+            .from(Dsl.tbl("users"))
+            .optimizerHint("MAX_EXECUTION_TIME(1000)")
+            .build();
+        var hintedUpdate = UpdateStatement.builder(Dsl.tbl("users"))
+            .set(Dsl.set("name", Dsl.lit("alice")))
+            .optimizerHint("BKA(users)")
+            .build();
+        var hintedDelete = DeleteStatement.builder(Dsl.tbl("users"))
+            .optimizerHint("BKA(users)")
+            .build();
+        var insertIgnore = InsertStatement.of(
+            InsertStatement.InsertMode.IGNORE,
+            Dsl.tbl("users"),
+            List.of(Dsl.id("id")),
+            Dsl.rows(Dsl.row(Dsl.lit(1))),
+            null,
+            InsertStatement.OnConflictAction.NONE,
+            List.of(),
+            null,
+            List.of()
+        );
+        var insertConflict = InsertStatement.of(
+            InsertStatement.InsertMode.STANDARD,
+            Dsl.tbl("users"),
+            List.of(Dsl.id("id")),
+            Dsl.rows(Dsl.row(Dsl.lit(1))),
+            List.of(Dsl.id("id")),
+            InsertStatement.OnConflictAction.DO_UPDATE,
+            List.of(Dsl.set("name", Dsl.lit("alice"))),
+            null,
+            List.of()
+        );
+
+        assertTrue(StatementFeatureInspector.hasAnyFunctionName(functionQuery, Set.of("JSON_EXTRACT")));
+        assertTrue(StatementFeatureInspector.hasAnyFunctionNamePrefix(functionQuery, Set.of("json_")));
+        assertTrue(StatementFeatureInspector.hasOptimizerHints(hintedSelect));
+        assertTrue(StatementFeatureInspector.hasOptimizerHints(hintedUpdate));
+        assertTrue(StatementFeatureInspector.hasOptimizerHints(hintedDelete));
+        assertTrue(StatementFeatureInspector.hasIndexHints(functionQuery));
+        assertTrue(StatementFeatureInspector.hasInsertMode(insertIgnore, InsertStatement.InsertMode.IGNORE));
+        assertTrue(StatementFeatureInspector.hasOnConflictAction(insertConflict, InsertStatement.OnConflictAction.DO_UPDATE));
+
+        assertFalse(StatementFeatureInspector.hasAnyFunctionName(functionQuery, Set.of("JSON_OBJECT")));
+        assertFalse(StatementFeatureInspector.hasAnyFunctionNamePrefix(functionQuery, Set.of("DATE_")));
+        assertFalse(StatementFeatureInspector.hasOptimizerHints(functionQuery));
+        assertFalse(StatementFeatureInspector.hasIndexHints(hintedSelect));
+        assertFalse(StatementFeatureInspector.hasInsertMode(insertIgnore, InsertStatement.InsertMode.REPLACE));
+        assertFalse(StatementFeatureInspector.hasOnConflictAction(insertIgnore, InsertStatement.OnConflictAction.DO_UPDATE));
+    }
+}

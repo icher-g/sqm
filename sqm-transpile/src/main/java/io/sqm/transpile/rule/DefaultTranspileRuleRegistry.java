@@ -1,6 +1,11 @@
 package io.sqm.transpile.rule;
 
 import io.sqm.core.dialect.SqlDialectId;
+import io.sqm.transpile.builtin.MySqlToPostgresInsertModeUnsupportedRule;
+import io.sqm.transpile.builtin.MySqlToPostgresJsonFunctionUnsupportedRule;
+import io.sqm.transpile.builtin.MySqlToPostgresNullSafeComparisonRule;
+import io.sqm.transpile.builtin.MySqlToPostgresOnDuplicateKeyUnsupportedRule;
+import io.sqm.transpile.builtin.MySqlToPostgresHintDroppingRule;
 import io.sqm.transpile.builtin.PostgresToMySqlIlikeRule;
 import io.sqm.transpile.builtin.PostgresToMySqlNullSafeComparisonRule;
 import io.sqm.transpile.builtin.PostgresToMySqlDistinctOnUnsupportedRule;
@@ -37,7 +42,12 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
             new PostgresToMySqlDistinctOnUnsupportedRule(),
             new PostgresToMySqlSimilarToUnsupportedRule(),
             new PostgresToMySqlRegexVariantUnsupportedRule(),
-            new PostgresToMySqlOperatorFamilyUnsupportedRule()
+            new PostgresToMySqlOperatorFamilyUnsupportedRule(),
+            new MySqlToPostgresNullSafeComparisonRule(),
+            new MySqlToPostgresHintDroppingRule(),
+            new MySqlToPostgresOnDuplicateKeyUnsupportedRule(),
+            new MySqlToPostgresInsertModeUnsupportedRule(),
+            new MySqlToPostgresJsonFunctionUnsupportedRule()
         ));
     }
 

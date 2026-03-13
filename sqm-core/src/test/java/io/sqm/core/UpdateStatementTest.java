@@ -137,4 +137,23 @@ class UpdateStatementTest {
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).optimizerHint(null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).set(null));
     }
+
+    @Test
+    void builderCanCopyExistingStatement() {
+        var original = update(tbl("users"))
+            .optimizerHint("BKA(users)")
+            .set(set("name", lit("alice")))
+            .from(tbl("source_users"))
+            .build();
+
+        var copied = UpdateStatement.builder(original)
+            .clearOptimizerHints()
+            .build();
+
+        assertEquals(List.of("BKA(users)"), original.optimizerHints());
+        assertTrue(copied.optimizerHints().isEmpty());
+        assertEquals(original.assignments(), copied.assignments());
+        assertEquals(original.from(), copied.from());
+        assertEquals(original.table(), copied.table());
+    }
 }

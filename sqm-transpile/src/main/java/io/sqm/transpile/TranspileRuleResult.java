@@ -67,6 +67,33 @@ public record TranspileRuleResult(
     }
 
     /**
+     * Creates a rewritten rule result with a non-blocking warning.
+     *
+     * @param statement output statement
+     * @param fidelity rewrite fidelity
+     * @param code stable warning code
+     * @param message human-readable warning description
+     * @param description human-readable step description
+     * @return rewritten warning rule result
+     */
+    public static TranspileRuleResult rewrittenWithWarning(
+        Statement statement,
+        RewriteFidelity fidelity,
+        String code,
+        String message,
+        String description
+    ) {
+        return new TranspileRuleResult(
+            statement,
+            true,
+            fidelity,
+            List.of(new TranspileWarning(code, message)),
+            List.of(),
+            description
+        );
+    }
+
+    /**
      * Creates an unsupported rule result.
      *
      * @param statement input statement

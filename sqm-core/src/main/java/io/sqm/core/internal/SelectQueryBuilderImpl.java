@@ -140,6 +140,12 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
     }
 
     @Override
+    public SelectQueryBuilder clearOptimizerHints() {
+        this.optimizerHints.clear();
+        return this;
+    }
+
+    @Override
     public SelectQueryBuilder limitOffset(LimitOffset limitOffset) {
         this.limitOffset = limitOffset;
         return this;
