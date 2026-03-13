@@ -2,6 +2,31 @@
 
 ## [Unreleased]
 
+## [v0.3.3] - 2026-03-13
+
+### Added
+- New module: `sqm-transpile` with a first-class SQL transpilation pipeline for source-to-target dialect conversion.
+- New semantic core node: `ConcatExpr`, with ANSI/PostgreSQL `||` parsing/rendering and MySQL `CONCAT(...)` parsing/rendering.
+- PostgreSQL -> MySQL transpilation coverage for:
+  - exact concat conversion through semantic `ConcatExpr`
+  - exact null-safe comparison conversion (`IS [NOT] DISTINCT FROM`)
+  - exact regex subset conversion where supported by both dialects
+  - approximate `ILIKE` conversion with structured warnings
+  - explicit unsupported diagnostics for `RETURNING`, `DISTINCT ON`, `SIMILAR TO`, and representative PostgreSQL-specific operator families
+- MySQL -> PostgreSQL transpilation coverage for:
+  - exact concat conversion through semantic `ConcatExpr`
+  - exact null-safe comparison conversion (`<=>`)
+  - warning-based dropping of MySQL optimizer hints and index hints
+  - explicit unsupported diagnostics for `ON DUPLICATE KEY UPDATE`, insert modes/modifiers, and representative MySQL JSON function families
+- End-to-end transpilation integration coverage in `sqm-it`.
+- Transpilation example programs in `examples`.
+- New transpilation usage/design docs and wiki guides.
+
+### Changed
+- `SqlDialectId` is now the shared dialect identity value object used by `sqm-transpile` and the `sqm-control` execution pipeline.
+- `sqm-control` now stores `SqlDialectId` directly in `ExecutionContext` while preserving `dialect()` as a compatibility accessor.
+- README, examples, wiki navigation, and planning docs now describe the transpilation workflow and current rule matrix.
+
 ## [v0.3.2] - 2026-03-11
 
 ### Added
