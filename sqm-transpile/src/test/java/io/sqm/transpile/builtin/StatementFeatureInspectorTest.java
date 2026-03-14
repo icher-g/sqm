@@ -44,6 +44,11 @@ class StatementFeatureInspectorTest {
             .from(Dsl.tbl("users"))
             .distinct(Dsl.col("user_id"))
             .build();
+        var topSpec = SelectQuery.builder()
+            .select(Dsl.col("id"))
+            .from(Dsl.tbl("users"))
+            .top(Dsl.lit(5))
+            .build();
         var ilike = Dsl.select(Dsl.col("name"))
             .from(Dsl.tbl("users"))
             .where(Dsl.col("name").ilike("al%"))
@@ -56,11 +61,13 @@ class StatementFeatureInspectorTest {
         assertTrue(StatementFeatureInspector.hasReturning(update));
         assertTrue(StatementFeatureInspector.hasReturning(delete));
         assertTrue(StatementFeatureInspector.hasDistinctOn(distinctOn));
+        assertTrue(StatementFeatureInspector.hasTopSpec(topSpec));
         assertTrue(StatementFeatureInspector.hasLikeMode(ilike, LikeMode.ILIKE));
         assertTrue(StatementFeatureInspector.hasAnyBinaryOperator(operator, Set.of("->>")));
 
         assertFalse(StatementFeatureInspector.hasReturning(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()));
         assertFalse(StatementFeatureInspector.hasDistinctOn(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()));
+        assertFalse(StatementFeatureInspector.hasTopSpec(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()));
         assertFalse(StatementFeatureInspector.hasLikeMode(ilike, LikeMode.LIKE));
         assertFalse(StatementFeatureInspector.hasAnyBinaryOperator(operator, Set.of("@>")));
     }

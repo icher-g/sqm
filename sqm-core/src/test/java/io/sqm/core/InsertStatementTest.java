@@ -44,9 +44,18 @@ class InsertStatementTest {
     }
 
     @Test
-    void supportsOfOverloadAndBuilderConvenienceMethods() {
+    void supportsCanonicalFactoryAndBuilderConvenienceMethods() {
         var source = row(lit(1));
-        var ofStatement = InsertStatement.of(InsertStatement.InsertMode.REPLACE, tbl("users"), source);
+        var ofStatement = InsertStatement.of(
+            InsertStatement.InsertMode.REPLACE,
+            tbl("users"),
+            java.util.List.of(),
+            source,
+            java.util.List.of(),
+            InsertStatement.OnConflictAction.NONE,
+            java.util.List.of(),
+            null,
+            java.util.List.of());
 
         assertEquals(InsertStatement.InsertMode.REPLACE, ofStatement.insertMode());
         assertEquals(0, ofStatement.columns().size());
@@ -88,15 +97,26 @@ class InsertStatementTest {
     }
 
     @Test
-    void factoryOverloadsDefaultToStandardMode() {
+    void canonicalFactorySupportsStandardModeWithoutColumns() {
         var statementWithColumns = InsertStatement.of(
+            InsertStatement.InsertMode.STANDARD,
             tbl("users"),
             java.util.List.of(Identifier.of("id")),
             row(lit(1)),
+            java.util.List.of(),
+            InsertStatement.OnConflictAction.NONE,
+            java.util.List.of(),
+            null,
             java.util.List.of(col("id").toSelectItem()));
         var statementWithoutColumns = InsertStatement.of(
+            InsertStatement.InsertMode.STANDARD,
             tbl("users"),
+            java.util.List.of(),
             row(lit(1)),
+            java.util.List.of(),
+            InsertStatement.OnConflictAction.NONE,
+            java.util.List.of(),
+            null,
             java.util.List.of(col("id").toSelectItem()));
 
         assertEquals(InsertStatement.InsertMode.STANDARD, statementWithColumns.insertMode());
@@ -110,7 +130,16 @@ class InsertStatementTest {
     @Test
     void normalizesNullCollectionsInFactories() {
         var statement = InsertStatement.of(InsertStatement.InsertMode.IGNORE, tbl("users"), null, row(lit(1)), null, null, null, null, null);
-        var statementWithReturningOverload = InsertStatement.of(InsertStatement.InsertMode.REPLACE, tbl("users"), row(lit(1)), null);
+        var statementWithReturningOverload = InsertStatement.of(
+            InsertStatement.InsertMode.REPLACE,
+            tbl("users"),
+            java.util.List.of(),
+            row(lit(1)),
+            java.util.List.of(),
+            InsertStatement.OnConflictAction.NONE,
+            java.util.List.of(),
+            null,
+            null);
 
         assertEquals(InsertStatement.InsertMode.IGNORE, statement.insertMode());
         assertTrue(statement.columns().isEmpty());
@@ -153,18 +182,18 @@ class InsertStatementTest {
 
     @Test
     void validatesRequiredMembers() {
-        var defaultModeStatement = InsertStatement.of(null, tbl("users"), row(lit(1)));
+        var defaultModeStatement = InsertStatement.of(null, tbl("users"), java.util.List.of(), row(lit(1)), java.util.List.of(), null, java.util.List.of(), null, java.util.List.of());
         assertEquals(InsertStatement.InsertMode.STANDARD, defaultModeStatement.insertMode());
-        assertThrows(NullPointerException.class, () -> InsertStatement.of(null, java.util.List.of(), row(lit(1))));
-        assertThrows(NullPointerException.class, () -> InsertStatement.of(tbl("users"), java.util.List.of(), null));
+        assertThrows(NullPointerException.class, () -> InsertStatement.of(InsertStatement.InsertMode.STANDARD, null, java.util.List.of(), row(lit(1)), java.util.List.of(), InsertStatement.OnConflictAction.NONE, java.util.List.of(), null, java.util.List.of()));
+        assertThrows(NullPointerException.class, () -> InsertStatement.of(InsertStatement.InsertMode.STANDARD, tbl("users"), java.util.List.of(), null, java.util.List.of(), InsertStatement.OnConflictAction.NONE, java.util.List.of(), null, java.util.List.of()));
         assertThrows(IllegalStateException.class, () -> insert(tbl("users")).build());
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).table(null));
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).insertMode(null));
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).columns((Identifier[]) null));
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).source(null));
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).returning((SelectItem[]) null));
-        assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(tbl("users"), java.util.List.of(), row(lit(1)), java.util.List.of(), InsertStatement.OnConflictAction.DO_UPDATE, java.util.List.of(), null, java.util.List.of()));
-        assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(tbl("users"), java.util.List.of(), row(lit(1)), java.util.List.of(Identifier.of("id")), InsertStatement.OnConflictAction.NONE, java.util.List.of(), null, java.util.List.of()));
-        assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(tbl("users"), java.util.List.of(), row(lit(1)), java.util.List.of(), InsertStatement.OnConflictAction.DO_NOTHING, java.util.List.of(set("id", lit(2))), null, java.util.List.of()));
+        assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(InsertStatement.InsertMode.STANDARD, tbl("users"), java.util.List.of(), row(lit(1)), java.util.List.of(), InsertStatement.OnConflictAction.DO_UPDATE, java.util.List.of(), null, java.util.List.of()));
+        assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(InsertStatement.InsertMode.STANDARD, tbl("users"), java.util.List.of(), row(lit(1)), java.util.List.of(Identifier.of("id")), InsertStatement.OnConflictAction.NONE, java.util.List.of(), null, java.util.List.of()));
+        assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(InsertStatement.InsertMode.STANDARD, tbl("users"), java.util.List.of(), row(lit(1)), java.util.List.of(), InsertStatement.OnConflictAction.DO_NOTHING, java.util.List.of(set("id", lit(2))), null, java.util.List.of()));
     }
 }

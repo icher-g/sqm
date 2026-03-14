@@ -721,6 +721,18 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
+     * Visits a {@link TopSpec}.
+     *
+     * @param t the top specification being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitTopSpec(TopSpec t) {
+        accept(t.count());
+        return defaultResult();
+    }
+
+    /**
      * Visits a {@link CompositeQuery}, representing a set operation such as
      * {@code UNION}, {@code INTERSECT}, or {@code EXCEPT}.
      *
@@ -759,6 +771,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     public R visitSelectQuery(SelectQuery q) {
         q.items().forEach(this::accept);
         accept(q.distinct());
+        accept(q.topSpec());
         accept(q.from());
         q.joins().forEach(this::accept);
         accept(q.where());

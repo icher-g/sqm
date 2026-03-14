@@ -39,6 +39,7 @@
         <module>sqm-transpile</module>
         <module>sqm-core-postgresql</module>
         <module>sqm-core-mysql</module>
+        <module>sqm-core-sqlserver</module>
         <module>sqm-render</module>
         <module>sqm-parser</module>
         <module>sqm-json</module>
@@ -47,8 +48,10 @@
         <module>sqm-validate</module>
         <module>sqm-parser-postgresql</module>
         <module>sqm-parser-mysql</module>
+        <module>sqm-parser-sqlserver</module>
         <module>sqm-render-postgresql</module>
         <module>sqm-render-mysql</module>
+        <module>sqm-render-sqlserver</module>
         <module>sqm-validate-postgresql</module>
         <module>sqm-validate-mysql</module>
         <module>sqm-catalog</module>
@@ -134,7 +137,7 @@
                 <executions>
                     <execution>
                         <id>flatten</id>
-                        <phase>deploy</phase>
+                        <phase>install</phase>
                         <goals>
                             <goal>flatten</goal>
                         </goals>

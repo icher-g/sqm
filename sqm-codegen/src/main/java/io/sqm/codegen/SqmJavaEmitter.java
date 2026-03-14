@@ -327,6 +327,9 @@ final class SqmJavaEmitter {
             if (q.distinct() != null) {
                 sb.append("\n").append(emitDistinctTail(q.distinct()));
             }
+            if (q.topSpec() != null) {
+                sb.append("\n").append(emitTopSpecTail(q.topSpec()));
+            }
             if (q.limitOffset() != null) {
                 sb.append("\n").append(emitLimitOffsetTail(q.limitOffset()));
             }
@@ -759,6 +762,19 @@ final class SqmJavaEmitter {
                 return ".distinct(distinct())";
             }
             return ".distinct(" + joinInline(distinctSpec.items().stream().map(this::emitNode).toList()) + ")";
+        }
+
+        private String emitTopSpecTail(TopSpec topSpec) {
+            if (topSpec.percent() || topSpec.withTies()) {
+                return ".top(TopSpec.of("
+                    + emitNode(topSpec.count())
+                    + ", "
+                    + topSpec.percent()
+                    + ", "
+                    + topSpec.withTies()
+                    + "))";
+            }
+            return ".top(" + emitNode(topSpec.count()) + ")";
         }
 
         private String emitLimitOffsetTail(LimitOffset limitOffset) {

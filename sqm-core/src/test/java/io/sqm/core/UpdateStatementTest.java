@@ -41,11 +41,15 @@ class UpdateStatementTest {
     }
 
     @Test
-    void supportsOfOverloadAndBuilderConvenienceMethods() {
+    void supportsCanonicalFactoryAndBuilderConvenienceMethods() {
         var statement = UpdateStatement.of(
             tbl("users"),
             List.of(set("name", lit("alice"))),
-            List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))));
+            List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))),
+            List.of(),
+            null,
+            List.of(),
+            List.of());
         assertNull(statement.where());
         assertTrue(statement.from().isEmpty());
         assertEquals(1, statement.joins().size());
@@ -64,14 +68,15 @@ class UpdateStatementTest {
     }
 
     @Test
-    void supportsFactoryOverloadsWithFromAndReturning() {
+    void supportsCanonicalFactoryWithFromAndReturning() {
         var statement = UpdateStatement.of(
             tbl("users"),
             List.of(set("name", lit("alice"))),
             List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))),
             List.of(tbl("src_users")),
             col("users", "id").eq(lit(1)),
-            List.of(io.sqm.core.ExprSelectItem.of(col("users", "id"), null)));
+            List.of(io.sqm.core.ExprSelectItem.of(col("users", "id"), null)),
+            List.of());
 
         assertEquals(1, statement.joins().size());
         assertEquals(1, statement.from().size());
@@ -82,7 +87,9 @@ class UpdateStatementTest {
             List.of(set("name", lit("alice"))),
             List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))),
             List.of(tbl("src_users")),
-            col("users", "id").eq(lit(1)));
+            col("users", "id").eq(lit(1)),
+            List.of(),
+            List.of());
 
         assertTrue(withoutReturning.returning().isEmpty());
     }
@@ -122,9 +129,9 @@ class UpdateStatementTest {
 
     @Test
     void validatesRequiredMembers() {
-        assertThrows(NullPointerException.class, () -> UpdateStatement.of(null, List.of(set("name", lit("alice"))), (Predicate) null));
-        assertThrows(NullPointerException.class, () -> UpdateStatement.of(tbl("users"), null, (Predicate) null));
-        assertThrows(IllegalArgumentException.class, () -> UpdateStatement.of(tbl("users"), List.of(), (Predicate) null));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.of(null, List.of(set("name", lit("alice"))), List.of(), List.of(), null, List.of(), List.of()));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.of(tbl("users"), null, List.of(), List.of(), null, List.of(), List.of()));
+        assertThrows(IllegalArgumentException.class, () -> UpdateStatement.of(tbl("users"), List.of(), List.of(), List.of(), null, List.of(), List.of()));
         assertThrows(IllegalStateException.class, () -> update(tbl("users")).build());
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).table(null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).assignments(null));

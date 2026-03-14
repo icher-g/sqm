@@ -63,17 +63,6 @@ public interface Match<T, R> {
     }
 
     /**
-     * Creates a new matcher for the given {@link Assignment}.
-     *
-     * @param assignment the assignment to match on
-     * @param <R> the result type
-     * @return a new {@code AssignmentMatch} for {@code assignment}
-     */
-    static <R> AssignmentMatch<R> assignment(Assignment assignment) {
-        return AssignmentMatch.match(assignment);
-    }
-
-    /**
      * Creates a new matcher for the given {@link Statement}.
      *
      * @param statement the statement to match on

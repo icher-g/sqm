@@ -573,6 +573,16 @@ class LexerTest {
     }
 
     @Test
+    void lexer_recognizes_sql_server_top_keywords() {
+        List<Token> tokens = Lexer.lexAll("TOP PERCENT WITH TIES", quoting);
+
+        assertEquals(TokenType.TOP, tokens.get(0).type());
+        assertEquals(TokenType.PERCENT, tokens.get(1).type());
+        assertEquals(TokenType.WITH, tokens.get(2).type());
+        assertEquals(TokenType.TIES, tokens.get(3).type());
+    }
+
+    @Test
     void lexer_throwsOnUnterminatedOptimizerHintComment() {
         assertThrows(ParserException.class, () -> Lexer.lexAll("SELECT /*+ BKA(users)", quoting));
     }

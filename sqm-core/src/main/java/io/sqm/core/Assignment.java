@@ -1,6 +1,5 @@
 package io.sqm.core;
 
-import io.sqm.core.match.AssignmentMatch;
 import io.sqm.core.walk.NodeVisitor;
 
 import java.util.Objects;
@@ -45,16 +44,6 @@ public non-sealed interface Assignment extends Node {
      * @return assigned expression
      */
     Expression value();
-
-    /**
-     * Creates a matcher for the current assignment.
-     *
-     * @param <R> result type
-     * @return assignment matcher
-     */
-    default <R> AssignmentMatch<R> matchAssignment() {
-        return AssignmentMatch.match(this);
-    }
 
     /**
      * Accepts a {@link NodeVisitor}.

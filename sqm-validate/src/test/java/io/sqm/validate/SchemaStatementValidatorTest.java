@@ -1794,6 +1794,19 @@ class SchemaStatementValidatorTest {
     }
 
     @Test
+    void validate_reportsInvalidTopType() {
+        Query query = select(star())
+            .from(tbl("users").as("u"))
+            .top(col("u", "status"))
+            .build();
+
+        var result = validator.validate(query);
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.LIMIT_OFFSET_INVALID));
+    }
+
+    @Test
     void validate_reportsInvalidOffsetType() {
         Query query = select(star())
             .from(tbl("users").as("u"))
@@ -1873,6 +1886,17 @@ class SchemaStatementValidatorTest {
             .from(tbl("users").as("u"))
             .limit(col("u", "age"))
             .offset(lit(1))
+            .build();
+
+        var result = validator.validate(query);
+        assertTrue(result.ok());
+    }
+
+    @Test
+    void validate_acceptsNumericTopExpression() {
+        Query query = select(star())
+            .from(tbl("users").as("u"))
+            .top(col("u", "age"))
             .build();
 
         var result = validator.validate(query);

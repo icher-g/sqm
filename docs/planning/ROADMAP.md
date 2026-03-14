@@ -9,8 +9,8 @@ Priority levels:
 ## Goals
 - Expand dialect coverage beyond ANSI/PostgreSQL/MySQL.
 - Add first-class SQL transpilation before expanding to additional dialect families.
-- Add first-class DDL model/parse/render support.
 - Keep middleware and validation usable across dialects.
+- Keep DDL as a separate product/architecture decision rather than assuming it belongs in the framework.
 
 ## P0 (Required)
 
@@ -96,33 +96,19 @@ Priority levels:
 - Support SQL Server pagination/identifier/function differences.
 - Add integration round-trip tests and middleware smoke coverage.
 
-### Epic R6: DDL MVP (Cross-Dialect Core)
-- Extend `sqm-core` with DDL nodes:
-  - `CreateTable`, `AlterTable`, `DropTable`
-  - column defs, constraints (PK/FK/unique/check), index basics
-- Add parser/renderer support for ANSI + PostgreSQL first.
-- Add visitor/transformer/match/json support for all new DDL nodes.
-- Add baseline semantic validation for DDL shape and references.
-
-### Epic R7: Middleware DDL Policy Controls
-- Add explicit DDL decision controls in `sqm-control`:
-  - allowlist/denylist by operation (`CREATE`, `ALTER`, `DROP`)
-  - scope by principal/tenant/object
-- Add audit guidance and reason codes for DDL decisions.
-- Add REST/MCP examples and integration tests.
+### DDL Track (Decision Required)
+- DDL is not currently committed as a framework feature.
+- Before any DDL epic is scheduled, SQM needs a separate design decision on:
+  - whether DDL belongs in the framework at all
+  - whether DDL belongs in the same shared core model as query/DML
+  - what the cross-dialect contract would be if supported
+- Until that decision is made, DDL should remain out of scope for dialect epics and downstream completion criteria.
 
 ## P1 (High Value)
 
 ### Epic R8: Oracle Dialect Support
 - Add parser/renderer/specs modules for Oracle-specific syntax.
 - Focus on top query constructs and compatibility gaps.
-
-### Epic R9: DDL Coverage Expansion
-- Add:
-  - `CreateSchema`, `DropSchema`
-  - `CreateIndex`, `DropIndex`, `Rename`
-  - richer `AlterTable` actions
-- Expand validation and cross-dialect render fallback behavior.
 
 ### Epic R10: Catalog/Introspection Unification for New Dialects
 - Provide dialect-aware type mapping packs.
@@ -150,12 +136,10 @@ Priority levels:
 ## Suggested Implementation Order
 1. `R4` SQL transpilation foundation
 2. `R5` SQL Server
-3. `R6` DDL MVP core
-4. `R7` DDL middleware controls
-5. `R9` DDL expansion
-6. `R8` Oracle
-7. `R10` catalog unification
-8. `R11`/`R12`/`R13` as capacity permits
+3. `R8` Oracle
+4. `R10` catalog unification
+5. Separate DDL decision, only if explicitly accepted
+6. `R11`/`R12`/`R13` as capacity permits
 
 ## Exit Criteria Per Epic
 - Model + parser + renderer + tests + docs complete.

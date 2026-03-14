@@ -12,123 +12,17 @@ import java.util.Objects;
 public non-sealed interface InsertStatement extends Statement {
 
     /**
-     * Creates an immutable insert statement.
-     *
-     * @param insertMode insert mode
-     * @param table      target table
-     * @param columns    target columns, or empty when omitted
-     * @param source     insert source
-     * @return immutable insert statement
-     */
-    static InsertStatement of(InsertMode insertMode, Table table, List<Identifier> columns, InsertSource source) {
-        return of(insertMode, table, columns, source, List.of(), OnConflictAction.NONE, List.of(), null, List.of());
-    }
-
-    /**
-     * Creates an immutable insert statement.
-     *
-     * @param table   target table
-     * @param columns target columns, or empty when omitted
-     * @param source  insert source
-     * @return immutable insert statement
-     */
-    static InsertStatement of(Table table, List<Identifier> columns, InsertSource source) {
-        return of(InsertMode.STANDARD, table, columns, source);
-    }
-
-    /**
-     * Creates an immutable insert statement with a {@code RETURNING} projection list.
-     *
-     * @param insertMode insert mode
-     * @param table      target table
-     * @param columns    target columns, or empty when omitted
-     * @param source     insert source
-     * @param returning  returning projection list, or empty when omitted
-     * @return immutable insert statement
-     */
-    static InsertStatement of(InsertMode insertMode,
-                              Table table,
-                              List<Identifier> columns,
-                              InsertSource source,
-                              List<SelectItem> returning) {
-        return of(insertMode, table, columns, source, List.of(), OnConflictAction.NONE, List.of(), null, returning);
-    }
-
-    /**
-     * Creates an immutable insert statement with a {@code RETURNING} projection list.
-     *
-     * @param table     target table
-     * @param columns   target columns, or empty when omitted
-     * @param source    insert source
-     * @param returning returning projection list, or empty when omitted
-     * @return immutable insert statement
-     */
-    static InsertStatement of(Table table, List<Identifier> columns, InsertSource source, List<SelectItem> returning) {
-        return of(InsertMode.STANDARD, table, columns, source, returning);
-    }
-
-    /**
-     * Creates an immutable insert statement without an explicit column list.
-     *
-     * @param insertMode insert mode
-     * @param table      target table
-     * @param source     insert source
-     * @return immutable insert statement
-     */
-    static InsertStatement of(InsertMode insertMode, Table table, InsertSource source) {
-        return of(insertMode, table, List.of(), source, List.of(), OnConflictAction.NONE, List.of(), null, List.of());
-    }
-
-    /**
-     * Creates an immutable insert statement without an explicit column list.
-     *
-     * @param table  target table
-     * @param source insert source
-     * @return immutable insert statement
-     */
-    static InsertStatement of(Table table, InsertSource source) {
-        return of(InsertMode.STANDARD, table, source);
-    }
-
-    /**
-     * Creates an immutable insert statement without an explicit column list and with
-     * optional {@code RETURNING} items.
-     *
-     * @param insertMode insert mode
-     * @param table      target table
-     * @param source     insert source
-     * @param returning  returning projection list, or empty when omitted
-     * @return immutable insert statement
-     */
-    static InsertStatement of(InsertMode insertMode, Table table, InsertSource source, List<SelectItem> returning) {
-        return of(insertMode, table, List.of(), source, List.of(), OnConflictAction.NONE, List.of(), null, returning);
-    }
-
-    /**
-     * Creates an immutable insert statement without an explicit column list and with
-     * optional {@code RETURNING} items.
-     *
-     * @param table     target table
-     * @param source    insert source
-     * @param returning returning projection list, or empty when omitted
-     * @return immutable insert statement
-     */
-    static InsertStatement of(Table table, InsertSource source, List<SelectItem> returning) {
-        return of(InsertMode.STANDARD, table, source, returning);
-    }
-
-    /**
      * Creates an immutable insert statement with optional {@code ON CONFLICT} and {@code RETURNING} clauses.
      *
-     * @param insertMode                insert mode
-     * @param table                     target table
-     * @param columns                   target columns, or empty when omitted
-     * @param source                    insert source
-     * @param conflictTarget            conflict target columns, or empty when omitted
-     * @param onConflictAction          on-conflict action
+     * @param insertMode insert mode
+     * @param table target table
+     * @param columns target columns, or empty when omitted
+     * @param source insert source
+     * @param conflictTarget conflict target columns, or empty when omitted
+     * @param onConflictAction on-conflict action
      * @param conflictUpdateAssignments conflict-update assignments, or empty when omitted
-     * @param conflictUpdateWhere       optional conflict-update predicate
-     * @param returning                 returning projection list, or empty when omitted
+     * @param conflictUpdateWhere optional conflict-update predicate
+     * @param returning returning projection list, or empty when omitted
      * @return immutable insert statement
      */
     static InsertStatement of(InsertMode insertMode,
@@ -141,38 +35,6 @@ public non-sealed interface InsertStatement extends Statement {
                               Predicate conflictUpdateWhere,
                               List<SelectItem> returning) {
         return new Impl(insertMode,
-            table,
-            columns,
-            source,
-            conflictTarget,
-            onConflictAction,
-            conflictUpdateAssignments,
-            conflictUpdateWhere,
-            returning);
-    }
-
-    /**
-     * Creates an immutable insert statement with optional {@code ON CONFLICT} and {@code RETURNING} clauses.
-     *
-     * @param table                     target table
-     * @param columns                   target columns, or empty when omitted
-     * @param source                    insert source
-     * @param conflictTarget            conflict target columns, or empty when omitted
-     * @param onConflictAction          on-conflict action
-     * @param conflictUpdateAssignments conflict-update assignments, or empty when omitted
-     * @param conflictUpdateWhere       optional conflict-update predicate
-     * @param returning                 returning projection list, or empty when omitted
-     * @return immutable insert statement
-     */
-    static InsertStatement of(Table table,
-                              List<Identifier> columns,
-                              InsertSource source,
-                              List<Identifier> conflictTarget,
-                              OnConflictAction onConflictAction,
-                              List<Assignment> conflictUpdateAssignments,
-                              Predicate conflictUpdateWhere,
-                              List<SelectItem> returning) {
-        return of(InsertMode.STANDARD,
             table,
             columns,
             source,

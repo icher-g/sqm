@@ -322,4 +322,28 @@ public class MixInsSmokeTest {
         String out = m.writeValueAsString(v);
         assertEquals(json.stripIndent(), out.stripIndent());
     }
+
+    @Test
+    @DisplayName("TopSpec MixIn: minimal read/write")
+    void top_spec_serialization_minimal() throws Exception {
+        ObjectMapper m = SqmJsonMixins.createPretty();
+
+        String json =
+            """
+                {
+                  "kind" : "topSpec",
+                  "count" : {
+                    "kind" : "literal",
+                    "value" : 5
+                  },
+                  "percent" : false,
+                  "withTies" : true
+                }""";
+
+        var top = m.readValue(json, TopSpec.class);
+
+        assertNotNull(top);
+        assertTrue(top.withTies());
+        assertEquals(json.stripIndent(), m.writeValueAsString(top).stripIndent());
+    }
 }

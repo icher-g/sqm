@@ -14,41 +14,6 @@ import java.util.List;
 public non-sealed interface SelectQuery extends Query {
 
     /**
-     * Creates an immutable {@link SelectQuery} from all SELECT clause parts.
-     *
-     * <p>This is a low-level factory intended for callers that already have the
-     * full query shape available. For incremental construction use
-     * {@link #builder()}.</p>
-     *
-     * @param items select items (must not be {@code null})
-     * @param from FROM table reference, or {@code null}
-     * @param joins joins (must not be {@code null})
-     * @param where WHERE predicate, or {@code null}
-     * @param groupBy GROUP BY clause, or {@code null}
-     * @param having HAVING predicate, or {@code null}
-     * @param orderBy ORDER BY clause, or {@code null}
-     * @param distinct DISTINCT specification, or {@code null}
-     * @param limitOffset LIMIT/OFFSET specification, or {@code null}
-     * @param lockFor locking clause, or {@code null}
-     * @param windows WINDOW clause definitions (must not be {@code null})
-     * @return immutable {@link SelectQuery} instance
-     */
-    static SelectQuery of(
-        List<SelectItem> items,
-        TableRef from,
-        List<Join> joins,
-        Predicate where,
-        GroupBy groupBy,
-        Predicate having,
-        OrderBy orderBy,
-        DistinctSpec distinct,
-        LimitOffset limitOffset,
-        LockingClause lockFor,
-        List<WindowDef> windows) {
-        return new Impl(items, from, joins, where, groupBy, having, orderBy, distinct, limitOffset, lockFor, windows, List.of(), List.of());
-    }
-
-    /**
      * Creates an immutable {@link SelectQuery} from all SELECT clause parts, including select modifiers and optimizer hints.
      *
      * @param items select items (must not be {@code null})
@@ -59,6 +24,7 @@ public non-sealed interface SelectQuery extends Query {
      * @param having HAVING predicate, or {@code null}
      * @param orderBy ORDER BY clause, or {@code null}
      * @param distinct DISTINCT specification, or {@code null}
+     * @param topSpec TOP specification, or {@code null}
      * @param limitOffset LIMIT/OFFSET specification, or {@code null}
      * @param lockFor locking clause, or {@code null}
      * @param windows WINDOW clause definitions (must not be {@code null})
@@ -75,12 +41,13 @@ public non-sealed interface SelectQuery extends Query {
         Predicate having,
         OrderBy orderBy,
         DistinctSpec distinct,
+        TopSpec topSpec,
         LimitOffset limitOffset,
         LockingClause lockFor,
         List<WindowDef> windows,
         List<SelectModifier> modifiers,
         List<String> optimizerHints) {
-        return new Impl(items, from, joins, where, groupBy, having, orderBy, distinct, limitOffset, lockFor, windows, modifiers, optimizerHints);
+        return new Impl(items, from, joins, where, groupBy, having, orderBy, distinct, topSpec, limitOffset, lockFor, windows, modifiers, optimizerHints);
     }
 
     /**
@@ -166,6 +133,13 @@ public non-sealed interface SelectQuery extends Query {
     DistinctSpec distinct();
 
     /**
+     * Gets the top specification for this query.
+     *
+     * @return top specification or {@code null} if absent
+     */
+    TopSpec topSpec();
+
+    /**
      * Gets the limit/offset specification for this query.
      *
      * @return limit/offset specification or {@code null} if absent
@@ -223,6 +197,7 @@ public non-sealed interface SelectQuery extends Query {
      * @param having HAVING predicate, or {@code null}
      * @param orderBy ORDER BY clause, or {@code null}
      * @param distinct DISTINCT specification, or {@code null}
+     * @param topSpec TOP specification, or {@code null}
      * @param limitOffset LIMIT/OFFSET specification, or {@code null}
      * @param lockFor locking clause, or {@code null}
      * @param windows WINDOW clause definitions (immutable copy)
@@ -237,6 +212,7 @@ public non-sealed interface SelectQuery extends Query {
                 Predicate having,
                 OrderBy orderBy,
                 DistinctSpec distinct,
+                TopSpec topSpec,
                 LimitOffset limitOffset,
                 LockingClause lockFor,
                 List<WindowDef> windows,
@@ -265,6 +241,7 @@ public non-sealed interface SelectQuery extends Query {
          * @param having HAVING predicate, or {@code null}
          * @param orderBy ORDER BY clause, or {@code null}
          * @param distinct DISTINCT specification, or {@code null}
+         * @param topSpec TOP specification, or {@code null}
          * @param limitOffset LIMIT/OFFSET specification, or {@code null}
          * @param lockFor locking clause, or {@code null}
          * @param windows WINDOW clause definitions (must not be {@code null})
@@ -277,10 +254,11 @@ public non-sealed interface SelectQuery extends Query {
                     Predicate having,
                     OrderBy orderBy,
                     DistinctSpec distinct,
+                    TopSpec topSpec,
                     LimitOffset limitOffset,
                     LockingClause lockFor,
                     List<WindowDef> windows) {
-            this(items, from, joins, where, groupBy, having, orderBy, distinct, limitOffset, lockFor, windows, List.of(), List.of());
+            this(items, from, joins, where, groupBy, having, orderBy, distinct, topSpec, limitOffset, lockFor, windows, List.of(), List.of());
         }
     }
 }

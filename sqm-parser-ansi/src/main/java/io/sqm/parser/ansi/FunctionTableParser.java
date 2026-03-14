@@ -59,9 +59,7 @@ public class FunctionTableParser implements MatchableParser<FunctionTable> {
 
         boolean withOrdinality = false;
         if (cur.consumeIf(TokenType.WITH)) {
-            if (!cur.consumeIf(TokenType.ORDINALITY)) {
-                return error("Expected ORDINALITY after WITH", cur.fullPos());
-            }
+            cur.expect("Expected ORDINALITY after WITH", TokenType.ORDINALITY);
             if (!ctx.capabilities().supports(SqlFeature.FUNCTION_TABLE_ORDINALITY)) {
                 return error("WITH ORDINALITY is not supported by this dialect", cur.fullPos());
             }

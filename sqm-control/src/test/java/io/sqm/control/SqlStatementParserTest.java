@@ -52,6 +52,24 @@ class SqlStatementParserTest {
     }
 
     @Test
+    void parses_sqlserver_query() {
+        var parser = SqlStatementParser.standard();
+        var context = ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE);
+
+        var query = parser.parse("select [u].[id] from [users] as [u]", context);
+        assertInstanceOf(Query.class, query);
+    }
+
+    @Test
+    void parses_sqlserver_alias_dialect() {
+        var parser = SqlStatementParser.standard();
+        var context = ExecutionContext.of("mssql", ExecutionMode.ANALYZE);
+
+        var query = parser.parse("select 1", context);
+        assertInstanceOf(Query.class, query);
+    }
+
+    @Test
     void rejects_parse_errors() {
         var parser = SqlStatementParser.standard();
         var context = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);

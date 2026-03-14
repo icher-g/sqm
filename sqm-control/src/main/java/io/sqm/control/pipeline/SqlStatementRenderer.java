@@ -10,6 +10,7 @@ import io.sqm.render.spi.ParameterizationMode;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.RenderOptions;
 import io.sqm.render.spi.SqlDialect;
+import io.sqm.render.sqlserver.spi.SqlServerDialect;
 
 import java.util.Map;
 import java.util.Objects;
@@ -25,7 +26,8 @@ public interface SqlStatementRenderer {
      * Creates the default dialect-aware renderer used by middleware.
      *
      * <p>The returned renderer resolves the render dialect from {@link ExecutionContext#dialect()} and supports
-     * ANSI, MySQL, plus PostgreSQL aliases ({@code postgresql}, {@code postgres}).</p>
+     * ANSI, MySQL, PostgreSQL aliases ({@code postgresql}, {@code postgres}),
+     * and SQL Server aliases ({@code sqlserver}, {@code mssql}, {@code tsql}).</p>
      *
      * @return dialect-aware renderer
      */
@@ -33,7 +35,8 @@ public interface SqlStatementRenderer {
         return dialectAwareIds(Map.of(
             SqlDialectId.ANSI, AnsiDialect::new,
             SqlDialectId.MYSQL, MySqlDialect::new,
-            SqlDialectId.POSTGRESQL, PostgresDialect::new
+            SqlDialectId.POSTGRESQL, PostgresDialect::new,
+            SqlDialectId.SQLSERVER, SqlServerDialect::new
         ));
     }
 

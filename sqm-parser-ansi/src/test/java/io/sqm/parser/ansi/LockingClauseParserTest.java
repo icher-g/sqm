@@ -174,7 +174,7 @@ class LockingClauseParserTest {
     @Test
     @DisplayName("Parse SKIP without LOCKED fails")
     void parseSkipWithoutLockedFails() {
-        var result = parser.parse(Cursor.of("FOR UPDATE SKIP", quoting), ctx);
+        var result = ctx.parse(LockingClause.class, "FOR UPDATE SKIP");
 
         assertFalse(result.ok());
         assertNotNull(result.errorMessage());

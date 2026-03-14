@@ -1706,6 +1706,46 @@ public final class Dsl {
     }
 
     /**
+     * Creates a plain {@code TOP (<count>)} specification.
+     *
+     * @param count top-count expression
+     * @return top specification
+     */
+    public static TopSpec top(Expression count) {
+        return TopSpec.of(count);
+    }
+
+    /**
+     * Creates a plain {@code TOP (<count>)} specification.
+     *
+     * @param count top-count value
+     * @return top specification
+     */
+    public static TopSpec top(long count) {
+        return top(lit(count));
+    }
+
+    /**
+     * Creates a {@code TOP (<count>) PERCENT} specification.
+     *
+     * @param count top-count expression
+     * @return top specification
+     */
+    public static TopSpec topPercent(Expression count) {
+        return TopSpec.of(count, true, false);
+    }
+
+    /**
+     * Creates a {@code TOP (<count>) WITH TIES} specification.
+     *
+     * @param count top-count expression
+     * @return top specification
+     */
+    public static TopSpec topWithTies(Expression count) {
+        return TopSpec.of(count, false, true);
+    }
+
+    /**
      * Creates a LIMIT/OFFSET specification.
      *
      * @param limit  limit expression, may be null

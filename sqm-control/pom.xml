@@ -38,6 +38,11 @@
         </dependency>
         <dependency>
             <groupId>io.sqm</groupId>
+            <artifactId>sqm-parser-sqlserver</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.sqm</groupId>
             <artifactId>sqm-validate</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -69,6 +74,11 @@
         <dependency>
             <groupId>io.sqm</groupId>
             <artifactId>sqm-render-mysql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.sqm</groupId>
+            <artifactId>sqm-render-sqlserver</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

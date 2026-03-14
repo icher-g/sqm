@@ -184,6 +184,34 @@ public interface SelectQueryBuilder {
     SelectQueryBuilder distinct(DistinctSpec distinctSpec);
 
     /**
+     * Sets the top specification.
+     *
+     * @param topSpec top specification, may be {@code null}
+     * @return this builder
+     */
+    SelectQueryBuilder top(TopSpec topSpec);
+
+    /**
+     * Sets a plain {@code TOP (<count>)} specification using a numeric value.
+     *
+     * @param count top count
+     * @return this builder
+     */
+    default SelectQueryBuilder top(long count) {
+        return top(Expression.literal(count));
+    }
+
+    /**
+     * Sets a plain {@code TOP (<count>)} specification using an expression.
+     *
+     * @param count top count expression
+     * @return this builder
+     */
+    default SelectQueryBuilder top(Expression count) {
+        return top(TopSpec.of(count));
+    }
+
+    /**
      * Sets {@code DISTINCT ON (...)} using the provided expressions.
      *
      * @param items distinct-on expressions
@@ -330,6 +358,27 @@ public interface SelectQueryBuilder {
      * @return current limit/offset clause or {@code null}
      */
     LimitOffset currentLimitOffset();
+
+    /**
+     * Returns the current top specification held by the builder, if any.
+     *
+     * @return current top specification or {@code null}
+     */
+    TopSpec currentTopSpec();
+
+    /**
+     * Returns the current distinct specification held by the builder, if any.
+     *
+     * @return current distinct specification or {@code null}
+     */
+    DistinctSpec currentDistinct();
+
+    /**
+     * Returns the current order-by clause held by the builder, if any.
+     *
+     * @return current order-by clause or {@code null}
+     */
+    OrderBy currentOrderBy();
 
     private Expression currentLimit() {
         LimitOffset limitOffset = currentLimitOffset();

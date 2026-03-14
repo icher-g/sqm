@@ -716,6 +716,21 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
+     * Visits a {@link TopSpec} node.
+     *
+     * @param t top specification to transform
+     * @return transformed top specification, or the original instance if unchanged
+     */
+    @Override
+    public Node visitTopSpec(TopSpec t) {
+        var count = apply(t.count());
+        if (count != t.count()) {
+            return TopSpec.of(count, t.percent(), t.withTies());
+        }
+        return t;
+    }
+
+    /**
      * Visits an {@link AnyAllPredicate}, representing
      * {@code <expr> = ANY(<subquery>)} or {@code <expr> > ALL(<subquery>)} constructs.
      *
@@ -904,6 +919,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         boolean changed = apply(q.items(), items);
         var distinct = apply(q.distinct());
         changed |= distinct != q.distinct();
+        var topSpec = apply(q.topSpec());
+        changed |= topSpec != q.topSpec();
         var from = apply(q.from());
         changed |= from != q.from();
         List<Join> joins = new ArrayList<>();
@@ -926,6 +943,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             var builder = SelectQuery.builder()
                 .select(items)
                 .distinct(distinct)
+                .top(topSpec)
                 .from(from)
                 .join(joins)
                 .where(where)
