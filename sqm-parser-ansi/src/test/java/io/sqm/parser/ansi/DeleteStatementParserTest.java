@@ -85,6 +85,15 @@ class DeleteStatementParserTest {
     }
 
     @Test
+    void rejectsDeleteWithOutputInAnsiDialect() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM users OUTPUT deleted.id");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("DELETE ... OUTPUT is not supported by this dialect"));
+    }
+
+    @Test
     void rejectsDeleteReturningInAnsiDialect() {
         var ctx = ParseContext.of(new AnsiSpecs());
         var result = ctx.parse(DeleteStatement.class, "DELETE FROM users RETURNING id");

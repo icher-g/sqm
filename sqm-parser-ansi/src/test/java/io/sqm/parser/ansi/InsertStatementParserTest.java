@@ -125,6 +125,15 @@ class InsertStatementParserTest {
     }
 
     @Test
+    void rejectsInsertWithOutputInAnsiDialect() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT INTO users OUTPUT inserted.id VALUES (1)");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("INSERT ... OUTPUT is not supported by this dialect"));
+    }
+
+    @Test
     void exposesInsertStatementTargetType() {
         assertEquals(InsertStatement.class, new InsertStatementParser().targetType());
     }

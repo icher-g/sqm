@@ -8,14 +8,7 @@ import io.sqm.render.spi.RenderContext;
 import io.sqm.render.sqlserver.spi.SqlServerDialect;
 import org.junit.jupiter.api.Test;
 
-import static io.sqm.dsl.Dsl.col;
-import static io.sqm.dsl.Dsl.id;
-import static io.sqm.dsl.Dsl.deleted;
-import static io.sqm.dsl.Dsl.insert;
-import static io.sqm.dsl.Dsl.lit;
-import static io.sqm.dsl.Dsl.output;
-import static io.sqm.dsl.Dsl.outputItem;
-import static io.sqm.dsl.Dsl.row;
+import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -64,7 +57,7 @@ class SqlServerInsertStatementRendererTest {
         var ctx = RenderContext.of(new SqlServerDialect());
         InsertStatement statement = insert("users")
             .columns(id("name"))
-            .output(output(outputItem(io.sqm.dsl.Dsl.inserted("id"), "user_id")))
+            .output(output(outputItem(inserted("id"), "user_id")))
             .values(row(lit("alice")))
             .build();
 
@@ -78,7 +71,7 @@ class SqlServerInsertStatementRendererTest {
         var ctx = RenderContext.of(new SqlServerDialect());
         InsertStatement statement = insert("users")
             .columns(id("name"))
-            .output(output(outputItem(io.sqm.dsl.Dsl.inserted("id").add(lit(1)), "next_id")))
+            .output(output(outputItem(inserted("id").add(lit(1)), "next_id")))
             .values(row(lit("alice")))
             .build();
 

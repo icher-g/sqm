@@ -1,7 +1,6 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.OutputItem;
-import io.sqm.core.QueryExpr;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -26,7 +25,7 @@ public class OutputItemRenderer implements Renderer<OutputItem> {
      */
     @Override
     public void render(OutputItem node, RenderContext ctx, SqlWriter w) {
-        w.append(node.expression(), node.expression() instanceof QueryExpr, true);
+        w.append(node.expression());
         if (node.alias() != null) {
             w.space().append("AS").space().append(renderIdentifier(node.alias(), ctx.dialect().quoter()));
         }
