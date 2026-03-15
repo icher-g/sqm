@@ -180,6 +180,37 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
+    void sqlServerTopPercentIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.SQLSERVER)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .build();
+
+        var result = transpiler.transpile("SELECT TOP (5) PERCENT id FROM users");
+
+        assertEquals(TranspileStatus.PARSE_FAILED, result.status());
+        assertEquals("PARSE_ERROR", result.problems().getFirst().code());
+        assertTrue(result.sql().isEmpty());
+    }
+
+    @Test
+    void sqlServerTargetValidationUsesDefaultDialectRules() {
+        var schema = CatalogSchema.of(
+            CatalogTable.of("public", "users", CatalogColumn.of("id", CatalogType.LONG))
+        );
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.SQLSERVER)
+            .targetSchema(schema)
+            .build();
+
+        var result = transpiler.transpile("SELECT id FROM users LIMIT 5 OFFSET 2");
+
+        assertEquals(TranspileStatus.VALIDATION_FAILED, result.status());
+        assertTrue(result.problems().stream().anyMatch(problem -> problem.code().contains("DIALECT_CLAUSE_INVALID")));
+    }
+
+    @Test
     void transpilesMySqlRegexPredicateToPostgresRendering() {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.MYSQL)
@@ -413,6 +444,18 @@ class DefaultSqlTranspilerTest {
         assertEquals(TranspileStatus.PARSE_FAILED, result.status());
         assertFalse(result.success());
         assertFalse(result.problems().isEmpty());
+    }
+
+    @Test
+    void unsupportedDefaultDialectsAreRejectedAtBuildTime() {
+        assertThrows(IllegalArgumentException.class, () -> SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.of("oracle"))
+            .targetDialect(SqlDialectId.MYSQL)
+            .build());
+        assertThrows(IllegalArgumentException.class, () -> SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.of("oracle"))
+            .build());
     }
 
     @Test

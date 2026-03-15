@@ -49,4 +49,14 @@ class SqlServerFunctionExprParserTest {
         assertEquals("day", assertInstanceOf(LiteralExpr.class, dateAddArg.expr()).value());
         assertEquals("day", assertInstanceOf(LiteralExpr.class, dateDiffArg.expr()).value());
     }
+
+    @Test
+    void keepsNonDatepartFirstArgumentOnGenericFunctionPath() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(FunctionExpr.class, "DATEADD('day', 1, created_at)");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var firstArg = assertInstanceOf(FunctionExpr.Arg.ExprArg.class, result.value().args().getFirst());
+        assertEquals("day", assertInstanceOf(LiteralExpr.class, firstArg.expr()).value());
+    }
 }

@@ -171,6 +171,34 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
+    void validate_reportsLockingAndLimitAllAsUnsupported() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var query = select(col("u", "id"))
+            .from(tbl("users").as("u").only())
+            .orderBy(order(col("u", "id")))
+            .limitOffset(limitAll())
+            .lockFor(update(), ofTables("u"), false, false)
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "select.lock".equals(problem.clausePath())
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "limit_offset".equals(problem.clausePath())
+                && problem.message().contains("LIMIT ALL")
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "from.table".equals(problem.clausePath())
+                && problem.message().contains("inheritance")
+        ));
+    }
+
+    @Test
     void validate_acceptsBaselineSqlServerDmlAndRetainsBaseRules() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var insertStatement = insert("users")
@@ -331,6 +359,15 @@ class SqlServerValidationDialectTest {
         assertEquals(4, dialect.additionalRules().size());
         assertTrue(dialect.functionCatalog().resolve("len").isPresent());
         assertTrue(dialect.functionCatalog().resolve("getdate").isPresent());
+    }
+
+    @Test
+    void functionCatalogFallsBackAndHandlesNullFunctionNames() {
+        var catalog = SqlServerValidationDialect.of().functionCatalog();
+
+        assertTrue(catalog.resolve("count").isPresent());
+        assertTrue(catalog.resolve("STRING_AGG").isPresent());
+        assertTrue(catalog.resolve(null).isEmpty());
     }
 
     private static boolean hasDialectProblem(io.sqm.validate.api.ValidationResult result, ValidationProblem.Code code) {
