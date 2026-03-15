@@ -381,6 +381,10 @@ public enum TokenType {
      */
     RETURNING,
     /**
+     * OUTPUT keyword token.
+     */
+    OUTPUT,
+    /**
      * WHERE keyword token.
      */
     WHERE,

@@ -51,4 +51,28 @@ class SqlServerDeleteStatementParserTest {
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("DELETE ... RETURNING is not supported by this dialect"));
     }
+
+    @Test
+    void parsesDeleteOutputIntoClause() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            DeleteStatement.class,
+            "DELETE FROM [users] OUTPUT deleted.[id] INTO [audit] ([user_id]) WHERE [id] = 1"
+        );
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertNotNull(result.value().output());
+        assertNotNull(result.value().output().into());
+        assertEquals("audit", result.value().output().into().target().name().value());
+        assertEquals("user_id", result.value().output().into().columns().getFirst().value());
+    }
+
+    @Test
+    void rejectsDeleteOutputInsertedReference() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(DeleteStatement.class, "DELETE FROM [users] OUTPUT inserted.[id] WHERE [id] = 1");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("inserted.<column>"));
+    }
 }

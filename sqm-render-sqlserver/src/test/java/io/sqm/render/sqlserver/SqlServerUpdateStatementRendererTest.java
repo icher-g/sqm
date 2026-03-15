@@ -8,8 +8,13 @@ import io.sqm.render.sqlserver.spi.SqlServerDialect;
 import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.deleted;
 import static io.sqm.dsl.Dsl.id;
+import static io.sqm.dsl.Dsl.inserted;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.output;
+import static io.sqm.dsl.Dsl.outputInto;
+import static io.sqm.dsl.Dsl.outputItem;
 import static io.sqm.dsl.Dsl.update;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -54,9 +59,47 @@ class SqlServerUpdateStatementRendererTest {
     }
 
     @Test
+    void rendersUpdateOutputIntoClause() {
+        var ctx = RenderContext.of(new SqlServerDialect());
+        UpdateStatement statement = update("users")
+            .set(id("name"), lit("alice"))
+            .output(output(
+                outputInto("audit", "old_name", "new_name"),
+                outputItem(deleted("name")),
+                outputItem(inserted("name"))
+            ))
+            .where(col("id").eq(lit(1)))
+            .build();
+
+        var sql = normalize(ctx.render(statement).sql());
+
+        assertEquals(
+            "UPDATE users SET name = 'alice' OUTPUT deleted.name, inserted.name INTO audit (old_name, new_name) WHERE id = 1",
+            sql
+        );
+    }
+
+    @Test
+    void rendersUpdateOutputExpressionUsingPseudoColumns() {
+        var ctx = RenderContext.of(new SqlServerDialect());
+        UpdateStatement statement = update("users")
+            .set(id("score"), lit(1))
+            .output(output(outputItem(inserted("score").add(deleted("score")), "score_sum")))
+            .where(col("id").eq(lit(1)))
+            .build();
+
+        var sql = normalize(ctx.render(statement).sql());
+
+        assertEquals(
+            "UPDATE users SET score = 1 OUTPUT inserted.score + deleted.score AS score_sum WHERE id = 1",
+            sql
+        );
+    }
+
+    @Test
     void sqlServerRegistryProvidesUpdateRenderer() {
         var repo = Renderers.sqlServer();
-        assertInstanceOf(io.sqm.render.ansi.UpdateStatementRenderer.class, repo.require(UpdateStatement.class));
+        assertInstanceOf(SqlServerUpdateStatementRenderer.class, repo.require(UpdateStatement.class));
     }
 
     private static String normalize(String sql) {

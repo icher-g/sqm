@@ -56,6 +56,11 @@ public class InsertStatementParser implements Parser<InsertStatement> {
             columns = parsedColumns.value();
         }
 
+        var output = parseOutput(cur, ctx);
+        if (output.isError()) {
+            return error(output);
+        }
+
         var source = parseInsertSource(cur, ctx);
         if (source.isError()) {
             return error(source);
@@ -80,7 +85,7 @@ public class InsertStatementParser implements Parser<InsertStatement> {
             conflict.value().action(),
             conflict.value().assignments(),
             conflict.value().where(),
-            null,
+            output.value(),
             returning.value()));
     }
 
@@ -155,6 +160,20 @@ public class InsertStatementParser implements Parser<InsertStatement> {
             return error("INSERT ... RETURNING is not supported by this dialect", cur.fullPos());
         }
         return ok(List.of());
+    }
+
+    /**
+     * Parses optional {@code OUTPUT} clause.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return parsed output clause or {@code null} when omitted
+     */
+    protected ParseResult<OutputClause> parseOutput(Cursor cur, ParseContext ctx) {
+        if (cur.match(TokenType.OUTPUT)) {
+            return error("INSERT ... OUTPUT is not supported by this dialect", cur.fullPos());
+        }
+        return ok(null);
     }
 
     /**

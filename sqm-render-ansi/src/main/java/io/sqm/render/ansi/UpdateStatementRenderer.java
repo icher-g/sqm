@@ -42,6 +42,7 @@ public class UpdateStatementRenderer implements Renderer<UpdateStatement> {
         w.space().append("SET").space();
         w.comma(node.assignments());
 
+        renderOutput(node.output(), ctx, w);
         renderFrom(node.from(), ctx, w);
 
         if (node.where() != null) {
@@ -100,6 +101,19 @@ public class UpdateStatementRenderer implements Renderer<UpdateStatement> {
     protected void renderReturning(List<SelectItem> returning, RenderContext ctx, SqlWriter w) {
         if (!returning.isEmpty()) {
             throw new UnsupportedDialectFeatureException("UPDATE ... RETURNING", ctx.dialect().name());
+        }
+    }
+
+    /**
+     * Renders optional {@code OUTPUT} clause.
+     *
+     * @param output output clause
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected void renderOutput(io.sqm.core.OutputClause output, RenderContext ctx, SqlWriter w) {
+        if (output != null) {
+            throw new UnsupportedDialectFeatureException("UPDATE ... OUTPUT", ctx.dialect().name());
         }
     }
 

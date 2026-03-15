@@ -39,6 +39,7 @@ public class DeleteStatementRenderer implements Renderer<DeleteStatement> {
 
         renderUsing(node.using(), ctx, w);
         renderJoins(node.joins(), ctx, w);
+        renderOutput(node.output(), ctx, w);
 
         if (node.where() != null) {
             w.space().append("WHERE").space().append(node.where());
@@ -96,6 +97,19 @@ public class DeleteStatementRenderer implements Renderer<DeleteStatement> {
     protected void renderReturning(List<SelectItem> returning, RenderContext ctx, SqlWriter w) {
         if (!returning.isEmpty()) {
             throw new UnsupportedDialectFeatureException("DELETE ... RETURNING", ctx.dialect().name());
+        }
+    }
+
+    /**
+     * Renders optional {@code OUTPUT} clause.
+     *
+     * @param output output clause
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected void renderOutput(io.sqm.core.OutputClause output, RenderContext ctx, SqlWriter w) {
+        if (output != null) {
+            throw new UnsupportedDialectFeatureException("DELETE ... OUTPUT", ctx.dialect().name());
         }
     }
 

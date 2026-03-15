@@ -43,6 +43,7 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
             w.append(")");
         }
 
+        renderOutput(node.output(), ctx, w);
         renderSource(node.source(), w);
         renderOnConflict(node.conflictTarget(),
             node.onConflictAction(),
@@ -98,6 +99,19 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
     protected void renderReturning(List<SelectItem> returning, RenderContext ctx, SqlWriter w) {
         if (!returning.isEmpty()) {
             throw new UnsupportedDialectFeatureException("INSERT ... RETURNING", ctx.dialect().name());
+        }
+    }
+
+    /**
+     * Renders optional {@code OUTPUT} clause.
+     *
+     * @param output output clause
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected void renderOutput(io.sqm.core.OutputClause output, RenderContext ctx, SqlWriter w) {
+        if (output != null) {
+            throw new UnsupportedDialectFeatureException("INSERT ... OUTPUT", ctx.dialect().name());
         }
     }
 

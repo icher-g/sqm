@@ -1,11 +1,6 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.DeleteStatement;
-import io.sqm.core.Join;
-import io.sqm.core.Predicate;
-import io.sqm.core.SelectItem;
-import io.sqm.core.Table;
-import io.sqm.core.TableRef;
+import io.sqm.core.*;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
@@ -61,6 +56,11 @@ public class DeleteStatementParser implements Parser<DeleteStatement> {
             return error(joinsResult);
         }
 
+        var outputResult = parseOutput(cur, ctx);
+        if (outputResult.isError()) {
+            return error(outputResult);
+        }
+
         Predicate where = null;
 
         if (cur.consumeIf(TokenType.WHERE)) {
@@ -81,7 +81,7 @@ public class DeleteStatementParser implements Parser<DeleteStatement> {
             usingResult.value(),
             joinsResult.value(),
             where,
-            null,
+            outputResult.value(),
             returningResult.value(),
             optimizerHintsResult.value()
         ));
@@ -139,6 +139,20 @@ public class DeleteStatementParser implements Parser<DeleteStatement> {
             return error("DELETE ... RETURNING is not supported by this dialect", cur.fullPos());
         }
         return ok(List.of());
+    }
+
+    /**
+     * Parses optional {@code OUTPUT} clause.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return parsed output clause or {@code null} when omitted
+     */
+    protected ParseResult<OutputClause> parseOutput(Cursor cur, ParseContext ctx) {
+        if (cur.match(TokenType.OUTPUT)) {
+            return error("DELETE ... OUTPUT is not supported by this dialect", cur.fullPos());
+        }
+        return ok(null);
     }
 
     /**

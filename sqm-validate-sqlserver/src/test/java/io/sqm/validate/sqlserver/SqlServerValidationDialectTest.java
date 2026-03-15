@@ -203,12 +203,15 @@ class SqlServerValidationDialectTest {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var insertStatement = insert("users")
             .columns(id("id"), id("name"))
+            .output(output(outputItem(inserted("id"), "user_id")))
             .values(rows(row(lit(1L), lit("alice"))))
             .build();
         var updateStatement = update("users")
             .set(Identifier.of("missing_col"), lit("alice"))
+            .output(output(outputItem(deleted("name")), outputItem(inserted("name"))))
             .build();
         var deleteStatement = delete("users")
+            .output(output(outputItem(deleted("id"))))
             .where(col("id").eq(lit(1L)))
             .build();
 
@@ -222,6 +225,34 @@ class SqlServerValidationDialectTest {
                 && "dml.assignment".equals(problem.clausePath())
         ));
         assertFalse(hasDialectProblem(deleteResult, ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED));
+    }
+
+    @Test
+    void validate_reportsInvalidSqlServerOutputRowSources() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var insertStatement = insert("users")
+            .columns(id("id"), id("name"))
+            .output(output(outputItem(deleted("id"))))
+            .values(rows(row(lit(1L), lit("alice"))))
+            .build();
+        var deleteStatement = delete("users")
+            .output(output(outputItem(inserted("id"))))
+            .where(col("id").eq(lit(1L)))
+            .build();
+
+        var insertResult = validator.validate(insertStatement);
+        var deleteResult = validator.validate(deleteStatement);
+
+        assertTrue(insertResult.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "insert.output".equals(problem.clausePath())
+                && problem.message().contains("deleted")
+        ));
+        assertTrue(deleteResult.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "delete.output".equals(problem.clausePath())
+                && problem.message().contains("inserted")
+        ));
     }
 
     @Test
