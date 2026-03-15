@@ -41,6 +41,24 @@ class SqlServerLimitOffsetRendererTest {
             renderer.render(LimitOffset.all(), context, new DefaultSqlWriter(context)));
     }
 
+    @Test
+    void renders_offset_only() {
+        var writer = new DefaultSqlWriter(context);
+
+        renderer.render(LimitOffset.offset(5), context, writer);
+
+        assertEquals("OFFSET 5 ROWS", normalize(writer.toText(List.of()).sql()));
+    }
+
+    @Test
+    void skips_empty_limit_offset() {
+        var writer = new DefaultSqlWriter(context);
+
+        renderer.render(LimitOffset.of(null, null, false), context, writer);
+
+        assertEquals("", normalize(writer.toText(List.of()).sql()));
+    }
+
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
     }

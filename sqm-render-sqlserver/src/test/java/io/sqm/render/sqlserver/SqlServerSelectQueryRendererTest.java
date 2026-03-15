@@ -55,6 +55,18 @@ class SqlServerSelectQueryRendererTest {
         assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(query));
     }
 
+    @Test
+    void renders_top_percent_when_top_spec_requests_it() {
+        var query = SelectQuery.builder()
+            .top(io.sqm.dsl.Dsl.topPercent(Expression.literal(10)))
+            .select(Expression.literal(1))
+            .build();
+
+        var rendered = RenderContext.of(new SqlServerDialect()).render(query);
+
+        assertEquals("SELECT TOP (10) PERCENT 1", normalize(rendered.sql()));
+    }
+
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
     }

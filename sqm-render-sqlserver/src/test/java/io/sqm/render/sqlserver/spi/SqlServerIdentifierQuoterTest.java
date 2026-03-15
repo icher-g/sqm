@@ -33,4 +33,24 @@ class SqlServerIdentifierQuoterTest {
 
         assertThrows(IllegalArgumentException.class, () -> quoter.quote("users", QuoteStyle.DOUBLE_QUOTE));
     }
+
+    @Test
+    void quotes_only_when_needed_and_qualifies_names() {
+        var quoter = new SqlServerIdentifierQuoter();
+
+        assertEquals("users", quoter.quote("users", QuoteStyle.NONE));
+        assertEquals("[TOP]", quoter.quoteIfNeeded("TOP"));
+        assertEquals("[dbo].[users]", quoter.qualify("dbo", "users"));
+        assertEquals("[users]", quoter.qualify(null, "users"));
+    }
+
+    @Test
+    void reports_needs_quoting_and_rejects_backticks() {
+        var quoter = new SqlServerIdentifierQuoter();
+
+        assertTrue(quoter.needsQuoting("has space"));
+        assertTrue(quoter.needsQuoting(""));
+        assertFalse(quoter.needsQuoting("users"));
+        assertThrows(IllegalArgumentException.class, () -> quoter.quote("users", QuoteStyle.BACKTICK));
+    }
 }

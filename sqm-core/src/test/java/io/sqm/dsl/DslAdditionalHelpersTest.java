@@ -51,10 +51,16 @@ class DslAdditionalHelpersTest {
     void distinctHelpers() {
         DistinctSpec plain = distinct();
         DistinctSpec onExpr = distinctOn(col("a"), col("b"));
+        TopSpec percent = topPercent(lit(10));
+        TopSpec withTies = topWithTies(lit(5));
 
         assertNotNull(plain);
         assertTrue(plain.items().isEmpty());
         assertEquals(2, onExpr.items().size());
+        assertTrue(percent.percent());
+        assertFalse(percent.withTies());
+        assertFalse(withTies.percent());
+        assertTrue(withTies.withTies());
     }
 
     @Test

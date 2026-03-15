@@ -105,4 +105,18 @@ class SelectQueryBuilderTest {
         assertEquals(original.items(), copied.items());
         assertEquals(original.from(), copied.from());
     }
+
+    @Test
+    void exposesCurrentBuilderStateForHookBasedParsing() {
+        var builder = SelectQuery.builder()
+            .distinct(DistinctSpec.TRUE)
+            .top(TopSpec.of(Expression.literal(3)))
+            .orderBy(OrderItem.of(col("id")))
+            .limitOffset(LimitOffset.of(Expression.literal(5), Expression.literal(1)));
+
+        assertNotNull(builder.currentDistinct());
+        assertNotNull(builder.currentTopSpec());
+        assertNotNull(builder.currentOrderBy());
+        assertNotNull(builder.currentLimitOffset());
+    }
 }

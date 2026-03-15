@@ -1349,4 +1349,32 @@ class RecursiveNodeTransformerTest {
         var unchanged = (DeleteStatement) statement.accept(new NothingTransformer());
         assertSame(statement, unchanged);
     }
+
+    @Test
+    void visitTopSpecAndSelectQuery() {
+        var query = select(col("id"))
+            .top(top(2))
+            .from(tbl("users"))
+            .build();
+
+        var transformer = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitLiteralExpr(LiteralExpr l) {
+                if (Long.valueOf(2L).equals(l.value()) || Integer.valueOf(2).equals(l.value())) {
+                    return lit(3);
+                }
+                return l;
+            }
+        };
+
+        var transformedTop = (TopSpec) query.topSpec().accept(transformer);
+        assertEquals(3, transformedTop.count().matchExpression().literal(l -> l.value()).orElse(null));
+
+        var transformedQuery = (SelectQuery) query.accept(transformer);
+        assertNotSame(query, transformedQuery);
+        assertEquals(3, transformedQuery.topSpec().count().matchExpression().literal(l -> l.value()).orElse(null));
+
+        var unchanged = (SelectQuery) query.accept(new NothingTransformer());
+        assertSame(query, unchanged);
+    }
 }

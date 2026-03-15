@@ -323,4 +323,24 @@ public class SelectQueryRendererTest {
         assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
             () -> RenderContext.of(new AnsiDialect()).render(q));
     }
+
+    @Test
+    @DisplayName("Renders TOP PERCENT and WITH TIES when TOP style is supported")
+    void rendersTopVariants() {
+        var ctx = ctxWith(topOnly());
+
+        var percent = select(col("t", "c"))
+            .top(topPercent(lit(10)))
+            .from(tbl("t"))
+            .build();
+
+        assertTrue(ctx.render(percent).sql().startsWith("SELECT TOP (10) PERCENT"));
+
+        var withTies = select(col("t", "c"))
+            .top(topWithTies(lit(10)))
+            .from(tbl("t"))
+            .build();
+
+        assertTrue(ctx.render(withTies).sql().startsWith("SELECT TOP (10) WITH TIES"));
+    }
 }
