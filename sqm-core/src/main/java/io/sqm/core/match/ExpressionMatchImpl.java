@@ -203,6 +203,21 @@ public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
     }
 
     /**
+     * Registers a handler to be applied when the subject is a SQL Server {@link OutputColumnExpr}.
+     *
+     * @param f handler for {@code OutputColumnExpr}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public ExpressionMatch<R> outputColumn(Function<OutputColumnExpr, R> f) {
+        if (!matched && expr instanceof OutputColumnExpr outputColumnExpr) {
+            result = f.apply(outputColumnExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
      * Registers a handler to be applied when the subject is a {@link FunctionExpr}.
      *
      * @param f handler for {@code FunctionExpr}

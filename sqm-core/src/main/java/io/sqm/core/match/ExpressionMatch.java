@@ -131,6 +131,14 @@ public interface ExpressionMatch<R> extends Match<Expression, R> {
     ExpressionMatch<R> column(Function<ColumnExpr, R> f);
 
     /**
+     * Registers a handler to be applied when the subject is a SQL Server {@link OutputColumnExpr}.
+     *
+     * @param f handler for {@code OutputColumnExpr}
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> outputColumn(Function<OutputColumnExpr, R> f);
+
+    /**
      * Registers a handler to be applied when the subject is a {@link FunctionExpr}.
      *
      * @param f handler for {@code FunctionExpr}

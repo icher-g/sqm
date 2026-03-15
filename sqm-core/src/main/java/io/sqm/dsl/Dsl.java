@@ -208,6 +208,46 @@ public final class Dsl {
         return ColumnExpr.of(table, name);
     }
 
+    /**
+     * Creates an {@code inserted.<column>} SQL Server output expression.
+     *
+     * @param column output column name
+     * @return output column expression
+     */
+    public static OutputColumnExpr inserted(String column) {
+        return OutputColumnExpr.inserted(Identifier.of(column));
+    }
+
+    /**
+     * Creates an {@code inserted.<column>} SQL Server output expression.
+     *
+     * @param column quote-aware output column identifier
+     * @return output column expression
+     */
+    public static OutputColumnExpr inserted(Identifier column) {
+        return OutputColumnExpr.inserted(column);
+    }
+
+    /**
+     * Creates a {@code deleted.<column>} SQL Server output expression.
+     *
+     * @param column output column name
+     * @return output column expression
+     */
+    public static OutputColumnExpr deleted(String column) {
+        return OutputColumnExpr.deleted(Identifier.of(column));
+    }
+
+    /**
+     * Creates a {@code deleted.<column>} SQL Server output expression.
+     *
+     * @param column quote-aware output column identifier
+     * @return output column expression
+     */
+    public static OutputColumnExpr deleted(Identifier column) {
+        return OutputColumnExpr.deleted(column);
+    }
+
     /* ========================= Select Items ====================== */
 
     /**
@@ -237,6 +277,102 @@ public final class Dsl {
      */
     public static QualifiedStarSelectItem star(Identifier qualifier) {
         return QualifiedStarSelectItem.of(qualifier);
+    }
+
+    /**
+     * Creates a SQL Server DML output item.
+     *
+     * @param expression output expression
+     * @return output item
+     */
+    public static OutputItem outputItem(Expression expression) {
+        return OutputItem.of(expression);
+    }
+
+    /**
+     * Creates a SQL Server DML output item with an alias.
+     *
+     * @param expression output expression
+     * @param alias output alias
+     * @return output item
+     */
+    public static OutputItem outputItem(Expression expression, String alias) {
+        return OutputItem.of(expression, alias == null ? null : Identifier.of(alias));
+    }
+
+    /**
+     * Creates a SQL Server DML output item with an alias.
+     *
+     * @param expression output expression
+     * @param alias quote-aware output alias
+     * @return output item
+     */
+    public static OutputItem outputItem(Expression expression, Identifier alias) {
+        return OutputItem.of(expression, alias);
+    }
+
+    /**
+     * Creates a SQL Server {@code OUTPUT INTO} target without explicit target columns.
+     *
+     * @param target target table
+     * @return output-into specification
+     */
+    public static OutputInto outputInto(Table target) {
+        return OutputInto.of(target);
+    }
+
+    /**
+     * Creates a SQL Server {@code OUTPUT INTO} target with explicit target columns.
+     *
+     * @param target target table
+     * @param columns target columns
+     * @return output-into specification
+     */
+    public static OutputInto outputInto(Table target, Identifier... columns) {
+        return OutputInto.of(target, List.of(columns));
+    }
+
+    /**
+     * Creates a SQL Server {@code OUTPUT INTO} target with explicit target columns.
+     *
+     * @param target target table
+     * @param columns target column names
+     * @return output-into specification
+     */
+    public static OutputInto outputInto(Table target, String... columns) {
+        return outputInto(target, java.util.Arrays.stream(columns).map(Identifier::of).toArray(Identifier[]::new));
+    }
+
+    /**
+     * Creates a SQL Server {@code OUTPUT INTO} target with explicit target columns.
+     *
+     * @param target target table
+     * @param columns target column names
+     * @return output-into specification
+     */
+    public static OutputInto outputInto(String target, String... columns) {
+        return outputInto(tbl(target), java.util.Arrays.stream(columns).map(Identifier::of).toArray(Identifier[]::new));
+    }
+
+    /**
+     * Creates a SQL Server {@code OUTPUT} clause without an {@code INTO} target.
+     *
+     * @param items output items
+     * @return output clause
+     */
+    public static OutputClause output(OutputItem... items) {
+        return OutputClause.of(List.of(items));
+    }
+
+    /**
+     * Creates a SQL Server {@code OUTPUT} clause with an {@code INTO} target.
+     *
+     * @param into output-into target
+     * @param items output items
+     * @return output clause
+     */
+    public static OutputClause output(OutputInto into, OutputItem... items) {
+        return OutputClause.of(List.of(items), into);
     }
 
     /* ========================= Functions ========================= */

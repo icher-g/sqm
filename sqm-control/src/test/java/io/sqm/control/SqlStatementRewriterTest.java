@@ -103,7 +103,7 @@ class SqlStatementRewriterTest {
     @Test
     void chain_preserves_last_statement_when_no_rule_rewrites() {
         Statement input = Query.select(Expression.literal(1)).build();
-        Statement passThrough = DeleteStatement.of(tbl("users"), java.util.List.of(), java.util.List.of(), null, java.util.List.of(), java.util.List.of());
+        Statement passThrough = DeleteStatement.of(tbl("users"), java.util.List.of(), java.util.List.of(), null, null, java.util.List.of(), java.util.List.of());
 
         StatementRewriteRule rule = (statement, context) -> StatementRewriteResult.unchanged(passThrough);
 

@@ -81,6 +81,7 @@ public class DeleteStatementParser implements Parser<DeleteStatement> {
             usingResult.value(),
             joinsResult.value(),
             where,
+            null,
             returningResult.value(),
             optimizerHintsResult.value()
         ));

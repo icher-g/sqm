@@ -361,4 +361,16 @@ public class ExpressionMatchTest {
 
         assertEquals("P", out);
     }
+
+    @Test
+    void matches_outputColumn() {
+        var expr = inserted("id");
+        String out = Match
+            .<String>expression(expr)
+            .column(c -> "COL")
+            .outputColumn(c -> c.source().name() + ":" + c.column().value())
+            .orElse("ELSE");
+
+        assertEquals("INSERTED:id", out);
+    }
 }

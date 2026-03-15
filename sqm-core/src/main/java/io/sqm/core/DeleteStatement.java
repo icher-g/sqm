@@ -18,6 +18,7 @@ public non-sealed interface DeleteStatement extends Statement {
      * @param using optional USING sources
      * @param joins optional joined sources attached to the USING clause
      * @param where optional predicate
+     * @param output optional SQL Server output clause
      * @param returning optional returning projection items
      * @param optimizerHints optimizer hints (without comment delimiters)
      * @return immutable delete statement
@@ -26,9 +27,10 @@ public non-sealed interface DeleteStatement extends Statement {
                               List<TableRef> using,
                               List<Join> joins,
                               Predicate where,
+                              OutputClause output,
                               List<SelectItem> returning,
                               List<String> optimizerHints) {
-        return new Impl(table, using, joins, where, returning, optimizerHints);
+        return new Impl(table, using, joins, where, output, returning, optimizerHints);
     }
 
     /**
@@ -80,6 +82,13 @@ public non-sealed interface DeleteStatement extends Statement {
     Predicate where();
 
     /**
+     * Returns optional SQL Server {@code OUTPUT} clause.
+     *
+     * @return output clause or {@code null}
+     */
+    OutputClause output();
+
+    /**
      * Returns optional {@code RETURNING} projection items.
      *
      * @return immutable returning projection list
@@ -113,6 +122,7 @@ public non-sealed interface DeleteStatement extends Statement {
         private final List<TableRef> using = new ArrayList<>();
         private final List<Join> joins = new ArrayList<>();
         private Predicate where;
+        private OutputClause output;
         private final List<SelectItem> returning = new ArrayList<>();
         private final List<String> optimizerHints = new ArrayList<>();
 
@@ -135,6 +145,7 @@ public non-sealed interface DeleteStatement extends Statement {
             this.using.addAll(statement.using());
             this.joins.addAll(statement.joins());
             this.where = statement.where();
+            this.output = statement.output();
             this.returning.addAll(statement.returning());
             this.optimizerHints.addAll(statement.optimizerHints());
         }
@@ -221,6 +232,17 @@ public non-sealed interface DeleteStatement extends Statement {
         }
 
         /**
+         * Sets the optional SQL Server {@code OUTPUT} clause.
+         *
+         * @param output output clause or {@code null}
+         * @return this builder
+         */
+        public Builder output(OutputClause output) {
+            this.output = output;
+            return this;
+        }
+
+        /**
          * Replaces optional {@code RETURNING} projection items.
          *
          * @param returning returning items
@@ -287,7 +309,7 @@ public non-sealed interface DeleteStatement extends Statement {
             if (table == null) {
                 throw new IllegalStateException("table must be set");
             }
-            return DeleteStatement.of(table, using, joins, where, returning, optimizerHints);
+            return DeleteStatement.of(table, using, joins, where, output, returning, optimizerHints);
         }
     }
 
@@ -298,6 +320,7 @@ public non-sealed interface DeleteStatement extends Statement {
      * @param using optional using sources
      * @param joins optional joined sources attached to the USING clause
      * @param where optional predicate
+     * @param output optional SQL Server output clause
      * @param returning optional returning projection items
      * @param optimizerHints optimizer hints (without comment delimiters)
      */
@@ -305,6 +328,7 @@ public non-sealed interface DeleteStatement extends Statement {
                 List<TableRef> using,
                 List<Join> joins,
                 Predicate where,
+                OutputClause output,
                 List<SelectItem> returning,
                 List<String> optimizerHints) implements DeleteStatement {
         /**

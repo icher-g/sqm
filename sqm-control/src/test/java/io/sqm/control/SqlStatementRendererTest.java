@@ -69,7 +69,7 @@ class SqlStatementRendererTest {
     @Test
     void renders_mysql_delete_statement() {
         var renderer = SqlStatementRenderer.standard();
-        var delete = DeleteStatement.of(io.sqm.dsl.Dsl.tbl("users"), java.util.List.of(), java.util.List.of(), null, java.util.List.of(), java.util.List.of());
+        var delete = DeleteStatement.of(io.sqm.dsl.Dsl.tbl("users"), java.util.List.of(), java.util.List.of(), null, null, java.util.List.of(), java.util.List.of());
 
         var rendered = renderer.render(delete, ExecutionContext.of("mysql", ExecutionMode.ANALYZE));
 

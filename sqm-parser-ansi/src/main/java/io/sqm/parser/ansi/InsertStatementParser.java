@@ -80,6 +80,7 @@ public class InsertStatementParser implements Parser<InsertStatement> {
             conflict.value().action(),
             conflict.value().assignments(),
             conflict.value().where(),
+            null,
             returning.value()));
     }
 

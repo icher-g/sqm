@@ -30,6 +30,14 @@ public interface ExpressionVisitor<R> {
     R visitColumnExpr(ColumnExpr c);
 
     /**
+     * Visits a SQL Server {@link OutputColumnExpr} such as {@code inserted.id}.
+     *
+     * @param c the output column expression
+     * @return a result produced by the visitor
+     */
+    R visitOutputColumnExpr(OutputColumnExpr c);
+
+    /**
      * Visits a {@link FunctionExpr} node representing a function call.
      *
      * @param f the function expression

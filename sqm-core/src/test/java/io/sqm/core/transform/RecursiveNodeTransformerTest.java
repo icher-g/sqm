@@ -1377,4 +1377,31 @@ class RecursiveNodeTransformerTest {
         var unchanged = (SelectQuery) query.accept(new NothingTransformer());
         assertSame(query, unchanged);
     }
+
+    @Test
+    void visitOutputClauseAndOutputColumnExpr() {
+        var statement = update("users")
+            .set(id("name"), lit("alice"))
+            .output(output(outputItem(inserted("id")), outputItem(deleted("name"), "old_name")))
+            .build();
+
+        var transformer = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitOutputColumnExpr(OutputColumnExpr c) {
+                if (c.source() == OutputRowSource.INSERTED) {
+                    return inserted("user_id");
+                }
+                return c;
+            }
+        };
+
+        var transformed = (UpdateStatement) statement.accept(transformer);
+        assertNotSame(statement, transformed);
+        assertEquals("user_id", transformed.output().items().getFirst().expression().matchExpression()
+            .outputColumn(c -> c.column().value())
+            .orElse(null));
+
+        var unchanged = (UpdateStatement) statement.accept(new NothingTransformer());
+        assertSame(statement, unchanged);
+    }
 }

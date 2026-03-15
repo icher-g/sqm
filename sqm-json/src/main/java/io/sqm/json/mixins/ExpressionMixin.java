@@ -23,6 +23,7 @@ import io.sqm.core.*;
     @JsonSubTypes.Type(value = ArraySliceExpr.Impl.class, name = "array-slice"),
     @JsonSubTypes.Type(value = CollateExpr.Impl.class, name = "collate"),
     @JsonSubTypes.Type(value = ColumnExpr.Impl.class, name = "column"),
+    @JsonSubTypes.Type(value = OutputColumnExpr.Impl.class, name = "output-column"),
     @JsonSubTypes.Type(value = FunctionExpr.Impl.class, name = "function"),
     @JsonSubTypes.Type(value = LiteralExpr.Impl.class, name = "literal"),
     @JsonSubTypes.Type(value = DateLiteralExpr.Impl.class, name = "date-literal"),

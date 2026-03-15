@@ -27,6 +27,7 @@ Node
 │  ├─ ArraySliceExpr
 │  ├─ AtTimeZoneExpr
 │  ├─ ColumnExpr
+│  ├─ OutputColumnExpr
 │  ├─ FunctionExpr
 │  │  └─ FunctionExpr.Arg
 │  │     ├─ FunctionExpr.Arg.Column
@@ -85,6 +86,9 @@ Node
 │  ├─ ExprSelectItem
 │  ├─ StarSelectItem
 │  └─ QualifiedStarSelectItem
+├─ OutputClause
+├─ OutputItem
+├─ OutputInto
 ├─ Statement
 │  ├─ Query
 │  │  ├─ CompositeQuery
@@ -159,6 +163,7 @@ graph TD
   Expression --> ArraySubscriptExpr
   Expression --> ArraySliceExpr
   Expression --> ColumnExpr
+  Expression --> OutputColumnExpr
   Expression --> FunctionExpr
   Expression --> ParamExpr
   Expression --> ArithmeticExpr
@@ -225,6 +230,10 @@ graph TD
   SelectItem --> ExprSelectItem
   SelectItem --> StarSelectItem
   SelectItem --> QualifiedStarSelectItem
+
+  Node --> OutputClause
+  Node --> OutputItem
+  Node --> OutputInto
 
   Node --> Query
   Query --> CompositeQuery
@@ -532,5 +541,13 @@ graph TD
 - **TopSpec** – select-head row limiting model for constructs such as SQL Server `TOP (...)`, including optional `PERCENT` and `WITH TIES`
 - **LimitOffset** – LIMIT/OFFSET model  
 
+---
+
+### SQL Server DML output
+
+- **OutputClause** – SQL Server DML `OUTPUT` clause attached to `INSERT`, `UPDATE`, or `DELETE`
+- **OutputItem** – one projected expression inside an `OUTPUT` clause, with optional alias
+- **OutputInto** – optional `OUTPUT ... INTO ...` target table and target column list
+- **OutputColumnExpr** – SQL Server pseudo-column reference used only inside `OUTPUT`, such as `inserted.id` or `deleted.status`
 
 

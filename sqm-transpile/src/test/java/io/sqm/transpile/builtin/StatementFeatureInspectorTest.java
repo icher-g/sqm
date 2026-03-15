@@ -30,6 +30,7 @@ class StatementFeatureInspectorTest {
             InsertStatement.OnConflictAction.NONE,
             List.of(),
             null,
+            null,
             List.of(Dsl.col("id").toSelectItem())
         );
         var update = UpdateStatement.builder(Dsl.tbl("users"))
@@ -105,6 +106,7 @@ class StatementFeatureInspectorTest {
             InsertStatement.OnConflictAction.NONE,
             List.of(),
             null,
+            null,
             List.of()
         );
         var insertConflict = InsertStatement.of(
@@ -115,6 +117,7 @@ class StatementFeatureInspectorTest {
             List.of(Dsl.id("id")),
             InsertStatement.OnConflictAction.DO_UPDATE,
             List.of(Dsl.set("name", Dsl.lit("alice"))),
+            null,
             null,
             List.of()
         );

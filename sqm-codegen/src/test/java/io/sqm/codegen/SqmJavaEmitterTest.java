@@ -288,6 +288,7 @@ class SqmJavaEmitterTest {
             .ignore()
             .columns(id("id"), id("name", QuoteStyle.BACKTICK))
             .values(row(lit(1), lit("alice")))
+            .output(output(outputItem(inserted("id"), "new_id")))
             .returning(col("id").toSelectItem())
             .build();
         var update = update(tbl("users"))
@@ -295,12 +296,14 @@ class SqmJavaEmitterTest {
             .set(set("u", "name", lit("alice")))
             .from(tbl("src"))
             .where(col("u", "id").eq(lit(1)))
+            .output(output(outputInto(tbl("audit"), id("user_id")), outputItem(inserted("id"), "user_id")))
             .returning(col("u", "id").toSelectItem())
             .build();
         var delete = delete(tbl("users"))
             .optimizerHint("BKA(users)")
             .using(tbl("audit"))
             .where(col("users", "id").eq(col("audit", "user_id")))
+            .output(output(outputItem(deleted("id"))))
             .returning(col("users", "id").toSelectItem())
             .build();
 
@@ -312,17 +315,20 @@ class SqmJavaEmitterTest {
         assertTrue(insertSource.contains(".ignore()"));
         assertTrue(insertSource.contains(".columns(id(\"id\"), id(\"name\", QuoteStyle.BACKTICK))"));
         assertTrue(insertSource.contains(".values(row(lit(1), lit(\"alice\")))"));
+        assertTrue(insertSource.contains(".output(output(outputItem(inserted(id(\"id\")), id(\"new_id\"))))"));
         assertTrue(insertSource.contains(".returning(col(\"id\"))"));
 
         assertTrue(updateSource.contains("update(tbl(\"users\"))"));
         assertTrue(updateSource.contains(".optimizerHints(java.util.List.of(\"MAX_EXECUTION_TIME(1000)\"))"));
         assertTrue(updateSource.contains(".set(set(QualifiedName.of(id(\"u\"), id(\"name\")), lit(\"alice\")))"));
         assertTrue(updateSource.contains(".from(tbl(\"src\"))"));
+        assertTrue(updateSource.contains(".output(output(outputInto(tbl(\"audit\"), id(\"user_id\")), outputItem(inserted(id(\"id\")), id(\"user_id\"))))"));
         assertTrue(updateSource.contains(".returning(col(\"u\", \"id\"))"));
 
         assertTrue(deleteSource.contains("delete(tbl(\"users\"))"));
         assertTrue(deleteSource.contains(".optimizerHints(java.util.List.of(\"BKA(users)\"))"));
         assertTrue(deleteSource.contains(".using(tbl(\"audit\"))"));
+        assertTrue(deleteSource.contains(".output(output(outputItem(deleted(id(\"id\")))))"));
         assertTrue(deleteSource.contains(".returning(col(\"users\", \"id\"))"));
     }
 

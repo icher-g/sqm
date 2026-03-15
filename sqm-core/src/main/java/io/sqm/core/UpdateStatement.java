@@ -19,6 +19,7 @@ public non-sealed interface UpdateStatement extends Statement {
      * @param joins optional joined sources attached to the target table
      * @param from optional FROM sources
      * @param where optional predicate
+     * @param output optional SQL Server output clause
      * @param returning optional returning projection items
      * @param optimizerHints optimizer hints (without comment delimiters)
      * @return immutable update statement
@@ -28,9 +29,10 @@ public non-sealed interface UpdateStatement extends Statement {
                               List<Join> joins,
                               List<TableRef> from,
                               Predicate where,
+                              OutputClause output,
                               List<SelectItem> returning,
                               List<String> optimizerHints) {
-        return new Impl(table, assignments, joins, from, where, returning, optimizerHints);
+        return new Impl(table, assignments, joins, from, where, output, returning, optimizerHints);
     }
 
     /**
@@ -89,6 +91,13 @@ public non-sealed interface UpdateStatement extends Statement {
     Predicate where();
 
     /**
+     * Returns optional SQL Server {@code OUTPUT} clause.
+     *
+     * @return output clause or {@code null}
+     */
+    OutputClause output();
+
+    /**
      * Returns optional {@code RETURNING} projection items.
      *
      * @return immutable returning projection list
@@ -123,6 +132,7 @@ public non-sealed interface UpdateStatement extends Statement {
         private final List<Join> joins = new ArrayList<>();
         private final List<TableRef> from = new ArrayList<>();
         private Predicate where;
+        private OutputClause output;
         private final List<SelectItem> returning = new ArrayList<>();
         private final List<String> optimizerHints = new ArrayList<>();
 
@@ -146,6 +156,7 @@ public non-sealed interface UpdateStatement extends Statement {
             this.joins.addAll(statement.joins());
             this.from.addAll(statement.from());
             this.where = statement.where();
+            this.output = statement.output();
             this.returning.addAll(statement.returning());
             this.optimizerHints.addAll(statement.optimizerHints());
         }
@@ -278,6 +289,17 @@ public non-sealed interface UpdateStatement extends Statement {
         }
 
         /**
+         * Sets the optional SQL Server {@code OUTPUT} clause.
+         *
+         * @param output output clause or {@code null}
+         * @return this builder
+         */
+        public Builder output(OutputClause output) {
+            this.output = output;
+            return this;
+        }
+
+        /**
          * Replaces optional {@code RETURNING} projection items.
          *
          * @param returning returning items
@@ -347,7 +369,7 @@ public non-sealed interface UpdateStatement extends Statement {
             if (assignments.isEmpty()) {
                 throw new IllegalStateException("at least one assignment is required");
             }
-            return UpdateStatement.of(table, assignments, joins, from, where, returning, optimizerHints);
+            return UpdateStatement.of(table, assignments, joins, from, where, output, returning, optimizerHints);
         }
     }
 
@@ -359,6 +381,7 @@ public non-sealed interface UpdateStatement extends Statement {
      * @param joins optional joined sources attached to the target table
      * @param from optional from sources
      * @param where optional predicate
+     * @param output optional SQL Server output clause
      * @param returning optional returning projection items
      * @param optimizerHints optimizer hints (without comment delimiters)
      */
@@ -367,6 +390,7 @@ public non-sealed interface UpdateStatement extends Statement {
                 List<Join> joins,
                 List<TableRef> from,
                 Predicate where,
+                OutputClause output,
                 List<SelectItem> returning,
                 List<String> optimizerHints) implements UpdateStatement {
         /**

@@ -143,6 +143,7 @@ class MySqlDeleteStatementRendererTest {
             java.util.List.of(),
             java.util.List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))),
             null,
+            null,
             java.util.List.of(),
             java.util.List.of());
 

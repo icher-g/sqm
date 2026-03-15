@@ -87,6 +87,7 @@ public class UpdateStatementParser implements Parser<UpdateStatement> {
             joinsResult.value(),
             fromResult.value(),
             where,
+            null,
             returningResult.value(),
             optimizerHintsResult.value()
         ));

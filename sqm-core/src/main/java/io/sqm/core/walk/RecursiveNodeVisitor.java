@@ -44,6 +44,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         accept(statement.source());
         statement.conflictUpdateAssignments().forEach(this::accept);
         accept(statement.conflictUpdateWhere());
+        accept(statement.output());
         statement.returning().forEach(this::accept);
         return defaultResult();
     }
@@ -61,6 +62,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         statement.joins().forEach(this::accept);
         statement.from().forEach(this::accept);
         accept(statement.where());
+        accept(statement.output());
         statement.returning().forEach(this::accept);
         return defaultResult();
     }
@@ -77,7 +79,45 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         statement.using().forEach(this::accept);
         statement.joins().forEach(this::accept);
         accept(statement.where());
+        accept(statement.output());
         statement.returning().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
+     * Visits a SQL Server DML {@link OutputClause}.
+     *
+     * @param clause output clause being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitOutputClause(OutputClause clause) {
+        clause.items().forEach(this::accept);
+        accept(clause.into());
+        return defaultResult();
+    }
+
+    /**
+     * Visits one SQL Server DML {@link OutputItem}.
+     *
+     * @param item output item being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitOutputItem(OutputItem item) {
+        accept(item.expression());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a SQL Server {@link OutputInto} target.
+     *
+     * @param into output-into target being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitOutputInto(OutputInto into) {
+        accept(into.target());
         return defaultResult();
     }
 
@@ -113,6 +153,17 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
      */
     @Override
     public R visitColumnExpr(ColumnExpr c) {
+        return defaultResult();
+    }
+
+    /**
+     * Visits a SQL Server {@link OutputColumnExpr}.
+     *
+     * @param c the output column expression
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitOutputColumnExpr(OutputColumnExpr c) {
         return defaultResult();
     }
 

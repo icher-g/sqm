@@ -11,7 +11,10 @@ import java.util.List;
 
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.insert;
+import static io.sqm.dsl.Dsl.inserted;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.output;
+import static io.sqm.dsl.Dsl.outputItem;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
@@ -24,6 +27,7 @@ class InsertStatementVisitorTest {
         var statement = insert(tbl("users"))
             .values(row(lit(1), lit("alice")))
             .onConflictDoUpdate(java.util.List.of(io.sqm.core.Identifier.of("id")), java.util.List.of(set("name", lit("alice2"))), col("id").eq(lit(1)))
+            .output(output(outputItem(inserted("id"))))
             .returning(col("id").toSelectItem())
             .build();
         var visits = new ArrayList<String>();
@@ -63,8 +67,14 @@ class InsertStatementVisitorTest {
                 visits.add("returning");
                 return super.visitExprSelectItem(i);
             }
+
+            @Override
+            public Void visitOutputItem(io.sqm.core.OutputItem item) {
+                visits.add("output");
+                return super.visitOutputItem(item);
+            }
         }.accept(statement);
 
-        assertEquals(List.of("insert", "table", "row", "conflict-assignment", "returning"), visits.subList(0, 5));
+        assertEquals(List.of("insert", "table", "row", "conflict-assignment", "output", "returning"), visits.subList(0, 6));
     }
 }

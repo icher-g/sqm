@@ -106,6 +106,7 @@ class MySqlInsertStatementRendererTest {
             InsertStatement.OnConflictAction.DO_UPDATE,
             java.util.List.of(set("name", lit("alice2"))),
             col("id").eq(lit(1)),
+            null,
             java.util.List.of());
 
         assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,

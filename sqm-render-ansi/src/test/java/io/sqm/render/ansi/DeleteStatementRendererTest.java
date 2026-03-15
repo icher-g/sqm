@@ -94,6 +94,7 @@ class DeleteStatementRendererTest {
             java.util.List.of(),
             java.util.List.of(),
             null,
+            null,
             java.util.List.of(io.sqm.core.ExprSelectItem.of(col("id"), null)),
             java.util.List.of());
 

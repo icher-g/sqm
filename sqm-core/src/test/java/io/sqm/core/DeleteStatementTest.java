@@ -5,9 +5,12 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.deleted;
 import static io.sqm.dsl.Dsl.delete;
 import static io.sqm.dsl.Dsl.inner;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.output;
+import static io.sqm.dsl.Dsl.outputItem;
 import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -38,7 +41,7 @@ class DeleteStatementTest {
 
     @Test
     void supportsCanonicalFactoryAndBuilderMutator() {
-        var statement = DeleteStatement.of(tbl("users"), List.of(), List.of(), null, List.of(), List.of());
+        var statement = DeleteStatement.of(tbl("users"), List.of(), List.of(), null, null, List.of(), List.of());
         assertNull(statement.where());
         assertTrue(statement.using().isEmpty());
         assertTrue(statement.joins().isEmpty());
@@ -62,6 +65,7 @@ class DeleteStatementTest {
             List.of(tbl("users")),
             List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))),
             col("users", "id").eq(lit(1)),
+            null,
             List.of(io.sqm.core.ExprSelectItem.of(col("users", "id"), null)),
             List.of());
 
@@ -74,6 +78,7 @@ class DeleteStatementTest {
             List.of(tbl("users")),
             List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))),
             col("users", "id").eq(lit(1)),
+            null,
             List.of(),
             List.of());
 
@@ -82,7 +87,7 @@ class DeleteStatementTest {
 
     @Test
     void normalizesNullUsingJoinsAndReturningInFactory() {
-        var statement = DeleteStatement.of(tbl("users"), null, null, null, null, null);
+        var statement = DeleteStatement.of(tbl("users"), null, null, null, null, null, null);
         assertTrue(statement.using().isEmpty());
         assertTrue(statement.joins().isEmpty());
         assertTrue(statement.returning().isEmpty());
@@ -112,7 +117,7 @@ class DeleteStatementTest {
 
     @Test
     void validatesRequiredMembers() {
-        assertThrows(NullPointerException.class, () -> DeleteStatement.of(null, List.of(), List.of(), null, List.of(), List.of()));
+        assertThrows(NullPointerException.class, () -> DeleteStatement.of(null, List.of(), List.of(), null, null, List.of(), List.of()));
         assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).table(null));
         assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).using((TableRef[]) null));
         assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).using((List<TableRef>) null));
@@ -128,6 +133,7 @@ class DeleteStatementTest {
     void builderCanCopyExistingStatement() {
         var original = delete(tbl("users"))
             .optimizerHint("BKA(users)")
+            .output(output(outputItem(deleted("id"))))
             .using(tbl("source_users"))
             .build();
 
@@ -137,6 +143,7 @@ class DeleteStatementTest {
 
         assertEquals(List.of("BKA(users)"), original.optimizerHints());
         assertTrue(copied.optimizerHints().isEmpty());
+        assertEquals(original.output(), copied.output());
         assertEquals(original.using(), copied.using());
         assertEquals(original.table(), copied.table());
     }

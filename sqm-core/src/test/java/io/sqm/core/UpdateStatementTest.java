@@ -5,8 +5,12 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.deleted;
 import static io.sqm.dsl.Dsl.inner;
+import static io.sqm.dsl.Dsl.inserted;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.output;
+import static io.sqm.dsl.Dsl.outputItem;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
 import static io.sqm.dsl.Dsl.update;
@@ -48,6 +52,7 @@ class UpdateStatementTest {
             List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))),
             List.of(),
             null,
+            null,
             List.of(),
             List.of());
         assertNull(statement.where());
@@ -75,6 +80,7 @@ class UpdateStatementTest {
             List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))),
             List.of(tbl("src_users")),
             col("users", "id").eq(lit(1)),
+            null,
             List.of(io.sqm.core.ExprSelectItem.of(col("users", "id"), null)),
             List.of());
 
@@ -88,6 +94,7 @@ class UpdateStatementTest {
             List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))),
             List.of(tbl("src_users")),
             col("users", "id").eq(lit(1)),
+            null,
             List.of(),
             List.of());
 
@@ -96,7 +103,7 @@ class UpdateStatementTest {
 
     @Test
     void normalizesNullFromJoinsAndReturningInFactory() {
-        var statement = UpdateStatement.of(tbl("users"), List.of(set("name", lit("alice"))), null, null, null, null, null);
+        var statement = UpdateStatement.of(tbl("users"), List.of(set("name", lit("alice"))), null, null, null, null, null, null);
         assertTrue(statement.joins().isEmpty());
         assertTrue(statement.from().isEmpty());
         assertTrue(statement.returning().isEmpty());
@@ -129,9 +136,9 @@ class UpdateStatementTest {
 
     @Test
     void validatesRequiredMembers() {
-        assertThrows(NullPointerException.class, () -> UpdateStatement.of(null, List.of(set("name", lit("alice"))), List.of(), List.of(), null, List.of(), List.of()));
-        assertThrows(NullPointerException.class, () -> UpdateStatement.of(tbl("users"), null, List.of(), List.of(), null, List.of(), List.of()));
-        assertThrows(IllegalArgumentException.class, () -> UpdateStatement.of(tbl("users"), List.of(), List.of(), List.of(), null, List.of(), List.of()));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.of(null, List.of(set("name", lit("alice"))), List.of(), List.of(), null, null, List.of(), List.of()));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.of(tbl("users"), null, List.of(), List.of(), null, null, List.of(), List.of()));
+        assertThrows(IllegalArgumentException.class, () -> UpdateStatement.of(tbl("users"), List.of(), List.of(), List.of(), null, null, List.of(), List.of()));
         assertThrows(IllegalStateException.class, () -> update(tbl("users")).build());
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).table(null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).assignments(null));
@@ -150,6 +157,7 @@ class UpdateStatementTest {
         var original = update(tbl("users"))
             .optimizerHint("BKA(users)")
             .set(set("name", lit("alice")))
+            .output(output(outputItem(deleted("name"), "old_name"), outputItem(inserted("name"), "new_name")))
             .from(tbl("source_users"))
             .build();
 
@@ -161,6 +169,7 @@ class UpdateStatementTest {
         assertTrue(copied.optimizerHints().isEmpty());
         assertEquals(original.assignments(), copied.assignments());
         assertEquals(original.from(), copied.from());
+        assertEquals(original.output(), copied.output());
         assertEquals(original.table(), copied.table());
     }
 }

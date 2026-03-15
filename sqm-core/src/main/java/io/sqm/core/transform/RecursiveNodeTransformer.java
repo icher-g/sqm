@@ -68,6 +68,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         changed |= apply(statement.conflictUpdateAssignments(), conflictAssignments);
         var conflictWhere = apply(statement.conflictUpdateWhere());
         changed |= conflictWhere != statement.conflictUpdateWhere();
+        var output = apply(statement.output());
+        changed |= output != statement.output();
         changed |= apply(statement.returning(), returning);
         if (changed) {
             return InsertStatement.of(
@@ -79,6 +81,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
                 statement.onConflictAction(),
                 conflictAssignments,
                 conflictWhere,
+                output,
                 returning);
         }
         return statement;
@@ -103,9 +106,11 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         changed |= apply(statement.from(), from);
         var where = apply(statement.where());
         changed |= where != statement.where();
+        var output = apply(statement.output());
+        changed |= output != statement.output();
         changed |= apply(statement.returning(), returning);
         if (changed) {
-            return UpdateStatement.of(table, assignments, joins, from, where, returning, statement.optimizerHints());
+            return UpdateStatement.of(table, assignments, joins, from, where, output, returning, statement.optimizerHints());
         }
         return statement;
     }
@@ -127,11 +132,61 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         changed |= apply(statement.joins(), joins);
         var where = apply(statement.where());
         changed |= where != statement.where();
+        var output = apply(statement.output());
+        changed |= output != statement.output();
         changed |= apply(statement.returning(), returning);
         if (changed) {
-            return DeleteStatement.of(table, using, joins, where, returning, statement.optimizerHints());
+            return DeleteStatement.of(table, using, joins, where, output, returning, statement.optimizerHints());
         }
         return statement;
+    }
+
+    /**
+     * Visits a SQL Server DML {@link OutputClause}.
+     *
+     * @param clause output clause to transform
+     * @return transformed output clause, or the original instance if unchanged
+     */
+    @Override
+    public Node visitOutputClause(OutputClause clause) {
+        List<OutputItem> items = new ArrayList<>(clause.items().size());
+        boolean changed = apply(clause.items(), items);
+        var into = apply(clause.into());
+        changed |= into != clause.into();
+        if (changed) {
+            return OutputClause.of(items, into);
+        }
+        return clause;
+    }
+
+    /**
+     * Visits one SQL Server DML {@link OutputItem}.
+     *
+     * @param item output item to transform
+     * @return transformed output item, or the original instance if unchanged
+     */
+    @Override
+    public Node visitOutputItem(OutputItem item) {
+        var expression = apply(item.expression());
+        if (expression != item.expression()) {
+            return OutputItem.of(expression, item.alias());
+        }
+        return item;
+    }
+
+    /**
+     * Visits a SQL Server {@link OutputInto} target.
+     *
+     * @param into output-into target to transform
+     * @return transformed output-into target, or the original instance if unchanged
+     */
+    @Override
+    public Node visitOutputInto(OutputInto into) {
+        var target = apply(into.target());
+        if (target != into.target()) {
+            return OutputInto.of(target, into.columns());
+        }
+        return into;
     }
 
     /**
@@ -173,6 +228,17 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
      */
     @Override
     public Node visitColumnExpr(ColumnExpr c) {
+        return c;
+    }
+
+    /**
+     * Visits a SQL Server {@link OutputColumnExpr}.
+     *
+     * @param c the output column expression
+     * @return transformed node if changed, or the original instance otherwise
+     */
+    @Override
+    public Node visitOutputColumnExpr(OutputColumnExpr c) {
         return c;
     }
 

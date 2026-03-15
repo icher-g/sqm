@@ -213,6 +213,9 @@ final class SqmJavaEmitter {
                     }
                 }
             }
+            if (statement.output() != null) {
+                sb.append(".output(").append(emitNode(statement.output())).append(")");
+            }
             if (!statement.returning().isEmpty()) {
                 sb.append(".returning(")
                     .append(joinInline(statement.returning().stream().map(this::emitNode).toList()))
@@ -244,6 +247,9 @@ final class SqmJavaEmitter {
             if (statement.where() != null) {
                 sb.append(".where(").append(emitNode(statement.where())).append(")");
             }
+            if (statement.output() != null) {
+                sb.append(".output(").append(emitNode(statement.output())).append(")");
+            }
             if (!statement.returning().isEmpty()) {
                 sb.append(".returning(")
                     .append(joinInline(statement.returning().stream().map(this::emitNode).toList()))
@@ -271,6 +277,9 @@ final class SqmJavaEmitter {
             }
             if (statement.where() != null) {
                 sb.append(".where(").append(emitNode(statement.where())).append(")");
+            }
+            if (statement.output() != null) {
+                sb.append(".output(").append(emitNode(statement.output())).append(")");
             }
             if (!statement.returning().isEmpty()) {
                 sb.append(".returning(")
@@ -566,6 +575,40 @@ final class SqmJavaEmitter {
             return c.tableAlias() == null
                 ? "col(" + quote(c.name()) + ")"
                 : "col(" + quote(c.tableAlias()) + ", " + quote(c.name()) + ")";
+        }
+
+        @Override
+        public String visitOutputColumnExpr(OutputColumnExpr c) {
+            var helper = c.source() == OutputRowSource.INSERTED ? "inserted" : "deleted";
+            return helper + "(" + emitIdentifier(c.column()) + ")";
+        }
+
+        @Override
+        public String visitOutputItem(OutputItem item) {
+            var base = "outputItem(" + emitNode(item.expression());
+            if (item.alias() != null) {
+                return base + ", " + emitIdentifier(item.alias()) + ")";
+            }
+            return base + ")";
+        }
+
+        @Override
+        public String visitOutputInto(OutputInto into) {
+            if (into.columns().isEmpty()) {
+                return "outputInto(" + emitNode(into.target()) + ")";
+            }
+            return "outputInto(" + emitNode(into.target()) + ", "
+                + joinInline(into.columns().stream().map(DslEmitterVisitor::emitIdentifier).toList())
+                + ")";
+        }
+
+        @Override
+        public String visitOutputClause(OutputClause clause) {
+            if (clause.into() == null) {
+                return "output(" + joinInline(clause.items().stream().map(this::emitNode).toList()) + ")";
+            }
+            return "output(" + emitNode(clause.into()) + ", "
+                + joinInline(clause.items().stream().map(this::emitNode).toList()) + ")";
         }
 
         @Override

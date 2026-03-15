@@ -22,6 +22,7 @@ public non-sealed interface InsertStatement extends Statement {
      * @param onConflictAction on-conflict action
      * @param conflictUpdateAssignments conflict-update assignments, or empty when omitted
      * @param conflictUpdateWhere optional conflict-update predicate
+     * @param output optional SQL Server output clause
      * @param returning returning projection list, or empty when omitted
      * @return immutable insert statement
      */
@@ -33,6 +34,7 @@ public non-sealed interface InsertStatement extends Statement {
                               OnConflictAction onConflictAction,
                               List<Assignment> conflictUpdateAssignments,
                               Predicate conflictUpdateWhere,
+                              OutputClause output,
                               List<SelectItem> returning) {
         return new Impl(insertMode,
             table,
@@ -42,6 +44,7 @@ public non-sealed interface InsertStatement extends Statement {
             onConflictAction,
             conflictUpdateAssignments,
             conflictUpdateWhere,
+            output,
             returning);
     }
 
@@ -112,6 +115,13 @@ public non-sealed interface InsertStatement extends Statement {
     Predicate conflictUpdateWhere();
 
     /**
+     * Returns optional SQL Server {@code OUTPUT} clause.
+     *
+     * @return output clause or {@code null}
+     */
+    OutputClause output();
+
+    /**
      * Returns optional {@code RETURNING} projection items.
      *
      * @return immutable returning item list
@@ -179,6 +189,7 @@ public non-sealed interface InsertStatement extends Statement {
         private InsertSource source;
         private OnConflictAction onConflictAction = OnConflictAction.NONE;
         private Predicate conflictUpdateWhere;
+        private OutputClause output;
 
         /**
          * Creates a builder initialized with a target table.
@@ -383,6 +394,17 @@ public non-sealed interface InsertStatement extends Statement {
         }
 
         /**
+         * Sets the optional SQL Server {@code OUTPUT} clause.
+         *
+         * @param output output clause or {@code null}
+         * @return this builder
+         */
+        public Builder output(OutputClause output) {
+            this.output = output;
+            return this;
+        }
+
+        /**
          * Replaces the {@code RETURNING} projection list.
          *
          * @param returning returning projection list
@@ -427,6 +449,7 @@ public non-sealed interface InsertStatement extends Statement {
                 onConflictAction,
                 conflictUpdateAssignments,
                 conflictUpdateWhere,
+                output,
                 returning);
         }
     }
@@ -442,6 +465,7 @@ public non-sealed interface InsertStatement extends Statement {
      * @param onConflictAction          optional on-conflict action
      * @param conflictUpdateAssignments conflict-update assignments
      * @param conflictUpdateWhere       optional conflict-update predicate
+     * @param output                    optional SQL Server output clause
      * @param returning                 returning projection list
      */
     record Impl(InsertMode insertMode,
@@ -452,6 +476,7 @@ public non-sealed interface InsertStatement extends Statement {
                 OnConflictAction onConflictAction,
                 List<Assignment> conflictUpdateAssignments,
                 Predicate conflictUpdateWhere,
+                OutputClause output,
                 List<SelectItem> returning) implements InsertStatement {
         /**
          * Creates an immutable insert statement implementation.
