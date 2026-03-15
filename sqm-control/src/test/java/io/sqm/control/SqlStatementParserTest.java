@@ -81,6 +81,15 @@ class SqlStatementParserTest {
     }
 
     @Test
+    void parses_sqlserver_insert_statement_with_output() {
+        var parser = SqlStatementParser.standard();
+        var context = ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE);
+
+        var statement = parser.parse("INSERT INTO [users] ([name]) OUTPUT inserted.[id] VALUES ('alice')", context);
+        assertInstanceOf(InsertStatement.class, statement);
+    }
+
+    @Test
     void parses_sqlserver_update_statement() {
         var parser = SqlStatementParser.standard();
         var context = ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE);
@@ -95,6 +104,15 @@ class SqlStatementParserTest {
         var context = ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE);
 
         var statement = parser.parse("DELETE FROM [users]", context);
+        assertInstanceOf(DeleteStatement.class, statement);
+    }
+
+    @Test
+    void parses_sqlserver_delete_statement_with_output() {
+        var parser = SqlStatementParser.standard();
+        var context = ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE);
+
+        var statement = parser.parse("DELETE FROM [users] OUTPUT deleted.[id] WHERE [id] = 1", context);
         assertInstanceOf(DeleteStatement.class, statement);
     }
 

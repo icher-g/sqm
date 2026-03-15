@@ -10,8 +10,11 @@ import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.id;
+import static io.sqm.dsl.Dsl.deleted;
 import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.output;
+import static io.sqm.dsl.Dsl.outputItem;
 import static io.sqm.dsl.Dsl.row;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -57,9 +60,48 @@ class SqlServerInsertStatementRendererTest {
     }
 
     @Test
+    void rendersInsertOutputClause() {
+        var ctx = RenderContext.of(new SqlServerDialect());
+        InsertStatement statement = insert("users")
+            .columns(id("name"))
+            .output(output(outputItem(io.sqm.dsl.Dsl.inserted("id"), "user_id")))
+            .values(row(lit("alice")))
+            .build();
+
+        var sql = normalize(ctx.render(statement).sql());
+
+        assertEquals("INSERT INTO users (name) OUTPUT inserted.id AS user_id VALUES ('alice')", sql);
+    }
+
+    @Test
+    void rendersInsertOutputExpressionUsingPseudoColumn() {
+        var ctx = RenderContext.of(new SqlServerDialect());
+        InsertStatement statement = insert("users")
+            .columns(id("name"))
+            .output(output(outputItem(io.sqm.dsl.Dsl.inserted("id").add(lit(1)), "next_id")))
+            .values(row(lit("alice")))
+            .build();
+
+        var sql = normalize(ctx.render(statement).sql());
+
+        assertEquals("INSERT INTO users (name) OUTPUT inserted.id + 1 AS next_id VALUES ('alice')", sql);
+    }
+
+    @Test
+    void rejectsInsertOutputDeletedReference() {
+        var ctx = RenderContext.of(new SqlServerDialect());
+        InsertStatement statement = insert("users")
+            .values(row(lit("alice")))
+            .output(output(outputItem(deleted("id"))))
+            .build();
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> ctx.render(statement));
+    }
+
+    @Test
     void sqlServerRegistryProvidesInsertRenderer() {
         var repo = Renderers.sqlServer();
-        assertInstanceOf(io.sqm.render.ansi.InsertStatementRenderer.class, repo.require(InsertStatement.class));
+        assertInstanceOf(SqlServerInsertStatementRenderer.class, repo.require(InsertStatement.class));
     }
 
     private static String normalize(String sql) {

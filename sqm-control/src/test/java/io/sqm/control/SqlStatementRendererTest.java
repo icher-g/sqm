@@ -20,7 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static io.sqm.dsl.Dsl.delete;
 import static io.sqm.dsl.Dsl.id;
 import static io.sqm.dsl.Dsl.insert;
+import static io.sqm.dsl.Dsl.inserted;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.output;
+import static io.sqm.dsl.Dsl.outputItem;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.tbl;
 import static io.sqm.dsl.Dsl.update;
@@ -99,6 +102,23 @@ class SqlStatementRendererTest {
         var rendered = renderer.render(statement, ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE));
 
         assertEquals("INSERT INTO [users] ([id]) VALUES (1)", rendered.sql().replaceAll("\\s+", " ").trim());
+    }
+
+    @Test
+    void renders_sqlserver_insert_statement_with_output() {
+        var renderer = SqlStatementRenderer.standard();
+        InsertStatement statement = insert(tbl(id("users", QuoteStyle.BRACKETS)))
+            .columns(id("name", QuoteStyle.BRACKETS))
+            .output(output(outputItem(inserted(id("id", QuoteStyle.BRACKETS)))))
+            .values(row(lit("alice")))
+            .build();
+
+        var rendered = renderer.render(statement, ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE));
+
+        assertEquals(
+            "INSERT INTO [users] ([name]) OUTPUT inserted.[id] VALUES ('alice')",
+            rendered.sql().replaceAll("\\s+", " ").trim()
+        );
     }
 
     @Test

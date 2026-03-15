@@ -10,7 +10,10 @@ import org.junit.jupiter.api.Test;
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.delete;
 import static io.sqm.dsl.Dsl.id;
+import static io.sqm.dsl.Dsl.inserted;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.output;
+import static io.sqm.dsl.Dsl.outputItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -50,9 +53,33 @@ class SqlServerDeleteStatementRendererTest {
     }
 
     @Test
+    void rendersDeleteOutputClause() {
+        var ctx = RenderContext.of(new SqlServerDialect());
+        DeleteStatement statement = delete("users")
+            .output(output(outputItem(io.sqm.dsl.Dsl.deleted("id"), "deleted_id")))
+            .where(col("id").eq(lit(1)))
+            .build();
+
+        var sql = normalize(ctx.render(statement).sql());
+
+        assertEquals("DELETE FROM users OUTPUT deleted.id AS deleted_id WHERE id = 1", sql);
+    }
+
+    @Test
+    void rejectsDeleteOutputInsertedReference() {
+        var ctx = RenderContext.of(new SqlServerDialect());
+        DeleteStatement statement = delete("users")
+            .output(output(outputItem(inserted("id"))))
+            .where(col("id").eq(lit(1)))
+            .build();
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class, () -> ctx.render(statement));
+    }
+
+    @Test
     void sqlServerRegistryProvidesDeleteRenderer() {
         var repo = Renderers.sqlServer();
-        assertInstanceOf(io.sqm.render.ansi.DeleteStatementRenderer.class, repo.require(DeleteStatement.class));
+        assertInstanceOf(SqlServerDeleteStatementRenderer.class, repo.require(DeleteStatement.class));
     }
 
     private static String normalize(String sql) {

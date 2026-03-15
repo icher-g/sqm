@@ -1,6 +1,8 @@
 package io.sqm.validate.sqlserver.rule;
 
 import io.sqm.core.DeleteStatement;
+import io.sqm.core.OutputColumnExpr;
+import io.sqm.core.OutputRowSource;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
@@ -60,6 +62,18 @@ public final class SqlServerDeleteStatementValidationRule implements SchemaValid
                 node,
                 "delete.hint"
             );
+        }
+        if (node.output() != null) {
+            for (var item : node.output().items()) {
+                if (item.expression() instanceof OutputColumnExpr outputColumn && outputColumn.source() == OutputRowSource.INSERTED) {
+                    context.addProblem(
+                        ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
+                        "DELETE OUTPUT may reference deleted.<column> values, but not inserted.<column>",
+                        item,
+                        "delete.output"
+                    );
+                }
+            }
         }
     }
 }
