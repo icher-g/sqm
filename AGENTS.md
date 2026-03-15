@@ -43,6 +43,8 @@ Agents should read it first and follow it throughout the task.
 - For SQL render assertions, normalize whitespace when formatting differences are not semantically relevant.
 - Any new public model surface or node shape must be reachable through DSL helpers; if it is not, add DSL support before considering the work complete.
 - When adding or changing nodes, verify codegen can express them via DSL and update codegen as needed; do not assume parser/renderer support alone is sufficient.
+- When a derived parser or renderer would need to duplicate substantial base-class logic, refactor the base class into smaller overridable hooks instead of copying the whole implementation.
+- Do not introduce parser or renderer state objects unless they are genuinely needed to carry shared phase data that cannot be derived cleanly at the point of use.
 
 ## Workflow
 - Implement model changes first, then parser/renderer wiring, then DSL/helpers, then tests/docs.
@@ -73,5 +75,10 @@ Agents should read it first and follow it throughout the task.
 - In parsers, prefer `cur.expect(...)` over manual `consumeIf(...)` + error branches when a token is required after the parser has already committed to a branch. Use `consumeIf(...)` for truly optional syntax probes.
 - `sqm-validate` and dialect-specific validation modules must be considered part of dialect completeness, not optional follow-up work.
 - `sqm-transpile` must be reviewed for every new dialect epic so unsupported, approximate, and exact behavior stays explicit.
+- When a dialect epic includes transpilation scope, document the expected next rule families explicitly in the epic or story design; do not leave future transpile expansion as a vague placeholder.
 - Epic designs should explicitly state scope for Query, DML, and DDL separately so completion criteria are unambiguous.
 - Current repo position: DDL support is not assumed for the framework and requires a separate explicit design decision before it should be planned as implementation work.
+- If a dialect implementation temporarily falls back to a generic or default implementation because a dialect-specific piece is missing, do not leave that fallback implicit.
+- For every such fallback, either:
+  - fix the current design so the missing dialect-specific piece is included in the active story or epic, or
+  - record the missing piece explicitly in the follow-up design/story so it cannot be forgotten.

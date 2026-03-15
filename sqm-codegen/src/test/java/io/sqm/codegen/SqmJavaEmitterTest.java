@@ -159,6 +159,31 @@ class SqmJavaEmitterTest {
     }
 
     @Test
+    void emitQuery_prefersSqlServerFunctionHelpersWhenAvailable() {
+        var source = emitter.emitQuery(
+            select(
+                len(col("name")),
+                dataLength(col("payload")),
+                getDate(),
+                dateAdd("day", lit(1), col("created_at")),
+                dateDiff("day", col("created_at"), col("updated_at")),
+                isNullFn(col("name"), lit("unknown")),
+                stringAgg(col("name"), lit(",")).withinGroup(orderBy(order(col("name"))))
+            )
+                .from(tbl("users"))
+                .build()
+        );
+
+        assertTrue(source.contains("len(col(\"name\"))"));
+        assertTrue(source.contains("dataLength(col(\"payload\"))"));
+        assertTrue(source.contains("getDate()"));
+        assertTrue(source.contains("dateAdd(\"day\", lit(1), col(\"created_at\"))"));
+        assertTrue(source.contains("dateDiff(\"day\", col(\"created_at\"), col(\"updated_at\"))"));
+        assertTrue(source.contains("isNullFn(col(\"name\"), lit(\"unknown\"))"));
+        assertTrue(source.contains("stringAgg(col(\"name\"), lit(\",\"))"));
+    }
+
+    @Test
     void emitQuery_formatsSupportedLiteralTypes() {
         String source = emitter.emitQuery(
             select(

@@ -2,6 +2,7 @@ package io.sqm.validate.postgresql;
 
 import io.sqm.core.Node;
 import io.sqm.core.dialect.DialectCapabilities;
+import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.core.postgresql.dialect.PostgresCapabilities;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
@@ -70,7 +71,7 @@ public final class PostgresValidationDialect implements SchemaValidationDialect 
 
     @Override
     public String name() {
-        return "postgresql";
+        return SqlDialectId.POSTGRESQL.value();
     }
 
     @Override

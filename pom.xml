@@ -54,6 +54,7 @@
         <module>sqm-render-sqlserver</module>
         <module>sqm-validate-postgresql</module>
         <module>sqm-validate-mysql</module>
+        <module>sqm-validate-sqlserver</module>
         <module>sqm-catalog</module>
         <module>sqm-catalog-postgresql</module>
         <module>sqm-catalog-mysql</module>

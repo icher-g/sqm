@@ -8,12 +8,14 @@ import io.sqm.parser.core.Token;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
+import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
 import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.mysql.MySqlValidationDialect;
 import io.sqm.validate.postgresql.PostgresValidationDialect;
+import io.sqm.validate.sqlserver.SqlServerValidationDialect;
 import io.sqm.validate.schema.SchemaStatementValidator;
 
 import java.io.IOException;
@@ -124,11 +126,13 @@ public final class SqlFileCodeGenerator {
         var ansi = ParseContext.of(new AnsiSpecs());
         var postgres = ParseContext.of(new PostgresSpecs());
         var mysql = ParseContext.of(new MySqlSpecs());
+        var sqlServer = ParseContext.of(new SqlServerSpecs());
         return switch (dialect) {
             case ANSI -> List.of(
                 new ParseStage("ansi", ansi),
                 new ParseStage("postgresql", postgres),
-                new ParseStage("mysql", mysql)
+                new ParseStage("mysql", mysql),
+                new ParseStage("sqlserver", sqlServer)
             );
             case POSTGRESQL -> List.of(
                 new ParseStage("postgresql", postgres),
@@ -136,6 +140,10 @@ public final class SqlFileCodeGenerator {
             );
             case MYSQL -> List.of(
                 new ParseStage("mysql", mysql),
+                new ParseStage("ansi", ansi)
+            );
+            case SQLSERVER -> List.of(
+                new ParseStage("sqlserver", sqlServer),
                 new ParseStage("ansi", ansi)
             );
         };
@@ -211,6 +219,7 @@ public final class SqlFileCodeGenerator {
                 case ANSI -> SchemaStatementValidator.of(schema);
                 case POSTGRESQL -> SchemaStatementValidator.of(schema, PostgresValidationDialect.of());
                 case MYSQL -> SchemaStatementValidator.of(schema, MySqlValidationDialect.of());
+                case SQLSERVER -> SchemaStatementValidator.of(schema, SqlServerValidationDialect.of());
             };
         } catch (SQLException ex) {
             throw new SqlFileCodegenException("Failed to load schema for validation: " + ex.getMessage());

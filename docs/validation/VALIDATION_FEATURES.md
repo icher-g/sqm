@@ -119,6 +119,31 @@ PostgreSQL-specific validation is implemented in a dedicated dialect module:
 - PostgreSQL-aware function signatures and return-type inference are provided by
   `io.sqm.validate.postgresql.function.PostgresFunctionCatalog`.
 
+## SQL Server Dialect Module (`sqm-validate-sqlserver`)
+
+SQL Server-specific validation is implemented in a dedicated dialect module:
+- `io.sqm.validate.sqlserver.SqlServerValidationDialect`
+
+### SQL Server-Specific Feature Validation
+
+- Version-gated SQL Server features (`DIALECT_FEATURE_UNSUPPORTED`), including:
+  - `TOP ... PERCENT`
+  - `TOP ... WITH TIES`
+  - deferred advanced DML features such as `OUTPUT` and `MERGE`
+  - non-SQL Server DML extensions such as `RETURNING`, `ON CONFLICT`, `ON DUPLICATE KEY UPDATE`, and `REPLACE`
+
+### SQL Server Clause Consistency Validation
+
+- SQL Server clause consistency (`DIALECT_CLAUSE_INVALID`), including:
+  - `TOP` combined with `OFFSET/FETCH`
+  - `OFFSET/FETCH` without `ORDER BY`
+  - baseline DML-only acceptance for shared `INSERT`, `UPDATE`, and `DELETE` shapes
+
+### SQL Server Function Catalog
+
+- SQL Server-aware function signatures and return-type inference are provided by
+  `io.sqm.validate.sqlserver.function.SqlServerFunctionCatalog`.
+
 ## Extension Architecture
 
 ### SchemaValidationSettings
@@ -254,9 +279,9 @@ Default behavior is unchanged when using:
 
 ### High Priority
 
-1. Expand PostgreSQL function catalog coverage and version granularity.
+1. Expand PostgreSQL and SQL Server function catalog coverage and version granularity.
 2. Add richer diagnostics payload (rule id, offending node summary, optional hint).
-3. Add end-to-end parser-to-validator PostgreSQL integration tests.
+3. Add deeper end-to-end parser-to-validator integration coverage for dialect-specific rule packs.
 
 ### Medium Priority
 

@@ -168,6 +168,32 @@ class GenerateMojoTest {
     }
 
     @Test
+    void sqlServerDialectGeneratesSources() throws Exception {
+        var sqlDir = tempDir.resolve("sql-sqlserver");
+        var outDir = tempDir.resolve("generated-sqlserver");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(
+            sqlDir.resolve("user/find_top_users.sql"),
+            "select top (5) [u].[id], dateadd(day, 1, [u].[created_at]) from [users] [u] order by [u].[id]",
+            StandardCharsets.UTF_8
+        );
+
+        var mojo = new GenerateMojo();
+        setField(mojo, "project", new MavenProject());
+        setField(mojo, "skip", false);
+        setField(mojo, "dialect", "sqlserver");
+        setField(mojo, "basePackage", "io.sqm.codegen.generated");
+        setField(mojo, "sqlDirectory", sqlDir.toString());
+        setField(mojo, "generatedSourcesDirectory", outDir.toString());
+        setField(mojo, "cleanupStaleFiles", true);
+        setField(mojo, "includeGenerationTimestamp", false);
+
+        mojo.execute();
+
+        assertTrue(Files.exists(outDir.resolve("io/sqm/codegen/generated/UserQueries.java")));
+    }
+
+    @Test
     void includeGenerationTimestampAddsGeneratedDateMetadata() throws Exception {
         var sqlDir = tempDir.resolve("sql-date");
         var outDir = tempDir.resolve("generated-date");
@@ -498,6 +524,7 @@ class GenerateMojoTest {
         assertInstanceOf(PostgresSqlTypeMapper.class, invokeJdbcTypeMapper(mojo, SqlCodegenDialect.POSTGRESQL));
         assertInstanceOf(MySqlSqlTypeMapper.class, invokeJdbcTypeMapper(mojo, SqlCodegenDialect.MYSQL));
         assertInstanceOf(DefaultSqlTypeMapper.class, invokeJdbcTypeMapper(mojo, SqlCodegenDialect.ANSI));
+        assertInstanceOf(DefaultSqlTypeMapper.class, invokeJdbcTypeMapper(mojo, SqlCodegenDialect.SQLSERVER));
     }
 
     private static void setField(Object target, String fieldName, Object value) throws Exception {

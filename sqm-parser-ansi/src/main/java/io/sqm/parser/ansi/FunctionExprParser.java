@@ -1,9 +1,6 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.FunctionExpr;
-import io.sqm.core.OrderBy;
-import io.sqm.core.OverSpec;
-import io.sqm.core.Predicate;
+import io.sqm.core.*;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.Lookahead;
 import io.sqm.parser.core.TokenType;
@@ -20,6 +17,7 @@ import static io.sqm.parser.spi.ParseResult.ok;
 /**
  * Parses SQL function expressions.
  */
+@SuppressWarnings("unused")
 public class FunctionExprParser implements MatchableParser<FunctionExpr> {
     /**
      * Creates a function expression parser.
@@ -36,63 +34,188 @@ public class FunctionExprParser implements MatchableParser<FunctionExpr> {
      */
     @Override
     public ParseResult<FunctionExpr> parse(Cursor cur, ParseContext ctx) {
-        var t = cur.expect("Expected function name", TokenType.IDENT);
+        var functionName = parseFunctionName(cur);
 
-        var functionName = parseQualifiedName(toIdentifier(t), cur);
-
-        // '('
         cur.expect("Expected '(' after function name", TokenType.LPAREN);
 
-        final Boolean distinct = cur.consumeIf(TokenType.DISTINCT) ? true : null;
-        final List<FunctionExpr.Arg> args = new ArrayList<>();
-
-        if (!cur.match(TokenType.RPAREN)) {
-            do {
-                var vr = ctx.parse(FunctionExpr.Arg.class, cur);
-                if (vr.isError()) {
-                    return error(vr);
-                }
-                args.add(vr.value());
-            } while (cur.consumeIf(TokenType.COMMA));
+        var distinct = parseDistinct(cur, ctx, functionName);
+        var args = parseArguments(cur, ctx, functionName);
+        if (args.isError()) {
+            return error(args);
         }
 
-        // ')'
         cur.expect("Expected ')' to close function", TokenType.RPAREN);
 
-        OrderBy withinGroup = null;
-        if (cur.consumeIf(TokenType.WITHIN)) {
-            cur.expect("Expected GROUP after WITHIN", TokenType.GROUP);
-            cur.expect("Expected '(' after WITHIN GROUP", TokenType.LPAREN);
-            var obr = ctx.parse(OrderBy.class, cur);
-            if (obr.isError()) {
-                return error(obr);
-            }
-            cur.expect("Expected ')' to close statement", TokenType.RPAREN);
-            withinGroup = obr.value();
+        var withinGroup = parseWithinGroup(cur, ctx, functionName);
+        if (withinGroup.isError()) {
+            return error(withinGroup);
         }
 
-        Predicate filter = null;
-        if (cur.consumeIf(TokenType.FILTER)) {
-            cur.expect("Expected '(' after FILTER", TokenType.LPAREN);
-            cur.expect("Expected WHERE in a FILTER", TokenType.WHERE);
-            var pr = ctx.parse(Predicate.class, cur);
-            if (pr.isError()) {
-                return error(pr);
-            }
-            cur.expect("Expected ')' to close statement", TokenType.RPAREN);
-            filter = pr.value();
+        var filter = parseFilter(cur, ctx, functionName);
+        if (filter.isError()) {
+            return error(filter);
         }
 
-        OverSpec over = null;
-        if (cur.match(TokenType.OVER)) {
-            var or = ctx.parse(OverSpec.class, cur);
-            if (or.isError()) {
-                return error(or);
-            }
-            over = or.value();
+        var over = parseOver(cur, ctx, functionName);
+        if (over.isError()) {
+            return error(over);
         }
 
-        return ok(FunctionExpr.of(functionName, args, distinct, withinGroup, filter, over));
+        return ok(buildFunction(functionName, args.value(), distinct, withinGroup.value(), filter.value(), over.value()));
+    }
+
+    /**
+     * Parses the qualified function name after the leading identifier token.
+     *
+     * @param cur cursor positioned at the function name.
+     * @return parsed qualified function name.
+     */
+    protected QualifiedName parseFunctionName(Cursor cur) {
+        var token = cur.expect("Expected function name", TokenType.IDENT);
+        return parseQualifiedName(toIdentifier(token), cur);
+    }
+
+    /**
+     * Parses the optional {@code DISTINCT} marker inside the argument list.
+     *
+     * @param cur cursor positioned after the opening parenthesis.
+     * @param ctx parser context.
+     * @param functionName parsed qualified function name.
+     * @return parsed distinct flag or {@code null} when absent.
+     */
+    protected Boolean parseDistinct(Cursor cur, ParseContext ctx, QualifiedName functionName) {
+        return cur.consumeIf(TokenType.DISTINCT) ? true : null;
+    }
+
+    /**
+     * Parses the function argument list.
+     *
+     * @param cur cursor positioned at the first argument token or closing parenthesis.
+     * @param ctx parser context.
+     * @param functionName parsed qualified function name.
+     * @return parsed immutable argument list.
+     */
+    protected ParseResult<? extends List<FunctionExpr.Arg>> parseArguments(
+        Cursor cur,
+        ParseContext ctx,
+        QualifiedName functionName
+    ) {
+        final List<FunctionExpr.Arg> args = new ArrayList<>();
+        if (!cur.match(TokenType.RPAREN)) {
+            do {
+                var arg = parseArgument(args.size(), cur, ctx, functionName);
+                if (arg.isError()) {
+                    return error(arg);
+                }
+                args.add(arg.value());
+            } while (cur.consumeIf(TokenType.COMMA));
+        }
+        return ok(List.copyOf(args));
+    }
+
+    /**
+     * Parses one function argument.
+     *
+     * @param index zero-based argument index.
+     * @param cur cursor positioned at the argument.
+     * @param ctx parser context.
+     * @param functionName parsed qualified function name.
+     * @return parsed function argument.
+     */
+    protected ParseResult<? extends FunctionExpr.Arg> parseArgument(
+        int index,
+        Cursor cur,
+        ParseContext ctx,
+        QualifiedName functionName
+    ) {
+        return ctx.parse(FunctionExpr.Arg.class, cur);
+    }
+
+    /**
+     * Parses the optional {@code WITHIN GROUP (...)} clause.
+     *
+     * @param cur cursor positioned after the closing parenthesis of the argument list.
+     * @param ctx parser context.
+     * @param functionName parsed qualified function name.
+     * @return parsed {@code WITHIN GROUP} clause or {@code null}.
+     */
+    protected ParseResult<? extends OrderBy> parseWithinGroup(
+        Cursor cur,
+        ParseContext ctx,
+        QualifiedName functionName
+    ) {
+        if (!cur.consumeIf(TokenType.WITHIN)) {
+            return ok(null);
+        }
+        cur.expect("Expected GROUP after WITHIN", TokenType.GROUP);
+        cur.expect("Expected '(' after WITHIN GROUP", TokenType.LPAREN);
+        var orderBy = ctx.parse(OrderBy.class, cur);
+        cur.expect("Expected ')' to close statement", TokenType.RPAREN);
+        return orderBy;
+    }
+
+    /**
+     * Parses the optional {@code FILTER (WHERE ...)} clause.
+     *
+     * @param cur cursor positioned after the argument list or {@code WITHIN GROUP}.
+     * @param ctx parser context.
+     * @param functionName parsed qualified function name.
+     * @return parsed filter predicate or {@code null}.
+     */
+    protected ParseResult<? extends Predicate> parseFilter(
+        Cursor cur,
+        ParseContext ctx,
+        QualifiedName functionName
+    ) {
+        if (!cur.consumeIf(TokenType.FILTER)) {
+            return ok(null);
+        }
+        cur.expect("Expected '(' after FILTER", TokenType.LPAREN);
+        cur.expect("Expected WHERE in a FILTER", TokenType.WHERE);
+        var filter = ctx.parse(Predicate.class, cur);
+        cur.expect("Expected ')' to close statement", TokenType.RPAREN);
+        return filter;
+    }
+
+    /**
+     * Parses the optional {@code OVER ...} clause.
+     *
+     * @param cur cursor positioned after the argument list and optional aggregate clauses.
+     * @param ctx parser context.
+     * @param functionName parsed qualified function name.
+     * @return parsed over specification or {@code null}.
+     */
+    protected ParseResult<? extends OverSpec> parseOver(
+        Cursor cur,
+        ParseContext ctx,
+        QualifiedName functionName
+    ) {
+        if (!cur.match(TokenType.OVER)) {
+            return ok(null);
+        }
+        return ctx.parse(OverSpec.class, cur);
+    }
+
+    /**
+     * Builds the final function expression from parsed phases.
+     *
+     * @param functionName parsed qualified function name.
+     * @param args parsed arguments.
+     * @param distinct optional distinct marker.
+     * @param withinGroup optional within-group clause.
+     * @param filter optional filter clause.
+     * @param over optional over clause.
+     * @return final function expression.
+     */
+    protected FunctionExpr buildFunction(
+        QualifiedName functionName,
+        List<FunctionExpr.Arg> args,
+        Boolean distinct,
+        OrderBy withinGroup,
+        Predicate filter,
+        OverSpec over
+    ) {
+        return FunctionExpr.of(functionName, args, distinct, withinGroup, filter, over);
     }
 
     /**

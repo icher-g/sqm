@@ -140,6 +140,46 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
+    void transpilesAnsiLimitToSqlServerTopRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.SQLSERVER)
+            .build();
+
+        var result = transpiler.transpile("SELECT id FROM users LIMIT 5");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT TOP (5) id FROM users"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "standard-limit-to-sqlserver-top".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.EXACT
+        ));
+    }
+
+    @Test
+    void transpilesSqlServerTopToPostgresLimitRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.SQLSERVER)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .build();
+
+        var result = transpiler.transpile("SELECT TOP (5) id FROM users");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT id FROM users LIMIT 5"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "sqlserver-top-to-limit".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.EXACT
+        ));
+    }
+
+    @Test
     void transpilesMySqlRegexPredicateToPostgresRendering() {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.MYSQL)
@@ -640,6 +680,26 @@ class DefaultSqlTranspilerTest {
         assertEquals("UNSUPPORTED_DISTINCT_ON", result.problems().getFirst().code());
         assertTrue(result.steps().stream().anyMatch(step ->
             "postgres-to-mysql-distinct-on-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
+    void postgresDistinctOnIsRejectedBeforeSqlServerRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.SQLSERVER)
+            .build();
+
+        var result = transpiler.transpile(
+            "SELECT DISTINCT ON (user_id) user_id, created_at FROM orders ORDER BY user_id, created_at DESC"
+        );
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertTrue(result.sql().isEmpty());
+        assertEquals("UNSUPPORTED_DISTINCT_ON", result.problems().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "postgres-to-sqlserver-distinct-on-unsupported".equals(step.ruleId())
                 && step.fidelity() == RewriteFidelity.UNSUPPORTED
         ));
     }

@@ -6,10 +6,12 @@ import io.sqm.core.Query;
 import io.sqm.json.SqmJsonMixins;
 import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
+import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.mysql.spi.MySqlDialect;
 import io.sqm.render.spi.RenderContext;
+import io.sqm.render.sqlserver.spi.SqlServerDialect;
 
 public final class Utils {
     private static final ObjectMapper MAPPER = SqmJsonMixins.createDefault()
@@ -31,6 +33,12 @@ public final class Utils {
         return normalizeSql(s.sql());
     }
 
+    public static String renderSqlServer(Query q) {
+        var r = RenderContext.of(new SqlServerDialect());
+        var s = r.render(q);
+        return normalizeSql(s.sql());
+    }
+
     public static Query parse(String sql) {
         var ctx = ParseContext.of(new AnsiSpecs());
         var pr = ctx.parse(Query.class, sql);
@@ -42,6 +50,15 @@ public final class Utils {
 
     public static Query parseMySql(String sql) {
         var ctx = ParseContext.of(new MySqlSpecs());
+        var pr = ctx.parse(Query.class, sql);
+        if (pr.isError()) {
+            throw new RuntimeException(pr.errorMessage());
+        }
+        return pr.value();
+    }
+
+    public static Query parseSqlServer(String sql) {
+        var ctx = ParseContext.of(new SqlServerSpecs());
         var pr = ctx.parse(Query.class, sql);
         if (pr.isError()) {
             throw new RuntimeException(pr.errorMessage());
