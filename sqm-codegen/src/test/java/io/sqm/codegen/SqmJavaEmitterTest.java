@@ -4,6 +4,7 @@ import io.sqm.core.Identifier;
 import io.sqm.core.OrderItem;
 import io.sqm.core.Query;
 import io.sqm.core.QuoteStyle;
+import io.sqm.core.TopSpec;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -142,6 +143,19 @@ class SqmJavaEmitterTest {
 
         String bothNull = emitter.emitQuery(select(star()).from(tbl("t")).limitOffset(limitOffset(null, null)).build());
         assertTrue(bothNull.contains(".limitOffset(limitOffset(null, null))"));
+    }
+
+    @Test
+    void emitQuery_coversTopSpecVariants() {
+        String plainTop = emitter.emitQuery(
+            select(star()).from(tbl("t")).top(lit(5)).build()
+        );
+        String topPercentWithTies = emitter.emitQuery(
+            select(star()).from(tbl("t")).top(TopSpec.of(lit(10), true, true)).build()
+        );
+
+        assertTrue(plainTop.contains(".top(lit(5))"));
+        assertTrue(topPercentWithTies.contains(".top(TopSpec.of(lit(10), true, true))"));
     }
 
     @Test

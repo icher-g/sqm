@@ -162,7 +162,7 @@ class SqlDecisionEngineTest {
             SqlStatementRenderer.standard()
         );
 
-        var result = engine.evaluate(DeleteStatement.of(tbl("users")), ExecutionContext.of("mysql", ExecutionMode.ANALYZE));
+        var result = engine.evaluate(DeleteStatement.of(tbl("users"), java.util.List.of(), java.util.List.of(), null, java.util.List.of(), java.util.List.of()), ExecutionContext.of("mysql", ExecutionMode.ANALYZE));
 
         assertEquals(DecisionKind.ALLOW, result.kind());
         assertEquals(ReasonCode.NONE, result.reasonCode());

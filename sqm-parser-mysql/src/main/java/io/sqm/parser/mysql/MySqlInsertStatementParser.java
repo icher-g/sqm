@@ -68,9 +68,7 @@ public class MySqlInsertStatementParser extends io.sqm.parser.ansi.InsertStateme
         if (cur.match(TokenType.CONFLICT)) {
             return error("INSERT ... ON CONFLICT is not supported by this dialect", cur.fullPos());
         }
-        if (!cur.consumeIf(TokenType.DUPLICATE)) {
-            return error("Expected DUPLICATE after ON", cur.fullPos());
-        }
+        cur.expect("Expected DUPLICATE after ON", TokenType.DUPLICATE);
         if (!ctx.capabilities().supports(SqlFeature.INSERT_ON_DUPLICATE_KEY_UPDATE)) {
             return error("INSERT ... ON DUPLICATE KEY UPDATE is not supported by this dialect", cur.fullPos());
         }

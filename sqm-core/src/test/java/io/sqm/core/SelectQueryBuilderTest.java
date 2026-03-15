@@ -4,7 +4,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.window;
 
@@ -33,8 +35,21 @@ class SelectQueryBuilderTest {
         assertNotNull(query.having());
         assertEquals(1, query.windows().size());
         assertNotNull(query.orderBy());
+        assertNull(query.topSpec());
         assertNotNull(query.limitOffset());
         assertNotNull(query.lockFor());
+    }
+
+    @Test
+    void stores_top_spec_in_query() {
+        var query = SelectQuery.builder()
+            .select(Expression.literal(1))
+            .top(TopSpec.of(Expression.literal(10), true, true))
+            .build();
+
+        assertNotNull(query.topSpec());
+        assertTrue(query.topSpec().percent());
+        assertTrue(query.topSpec().withTies());
     }
 
     @Test
@@ -89,5 +104,19 @@ class SelectQueryBuilderTest {
         assertEquals(java.util.List.of(), copied.optimizerHints());
         assertEquals(original.items(), copied.items());
         assertEquals(original.from(), copied.from());
+    }
+
+    @Test
+    void exposesCurrentBuilderStateForHookBasedParsing() {
+        var builder = SelectQuery.builder()
+            .distinct(DistinctSpec.TRUE)
+            .top(TopSpec.of(Expression.literal(3)))
+            .orderBy(OrderItem.of(col("id")))
+            .limitOffset(LimitOffset.of(Expression.literal(5), Expression.literal(1)));
+
+        assertNotNull(builder.currentDistinct());
+        assertNotNull(builder.currentTopSpec());
+        assertNotNull(builder.currentOrderBy());
+        assertNotNull(builder.currentLimitOffset());
     }
 }

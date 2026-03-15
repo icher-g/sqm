@@ -21,6 +21,7 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
     private Predicate where;
     private Predicate having;
     private DistinctSpec distinctSpec;
+    private TopSpec topSpec;
     private LimitOffset limitOffset;
     private LockingClause lockingClause;
 
@@ -45,6 +46,7 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
         this.having = query.having();
         this.orderBy = query.orderBy();
         this.distinctSpec = query.distinct();
+        this.topSpec = query.topSpec();
         this.limitOffset = query.limitOffset();
         this.lockingClause = query.lockFor();
         this.windows.addAll(query.windows());
@@ -126,6 +128,12 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
     }
 
     @Override
+    public SelectQueryBuilder top(TopSpec topSpec) {
+        this.topSpec = topSpec;
+        return this;
+    }
+
+    @Override
     public SelectQueryBuilder selectModifiers(List<SelectModifier> modifiers) {
         Objects.requireNonNull(modifiers, "modifiers must not be null");
         this.modifiers.addAll(modifiers);
@@ -157,6 +165,21 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
     }
 
     @Override
+    public TopSpec currentTopSpec() {
+        return topSpec;
+    }
+
+    @Override
+    public DistinctSpec currentDistinct() {
+        return distinctSpec;
+    }
+
+    @Override
+    public OrderBy currentOrderBy() {
+        return orderBy;
+    }
+
+    @Override
     public SelectQueryBuilder lockFor(LockingClause lockingClause) {
         this.lockingClause = lockingClause;
         return this;
@@ -173,6 +196,7 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
             having,
             orderBy,
             distinctSpec,
+            topSpec,
             limitOffset,
             lockingClause,
             windows,

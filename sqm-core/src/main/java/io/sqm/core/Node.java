@@ -21,7 +21,7 @@ import java.util.Arrays;
  * to be applied to nodes without modifying their internal structure.
  * </p>
  */
-public sealed interface Node extends Serializable permits Assignment, BoundSpec, CteDef, DialectNode, DistinctSpec, Expression, FrameSpec, FromItem, GroupBy, GroupItem, InsertSource, LimitOffset, LockingClause, OrderBy, OrderItem, OverSpec, PartitionBy, SelectItem, Statement, TypeName, WhenThen, WindowDef {
+public sealed interface Node extends Serializable permits Assignment, BoundSpec, CteDef, DialectNode, DistinctSpec, Expression, FrameSpec, FromItem, GroupBy, GroupItem, InsertSource, LimitOffset, LockingClause, OrderBy, OrderItem, OverSpec, PartitionBy, SelectItem, Statement, TopSpec, TypeName, WhenThen, WindowDef {
     /**
      * Accepts a {@link NodeVisitor} that performs an operation on this node.
      * <p>

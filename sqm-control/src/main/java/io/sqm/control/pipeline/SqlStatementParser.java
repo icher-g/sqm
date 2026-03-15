@@ -8,6 +8,7 @@ import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.Specs;
+import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
 
 import java.util.Map;
 import java.util.Objects;
@@ -23,7 +24,8 @@ public interface SqlStatementParser {
      * Creates the default dialect-aware parser used by middleware.
      *
      * <p>The returned parser resolves the parser dialect from {@link ExecutionContext#dialect()} and supports
-     * ANSI, MySQL, plus PostgreSQL aliases ({@code postgresql}, {@code postgres}).</p>
+     * ANSI, MySQL, PostgreSQL aliases ({@code postgresql}, {@code postgres}),
+     * and SQL Server aliases ({@code sqlserver}, {@code mssql}, {@code tsql}).</p>
      *
      * @return dialect-aware parser
      */
@@ -31,7 +33,8 @@ public interface SqlStatementParser {
         return dialectAwareIds(Map.of(
             SqlDialectId.ANSI, AnsiSpecs::new,
             SqlDialectId.MYSQL, MySqlSpecs::new,
-            SqlDialectId.POSTGRESQL, PostgresSpecs::new
+            SqlDialectId.POSTGRESQL, PostgresSpecs::new,
+            SqlDialectId.SQLSERVER, SqlServerSpecs::new
         ));
     }
 

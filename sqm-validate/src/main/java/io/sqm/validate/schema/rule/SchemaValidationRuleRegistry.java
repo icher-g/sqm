@@ -75,6 +75,7 @@ public final class SchemaValidationRuleRegistry {
             new CteDefinitionValidationRule(projectionShapeInspector),
             new OrderByOrdinalValidationRule(),
             new CompositeOrderByOrdinalValidationRule(projectionShapeInspector),
+            new TopSpecValidationRule(scalarSubqueryShapeValidator),
             new LimitOffsetValidationRule(scalarSubqueryShapeValidator),
             new CompositeLimitOffsetValidationRule(scalarSubqueryShapeValidator),
             new GroupByOrdinalValidationRule(),

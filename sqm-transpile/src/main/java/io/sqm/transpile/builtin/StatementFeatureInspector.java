@@ -9,6 +9,7 @@ import io.sqm.core.LikeMode;
 import io.sqm.core.LikePredicate;
 import io.sqm.core.Statement;
 import io.sqm.core.Table;
+import io.sqm.core.TopSpec;
 import io.sqm.core.SelectQuery;
 import io.sqm.core.UpdateStatement;
 import io.sqm.core.walk.RecursiveNodeVisitor;
@@ -72,6 +73,24 @@ final class StatementFeatureInspector {
                     found.set(true);
                 }
                 super.visitDistinctSpec(spec);
+                return null;
+            }
+        });
+        return found.get();
+    }
+
+    static boolean hasTopSpec(Statement statement) {
+        var found = new AtomicBoolean(false);
+        statement.accept(new RecursiveNodeVisitor<Void>() {
+            @Override
+            protected Void defaultResult() {
+                return null;
+            }
+
+            @Override
+            public Void visitTopSpec(TopSpec spec) {
+                found.set(true);
+                super.visitTopSpec(spec);
                 return null;
             }
         });

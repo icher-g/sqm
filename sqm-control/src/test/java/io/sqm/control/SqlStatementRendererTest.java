@@ -43,7 +43,7 @@ class SqlStatementRendererTest {
     void for_dialect_rejects_unsupported_dialect() {
         assertThrows(IllegalArgumentException.class, () -> SqlStatementRenderer.standard().render(
             Query.select(Expression.literal(1)).build(),
-            ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE)));
+            ExecutionContext.of("oracle", ExecutionMode.ANALYZE)));
     }
 
     @Test
@@ -59,11 +59,23 @@ class SqlStatementRendererTest {
     @Test
     void renders_mysql_delete_statement() {
         var renderer = SqlStatementRenderer.standard();
-        var delete = DeleteStatement.of(io.sqm.dsl.Dsl.tbl("users"));
+        var delete = DeleteStatement.of(io.sqm.dsl.Dsl.tbl("users"), java.util.List.of(), java.util.List.of(), null, java.util.List.of(), java.util.List.of());
 
         var rendered = renderer.render(delete, ExecutionContext.of("mysql", ExecutionMode.ANALYZE));
 
         assertTrue(rendered.sql().toLowerCase().startsWith("delete"));
+    }
+
+    @Test
+    void renders_sqlserver_query() {
+        var renderer = SqlStatementRenderer.standard();
+        var rendered = renderer.render(
+            Query.select(Expression.literal(true)).build(),
+            ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE)
+        );
+
+        assertTrue(rendered.sql().contains("SELECT"));
+        assertTrue(rendered.sql().contains("1"));
     }
 
     @Test

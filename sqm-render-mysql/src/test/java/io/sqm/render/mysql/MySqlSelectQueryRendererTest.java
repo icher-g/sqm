@@ -31,6 +31,7 @@ class MySqlSelectQueryRendererTest {
             null,
             null,
             null,
+            null,
             List.of(),
             List.of(SelectModifier.CALC_FOUND_ROWS),
             List.of("MAX_EXECUTION_TIME(1000)")
@@ -48,6 +49,7 @@ class MySqlSelectQueryRendererTest {
             List.of(Dsl.col("id").toSelectItem()),
             Dsl.tbl("users"),
             List.of(),
+            null,
             null,
             null,
             null,
@@ -78,6 +80,7 @@ class MySqlSelectQueryRendererTest {
             null,
             null,
             null,
+            null,
             List.of(),
             List.of(),
             List.of("  MAX_EXECUTION_TIME(1000)\n   BKA(users)  ")
@@ -97,6 +100,7 @@ class MySqlSelectQueryRendererTest {
             List.of(Dsl.col("id").toSelectItem()),
             Dsl.tbl("users"),
             List.of(),
+            null,
             null,
             null,
             null,

@@ -135,6 +135,7 @@ Node
 ├─ OrderBy
 ├─ OrderItem
 ├─ WhenThen
+├─ TopSpec
 └─ LimitOffset
 ```
 
@@ -277,6 +278,7 @@ graph TD
   Node --> OrderBy
   Node --> OrderItem
   Node --> WhenThen
+  Node --> TopSpec
   Node --> LimitOffset
 ```
 
@@ -527,6 +529,7 @@ graph TD
 
 ### Pagination
 
+- **TopSpec** – select-head row limiting model for constructs such as SQL Server `TOP (...)`, including optional `PERCENT` and `WITH TIES`
 - **LimitOffset** – LIMIT/OFFSET model  
 
 

@@ -54,9 +54,7 @@ public class CteDefParser implements Parser<CteDef> {
             materialization = CteDef.Materialization.MATERIALIZED;
         }
         else if (cur.consumeIf(TokenType.NOT)) {
-            if (!cur.consumeIf(TokenType.MATERIALIZED)) {
-                return error("Expected MATERIALIZED after NOT", cur.fullPos());
-            }
+            cur.expect("Expected MATERIALIZED after NOT", TokenType.MATERIALIZED);
             if (!ctx.capabilities().supports(SqlFeature.CTE_MATERIALIZATION)) {
                 return error("CTE materialization is not supported by this dialect", cur.fullPos());
             }

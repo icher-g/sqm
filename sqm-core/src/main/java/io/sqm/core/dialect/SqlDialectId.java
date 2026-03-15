@@ -26,6 +26,11 @@ public record SqlDialectId(String value) implements Serializable {
     public static final SqlDialectId POSTGRESQL = new SqlDialectId("postgresql");
 
     /**
+     * Built-in SQL Server dialect identifier.
+     */
+    public static final SqlDialectId SQLSERVER = new SqlDialectId("sqlserver");
+
+    /**
      * Creates a normalized dialect identifier.
      *
      * @param value normalized dialect identifier
@@ -50,6 +55,7 @@ public record SqlDialectId(String value) implements Serializable {
             case "ansi" -> ANSI;
             case "mysql" -> MYSQL;
             case "postgres", "postgresql" -> POSTGRESQL;
+            case "sqlserver", "mssql", "tsql" -> SQLSERVER;
             default -> new SqlDialectId(normalized);
         };
     }

@@ -99,6 +99,7 @@ public class MixInsGenerateJsonTest {
     void query_select_serializes() throws Exception {
         var q = select(func("count", starArg()).as("cnt"))
             .from(tbl("orders").as("o"))
+            .top(top(5))
             .where(col("o", "status").in("A", "B"))
             .join(inner(tbl("users").as("u")).on(col("u", "id").eq(col("o", "user_id"))))
             .groupBy(group("u", "user_name"), group("o", "status"))
@@ -108,6 +109,7 @@ public class MixInsGenerateJsonTest {
         String json = mapper.writeValueAsString(q);
 
         assertTrue(json.contains("\"kind\" : \"select\""));
+        assertTrue(json.contains("\"kind\" : \"topSpec\""));
         assertTrue(json.contains("\"kind\" : \"function\""));
         assertTrue(json.contains("\"kind\" : \"INNER\""));
         assertTrue(json.contains("\"kind\" : \"comparison\""));

@@ -94,7 +94,8 @@ class DeleteStatementRendererTest {
             java.util.List.of(),
             java.util.List.of(),
             null,
-            java.util.List.of(io.sqm.core.ExprSelectItem.of(col("id"), null)));
+            java.util.List.of(io.sqm.core.ExprSelectItem.of(col("id"), null)),
+            java.util.List.of());
 
         var renderer = new DeleteStatementRenderer();
         var writer = new io.sqm.render.defaults.DefaultSqlWriter(ctx);

@@ -48,7 +48,7 @@ final class LimitOffsetValidationRule implements SchemaValidationRule<SelectQuer
      * @param owner      owner node for diagnostics.
      * @param context    schema validation context.
      */
-    private static void validateExpression(
+    static void validateExpression(
         Expression expression,
         String label,
         io.sqm.core.Node owner,

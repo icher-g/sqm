@@ -99,9 +99,7 @@ public class LockingClauseParser implements Parser<LockingClause> {
 
         boolean skipLocked = false;
         if (cur.consumeIf(TokenType.SKIP)) {
-            if (!cur.consumeIf(TokenType.LOCKED)) {
-                return error("Expected LOCKED after SKIP", cur.fullPos());
-            }
+            cur.expect("Expected LOCKED after SKIP", TokenType.LOCKED);
             if (!ctx.capabilities().supports(SqlFeature.LOCKING_SKIP_LOCKED)) {
                 return error("SKIP LOCKED is not supported by this dialect", cur.fullPos());
             }

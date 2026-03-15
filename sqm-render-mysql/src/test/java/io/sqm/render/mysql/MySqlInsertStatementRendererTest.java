@@ -98,6 +98,7 @@ class MySqlInsertStatementRendererTest {
     @Test
     void rejectsOnDuplicateKeyUpdateWithWhereClause() {
         InsertStatement statement = InsertStatement.of(
+            InsertStatement.InsertMode.STANDARD,
             tbl("users"),
             java.util.List.of(),
             row(lit(1)),

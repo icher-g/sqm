@@ -242,13 +242,16 @@ public class SelectQueryRendererTest {
             var ctx = ctxWith(topOnly());
 
             var q = select(col("t", "c"))
+                .top(top(4L))
                 .from(tbl("t"))
-                .limit(4L)
                 .build();
 
             String sql = ctx.render(q).sql();
-            // Allow both "SELECT TOP 4" and "SELECT DISTINCT TOP 4" if user sets distinct elsewhere.
-            assertTrue(sql.startsWith("SELECT TOP 4") || sql.startsWith("SELECT DISTINCT TOP 4"), "TOP should be injected right after SELECT[/DISTINCT]");
+            // Allow both "SELECT TOP (4)" and "SELECT DISTINCT TOP (4)" if user sets distinct elsewhere.
+            assertTrue(
+                sql.startsWith("SELECT TOP (4)") || sql.startsWith("SELECT DISTINCT TOP (4)"),
+                "TOP should be injected right after SELECT[/DISTINCT]"
+            );
             assertFalse(sql.contains("OFFSET"), "TOP style should not produce OFFSET");
         }
 
@@ -258,8 +261,8 @@ public class SelectQueryRendererTest {
             var ctx = ctxWith(topOnly());
 
             var q = select(col("t", "c"))
+                .top(top(4L))
                 .from(tbl("t"))
-                .limit(4L)
                 .offset(2L)
                 .build();
 
@@ -280,6 +283,7 @@ public class SelectQueryRendererTest {
             java.util.List.of(col("t", "c").toSelectItem()),
             tbl("t"),
             java.util.List.of(),
+            null,
             null,
             null,
             null,
@@ -310,6 +314,7 @@ public class SelectQueryRendererTest {
             null,
             null,
             null,
+            null,
             java.util.List.of(),
             java.util.List.of(),
             java.util.List.of("MAX_EXECUTION_TIME(1000)")
@@ -317,5 +322,25 @@ public class SelectQueryRendererTest {
 
         assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
             () -> RenderContext.of(new AnsiDialect()).render(q));
+    }
+
+    @Test
+    @DisplayName("Renders TOP PERCENT and WITH TIES when TOP style is supported")
+    void rendersTopVariants() {
+        var ctx = ctxWith(topOnly());
+
+        var percent = select(col("t", "c"))
+            .top(topPercent(lit(10)))
+            .from(tbl("t"))
+            .build();
+
+        assertTrue(ctx.render(percent).sql().startsWith("SELECT TOP (10) PERCENT"));
+
+        var withTies = select(col("t", "c"))
+            .top(topWithTies(lit(10)))
+            .from(tbl("t"))
+            .build();
+
+        assertTrue(ctx.render(withTies).sql().startsWith("SELECT TOP (10) WITH TIES"));
     }
 }

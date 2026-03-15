@@ -21,6 +21,7 @@ import io.sqm.core.*;
     @JsonSubTypes.Type(value = OrderItem.Impl.class, name = "order"),
     @JsonSubTypes.Type(value = CteDef.Impl.class, name = "cte"),
     @JsonSubTypes.Type(value = WhenThen.Impl.class, name = "whenThen"),
+    @JsonSubTypes.Type(value = TopSpec.Impl.class, name = "topSpec"),
     @JsonSubTypes.Type(value = LimitOffset.Impl.class, name = "limitOffset"),
     @JsonSubTypes.Type(value = Assignment.Impl.class, name = "assignment"),
     @JsonSubTypes.Type(value = WindowDef.Impl.class, name = "window"),

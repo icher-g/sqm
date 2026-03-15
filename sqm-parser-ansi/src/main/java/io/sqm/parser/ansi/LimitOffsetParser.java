@@ -114,9 +114,7 @@ public class LimitOffsetParser implements Parser<LimitOffset> {
             cur.advance();
         }
 
-        if (!cur.consumeIf(TokenType.ONLY)) {
-            return error("Expected ONLY at the end of FETCH clause", cur.fullPos());
-        }
+        cur.expect("Expected ONLY at the end of FETCH clause", TokenType.ONLY);
         return ok(lr.value());
     }
 }

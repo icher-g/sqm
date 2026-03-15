@@ -433,6 +433,10 @@ public enum TokenType {
      */
     TOP,
     /**
+     * PERCENT keyword token.
+     */
+    PERCENT,
+    /**
      * UNION keyword token.
      */
     UNION,

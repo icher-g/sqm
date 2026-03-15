@@ -95,6 +95,7 @@
                         <version>${project.version}</version>
                         <configuration>
                             <schemaProvider>jdbc</schemaProvider>
+                            <!--suppress UnresolvedMavenProperty -->
                             <schemaJdbcUrl>${env.SQM_SCHEMA_JDBC_URL}</schemaJdbcUrl>
                             <schemaJdbcUsernameEnv>SQM_SCHEMA_JDBC_USERNAME</schemaJdbcUsernameEnv>
                             <schemaJdbcPasswordEnv>SQM_SCHEMA_JDBC_PASSWORD</schemaJdbcPasswordEnv>

@@ -1,6 +1,7 @@
 package io.sqm.core.walk;
 
 import io.sqm.core.LimitOffset;
+import io.sqm.core.TopSpec;
 
 /**
  * Visitor interface for traversing pagination elements
@@ -26,5 +27,14 @@ public interface PaginationVisitor<R> {
      * @return a result value, or {@code null} if {@code <R>} is {@link Void}
      */
     R visitLimitOffset(LimitOffset l);
+
+    /**
+     * Visits a {@link TopSpec} node that represents a select-head row-limiting
+     * construct such as SQL Server {@code TOP}.
+     *
+     * @param t top specification being visited
+     * @return a result value, or {@code null} if {@code <R>} is {@link Void}
+     */
+    R visitTopSpec(TopSpec t);
 }
 
