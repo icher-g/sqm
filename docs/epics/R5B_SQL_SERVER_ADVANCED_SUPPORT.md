@@ -86,7 +86,11 @@ DDL is treated as a separate framework-level decision, not as an assumed later s
 - SQL Server `TOP ... PERCENT`.
 - SQL Server `TOP ... WITH TIES`.
 - SQL Server catalog/type-mapper follow-up required for real SQL Server downstream support.
-- Broader SQL Server transpilation coverage for the advanced SQL Server slice.
+- Broader SQL Server transpilation coverage for the advanced SQL Server slice, including:
+  - explicit exact rewrites where SQL Server and non-SQL Server model shapes are safely transformable
+  - explicit unsupported rules for advanced SQL Server source and target features with no safe mapping
+  - SQL Server function-family transpilation rules where mappings are exact or clearly approximate
+  - advanced pagination transpilation rules for `TOP ... PERCENT`, `TOP ... WITH TIES`, and `OFFSET/FETCH` semantics where applicable
 - Validation, DSL, codegen, control, middleware, and integration coverage for all new behavior.
 
 ### Explicitly Deferred
@@ -236,13 +240,34 @@ Required outcomes:
 - SQL Server advanced features are classified as exact, approximate, or unsupported
 - `OUTPUT`, `MERGE`, hints, and advanced `TOP` behavior all have explicit rule outcomes
 - diagnostics explain why a feature cannot be converted when no safe mapping exists
+- transpilation rule coverage is expanded deliberately rather than left implicit in renderer or validator failures
 
 Important principle:
 many SQL Server advanced features will likely be unsupported for most targets. That is acceptable, but the unsupported outcome must be first-class and tested.
 
+Expected follow-up rule areas include:
+
+- SQL Server advanced `TOP` rewrites and unsupported outcomes:
+  - `TOP ... PERCENT`
+  - `TOP ... WITH TIES`
+- SQL Server `OUTPUT` exact or unsupported source/target rules
+- SQL Server hint exact, approximate, dropped-with-warning, or unsupported rules depending on target semantics
+- `MERGE` unsupported rules for targets without a safe equivalent
+- SQL Server function-family mappings where a deliberate conversion exists, for example:
+  - `LEN` and length-family equivalents
+  - `ISNULL` and `COALESCE`
+  - selected date/time function families
+- SQL Server boolean and predicate-shape rewrites where dialect rendering or semantics differ materially
+- additional SQL Server source-side unsupported rules for advanced features that cannot be preserved safely
+
 ### 8. Catalog And Type Mapper Follow-Up
 
 This epic should define the SQL Server-specific part of downstream catalog support that was intentionally left out of `R5`.
+
+Current explicit gap carried from `R5`:
+
+- `sqm-codegen-maven-plugin` currently accepts SQL Server dialect selection, but JDBC schema introspection still falls back to the generic `DefaultSqlTypeMapper` because there is no dedicated SQL Server catalog/type-mapper module yet.
+- That fallback is acceptable only as an explicit bridge to this follow-up epic and must not be treated as completed SQL Server catalog support.
 
 Expected areas:
 
@@ -429,6 +454,7 @@ As a SQM user, I want advanced SQL Server features to produce explicit transpila
 - Advanced SQL Server features have explicit exact/approximate/unsupported outcomes.
 - Diagnostics explain unsupported conversions.
 - Tests cover representative advanced SQL Server source and target cases.
+- The story explicitly reviews and adds transpilation rules where appropriate instead of relying on downstream validation or rendering failures alone.
 
 #### Labels
 `story`, `sqlserver`, `transpile`

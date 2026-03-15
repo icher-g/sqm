@@ -20,12 +20,17 @@ public enum SqlCodegenDialect {
     /**
      * MySQL dialect.
      */
-    MYSQL;
+    MYSQL,
+
+    /**
+     * SQL Server dialect.
+     */
+    SQLSERVER;
 
     /**
      * Resolves a dialect from user configuration.
      *
-     * @param value dialect name such as {@code ansi}, {@code postgresql}, or {@code mysql}.
+     * @param value dialect name such as {@code ansi}, {@code postgresql}, {@code mysql}, or {@code sqlserver}.
      * @return resolved dialect.
      */
     public static SqlCodegenDialect from(String value) {
@@ -34,6 +39,7 @@ public enum SqlCodegenDialect {
             case "ansi" -> ANSI;
             case "postgresql", "postgres", "pg" -> POSTGRESQL;
             case "mysql" -> MYSQL;
+            case "sqlserver", "mssql", "tsql" -> SQLSERVER;
             default -> throw new IllegalArgumentException("Unsupported dialect: " + value);
         };
     }

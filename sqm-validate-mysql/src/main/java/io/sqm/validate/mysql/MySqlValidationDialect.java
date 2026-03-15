@@ -1,6 +1,7 @@
 package io.sqm.validate.mysql;
 
 import io.sqm.core.Node;
+import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.validate.mysql.rule.MySqlIndexHintValidationRule;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
@@ -35,7 +36,7 @@ public final class MySqlValidationDialect implements SchemaValidationDialect {
      */
     @Override
     public String name() {
-        return "mysql";
+        return SqlDialectId.MYSQL.value();
     }
 
     /**

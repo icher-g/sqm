@@ -616,10 +616,7 @@ final class SqmJavaEmitter {
 
         @Override
         public String visitFunctionExpr(FunctionExpr f) {
-            String args = (f.args() == null || f.args().isEmpty())
-                ? ""
-                : ", " + joinInline(f.args().stream().map(this::emitNode).toList());
-            String out = "func(" + quote(String.join(".", f.name().values())) + args + ")";
+            String out = emitFunctionExprBase(f);
             if (Boolean.TRUE.equals(f.distinctArg())) {
                 out += ".distinct()";
             }
@@ -633,6 +630,70 @@ final class SqmJavaEmitter {
                 out += ".over(" + emitNode(f.over()) + ")";
             }
             return out;
+        }
+
+        private String emitFunctionExprBase(FunctionExpr f) {
+            var helper = emitSqlServerFunctionHelper(f);
+            if (helper != null) {
+                return helper;
+            }
+            String args = (f.args() == null || f.args().isEmpty())
+                ? ""
+                : ", " + joinInline(f.args().stream().map(this::emitNode).toList());
+            return "func(" + quote(String.join(".", f.name().values())) + args + ")";
+        }
+
+        private String emitSqlServerFunctionHelper(FunctionExpr f) {
+            if (f == null || f.name() == null) {
+                return null;
+            }
+            var functionName = f.name().parts().getLast().value().toLowerCase(java.util.Locale.ROOT);
+            return switch (functionName) {
+                case "len" -> emitUnaryFunctionHelper("len", f);
+                case "datalength" -> emitUnaryFunctionHelper("dataLength", f);
+                case "getdate" -> (f.args() == null || f.args().isEmpty()) ? "getDate()" : null;
+                case "dateadd" -> emitDatePartFunctionHelper("dateAdd", f);
+                case "datediff" -> emitDatePartFunctionHelper("dateDiff", f);
+                case "isnull" -> emitBinaryFunctionHelper("isNullFn", f);
+                case "string_agg" -> emitBinaryFunctionHelper("stringAgg", f);
+                default -> null;
+            };
+        }
+
+        private String emitUnaryFunctionHelper(String helperName, FunctionExpr f) {
+            if (f.args() == null || f.args().size() != 1) {
+                return null;
+            }
+            return helperName + "(" + emitExprArg(f.args().getFirst()) + ")";
+        }
+
+        private String emitBinaryFunctionHelper(String helperName, FunctionExpr f) {
+            if (f.args() == null || f.args().size() != 2) {
+                return null;
+            }
+            return helperName + "(" + emitExprArg(f.args().getFirst()) + ", " + emitExprArg(f.args().get(1)) + ")";
+        }
+
+        private String emitDatePartFunctionHelper(String helperName, FunctionExpr f) {
+            if (f.args() == null || f.args().size() != 3) {
+                return null;
+            }
+            var firstArg = f.args().getFirst();
+            if (!(firstArg instanceof FunctionExpr.Arg.ExprArg exprArg)
+                || !(exprArg.expr() instanceof io.sqm.core.LiteralExpr literal)
+                || !(literal.value() instanceof String datePart)) {
+                return null;
+            }
+            return helperName + "(" + quote(datePart) + ", "
+                + emitExprArg(f.args().get(1)) + ", "
+                + emitExprArg(f.args().get(2)) + ")";
+        }
+
+        private String emitExprArg(FunctionExpr.Arg arg) {
+            if (arg instanceof FunctionExpr.Arg.ExprArg exprArg) {
+                return emitNode(exprArg.expr());
+            }
+            return emitNode(arg);
         }
 
         @Override

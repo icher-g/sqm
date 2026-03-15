@@ -12,6 +12,7 @@ import io.sqm.validate.schema.SchemaStatementValidator;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.TenantRequirementMode;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
+import io.sqm.validate.sqlserver.SqlServerValidationDialect;
 
 import java.util.Map;
 import java.util.Objects;
@@ -45,7 +46,8 @@ public interface SqlStatementValidator {
         return dialectAwareIds(schema, Map.of(
             SqlDialectId.ANSI, () -> settings,
             SqlDialectId.MYSQL, () -> mergeDialectSettings(settings, MySqlValidationDialect.of()),
-            SqlDialectId.POSTGRESQL, () -> mergeDialectSettings(settings, PostgresValidationDialect.of())
+            SqlDialectId.POSTGRESQL, () -> mergeDialectSettings(settings, PostgresValidationDialect.of()),
+            SqlDialectId.SQLSERVER, () -> mergeDialectSettings(settings, SqlServerValidationDialect.of())
         ));
     }
 

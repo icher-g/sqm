@@ -143,6 +143,27 @@ class SqlFileCodeGeneratorTest {
     }
 
     @Test
+    void generate_supportsSqlServerDialectSpecificQueries() throws IOException {
+        var sqlDir = tempDir.resolve("sql-sqlserver");
+        var outputDir = tempDir.resolve("generated-sqlserver");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(
+            sqlDir.resolve("user").resolve("top_lookup.sql"),
+            "select top (5) [u].[id], len([u].[name]) from [users] as [u] order by [u].[id]"
+        );
+
+        var options = SqlFileCodegenOptions.of(sqlDir, outputDir, "io.sqm.codegen.generated", SqlCodegenDialect.SQLSERVER);
+        var generated = SqlFileCodeGenerator.of(options).generate();
+
+        assertEquals(1, generated.size());
+        var generatedFile = outputDir.resolve(Path.of("io", "sqm", "codegen", "generated", "UserQueries.java"));
+        var source = Files.readString(generatedFile);
+        assertTrue(source.contains("public static SelectQuery topLookup()"));
+        assertTrue(source.contains(".top("));
+        assertTrue(source.contains("len("));
+    }
+
+    @Test
     void generate_emitsStatementMethodsForDmlFiles() throws IOException {
         var sqlDir = tempDir.resolve("sql-dml");
         var outputDir = tempDir.resolve("generated-dml");
@@ -442,6 +463,36 @@ class SqlFileCodeGeneratorTest {
 
         assertEquals(1, generated.size());
         assertTrue(Files.readString(generated.getFirst()).contains("public static InsertStatement insertUser()"));
+    }
+
+    @Test
+    void generate_validates_sqlserver_queries_against_schema_provider() throws Exception {
+        var sqlDir = tempDir.resolve("sql-sqlserver-schema");
+        var outputDir = tempDir.resolve("generated-sqlserver-schema");
+        var schemaSnapshot = tempDir.resolve("schema-sqlserver.json");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(
+            sqlDir.resolve("user").resolve("paged_users.sql"),
+            "select [u].[id] from [users] as [u] order by [u].[id] offset 2 rows fetch next 5 rows only"
+        );
+
+        JsonSchemaProvider.of(schemaSnapshot).save(CatalogSchema.of(
+            CatalogTable.of("public", "users", CatalogColumn.of("id", CatalogType.LONG))
+        ));
+
+        var options = SqlFileCodegenOptions.of(
+            sqlDir,
+            outputDir,
+            "io.sqm.codegen.generated",
+            SqlCodegenDialect.SQLSERVER,
+            false,
+            JsonSchemaProvider.of(schemaSnapshot)
+        );
+
+        var generated = SqlFileCodeGenerator.of(options).generate();
+
+        assertEquals(1, generated.size());
+        assertTrue(Files.readString(generated.getFirst()).contains("public static SelectQuery pagedUsers()"));
     }
 
     @Test

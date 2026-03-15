@@ -158,6 +158,27 @@ class DslAdditionalHelpersTest {
     }
 
     @Test
+    void sqlServerFunctionHelpersBuildExpectedFunctions() {
+        var lenFn = len(col("name"));
+        var dataLengthFn = dataLength(col("payload"));
+        var getDateFn = getDate();
+        var dateAddFn = dateAdd("day", lit(1), col("created_at"));
+        var dateDiffFn = dateDiff("day", col("created_at"), col("updated_at"));
+        var isNullFnExpr = isNullFn(col("name"), lit("unknown"));
+        var stringAggFn = stringAgg(col("name"), lit(","));
+
+        assertEquals("LEN", lenFn.name().values().getLast());
+        assertEquals("DATALENGTH", dataLengthFn.name().values().getLast());
+        assertEquals("GETDATE", getDateFn.name().values().getLast());
+        assertEquals("DATEADD", dateAddFn.name().values().getLast());
+        assertEquals("day", assertInstanceOf(LiteralExpr.class,
+            assertInstanceOf(FunctionExpr.Arg.ExprArg.class, dateAddFn.args().getFirst()).expr()).value());
+        assertEquals("DATEDIFF", dateDiffFn.name().values().getLast());
+        assertEquals("ISNULL", isNullFnExpr.name().values().getLast());
+        assertEquals("STRING_AGG", stringAggFn.name().values().getLast());
+    }
+
+    @Test
     void cteHelpersConvertStringNamesAndAliases() {
         var body = select(star()).from(tbl("t")).build();
 

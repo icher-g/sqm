@@ -7,13 +7,23 @@ import io.sqm.control.pipeline.SqlStatementParser;
 import io.sqm.control.pipeline.SqlStatementRenderer;
 import io.sqm.core.DeleteStatement;
 import io.sqm.core.Expression;
+import io.sqm.core.InsertStatement;
+import io.sqm.core.QuoteStyle;
 import io.sqm.core.Query;
+import io.sqm.core.UpdateStatement;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static io.sqm.dsl.Dsl.delete;
+import static io.sqm.dsl.Dsl.id;
+import static io.sqm.dsl.Dsl.insert;
+import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.row;
+import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.update;
 
 class SqlStatementRendererTest {
 
@@ -76,6 +86,41 @@ class SqlStatementRendererTest {
 
         assertTrue(rendered.sql().contains("SELECT"));
         assertTrue(rendered.sql().contains("1"));
+    }
+
+    @Test
+    void renders_sqlserver_insert_statement() {
+        var renderer = SqlStatementRenderer.standard();
+        InsertStatement statement = insert(tbl(id("users", QuoteStyle.BRACKETS)))
+            .columns(id("id", QuoteStyle.BRACKETS))
+            .values(row(lit(1)))
+            .build();
+
+        var rendered = renderer.render(statement, ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE));
+
+        assertEquals("INSERT INTO [users] ([id]) VALUES (1)", rendered.sql().replaceAll("\\s+", " ").trim());
+    }
+
+    @Test
+    void renders_sqlserver_update_statement() {
+        var renderer = SqlStatementRenderer.standard();
+        UpdateStatement statement = update(tbl(id("users", QuoteStyle.BRACKETS)))
+            .set(id("name", QuoteStyle.BRACKETS), lit("alice"))
+            .build();
+
+        var rendered = renderer.render(statement, ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE));
+
+        assertEquals("UPDATE [users] SET [name] = 'alice'", rendered.sql().replaceAll("\\s+", " ").trim());
+    }
+
+    @Test
+    void renders_sqlserver_delete_statement() {
+        var renderer = SqlStatementRenderer.standard();
+        DeleteStatement statement = delete(tbl(id("users", QuoteStyle.BRACKETS))).build();
+
+        var rendered = renderer.render(statement, ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE));
+
+        assertEquals("DELETE FROM [users]", rendered.sql().replaceAll("\\s+", " ").trim());
     }
 
     @Test

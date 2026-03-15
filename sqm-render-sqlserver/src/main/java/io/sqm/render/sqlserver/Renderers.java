@@ -23,6 +23,7 @@ public final class Renderers {
 
     private static RenderersRepository registerDefaults(RenderersRepository repository) {
         return repository
+            .register(new SqlServerFunctionExprRenderer())
             .register(new SqlServerLimitOffsetRenderer())
             .register(new SqlServerSelectQueryRenderer());
     }

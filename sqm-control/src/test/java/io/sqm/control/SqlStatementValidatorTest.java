@@ -73,6 +73,16 @@ class SqlStatementValidatorTest {
     }
 
     @Test
+    void standard_supports_sqlserver_dialect_validation() {
+        var validator = SqlStatementValidator.standard(SCHEMA);
+        var query = select(col("id")).from(tbl(Identifier.of("users", io.sqm.core.QuoteStyle.BRACKETS))).build();
+
+        var result = validator.validate(query, ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE));
+
+        assertEquals(ReasonCode.NONE, result.code());
+    }
+
+    @Test
     void standard_reports_dml_assignment_validation_failures() {
         var validator = SqlStatementValidator.standard(SCHEMA);
         UpdateStatement statement = update("users")

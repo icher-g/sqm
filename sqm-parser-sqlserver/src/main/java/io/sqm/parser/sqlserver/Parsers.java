@@ -23,6 +23,7 @@ public final class Parsers {
 
     private static ParsersRepository registerDefaults(ParsersRepository repository) {
         return repository
+            .register(new SqlServerFunctionExprParser())
             .register(new SqlServerLimitOffsetParser())
             .register(new SqlServerSelectQueryParser());
     }

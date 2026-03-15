@@ -41,5 +41,31 @@ class DefaultTranspileRuleRegistryDefaultsTest {
             rules.stream().map(TranspileRule::id).sorted().toList()
         );
     }
+
+    @Test
+    void defaultsIncludeSqlServerBuiltIns() {
+        var postgresToSqlServerRules = DefaultTranspileRuleRegistry.defaults()
+            .rulesFor(SqlDialectId.POSTGRESQL, SqlDialectId.SQLSERVER);
+        var sqlServerToPostgresRules = DefaultTranspileRuleRegistry.defaults()
+            .rulesFor(SqlDialectId.SQLSERVER, SqlDialectId.POSTGRESQL);
+        var ansiToSqlServerRules = DefaultTranspileRuleRegistry.defaults()
+            .rulesFor(SqlDialectId.ANSI, SqlDialectId.SQLSERVER);
+
+        assertEquals(
+            java.util.List.of(
+                "postgres-to-sqlserver-distinct-on-unsupported",
+                "standard-limit-to-sqlserver-top"
+            ),
+            postgresToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()
+        );
+        assertEquals(
+            java.util.List.of("sqlserver-top-to-limit"),
+            sqlServerToPostgresRules.stream().map(TranspileRule::id).sorted().toList()
+        );
+        assertEquals(
+            java.util.List.of("standard-limit-to-sqlserver-top"),
+            ansiToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()
+        );
+    }
 }
 

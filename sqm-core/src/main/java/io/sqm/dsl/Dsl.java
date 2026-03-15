@@ -253,6 +253,87 @@ public final class Dsl {
     }
 
     /**
+     * Creates a SQL Server {@code LEN(...)} function call.
+     *
+     * @param expr string expression to measure.
+     * @return SQL Server {@code LEN(...)} function expression.
+     */
+    public static FunctionExpr len(Expression expr) {
+        return func("LEN", arg(expr));
+    }
+
+    /**
+     * Creates a SQL Server {@code DATALENGTH(...)} function call.
+     *
+     * @param expr expression whose storage length is required.
+     * @return SQL Server {@code DATALENGTH(...)} function expression.
+     */
+    public static FunctionExpr dataLength(Expression expr) {
+        return func("DATALENGTH", arg(expr));
+    }
+
+    /**
+     * Creates a SQL Server {@code GETDATE()} function call.
+     *
+     * @return SQL Server {@code GETDATE()} function expression.
+     */
+    public static FunctionExpr getDate() {
+        return func("GETDATE");
+    }
+
+    /**
+     * Creates a SQL Server {@code DATEADD(...)} function call.
+     *
+     * <p>The {@code datePart} argument is modeled as a string literal in SQM and
+     * is rendered without quotes by the SQL Server renderer.</p>
+     *
+     * @param datePart SQL Server datepart token such as {@code day} or {@code month}.
+     * @param number increment expression.
+     * @param date date/time expression to shift.
+     * @return SQL Server {@code DATEADD(...)} function expression.
+     */
+    public static FunctionExpr dateAdd(String datePart, Expression number, Expression date) {
+        return func("DATEADD", arg(lit(datePart)), arg(number), arg(date));
+    }
+
+    /**
+     * Creates a SQL Server {@code DATEDIFF(...)} function call.
+     *
+     * <p>The {@code datePart} argument is modeled as a string literal in SQM and
+     * is rendered without quotes by the SQL Server renderer.</p>
+     *
+     * @param datePart SQL Server datepart token such as {@code day} or {@code month}.
+     * @param start start date/time expression.
+     * @param end end date/time expression.
+     * @return SQL Server {@code DATEDIFF(...)} function expression.
+     */
+    public static FunctionExpr dateDiff(String datePart, Expression start, Expression end) {
+        return func("DATEDIFF", arg(lit(datePart)), arg(start), arg(end));
+    }
+
+    /**
+     * Creates a SQL Server {@code ISNULL(...)} function call.
+     *
+     * @param expr expression to test for {@code NULL}.
+     * @param replacement replacement expression when {@code expr} is {@code NULL}.
+     * @return SQL Server {@code ISNULL(...)} function expression.
+     */
+    public static FunctionExpr isNullFn(Expression expr, Expression replacement) {
+        return func("ISNULL", arg(expr), arg(replacement));
+    }
+
+    /**
+     * Creates a SQL Server {@code STRING_AGG(...)} function call.
+     *
+     * @param expr expression to aggregate.
+     * @param separator separator expression inserted between aggregated values.
+     * @return SQL Server {@code STRING_AGG(...)} function expression.
+     */
+    public static FunctionExpr stringAgg(Expression expr, Expression separator) {
+        return func("STRING_AGG", arg(expr), arg(separator));
+    }
+
+    /**
      * Creates an {@code INTERVAL '...'} literal without a qualifier.
      *
      * @param value interval literal value without surrounding quotes

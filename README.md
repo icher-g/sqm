@@ -23,7 +23,7 @@ Repository development rules for contributors and coding agents are defined in `
 ## Features
 
 - **Typed immutable SQL model** - composable AST for statements (queries + DML), expressions, predicates, joins, and dialect-specific nodes.
-- **Dialect support** - ANSI + PostgreSQL + MySQL parser/renderer/spec implementations.
+- **Dialect support** - ANSI + PostgreSQL + MySQL + SQL Server parser/renderer/spec implementations.
 - **Validation framework** - schema-aware statement validation with configurable limits and access policies (principal/tenant aware).
 - **Rewrite and normalization pipeline** - built-in and custom rewrite rules (limit injection, qualification, canonicalization, tenant predicate, etc.).
 - **SQL transpilation** - source-to-target PostgreSQL/MySQL conversion with exact, approximate, and unsupported diagnostics.
@@ -153,6 +153,17 @@ Current scope boundary:
 - PostgreSQL writable CTE coverage includes `INSERT ... RETURNING`, `UPDATE ... RETURNING`, and `DELETE ... RETURNING`.
 - MySQL `RETURNING` remains capability-gated and unsupported for current supported MySQL versions.
 - MySQL joined DML support includes qualified assignment targets such as `SET u.name = ...`.
+- SQL Server baseline support includes query + shared-model DML with:
+  - bracket-quoted identifiers
+  - `TOP` and `OFFSET/FETCH`
+  - first-wave SQL Server functions such as `LEN`, `DATEADD`, `DATEDIFF`, `ISNULL`, and `STRING_AGG`
+  - baseline `INSERT`, `UPDATE`, and `DELETE`
+- SQL Server deferred follow-up features include:
+  - `TOP ... PERCENT`
+  - `TOP ... WITH TIES`
+  - `OUTPUT`
+  - `MERGE`
+  - table hints such as `WITH (NOLOCK)`
 
 ### PostgreSQL DML Example
 
@@ -214,6 +225,38 @@ INSERT IGNORE INTO users (id, name) VALUES (1, 'alice')
   DELETE /*+ BKA(users) */ FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'
   DELETE FROM users AS u USE INDEX (idx_users_name) USING users AS u USE INDEX (idx_users_name) INNER JOIN orders AS o FORCE INDEX FOR JOIN (idx_orders_user) ON u.id = o.user_id WHERE o.state = 'closed'
   ```
+
+### SQL Server Query and DML Example
+
+```java
+var parseCtx = ParseContext.of(new SqlServerSpecs());
+var renderCtx = RenderContext.of(new SqlServerDialect());
+
+var query = parseCtx.parse(Query.class, """
+    SELECT TOP (5) [u].[id], LEN([u].[name]) AS [name_len]
+    FROM [users] AS [u]
+    ORDER BY [u].[id]
+    """).value();
+
+var statement = parseCtx.parse(Statement.class, """
+    UPDATE [users]
+    SET [name] = ISNULL([name], 'unknown')
+    WHERE [id] = 1
+    """).value();
+
+System.out.println(renderCtx.render(query).sql());
+System.out.println(renderCtx.render(statement).sql());
+```
+
+Supported SQL Server baseline examples include:
+
+```sql
+SELECT TOP (5) [id], [name] FROM [users] ORDER BY [id]
+SELECT [id], [name] FROM [users] ORDER BY [name] OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY
+INSERT INTO [users] ([id], [name]) VALUES (1, 'alice')
+UPDATE [users] SET [name] = 'alice' WHERE [id] = 1
+DELETE FROM [users] WHERE [id] = 1
+```
 
 ---
 

@@ -449,7 +449,7 @@ public class GenerateMojo extends AbstractMojo {
         return switch (Objects.requireNonNull(resolvedDialect, "resolvedDialect")) {
             case POSTGRESQL -> PostgresSqlTypeMapper.standard();
             case MYSQL -> MySqlSqlTypeMapper.standard();
-            case ANSI -> DefaultSqlTypeMapper.standard();
+            case ANSI, SQLSERVER -> DefaultSqlTypeMapper.standard();
         };
     }
 

@@ -25,6 +25,13 @@ class SqlCodegenDialectTest {
     }
 
     @Test
+    void from_resolvesSqlServerAliases() {
+        assertEquals(SqlCodegenDialect.SQLSERVER, SqlCodegenDialect.from("sqlserver"));
+        assertEquals(SqlCodegenDialect.SQLSERVER, SqlCodegenDialect.from("mssql"));
+        assertEquals(SqlCodegenDialect.SQLSERVER, SqlCodegenDialect.from("tsql"));
+    }
+
+    @Test
     void from_throwsOnUnsupportedDialect() {
         assertThrows(IllegalArgumentException.class, () -> SqlCodegenDialect.from("sqlite"));
     }

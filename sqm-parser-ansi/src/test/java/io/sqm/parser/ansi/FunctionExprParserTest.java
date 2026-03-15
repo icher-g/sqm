@@ -4,6 +4,8 @@ import io.sqm.core.*;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class FunctionExprParserTest {
@@ -92,5 +94,36 @@ class FunctionExprParserTest {
         assertEquals(2, f.name().parts().size());
         assertEquals(QuoteStyle.DOUBLE_QUOTE, f.name().parts().get(0).quoteStyle());
         assertEquals(QuoteStyle.DOUBLE_QUOTE, f.name().parts().get(1).quoteStyle());
+    }
+
+    @Test
+    void parsesAggregateClausesAcrossFunctionPhases() {
+        var f = parseFunc("COUNT(DISTINCT name) FILTER (WHERE active = TRUE) OVER (ORDER BY created_at)");
+
+        assertEquals("count", String.join(".", f.name().values()).toLowerCase());
+        assertEquals(Boolean.TRUE, f.distinctArg());
+        assertNotNull(f.filter());
+        assertNotNull(f.over());
+        assertNull(f.withinGroup());
+    }
+
+    @Test
+    void parsesWithinGroupClause() {
+        var f = parseFunc("STRING_AGG(name, ',') WITHIN GROUP (ORDER BY name)");
+
+        assertEquals("string_agg", String.join(".", f.name().values()).toLowerCase());
+        assertEquals(2, f.args().size());
+        assertNotNull(f.withinGroup());
+        assertNull(f.filter());
+        assertNull(f.over());
+    }
+
+    @Test
+    void rejectsMalformedFilterClause() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(FunctionExpr.class, "COUNT(name) FILTER (name = 'x')");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected WHERE"));
     }
 }

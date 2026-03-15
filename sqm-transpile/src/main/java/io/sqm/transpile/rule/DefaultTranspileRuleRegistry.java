@@ -13,6 +13,9 @@ import io.sqm.transpile.builtin.PostgresToMySqlOperatorFamilyUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlRegexVariantUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlReturningUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlSimilarToUnsupportedRule;
+import io.sqm.transpile.builtin.PostgresToSqlServerDistinctOnUnsupportedRule;
+import io.sqm.transpile.builtin.SqlServerTopToLimitRule;
+import io.sqm.transpile.builtin.StandardLimitToSqlServerTopRule;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -47,7 +50,10 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
             new MySqlToPostgresHintDroppingRule(),
             new MySqlToPostgresOnDuplicateKeyUnsupportedRule(),
             new MySqlToPostgresInsertModeUnsupportedRule(),
-            new MySqlToPostgresJsonFunctionUnsupportedRule()
+            new MySqlToPostgresJsonFunctionUnsupportedRule(),
+            new StandardLimitToSqlServerTopRule(),
+            new SqlServerTopToLimitRule(),
+            new PostgresToSqlServerDistinctOnUnsupportedRule()
         ));
     }
 

@@ -1,0 +1,120 @@
+package io.sqm.it;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import io.sqm.core.Statement;
+import io.sqm.json.SqmJsonMixins;
+import io.sqm.parser.spi.ParseContext;
+import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
+import io.sqm.render.ansi.spi.AnsiDialect;
+import io.sqm.render.spi.RenderContext;
+import io.sqm.render.sqlserver.spi.SqlServerDialect;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.Objects;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class SqlServerDmlRoundTripIntegrationTest {
+
+    private static final ObjectMapper MAPPER = SqmJsonMixins.createDefault()
+        .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+        .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
+
+    private ParseContext parseContext;
+    private RenderContext renderContext;
+
+    private static String canonicalJson(Statement statement) {
+        try {
+            return MAPPER.writeValueAsString(statement);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String normalize(String sql) {
+        return sql.replaceAll("\\s+", " ").trim();
+    }
+
+    @BeforeEach
+    void setUp() {
+        parseContext = ParseContext.of(new SqlServerSpecs());
+        renderContext = RenderContext.of(new SqlServerDialect());
+    }
+
+    @Test
+    void roundTripInsertValuesStatement() {
+        assertRoundTrip(
+            "INSERT INTO [users] ([id], [name]) VALUES (1, 'alice'), (2, 'bob')",
+            "INSERT INTO [users] ([id], [name]) VALUES (1, 'alice'), (2, 'bob')"
+        );
+    }
+
+    @Test
+    void roundTripUpdateStatement() {
+        assertRoundTrip(
+            "UPDATE [users] SET [name] = 'alice', [active] = 1 WHERE [id] = 1",
+            "UPDATE [users] SET [name] = 'alice', [active] = 1 WHERE [id] = 1"
+        );
+    }
+
+    @Test
+    void roundTripDeleteStatement() {
+        assertRoundTrip(
+            "DELETE FROM [users] WHERE [id] = 1",
+            "DELETE FROM [users] WHERE [id] = 1"
+        );
+    }
+
+    @Test
+    void rejectsReturningForSqlServerBaseline() {
+        var result = parseContext.parse(Statement.class, "INSERT INTO [users] ([id]) VALUES (1) RETURNING [id]");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("RETURNING"));
+    }
+
+    @Test
+    void rejectsUpdateFromForSqlServerBaseline() {
+        var result = parseContext.parse(
+            Statement.class,
+            "UPDATE [users] SET [name] = 'alice' FROM [users] INNER JOIN [orders] ON [users].[id] = [orders].[user_id]"
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("UPDATE ... FROM"));
+    }
+
+    @Test
+    void rejectsDeleteUsingForSqlServerBaseline() {
+        var result = parseContext.parse(
+            Statement.class,
+            "DELETE FROM [users] USING [users] INNER JOIN [orders] ON [users].[id] = [orders].[user_id]"
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("DELETE ... USING"));
+    }
+
+    @Test
+    void ansiRendererRejectsSqlServerTopQueryModel() {
+        var parsed = parseContext.parse(Statement.class, "SELECT TOP (5) [id] FROM [users]");
+        assertTrue(parsed.ok(), parsed.errorMessage());
+
+        var ansiRenderContext = RenderContext.of(new AnsiDialect());
+        assertThrows(UnsupportedOperationException.class, () -> ansiRenderContext.render(parsed.value()));
+    }
+
+    private void assertRoundTrip(String originalSql, String expectedCanonicalSql) {
+        var parsed = parseContext.parse(Statement.class, originalSql);
+        assertTrue(parsed.ok(), parsed.errorMessage());
+
+        var rendered = renderContext.render(parsed.value()).sql();
+        assertEquals(normalize(expectedCanonicalSql), normalize(rendered));
+
+        var reparsed = parseContext.parse(Statement.class, rendered);
+        assertTrue(reparsed.ok(), reparsed.errorMessage());
+        assertEquals(canonicalJson(parsed.value()), canonicalJson(reparsed.value()));
+    }
+}

@@ -159,6 +159,61 @@ class SqmJavaEmitterTest {
     }
 
     @Test
+    void emitQuery_coversDistinctOnAndLimitAllWithoutOffsetVariants() {
+        String distinctOnSource = emitter.emitQuery(
+            select(col("id")).from(tbl("t")).distinct(distinctOn(col("id"))).build()
+        );
+        String limitAllSource = emitter.emitQuery(
+            select(star()).from(tbl("t")).limitOffset(limitAll()).build()
+        );
+
+        assertTrue(distinctOnSource.contains(".distinct(col(\"id\"))"));
+        assertTrue(limitAllSource.contains(".limitOffset(limitAll())"));
+    }
+
+    @Test
+    void emitQuery_prefersSqlServerFunctionHelpersWhenAvailable() {
+        var source = emitter.emitQuery(
+            select(
+                len(col("name")),
+                dataLength(col("payload")),
+                getDate(),
+                dateAdd("day", lit(1), col("created_at")),
+                dateDiff("day", col("created_at"), col("updated_at")),
+                isNullFn(col("name"), lit("unknown")),
+                stringAgg(col("name"), lit(",")).withinGroup(orderBy(order(col("name"))))
+            )
+                .from(tbl("users"))
+                .build()
+        );
+
+        assertTrue(source.contains("len(col(\"name\"))"));
+        assertTrue(source.contains("dataLength(col(\"payload\"))"));
+        assertTrue(source.contains("getDate()"));
+        assertTrue(source.contains("dateAdd(\"day\", lit(1), col(\"created_at\"))"));
+        assertTrue(source.contains("dateDiff(\"day\", col(\"created_at\"), col(\"updated_at\"))"));
+        assertTrue(source.contains("isNullFn(col(\"name\"), lit(\"unknown\"))"));
+        assertTrue(source.contains("stringAgg(col(\"name\"), lit(\",\"))"));
+    }
+
+    @Test
+    void emitQuery_fallsBackToGenericFunctionEmissionWhenSqlServerHelpersDoNotFit() {
+        var source = emitter.emitQuery(
+            select(
+                func("GETDATE", arg(lit(1))),
+                func("DATEADD", arg(col("datepart")), arg(lit(1)), arg(col("created_at"))),
+                func("LEN", starArg())
+            )
+                .from(tbl("users"))
+                .build()
+        );
+
+        assertTrue(source.contains("func(\"GETDATE\", arg(lit(1)))"));
+        assertTrue(source.contains("func(\"DATEADD\", arg(col(\"datepart\")), arg(lit(1)), arg(col(\"created_at\")))"));
+        assertTrue(source.contains("len(starArg())"));
+    }
+
+    @Test
     void emitQuery_formatsSupportedLiteralTypes() {
         String source = emitter.emitQuery(
             select(
