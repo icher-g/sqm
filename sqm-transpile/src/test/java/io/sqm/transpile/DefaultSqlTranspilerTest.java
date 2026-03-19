@@ -180,7 +180,7 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
-    void sqlServerTopPercentIsRejectedBeforeRendering() {
+    void sqlServerTopPercentIsRejectedAsUnsupportedTranspilation() {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.SQLSERVER)
             .targetDialect(SqlDialectId.POSTGRESQL)
@@ -188,8 +188,28 @@ class DefaultSqlTranspilerTest {
 
         var result = transpiler.transpile("SELECT TOP (5) PERCENT id FROM users");
 
-        assertEquals(TranspileStatus.PARSE_FAILED, result.status());
-        assertEquals("PARSE_ERROR", result.problems().getFirst().code());
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_SQLSERVER_TOP_PERCENT", result.problems().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "sqlserver-top-to-limit".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+        assertTrue(result.sql().isEmpty());
+    }
+
+    @Test
+    void sqlServerTopWithTiesIsRejectedAsUnsupportedTranspilation() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.SQLSERVER)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .build();
+
+        var result = transpiler.transpile(
+            "SELECT TOP (5) WITH TIES id FROM users ORDER BY id"
+        );
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_SQLSERVER_TOP_WITH_TIES", result.problems().getFirst().code());
         assertTrue(result.sql().isEmpty());
     }
 

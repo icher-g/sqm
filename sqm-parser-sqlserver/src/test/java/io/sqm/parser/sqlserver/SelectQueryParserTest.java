@@ -38,17 +38,29 @@ class SelectQueryParserTest {
     }
 
     @Test
-    void rejects_top_percent() {
+    void parses_top_percent() {
         var context = ParseContext.of(new SqlServerSpecs());
-        var result = context.parse(Query.class, "SELECT TOP (10) PERCENT [u].[id] FROM [users] AS [u]");
+        var result = context.parse(SelectQuery.class, "SELECT TOP (10) PERCENT [u].[id] FROM [users] AS [u]");
 
-        assertTrue(result.isError());
+        assertFalse(result.isError());
+        assertTrue(result.value().topSpec().percent());
+        assertFalse(result.value().topSpec().withTies());
     }
 
     @Test
-    void rejects_top_with_ties() {
+    void parses_top_with_ties() {
         var context = ParseContext.of(new SqlServerSpecs());
-        var result = context.parse(Query.class, "SELECT TOP (10) WITH TIES [u].[id] FROM [users] AS [u] ORDER BY [u].[id]");
+        var result = context.parse(SelectQuery.class, "SELECT TOP (10) WITH TIES [u].[id] FROM [users] AS [u] ORDER BY [u].[id]");
+
+        assertFalse(result.isError());
+        assertFalse(result.value().topSpec().percent());
+        assertTrue(result.value().topSpec().withTies());
+    }
+
+    @Test
+    void rejects_top_with_ties_without_order_by() {
+        var context = ParseContext.of(new SqlServerSpecs());
+        var result = context.parse(Query.class, "SELECT TOP (10) WITH TIES [u].[id] FROM [users] AS [u]");
 
         assertTrue(result.isError());
     }

@@ -1,12 +1,6 @@
 package io.sqm.validate.sqlserver.rule;
 
-import io.sqm.core.LimitOffset;
-import io.sqm.core.Node;
-import io.sqm.core.OrderItem;
-import io.sqm.core.SelectModifier;
-import io.sqm.core.SelectQuery;
-import io.sqm.core.Table;
-import io.sqm.core.TopSpec;
+import io.sqm.core.*;
 import io.sqm.core.walk.RecursiveNodeVisitor;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
@@ -32,12 +26,12 @@ public final class SqlServerSelectValidationRule implements SchemaValidationRule
      * Validates SQL Server query shapes that are unsupported or invalid in the
      * current baseline support slice.
      *
-     * @param node select query.
+     * @param node    select query.
      * @param context validation context.
      */
     @Override
     public void validate(SelectQuery node, SchemaValidationContext context) {
-        validateTop(node.topSpec(), context);
+        validateTop(node, context);
         validateLimitOffset(node, context);
 
         if (node.lockFor() != null) {
@@ -72,22 +66,15 @@ public final class SqlServerSelectValidationRule implements SchemaValidationRule
         new SelectFeatureWalker(context).acceptNode(node);
     }
 
-    private void validateTop(TopSpec topSpec, SchemaValidationContext context) {
+    private void validateTop(SelectQuery node, SchemaValidationContext context) {
+        var topSpec = node.topSpec();
         if (topSpec == null) {
             return;
         }
-        if (topSpec.percent()) {
+        if (topSpec.withTies() && node.orderBy() == null) {
             context.addProblem(
-                ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
-                "SQL Server baseline support does not include TOP PERCENT",
-                topSpec,
-                "select.top"
-            );
-        }
-        if (topSpec.withTies()) {
-            context.addProblem(
-                ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
-                "SQL Server baseline support does not include TOP WITH TIES",
+                ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
+                "SQL Server TOP WITH TIES requires ORDER BY",
                 topSpec,
                 "select.top"
             );

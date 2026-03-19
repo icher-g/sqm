@@ -118,15 +118,14 @@ Expected warning:
 
 - Exact:
   - row limiting rewrite from `LIMIT` to SQL Server `TOP`
-- Unsupported:
-  - statements that require SQL Server-deferred `TOP ... PERCENT`
-  - statements that require SQL Server-deferred `TOP ... WITH TIES`
 
 ### SQL Server -> Standard / ANSI-style target
 
 - Exact:
   - `TOP` to standard row-limiting model / target `LIMIT`
 - Unsupported:
+  - `TOP ... PERCENT`
+  - `TOP ... WITH TIES`
   - `DISTINCT ON` when targeting SQL Server from PostgreSQL source
   - deferred SQL Server advanced DML features such as `OUTPUT`, `MERGE`, and hints
 

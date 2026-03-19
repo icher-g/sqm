@@ -70,6 +70,23 @@ public class SelectQueryParser extends io.sqm.parser.ansi.SelectQueryParser {
         return ok(null);
     }
 
+    /**
+     * Validates completed SQL Server SELECT query state.
+     *
+     * @param cur token cursor.
+     * @param ctx parse context.
+     * @param q   mutable query builder.
+     * @return parsing result.
+     */
+    @Override
+    protected ParseResult<Void> validateCompletedQuery(Cursor cur, ParseContext ctx, SelectQueryBuilder q) {
+        var topSpec = q.currentTopSpec();
+        if (topSpec != null && topSpec.withTies() && q.currentOrderBy() == null) {
+            return error("TOP WITH TIES requires ORDER BY in SQL Server", cur.fullPos());
+        }
+        return ok(null);
+    }
+
     private ParseResult<TopSpec> parseTopClause(Cursor cur, ParseContext ctx) {
         if (!cur.consumeIf(TokenType.TOP)) {
             return ok(null);
@@ -91,14 +108,6 @@ public class SelectQueryParser extends io.sqm.parser.ansi.SelectQueryParser {
         if (cur.consumeIf(TokenType.WITH)) {
             cur.expect("Expected TIES after WITH in TOP clause", TokenType.TIES);
             withTies = true;
-        }
-
-        if (percent) {
-            return error("TOP PERCENT is not supported by SQL Server baseline support", cur.fullPos());
-        }
-
-        if (withTies) {
-            return error("TOP WITH TIES is not supported by SQL Server baseline support", cur.fullPos());
         }
 
         return ok(TopSpec.of(count, percent, withTies));

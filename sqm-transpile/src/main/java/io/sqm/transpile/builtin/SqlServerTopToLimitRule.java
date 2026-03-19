@@ -14,7 +14,7 @@ import io.sqm.transpile.TranspileRuleResult;
 import io.sqm.transpile.rule.TranspileRule;
 
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Rewrites baseline SQL Server {@code TOP} queries into generic limit-only
@@ -49,11 +49,12 @@ public final class SqlServerTopToLimitRule implements TranspileRule {
 
     @Override
     public TranspileRuleResult apply(Statement statement, TranspileContext context) {
-        if (hasUnsupportedTopVariant(statement)) {
+        var unsupportedVariant = unsupportedTopVariant(statement);
+        if (unsupportedVariant != null) {
             return TranspileRuleResult.unsupported(
                 statement,
-                "UNSUPPORTED_SQLSERVER_TOP_VARIANT",
-                "SQL Server TOP PERCENT and TOP WITH TIES are not supported by the transpilation baseline"
+                unsupportedVariant.code(),
+                unsupportedVariant.message()
             );
         }
 
@@ -69,8 +70,8 @@ public final class SqlServerTopToLimitRule implements TranspileRule {
         );
     }
 
-    private static boolean hasUnsupportedTopVariant(Statement statement) {
-        var found = new AtomicBoolean(false);
+    private static UnsupportedTopVariant unsupportedTopVariant(Statement statement) {
+        var found = new AtomicReference<UnsupportedTopVariant>();
         statement.accept(new RecursiveNodeVisitor<Void>() {
             @Override
             protected Void defaultResult() {
@@ -79,13 +80,26 @@ public final class SqlServerTopToLimitRule implements TranspileRule {
 
             @Override
             public Void visitTopSpec(TopSpec spec) {
-                if (spec.percent() || spec.withTies()) {
-                    found.set(true);
+                if (found.get() == null) {
+                    if (spec.percent()) {
+                        found.set(new UnsupportedTopVariant(
+                            "UNSUPPORTED_SQLSERVER_TOP_PERCENT",
+                            "SQL Server TOP PERCENT cannot be transpiled exactly to LIMIT/OFFSET-style targets"
+                        ));
+                    } else if (spec.withTies()) {
+                        found.set(new UnsupportedTopVariant(
+                            "UNSUPPORTED_SQLSERVER_TOP_WITH_TIES",
+                            "SQL Server TOP WITH TIES cannot be transpiled exactly to LIMIT/OFFSET-style targets"
+                        ));
+                    }
                 }
                 return super.visitTopSpec(spec);
             }
         });
         return found.get();
+    }
+
+    private record UnsupportedTopVariant(String code, String message) {
     }
 
     private static final class TopToLimitTransformer extends RecursiveNodeTransformer {

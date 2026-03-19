@@ -112,29 +112,47 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
-    void validate_reportsDeferredTopVariants() {
+    void validate_acceptsTopPercent() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
-        var topPercentQuery = select(col("u", "id"))
+        var query = select(col("u", "id"))
             .from(tbl("users").as("u"))
             .top(topPercent(lit(10L)))
             .build();
-        var topWithTiesQuery = select(col("u", "id"))
+
+        var result = validator.validate(query);
+
+        assertTrue(result.ok(), result.problems().toString());
+    }
+
+    @Test
+    void validate_acceptsTopWithTiesWithOrderBy() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var query = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .orderBy(order(col("u", "id")))
+            .top(topWithTies(lit(10L)))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.ok(), result.problems().toString());
+    }
+
+    @Test
+    void validate_reportsTopWithTiesWithoutOrderBy() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var query = select(col("u", "id"))
             .from(tbl("users").as("u"))
             .top(topWithTies(lit(10L)))
             .build();
 
-        var topPercentResult = validator.validate(topPercentQuery);
-        var topWithTiesResult = validator.validate(topWithTiesQuery);
+        var result = validator.validate(query);
 
-        assertTrue(topPercentResult.problems().stream().anyMatch(problem ->
-            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
-                && "select.top".equals(problem.clausePath())
-                && problem.message().contains("PERCENT")
-        ));
-        assertTrue(topWithTiesResult.problems().stream().anyMatch(problem ->
-            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
                 && "select.top".equals(problem.clausePath())
                 && problem.message().contains("WITH TIES")
+                && problem.message().contains("ORDER BY")
         ));
     }
 
