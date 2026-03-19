@@ -134,7 +134,7 @@ class TransportParityIntegrationTest {
     }
 
     @Test
-    void unsupported_sqlserver_feature_surfaces_clear_diagnostics_across_transports() {
+    void invalid_sqlserver_advanced_top_surfaces_clear_diagnostics_across_transports() {
         var service = SqlMiddlewareServices.create(
             SqlDecisionServiceConfig.builder(SCHEMA)
                 .buildValidationAndRewriteConfig()
@@ -143,7 +143,7 @@ class TransportParityIntegrationTest {
         var restController = new SqlMiddlewareRestController(new SqlMiddlewareRestAdapter(service));
         var mcpRouter = new SqlMiddlewareMcpToolRouter(new SqlMiddlewareMcpAdapter(service));
         var request = new AnalyzeRequest(
-            "select top 10 percent [id] from [users]",
+            "select top 10 with ties [id] from [users]",
             new ExecutionContextDto("sqlserver", null, null, null, null)
         );
 
@@ -157,7 +157,8 @@ class TransportParityIntegrationTest {
         assertEquals(direct.reasonCode(), mcp.reasonCode());
         assertEquals(DecisionKindDto.DENY, direct.kind());
         assertEquals(ReasonCodeDto.DENY_PIPELINE_ERROR, direct.reasonCode());
-        assertTrue(direct.message() != null && direct.message().toUpperCase().contains("PERCENT"));
+        assertTrue(direct.message() != null && direct.message().toUpperCase().contains("WITH TIES"));
+        assertTrue(direct.message().toUpperCase().contains("ORDER BY"));
     }
 }
 
