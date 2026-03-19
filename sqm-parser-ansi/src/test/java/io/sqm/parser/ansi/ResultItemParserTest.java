@@ -27,6 +27,19 @@ class ResultItemParserTest {
     }
 
     @Test
+    void parsesStarAndQualifiedStarItems() {
+        var ctx = ParseContext.of(new TestSpecs());
+
+        var star = ctx.parse(ResultItem.class, "*");
+        var qualifiedStar = ctx.parse(ResultItem.class, "u.*");
+
+        assertTrue(star.ok(), star.errorMessage());
+        assertEquals("star", star.value().matchResultItem().star(ignore -> "star").orElse(null));
+        assertTrue(qualifiedStar.ok(), qualifiedStar.errorMessage());
+        assertEquals("u", qualifiedStar.value().matchResultItem().qualifiedStar(item -> item.qualifier().value()).orElse(null));
+    }
+
+    @Test
     void errorWhenExpressionMissing() {
         var ctx = ParseContext.of(new TestSpecs());
         var result = ctx.parse(ResultItem.class, "AS out_id");

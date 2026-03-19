@@ -374,6 +374,19 @@ class SqmJavaEmitterTest {
     }
 
     @Test
+    void emitStatement_covers_generic_result_star_variants() {
+        var insert = insert(tbl("users"))
+            .columns(id("id"))
+            .values(row(lit(1)))
+            .result(star(), star("u"))
+            .build();
+
+        var source = emitter.emitStatement(insert);
+
+        assertTrue(source.contains(".result(star(), star(id(\"u\")))"));
+    }
+
+    @Test
     void emitQuery_covers_remaining_window_distinct_and_limit_variants() {
         var baseFrameOnly = emitter.emitQuery(
             select(func("f").over(over("base", rows(currentRow())))).from(tbl("t")).build()

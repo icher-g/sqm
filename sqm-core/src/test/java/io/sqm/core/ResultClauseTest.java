@@ -3,6 +3,8 @@ package io.sqm.core;
 import io.sqm.dsl.Dsl;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -43,5 +45,15 @@ class ResultClauseTest {
 
         assertTrue(into.columns().contains(id("col1")));
         assertThrows(UnsupportedOperationException.class, () -> into.columns().add(id("col2")));
+    }
+
+    @Test
+    void supportsStringBasedDslResultIntoOverloads() {
+        var fromTable = Dsl.resultInto(tbl("audit"), "col_a", "col_b");
+        var fromName = Dsl.resultInto("audit", "col_a", "col_b");
+
+        assertEquals(List.of(id("col_a"), id("col_b")), fromTable.columns());
+        assertEquals("audit", fromName.target().name().value());
+        assertEquals(List.of(id("col_a"), id("col_b")), fromName.columns());
     }
 }

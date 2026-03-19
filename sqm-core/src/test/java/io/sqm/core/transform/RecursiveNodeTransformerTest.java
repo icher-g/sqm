@@ -1405,4 +1405,29 @@ class RecursiveNodeTransformerTest {
         var unchanged = (UpdateStatement) statement.accept(new NothingTransformer());
         assertSame(statement, unchanged);
     }
+
+    @Test
+    void visitResultClauseWithResultIntoQualifiedStarAndOutputStar() {
+        var statement = update("users")
+            .set(id("name"), lit("alice"))
+            .result(tbl("audit"), star("u"), deletedAll())
+            .build();
+
+        var transformer = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitTable(Table t) {
+                if ("audit".equals(t.name().value())) {
+                    return tbl("audit_log");
+                }
+                return t;
+            }
+        };
+
+        var transformed = (UpdateStatement) statement.accept(transformer);
+
+        assertNotSame(statement, transformed);
+        assertEquals("audit_log", transformed.result().into().target().name().value());
+        assertEquals("u", transformed.result().items().getFirst().matchResultItem().qualifiedStar(item -> item.qualifier().value()).orElse(null));
+        assertEquals(OutputRowSource.DELETED, transformed.result().items().get(1).matchResultItem().outputStar(OutputStarResultItem::source).orElse(null));
+    }
 }
