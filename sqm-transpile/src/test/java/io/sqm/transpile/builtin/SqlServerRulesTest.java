@@ -48,7 +48,7 @@ class SqlServerRulesTest {
     }
 
     @Test
-    void sqlServerTopToLimitRejectsDeferredTopVariants() {
+    void sqlServerTopToLimitRejectsTopPercent() {
         Statement statement = Dsl.select(Dsl.col("id"))
             .from(Dsl.tbl("users"))
             .top(Dsl.topPercent(Dsl.lit(5)))
@@ -58,7 +58,22 @@ class SqlServerRulesTest {
 
         assertEquals(io.sqm.transpile.RewriteFidelity.UNSUPPORTED, result.fidelity());
         assertFalse(result.problems().isEmpty());
-        assertEquals("UNSUPPORTED_SQLSERVER_TOP_VARIANT", result.problems().getFirst().code());
+        assertEquals("UNSUPPORTED_SQLSERVER_TOP_PERCENT", result.problems().getFirst().code());
+    }
+
+    @Test
+    void sqlServerTopToLimitRejectsTopWithTies() {
+        Statement statement = Dsl.select(Dsl.col("id"))
+            .from(Dsl.tbl("users"))
+            .orderBy(Dsl.order(Dsl.col("id")))
+            .top(Dsl.topWithTies(Dsl.lit(5)))
+            .build();
+
+        var result = new SqlServerTopToLimitRule().apply(statement, context(SqlDialectId.SQLSERVER, SqlDialectId.POSTGRESQL));
+
+        assertEquals(io.sqm.transpile.RewriteFidelity.UNSUPPORTED, result.fidelity());
+        assertFalse(result.problems().isEmpty());
+        assertEquals("UNSUPPORTED_SQLSERVER_TOP_WITH_TIES", result.problems().getFirst().code());
     }
 
     @Test

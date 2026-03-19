@@ -7,8 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class SqlServerRoundTripIntegrationTest {
 
@@ -70,12 +69,11 @@ class SqlServerRoundTripIntegrationTest {
     }
 
     @Test
-    void parser_rejects_top_percent() {
+    void parser_accepts_top_percent() {
         var ctx = ParseContext.of(new SqlServerSpecs());
         var result = ctx.parse(Query.class, "SELECT TOP 10 PERCENT [id] FROM [users]");
 
-        assertTrue(result.isError());
-        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("PERCENT"));
+        assertFalse(result.isError());
     }
 
     @Test

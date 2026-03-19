@@ -29,6 +29,11 @@ public class SelectQueryRenderer extends io.sqm.render.ansi.SelectQueryRenderer 
         if (limitOffset != null && limitOffset.offset() != null && node.orderBy() == null) {
             throw new UnsupportedOperationException("SQL Server OFFSET/FETCH requires ORDER BY");
         }
+
+        var topSpec = node.topSpec();
+        if (topSpec != null && topSpec.withTies() && node.orderBy() == null) {
+            throw new UnsupportedOperationException("SQL Server TOP WITH TIES requires ORDER BY");
+        }
     }
 
     /**

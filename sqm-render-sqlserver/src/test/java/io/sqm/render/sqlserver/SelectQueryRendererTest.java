@@ -15,6 +15,7 @@ import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.distinct;
 import static io.sqm.dsl.Dsl.id;
 import static io.sqm.dsl.Dsl.top;
+import static io.sqm.dsl.Dsl.topWithTies;
 import static io.sqm.dsl.Dsl.tbl;
 
 class SelectQueryRendererTest {
@@ -65,6 +66,29 @@ class SelectQueryRendererTest {
         var rendered = RenderContext.of(new SqlServerDialect()).render(query);
 
         assertEquals("SELECT TOP (10) PERCENT 1", normalize(rendered.sql()));
+    }
+
+    @Test
+    void renders_top_with_ties_when_order_by_is_present() {
+        var query = SelectQuery.builder()
+            .top(topWithTies(Expression.literal(10)))
+            .select(Expression.literal(1))
+            .orderBy(OrderItem.of(1))
+            .build();
+
+        var rendered = RenderContext.of(new SqlServerDialect()).render(query);
+
+        assertEquals("SELECT TOP (10) WITH TIES 1 ORDER BY 1", normalize(rendered.sql()));
+    }
+
+    @Test
+    void rejects_top_with_ties_without_order_by() {
+        var query = SelectQuery.builder()
+            .top(topWithTies(Expression.literal(10)))
+            .select(Expression.literal(1))
+            .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(query));
     }
 
     private static String normalize(String sql) {

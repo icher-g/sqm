@@ -155,13 +155,11 @@ Current scope boundary:
 - MySQL joined DML support includes qualified assignment targets such as `SET u.name = ...`.
 - SQL Server baseline support includes query + shared-model DML with:
   - bracket-quoted identifiers
-  - `TOP` and `OFFSET/FETCH`
+  - `TOP`, `TOP ... PERCENT`, `TOP ... WITH TIES`, and `OFFSET/FETCH`
   - first-wave SQL Server functions such as `LEN`, `DATEADD`, `DATEDIFF`, `ISNULL`, and `STRING_AGG`
   - baseline `INSERT`, `UPDATE`, and `DELETE`
   - `OUTPUT` and `OUTPUT ... INTO` through shared `ResultClause` support
 - SQL Server deferred follow-up features include:
-  - `TOP ... PERCENT`
-  - `TOP ... WITH TIES`
   - `MERGE`
   - table hints such as `WITH (NOLOCK)`
 
