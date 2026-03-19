@@ -213,13 +213,8 @@ final class SqmJavaEmitter {
                     }
                 }
             }
-            if (statement.output() != null) {
-                sb.append(".output(").append(emitNode(statement.output())).append(")");
-            }
-            if (!statement.returning().isEmpty()) {
-                sb.append(".returning(")
-                    .append(joinInline(statement.returning().stream().map(this::emitNode).toList()))
-                    .append(")");
+            if (statement.result() != null) {
+                sb.append(emitResultBuilderCall(statement.result()));
             }
             sb.append(".build()");
             return sb.toString();
@@ -247,13 +242,8 @@ final class SqmJavaEmitter {
             if (statement.where() != null) {
                 sb.append(".where(").append(emitNode(statement.where())).append(")");
             }
-            if (statement.output() != null) {
-                sb.append(".output(").append(emitNode(statement.output())).append(")");
-            }
-            if (!statement.returning().isEmpty()) {
-                sb.append(".returning(")
-                    .append(joinInline(statement.returning().stream().map(this::emitNode).toList()))
-                    .append(")");
+            if (statement.result() != null) {
+                sb.append(emitResultBuilderCall(statement.result()));
             }
             sb.append(".build()");
             return sb.toString();
@@ -278,16 +268,19 @@ final class SqmJavaEmitter {
             if (statement.where() != null) {
                 sb.append(".where(").append(emitNode(statement.where())).append(")");
             }
-            if (statement.output() != null) {
-                sb.append(".output(").append(emitNode(statement.output())).append(")");
-            }
-            if (!statement.returning().isEmpty()) {
-                sb.append(".returning(")
-                    .append(joinInline(statement.returning().stream().map(this::emitNode).toList()))
-                    .append(")");
+            if (statement.result() != null) {
+                sb.append(emitResultBuilderCall(statement.result()));
             }
             sb.append(".build()");
             return sb.toString();
+        }
+
+        private String emitResultBuilderCall(ResultClause clause) {
+            var items = joinInline(clause.items().stream().map(this::emitNode).toList());
+            if (clause.into() == null) {
+                return ".result(" + items + ")";
+            }
+            return ".result(" + emitNode(clause.into()) + ", " + items + ")";
         }
 
         @Override
@@ -584,30 +577,45 @@ final class SqmJavaEmitter {
         }
 
         @Override
-        public String visitOutputItem(OutputItem item) {
-            var base = "outputItem(" + emitNode(item.expression());
+        public String visitExprResultItem(ExprResultItem item) {
+            var expr = emitNode(item.expr());
             if (item.alias() != null) {
-                return base + ", " + emitIdentifier(item.alias()) + ")";
+                return expr + ".as(" + emitIdentifier(item.alias()) + ")";
             }
-            return base + ")";
+            return expr;
         }
 
         @Override
-        public String visitOutputInto(OutputInto into) {
+        public String visitStarResultItem(StarResultItem item) {
+            return "star()";
+        }
+
+        @Override
+        public String visitQualifiedStarResultItem(QualifiedStarResultItem item) {
+            return "star(" + emitIdentifier(item.qualifier()) + ")";
+        }
+
+        @Override
+        public String visitOutputStarResultItem(OutputStarResultItem item) {
+            return item.source() == OutputRowSource.INSERTED ? "insertedAll()" : "deletedAll()";
+        }
+
+        @Override
+        public String visitResultInto(ResultInto into) {
             if (into.columns().isEmpty()) {
-                return "outputInto(" + emitNode(into.target()) + ")";
+                return "resultInto(" + emitNode(into.target()) + ")";
             }
-            return "outputInto(" + emitNode(into.target()) + ", "
+            return "resultInto(" + emitNode(into.target()) + ", "
                 + joinInline(into.columns().stream().map(DslEmitterVisitor::emitIdentifier).toList())
                 + ")";
         }
 
         @Override
-        public String visitOutputClause(OutputClause clause) {
+        public String visitResultClause(ResultClause clause) {
             if (clause.into() == null) {
-                return "output(" + joinInline(clause.items().stream().map(this::emitNode).toList()) + ")";
+                return "result(" + joinInline(clause.items().stream().map(this::emitNode).toList()) + ")";
             }
-            return "output(" + emitNode(clause.into()) + ", "
+            return "result(" + emitNode(clause.into()) + ", "
                 + joinInline(clause.items().stream().map(this::emitNode).toList()) + ")";
         }
 

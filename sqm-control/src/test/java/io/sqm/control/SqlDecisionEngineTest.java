@@ -15,7 +15,6 @@ import io.sqm.control.rewrite.BuiltInRewriteSettings;
 import io.sqm.control.rewrite.TenantPredicateRewriteRule;
 import io.sqm.control.rewrite.TenantRewriteTablePolicy;
 import io.sqm.control.service.SqlDecisionEngine;
-import io.sqm.core.DeleteStatement;
 import io.sqm.core.Expression;
 import io.sqm.core.Query;
 import io.sqm.core.UpdateStatement;
@@ -162,7 +161,7 @@ class SqlDecisionEngineTest {
             SqlStatementRenderer.standard()
         );
 
-        var result = engine.evaluate(DeleteStatement.of(tbl("users"), java.util.List.of(), java.util.List.of(), null, null, java.util.List.of(), java.util.List.of()), ExecutionContext.of("mysql", ExecutionMode.ANALYZE));
+        var result = engine.evaluate(io.sqm.dsl.Dsl.delete(tbl("users")).build(), ExecutionContext.of("mysql", ExecutionMode.ANALYZE));
 
         assertEquals(DecisionKind.ALLOW, result.kind());
         assertEquals(ReasonCode.NONE, result.reasonCode());

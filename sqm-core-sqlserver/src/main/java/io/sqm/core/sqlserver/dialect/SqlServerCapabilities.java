@@ -25,6 +25,7 @@ public final class SqlServerCapabilities {
     public static DialectCapabilities of(SqlDialectVersion version) {
         Objects.requireNonNull(version, "version");
         return VersionedDialectCapabilities.builder(version)
+            .supports(SqlFeature.DML_RESULT_CLAUSE)
             .supports(SqlFeature.EXPR_COLLATE)
             .build();
     }

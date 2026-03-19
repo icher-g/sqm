@@ -19,7 +19,7 @@ final class ValidationReportWriter {
     /**
      * Creates report writer.
      *
-     * @param jsonPath JSON report output path.
+     * @param jsonPath JSON report result path.
      * @param failOnValidationError current fail policy used by code generation.
      */
     ValidationReportWriter(Path jsonPath, boolean failOnValidationError) {

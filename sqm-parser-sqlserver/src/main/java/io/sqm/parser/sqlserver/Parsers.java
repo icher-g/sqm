@@ -24,16 +24,19 @@ public final class Parsers {
     }
 
     private static ParsersRepository registerDefaults(ParsersRepository repository) {
-        var atomicExprParser = new SqlServerAtomicExprParser();
+        var atomicExprParser = new AtomicExprParser();
         var postfixExprParser = new PostfixExprParser(atomicExprParser);
         return repository
-            .register(new SqlServerInsertStatementParser())
-            .register(new SqlServerUpdateStatementParser())
-            .register(new SqlServerDeleteStatementParser())
-            .register(new SqlServerOutputColumnExprParser())
-            .register(new SqlServerFunctionExprParser())
-            .register(new SqlServerLimitOffsetParser())
+            .register(new InsertStatementParser())
+            .register(new UpdateStatementParser())
+            .register(new DeleteStatementParser())
+            .register(new OutputColumnExprParser())
+            .register(new OutputStarResultItemParser())
+            .register(new FunctionExprParser())
+            .register(new LimitOffsetParser())
             .register(new PowerArithmeticExprParser(postfixExprParser))
-            .register(new SqlServerSelectQueryParser());
+            .register(new SelectQueryParser())
+            .register(new ResultClauseParser())
+            .register(new ResultIntoParser());
     }
 }

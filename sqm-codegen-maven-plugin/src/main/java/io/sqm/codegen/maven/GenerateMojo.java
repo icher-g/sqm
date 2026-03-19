@@ -206,7 +206,7 @@ public class GenerateMojo extends AbstractMojo {
     @Parameter(property = "sqm.codegen.failOnValidationError", defaultValue = "true")
     private boolean failOnValidationError = true;
     /**
-     * Optional validation report JSON output path.
+     * Optional validation report JSON result path.
      */
     @Parameter(property = "sqm.codegen.validationReportPath", defaultValue = "${project.build.directory}/sqm-codegen/validation-report.json")
     private String validationReportPath;

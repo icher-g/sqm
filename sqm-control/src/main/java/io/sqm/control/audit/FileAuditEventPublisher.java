@@ -27,7 +27,7 @@ public final class FileAuditEventPublisher implements AuditEventPublisher {
     /**
      * Creates a file-backed publisher.
      *
-     * @param outputPath output file path
+     * @param outputPath result file path
      * @return publisher instance
      */
     public static FileAuditEventPublisher of(Path outputPath) {
@@ -38,7 +38,7 @@ public final class FileAuditEventPublisher implements AuditEventPublisher {
     /**
      * Creates a file-backed publisher with rotation/retention settings.
      *
-     * @param outputPath output file path
+     * @param outputPath result file path
      * @param maxBytes   maximum file size in bytes before rotation; {@code <= 0} disables rotation
      * @param maxHistory number of rotated files retained; {@code 0} keeps no history files
      * @return publisher instance

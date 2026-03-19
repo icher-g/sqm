@@ -5,12 +5,7 @@ import io.sqm.core.Statement;
 import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
-import io.sqm.parser.spi.IdentifierQuoting;
-import io.sqm.parser.spi.Lookups;
-import io.sqm.parser.spi.OperatorPolicy;
-import io.sqm.parser.spi.ParseContext;
-import io.sqm.parser.spi.ParsersRepository;
-import io.sqm.parser.spi.Specs;
+import io.sqm.parser.spi.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
@@ -30,7 +25,7 @@ class DeleteStatementParserTest {
         assertEquals("users", statement.table().name().value());
         assertEquals(1, statement.using().size());
         assertNotNull(statement.where());
-        assertTrue(statement.returning().isEmpty());
+        assertNull(statement.result());
     }
 
     @Test
@@ -40,7 +35,7 @@ class DeleteStatementParserTest {
             "DELETE FROM users WHERE id = 1 RETURNING id, name");
 
         assertTrue(result.ok(), result.errorMessage());
-        assertEquals(2, result.value().returning().size());
+        assertEquals(2, result.value().result().items().size());
     }
 
     @Test
@@ -50,7 +45,7 @@ class DeleteStatementParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertTrue(result.value().using().isEmpty());
-        assertTrue(result.value().returning().isEmpty());
+        assertNull(result.value().result());
         assertNull(result.value().table().alias());
     }
 
@@ -82,7 +77,7 @@ class DeleteStatementParserTest {
         assertTrue(result.ok(), result.errorMessage());
         assertInstanceOf(DeleteStatement.class, result.value());
         assertEquals(1, ((DeleteStatement) result.value()).using().size());
-        assertEquals(1, ((DeleteStatement) result.value()).returning().size());
+        assertEquals(1, ((DeleteStatement) result.value()).result().items().size());
     }
 
     @Test
@@ -165,7 +160,7 @@ class DeleteStatementParserTest {
 
         @Override
         public DialectCapabilities capabilities() {
-            return feature -> feature != SqlFeature.DML_RETURNING && delegate.capabilities().supports(feature);
+            return feature -> feature != SqlFeature.DML_RESULT_CLAUSE && delegate.capabilities().supports(feature);
         }
 
         @Override

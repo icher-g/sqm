@@ -1,8 +1,6 @@
 package io.sqm.validate.schema.rule;
 
-import io.sqm.core.ColumnExpr;
-import io.sqm.core.GroupItem;
-import io.sqm.core.SelectQuery;
+import io.sqm.core.*;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
@@ -75,13 +73,13 @@ final class SelectAggregationValidationRule implements SchemaValidationRule<Sele
                         "select"
                     );
                 }
-                case io.sqm.core.StarSelectItem ignored -> context.addProblem(
+                case StarSelectItem ignored -> context.addProblem(
                     ValidationProblem.Code.AGGREGATION_MISUSE,
                     "SELECT * is not allowed together with GROUP BY without explicit aggregation",
                     node,
                     "select"
                 );
-                case io.sqm.core.QualifiedStarSelectItem ignored -> context.addProblem(
+                case QualifiedStarSelectItem ignored -> context.addProblem(
                     ValidationProblem.Code.AGGREGATION_MISUSE,
                     "SELECT * is not allowed together with GROUP BY without explicit aggregation",
                     node,

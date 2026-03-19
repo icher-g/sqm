@@ -46,14 +46,14 @@ class SelectItemParserTest {
     private static ParseContext contextWithSelectItemParsers() {
         var repo = new DefaultParsersRepository()
             .register(SelectItem.class, new SelectItemParser())
-            .register(StarSelectItem.class, new StarSelectItemParser())
+            .register(StarSelectItem.class, new StarItemParser())
             .register(QualifiedStarSelectItem.class, new QualifiedStarSelectItemParser())
             .register(ExprSelectItem.class, new ExprSelectItemParser())
             .register(Expression.class, new SimpleExpressionParser());
         return TestSupport.context(repo);
     }
 
-    private static final class StarSelectItemParser implements MatchableParser<StarSelectItem> {
+    private static final class StarItemParser implements MatchableParser<StarSelectItem> {
         @Override
         public boolean match(Cursor cur, ParseContext ctx) {
             return cur.match(t -> isStar(t));

@@ -1,8 +1,11 @@
 package io.sqm.validate.sqlserver.rule;
 
+import io.sqm.core.ExprResultItem;
 import io.sqm.core.InsertStatement;
 import io.sqm.core.OutputColumnExpr;
 import io.sqm.core.OutputRowSource;
+import io.sqm.core.OutputStarResultItem;
+import io.sqm.core.ResultItem;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
@@ -47,25 +50,26 @@ public final class SqlServerInsertStatementValidationRule implements SchemaValid
                 "insert.on_conflict"
             );
         }
-        if (!node.returning().isEmpty()) {
-            context.addProblem(
-                ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
-                "SQL Server baseline support does not include INSERT RETURNING",
-                node,
-                "insert.returning"
-            );
-        }
-        if (node.output() != null) {
-            for (var item : node.output().items()) {
-                if (item.expression() instanceof OutputColumnExpr outputColumn && outputColumn.source() == OutputRowSource.DELETED) {
+        if (node.result() != null) {
+            for (var item : node.result().items()) {
+                if (usesOutputSource(item, OutputRowSource.DELETED)) {
                     context.addProblem(
                         ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
                         "INSERT OUTPUT may reference inserted.<column> values, but not deleted.<column>",
                         item,
-                        "insert.output"
+                        "insert.result"
                     );
                 }
             }
         }
+    }
+
+    private static boolean usesOutputSource(ResultItem item, OutputRowSource source) {
+        if (item instanceof OutputStarResultItem outputStar) {
+            return outputStar.source() == source;
+        }
+        return item instanceof ExprResultItem exprItem
+            && exprItem.expr() instanceof OutputColumnExpr outputColumn
+            && outputColumn.source() == source;
     }
 }

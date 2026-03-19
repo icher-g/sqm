@@ -131,7 +131,7 @@ class SchemaStatementValidatorDmlTest {
         var statement = insert(tbl("users").as("u"))
             .columns(id("id"), id("name"))
             .query(select(lit(1L), lit("alice")).build())
-            .returning(SelectItem.expr(col("u", "id")))
+            .result(SelectItem.expr(col("u", "id")))
             .build();
 
         var result = validator.validate(statement);

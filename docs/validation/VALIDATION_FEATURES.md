@@ -129,7 +129,7 @@ SQL Server-specific validation is implemented in a dedicated dialect module:
 - Version-gated SQL Server features (`DIALECT_FEATURE_UNSUPPORTED`), including:
   - `TOP ... PERCENT`
   - `TOP ... WITH TIES`
-  - deferred advanced DML features such as `OUTPUT` and `MERGE`
+  - deferred advanced DML features such as `MERGE`
   - non-SQL Server DML extensions such as `RETURNING`, `ON CONFLICT`, `ON DUPLICATE KEY UPDATE`, and `REPLACE`
 
 ### SQL Server Clause Consistency Validation
@@ -138,6 +138,7 @@ SQL Server-specific validation is implemented in a dedicated dialect module:
   - `TOP` combined with `OFFSET/FETCH`
   - `OFFSET/FETCH` without `ORDER BY`
   - baseline DML-only acceptance for shared `INSERT`, `UPDATE`, and `DELETE` shapes
+  - `OUTPUT` pseudo-row-source legality (`inserted`/`deleted` column and star usage by statement type)
 
 ### SQL Server Function Catalog
 

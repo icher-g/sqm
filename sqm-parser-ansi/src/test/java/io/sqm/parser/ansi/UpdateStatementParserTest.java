@@ -95,7 +95,7 @@ class UpdateStatementParserTest {
     }
 
     @Test
-    void rejectsUpdateWithOutputInAnsiDialect() {
+    void rejectsUpdateWithResultInAnsiDialect() {
         var ctx = ParseContext.of(new AnsiSpecs());
         var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' OUTPUT inserted.name");
 

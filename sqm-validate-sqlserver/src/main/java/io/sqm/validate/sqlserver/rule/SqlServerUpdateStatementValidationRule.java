@@ -45,14 +45,6 @@ public final class SqlServerUpdateStatementValidationRule implements SchemaValid
                 "update.from"
             );
         }
-        if (!node.returning().isEmpty()) {
-            context.addProblem(
-                ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
-                "SQL Server baseline support does not include UPDATE RETURNING",
-                node,
-                "update.returning"
-            );
-        }
         if (!node.optimizerHints().isEmpty()) {
             context.addProblem(
                 ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,

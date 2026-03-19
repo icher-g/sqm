@@ -158,7 +158,7 @@ The capability matrix should cover both query and the R5 DML baseline. Expected 
 
 Expected explicitly unsupported capabilities in R5 include:
 
-- `DML_RETURNING`
+- `DML_RESULT_CLAUSE`
 - `INSERT_ON_CONFLICT`
 - `INSERT_ON_DUPLICATE_KEY_UPDATE`
 - `REPLACE_INTO`

@@ -5,28 +5,11 @@ import io.sqm.control.execution.ExecutionMode;
 import io.sqm.control.execution.ParameterizationMode;
 import io.sqm.control.pipeline.SqlStatementParser;
 import io.sqm.control.pipeline.SqlStatementRenderer;
-import io.sqm.core.DeleteStatement;
-import io.sqm.core.Expression;
-import io.sqm.core.InsertStatement;
-import io.sqm.core.QuoteStyle;
-import io.sqm.core.Query;
-import io.sqm.core.UpdateStatement;
+import io.sqm.core.*;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static io.sqm.dsl.Dsl.delete;
-import static io.sqm.dsl.Dsl.id;
-import static io.sqm.dsl.Dsl.insert;
-import static io.sqm.dsl.Dsl.inserted;
-import static io.sqm.dsl.Dsl.lit;
-import static io.sqm.dsl.Dsl.output;
-import static io.sqm.dsl.Dsl.outputItem;
-import static io.sqm.dsl.Dsl.row;
-import static io.sqm.dsl.Dsl.tbl;
-import static io.sqm.dsl.Dsl.update;
+import static io.sqm.dsl.Dsl.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 class SqlStatementRendererTest {
 
@@ -72,7 +55,7 @@ class SqlStatementRendererTest {
     @Test
     void renders_mysql_delete_statement() {
         var renderer = SqlStatementRenderer.standard();
-        var delete = DeleteStatement.of(io.sqm.dsl.Dsl.tbl("users"), java.util.List.of(), java.util.List.of(), null, null, java.util.List.of(), java.util.List.of());
+        var delete = delete(tbl("users")).build();
 
         var rendered = renderer.render(delete, ExecutionContext.of("mysql", ExecutionMode.ANALYZE));
 
@@ -109,7 +92,7 @@ class SqlStatementRendererTest {
         var renderer = SqlStatementRenderer.standard();
         InsertStatement statement = insert(tbl(id("users", QuoteStyle.BRACKETS)))
             .columns(id("name", QuoteStyle.BRACKETS))
-            .output(output(outputItem(inserted(id("id", QuoteStyle.BRACKETS)))))
+            .result(inserted(id("id", QuoteStyle.BRACKETS)))
             .values(row(lit("alice")))
             .build();
 
@@ -136,7 +119,7 @@ class SqlStatementRendererTest {
     @Test
     void renders_sqlserver_delete_statement() {
         var renderer = SqlStatementRenderer.standard();
-        DeleteStatement statement = delete(tbl(id("users", QuoteStyle.BRACKETS))).build();
+        var statement = delete(tbl(id("users", QuoteStyle.BRACKETS))).build();
 
         var rendered = renderer.render(statement, ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE));
 

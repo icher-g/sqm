@@ -76,13 +76,13 @@ final class CteDefinitionValidationRule implements SchemaValidationRule<CteDef> 
             return projectionShapeInspector.projectionArity(query);
         }
         if (body instanceof InsertStatement insert) {
-            return Optional.of(insert.returning().size());
+            return insert.result() == null ? Optional.empty() : Optional.of(insert.result().items().size());
         }
         if (body instanceof UpdateStatement update) {
-            return Optional.of(update.returning().size());
+            return update.result() == null ? Optional.empty() : Optional.of(update.result().items().size());
         }
         if (body instanceof DeleteStatement delete) {
-            return Optional.of(delete.returning().size());
+            return delete.result() == null ? Optional.empty() : Optional.of(delete.result().items().size());
         }
         return Optional.empty();
     }

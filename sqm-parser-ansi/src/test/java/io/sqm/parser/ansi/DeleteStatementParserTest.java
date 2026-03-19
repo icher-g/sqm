@@ -85,7 +85,7 @@ class DeleteStatementParserTest {
     }
 
     @Test
-    void rejectsDeleteWithOutputInAnsiDialect() {
+    void rejectsDeleteWithResultInAnsiDialect() {
         var ctx = ParseContext.of(new AnsiSpecs());
         var result = ctx.parse(DeleteStatement.class, "DELETE FROM users OUTPUT deleted.id");
 

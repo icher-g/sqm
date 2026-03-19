@@ -12,7 +12,7 @@ import io.sqm.render.spi.Renderer;
 public class OutputColumnExprRenderer implements Renderer<OutputColumnExpr> {
 
     /**
-     * Creates an output-column renderer.
+     * Creates an result-column renderer.
      */
     public OutputColumnExprRenderer() {
     }

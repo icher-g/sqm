@@ -76,9 +76,11 @@ public class UpdateStatementParser implements Parser<UpdateStatement> {
             where = whereResult.value();
         }
 
-        var returningResult = parseReturning(cur, ctx);
-        if (returningResult.isError()) {
-            return error(returningResult);
+        if (outputResult.value() == null) {
+            outputResult = parseReturning(cur, ctx);
+            if (outputResult.isError()) {
+                return error(outputResult);
+            }
         }
 
         return ok(UpdateStatement.of(
@@ -88,7 +90,6 @@ public class UpdateStatementParser implements Parser<UpdateStatement> {
             fromResult.value(),
             where,
             outputResult.value(),
-            returningResult.value(),
             optimizerHintsResult.value()
         ));
     }
@@ -139,11 +140,11 @@ public class UpdateStatementParser implements Parser<UpdateStatement> {
      * @param ctx parse context
      * @return parsed RETURNING items or empty list when omitted
      */
-    protected ParseResult<List<SelectItem>> parseReturning(Cursor cur, ParseContext ctx) {
+    protected ParseResult<ResultClause> parseReturning(Cursor cur, ParseContext ctx) {
         if (cur.match(TokenType.RETURNING)) {
             return error("UPDATE ... RETURNING is not supported by this dialect", cur.fullPos());
         }
-        return ok(List.of());
+        return ok(null);
     }
 
     /**
@@ -151,9 +152,9 @@ public class UpdateStatementParser implements Parser<UpdateStatement> {
      *
      * @param cur token cursor
      * @param ctx parse context
-     * @return parsed output clause or {@code null} when omitted
+     * @return parsed result clause or {@code null} when omitted
      */
-    protected ParseResult<OutputClause> parseOutput(Cursor cur, ParseContext ctx) {
+    protected ParseResult<ResultClause> parseOutput(Cursor cur, ParseContext ctx) {
         if (cur.match(TokenType.OUTPUT)) {
             return error("UPDATE ... OUTPUT is not supported by this dialect", cur.fullPos());
         }

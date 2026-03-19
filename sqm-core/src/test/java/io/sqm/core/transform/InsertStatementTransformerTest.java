@@ -68,7 +68,7 @@ class InsertStatementTransformerTest {
     void rebuildsStatementWhenReturningChanges() {
         var statement = insert(tbl("users"))
             .values(row(lit(1)))
-            .returning(col("id").toSelectItem())
+            .result(col("id").toSelectItem())
             .build();
 
         Node transformed = new RecursiveNodeTransformer() {

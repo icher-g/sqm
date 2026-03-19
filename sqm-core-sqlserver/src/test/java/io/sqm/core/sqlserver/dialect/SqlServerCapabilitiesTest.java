@@ -13,6 +13,7 @@ class SqlServerCapabilitiesTest {
     void supports_sql_server_baseline_features() {
         var capabilities = SqlServerCapabilities.of(SqlDialectVersion.of(2019, 0));
 
+        assertTrue(capabilities.supports(SqlFeature.DML_RESULT_CLAUSE));
         assertTrue(capabilities.supports(SqlFeature.EXPR_COLLATE));
     }
 
@@ -20,7 +21,6 @@ class SqlServerCapabilitiesTest {
     void rejects_non_sql_server_specific_features_by_default() {
         var capabilities = SqlServerCapabilities.of(SqlDialectVersion.of(2019, 0));
 
-        assertFalse(capabilities.supports(SqlFeature.DML_RETURNING));
         assertFalse(capabilities.supports(SqlFeature.INSERT_ON_CONFLICT));
         assertFalse(capabilities.supports(SqlFeature.INSERT_ON_DUPLICATE_KEY_UPDATE));
         assertFalse(capabilities.supports(SqlFeature.REPLACE_INTO));

@@ -45,7 +45,7 @@ class MySqlCapabilitiesTest {
 
         assertFalse(capabilities.supports(SqlFeature.DISTINCT_ON));
         assertFalse(capabilities.supports(SqlFeature.ORDER_BY_USING));
-        assertFalse(capabilities.supports(SqlFeature.DML_RETURNING));
+        assertFalse(capabilities.supports(SqlFeature.DML_RESULT_CLAUSE));
         assertFalse(capabilities.supports(SqlFeature.POSTGRES_TYPECAST));
         assertFalse(capabilities.supports(SqlFeature.DOLLAR_STRING_LITERAL));
         assertFalse(capabilities.supports(SqlFeature.ARRAY_LITERAL));
@@ -53,9 +53,9 @@ class MySqlCapabilitiesTest {
 
     @Test
     void does_not_support_dmlReturning_for_current_mysql_versions() {
-        assertFalse(MySqlCapabilities.of(SqlDialectVersion.of(5, 7)).supports(SqlFeature.DML_RETURNING));
-        assertFalse(MySqlCapabilities.of(SqlDialectVersion.of(8, 0)).supports(SqlFeature.DML_RETURNING));
-        assertFalse(MySqlCapabilities.of(SqlDialectVersion.of(8, 4)).supports(SqlFeature.DML_RETURNING));
+        assertFalse(MySqlCapabilities.of(SqlDialectVersion.of(5, 7)).supports(SqlFeature.DML_RESULT_CLAUSE));
+        assertFalse(MySqlCapabilities.of(SqlDialectVersion.of(8, 0)).supports(SqlFeature.DML_RESULT_CLAUSE));
+        assertFalse(MySqlCapabilities.of(SqlDialectVersion.of(8, 4)).supports(SqlFeature.DML_RESULT_CLAUSE));
     }
 
     @Test
@@ -79,7 +79,7 @@ class MySqlCapabilitiesTest {
         assertEquals(expected.supports(SqlFeature.REPLACE_INTO), latest.supports(SqlFeature.REPLACE_INTO));
         assertEquals(expected.supports(SqlFeature.UPDATE_JOIN), latest.supports(SqlFeature.UPDATE_JOIN));
         assertEquals(expected.supports(SqlFeature.DELETE_USING_JOIN), latest.supports(SqlFeature.DELETE_USING_JOIN));
-        assertEquals(expected.supports(SqlFeature.DML_RETURNING), latest.supports(SqlFeature.DML_RETURNING));
+        assertEquals(expected.supports(SqlFeature.DML_RESULT_CLAUSE), latest.supports(SqlFeature.DML_RESULT_CLAUSE));
     }
 
     @Test

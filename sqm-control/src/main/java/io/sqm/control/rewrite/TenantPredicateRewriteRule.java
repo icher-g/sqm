@@ -189,7 +189,7 @@ public final class TenantPredicateRewriteRule implements StatementRewriteRule {
             .joins(update.joins())
             .from(update.from())
             .where(where)
-            .returning(update.returning())
+            .result(update.result())
             .optimizerHints(update.optimizerHints())
             .build();
     }
@@ -206,7 +206,7 @@ public final class TenantPredicateRewriteRule implements StatementRewriteRule {
             .using(delete.using())
             .joins(delete.joins())
             .where(where)
-            .returning(delete.returning())
+            .result(delete.result())
             .optimizerHints(delete.optimizerHints())
             .build();
     }

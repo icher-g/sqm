@@ -25,7 +25,7 @@ import java.util.Set;
  * avoiding large overload sets on {@link SqlDecisionService}.</p>
  *
  * @param engine         decision engine used to evaluate parsed statements.
- * @param explainer      decision explainer used to enrich audit output.
+ * @param explainer      decision explainer used to enrich audit result.
  * @param auditPublisher audit event publisher implementation.
  * @param guardrails     runtime guardrails applied before execution.
  * @param statementParser SQL parser used to parse incoming statement text.

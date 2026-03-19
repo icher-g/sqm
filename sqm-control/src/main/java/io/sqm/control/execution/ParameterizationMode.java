@@ -1,11 +1,11 @@
 package io.sqm.control.execution;
 
 /**
- * Configuration policy for SQL literal parameterization in middleware output.
+ * Configuration policy for SQL literal parameterization in middleware result.
  *
  * <p>This enum intentionally lives in {@code sqm-control} (not renderer modules)
  * so middleware configuration can expose a stable user-facing policy without
- * coupling callers to renderer-specific output contracts yet.</p>
+ * coupling callers to renderer-specific result contracts yet.</p>
  *
  * <p>The policy defines whether middleware should produce parameterized SQL
  * payloads when that optional mode is enabled in future epics.</p>

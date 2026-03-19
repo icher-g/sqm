@@ -55,7 +55,7 @@ class CteDefParserTest {
 
         var body = res.value().body();
         assertInstanceOf(InsertStatement.class, body);
-        assertEquals(1, ((InsertStatement) body).returning().size());
+        assertEquals(1, ((InsertStatement) body).result().items().size());
     }
 
     @Test
@@ -66,7 +66,7 @@ class CteDefParserTest {
 
         var body = res.value().body();
         assertInstanceOf(UpdateStatement.class, body);
-        assertEquals(1, ((UpdateStatement) body).returning().size());
+        assertEquals(1, ((UpdateStatement) body).result().items().size());
     }
 
     @Test
@@ -77,7 +77,7 @@ class CteDefParserTest {
 
         var body = res.value().body();
         assertInstanceOf(DeleteStatement.class, body);
-        assertEquals(1, ((DeleteStatement) body).returning().size());
+        assertEquals(1, ((DeleteStatement) body).result().items().size());
     }
 
     @Test

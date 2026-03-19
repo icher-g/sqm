@@ -3,7 +3,7 @@ package io.sqm.core;
 import io.sqm.core.walk.NodeVisitor;
 
 /**
- * Represent a '*' in SELECT. {@code SELECT *}.
+ * Represent a '*' in SELECT. {@code SELECT * }.
  */
 public non-sealed interface StarSelectItem extends SelectItem {
 

@@ -21,7 +21,7 @@ Priority levels:
 - Node-contract support delivered (visitor/transformer/match/json).
 - Integration coverage delivered in sqm-it (statement round-trip).
 - Compatibility boundaries and deferred DML extensions are tracked in GitHub issues.
-- RETURNING/OUTPUT support remains deferred to post-R1 dialect work items tracked in GitHub issues.
+- Result-clause support (`RETURNING`/`OUTPUT`) was delivered in later dialect work on top of the DML foundation.
 
 ### Epic R1: MySQL Dialect Support (Completed)
 - Add `sqm-parser-mysql` and `sqm-render-mysql`.
@@ -130,7 +130,7 @@ Priority levels:
 - Keep optimizer opt-in and deterministic.
 
 ### Epic R13: DML Advanced Expansion
-- Expand beyond the delivered DML baseline with advanced dialect-specific DML features (for example SQL Server `OUTPUT`, richer MySQL assignment/target variants, and MERGE-family support where applicable).
+- Expand beyond the delivered DML baseline with remaining advanced dialect-specific DML features (for example richer MySQL assignment/target variants and MERGE-family support where applicable).
 - Ensure parser/render/validate/rewrite parity with existing query flows.
 
 ## Suggested Implementation Order

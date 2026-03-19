@@ -4,21 +4,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static io.sqm.dsl.Dsl.col;
-import static io.sqm.dsl.Dsl.deleted;
-import static io.sqm.dsl.Dsl.inner;
-import static io.sqm.dsl.Dsl.inserted;
-import static io.sqm.dsl.Dsl.lit;
-import static io.sqm.dsl.Dsl.output;
-import static io.sqm.dsl.Dsl.outputItem;
-import static io.sqm.dsl.Dsl.set;
-import static io.sqm.dsl.Dsl.tbl;
-import static io.sqm.dsl.Dsl.update;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static io.sqm.dsl.Dsl.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 class UpdateStatementTest {
 
@@ -53,7 +40,6 @@ class UpdateStatementTest {
             List.of(),
             null,
             null,
-            List.of(),
             List.of());
         assertNull(statement.where());
         assertTrue(statement.from().isEmpty());
@@ -80,13 +66,11 @@ class UpdateStatementTest {
             List.of(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id")))),
             List.of(tbl("src_users")),
             col("users", "id").eq(lit(1)),
-            null,
-            List.of(io.sqm.core.ExprSelectItem.of(col("users", "id"), null)),
+            result(deleted("name").as("old_name"), inserted("name").as("new_name")),
             List.of());
 
         assertEquals(1, statement.joins().size());
         assertEquals(1, statement.from().size());
-        assertEquals(1, statement.returning().size());
 
         var withoutReturning = UpdateStatement.of(
             tbl("users"),
@@ -95,18 +79,17 @@ class UpdateStatementTest {
             List.of(tbl("src_users")),
             col("users", "id").eq(lit(1)),
             null,
-            List.of(),
             List.of());
 
-        assertTrue(withoutReturning.returning().isEmpty());
+        assertNull(withoutReturning.result());
     }
 
     @Test
     void normalizesNullFromJoinsAndReturningInFactory() {
-        var statement = UpdateStatement.of(tbl("users"), List.of(set("name", lit("alice"))), null, null, null, null, null, null);
+        var statement = UpdateStatement.of(tbl("users"), List.of(set("name", lit("alice"))), null, null, null, null, null);
         assertTrue(statement.joins().isEmpty());
         assertTrue(statement.from().isEmpty());
-        assertTrue(statement.returning().isEmpty());
+        assertNull(statement.result());
         assertTrue(statement.optimizerHints().isEmpty());
     }
 
@@ -136,17 +119,17 @@ class UpdateStatementTest {
 
     @Test
     void validatesRequiredMembers() {
-        assertThrows(NullPointerException.class, () -> UpdateStatement.of(null, List.of(set("name", lit("alice"))), List.of(), List.of(), null, null, List.of(), List.of()));
-        assertThrows(NullPointerException.class, () -> UpdateStatement.of(tbl("users"), null, List.of(), List.of(), null, null, List.of(), List.of()));
-        assertThrows(IllegalArgumentException.class, () -> UpdateStatement.of(tbl("users"), List.of(), List.of(), List.of(), null, null, List.of(), List.of()));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.of(null, List.of(set("name", lit("alice"))), List.of(), List.of(), null, null, List.of()));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.of(tbl("users"), null, List.of(), List.of(), null, null, List.of()));
+        assertThrows(IllegalArgumentException.class, () -> UpdateStatement.of(tbl("users"), List.of(), List.of(), List.of(), null, null, List.of()));
         assertThrows(IllegalStateException.class, () -> update(tbl("users")).build());
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).table(null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).assignments(null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).joins((Join[]) null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).join(null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).from((TableRef[]) null));
-        assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).returning((SelectItem[]) null));
-        assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).returning((List<SelectItem>) null));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).result((ResultItem[]) null));
+        assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).result((List<ResultItem>) null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).optimizerHints(null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).optimizerHint(null));
         assertThrows(NullPointerException.class, () -> UpdateStatement.builder(tbl("users")).set(null));
@@ -157,7 +140,7 @@ class UpdateStatementTest {
         var original = update(tbl("users"))
             .optimizerHint("BKA(users)")
             .set(set("name", lit("alice")))
-            .output(output(outputItem(deleted("name"), "old_name"), outputItem(inserted("name"), "new_name")))
+            .result(deleted("name").as("old_name"), inserted("name").as("new_name"))
             .from(tbl("source_users"))
             .build();
 
@@ -169,7 +152,7 @@ class UpdateStatementTest {
         assertTrue(copied.optimizerHints().isEmpty());
         assertEquals(original.assignments(), copied.assignments());
         assertEquals(original.from(), copied.from());
-        assertEquals(original.output(), copied.output());
+        assertEquals(original.result(), copied.result());
         assertEquals(original.table(), copied.table());
     }
 }

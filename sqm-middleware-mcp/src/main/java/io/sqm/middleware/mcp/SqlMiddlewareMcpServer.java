@@ -63,12 +63,12 @@ public final class SqlMiddlewareMcpServer {
      * Starts serving MCP requests until EOF or explicit {@code exit} notification.
      *
      * @param input  input stream for framed JSON-RPC requests
-     * @param output output stream for framed JSON-RPC responses
+     * @param output result stream for framed JSON-RPC responses
      * @throws IOException if I/O fails
      */
     public void serve(InputStream input, OutputStream output) throws IOException {
         Objects.requireNonNull(input, "input must not be null");
-        Objects.requireNonNull(output, "output must not be null");
+        Objects.requireNonNull(output, "result must not be null");
 
         var in = new BufferedInputStream(input);
         var out = new BufferedOutputStream(output);

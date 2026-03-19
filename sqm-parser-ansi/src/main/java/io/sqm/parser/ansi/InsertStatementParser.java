@@ -71,9 +71,11 @@ public class InsertStatementParser implements Parser<InsertStatement> {
             return error(conflict);
         }
 
-        var returning = parseReturning(cur, ctx);
-        if (returning.isError()) {
-            return error(returning);
+        if (output.value() == null) {
+            output = parseReturning(cur, ctx);
+            if (output.isError()) {
+                return error(output);
+            }
         }
 
         return ok(InsertStatement.of(
@@ -85,8 +87,7 @@ public class InsertStatementParser implements Parser<InsertStatement> {
             conflict.value().action(),
             conflict.value().assignments(),
             conflict.value().where(),
-            output.value(),
-            returning.value()));
+            output.value()));
     }
 
     /**
@@ -155,11 +156,11 @@ public class InsertStatementParser implements Parser<InsertStatement> {
      * @param ctx parse context
      * @return returning projection list, or empty list when omitted
      */
-    protected ParseResult<List<SelectItem>> parseReturning(Cursor cur, ParseContext ctx) {
+    protected ParseResult<ResultClause> parseReturning(Cursor cur, ParseContext ctx) {
         if (cur.match(TokenType.RETURNING)) {
             return error("INSERT ... RETURNING is not supported by this dialect", cur.fullPos());
         }
-        return ok(List.of());
+        return ok(null);
     }
 
     /**
@@ -167,9 +168,9 @@ public class InsertStatementParser implements Parser<InsertStatement> {
      *
      * @param cur token cursor
      * @param ctx parse context
-     * @return parsed output clause or {@code null} when omitted
+     * @return parsed result clause or {@code null} when omitted
      */
-    protected ParseResult<OutputClause> parseOutput(Cursor cur, ParseContext ctx) {
+    protected ParseResult<ResultClause> parseOutput(Cursor cur, ParseContext ctx) {
         if (cur.match(TokenType.OUTPUT)) {
             return error("INSERT ... OUTPUT is not supported by this dialect", cur.fullPos());
         }

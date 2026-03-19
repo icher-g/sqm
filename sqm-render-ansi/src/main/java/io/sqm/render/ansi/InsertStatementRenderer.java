@@ -1,13 +1,6 @@
 package io.sqm.render.ansi;
 
-import io.sqm.core.Assignment;
-import io.sqm.core.Identifier;
-import io.sqm.core.InsertSource;
-import io.sqm.core.InsertStatement;
-import io.sqm.core.Predicate;
-import io.sqm.core.Query;
-import io.sqm.core.RowValues;
-import io.sqm.core.SelectItem;
+import io.sqm.core.*;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
@@ -24,6 +17,14 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
      * Creates an insert-statement renderer.
      */
     public InsertStatementRenderer() {
+    }
+
+    private static String unsupportedInsertModeName(InsertStatement.InsertMode insertMode) {
+        return switch (insertMode) {
+            case STANDARD -> "INSERT INTO";
+            case IGNORE -> "INSERT IGNORE";
+            case REPLACE -> "REPLACE INTO";
+        };
     }
 
     /**
@@ -43,7 +44,7 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
             w.append(")");
         }
 
-        renderOutput(node.output(), ctx, w);
+        renderOutput(node.result(), ctx, w);
         renderSource(node.source(), w);
         renderOnConflict(node.conflictTarget(),
             node.onConflictAction(),
@@ -51,15 +52,15 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
             node.conflictUpdateWhere(),
             ctx,
             w);
-        renderReturning(node.returning(), ctx, w);
+        renderReturning(node.result(), ctx, w);
     }
 
     /**
      * Renders the leading insert keywords.
      *
      * @param node insert statement
-     * @param ctx render context
-     * @param w SQL writer
+     * @param ctx  render context
+     * @param w    SQL writer
      */
     protected void renderInsertPrefix(InsertStatement node, RenderContext ctx, SqlWriter w) {
         if (node.insertMode() != InsertStatement.InsertMode.STANDARD) {
@@ -71,47 +72,47 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
     /**
      * Renders optional {@code ON CONFLICT} clause.
      *
-     * @param target conflict target
-     * @param action conflict action
+     * @param target      conflict target
+     * @param action      conflict action
      * @param assignments conflict-update assignments
-     * @param where conflict-update predicate
-     * @param ctx render context
-     * @param w SQL writer
+     * @param where       conflict-update predicate
+     * @param ctx         render context
+     * @param w           SQL writer
      */
     protected void renderOnConflict(List<Identifier> target,
-                                    InsertStatement.OnConflictAction action,
-                                    List<Assignment> assignments,
-                                    Predicate where,
-                                    RenderContext ctx,
-                                    SqlWriter w) {
+        InsertStatement.OnConflictAction action,
+        List<Assignment> assignments,
+        Predicate where,
+        RenderContext ctx,
+        SqlWriter w) {
         if (action != InsertStatement.OnConflictAction.NONE) {
             throw new UnsupportedDialectFeatureException("INSERT ... ON CONFLICT", ctx.dialect().name());
         }
     }
 
     /**
-     * Renders optional {@code RETURNING} clause.
+     * Renders optional {@code OUTPUT} clause.
      *
-     * @param returning returning projection items
-     * @param ctx render context
-     * @param w SQL writer
+     * @param result result clause
+     * @param ctx    render context
+     * @param w      SQL writer
      */
-    protected void renderReturning(List<SelectItem> returning, RenderContext ctx, SqlWriter w) {
-        if (!returning.isEmpty()) {
-            throw new UnsupportedDialectFeatureException("INSERT ... RETURNING", ctx.dialect().name());
+    protected void renderOutput(ResultClause result, RenderContext ctx, SqlWriter w) {
+        if (result != null) {
+            throw new UnsupportedDialectFeatureException("INSERT ... OUTPUT", ctx.dialect().name());
         }
     }
 
     /**
-     * Renders optional {@code OUTPUT} clause.
+     * Renders optional {@code RETURNING} clause.
      *
-     * @param output output clause
-     * @param ctx render context
-     * @param w SQL writer
+     * @param result result clause
+     * @param ctx    render context
+     * @param w      SQL writer
      */
-    protected void renderOutput(io.sqm.core.OutputClause output, RenderContext ctx, SqlWriter w) {
-        if (output != null) {
-            throw new UnsupportedDialectFeatureException("INSERT ... OUTPUT", ctx.dialect().name());
+    protected void renderReturning(ResultClause result, RenderContext ctx, SqlWriter w) {
+        if (result != null) {
+            throw new UnsupportedDialectFeatureException("INSERT ... RETURNING", ctx.dialect().name());
         }
     }
 
@@ -128,14 +129,6 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
         }
 
         throw new IllegalArgumentException("Unsupported INSERT source: " + source.getClass().getName());
-    }
-
-    private static String unsupportedInsertModeName(InsertStatement.InsertMode insertMode) {
-        return switch (insertMode) {
-            case STANDARD -> "INSERT INTO";
-            case IGNORE -> "INSERT IGNORE";
-            case REPLACE -> "REPLACE INTO";
-        };
     }
 
     /**

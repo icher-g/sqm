@@ -20,25 +20,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class StatementFeatureInspectorTest {
 
     @Test
-    void detectsReturningDistinctOnLikeModesAndBinaryOperators() {
-        var insert = InsertStatement.of(
-            InsertStatement.InsertMode.STANDARD,
-            Dsl.tbl("users"),
-            List.of(Dsl.id("id")),
-            Dsl.rows(Dsl.row(Dsl.lit(1))),
-            null,
-            InsertStatement.OnConflictAction.NONE,
-            List.of(),
-            null,
-            null,
-            List.of(Dsl.col("id").toSelectItem())
-        );
+    void detectsResultClauseDistinctOnLikeModesAndBinaryOperators() {
+        var insert = InsertStatement.builder(Dsl.tbl("users"))
+            .columns(Dsl.id("id"))
+            .values(Dsl.rows(Dsl.row(Dsl.lit(1))))
+            .result(Dsl.col("id").toSelectItem())
+            .build();
         var update = UpdateStatement.builder(Dsl.tbl("users"))
             .set(Dsl.set("name", Dsl.lit("alice")))
-            .returning(Dsl.col("id").toSelectItem())
+            .result(Dsl.col("id").toSelectItem())
             .build();
         var delete = DeleteStatement.builder(Dsl.tbl("users"))
-            .returning(Dsl.col("id").toSelectItem())
+            .result(Dsl.col("id").toSelectItem())
             .build();
         var distinctOn = SelectQuery.builder()
             .select(Dsl.col("name"))
@@ -58,15 +51,15 @@ class StatementFeatureInspectorTest {
             .from(Dsl.tbl("users"))
             .build();
 
-        assertTrue(StatementFeatureInspector.hasReturning(insert));
-        assertTrue(StatementFeatureInspector.hasReturning(update));
-        assertTrue(StatementFeatureInspector.hasReturning(delete));
+        assertTrue(StatementFeatureInspector.hasResultClause(insert));
+        assertTrue(StatementFeatureInspector.hasResultClause(update));
+        assertTrue(StatementFeatureInspector.hasResultClause(delete));
         assertTrue(StatementFeatureInspector.hasDistinctOn(distinctOn));
         assertTrue(StatementFeatureInspector.hasTopSpec(topSpec));
         assertTrue(StatementFeatureInspector.hasLikeMode(ilike, LikeMode.ILIKE));
         assertTrue(StatementFeatureInspector.hasAnyBinaryOperator(operator, Set.of("->>")));
 
-        assertFalse(StatementFeatureInspector.hasReturning(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()));
+        assertFalse(StatementFeatureInspector.hasResultClause(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()));
         assertFalse(StatementFeatureInspector.hasDistinctOn(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()));
         assertFalse(StatementFeatureInspector.hasTopSpec(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()));
         assertFalse(StatementFeatureInspector.hasLikeMode(ilike, LikeMode.LIKE));
@@ -97,30 +90,20 @@ class StatementFeatureInspectorTest {
         var hintedDelete = DeleteStatement.builder(Dsl.tbl("users"))
             .optimizerHint("BKA(users)")
             .build();
-        var insertIgnore = InsertStatement.of(
-            InsertStatement.InsertMode.IGNORE,
-            Dsl.tbl("users"),
-            List.of(Dsl.id("id")),
-            Dsl.rows(Dsl.row(Dsl.lit(1))),
-            null,
-            InsertStatement.OnConflictAction.NONE,
-            List.of(),
-            null,
-            null,
-            List.of()
-        );
-        var insertConflict = InsertStatement.of(
-            InsertStatement.InsertMode.STANDARD,
-            Dsl.tbl("users"),
-            List.of(Dsl.id("id")),
-            Dsl.rows(Dsl.row(Dsl.lit(1))),
-            List.of(Dsl.id("id")),
-            InsertStatement.OnConflictAction.DO_UPDATE,
-            List.of(Dsl.set("name", Dsl.lit("alice"))),
-            null,
-            null,
-            List.of()
-        );
+        var insertIgnore = InsertStatement.builder(Dsl.tbl("users"))
+            .ignore()
+            .columns(Dsl.id("id"))
+            .values(Dsl.rows(Dsl.row(Dsl.lit(1))))
+            .build();
+        var insertConflict = InsertStatement.builder(Dsl.tbl("users"))
+            .columns(Dsl.id("id"))
+            .values(Dsl.rows(Dsl.row(Dsl.lit(1))))
+            .onConflictDoUpdate(
+                List.of(Dsl.id("id")),
+                List.of(Dsl.set("name", Dsl.lit("alice"))),
+                null
+            )
+            .build();
 
         assertTrue(StatementFeatureInspector.hasAnyFunctionName(functionQuery, Set.of("JSON_EXTRACT")));
         assertTrue(StatementFeatureInspector.hasAnyFunctionNamePrefix(functionQuery, Set.of("json_")));

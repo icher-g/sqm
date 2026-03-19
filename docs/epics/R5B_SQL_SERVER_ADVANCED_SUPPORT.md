@@ -126,7 +126,7 @@ Any new node introduced here must satisfy the standard repository requirements:
 
 ### 2. SQL Server OUTPUT
 
-`OUTPUT` is the most important SQL Server-specific advanced DML feature deferred from `R5`.
+`OUTPUT` was the most important SQL Server-specific advanced DML feature deferred from `R5`.
 
 #### Design goals
 - Support `INSERT ... OUTPUT ...`

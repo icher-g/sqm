@@ -1,25 +1,12 @@
 package io.sqm.core.walk;
 
-import io.sqm.core.Assignment;
-import io.sqm.core.OutputColumnExpr;
-import io.sqm.core.OutputRowSource;
-import io.sqm.core.Table;
-import io.sqm.core.UpdateStatement;
+import io.sqm.core.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.sqm.dsl.Dsl.col;
-import static io.sqm.dsl.Dsl.deleted;
-import static io.sqm.dsl.Dsl.inner;
-import static io.sqm.dsl.Dsl.inserted;
-import static io.sqm.dsl.Dsl.lit;
-import static io.sqm.dsl.Dsl.output;
-import static io.sqm.dsl.Dsl.outputItem;
-import static io.sqm.dsl.Dsl.set;
-import static io.sqm.dsl.Dsl.tbl;
-import static io.sqm.dsl.Dsl.update;
+import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class UpdateStatementVisitorTest {
@@ -31,8 +18,7 @@ class UpdateStatementVisitorTest {
             .set(set("name", lit("alice")))
             .from(tbl("source_users"))
             .where(col("id").eq(lit(1)))
-            .output(output(outputItem(deleted("name")), outputItem(inserted("name"))))
-            .returning(col("id").toSelectItem())
+            .result(deleted("name"), inserted("name"))
             .build();
         var visits = new ArrayList<String>();
 
@@ -62,7 +48,6 @@ class UpdateStatementVisitorTest {
         }.accept(statement);
 
         assertEquals(List.of("update", "table", "assignment", "table", "table"), visits.subList(0, 5));
-        assertEquals(OutputRowSource.DELETED, statement.output().items().getFirst().expression().matchExpression().outputColumn(OutputColumnExpr::source).orElse(null));
-        assertEquals("id", statement.returning().getFirst().matchSelectItem().expr(e -> e.expr().matchExpression().column(c -> c.name().value()).orElse(null)).orElse(null));
+        assertEquals(OutputRowSource.DELETED, statement.result().items().getFirst().matchResultItem().expr(e -> e.expr().matchExpression().outputColumn(OutputColumnExpr::source).orElse(null)).orElse(null));
     }
 }

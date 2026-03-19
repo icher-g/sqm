@@ -59,7 +59,7 @@ class CteDefTest {
         var body = insert("users")
             .columns(id("name"))
             .values(row(lit("alice")))
-            .returning(col("id").toSelectItem())
+            .result(col("id").toSelectItem())
             .build();
 
         var cte = CteDef.of(Identifier.of("ins")).body(body);

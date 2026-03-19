@@ -46,7 +46,7 @@ class PostgresSpecsTest {
         assertTrue(specs.capabilities().supports(SqlFeature.INTERVAL_LITERAL));
         assertTrue(specs.capabilities().supports(SqlFeature.DISTINCT_ON));
         assertTrue(specs.capabilities().supports(SqlFeature.ORDER_BY_USING));
-        assertTrue(specs.capabilities().supports(SqlFeature.DML_RETURNING));
+        assertTrue(specs.capabilities().supports(SqlFeature.DML_RESULT_CLAUSE));
         assertTrue(specs.capabilities().supports(SqlFeature.INSERT_ON_CONFLICT));
         assertTrue(specs.capabilities().supports(SqlFeature.UPDATE_FROM));
         assertTrue(specs.capabilities().supports(SqlFeature.DELETE_USING));

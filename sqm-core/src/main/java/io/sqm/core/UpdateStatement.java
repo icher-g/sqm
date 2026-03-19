@@ -14,25 +14,23 @@ public non-sealed interface UpdateStatement extends Statement {
     /**
      * Creates an immutable update statement.
      *
-     * @param table target table
-     * @param assignments update assignments
-     * @param joins optional joined sources attached to the target table
-     * @param from optional FROM sources
-     * @param where optional predicate
-     * @param output optional SQL Server output clause
-     * @param returning optional returning projection items
+     * @param table          target table
+     * @param assignments    update assignments
+     * @param joins          optional joined sources attached to the target table
+     * @param from           optional FROM sources
+     * @param where          optional predicate
+     * @param result         optional result projection
      * @param optimizerHints optimizer hints (without comment delimiters)
      * @return immutable update statement
      */
     static UpdateStatement of(Table table,
-                              List<Assignment> assignments,
-                              List<Join> joins,
-                              List<TableRef> from,
-                              Predicate where,
-                              OutputClause output,
-                              List<SelectItem> returning,
-                              List<String> optimizerHints) {
-        return new Impl(table, assignments, joins, from, where, output, returning, optimizerHints);
+        List<Assignment> assignments,
+        List<Join> joins,
+        List<TableRef> from,
+        Predicate where,
+        ResultClause result,
+        List<String> optimizerHints) {
+        return new Impl(table, assignments, joins, from, where, result, optimizerHints);
     }
 
     /**
@@ -91,18 +89,11 @@ public non-sealed interface UpdateStatement extends Statement {
     Predicate where();
 
     /**
-     * Returns optional SQL Server {@code OUTPUT} clause.
+     * Returns optional result clause.
      *
-     * @return output clause or {@code null}
+     * @return result clause or {@code null}
      */
-    OutputClause output();
-
-    /**
-     * Returns optional {@code RETURNING} projection items.
-     *
-     * @return immutable returning projection list
-     */
-    List<SelectItem> returning();
+    ResultClause result();
 
     /**
      * Returns optimizer hints attached to this statement.
@@ -115,7 +106,7 @@ public non-sealed interface UpdateStatement extends Statement {
      * Accepts a {@link NodeVisitor}.
      *
      * @param visitor visitor instance
-     * @param <R> result type
+     * @param <R>     result type
      * @return visitor result
      */
     @Override
@@ -127,14 +118,13 @@ public non-sealed interface UpdateStatement extends Statement {
      * Mutable builder for constructing immutable {@link UpdateStatement} instances.
      */
     final class Builder {
-        private Table table;
         private final List<Assignment> assignments = new ArrayList<>();
         private final List<Join> joins = new ArrayList<>();
         private final List<TableRef> from = new ArrayList<>();
-        private Predicate where;
-        private OutputClause output;
-        private final List<SelectItem> returning = new ArrayList<>();
         private final List<String> optimizerHints = new ArrayList<>();
+        private Table table;
+        private Predicate where;
+        private ResultClause result;
 
         /**
          * Creates a builder initialized with a target table.
@@ -156,8 +146,7 @@ public non-sealed interface UpdateStatement extends Statement {
             this.joins.addAll(statement.joins());
             this.from.addAll(statement.from());
             this.where = statement.where();
-            this.output = statement.output();
-            this.returning.addAll(statement.returning());
+            this.result = statement.result();
             this.optimizerHints.addAll(statement.optimizerHints());
         }
 
@@ -259,7 +248,7 @@ public non-sealed interface UpdateStatement extends Statement {
          * Appends one assignment.
          *
          * @param column target column qualified name
-         * @param value assigned expression
+         * @param value  assigned expression
          * @return this builder
          */
         public Builder set(QualifiedName column, Expression value) {
@@ -270,7 +259,7 @@ public non-sealed interface UpdateStatement extends Statement {
          * Appends one assignment.
          *
          * @param column target column
-         * @param value assigned expression
+         * @param value  assigned expression
          * @return this builder
          */
         public Builder set(Identifier column, Expression value) {
@@ -291,36 +280,46 @@ public non-sealed interface UpdateStatement extends Statement {
         /**
          * Sets the optional SQL Server {@code OUTPUT} clause.
          *
-         * @param output output clause or {@code null}
+         * @param output result clause or {@code null}
          * @return this builder
          */
-        public Builder output(OutputClause output) {
-            this.output = output;
+        public Builder result(ResultClause output) {
+            this.result = output;
             return this;
         }
 
         /**
-         * Replaces optional {@code RETURNING} projection items.
+         * Replaces the result projection list.
          *
-         * @param returning returning items
+         * @param items projection list
          * @return this builder
          */
-        public Builder returning(List<SelectItem> returning) {
-            Objects.requireNonNull(returning, "returning");
-            this.returning.clear();
-            this.returning.addAll(returning);
-            return this;
+        public Builder result(List<ResultItem> items) {
+            Objects.requireNonNull(items, "items");
+            return result(ResultClause.of(items));
         }
 
         /**
-         * Replaces optional {@code RETURNING} projection items.
+         * Adds projection items from expressions or result items.
          *
-         * @param returning returning items
+         * @param nodes nodes accepted in the result clause: OUTPUT/RETURNING
          * @return this builder
          */
-        public Builder returning(SelectItem... returning) {
-            Objects.requireNonNull(returning, "returning");
-            return returning(List.of(returning));
+        public Builder result(Node... nodes) {
+            var items = ResultItem.fromNodes(nodes);
+            return result(items);
+        }
+
+        /**
+         * Adds projection items from expressions or result items.
+         *
+         * @param into  result-into target
+         * @param nodes nodes accepted in the result clause: OUTPUT/RETURNING
+         * @return this builder
+         */
+        public Builder result(ResultInto into, Node... nodes) {
+            var items = ResultItem.fromNodes(nodes);
+            return result(ResultClause.of(items, into));
         }
 
         /**
@@ -369,20 +368,19 @@ public non-sealed interface UpdateStatement extends Statement {
             if (assignments.isEmpty()) {
                 throw new IllegalStateException("at least one assignment is required");
             }
-            return UpdateStatement.of(table, assignments, joins, from, where, output, returning, optimizerHints);
+            return UpdateStatement.of(table, assignments, joins, from, where, result, optimizerHints);
         }
     }
 
     /**
      * Default immutable update statement implementation.
      *
-     * @param table target table
-     * @param assignments assignments
-     * @param joins optional joined sources attached to the target table
-     * @param from optional from sources
-     * @param where optional predicate
-     * @param output optional SQL Server output clause
-     * @param returning optional returning projection items
+     * @param table          target table
+     * @param assignments    assignments
+     * @param joins          optional joined sources attached to the target table
+     * @param from           optional from sources
+     * @param where          optional predicate
+     * @param result         optional SQL Server result clause
      * @param optimizerHints optimizer hints (without comment delimiters)
      */
     record Impl(Table table,
@@ -390,8 +388,7 @@ public non-sealed interface UpdateStatement extends Statement {
                 List<Join> joins,
                 List<TableRef> from,
                 Predicate where,
-                OutputClause output,
-                List<SelectItem> returning,
+                ResultClause result,
                 List<String> optimizerHints) implements UpdateStatement {
         /**
          * Creates an immutable update statement implementation.
@@ -401,7 +398,6 @@ public non-sealed interface UpdateStatement extends Statement {
             assignments = List.copyOf(Objects.requireNonNull(assignments, "assignments"));
             joins = joins == null ? List.of() : List.copyOf(joins);
             from = from == null ? List.of() : List.copyOf(from);
-            returning = returning == null ? List.of() : List.copyOf(returning);
             optimizerHints = optimizerHints == null ? List.of() : List.copyOf(optimizerHints);
             if (assignments.isEmpty()) {
                 throw new IllegalArgumentException("assignments must not be empty");

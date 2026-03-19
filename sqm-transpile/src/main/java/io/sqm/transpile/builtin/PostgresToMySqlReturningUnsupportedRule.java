@@ -35,7 +35,7 @@ public final class PostgresToMySqlReturningUnsupportedRule implements TranspileR
 
     @Override
     public TranspileRuleResult apply(Statement statement, TranspileContext context) {
-        if (!StatementFeatureInspector.hasReturning(statement)) {
+        if (!StatementFeatureInspector.hasResultClause(statement)) {
             return TranspileRuleResult.unchanged(statement, "No RETURNING usage detected");
         }
         return TranspileRuleResult.unsupported(

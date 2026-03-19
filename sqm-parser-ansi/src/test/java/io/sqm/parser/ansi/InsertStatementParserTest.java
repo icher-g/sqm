@@ -10,9 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class InsertStatementParserTest {
 
@@ -46,7 +44,7 @@ class InsertStatementParserTest {
         assertTrue(result.ok(), result.errorMessage());
         assertEquals(InsertStatement.InsertMode.STANDARD, result.value().insertMode());
         assertTrue(result.value().columns().isEmpty());
-        assertTrue(result.value().returning().isEmpty());
+        assertNull(result.value().result());
         assertInstanceOf(SelectQuery.class, result.value().source());
     }
 
@@ -125,7 +123,7 @@ class InsertStatementParserTest {
     }
 
     @Test
-    void rejectsInsertWithOutputInAnsiDialect() {
+    void rejectsInsertWithResultInAnsiDialect() {
         var ctx = ParseContext.of(new AnsiSpecs());
         var result = ctx.parse(InsertStatement.class, "INSERT INTO users OUTPUT inserted.id VALUES (1)");
 

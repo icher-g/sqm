@@ -14,7 +14,7 @@ import static io.sqm.parser.spi.ParseResult.error;
 public class OutputColumnExprParser implements MatchableParser<OutputColumnExpr> {
 
     /**
-     * Creates an output-column parser.
+     * Creates an result-column parser.
      */
     public OutputColumnExprParser() {
     }
@@ -47,7 +47,7 @@ public class OutputColumnExprParser implements MatchableParser<OutputColumnExpr>
      *
      * @param cur the current cursor pointing to the next token to be parsed
      * @param ctx the parsing context providing configuration, helpers and nested parsing
-     * @return {@code false} because ANSI never parses SQL Server output pseudo-columns
+     * @return {@code false} because ANSI never parses SQL Server result pseudo-columns
      */
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {

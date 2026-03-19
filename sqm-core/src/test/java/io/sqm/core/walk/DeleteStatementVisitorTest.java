@@ -9,14 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.sqm.dsl.Dsl.col;
-import static io.sqm.dsl.Dsl.deleted;
-import static io.sqm.dsl.Dsl.delete;
-import static io.sqm.dsl.Dsl.inner;
-import static io.sqm.dsl.Dsl.lit;
-import static io.sqm.dsl.Dsl.output;
-import static io.sqm.dsl.Dsl.outputItem;
-import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class DeleteStatementVisitorTest {
@@ -27,8 +20,7 @@ class DeleteStatementVisitorTest {
             .using(tbl("users"))
             .join(inner(tbl("source_users")).on(col("users", "id").eq(col("source_users", "user_id"))))
             .where(col("id").eq(lit(1)))
-            .output(output(outputItem(deleted("id"))))
-            .returning(col("id").toSelectItem())
+            .result(deleted("id"))
             .build();
         var visits = new ArrayList<String>();
 
@@ -52,7 +44,6 @@ class DeleteStatementVisitorTest {
         }.accept(statement);
 
         assertEquals(List.of("delete", "table", "table", "table"), visits.subList(0, 4));
-        assertEquals(OutputRowSource.DELETED, statement.output().items().getFirst().expression().matchExpression().outputColumn(OutputColumnExpr::source).orElse(null));
-        assertEquals("id", statement.returning().getFirst().matchSelectItem().expr(e -> e.expr().matchExpression().column(c -> c.name().value()).orElse(null)).orElse(null));
+        assertEquals(OutputRowSource.DELETED, statement.result().items().getFirst().matchResultItem().expr(e -> e.expr().matchExpression().outputColumn(OutputColumnExpr::source).orElse(null)).orElse(null));
     }
 }

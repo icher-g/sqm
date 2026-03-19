@@ -44,9 +44,9 @@ public enum SqlFeature {
      */
     DISTINCT_ON("PostgreSQL DISTINCT ON"),
     /**
-     * DML RETURNING clause support (for example PostgreSQL and dialects that support RETURNING semantics).
+     * DML result clause support (for example PostgreSQL {@code RETURNING} and SQL Server {@code OUTPUT}).
      */
-    DML_RETURNING("DML RETURNING clause"),
+    DML_RESULT_CLAUSE("DML result clause"),
     /**
      * PostgreSQL INSERT ... ON CONFLICT clause support for upsert semantics.
      */
@@ -132,7 +132,7 @@ public enum SqlFeature {
      */
     LATERAL("LATERAL table reference"),
     /**
-     * Set-returning functions in FROM clause that produce table output.
+     * Set-returning functions in FROM clause that produce table result.
      */
     FUNCTION_TABLE("Set-returning function in FROM"),
     /**

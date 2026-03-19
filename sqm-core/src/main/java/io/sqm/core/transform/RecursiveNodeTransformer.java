@@ -63,14 +63,12 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         var table = apply(statement.table());
         var source = apply(statement.source());
         List<Assignment> conflictAssignments = new ArrayList<>(statement.conflictUpdateAssignments().size());
-        List<SelectItem> returning = new ArrayList<>(statement.returning().size());
         boolean changed = table != statement.table() || source != statement.source();
         changed |= apply(statement.conflictUpdateAssignments(), conflictAssignments);
         var conflictWhere = apply(statement.conflictUpdateWhere());
         changed |= conflictWhere != statement.conflictUpdateWhere();
-        var output = apply(statement.output());
-        changed |= output != statement.output();
-        changed |= apply(statement.returning(), returning);
+        var output = apply(statement.result());
+        changed |= output != statement.result();
         if (changed) {
             return InsertStatement.of(
                 statement.insertMode(),
@@ -81,8 +79,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
                 statement.onConflictAction(),
                 conflictAssignments,
                 conflictWhere,
-                output,
-                returning);
+                output);
         }
         return statement;
     }
@@ -99,18 +96,16 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         List<Assignment> assignments = new ArrayList<>(statement.assignments().size());
         List<Join> joins = new ArrayList<>(statement.joins().size());
         List<TableRef> from = new ArrayList<>(statement.from().size());
-        List<SelectItem> returning = new ArrayList<>(statement.returning().size());
         boolean changed = table != statement.table();
         changed |= apply(statement.assignments(), assignments);
         changed |= apply(statement.joins(), joins);
         changed |= apply(statement.from(), from);
         var where = apply(statement.where());
         changed |= where != statement.where();
-        var output = apply(statement.output());
-        changed |= output != statement.output();
-        changed |= apply(statement.returning(), returning);
+        var output = apply(statement.result());
+        changed |= output != statement.result();
         if (changed) {
-            return UpdateStatement.of(table, assignments, joins, from, where, output, returning, statement.optimizerHints());
+            return UpdateStatement.of(table, assignments, joins, from, where, output, statement.optimizerHints());
         }
         return statement;
     }
@@ -126,71 +121,103 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         var table = apply(statement.table());
         List<TableRef> using = new ArrayList<>(statement.using().size());
         List<Join> joins = new ArrayList<>(statement.joins().size());
-        List<SelectItem> returning = new ArrayList<>(statement.returning().size());
         boolean changed = table != statement.table();
         changed |= apply(statement.using(), using);
         changed |= apply(statement.joins(), joins);
         var where = apply(statement.where());
         changed |= where != statement.where();
-        var output = apply(statement.output());
-        changed |= output != statement.output();
-        changed |= apply(statement.returning(), returning);
+        var output = apply(statement.result());
+        changed |= output != statement.result();
         if (changed) {
-            return DeleteStatement.of(table, using, joins, where, output, returning, statement.optimizerHints());
+            return DeleteStatement.of(table, using, joins, where, output, statement.optimizerHints());
         }
         return statement;
     }
 
     /**
-     * Visits a SQL Server DML {@link OutputClause}.
+     * Visits a DML {@link ResultClause}.
      *
-     * @param clause output clause to transform
-     * @return transformed output clause, or the original instance if unchanged
+     * @param clause result clause to transform
+     * @return transformed result clause, or the original instance if unchanged
      */
     @Override
-    public Node visitOutputClause(OutputClause clause) {
-        List<OutputItem> items = new ArrayList<>(clause.items().size());
+    public Node visitResultClause(ResultClause clause) {
+        List<ResultItem> items = new ArrayList<>(clause.items().size());
         boolean changed = apply(clause.items(), items);
         var into = apply(clause.into());
         changed |= into != clause.into();
         if (changed) {
-            return OutputClause.of(items, into);
+            return ResultClause.of(items, into);
         }
         return clause;
     }
 
     /**
-     * Visits one SQL Server DML {@link OutputItem}.
+     * Visits a DML {@link StarResultItem}.
      *
-     * @param item output item to transform
-     * @return transformed output item, or the original instance if unchanged
+     * @param i star result item
+     * @return transformed result item, or the original instance if unchanged.
      */
     @Override
-    public Node visitOutputItem(OutputItem item) {
-        var expression = apply(item.expression());
-        if (expression != item.expression()) {
-            return OutputItem.of(expression, item.alias());
-        }
-        return item;
+    public Node visitStarResultItem(StarResultItem i) {
+        return i;
     }
 
     /**
-     * Visits a SQL Server {@link OutputInto} target.
+     * Visits a DML {@link ExprResultItem}.
      *
-     * @param into output-into target to transform
-     * @return transformed output-into target, or the original instance if unchanged
+     * @param i expr result item
+     * @return transformed result item, or the original instance if unchanged.
      */
     @Override
-    public Node visitOutputInto(OutputInto into) {
+    public Node visitExprResultItem(ExprResultItem i) {
+        var expr = apply(i.expr());
+        if (expr != i.expr()) {
+            return ExprResultItem.of(expr, i.alias());
+        }
+        return i;
+    }
+
+    /**
+     * Visits a DML {@link QualifiedStarResultItem}.
+     *
+     * @param i qualified star result item
+     * @return transformed result item, or the original instance if unchanged.
+     */
+    @Override
+    public Node visitQualifiedStarResultItem(QualifiedStarResultItem i) {
+        return i;
+    }
+
+    /**
+     * Visits a SQL Server {@link OutputStarResultItem}.
+     *
+     * @param i output-star result item
+     * @return transformed result item, or the original instance if unchanged.
+     */
+    @Override
+    public Node visitOutputStarResultItem(OutputStarResultItem i) {
+        return i;
+    }
+
+    /**
+     * Visits a DML {@link ResultInto} target.
+     *
+     * @param into result-into target to transform
+     * @return transformed result-into target, or the original instance if unchanged
+     */
+    @Override
+    public Node visitResultInto(ResultInto into) {
         var target = apply(into.target());
         if (target != into.target()) {
-            return OutputInto.of(target, into.columns());
+            return ResultInto.of(target, into.columns());
         }
         return into;
     }
 
     /**
      * Visits a single {@link Assignment}.     *
+     *
      * @param assignment assignment to transform
      * @return transformed assignment, or the original instance if unchanged
      */
@@ -234,7 +261,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     /**
      * Visits a SQL Server {@link OutputColumnExpr}.
      *
-     * @param c the output column expression
+     * @param c the result column expression
      * @return transformed node if changed, or the original instance otherwise
      */
     @Override
