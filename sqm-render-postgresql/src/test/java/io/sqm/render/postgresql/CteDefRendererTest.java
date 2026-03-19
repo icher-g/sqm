@@ -60,7 +60,7 @@ class CteDefRendererTest {
             insert("users")
                 .columns(id("name"))
                 .values(row(lit("alice")))
-                .returning(col("id").toSelectItem())
+                .result(col("id").toSelectItem())
                 .build()
         );
 
@@ -76,7 +76,7 @@ class CteDefRendererTest {
             update("users")
                 .set(id("name"), lit("alice"))
                 .where(col("id").eq(lit(1)))
-                .returning(col("id").toSelectItem())
+                .result(col("id").toSelectItem())
                 .build()
         );
 
@@ -91,7 +91,7 @@ class CteDefRendererTest {
         var cte = cte("del",
             delete("users")
                 .where(col("id").eq(lit(1)))
-                .returning(col("id").toSelectItem())
+                .result(col("id").toSelectItem())
                 .build()
         );
 

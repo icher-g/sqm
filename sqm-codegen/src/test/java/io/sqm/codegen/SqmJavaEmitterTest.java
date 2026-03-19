@@ -1,10 +1,6 @@
 package io.sqm.codegen;
 
-import io.sqm.core.Identifier;
-import io.sqm.core.OrderItem;
-import io.sqm.core.Query;
-import io.sqm.core.QuoteStyle;
-import io.sqm.core.TopSpec;
+import io.sqm.core.*;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -288,23 +284,20 @@ class SqmJavaEmitterTest {
             .ignore()
             .columns(id("id"), id("name", QuoteStyle.BACKTICK))
             .values(row(lit(1), lit("alice")))
-            .output(output(outputItem(inserted("id"), "new_id")))
-            .returning(col("id").toSelectItem())
+            .result(inserted("id").as("new_id"))
             .build();
         var update = update(tbl("users"))
             .optimizerHint("MAX_EXECUTION_TIME(1000)")
             .set(set("u", "name", lit("alice")))
             .from(tbl("src"))
             .where(col("u", "id").eq(lit(1)))
-            .output(output(outputInto(tbl("audit"), id("user_id")), outputItem(inserted("id"), "user_id")))
-            .returning(col("u", "id").toSelectItem())
+            .result(resultInto(tbl("audit"), id("user_id")), insertedAll(), inserted("id").as("user_id"))
             .build();
         var delete = delete(tbl("users"))
             .optimizerHint("BKA(users)")
             .using(tbl("audit"))
             .where(col("users", "id").eq(col("audit", "user_id")))
-            .output(output(outputItem(deleted("id"))))
-            .returning(col("users", "id").toSelectItem())
+            .result(deleted("id"))
             .build();
 
         var insertSource = emitter.emitStatement(insert);
@@ -315,21 +308,18 @@ class SqmJavaEmitterTest {
         assertTrue(insertSource.contains(".ignore()"));
         assertTrue(insertSource.contains(".columns(id(\"id\"), id(\"name\", QuoteStyle.BACKTICK))"));
         assertTrue(insertSource.contains(".values(row(lit(1), lit(\"alice\")))"));
-        assertTrue(insertSource.contains(".output(output(outputItem(inserted(id(\"id\")), id(\"new_id\"))))"));
-        assertTrue(insertSource.contains(".returning(col(\"id\"))"));
+        assertTrue(insertSource.contains(".result(inserted(id(\"id\")).as(id(\"new_id\")))"));
 
         assertTrue(updateSource.contains("update(tbl(\"users\"))"));
         assertTrue(updateSource.contains(".optimizerHints(java.util.List.of(\"MAX_EXECUTION_TIME(1000)\"))"));
         assertTrue(updateSource.contains(".set(set(QualifiedName.of(id(\"u\"), id(\"name\")), lit(\"alice\")))"));
         assertTrue(updateSource.contains(".from(tbl(\"src\"))"));
-        assertTrue(updateSource.contains(".output(output(outputInto(tbl(\"audit\"), id(\"user_id\")), outputItem(inserted(id(\"id\")), id(\"user_id\"))))"));
-        assertTrue(updateSource.contains(".returning(col(\"u\", \"id\"))"));
+        assertTrue(updateSource.contains(".result(resultInto(tbl(\"audit\"), id(\"user_id\")), insertedAll(), inserted(id(\"id\")).as(id(\"user_id\")))"));
 
         assertTrue(deleteSource.contains("delete(tbl(\"users\"))"));
         assertTrue(deleteSource.contains(".optimizerHints(java.util.List.of(\"BKA(users)\"))"));
         assertTrue(deleteSource.contains(".using(tbl(\"audit\"))"));
-        assertTrue(deleteSource.contains(".output(output(outputItem(deleted(id(\"id\")))))"));
-        assertTrue(deleteSource.contains(".returning(col(\"users\", \"id\"))"));
+        assertTrue(deleteSource.contains(".result(deleted(id(\"id\")))"));
     }
 
     @Test
@@ -381,6 +371,19 @@ class SqmJavaEmitterTest {
         assertTrue(emitter.emitQuery(noKeyUpdateLock).contains(".lockFor(noKeyUpdate(), ofTables(\"users\"), false, true)"));
         assertTrue(emitter.emitQuery(shareLock).contains(".lockFor(share(), ofTables(\"users\"), false, false)"));
         assertTrue(emitter.emitQuery(keyShareLock).contains(".lockFor(keyShare(), ofTables(\"users\"), true, false)"));
+    }
+
+    @Test
+    void emitStatement_covers_generic_result_star_variants() {
+        var insert = insert(tbl("users"))
+            .columns(id("id"))
+            .values(row(lit(1)))
+            .result(star(), star("u"))
+            .build();
+
+        var source = emitter.emitStatement(insert);
+
+        assertTrue(source.contains(".result(star(), star(id(\"u\")))"));
     }
 
     @Test

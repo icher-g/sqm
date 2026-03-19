@@ -162,6 +162,15 @@ public sealed interface Expression extends Node
     }
 
     /**
+     * Creates a RESULT item (OUTPUT / RETURNING) based on the current expression.
+     *
+     * @return {@link ResultItem}.
+     */
+    default ResultItem toResultItem() {
+        return ResultItem.expr(this);
+    }
+
+    /**
      * Applies a collation to the current expression.
      * <p>Example:</p>
      * <pre>

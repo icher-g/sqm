@@ -4,7 +4,6 @@ import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.core.mysql.dialect.MySqlCapabilities;
 import io.sqm.parser.ansi.AnsiOperatorPolicy;
-import io.sqm.parser.mysql.MySqlLookups;
 import io.sqm.parser.mysql.Parsers;
 import io.sqm.parser.spi.*;
 

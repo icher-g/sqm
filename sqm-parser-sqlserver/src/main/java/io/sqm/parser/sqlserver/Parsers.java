@@ -1,6 +1,8 @@
 package io.sqm.parser.sqlserver;
 
+import io.sqm.parser.PostfixExprParser;
 import io.sqm.parser.spi.ParsersRepository;
+import io.sqm.parser.ansi.PowerArithmeticExprParser;
 
 /**
  * Registry entry point for SQL Server parser implementations.
@@ -22,9 +24,19 @@ public final class Parsers {
     }
 
     private static ParsersRepository registerDefaults(ParsersRepository repository) {
+        var atomicExprParser = new AtomicExprParser();
+        var postfixExprParser = new PostfixExprParser(atomicExprParser);
         return repository
-            .register(new SqlServerFunctionExprParser())
-            .register(new SqlServerLimitOffsetParser())
-            .register(new SqlServerSelectQueryParser());
+            .register(new InsertStatementParser())
+            .register(new UpdateStatementParser())
+            .register(new DeleteStatementParser())
+            .register(new OutputColumnExprParser())
+            .register(new OutputStarResultItemParser())
+            .register(new FunctionExprParser())
+            .register(new LimitOffsetParser())
+            .register(new PowerArithmeticExprParser(postfixExprParser))
+            .register(new SelectQueryParser())
+            .register(new ResultClauseParser())
+            .register(new ResultIntoParser());
     }
 }

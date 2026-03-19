@@ -60,10 +60,34 @@ class SqlServerDmlRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTripInsertStatementWithOutputStar() {
+        assertRoundTrip(
+            "INSERT INTO [users] ([name]) OUTPUT inserted.* VALUES ('alice')",
+            "INSERT INTO [users] ([name]) OUTPUT inserted.* VALUES ('alice')"
+        );
+    }
+
+    @Test
+    void roundTripUpdateStatementWithOutputInto() {
+        assertRoundTrip(
+            "UPDATE [users] SET [name] = 'alice' OUTPUT deleted.[name], inserted.[name] INTO [audit] ([old_name], [new_name]) WHERE [id] = 1",
+            "UPDATE [users] SET [name] = 'alice' OUTPUT deleted.[name], inserted.[name] INTO [audit] ([old_name], [new_name]) WHERE [id] = 1"
+        );
+    }
+
+    @Test
     void roundTripDeleteStatement() {
         assertRoundTrip(
             "DELETE FROM [users] WHERE [id] = 1",
             "DELETE FROM [users] WHERE [id] = 1"
+        );
+    }
+
+    @Test
+    void roundTripDeleteStatementWithOutputStar() {
+        assertRoundTrip(
+            "DELETE FROM [users] OUTPUT deleted.* WHERE [id] = 1",
+            "DELETE FROM [users] OUTPUT deleted.* WHERE [id] = 1"
         );
     }
 

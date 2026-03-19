@@ -231,7 +231,7 @@ public final class SchemaStatementValidator implements StatementValidator {
                 context.registerTableRef(statement.table());
                 statement.conflictUpdateAssignments().forEach(this::accept);
                 accept(statement.conflictUpdateWhere());
-                statement.returning().forEach(this::accept);
+                accept(statement.result());
                 registry.validate(statement, context);
                 return defaultResult();
             } finally {
@@ -256,7 +256,7 @@ public final class SchemaStatementValidator implements StatementValidator {
                 statement.joins().forEach(this::accept);
                 statement.from().forEach(this::accept);
                 accept(statement.where());
-                statement.returning().forEach(this::accept);
+                accept(statement.result());
                 registry.validate(statement, context);
                 return defaultResult();
             } finally {
@@ -283,7 +283,7 @@ public final class SchemaStatementValidator implements StatementValidator {
                 statement.using().forEach(this::accept);
                 statement.joins().forEach(this::accept);
                 accept(statement.where());
-                statement.returning().forEach(this::accept);
+                accept(statement.result());
                 registry.validate(statement, context);
                 return defaultResult();
             } finally {

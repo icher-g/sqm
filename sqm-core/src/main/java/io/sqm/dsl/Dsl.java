@@ -49,7 +49,7 @@ public final class Dsl {
     /**
      * Creates an identifier helper value with an explicit quote style.
      *
-     * @param value identifier text
+     * @param value      identifier text
      * @param quoteStyle identifier quote style
      * @return quote-aware identifier with requested quote style
      */
@@ -94,7 +94,7 @@ public final class Dsl {
      * Creates a table with the provided quote-aware schema and name identifiers.
      *
      * @param schema schema identifier
-     * @param name table name identifier
+     * @param name   table name identifier
      * @return a table
      */
     public static Table tbl(Identifier schema, Identifier name) {
@@ -201,7 +201,7 @@ public final class Dsl {
      * Creates a column with the provided quote-aware table alias and column name identifiers.
      *
      * @param table table alias identifier
-     * @param name column name identifier
+     * @param name  column name identifier
      * @return a column
      */
     public static ColumnExpr col(Identifier table, Identifier name) {
@@ -209,43 +209,61 @@ public final class Dsl {
     }
 
     /**
-     * Creates an {@code inserted.<column>} SQL Server output expression.
+     * Creates an {@code inserted.<column>} SQL Server result expression.
      *
-     * @param column output column name
-     * @return output column expression
+     * @param column result column name
+     * @return result column expression
      */
     public static OutputColumnExpr inserted(String column) {
         return OutputColumnExpr.inserted(Identifier.of(column));
     }
 
     /**
-     * Creates an {@code inserted.<column>} SQL Server output expression.
+     * Creates an {@code inserted.<column>} SQL Server result expression.
      *
-     * @param column quote-aware output column identifier
-     * @return output column expression
+     * @param column quote-aware result column identifier
+     * @return result column expression
      */
     public static OutputColumnExpr inserted(Identifier column) {
         return OutputColumnExpr.inserted(column);
     }
 
     /**
-     * Creates a {@code deleted.<column>} SQL Server output expression.
+     * Creates a {@code deleted.<column>} SQL Server result expression.
      *
-     * @param column output column name
-     * @return output column expression
+     * @param column result column name
+     * @return result column expression
      */
     public static OutputColumnExpr deleted(String column) {
         return OutputColumnExpr.deleted(Identifier.of(column));
     }
 
     /**
-     * Creates a {@code deleted.<column>} SQL Server output expression.
+     * Creates a {@code deleted.<column>} SQL Server result expression.
      *
-     * @param column quote-aware output column identifier
-     * @return output column expression
+     * @param column quote-aware result column identifier
+     * @return result column expression
      */
     public static OutputColumnExpr deleted(Identifier column) {
         return OutputColumnExpr.deleted(column);
+    }
+
+    /**
+     * Creates an {@code inserted.*} SQL Server result item.
+     *
+     * @return output-star result item
+     */
+    public static OutputStarResultItem insertedAll() {
+        return OutputStarResultItem.inserted();
+    }
+
+    /**
+     * Creates a {@code deleted.*} SQL Server result item.
+     *
+     * @return output-star result item
+     */
+    public static OutputStarResultItem deletedAll() {
+        return OutputStarResultItem.deleted();
     }
 
     /* ========================= Select Items ====================== */
@@ -280,99 +298,69 @@ public final class Dsl {
     }
 
     /**
-     * Creates a SQL Server DML output item.
-     *
-     * @param expression output expression
-     * @return output item
-     */
-    public static OutputItem outputItem(Expression expression) {
-        return OutputItem.of(expression);
-    }
-
-    /**
-     * Creates a SQL Server DML output item with an alias.
-     *
-     * @param expression output expression
-     * @param alias output alias
-     * @return output item
-     */
-    public static OutputItem outputItem(Expression expression, String alias) {
-        return OutputItem.of(expression, alias == null ? null : Identifier.of(alias));
-    }
-
-    /**
-     * Creates a SQL Server DML output item with an alias.
-     *
-     * @param expression output expression
-     * @param alias quote-aware output alias
-     * @return output item
-     */
-    public static OutputItem outputItem(Expression expression, Identifier alias) {
-        return OutputItem.of(expression, alias);
-    }
-
-    /**
-     * Creates a SQL Server {@code OUTPUT INTO} target without explicit target columns.
+     * Creates a {@code OUTPUT INTO} target without explicit target columns.
      *
      * @param target target table
-     * @return output-into specification
+     * @return result-into specification
      */
-    public static OutputInto outputInto(Table target) {
-        return OutputInto.of(target);
+    public static ResultInto resultInto(Table target) {
+        return ResultInto.of(target);
     }
 
     /**
-     * Creates a SQL Server {@code OUTPUT INTO} target with explicit target columns.
+     * Creates a {@code OUTPUT INTO} target with explicit target columns.
      *
-     * @param target target table
+     * @param target  target table
      * @param columns target columns
-     * @return output-into specification
+     * @return result-into specification
      */
-    public static OutputInto outputInto(Table target, Identifier... columns) {
-        return OutputInto.of(target, List.of(columns));
+    public static ResultInto resultInto(Table target, Identifier... columns) {
+        return ResultInto.of(target, List.of(columns));
     }
 
     /**
-     * Creates a SQL Server {@code OUTPUT INTO} target with explicit target columns.
+     * Creates a {@code OUTPUT INTO} target with explicit target columns.
      *
-     * @param target target table
+     * @param target  target table
      * @param columns target column names
-     * @return output-into specification
+     * @return result-into specification
      */
-    public static OutputInto outputInto(Table target, String... columns) {
-        return outputInto(target, java.util.Arrays.stream(columns).map(Identifier::of).toArray(Identifier[]::new));
+    public static ResultInto resultInto(Table target, String... columns) {
+        return resultInto(target, java.util.Arrays.stream(columns).map(Identifier::of).toArray(Identifier[]::new));
     }
 
     /**
-     * Creates a SQL Server {@code OUTPUT INTO} target with explicit target columns.
+     * Creates a {@code OUTPUT INTO} target with explicit target columns.
      *
-     * @param target target table
+     * @param target  target table
      * @param columns target column names
-     * @return output-into specification
+     * @return result-into specification
      */
-    public static OutputInto outputInto(String target, String... columns) {
-        return outputInto(tbl(target), java.util.Arrays.stream(columns).map(Identifier::of).toArray(Identifier[]::new));
+    public static ResultInto resultInto(String target, String... columns) {
+        return resultInto(tbl(target), java.util.Arrays.stream(columns).map(Identifier::of).toArray(Identifier[]::new));
     }
 
     /**
-     * Creates a SQL Server {@code OUTPUT} clause without an {@code INTO} target.
+     * Creates a result clause without an {@code INTO} target.
      *
-     * @param items output items
-     * @return output clause
+     * @param nodes result items
+     * @return result clause
      */
-    public static OutputClause output(OutputItem... items) {
-        return OutputClause.of(List.of(items));
+    public static ResultClause result(Node... nodes) {
+        var items = ResultItem.fromNodes(nodes);
+        return ResultClause.of(items);
     }
 
     /**
-     * Creates a SQL Server {@code OUTPUT} clause with an {@code INTO} target.
+     * Creates a result clause with an {@code INTO} target.
      *
-     * @param into output-into target
-     * @param items output items
-     * @return output clause
+     * @param into  result-into target
+     * @param nodes result items
+     * @return result clause
      */
-    public static OutputClause output(OutputInto into, OutputItem... items) {
-        return OutputClause.of(List.of(items), into);
+    public static ResultClause result(ResultInto into, Node... nodes) {
+        var items = ResultItem.fromNodes(nodes);
+        return ResultClause.of(items, into);
     }
 
     /* ========================= Functions ========================= */
@@ -424,8 +412,8 @@ public final class Dsl {
      * is rendered without quotes by the SQL Server renderer.</p>
      *
      * @param datePart SQL Server datepart token such as {@code day} or {@code month}.
-     * @param number increment expression.
-     * @param date date/time expression to shift.
+     * @param number   increment expression.
+     * @param date     date/time expression to shift.
      * @return SQL Server {@code DATEADD(...)} function expression.
      */
     public static FunctionExpr dateAdd(String datePart, Expression number, Expression date) {
@@ -439,8 +427,8 @@ public final class Dsl {
      * is rendered without quotes by the SQL Server renderer.</p>
      *
      * @param datePart SQL Server datepart token such as {@code day} or {@code month}.
-     * @param start start date/time expression.
-     * @param end end date/time expression.
+     * @param start    start date/time expression.
+     * @param end      end date/time expression.
      * @return SQL Server {@code DATEDIFF(...)} function expression.
      */
     public static FunctionExpr dateDiff(String datePart, Expression start, Expression end) {
@@ -450,7 +438,7 @@ public final class Dsl {
     /**
      * Creates a SQL Server {@code ISNULL(...)} function call.
      *
-     * @param expr expression to test for {@code NULL}.
+     * @param expr        expression to test for {@code NULL}.
      * @param replacement replacement expression when {@code expr} is {@code NULL}.
      * @return SQL Server {@code ISNULL(...)} function expression.
      */
@@ -461,7 +449,7 @@ public final class Dsl {
     /**
      * Creates a SQL Server {@code STRING_AGG(...)} function call.
      *
-     * @param expr expression to aggregate.
+     * @param expr      expression to aggregate.
      * @param separator separator expression inserted between aggregated values.
      * @return SQL Server {@code STRING_AGG(...)} function expression.
      */
@@ -482,7 +470,7 @@ public final class Dsl {
     /**
      * Creates an {@code INTERVAL '...'} literal with a qualifier.
      *
-     * @param value interval literal value without surrounding quotes
+     * @param value     interval literal value without surrounding quotes
      * @param qualifier interval qualifier such as {@code DAY}
      * @return interval literal expression
      */
@@ -686,7 +674,7 @@ public final class Dsl {
      * Creates an {@code UPDATE} assignment using a string column name and expression value.
      *
      * @param column target column name
-     * @param value assigned expression
+     * @param value  assigned expression
      * @return an assignment
      */
     public static Assignment set(String column, Expression value) {
@@ -697,7 +685,7 @@ public final class Dsl {
      * Creates an {@code UPDATE} assignment using a quote-aware column identifier.
      *
      * @param column target column identifier
-     * @param value assigned expression
+     * @param value  assigned expression
      * @return an assignment
      */
     public static Assignment set(Identifier column, Expression value) {
@@ -708,7 +696,7 @@ public final class Dsl {
      * Creates an {@code UPDATE} assignment using a qualified target name.
      *
      * @param column target column qualified name
-     * @param value assigned expression
+     * @param value  assigned expression
      * @return an assignment
      */
     public static Assignment set(QualifiedName column, Expression value) {
@@ -719,8 +707,8 @@ public final class Dsl {
      * Creates an {@code UPDATE} assignment using a table/alias and column name.
      *
      * @param qualifier table or alias qualifier
-     * @param column target column name
-     * @param value assigned expression
+     * @param column    target column name
+     * @param value     assigned expression
      * @return an assignment
      */
     public static Assignment set(String qualifier, String column, Expression value) {
@@ -731,8 +719,8 @@ public final class Dsl {
      * Creates an {@code UPDATE} assignment using a table/alias and column name with a literal value.
      *
      * @param qualifier table or alias qualifier
-     * @param column target column name
-     * @param value assigned literal value
+     * @param column    target column name
+     * @param value     assigned literal value
      * @return an assignment
      */
     public static Assignment set(String qualifier, String column, Object value) {
@@ -743,7 +731,7 @@ public final class Dsl {
      * Creates an {@code UPDATE} assignment using a string column name and literal value.
      *
      * @param column target column name
-     * @param value assigned literal value
+     * @param value  assigned literal value
      * @return an assignment
      */
     public static Assignment set(String column, Object value) {

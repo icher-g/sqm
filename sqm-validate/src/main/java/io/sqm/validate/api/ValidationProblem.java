@@ -142,7 +142,7 @@ public record ValidationProblem(
          */
         LOCK_TARGET_NOT_FOUND,
         /**
-         * ORDER BY in set operation references expression outside set-operation output shape.
+         * ORDER BY in set operation references expression outside set-operation result shape.
          */
         SET_OPERATION_ORDER_BY_INVALID,
         /**

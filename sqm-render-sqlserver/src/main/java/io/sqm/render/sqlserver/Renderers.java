@@ -23,8 +23,15 @@ public final class Renderers {
 
     private static RenderersRepository registerDefaults(RenderersRepository repository) {
         return repository
-            .register(new SqlServerFunctionExprRenderer())
-            .register(new SqlServerLimitOffsetRenderer())
-            .register(new SqlServerSelectQueryRenderer());
+            .register(new InsertStatementRenderer())
+            .register(new UpdateStatementRenderer())
+            .register(new DeleteStatementRenderer())
+            .register(new OutputColumnExprRenderer())
+            .register(new OutputStarResultItemRenderer())
+            .register(new FunctionExprRenderer())
+            .register(new LimitOffsetRenderer())
+            .register(new SelectQueryRenderer())
+            .register(new ResultClauseRenderer())
+            .register(new ResultIntoRenderer());
     }
 }

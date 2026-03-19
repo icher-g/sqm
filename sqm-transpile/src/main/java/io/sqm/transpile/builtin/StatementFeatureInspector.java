@@ -24,7 +24,7 @@ final class StatementFeatureInspector {
     private StatementFeatureInspector() {
     }
 
-    static boolean hasReturning(Statement statement) {
+    static boolean hasResultClause(Statement statement) {
         var found = new AtomicBoolean(false);
         statement.accept(new RecursiveNodeVisitor<Void>() {
             @Override
@@ -34,7 +34,7 @@ final class StatementFeatureInspector {
 
             @Override
             public Void visitInsertStatement(InsertStatement statement) {
-                if (!statement.returning().isEmpty()) {
+                if (statement.result() != null) {
                     found.set(true);
                 }
                 return super.visitInsertStatement(statement);
@@ -42,7 +42,7 @@ final class StatementFeatureInspector {
 
             @Override
             public Void visitUpdateStatement(UpdateStatement statement) {
-                if (!statement.returning().isEmpty()) {
+                if (statement.result() != null) {
                     found.set(true);
                 }
                 return super.visitUpdateStatement(statement);
@@ -50,7 +50,7 @@ final class StatementFeatureInspector {
 
             @Override
             public Void visitDeleteStatement(DeleteStatement statement) {
-                if (!statement.returning().isEmpty()) {
+                if (statement.result() != null) {
                     found.set(true);
                 }
                 return super.visitDeleteStatement(statement);

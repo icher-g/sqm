@@ -19,21 +19,21 @@ class RenderersIsolationTest {
         RenderersRepository mysql = Renderers.mysql();
 
         assertInstanceOf(io.sqm.render.ansi.InsertStatementRenderer.class, ansi.require(InsertStatement.class));
-        assertInstanceOf(MySqlInsertStatementRenderer.class, mysql.require(InsertStatement.class));
+        assertInstanceOf(InsertStatementRenderer.class, mysql.require(InsertStatement.class));
 
         assertInstanceOf(io.sqm.render.ansi.LimitOffsetRenderer.class, ansi.require(LimitOffset.class));
-        assertInstanceOf(MySqlLimitOffsetRenderer.class, mysql.require(LimitOffset.class));
+        assertInstanceOf(LimitOffsetRenderer.class, mysql.require(LimitOffset.class));
 
         assertInstanceOf(io.sqm.render.ansi.GroupByRenderer.class, ansi.require(GroupBy.class));
-        assertInstanceOf(MySqlGroupByRenderer.class, mysql.require(GroupBy.class));
+        assertInstanceOf(GroupByRenderer.class, mysql.require(GroupBy.class));
 
         assertInstanceOf(io.sqm.render.ansi.RegexPredicateRenderer.class, ansi.require(RegexPredicate.class));
-        assertInstanceOf(MySqlRegexPredicateRenderer.class, mysql.require(RegexPredicate.class));
+        assertInstanceOf(RegexPredicateRenderer.class, mysql.require(RegexPredicate.class));
 
         assertInstanceOf(io.sqm.render.ansi.TableRenderer.class, ansi.require(Table.class));
-        assertInstanceOf(MySqlTableRenderer.class, mysql.require(Table.class));
+        assertInstanceOf(TableRenderer.class, mysql.require(Table.class));
 
         assertInstanceOf(io.sqm.render.ansi.SelectQueryRenderer.class, ansi.require(SelectQuery.class));
-        assertInstanceOf(MySqlSelectQueryRenderer.class, mysql.require(SelectQuery.class));
+        assertInstanceOf(SelectQueryRenderer.class, mysql.require(SelectQuery.class));
     }
 }

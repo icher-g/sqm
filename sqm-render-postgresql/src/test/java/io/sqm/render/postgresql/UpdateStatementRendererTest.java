@@ -37,7 +37,7 @@ class UpdateStatementRendererTest {
         UpdateStatement statement = update("users")
             .set(id("name"), lit("alice"))
             .where(col("id").eq(lit(1)))
-            .returning(col("id").toSelectItem(), col("name").toSelectItem())
+            .result(col("id").toSelectItem(), col("name").toSelectItem())
             .build();
 
         var sql = normalize(ctx.render(statement).sql());
@@ -77,7 +77,7 @@ class UpdateStatementRendererTest {
         var writer = new DefaultSqlWriter(ansiCtx);
         UpdateStatement statement = update("users")
             .set(id("name"), lit("alice"))
-            .returning(col("id").toSelectItem())
+            .result(col("id").toSelectItem())
             .build();
 
         assertThrows(UnsupportedDialectFeatureException.class, () -> renderer.render(statement, ansiCtx, writer));

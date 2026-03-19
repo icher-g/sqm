@@ -19,21 +19,21 @@ class ParsersIsolationTest {
         ParsersRepository mysql = Parsers.mysql();
 
         assertInstanceOf(io.sqm.parser.ansi.InsertStatementParser.class, ansi.require(InsertStatement.class));
-        assertInstanceOf(MySqlInsertStatementParser.class, mysql.require(InsertStatement.class));
+        assertInstanceOf(InsertStatementParser.class, mysql.require(InsertStatement.class));
 
         assertInstanceOf(io.sqm.parser.ansi.LimitOffsetParser.class, ansi.require(LimitOffset.class));
-        assertInstanceOf(MySqlLimitOffsetParser.class, mysql.require(LimitOffset.class));
+        assertInstanceOf(LimitOffsetParser.class, mysql.require(LimitOffset.class));
 
         assertInstanceOf(io.sqm.parser.ansi.GroupByParser.class, ansi.require(GroupBy.class));
-        assertInstanceOf(MySqlGroupByParser.class, mysql.require(GroupBy.class));
+        assertInstanceOf(GroupByParser.class, mysql.require(GroupBy.class));
 
         assertInstanceOf(io.sqm.parser.ansi.RegexPredicateParser.class, ansi.require(RegexPredicate.class));
-        assertInstanceOf(MySqlRegexPredicateParser.class, mysql.require(RegexPredicate.class));
+        assertInstanceOf(RegexPredicateParser.class, mysql.require(RegexPredicate.class));
 
         assertInstanceOf(io.sqm.parser.ansi.TableParser.class, ansi.require(Table.class));
-        assertInstanceOf(MySqlTableParser.class, mysql.require(Table.class));
+        assertInstanceOf(TableParser.class, mysql.require(Table.class));
 
         assertInstanceOf(io.sqm.parser.ansi.SelectQueryParser.class, ansi.require(SelectQuery.class));
-        assertInstanceOf(MySqlSelectQueryParser.class, mysql.require(SelectQuery.class));
+        assertInstanceOf(SelectQueryParser.class, mysql.require(SelectQuery.class));
     }
 }

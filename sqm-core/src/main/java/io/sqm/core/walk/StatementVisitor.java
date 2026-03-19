@@ -5,9 +5,8 @@ import io.sqm.core.CteDef;
 import io.sqm.core.DeleteStatement;
 import io.sqm.core.InsertStatement;
 import io.sqm.core.LockingClause;
-import io.sqm.core.OutputClause;
-import io.sqm.core.OutputInto;
-import io.sqm.core.OutputItem;
+import io.sqm.core.ResultClause;
+import io.sqm.core.ResultInto;
 import io.sqm.core.TypeName;
 import io.sqm.core.UpdateStatement;
 import io.sqm.core.WhenThen;
@@ -44,28 +43,20 @@ public interface StatementVisitor<R> {
     R visitDeleteStatement(DeleteStatement statement);
 
     /**
-     * Visits a SQL Server DML {@link OutputClause}.
+     * Visits a SQL Server DML {@link ResultClause}.
      *
-     * @param clause output clause being visited
+     * @param clause result clause being visited
      * @return a result specific to the visitor implementation
      */
-    R visitOutputClause(OutputClause clause);
+    R visitResultClause(ResultClause clause);
 
     /**
-     * Visits one projected {@link OutputItem} from a SQL Server DML {@code OUTPUT} clause.
+     * Visits a SQL Server {@link ResultInto} target.
      *
-     * @param item output item being visited
+     * @param into result-into target being visited
      * @return a result specific to the visitor implementation
      */
-    R visitOutputItem(OutputItem item);
-
-    /**
-     * Visits a SQL Server {@link OutputInto} target.
-     *
-     * @param into output-into target being visited
-     * @return a result specific to the visitor implementation
-     */
-    R visitOutputInto(OutputInto into);
+    R visitResultInto(ResultInto into);
 
     /**
      * Visits a single {@link Assignment} within an update statement.

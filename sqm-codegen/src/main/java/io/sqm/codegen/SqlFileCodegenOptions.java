@@ -40,7 +40,7 @@ public final class SqlFileCodegenOptions {
      * Creates options for SQL file code generation.
      *
      * @param sqlDirectory source directory that contains {@code *.sql} files.
-     * @param generatedSourcesDirectory output directory where generated Java files are written.
+     * @param generatedSourcesDirectory result directory where generated Java files are written.
      * @param basePackage Java package for generated classes.
      * @return new immutable options.
      */
@@ -52,7 +52,7 @@ public final class SqlFileCodegenOptions {
      * Creates options for SQL file code generation.
      *
      * @param sqlDirectory source directory that contains {@code *.sql} files.
-     * @param generatedSourcesDirectory output directory where generated Java files are written.
+     * @param generatedSourcesDirectory result directory where generated Java files are written.
      * @param basePackage Java package for generated classes.
      * @param dialect SQL dialect used for parse validation.
      * @return new immutable options.
@@ -70,7 +70,7 @@ public final class SqlFileCodegenOptions {
      * Creates options for SQL file code generation.
      *
      * @param sqlDirectory source directory that contains {@code *.sql} files.
-     * @param generatedSourcesDirectory output directory where generated Java files are written.
+     * @param generatedSourcesDirectory result directory where generated Java files are written.
      * @param basePackage Java package for generated classes.
      * @param dialect SQL dialect used for parse validation.
      * @param includeGenerationTimestamp if {@code true}, generated classes include {@code @Generated(date=...)} metadata.
@@ -90,7 +90,7 @@ public final class SqlFileCodegenOptions {
      * Creates options for SQL file code generation.
      *
      * @param sqlDirectory source directory that contains {@code *.sql} files.
-     * @param generatedSourcesDirectory output directory where generated Java files are written.
+     * @param generatedSourcesDirectory result directory where generated Java files are written.
      * @param basePackage Java package for generated classes.
      * @param dialect SQL dialect used for parse validation.
      * @param includeGenerationTimestamp if {@code true}, generated classes include {@code @Generated(date=...)} metadata.
@@ -120,7 +120,7 @@ public final class SqlFileCodegenOptions {
      * Creates options for SQL file code generation.
      *
      * @param sqlDirectory source directory that contains {@code *.sql} files.
-     * @param generatedSourcesDirectory output directory where generated Java files are written.
+     * @param generatedSourcesDirectory result directory where generated Java files are written.
      * @param basePackage Java package for generated classes.
      * @param dialect SQL dialect used for parse validation.
      * @param includeGenerationTimestamp if {@code true}, generated classes include {@code @Generated(date=...)} metadata.
@@ -166,7 +166,7 @@ public final class SqlFileCodegenOptions {
     }
 
     /**
-     * Returns the output directory for generated Java sources.
+     * Returns the result directory for generated Java sources.
      *
      * @return generated Java sources directory.
      */

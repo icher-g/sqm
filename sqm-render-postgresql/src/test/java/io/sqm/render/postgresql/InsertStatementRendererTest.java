@@ -23,7 +23,7 @@ class InsertStatementRendererTest {
         var ctx = RenderContext.of(new PostgresDialect());
         InsertStatement statement = insert("users")
             .values(row(lit(1), lit("alice")))
-            .returning(col("id").toSelectItem(), col("name").as("user_name"))
+            .result(col("id").toSelectItem(), col("name").as("user_name"))
             .build();
 
         var sql = normalize(ctx.render(statement).sql());
@@ -104,7 +104,7 @@ class InsertStatementRendererTest {
         var writer = new DefaultSqlWriter(ansiCtx);
         InsertStatement statement = insert("users")
             .values(row(lit(1)))
-            .returning(col("id").toSelectItem())
+            .result(col("id").toSelectItem())
             .build();
 
         assertThrows(UnsupportedDialectFeatureException.class, () -> renderer.render(statement, ansiCtx, writer));

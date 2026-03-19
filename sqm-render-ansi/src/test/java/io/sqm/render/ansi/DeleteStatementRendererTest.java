@@ -5,15 +5,15 @@ import io.sqm.core.Statement;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.Test;
 
-import static io.sqm.dsl.Dsl.col;
-import static io.sqm.dsl.Dsl.delete;
-import static io.sqm.dsl.Dsl.inner;
-import static io.sqm.dsl.Dsl.lit;
-import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 class DeleteStatementRendererTest {
+
+    private static String normalize(String sql) {
+        return sql.replaceAll("\\s+", " ").trim();
+    }
 
     @Test
     void rendersDeleteWithWhere() {
@@ -94,8 +94,7 @@ class DeleteStatementRendererTest {
             java.util.List.of(),
             java.util.List.of(),
             null,
-            null,
-            java.util.List.of(io.sqm.core.ExprSelectItem.of(col("id"), null)),
+            result(col("id")),
             java.util.List.of());
 
         var renderer = new DeleteStatementRenderer();
@@ -105,9 +104,5 @@ class DeleteStatementRendererTest {
             io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
             () -> renderer.render(statement, ctx, writer)
         );
-    }
-
-    private static String normalize(String sql) {
-        return sql.replaceAll("\\s+", " ").trim();
     }
 }

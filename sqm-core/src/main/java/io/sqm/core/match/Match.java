@@ -96,6 +96,17 @@ public interface Match<T, R> {
     }
 
     /**
+     * Creates a new matcher for the given {@link ResultItem}.
+     *
+     * @param i   the select item to match on
+     * @param <R> the result type
+     * @return a new {@code ResultItemMatch} for {@code i}
+     */
+    static <R> ResultItemMatch<R> resultItem(ResultItem i) {
+        return ResultItemMatch.match(i);
+    }
+
+    /**
      * Creates a new matcher for the given {@link TableRef}.
      *
      * @param t   the table reference to match on

@@ -95,6 +95,15 @@ class UpdateStatementParserTest {
     }
 
     @Test
+    void rejectsUpdateWithResultInAnsiDialect() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' OUTPUT inserted.name");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).startsWith("UPDATE ... OUTPUT is not supported by this dialect"));
+    }
+
+    @Test
     void rejectsUpdateWithInvalidWhereClause() {
         var ctx = ParseContext.of(new AnsiSpecs());
         var result = ctx.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' WHERE");

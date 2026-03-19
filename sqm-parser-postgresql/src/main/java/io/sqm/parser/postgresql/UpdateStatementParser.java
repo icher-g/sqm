@@ -1,6 +1,7 @@
 package io.sqm.parser.postgresql;
 
-import io.sqm.core.SelectItem;
+import io.sqm.core.ResultClause;
+import io.sqm.core.ResultItem;
 import io.sqm.core.TableRef;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
@@ -56,19 +57,19 @@ public class UpdateStatementParser extends io.sqm.parser.ansi.UpdateStatementPar
      * @return returning projection list, or empty list when omitted
      */
     @Override
-    protected ParseResult<List<SelectItem>> parseReturning(Cursor cur, ParseContext ctx) {
+    protected ParseResult<ResultClause> parseReturning(Cursor cur, ParseContext ctx) {
         if (!cur.consumeIf(TokenType.RETURNING)) {
-            return ok(List.of());
+            return ok(null);
         }
 
-        if (!ctx.capabilities().supports(SqlFeature.DML_RETURNING)) {
+        if (!ctx.capabilities().supports(SqlFeature.DML_RESULT_CLAUSE)) {
             return error("UPDATE ... RETURNING is not supported by this dialect", cur.fullPos());
         }
 
-        var returningResult = parseItems(SelectItem.class, cur, ctx);
+        var returningResult = parseItems(ResultItem.class, cur, ctx);
         if (returningResult.isError()) {
             return error(returningResult);
         }
-        return ok(List.copyOf(returningResult.value()));
+        return ok(ResultClause.of(returningResult.value()));
     }
 }

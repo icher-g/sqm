@@ -14,28 +14,26 @@ public non-sealed interface InsertStatement extends Statement {
     /**
      * Creates an immutable insert statement with optional {@code ON CONFLICT} and {@code RETURNING} clauses.
      *
-     * @param insertMode insert mode
-     * @param table target table
-     * @param columns target columns, or empty when omitted
-     * @param source insert source
-     * @param conflictTarget conflict target columns, or empty when omitted
-     * @param onConflictAction on-conflict action
+     * @param insertMode                insert mode
+     * @param table                     target table
+     * @param columns                   target columns, or empty when omitted
+     * @param source                    insert source
+     * @param conflictTarget            conflict target columns, or empty when omitted
+     * @param onConflictAction          on-conflict action
      * @param conflictUpdateAssignments conflict-update assignments, or empty when omitted
-     * @param conflictUpdateWhere optional conflict-update predicate
-     * @param output optional SQL Server output clause
-     * @param returning returning projection list, or empty when omitted
+     * @param conflictUpdateWhere       optional conflict-update predicate
+     * @param resultClause              result projection list, or null when omitted
      * @return immutable insert statement
      */
     static InsertStatement of(InsertMode insertMode,
-                              Table table,
-                              List<Identifier> columns,
-                              InsertSource source,
-                              List<Identifier> conflictTarget,
-                              OnConflictAction onConflictAction,
-                              List<Assignment> conflictUpdateAssignments,
-                              Predicate conflictUpdateWhere,
-                              OutputClause output,
-                              List<SelectItem> returning) {
+        Table table,
+        List<Identifier> columns,
+        InsertSource source,
+        List<Identifier> conflictTarget,
+        OnConflictAction onConflictAction,
+        List<Assignment> conflictUpdateAssignments,
+        Predicate conflictUpdateWhere,
+        ResultClause resultClause) {
         return new Impl(insertMode,
             table,
             columns,
@@ -44,8 +42,7 @@ public non-sealed interface InsertStatement extends Statement {
             onConflictAction,
             conflictUpdateAssignments,
             conflictUpdateWhere,
-            output,
-            returning);
+            resultClause);
     }
 
     /**
@@ -115,18 +112,11 @@ public non-sealed interface InsertStatement extends Statement {
     Predicate conflictUpdateWhere();
 
     /**
-     * Returns optional SQL Server {@code OUTPUT} clause.
+     * Returns optional result clause.
      *
-     * @return output clause or {@code null}
+     * @return result clause or {@code null}
      */
-    OutputClause output();
-
-    /**
-     * Returns optional {@code RETURNING} projection items.
-     *
-     * @return immutable returning item list
-     */
-    List<SelectItem> returning();
+    ResultClause result();
 
     /**
      * Accepts a {@link NodeVisitor}.
@@ -183,13 +173,12 @@ public non-sealed interface InsertStatement extends Statement {
         private final List<Identifier> columns = new ArrayList<>();
         private final List<Identifier> conflictTarget = new ArrayList<>();
         private final List<Assignment> conflictUpdateAssignments = new ArrayList<>();
-        private final List<SelectItem> returning = new ArrayList<>();
         private InsertMode insertMode = InsertMode.STANDARD;
         private Table table;
         private InsertSource source;
         private OnConflictAction onConflictAction = OnConflictAction.NONE;
         private Predicate conflictUpdateWhere;
-        private OutputClause output;
+        private ResultClause resultClause;
 
         /**
          * Creates a builder initialized with a target table.
@@ -394,38 +383,48 @@ public non-sealed interface InsertStatement extends Statement {
         }
 
         /**
-         * Sets the optional SQL Server {@code OUTPUT} clause.
+         * Adds projection items from expressions or result items.
          *
-         * @param output output clause or {@code null}
+         * @param nodes nodes accepted in the result clause: OUTPUT/RETURNING
          * @return this builder
          */
-        public Builder output(OutputClause output) {
-            this.output = output;
+        public Builder result(Node... nodes) {
+            var items = ResultItem.fromNodes(nodes);
+            return result(items);
+        }
+
+        /**
+         * Adds projection items from expressions or result items.
+         *
+         * @param into  result-into target
+         * @param nodes nodes accepted in the result clause: OUTPUT/RETURNING
+         * @return this builder
+         */
+        public Builder result(ResultInto into, Node... nodes) {
+            var items = ResultItem.fromNodes(nodes);
+            return result(ResultClause.of(items, into));
+        }
+
+        /**
+         * Sets the optional result clause.
+         *
+         * @param output result clause or {@code null}
+         * @return this builder
+         */
+        public Builder result(ResultClause output) {
+            this.resultClause = output;
             return this;
         }
 
         /**
-         * Replaces the {@code RETURNING} projection list.
+         * Replaces the result projection list.
          *
-         * @param returning returning projection list
+         * @param items projection list
          * @return this builder
          */
-        public Builder returning(List<SelectItem> returning) {
-            Objects.requireNonNull(returning, "returning");
-            this.returning.clear();
-            this.returning.addAll(returning);
-            return this;
-        }
-
-        /**
-         * Replaces the {@code RETURNING} projection list.
-         *
-         * @param returning returning projection items
-         * @return this builder
-         */
-        public Builder returning(SelectItem... returning) {
-            Objects.requireNonNull(returning, "returning");
-            return returning(List.of(returning));
+        public Builder result(List<ResultItem> items) {
+            Objects.requireNonNull(items, "items");
+            return result(ResultClause.of(items));
         }
 
         /**
@@ -449,8 +448,7 @@ public non-sealed interface InsertStatement extends Statement {
                 onConflictAction,
                 conflictUpdateAssignments,
                 conflictUpdateWhere,
-                output,
-                returning);
+                resultClause);
         }
     }
 
@@ -465,8 +463,7 @@ public non-sealed interface InsertStatement extends Statement {
      * @param onConflictAction          optional on-conflict action
      * @param conflictUpdateAssignments conflict-update assignments
      * @param conflictUpdateWhere       optional conflict-update predicate
-     * @param output                    optional SQL Server output clause
-     * @param returning                 returning projection list
+     * @param result                    optional result projection list
      */
     record Impl(InsertMode insertMode,
                 Table table,
@@ -476,8 +473,7 @@ public non-sealed interface InsertStatement extends Statement {
                 OnConflictAction onConflictAction,
                 List<Assignment> conflictUpdateAssignments,
                 Predicate conflictUpdateWhere,
-                OutputClause output,
-                List<SelectItem> returning) implements InsertStatement {
+                ResultClause result) implements InsertStatement {
         /**
          * Creates an immutable insert statement implementation.
          */
@@ -489,7 +485,6 @@ public non-sealed interface InsertStatement extends Statement {
             conflictTarget = conflictTarget == null ? List.of() : List.copyOf(conflictTarget);
             onConflictAction = onConflictAction == null ? OnConflictAction.NONE : onConflictAction;
             conflictUpdateAssignments = conflictUpdateAssignments == null ? List.of() : List.copyOf(conflictUpdateAssignments);
-            returning = returning == null ? List.of() : List.copyOf(returning);
 
             if (onConflictAction == OnConflictAction.NONE) {
                 if (!conflictTarget.isEmpty() || !conflictUpdateAssignments.isEmpty() || conflictUpdateWhere != null) {

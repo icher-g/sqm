@@ -1,10 +1,6 @@
 package io.sqm.render.postgresql;
 
-import io.sqm.core.Assignment;
-import io.sqm.core.Identifier;
-import io.sqm.core.InsertStatement;
-import io.sqm.core.Predicate;
-import io.sqm.core.SelectItem;
+import io.sqm.core.*;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
@@ -26,20 +22,20 @@ public class InsertStatementRenderer extends io.sqm.render.ansi.InsertStatementR
     /**
      * Renders optional PostgreSQL {@code ON CONFLICT} clause.
      *
-     * @param target conflict target
-     * @param action conflict action
+     * @param target      conflict target
+     * @param action      conflict action
      * @param assignments conflict-update assignments
-     * @param where conflict-update predicate
-     * @param ctx render context
-     * @param w SQL writer
+     * @param where       conflict-update predicate
+     * @param ctx         render context
+     * @param w           SQL writer
      */
     @Override
     protected void renderOnConflict(List<Identifier> target,
-                                    InsertStatement.OnConflictAction action,
-                                    List<Assignment> assignments,
-                                    Predicate where,
-                                    RenderContext ctx,
-                                    SqlWriter w) {
+        InsertStatement.OnConflictAction action,
+        List<Assignment> assignments,
+        Predicate where,
+        RenderContext ctx,
+        SqlWriter w) {
 
         if (action == InsertStatement.OnConflictAction.NONE) {
             return;
@@ -71,18 +67,23 @@ public class InsertStatementRenderer extends io.sqm.render.ansi.InsertStatementR
     /**
      * Renders optional PostgreSQL {@code RETURNING} clause.
      *
-     * @param returning returning projection items
-     * @param ctx       render context
-     * @param w         SQL writer
+     * @param result returning projection items
+     * @param ctx    render context
+     * @param w      SQL writer
      */
     @Override
-    protected void renderReturning(List<SelectItem> returning, RenderContext ctx, SqlWriter w) {
-        if (returning.isEmpty()) {
+    protected void renderReturning(ResultClause result, RenderContext ctx, SqlWriter w) {
+        if (result == null || result.items().isEmpty()) {
             return;
         }
-        if (!ctx.dialect().capabilities().supports(SqlFeature.DML_RETURNING)) {
+        if (!ctx.dialect().capabilities().supports(SqlFeature.DML_RESULT_CLAUSE)) {
             throw new UnsupportedDialectFeatureException("INSERT ... RETURNING", ctx.dialect().name());
         }
-        w.space().append("RETURNING").space().comma(returning);
+        w.space().append("RETURNING").space().comma(result.items());
+    }
+
+    @Override
+    protected void renderOutput(ResultClause result, RenderContext ctx, SqlWriter w) {
+        // noop
     }
 }

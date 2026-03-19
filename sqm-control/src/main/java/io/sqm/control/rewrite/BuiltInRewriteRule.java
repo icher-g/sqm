@@ -30,7 +30,7 @@ public enum BuiltInRewriteRule {
     IDENTIFIER_NORMALIZATION,
 
     /**
-     * Canonicalizes query structure for deterministic fingerprints and output.
+     * Canonicalizes query structure for deterministic fingerprints and result.
      */
     CANONICALIZATION
 }

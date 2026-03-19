@@ -86,9 +86,13 @@ Node
 │  ├─ ExprSelectItem
 │  ├─ StarSelectItem
 │  └─ QualifiedStarSelectItem
-├─ OutputClause
-├─ OutputItem
-├─ OutputInto
+├─ ResultClause
+├─ ResultItem
+│  ├─ ExprResultItem
+│  ├─ StarResultItem
+│  ├─ QualifiedStarResultItem
+│  └─ OutputStarResultItem
+├─ ResultInto
 ├─ Statement
 │  ├─ Query
 │  │  ├─ CompositeQuery
@@ -231,9 +235,13 @@ graph TD
   SelectItem --> StarSelectItem
   SelectItem --> QualifiedStarSelectItem
 
-  Node --> OutputClause
-  Node --> OutputItem
-  Node --> OutputInto
+  Node --> ResultClause
+  Node --> ResultItem
+  ResultItem --> ExprResultItem
+  ResultItem --> StarResultItem
+  ResultItem --> QualifiedStarResultItem
+  ResultItem --> OutputStarResultItem
+  Node --> ResultInto
 
   Node --> Query
   Query --> CompositeQuery
@@ -476,7 +484,7 @@ graph TD
     - CompositeQuery – `UNION`, `INTERSECT`, `EXCEPT`
     - SelectQuery – main SELECT form
     - WithQuery – WITH + child query
-- **InsertStatement** - `INSERT INTO <table> [(columns...)] <source> [RETURNING ...]` where source is `VALUES (...)` or a query.
+- **InsertStatement** - `INSERT INTO <table> [(columns...)] <source> [result clause]` where source is `VALUES (...)` or a query.
 - **UpdateStatement** - `UPDATE [/*+ ... */] <table> SET c1 = expr [, ...] [FROM ...] [WHERE ...]`, with optional optimizer hints stored as immutable hint strings.
 - **DeleteStatement** - `DELETE [/*+ ... */] FROM <table> [USING ...] [WHERE ...]`, with optional optimizer hints stored as immutable hint strings.
 - **CteDef** – CTE definition
@@ -545,9 +553,13 @@ graph TD
 
 ### SQL Server DML output
 
-- **OutputClause** – SQL Server DML `OUTPUT` clause attached to `INSERT`, `UPDATE`, or `DELETE`
-- **OutputItem** – one projected expression inside an `OUTPUT` clause, with optional alias
-- **OutputInto** – optional `OUTPUT ... INTO ...` target table and target column list
+- **ResultClause** – shared DML result clause used by SQL Server `OUTPUT` and PostgreSQL/MySQL `RETURNING`
+- **ResultItem** – base type for one projected expression or star item inside a DML result clause
+- **ExprResultItem** – expression result item with an optional alias
+- **StarResultItem** – unqualified `*` result item
+- **QualifiedStarResultItem** – generic qualified star result item such as `t.*`
+- **ResultInto** – optional SQL Server `OUTPUT ... INTO ...` target table and target column list
 - **OutputColumnExpr** – SQL Server pseudo-column reference used only inside `OUTPUT`, such as `inserted.id` or `deleted.status`
+- **OutputStarResultItem** – SQL Server pseudo-row-source star used only inside `OUTPUT`, such as `inserted.*` or `deleted.*`
 
 

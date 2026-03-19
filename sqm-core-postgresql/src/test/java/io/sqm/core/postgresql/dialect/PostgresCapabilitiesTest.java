@@ -18,7 +18,7 @@ class PostgresCapabilitiesTest {
         assertTrue(capabilities.supports(SqlFeature.INTERVAL_LITERAL));
         assertTrue(capabilities.supports(SqlFeature.DISTINCT_ON));
         assertTrue(capabilities.supports(SqlFeature.ORDER_BY_USING));
-        assertTrue(capabilities.supports(SqlFeature.DML_RETURNING));
+        assertTrue(capabilities.supports(SqlFeature.DML_RESULT_CLAUSE));
         assertTrue(capabilities.supports(SqlFeature.INSERT_ON_CONFLICT));
         assertTrue(capabilities.supports(SqlFeature.UPDATE_FROM));
         assertTrue(capabilities.supports(SqlFeature.DELETE_USING));

@@ -44,8 +44,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         accept(statement.source());
         statement.conflictUpdateAssignments().forEach(this::accept);
         accept(statement.conflictUpdateWhere());
-        accept(statement.output());
-        statement.returning().forEach(this::accept);
+        accept(statement.result());
         return defaultResult();
     }
 
@@ -62,8 +61,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         statement.joins().forEach(this::accept);
         statement.from().forEach(this::accept);
         accept(statement.where());
-        accept(statement.output());
-        statement.returning().forEach(this::accept);
+        accept(statement.result());
         return defaultResult();
     }
 
@@ -79,44 +77,104 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         statement.using().forEach(this::accept);
         statement.joins().forEach(this::accept);
         accept(statement.where());
-        accept(statement.output());
-        statement.returning().forEach(this::accept);
+        accept(statement.result());
         return defaultResult();
     }
 
     /**
-     * Visits a SQL Server DML {@link OutputClause}.
+     * Visits a SQL Server DML {@link ResultClause}.
      *
-     * @param clause output clause being visited
+     * @param clause result clause being visited
      * @return a result produced by the visitor
      */
     @Override
-    public R visitOutputClause(OutputClause clause) {
+    public R visitResultClause(ResultClause clause) {
         clause.items().forEach(this::accept);
         accept(clause.into());
         return defaultResult();
     }
 
     /**
-     * Visits one SQL Server DML {@link OutputItem}.
+     * Visits an expression-based result item.
+     * <p>
+     * This item represents a returned expression optionally aliased with an identifier.
+     * Examples:
+     * <pre>
+     * RETURNING id
+     * RETURNING upper(name) AS normalized
+     * OUTPUT INSERTED.id
+     * </pre>
      *
-     * @param item output item being visited
-     * @return a result produced by the visitor
+     * @param i expression result item
+     * @return visitor result
      */
     @Override
-    public R visitOutputItem(OutputItem item) {
-        accept(item.expression());
+    public R visitExprResultItem(ExprResultItem i) {
+        accept(i.expr());
         return defaultResult();
     }
 
     /**
-     * Visits a SQL Server {@link OutputInto} target.
+     * Visits a qualified star result item.
+     * <p>
+     * Represents returning all columns from a qualified row source.
+     * Examples:
+     * <pre>
+     * RETURNING t.*
+     * </pre>
      *
-     * @param into output-into target being visited
+     * @param i qualified star result item
+     * @return visitor result
+     */
+    @Override
+    public R visitQualifiedStarResultItem(QualifiedStarResultItem i) {
+        return defaultResult();
+    }
+
+    /**
+     * Visits a SQL Server output star result item.
+     * <p>
+     * Represents returning all columns from a SQL Server pseudo-row source.
+     * Examples:
+     * <pre>
+     * OUTPUT INSERTED.*
+     * OUTPUT DELETED.*
+     * </pre>
+     *
+     * @param i output-star result item
+     * @return visitor result
+     */
+    @Override
+    public R visitOutputStarResultItem(OutputStarResultItem i) {
+        return defaultResult();
+    }
+
+    /**
+     * Visits a star result item.
+     * <p>
+     * Represents returning all columns of the affected row.
+     * Examples:
+     * <pre>
+     * RETURNING *
+     * OUTPUT *
+     * </pre>
+     *
+     * @param i star result item
+     * @return visitor result
+     */
+    @Override
+    public R visitStarResultItem(StarResultItem i) {
+        return defaultResult();
+    }
+
+    /**
+     * Visits a SQL Server {@link ResultInto} target.
+     *
+     * @param into result-into target being visited
      * @return a result produced by the visitor
      */
     @Override
-    public R visitOutputInto(OutputInto into) {
+    public R visitResultInto(ResultInto into) {
         accept(into.target());
         return defaultResult();
     }
@@ -159,7 +217,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     /**
      * Visits a SQL Server {@link OutputColumnExpr}.
      *
-     * @param c the output column expression
+     * @param c the result column expression
      * @return a result produced by the visitor
      */
     @Override

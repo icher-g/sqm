@@ -71,7 +71,7 @@ class InsertStatementRendererTest {
         var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
         InsertStatement statement = insert("users")
             .values(row(lit(1)))
-            .returning(col("id").toSelectItem())
+            .result(col("id").toSelectItem())
             .build();
 
         assertThrows(UnsupportedDialectFeatureException.class, () -> ctx.render(statement));

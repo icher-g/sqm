@@ -34,7 +34,7 @@ class DeleteStatementRendererTest {
         var ctx = RenderContext.of(new PostgresDialect());
         DeleteStatement statement = delete("users")
             .where(col("id").eq(lit(1)))
-            .returning(col("id").toSelectItem(), col("name").toSelectItem())
+            .result(col("id").toSelectItem(), col("name").toSelectItem())
             .build();
 
         var sql = normalize(ctx.render(statement).sql());
@@ -72,7 +72,7 @@ class DeleteStatementRendererTest {
         var ansiCtx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
         var writer = new DefaultSqlWriter(ansiCtx);
         DeleteStatement statement = delete("users")
-            .returning(col("id").toSelectItem())
+            .result(col("id").toSelectItem())
             .build();
 
         assertThrows(UnsupportedDialectFeatureException.class, () -> renderer.render(statement, ansiCtx, writer));

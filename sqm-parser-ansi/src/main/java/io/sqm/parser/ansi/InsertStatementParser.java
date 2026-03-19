@@ -56,6 +56,11 @@ public class InsertStatementParser implements Parser<InsertStatement> {
             columns = parsedColumns.value();
         }
 
+        var output = parseOutput(cur, ctx);
+        if (output.isError()) {
+            return error(output);
+        }
+
         var source = parseInsertSource(cur, ctx);
         if (source.isError()) {
             return error(source);
@@ -66,9 +71,11 @@ public class InsertStatementParser implements Parser<InsertStatement> {
             return error(conflict);
         }
 
-        var returning = parseReturning(cur, ctx);
-        if (returning.isError()) {
-            return error(returning);
+        if (output.value() == null) {
+            output = parseReturning(cur, ctx);
+            if (output.isError()) {
+                return error(output);
+            }
         }
 
         return ok(InsertStatement.of(
@@ -80,8 +87,7 @@ public class InsertStatementParser implements Parser<InsertStatement> {
             conflict.value().action(),
             conflict.value().assignments(),
             conflict.value().where(),
-            null,
-            returning.value()));
+            output.value()));
     }
 
     /**
@@ -150,11 +156,25 @@ public class InsertStatementParser implements Parser<InsertStatement> {
      * @param ctx parse context
      * @return returning projection list, or empty list when omitted
      */
-    protected ParseResult<List<SelectItem>> parseReturning(Cursor cur, ParseContext ctx) {
+    protected ParseResult<ResultClause> parseReturning(Cursor cur, ParseContext ctx) {
         if (cur.match(TokenType.RETURNING)) {
             return error("INSERT ... RETURNING is not supported by this dialect", cur.fullPos());
         }
-        return ok(List.of());
+        return ok(null);
+    }
+
+    /**
+     * Parses optional {@code OUTPUT} clause.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return parsed result clause or {@code null} when omitted
+     */
+    protected ParseResult<ResultClause> parseOutput(Cursor cur, ParseContext ctx) {
+        if (cur.match(TokenType.OUTPUT)) {
+            return error("INSERT ... OUTPUT is not supported by this dialect", cur.fullPos());
+        }
+        return ok(null);
     }
 
     /**

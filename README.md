@@ -158,10 +158,10 @@ Current scope boundary:
   - `TOP` and `OFFSET/FETCH`
   - first-wave SQL Server functions such as `LEN`, `DATEADD`, `DATEDIFF`, `ISNULL`, and `STRING_AGG`
   - baseline `INSERT`, `UPDATE`, and `DELETE`
+  - `OUTPUT` and `OUTPUT ... INTO` through shared `ResultClause` support
 - SQL Server deferred follow-up features include:
   - `TOP ... PERCENT`
   - `TOP ... WITH TIES`
-  - `OUTPUT`
   - `MERGE`
   - table hints such as `WITH (NOLOCK)`
 
@@ -254,6 +254,8 @@ Supported SQL Server baseline examples include:
 SELECT TOP (5) [id], [name] FROM [users] ORDER BY [id]
 SELECT [id], [name] FROM [users] ORDER BY [name] OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY
 INSERT INTO [users] ([id], [name]) VALUES (1, 'alice')
+INSERT INTO [users] ([name]) OUTPUT inserted.[id] VALUES ('alice')
+UPDATE [users] SET [name] = 'alice' OUTPUT deleted.[name], inserted.[name] INTO [audit] ([old_name], [new_name]) WHERE [id] = 1
 UPDATE [users] SET [name] = 'alice' WHERE [id] = 1
 DELETE FROM [users] WHERE [id] = 1
 ```

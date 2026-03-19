@@ -203,12 +203,15 @@ class SqlServerValidationDialectTest {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var insertStatement = insert("users")
             .columns(id("id"), id("name"))
+            .result(inserted("id").as("user_id"))
             .values(rows(row(lit(1L), lit("alice"))))
             .build();
         var updateStatement = update("users")
             .set(Identifier.of("missing_col"), lit("alice"))
+            .result(deleted("name"), inserted("name"))
             .build();
         var deleteStatement = delete("users")
+            .result(deleted("id"))
             .where(col("id").eq(lit(1L)))
             .build();
 
@@ -222,6 +225,34 @@ class SqlServerValidationDialectTest {
                 && "dml.assignment".equals(problem.clausePath())
         ));
         assertFalse(hasDialectProblem(deleteResult, ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED));
+    }
+
+    @Test
+    void validate_reportsInvalidSqlServerOutputRowSources() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var insertStatement = insert("users")
+            .columns(id("id"), id("name"))
+            .result(deletedAll(), deleted("id"))
+            .values(rows(row(lit(1L), lit("alice"))))
+            .build();
+        var deleteStatement = delete("users")
+            .result(insertedAll(), inserted("id"))
+            .where(col("id").eq(lit(1L)))
+            .build();
+
+        var insertResult = validator.validate(insertStatement);
+        var deleteResult = validator.validate(deleteStatement);
+
+        assertTrue(insertResult.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "insert.result".equals(problem.clausePath())
+                && problem.message().contains("deleted")
+        ));
+        assertTrue(deleteResult.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "delete.result".equals(problem.clausePath())
+                && problem.message().contains("inserted")
+        ));
     }
 
     @Test
@@ -283,19 +314,19 @@ class SqlServerValidationDialectTest {
             .columns(id("id"), id("name"))
             .values(rows(row(lit(1L), lit("alice"))))
             .onConflictDoNothing(id("id"))
-            .returning(col("id").toSelectItem())
+            .result(col("id").toSelectItem())
             .build();
         var updateStatement = update("users")
             .set(Identifier.of("name"), lit("alice"))
             .join(inner(tbl("users").as("u2")).on(col("u2", "id").eq(col("users", "id"))))
             .from(tbl("users").as("u3"))
-            .returning(col("id").toSelectItem())
+            .result(col("id").toSelectItem())
             .optimizerHint("INDEX(users idx_users_name)")
             .build();
         var deleteStatement = delete("users")
             .using(tbl("users").as("u"))
             .join(inner(tbl("users").as("u2")).on(col("u2", "id").eq(col("users", "id"))))
-            .returning(col("id").toSelectItem())
+            .result(col("id").toSelectItem())
             .optimizerHint("INDEX(users idx_users_name)")
             .build();
 
@@ -311,10 +342,6 @@ class SqlServerValidationDialectTest {
             problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
                 && "insert.on_conflict".equals(problem.clausePath())
         ));
-        assertTrue(insertResult.problems().stream().anyMatch(problem ->
-            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
-                && "insert.returning".equals(problem.clausePath())
-        ));
 
         assertTrue(updateResult.problems().stream().anyMatch(problem ->
             problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
@@ -323,10 +350,6 @@ class SqlServerValidationDialectTest {
         assertTrue(updateResult.problems().stream().anyMatch(problem ->
             problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
                 && "update.from".equals(problem.clausePath())
-        ));
-        assertTrue(updateResult.problems().stream().anyMatch(problem ->
-            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
-                && "update.returning".equals(problem.clausePath())
         ));
         assertTrue(updateResult.problems().stream().anyMatch(problem ->
             problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
@@ -340,10 +363,6 @@ class SqlServerValidationDialectTest {
         assertTrue(deleteResult.problems().stream().anyMatch(problem ->
             problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
                 && "delete.join".equals(problem.clausePath())
-        ));
-        assertTrue(deleteResult.problems().stream().anyMatch(problem ->
-            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
-                && "delete.returning".equals(problem.clausePath())
         ));
         assertTrue(deleteResult.problems().stream().anyMatch(problem ->
             problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED

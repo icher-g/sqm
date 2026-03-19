@@ -26,14 +26,14 @@ public final class Renderers {
 
     private static RenderersRepository registerDefaults(RenderersRepository renderersRepository) {
         return renderersRepository
-            .register(new MySqlInsertStatementRenderer())
-            .register(new MySqlUpdateStatementRenderer())
-            .register(new MySqlDeleteStatementRenderer())
-            .register(new MySqlLimitOffsetRenderer())
-            .register(new MySqlGroupByRenderer())
-            .register(new MySqlConcatExprRenderer())
-            .register(new MySqlRegexPredicateRenderer())
-            .register(new MySqlTableRenderer())
-            .register(new MySqlSelectQueryRenderer());
+            .register(new InsertStatementRenderer())
+            .register(new UpdateStatementRenderer())
+            .register(new DeleteStatementRenderer())
+            .register(new LimitOffsetRenderer())
+            .register(new GroupByRenderer())
+            .register(new ConcatExprRenderer())
+            .register(new RegexPredicateRenderer())
+            .register(new TableRenderer())
+            .register(new SelectQueryRenderer());
     }
 }

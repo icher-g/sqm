@@ -56,7 +56,7 @@ class MySqlSpecsTest {
 
         assertSame(specs.capabilities(), specs.capabilities());
         assertSame(specs.operatorPolicy(), specs.operatorPolicy());
-        assertFalse(specs.capabilities().supports(SqlFeature.DML_RETURNING));
+        assertFalse(specs.capabilities().supports(SqlFeature.DML_RESULT_CLAUSE));
     }
 
     @Test

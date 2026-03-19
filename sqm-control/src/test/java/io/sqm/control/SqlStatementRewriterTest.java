@@ -14,7 +14,6 @@ import io.sqm.control.pipeline.StatementRewriteResult;
 import io.sqm.control.pipeline.StatementRewriteRule;
 import io.sqm.control.rewrite.BuiltInRewriteRule;
 import io.sqm.control.rewrite.BuiltInRewriteSettings;
-import io.sqm.core.DeleteStatement;
 import io.sqm.core.Expression;
 import io.sqm.core.Query;
 import io.sqm.core.Statement;
@@ -103,7 +102,7 @@ class SqlStatementRewriterTest {
     @Test
     void chain_preserves_last_statement_when_no_rule_rewrites() {
         Statement input = Query.select(Expression.literal(1)).build();
-        Statement passThrough = DeleteStatement.of(tbl("users"), java.util.List.of(), java.util.List.of(), null, null, java.util.List.of(), java.util.List.of());
+        Statement passThrough = io.sqm.dsl.Dsl.delete(tbl("users")).build();
 
         StatementRewriteRule rule = (statement, context) -> StatementRewriteResult.unchanged(passThrough);
 

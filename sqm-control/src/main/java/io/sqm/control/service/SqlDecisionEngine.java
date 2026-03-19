@@ -43,7 +43,7 @@ public interface SqlDecisionEngine {
      *
      * @param statementValidator statement validator used before and after rewrites
      * @param statementRewriter statement rewrite pipeline
-     * @param statementRenderer statement renderer for rewritten output
+     * @param statementRenderer statement renderer for rewritten result
      */
     record Impl(SqlStatementValidator statementValidator, SqlStatementRewriter statementRewriter, SqlStatementRenderer statementRenderer) implements SqlDecisionEngine {
 

@@ -1,12 +1,6 @@
 package io.sqm.parser.postgresql;
 
-import io.sqm.core.CteDef;
-import io.sqm.core.DeleteStatement;
-import io.sqm.core.Identifier;
-import io.sqm.core.InsertStatement;
-import io.sqm.core.Query;
-import io.sqm.core.Statement;
-import io.sqm.core.UpdateStatement;
+import io.sqm.core.*;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
@@ -28,6 +22,10 @@ public class CteDefParser extends io.sqm.parser.ansi.CteDefParser {
     public CteDefParser() {
     }
 
+    private static boolean isEmpty(ResultClause result) {
+        return result == null || result.items().isEmpty();
+    }
+
     /**
      * Parses CTE body as a generic statement for PostgreSQL.
      *
@@ -43,45 +41,45 @@ public class CteDefParser extends io.sqm.parser.ansi.CteDefParser {
     /**
      * Creates PostgreSQL CTE node and validates writable CTE constraints.
      *
-     * @param name CTE name.
-     * @param body parsed body statement.
-     * @param aliases column aliases.
+     * @param name            CTE name.
+     * @param body            parsed body statement.
+     * @param aliases         column aliases.
      * @param materialization materialization hint.
-     * @param ctx parse context.
-     * @param cur token cursor.
+     * @param ctx             parse context.
+     * @param cur             token cursor.
      * @return parsed CTE definition.
      */
     @Override
     protected ParseResult<CteDef> createCte(Identifier name,
-                                            Statement body,
-                                            List<Identifier> aliases,
-                                            CteDef.Materialization materialization,
-                                            ParseContext ctx,
-                                            Cursor cur) {
+        Statement body,
+        List<Identifier> aliases,
+        CteDef.Materialization materialization,
+        ParseContext ctx,
+        Cursor cur) {
         if (body instanceof Query query) {
             return ok(Query.cte(name, query, aliases, materialization));
         }
 
-        if (!ctx.capabilities().supports(SqlFeature.DML_RETURNING)) {
+        if (!ctx.capabilities().supports(SqlFeature.DML_RESULT_CLAUSE)) {
             return error("Writable CTE DML RETURNING is not supported by this dialect", cur.fullPos());
         }
 
         if (body instanceof InsertStatement insert) {
-            if (insert.returning().isEmpty()) {
+            if (isEmpty(insert.result())) {
                 return error("Writable CTE INSERT requires RETURNING", cur.fullPos());
             }
             return ok(Query.cte(name, insert, aliases, materialization));
         }
 
         if (body instanceof UpdateStatement update) {
-            if (update.returning().isEmpty()) {
+            if (isEmpty(update.result())) {
                 return error("Writable CTE UPDATE requires RETURNING", cur.fullPos());
             }
             return ok(Query.cte(name, update, aliases, materialization));
         }
 
         if (body instanceof DeleteStatement delete) {
-            if (delete.returning().isEmpty()) {
+            if (isEmpty(delete.result())) {
                 return error("Writable CTE DELETE requires RETURNING", cur.fullPos());
             }
             return ok(Query.cte(name, delete, aliases, materialization));

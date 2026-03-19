@@ -58,7 +58,7 @@ final class InPredicateTypeValidationRule implements SchemaValidationRule<InPred
     }
 
     /**
-     * Validates scalar IN against subquery output type.
+     * Validates scalar IN against subquery result type.
      *
      * @param leftType left-hand type.
      * @param queryExpr query expression value set.
@@ -178,7 +178,7 @@ final class InPredicateTypeValidationRule implements SchemaValidationRule<InPred
     }
 
     /**
-     * Validates row-value IN against subquery output shape and types.
+     * Validates row-value IN against subquery result shape and types.
      *
      * @param leftRow left-hand row expression.
      * @param leftWidth left tuple width.

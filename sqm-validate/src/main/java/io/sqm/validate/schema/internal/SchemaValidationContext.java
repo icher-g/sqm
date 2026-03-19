@@ -493,7 +493,7 @@ public final class SchemaValidationContext {
      * Infers cast target type when it maps to a known validation type.
      *
      * @param typeName cast target type.
-     * @return inferred cast output type.
+     * @return inferred cast result type.
      */
     private Optional<CatalogType> inferCastType(TypeName typeName) {
         if (typeName == null) {
@@ -543,7 +543,7 @@ public final class SchemaValidationContext {
     }
 
     /**
-     * Infers output type for a single-expression SELECT projection.
+     * Infers result type for a single-expression SELECT projection.
      *
      * @param select select query.
      * @return inferred projection type.
@@ -636,7 +636,7 @@ public final class SchemaValidationContext {
      * shape can be unknown without deeper query analysis.</p>
      *
      * @param alias         source alias.
-     * @param columnAliases explicit output aliases.
+     * @param columnAliases explicit result aliases.
      */
     private void registerDerivedSource(Identifier alias, List<Identifier> columnAliases) {
         if (alias == null) {
@@ -1109,7 +1109,7 @@ public final class SchemaValidationContext {
     /**
      * CTE metadata resolved from a WITH definition.
      *
-     * @param columns       CTE output columns.
+     * @param columns       CTE result columns.
      * @param strictColumns whether column list is explicit and strict.
      */
     private record CteSource(Map<String, CatalogColumn> columns, boolean strictColumns) {

@@ -1,11 +1,6 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.Join;
-import io.sqm.core.Predicate;
-import io.sqm.core.SelectItem;
-import io.sqm.core.Table;
-import io.sqm.core.TableRef;
-import io.sqm.core.UpdateStatement;
+import io.sqm.core.*;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
@@ -61,6 +56,11 @@ public class UpdateStatementParser implements Parser<UpdateStatement> {
             return error(assignmentsResult);
         }
 
+        var outputResult = parseOutput(cur, ctx);
+        if (outputResult.isError()) {
+            return error(outputResult);
+        }
+
         var fromResult = parseFrom(cur, ctx);
         if (fromResult.isError()) {
             return error(fromResult);
@@ -76,9 +76,11 @@ public class UpdateStatementParser implements Parser<UpdateStatement> {
             where = whereResult.value();
         }
 
-        var returningResult = parseReturning(cur, ctx);
-        if (returningResult.isError()) {
-            return error(returningResult);
+        if (outputResult.value() == null) {
+            outputResult = parseReturning(cur, ctx);
+            if (outputResult.isError()) {
+                return error(outputResult);
+            }
         }
 
         return ok(UpdateStatement.of(
@@ -87,8 +89,7 @@ public class UpdateStatementParser implements Parser<UpdateStatement> {
             joinsResult.value(),
             fromResult.value(),
             where,
-            null,
-            returningResult.value(),
+            outputResult.value(),
             optimizerHintsResult.value()
         ));
     }
@@ -139,11 +140,25 @@ public class UpdateStatementParser implements Parser<UpdateStatement> {
      * @param ctx parse context
      * @return parsed RETURNING items or empty list when omitted
      */
-    protected ParseResult<List<SelectItem>> parseReturning(Cursor cur, ParseContext ctx) {
+    protected ParseResult<ResultClause> parseReturning(Cursor cur, ParseContext ctx) {
         if (cur.match(TokenType.RETURNING)) {
             return error("UPDATE ... RETURNING is not supported by this dialect", cur.fullPos());
         }
-        return ok(List.of());
+        return ok(null);
+    }
+
+    /**
+     * Parses optional {@code OUTPUT} clause.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return parsed result clause or {@code null} when omitted
+     */
+    protected ParseResult<ResultClause> parseOutput(Cursor cur, ParseContext ctx) {
+        if (cur.match(TokenType.OUTPUT)) {
+            return error("UPDATE ... OUTPUT is not supported by this dialect", cur.fullPos());
+        }
+        return ok(null);
     }
 
     /**

@@ -8,7 +8,7 @@ import java.util.Objects;
 /**
  * Result of a single transpilation rule execution.
  *
- * @param statement output statement after the rule
+ * @param statement result statement after the rule
  * @param changed whether the statement changed
  * @param fidelity semantic fidelity of the rule outcome
  * @param warnings emitted non-blocking warnings
@@ -26,7 +26,7 @@ public record TranspileRuleResult(
     /**
      * Creates a rule result.
      *
-     * @param statement output statement after the rule
+     * @param statement result statement after the rule
      * @param changed whether the statement changed
      * @param fidelity semantic fidelity of the rule outcome
      * @param warnings emitted non-blocking warnings
@@ -57,7 +57,7 @@ public record TranspileRuleResult(
     /**
      * Creates a rewritten rule result.
      *
-     * @param statement output statement
+     * @param statement result statement
      * @param fidelity rewrite fidelity
      * @param description human-readable step description
      * @return rewritten rule result
@@ -69,7 +69,7 @@ public record TranspileRuleResult(
     /**
      * Creates a rewritten rule result with a non-blocking warning.
      *
-     * @param statement output statement
+     * @param statement result statement
      * @param fidelity rewrite fidelity
      * @param code stable warning code
      * @param message human-readable warning description

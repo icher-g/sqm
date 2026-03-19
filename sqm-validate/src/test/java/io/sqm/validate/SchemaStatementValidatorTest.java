@@ -71,9 +71,11 @@ class SchemaStatementValidatorTest {
 
     @Test
     void validate_reportsDeniedTableByPolicy() {
+
         var settings = SchemaValidationSettings.builder()
             .accessPolicy(DefaultCatalogAccessPolicy.builder().denyTable("orders").build())
             .build();
+
         var policyValidator = SchemaStatementValidator.of(SCHEMA, settings);
 
         Query query = select(star()).from(tbl("orders").as("o")).build();
@@ -95,21 +97,30 @@ class SchemaStatementValidatorTest {
 
     @Test
     void validate_appliesPrincipalSpecificTablePolicy() {
+
+
+
         var policy = DefaultCatalogAccessPolicy.builder()
             .denyTableForPrincipal("alice", "orders")
             .build();
+
         var settings = SchemaValidationSettings.builder()
             .principal("alice")
             .accessPolicy(policy)
             .build();
+
         var policyValidator = SchemaStatementValidator.of(SCHEMA, settings);
 
         Query query = select(star()).from(tbl("orders").as("o")).build();
         var result = policyValidator.validate(query);
 
         assertFalse(result.ok());
-        assertTrue(result.problems().stream()
-            .anyMatch(p -> p.code() == ValidationProblem.Code.POLICY_TABLE_DENIED));
+        assertTrue(result.problems().stream().anyMatch(
+            p -> p.code() == ValidationProblem.Code.POLICY_TABLE_DENIED)
+        );
+
+
+
     }
 
     @Test
@@ -701,7 +712,7 @@ class SchemaStatementValidatorTest {
                 insert("users")
                     .columns(id("name"))
                     .values(row(lit("alice")))
-                    .returning(col("id").toSelectItem(), col("name").toSelectItem())
+                    .result(col("id").toSelectItem(), col("name").toSelectItem())
                     .build()
             ).columnAliases("id", "name")
         ).body(
@@ -720,7 +731,7 @@ class SchemaStatementValidatorTest {
                 update("users")
                     .set(id("name"), lit("alice"))
                     .where(col("id").eq(lit(1)))
-                    .returning(col("id").toSelectItem(), col("name").toSelectItem())
+                    .result(col("id").toSelectItem(), col("name").toSelectItem())
                     .build()
             ).columnAliases("id")
         ).body(
@@ -739,7 +750,7 @@ class SchemaStatementValidatorTest {
             cte("del",
                 delete("users")
                     .where(col("id").eq(lit(1)))
-                    .returning(col("id").toSelectItem())
+                    .result(col("id").toSelectItem())
                     .build()
             ).columnAliases("id")
         ).body(

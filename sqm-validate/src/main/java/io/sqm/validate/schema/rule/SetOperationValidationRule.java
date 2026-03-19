@@ -102,7 +102,7 @@ final class SetOperationValidationRule implements SchemaValidationRule<Composite
 
     /**
      * Validates that expression-based ORDER BY items in set operations reference
-     * projected output expressions.
+     * projected result expressions.
      *
      * @param node composite query node.
      * @param context validation context.
@@ -123,7 +123,7 @@ final class SetOperationValidationRule implements SchemaValidationRule<Composite
                 }
                 context.addProblem(
                     ValidationProblem.Code.SET_OPERATION_ORDER_BY_INVALID,
-                    "Set operation ORDER BY expressions require expression-only output shape; use ordinals instead",
+                    "Set operation ORDER BY expressions require expression-only result shape; use ordinals instead",
                     item,
                     "set_operation.order_by"
                 );
@@ -139,7 +139,7 @@ final class SetOperationValidationRule implements SchemaValidationRule<Composite
             }
             context.addProblem(
                 ValidationProblem.Code.SET_OPERATION_ORDER_BY_INVALID,
-                "Set operation ORDER BY expression must reference projected output expression",
+                "Set operation ORDER BY expression must reference projected result expression",
                 item,
                 "set_operation.order_by"
             );

@@ -23,15 +23,15 @@ public final class Parsers {
 
     private static ParsersRepository registerDefaults(ParsersRepository repository) {
         return repository
-            .register(new MySqlConcatExprParser())
-            .register(new MySqlIntervalLiteralExprParser())
-            .register(new MySqlInsertStatementParser())
-            .register(new MySqlUpdateStatementParser())
-            .register(new MySqlDeleteStatementParser())
-            .register(new MySqlLimitOffsetParser())
-            .register(new MySqlGroupByParser())
-            .register(new MySqlRegexPredicateParser())
-            .register(new MySqlTableParser())
-            .register(new MySqlSelectQueryParser());
+            .register(new ConcatExprParser())
+            .register(new IntervalLiteralExprParser())
+            .register(new InsertStatementParser())
+            .register(new UpdateStatementParser())
+            .register(new DeleteStatementParser())
+            .register(new LimitOffsetParser())
+            .register(new GroupByParser())
+            .register(new RegexPredicateParser())
+            .register(new TableParser())
+            .register(new SelectQueryParser());
     }
 }

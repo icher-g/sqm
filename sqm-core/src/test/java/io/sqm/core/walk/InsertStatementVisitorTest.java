@@ -1,7 +1,7 @@
 package io.sqm.core.walk;
 
 import io.sqm.core.Assignment;
-import io.sqm.core.ExprSelectItem;
+import io.sqm.core.ExprResultItem;
 import io.sqm.core.InsertStatement;
 import io.sqm.core.Table;
 import org.junit.jupiter.api.Test;
@@ -9,15 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.sqm.dsl.Dsl.col;
-import static io.sqm.dsl.Dsl.insert;
-import static io.sqm.dsl.Dsl.inserted;
-import static io.sqm.dsl.Dsl.lit;
-import static io.sqm.dsl.Dsl.output;
-import static io.sqm.dsl.Dsl.outputItem;
-import static io.sqm.dsl.Dsl.row;
-import static io.sqm.dsl.Dsl.set;
-import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class InsertStatementVisitorTest {
@@ -27,8 +19,7 @@ class InsertStatementVisitorTest {
         var statement = insert(tbl("users"))
             .values(row(lit(1), lit("alice")))
             .onConflictDoUpdate(java.util.List.of(io.sqm.core.Identifier.of("id")), java.util.List.of(set("name", lit("alice2"))), col("id").eq(lit(1)))
-            .output(output(outputItem(inserted("id"))))
-            .returning(col("id").toSelectItem())
+            .result(inserted("id"))
             .build();
         var visits = new ArrayList<String>();
 
@@ -63,18 +54,12 @@ class InsertStatementVisitorTest {
             }
 
             @Override
-            public Void visitExprSelectItem(ExprSelectItem i) {
-                visits.add("returning");
-                return super.visitExprSelectItem(i);
-            }
-
-            @Override
-            public Void visitOutputItem(io.sqm.core.OutputItem item) {
-                visits.add("output");
-                return super.visitOutputItem(item);
+            public Void visitExprResultItem(ExprResultItem item) {
+                visits.add("result");
+                return super.visitExprResultItem(item);
             }
         }.accept(statement);
 
-        assertEquals(List.of("insert", "table", "row", "conflict-assignment", "output", "returning"), visits.subList(0, 6));
+        assertEquals(List.of("insert", "table", "row", "conflict-assignment", "result"), visits.subList(0, 5));
     }
 }

@@ -116,7 +116,7 @@ class CteDefRendererTest {
             insert("users")
                 .columns(id("name"))
                 .values(row(lit("alice")))
-                .returning(col("id").toSelectItem())
+                .result(col("id").toSelectItem())
                 .build(),
             List.of(),
             CteDef.Materialization.DEFAULT

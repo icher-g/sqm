@@ -10,7 +10,7 @@ import io.sqm.core.transform.IdentifierNormalizationTransformer;
 import java.util.Objects;
 
 /**
- * Middleware rewrite rule that normalizes unquoted identifiers for deterministic output.
+ * Middleware rewrite rule that normalizes unquoted identifiers for deterministic result.
  *
  * <p>Quoted identifiers are preserved exactly.</p>
  */

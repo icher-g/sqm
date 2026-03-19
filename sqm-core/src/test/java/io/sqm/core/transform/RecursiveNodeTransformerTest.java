@@ -1296,7 +1296,7 @@ class RecursiveNodeTransformerTest {
         var statement = update("users")
             .set(id("name"), lit("alice"))
             .where(col("id").eq(lit(1)))
-            .returning(col("id").toSelectItem())
+            .result(col("id"))
             .build();
         var transformer = new RecursiveNodeTransformer() {
             @Override
@@ -1313,7 +1313,7 @@ class RecursiveNodeTransformerTest {
         assertEquals("user_id", transformed.where().matchPredicate()
             .comparison(cmp -> cmp.lhs().matchExpression().column(c -> c.name().value()).orElse(null))
             .orElse(null));
-        assertEquals("user_id", transformed.returning().getFirst().matchSelectItem()
+        assertEquals("user_id", transformed.result().items().getFirst().matchResultItem()
             .expr(e -> e.expr().matchExpression().column(c -> c.name().value()).orElse(null))
             .orElse(null));
 
@@ -1325,7 +1325,7 @@ class RecursiveNodeTransformerTest {
     void visitDeleteStatement() {
         var statement = delete("users")
             .where(col("id").eq(lit(1)))
-            .returning(col("id").toSelectItem())
+            .result(col("id"))
             .build();
         var transformer = new RecursiveNodeTransformer() {
             @Override
@@ -1342,7 +1342,7 @@ class RecursiveNodeTransformerTest {
         assertEquals("user_id", transformed.where().matchPredicate()
             .comparison(cmp -> cmp.lhs().matchExpression().column(c -> c.name().value()).orElse(null))
             .orElse(null));
-        assertEquals("user_id", transformed.returning().getFirst().matchSelectItem()
+        assertEquals("user_id", transformed.result().items().getFirst().matchResultItem()
             .expr(e -> e.expr().matchExpression().column(c -> c.name().value()).orElse(null))
             .orElse(null));
 
@@ -1379,10 +1379,10 @@ class RecursiveNodeTransformerTest {
     }
 
     @Test
-    void visitOutputClauseAndOutputColumnExpr() {
+    void visitOutputClauseAndResultColumnExpr() {
         var statement = update("users")
             .set(id("name"), lit("alice"))
-            .output(output(outputItem(inserted("id")), outputItem(deleted("name"), "old_name")))
+            .result(inserted("id"), deleted("name").as("old_name"))
             .build();
 
         var transformer = new RecursiveNodeTransformer() {
@@ -1397,11 +1397,37 @@ class RecursiveNodeTransformerTest {
 
         var transformed = (UpdateStatement) statement.accept(transformer);
         assertNotSame(statement, transformed);
-        assertEquals("user_id", transformed.output().items().getFirst().expression().matchExpression()
-            .outputColumn(c -> c.column().value())
+        assertEquals("user_id", transformed.result().items().getFirst().matchResultItem().expr(e -> e.expr().matchExpression()
+                .outputColumn(c -> c.column().value())
+                .orElse(null))
             .orElse(null));
 
         var unchanged = (UpdateStatement) statement.accept(new NothingTransformer());
         assertSame(statement, unchanged);
+    }
+
+    @Test
+    void visitResultClauseWithResultIntoQualifiedStarAndOutputStar() {
+        var statement = update("users")
+            .set(id("name"), lit("alice"))
+            .result(tbl("audit"), star("u"), deletedAll())
+            .build();
+
+        var transformer = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitTable(Table t) {
+                if ("audit".equals(t.name().value())) {
+                    return tbl("audit_log");
+                }
+                return t;
+            }
+        };
+
+        var transformed = (UpdateStatement) statement.accept(transformer);
+
+        assertNotSame(statement, transformed);
+        assertEquals("audit_log", transformed.result().into().target().name().value());
+        assertEquals("u", transformed.result().items().getFirst().matchResultItem().qualifiedStar(item -> item.qualifier().value()).orElse(null));
+        assertEquals(OutputRowSource.DELETED, transformed.result().items().get(1).matchResultItem().outputStar(OutputStarResultItem::source).orElse(null));
     }
 }

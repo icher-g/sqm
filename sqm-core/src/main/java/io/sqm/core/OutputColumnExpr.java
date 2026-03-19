@@ -11,31 +11,31 @@ import java.util.Objects;
 public non-sealed interface OutputColumnExpr extends Expression {
 
     /**
-     * Creates an {@code inserted.<column>} output expression.
+     * Creates an {@code inserted.<column>} result expression.
      *
-     * @param column output column identifier
-     * @return output column expression
+     * @param column result column identifier
+     * @return result column expression
      */
     static OutputColumnExpr inserted(Identifier column) {
         return of(OutputRowSource.INSERTED, column);
     }
 
     /**
-     * Creates a {@code deleted.<column>} output expression.
+     * Creates a {@code deleted.<column>} result expression.
      *
-     * @param column output column identifier
-     * @return output column expression
+     * @param column result column identifier
+     * @return result column expression
      */
     static OutputColumnExpr deleted(Identifier column) {
         return of(OutputRowSource.DELETED, column);
     }
 
     /**
-     * Creates an output column expression.
+     * Creates an result column expression.
      *
      * @param source pseudo-row source
-     * @param column output column identifier
-     * @return output column expression
+     * @param column result column identifier
+     * @return result column expression
      */
     static OutputColumnExpr of(OutputRowSource source, Identifier column) {
         return new Impl(source, column);
@@ -44,14 +44,14 @@ public non-sealed interface OutputColumnExpr extends Expression {
     /**
      * Returns the SQL Server pseudo-row source.
      *
-     * @return output row source
+     * @return result row source
      */
     OutputRowSource source();
 
     /**
-     * Returns the referenced output column identifier.
+     * Returns the referenced result column identifier.
      *
-     * @return output column identifier
+     * @return result column identifier
      */
     Identifier column();
 
@@ -71,15 +71,15 @@ public non-sealed interface OutputColumnExpr extends Expression {
      * Default immutable implementation.
      *
      * @param source pseudo-row source
-     * @param column output column identifier
+     * @param column result column identifier
      */
     record Impl(OutputRowSource source, Identifier column) implements OutputColumnExpr {
 
         /**
-         * Creates an output column expression implementation.
+         * Creates an result column expression implementation.
          *
          * @param source pseudo-row source
-         * @param column output column identifier
+         * @param column result column identifier
          */
         public Impl {
             Objects.requireNonNull(source, "source");

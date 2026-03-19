@@ -583,6 +583,15 @@ class LexerTest {
     }
 
     @Test
+    void lexer_recognizes_sql_server_output_keyword() {
+        List<Token> tokens = Lexer.lexAll("OUTPUT inserted.id", quoting);
+
+        assertEquals(TokenType.OUTPUT, tokens.get(0).type());
+        assertEquals(TokenType.IDENT, tokens.get(1).type());
+        assertEquals("inserted", tokens.get(1).lexeme());
+    }
+
+    @Test
     void lexer_throwsOnUnterminatedOptimizerHintComment() {
         assertThrows(ParserException.class, () -> Lexer.lexAll("SELECT /*+ BKA(users)", quoting));
     }

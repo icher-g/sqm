@@ -28,7 +28,7 @@ class InsertStatementParserTest {
         assertTrue(result.ok(), result.errorMessage());
         var statement = result.value();
         assertInstanceOf(RowExpr.class, statement.source());
-        assertEquals(1, statement.returning().size());
+        assertEquals(1, statement.result().items().size());
     }
 
     @Test
@@ -85,7 +85,7 @@ class InsertStatementParserTest {
         var result = ctx.parse(InsertStatement.class, "INSERT INTO users VALUES (1)");
 
         assertTrue(result.ok(), result.errorMessage());
-        assertTrue(result.value().returning().isEmpty());
+        assertNull(result.value().result());
         assertEquals(InsertStatement.OnConflictAction.NONE, result.value().onConflictAction());
         assertNull(result.value().table().alias());
     }
@@ -116,7 +116,7 @@ class InsertStatementParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertInstanceOf(InsertStatement.class, result.value());
-        assertEquals(1, ((InsertStatement) result.value()).returning().size());
+        assertEquals(1, ((InsertStatement) result.value()).result().items().size());
     }
 
     @Test
@@ -173,7 +173,7 @@ class InsertStatementParserTest {
 
         @Override
         public DialectCapabilities capabilities() {
-            return feature -> feature != SqlFeature.DML_RETURNING && delegate.capabilities().supports(feature);
+            return feature -> feature != SqlFeature.DML_RESULT_CLAUSE && delegate.capabilities().supports(feature);
         }
 
         @Override

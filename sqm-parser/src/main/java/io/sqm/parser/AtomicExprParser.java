@@ -144,7 +144,7 @@ public class AtomicExprParser {
             return matched.result();
         }
 
-        matched = ctx.parseIfMatch(ColumnExpr.class, cur);
+        matched = parseColumnLikeExpression(cur, ctx);
         if (matched.match()) {
             return matched.result();
         }
@@ -155,6 +155,22 @@ public class AtomicExprParser {
         }
 
         return error("Unsupported expression token: " + cur.peek().lexeme(), cur.fullPos());
+    }
+
+    /**
+     * Attempts to parse column-like atomic expressions.
+     *
+     * <p>The default implementation only recognizes ordinary {@link ColumnExpr}
+     * instances. Dialects may override this phase to try additional
+     * column-shaped expression forms before falling back to regular column
+     * parsing.</p>
+     *
+     * @param cur the current token cursor
+     * @param ctx the parsing context
+     * @return a match result for the column-like expression phase
+     */
+    protected MatchResult<? extends Expression> parseColumnLikeExpression(Cursor cur, ParseContext ctx) {
+        return ctx.parseIfMatch(ColumnExpr.class, cur);
     }
 
     /**
