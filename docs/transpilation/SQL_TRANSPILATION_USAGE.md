@@ -126,8 +126,9 @@ Expected warning:
 - Unsupported:
   - `TOP ... PERCENT`
   - `TOP ... WITH TIES`
+  - SQL Server table hints such as `WITH (NOLOCK)` / `WITH (UPDLOCK)` / `WITH (HOLDLOCK)`
   - `DISTINCT ON` when targeting SQL Server from PostgreSQL source
-  - deferred SQL Server advanced DML features such as `OUTPUT`, `MERGE`, and hints
+  - deferred SQL Server advanced DML features such as `OUTPUT` and `MERGE`
 
 ## Reading Results
 

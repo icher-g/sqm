@@ -235,6 +235,25 @@ final class StatementFeatureInspector {
         return found.get();
     }
 
+    static boolean hasLockHints(Statement statement) {
+        var found = new AtomicBoolean(false);
+        statement.accept(new RecursiveNodeVisitor<Void>() {
+            @Override
+            protected Void defaultResult() {
+                return null;
+            }
+
+            @Override
+            public Void visitTable(Table table) {
+                if (!table.lockHints().isEmpty()) {
+                    found.set(true);
+                }
+                return super.visitTable(table);
+            }
+        });
+        return found.get();
+    }
+
     static boolean hasInsertMode(Statement statement, InsertStatement.InsertMode mode) {
         var found = new AtomicBoolean(false);
         statement.accept(new RecursiveNodeVisitor<Void>() {

@@ -14,6 +14,7 @@ import io.sqm.transpile.builtin.PostgresToMySqlRegexVariantUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlReturningUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlSimilarToUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToSqlServerDistinctOnUnsupportedRule;
+import io.sqm.transpile.builtin.SqlServerTableHintsUnsupportedRule;
 import io.sqm.transpile.builtin.SqlServerTopToLimitRule;
 import io.sqm.transpile.builtin.StandardLimitToSqlServerTopRule;
 
@@ -53,6 +54,7 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
             new MySqlToPostgresJsonFunctionUnsupportedRule(),
             new StandardLimitToSqlServerTopRule(),
             new SqlServerTopToLimitRule(),
+            new SqlServerTableHintsUnsupportedRule(),
             new PostgresToSqlServerDistinctOnUnsupportedRule()
         ));
     }

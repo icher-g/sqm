@@ -34,6 +34,14 @@ final class SqmJavaEmitter {
             return "QualifiedName.of(" + joinInline(value.parts().stream().map(DslEmitterVisitor::emitIdentifier).toList()) + ")";
         }
 
+        private static String emitLockHint(Table.LockHint hint) {
+            return switch (hint.kind()) {
+                case NOLOCK -> "withNoLock()";
+                case UPDLOCK -> "withUpdLock()";
+                case HOLDLOCK -> "withHoldLock()";
+            };
+        }
+
         private static String emitStringList(List<String> values) {
             return "java.util.List.of(" + joinInline(values.stream().map(DslEmitterVisitor::quote).toList()) + ")";
         }
@@ -360,19 +368,22 @@ final class SqmJavaEmitter {
 
         @Override
         public String visitTable(Table t) {
-            String out = t.schema() == null
+            StringBuilder out = new StringBuilder(t.schema() == null
                 ? "tbl(" + quote(t.name()) + ")"
-                : "tbl(" + quote(t.schema()) + ", " + quote(t.name()) + ")";
+                : "tbl(" + quote(t.schema()) + ", " + quote(t.name()) + ")");
             if (t.alias() != null) {
-                out += ".as(" + quote(t.alias()) + ")";
+                out.append(".as(").append(quote(t.alias())).append(")");
             }
             if (t.inheritance() == Table.Inheritance.ONLY) {
-                out += ".only()";
+                out.append(".only()");
             }
             if (t.inheritance() == Table.Inheritance.INCLUDE_DESCENDANTS) {
-                out += ".includingDescendants()";
+                out.append(".includingDescendants()");
             }
-            return out;
+            for (var hint : t.lockHints()) {
+                out.append(".").append(emitLockHint(hint));
+            }
+            return out.toString();
         }
 
         @Override

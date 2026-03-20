@@ -75,4 +75,16 @@ class DeleteStatementParserTest {
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("inserted.<column>"));
     }
+
+    @Test
+    void rejectsOutputIntoTargetTableHints() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            DeleteStatement.class,
+            "DELETE FROM [users] OUTPUT deleted.[id] INTO [audit] WITH (NOLOCK) ([user_id]) WHERE [id] = 1"
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("OUTPUT INTO"));
+    }
 }

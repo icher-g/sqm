@@ -76,15 +76,18 @@ class TableTest {
         var table = tbl("users")
             .useIndex("idx_users_name")
             .ignoreIndex("idx_users_email")
+            .withNoLock()
             .as("u")
             .inSchema("app");
 
         assertEquals(2, table.indexHints().size());
+        assertEquals(1, table.lockHints().size());
         assertEquals(Table.IndexHintType.USE, table.indexHints().get(0).type());
         assertEquals(Table.IndexHintType.IGNORE, table.indexHints().get(1).type());
         assertThrows(UnsupportedOperationException.class, () -> table.indexHints().add(
             new Table.IndexHint(Table.IndexHintType.FORCE, Table.IndexHintScope.DEFAULT, List.of(Identifier.of("idx")))
         ));
+        assertThrows(UnsupportedOperationException.class, () -> table.lockHints().add(Table.LockHint.holdlock()));
         assertEquals("u", table.alias().value());
         assertEquals("app", table.schema().value());
     }
@@ -93,18 +96,28 @@ class TableTest {
     void withIdentifierMutatorsPreserveIndexHints() {
         var table = tbl("users")
             .forceIndex("idx_users_id")
+            .withUpdLock()
             .as(Identifier.of("u"))
             .inSchema(Identifier.of("app"));
 
         assertEquals("u", table.alias().value());
         assertEquals("app", table.schema().value());
         assertEquals(Table.IndexHintType.FORCE, table.indexHints().getFirst().type());
+        assertEquals(Table.LockHintKind.UPDLOCK, table.lockHints().getFirst().kind());
     }
 
     @Test
     void ofTreatsNullIndexHintsAsEmptyList() {
         var table = Table.of(null, Identifier.of("users"), null, Table.Inheritance.DEFAULT, null);
         assertEquals(List.of(), table.indexHints());
+        assertEquals(List.of(), table.lockHints());
+    }
+
+    @Test
+    void ofTreatsNullSqlServerHintsAsEmptyList() {
+        var table = Table.of(null, Identifier.of("users"), null, Table.Inheritance.DEFAULT, List.of(), null);
+
+        assertEquals(List.of(), table.lockHints());
     }
 
     @Test
@@ -123,5 +136,19 @@ class TableTest {
     void indexHintRejectsEmptyIndexes() {
         assertThrows(IllegalArgumentException.class,
             () -> new Table.IndexHint(Table.IndexHintType.USE, Table.IndexHintScope.DEFAULT, List.of()));
+    }
+
+    @Test
+    void lockHintsAreImmutableAndPreservedByMutators() {
+        var table = tbl("users")
+            .withNoLock()
+            .withHoldLock()
+            .useIndex("idx_users_id")
+            .as("u");
+
+        assertEquals(2, table.lockHints().size());
+        assertEquals(Table.LockHintKind.NOLOCK, table.lockHints().get(0).kind());
+        assertEquals(Table.LockHintKind.HOLDLOCK, table.lockHints().get(1).kind());
+        assertEquals(Table.IndexHintType.USE, table.indexHints().getFirst().type());
     }
 }

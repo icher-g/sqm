@@ -87,6 +87,9 @@ public final class Lexer {
         KEYWORDS.put("ONLY", ONLY);
         KEYWORDS.put("BY", BY);
         KEYWORDS.put("TOP", TOP);
+        KEYWORDS.put("NOLOCK", NOLOCK);
+        KEYWORDS.put("UPDLOCK", UPDLOCK);
+        KEYWORDS.put("HOLDLOCK", HOLDLOCK);
         KEYWORDS.put("PERCENT", PERCENT);
         KEYWORDS.put("UNION", UNION);
         KEYWORDS.put("INTERSECT", INTERSECT);

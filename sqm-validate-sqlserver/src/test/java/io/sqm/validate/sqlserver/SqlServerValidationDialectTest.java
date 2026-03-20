@@ -128,7 +128,7 @@ class SqlServerValidationDialectTest {
     void validate_acceptsTopWithTiesWithOrderBy() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var query = select(col("u", "id"))
-            .from(tbl("users").as("u"))
+            .from(tbl("users").as("u").withNoLock())
             .orderBy(order(col("u", "id")))
             .top(topWithTies(lit(10L)))
             .build();
@@ -189,6 +189,22 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
+    void validate_reportsConflictingSqlServerTableHints() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var query = select(col("u", "id"))
+            .from(tbl("users").as("u").withNoLock().withUpdLock())
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "from.table".equals(problem.clausePath())
+                && problem.message().contains("NOLOCK")
+        ));
+    }
+
+    @Test
     void validate_reportsLockingAndLimitAllAsUnsupported() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var query = select(col("u", "id"))
@@ -219,16 +235,16 @@ class SqlServerValidationDialectTest {
     @Test
     void validate_acceptsBaselineSqlServerDmlAndRetainsBaseRules() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
-        var insertStatement = insert("users")
+        var insertStatement = insert(tbl("users").withHoldLock())
             .columns(id("id"), id("name"))
             .result(inserted("id").as("user_id"))
             .values(rows(row(lit(1L), lit("alice"))))
             .build();
-        var updateStatement = update("users")
+        var updateStatement = update(tbl("users").withUpdLock())
             .set(Identifier.of("missing_col"), lit("alice"))
             .result(deleted("name"), inserted("name"))
             .build();
-        var deleteStatement = delete("users")
+        var deleteStatement = delete(tbl("users").withNoLock())
             .result(deleted("id"))
             .where(col("id").eq(lit(1L)))
             .build();
@@ -243,6 +259,23 @@ class SqlServerValidationDialectTest {
                 && "dml.assignment".equals(problem.clausePath())
         ));
         assertFalse(hasDialectProblem(deleteResult, ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED));
+    }
+
+    @Test
+    void validate_reportsOutputIntoTargetHintsAsUnsupported() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var updateStatement = update("users")
+            .set(Identifier.of("name"), lit("alice"))
+            .result(resultInto(tbl("audit").withNoLock(), "user_id"), inserted("id"))
+            .build();
+
+        var result = validator.validate(updateStatement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "update.result".equals(problem.clausePath())
+                && problem.message().contains("OUTPUT INTO")
+        ));
     }
 
     @Test

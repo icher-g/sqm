@@ -29,6 +29,7 @@ public final class SqlServerUpdateStatementValidationRule implements SchemaValid
      */
     @Override
     public void validate(UpdateStatement node, SchemaValidationContext context) {
+        SqlServerTableHintSupport.validateHints(node.table(), context, "update.table");
         if (!node.joins().isEmpty()) {
             context.addProblem(
                 ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
@@ -53,5 +54,6 @@ public final class SqlServerUpdateStatementValidationRule implements SchemaValid
                 "update.hint"
             );
         }
+        SqlServerTableHintSupport.validateResultIntoTarget(node.result() == null ? null : node.result().into(), context, "update.result");
     }
 }

@@ -34,6 +34,7 @@ public final class SqlServerDeleteStatementValidationRule implements SchemaValid
      */
     @Override
     public void validate(DeleteStatement node, SchemaValidationContext context) {
+        SqlServerTableHintSupport.validateHints(node.table(), context, "delete.table");
         if (!node.using().isEmpty()) {
             context.addProblem(
                 ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
@@ -58,6 +59,7 @@ public final class SqlServerDeleteStatementValidationRule implements SchemaValid
                 "delete.hint"
             );
         }
+        SqlServerTableHintSupport.validateResultIntoTarget(node.result() == null ? null : node.result().into(), context, "delete.result");
         if (node.result() != null) {
             for (var item : node.result().items()) {
                 if (usesOutputSource(item, OutputRowSource.INSERTED)) {

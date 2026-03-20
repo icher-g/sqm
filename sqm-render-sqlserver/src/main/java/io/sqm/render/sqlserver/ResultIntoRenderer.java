@@ -25,6 +25,9 @@ public class ResultIntoRenderer implements Renderer<ResultInto> {
      */
     @Override
     public void render(ResultInto node, RenderContext ctx, SqlWriter w) {
+        if (!node.target().lockHints().isEmpty()) {
+            throw new UnsupportedOperationException("SQL Server table hints are not supported on OUTPUT INTO targets");
+        }
         w.append("INTO").space().append(node.target());
         if (!node.columns().isEmpty()) {
             w.space().append("(");

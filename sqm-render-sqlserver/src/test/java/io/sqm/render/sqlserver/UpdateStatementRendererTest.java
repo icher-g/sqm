@@ -19,14 +19,14 @@ class UpdateStatementRendererTest {
     @Test
     void rendersBracketQuotedUpdateStatement() {
         var ctx = RenderContext.of(new SqlServerDialect());
-        UpdateStatement statement = update(io.sqm.dsl.Dsl.tbl(id("users", QuoteStyle.BRACKETS)))
+        UpdateStatement statement = update(io.sqm.dsl.Dsl.tbl(id("users", QuoteStyle.BRACKETS)).withUpdLock())
             .set(id("name", QuoteStyle.BRACKETS), lit("alice"))
             .where(col(id("id", QuoteStyle.BRACKETS)).eq(lit(1)))
             .build();
 
         var sql = normalize(ctx.render(statement).sql());
 
-        assertEquals("UPDATE [users] SET [name] = 'alice' WHERE [id] = 1", sql);
+        assertEquals("UPDATE [users] WITH (UPDLOCK) SET [name] = 'alice' WHERE [id] = 1", sql);
     }
 
     @Test
@@ -88,6 +88,17 @@ class UpdateStatementRendererTest {
             "UPDATE users SET score = 1 OUTPUT inserted.score + deleted.score AS score_sum WHERE id = 1",
             sql
         );
+    }
+
+    @Test
+    void rejectsOutputIntoTargetTableHints() {
+        var ctx = RenderContext.of(new SqlServerDialect());
+        UpdateStatement statement = update("users")
+            .set(id("name"), lit("alice"))
+            .result(resultInto(tbl("audit").withNoLock(), "user_id"), inserted("id"))
+            .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> ctx.render(statement));
     }
 
     @Test

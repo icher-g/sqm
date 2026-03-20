@@ -30,6 +30,7 @@ public final class Parsers {
             .register(new InsertStatementParser())
             .register(new UpdateStatementParser())
             .register(new DeleteStatementParser())
+            .register(new TableParser())
             .register(new OutputColumnExprParser())
             .register(new OutputStarResultItemParser())
             .register(new FunctionExprParser())
