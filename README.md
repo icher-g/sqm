@@ -130,6 +130,7 @@ DML foundation is delivered with a statement-level model and ANSI baseline parse
 PostgreSQL DML extensions are delivered for:
 
 - `MERGE` (PostgreSQL 15+)
+- SQL Server `MERGE` with `TOP (...)` and `OUTPUT`
 - `INSERT ... RETURNING`
 - `UPDATE ... FROM`
 - `DELETE ... USING`
@@ -161,8 +162,14 @@ Current scope boundary:
   - first-wave SQL Server functions such as `LEN`, `DATEADD`, `DATEDIFF`, `ISNULL`, and `STRING_AGG`
   - baseline `INSERT`, `UPDATE`, and `DELETE`
   - `OUTPUT` and `OUTPUT ... INTO` through shared `ResultClause` support
-- SQL Server deferred follow-up features include:
-  - `MERGE`
+- SQL Server `MERGE` support includes:
+  - `WHEN MATCHED` update/delete
+  - `WHEN NOT MATCHED` insert
+  - `WHEN NOT MATCHED BY SOURCE` update/delete
+  - clause predicates (`WHEN ... AND ...`)
+  - `OUTPUT`
+  - `TOP (...)`
+  - `TOP (...) PERCENT`
 
 ### PostgreSQL DML Example
 
@@ -186,7 +193,7 @@ System.out.println(sql);
 Supported PostgreSQL DML examples include:
 
 ```sql
-MERGE INTO users AS u USING incoming_users AS s ON u.id = s.id WHEN MATCHED AND s.active = true THEN UPDATE SET name = s.name WHEN NOT MATCHED AND s.name IS NOT NULL THEN INSERT (id, name) VALUES (s.id, s.name) RETURNING u.id
+MERGE INTO users AS u USING incoming_users AS s ON u.id = s.id WHEN MATCHED AND s.active = true THEN UPDATE SET name = s.name WHEN NOT MATCHED BY SOURCE AND u.name IS NOT NULL THEN DO NOTHING WHEN NOT MATCHED AND s.name IS NOT NULL THEN INSERT (id, name) VALUES (s.id, s.name) RETURNING u.id
 INSERT INTO users (name) VALUES ('alice') RETURNING id
 UPDATE users u SET name = src.name FROM source_users src WHERE u.id = src.id
 DELETE FROM users USING source_users src WHERE users.id = src.id
@@ -195,6 +202,9 @@ WITH ins AS ( INSERT INTO users (name) VALUES ('alice') RETURNING id ) SELECT id
 WITH upd AS ( UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id ) SELECT id FROM upd
 WITH del AS ( DELETE FROM users WHERE id = 1 RETURNING id ) SELECT id FROM del
 ```
+
+Current PostgreSQL `MERGE` scope:
+- supported: `WHEN MATCHED` update/delete, `WHEN NOT MATCHED` insert, `WHEN NOT MATCHED BY SOURCE` update/delete, clause predicates (`WHEN ... AND ...`), `DO NOTHING`, and `RETURNING`
 
 ### MySQL DML Example
 
@@ -258,6 +268,7 @@ INSERT INTO [users] ([name]) OUTPUT inserted.[id] VALUES ('alice')
 UPDATE [users] SET [name] = 'alice' OUTPUT deleted.[name], inserted.[name] INTO [audit] ([old_name], [new_name]) WHERE [id] = 1
 UPDATE [users] SET [name] = 'alice' WHERE [id] = 1
 DELETE FROM [users] WHERE [id] = 1
+MERGE TOP (10) PERCENT INTO [users] USING [src] AS [s] ON [users].[id] = [s].[id] WHEN MATCHED THEN DELETE OUTPUT deleted.[id]
 ```
 
 ---

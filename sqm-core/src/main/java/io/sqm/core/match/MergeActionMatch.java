@@ -2,6 +2,7 @@ package io.sqm.core.match;
 
 import io.sqm.core.MergeAction;
 import io.sqm.core.MergeDeleteAction;
+import io.sqm.core.MergeDoNothingAction;
 import io.sqm.core.MergeInsertAction;
 import io.sqm.core.MergeUpdateAction;
 
@@ -40,6 +41,14 @@ public interface MergeActionMatch<R> extends Match<MergeAction, R> {
      * @return {@code this} for fluent chaining
      */
     MergeActionMatch<R> delete(Function<MergeDeleteAction, R> function);
+
+    /**
+     * Registers a handler for {@link MergeDoNothingAction} actions.
+     *
+     * @param function do-nothing-action handler
+     * @return {@code this} for fluent chaining
+     */
+    MergeActionMatch<R> doNothing(Function<MergeDoNothingAction, R> function);
 
     /**
      * Registers a handler for {@link MergeInsertAction} actions.

@@ -7,6 +7,7 @@ import io.sqm.core.InsertStatement;
 import io.sqm.core.LockingClause;
 import io.sqm.core.MergeClause;
 import io.sqm.core.MergeDeleteAction;
+import io.sqm.core.MergeDoNothingAction;
 import io.sqm.core.MergeInsertAction;
 import io.sqm.core.MergeStatement;
 import io.sqm.core.MergeUpdateAction;
@@ -78,6 +79,14 @@ public interface StatementVisitor<R> {
      * @return a result specific to the visitor implementation
      */
     R visitMergeDeleteAction(MergeDeleteAction action);
+
+    /**
+     * Visits a {@link MergeDoNothingAction}.
+     *
+     * @param action merge-do-nothing action being visited
+     * @return a result specific to the visitor implementation
+     */
+    R visitMergeDoNothingAction(MergeDoNothingAction action);
 
     /**
      * Visits a {@link MergeInsertAction}.

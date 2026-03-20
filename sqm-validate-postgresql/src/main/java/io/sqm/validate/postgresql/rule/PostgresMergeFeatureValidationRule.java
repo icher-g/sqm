@@ -35,14 +35,21 @@ public final class PostgresMergeFeatureValidationRule implements SchemaValidatio
 
     @Override
     public void validate(MergeStatement node, SchemaValidationContext context) {
-        if (capabilities.supports(SqlFeature.MERGE_STATEMENT)) {
-            return;
+        if (!capabilities.supports(SqlFeature.MERGE_STATEMENT)) {
+            context.addProblem(
+                ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
+                "PostgreSQL " + version + " does not support " + SqlFeature.MERGE_STATEMENT.description(),
+                node,
+                "merge"
+            );
         }
-        context.addProblem(
-            ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
-            "PostgreSQL " + version + " does not support " + SqlFeature.MERGE_STATEMENT.description(),
-            node,
-            "merge"
-        );
+        if (node.topSpec() != null) {
+            context.addProblem(
+                ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
+                "PostgreSQL MERGE does not support TOP",
+                node.topSpec(),
+                "merge.top"
+            );
+        }
     }
 }

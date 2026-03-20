@@ -2,6 +2,7 @@ package io.sqm.render.postgresql;
 
 import io.sqm.core.MergeClause;
 import io.sqm.core.MergeDeleteAction;
+import io.sqm.core.MergeDoNothingAction;
 import io.sqm.core.MergeInsertAction;
 import io.sqm.core.MergeUpdateAction;
 import io.sqm.core.dialect.DialectCapabilities;
@@ -35,6 +36,7 @@ import static io.sqm.dsl.Dsl.merge;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.top;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -91,6 +93,42 @@ class MergeStatementRendererTest {
     }
 
     @Test
+    void rendersNotMatchedBySourceClause() {
+        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(15, 0)));
+        MergeStatement statement = merge("users")
+            .source(tbl("src"))
+            .on(col("users", "id").eq(col("src", "id")))
+            .whenNotMatchedBySourceDelete(col("users", "active").eq(lit(true)))
+            .build();
+
+        var sql = normalize(ctx.render(statement).sql());
+
+        assertEquals(
+            "MERGE INTO users USING src ON users.id = src.id WHEN NOT MATCHED BY SOURCE AND users.active = TRUE THEN DELETE",
+            sql
+        );
+    }
+
+    @Test
+    void rendersDoNothingBranches() {
+        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(15, 0)));
+        MergeStatement statement = merge("users")
+            .source(tbl("src"))
+            .on(col("users", "id").eq(col("src", "id")))
+            .whenMatchedDoNothing()
+            .whenNotMatchedDoNothing(col("src", "id").gt(lit(0)))
+            .whenNotMatchedBySourceDoNothing()
+            .build();
+
+        var sql = normalize(ctx.render(statement).sql());
+
+        assertEquals(
+            "MERGE INTO users USING src ON users.id = src.id WHEN MATCHED THEN DO NOTHING WHEN NOT MATCHED AND src.id > 0 THEN DO NOTHING WHEN NOT MATCHED BY SOURCE THEN DO NOTHING",
+            sql
+        );
+    }
+
+    @Test
     void rejectsReturningWhenDialectDoesNotSupportIt() {
         var renderer = new MergeStatementRenderer();
         var ctx = RenderContext.of(new NoReturningPostgresDialect());
@@ -100,6 +138,21 @@ class MergeStatementRendererTest {
             .on(col("users", "id").eq(col("src", "id")))
             .whenMatchedDelete()
             .result(col("id").toSelectItem())
+            .build();
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> renderer.render(statement, ctx, writer));
+    }
+
+    @Test
+    void rejectsMergeTop() {
+        var renderer = new MergeStatementRenderer();
+        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(15, 0)));
+        var writer = new DefaultSqlWriter(ctx);
+        MergeStatement statement = merge("users")
+            .source(tbl("src"))
+            .on(col("users", "id").eq(col("src", "id")))
+            .top(top(5))
+            .whenMatchedDelete()
             .build();
 
         assertThrows(UnsupportedDialectFeatureException.class, () -> renderer.render(statement, ctx, writer));
@@ -117,6 +170,14 @@ class MergeStatementRendererTest {
                 MergeInsertAction.of(java.util.List.of(), row(lit(1), lit("alice")))
             )
         ).sql());
+        var notMatchedBySourceDelete = normalize(ctx.render(
+            MergeClause.of(
+                MergeClause.MatchType.NOT_MATCHED_BY_SOURCE,
+                col("users", "active").eq(lit(true)),
+                MergeDeleteAction.of()
+            )
+        ).sql());
+        var doNothingAction = normalize(ctx.render(MergeDoNothingAction.of()).sql());
         var deleteAction = normalize(ctx.render(MergeDeleteAction.of()).sql());
         var updateAction = normalize(ctx.render(
             MergeUpdateAction.of(java.util.List.of(set("name", lit("alice")), set("email", lit("a@example.com"))))
@@ -127,6 +188,8 @@ class MergeStatementRendererTest {
 
         assertEquals("WHEN MATCHED THEN DELETE", matchedDelete);
         assertEquals("WHEN NOT MATCHED AND s.name IS NOT NULL THEN INSERT VALUES (1, 'alice')", notMatchedInsert);
+        assertEquals("WHEN NOT MATCHED BY SOURCE AND users.active = TRUE THEN DELETE", notMatchedBySourceDelete);
+        assertEquals("DO NOTHING", doNothingAction);
         assertEquals("DELETE", deleteAction);
         assertEquals("UPDATE SET name = 'alice', email = 'a@example.com'", updateAction);
         assertEquals("INSERT (id, name) VALUES (1, 'alice')", insertAction);

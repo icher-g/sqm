@@ -11,6 +11,7 @@ import static io.sqm.dsl.Dsl.merge;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.top;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -113,5 +114,39 @@ class MergeStatementTransformerTest {
         assertEquals(2, transformed.clauses().getFirst().condition().matchPredicate()
             .comparison(cmp -> cmp.rhs().matchExpression().literal(l -> l.value()).orElse(null))
             .orElse(null));
+    }
+
+    @Test
+    void preservesIdentityForDoNothingAction() {
+        var statement = merge(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDoNothing()
+            .build();
+
+        var transformed = new RecursiveNodeTransformer() {
+        }.transform(statement);
+
+        assertSame(statement, transformed);
+    }
+
+    @Test
+    void rebuildsStatementWhenTopSpecChanges() {
+        var statement = merge(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .top(top(1))
+            .whenMatchedDelete()
+            .build();
+
+        var transformed = (MergeStatement) new RecursiveNodeTransformer() {
+            @Override
+            public Node visitLiteralExpr(io.sqm.core.LiteralExpr literalExpr) {
+                return lit(2);
+            }
+        }.transform(statement);
+
+        assertNotSame(statement, transformed);
+        assertEquals(2, transformed.topSpec().count().matchExpression().literal(l -> l.value()).orElse(null));
     }
 }

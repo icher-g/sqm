@@ -64,13 +64,16 @@ class StatementJsonTest {
         var json = mapper.writeValueAsString(merge(tbl("users"))
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
+            .top(top(5))
             .whenMatchedUpdate(java.util.List.of(set("name", col("s", "name"))))
+            .whenNotMatchedBySourceDoNothing()
             .whenNotMatchedInsert(java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
             .build());
 
-        var statement = mapper.readValue(json, Statement.class);
+        var statement = (io.sqm.core.MergeStatement) mapper.readValue(json, Statement.class);
 
         assertInstanceOf(io.sqm.core.MergeStatement.class, statement);
+        assertNotNull(statement.topSpec());
     }
 
     @Test

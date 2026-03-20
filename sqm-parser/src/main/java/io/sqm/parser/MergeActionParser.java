@@ -2,6 +2,7 @@ package io.sqm.parser;
 
 import io.sqm.core.MergeAction;
 import io.sqm.core.MergeDeleteAction;
+import io.sqm.core.MergeDoNothingAction;
 import io.sqm.core.MergeInsertAction;
 import io.sqm.core.MergeUpdateAction;
 import io.sqm.parser.core.Cursor;
@@ -31,6 +32,9 @@ public class MergeActionParser implements Parser<MergeAction> {
         }
         if (cur.match(TokenType.INSERT)) {
             return ctx.parse(MergeInsertAction.class, cur);
+        }
+        if (cur.match(TokenType.DO)) {
+            return ctx.parse(MergeDoNothingAction.class, cur);
         }
         return ParseResult.error("Expected MERGE action", cur.fullPos());
     }

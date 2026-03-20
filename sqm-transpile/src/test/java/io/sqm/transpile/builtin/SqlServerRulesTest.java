@@ -106,7 +106,10 @@ class SqlServerRulesTest {
         Statement statement = Dsl.merge("users")
             .source(Dsl.tbl("src").as("s"))
             .on(Dsl.col("users", "id").eq(Dsl.col("s", "id")))
+            .top(Dsl.topPercent(Dsl.lit(10)))
             .whenMatchedDelete()
+            .whenNotMatchedBySourceDelete(Dsl.col("users", "archived").eq(Dsl.lit(true)))
+            .result(Dsl.deleted("id"), Dsl.inserted("id"))
             .build();
 
         var result = new SqlServerMergeUnsupportedRule().apply(statement, context(SqlDialectId.SQLSERVER, SqlDialectId.POSTGRESQL));

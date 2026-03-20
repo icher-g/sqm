@@ -5,7 +5,7 @@ import io.sqm.core.match.MergeActionMatch;
 /**
  * Base type for SQL {@code MERGE} actions executed after a match decision.
  */
-public sealed interface MergeAction extends Node permits MergeDeleteAction, MergeInsertAction, MergeUpdateAction {
+public sealed interface MergeAction extends Node permits MergeDeleteAction, MergeDoNothingAction, MergeInsertAction, MergeUpdateAction {
 
     /**
      * Creates a new matcher for the current {@link MergeAction}.

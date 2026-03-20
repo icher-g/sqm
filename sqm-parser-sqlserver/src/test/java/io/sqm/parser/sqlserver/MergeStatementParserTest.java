@@ -18,7 +18,7 @@ class MergeStatementParserTest {
         var result = ctx.parse(
             MergeStatement.class,
             """
-                MERGE INTO [users] WITH (HOLDLOCK)
+                MERGE TOP (10) PERCENT INTO [users] WITH (HOLDLOCK)
                 USING [src_users] AS [s]
                 ON [users].[id] = [s].[id]
                 WHEN MATCHED AND [s].[active] = 1 THEN UPDATE SET [name] = [s].[name]
@@ -29,6 +29,8 @@ class MergeStatementParserTest {
         assertTrue(result.ok(), result.errorMessage());
         assertEquals("users", result.value().target().name().value());
         assertEquals(1, result.value().target().lockHints().size());
+        assertNotNull(result.value().topSpec());
+        assertTrue(result.value().topSpec().percent());
         assertEquals(2, result.value().clauses().size());
         assertTrue(result.value().clauses().stream().allMatch(clause -> clause.condition() != null));
     }
@@ -46,15 +48,43 @@ class MergeStatementParserTest {
     }
 
     @Test
-    void rejectsMergeOutputInFirstSlice() {
+    void parsesMergeOutput() {
         var ctx = ParseContext.of(new SqlServerSpecs());
         var result = ctx.parse(
             MergeStatement.class,
             "MERGE users USING src ON users.id = src.id WHEN MATCHED THEN DELETE OUTPUT deleted.id"
         );
 
+        assertTrue(result.ok(), result.errorMessage());
+        assertNotNull(result.value().result());
+        assertEquals(1, result.value().result().items().size());
+    }
+
+    @Test
+    void parsesMergeOutputInto() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            "MERGE users USING src ON users.id = src.id WHEN MATCHED THEN DELETE OUTPUT deleted.id INTO audit (user_id)"
+        );
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertNotNull(result.value().result());
+        assertNotNull(result.value().result().into());
+        assertEquals("audit", result.value().result().into().target().name().value());
+        assertEquals(1, result.value().result().into().columns().size());
+    }
+
+    @Test
+    void rejectsMergeOutputIntoTargetHints() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            "MERGE users USING src ON users.id = src.id WHEN MATCHED THEN DELETE OUTPUT deleted.id INTO audit WITH (NOLOCK)"
+        );
+
         assertTrue(result.isError());
-        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("OUTPUT"));
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("OUTPUT INTO targets"));
     }
 
     @Test
@@ -86,27 +116,28 @@ class MergeStatementParserTest {
     }
 
     @Test
-    void rejectsMergeTopInFirstSlice() {
+    void rejectsMergeTopWithTies() {
         var ctx = ParseContext.of(new SqlServerSpecs());
         var result = ctx.parse(
             MergeStatement.class,
-            "MERGE TOP (10) users USING src ON users.id = src.id WHEN MATCHED THEN DELETE"
+            "MERGE TOP (10) WITH TIES users USING src ON users.id = src.id WHEN MATCHED THEN DELETE"
         );
 
         assertTrue(result.isError());
-        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("TOP"));
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("WITH TIES"));
     }
 
     @Test
-    void rejectsNotMatchedBySourceInFirstSlice() {
+    void parsesNotMatchedBySourceInCurrentSlice() {
         var ctx = ParseContext.of(new SqlServerSpecs());
         var result = ctx.parse(
             MergeStatement.class,
-            "MERGE users USING src ON users.id = src.id WHEN NOT MATCHED BY SOURCE THEN DELETE"
+            "MERGE users USING src ON users.id = src.id WHEN NOT MATCHED BY SOURCE AND users.active = 1 THEN UPDATE SET name = src.name"
         );
 
-        assertTrue(result.isError());
-        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("BY"));
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(1, result.value().clauses().size());
+        assertEquals(io.sqm.core.MergeClause.MatchType.NOT_MATCHED_BY_SOURCE, result.value().clauses().getFirst().matchType());
     }
 
     @Test
@@ -134,6 +165,18 @@ class MergeStatementParserTest {
     }
 
     @Test
+    void rejectsDoNothingAction() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            "MERGE users USING src ON users.id = src.id WHEN MATCHED THEN DO NOTHING"
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("DO NOTHING"));
+    }
+
+    @Test
     void rejectsTwoMatchedClausesWithoutPredicateOnFirstClause() {
         var ctx = ParseContext.of(new SqlServerSpecs());
         var result = ctx.parse(
@@ -158,6 +201,38 @@ class MergeStatementParserTest {
                 MERGE users USING src ON users.id = src.id
                 WHEN MATCHED AND src.active = 1 THEN DELETE
                 WHEN MATCHED THEN DELETE
+                """
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("one UPDATE and one DELETE"));
+    }
+
+    @Test
+    void rejectsTwoNotMatchedBySourceClausesWithoutPredicateOnFirstClause() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            """
+                MERGE users USING src ON users.id = src.id
+                WHEN NOT MATCHED BY SOURCE THEN DELETE
+                WHEN NOT MATCHED BY SOURCE THEN UPDATE SET name = src.name
+                """
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("first WHEN NOT MATCHED BY SOURCE"));
+    }
+
+    @Test
+    void rejectsTwoNotMatchedBySourceClausesWithSameActionFamily() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            """
+                MERGE users USING src ON users.id = src.id
+                WHEN NOT MATCHED BY SOURCE AND users.active = 1 THEN DELETE
+                WHEN NOT MATCHED BY SOURCE THEN DELETE
                 """
         );
 

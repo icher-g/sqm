@@ -100,6 +100,7 @@ public final class Lexer {
         KEYWORDS.put("DELETE", DELETE);
         KEYWORDS.put("MERGE", MERGE);
         KEYWORDS.put("MATCHED", MATCHED);
+        KEYWORDS.put("SOURCE", SOURCE);
         KEYWORDS.put("TRUNCATE", TRUNCATE);
         KEYWORDS.put("REPLACE", REPLACE);
         KEYWORDS.put("COPY", COPY);

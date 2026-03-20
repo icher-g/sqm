@@ -57,6 +57,7 @@ public final class Parsers {
             .register(new MergeClauseParser())
             .register(new MergeUpdateActionParser())
             .register(new MergeDeleteActionParser())
+            .register(new MergeDoNothingActionParser())
             .register(new MergeInsertActionParser())
             .register(new ResultClauseParser())
             .register(new ExprResultItemParser())

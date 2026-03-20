@@ -34,6 +34,7 @@ public final class Renderers {
             .register(new MergeClauseRenderer())
             .register(new MergeUpdateActionRenderer())
             .register(new MergeDeleteActionRenderer())
+            .register(new MergeDoNothingActionRenderer())
             .register(new MergeInsertActionRenderer())
             .register(new CastExprRenderer());
     }

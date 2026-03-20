@@ -400,8 +400,10 @@ class SqmJavaEmitterTest {
         var mergeStatement = merge(tbl("users"))
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
+            .top(top(5))
             .whenMatchedUpdate(col("s", "active").eq(lit(true)), java.util.List.of(set("name", col("s", "name"))))
             .whenMatchedDelete(col("s", "deleted").eq(lit(true)))
+            .whenNotMatchedBySourceDelete(col("users", "active").eq(lit(false)))
             .whenNotMatchedInsert(col("s", "name").isNotNull(), java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
             .build();
 
@@ -409,8 +411,10 @@ class SqmJavaEmitterTest {
 
         assertTrue(source.contains("merge(tbl(\"users\"))"));
         assertTrue(source.contains(".source(tbl(\"src\").as(\"s\"))"));
-        assertTrue(source.contains(".whenMatchedUpdate(col(\"s\", \"active\").eq(lit(true)), java.util.List.of("));
+        assertTrue(source.contains(".top(lit(5L))"));
+        assertTrue(source.contains(".whenMatchedUpdate(col(\"s\", \"active\").eq(lit(true)), set(id(\"name\"), col(\"s\", \"name\")))"));
         assertTrue(source.contains(".whenMatchedDelete(col(\"s\", \"deleted\").eq(lit(true)))"));
+        assertTrue(source.contains(".whenNotMatchedBySourceDelete(col(\"users\", \"active\").eq(lit(false)))"));
         assertTrue(source.contains(".whenNotMatchedInsert(col(\"s\", \"name\").isNotNull(), java.util.List.of(id(\"id\"), id(\"name\")), row(col(\"s\", \"id\"), col(\"s\", \"name\")))"));
     }
 
@@ -442,6 +446,38 @@ class SqmJavaEmitterTest {
         var source = emitter.emitStatement(mergeStatement);
 
         assertTrue(source.contains(".whenNotMatchedInsert(col(\"s\", \"id\").gt(lit(0)), row(col(\"s\", \"id\")))"));
+    }
+
+    @Test
+    void emitStatement_coversMergeDoNothingVariants() {
+        var mergeStatement = merge(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDoNothing()
+            .whenNotMatchedDoNothing(col("s", "id").gt(lit(0)))
+            .whenNotMatchedBySourceDoNothing()
+            .build();
+
+        var source = emitter.emitStatement(mergeStatement);
+
+        assertTrue(source.contains(".whenMatchedDoNothing()"));
+        assertTrue(source.contains(".whenNotMatchedDoNothing(col(\"s\", \"id\").gt(lit(0)))"));
+        assertTrue(source.contains(".whenNotMatchedBySourceDoNothing()"));
+    }
+
+    @Test
+    void emitStatement_coversMergeTopSpecAndVarargBySourceUpdateVariants() {
+        var mergeStatement = merge(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .top(TopSpec.of(lit(10), true, true))
+            .whenNotMatchedBySourceUpdate(set("name", lit("archived")))
+            .build();
+
+        var source = emitter.emitStatement(mergeStatement);
+
+        assertTrue(source.contains(".top(TopSpec.of(lit(10), true, true))"));
+        assertTrue(source.contains(".whenNotMatchedBySourceUpdate(set(id(\"name\"), lit(\"archived\")))"));
     }
 
     @Test

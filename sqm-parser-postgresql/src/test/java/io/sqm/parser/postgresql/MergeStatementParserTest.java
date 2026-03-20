@@ -1,6 +1,7 @@
 package io.sqm.parser.postgresql;
 
 import io.sqm.core.MergeClause;
+import io.sqm.core.MergeDoNothingAction;
 import io.sqm.core.MergeInsertAction;
 import io.sqm.core.MergeStatement;
 import io.sqm.core.MergeUpdateAction;
@@ -82,7 +83,7 @@ class MergeStatementParserTest {
     }
 
     @Test
-    void parsesActionPredicatesAndRejectsNotMatchedBySourceInCurrentSlice() {
+    void parsesActionPredicatesAndNotMatchedBySourceClauses() {
         var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
 
         var predicates = ctx.parse(
@@ -91,13 +92,32 @@ class MergeStatementParserTest {
         );
         var bySource = ctx.parse(
             MergeStatement.class,
-            "MERGE users USING src ON users.id = src.id WHEN NOT MATCHED BY SOURCE THEN DELETE"
+            "MERGE users USING src ON users.id = src.id WHEN NOT MATCHED BY SOURCE AND users.active = true THEN UPDATE SET name = src.name"
         );
 
         assertTrue(predicates.ok(), predicates.errorMessage());
         assertNotNull(predicates.value().clauses().getFirst().condition());
-        assertTrue(bySource.isError());
-        assertTrue(Objects.requireNonNull(bySource.errorMessage()).contains("BY"));
+        assertTrue(bySource.ok(), bySource.errorMessage());
+        assertEquals(MergeClause.MatchType.NOT_MATCHED_BY_SOURCE, bySource.value().clauses().getFirst().matchType());
+        assertNotNull(bySource.value().clauses().getFirst().condition());
+    }
+
+    @Test
+    void parsesDoNothingAcrossSupportedMergeBranches() {
+        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
+        var result = ctx.parse(
+            MergeStatement.class,
+            """
+                MERGE users USING src ON users.id = src.id
+                WHEN MATCHED THEN DO NOTHING
+                WHEN NOT MATCHED AND src.id > 0 THEN DO NOTHING
+                WHEN NOT MATCHED BY SOURCE THEN DO NOTHING
+                """
+        );
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(3, result.value().clauses().size());
+        assertTrue(result.value().clauses().stream().allMatch(clause -> clause.action() instanceof MergeDoNothingAction));
     }
 
     @Test
@@ -135,6 +155,10 @@ class MergeStatementParserTest {
             MergeUpdateAction.class,
             "UPDATE SET name = src.name, email = src.email"
         );
+        var doNothingAction = ctx.parse(
+            MergeDoNothingAction.class,
+            "DO NOTHING"
+        );
         var insertAction = ctx.parse(
             MergeInsertAction.class,
             "INSERT VALUES (src.id, src.name)"
@@ -146,6 +170,7 @@ class MergeStatementParserTest {
         assertEquals(MergeClause.MatchType.NOT_MATCHED, notMatchedInsert.value().matchType());
         assertTrue(updateAction.ok(), updateAction.errorMessage());
         assertEquals(2, updateAction.value().assignments().size());
+        assertTrue(doNothingAction.ok(), doNothingAction.errorMessage());
         assertTrue(insertAction.ok(), insertAction.errorMessage());
         assertTrue(insertAction.value().columns().isEmpty());
         assertEquals(2, insertAction.value().values().items().size());
@@ -163,9 +188,17 @@ class MergeStatementParserTest {
             MergeClause.class,
             "WHEN MATCHED THEN INSERT VALUES (src.id)"
         );
+        var bySourceInsert = ctx.parse(
+            MergeClause.class,
+            "WHEN NOT MATCHED BY SOURCE THEN INSERT VALUES (src.id)"
+        );
         var notMatchedDelete = ctx.parse(
             MergeClause.class,
             "WHEN NOT MATCHED THEN DELETE"
+        );
+        var invalidDo = ctx.parse(
+            MergeDoNothingAction.class,
+            "DO UPDATE"
         );
         var invalidUpdate = ctx.parse(
             MergeUpdateAction.class,
@@ -180,8 +213,12 @@ class MergeStatementParserTest {
         assertTrue(Objects.requireNonNull(missingThen.errorMessage()).contains("Expected THEN"));
         assertTrue(matchedInsert.isError());
         assertTrue(Objects.requireNonNull(matchedInsert.errorMessage()).contains("cannot use INSERT"));
+        assertTrue(bySourceInsert.isError());
+        assertTrue(Objects.requireNonNull(bySourceInsert.errorMessage()).contains("cannot use INSERT"));
         assertTrue(notMatchedDelete.isError());
-        assertTrue(Objects.requireNonNull(notMatchedDelete.errorMessage()).contains("must use INSERT"));
+        assertTrue(Objects.requireNonNull(notMatchedDelete.errorMessage()).contains("must use INSERT or DO NOTHING"));
+        assertTrue(invalidDo.isError());
+        assertTrue(Objects.requireNonNull(invalidDo.errorMessage()).contains("NOTHING"));
         assertTrue(invalidUpdate.isError());
         assertTrue(Objects.requireNonNull(invalidUpdate.errorMessage()).contains("assignment"));
         assertTrue(invalidInsert.isError());
@@ -197,6 +234,18 @@ class MergeStatementParserTest {
         );
 
         assertTrue(result.isError());
+    }
+
+    @Test
+    void rejectsMergeTop() {
+        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
+        var result = ctx.parse(
+            MergeStatement.class,
+            "MERGE TOP (10) users USING src ON users.id = src.id WHEN MATCHED THEN DELETE"
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("TOP"));
     }
 
     @Test

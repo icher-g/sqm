@@ -2,6 +2,7 @@ package io.sqm.core.walk;
 
 import io.sqm.core.MergeClause;
 import io.sqm.core.MergeDeleteAction;
+import io.sqm.core.MergeDoNothingAction;
 import io.sqm.core.MergeInsertAction;
 import io.sqm.core.LiteralExpr;
 import io.sqm.core.MergeStatement;
@@ -18,6 +19,7 @@ import static io.sqm.dsl.Dsl.merge;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.top;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MergeStatementVisitorTest {
@@ -27,8 +29,10 @@ class MergeStatementVisitorTest {
         var statement = merge(tbl("users"))
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
+            .top(top(5))
             .whenMatchedUpdate(col("s", "active").eq(io.sqm.dsl.Dsl.lit(true)), List.of(set("name", col("s", "name"))))
             .whenMatchedDelete()
+            .whenNotMatchedDoNothing()
             .whenNotMatchedInsert(List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
             .build();
         var visits = new ArrayList<String>();
@@ -58,6 +62,12 @@ class MergeStatementVisitorTest {
             }
 
             @Override
+            public Void visitTopSpec(io.sqm.core.TopSpec topSpec) {
+                visits.add("top");
+                return super.visitTopSpec(topSpec);
+            }
+
+            @Override
             public Void visitMergeUpdateAction(MergeUpdateAction action) {
                 visits.add("update");
                 return super.visitMergeUpdateAction(action);
@@ -67,6 +77,12 @@ class MergeStatementVisitorTest {
             public Void visitMergeDeleteAction(MergeDeleteAction action) {
                 visits.add("delete");
                 return super.visitMergeDeleteAction(action);
+            }
+
+            @Override
+            public Void visitMergeDoNothingAction(MergeDoNothingAction action) {
+                visits.add("doNothing");
+                return super.visitMergeDoNothingAction(action);
             }
 
             @Override
@@ -82,6 +98,6 @@ class MergeStatementVisitorTest {
             }
         }.accept(statement);
 
-        assertEquals(List.of("merge", "table", "table", "clause", "literal", "update", "clause", "delete", "clause", "insert"), visits.subList(0, 10));
+        assertEquals(List.of("merge", "table", "table", "top", "literal", "clause", "literal", "update", "clause", "delete", "clause", "doNothing", "clause", "insert"), visits.subList(0, 14));
     }
 }

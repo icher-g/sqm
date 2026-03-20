@@ -288,6 +288,9 @@ final class SqmJavaEmitter {
             var sb = new StringBuilder("merge(").append(emitNode(statement.target())).append(")");
             sb.append(".source(").append(emitNode(statement.source())).append(")");
             sb.append(".on(").append(emitNode(statement.on())).append(")");
+            if (statement.topSpec() != null) {
+                sb.append(emitTopSpecTail(statement.topSpec()));
+            }
             for (var clause : statement.clauses()) {
                 sb.append(emitMergeClauseBuilderCall(clause));
             }
@@ -301,14 +304,19 @@ final class SqmJavaEmitter {
         private String emitMergeClauseBuilderCall(MergeClause clause) {
             if (clause.matchType() == MergeClause.MatchType.MATCHED && clause.action() instanceof MergeUpdateAction updateAction) {
                 var predicateArg = clause.condition() == null ? "" : emitNode(clause.condition()) + ", ";
-                return ".whenMatchedUpdate(" + predicateArg + "java.util.List.of("
+                return ".whenMatchedUpdate(" + predicateArg
                     + joinInline(updateAction.assignments().stream().map(this::emitNode).toList())
-                    + "))";
+                    + ")";
             }
             if (clause.matchType() == MergeClause.MatchType.MATCHED && clause.action() instanceof MergeDeleteAction) {
                 return clause.condition() == null
                     ? ".whenMatchedDelete()"
                     : ".whenMatchedDelete(" + emitNode(clause.condition()) + ")";
+            }
+            if (clause.matchType() == MergeClause.MatchType.MATCHED && clause.action() instanceof MergeDoNothingAction) {
+                return clause.condition() == null
+                    ? ".whenMatchedDoNothing()"
+                    : ".whenMatchedDoNothing(" + emitNode(clause.condition()) + ")";
             }
             if (clause.matchType() == MergeClause.MatchType.NOT_MATCHED && clause.action() instanceof MergeInsertAction insertAction) {
                 var predicateArg = clause.condition() == null ? "" : emitNode(clause.condition()) + ", ";
@@ -321,6 +329,27 @@ final class SqmJavaEmitter {
                     + ", "
                     + emitNode(insertAction.values())
                     + ")";
+            }
+            if (clause.matchType() == MergeClause.MatchType.NOT_MATCHED && clause.action() instanceof MergeDoNothingAction) {
+                return clause.condition() == null
+                    ? ".whenNotMatchedDoNothing()"
+                    : ".whenNotMatchedDoNothing(" + emitNode(clause.condition()) + ")";
+            }
+            if (clause.matchType() == MergeClause.MatchType.NOT_MATCHED_BY_SOURCE && clause.action() instanceof MergeUpdateAction updateAction) {
+                var predicateArg = clause.condition() == null ? "" : emitNode(clause.condition()) + ", ";
+                return ".whenNotMatchedBySourceUpdate(" + predicateArg
+                    + joinInline(updateAction.assignments().stream().map(this::emitNode).toList())
+                    + ")";
+            }
+            if (clause.matchType() == MergeClause.MatchType.NOT_MATCHED_BY_SOURCE && clause.action() instanceof MergeDeleteAction) {
+                return clause.condition() == null
+                    ? ".whenNotMatchedBySourceDelete()"
+                    : ".whenNotMatchedBySourceDelete(" + emitNode(clause.condition()) + ")";
+            }
+            if (clause.matchType() == MergeClause.MatchType.NOT_MATCHED_BY_SOURCE && clause.action() instanceof MergeDoNothingAction) {
+                return clause.condition() == null
+                    ? ".whenNotMatchedBySourceDoNothing()"
+                    : ".whenNotMatchedBySourceDoNothing(" + emitNode(clause.condition()) + ")";
             }
             throw unsupported("merge clause", clause);
         }

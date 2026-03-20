@@ -2,6 +2,7 @@ package io.sqm.core.match;
 
 import io.sqm.core.MergeAction;
 import io.sqm.core.MergeDeleteAction;
+import io.sqm.core.MergeDoNothingAction;
 import io.sqm.core.MergeInsertAction;
 import io.sqm.core.MergeUpdateAction;
 
@@ -40,6 +41,15 @@ public final class MergeActionMatchImpl<R> implements MergeActionMatch<R> {
     public MergeActionMatch<R> delete(Function<MergeDeleteAction, R> function) {
         if (!matched && action instanceof MergeDeleteAction mergeDeleteAction) {
             result = function.apply(mergeDeleteAction);
+            matched = true;
+        }
+        return this;
+    }
+
+    @Override
+    public MergeActionMatch<R> doNothing(Function<MergeDoNothingAction, R> function) {
+        if (!matched && action instanceof MergeDoNothingAction mergeDoNothingAction) {
+            result = function.apply(mergeDoNothingAction);
             matched = true;
         }
         return this;

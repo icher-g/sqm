@@ -128,10 +128,12 @@ class StatementFeatureInspectorTest {
         MergeStatement mergeStatement = Dsl.merge("users")
             .source(Dsl.tbl("src").as("s"))
             .on(Dsl.col("users", "id").eq(Dsl.col("s", "id")))
+            .top(Dsl.top(5))
             .whenMatchedDelete()
             .build();
 
         assertTrue(StatementFeatureInspector.hasMergeStatement(mergeStatement));
+        assertTrue(StatementFeatureInspector.hasTopSpec(mergeStatement));
         assertFalse(StatementFeatureInspector.hasMergeStatement(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()));
     }
 }
