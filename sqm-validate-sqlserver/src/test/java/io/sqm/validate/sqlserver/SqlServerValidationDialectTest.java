@@ -205,6 +205,22 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
+    void validate_reportsDuplicateSqlServerTableHints() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var query = select(col("u", "id"))
+            .from(tbl("users").as("u").withHoldLock().withHoldLock())
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "from.table".equals(problem.clausePath())
+                && problem.message().contains("Duplicate")
+        ));
+    }
+
+    @Test
     void validate_reportsLockingAndLimitAllAsUnsupported() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var query = select(col("u", "id"))
@@ -259,6 +275,30 @@ class SqlServerValidationDialectTest {
                 && "dml.assignment".equals(problem.clausePath())
         ));
         assertFalse(hasDialectProblem(deleteResult, ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED));
+    }
+
+    @Test
+    void validate_acceptsSqlServerDmlWithoutResultClause() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var insertStatement = insert(tbl("users").withHoldLock())
+            .columns(id("id"), id("name"))
+            .values(rows(row(lit(1L), lit("alice"))))
+            .build();
+        var updateStatement = update(tbl("users").withUpdLock())
+            .set(Identifier.of("name"), lit("alice"))
+            .where(col("id").eq(lit(1L)))
+            .build();
+        var deleteStatement = delete(tbl("users").withNoLock())
+            .where(col("id").eq(lit(1L)))
+            .build();
+
+        var insertResult = validator.validate(insertStatement);
+        var updateResult = validator.validate(updateStatement);
+        var deleteResult = validator.validate(deleteStatement);
+
+        assertTrue(insertResult.ok(), insertResult.problems().toString());
+        assertTrue(updateResult.ok(), updateResult.problems().toString());
+        assertTrue(deleteResult.ok(), deleteResult.problems().toString());
     }
 
     @Test

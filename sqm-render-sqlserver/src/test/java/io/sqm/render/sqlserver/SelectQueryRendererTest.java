@@ -113,6 +113,16 @@ class SelectQueryRendererTest {
         assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(query));
     }
 
+    @Test
+    void rejects_duplicate_sqlServerTableHints() {
+        var query = SelectQuery.builder()
+            .select(Expression.literal(1))
+            .from(tbl("users").withHoldLock().withHoldLock())
+            .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(query));
+    }
+
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
     }
