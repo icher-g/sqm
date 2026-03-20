@@ -387,6 +387,40 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
+    void validate_reportsSqlServerMergeHintAndClauseConflicts() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var mergeStatement = merge(tbl("users").withNoLock().withUpdLock())
+            .source(tbl("users").as("s").withHoldLock().withHoldLock())
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .whenMatchedDelete()
+            .whenNotMatchedInsert(java.util.List.of(id("id")), row(col("s", "id")))
+            .whenNotMatchedInsert(java.util.List.of(id("id")), row(col("s", "id")))
+            .build();
+
+        var result = validator.validate(mergeStatement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "merge.target".equals(problem.clausePath())
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "merge.source".equals(problem.clausePath())
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "merge.clause".equals(problem.clausePath())
+                && problem.message().contains("DELETE")
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "merge.clause".equals(problem.clausePath())
+                && problem.message().contains("INSERT")
+        ));
+    }
+
+    @Test
     void validate_acceptsFirstWaveSqlServerFunctions() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var scalarQuery = select(

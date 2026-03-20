@@ -14,6 +14,7 @@ import static io.sqm.dsl.Dsl.delete;
 import static io.sqm.dsl.Dsl.id;
 import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.merge;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.set;
@@ -137,6 +138,80 @@ class SchemaStatementValidatorDmlTest {
         var result = validator.validate(statement);
 
         assertTrue(result.ok());
+    }
+
+    @Test
+    void validate_accepts_merge_with_existing_insert_target_columns() {
+        var validator = SchemaStatementValidator.of(SCHEMA);
+        var statement = merge(tbl("users").as("u"))
+            .source(tbl("orders").as("o"))
+            .on(col("u", "id").eq(col("o", "user_id")))
+            .whenMatchedDelete()
+            .whenNotMatchedInsert(java.util.List.of(id("id"), id("name")), row(lit(1L), lit("alice")))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertTrue(result.ok(), result.problems().toString());
+    }
+
+    @Test
+    void validate_reports_missing_merge_insert_target_column() {
+        var validator = SchemaStatementValidator.of(SCHEMA);
+        var statement = merge(tbl("users").as("u"))
+            .source(tbl("orders").as("o"))
+            .on(col("u", "id").eq(col("o", "user_id")))
+            .whenNotMatchedInsert(java.util.List.of(id("id"), id("missing_col")), row(lit(1L), lit("alice")))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(problem -> problem.code() == ValidationProblem.Code.COLUMN_NOT_FOUND
+                && "merge.insert.columns".equals(problem.clausePath())));
+    }
+
+    @Test
+    void validate_reports_duplicate_merge_insert_target_column() {
+        var validator = SchemaStatementValidator.of(SCHEMA);
+        var statement = merge(tbl("users").as("u"))
+            .source(tbl("orders").as("o"))
+            .on(col("u", "id").eq(col("o", "user_id")))
+            .whenNotMatchedInsert(java.util.List.of(id("id"), id("id")), row(lit(1L), lit(2L)))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(problem -> problem.code() == ValidationProblem.Code.COLUMN_AMBIGUOUS
+                && "merge.insert.columns".equals(problem.clausePath())));
+    }
+
+    @Test
+    void validate_reports_duplicate_generic_merge_clauses() {
+        var validator = SchemaStatementValidator.of(SCHEMA);
+        var statement = merge(tbl("users").as("u"))
+            .source(tbl("orders").as("o"))
+            .on(col("u", "id").eq(col("o", "user_id")))
+            .whenMatchedDelete()
+            .whenMatchedDelete()
+            .whenNotMatchedInsert(java.util.List.of(id("id")), row(lit(1L)))
+            .whenNotMatchedInsert(java.util.List.of(id("id")), row(lit(2L)))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(problem -> problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "merge.clause".equals(problem.clausePath())
+                && problem.message().contains("DELETE")));
+        assertTrue(result.problems().stream()
+            .anyMatch(problem -> problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "merge.clause".equals(problem.clausePath())
+                && problem.message().contains("INSERT")));
     }
 }
 

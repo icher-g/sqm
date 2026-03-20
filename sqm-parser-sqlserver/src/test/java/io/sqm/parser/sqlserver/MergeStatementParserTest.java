@@ -85,4 +85,84 @@ class MergeStatementParserTest {
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("at most one WHEN MATCHED THEN UPDATE"));
     }
+
+    @Test
+    void rejectsMergeTopInFirstSlice() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            "MERGE TOP (10) users USING src ON users.id = src.id WHEN MATCHED THEN DELETE"
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("TOP"));
+    }
+
+    @Test
+    void rejectsNotMatchedBySourceInFirstSlice() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            "MERGE users USING src ON users.id = src.id WHEN NOT MATCHED BY SOURCE THEN DELETE"
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("BY"));
+    }
+
+    @Test
+    void rejectsWhenMatchedInsertAction() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            "MERGE users USING src ON users.id = src.id WHEN MATCHED THEN INSERT (id) VALUES (src.id)"
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("cannot use INSERT"));
+    }
+
+    @Test
+    void rejectsWhenNotMatchedUpdateAction() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            "MERGE users USING src ON users.id = src.id WHEN NOT MATCHED THEN UPDATE SET name = src.name"
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("must use INSERT"));
+    }
+
+    @Test
+    void rejectsDuplicateMatchedDeleteClauseInFirstSlice() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            """
+                MERGE users USING src ON users.id = src.id
+                WHEN MATCHED THEN DELETE
+                WHEN MATCHED THEN DELETE
+                """
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("at most one WHEN MATCHED THEN DELETE"));
+    }
+
+    @Test
+    void rejectsDuplicateNotMatchedInsertClauseInFirstSlice() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            """
+                MERGE users USING src ON users.id = src.id
+                WHEN NOT MATCHED THEN INSERT (id) VALUES (src.id)
+                WHEN NOT MATCHED THEN INSERT (id) VALUES (src.id)
+                """
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("at most one WHEN NOT MATCHED THEN INSERT"));
+    }
 }

@@ -415,6 +415,23 @@ class SqmJavaEmitterTest {
     }
 
     @Test
+    void emitStatement_coversMergeVariantsWithoutColumnsAndWithResultClause() {
+        var mergeStatement = merge(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .whenNotMatchedInsert(row(col("s", "id")))
+            .result(inserted("id"))
+            .build();
+
+        var source = emitter.emitStatement(mergeStatement);
+
+        assertTrue(source.contains(".whenMatchedDelete()"));
+        assertTrue(source.contains(".whenNotMatchedInsert(row(col(\"s\", \"id\")))"));
+        assertTrue(source.contains(".result(inserted(id(\"id\")))"));
+    }
+
+    @Test
     void emitQuery_covers_remaining_window_distinct_and_limit_variants() {
         var baseFrameOnly = emitter.emitQuery(
             select(func("f").over(over("base", rows(currentRow())))).from(tbl("t")).build()

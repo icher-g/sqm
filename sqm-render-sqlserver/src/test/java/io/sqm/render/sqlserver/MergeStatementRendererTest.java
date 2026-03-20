@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.id;
+import static io.sqm.dsl.Dsl.inserted;
 import static io.sqm.dsl.Dsl.merge;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
@@ -39,6 +40,42 @@ class MergeStatementRendererTest {
             .on(col("users", "id").eq(col("s", "id")))
             .whenMatchedDelete()
             .whenMatchedDelete()
+            .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(mergeStatement));
+    }
+
+    @Test
+    void rejectsDuplicateMatchedUpdateClauses() {
+        var mergeStatement = merge("users")
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedUpdate(java.util.List.of(set("name", col("s", "name"))))
+            .whenMatchedUpdate(java.util.List.of(set("name", col("s", "other_name"))))
+            .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(mergeStatement));
+    }
+
+    @Test
+    void rejectsDuplicateNotMatchedInsertClauses() {
+        var mergeStatement = merge("users")
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenNotMatchedInsert(java.util.List.of(id("id")), row(col("s", "id")))
+            .whenNotMatchedInsert(java.util.List.of(id("id")), row(col("s", "id")))
+            .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(mergeStatement));
+    }
+
+    @Test
+    void rejectsMergeOutputInFirstSlice() {
+        var mergeStatement = merge("users")
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .result(inserted("id"))
             .build();
 
         assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(mergeStatement));
