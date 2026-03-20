@@ -189,6 +189,17 @@ class MergeStatementParserTest {
     }
 
     @Test
+    void rejectsMalformedClausePredicate() {
+        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
+        var result = ctx.parse(
+            MergeClause.class,
+            "WHEN MATCHED AND THEN DELETE"
+        );
+
+        assertTrue(result.isError());
+    }
+
+    @Test
     void parsesNotMatchedInsertWithPredicateAndNoColumnList() {
         var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
         var result = ctx.parse(

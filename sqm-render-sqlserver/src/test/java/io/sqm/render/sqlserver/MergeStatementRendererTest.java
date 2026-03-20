@@ -76,6 +76,19 @@ class MergeStatementRendererTest {
     }
 
     @Test
+    void rejectsMoreThanTwoMatchedClauses() {
+        var mergeStatement = merge("users")
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedUpdate(col("s", "active").eq(lit(1)), java.util.List.of(set("name", col("s", "name"))))
+            .whenMatchedDelete()
+            .whenMatchedDelete()
+            .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(mergeStatement));
+    }
+
+    @Test
     void rejectsDuplicateNotMatchedInsertClauses() {
         var mergeStatement = merge("users")
             .source(tbl("src").as("s"))

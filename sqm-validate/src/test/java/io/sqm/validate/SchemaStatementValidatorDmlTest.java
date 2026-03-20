@@ -221,5 +221,20 @@ class SchemaStatementValidatorDmlTest {
         assertTrue(result.problems().stream()
             .anyMatch(problem -> problem.code() == ValidationProblem.Code.UNKNOWN_TABLE_ALIAS));
     }
+
+    @Test
+    void validate_accepts_merge_with_only_matched_clauses() {
+        var validator = SchemaStatementValidator.of(SCHEMA);
+        var statement = merge(tbl("users").as("u"))
+            .source(tbl("orders").as("o"))
+            .on(col("u", "id").eq(col("o", "user_id")))
+            .whenMatchedDelete(col("o", "user_id").eq(lit(1L)))
+            .whenMatchedDelete(col("o", "user_id").eq(lit(2L)))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertTrue(result.ok(), result.problems().toString());
+    }
 }
 

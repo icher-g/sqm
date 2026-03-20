@@ -421,6 +421,26 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
+    void validate_reportsSqlServerMergeWithTooManyMatchedClauses() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var mergeStatement = merge("users")
+            .source(tbl("users").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedUpdate(col("s", "updated_at").isNotNull(), java.util.List.of(set("users", "name", col("s", "name"))))
+            .whenMatchedDelete()
+            .whenMatchedDelete()
+            .build();
+
+        var result = validator.validate(mergeStatement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "merge.clause".equals(problem.clausePath())
+                && problem.message().contains("at most two WHEN MATCHED")
+        ));
+    }
+
+    @Test
     void validate_acceptsFirstWaveSqlServerFunctions() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var scalarQuery = select(

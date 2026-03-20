@@ -166,6 +166,34 @@ class MergeStatementParserTest {
     }
 
     @Test
+    void rejectsMoreThanTwoMatchedClauses() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            """
+                MERGE users USING src ON users.id = src.id
+                WHEN MATCHED AND src.active = 1 THEN UPDATE SET name = src.name
+                WHEN MATCHED THEN DELETE
+                WHEN MATCHED THEN DELETE
+                """
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("at most two WHEN MATCHED"));
+    }
+
+    @Test
+    void rejectsMalformedMatchedClausePredicate() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            "MERGE users USING src ON users.id = src.id WHEN MATCHED AND THEN DELETE"
+        );
+
+        assertTrue(result.isError());
+    }
+
+    @Test
     void rejectsDuplicateNotMatchedInsertClauseInCurrentSlice() {
         var ctx = ParseContext.of(new SqlServerSpecs());
         var result = ctx.parse(
