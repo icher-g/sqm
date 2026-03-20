@@ -100,4 +100,19 @@ class SqlServerRulesTest {
         assertFalse(result.problems().isEmpty());
         assertEquals("UNSUPPORTED_SQLSERVER_TABLE_HINTS", result.problems().getFirst().code());
     }
+
+    @Test
+    void sqlServerMergeRuleRejectsMergeForNonSqlServerTargets() {
+        Statement statement = Dsl.merge("users")
+            .source(Dsl.tbl("src").as("s"))
+            .on(Dsl.col("users", "id").eq(Dsl.col("s", "id")))
+            .whenMatchedDelete()
+            .build();
+
+        var result = new SqlServerMergeUnsupportedRule().apply(statement, context(SqlDialectId.SQLSERVER, SqlDialectId.POSTGRESQL));
+
+        assertEquals(io.sqm.transpile.RewriteFidelity.UNSUPPORTED, result.fidelity());
+        assertFalse(result.problems().isEmpty());
+        assertEquals("UNSUPPORTED_SQLSERVER_MERGE", result.problems().getFirst().code());
+    }
 }

@@ -513,6 +513,10 @@ public enum TokenType {
      */
     MERGE,
     /**
+     * MATCHED keyword token.
+     */
+    MATCHED,
+    /**
      * TRUNCATE keyword token.
      */
     TRUNCATE,

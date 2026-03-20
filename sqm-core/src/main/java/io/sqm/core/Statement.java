@@ -5,7 +5,7 @@ import io.sqm.core.match.StatementMatch;
 /**
  * Represents a top-level SQL statement in the SQM model.
  */
-public sealed interface Statement extends Node permits DeleteStatement, InsertStatement, Query, UpdateStatement {
+public sealed interface Statement extends Node permits DeleteStatement, InsertStatement, MergeStatement, Query, UpdateStatement {
 
     /**
      * Creates a new matcher for the current {@link Statement}.

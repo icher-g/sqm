@@ -2,6 +2,7 @@ package io.sqm.parser;
 
 import io.sqm.core.DeleteStatement;
 import io.sqm.core.InsertStatement;
+import io.sqm.core.MergeStatement;
 import io.sqm.core.Query;
 import io.sqm.core.Statement;
 import io.sqm.core.UpdateStatement;
@@ -32,6 +33,9 @@ public class StatementParser implements Parser<Statement> {
         }
         if (cur.match(TokenType.DELETE)) {
             return ctx.parse(DeleteStatement.class, cur);
+        }
+        if (cur.match(TokenType.MERGE)) {
+            return ctx.parse(MergeStatement.class, cur);
         }
         return ctx.parse(Query.class, cur);
     }

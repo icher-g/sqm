@@ -135,6 +135,86 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
+     * Visits a dialect-neutral {@link MergeStatement}.
+     *
+     * @param statement merge statement to transform
+     * @return transformed merge statement, or the original instance if unchanged
+     */
+    @Override
+    public Node visitMergeStatement(MergeStatement statement) {
+        var target = apply(statement.target());
+        var source = apply(statement.source());
+        var on = apply(statement.on());
+        var result = apply(statement.result());
+        List<MergeClause> clauses = new ArrayList<>(statement.clauses().size());
+        boolean changed = target != statement.target()
+            || source != statement.source()
+            || on != statement.on()
+            || result != statement.result();
+        changed |= apply(statement.clauses(), clauses);
+        if (changed) {
+            return MergeStatement.of(target, source, on, clauses, result);
+        }
+        return statement;
+    }
+
+    /**
+     * Visits a {@link MergeClause}.
+     *
+     * @param clause merge clause to transform
+     * @return transformed merge clause, or the original instance if unchanged
+     */
+    @Override
+    public Node visitMergeClause(MergeClause clause) {
+        var action = apply(clause.action());
+        if (action != clause.action()) {
+            return MergeClause.of(clause.matchType(), action);
+        }
+        return clause;
+    }
+
+    /**
+     * Visits a {@link MergeUpdateAction}.
+     *
+     * @param action merge-update action to transform
+     * @return transformed action, or the original instance if unchanged
+     */
+    @Override
+    public Node visitMergeUpdateAction(MergeUpdateAction action) {
+        List<Assignment> assignments = new ArrayList<>(action.assignments().size());
+        if (apply(action.assignments(), assignments)) {
+            return MergeUpdateAction.of(assignments);
+        }
+        return action;
+    }
+
+    /**
+     * Visits a {@link MergeDeleteAction}.
+     *
+     * @param action merge-delete action to transform
+     * @return transformed action, or the original instance if unchanged
+     */
+    @Override
+    public Node visitMergeDeleteAction(MergeDeleteAction action) {
+        return action;
+    }
+
+    /**
+     * Visits a {@link MergeInsertAction}.
+     *
+     * @param action merge-insert action to transform
+     * @return transformed action, or the original instance if unchanged
+     */
+    @Override
+    public Node visitMergeInsertAction(MergeInsertAction action) {
+        var values = apply(action.values());
+        if (values != action.values()) {
+            return MergeInsertAction.of(action.columns(), values);
+        }
+        return action;
+    }
+
+    /**
      * Visits a DML {@link ResultClause}.
      *
      * @param clause result clause to transform

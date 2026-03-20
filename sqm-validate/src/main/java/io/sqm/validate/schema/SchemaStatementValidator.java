@@ -224,14 +224,10 @@ public final class SchemaStatementValidator implements StatementValidator {
 
         @Override
         public Void visitInsertStatement(InsertStatement statement) {
-            accept(statement.table());
-            accept(statement.source());
             context.pushScope();
             try {
                 context.registerTableRef(statement.table());
-                statement.conflictUpdateAssignments().forEach(this::accept);
-                accept(statement.conflictUpdateWhere());
-                accept(statement.result());
+                super.visitInsertStatement(statement);
                 registry.validate(statement, context);
                 return defaultResult();
             } finally {
@@ -243,7 +239,6 @@ public final class SchemaStatementValidator implements StatementValidator {
         public Void visitUpdateStatement(UpdateStatement statement) {
             context.pushScope();
             try {
-                accept(statement.table());
                 context.registerTableRef(statement.table());
                 for (var from : statement.from()) {
                     context.registerTableRef(from);
@@ -252,11 +247,7 @@ public final class SchemaStatementValidator implements StatementValidator {
                     context.registerTableRef(join.right());
                 }
                 registerJoinVisibility(List.of(statement.table()), statement.joins());
-                statement.assignments().forEach(this::accept);
-                statement.joins().forEach(this::accept);
-                statement.from().forEach(this::accept);
-                accept(statement.where());
-                accept(statement.result());
+                super.visitUpdateStatement(statement);
                 registry.validate(statement, context);
                 return defaultResult();
             } finally {
@@ -268,7 +259,6 @@ public final class SchemaStatementValidator implements StatementValidator {
         public Void visitDeleteStatement(DeleteStatement statement) {
             context.pushScope();
             try {
-                accept(statement.table());
                 context.registerTableRef(statement.table());
                 for (var using : statement.using()) {
                     context.registerTableRef(using);
@@ -280,10 +270,21 @@ public final class SchemaStatementValidator implements StatementValidator {
                 baseSources.add(statement.table());
                 baseSources.addAll(statement.using());
                 registerJoinVisibility(baseSources, statement.joins());
-                statement.using().forEach(this::accept);
-                statement.joins().forEach(this::accept);
-                accept(statement.where());
-                accept(statement.result());
+                super.visitDeleteStatement(statement);
+                registry.validate(statement, context);
+                return defaultResult();
+            } finally {
+                context.popScope();
+            }
+        }
+
+        @Override
+        public Void visitMergeStatement(MergeStatement statement) {
+            context.pushScope();
+            try {
+                context.registerTableRef(statement.target());
+                context.registerTableRef(statement.source());
+                super.visitMergeStatement(statement);
                 registry.validate(statement, context);
                 return defaultResult();
             } finally {

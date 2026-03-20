@@ -55,6 +55,8 @@ public final class SqmJsonMixins {
 
         // Statements
         mapper.addMixIn(Statement.class, StatementMixin.class);
+        mapper.addMixIn(MergeClause.class, MergeClauseMixin.class);
+        mapper.addMixIn(MergeAction.class, MergeActionMixin.class);
 
         // Queries
         mapper.addMixIn(Query.class, QueryMixin.class);

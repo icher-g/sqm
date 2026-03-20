@@ -168,6 +168,19 @@ introduce a shared DML result-projection abstraction if it can model both SQL Se
 - matched / not matched action branches
 - basic `UPDATE`, `DELETE`, and `INSERT` actions within `MERGE`
 
+#### First delivered slice
+- `WHEN MATCHED THEN UPDATE`
+- `WHEN MATCHED THEN DELETE`
+- `WHEN NOT MATCHED THEN INSERT ... VALUES (...)`
+- parser, renderer, validation, DSL, codegen, JSON, and explicit unsupported transpilation coverage
+
+#### Deferred after the first slice
+- `OUTPUT` on `MERGE`
+- `TOP` inside `MERGE`
+- `WHEN NOT MATCHED BY SOURCE`
+- action predicates such as `WHEN MATCHED AND ...`
+- other SQL Server-specific `MERGE` options that need a broader model decision
+
 #### Explicitly defer unless deliberately accepted
 - highly specialized SQL Server `MERGE` options or output combinations that overly complicate the first model
 
@@ -433,6 +446,7 @@ As a SQM user, I want SQL Server `MERGE` modeled and supported so that merge-bas
 - Parser/render/validate coverage exists for the selected initial SQL Server `MERGE` slice.
 - Unsupported dialects reject `MERGE` explicitly.
 - DSL, codegen, and tests are updated.
+- The first delivered slice is documented clearly so later stories can extend `MERGE` without re-opening the base model decision.
 
 #### Labels
 `story`, `sqlserver`, `merge`, `dml`

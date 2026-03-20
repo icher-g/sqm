@@ -347,6 +347,80 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
+    void validate_acceptsFirstSliceSqlServerMerge() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var mergeStatement = merge(tbl("users").withHoldLock())
+            .source(tbl("users").as("s").withUpdLock())
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedUpdate(java.util.List.of(set("users", "name", col("s", "name"))))
+            .whenNotMatchedInsert(java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
+            .build();
+
+        var result = validator.validate(mergeStatement);
+
+        assertTrue(result.ok(), result.problems().toString());
+    }
+
+    @Test
+    void validate_reportsUnsupportedSqlServerMergeExtensions() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var mergeStatement = merge("users")
+            .source(tbl("users").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedUpdate(java.util.List.of(set("users", "name", col("s", "name"))))
+            .whenMatchedUpdate(java.util.List.of(set("users", "name", col("s", "updated_at"))))
+            .result(inserted("id"))
+            .build();
+
+        var result = validator.validate(mergeStatement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "merge.clause".equals(problem.clausePath())
+                && problem.message().contains("at most one WHEN MATCHED THEN UPDATE")
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "merge.result".equals(problem.clausePath())
+                && problem.message().contains("OUTPUT")
+        ));
+    }
+
+    @Test
+    void validate_reportsSqlServerMergeHintAndClauseConflicts() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var mergeStatement = merge(tbl("users").withNoLock().withUpdLock())
+            .source(tbl("users").as("s").withHoldLock().withHoldLock())
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .whenMatchedDelete()
+            .whenNotMatchedInsert(java.util.List.of(id("id")), row(col("s", "id")))
+            .whenNotMatchedInsert(java.util.List.of(id("id")), row(col("s", "id")))
+            .build();
+
+        var result = validator.validate(mergeStatement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "merge.target".equals(problem.clausePath())
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "merge.source".equals(problem.clausePath())
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "merge.clause".equals(problem.clausePath())
+                && problem.message().contains("DELETE")
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "merge.clause".equals(problem.clausePath())
+                && problem.message().contains("INSERT")
+        ));
+    }
+
+    @Test
     void validate_acceptsFirstWaveSqlServerFunctions() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var scalarQuery = select(
@@ -466,7 +540,7 @@ class SqlServerValidationDialectTest {
         var dialect = SqlServerValidationDialect.of();
 
         assertEquals("sqlserver", dialect.name());
-        assertEquals(4, dialect.additionalRules().size());
+        assertEquals(5, dialect.additionalRules().size());
         assertTrue(dialect.functionCatalog().resolve("len").isPresent());
         assertTrue(dialect.functionCatalog().resolve("getdate").isPresent());
     }

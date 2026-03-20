@@ -5,6 +5,7 @@ import io.sqm.core.DeleteStatement;
 import io.sqm.core.FunctionExpr;
 import io.sqm.core.InsertStatement;
 import io.sqm.core.LikeMode;
+import io.sqm.core.MergeStatement;
 import io.sqm.core.QualifiedName;
 import io.sqm.core.SelectQuery;
 import io.sqm.core.UpdateStatement;
@@ -120,5 +121,17 @@ class StatementFeatureInspectorTest {
         assertFalse(StatementFeatureInspector.hasIndexHints(hintedSelect));
         assertFalse(StatementFeatureInspector.hasInsertMode(insertIgnore, InsertStatement.InsertMode.REPLACE));
         assertFalse(StatementFeatureInspector.hasOnConflictAction(insertIgnore, InsertStatement.OnConflictAction.DO_UPDATE));
+    }
+
+    @Test
+    void detectsMergeStatements() {
+        MergeStatement mergeStatement = Dsl.merge("users")
+            .source(Dsl.tbl("src").as("s"))
+            .on(Dsl.col("users", "id").eq(Dsl.col("s", "id")))
+            .whenMatchedDelete()
+            .build();
+
+        assertTrue(StatementFeatureInspector.hasMergeStatement(mergeStatement));
+        assertFalse(StatementFeatureInspector.hasMergeStatement(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()));
     }
 }

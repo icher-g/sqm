@@ -74,6 +74,17 @@ public interface Match<T, R> {
     }
 
     /**
+     * Creates a new matcher for the given {@link MergeAction}.
+     *
+     * @param action merge action to match on
+     * @param <R> the result type
+     * @return a new {@code MergeActionMatch} for {@code action}
+     */
+    static <R> MergeActionMatch<R> mergeAction(MergeAction action) {
+        return MergeActionMatch.match(action);
+    }
+
+    /**
      * Creates a new matcher for the given {@link Query}.
      *
      * @param q   the query to match on
