@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.delete;
 import static io.sqm.dsl.Dsl.insert;
+import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.merge;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.set;
@@ -68,6 +70,22 @@ class StatementMatchTest {
             .otherwise(ignored -> "OTHER");
 
         assertEquals("DELETE", out);
+    }
+
+    @Test
+    void matchesMergeStatements() {
+        Statement statement = merge(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .build();
+
+        var out = Match
+            .<String>statement(statement)
+            .merge(merge -> "MERGE")
+            .otherwise(ignored -> "OTHER");
+
+        assertEquals("MERGE", out);
     }
 
     @Test

@@ -5,6 +5,11 @@ import io.sqm.core.CteDef;
 import io.sqm.core.DeleteStatement;
 import io.sqm.core.InsertStatement;
 import io.sqm.core.LockingClause;
+import io.sqm.core.MergeClause;
+import io.sqm.core.MergeDeleteAction;
+import io.sqm.core.MergeInsertAction;
+import io.sqm.core.MergeStatement;
+import io.sqm.core.MergeUpdateAction;
 import io.sqm.core.ResultClause;
 import io.sqm.core.ResultInto;
 import io.sqm.core.TypeName;
@@ -41,6 +46,46 @@ public interface StatementVisitor<R> {
      * @return a result specific to the visitor implementation
      */
     R visitDeleteStatement(DeleteStatement statement);
+
+    /**
+     * Visits a dialect-neutral {@link MergeStatement}.
+     *
+     * @param statement merge statement being visited
+     * @return a result specific to the visitor implementation
+     */
+    R visitMergeStatement(MergeStatement statement);
+
+    /**
+     * Visits a single {@link MergeClause}.
+     *
+     * @param clause merge clause being visited
+     * @return a result specific to the visitor implementation
+     */
+    R visitMergeClause(MergeClause clause);
+
+    /**
+     * Visits a {@link MergeUpdateAction}.
+     *
+     * @param action merge-update action being visited
+     * @return a result specific to the visitor implementation
+     */
+    R visitMergeUpdateAction(MergeUpdateAction action);
+
+    /**
+     * Visits a {@link MergeDeleteAction}.
+     *
+     * @param action merge-delete action being visited
+     * @return a result specific to the visitor implementation
+     */
+    R visitMergeDeleteAction(MergeDeleteAction action);
+
+    /**
+     * Visits a {@link MergeInsertAction}.
+     *
+     * @param action merge-insert action being visited
+     * @return a result specific to the visitor implementation
+     */
+    R visitMergeInsertAction(MergeInsertAction action);
 
     /**
      * Visits a SQL Server DML {@link ResultClause}.

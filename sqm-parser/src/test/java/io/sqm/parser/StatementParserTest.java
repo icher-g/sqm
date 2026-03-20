@@ -1,10 +1,6 @@
 package io.sqm.parser;
 
-import io.sqm.core.DeleteStatement;
-import io.sqm.core.InsertStatement;
-import io.sqm.core.Query;
-import io.sqm.core.Statement;
-import io.sqm.core.UpdateStatement;
+import io.sqm.core.*;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
@@ -12,7 +8,6 @@ import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,7 +19,8 @@ class StatementParserTest {
             .register(Query.class, new QueryStubParser())
             .register(InsertStatement.class, new InsertStubParser())
             .register(UpdateStatement.class, new UpdateStubParser())
-            .register(DeleteStatement.class, new DeleteStubParser());
+            .register(DeleteStatement.class, new DeleteStubParser())
+            .register(MergeStatement.class, new MergeStubParser());
         return TestSupport.context(repo);
     }
 
@@ -74,12 +70,12 @@ class StatementParserTest {
     }
 
     @Test
-    void returnsErrorForUnsupportedStatementStart() {
+    void delegatesToMergeParser() {
         var ctx = contextWithStatementParsers();
-        var result = ctx.parse(Statement.class, "MERGE INTO users");
+        var result = ctx.parse(Statement.class, "MERGE");
 
-        assertTrue(result.isError());
-        assertEquals("Expected SELECT at 0", result.errorMessage());
+        assertTrue(result.ok());
+        assertInstanceOf(MergeStatement.class, result.value());
     }
 
     private static final class QueryStubParser implements Parser<Query> {
@@ -135,6 +131,23 @@ class StatementParserTest {
         @Override
         public Class<DeleteStatement> targetType() {
             return DeleteStatement.class;
+        }
+    }
+
+    private static final class MergeStubParser implements Parser<MergeStatement> {
+        @Override
+        public ParseResult<? extends MergeStatement> parse(Cursor cur, ParseContext ctx) {
+            cur.expect("Expected MERGE", TokenType.MERGE);
+            return ParseResult.ok(io.sqm.dsl.Dsl.merge("users")
+                .source(io.sqm.dsl.Dsl.tbl("src"))
+                .on(io.sqm.dsl.Dsl.col("users", "id").eq(io.sqm.dsl.Dsl.col("src", "id")))
+                .whenMatchedDelete()
+                .build());
+        }
+
+        @Override
+        public Class<MergeStatement> targetType() {
+            return MergeStatement.class;
         }
     }
 }

@@ -7,6 +7,7 @@ import io.sqm.core.FunctionExpr;
 import io.sqm.core.InsertStatement;
 import io.sqm.core.LikeMode;
 import io.sqm.core.LikePredicate;
+import io.sqm.core.MergeStatement;
 import io.sqm.core.Statement;
 import io.sqm.core.Table;
 import io.sqm.core.TopSpec;
@@ -57,6 +58,10 @@ final class StatementFeatureInspector {
             }
         });
         return found.get();
+    }
+
+    static boolean hasMergeStatement(Statement statement) {
+        return statement instanceof MergeStatement;
     }
 
     static boolean hasDistinctOn(Statement statement) {

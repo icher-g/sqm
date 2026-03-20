@@ -61,6 +61,7 @@ public final class SchemaValidationRuleRegistry {
         var rules = new ArrayList<>(List.of(
             new StructuralLimitsValidationRule(limits),
             new InsertStatementValidationRule(),
+            new MergeStatementValidationRule(),
             new AssignmentTargetValidationRule(),
             new ColumnReferenceValidationRule(),
             new ColumnAccessValidationRule(),

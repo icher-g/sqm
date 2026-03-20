@@ -8,6 +8,7 @@ import io.sqm.validate.schema.rule.SchemaValidationRule;
 import io.sqm.validate.sqlserver.function.SqlServerFunctionCatalog;
 import io.sqm.validate.sqlserver.rule.SqlServerDeleteStatementValidationRule;
 import io.sqm.validate.sqlserver.rule.SqlServerInsertStatementValidationRule;
+import io.sqm.validate.sqlserver.rule.SqlServerMergeStatementValidationRule;
 import io.sqm.validate.sqlserver.rule.SqlServerSelectValidationRule;
 import io.sqm.validate.sqlserver.rule.SqlServerUpdateStatementValidationRule;
 
@@ -65,7 +66,8 @@ public final class SqlServerValidationDialect implements SchemaValidationDialect
             new SqlServerSelectValidationRule(),
             new SqlServerInsertStatementValidationRule(),
             new SqlServerUpdateStatementValidationRule(),
-            new SqlServerDeleteStatementValidationRule()
+            new SqlServerDeleteStatementValidationRule(),
+            new SqlServerMergeStatementValidationRule()
         );
     }
 }

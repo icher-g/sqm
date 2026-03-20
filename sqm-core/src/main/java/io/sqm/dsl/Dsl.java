@@ -1729,6 +1729,26 @@ public final class Dsl {
         return delete(tbl(table));
     }
 
+    /**
+     * Creates a {@link MergeStatement} builder for the provided target table.
+     *
+     * @param table merge target table
+     * @return a merge statement builder
+     */
+    public static MergeStatement.Builder merge(Table table) {
+        return MergeStatement.builder(table);
+    }
+
+    /**
+     * Creates a {@link MergeStatement} builder for the provided target table name.
+     *
+     * @param table merge target table name
+     * @return a merge statement builder
+     */
+    public static MergeStatement.Builder merge(String table) {
+        return merge(tbl(table));
+    }
+
 
     /* ========================= Query ========================= */
 

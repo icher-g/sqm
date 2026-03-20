@@ -82,6 +82,69 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
+     * Visits a dialect-neutral {@link MergeStatement}.
+     *
+     * @param statement merge statement being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitMergeStatement(MergeStatement statement) {
+        accept(statement.target());
+        accept(statement.source());
+        accept(statement.on());
+        statement.clauses().forEach(this::accept);
+        accept(statement.result());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link MergeClause}.
+     *
+     * @param clause merge clause being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitMergeClause(MergeClause clause) {
+        accept(clause.action());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link MergeUpdateAction}.
+     *
+     * @param action merge-update action being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitMergeUpdateAction(MergeUpdateAction action) {
+        action.assignments().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link MergeDeleteAction}.
+     *
+     * @param action merge-delete action being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitMergeDeleteAction(MergeDeleteAction action) {
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link MergeInsertAction}.
+     *
+     * @param action merge-insert action being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitMergeInsertAction(MergeInsertAction action) {
+        accept(action.values());
+        return defaultResult();
+    }
+
+    /**
      * Visits a SQL Server DML {@link ResultClause}.
      *
      * @param clause result clause being visited

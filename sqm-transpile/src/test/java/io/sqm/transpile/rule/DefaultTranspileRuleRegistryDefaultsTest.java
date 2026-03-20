@@ -60,6 +60,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         );
         assertEquals(
             java.util.List.of(
+                "sqlserver-merge-unsupported",
                 "sqlserver-table-hints-unsupported",
                 "sqlserver-top-to-limit"
             ),

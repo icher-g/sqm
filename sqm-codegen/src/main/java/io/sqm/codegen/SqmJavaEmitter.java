@@ -283,6 +283,43 @@ final class SqmJavaEmitter {
             return sb.toString();
         }
 
+        @Override
+        public String visitMergeStatement(MergeStatement statement) {
+            var sb = new StringBuilder("merge(").append(emitNode(statement.target())).append(")");
+            sb.append(".source(").append(emitNode(statement.source())).append(")");
+            sb.append(".on(").append(emitNode(statement.on())).append(")");
+            for (var clause : statement.clauses()) {
+                sb.append(emitMergeClauseBuilderCall(clause));
+            }
+            if (statement.result() != null) {
+                sb.append(emitResultBuilderCall(statement.result()));
+            }
+            sb.append(".build()");
+            return sb.toString();
+        }
+
+        private String emitMergeClauseBuilderCall(MergeClause clause) {
+            if (clause.matchType() == MergeClause.MatchType.MATCHED && clause.action() instanceof MergeUpdateAction updateAction) {
+                return ".whenMatchedUpdate(java.util.List.of("
+                    + joinInline(updateAction.assignments().stream().map(this::emitNode).toList())
+                    + "))";
+            }
+            if (clause.matchType() == MergeClause.MatchType.MATCHED && clause.action() instanceof MergeDeleteAction) {
+                return ".whenMatchedDelete()";
+            }
+            if (clause.matchType() == MergeClause.MatchType.NOT_MATCHED && clause.action() instanceof MergeInsertAction insertAction) {
+                if (insertAction.columns().isEmpty()) {
+                    return ".whenNotMatchedInsert(" + emitNode(insertAction.values()) + ")";
+                }
+                return ".whenNotMatchedInsert("
+                    + emitIdentifierList(insertAction.columns())
+                    + ", "
+                    + emitNode(insertAction.values())
+                    + ")";
+            }
+            throw unsupported("merge clause", clause);
+        }
+
         private String emitResultBuilderCall(ResultClause clause) {
             var items = joinInline(clause.items().stream().map(this::emitNode).toList());
             if (clause.into() == null) {

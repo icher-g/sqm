@@ -59,6 +59,21 @@ class StatementJsonTest {
     }
 
     @Test
+    void deserializesMergeStatementRoot() throws Exception {
+        var mapper = SqmJsonMixins.createDefault();
+        var json = mapper.writeValueAsString(merge(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedUpdate(java.util.List.of(set("name", col("s", "name"))))
+            .whenNotMatchedInsert(java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
+            .build());
+
+        var statement = mapper.readValue(json, Statement.class);
+
+        assertInstanceOf(io.sqm.core.MergeStatement.class, statement);
+    }
+
+    @Test
     void deserializesStatementWithOutputClause() throws Exception {
         var mapper = SqmJsonMixins.createDefault();
         var json = mapper.writeValueAsString(update(tbl("users"))

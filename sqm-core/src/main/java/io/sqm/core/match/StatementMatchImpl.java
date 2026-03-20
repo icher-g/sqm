@@ -2,6 +2,7 @@ package io.sqm.core.match;
 
 import io.sqm.core.DeleteStatement;
 import io.sqm.core.InsertStatement;
+import io.sqm.core.MergeStatement;
 import io.sqm.core.Query;
 import io.sqm.core.Statement;
 import io.sqm.core.UpdateStatement;
@@ -59,6 +60,15 @@ public final class StatementMatchImpl<R> implements StatementMatch<R> {
     public StatementMatch<R> delete(Function<DeleteStatement, R> function) {
         if (!matched && statement instanceof DeleteStatement deleteStatement) {
             result = function.apply(deleteStatement);
+            matched = true;
+        }
+        return this;
+    }
+
+    @Override
+    public StatementMatch<R> merge(Function<MergeStatement, R> function) {
+        if (!matched && statement instanceof MergeStatement mergeStatement) {
+            result = function.apply(mergeStatement);
             matched = true;
         }
         return this;

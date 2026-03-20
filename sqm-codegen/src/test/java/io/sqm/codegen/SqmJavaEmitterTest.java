@@ -396,6 +396,25 @@ class SqmJavaEmitterTest {
     }
 
     @Test
+    void emitStatement_coversMergeStatements() {
+        var mergeStatement = merge(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedUpdate(java.util.List.of(set("name", col("s", "name"))))
+            .whenMatchedDelete()
+            .whenNotMatchedInsert(java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
+            .build();
+
+        var source = emitter.emitStatement(mergeStatement);
+
+        assertTrue(source.contains("merge(tbl(\"users\"))"));
+        assertTrue(source.contains(".source(tbl(\"src\").as(\"s\"))"));
+        assertTrue(source.contains(".whenMatchedUpdate(java.util.List.of("));
+        assertTrue(source.contains(".whenMatchedDelete()"));
+        assertTrue(source.contains(".whenNotMatchedInsert(java.util.List.of(id(\"id\"), id(\"name\")), row(col(\"s\", \"id\"), col(\"s\", \"name\")))"));
+    }
+
+    @Test
     void emitQuery_covers_remaining_window_distinct_and_limit_variants() {
         var baseFrameOnly = emitter.emitQuery(
             select(func("f").over(over("base", rows(currentRow())))).from(tbl("t")).build()

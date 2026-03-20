@@ -2,6 +2,7 @@ package io.sqm.render;
 
 import io.sqm.core.DeleteStatement;
 import io.sqm.core.InsertStatement;
+import io.sqm.core.MergeStatement;
 import io.sqm.core.Query;
 import io.sqm.core.Statement;
 import io.sqm.core.UpdateStatement;
@@ -42,6 +43,10 @@ public class StatementRenderer implements Renderer<Statement> {
         }
         if (node instanceof DeleteStatement deleteStatement) {
             w.append(deleteStatement);
+            return;
+        }
+        if (node instanceof MergeStatement mergeStatement) {
+            w.append(mergeStatement);
             return;
         }
         throw new UnsupportedOperationException("Statement type is not supported by this renderer yet: " + node.getClass().getSimpleName());

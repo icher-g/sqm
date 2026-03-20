@@ -2,6 +2,7 @@ package io.sqm.core.match;
 
 import io.sqm.core.DeleteStatement;
 import io.sqm.core.InsertStatement;
+import io.sqm.core.MergeStatement;
 import io.sqm.core.Query;
 import io.sqm.core.Statement;
 import io.sqm.core.UpdateStatement;
@@ -57,4 +58,12 @@ public interface StatementMatch<R> extends Match<Statement, R> {
      * @return {@code this} for fluent chaining
      */
     StatementMatch<R> delete(Function<DeleteStatement, R> function);
+
+    /**
+     * Registers a handler for {@link MergeStatement} statements.
+     *
+     * @param function merge handler
+     * @return {@code this} for fluent chaining
+     */
+    StatementMatch<R> merge(Function<MergeStatement, R> function);
 }

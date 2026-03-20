@@ -48,6 +48,10 @@ public enum SqlFeature {
      */
     DML_RESULT_CLAUSE("DML result clause"),
     /**
+     * SQL {@code MERGE} statement support.
+     */
+    MERGE_STATEMENT("MERGE statement"),
+    /**
      * PostgreSQL INSERT ... ON CONFLICT clause support for upsert semantics.
      */
     INSERT_ON_CONFLICT("PostgreSQL INSERT ... ON CONFLICT clause"),
