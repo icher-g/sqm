@@ -13,6 +13,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
 
         assertEquals(
             java.util.List.of(
+                "postgres-merge-unsupported",
                 "postgres-to-mysql-distinct-on-unsupported",
                 "postgres-to-mysql-ilike",
                 "postgres-to-mysql-null-safe-comparison",
@@ -53,6 +54,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
 
         assertEquals(
             java.util.List.of(
+                "postgres-merge-unsupported",
                 "postgres-to-sqlserver-distinct-on-unsupported",
                 "standard-limit-to-sqlserver-top"
             ),

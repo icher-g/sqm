@@ -12,6 +12,7 @@ import io.sqm.transpile.builtin.PostgresToMySqlDistinctOnUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlOperatorFamilyUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlRegexVariantUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlReturningUnsupportedRule;
+import io.sqm.transpile.builtin.PostgresMergeUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlSimilarToUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToSqlServerDistinctOnUnsupportedRule;
 import io.sqm.transpile.builtin.SqlServerMergeUnsupportedRule;
@@ -48,6 +49,7 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
             new PostgresToMySqlSimilarToUnsupportedRule(),
             new PostgresToMySqlRegexVariantUnsupportedRule(),
             new PostgresToMySqlOperatorFamilyUnsupportedRule(),
+            new PostgresMergeUnsupportedRule(),
             new MySqlToPostgresNullSafeComparisonRule(),
             new MySqlToPostgresHintDroppingRule(),
             new MySqlToPostgresOnDuplicateKeyUnsupportedRule(),

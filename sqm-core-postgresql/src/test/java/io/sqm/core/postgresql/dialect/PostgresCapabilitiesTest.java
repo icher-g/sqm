@@ -36,6 +36,12 @@ class PostgresCapabilitiesTest {
     }
 
     @Test
+    void supports_merge_from_postgres15() {
+        assertFalse(PostgresCapabilities.of(SqlDialectVersion.of(14, 0)).supports(SqlFeature.MERGE_STATEMENT));
+        assertTrue(PostgresCapabilities.of(SqlDialectVersion.of(15, 0)).supports(SqlFeature.MERGE_STATEMENT));
+    }
+
+    @Test
     void supports_respects_min_versions() {
         var capabilities = PostgresCapabilities.of(SqlDialectVersion.of(9, 0));
 

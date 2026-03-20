@@ -30,6 +30,11 @@ public final class Renderers {
             .register(new InsertStatementRenderer())
             .register(new UpdateStatementRenderer())
             .register(new DeleteStatementRenderer())
+            .register(new MergeStatementRenderer())
+            .register(new MergeClauseRenderer())
+            .register(new MergeUpdateActionRenderer())
+            .register(new MergeDeleteActionRenderer())
+            .register(new MergeInsertActionRenderer())
             .register(new CastExprRenderer());
     }
 }
