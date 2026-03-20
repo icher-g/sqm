@@ -748,6 +748,42 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
+    void postgresReturningToSqlServerIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.SQLSERVER)
+            .build();
+
+        var result = transpiler.transpile("UPDATE users SET name = 'alice' RETURNING id");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertTrue(result.sql().isEmpty());
+        assertEquals("UNSUPPORTED_RETURNING", result.problems().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "postgres-to-sqlserver-returning-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
+    void sqlServerOutputIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.SQLSERVER)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .build();
+
+        var result = transpiler.transpile("UPDATE users SET name = 'alice' OUTPUT deleted.name, inserted.name");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertTrue(result.sql().isEmpty());
+        assertEquals("UNSUPPORTED_SQLSERVER_OUTPUT", result.problems().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "sqlserver-output-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
     void postgresDistinctOnIsRejectedBeforeSqlServerRendering() {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.POSTGRESQL)

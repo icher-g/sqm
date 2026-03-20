@@ -102,6 +102,20 @@ class SqlServerRulesTest {
     }
 
     @Test
+    void sqlServerOutputRuleRejectsSqlServerOutputForNonSqlServerTargets() {
+        Statement statement = Dsl.update(Dsl.tbl("users"))
+            .set(Dsl.set("name", Dsl.lit("alice")))
+            .result(Dsl.deleted("name"), Dsl.inserted("name"))
+            .build();
+
+        var result = new SqlServerOutputUnsupportedRule().apply(statement, context(SqlDialectId.SQLSERVER, SqlDialectId.POSTGRESQL));
+
+        assertEquals(io.sqm.transpile.RewriteFidelity.UNSUPPORTED, result.fidelity());
+        assertFalse(result.problems().isEmpty());
+        assertEquals("UNSUPPORTED_SQLSERVER_OUTPUT", result.problems().getFirst().code());
+    }
+
+    @Test
     void sqlServerMergeRuleRejectsMergeForNonSqlServerTargets() {
         Statement statement = Dsl.merge("users")
             .source(Dsl.tbl("src").as("s"))
