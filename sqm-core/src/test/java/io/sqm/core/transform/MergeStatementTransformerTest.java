@@ -93,4 +93,25 @@ class MergeStatementTransformerTest {
             .update(action -> action.assignments().getFirst().value().matchExpression().literal(l -> l.value()).orElse(null))
             .orElse(null));
     }
+
+    @Test
+    void rebuildsStatementWhenClauseConditionChanges() {
+        var statement = merge(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete(col("s", "active").eq(lit(1)))
+            .build();
+
+        var transformed = (MergeStatement) new RecursiveNodeTransformer() {
+            @Override
+            public Node visitLiteralExpr(io.sqm.core.LiteralExpr literalExpr) {
+                return lit(2);
+            }
+        }.transform(statement);
+
+        assertNotSame(statement, transformed);
+        assertEquals(2, transformed.clauses().getFirst().condition().matchPredicate()
+            .comparison(cmp -> cmp.rhs().matchExpression().literal(l -> l.value()).orElse(null))
+            .orElse(null));
+    }
 }

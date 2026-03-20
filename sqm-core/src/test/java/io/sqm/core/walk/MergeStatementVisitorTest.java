@@ -3,6 +3,7 @@ package io.sqm.core.walk;
 import io.sqm.core.MergeClause;
 import io.sqm.core.MergeDeleteAction;
 import io.sqm.core.MergeInsertAction;
+import io.sqm.core.LiteralExpr;
 import io.sqm.core.MergeStatement;
 import io.sqm.core.MergeUpdateAction;
 import io.sqm.core.Table;
@@ -26,7 +27,7 @@ class MergeStatementVisitorTest {
         var statement = merge(tbl("users"))
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
-            .whenMatchedUpdate(List.of(set("name", col("s", "name"))))
+            .whenMatchedUpdate(col("s", "active").eq(io.sqm.dsl.Dsl.lit(true)), List.of(set("name", col("s", "name"))))
             .whenMatchedDelete()
             .whenNotMatchedInsert(List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
             .build();
@@ -73,8 +74,14 @@ class MergeStatementVisitorTest {
                 visits.add("insert");
                 return super.visitMergeInsertAction(action);
             }
+
+            @Override
+            public Void visitLiteralExpr(LiteralExpr literalExpr) {
+                visits.add("literal");
+                return super.visitLiteralExpr(literalExpr);
+            }
         }.accept(statement);
 
-        assertEquals(List.of("merge", "table", "table", "clause", "update", "clause", "delete", "clause", "insert"), visits.subList(0, 9));
+        assertEquals(List.of("merge", "table", "table", "clause", "literal", "update", "clause", "delete", "clause", "insert"), visits.subList(0, 10));
     }
 }

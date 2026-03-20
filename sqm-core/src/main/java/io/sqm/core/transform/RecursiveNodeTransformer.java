@@ -166,9 +166,10 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
      */
     @Override
     public Node visitMergeClause(MergeClause clause) {
+        var condition = apply(clause.condition());
         var action = apply(clause.action());
-        if (action != clause.action()) {
-            return MergeClause.of(clause.matchType(), action);
+        if (condition != clause.condition() || action != clause.action()) {
+            return MergeClause.of(clause.matchType(), condition, action);
         }
         return clause;
     }

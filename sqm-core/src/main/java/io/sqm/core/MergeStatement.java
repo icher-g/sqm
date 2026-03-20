@@ -152,7 +152,18 @@ public non-sealed interface MergeStatement extends Statement {
          * @return this builder
          */
         public Builder whenMatchedUpdate(List<Assignment> assignments) {
-            return clause(MergeClause.of(MergeClause.MatchType.MATCHED, MergeUpdateAction.of(assignments)));
+            return whenMatchedUpdate(null, assignments);
+        }
+
+        /**
+         * Appends a {@code WHEN MATCHED AND ... THEN UPDATE SET ...} clause.
+         *
+         * @param condition optional clause predicate
+         * @param assignments update assignments
+         * @return this builder
+         */
+        public Builder whenMatchedUpdate(Predicate condition, List<Assignment> assignments) {
+            return clause(MergeClause.of(MergeClause.MatchType.MATCHED, condition, MergeUpdateAction.of(assignments)));
         }
 
         /**
@@ -167,12 +178,34 @@ public non-sealed interface MergeStatement extends Statement {
         }
 
         /**
+         * Appends a {@code WHEN MATCHED AND ... THEN UPDATE SET ...} clause.
+         *
+         * @param condition optional clause predicate
+         * @param assignments update assignments
+         * @return this builder
+         */
+        public Builder whenMatchedUpdate(Predicate condition, Assignment... assignments) {
+            Objects.requireNonNull(assignments, "assignments");
+            return whenMatchedUpdate(condition, List.of(assignments));
+        }
+
+        /**
          * Appends a {@code WHEN MATCHED THEN DELETE} clause.
          *
          * @return this builder
          */
         public Builder whenMatchedDelete() {
-            return clause(MergeClause.of(MergeClause.MatchType.MATCHED, MergeDeleteAction.of()));
+            return whenMatchedDelete(null);
+        }
+
+        /**
+         * Appends a {@code WHEN MATCHED AND ... THEN DELETE} clause.
+         *
+         * @param condition optional clause predicate
+         * @return this builder
+         */
+        public Builder whenMatchedDelete(Predicate condition) {
+            return clause(MergeClause.of(MergeClause.MatchType.MATCHED, condition, MergeDeleteAction.of()));
         }
 
         /**
@@ -183,7 +216,19 @@ public non-sealed interface MergeStatement extends Statement {
          * @return this builder
          */
         public Builder whenNotMatchedInsert(List<Identifier> columns, RowExpr values) {
-            return clause(MergeClause.of(MergeClause.MatchType.NOT_MATCHED, MergeInsertAction.of(columns, values)));
+            return whenNotMatchedInsert(null, columns, values);
+        }
+
+        /**
+         * Appends a {@code WHEN NOT MATCHED AND ... THEN INSERT ... VALUES (...)} clause.
+         *
+         * @param condition optional clause predicate
+         * @param columns target columns, or empty when omitted
+         * @param values inserted values row
+         * @return this builder
+         */
+        public Builder whenNotMatchedInsert(Predicate condition, List<Identifier> columns, RowExpr values) {
+            return clause(MergeClause.of(MergeClause.MatchType.NOT_MATCHED, condition, MergeInsertAction.of(columns, values)));
         }
 
         /**
@@ -193,7 +238,18 @@ public non-sealed interface MergeStatement extends Statement {
          * @return this builder
          */
         public Builder whenNotMatchedInsert(RowExpr values) {
-            return whenNotMatchedInsert(List.of(), values);
+            return whenNotMatchedInsert(null, List.of(), values);
+        }
+
+        /**
+         * Appends a {@code WHEN NOT MATCHED AND ... THEN INSERT ... VALUES (...)} clause.
+         *
+         * @param condition optional clause predicate
+         * @param values inserted values row
+         * @return this builder
+         */
+        public Builder whenNotMatchedInsert(Predicate condition, RowExpr values) {
+            return whenNotMatchedInsert(condition, List.of(), values);
         }
 
         /**
@@ -206,6 +262,19 @@ public non-sealed interface MergeStatement extends Statement {
         public Builder whenNotMatchedInsert(List<Identifier> columns, List<Expression> values) {
             Objects.requireNonNull(values, "values");
             return whenNotMatchedInsert(columns, RowExpr.of(values));
+        }
+
+        /**
+         * Appends a {@code WHEN NOT MATCHED AND ... THEN INSERT ... VALUES (...)} clause.
+         *
+         * @param condition optional clause predicate
+         * @param columns target columns
+         * @param values inserted value expressions
+         * @return this builder
+         */
+        public Builder whenNotMatchedInsert(Predicate condition, List<Identifier> columns, List<Expression> values) {
+            Objects.requireNonNull(values, "values");
+            return whenNotMatchedInsert(condition, columns, RowExpr.of(values));
         }
 
         /**

@@ -300,18 +300,23 @@ final class SqmJavaEmitter {
 
         private String emitMergeClauseBuilderCall(MergeClause clause) {
             if (clause.matchType() == MergeClause.MatchType.MATCHED && clause.action() instanceof MergeUpdateAction updateAction) {
-                return ".whenMatchedUpdate(java.util.List.of("
+                var predicateArg = clause.condition() == null ? "" : emitNode(clause.condition()) + ", ";
+                return ".whenMatchedUpdate(" + predicateArg + "java.util.List.of("
                     + joinInline(updateAction.assignments().stream().map(this::emitNode).toList())
                     + "))";
             }
             if (clause.matchType() == MergeClause.MatchType.MATCHED && clause.action() instanceof MergeDeleteAction) {
-                return ".whenMatchedDelete()";
+                return clause.condition() == null
+                    ? ".whenMatchedDelete()"
+                    : ".whenMatchedDelete(" + emitNode(clause.condition()) + ")";
             }
             if (clause.matchType() == MergeClause.MatchType.NOT_MATCHED && clause.action() instanceof MergeInsertAction insertAction) {
+                var predicateArg = clause.condition() == null ? "" : emitNode(clause.condition()) + ", ";
                 if (insertAction.columns().isEmpty()) {
-                    return ".whenNotMatchedInsert(" + emitNode(insertAction.values()) + ")";
+                    return ".whenNotMatchedInsert(" + predicateArg + emitNode(insertAction.values()) + ")";
                 }
                 return ".whenNotMatchedInsert("
+                    + predicateArg
                     + emitIdentifierList(insertAction.columns())
                     + ", "
                     + emitNode(insertAction.values())

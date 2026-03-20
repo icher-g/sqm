@@ -12,9 +12,7 @@ import static io.sqm.dsl.Dsl.merge;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class MergeStatementTest {
 
@@ -23,14 +21,16 @@ class MergeStatementTest {
         var statement = merge(tbl("users"))
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
-            .whenMatchedUpdate(List.of(set("name", col("s", "name"))))
+            .whenMatchedUpdate(col("s", "active").eq(lit(true)), List.of(set("name", col("s", "name"))))
             .whenMatchedDelete()
-            .whenNotMatchedInsert(List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
+            .whenNotMatchedInsert(col("s", "name").isNotNull(), List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
             .result(inserted("id"))
             .build();
 
         assertEquals("users", statement.target().name().value());
         assertEquals(3, statement.clauses().size());
+        assertNotNull(statement.clauses().getFirst().condition());
+        assertNotNull(statement.clauses().get(2).condition());
         assertNotNull(statement.result());
     }
 
@@ -63,10 +63,61 @@ class MergeStatementTest {
     }
 
     @Test
+    void mergeClause_preservesOptionalCondition() {
+        var clause = MergeClause.of(
+            MergeClause.MatchType.MATCHED,
+            col("s", "active").eq(lit(true)),
+            MergeDeleteAction.of()
+        );
+
+        assertNotNull(clause.condition());
+    }
+
+    @Test
+    void mergeClause_withoutExplicitConditionDefaultsToNull() {
+        var clause = MergeClause.of(
+            MergeClause.MatchType.MATCHED,
+            MergeDeleteAction.of()
+        );
+
+        assertEquals(MergeClause.MatchType.MATCHED, clause.matchType());
+        assertNull(clause.condition());
+    }
+
+    @Test
     void mergeInsertAction_normalizesNullColumnsToEmptyList() {
         var action = MergeInsertAction.of(null, row(lit(1L)));
 
         assertEquals(List.of(), action.columns());
+    }
+
+    @Test
+    void builder_supportsPredicateAwareVarargAndValueListMergeOverloads() {
+        var statement = merge(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedUpdate(
+                col("s", "active").eq(lit(true)),
+                set("name", col("s", "name")),
+                set("id", col("s", "id"))
+            )
+            .whenNotMatchedInsert(
+                col("s", "id").gt(lit(0L)),
+                row(col("s", "id"))
+            )
+            .whenNotMatchedInsert(
+                col("s", "name").isNotNull(),
+                List.of(id("id"), id("name")),
+                List.of(col("s", "id"), col("s", "name"))
+            )
+            .build();
+
+        assertEquals(3, statement.clauses().size());
+        assertEquals(2, ((MergeUpdateAction) statement.clauses().getFirst().action()).assignments().size());
+        assertEquals(List.of(), ((MergeInsertAction) statement.clauses().get(1).action()).columns());
+        assertEquals(2, ((MergeInsertAction) statement.clauses().get(2).action()).values().items().size());
+        assertNotNull(statement.clauses().get(1).condition());
+        assertNotNull(statement.clauses().get(2).condition());
     }
 
     @Test

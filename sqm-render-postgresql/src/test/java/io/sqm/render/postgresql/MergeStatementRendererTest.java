@@ -46,15 +46,15 @@ class MergeStatementRendererTest {
         MergeStatement statement = merge("users")
             .source(tbl("src_users").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
-            .whenMatchedUpdate(java.util.List.of(set("name", col("s", "name"))))
-            .whenNotMatchedInsert(java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
+            .whenMatchedUpdate(col("s", "active").eq(lit(true)), java.util.List.of(set("name", col("s", "name"))))
+            .whenNotMatchedInsert(col("s", "name").isNotNull(), java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
             .result(col("id").toSelectItem())
             .build();
 
         var sql = normalize(ctx.render(statement).sql());
 
         assertEquals(
-            "MERGE INTO users USING src_users AS s ON users.id = s.id WHEN MATCHED THEN UPDATE SET name = s.name WHEN NOT MATCHED THEN INSERT (id, name) VALUES (s.id, s.name) RETURNING id",
+            "MERGE INTO users USING src_users AS s ON users.id = s.id WHEN MATCHED AND s.active = TRUE THEN UPDATE SET name = s.name WHEN NOT MATCHED AND s.name IS NOT NULL THEN INSERT (id, name) VALUES (s.id, s.name) RETURNING id",
             sql
         );
     }
@@ -113,6 +113,7 @@ class MergeStatementRendererTest {
         var notMatchedInsert = normalize(ctx.render(
             MergeClause.of(
                 MergeClause.MatchType.NOT_MATCHED,
+                col("s", "name").isNotNull(),
                 MergeInsertAction.of(java.util.List.of(), row(lit(1), lit("alice")))
             )
         ).sql());
@@ -125,7 +126,7 @@ class MergeStatementRendererTest {
         ).sql());
 
         assertEquals("WHEN MATCHED THEN DELETE", matchedDelete);
-        assertEquals("WHEN NOT MATCHED THEN INSERT VALUES (1, 'alice')", notMatchedInsert);
+        assertEquals("WHEN NOT MATCHED AND s.name IS NOT NULL THEN INSERT VALUES (1, 'alice')", notMatchedInsert);
         assertEquals("DELETE", deleteAction);
         assertEquals("UPDATE SET name = 'alice', email = 'a@example.com'", updateAction);
         assertEquals("INSERT (id, name) VALUES (1, 'alice')", insertAction);

@@ -17,7 +17,19 @@ public non-sealed interface MergeClause extends Node {
      * @return immutable merge clause
      */
     static MergeClause of(MatchType matchType, MergeAction action) {
-        return new Impl(matchType, action);
+        return of(matchType, null, action);
+    }
+
+    /**
+     * Creates an immutable merge clause.
+     *
+     * @param matchType clause match type
+     * @param condition optional clause predicate evaluated before the action
+     * @param action branch action
+     * @return immutable merge clause
+     */
+    static MergeClause of(MatchType matchType, Predicate condition, MergeAction action) {
+        return new Impl(matchType, condition, action);
     }
 
     /**
@@ -26,6 +38,13 @@ public non-sealed interface MergeClause extends Node {
      * @return clause match type
      */
     MatchType matchType();
+
+    /**
+     * Returns the optional clause predicate evaluated before the action.
+     *
+     * @return clause predicate or {@code null}
+     */
+    Predicate condition();
 
     /**
      * Returns the action executed by this clause.
@@ -64,9 +83,10 @@ public non-sealed interface MergeClause extends Node {
      * Default immutable implementation of {@link MergeClause}.
      *
      * @param matchType clause match type
+     * @param condition optional clause predicate
      * @param action clause action
      */
-    record Impl(MatchType matchType, MergeAction action) implements MergeClause {
+    record Impl(MatchType matchType, Predicate condition, MergeAction action) implements MergeClause {
         /**
          * Creates an immutable merge clause implementation.
          */

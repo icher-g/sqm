@@ -8,9 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class MergeStatementParserTest {
 
@@ -23,8 +21,8 @@ class MergeStatementParserTest {
                 MERGE INTO [users] WITH (HOLDLOCK)
                 USING [src_users] AS [s]
                 ON [users].[id] = [s].[id]
-                WHEN MATCHED THEN UPDATE SET [name] = [s].[name]
-                WHEN NOT MATCHED THEN INSERT ([id], [name]) VALUES ([s].[id], [s].[name])
+                WHEN MATCHED AND [s].[active] = 1 THEN UPDATE SET [name] = [s].[name]
+                WHEN NOT MATCHED AND [s].[name] IS NOT NULL THEN INSERT ([id], [name]) VALUES ([s].[id], [s].[name])
                 """
         );
 
@@ -32,6 +30,7 @@ class MergeStatementParserTest {
         assertEquals("users", result.value().target().name().value());
         assertEquals(1, result.value().target().lockHints().size());
         assertEquals(2, result.value().clauses().size());
+        assertTrue(result.value().clauses().stream().allMatch(clause -> clause.condition() != null));
     }
 
     @Test
@@ -59,31 +58,31 @@ class MergeStatementParserTest {
     }
 
     @Test
-    void rejectsMergeActionPredicatesInFirstSlice() {
+    void parsesMergeActionPredicatesInCurrentSlice() {
         var ctx = ParseContext.of(new SqlServerSpecs());
         var result = ctx.parse(
             MergeStatement.class,
             "MERGE users USING src ON users.id = src.id WHEN MATCHED AND src.active = 1 THEN DELETE"
         );
 
-        assertTrue(result.isError());
-        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("predicates"));
+        assertTrue(result.ok(), result.errorMessage());
+        assertNotNull(result.value().clauses().getFirst().condition());
     }
 
     @Test
-    void rejectsDuplicateMatchedUpdateClauseInFirstSlice() {
+    void acceptsTwoMatchedClausesWithFirstPredicateAndDistinctActions() {
         var ctx = ParseContext.of(new SqlServerSpecs());
         var result = ctx.parse(
             MergeStatement.class,
             """
                 MERGE users USING src ON users.id = src.id
-                WHEN MATCHED THEN UPDATE SET name = src.name
-                WHEN MATCHED THEN UPDATE SET name = src.other_name
+                WHEN MATCHED AND src.active = 1 THEN UPDATE SET name = src.name
+                WHEN MATCHED THEN DELETE
                 """
         );
 
-        assertTrue(result.isError());
-        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("at most one WHEN MATCHED THEN UPDATE"));
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(2, result.value().clauses().size());
     }
 
     @Test
@@ -135,23 +134,67 @@ class MergeStatementParserTest {
     }
 
     @Test
-    void rejectsDuplicateMatchedDeleteClauseInFirstSlice() {
+    void rejectsTwoMatchedClausesWithoutPredicateOnFirstClause() {
         var ctx = ParseContext.of(new SqlServerSpecs());
         var result = ctx.parse(
             MergeStatement.class,
             """
                 MERGE users USING src ON users.id = src.id
                 WHEN MATCHED THEN DELETE
+                WHEN MATCHED THEN UPDATE SET name = src.name
+                """
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("first WHEN MATCHED"));
+    }
+
+    @Test
+    void rejectsTwoMatchedClausesWithSameActionFamily() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            """
+                MERGE users USING src ON users.id = src.id
+                WHEN MATCHED AND src.active = 1 THEN DELETE
                 WHEN MATCHED THEN DELETE
                 """
         );
 
         assertTrue(result.isError());
-        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("at most one WHEN MATCHED THEN DELETE"));
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("one UPDATE and one DELETE"));
     }
 
     @Test
-    void rejectsDuplicateNotMatchedInsertClauseInFirstSlice() {
+    void rejectsMoreThanTwoMatchedClauses() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            """
+                MERGE users USING src ON users.id = src.id
+                WHEN MATCHED AND src.active = 1 THEN UPDATE SET name = src.name
+                WHEN MATCHED THEN DELETE
+                WHEN MATCHED THEN DELETE
+                """
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("at most two WHEN MATCHED"));
+    }
+
+    @Test
+    void rejectsMalformedMatchedClausePredicate() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            MergeStatement.class,
+            "MERGE users USING src ON users.id = src.id WHEN MATCHED AND THEN DELETE"
+        );
+
+        assertTrue(result.isError());
+    }
+
+    @Test
+    void rejectsDuplicateNotMatchedInsertClauseInCurrentSlice() {
         var ctx = ParseContext.of(new SqlServerSpecs());
         var result = ctx.parse(
             MergeStatement.class,

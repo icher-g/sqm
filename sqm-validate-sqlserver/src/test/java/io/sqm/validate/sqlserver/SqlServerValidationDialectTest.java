@@ -352,7 +352,7 @@ class SqlServerValidationDialectTest {
         var mergeStatement = merge(tbl("users").withHoldLock())
             .source(tbl("users").as("s").withUpdLock())
             .on(col("users", "id").eq(col("s", "id")))
-            .whenMatchedUpdate(java.util.List.of(set("users", "name", col("s", "name"))))
+            .whenMatchedUpdate(col("s", "updated_at").isNotNull(), java.util.List.of(set("users", "name", col("s", "name"))))
             .whenNotMatchedInsert(java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
             .build();
 
@@ -368,7 +368,7 @@ class SqlServerValidationDialectTest {
             .source(tbl("users").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
             .whenMatchedUpdate(java.util.List.of(set("users", "name", col("s", "name"))))
-            .whenMatchedUpdate(java.util.List.of(set("users", "name", col("s", "updated_at"))))
+            .whenMatchedDelete()
             .result(inserted("id"))
             .build();
 
@@ -377,7 +377,7 @@ class SqlServerValidationDialectTest {
         assertTrue(result.problems().stream().anyMatch(problem ->
             problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
                 && "merge.clause".equals(problem.clausePath())
-                && problem.message().contains("at most one WHEN MATCHED THEN UPDATE")
+                && problem.message().contains("first WHEN MATCHED")
         ));
         assertTrue(result.problems().stream().anyMatch(problem ->
             problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
@@ -392,7 +392,7 @@ class SqlServerValidationDialectTest {
         var mergeStatement = merge(tbl("users").withNoLock().withUpdLock())
             .source(tbl("users").as("s").withHoldLock().withHoldLock())
             .on(col("users", "id").eq(col("s", "id")))
-            .whenMatchedDelete()
+            .whenMatchedDelete(col("s", "updated_at").isNotNull())
             .whenMatchedDelete()
             .whenNotMatchedInsert(java.util.List.of(id("id")), row(col("s", "id")))
             .whenNotMatchedInsert(java.util.List.of(id("id")), row(col("s", "id")))
@@ -417,6 +417,26 @@ class SqlServerValidationDialectTest {
             problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
                 && "merge.clause".equals(problem.clausePath())
                 && problem.message().contains("INSERT")
+        ));
+    }
+
+    @Test
+    void validate_reportsSqlServerMergeWithTooManyMatchedClauses() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var mergeStatement = merge("users")
+            .source(tbl("users").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedUpdate(col("s", "updated_at").isNotNull(), java.util.List.of(set("users", "name", col("s", "name"))))
+            .whenMatchedDelete()
+            .whenMatchedDelete()
+            .build();
+
+        var result = validator.validate(mergeStatement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "merge.clause".equals(problem.clausePath())
+                && problem.message().contains("at most two WHEN MATCHED")
         ));
     }
 
