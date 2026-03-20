@@ -261,6 +261,15 @@ class SqmJavaEmitterTest {
     }
 
     @Test
+    void emitQuery_emitsSqlServerTableHintHelpers() {
+        String source = emitter.emitQuery(select(star()).from(tbl("users").withNoLock().withUpdLock().withHoldLock()).build());
+
+        assertTrue(source.contains(".withNoLock()"));
+        assertTrue(source.contains(".withUpdLock()"));
+        assertTrue(source.contains(".withHoldLock()"));
+    }
+
+    @Test
     void emitQuery_escapesIdentifierValuesFromTypedModelNodes() {
         Query query = select(
             col("t", "a").as("a\"b"),

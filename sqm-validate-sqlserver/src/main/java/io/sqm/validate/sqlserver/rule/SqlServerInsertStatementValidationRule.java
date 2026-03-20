@@ -34,6 +34,7 @@ public final class SqlServerInsertStatementValidationRule implements SchemaValid
      */
     @Override
     public void validate(InsertStatement node, SchemaValidationContext context) {
+        SqlServerTableHintSupport.validateHints(node.table(), context, "insert.table");
         if (node.insertMode() != InsertStatement.InsertMode.STANDARD) {
             context.addProblem(
                 ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
@@ -50,6 +51,7 @@ public final class SqlServerInsertStatementValidationRule implements SchemaValid
                 "insert.on_conflict"
             );
         }
+        SqlServerTableHintSupport.validateResultIntoTarget(node.result() == null ? null : node.result().into(), context, "insert.result");
         if (node.result() != null) {
             for (var item : node.result().items()) {
                 if (usesOutputSource(item, OutputRowSource.DELETED)) {

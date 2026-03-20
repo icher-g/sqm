@@ -92,4 +92,17 @@ class InsertStatementParserTest {
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("deleted.<column>"));
     }
+
+    @Test
+    void parsesInsertTargetTableHints() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            InsertStatement.class,
+            "INSERT INTO [users] WITH (HOLDLOCK) ([id], [name]) VALUES (1, 'alice')"
+        );
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(1, result.value().table().lockHints().size());
+        assertEquals(Table.LockHintKind.HOLDLOCK, result.value().table().lockHints().getFirst().kind());
+    }
 }

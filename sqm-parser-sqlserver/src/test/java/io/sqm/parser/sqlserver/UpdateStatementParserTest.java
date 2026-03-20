@@ -80,4 +80,16 @@ class UpdateStatementParserTest {
         assertTrue(result.ok(), result.errorMessage());
         assertEquals("score_sum", result.value().result().items().getFirst().matchResultItem().expr(e -> e.alias().value()).orElse(null));
     }
+
+    @Test
+    void parsesUpdateTargetTableHints() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(
+            UpdateStatement.class,
+            "UPDATE [users] WITH (UPDLOCK, HOLDLOCK) SET [name] = 'alice' WHERE [id] = 1"
+        );
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(2, result.value().table().lockHints().size());
+    }
 }

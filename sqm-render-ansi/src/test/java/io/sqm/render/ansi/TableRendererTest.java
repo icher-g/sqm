@@ -92,4 +92,18 @@ class TableRendererTest {
         );
         assertThrows(UnsupportedDialectFeatureException.class, () -> render(table));
     }
+
+    @Test
+    @DisplayName("Rejects table lock hints in ANSI renderer")
+    void rejects_lock_hints() {
+        var table = Table.of(
+            null,
+            Identifier.of("t"),
+            null,
+            Table.Inheritance.DEFAULT,
+            java.util.List.of(),
+            java.util.List.of(Table.LockHint.nolock())
+        );
+        assertThrows(UnsupportedDialectFeatureException.class, () -> render(table));
+    }
 }

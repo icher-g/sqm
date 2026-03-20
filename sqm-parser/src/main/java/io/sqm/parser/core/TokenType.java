@@ -437,6 +437,18 @@ public enum TokenType {
      */
     TOP,
     /**
+     * NOLOCK keyword token.
+     */
+    NOLOCK,
+    /**
+     * UPDLOCK keyword token.
+     */
+    UPDLOCK,
+    /**
+     * HOLDLOCK keyword token.
+     */
+    HOLDLOCK,
+    /**
      * PERCENT keyword token.
      */
     PERCENT,

@@ -173,6 +173,7 @@ public final class SqlServerSelectValidationRule implements SchemaValidationRule
                     "from.table"
                 );
             }
+            SqlServerTableHintSupport.validateHints(table, context, "from.table");
             if (table.inheritance() != Table.Inheritance.DEFAULT) {
                 context.addProblem(
                     ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,

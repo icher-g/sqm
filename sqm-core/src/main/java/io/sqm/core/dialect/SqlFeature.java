@@ -180,6 +180,10 @@ public enum SqlFeature {
      */
     TABLE_INDEX_HINT("MySQL table index hints"),
     /**
+     * Table lock hints ({@code WITH (...)} in SQL Server).
+     */
+    TABLE_LOCK_HINT("Table lock hints"),
+    /**
      * MySQL {@code SQL_CALC_FOUND_ROWS} SELECT modifier.
      */
     CALC_FOUND_ROWS_MODIFIER("MySQL SQL_CALC_FOUND_ROWS modifier"),

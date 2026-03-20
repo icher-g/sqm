@@ -8,6 +8,7 @@ import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TableTest {
 
@@ -76,15 +77,18 @@ class TableTest {
         var table = tbl("users")
             .useIndex("idx_users_name")
             .ignoreIndex("idx_users_email")
+            .withNoLock()
             .as("u")
             .inSchema("app");
 
         assertEquals(2, table.indexHints().size());
+        assertEquals(1, table.lockHints().size());
         assertEquals(Table.IndexHintType.USE, table.indexHints().get(0).type());
         assertEquals(Table.IndexHintType.IGNORE, table.indexHints().get(1).type());
         assertThrows(UnsupportedOperationException.class, () -> table.indexHints().add(
             new Table.IndexHint(Table.IndexHintType.FORCE, Table.IndexHintScope.DEFAULT, List.of(Identifier.of("idx")))
         ));
+        assertThrows(UnsupportedOperationException.class, () -> table.lockHints().add(Table.LockHint.holdlock()));
         assertEquals("u", table.alias().value());
         assertEquals("app", table.schema().value());
     }
@@ -93,18 +97,79 @@ class TableTest {
     void withIdentifierMutatorsPreserveIndexHints() {
         var table = tbl("users")
             .forceIndex("idx_users_id")
+            .withUpdLock()
             .as(Identifier.of("u"))
             .inSchema(Identifier.of("app"));
 
         assertEquals("u", table.alias().value());
         assertEquals("app", table.schema().value());
         assertEquals(Table.IndexHintType.FORCE, table.indexHints().getFirst().type());
+        assertEquals(Table.LockHintKind.UPDLOCK, table.lockHints().getFirst().kind());
     }
 
     @Test
     void ofTreatsNullIndexHintsAsEmptyList() {
         var table = Table.of(null, Identifier.of("users"), null, Table.Inheritance.DEFAULT, null);
         assertEquals(List.of(), table.indexHints());
+        assertEquals(List.of(), table.lockHints());
+    }
+
+    @Test
+    void ofTreatsNullSqlServerHintsAsEmptyList() {
+        var table = Table.of(null, Identifier.of("users"), null, Table.Inheritance.DEFAULT, List.of(), null);
+
+        assertEquals(List.of(), table.lockHints());
+    }
+
+    @Test
+    void withHintsCopiesAndFiltersByHintFamily() {
+        var table = tbl("users").withHints(List.of(
+            Table.IndexHint.use(Table.IndexHintScope.DEFAULT, List.of(Identifier.of("idx_users_name"))),
+            Table.LockHint.updlock()
+        ));
+
+        assertEquals(2, table.hints().size());
+        assertEquals(1, table.indexHints().size());
+        assertEquals(1, table.lockHints().size());
+        assertEquals(Table.IndexHintType.USE, table.indexHints().getFirst().type());
+        assertEquals(Table.LockHintKind.UPDLOCK, table.lockHints().getFirst().kind());
+        assertThrows(UnsupportedOperationException.class, () -> table.hints().add(Table.LockHint.holdlock()));
+    }
+
+    @Test
+    void withHintsTreatsNullAsEmptyList() {
+        var table = tbl("users").withNoLock().useIndex("idx_users_id").withHints(null);
+
+        assertTrue(table.hints().isEmpty());
+        assertTrue(table.indexHints().isEmpty());
+        assertTrue(table.lockHints().isEmpty());
+    }
+
+    @Test
+    void withIndexHintsReplacesIndexesAndPreservesLockHints() {
+        var table = tbl("users")
+            .withNoLock()
+            .useIndex("idx_old")
+            .withIndexHints(List.of(Table.IndexHint.force(Table.IndexHintScope.JOIN, List.of(Identifier.of("idx_new")))));
+
+        assertEquals(1, table.indexHints().size());
+        assertEquals(Table.IndexHintType.FORCE, table.indexHints().getFirst().type());
+        assertEquals(Table.IndexHintScope.JOIN, table.indexHints().getFirst().scope());
+        assertEquals(1, table.lockHints().size());
+        assertEquals(Table.LockHintKind.NOLOCK, table.lockHints().getFirst().kind());
+    }
+
+    @Test
+    void withLockHintsReplacesLocksAndPreservesIndexHints() {
+        var table = tbl("users")
+            .withNoLock()
+            .useIndex("idx_users_id")
+            .withLockHints(List.of(Table.LockHint.holdlock()));
+
+        assertEquals(1, table.indexHints().size());
+        assertEquals(Table.IndexHintType.USE, table.indexHints().getFirst().type());
+        assertEquals(1, table.lockHints().size());
+        assertEquals(Table.LockHintKind.HOLDLOCK, table.lockHints().getFirst().kind());
     }
 
     @Test
@@ -123,5 +188,19 @@ class TableTest {
     void indexHintRejectsEmptyIndexes() {
         assertThrows(IllegalArgumentException.class,
             () -> new Table.IndexHint(Table.IndexHintType.USE, Table.IndexHintScope.DEFAULT, List.of()));
+    }
+
+    @Test
+    void lockHintsAreImmutableAndPreservedByMutators() {
+        var table = tbl("users")
+            .withNoLock()
+            .withHoldLock()
+            .useIndex("idx_users_id")
+            .as("u");
+
+        assertEquals(2, table.lockHints().size());
+        assertEquals(Table.LockHintKind.NOLOCK, table.lockHints().get(0).kind());
+        assertEquals(Table.LockHintKind.HOLDLOCK, table.lockHints().get(1).kind());
+        assertEquals(Table.IndexHintType.USE, table.indexHints().getFirst().type());
     }
 }

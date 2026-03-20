@@ -87,4 +87,17 @@ class SqlServerRulesTest {
         assertSame(statement, result.statement());
         assertEquals("No DISTINCT ON usage detected", result.description());
     }
+
+    @Test
+    void sqlServerTableHintsRuleRejectsSqlServerHintsForNonSqlServerTargets() {
+        Statement statement = Dsl.select(Dsl.col("id"))
+            .from(Dsl.tbl("users").withNoLock())
+            .build();
+
+        var result = new SqlServerTableHintsUnsupportedRule().apply(statement, context(SqlDialectId.SQLSERVER, SqlDialectId.POSTGRESQL));
+
+        assertEquals(io.sqm.transpile.RewriteFidelity.UNSUPPORTED, result.fidelity());
+        assertFalse(result.problems().isEmpty());
+        assertEquals("UNSUPPORTED_SQLSERVER_TABLE_HINTS", result.problems().getFirst().code());
+    }
 }

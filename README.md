@@ -156,12 +156,12 @@ Current scope boundary:
 - SQL Server baseline support includes query + shared-model DML with:
   - bracket-quoted identifiers
   - `TOP`, `TOP ... PERCENT`, `TOP ... WITH TIES`, and `OFFSET/FETCH`
+  - table hints `WITH (NOLOCK)`, `WITH (UPDLOCK)`, and `WITH (HOLDLOCK)` in supported statement contexts
   - first-wave SQL Server functions such as `LEN`, `DATEADD`, `DATEDIFF`, `ISNULL`, and `STRING_AGG`
   - baseline `INSERT`, `UPDATE`, and `DELETE`
   - `OUTPUT` and `OUTPUT ... INTO` through shared `ResultClause` support
 - SQL Server deferred follow-up features include:
   - `MERGE`
-  - table hints such as `WITH (NOLOCK)`
 
 ### PostgreSQL DML Example
 

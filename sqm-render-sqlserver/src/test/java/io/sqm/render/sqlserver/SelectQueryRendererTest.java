@@ -91,6 +91,38 @@ class SelectQueryRendererTest {
         assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(query));
     }
 
+    @Test
+    void renders_sqlServerTableHints() {
+        var query = SelectQuery.builder()
+            .select(Expression.literal(1))
+            .from(tbl("users").as("u").withUpdLock().withHoldLock())
+            .build();
+
+        var rendered = RenderContext.of(new SqlServerDialect()).render(query);
+
+        assertEquals("SELECT 1 FROM users AS u WITH (UPDLOCK, HOLDLOCK)", normalize(rendered.sql()));
+    }
+
+    @Test
+    void rejects_conflicting_sqlServerTableHints() {
+        var query = SelectQuery.builder()
+            .select(Expression.literal(1))
+            .from(tbl("users").withNoLock().withUpdLock())
+            .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(query));
+    }
+
+    @Test
+    void rejects_duplicate_sqlServerTableHints() {
+        var query = SelectQuery.builder()
+            .select(Expression.literal(1))
+            .from(tbl("users").withHoldLock().withHoldLock())
+            .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(query));
+    }
+
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
     }

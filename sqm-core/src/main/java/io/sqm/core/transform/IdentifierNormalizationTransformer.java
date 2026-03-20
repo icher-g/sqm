@@ -42,7 +42,7 @@ public final class IdentifierNormalizationTransformer extends RecursiveNodeTrans
         if (schema == t.schema() && name == t.name() && alias == t.alias()) {
             return t;
         }
-        return Table.of(schema, name, alias, t.inheritance());
+        return Table.of(schema, name, alias, t.inheritance(), t.indexHints(), t.lockHints());
     }
 
     @Override

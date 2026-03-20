@@ -59,7 +59,10 @@ class DefaultTranspileRuleRegistryDefaultsTest {
             postgresToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()
         );
         assertEquals(
-            java.util.List.of("sqlserver-top-to-limit"),
+            java.util.List.of(
+                "sqlserver-table-hints-unsupported",
+                "sqlserver-top-to-limit"
+            ),
             sqlServerToPostgresRules.stream().map(TranspileRule::id).sorted().toList()
         );
         assertEquals(

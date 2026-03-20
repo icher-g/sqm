@@ -40,6 +40,9 @@ public class ResultIntoParser implements Parser<ResultInto> {
         if (table.isError()) {
             return error(table);
         }
+        if (!table.value().lockHints().isEmpty()) {
+            return error("SQL Server table hints are not supported on OUTPUT INTO targets", cur.fullPos());
+        }
 
         List<Identifier> columns = List.of();
         if (cur.consumeIf(TokenType.LPAREN)) {

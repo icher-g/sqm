@@ -26,6 +26,7 @@ public final class Renderers {
             .register(new InsertStatementRenderer())
             .register(new UpdateStatementRenderer())
             .register(new DeleteStatementRenderer())
+            .register(new TableRenderer())
             .register(new OutputColumnExprRenderer())
             .register(new OutputStarResultItemRenderer())
             .register(new FunctionExprRenderer())

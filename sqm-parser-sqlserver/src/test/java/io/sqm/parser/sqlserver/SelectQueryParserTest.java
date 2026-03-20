@@ -6,6 +6,8 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
 import org.junit.jupiter.api.Test;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -97,5 +99,27 @@ class SelectQueryParserTest {
         var result = context.parse(Query.class, "SELECT TOP (10 [u].[id] FROM [users] AS [u]");
 
         assertTrue(result.isError());
+    }
+
+    @Test
+    void parses_sqlServerTableHintsOnFromTable() {
+        var context = ParseContext.of(new SqlServerSpecs());
+        var result = context.parse(SelectQuery.class, "SELECT [u].[id] FROM [users] AS [u] WITH (UPDLOCK, HOLDLOCK)");
+
+        assertFalse(result.isError(), result.errorMessage());
+        assertEquals(2, result.value().from().matchTableRef().table(t -> t.lockHints().size()).orElseThrow(AssertionError::new));
+        assertEquals(
+            io.sqm.core.Table.LockHintKind.UPDLOCK,
+            result.value().from().matchTableRef().table(t -> t.lockHints().getFirst().kind()).orElseThrow(AssertionError::new)
+        );
+    }
+
+    @Test
+    void rejects_conflicting_sqlServerTableHints() {
+        var context = ParseContext.of(new SqlServerSpecs());
+        var result = context.parse(Query.class, "SELECT [u].[id] FROM [users] AS [u] WITH (NOLOCK, UPDLOCK)");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("NOLOCK"));
     }
 }
