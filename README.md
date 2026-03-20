@@ -1306,7 +1306,7 @@ price + quantity * 2
 | Module                     | Description                                                                 |
 |----------------------------|-----------------------------------------------------------------------------|
 | `sqm-core`                 | Core SQL model (AST), visitors/transformers, match API, base DSL primitives |
-| `sqm-core-mysql`           | MySQL-specific model capabilities                                            |
+| `sqm-core-mysql`           | MySQL-specific model capabilities                                           |
 | `sqm-core-postgresql`      | PostgreSQL-specific model capabilities                                      |
 | `sqm-parser`               | Parser SPI and shared parser contracts                                      |
 | `sqm-parser-ansi`          | ANSI parser implementation                                                  |
@@ -1320,6 +1320,7 @@ price + quantity * 2
 | `sqm-catalog`              | Schema/catalog model and providers (JSON/JDBC)                              |
 | `sqm-catalog-mysql`        | MySQL catalog-specific implementations                                      |
 | `sqm-catalog-postgresql`   | PostgreSQL catalog-specific implementations                                 |
+| `sqm-catalog-sqlserver`    | SQL Server catalog-specific implementations                                 |
 | `sqm-validate`             | Schema-aware semantic validator                                             |
 | `sqm-validate-mysql`       | MySQL validation extensions                                                 |
 | `sqm-validate-postgresql`  | PostgreSQL validation extensions                                            |

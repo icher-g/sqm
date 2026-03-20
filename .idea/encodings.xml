@@ -15,6 +15,8 @@
     <file url="file://$PROJECT_DIR$/sqm-catalog-mysql/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-catalog-postgresql/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-catalog-postgresql/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-catalog-sqlserver/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sqm-catalog-sqlserver/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-catalog/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-catalog/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sqm-codegen-maven-plugin/src/main/java" charset="UTF-8" />

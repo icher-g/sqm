@@ -3,6 +3,7 @@ package io.sqm.codegen.maven;
 import io.sqm.catalog.jdbc.DefaultSqlTypeMapper;
 import io.sqm.catalog.mysql.MySqlSqlTypeMapper;
 import io.sqm.catalog.postgresql.PostgresSqlTypeMapper;
+import io.sqm.catalog.sqlserver.SqlServerSqlTypeMapper;
 import io.sqm.codegen.SqlCodegenDialect;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -524,7 +525,7 @@ class GenerateMojoTest {
         assertInstanceOf(PostgresSqlTypeMapper.class, invokeJdbcTypeMapper(mojo, SqlCodegenDialect.POSTGRESQL));
         assertInstanceOf(MySqlSqlTypeMapper.class, invokeJdbcTypeMapper(mojo, SqlCodegenDialect.MYSQL));
         assertInstanceOf(DefaultSqlTypeMapper.class, invokeJdbcTypeMapper(mojo, SqlCodegenDialect.ANSI));
-        assertInstanceOf(DefaultSqlTypeMapper.class, invokeJdbcTypeMapper(mojo, SqlCodegenDialect.SQLSERVER));
+        assertInstanceOf(SqlServerSqlTypeMapper.class, invokeJdbcTypeMapper(mojo, SqlCodegenDialect.SQLSERVER));
     }
 
     private static void setField(Object target, String fieldName, Object value) throws Exception {

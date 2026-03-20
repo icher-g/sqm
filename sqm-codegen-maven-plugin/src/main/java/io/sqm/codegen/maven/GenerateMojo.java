@@ -7,6 +7,7 @@ import io.sqm.catalog.jdbc.JdbcSchemaProvider;
 import io.sqm.catalog.jdbc.SqlTypeMapper;
 import io.sqm.catalog.mysql.MySqlSqlTypeMapper;
 import io.sqm.catalog.postgresql.PostgresSqlTypeMapper;
+import io.sqm.catalog.sqlserver.SqlServerSqlTypeMapper;
 import io.sqm.catalog.snapshot.JsonSchemaProvider;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -449,7 +450,8 @@ public class GenerateMojo extends AbstractMojo {
         return switch (Objects.requireNonNull(resolvedDialect, "resolvedDialect")) {
             case POSTGRESQL -> PostgresSqlTypeMapper.standard();
             case MYSQL -> MySqlSqlTypeMapper.standard();
-            case ANSI, SQLSERVER -> DefaultSqlTypeMapper.standard();
+            case SQLSERVER -> SqlServerSqlTypeMapper.standard();
+            case ANSI -> DefaultSqlTypeMapper.standard();
         };
     }
 

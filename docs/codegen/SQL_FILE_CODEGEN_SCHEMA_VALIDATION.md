@@ -118,16 +118,18 @@ Validation is executed after parsing and before Java emission.
 
 ## Supported Schema Provider Combinations
 
-| Parse/validation dialect | `schemaProvider=json` | `schemaProvider=jdbc` | JDBC type mapper |
-| --- | --- | --- | --- |
-| `ansi` | Supported | Supported | default JDBC mapper |
-| `postgresql` | Supported | Supported | PostgreSQL-aware mapper |
-| `mysql` | Supported | Supported | MySQL-aware mapper |
+| Parse/validation dialect | `schemaProvider=json` | `schemaProvider=jdbc` | JDBC type mapper        |
+|--------------------------|-----------------------|-----------------------|-------------------------|
+| `ansi`                   | Supported             | Supported             | default JDBC mapper     |
+| `postgresql`             | Supported             | Supported             | PostgreSQL-aware mapper |
+| `mysql`                  | Supported             | Supported             | MySQL-aware mapper      |
+| `sqlserver`              | Supported             | Supported             | SQL Server-aware mapper |
 
 Current JDBC constraint:
 
 - PostgreSQL gets a dedicated native type mapper.
 - MySQL now gets a dedicated native type mapper via `sqm-catalog-mysql`.
+- SQL Server now gets a dedicated native type mapper via `sqm-catalog-sqlserver`.
 - The plugin bundles PostgreSQL and MySQL JDBC drivers so either JDBC URL family can be used without adding a separate driver dependency to the consuming build.
 
 ## Credential Resolution (JDBC)
