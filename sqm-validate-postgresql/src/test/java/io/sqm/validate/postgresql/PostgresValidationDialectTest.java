@@ -452,8 +452,8 @@ class PostgresValidationDialectTest {
         MergeStatement statement = merge("users")
             .source(tbl("users").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
-            .whenMatchedDelete()
-            .whenNotMatchedInsert(java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
+            .whenMatchedDelete(col("s", "state").eq(lit("closed")))
+            .whenNotMatchedInsert(col("s", "name").isNotNull(), java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
             .result(col("id").toSelectItem())
             .build();
 

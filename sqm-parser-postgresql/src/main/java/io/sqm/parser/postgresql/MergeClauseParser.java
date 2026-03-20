@@ -1,10 +1,6 @@
 package io.sqm.parser.postgresql;
 
-import io.sqm.core.MergeAction;
-import io.sqm.core.MergeClause;
-import io.sqm.core.MergeDeleteAction;
-import io.sqm.core.MergeInsertAction;
-import io.sqm.core.MergeUpdateAction;
+import io.sqm.core.*;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
@@ -40,11 +36,14 @@ public class MergeClauseParser extends io.sqm.parser.ansi.MergeClauseParser {
             matchType = MergeClause.MatchType.MATCHED;
         }
 
-        if (!cur.match(TokenType.THEN)) {
-            if (cur.match(TokenType.AND)) {
-                return error("PostgreSQL MERGE action predicates are not supported by this slice", cur.fullPos());
+        Predicate condition = null;
+
+        if (cur.consumeIf(TokenType.AND)) {
+            var parsedCondition = ctx.parse(Predicate.class, cur);
+            if (parsedCondition.isError()) {
+                return error(parsedCondition);
             }
-            return error("Expected THEN after MERGE match branch", cur.fullPos());
+            condition = parsedCondition.value();
         }
         cur.expect("Expected THEN after MERGE match branch", TokenType.THEN);
 
@@ -64,6 +63,6 @@ public class MergeClauseParser extends io.sqm.parser.ansi.MergeClauseParser {
             return error("WHEN MATCHED clauses must use UPDATE or DELETE actions", cur.fullPos());
         }
 
-        return ok(MergeClause.of(matchType, action.value()));
+        return ok(MergeClause.of(matchType, condition, action.value()));
     }
 }

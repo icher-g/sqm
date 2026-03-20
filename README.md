@@ -186,7 +186,7 @@ System.out.println(sql);
 Supported PostgreSQL DML examples include:
 
 ```sql
-MERGE INTO users AS u USING incoming_users AS s ON u.id = s.id WHEN MATCHED THEN UPDATE SET name = s.name WHEN NOT MATCHED THEN INSERT (id, name) VALUES (s.id, s.name) RETURNING u.id
+MERGE INTO users AS u USING incoming_users AS s ON u.id = s.id WHEN MATCHED AND s.active = true THEN UPDATE SET name = s.name WHEN NOT MATCHED AND s.name IS NOT NULL THEN INSERT (id, name) VALUES (s.id, s.name) RETURNING u.id
 INSERT INTO users (name) VALUES ('alice') RETURNING id
 UPDATE users u SET name = src.name FROM source_users src WHERE u.id = src.id
 DELETE FROM users USING source_users src WHERE users.id = src.id

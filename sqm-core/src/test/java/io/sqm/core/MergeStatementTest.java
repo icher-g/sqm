@@ -23,14 +23,16 @@ class MergeStatementTest {
         var statement = merge(tbl("users"))
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
-            .whenMatchedUpdate(List.of(set("name", col("s", "name"))))
+            .whenMatchedUpdate(col("s", "active").eq(lit(true)), List.of(set("name", col("s", "name"))))
             .whenMatchedDelete()
-            .whenNotMatchedInsert(List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
+            .whenNotMatchedInsert(col("s", "name").isNotNull(), List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
             .result(inserted("id"))
             .build();
 
         assertEquals("users", statement.target().name().value());
         assertEquals(3, statement.clauses().size());
+        assertNotNull(statement.clauses().getFirst().condition());
+        assertNotNull(statement.clauses().get(2).condition());
         assertNotNull(statement.result());
     }
 
@@ -60,6 +62,17 @@ class MergeStatementTest {
             MergeClause.MatchType.NOT_MATCHED,
             MergeDeleteAction.of()
         ));
+    }
+
+    @Test
+    void mergeClause_preservesOptionalCondition() {
+        var clause = MergeClause.of(
+            MergeClause.MatchType.MATCHED,
+            col("s", "active").eq(lit(true)),
+            MergeDeleteAction.of()
+        );
+
+        assertNotNull(clause.condition());
     }
 
     @Test

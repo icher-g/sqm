@@ -42,44 +42,50 @@ public final class SqlServerMergeStatementValidationRule implements SchemaValida
             );
         }
 
-        boolean matchedUpdate = false;
-        boolean matchedDelete = false;
-        boolean notMatchedInsert = false;
+        var matchedClauses = node.clauses().stream()
+            .filter(clause -> clause.matchType() == MergeClause.MatchType.MATCHED)
+            .toList();
+        if (matchedClauses.size() > 2) {
+            context.addProblem(
+                ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
+                "SQL Server MERGE supports at most two WHEN MATCHED clauses",
+                node,
+                "merge.clause"
+            );
+        }
 
-        for (var clause : node.clauses()) {
-            if (clause.matchType() == MergeClause.MatchType.MATCHED && clause.action() instanceof MergeUpdateAction) {
-                if (matchedUpdate) {
-                    context.addProblem(
-                        ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
-                        "SQL Server MERGE supports at most one WHEN MATCHED THEN UPDATE clause in this slice",
-                        clause,
-                        "merge.clause"
-                    );
-                }
-                matchedUpdate = true;
+        if (matchedClauses.size() == 2) {
+            if (matchedClauses.getFirst().condition() == null) {
+                context.addProblem(
+                    ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
+                    "SQL Server MERGE requires the first WHEN MATCHED clause to include AND <search_condition> when two MATCHED clauses are present",
+                    matchedClauses.getFirst(),
+                    "merge.clause"
+                );
             }
-            else if (clause.matchType() == MergeClause.MatchType.MATCHED && clause.action() instanceof MergeDeleteAction) {
-                if (matchedDelete) {
-                    context.addProblem(
-                        ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
-                        "SQL Server MERGE supports at most one WHEN MATCHED THEN DELETE clause in this slice",
-                        clause,
-                        "merge.clause"
-                    );
-                }
-                matchedDelete = true;
+            var firstAction = matchedClauses.getFirst().action();
+            var secondAction = matchedClauses.get(1).action();
+            if ((firstAction instanceof MergeUpdateAction && secondAction instanceof MergeUpdateAction)
+                || (firstAction instanceof MergeDeleteAction && secondAction instanceof MergeDeleteAction)) {
+                context.addProblem(
+                    ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
+                    "SQL Server MERGE requires one UPDATE and one DELETE action when two WHEN MATCHED clauses are present",
+                    node,
+                    "merge.clause"
+                );
             }
-            else if (clause.matchType() == MergeClause.MatchType.NOT_MATCHED && clause.action() instanceof MergeInsertAction) {
-                if (notMatchedInsert) {
-                    context.addProblem(
-                        ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
-                        "SQL Server MERGE supports at most one WHEN NOT MATCHED THEN INSERT clause in this slice",
-                        clause,
-                        "merge.clause"
-                    );
-                }
-                notMatchedInsert = true;
-            }
+        }
+
+        long notMatchedInsertCount = node.clauses().stream()
+            .filter(clause -> clause.matchType() == MergeClause.MatchType.NOT_MATCHED && clause.action() instanceof MergeInsertAction)
+            .count();
+        if (notMatchedInsertCount > 1) {
+            context.addProblem(
+                ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
+                "SQL Server MERGE supports at most one WHEN NOT MATCHED THEN INSERT clause",
+                node,
+                "merge.clause"
+            );
         }
     }
 }

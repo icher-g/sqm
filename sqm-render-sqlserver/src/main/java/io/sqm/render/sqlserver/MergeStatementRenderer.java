@@ -40,29 +40,30 @@ public class MergeStatementRenderer extends io.sqm.render.ansi.MergeStatementRen
     }
 
     private void validate(MergeStatement node) {
-        boolean matchedUpdate = false;
-        boolean matchedDelete = false;
-        boolean notMatchedInsert = false;
+        var matchedClauses = node.clauses().stream()
+            .filter(clause -> clause.matchType() == MergeClause.MatchType.MATCHED)
+            .toList();
+        if (matchedClauses.size() > 2) {
+            throw new UnsupportedOperationException("SQL Server MERGE supports at most two WHEN MATCHED clauses");
+        }
 
-        for (MergeClause clause : node.clauses()) {
-            if (clause.matchType() == MergeClause.MatchType.MATCHED && clause.action() instanceof MergeUpdateAction) {
-                if (matchedUpdate) {
-                    throw new UnsupportedOperationException("SQL Server MERGE supports at most one WHEN MATCHED THEN UPDATE clause in this slice");
-                }
-                matchedUpdate = true;
+        if (matchedClauses.size() == 2) {
+            if (matchedClauses.getFirst().condition() == null) {
+                throw new UnsupportedOperationException("SQL Server MERGE requires the first WHEN MATCHED clause to include AND <search_condition> when two MATCHED clauses are present");
             }
-            else if (clause.matchType() == MergeClause.MatchType.MATCHED && clause.action() instanceof MergeDeleteAction) {
-                if (matchedDelete) {
-                    throw new UnsupportedOperationException("SQL Server MERGE supports at most one WHEN MATCHED THEN DELETE clause in this slice");
-                }
-                matchedDelete = true;
+            var firstAction = matchedClauses.getFirst().action();
+            var secondAction = matchedClauses.get(1).action();
+            if ((firstAction instanceof MergeUpdateAction && secondAction instanceof MergeUpdateAction)
+                || (firstAction instanceof MergeDeleteAction && secondAction instanceof MergeDeleteAction)) {
+                throw new UnsupportedOperationException("SQL Server MERGE requires one UPDATE and one DELETE action when two WHEN MATCHED clauses are present");
             }
-            else if (clause.matchType() == MergeClause.MatchType.NOT_MATCHED && clause.action() instanceof MergeInsertAction) {
-                if (notMatchedInsert) {
-                    throw new UnsupportedOperationException("SQL Server MERGE supports at most one WHEN NOT MATCHED THEN INSERT clause in this slice");
-                }
-                notMatchedInsert = true;
-            }
+        }
+
+        long notMatchedInsertCount = node.clauses().stream()
+            .filter(clause -> clause.matchType() == MergeClause.MatchType.NOT_MATCHED && clause.action() instanceof MergeInsertAction)
+            .count();
+        if (notMatchedInsertCount > 1) {
+            throw new UnsupportedOperationException("SQL Server MERGE supports at most one WHEN NOT MATCHED THEN INSERT clause");
         }
     }
 }

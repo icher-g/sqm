@@ -400,18 +400,18 @@ class SqmJavaEmitterTest {
         var mergeStatement = merge(tbl("users"))
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
-            .whenMatchedUpdate(java.util.List.of(set("name", col("s", "name"))))
-            .whenMatchedDelete()
-            .whenNotMatchedInsert(java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
+            .whenMatchedUpdate(col("s", "active").eq(lit(true)), java.util.List.of(set("name", col("s", "name"))))
+            .whenMatchedDelete(col("s", "deleted").eq(lit(true)))
+            .whenNotMatchedInsert(col("s", "name").isNotNull(), java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
             .build();
 
         var source = emitter.emitStatement(mergeStatement);
 
         assertTrue(source.contains("merge(tbl(\"users\"))"));
         assertTrue(source.contains(".source(tbl(\"src\").as(\"s\"))"));
-        assertTrue(source.contains(".whenMatchedUpdate(java.util.List.of("));
-        assertTrue(source.contains(".whenMatchedDelete()"));
-        assertTrue(source.contains(".whenNotMatchedInsert(java.util.List.of(id(\"id\"), id(\"name\")), row(col(\"s\", \"id\"), col(\"s\", \"name\")))"));
+        assertTrue(source.contains(".whenMatchedUpdate(col(\"s\", \"active\").eq(lit(true)), java.util.List.of("));
+        assertTrue(source.contains(".whenMatchedDelete(col(\"s\", \"deleted\").eq(lit(true)))"));
+        assertTrue(source.contains(".whenNotMatchedInsert(col(\"s\", \"name\").isNotNull(), java.util.List.of(id(\"id\"), id(\"name\")), row(col(\"s\", \"id\"), col(\"s\", \"name\")))"));
     }
 
     @Test

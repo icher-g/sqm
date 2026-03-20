@@ -19,9 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class MergeStatementParserTest {
 
@@ -34,8 +32,8 @@ class MergeStatementParserTest {
                 MERGE INTO users AS u
                 USING src_users AS s
                 ON u.id = s.id
-                WHEN MATCHED THEN UPDATE SET name = s.name
-                WHEN NOT MATCHED THEN INSERT (id, name) VALUES (s.id, s.name)
+                WHEN MATCHED AND s.active = true THEN UPDATE SET name = s.name
+                WHEN NOT MATCHED AND s.name IS NOT NULL THEN INSERT (id, name) VALUES (s.id, s.name)
                 RETURNING id
                 """
         );
@@ -43,6 +41,7 @@ class MergeStatementParserTest {
         assertTrue(result.ok(), result.errorMessage());
         assertEquals("users", result.value().target().name().value());
         assertEquals(2, result.value().clauses().size());
+        assertTrue(result.value().clauses().stream().allMatch(clause -> clause.condition() != null));
         assertEquals(1, result.value().result().items().size());
     }
 
@@ -83,7 +82,7 @@ class MergeStatementParserTest {
     }
 
     @Test
-    void rejectsActionPredicatesAndNotMatchedBySourceInFirstSlice() {
+    void parsesActionPredicatesAndRejectsNotMatchedBySourceInCurrentSlice() {
         var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
 
         var predicates = ctx.parse(
@@ -95,8 +94,8 @@ class MergeStatementParserTest {
             "MERGE users USING src ON users.id = src.id WHEN NOT MATCHED BY SOURCE THEN DELETE"
         );
 
-        assertTrue(predicates.isError());
-        assertTrue(Objects.requireNonNull(predicates.errorMessage()).contains("predicates"));
+        assertTrue(predicates.ok(), predicates.errorMessage());
+        assertNotNull(predicates.value().clauses().getFirst().condition());
         assertTrue(bySource.isError());
         assertTrue(Objects.requireNonNull(bySource.errorMessage()).contains("BY"));
     }
@@ -187,6 +186,19 @@ class MergeStatementParserTest {
         assertTrue(Objects.requireNonNull(invalidUpdate.errorMessage()).contains("assignment"));
         assertTrue(invalidInsert.isError());
         assertTrue(Objects.requireNonNull(invalidInsert.errorMessage()).contains("Expected"));
+    }
+
+    @Test
+    void parsesNotMatchedInsertWithPredicateAndNoColumnList() {
+        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
+        var result = ctx.parse(
+            MergeStatement.class,
+            "MERGE users USING src ON users.id = src.id WHEN NOT MATCHED AND src.id > 0 THEN INSERT VALUES (src.id)"
+        );
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertNotNull(result.value().clauses().getFirst().condition());
+        assertTrue(((MergeInsertAction) result.value().clauses().getFirst().action()).columns().isEmpty());
     }
 
     private static final class NoReturningPostgresSpecs implements Specs {

@@ -508,7 +508,7 @@ graph TD
   `DELETE [/*+ ... */] FROM <table> [USING ...] [WHERE ...]`, with optional optimizer hints stored as immutable hint strings.
 - **MergeStatement**
   `MERGE INTO <target> USING <source> ON <predicate> <clauses...> [result clause]`.
-  The current first slice models SQL Server-style `WHEN MATCHED THEN UPDATE`, `WHEN MATCHED THEN DELETE`, and `WHEN NOT MATCHED THEN INSERT ... VALUES (...)`.
+  The current shared slice models `WHEN MATCHED [AND ...] THEN UPDATE`, `WHEN MATCHED [AND ...] THEN DELETE`, and `WHEN NOT MATCHED [AND ...] THEN INSERT ... VALUES (...)`.
   More specialized branches and SQL Server options remain dialect-gated follow-up work.
 - **CteDef**
   CTE definition.
@@ -516,7 +516,7 @@ graph TD
 ### MERGE
 
 - **MergeClause**
-  One `WHEN ... THEN ...` branch inside a `MERGE` statement, pairing a match category with a concrete action.
+  One `WHEN ... THEN ...` branch inside a `MERGE` statement, pairing a match category with an optional clause predicate and a concrete action.
 - **MergeAction**
   Base type for actions executed by a `MERGE` clause.
   - **MergeUpdateAction** - `WHEN MATCHED THEN UPDATE SET ...`

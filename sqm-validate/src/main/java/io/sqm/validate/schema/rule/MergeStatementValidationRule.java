@@ -26,43 +26,8 @@ public final class MergeStatementValidationRule implements SchemaValidationRule<
 
     @Override
     public void validate(MergeStatement node, SchemaValidationContext context) {
-        boolean matchedUpdate = false;
-        boolean matchedDelete = false;
-        boolean notMatchedInsert = false;
-
         for (var clause : node.clauses()) {
-            if (clause.matchType() == MergeClause.MatchType.MATCHED && clause.action() instanceof MergeUpdateAction) {
-                if (matchedUpdate) {
-                    context.addProblem(
-                        ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
-                        "Duplicate WHEN MATCHED THEN UPDATE clause",
-                        clause,
-                        "merge.clause"
-                    );
-                }
-                matchedUpdate = true;
-            }
-            else if (clause.matchType() == MergeClause.MatchType.MATCHED && clause.action() instanceof MergeDeleteAction) {
-                if (matchedDelete) {
-                    context.addProblem(
-                        ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
-                        "Duplicate WHEN MATCHED THEN DELETE clause",
-                        clause,
-                        "merge.clause"
-                    );
-                }
-                matchedDelete = true;
-            }
-            else if (clause.matchType() == MergeClause.MatchType.NOT_MATCHED && clause.action() instanceof MergeInsertAction insertAction) {
-                if (notMatchedInsert) {
-                    context.addProblem(
-                        ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
-                        "Duplicate WHEN NOT MATCHED THEN INSERT clause",
-                        clause,
-                        "merge.clause"
-                    );
-                }
-                notMatchedInsert = true;
+            if (clause.matchType() == MergeClause.MatchType.NOT_MATCHED && clause.action() instanceof MergeInsertAction insertAction) {
                 validateInsertColumns(node, insertAction, context);
             }
         }

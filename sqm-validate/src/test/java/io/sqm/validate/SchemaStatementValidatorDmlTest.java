@@ -190,28 +190,36 @@ class SchemaStatementValidatorDmlTest {
     }
 
     @Test
-    void validate_reports_duplicate_generic_merge_clauses() {
+    void validate_allows_multiple_generic_merge_clauses_when_model_shape_is_valid() {
         var validator = SchemaStatementValidator.of(SCHEMA);
         var statement = merge(tbl("users").as("u"))
             .source(tbl("orders").as("o"))
             .on(col("u", "id").eq(col("o", "user_id")))
-            .whenMatchedDelete()
-            .whenMatchedDelete()
-            .whenNotMatchedInsert(java.util.List.of(id("id")), row(lit(1L)))
-            .whenNotMatchedInsert(java.util.List.of(id("id")), row(lit(2L)))
+            .whenMatchedDelete(col("o", "user_id").eq(lit(1L)))
+            .whenMatchedDelete(col("o", "user_id").eq(lit(2L)))
+            .whenNotMatchedInsert(col("o", "user_id").gt(lit(0L)), java.util.List.of(id("id")), row(lit(1L)))
+            .whenNotMatchedInsert(col("o", "user_id").gt(lit(10L)), java.util.List.of(id("id")), row(lit(2L)))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertTrue(result.ok(), result.problems().toString());
+    }
+
+    @Test
+    void validate_reports_merge_clause_condition_alias_errors() {
+        var validator = SchemaStatementValidator.of(SCHEMA);
+        var statement = merge(tbl("users").as("u"))
+            .source(tbl("orders").as("o"))
+            .on(col("u", "id").eq(col("o", "user_id")))
+            .whenMatchedDelete(col("missing", "state").eq(lit("closed")))
             .build();
 
         var result = validator.validate(statement);
 
         assertFalse(result.ok());
         assertTrue(result.problems().stream()
-            .anyMatch(problem -> problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
-                && "merge.clause".equals(problem.clausePath())
-                && problem.message().contains("DELETE")));
-        assertTrue(result.problems().stream()
-            .anyMatch(problem -> problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
-                && "merge.clause".equals(problem.clausePath())
-                && problem.message().contains("INSERT")));
+            .anyMatch(problem -> problem.code() == ValidationProblem.Code.UNKNOWN_TABLE_ALIAS));
     }
 }
 

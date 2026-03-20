@@ -105,6 +105,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
      */
     @Override
     public R visitMergeClause(MergeClause clause) {
+        accept(clause.condition());
         accept(clause.action());
         return defaultResult();
     }

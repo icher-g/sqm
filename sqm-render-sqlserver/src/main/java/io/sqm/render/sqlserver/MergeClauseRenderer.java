@@ -22,6 +22,9 @@ public class MergeClauseRenderer extends io.sqm.render.ansi.MergeClauseRenderer 
             w.space().append("NOT");
         }
         w.space().append("MATCHED");
+        if (node.condition() != null) {
+            w.space().append("AND").space().append(node.condition());
+        }
         w.space().append("THEN").space().append(node.action());
     }
 }

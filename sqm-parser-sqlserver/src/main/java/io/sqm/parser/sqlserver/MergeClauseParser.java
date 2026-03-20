@@ -37,11 +37,14 @@ public class MergeClauseParser extends io.sqm.parser.ansi.MergeClauseParser {
             matchType = MergeClause.MatchType.MATCHED;
         }
 
-        if (!cur.match(TokenType.THEN)) {
-            if (cur.match(TokenType.AND)) {
-                return error("SQL Server MERGE action predicates are not supported yet", cur.fullPos());
+        Predicate condition = null;
+
+        if (cur.consumeIf(TokenType.AND)) {
+            var parsedCondition = ctx.parse(Predicate.class, cur);
+            if (parsedCondition.isError()) {
+                return error(parsedCondition);
             }
-            return error("Expected THEN after MERGE match branch", cur.fullPos());
+            condition = parsedCondition.value();
         }
         cur.expect("Expected THEN after MERGE match branch", TokenType.THEN);
 
@@ -60,6 +63,6 @@ public class MergeClauseParser extends io.sqm.parser.ansi.MergeClauseParser {
             return error("WHEN MATCHED clauses must use UPDATE or DELETE actions", cur.fullPos());
         }
 
-        return ok(MergeClause.of(matchType, action.value()));
+        return ok(MergeClause.of(matchType, condition, action.value()));
     }
 }
