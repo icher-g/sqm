@@ -185,6 +185,30 @@ class MergeStatementTest {
     }
 
     @Test
+    void builder_supportsRawClauseTopLongAndResultOverloads() {
+        var statement = MergeStatement.builder(tbl("users"))
+            .target(tbl("users").as("u"))
+            .source(tbl("src").as("s"))
+            .on(col("u", "id").eq(col("s", "id")))
+            .top(5L)
+            .clause(MergeClause.of(MergeClause.MatchType.MATCHED, MergeDeleteAction.of()))
+            .result(java.util.List.of(ResultItem.expr(inserted("id"))))
+            .build();
+        var intoStatement = MergeStatement.builder(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .result(ResultInto.of(tbl("audit"), List.of(id("user_id"))), inserted("id"))
+            .build();
+
+        assertEquals("u", statement.target().alias().value());
+        assertEquals(5L, ((LiteralExpr) statement.topSpec().count()).value());
+        assertNotNull(statement.result());
+        assertNotNull(intoStatement.result());
+        assertNotNull(intoStatement.result().into());
+    }
+
+    @Test
     void mergeUpdateAction_requiresAssignments() {
         assertThrows(IllegalArgumentException.class, () -> MergeUpdateAction.of(List.of()));
     }

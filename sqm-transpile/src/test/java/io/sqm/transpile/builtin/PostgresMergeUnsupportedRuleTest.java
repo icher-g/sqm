@@ -33,7 +33,9 @@ class PostgresMergeUnsupportedRuleTest {
         Statement statement = Dsl.merge("users")
             .source(Dsl.tbl("src").as("s"))
             .on(Dsl.col("users", "id").eq(Dsl.col("s", "id")))
-            .whenMatchedDelete()
+            .whenMatchedDoNothing()
+            .whenNotMatchedBySourceDoNothing(Dsl.col("users", "active").eq(Dsl.lit(true)))
+            .result(Dsl.col("users", "id").toSelectItem())
             .build();
 
         var result = new PostgresMergeUnsupportedRule().apply(statement, context(SqlDialectId.POSTGRESQL, SqlDialectId.SQLSERVER));

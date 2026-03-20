@@ -254,5 +254,23 @@ class SchemaStatementValidatorDmlTest {
         assertTrue(result.problems().stream()
             .anyMatch(problem -> "merge.top".equals(problem.clausePath())));
     }
+
+    @Test
+    void validate_reports_nonNumeric_merge_top_expression() {
+        var validator = SchemaStatementValidator.of(SCHEMA);
+        var statement = merge(tbl("users").as("u"))
+            .source(tbl("orders").as("o"))
+            .on(col("u", "id").eq(col("o", "user_id")))
+            .top(top(lit("bad")))
+            .whenMatchedDelete()
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(problem -> problem.code() == ValidationProblem.Code.LIMIT_OFFSET_INVALID
+                && "merge.top".equals(problem.clausePath())));
+    }
 }
 

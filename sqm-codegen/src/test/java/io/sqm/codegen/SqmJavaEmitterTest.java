@@ -466,6 +466,21 @@ class SqmJavaEmitterTest {
     }
 
     @Test
+    void emitStatement_coversMergeTopSpecAndVarargBySourceUpdateVariants() {
+        var mergeStatement = merge(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .top(TopSpec.of(lit(10), true, true))
+            .whenNotMatchedBySourceUpdate(set("name", lit("archived")))
+            .build();
+
+        var source = emitter.emitStatement(mergeStatement);
+
+        assertTrue(source.contains(".top(TopSpec.of(lit(10), true, true))"));
+        assertTrue(source.contains(".whenNotMatchedBySourceUpdate(set(id(\"name\"), lit(\"archived\")))"));
+    }
+
+    @Test
     void emitQuery_covers_remaining_window_distinct_and_limit_variants() {
         var baseFrameOnly = emitter.emitQuery(
             select(func("f").over(over("base", rows(currentRow())))).from(tbl("t")).build()
