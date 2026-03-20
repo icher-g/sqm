@@ -1,6 +1,9 @@
 package io.sqm.parser.postgresql;
 
+import io.sqm.core.MergeClause;
+import io.sqm.core.MergeInsertAction;
 import io.sqm.core.MergeStatement;
+import io.sqm.core.MergeUpdateAction;
 import io.sqm.core.Statement;
 import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectVersion;
@@ -96,6 +99,94 @@ class MergeStatementParserTest {
         assertTrue(Objects.requireNonNull(predicates.errorMessage()).contains("predicates"));
         assertTrue(bySource.isError());
         assertTrue(Objects.requireNonNull(bySource.errorMessage()).contains("BY"));
+    }
+
+    @Test
+    void rejectsMergeWithoutClausesAndWhenAfterReturning() {
+        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
+
+        var noClauses = ctx.parse(
+            MergeStatement.class,
+            "MERGE users USING src ON users.id = src.id"
+        );
+        var whenAfterReturning = ctx.parse(
+            MergeStatement.class,
+            "MERGE users USING src ON users.id = src.id WHEN MATCHED THEN DELETE RETURNING id WHEN MATCHED THEN DELETE"
+        );
+
+        assertTrue(noClauses.isError());
+        assertTrue(Objects.requireNonNull(noClauses.errorMessage()).contains("at least one MERGE clause"));
+        assertTrue(whenAfterReturning.isError());
+        assertTrue(Objects.requireNonNull(whenAfterReturning.errorMessage()).contains("Duplicate or unsupported"));
+    }
+
+    @Test
+    void parsesClauseAndActionsForCoveredFirstSliceShapes() {
+        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
+
+        var matchedUpdate = ctx.parse(
+            MergeClause.class,
+            "WHEN MATCHED THEN UPDATE SET name = src.name"
+        );
+        var notMatchedInsert = ctx.parse(
+            MergeClause.class,
+            "WHEN NOT MATCHED THEN INSERT VALUES (src.id)"
+        );
+        var updateAction = ctx.parse(
+            MergeUpdateAction.class,
+            "UPDATE SET name = src.name, email = src.email"
+        );
+        var insertAction = ctx.parse(
+            MergeInsertAction.class,
+            "INSERT VALUES (src.id, src.name)"
+        );
+
+        assertTrue(matchedUpdate.ok(), matchedUpdate.errorMessage());
+        assertEquals(MergeClause.MatchType.MATCHED, matchedUpdate.value().matchType());
+        assertTrue(notMatchedInsert.ok(), notMatchedInsert.errorMessage());
+        assertEquals(MergeClause.MatchType.NOT_MATCHED, notMatchedInsert.value().matchType());
+        assertTrue(updateAction.ok(), updateAction.errorMessage());
+        assertEquals(2, updateAction.value().assignments().size());
+        assertTrue(insertAction.ok(), insertAction.errorMessage());
+        assertTrue(insertAction.value().columns().isEmpty());
+        assertEquals(2, insertAction.value().values().items().size());
+    }
+
+    @Test
+    void rejectsInvalidClauseShapesAndMalformedActions() {
+        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
+
+        var missingThen = ctx.parse(
+            MergeClause.class,
+            "WHEN MATCHED DELETE"
+        );
+        var matchedInsert = ctx.parse(
+            MergeClause.class,
+            "WHEN MATCHED THEN INSERT VALUES (src.id)"
+        );
+        var notMatchedDelete = ctx.parse(
+            MergeClause.class,
+            "WHEN NOT MATCHED THEN DELETE"
+        );
+        var invalidUpdate = ctx.parse(
+            MergeUpdateAction.class,
+            "UPDATE SET"
+        );
+        var invalidInsert = ctx.parse(
+            MergeInsertAction.class,
+            "INSERT VALUES src.id"
+        );
+
+        assertTrue(missingThen.isError());
+        assertTrue(Objects.requireNonNull(missingThen.errorMessage()).contains("Expected THEN"));
+        assertTrue(matchedInsert.isError());
+        assertTrue(Objects.requireNonNull(matchedInsert.errorMessage()).contains("cannot use INSERT"));
+        assertTrue(notMatchedDelete.isError());
+        assertTrue(Objects.requireNonNull(notMatchedDelete.errorMessage()).contains("must use INSERT"));
+        assertTrue(invalidUpdate.isError());
+        assertTrue(Objects.requireNonNull(invalidUpdate.errorMessage()).contains("assignment"));
+        assertTrue(invalidInsert.isError());
+        assertTrue(Objects.requireNonNull(invalidInsert.errorMessage()).contains("Expected"));
     }
 
     private static final class NoReturningPostgresSpecs implements Specs {
