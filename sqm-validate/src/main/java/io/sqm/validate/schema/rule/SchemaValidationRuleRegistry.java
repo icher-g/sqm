@@ -77,6 +77,7 @@ public final class SchemaValidationRuleRegistry {
             new OrderByOrdinalValidationRule(),
             new CompositeOrderByOrdinalValidationRule(projectionShapeInspector),
             new TopSpecValidationRule(scalarSubqueryShapeValidator),
+            new MergeTopSpecValidationRule(scalarSubqueryShapeValidator),
             new LimitOffsetValidationRule(scalarSubqueryShapeValidator),
             new CompositeLimitOffsetValidationRule(scalarSubqueryShapeValidator),
             new GroupByOrdinalValidationRule(),

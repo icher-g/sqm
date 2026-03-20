@@ -352,8 +352,11 @@ class SqlServerValidationDialectTest {
         var mergeStatement = merge(tbl("users").withHoldLock())
             .source(tbl("users").as("s").withUpdLock())
             .on(col("users", "id").eq(col("s", "id")))
+            .top(topPercent(lit(10L)))
             .whenMatchedUpdate(col("s", "updated_at").isNotNull(), java.util.List.of(set("users", "name", col("s", "name"))))
+            .whenNotMatchedBySourceDelete(col("users", "updated_at").isNotNull())
             .whenNotMatchedInsert(java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
+            .result(deleted("id"), inserted("id"))
             .build();
 
         var result = validator.validate(mergeStatement);
@@ -362,14 +365,14 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
-    void validate_reportsUnsupportedSqlServerMergeExtensions() {
+    void validate_reportsSqlServerMergeClauseConflictsAndOutputIntoTargetHints() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var mergeStatement = merge("users")
             .source(tbl("users").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
             .whenMatchedUpdate(java.util.List.of(set("users", "name", col("s", "name"))))
             .whenMatchedDelete()
-            .result(inserted("id"))
+            .result(resultInto(tbl("audit").withNoLock(), "user_id"), inserted("id"))
             .build();
 
         var result = validator.validate(mergeStatement);
@@ -382,7 +385,7 @@ class SqlServerValidationDialectTest {
         assertTrue(result.problems().stream().anyMatch(problem ->
             problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
                 && "merge.result".equals(problem.clausePath())
-                && problem.message().contains("OUTPUT")
+                && problem.message().contains("OUTPUT INTO")
         ));
     }
 
@@ -437,6 +440,62 @@ class SqlServerValidationDialectTest {
             problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
                 && "merge.clause".equals(problem.clausePath())
                 && problem.message().contains("at most two WHEN MATCHED")
+        ));
+    }
+
+    @Test
+    void validate_reportsSqlServerMergeBySourceClauseConflicts() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var mergeStatement = merge("users")
+            .source(tbl("users").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenNotMatchedBySourceDelete()
+            .whenNotMatchedBySourceUpdate(java.util.List.of(set("users", "name", col("s", "name"))))
+            .build();
+
+        var result = validator.validate(mergeStatement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "merge.clause".equals(problem.clausePath())
+                && problem.message().contains("first WHEN NOT MATCHED BY SOURCE")
+        ));
+    }
+
+    @Test
+    void validate_reportsSqlServerMergeDoNothingAsUnsupported() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var mergeStatement = merge("users")
+            .source(tbl("users").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDoNothing()
+            .build();
+
+        var result = validator.validate(mergeStatement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "merge.clause".equals(problem.clausePath())
+                && problem.message().contains("DO NOTHING")
+        ));
+    }
+
+    @Test
+    void validate_reportsSqlServerMergeTopWithTiesAsInvalid() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var mergeStatement = merge("users")
+            .source(tbl("users").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .top(topWithTies(lit(5L)))
+            .whenMatchedDelete()
+            .build();
+
+        var result = validator.validate(mergeStatement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "merge.top".equals(problem.clausePath())
+                && problem.message().contains("WITH TIES")
         ));
     }
 

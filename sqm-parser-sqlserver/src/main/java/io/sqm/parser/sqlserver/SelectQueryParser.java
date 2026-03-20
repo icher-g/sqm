@@ -1,10 +1,8 @@
 package io.sqm.parser.sqlserver;
 
-import io.sqm.core.Expression;
 import io.sqm.core.SelectQueryBuilder;
 import io.sqm.core.TopSpec;
 import io.sqm.parser.core.Cursor;
-import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
@@ -88,28 +86,6 @@ public class SelectQueryParser extends io.sqm.parser.ansi.SelectQueryParser {
     }
 
     private ParseResult<TopSpec> parseTopClause(Cursor cur, ParseContext ctx) {
-        if (!cur.consumeIf(TokenType.TOP)) {
-            return ok(null);
-        }
-
-        var parenthesized = cur.consumeIf(TokenType.LPAREN);
-        var expr = ctx.parse(Expression.class, cur);
-        if (expr.isError()) {
-            return error(expr);
-        }
-        var count = expr.value();
-        if (parenthesized) {
-            cur.expect("Expected ')' to close TOP expression", TokenType.RPAREN);
-        }
-
-        var percent = cur.consumeIf(TokenType.PERCENT);
-
-        boolean withTies = false;
-        if (cur.consumeIf(TokenType.WITH)) {
-            cur.expect("Expected TIES after WITH in TOP clause", TokenType.TIES);
-            withTies = true;
-        }
-
-        return ok(TopSpec.of(count, percent, withTies));
+        return SqlServerTopSpecParserSupport.parseTopClause(cur, ctx, true, "TOP WITH TIES requires ORDER BY in SQL Server");
     }
 }

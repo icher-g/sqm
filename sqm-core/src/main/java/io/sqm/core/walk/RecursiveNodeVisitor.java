@@ -92,6 +92,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         accept(statement.target());
         accept(statement.source());
         accept(statement.on());
+        accept(statement.topSpec());
         statement.clauses().forEach(this::accept);
         accept(statement.result());
         return defaultResult();
@@ -130,6 +131,17 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
      */
     @Override
     public R visitMergeDeleteAction(MergeDeleteAction action) {
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link MergeDoNothingAction}.
+     *
+     * @param action merge-do-nothing action being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitMergeDoNothingAction(MergeDoNothingAction action) {
         return defaultResult();
     }
 

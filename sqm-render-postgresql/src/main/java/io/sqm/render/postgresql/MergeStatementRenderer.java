@@ -24,6 +24,10 @@ public class MergeStatementRenderer extends io.sqm.render.ansi.MergeStatementRen
             throw new UnsupportedDialectFeatureException("MERGE", ctx.dialect().name());
         }
 
+        if (node.topSpec() != null) {
+            throw new UnsupportedDialectFeatureException("MERGE TOP", ctx.dialect().name());
+        }
+
         w.append("MERGE INTO").space().append(node.target());
         w.space().append("USING").space().append(node.source());
         w.space().append("ON").space().append(node.on());

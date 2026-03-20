@@ -66,7 +66,7 @@ public non-sealed interface MergeClause extends Node {
     }
 
     /**
-     * Supported MERGE match branches in the first implementation slice.
+     * Supported MERGE match branches in the shared implementation slices.
      */
     enum MatchType {
         /**
@@ -76,7 +76,11 @@ public non-sealed interface MergeClause extends Node {
         /**
          * {@code WHEN NOT MATCHED}.
          */
-        NOT_MATCHED
+        NOT_MATCHED,
+        /**
+         * {@code WHEN NOT MATCHED BY SOURCE}.
+         */
+        NOT_MATCHED_BY_SOURCE
     }
 
     /**
@@ -93,12 +97,23 @@ public non-sealed interface MergeClause extends Node {
         public Impl {
             Objects.requireNonNull(matchType, "matchType");
             Objects.requireNonNull(action, "action");
-            if (matchType == MatchType.MATCHED && action instanceof MergeInsertAction) {
-                throw new IllegalArgumentException("MATCHED merge clauses cannot use INSERT actions");
+            if ((matchType == MatchType.MATCHED || matchType == MatchType.NOT_MATCHED_BY_SOURCE)
+                && action instanceof MergeInsertAction) {
+                throw new IllegalArgumentException(renderMatchType(matchType) + " merge clauses cannot use INSERT actions");
             }
-            if (matchType == MatchType.NOT_MATCHED && !(action instanceof MergeInsertAction)) {
-                throw new IllegalArgumentException("NOT MATCHED merge clauses require an INSERT action");
+            if (matchType == MatchType.NOT_MATCHED
+                && !(action instanceof MergeInsertAction)
+                && !(action instanceof MergeDoNothingAction)) {
+                throw new IllegalArgumentException(renderMatchType(matchType) + " merge clauses require an INSERT or DO NOTHING action");
             }
+        }
+
+        private static String renderMatchType(MatchType matchType) {
+            return switch (matchType) {
+                case MATCHED -> "MATCHED";
+                case NOT_MATCHED -> "NOT MATCHED";
+                case NOT_MATCHED_BY_SOURCE -> "NOT MATCHED BY SOURCE";
+            };
         }
     }
 }

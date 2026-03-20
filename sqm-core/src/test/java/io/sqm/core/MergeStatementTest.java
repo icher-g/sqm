@@ -12,6 +12,8 @@ import static io.sqm.dsl.Dsl.merge;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.topPercent;
+import static io.sqm.dsl.Dsl.topWithTies;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MergeStatementTest {
@@ -59,6 +61,11 @@ class MergeStatementTest {
         assertThrows(IllegalArgumentException.class, () -> MergeClause.of(
             MergeClause.MatchType.NOT_MATCHED,
             MergeDeleteAction.of()
+        ));
+
+        assertThrows(IllegalArgumentException.class, () -> MergeClause.of(
+            MergeClause.MatchType.NOT_MATCHED_BY_SOURCE,
+            MergeInsertAction.of(List.of(id("id")), row(lit(1L)))
         ));
     }
 
@@ -118,6 +125,63 @@ class MergeStatementTest {
         assertEquals(2, ((MergeInsertAction) statement.clauses().get(2).action()).values().items().size());
         assertNotNull(statement.clauses().get(1).condition());
         assertNotNull(statement.clauses().get(2).condition());
+    }
+
+    @Test
+    void builder_supportsNotMatchedBySourceBranches() {
+        var statement = merge(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenNotMatchedBySourceUpdate(
+                col("users", "active").eq(lit(true)),
+                set("name", lit("archived"))
+            )
+            .whenNotMatchedBySourceDelete()
+            .build();
+
+        assertEquals(MergeClause.MatchType.NOT_MATCHED_BY_SOURCE, statement.clauses().getFirst().matchType());
+        assertInstanceOf(MergeUpdateAction.class, statement.clauses().getFirst().action());
+        assertEquals(MergeClause.MatchType.NOT_MATCHED_BY_SOURCE, statement.clauses().get(1).matchType());
+        assertInstanceOf(MergeDeleteAction.class, statement.clauses().get(1).action());
+    }
+
+    @Test
+    void builder_supportsDoNothingBranches() {
+        var statement = merge(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDoNothing(col("s", "active").eq(lit(true)))
+            .whenNotMatchedDoNothing()
+            .whenNotMatchedBySourceDoNothing(col("users", "name").isNotNull())
+            .build();
+
+        assertInstanceOf(MergeDoNothingAction.class, statement.clauses().get(0).action());
+        assertEquals(MergeClause.MatchType.NOT_MATCHED, statement.clauses().get(1).matchType());
+        assertInstanceOf(MergeDoNothingAction.class, statement.clauses().get(1).action());
+        assertEquals(MergeClause.MatchType.NOT_MATCHED_BY_SOURCE, statement.clauses().get(2).matchType());
+        assertInstanceOf(MergeDoNothingAction.class, statement.clauses().get(2).action());
+    }
+
+    @Test
+    void builder_supportsMergeTopVariants() {
+        var statement = merge(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .top(topPercent(lit(10L)))
+            .whenMatchedDelete()
+            .build();
+        var withTies = merge(tbl("users"))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .top(topWithTies(lit(5L)))
+            .whenMatchedDelete()
+            .build();
+
+        assertNotNull(statement.topSpec());
+        assertTrue(statement.topSpec().percent());
+        assertFalse(statement.topSpec().withTies());
+        assertNotNull(withTies.topSpec());
+        assertTrue(withTies.topSpec().withTies());
     }
 
     @Test

@@ -17,14 +17,6 @@ public class MergeClauseRenderer extends io.sqm.render.ansi.MergeClauseRenderer 
 
     @Override
     public void render(MergeClause node, RenderContext ctx, SqlWriter w) {
-        w.append("WHEN");
-        if (node.matchType() == MergeClause.MatchType.NOT_MATCHED) {
-            w.space().append("NOT");
-        }
-        w.space().append("MATCHED");
-        if (node.condition() != null) {
-            w.space().append("AND").space().append(node.condition());
-        }
-        w.space().append("THEN").space().append(node.action());
+        renderSupportedClause(node, w);
     }
 }

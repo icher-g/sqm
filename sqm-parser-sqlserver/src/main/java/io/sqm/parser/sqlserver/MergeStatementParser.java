@@ -9,6 +9,7 @@ import io.sqm.core.Predicate;
 import io.sqm.core.ResultClause;
 import io.sqm.core.Table;
 import io.sqm.core.TableRef;
+import io.sqm.core.TopSpec;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -38,8 +39,10 @@ public class MergeStatementParser extends io.sqm.parser.ansi.MergeStatementParse
         if (!ctx.capabilities().supports(SqlFeature.MERGE_STATEMENT)) {
             return error("MERGE is not supported by this dialect", cur.fullPos());
         }
-        if (cur.match(TokenType.TOP)) {
-            return error("SQL Server MERGE TOP is not supported yet", cur.fullPos());
+
+        var topSpec = parseTopClause(cur, ctx);
+        if (topSpec.isError()) {
+            return error(topSpec);
         }
 
         cur.consumeIf(TokenType.INTO);
@@ -66,15 +69,30 @@ public class MergeStatementParser extends io.sqm.parser.ansi.MergeStatementParse
             return error(clauses);
         }
 
+        ResultClause result = null;
+
         if (cur.match(TokenType.OUTPUT)) {
-            return error("SQL Server MERGE OUTPUT is not supported yet", cur.fullPos());
+            var parsedResult = ctx.parse(ResultClause.class, cur);
+            if (parsedResult.isError()) {
+                return error(parsedResult);
+            }
+            result = parsedResult.value();
         }
+
         if (cur.match(TokenType.WHEN)) {
             return error("Duplicate or unsupported SQL Server MERGE clause ordering", cur.fullPos());
         }
 
-        ResultClause result = null;
-        return ok(MergeStatement.of(target.value(), source.value(), on.value(), clauses.value(), result));
+        return ok(MergeStatement.of(target.value(), source.value(), on.value(), topSpec.value(), clauses.value(), result));
+    }
+
+    private ParseResult<TopSpec> parseTopClause(Cursor cur, ParseContext ctx) {
+        return SqlServerTopSpecParserSupport.parseTopClause(
+            cur,
+            ctx,
+            false,
+            "SQL Server MERGE TOP does not support WITH TIES"
+        );
     }
 
     private ParseResult<List<MergeClause>> parseClauses(Cursor cur, ParseContext ctx) {
@@ -86,6 +104,7 @@ public class MergeStatementParser extends io.sqm.parser.ansi.MergeStatementParse
             }
             clauses.add(clause.value());
         }
+
         if (clauses.isEmpty()) {
             return error("Expected at least one MERGE clause", cur.fullPos());
         }
@@ -93,28 +112,56 @@ public class MergeStatementParser extends io.sqm.parser.ansi.MergeStatementParse
         var matchedClauses = clauses.stream()
             .filter(clause -> clause.matchType() == MergeClause.MatchType.MATCHED)
             .toList();
+
         if (matchedClauses.size() > 2) {
             return error("SQL Server MERGE supports at most two WHEN MATCHED clauses", cur.fullPos());
         }
 
         if (matchedClauses.size() == 2) {
-            if (matchedClauses.getFirst().condition() == null) {
-                return error("SQL Server MERGE requires the first WHEN MATCHED clause to include AND <search_condition> when two MATCHED clauses are present", cur.fullPos());
-            }
-            var firstAction = matchedClauses.getFirst().action();
-            var secondAction = matchedClauses.get(1).action();
-            if ((firstAction instanceof MergeUpdateAction && secondAction instanceof MergeUpdateAction)
-                || (firstAction instanceof MergeDeleteAction && secondAction instanceof MergeDeleteAction)) {
-                return error("SQL Server MERGE requires one UPDATE and one DELETE action when two WHEN MATCHED clauses are present", cur.fullPos());
+            var validation = validateDualUpdateDeleteClauses(matchedClauses, "WHEN MATCHED", cur);
+            if (validation.isError()) {
+                return validation;
             }
         }
 
         long notMatchedInsertCount = clauses.stream()
             .filter(clause -> clause.matchType() == MergeClause.MatchType.NOT_MATCHED && clause.action() instanceof MergeInsertAction)
             .count();
+
         if (notMatchedInsertCount > 1) {
             return error("SQL Server MERGE supports at most one WHEN NOT MATCHED THEN INSERT clause", cur.fullPos());
         }
+
+        var notMatchedBySourceClauses = clauses.stream()
+            .filter(clause -> clause.matchType() == MergeClause.MatchType.NOT_MATCHED_BY_SOURCE)
+            .toList();
+
+        if (notMatchedBySourceClauses.size() > 2) {
+            return error("SQL Server MERGE supports at most two WHEN NOT MATCHED BY SOURCE clauses", cur.fullPos());
+        }
+
+        if (notMatchedBySourceClauses.size() == 2) {
+            var validation = validateDualUpdateDeleteClauses(notMatchedBySourceClauses, "WHEN NOT MATCHED BY SOURCE", cur);
+            if (validation.isError()) {
+                return validation;
+            }
+        }
         return ok(List.copyOf(clauses));
+    }
+
+    private ParseResult<List<MergeClause>> validateDualUpdateDeleteClauses(List<MergeClause> clauses, String label, Cursor cur) {
+        if (clauses.getFirst().condition() == null) {
+            return error("SQL Server MERGE requires the first " + label + " clause to include AND <search_condition> when two "
+                + label + " clauses are present", cur.fullPos());
+        }
+
+        var firstAction = clauses.getFirst().action();
+        var secondAction = clauses.get(1).action();
+
+        if ((firstAction instanceof MergeUpdateAction && secondAction instanceof MergeUpdateAction)
+            || (firstAction instanceof MergeDeleteAction && secondAction instanceof MergeDeleteAction)) {
+            return error("SQL Server MERGE requires one UPDATE and one DELETE action when two " + label + " clauses are present", cur.fullPos());
+        }
+        return ok(clauses);
     }
 }

@@ -517,6 +517,10 @@ public enum TokenType {
      */
     MATCHED,
     /**
+     * SOURCE keyword token.
+     */
+    SOURCE,
+    /**
      * TRUNCATE keyword token.
      */
     TRUNCATE,

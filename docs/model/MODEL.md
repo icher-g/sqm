@@ -507,8 +507,9 @@ graph TD
 - **DeleteStatement**
   `DELETE [/*+ ... */] FROM <table> [USING ...] [WHERE ...]`, with optional optimizer hints stored as immutable hint strings.
 - **MergeStatement**
-  `MERGE INTO <target> USING <source> ON <predicate> <clauses...> [result clause]`.
-  The current shared slice models `WHEN MATCHED [AND ...] THEN UPDATE`, `WHEN MATCHED [AND ...] THEN DELETE`, and `WHEN NOT MATCHED [AND ...] THEN INSERT ... VALUES (...)`.
+  `MERGE [TOP (...)] INTO <target> USING <source> ON <predicate> <clauses...> [result clause]`.
+  The current shared slice models `WHEN MATCHED [AND ...] THEN UPDATE|DELETE`, `WHEN NOT MATCHED [AND ...] THEN INSERT ... VALUES (...)`, and `WHEN NOT MATCHED BY SOURCE [AND ...] THEN UPDATE|DELETE`.
+  PostgreSQL additionally supports `DO NOTHING` for all three MERGE branch families.
   More specialized branches and SQL Server options remain dialect-gated follow-up work.
 - **CteDef**
   CTE definition.
@@ -521,6 +522,7 @@ graph TD
   Base type for actions executed by a `MERGE` clause.
   - **MergeUpdateAction** - `WHEN MATCHED THEN UPDATE SET ...`
   - **MergeDeleteAction** - `WHEN MATCHED THEN DELETE`
+  - **MergeDoNothingAction** - `WHEN ... THEN DO NOTHING`
   - **MergeInsertAction** - `WHEN NOT MATCHED THEN INSERT ... VALUES (...)`
 
 ---

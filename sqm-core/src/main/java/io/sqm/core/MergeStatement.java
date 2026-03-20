@@ -17,12 +17,13 @@ public non-sealed interface MergeStatement extends Statement {
      * @param target merge target table
      * @param source merge source relation
      * @param on merge join predicate
+     * @param topSpec optional top specification
      * @param clauses merge clauses
      * @param result optional result clause
      * @return immutable merge statement
      */
-    static MergeStatement of(Table target, TableRef source, Predicate on, List<MergeClause> clauses, ResultClause result) {
-        return new Impl(target, source, on, clauses, result);
+    static MergeStatement of(Table target, TableRef source, Predicate on, TopSpec topSpec, List<MergeClause> clauses, ResultClause result) {
+        return new Impl(target, source, on, topSpec, clauses, result);
     }
 
     /**
@@ -55,6 +56,13 @@ public non-sealed interface MergeStatement extends Statement {
      * @return merge join predicate
      */
     Predicate on();
+
+    /**
+     * Returns the optional merge top specification.
+     *
+     * @return top specification or {@code null}
+     */
+    TopSpec topSpec();
 
     /**
      * Returns merge clauses in source order.
@@ -90,6 +98,7 @@ public non-sealed interface MergeStatement extends Statement {
         private Table target;
         private TableRef source;
         private Predicate on;
+        private TopSpec topSpec;
         private ResultClause result;
 
         /**
@@ -132,6 +141,37 @@ public non-sealed interface MergeStatement extends Statement {
         public Builder on(Predicate on) {
             this.on = Objects.requireNonNull(on, "on");
             return this;
+        }
+
+        /**
+         * Sets the optional merge top specification.
+         *
+         * @param topSpec top specification or {@code null}
+         * @return this builder
+         */
+        public Builder top(TopSpec topSpec) {
+            this.topSpec = topSpec;
+            return this;
+        }
+
+        /**
+         * Sets a plain {@code TOP (<count>)} specification.
+         *
+         * @param count top-count expression
+         * @return this builder
+         */
+        public Builder top(Expression count) {
+            return top(TopSpec.of(count));
+        }
+
+        /**
+         * Sets a plain {@code TOP (<count>)} specification.
+         *
+         * @param count top-count literal value
+         * @return this builder
+         */
+        public Builder top(long count) {
+            return top(Expression.literal(count));
         }
 
         /**
@@ -209,6 +249,25 @@ public non-sealed interface MergeStatement extends Statement {
         }
 
         /**
+         * Appends a {@code WHEN MATCHED THEN DO NOTHING} clause.
+         *
+         * @return this builder
+         */
+        public Builder whenMatchedDoNothing() {
+            return whenMatchedDoNothing(null);
+        }
+
+        /**
+         * Appends a {@code WHEN MATCHED AND ... THEN DO NOTHING} clause.
+         *
+         * @param condition optional clause predicate
+         * @return this builder
+         */
+        public Builder whenMatchedDoNothing(Predicate condition) {
+            return clause(MergeClause.of(MergeClause.MatchType.MATCHED, condition, MergeDoNothingAction.of()));
+        }
+
+        /**
          * Appends a {@code WHEN NOT MATCHED THEN INSERT ... VALUES (...)} clause.
          *
          * @param columns target columns, or empty when omitted
@@ -253,6 +312,25 @@ public non-sealed interface MergeStatement extends Statement {
         }
 
         /**
+         * Appends a {@code WHEN NOT MATCHED THEN DO NOTHING} clause.
+         *
+         * @return this builder
+         */
+        public Builder whenNotMatchedDoNothing() {
+            return whenNotMatchedDoNothing(null);
+        }
+
+        /**
+         * Appends a {@code WHEN NOT MATCHED AND ... THEN DO NOTHING} clause.
+         *
+         * @param condition optional clause predicate
+         * @return this builder
+         */
+        public Builder whenNotMatchedDoNothing(Predicate condition) {
+            return clause(MergeClause.of(MergeClause.MatchType.NOT_MATCHED, condition, MergeDoNothingAction.of()));
+        }
+
+        /**
          * Appends a {@code WHEN NOT MATCHED THEN INSERT ... VALUES (...)} clause.
          *
          * @param columns target columns
@@ -275,6 +353,88 @@ public non-sealed interface MergeStatement extends Statement {
         public Builder whenNotMatchedInsert(Predicate condition, List<Identifier> columns, List<Expression> values) {
             Objects.requireNonNull(values, "values");
             return whenNotMatchedInsert(condition, columns, RowExpr.of(values));
+        }
+
+        /**
+         * Appends a {@code WHEN NOT MATCHED BY SOURCE THEN UPDATE SET ...} clause.
+         *
+         * @param assignments update assignments
+         * @return this builder
+         */
+        public Builder whenNotMatchedBySourceUpdate(List<Assignment> assignments) {
+            return whenNotMatchedBySourceUpdate(null, assignments);
+        }
+
+        /**
+         * Appends a {@code WHEN NOT MATCHED BY SOURCE AND ... THEN UPDATE SET ...} clause.
+         *
+         * @param condition optional clause predicate
+         * @param assignments update assignments
+         * @return this builder
+         */
+        public Builder whenNotMatchedBySourceUpdate(Predicate condition, List<Assignment> assignments) {
+            return clause(MergeClause.of(MergeClause.MatchType.NOT_MATCHED_BY_SOURCE, condition, MergeUpdateAction.of(assignments)));
+        }
+
+        /**
+         * Appends a {@code WHEN NOT MATCHED BY SOURCE THEN UPDATE SET ...} clause.
+         *
+         * @param assignments update assignments
+         * @return this builder
+         */
+        public Builder whenNotMatchedBySourceUpdate(Assignment... assignments) {
+            Objects.requireNonNull(assignments, "assignments");
+            return whenNotMatchedBySourceUpdate(List.of(assignments));
+        }
+
+        /**
+         * Appends a {@code WHEN NOT MATCHED BY SOURCE AND ... THEN UPDATE SET ...} clause.
+         *
+         * @param condition optional clause predicate
+         * @param assignments update assignments
+         * @return this builder
+         */
+        public Builder whenNotMatchedBySourceUpdate(Predicate condition, Assignment... assignments) {
+            Objects.requireNonNull(assignments, "assignments");
+            return whenNotMatchedBySourceUpdate(condition, List.of(assignments));
+        }
+
+        /**
+         * Appends a {@code WHEN NOT MATCHED BY SOURCE THEN DELETE} clause.
+         *
+         * @return this builder
+         */
+        public Builder whenNotMatchedBySourceDelete() {
+            return whenNotMatchedBySourceDelete(null);
+        }
+
+        /**
+         * Appends a {@code WHEN NOT MATCHED BY SOURCE AND ... THEN DELETE} clause.
+         *
+         * @param condition optional clause predicate
+         * @return this builder
+         */
+        public Builder whenNotMatchedBySourceDelete(Predicate condition) {
+            return clause(MergeClause.of(MergeClause.MatchType.NOT_MATCHED_BY_SOURCE, condition, MergeDeleteAction.of()));
+        }
+
+        /**
+         * Appends a {@code WHEN NOT MATCHED BY SOURCE THEN DO NOTHING} clause.
+         *
+         * @return this builder
+         */
+        public Builder whenNotMatchedBySourceDoNothing() {
+            return whenNotMatchedBySourceDoNothing(null);
+        }
+
+        /**
+         * Appends a {@code WHEN NOT MATCHED BY SOURCE AND ... THEN DO NOTHING} clause.
+         *
+         * @param condition optional clause predicate
+         * @return this builder
+         */
+        public Builder whenNotMatchedBySourceDoNothing(Predicate condition) {
+            return clause(MergeClause.of(MergeClause.MatchType.NOT_MATCHED_BY_SOURCE, condition, MergeDoNothingAction.of()));
         }
 
         /**
@@ -340,7 +500,7 @@ public non-sealed interface MergeStatement extends Statement {
             if (clauses.isEmpty()) {
                 throw new IllegalStateException("at least one merge clause is required");
             }
-            return MergeStatement.of(target, source, on, clauses, result);
+            return MergeStatement.of(target, source, on, topSpec, clauses, result);
         }
     }
 
@@ -350,12 +510,14 @@ public non-sealed interface MergeStatement extends Statement {
      * @param target merge target table
      * @param source merge source relation
      * @param on merge predicate
+     * @param topSpec optional top specification
      * @param clauses merge clauses
      * @param result optional result clause
      */
     record Impl(Table target,
                 TableRef source,
                 Predicate on,
+                TopSpec topSpec,
                 List<MergeClause> clauses,
                 ResultClause result) implements MergeStatement {
         /**

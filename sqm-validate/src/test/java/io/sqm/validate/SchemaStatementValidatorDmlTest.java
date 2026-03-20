@@ -19,6 +19,7 @@ import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.top;
 import static io.sqm.dsl.Dsl.update;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -235,6 +236,23 @@ class SchemaStatementValidatorDmlTest {
         var result = validator.validate(statement);
 
         assertTrue(result.ok(), result.problems().toString());
+    }
+
+    @Test
+    void validate_reports_invalid_merge_top_expression_shape() {
+        var validator = SchemaStatementValidator.of(SCHEMA);
+        var statement = merge(tbl("users").as("u"))
+            .source(tbl("orders").as("o"))
+            .on(col("u", "id").eq(col("o", "user_id")))
+            .top(top(lit(-1L)))
+            .whenMatchedDelete()
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(problem -> "merge.top".equals(problem.clausePath())));
     }
 }
 

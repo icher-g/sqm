@@ -145,15 +145,17 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         var target = apply(statement.target());
         var source = apply(statement.source());
         var on = apply(statement.on());
+        var topSpec = apply(statement.topSpec());
         var result = apply(statement.result());
         List<MergeClause> clauses = new ArrayList<>(statement.clauses().size());
         boolean changed = target != statement.target()
             || source != statement.source()
             || on != statement.on()
+            || topSpec != statement.topSpec()
             || result != statement.result();
         changed |= apply(statement.clauses(), clauses);
         if (changed) {
-            return MergeStatement.of(target, source, on, clauses, result);
+            return MergeStatement.of(target, source, on, topSpec, clauses, result);
         }
         return statement;
     }
@@ -197,6 +199,17 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
      */
     @Override
     public Node visitMergeDeleteAction(MergeDeleteAction action) {
+        return action;
+    }
+
+    /**
+     * Visits a {@link MergeDoNothingAction}.
+     *
+     * @param action merge-do-nothing action to transform
+     * @return transformed action, or the original instance if unchanged
+     */
+    @Override
+    public Node visitMergeDoNothingAction(MergeDoNothingAction action) {
         return action;
     }
 

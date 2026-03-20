@@ -47,15 +47,7 @@ public class SelectQueryRenderer extends io.sqm.render.ansi.SelectQueryRenderer 
     protected void renderAfterDistinctClause(SelectQuery node, RenderContext ctx, SqlWriter w) {
         var topSpec = node.topSpec();
         if (topSpec != null) {
-            w.space().append("TOP (");
-            w.append(topSpec.count());
-            w.append(")");
-            if (topSpec.percent()) {
-                w.space().append("PERCENT");
-            }
-            if (topSpec.withTies()) {
-                w.space().append("WITH TIES");
-            }
+            SqlServerTopSpecRenderSupport.renderTopSpec(topSpec, w);
         }
     }
 }

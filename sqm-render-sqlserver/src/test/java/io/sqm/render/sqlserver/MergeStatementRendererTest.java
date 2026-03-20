@@ -5,13 +5,17 @@ import io.sqm.render.sqlserver.spi.SqlServerDialect;
 import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.deleted;
 import static io.sqm.dsl.Dsl.id;
 import static io.sqm.dsl.Dsl.inserted;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.merge;
+import static io.sqm.dsl.Dsl.resultInto;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.topPercent;
+import static io.sqm.dsl.Dsl.topWithTies;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -22,6 +26,7 @@ class MergeStatementRendererTest {
         var mergeStatement = merge(tbl("users").withHoldLock())
             .source(tbl("src_users").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
+            .top(topPercent(lit(10)))
             .whenMatchedUpdate(col("s", "active").eq(lit(1)), java.util.List.of(set("name", col("s", "name"))))
             .whenNotMatchedInsert(col("s", "name").isNotNull(), java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
             .build();
@@ -29,7 +34,7 @@ class MergeStatementRendererTest {
         var rendered = RenderContext.of(new SqlServerDialect()).render(mergeStatement);
 
         assertEquals(
-            "MERGE INTO users WITH (HOLDLOCK) USING src_users AS s ON users.id = s.id WHEN MATCHED AND s.active = 1 THEN UPDATE SET name = s.name WHEN NOT MATCHED AND s.name IS NOT NULL THEN INSERT (id, name) VALUES (s.id, s.name)",
+            "MERGE TOP (10) PERCENT INTO users WITH (HOLDLOCK) USING src_users AS s ON users.id = s.id WHEN MATCHED AND s.active = 1 THEN UPDATE SET name = s.name WHEN NOT MATCHED AND s.name IS NOT NULL THEN INSERT (id, name) VALUES (s.id, s.name)",
             normalize(rendered.sql())
         );
     }
@@ -47,6 +52,22 @@ class MergeStatementRendererTest {
 
         assertEquals(
             "MERGE INTO users USING src AS s ON users.id = s.id WHEN MATCHED AND s.active = 1 THEN DELETE WHEN MATCHED THEN UPDATE SET name = s.name",
+            normalize(rendered.sql())
+        );
+    }
+
+    @Test
+    void rendersNotMatchedBySourceClause() {
+        var mergeStatement = merge("users")
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenNotMatchedBySourceDelete(col("users", "active").eq(lit(1)))
+            .build();
+
+        var rendered = RenderContext.of(new SqlServerDialect()).render(mergeStatement);
+
+        assertEquals(
+            "MERGE INTO users USING src AS s ON users.id = s.id WHEN NOT MATCHED BY SOURCE AND users.active = 1 THEN DELETE",
             normalize(rendered.sql())
         );
     }
@@ -89,6 +110,41 @@ class MergeStatementRendererTest {
     }
 
     @Test
+    void rejectsTwoNotMatchedBySourceClausesWithoutPredicateOnFirstClause() {
+        var mergeStatement = merge("users")
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenNotMatchedBySourceDelete()
+            .whenNotMatchedBySourceUpdate(java.util.List.of(set("name", col("s", "name"))))
+            .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(mergeStatement));
+    }
+
+    @Test
+    void rejectsDoNothingAction() {
+        var mergeStatement = merge("users")
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDoNothing()
+            .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(mergeStatement));
+    }
+
+    @Test
+    void rejectsMergeTopWithTies() {
+        var mergeStatement = merge("users")
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .top(topWithTies(lit(5)))
+            .whenMatchedDelete()
+            .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(mergeStatement));
+    }
+
+    @Test
     void rejectsDuplicateNotMatchedInsertClauses() {
         var mergeStatement = merge("users")
             .source(tbl("src").as("s"))
@@ -101,15 +157,37 @@ class MergeStatementRendererTest {
     }
 
     @Test
-    void rejectsMergeOutputInFirstSlice() {
+    void rendersMergeOutput() {
         var mergeStatement = merge("users")
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
             .whenMatchedDelete()
-            .result(inserted("id"))
+            .result(deleted("id"), inserted("id"))
             .build();
 
-        assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(mergeStatement));
+        var rendered = RenderContext.of(new SqlServerDialect()).render(mergeStatement);
+
+        assertEquals(
+            "MERGE INTO users USING src AS s ON users.id = s.id WHEN MATCHED THEN DELETE OUTPUT deleted.id, inserted.id",
+            normalize(rendered.sql())
+        );
+    }
+
+    @Test
+    void rendersMergeOutputInto() {
+        var mergeStatement = merge("users")
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .result(resultInto(tbl("audit"), "deleted_id"), deleted("id"))
+            .build();
+
+        var rendered = RenderContext.of(new SqlServerDialect()).render(mergeStatement);
+
+        assertEquals(
+            "MERGE INTO users USING src AS s ON users.id = s.id WHEN MATCHED THEN DELETE OUTPUT deleted.id INTO audit (deleted_id)",
+            normalize(rendered.sql())
+        );
     }
 
     private static String normalize(String sql) {
