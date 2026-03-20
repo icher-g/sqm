@@ -56,6 +56,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
             java.util.List.of(
                 "postgres-merge-unsupported",
                 "postgres-to-sqlserver-distinct-on-unsupported",
+                "postgres-to-sqlserver-returning-unsupported",
                 "standard-limit-to-sqlserver-top"
             ),
             postgresToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()
@@ -63,6 +64,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         assertEquals(
             java.util.List.of(
                 "sqlserver-merge-unsupported",
+                "sqlserver-output-unsupported",
                 "sqlserver-table-hints-unsupported",
                 "sqlserver-top-to-limit"
             ),
