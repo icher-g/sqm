@@ -94,6 +94,7 @@ Expected warning:
 - Approximate:
   - `ILIKE`
 - Unsupported:
+  - `MERGE`
   - `RETURNING`
   - `DISTINCT ON`
   - `SIMILAR TO`

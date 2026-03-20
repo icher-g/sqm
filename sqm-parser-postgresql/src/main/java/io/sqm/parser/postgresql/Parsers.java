@@ -27,6 +27,11 @@ public class Parsers {
             .register(new InsertStatementParser())
             .register(new UpdateStatementParser())
             .register(new DeleteStatementParser())
+            .register(new MergeStatementParser())
+            .register(new MergeClauseParser())
+            .register(new MergeUpdateActionParser())
+            .register(new MergeDeleteActionParser())
+            .register(new MergeInsertActionParser())
             .register(new ConcatExprParser())
             .register(new BinaryOperatorExprParser())
             .register(new CastExprParser());

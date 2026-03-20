@@ -96,6 +96,7 @@ PostgreSQL-specific validation is implemented in a dedicated dialect module:
 ### PostgreSQL-Specific Feature Validation
 
 - Version-gated PostgreSQL features (`DIALECT_FEATURE_UNSUPPORTED`), including:
+  - `MERGE`
   - `DISTINCT ON`
   - locking variants (`FOR SHARE`, `FOR KEY SHARE`, `FOR NO KEY UPDATE`, `OF`, `NOWAIT`, `SKIP LOCKED`)
   - `LATERAL`, function tables and `WITH ORDINALITY`

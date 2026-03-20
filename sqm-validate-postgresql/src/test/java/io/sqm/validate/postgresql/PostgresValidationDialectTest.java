@@ -1,6 +1,7 @@
 package io.sqm.validate.postgresql;
 
 import io.sqm.core.CteDef;
+import io.sqm.core.MergeStatement;
 import io.sqm.core.Query;
 import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
@@ -421,11 +422,46 @@ class PostgresValidationDialectTest {
         assertNotNull(catalog);
         assertTrue(catalog.resolve("to_json").isPresent());
         assertFalse(catalog.resolve("to_jsonb").isPresent());
-        assertEquals(4, rules.size());
+        assertEquals(5, rules.size());
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectFeatureValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectClauseConsistencyRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresDistinctOnValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresCteFeatureValidationRule")));
+        assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresMergeFeatureValidationRule")));
+    }
+
+    @Test
+    void validate_reportsMergeUnsupportedBeforePostgres15() {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(14, 0)));
+        MergeStatement statement = merge("users")
+            .source(tbl("users").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "merge".equals(p.clausePath())));
+    }
+
+    @Test
+    void validate_acceptsMergeFromPostgres15() {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(15, 0)));
+        MergeStatement statement = merge("users")
+            .source(tbl("users").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .whenNotMatchedInsert(java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
+            .result(col("id").toSelectItem())
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertFalse(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "merge".equals(p.clausePath())));
     }
 
     @Test

@@ -12,6 +12,7 @@ import io.sqm.validate.schema.rule.SchemaValidationRule;
 import io.sqm.validate.postgresql.rule.PostgresSelectClauseConsistencyRule;
 import io.sqm.validate.postgresql.rule.PostgresCteFeatureValidationRule;
 import io.sqm.validate.postgresql.rule.PostgresDistinctOnValidationRule;
+import io.sqm.validate.postgresql.rule.PostgresMergeFeatureValidationRule;
 import io.sqm.validate.postgresql.rule.PostgresSelectFeatureValidationRule;
 
 import java.util.List;
@@ -85,7 +86,8 @@ public final class PostgresValidationDialect implements SchemaValidationDialect 
             new PostgresSelectFeatureValidationRule(capabilities, version),
             new PostgresSelectClauseConsistencyRule(capabilities),
             new PostgresDistinctOnValidationRule(),
-            new PostgresCteFeatureValidationRule(capabilities, version)
+            new PostgresCteFeatureValidationRule(capabilities, version),
+            new PostgresMergeFeatureValidationRule(capabilities, version)
         );
     }
 }

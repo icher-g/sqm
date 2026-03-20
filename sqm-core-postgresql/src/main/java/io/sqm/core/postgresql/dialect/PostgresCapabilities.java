@@ -30,6 +30,7 @@ public final class PostgresCapabilities {
         var pg95 = SqlDialectVersion.of(9, 5);
         var pg11 = SqlDialectVersion.of(11, 0);
         var pg12 = SqlDialectVersion.of(12, 0);
+        var pg15 = SqlDialectVersion.of(15, 0);
         return VersionedDialectCapabilities.builder(version)
             .supports(pg90,
                 SqlFeature.DATE_TYPED_LITERAL,
@@ -83,6 +84,7 @@ public final class PostgresCapabilities {
                 SqlFeature.WINDOW_FRAME_EXCLUDE
             )
             .supports(pg12, SqlFeature.CTE_MATERIALIZATION)
+            .supports(pg15, SqlFeature.MERGE_STATEMENT)
             .build();
     }
 

@@ -1,0 +1,69 @@
+package io.sqm.parser.postgresql;
+
+import io.sqm.core.MergeAction;
+import io.sqm.core.MergeClause;
+import io.sqm.core.MergeDeleteAction;
+import io.sqm.core.MergeInsertAction;
+import io.sqm.core.MergeUpdateAction;
+import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.TokenType;
+import io.sqm.parser.spi.ParseContext;
+import io.sqm.parser.spi.ParseResult;
+
+import static io.sqm.parser.spi.ParseResult.error;
+import static io.sqm.parser.spi.ParseResult.ok;
+
+/**
+ * Parses PostgreSQL {@code WHEN ... THEN ...} MERGE clauses for the first shared slice.
+ */
+public class MergeClauseParser extends io.sqm.parser.ansi.MergeClauseParser {
+
+    /**
+     * Creates a PostgreSQL merge-clause parser.
+     */
+    public MergeClauseParser() {
+    }
+
+    @Override
+    public ParseResult<? extends MergeClause> parse(Cursor cur, ParseContext ctx) {
+        cur.expect("Expected WHEN", TokenType.WHEN);
+
+        MergeClause.MatchType matchType;
+        if (cur.consumeIf(TokenType.NOT)) {
+            cur.expect("Expected MATCHED after WHEN NOT", TokenType.MATCHED);
+            if (cur.match(TokenType.BY)) {
+                return error("PostgreSQL MERGE ... WHEN NOT MATCHED BY ... is not supported by this slice", cur.fullPos());
+            }
+            matchType = MergeClause.MatchType.NOT_MATCHED;
+        } else {
+            cur.expect("Expected MATCHED after WHEN", TokenType.MATCHED);
+            matchType = MergeClause.MatchType.MATCHED;
+        }
+
+        if (!cur.match(TokenType.THEN)) {
+            if (cur.match(TokenType.AND)) {
+                return error("PostgreSQL MERGE action predicates are not supported by this slice", cur.fullPos());
+            }
+            return error("Expected THEN after MERGE match branch", cur.fullPos());
+        }
+        cur.expect("Expected THEN after MERGE match branch", TokenType.THEN);
+
+        var action = ctx.parse(MergeAction.class, cur);
+        if (action.isError()) {
+            return error(action);
+        }
+
+        if (matchType == MergeClause.MatchType.MATCHED && action.value() instanceof MergeInsertAction) {
+            return error("WHEN MATCHED clauses cannot use INSERT actions", cur.fullPos());
+        }
+        if (matchType == MergeClause.MatchType.NOT_MATCHED && !(action.value() instanceof MergeInsertAction)) {
+            return error("WHEN NOT MATCHED clauses must use INSERT actions", cur.fullPos());
+        }
+        if (matchType == MergeClause.MatchType.MATCHED
+            && !(action.value() instanceof MergeUpdateAction || action.value() instanceof MergeDeleteAction)) {
+            return error("WHEN MATCHED clauses must use UPDATE or DELETE actions", cur.fullPos());
+        }
+
+        return ok(MergeClause.of(matchType, action.value()));
+    }
+}
