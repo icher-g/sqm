@@ -44,7 +44,7 @@ class MergeStatementRendererTest {
 
     @Test
     void rendersPostgresMergeFirstSliceWithReturning() {
-        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(15, 0)));
+        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(18, 0)));
         MergeStatement statement = merge("users")
             .source(tbl("src_users").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
@@ -94,7 +94,7 @@ class MergeStatementRendererTest {
 
     @Test
     void rendersNotMatchedBySourceClause() {
-        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(15, 0)));
+        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(18, 0)));
         MergeStatement statement = merge("users")
             .source(tbl("src"))
             .on(col("users", "id").eq(col("src", "id")))
@@ -111,7 +111,7 @@ class MergeStatementRendererTest {
 
     @Test
     void rendersDoNothingBranches() {
-        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(15, 0)));
+        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(18, 0)));
         MergeStatement statement = merge("users")
             .source(tbl("src"))
             .on(col("users", "id").eq(col("src", "id")))
@@ -160,7 +160,7 @@ class MergeStatementRendererTest {
 
     @Test
     void rendersClauseAndActionLeaves() {
-        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(15, 0)));
+        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(18, 0)));
 
         var matchedDelete = normalize(ctx.render(MergeClause.of(MergeClause.MatchType.MATCHED, MergeDeleteAction.of())).sql());
         var notMatchedInsert = normalize(ctx.render(
@@ -198,7 +198,7 @@ class MergeStatementRendererTest {
     @Test
     void skipsNullReturningClause() {
         var renderer = new MergeStatementRenderer();
-        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(15, 0)));
+        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(18, 0)));
         var writer = new DefaultSqlWriter(ctx);
 
         renderer.renderReturning(null, ctx, writer);
@@ -206,12 +206,41 @@ class MergeStatementRendererTest {
         assertEquals("", writer.toText(java.util.List.of()).sql());
     }
 
+    @Test
+    void rejectsNotMatchedBySourceBeforePostgres18() {
+        var renderer = new MergeStatementRenderer();
+        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(15, 0)));
+        var writer = new DefaultSqlWriter(ctx);
+        MergeStatement statement = merge("users")
+            .source(tbl("src"))
+            .on(col("users", "id").eq(col("src", "id")))
+            .whenNotMatchedBySourceDelete()
+            .build();
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> renderer.render(statement, ctx, writer));
+    }
+
+    @Test
+    void rejectsMergeReturningBeforePostgres18() {
+        var renderer = new MergeStatementRenderer();
+        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(15, 0)));
+        var writer = new DefaultSqlWriter(ctx);
+        MergeStatement statement = merge("users")
+            .source(tbl("src"))
+            .on(col("users", "id").eq(col("src", "id")))
+            .whenMatchedDelete()
+            .result(col("id").toSelectItem())
+            .build();
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> renderer.render(statement, ctx, writer));
+    }
+
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
     }
 
     private static final class NoReturningPostgresDialect implements SqlDialect {
-        private final PostgresDialect delegate = new PostgresDialect(SqlDialectVersion.of(15, 0));
+        private final PostgresDialect delegate = new PostgresDialect(SqlDialectVersion.of(18, 0));
         private final ValueFormatter formatter = new PostgresValueFormatter(this);
 
         @Override
@@ -251,7 +280,7 @@ class MergeStatementRendererTest {
 
         @Override
         public DialectCapabilities capabilities() {
-            return feature -> feature != SqlFeature.DML_RESULT_CLAUSE && delegate.capabilities().supports(feature);
+            return feature -> feature != SqlFeature.MERGE_RESULT_CLAUSE && delegate.capabilities().supports(feature);
         }
 
         @Override

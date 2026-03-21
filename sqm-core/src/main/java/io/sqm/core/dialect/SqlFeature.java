@@ -52,6 +52,14 @@ public enum SqlFeature {
      */
     MERGE_STATEMENT("MERGE statement"),
     /**
+     * {@code WHEN NOT MATCHED BY SOURCE} clause support inside {@code MERGE}.
+     */
+    MERGE_NOT_MATCHED_BY_SOURCE_CLAUSE("MERGE WHEN NOT MATCHED BY SOURCE clause"),
+    /**
+     * Statement-level result projection support on {@code MERGE} statements.
+     */
+    MERGE_RESULT_CLAUSE("MERGE result clause"),
+    /**
      * PostgreSQL INSERT ... ON CONFLICT clause support for upsert semantics.
      */
     INSERT_ON_CONFLICT("PostgreSQL INSERT ... ON CONFLICT clause"),

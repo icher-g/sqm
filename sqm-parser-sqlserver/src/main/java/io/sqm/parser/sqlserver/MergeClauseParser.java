@@ -23,7 +23,7 @@ public class MergeClauseParser extends io.sqm.parser.ansi.MergeClauseParser {
     }
 
     @Override
-    protected MergeClause.MatchType parseNotMatchedBy(Cursor cur) {
+    protected MergeClause.MatchType parseNotMatchedBy(Cursor cur, ParseContext ctx) {
         cur.expect("Expected SOURCE after WHEN NOT MATCHED BY", TokenType.SOURCE);
         return MergeClause.MatchType.NOT_MATCHED_BY_SOURCE;
     }

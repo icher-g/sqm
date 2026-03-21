@@ -42,7 +42,7 @@ public class MergeClauseParser implements Parser<MergeClause> {
         if (cur.consumeIf(TokenType.NOT)) {
             cur.expect("Expected MATCHED after WHEN NOT", TokenType.MATCHED);
             if (cur.consumeIf(TokenType.BY)) {
-                matchType = parseNotMatchedBy(cur);
+                matchType = parseNotMatchedBy(cur, ctx);
                 if (matchType == null) {
                     return error(notMatchedByUnsupportedMessage(), cur.fullPos());
                 }
@@ -99,7 +99,7 @@ public class MergeClauseParser implements Parser<MergeClause> {
      * @param cur parser cursor positioned after {@code BY}
      * @return resolved match type, or {@code null} when unsupported
      */
-    protected MergeClause.MatchType parseNotMatchedBy(Cursor cur) {
+    protected MergeClause.MatchType parseNotMatchedBy(Cursor cur, ParseContext ctx) {
         return null;
     }
 

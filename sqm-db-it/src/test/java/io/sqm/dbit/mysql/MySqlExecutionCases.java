@@ -64,10 +64,10 @@ final class MySqlExecutionCases {
                     .replace()
                     .columns(id("id"), id("name"), id("active"), id("payload"), id("created_at"))
                     .values(row(
-                        lit(2),
-                        lit("Bobby"),
+                        lit(4),
+                        lit("Dylan"),
                         lit(true),
-                        func("JSON_OBJECT", arg(lit("user")), arg(func("JSON_OBJECT", arg(lit("id")), arg(lit(2))))),
+                        func("JSON_OBJECT", arg(lit("user")), arg(func("JSON_OBJECT", arg(lit("id")), arg(lit(4))))),
                         lit("2024-02-02 11:00:00")
                     ))
                     .build();
@@ -75,7 +75,7 @@ final class MySqlExecutionCases {
                 var sql = harness.render(statement);
                 assertTrue(sql.startsWith("REPLACE INTO"));
                 assertTrue(harness.executeUpdate(sql, List.of()) > 0);
-                assertEquals(List.of("Bobby"), harness.queryRows("select name from users where id = 2"));
+                assertEquals(List.of("Dylan"), harness.queryRows("select name from users where id = 4"));
             }
         ),
         new DialectExecutionCase<>(

@@ -12,7 +12,7 @@ import java.sql.DriverManager;
 
 abstract class PostgresExecutionHarness extends DialectExecutionHarness {
     @Container
-    protected static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
+    protected static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:18-alpine");
 
     private final RenderContext renderContext = RenderContext.of(new PostgresDialect());
 

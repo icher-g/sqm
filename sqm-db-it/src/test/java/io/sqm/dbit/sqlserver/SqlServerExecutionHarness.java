@@ -32,6 +32,16 @@ abstract class SqlServerExecutionHarness extends DialectExecutionHarness {
         return renderContext.render(statement).sql();
     }
 
+    @Override
+    public java.util.List<String> queryRows(String sql, java.util.List<Object> params) throws Exception {
+        return super.queryRows(normalizeExecutableSql(sql), params);
+    }
+
+    @Override
+    public int executeUpdate(String sql, java.util.List<Object> params) throws Exception {
+        return super.executeUpdate(normalizeExecutableSql(sql), params);
+    }
+
     protected void resetDslSchema() throws Exception {
         executeStatements(
             "drop table if exists [audit_names]",
@@ -63,5 +73,16 @@ abstract class SqlServerExecutionHarness extends DialectExecutionHarness {
                 "(4, 'Dana', 1, 80, '2024-01-04T07:45:00')," +
                 "(5, 'Eve', 1, 60, '2024-01-05T06:00:00')"
         );
+    }
+
+    private String normalizeExecutableSql(String sql) {
+        var trimmed = sql.trim();
+        if (!trimmed.regionMatches(true, 0, "MERGE ", 0, "MERGE ".length())) {
+            return sql;
+        }
+        if (trimmed.endsWith(";")) {
+            return sql;
+        }
+        return trimmed + ";";
     }
 }
