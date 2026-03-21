@@ -434,7 +434,6 @@ See:
 
 - Wiki guide: [wiki-src/SQL-Middleware-Framework.md](wiki-src/SQL-Middleware-Framework.md)
 - Example class: [examples/src/main/java/io/sqm/examples/Middleware_EndToEndPolicyFlow.java](examples/src/main/java/io/sqm/examples/Middleware_EndToEndPolicyFlow.java)
-- Integration tests: [sqm-it/src/test/java/io/sqm/it/PostgresMiddlewareIntegrationTest.java](sqm-it/src/test/java/io/sqm/it/PostgresMiddlewareIntegrationTest.java)
 
 #### Transport Runtimes (REST + MCP)
 
@@ -1337,7 +1336,8 @@ price + quantity * 2
 | `sqm-middleware-mcp`       | MCP stdio host adapter                                                      |
 | `sqm-codegen`              | SQL-to-Java statement model/code generation                                 |
 | `sqm-codegen-maven-plugin` | Maven plugin for SQL file code generation                                   |
-| `sqm-it`                   | Cross-module SQL integration tests                                          |
+| `sqm-it`                   | Cross-module fast integration tests without live DB containers              |
+| `sqm-db-it`                | Live database integration tests using Docker/Testcontainers                 |
 | `sqm-middleware-it`        | Middleware end-to-end integration/NFR tests                                 |
 | `examples`                 | Usage examples and reference flows                                          |
 

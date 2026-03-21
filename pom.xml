@@ -67,6 +67,7 @@
         <module>sqm-middleware-mcp</module>
         <module>sqm-middleware-it</module>
         <module>sqm-it</module>
+        <module>sqm-db-it</module>
         <module>examples</module>
     </modules>
     <properties>
