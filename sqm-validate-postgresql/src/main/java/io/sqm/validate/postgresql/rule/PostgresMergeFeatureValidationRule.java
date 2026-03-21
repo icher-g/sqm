@@ -51,5 +51,23 @@ public final class PostgresMergeFeatureValidationRule implements SchemaValidatio
                 "merge.top"
             );
         }
+        if (node.result() != null && !node.result().items().isEmpty() && !capabilities.supports(SqlFeature.MERGE_RESULT_CLAUSE)) {
+            context.addProblem(
+                ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
+                "PostgreSQL " + version + " does not support MERGE RETURNING",
+                node.result(),
+                "merge.result"
+            );
+        }
+        node.clauses().stream()
+            .filter(clause -> clause.matchType() == io.sqm.core.MergeClause.MatchType.NOT_MATCHED_BY_SOURCE)
+            .filter(clause -> !capabilities.supports(SqlFeature.MERGE_NOT_MATCHED_BY_SOURCE_CLAUSE))
+            .findFirst()
+            .ifPresent(clause -> context.addProblem(
+                ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
+                "PostgreSQL " + version + " does not support MERGE WHEN NOT MATCHED BY SOURCE clauses",
+                clause,
+                "merge.clause"
+            ));
     }
 }

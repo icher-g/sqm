@@ -1,0 +1,43 @@
+name: Live DB Integration
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-db:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dialect:
+          - id: postgresql
+            it_test: PostgresDslExecutionIT,PostgresMiddlewareExecutionIT
+          - id: mysql
+            it_test: MySqlDslExecutionIT
+          - id: sqlserver
+            it_test: SqlServerDslExecutionIT
+    name: Live DB (${{ matrix.dialect.id }})
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Docker Info
+        run: docker version
+
+      - name: Run ${{ matrix.dialect.id }} live DB suite
+        run: >
+          mvn -B -pl sqm-db-it -am verify -Pdocker-it
+          "-Dit.test=${{ matrix.dialect.it_test }}"
+          "-Dsurefire.skip=true"
+          "-Dfailsafe.failIfNoSpecifiedTests=false"
+          -Dapi.version=1.44
+          -Ddocker.host=unix:///var/run/docker.sock

@@ -23,6 +23,7 @@ function Extract-Section {
         [string[]]$NextHeaders
     )
 
+    $NextHeaders = @($NextHeaders)
     $escapedHeader = [regex]::Escape($Header)
     if ($NextHeaders.Count -eq 0) {
         $pattern = '(?ms)^' + $escapedHeader + '\s*\r?\n(.*)$'
@@ -102,6 +103,37 @@ function Ensure-Labels {
     }
 }
 
+function Get-IssueByExactTitle {
+    param(
+        [string]$Title,
+        [string]$RepoName
+    )
+
+    $args = @('issue', 'list', '--state', 'all', '--limit', '1000', '--search', $Title, '--json', 'number,title,url')
+    if (-not [string]::IsNullOrWhiteSpace($RepoName)) {
+        $args += @('--repo', $RepoName)
+    }
+
+    $json = & gh @args
+    if ([string]::IsNullOrWhiteSpace($json)) {
+        return $null
+    }
+
+    $parsed = $json | ConvertFrom-Json
+    $issues = @()
+    if ($null -eq $parsed) {
+        $issues = @()
+    }
+    elseif ($parsed -is [System.Array]) {
+        $issues = @($parsed)
+    }
+    elseif ($parsed.PSObject.Properties.Name -contains 'title') {
+        $issues = @($parsed)
+    }
+
+    return ($issues | Where-Object { $_.PSObject.Properties.Name -contains 'title' -and $_.title -eq $Title } | Select-Object -First 1)
+}
+
 function Create-Issue {
     param(
         [string]$Title,
@@ -112,9 +144,24 @@ function Create-Issue {
     )
 
     $labels = @($Labels | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
+
+    $existingIssue = $null
+    if (-not $PreviewOnly) {
+        $existingIssue = Get-IssueByExactTitle -Title $Title -RepoName $RepoName
+        if ($null -ne $existingIssue) {
+            Write-Host "Reusing existing issue #$($existingIssue.number): $($existingIssue.url)"
+            return $existingIssue.url
+        }
+    }
+
     Ensure-Labels -Labels $labels -RepoName $RepoName -PreviewOnly:$PreviewOnly
 
     if ($PreviewOnly) {
+        $previewExisting = Get-IssueByExactTitle -Title $Title -RepoName $RepoName
+        if ($null -ne $previewExisting) {
+            Write-Host "[WhatIf] reuse existing issue #$($previewExisting.number): $($previewExisting.url)"
+            return $previewExisting.url
+        }
         Write-Host "[WhatIf] gh issue create --title '$Title' --labels '$($labels -join ',')'"
         return ""
     }
@@ -146,7 +193,7 @@ $goal = Extract-Section -Text $raw -Header '### Epic Goal' -NextHeaders @('### B
 $value = Extract-Section -Text $raw -Header '### Business Value' -NextHeaders @('### Definition of Done', '### Suggested Labels')
 $dod = Extract-Section -Text $raw -Header '### Definition of Done' -NextHeaders @('### Suggested Labels')
 $epicLabelsText = Extract-Section -Text $raw -Header '### Suggested Labels' -NextHeaders @('---', '## User Stories')
-$epicLabels = Parse-Labels -Text $epicLabelsText
+$epicLabels = @(Parse-Labels -Text $epicLabelsText)
 if ($epicLabels.Count -eq 0) {
     $epicLabels = @('epic')
 }
@@ -169,9 +216,11 @@ Source: $resolvedPath
 
 $epicUrl = Create-Issue -Title $epicTitle -Body $epicBody -Labels $epicLabels -RepoName $Repo -PreviewOnly:$WhatIf
 $epicNumber = ''
-if (-not $WhatIf -and $epicUrl -match '/issues/(\d+)') {
+if ($epicUrl -match '/issues/(\d+)') {
     $epicNumber = $Matches[1]
-    Write-Host "Created epic issue #${epicNumber}: $epicUrl"
+    if (-not $WhatIf) {
+        Write-Host "Using epic issue #${epicNumber}: $epicUrl"
+    }
 }
 elseif ($WhatIf) {
     Write-Host "[WhatIf] Epic parsed: $epicTitle"
@@ -197,7 +246,7 @@ foreach ($storyMatch in $storyMatches) {
     $labelsText = Extract-Section -Text $block -Header '#### Labels' -NextHeaders @('#### Depends On')
     $dependsOn = Extract-Section -Text $block -Header '#### Depends On' -NextHeaders @()
 
-    $storyLabels = Parse-Labels -Text $labelsText
+    $storyLabels = @(Parse-Labels -Text $labelsText)
     if ($storyLabels.Count -eq 0) {
         $storyLabels = @('story')
     }
@@ -222,7 +271,7 @@ Source: $resolvedPath
 "@
 
     $storyUrl = Create-Issue -Title $storyTitle -Body $storyBody -Labels $storyLabels -RepoName $Repo -PreviewOnly:$WhatIf
-    if (-not $WhatIf) {
-        Write-Host "Created story issue: $storyUrl"
+    if (-not $WhatIf -and -not [string]::IsNullOrWhiteSpace($storyUrl)) {
+        Write-Host "Using story issue: $storyUrl"
     }
 }

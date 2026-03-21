@@ -10,6 +10,8 @@
 **SQM (Structured Query Model)** is a Java framework for representing SQL as a typed immutable model and running end-to-end SQL pipelines.
 It supports parse, validate, transform/rewrite, render, serialize, and runtime policy enforcement across multiple dialects and transports.
 
+Live dialect confidence is backed by real-engine execution coverage: shipped PostgreSQL, MySQL, and SQL Server syntax is exercised in Docker/Testcontainers suites against the actual database engines, not only parser/renderer round trips.
+
 ## Wiki
 
 Project wiki with feature guides and examples: https://github.com/icher-g/sqm/wiki
@@ -434,7 +436,6 @@ See:
 
 - Wiki guide: [wiki-src/SQL-Middleware-Framework.md](wiki-src/SQL-Middleware-Framework.md)
 - Example class: [examples/src/main/java/io/sqm/examples/Middleware_EndToEndPolicyFlow.java](examples/src/main/java/io/sqm/examples/Middleware_EndToEndPolicyFlow.java)
-- Integration tests: [sqm-it/src/test/java/io/sqm/it/PostgresMiddlewareIntegrationTest.java](sqm-it/src/test/java/io/sqm/it/PostgresMiddlewareIntegrationTest.java)
 
 #### Transport Runtimes (REST + MCP)
 
@@ -1337,7 +1338,8 @@ price + quantity * 2
 | `sqm-middleware-mcp`       | MCP stdio host adapter                                                      |
 | `sqm-codegen`              | SQL-to-Java statement model/code generation                                 |
 | `sqm-codegen-maven-plugin` | Maven plugin for SQL file code generation                                   |
-| `sqm-it`                   | Cross-module SQL integration tests                                          |
+| `sqm-it`                   | Cross-module fast integration tests without live DB containers              |
+| `sqm-db-it`                | Live database integration tests using Docker/Testcontainers                 |
 | `sqm-middleware-it`        | Middleware end-to-end integration/NFR tests                                 |
 | `examples`                 | Usage examples and reference flows                                          |
 
@@ -1361,6 +1363,7 @@ SQM includes:
 - Renderer compatibility checks per dialect
 - JSON serialization consistency tests
 - Middleware runtime integration and NFR suites
+- Live DB syntax execution suites in `sqm-db-it` for PostgreSQL, MySQL, and SQL Server
 
 ---
 
@@ -1376,6 +1379,20 @@ To run tests:
 ```bash
 mvn test
 ```
+
+To run the live DB suites separately:
+```bash
+mvn -B -pl sqm-db-it -am verify -Pdocker-it
+```
+
+Per-dialect live DB commands:
+```bash
+mvn -B -pl sqm-db-it -am verify -Pdocker-it -Dit.test=PostgresDslExecutionIT,PostgresMiddlewareExecutionIT -Dsurefire.skip=true -Dfailsafe.failIfNoSpecifiedTests=false
+mvn -B -pl sqm-db-it -am verify -Pdocker-it -Dit.test=MySqlDslExecutionIT -Dsurefire.skip=true -Dfailsafe.failIfNoSpecifiedTests=false
+mvn -B -pl sqm-db-it -am verify -Pdocker-it -Dit.test=SqlServerDslExecutionIT -Dsurefire.skip=true -Dfailsafe.failIfNoSpecifiedTests=false
+```
+
+GitHub Actions runs the live DB suites in the separate [`.github/workflows/live-db-it.yml`](.github/workflows/live-db-it.yml) pipeline so the default CI path stays fast.
 
 ---
 

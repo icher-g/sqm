@@ -27,6 +27,8 @@ public final class SqlServerCapabilities {
         return VersionedDialectCapabilities.builder(version)
             .supports(SqlFeature.DML_RESULT_CLAUSE)
             .supports(SqlFeature.MERGE_STATEMENT)
+            .supports(SqlFeature.MERGE_NOT_MATCHED_BY_SOURCE_CLAUSE)
+            .supports(SqlFeature.MERGE_RESULT_CLAUSE)
             .supports(SqlFeature.EXPR_COLLATE)
             .supports(SqlFeature.TABLE_LOCK_HINT)
             .build();

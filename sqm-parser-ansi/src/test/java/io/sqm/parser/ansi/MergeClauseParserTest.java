@@ -93,7 +93,7 @@ class MergeClauseParserTest {
         }
 
         @Override
-        protected MergeClause.MatchType parseNotMatchedBy(Cursor cur) {
+        protected MergeClause.MatchType parseNotMatchedBy(Cursor cur, ParseContext ctx) {
             if (cur.consumeIf(TokenType.SOURCE)) {
                 return MergeClause.MatchType.NOT_MATCHED_BY_SOURCE;
             }

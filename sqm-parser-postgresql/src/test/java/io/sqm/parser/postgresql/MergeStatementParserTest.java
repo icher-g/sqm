@@ -26,7 +26,7 @@ class MergeStatementParserTest {
 
     @Test
     void parsesPostgresMergeFirstSliceWithReturning() {
-        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
+        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(18, 0)));
         var result = ctx.parse(
             MergeStatement.class,
             """
@@ -84,13 +84,14 @@ class MergeStatementParserTest {
 
     @Test
     void parsesActionPredicatesAndNotMatchedBySourceClauses() {
-        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
+        var predicatesCtx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
+        var bySourceCtx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(18, 0)));
 
-        var predicates = ctx.parse(
+        var predicates = predicatesCtx.parse(
             MergeStatement.class,
             "MERGE users USING src ON users.id = src.id WHEN MATCHED AND src.active = 1 THEN DELETE"
         );
-        var bySource = ctx.parse(
+        var bySource = bySourceCtx.parse(
             MergeStatement.class,
             "MERGE users USING src ON users.id = src.id WHEN NOT MATCHED BY SOURCE AND users.active = true THEN UPDATE SET name = src.name"
         );
@@ -104,7 +105,7 @@ class MergeStatementParserTest {
 
     @Test
     void parsesDoNothingAcrossSupportedMergeBranches() {
-        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
+        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(18, 0)));
         var result = ctx.parse(
             MergeStatement.class,
             """
@@ -122,7 +123,7 @@ class MergeStatementParserTest {
 
     @Test
     void rejectsMergeWithoutClausesAndWhenAfterReturning() {
-        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
+        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(18, 0)));
 
         var noClauses = ctx.parse(
             MergeStatement.class,
@@ -178,7 +179,7 @@ class MergeStatementParserTest {
 
     @Test
     void rejectsInvalidClauseShapesAndMalformedActions() {
-        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
+        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(18, 0)));
 
         var missingThen = ctx.parse(
             MergeClause.class,
@@ -261,8 +262,32 @@ class MergeStatementParserTest {
         assertTrue(((MergeInsertAction) result.value().clauses().getFirst().action()).columns().isEmpty());
     }
 
+    @Test
+    void rejectsNotMatchedBySourceBeforePostgres18() {
+        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
+        var result = ctx.parse(
+            MergeStatement.class,
+            "MERGE users USING src ON users.id = src.id WHEN NOT MATCHED BY SOURCE THEN DELETE"
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("NOT MATCHED BY SOURCE"));
+    }
+
+    @Test
+    void rejectsMergeReturningBeforePostgres18() {
+        var ctx = ParseContext.of(new PostgresSpecs(SqlDialectVersion.of(15, 0)));
+        var result = ctx.parse(
+            MergeStatement.class,
+            "MERGE users USING src ON users.id = src.id WHEN MATCHED THEN DELETE RETURNING id"
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("RETURNING"));
+    }
+
     private static final class NoReturningPostgresSpecs implements Specs {
-        private final PostgresSpecs delegate = new PostgresSpecs(SqlDialectVersion.of(15, 0));
+        private final PostgresSpecs delegate = new PostgresSpecs(SqlDialectVersion.of(18, 0));
 
         @Override
         public ParsersRepository parsers() {
@@ -281,7 +306,7 @@ class MergeStatementParserTest {
 
         @Override
         public DialectCapabilities capabilities() {
-            return feature -> feature != SqlFeature.DML_RESULT_CLAUSE && delegate.capabilities().supports(feature);
+            return feature -> feature != SqlFeature.MERGE_RESULT_CLAUSE && delegate.capabilities().supports(feature);
         }
 
         @Override

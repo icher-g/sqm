@@ -39,6 +39,10 @@ class PostgresCapabilitiesTest {
     void supports_merge_from_postgres15() {
         assertFalse(PostgresCapabilities.of(SqlDialectVersion.of(14, 0)).supports(SqlFeature.MERGE_STATEMENT));
         assertTrue(PostgresCapabilities.of(SqlDialectVersion.of(15, 0)).supports(SqlFeature.MERGE_STATEMENT));
+        assertFalse(PostgresCapabilities.of(SqlDialectVersion.of(17, 0)).supports(SqlFeature.MERGE_NOT_MATCHED_BY_SOURCE_CLAUSE));
+        assertFalse(PostgresCapabilities.of(SqlDialectVersion.of(17, 0)).supports(SqlFeature.MERGE_RESULT_CLAUSE));
+        assertTrue(PostgresCapabilities.of(SqlDialectVersion.of(18, 0)).supports(SqlFeature.MERGE_NOT_MATCHED_BY_SOURCE_CLAUSE));
+        assertTrue(PostgresCapabilities.of(SqlDialectVersion.of(18, 0)).supports(SqlFeature.MERGE_RESULT_CLAUSE));
     }
 
     @Test

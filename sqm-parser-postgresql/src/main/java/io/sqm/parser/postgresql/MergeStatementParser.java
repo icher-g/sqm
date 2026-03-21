@@ -74,8 +74,8 @@ public class MergeStatementParser extends io.sqm.parser.ansi.MergeStatementParse
 
         ResultClause result = null;
         if (cur.consumeIf(TokenType.RETURNING)) {
-            if (!ctx.capabilities().supports(SqlFeature.DML_RESULT_CLAUSE)) {
-                return error("MERGE ... RETURNING is not supported by this dialect", cur.fullPos());
+            if (!ctx.capabilities().supports(SqlFeature.MERGE_RESULT_CLAUSE)) {
+                return error("PostgreSQL MERGE ... RETURNING is not supported by this PostgreSQL version", cur.fullPos());
             }
             var items = parseItems(ResultItem.class, cur, ctx);
             if (items.isError()) {

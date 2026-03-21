@@ -455,9 +455,7 @@ class PostgresValidationDialectTest {
             .whenMatchedDelete(col("s", "name").eq(lit("closed")))
             .whenMatchedDoNothing(col("s", "id").gt(lit(0L)))
             .whenNotMatchedDoNothing()
-            .whenNotMatchedBySourceUpdate(col("users", "name").eq(lit("stale")), java.util.List.of(set("name", col("s", "name"))))
             .whenNotMatchedInsert(col("s", "name").isNotNull(), java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
-            .result(col("id").toSelectItem())
             .build();
 
         var result = validator.validate(statement);
@@ -465,6 +463,45 @@ class PostgresValidationDialectTest {
         assertFalse(result.problems().stream()
             .anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
                 && "merge".equals(p.clausePath())));
+    }
+
+    @Test
+    void validate_reportsMergeBySourceAndReturningBeforePostgres18() {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(15, 0)));
+        MergeStatement statement = merge("users")
+            .source(tbl("users").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenNotMatchedBySourceUpdate(col("users", "name").eq(lit("stale")), java.util.List.of(set("name", col("s", "name"))))
+            .whenMatchedDelete()
+            .result(col("id").toSelectItem())
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "merge.clause".equals(p.clausePath())));
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "merge.result".equals(p.clausePath())));
+    }
+
+    @Test
+    void validate_acceptsMergeBySourceAndReturningFromPostgres18() {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(18, 0)));
+        MergeStatement statement = merge("users")
+            .source(tbl("users").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenNotMatchedBySourceUpdate(col("users", "name").eq(lit("stale")), java.util.List.of(set("name", col("s", "name"))))
+            .whenMatchedDelete()
+            .result(col("id").toSelectItem())
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertFalse(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && ("merge.clause".equals(p.clausePath()) || "merge.result".equals(p.clausePath()))));
     }
 
     @Test
