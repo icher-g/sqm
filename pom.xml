@@ -58,6 +58,7 @@
         <module>sqm-catalog</module>
         <module>sqm-catalog-postgresql</module>
         <module>sqm-catalog-mysql</module>
+        <module>sqm-catalog-sqlserver</module>
         <module>sqm-codegen</module>
         <module>sqm-codegen-maven-plugin</module>
         <module>sqm-middleware-api</module>
