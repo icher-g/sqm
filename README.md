@@ -17,6 +17,7 @@ Project wiki with feature guides and examples: https://github.com/icher-g/sqm/wi
 Direct wiki guides:
 
 - SQL Server syntax guide: [wiki-src/SQL-Server-Dialect.md](wiki-src/SQL-Server-Dialect.md)
+- Unsupported features and scope boundaries: [wiki-src/Unsupported-Features.md](wiki-src/Unsupported-Features.md)
 
 ## Contributor Rules
 

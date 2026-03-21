@@ -7,6 +7,7 @@
 - [Parsing SQL](Parsing-SQL)
 - [Rendering SQL](Rendering-SQL)
 - [SQL Server Dialect](SQL-Server-Dialect)
+- [Unsupported Features](Unsupported-Features)
 - [SQL Transpilation](SQL-Transpilation)
 - [SQL Transpilation Examples](SQL-Transpilation-Examples)
 - [SQL Middleware Framework](SQL-Middleware-Framework)

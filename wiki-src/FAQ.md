@@ -25,3 +25,12 @@ At `${schemaCachePath}.meta.properties`.
 
 Use `scripts/publish-wiki.ps1` after setting your wiki repo URL.
 
+## Are stored procedures supported?
+
+No. Stored procedure calls and stored procedure definitions are currently outside the SQM framework scope across all dialects.
+
+See:
+
+- [Unsupported Features](Unsupported-Features)
+- [SQL Server Dialect](SQL-Server-Dialect)
+
