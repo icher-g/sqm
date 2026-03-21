@@ -12,6 +12,7 @@
     <name>SQM (live-db-integration-tests)</name>
     <properties>
         <maven.deploy.skip>true</maven.deploy.skip>
+        <maven.install.skip>true</maven.install.skip>
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <testcontainers.version>1.21.3</testcontainers.version>
     </properties>
