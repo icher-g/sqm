@@ -14,6 +14,10 @@ It supports parse, validate, transform/rewrite, render, serialize, and runtime p
 
 Project wiki with feature guides and examples: https://github.com/icher-g/sqm/wiki
 
+Direct wiki guides:
+
+- SQL Server syntax guide: [wiki-src/SQL-Server-Dialect.md](wiki-src/SQL-Server-Dialect.md)
+
 ## Contributor Rules
 
 Repository development rules for contributors and coding agents are defined in `AGENTS.md`.
@@ -1396,7 +1400,7 @@ Roadmap is tracked in project docs and GitHub issues:
 - [docs/downstream/DOWNSTREAM_SUPPORT_MATRIX.md](docs/downstream/DOWNSTREAM_SUPPORT_MATRIX.md)
 - https://github.com/icher-g/sqm/issues
 
-Current downstream support spans ANSI, PostgreSQL, and MySQL query and DML flows across
+Current downstream support spans ANSI, PostgreSQL, MySQL, and SQL Server query and DML flows across
 validation, control/middleware, code generation, and Maven plugin schema-backed generation.
 
 ---

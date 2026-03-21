@@ -24,13 +24,13 @@ class DownstreamSupportMatrixTest {
 
         Map<String, List<String>> rows = matrixRows();
 
-        assertRow(rows, "sqm-validate", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes");
-        assertRow(rows, "sqm-control", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes");
-        assertRow(rows, "sqm-codegen", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes");
-        assertRow(rows, "sqm-codegen-maven-plugin", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes");
-        assertRow(rows, "sqm-middleware-core", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes");
-        assertRow(rows, "sqm-middleware-rest", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes");
-        assertRow(rows, "sqm-middleware-mcp", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes");
+        assertRow(rows, "sqm-validate", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes");
+        assertRow(rows, "sqm-control", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes");
+        assertRow(rows, "sqm-codegen", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes");
+        assertRow(rows, "sqm-codegen-maven-plugin", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes");
+        assertRow(rows, "sqm-middleware-core", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes");
+        assertRow(rows, "sqm-middleware-rest", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes");
+        assertRow(rows, "sqm-middleware-mcp", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes");
     }
 
     @Test
@@ -39,7 +39,7 @@ class DownstreamSupportMatrixTest {
 
         assertFalse(rows.isEmpty(), "Expected downstream support matrix to declare at least one module row");
         for (Map.Entry<String, List<String>> row : rows.entrySet()) {
-            for (int i = 0; i < 6; i++) {
+            for (int i = 0; i < 8; i++) {
                 String actualValue = row.getValue().get(i);
                 assertTrue(
                     SUPPORTED_STATUS_VALUES.contains(actualValue),
@@ -58,12 +58,14 @@ class DownstreamSupportMatrixTest {
         String postgresQuery,
         String postgresDml,
         String mysqlQuery,
-        String mysqlDml
+        String mysqlDml,
+        String sqlServerQuery,
+        String sqlServerDml
     ) {
         assertTrue(rows.containsKey(module), "Missing downstream support matrix row for module: " + module);
         assertEquals(
-            List.of(ansiQuery, ansiDml, postgresQuery, postgresDml, mysqlQuery, mysqlDml),
-            rows.get(module).subList(0, 6),
+            List.of(ansiQuery, ansiDml, postgresQuery, postgresDml, mysqlQuery, mysqlDml, sqlServerQuery, sqlServerDml),
+            rows.get(module).subList(0, 8),
             "Unexpected support matrix values for module: " + module
         );
     }
@@ -83,7 +85,7 @@ class DownstreamSupportMatrixTest {
 
             rows.put(
                 cells[0].replace("`", ""),
-                List.of(cells[1], cells[2], cells[3], cells[4], cells[5], cells[6], cells[7])
+                List.of(cells[1], cells[2], cells[3], cells[4], cells[5], cells[6], cells[7], cells[8])
             );
         }
         return rows;

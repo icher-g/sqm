@@ -164,6 +164,42 @@ class SqlFileCodeGeneratorTest {
     }
 
     @Test
+    void generate_supportsSqlServerAdvancedQueryAndMergeFiles() throws IOException {
+        var sqlDir = tempDir.resolve("sql-sqlserver-advanced");
+        var outputDir = tempDir.resolve("generated-sqlserver-advanced");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(
+            sqlDir.resolve("user").resolve("advanced_lookup.sql"),
+            "select top (10) percent [u].[id] from [users] as [u] with (nolock) order by [u].[id]"
+        );
+        Files.writeString(
+            sqlDir.resolve("user").resolve("sync_users.sql"),
+            """
+                merge top (10) percent into [users] with (holdlock)
+                using [users] as [s]
+                on [users].[id] = [s].[id]
+                when matched and [s].[id] = 1 then update set [name] = [s].[name]
+                when not matched by source and [users].[active] = 0 then delete
+                output deleted.[id]
+                """
+        );
+
+        var options = SqlFileCodegenOptions.of(sqlDir, outputDir, "io.sqm.codegen.generated", SqlCodegenDialect.SQLSERVER);
+        var generated = SqlFileCodeGenerator.of(options).generate();
+
+        assertEquals(1, generated.size());
+        var generatedFile = outputDir.resolve(Path.of("io", "sqm", "codegen", "generated", "UserQueries.java"));
+        var source = Files.readString(generatedFile);
+        assertTrue(source.contains("public static SelectQuery advancedLookup()"));
+        assertTrue(source.contains(".withNoLock()"));
+        assertTrue(source.contains(".top("));
+        assertTrue(source.contains("lit(10L)"));
+        assertTrue(source.contains("public static MergeStatement syncUsers()"));
+        assertTrue(source.contains(".whenNotMatchedBySourceDelete("));
+        assertTrue(source.contains(".result(deleted(id(\"id\", QuoteStyle.BRACKETS)))"));
+    }
+
+    @Test
     void generate_emitsStatementMethodsForDmlFiles() throws IOException {
         var sqlDir = tempDir.resolve("sql-dml");
         var outputDir = tempDir.resolve("generated-dml");

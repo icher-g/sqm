@@ -70,6 +70,30 @@ class MiddlewareServiceParityTest {
         assertEquals(directEnforce.kind().name(), viaEnforce.kind().name());
         assertNotEquals("DENY_PIPELINE_ERROR", viaEnforce.reasonCode().name());
     }
+
+    @Test
+    void sqlserver_advanced_requests_match_control_without_pipeline_failure() {
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
+                .buildValidationConfig()
+        );
+        var service = new SqlMiddlewareCoreService(decisionService);
+
+        var analyzeSql = "select top (10) percent [u].[id] from [users] as [u] with (nolock) order by [u].[id]";
+        var enforceSql = "update [users] set [name] = 'alice' output inserted.[id] where [id] = 1";
+        var context = new ExecutionContextDto("sqlserver", null, null, null, null);
+
+        var directAnalyze = decisionService.analyze(analyzeSql, ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE));
+        var viaAnalyze = service.analyze(new AnalyzeRequest(analyzeSql, context));
+        var directEnforce = decisionService.enforce(enforceSql, ExecutionContext.of("sqlserver", ExecutionMode.EXECUTE));
+        var viaEnforce = service.enforce(new EnforceRequest(enforceSql, context));
+
+        assertEquals(directAnalyze.reasonCode().name(), viaAnalyze.reasonCode().name());
+        assertEquals(directAnalyze.kind().name(), viaAnalyze.kind().name());
+
+        assertEquals(directEnforce.reasonCode().name(), viaEnforce.reasonCode().name());
+        assertEquals(directEnforce.kind().name(), viaEnforce.kind().name());
+    }
 }
 
 
