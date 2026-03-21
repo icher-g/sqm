@@ -17,6 +17,7 @@ import io.sqm.core.*;
     @JsonSubTypes.Type(value = Table.Impl.class, name = "table"),
     @JsonSubTypes.Type(value = ValuesTable.Impl.class, name = "values"),
     @JsonSubTypes.Type(value = FunctionTable.Impl.class, name = "func_table"),
+    @JsonSubTypes.Type(value = VariableTableRef.Impl.class, name = "variable_table"),
     @JsonSubTypes.Type(value = Lateral.Impl.class, name = "lateral")
 })
 public abstract class TableRefMixin extends CommonJsonMixin {

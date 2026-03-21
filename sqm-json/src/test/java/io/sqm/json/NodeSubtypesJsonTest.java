@@ -210,6 +210,20 @@ public class NodeSubtypesJsonTest {
         assertEquals(assignment, back);
         assertEquals(List.of("u", "name"), back.column().values());
     }
+
+    @Test
+    @DisplayName("SQL Server table variable: direct root round-trip")
+    void variableTable_asTableRefRoot() throws Exception {
+        var tableVariable = tableVar("@audit");
+
+        var back = roundTrip(tableVariable, TableRef.class);
+
+        assertInstanceOf(VariableTableRef.class, back);
+        assertEquals("audit", ((VariableTableRef) back).name().value());
+
+        JsonNode node = toTree(tableVariable);
+        assertEquals("variable_table", node.path("kind").asText());
+    }
     /* ==================== DistinctSpec Tests ==================== */
 
     @Test

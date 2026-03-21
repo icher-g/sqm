@@ -15,7 +15,10 @@ class ResultIntoParserTest {
         var result = ctx.parse(ResultInto.class, "INTO my_table");
 
         assertTrue(result.ok(), result.errorMessage());
-        assertEquals("my_table", result.value().target().name().value());
+        assertEquals(
+            "my_table",
+            result.value().target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
+        );
         assertTrue(result.value().columns().isEmpty());
     }
 
@@ -25,7 +28,23 @@ class ResultIntoParserTest {
         var result = ctx.parse(ResultInto.class, "INTO my_table (col_a, col_b)");
 
         assertTrue(result.ok(), result.errorMessage());
-        assertEquals("my_table", result.value().target().name().value());
+        assertEquals(
+            "my_table",
+            result.value().target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
+        );
+        assertEquals(2, result.value().columns().size());
+    }
+
+    @Test
+    void parsesIntoTableVariableTarget() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(ResultInto.class, "INTO @audit (col_a, col_b)");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(
+            "audit",
+            result.value().target().matchTableRef().variableTable(variable -> variable.name().value()).orElseThrow(AssertionError::new)
+        );
         assertEquals(2, result.value().columns().size());
     }
 

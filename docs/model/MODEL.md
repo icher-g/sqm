@@ -117,6 +117,7 @@ Node
 |     |  |- FunctionTable
 |     |  |- QueryTable
 |     |  `- ValuesTable
+|     `- VariableTableRef
 |     |- Lateral
 |     `- Table
 |- Assignment
@@ -274,6 +275,7 @@ graph TD
   TableRef --> AliasedTableRef
   TableRef --> Lateral
   TableRef --> Table
+  TableRef --> VariableTableRef
 
   AliasedTableRef --> FunctionTable
   AliasedTableRef --> QueryTable
@@ -540,6 +542,7 @@ graph TD
       - **FunctionTable** - table-valued function call used in FROM clause (for example `UNNEST(array)`, `generate_series(1,10)`)
       - **QueryTable** - derived table or subquery with optional alias and column aliases
       - **ValuesTable** - inline `VALUES` construct with optional alias
+    - **VariableTableRef** - variable-backed table reference such as SQL Server `@audit`, currently used for `OUTPUT INTO`
     - **Lateral** - wrapper for `LATERAL`, enabling correlated references to preceding FROM items
     - **Table** - base table reference (`schema.table`)
 
@@ -594,6 +597,6 @@ graph TD
 - **ExprResultItem** - expression result item with an optional alias
 - **StarResultItem** - unqualified `*` result item
 - **QualifiedStarResultItem** - generic qualified star result item such as `t.*`
-- **ResultInto** - optional SQL Server `OUTPUT ... INTO ...` target table and target column list
+- **ResultInto** - optional SQL Server `OUTPUT ... INTO ...` target relation and target column list, including base tables and SQL Server table variables
 - **OutputColumnExpr** - SQL Server pseudo-column reference used only inside `OUTPUT`, such as `inserted.id` or `deleted.status`
 - **OutputStarResultItem** - SQL Server pseudo-row-source star used only inside `OUTPUT`, such as `inserted.*` or `deleted.*`

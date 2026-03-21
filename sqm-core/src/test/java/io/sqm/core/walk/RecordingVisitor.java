@@ -94,6 +94,12 @@ public class RecordingVisitor extends RecursiveNodeVisitor<Void> {
     }
 
     @Override
+    public Void visitVariableTableRef(VariableTableRef t) {
+        mark(t);
+        return super.visitVariableTableRef(t);
+    }
+
+    @Override
     public Void visitOnJoin(OnJoin j) {
         mark(j);
         return super.visitOnJoin(j);

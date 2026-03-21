@@ -37,6 +37,7 @@ public final class Parsers {
             .register(new MergeDeleteActionParser())
             .register(new MergeDoNothingActionParser())
             .register(new MergeInsertActionParser())
+            .register(new VariableTableRefParser())
             .register(new OutputColumnExprParser())
             .register(new OutputStarResultItemParser())
             .register(new FunctionExprParser())

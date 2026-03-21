@@ -18,32 +18,32 @@ import java.util.Objects;
 public non-sealed interface ResultInto extends Node {
 
     /**
-     * Creates an result-into target without an explicit target column list.
+     * Creates a result-into target without an explicit target column list.
      *
-     * @param target target table
+     * @param target target relation
      * @return result-into specification
      */
-    static ResultInto of(Table target) {
+    static ResultInto of(TableRef target) {
         return of(target, List.of());
     }
 
     /**
-     * Creates an result-into target specification.
+     * Creates a result-into target specification.
      *
-     * @param target  target table
+     * @param target  target relation
      * @param columns optional target columns
      * @return result-into specification
      */
-    static ResultInto of(Table target, List<Identifier> columns) {
+    static ResultInto of(TableRef target, List<Identifier> columns) {
         return new Impl(target, columns);
     }
 
     /**
-     * Returns the target table that receives the emitted rows.
+     * Returns the target relation that receives the emitted rows.
      *
      * @return result target table
      */
-    Table target();
+    TableRef target();
 
     /**
      * Returns the optional target column list.
@@ -67,15 +67,15 @@ public non-sealed interface ResultInto extends Node {
     /**
      * Default immutable implementation.
      *
-     * @param target  target table
+     * @param target  target relation
      * @param columns optional target columns
      */
-    record Impl(Table target, List<Identifier> columns) implements ResultInto {
+    record Impl(TableRef target, List<Identifier> columns) implements ResultInto {
 
         /**
-         * Creates an result-into implementation.
+         * Creates a result-into implementation.
          *
-         * @param target  target table
+         * @param target  target relation
          * @param columns optional target columns
          */
         public Impl {

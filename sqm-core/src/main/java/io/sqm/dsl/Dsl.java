@@ -161,6 +161,26 @@ public final class Dsl {
         return TableRef.function(expr);
     }
 
+    /**
+     * Creates a SQL Server table-variable reference.
+     *
+     * @param name canonical variable name with or without leading {@code @}
+     * @return SQL Server table-variable reference
+     */
+    public static VariableTableRef tableVar(String name) {
+        return tableVar(Identifier.of(stripTableVariableSigil(name)));
+    }
+
+    /**
+     * Creates a SQL Server table-variable reference.
+     *
+     * @param name canonical variable identifier without leading {@code @}
+     * @return SQL Server table-variable reference
+     */
+    public static VariableTableRef tableVar(Identifier name) {
+        return TableRef.tableVariable(name);
+    }
+
     /* ========================= Columns ========================= */
 
     /**
@@ -300,32 +320,32 @@ public final class Dsl {
     /**
      * Creates a {@code OUTPUT INTO} target without explicit target columns.
      *
-     * @param target target table
+     * @param target target relation
      * @return result-into specification
      */
-    public static ResultInto resultInto(Table target) {
+    public static ResultInto resultInto(TableRef target) {
         return ResultInto.of(target);
     }
 
     /**
      * Creates a {@code OUTPUT INTO} target with explicit target columns.
      *
-     * @param target  target table
+     * @param target  target relation
      * @param columns target columns
      * @return result-into specification
      */
-    public static ResultInto resultInto(Table target, Identifier... columns) {
+    public static ResultInto resultInto(TableRef target, Identifier... columns) {
         return ResultInto.of(target, List.of(columns));
     }
 
     /**
      * Creates a {@code OUTPUT INTO} target with explicit target columns.
      *
-     * @param target  target table
+     * @param target  target relation
      * @param columns target column names
      * @return result-into specification
      */
-    public static ResultInto resultInto(Table target, String... columns) {
+    public static ResultInto resultInto(TableRef target, String... columns) {
         return resultInto(target, java.util.Arrays.stream(columns).map(Identifier::of).toArray(Identifier[]::new));
     }
 
@@ -578,6 +598,13 @@ public final class Dsl {
      */
     public static NamedParamExpr param(String name) {
         return NamedParamExpr.of(name);
+    }
+
+    private static String stripTableVariableSigil(String name) {
+        if (name == null) {
+            throw new NullPointerException("name");
+        }
+        return name.startsWith("@") ? name.substring(1) : name;
     }
 
     /* ========================= CASE ========================= */

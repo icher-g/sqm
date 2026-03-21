@@ -88,6 +88,7 @@ public final class Renderers {
             .register(new QualifiedStarResultItemRenderer())
             .register(new QueryExprRenderer())
             .register(new QueryTableRenderer())
+            .register(new VariableTableRefRenderer())
             .register(new RowExprRenderer())
             .register(new RowListExprRenderer())
             .register(new SelectQueryRenderer())

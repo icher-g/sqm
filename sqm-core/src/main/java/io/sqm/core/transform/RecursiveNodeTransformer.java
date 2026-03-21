@@ -692,6 +692,17 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
+     * Visits a {@link VariableTableRef}.
+     *
+     * @param t table-variable reference to transform
+     * @return transformed table-variable reference, or the original instance if unchanged
+     */
+    @Override
+    public Node visitVariableTableRef(VariableTableRef t) {
+        return t;
+    }
+
+    /**
      * Visits an {@link OnJoin}, a join with an {@code ON} predicate and a specific join kind
      * (INNER, LEFT, RIGHT, or FULL).
      *

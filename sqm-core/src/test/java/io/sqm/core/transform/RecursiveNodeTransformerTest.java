@@ -1426,8 +1426,34 @@ class RecursiveNodeTransformerTest {
         var transformed = (UpdateStatement) statement.accept(transformer);
 
         assertNotSame(statement, transformed);
-        assertEquals("audit_log", transformed.result().into().target().name().value());
+        assertEquals(
+            "audit_log",
+            transformed.result().into().target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
+        );
         assertEquals("u", transformed.result().items().getFirst().matchResultItem().qualifiedStar(item -> item.qualifier().value()).orElse(null));
         assertEquals(OutputRowSource.DELETED, transformed.result().items().get(1).matchResultItem().outputStar(OutputStarResultItem::source).orElse(null));
+    }
+
+    @Test
+    void visitVariableTableResultIntoTarget() {
+        var statement = update("users")
+            .set(id("name"), lit("alice"))
+            .result(resultInto(tableVar("audit_rows"), "user_id"), inserted("id"))
+            .build();
+
+        var transformer = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitVariableTableRef(VariableTableRef t) {
+                return tableVar("audit_archive");
+            }
+        };
+
+        var transformed = (UpdateStatement) statement.accept(transformer);
+
+        assertNotSame(statement, transformed);
+        assertEquals(
+            "audit_archive",
+            transformed.result().into().target().matchTableRef().variableTable(variable -> variable.name().value()).orElseThrow(AssertionError::new)
+        );
     }
 }

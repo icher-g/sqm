@@ -33,6 +33,7 @@ public final class Renderers {
             .register(new MergeDoNothingActionRenderer())
             .register(new MergeInsertActionRenderer())
             .register(new TableRenderer())
+            .register(new VariableTableRefRenderer())
             .register(new OutputColumnExprRenderer())
             .register(new OutputStarResultItemRenderer())
             .register(new FunctionExprRenderer())

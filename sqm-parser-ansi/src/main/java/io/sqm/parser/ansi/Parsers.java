@@ -104,6 +104,7 @@ public final class Parsers {
             .register(new TableRefParser())
             .register(new QueryTableParser())
             .register(new ValuesTableParser())
+            .register(new VariableTableRefParser())
             .register(new TableParser())
             .register(new GroupByParser())
             .register(new GroupingSetsParser())

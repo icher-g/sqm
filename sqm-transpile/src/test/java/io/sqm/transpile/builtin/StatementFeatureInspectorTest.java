@@ -68,6 +68,28 @@ class StatementFeatureInspectorTest {
     }
 
     @Test
+    void distinguishesGenericResultClausesFromSqlServerSpecificOutput() {
+        var returningInsert = InsertStatement.builder(Dsl.tbl("users"))
+            .columns(Dsl.id("id"))
+            .values(Dsl.rows(Dsl.row(Dsl.lit(1))))
+            .result(Dsl.col("id").toSelectItem())
+            .build();
+        var outputUpdate = UpdateStatement.builder(Dsl.tbl("users"))
+            .set(Dsl.set("name", Dsl.lit("alice")))
+            .result(Dsl.deleted("name"), Dsl.inserted("name"))
+            .build();
+        var outputIntoUpdate = UpdateStatement.builder(Dsl.tbl("users"))
+            .set(Dsl.set("name", Dsl.lit("alice")))
+            .result(Dsl.resultInto(Dsl.tbl("audit"), "old_name"), Dsl.deleted("name"))
+            .build();
+
+        assertTrue(StatementFeatureInspector.hasResultClause(returningInsert));
+        assertFalse(StatementFeatureInspector.hasSqlServerOutputClause(returningInsert));
+        assertTrue(StatementFeatureInspector.hasSqlServerOutputClause(outputUpdate));
+        assertTrue(StatementFeatureInspector.hasSqlServerOutputClause(outputIntoUpdate));
+    }
+
+    @Test
     void detectsFunctionsHintsInsertModesAndConflictActions() {
         var functionQuery = Dsl.select(FunctionExpr.of(
                 QualifiedName.of("json_extract"),

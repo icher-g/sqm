@@ -8,6 +8,9 @@ import io.sqm.core.InsertStatement;
 import io.sqm.core.LikeMode;
 import io.sqm.core.LikePredicate;
 import io.sqm.core.MergeStatement;
+import io.sqm.core.OutputColumnExpr;
+import io.sqm.core.OutputStarResultItem;
+import io.sqm.core.ResultClause;
 import io.sqm.core.Statement;
 import io.sqm.core.Table;
 import io.sqm.core.TopSpec;
@@ -55,6 +58,45 @@ final class StatementFeatureInspector {
                     found.set(true);
                 }
                 return super.visitDeleteStatement(statement);
+            }
+
+            @Override
+            public Void visitMergeStatement(MergeStatement statement) {
+                if (statement.result() != null) {
+                    found.set(true);
+                }
+                return super.visitMergeStatement(statement);
+            }
+        });
+        return found.get();
+    }
+
+    static boolean hasSqlServerOutputClause(Statement statement) {
+        var found = new AtomicBoolean(false);
+        statement.accept(new RecursiveNodeVisitor<Void>() {
+            @Override
+            protected Void defaultResult() {
+                return null;
+            }
+
+            @Override
+            public Void visitResultClause(ResultClause clause) {
+                if (clause.into() != null) {
+                    found.set(true);
+                }
+                return super.visitResultClause(clause);
+            }
+
+            @Override
+            public Void visitOutputColumnExpr(OutputColumnExpr c) {
+                found.set(true);
+                return super.visitOutputColumnExpr(c);
+            }
+
+            @Override
+            public Void visitOutputStarResultItem(OutputStarResultItem i) {
+                found.set(true);
+                return super.visitOutputStarResultItem(i);
             }
         });
         return found.get();

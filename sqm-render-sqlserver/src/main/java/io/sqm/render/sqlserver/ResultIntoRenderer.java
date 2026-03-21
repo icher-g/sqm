@@ -1,6 +1,8 @@
 package io.sqm.render.sqlserver;
 
 import io.sqm.core.ResultInto;
+import io.sqm.core.Table;
+import io.sqm.core.VariableTableRef;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -25,9 +27,14 @@ public class ResultIntoRenderer implements Renderer<ResultInto> {
      */
     @Override
     public void render(ResultInto node, RenderContext ctx, SqlWriter w) {
-        if (!node.target().lockHints().isEmpty()) {
+        if (!(node.target() instanceof Table || node.target() instanceof VariableTableRef)) {
+            throw new UnsupportedOperationException("SQL Server OUTPUT INTO currently supports base tables and table variables only");
+        }
+
+        if (node.target() instanceof Table target && !target.lockHints().isEmpty()) {
             throw new UnsupportedOperationException("SQL Server table hints are not supported on OUTPUT INTO targets");
         }
+
         w.append("INTO").space().append(node.target());
         if (!node.columns().isEmpty()) {
             w.space().append("(");
