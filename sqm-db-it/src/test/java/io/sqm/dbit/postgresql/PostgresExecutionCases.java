@@ -209,7 +209,7 @@ final class PostgresExecutionCases {
                         row(col("src", "id"), col("src", "name"), col("src", "active"))
                     )
                     .whenNotMatchedBySourceDoNothing(col("users", "active").eq(lit(false)))
-                    .result(col("id").toSelectItem())
+                    .result(col("users", "id").toSelectItem())
                     .build();
 
                 var sql = harness.render(statement);
@@ -228,6 +228,8 @@ final class PostgresExecutionCases {
                 PostgresLiveFeature.MERGE_NOT_MATCHED_BY_SOURCE_DELETE
             ),
             harness -> {
+                harness.executeStatements("delete from orders where user_id = 3");
+
                 var statement = merge("users")
                     .source(tbl("source_users").as("src"))
                     .on(col("users", "id").eq(col("src", "id")))
