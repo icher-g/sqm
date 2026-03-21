@@ -32,10 +32,15 @@ abstract class PostgresExecutionHarness extends DialectExecutionHarness {
 
     protected void resetDslSchema() throws Exception {
         executeStatements(
+            "drop table if exists source_users",
             "drop table if exists orders",
             "drop table if exists users",
             "drop table if exists events",
             "create table users (" +
+                "id bigint primary key," +
+                "name text not null," +
+                "active boolean not null)",
+            "create table source_users (" +
                 "id bigint primary key," +
                 "name text not null," +
                 "active boolean not null)",
@@ -51,6 +56,8 @@ abstract class PostgresExecutionHarness extends DialectExecutionHarness {
                 "primary key (user_id, version))",
             "insert into users(id, name, active) values " +
                 "(1, 'Alice', true), (2, 'Bob', false), (3, 'Carol', true)",
+            "insert into source_users(id, name, active) values " +
+                "(1, 'Alicia', true), (2, 'Bob', false), (4, 'Dave', true), (5, 'Eve', true)",
             "insert into orders(id, user_id, status, amount) values " +
                 "(10, 1, 'PAID', 12.50), (11, 1, 'NEW', 7.00), (12, 3, 'PAID', 5.25)",
             "insert into events(user_id, version, payload) values " +

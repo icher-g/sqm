@@ -19,12 +19,8 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - name: Docker Info
-        run: docker version
-
-      # Run tests;
       - name: Build & Test
-        run: mvn -B verify -Pdocker-it -Dapi.version=1.44 -Ddocker.host=unix:///var/run/docker.sock
+        run: mvn -B verify
 
       # Upload all per-module HTML for download
       - name: Upload coverage to Codecov

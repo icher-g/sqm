@@ -83,6 +83,11 @@
     <build>
         <pluginManagement>
             <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.4.1</version>
+                </plugin>
                 <!-- Surefire: unit tests -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>

@@ -1361,6 +1361,7 @@ SQM includes:
 - Renderer compatibility checks per dialect
 - JSON serialization consistency tests
 - Middleware runtime integration and NFR suites
+- Live DB syntax execution suites in `sqm-db-it` for PostgreSQL, MySQL, and SQL Server
 
 ---
 
@@ -1376,6 +1377,20 @@ To run tests:
 ```bash
 mvn test
 ```
+
+To run the live DB suites separately:
+```bash
+mvn -B -pl sqm-db-it -am verify -Pdocker-it
+```
+
+Per-dialect live DB commands:
+```bash
+mvn -B -pl sqm-db-it -am verify -Pdocker-it -Dit.test=PostgresDslExecutionIT,PostgresMiddlewareExecutionIT -Dsurefire.skip=true -Dfailsafe.failIfNoSpecifiedTests=false
+mvn -B -pl sqm-db-it -am verify -Pdocker-it -Dit.test=MySqlDslExecutionIT -Dsurefire.skip=true -Dfailsafe.failIfNoSpecifiedTests=false
+mvn -B -pl sqm-db-it -am verify -Pdocker-it -Dit.test=SqlServerDslExecutionIT -Dsurefire.skip=true -Dfailsafe.failIfNoSpecifiedTests=false
+```
+
+GitHub Actions runs the live DB suites in the separate [`.github/workflows/live-db-it.yml`](.github/workflows/live-db-it.yml) pipeline so the default CI path stays fast.
 
 ---
 
