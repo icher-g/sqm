@@ -70,13 +70,8 @@ jobs:
           echo "distMgmt.repoId   = $(mvn -q -DforceStdout help:evaluate -Dexpression=project.distributionManagement.repository.id || true)"
           echo "distMgmt.repoUrl  = $(mvn -q -DforceStdout help:evaluate -Dexpression=project.distributionManagement.repository.url || true)"
 
-      - name: Build (install to local)
-        run: mvn -B -ntp -DskipTests install
-
-      # ⬇️ Force deploy to GPR, deploy only publishable modules
       - name: Deploy to GitHub Packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mvn -B -ntp -DskipTests deploy
-
