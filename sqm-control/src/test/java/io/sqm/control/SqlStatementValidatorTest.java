@@ -83,6 +83,20 @@ class SqlStatementValidatorTest {
     }
 
     @Test
+    void standard_supports_sqlserver_advanced_merge_validation() {
+        var validator = SqlStatementValidator.standard(SCHEMA);
+        var statement = select(col("u", "id"))
+            .from(tbl(Identifier.of("users", io.sqm.core.QuoteStyle.BRACKETS)).as(Identifier.of("u", io.sqm.core.QuoteStyle.BRACKETS)).withNoLock())
+            .top(io.sqm.dsl.Dsl.topPercent(lit(10)))
+            .orderBy(io.sqm.dsl.Dsl.order(col("u", "id")))
+            .build();
+
+        var result = validator.validate(statement, ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE));
+
+        assertEquals(ReasonCode.NONE, result.code());
+    }
+
+    @Test
     void standard_reports_dml_assignment_validation_failures() {
         var validator = SqlStatementValidator.standard(SCHEMA);
         UpdateStatement statement = update("users")

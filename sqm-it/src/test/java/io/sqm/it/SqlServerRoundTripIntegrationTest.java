@@ -77,6 +77,44 @@ class SqlServerRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTrip_top_percent_query_with_table_hints() {
+        String sql = """
+            SELECT TOP (10) PERCENT [u].[id]
+            FROM [users] AS [u] WITH (NOLOCK)
+            ORDER BY [u].[id]
+            """.trim();
+
+        Query parsed = Utils.parseSqlServer(sql);
+        String rendered = Utils.renderSqlServer(parsed);
+        Query reparsed = Utils.parseSqlServer(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals(
+            "SELECT TOP (10) PERCENT [u].[id] FROM [users] AS [u] WITH (NOLOCK) ORDER BY [u].[id]",
+            Utils.normalizeSql(rendered)
+        );
+    }
+
+    @Test
+    void roundTrip_top_with_ties_query() {
+        String sql = """
+            SELECT TOP (5) WITH TIES [u].[id]
+            FROM [users] AS [u]
+            ORDER BY [u].[id]
+            """.trim();
+
+        Query parsed = Utils.parseSqlServer(sql);
+        String rendered = Utils.renderSqlServer(parsed);
+        Query reparsed = Utils.parseSqlServer(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals(
+            "SELECT TOP (5) WITH TIES [u].[id] FROM [users] AS [u] ORDER BY [u].[id]",
+            Utils.normalizeSql(rendered)
+        );
+    }
+
+    @Test
     void parser_rejects_offsetFetch_without_orderBy() {
         var ctx = ParseContext.of(new SqlServerSpecs());
         var result = ctx.parse(Query.class, "SELECT [id] FROM [users] OFFSET 5 ROWS FETCH NEXT 10 ROWS ONLY");

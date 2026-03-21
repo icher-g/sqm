@@ -92,6 +92,36 @@ class SqlServerDmlRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTripMergeStatementWithTopOutputAndBySourceClause() {
+        assertRoundTrip(
+            """
+                MERGE TOP (10) PERCENT INTO [users] WITH (HOLDLOCK)
+                USING [src_users] AS [s]
+                ON [users].[id] = [s].[id]
+                WHEN MATCHED AND [s].[active] = 1 THEN UPDATE SET [name] = [s].[name]
+                WHEN NOT MATCHED BY SOURCE AND [users].[active] = 0 THEN DELETE
+                OUTPUT deleted.[id]
+                """,
+            """
+                MERGE TOP (10) PERCENT INTO [users] WITH (HOLDLOCK)
+                USING [src_users] AS [s]
+                ON [users].[id] = [s].[id]
+                WHEN MATCHED AND [s].[active] = 1 THEN UPDATE SET [name] = [s].[name]
+                WHEN NOT MATCHED BY SOURCE AND [users].[active] = 0 THEN DELETE
+                OUTPUT deleted.[id]
+                """
+        );
+    }
+
+    @Test
+    void roundTripMergeStatementWithOutputInto() {
+        assertRoundTrip(
+            "MERGE INTO [users] USING [src] AS [s] ON [users].[id] = [s].[id] WHEN MATCHED THEN DELETE OUTPUT deleted.[id] INTO [audit] ([user_id])",
+            "MERGE INTO [users] USING [src] AS [s] ON [users].[id] = [s].[id] WHEN MATCHED THEN DELETE OUTPUT deleted.[id] INTO [audit] ([user_id])"
+        );
+    }
+
+    @Test
     void rejectsReturningForSqlServerBaseline() {
         var result = parseContext.parse(Statement.class, "INSERT INTO [users] ([id]) VALUES (1) RETURNING [id]");
 

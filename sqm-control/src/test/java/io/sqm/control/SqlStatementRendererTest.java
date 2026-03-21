@@ -75,6 +75,23 @@ class SqlStatementRendererTest {
     }
 
     @Test
+    void renders_sqlserver_advanced_top_percent_query_with_lock_hint() {
+        var renderer = SqlStatementRenderer.standard();
+        var statement = Query.select(col("u", "id"))
+            .from(tbl(id("users", QuoteStyle.BRACKETS)).as(id("u", QuoteStyle.BRACKETS)).withNoLock())
+            .top(TopSpec.of(lit(10), true, false))
+            .orderBy(order(col("u", "id")))
+            .build();
+
+        var rendered = renderer.render(statement, ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE));
+
+        assertEquals(
+            "SELECT TOP (10) PERCENT u.id FROM [users] AS [u] WITH (NOLOCK) ORDER BY u.id",
+            rendered.sql().replaceAll("\\s+", " ").trim()
+        );
+    }
+
+    @Test
     void renders_sqlserver_insert_statement() {
         var renderer = SqlStatementRenderer.standard();
         InsertStatement statement = insert(tbl(id("users", QuoteStyle.BRACKETS)))
@@ -124,6 +141,29 @@ class SqlStatementRendererTest {
         var rendered = renderer.render(statement, ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE));
 
         assertEquals("DELETE FROM [users]", rendered.sql().replaceAll("\\s+", " ").trim());
+    }
+
+    @Test
+    void renders_sqlserver_merge_statement_with_top_output_and_by_source_clause() {
+        var renderer = SqlStatementRenderer.standard();
+        var statement = SqlStatementParser.standard().parse(
+            """
+                MERGE TOP (10) PERCENT INTO [users] WITH (HOLDLOCK)
+                USING [src_users] AS [s]
+                ON [users].[id] = [s].[id]
+                WHEN MATCHED AND [s].[active] = 1 THEN UPDATE SET [name] = [s].[name]
+                WHEN NOT MATCHED BY SOURCE AND [users].[active] = 0 THEN DELETE
+                OUTPUT deleted.[id]
+                """,
+            ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE)
+        );
+
+        var rendered = renderer.render(statement, ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE));
+
+        assertEquals(
+            "MERGE TOP (10) PERCENT INTO [users] WITH (HOLDLOCK) USING [src_users] AS [s] ON [users].[id] = [s].[id] WHEN MATCHED AND [s].[active] = 1 THEN UPDATE SET [name] = [s].[name] WHEN NOT MATCHED BY SOURCE AND [users].[active] = 0 THEN DELETE OUTPUT deleted.[id]",
+            rendered.sql().replaceAll("\\s+", " ").trim()
+        );
     }
 
     @Test

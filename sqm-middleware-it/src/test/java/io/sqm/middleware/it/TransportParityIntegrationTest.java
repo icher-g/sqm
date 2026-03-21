@@ -134,6 +134,51 @@ class TransportParityIntegrationTest {
     }
 
     @Test
+    void rest_and_mcp_transports_match_core_service_for_sqlserver_advanced_requests() {
+        var service = SqlMiddlewareServices.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
+                .buildValidationAndRewriteConfig()
+        );
+
+        var restController = new SqlMiddlewareRestController(new SqlMiddlewareRestAdapter(service));
+        var mcpRouter = new SqlMiddlewareMcpToolRouter(new SqlMiddlewareMcpAdapter(service));
+        var context = new ExecutionContextDto("sqlserver", null, null, null, null);
+        var analyzeRequest = new AnalyzeRequest(
+            "select top (10) percent [u].[id] from [users] as [u] with (nolock) order by [u].[id]",
+            context
+        );
+        var enforceRequest = new EnforceRequest(
+            """
+                merge top (10) percent into [users] with (holdlock)
+                using [users] as [s]
+                on [users].[id] = [s].[id]
+                when matched and [s].[id] = 1 then update set [name] = [s].[name]
+                when not matched by source and [users].[id] = 1 then delete
+                output deleted.[id]
+                """,
+            context
+        );
+
+        var directAnalyze = service.analyze(analyzeRequest);
+        var restAnalyze = restController.analyze(analyzeRequest);
+        var mcpAnalyze = (DecisionResultDto) mcpRouter.invoke(SqlMiddlewareMcpToolRouter.ANALYZE_TOOL, analyzeRequest);
+
+        assertEquals(directAnalyze.kind(), restAnalyze.kind());
+        assertEquals(directAnalyze.reasonCode(), restAnalyze.reasonCode());
+        assertEquals(directAnalyze.kind(), mcpAnalyze.kind());
+        assertEquals(directAnalyze.reasonCode(), mcpAnalyze.reasonCode());
+
+        var directEnforce = service.enforce(enforceRequest);
+        var restEnforce = restController.enforce(enforceRequest);
+        var mcpEnforce = (DecisionResultDto) mcpRouter.invoke(SqlMiddlewareMcpToolRouter.ENFORCE_TOOL, enforceRequest);
+
+        assertEquals(directEnforce.kind(), restEnforce.kind());
+        assertEquals(directEnforce.reasonCode(), restEnforce.reasonCode());
+        assertEquals(directEnforce.kind(), mcpEnforce.kind());
+        assertEquals(directEnforce.reasonCode(), mcpEnforce.reasonCode());
+    }
+
+    @Test
     void invalid_sqlserver_advanced_top_surfaces_clear_diagnostics_across_transports() {
         var service = SqlMiddlewareServices.create(
             SqlDecisionServiceConfig.builder(SCHEMA)

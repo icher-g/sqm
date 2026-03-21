@@ -5,6 +5,7 @@ import io.sqm.control.execution.ExecutionMode;
 import io.sqm.core.DeleteStatement;
 import io.sqm.control.pipeline.SqlStatementParser;
 import io.sqm.core.InsertStatement;
+import io.sqm.core.MergeStatement;
 import io.sqm.core.Query;
 import io.sqm.core.UpdateStatement;
 import io.sqm.parser.ansi.AnsiSpecs;
@@ -90,6 +91,19 @@ class SqlStatementParserTest {
     }
 
     @Test
+    void parses_sqlserver_advanced_top_and_lock_hint_query() {
+        var parser = SqlStatementParser.standard();
+        var context = ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE);
+
+        var statement = parser.parse(
+            "SELECT TOP (10) PERCENT [u].[id] FROM [users] AS [u] WITH (NOLOCK) ORDER BY [u].[id]",
+            context
+        );
+
+        assertInstanceOf(Query.class, statement);
+    }
+
+    @Test
     void parses_sqlserver_update_statement() {
         var parser = SqlStatementParser.standard();
         var context = ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE);
@@ -114,6 +128,26 @@ class SqlStatementParserTest {
 
         var statement = parser.parse("DELETE FROM [users] OUTPUT deleted.[id] WHERE [id] = 1", context);
         assertInstanceOf(DeleteStatement.class, statement);
+    }
+
+    @Test
+    void parses_sqlserver_merge_statement_with_advanced_features() {
+        var parser = SqlStatementParser.standard();
+        var context = ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE);
+
+        var statement = parser.parse(
+            """
+                MERGE TOP (10) PERCENT INTO [users] WITH (HOLDLOCK)
+                USING [src_users] AS [s]
+                ON [users].[id] = [s].[id]
+                WHEN MATCHED AND [s].[active] = 1 THEN UPDATE SET [name] = [s].[name]
+                WHEN NOT MATCHED BY SOURCE AND [users].[active] = 0 THEN DELETE
+                OUTPUT deleted.[id]
+                """,
+            context
+        );
+
+        assertInstanceOf(MergeStatement.class, statement);
     }
 
     @Test
