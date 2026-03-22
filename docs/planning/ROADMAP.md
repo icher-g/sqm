@@ -90,11 +90,29 @@ Priority levels:
 - Deliver an initial PostgreSQL <-> MySQL transpilation slice focused on a small exact subset plus explicit unsupported cases.
 - Backlog follow-up: consolidate dialect identity usage across modules around shared `SqlDialectId` instead of mixed raw strings and service-specific dialect naming.
 
-### Epic R5: SQL Server Dialect Support
+Reference epic doc: `docs/epics/R4_SQL_TRANSPILATION_FOUNDATION_COMPLETED.md`
+
+### Epic R5: SQL Server Dialect Support (Completed)
 - Add `sqm-parser-sqlserver` and `sqm-render-sqlserver`.
 - Define `SqlServerSpecs`.
 - Support SQL Server pagination/identifier/function differences.
 - Add integration round-trip tests and middleware smoke coverage.
+Reference epic doc: `docs/epics/R5_SQL_SERVER_DIALECT_SUPPORT_COMPLETED.md`
+
+### Epic R5B: SQL Server Advanced Support (Completed)
+- Deliver the advanced SQL Server features intentionally deferred by `R5`.
+- Keep DDL explicitly out of scope while completing advanced DML/query semantics, validation, transpilation, DSL, codegen, and downstream wiring.
+Reference epic doc: `docs/epics/R5B_SQL_SERVER_ADVANCED_SUPPORT_COMPLETED.md`
+
+### Epic R6: Dialect Live DB Execution Coverage (Completed)
+- Add a dedicated live-database execution test track.
+- Separate Docker-backed real-engine verification from fast integration coverage.
+- Track executable coverage by shipped dialect feature families.
+Reference epic doc: `docs/epics/R6_DIALECT_LIVE_DB_EXECUTION_COVERAGE_COMPLETED.md`
+
+### Epic R7: Typed Hint Modeling
+- Introduce a typed hint model in `sqm-core`.
+- Align parser, renderer, validation, transpilation, DSL, codegen, and JSON behavior around first-class hint semantics.
 
 ### DDL Track (Decision Required)
 - DDL is not currently committed as a framework feature.
@@ -106,14 +124,22 @@ Priority levels:
 
 ## P1 (High Value)
 
-### Epic R8: Oracle Dialect Support
-- Add parser/renderer/specs modules for Oracle-specific syntax.
-- Focus on top query constructs and compatibility gaps.
+### Epic R8: Dialect Support Gap Closure
+- Close the currently documented `Not implemented by SQM` dialect gaps from `MODEL.md`.
+- Require each story to confirm dialect/version capability before coding and either implement or reclassify deliberately.
+
+### Epic R9: Transformation Ergonomics
+- Improve transformation authoring ergonomics without replacing the current visitor/matcher/transformer model.
+- Add a small, explicit ergonomic layer for repeated semantic inspection and rewrite tasks.
 
 ### Epic R10: Catalog/Introspection Unification for New Dialects
 - Provide dialect-aware type mapping packs.
 - Ensure catalog schema loading supports new dialect quirks.
 - Add conformance tests per dialect for schema/validator interplay.
+
+### Epic ORACLE-R1: Oracle Dialect Support
+- Add parser/renderer/specs modules for Oracle-specific syntax.
+- Focus on top query constructs and compatibility gaps.
 
 ## P2 (Nice to Have)
 
@@ -136,10 +162,15 @@ Priority levels:
 ## Suggested Implementation Order
 1. `R4` SQL transpilation foundation
 2. `R5` SQL Server
-3. `R8` Oracle
-4. `R10` catalog unification
-5. Separate DDL decision, only if explicitly accepted
-6. `R11`/`R12`/`R13` as capacity permits
+3. `R5B` SQL Server advanced support
+4. `R6` live DB execution coverage
+5. `R7` typed hint modeling
+6. `R8` dialect support gap closure
+7. `R9` transformation ergonomics
+8. `ORACLE-R1` Oracle
+9. `R10` catalog unification
+10. Separate DDL decision, only if explicitly accepted
+11. `R11`/`R12`/`R13` as capacity permits
 
 ## Exit Criteria Per Epic
 - Model + parser + renderer + tests + docs complete.
