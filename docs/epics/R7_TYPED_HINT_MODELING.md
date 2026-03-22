@@ -733,35 +733,173 @@ This epic is successful if, after implementation, SQM can do all of the followin
 
 ---
 
-## Suggested Story Breakdown
+## User Stories
 
 ### Story H1
 
-Introduce core typed hint nodes in `sqm-core` with visitor / transformer / matcher / JSON / docs coverage.
+#### Title
+`Story: Introduce core typed hint nodes in sqm-core`
+
+#### User Story
+As a SQM maintainer, I want typed hint nodes added to `sqm-core` so hint semantics become first-class model elements instead of opaque strings.
+
+#### Acceptance Criteria
+- a shared typed hint model exists in `sqm-core`
+- statement and table hint attachment points are represented explicitly
+- hint arguments are modeled structurally for the selected first-wave scope
+- visitors, transformers, matchers, JSON mixins, and `MODEL.md` are updated for the new node surface
+- docs explain the selected hint-node shape and scope boundaries
+
+#### Labels
+`story`, `model`, `hints`, `sqm-core`
+
+#### Depends On
+Epic model decision for `R7`
+
+---
 
 ### Story H2
 
-Add generic DSL and codegen support for typed hints.
+#### Title
+`Story: Add DSL and codegen support for typed hints`
+
+#### User Story
+As a SQM user, I want typed hints expressible through DSL and generated code so new hint semantics are usable ergonomically rather than only through low-level model construction.
+
+#### Acceptance Criteria
+- generic DSL helpers exist for statement and table hints
+- convenience helpers delegate to the canonical typed hint construction path where appropriate
+- `sqm-codegen` emits typed hint construction instead of raw string fragments
+- generated examples preserve hint structure clearly
+- tests cover DSL and codegen output for typed hints
+
+#### Labels
+`story`, `dsl`, `codegen`, `hints`
+
+#### Depends On
+H1
+
+---
 
 ### Story H3
 
-Migrate statement-level hints from raw strings to `StatementHint`.
+#### Title
+`Story: Migrate statement-level hints from raw strings to StatementHint`
+
+#### User Story
+As a SQM user, I want statement-level hints stored as typed nodes so transformations and downstream tooling can inspect them safely without reparsing strings.
+
+#### Acceptance Criteria
+- statement hint-bearing surfaces store typed `StatementHint` values for the selected scope
+- existing raw-string statement hint APIs are adapted or deprecated explicitly
+- compatibility behavior is documented where transitional APIs remain
+- tests cover typed statement hint construction, inspection, and migration behavior
+
+#### Labels
+`story`, `hints`, `model`, `api`
+
+#### Depends On
+H1, H2
+
+---
 
 ### Story H4
 
-Migrate existing table-hint modeling toward `TableHint`.
+#### Title
+`Story: Migrate table-hint modeling toward TableHint`
+
+#### User Story
+As a SQM user, I want table hints represented through typed `TableHint` nodes so table-level hint semantics are consistent with the new structured hint model.
+
+#### Acceptance Criteria
+- existing table-hint storage moves toward typed `TableHint` nodes
+- current convenience helpers continue to work through the typed model
+- table-hint APIs remain ergonomic for supported dialect scenarios
+- tests cover migration of existing table-hint behavior onto the typed representation
+
+#### Labels
+`story`, `hints`, `table`, `model`
+
+#### Depends On
+H1, H2
+
+---
 
 ### Story H5
 
-Add parser / renderer support for first-wave typed hints in currently supported dialects.
+#### Title
+`Story: Add parser and renderer support for first-wave typed hints`
+
+#### User Story
+As a SQM user, I want supported dialect parsers and renderers to read and write typed hints so the new model works end to end for the first-wave hint scope.
+
+#### Acceptance Criteria
+- supported dialect parsers emit typed statement and table hints for the selected first-wave cases
+- supported dialect renderers render typed hints correctly in supported contexts
+- unsupported dialect or context combinations fail explicitly rather than silently degrading
+- tests cover representative happy-path and unsupported-path parse/render scenarios
+
+#### Labels
+`story`, `parser`, `renderer`, `hints`, `dialect`
+
+#### Depends On
+H1, H3, H4
+
+---
 
 ### Story H6
 
-Add validation support for duplicate, conflicting, and unsupported typed hints.
+#### Title
+`Story: Add validation support for typed hints`
+
+#### User Story
+As a SQM user, I want typed hints validated structurally so duplicate, conflicting, and unsupported hint combinations are diagnosed clearly.
+
+#### Acceptance Criteria
+- shared and dialect-specific validation layers inspect typed hints structurally
+- duplicate and conflicting hint combinations are rejected where practical
+- unsupported contexts, names, argument counts, or argument shapes are diagnosed clearly
+- tests cover positive and negative validation cases for typed hints
+
+#### Labels
+`story`, `validation`, `hints`, `dialect`
+
+#### Depends On
+H1, H3, H4, H5
+
+---
 
 ### Story H7
 
-Add transpilation diagnostics and rule support for typed hints.
+#### Title
+`Story: Add transpilation diagnostics and rules for typed hints`
+
+#### User Story
+As a SQM user, I want transpilation to inspect typed hints structurally so exact, approximate, and unsupported outcomes are explicit and safe.
+
+#### Acceptance Criteria
+- transpile rules inspect hint kind, attachment point, and typed arguments rather than raw strings
+- representative hint cases produce explicit exact, approximate, or unsupported outcomes
+- diagnostics explain when typed hints cannot be preserved safely across dialects
+- tests cover typed-hint transpilation outcomes and warnings
+
+#### Labels
+`story`, `transpile`, `hints`, `dialect`
+
+#### Depends On
+H1, H3, H4, H5, H6
+
+---
+
+## Suggested Delivery Order
+
+1. `H1` core typed hint nodes
+2. `H2` DSL and codegen support
+3. `H3` statement-hint migration
+4. `H4` table-hint migration
+5. `H5` parser and renderer support
+6. `H6` validation support
+7. `H7` transpilation support
 
 ---
 
@@ -779,3 +917,23 @@ The recommended implementation strategy is:
 - dialect-owned parse/render/validation behavior
 - gradual migration away from raw strings
 - first-wave scope intentionally limited to the hint families SQM already touches today
+
+---
+
+## Publishing GitHub Issues
+
+The epic and stories can be published to GitHub issues from this markdown source.
+
+Preview:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\publish-r7-typed-hint-issues.ps1 -WhatIf
+```
+
+Publish:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\publish-r7-typed-hint-issues.ps1
+```
+
+The wrapper delegates to the generic publisher in `scripts/create-github-issues-from-epic-md.ps1`.
