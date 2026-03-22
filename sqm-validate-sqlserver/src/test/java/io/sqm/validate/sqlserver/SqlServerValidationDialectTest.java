@@ -319,6 +319,38 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
+    void validate_acceptsTableVariableOutputIntoTarget() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var updateStatement = update("users")
+            .set(Identifier.of("name"), lit("alice"))
+            .result(resultInto(tableVar("@audit"), "user_id"), inserted("id"))
+            .build();
+
+        var result = validator.validate(updateStatement);
+
+        assertFalse(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "update.result".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
+    void validate_acceptsBaseTableOutputIntoTargetWithoutHints() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var updateStatement = update("users")
+            .set(Identifier.of("name"), lit("alice"))
+            .result(resultInto(tbl("users"), "id"), inserted("id"))
+            .build();
+
+        var result = validator.validate(updateStatement);
+
+        assertFalse(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "update.result".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
     void validate_reportsInvalidSqlServerOutputRowSources() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var insertStatement = insert("users")
@@ -386,6 +418,23 @@ class SqlServerValidationDialectTest {
             problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
                 && "merge.result".equals(problem.clausePath())
                 && problem.message().contains("OUTPUT INTO")
+        ));
+    }
+
+    @Test
+    void validate_reportsNonTableOutputIntoTargetAsUnsupported() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var updateStatement = update("users")
+            .set(Identifier.of("name"), lit("alice"))
+            .result(resultInto(tbl(select(lit(1L)).build()).as("audit_rows"), "user_id"), inserted("id"))
+            .build();
+
+        var result = validator.validate(updateStatement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "update.result".equals(problem.clausePath())
+                && problem.message().contains("base tables and table variables")
         ));
     }
 

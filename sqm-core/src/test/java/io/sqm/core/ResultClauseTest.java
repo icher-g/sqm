@@ -19,7 +19,10 @@ class ResultClauseTest {
             deleted("total").as("old_total"));
 
         assertEquals(3, clause.items().size());
-        assertEquals("audit", clause.into().target().name().value());
+        assertEquals(
+            "audit",
+            clause.into().target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
+        );
         assertEquals(2, clause.into().columns().size());
         assertEquals(OutputRowSource.INSERTED, clause.items().getFirst().matchResultItem().outputStar(OutputStarResultItem::source).orElse(null));
         assertEquals(OutputRowSource.INSERTED, clause.items().get(1).matchResultItem().expr(e -> e.expr().matchExpression()
@@ -53,7 +56,37 @@ class ResultClauseTest {
         var fromName = Dsl.resultInto("audit", "col_a", "col_b");
 
         assertEquals(List.of(id("col_a"), id("col_b")), fromTable.columns());
-        assertEquals("audit", fromName.target().name().value());
+        assertEquals(
+            "audit",
+            fromName.target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
+        );
         assertEquals(List.of(id("col_a"), id("col_b")), fromName.columns());
+    }
+
+    @Test
+    void supportsNonTableResultIntoTargetsInSharedModel() {
+        var into = Dsl.resultInto(Dsl.tbl(select(lit(1L)).build()).as("audit_rows"), "col_a");
+
+        assertEquals(
+            "audit_rows",
+            into.target().matchTableRef().query(queryTable -> queryTable.alias().value()).orElse(null)
+        );
+        assertEquals(List.of(id("col_a")), into.columns());
+    }
+
+    @Test
+    void supportsVariableTableResultIntoTargets() {
+        var into = Dsl.resultInto(tableVar("@audit"), "col_a");
+
+        assertEquals(
+            "audit",
+            into.target().matchTableRef().variableTable(variable -> variable.name().value()).orElseThrow(AssertionError::new)
+        );
+        assertEquals(List.of(id("col_a")), into.columns());
+    }
+
+    @Test
+    void rejectsQuotedVariableTableNames() {
+        assertThrows(IllegalArgumentException.class, () -> tableVar(id("audit", QuoteStyle.DOUBLE_QUOTE)));
     }
 }

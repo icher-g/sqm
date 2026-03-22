@@ -300,7 +300,7 @@ class SqmJavaEmitterTest {
             .set(set("u", "name", lit("alice")))
             .from(tbl("src"))
             .where(col("u", "id").eq(lit(1)))
-            .result(resultInto(tbl("audit"), id("user_id")), insertedAll(), inserted("id").as("user_id"))
+            .result(resultInto(tableVar("audit"), id("user_id")), insertedAll(), inserted("id").as("user_id"))
             .build();
         var delete = delete(tbl("users"))
             .optimizerHint("BKA(users)")
@@ -323,7 +323,7 @@ class SqmJavaEmitterTest {
         assertTrue(updateSource.contains(".optimizerHints(java.util.List.of(\"MAX_EXECUTION_TIME(1000)\"))"));
         assertTrue(updateSource.contains(".set(set(QualifiedName.of(id(\"u\"), id(\"name\")), lit(\"alice\")))"));
         assertTrue(updateSource.contains(".from(tbl(\"src\"))"));
-        assertTrue(updateSource.contains(".result(resultInto(tbl(\"audit\"), id(\"user_id\")), insertedAll(), inserted(id(\"id\")).as(id(\"user_id\")))"));
+        assertTrue(updateSource.contains(".result(resultInto(tableVar(\"audit\"), id(\"user_id\")), insertedAll(), inserted(id(\"id\")).as(id(\"user_id\")))"));
 
         assertTrue(deleteSource.contains("delete(tbl(\"users\"))"));
         assertTrue(deleteSource.contains(".optimizerHints(java.util.List.of(\"BKA(users)\"))"));

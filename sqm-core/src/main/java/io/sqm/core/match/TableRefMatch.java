@@ -58,6 +58,14 @@ public interface TableRefMatch<R> extends Match<TableRef, R> {
     TableRefMatch<R> function(Function<FunctionTable, R> f);
 
     /**
+     * Registers a handler for a table-variable reference.
+     *
+     * @param f handler for {@code VariableTableRef}
+     * @return {@code this} for fluent chaining
+     */
+    TableRefMatch<R> variableTable(Function<VariableTableRef, R> f);
+
+    /**
      * Matches a {@link Lateral}.
      * <p>
      * This branch is selected when the FROM item is wrapped as lateral,

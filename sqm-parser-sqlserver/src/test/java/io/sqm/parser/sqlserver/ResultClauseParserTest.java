@@ -49,7 +49,10 @@ class ResultClauseParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertNotNull(result.value().into());
-        assertEquals("my_table", result.value().into().target().name().value());
+        assertEquals(
+            "my_table",
+            result.value().into().target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
+        );
         assertTrue(result.value().into().columns().isEmpty());
     }
 
@@ -60,7 +63,10 @@ class ResultClauseParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertNotNull(result.value().into());
-        assertEquals("my_table", result.value().into().target().name().value());
+        assertEquals(
+            "my_table",
+            result.value().into().target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
+        );
         assertEquals(2, result.value().into().columns().size());
         assertEquals("col_a", result.value().into().columns().get(0).value());
         assertEquals("col_b", result.value().into().columns().get(1).value());

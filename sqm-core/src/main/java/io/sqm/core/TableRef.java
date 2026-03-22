@@ -5,7 +5,7 @@ import io.sqm.core.match.TableRefMatch;
 /**
  * Anything that can appear in FROM/JOIN: table, subquery, VALUES, etc.
  */
-public sealed interface TableRef extends FromItem permits AliasedTableRef, DialectTableRef, Lateral, Table {
+public sealed interface TableRef extends FromItem permits AliasedTableRef, DialectTableRef, Lateral, Table, VariableTableRef {
     /**
      * Creates a table with the provided name. All other fields are set to NULL.
      *
@@ -74,6 +74,16 @@ public sealed interface TableRef extends FromItem permits AliasedTableRef, Diale
      */
     static FunctionTable function(FunctionExpr expr) {
         return FunctionTable.of(expr);
+    }
+
+    /**
+     * Creates a SQL Server table-variable reference.
+     *
+     * @param name canonical variable name without leading {@code @}
+     * @return table-variable reference
+     */
+    static VariableTableRef tableVariable(Identifier name) {
+        return VariableTableRef.of(name);
     }
 
     /**

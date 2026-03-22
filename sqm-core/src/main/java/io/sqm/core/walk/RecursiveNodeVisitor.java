@@ -550,6 +550,17 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
+     * Visits a table-variable reference.
+     *
+     * @param t the table-variable reference being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitVariableTableRef(VariableTableRef t) {
+        return defaultResult();
+    }
+
+    /**
      * Visits an {@link OnJoin}, a join with an {@code ON} predicate and a specific join kind
      * (INNER, LEFT, RIGHT, or FULL).
      *

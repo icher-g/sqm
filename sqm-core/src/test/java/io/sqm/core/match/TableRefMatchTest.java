@@ -206,4 +206,16 @@ class TableRefMatchTest {
         assertTrue(result.isPresent());
         assertEquals("Function", result.get());
     }
+
+    @Test
+    @DisplayName("Match variable table reference")
+    void matchVariableTableReference() {
+        TableRef table = tableVar("audit_rows");
+
+        var result = table.matchTableRef()
+            .variableTable(v -> v.name().value())
+            .orElse("Unknown");
+
+        assertEquals("audit_rows", result);
+    }
 }

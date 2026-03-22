@@ -63,7 +63,10 @@ class DeleteStatementParserTest {
         assertTrue(result.ok(), result.errorMessage());
         assertNotNull(result.value().result());
         assertNotNull(result.value().result().into());
-        assertEquals("audit", result.value().result().into().target().name().value());
+        assertEquals(
+            "audit",
+            result.value().result().into().target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
+        );
         assertEquals("user_id", result.value().result().into().columns().getFirst().value());
     }
 

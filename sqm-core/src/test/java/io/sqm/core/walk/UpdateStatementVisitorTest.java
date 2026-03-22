@@ -8,6 +8,7 @@ import java.util.List;
 
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class UpdateStatementVisitorTest {
 
@@ -18,7 +19,7 @@ class UpdateStatementVisitorTest {
             .set(set("name", lit("alice")))
             .from(tbl("source_users"))
             .where(col("id").eq(lit(1)))
-            .result(deleted("name"), inserted("name"))
+            .result(resultInto(tableVar("audit_rows"), "name"), deleted("name"), inserted("name"))
             .build();
         var visits = new ArrayList<String>();
 
@@ -45,9 +46,16 @@ class UpdateStatementVisitorTest {
                 visits.add("table");
                 return super.visitTable(table);
             }
+
+            @Override
+            public Void visitVariableTableRef(VariableTableRef tableVariable) {
+                visits.add("tableVar");
+                return super.visitVariableTableRef(tableVariable);
+            }
         }.accept(statement);
 
         assertEquals(List.of("update", "table", "assignment", "table", "table"), visits.subList(0, 5));
+        assertTrue(visits.contains("tableVar"));
         assertEquals(OutputRowSource.DELETED, statement.result().items().getFirst().matchResultItem().expr(e -> e.expr().matchExpression().outputColumn(OutputColumnExpr::source).orElse(null)).orElse(null));
     }
 }

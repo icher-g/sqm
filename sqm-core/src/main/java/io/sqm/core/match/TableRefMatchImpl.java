@@ -85,6 +85,21 @@ public class TableRefMatchImpl<R> implements TableRefMatch<R> {
     }
 
     /**
+     * Registers a handler for a table-variable reference.
+     *
+     * @param f handler for {@code VariableTableRef}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public TableRefMatch<R> variableTable(Function<VariableTableRef, R> f) {
+        if (!matched && table instanceof VariableTableRef t) {
+            result = f.apply(t);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
      * Matches a {@link Lateral}.
      * <p>
      * This branch is selected when the FROM item is wrapped as lateral,

@@ -9,6 +9,14 @@ Agents should read it first and follow it throughout the task.
 ## Goals
 - Improve unit test coverage of parsers across modules (e.g., `sqm-parser*`).
 
+## Modeling Rules
+- For model design decisions, semantic-node shape, and dialect-boundary questions, follow [`docs/reports/SQM_MODELING_RULES.md`](docs/reports/SQM_MODELING_RULES.md).
+- Treat that file as the canonical reference for:
+  - shared semantics vs dialect syntax
+  - when a distinction deserves a semantic node
+  - representability vs dialect support
+  - whether syntax belongs in `sqm-core` or dialect packages
+
 ## Minimum Requirements
 - Every new public class or public method must include JavaDoc.
 - Avoid Javadoc warnings by documenting explicit public no-arg constructors and public fields/record components (`@param`/`@return` where applicable).
@@ -65,7 +73,6 @@ Agents should read it first and follow it throughout the task.
 
 ## Notes
 - Update this file with more specific instructions as needed.
-- All dialect features must be modeled in `sqm-core` nodes.
 - Parsers should only accept features supported by their dialect.
 - Renderers should only render features supported by their dialect, otherwise reject.
 - `sqm-core` must not depend on parser/renderer modules.

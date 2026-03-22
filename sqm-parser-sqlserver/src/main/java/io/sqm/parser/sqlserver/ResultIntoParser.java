@@ -3,6 +3,8 @@ package io.sqm.parser.sqlserver;
 import io.sqm.core.Identifier;
 import io.sqm.core.ResultInto;
 import io.sqm.core.Table;
+import io.sqm.core.TableRef;
+import io.sqm.core.VariableTableRef;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
@@ -36,12 +38,24 @@ public class ResultIntoParser implements Parser<ResultInto> {
     public ParseResult<ResultInto> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected INTO after OUTPUT projection", TokenType.INTO);
 
-        var table = ctx.parse(Table.class, cur);
-        if (table.isError()) {
-            return error(table);
+        TableRef target;
+
+        var tableVariable = ctx.parseIfMatch(VariableTableRef.class, cur);
+        if (tableVariable.match()) {
+            if (tableVariable.result().isError()) {
+                return error(tableVariable.result());
+            }
+            target = tableVariable.result().value();
         }
-        if (!table.value().lockHints().isEmpty()) {
-            return error("SQL Server table hints are not supported on OUTPUT INTO targets", cur.fullPos());
+        else {
+            var table = ctx.parse(Table.class, cur);
+            if (table.isError()) {
+                return error(table);
+            }
+            if (!table.value().lockHints().isEmpty()) {
+                return error("SQL Server table hints are not supported on OUTPUT INTO targets", cur.fullPos());
+            }
+            target = table.value();
         }
 
         List<Identifier> columns = List.of();
@@ -50,7 +64,7 @@ public class ResultIntoParser implements Parser<ResultInto> {
             cur.expect("Expected ) after OUTPUT INTO target columns", TokenType.RPAREN);
         }
 
-        return ok(ResultInto.of(table.value(), columns));
+        return ok(ResultInto.of(target, columns));
     }
 
     /**

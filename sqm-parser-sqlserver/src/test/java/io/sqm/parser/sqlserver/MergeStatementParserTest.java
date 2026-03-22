@@ -71,7 +71,10 @@ class MergeStatementParserTest {
         assertTrue(result.ok(), result.errorMessage());
         assertNotNull(result.value().result());
         assertNotNull(result.value().result().into());
-        assertEquals("audit", result.value().result().into().target().name().value());
+        assertEquals(
+            "audit",
+            result.value().result().into().target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
+        );
         assertEquals(1, result.value().result().into().columns().size());
     }
 

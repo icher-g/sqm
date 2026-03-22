@@ -116,6 +116,20 @@ class SqlServerRulesTest {
     }
 
     @Test
+    void sqlServerOutputRuleIgnoresGenericReturningStyleResultClauses() {
+        Statement statement = Dsl.update(Dsl.tbl("users"))
+            .set(Dsl.set("name", Dsl.lit("alice")))
+            .result(Dsl.col("id").toSelectItem())
+            .build();
+
+        var result = new SqlServerOutputUnsupportedRule().apply(statement, context(SqlDialectId.SQLSERVER, SqlDialectId.POSTGRESQL));
+
+        assertFalse(result.changed());
+        assertSame(statement, result.statement());
+        assertEquals("No SQL Server-specific OUTPUT usage detected", result.description());
+    }
+
+    @Test
     void sqlServerMergeRuleRejectsMergeForNonSqlServerTargets() {
         Statement statement = Dsl.merge("users")
             .source(Dsl.tbl("src").as("s"))

@@ -475,6 +475,11 @@ final class SqmJavaEmitter {
         }
 
         @Override
+        public String visitVariableTableRef(VariableTableRef t) {
+            return "tableVar(" + quote(t.name()) + ")";
+        }
+
+        @Override
         public String visitOnJoin(OnJoin j) {
             String fn = switch (j.kind()) {
                 case INNER -> "inner";

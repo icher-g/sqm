@@ -46,6 +46,14 @@ public interface FromVisitor<R> {
     R visitFunctionTable(FunctionTable t);
 
     /**
+     * Visits a table-variable reference.
+     *
+     * @param t the table-variable reference being visited
+     * @return a result produced by the visitor
+     */
+    R visitVariableTableRef(VariableTableRef t);
+
+    /**
      * Visits an {@link OnJoin}, a join with an {@code ON} predicate and a specific join kind
      * (INNER, LEFT, RIGHT, or FULL).
      *

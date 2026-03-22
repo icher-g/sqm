@@ -2,6 +2,7 @@ package io.sqm.validate.sqlserver.rule;
 
 import io.sqm.core.ResultInto;
 import io.sqm.core.Table;
+import io.sqm.core.VariableTableRef;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
 
@@ -43,13 +44,28 @@ final class SqlServerTableHintSupport {
     }
 
     static void validateResultIntoTarget(ResultInto into, SchemaValidationContext context, String clausePath) {
-        if (into == null || into.target().lockHints().isEmpty()) {
+        if (into == null) {
+            return;
+        }
+        if (into.target() instanceof VariableTableRef) {
+            return;
+        }
+        if (!(into.target() instanceof Table targetTable)) {
+            context.addProblem(
+                ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
+                "SQL Server OUTPUT INTO currently supports base tables and table variables only",
+                into.target(),
+                clausePath
+            );
+            return;
+        }
+        if (targetTable.lockHints().isEmpty()) {
             return;
         }
         context.addProblem(
             ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
             "SQL Server table hints are not supported on OUTPUT INTO targets",
-            into.target(),
+            targetTable,
             clausePath
         );
     }

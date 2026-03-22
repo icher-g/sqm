@@ -2,6 +2,12 @@
 
 SQM is a Java library for SQL modeling, parsing, rendering, validation, and code generation.
 
+Support note:
+
+- nodes documented in the shared model are representable by SQM
+- dialect support remains parser/render/validate/transpile specific
+- see [Core Model](Core-Model), `docs/model/MODEL.md`, and [Unsupported Features](Unsupported-Features) for the distinction
+
 ## Start Here
 
 - [Getting Started](Getting-Started)

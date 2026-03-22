@@ -11,6 +11,14 @@ SQM represents queries as immutable, typed nodes.
 
 Detailed hierarchy: `docs/model/MODEL.md`.
 
+## Representability vs Support
+
+The core model documents what SQM can represent in the AST. That is not the same as saying every dialect currently supports that node.
+
+- `sqm-core` representability means the framework can model the construct
+- parser, renderer, validation, and transpilation support remain dialect-specific
+- `docs/model/MODEL.md` contains the fuller support notes and ambiguity table for shared-model nodes such as `ResultClause`, `ResultInto`, `OutputColumnExpr`, and `VariableTableRef`
+
 ## Traversal
 
 - `RecursiveNodeVisitor<R>` for analysis

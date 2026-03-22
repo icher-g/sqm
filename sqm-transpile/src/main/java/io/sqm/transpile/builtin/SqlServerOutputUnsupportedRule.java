@@ -41,8 +41,8 @@ public final class SqlServerOutputUnsupportedRule implements TranspileRule {
 
     @Override
     public TranspileRuleResult apply(Statement statement, TranspileContext context) {
-        if (!StatementFeatureInspector.hasResultClause(statement)) {
-            return TranspileRuleResult.unchanged(statement, "No SQL Server OUTPUT usage detected");
+        if (!StatementFeatureInspector.hasSqlServerOutputClause(statement)) {
+            return TranspileRuleResult.unchanged(statement, "No SQL Server-specific OUTPUT usage detected");
         }
 
         return TranspileRuleResult.unsupported(
