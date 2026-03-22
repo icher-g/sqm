@@ -124,6 +124,12 @@ Core components:
 SQM defines a rich, type-safe model (AST) to represent SQL statements internally.
 This model is shared across DSL, parser, renderer, validator, transform/rewrite, middleware, JSON, and codegen modules.
 
+Model presence and dialect support are intentionally different concepts:
+
+- a node in `sqm-core` is representable by the framework
+- parser, renderer, validation, and transpilation support remain dialect-specific
+- support details and ambiguous node notes live in `docs/model/MODEL.md`
+
 ➡️ [View the full hierarchy in docs/model/MODEL.md](docs/model/MODEL.md)
 
 ## DML Statement Support

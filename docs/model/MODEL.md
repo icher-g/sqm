@@ -9,6 +9,40 @@ The entire tree is rooted at `Node`. Everything that represents a piece of a SQL
 `sqm-control` (SQL middleware framework) does not introduce additional AST node types.
 It composes parse/validate/rewrite/render/decision behavior on top of the existing SQM model described in this document.
 
+## Representability vs dialect support
+
+This document describes what SQM can represent in the shared model. That is broader than what every dialect currently supports.
+
+- A node existing in `sqm-core` means SQM can represent it in the AST.
+- That does not automatically mean every parser can parse it, every renderer can emit it, or every transpiler can convert it.
+- Dialect support remains explicit at the parser, renderer, validation, and transpilation layers.
+
+Use the following table as the reference point for ambiguous cases where shared-model representability and dialect support are easy to conflate. It is not a full support matrix for every node in the tree, but it should cover the shared-model areas that are most likely to be misread as universally supported.
+
+Status terms used below:
+
+- `Support` means SQM currently ships support for that construct in the dialect slice.
+- `Not supported by the dialect` means the construct is outside the intended feature surface of that dialect in SQM terms, so the dialect layer should reject it explicitly rather than silently accept or approximate it.
+- `Not implemented by SQM` means the dialect may support related syntax or semantics, but SQM does not currently ship support for that construct in that dialect slice.
+
+| Construct                                                    | Shared model meaning                                                                 | ANSI SQM status                                                                 | PostgreSQL SQM status                                                                 | MySQL SQM status                                            | SQL Server SQM status                                           | Dialect capability note                                                                          | Notes                                                                                             |
+|--------------------------------------------------------------|--------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|-------------------------------------------------------------|-----------------------------------------------------------------|--------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
+| `DistinctSpec`                                               | Select-level distinct modifier abstraction                                           | `Support` for ANSI `DISTINCT`                                                   | `Support` for ANSI `DISTINCT` plus shipped variants such as `DISTINCT ON`             | `Support` for ANSI `DISTINCT`                               | `Support` for ANSI `DISTINCT`                                   | Dialects may define additional distinct variants beyond ANSI `DISTINCT`                          | Shared abstraction; concrete supported variants remain dialect-specific                           |
+| `AnonymousParamExpr` / `NamedParamExpr` / `OrdinalParamExpr` | Placeholder expressions for parameterized SQL                                        | `Support` for anonymous and named forms in shipped ANSI behavior                | `Support` for ordinal parameters such as `$1` and other shared forms in shipped scope | `Support` for anonymous and named forms in shipped scope    | `Support` for anonymous and named forms in shipped scope        | Placeholder syntax is dialect-shaped even when the semantic role is shared                       | Shared parameter family                                                                           |
+| `ArrayExpr` / `ArraySubscriptExpr` / `ArraySliceExpr`        | Array construction and array access semantics                                        | `Not supported by the dialect`                                                  | `Support`                                                                             | `Not implemented by SQM`                                    | `Not implemented by SQM`                                        | Some databases may support related array features differently                                    | Shared semantic family primarily exercised by PostgreSQL today                                    |
+| `AtTimeZoneExpr`                                             | Time-zone conversion expression                                                      | `Not supported by the dialect`                                                  | `Support`                                                                             | `Not supported by the dialect`                              | `Not implemented by SQM`                                        | This table records SQM dialect support, not a full claim about every database product capability | Shared node for a dialect-gated expression family                                                 |
+| `ResultClause`                                               | DML statement emits result rows                                                      | `Support` for the shared shape only where delivered by the ANSI-based DML slice | `Support` through shipped `RETURNING` support                                         | `Not implemented by SQM` for current shipped MySQL versions | `Support` through shipped `OUTPUT` support                      | The database syntax differs by dialect (`RETURNING`, `OUTPUT`, and future equivalents)           | Shared semantics, dialect-specific syntax                                                         |
+| `ResultInto`                                                 | DML result rows are redirected into a relation target                                | `Not supported by the dialect`                                                  | `Not supported by the dialect`                                                        | `Not supported by the dialect`                              | `Support` for `OUTPUT ... INTO`                                 | The current shipped support is SQL Server-specific                                               | Shared sink concept, currently only shipped for SQL Server                                        |
+| `OutputColumnExpr`                                           | SQL Server pseudo-row source expression such as `inserted.id`                        | `Not supported by the dialect`                                                  | `Not supported by the dialect`                                                        | `Not supported by the dialect`                              | `Support`                                                       | SQL Server-specific concept                                                                      | Kept explicit so SQL Server output semantics stay distinguishable from generic result projections |
+| `OutputStarResultItem`                                       | SQL Server pseudo-row source star such as `inserted.*`                               | `Not supported by the dialect`                                                  | `Not supported by the dialect`                                                        | `Not supported by the dialect`                              | `Support`                                                       | SQL Server-specific concept                                                                      | SQL Server-specific result item semantics                                                         |
+| `TopSpec`                                                    | Select-head row limiting model                                                       | `Not supported by the dialect`                                                  | `Not implemented by SQM`                                                              | `Not implemented by SQM`                                    | `Support`                                                       | `TOP`-style row limiting is dialect-specific                                                     | Shared node for `TOP`-style semantics, currently exercised by SQL Server                          |
+| `MergeStatement` / `MergeClause` family                      | Shared merge/upsert-style DML statement model                                        | `Not supported by the dialect`                                                  | `Support` for the shipped PostgreSQL `MERGE` scope                                    | `Not supported by the dialect`                              | `Support` for the shipped SQL Server `MERGE` scope              | The database-level feature family varies significantly across products                           | Shared statement family with strongly dialect-gated branches and options                          |
+| `Lateral`                                                    | Correlated table-reference wrapper in `FROM`                                         | `Not supported by the dialect`                                                  | `Support`                                                                             | `Not implemented by SQM`                                    | `Not implemented by SQM`                                        | Some products may have related capabilities under different syntax or limits                     | Shared relation wrapper; current shipped support is PostgreSQL-oriented                           |
+| `FunctionTable`                                              | Table-valued function reference in `FROM`                                            | `Not supported by the dialect`                                                  | `Support` in shipped PostgreSQL-oriented scope                                        | `Not implemented by SQM`                                    | `Not implemented by SQM`                                        | Function-table support depends on both syntax and dialect-specific function inventories          | Shared relation kind, dialect-specific inventories and syntax                                     |
+| `OnJoin` with `STRAIGHT_JOIN`                                | Join abstraction that can carry dialect-gated join kinds                             | `Support` for ANSI join kinds                                                   | `Support` for ANSI join kinds                                                         | `Support` including shipped `STRAIGHT_JOIN` handling        | `Support` for ANSI join kinds                                   | Not every join kind variant is valid in every dialect                                            | Shared join node; dialect-gated join kinds must stay explicit                                     |
+| `VariableTableRef`                                           | Relation identified by variable semantics rather than catalog-table identity         | `Not supported by the dialect`                                                  | `Not implemented by SQM`                                                              | `Not implemented by SQM`                                    | `Support` in the current shipped SQL Server `OUTPUT INTO` slice | SQL Server currently provides the shipped concrete syntax via `@var`                             | Shared semantic node; current concrete syntax is SQL Server `@var`                                |
+| `Table`                                                      | Base table reference, including temp-table names when treated as tables by a dialect | `Support`                                                                       | `Support`                                                                             | `Support`                                                   | `Support`                                                       | Temp tables are still modeled as named tables when the dialect treats them that way              | Temp tables remain `Table`, not `VariableTableRef`                                                |
+
 ---
 
 ## Node hierarchy
@@ -546,6 +580,16 @@ graph TD
     - **Lateral** - wrapper for `LATERAL`, enabling correlated references to preceding FROM items
     - **Table** - base table reference (`schema.table`)
 
+### Support notes for relation nodes
+
+- **Table**
+  Shared base-table reference. This also remains the right shared shape for dialect features such as temporary tables when they are still treated as named table objects.
+
+- **VariableTableRef**
+  Shared semantic node for relation-like targets identified by variable semantics rather than catalog-table identity.
+  Current shipped support is SQL Server table-variable syntax such as `@audit`.
+  ANSI explicitly rejects this node, and other dialects do not currently ship parser or renderer support for it.
+
 ---
 
 ### Grouping
@@ -600,3 +644,14 @@ graph TD
 - **ResultInto** - optional SQL Server `OUTPUT ... INTO ...` target relation and target column list, including base tables and SQL Server table variables
 - **OutputColumnExpr** - SQL Server pseudo-column reference used only inside `OUTPUT`, such as `inserted.id` or `deleted.status`
 - **OutputStarResultItem** - SQL Server pseudo-row-source star used only inside `OUTPUT`, such as `inserted.*` or `deleted.*`
+
+### Support notes for DML result nodes
+
+- **ResultClause**
+  Shared semantic node for mutation-result projections. The keyword and exact syntax are dialect-specific (`RETURNING`, `OUTPUT`, and future equivalents).
+
+- **ResultInto**
+  Shared semantic node for redirecting mutation-result rows into a relation target. The current shipped dialect support is SQL Server `OUTPUT ... INTO`.
+
+- **OutputColumnExpr** and **OutputStarResultItem**
+  SQL Server-specific result projection semantics represented explicitly in the shared AST so transforms, validation, and transpilation can distinguish them from generic mutation-result projections.

@@ -335,6 +335,22 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
+    void validate_acceptsBaseTableOutputIntoTargetWithoutHints() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var updateStatement = update("users")
+            .set(Identifier.of("name"), lit("alice"))
+            .result(resultInto(tbl("users"), "id"), inserted("id"))
+            .build();
+
+        var result = validator.validate(updateStatement);
+
+        assertFalse(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "update.result".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
     void validate_reportsInvalidSqlServerOutputRowSources() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var insertStatement = insert("users")

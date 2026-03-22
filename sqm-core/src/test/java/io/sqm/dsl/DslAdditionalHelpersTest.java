@@ -147,6 +147,7 @@ class DslAdditionalHelpersTest {
         assertEquals(1, updateStatement.assignments().size());
         assertNotNull(updateStatement.where());
     }
+
     @Test
     void dmlDeleteHelperBuildsDeleteStatement() {
         var statement = delete("users")
@@ -176,6 +177,18 @@ class DslAdditionalHelpersTest {
         assertEquals("DATEDIFF", dateDiffFn.name().values().getLast());
         assertEquals("ISNULL", isNullFnExpr.name().values().getLast());
         assertEquals("STRING_AGG", stringAggFn.name().values().getLast());
+    }
+
+    @Test
+    void outputIntoHelpersAcceptTableVariablesWithOrWithoutSigil() {
+        var withSigil = tableVar("@audit");
+        var withoutSigil = tableVar("audit");
+        var into = resultInto(withSigil, "user_id");
+
+        assertEquals("audit", withSigil.name().value());
+        assertEquals(withSigil, withoutSigil);
+        assertEquals("audit", into.target().matchTableRef().variableTable(v -> v.name().value()).orElse(null));
+        assertThrows(NullPointerException.class, () -> tableVar((String) null));
     }
 
     @Test

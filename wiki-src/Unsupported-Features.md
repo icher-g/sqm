@@ -7,6 +7,9 @@ The goal is to make two things explicit:
 - features that are intentionally out of scope for the framework as a whole
 - features that are not supported in a given dialect implementation even though they may exist in that database product
 
+This page is about support boundaries, not just shared-model representability.
+For nodes that exist in `sqm-core` but are dialect-gated in parser, renderer, validation, or transpilation, see `docs/model/MODEL.md`.
+
 ## General Framework Boundaries
 
 The following areas are currently outside the supported framework scope:

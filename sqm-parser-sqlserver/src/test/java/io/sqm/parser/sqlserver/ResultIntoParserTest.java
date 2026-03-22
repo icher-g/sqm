@@ -5,6 +5,8 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
 import org.junit.jupiter.api.Test;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class ResultIntoParserTest {
@@ -64,5 +66,14 @@ class ResultIntoParserTest {
 
         assertTrue(result.isError());
         assertNotNull(result.errorMessage());
+    }
+
+    @Test
+    void errorWhenOutputIntoTargetContainsTableHints() {
+        var ctx = ParseContext.of(new SqlServerSpecs());
+        var result = ctx.parse(ResultInto.class, "INTO audit WITH (NOLOCK)");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("table hints"));
     }
 }

@@ -1456,4 +1456,13 @@ class RecursiveNodeTransformerTest {
             transformed.result().into().target().matchTableRef().variableTable(variable -> variable.name().value()).orElseThrow(AssertionError::new)
         );
     }
+
+    @Test
+    void visitVariableTableRefWithoutChangesPreservesIdentity() {
+        var variable = tableVar("audit_rows");
+
+        var transformed = variable.accept(new NothingTransformer());
+
+        assertSame(variable, transformed);
+    }
 }

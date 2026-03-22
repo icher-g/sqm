@@ -82,11 +82,19 @@ class StatementFeatureInspectorTest {
             .set(Dsl.set("name", Dsl.lit("alice")))
             .result(Dsl.resultInto(Dsl.tbl("audit"), "old_name"), Dsl.deleted("name"))
             .build();
+        var outputMerge = Dsl.merge("users")
+            .source(Dsl.tbl("src").as("s"))
+            .on(Dsl.col("users", "id").eq(Dsl.col("s", "id")))
+            .whenMatchedDelete()
+            .result(Dsl.deleted("id"))
+            .build();
 
         assertTrue(StatementFeatureInspector.hasResultClause(returningInsert));
         assertFalse(StatementFeatureInspector.hasSqlServerOutputClause(returningInsert));
         assertTrue(StatementFeatureInspector.hasSqlServerOutputClause(outputUpdate));
         assertTrue(StatementFeatureInspector.hasSqlServerOutputClause(outputIntoUpdate));
+        assertTrue(StatementFeatureInspector.hasResultClause(outputMerge));
+        assertTrue(StatementFeatureInspector.hasSqlServerOutputClause(outputMerge));
     }
 
     @Test
@@ -113,6 +121,9 @@ class StatementFeatureInspectorTest {
         var hintedDelete = DeleteStatement.builder(Dsl.tbl("users"))
             .optimizerHint("BKA(users)")
             .build();
+        var lockHintQuery = Dsl.select(Dsl.col("id"))
+            .from(Dsl.tbl("users").withNoLock())
+            .build();
         var insertIgnore = InsertStatement.builder(Dsl.tbl("users"))
             .ignore()
             .columns(Dsl.id("id"))
@@ -134,6 +145,7 @@ class StatementFeatureInspectorTest {
         assertTrue(StatementFeatureInspector.hasOptimizerHints(hintedUpdate));
         assertTrue(StatementFeatureInspector.hasOptimizerHints(hintedDelete));
         assertTrue(StatementFeatureInspector.hasIndexHints(functionQuery));
+        assertTrue(StatementFeatureInspector.hasLockHints(lockHintQuery));
         assertTrue(StatementFeatureInspector.hasInsertMode(insertIgnore, InsertStatement.InsertMode.IGNORE));
         assertTrue(StatementFeatureInspector.hasOnConflictAction(insertConflict, InsertStatement.OnConflictAction.DO_UPDATE));
 
@@ -141,6 +153,7 @@ class StatementFeatureInspectorTest {
         assertFalse(StatementFeatureInspector.hasAnyFunctionNamePrefix(functionQuery, Set.of("DATE_")));
         assertFalse(StatementFeatureInspector.hasOptimizerHints(functionQuery));
         assertFalse(StatementFeatureInspector.hasIndexHints(hintedSelect));
+        assertFalse(StatementFeatureInspector.hasLockHints(hintedSelect));
         assertFalse(StatementFeatureInspector.hasInsertMode(insertIgnore, InsertStatement.InsertMode.REPLACE));
         assertFalse(StatementFeatureInspector.hasOnConflictAction(insertIgnore, InsertStatement.OnConflictAction.DO_UPDATE));
     }
