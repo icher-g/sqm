@@ -16,6 +16,7 @@ import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.delete;
 import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.merge;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.tbl;
 import static io.sqm.dsl.Dsl.update;
@@ -171,6 +172,50 @@ class MySqlValidationDialectTest {
                 && "select.hint".equals(problem.clausePath())
                 && problem.message().contains("BKA")
         ));
+    }
+
+    @Test
+    void validate_reportsInvalidMysqlStatementHintShapesForAdditionalFamilies() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var query = select(col("id"))
+            .from(tbl("users"))
+            .hint("NO_RANGE_OPTIMIZATION", "users", "extra")
+            .hint("SET_VAR", lit(1))
+            .hint("QB_NAME", lit(1))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "select.hint".equals(problem.clausePath())
+                && problem.message().contains("NO_RANGE_OPTIMIZATION")
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "select.hint".equals(problem.clausePath())
+                && problem.message().contains("SET_VAR")
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "select.hint".equals(problem.clausePath())
+                && problem.message().contains("QB_NAME")
+        ));
+    }
+
+    @Test
+    void validate_acceptsMysqlStatementHintsOnMergeAndQualifiedNameTargets() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var statement = merge("users")
+            .source(tbl("users").as("src"))
+            .on(col("users", "id").eq(col("src", "id")))
+            .whenMatchedDelete()
+            .hint("NO_RANGE_OPTIMIZATION", io.sqm.core.QualifiedName.of("public", "users"))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertTrue(result.ok());
     }
 
     @Test

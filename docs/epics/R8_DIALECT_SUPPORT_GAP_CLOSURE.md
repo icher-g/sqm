@@ -294,4 +294,217 @@ If the implementation or reclassification happens without updating `MODEL.md`, t
 5. `TopSpec` stories only after re-validating the model fit
 6. array-family stories only after re-validating the target dialect semantics
 
+---
+
+## User Stories
+
+### Story R8-1
+
+#### Title
+`Story: Add SQL Server AT TIME ZONE support`
+
+#### User Story
+As an SQM user targeting SQL Server, I want `AtTimeZoneExpr` to parse, render, validate, and participate in transpilation review so time-zone conversion logic already represented in the shared model is actually usable in the SQL Server dialect slice.
+
+#### Acceptance Criteria
+- SQL Server capability and version assumptions for `AT TIME ZONE` are confirmed before implementation.
+- SQL Server parser support is added for the existing `AtTimeZoneExpr` node where syntax and semantics align.
+- SQL Server renderer support is added and rejects unsupported combinations explicitly.
+- Validation coverage is added for SQL Server-specific semantic expectations.
+- Transpilation impact is reviewed and implemented or rejected explicitly.
+- DSL, codegen, control, and middleware impact are reviewed and updated where needed.
+- Unit tests cover valid SQL, invalid SQL, and dialect-boundary failures.
+- `MODEL.md` and relevant docs/wiki pages are updated.
+
+#### Labels
+`story`, `dialect`, `sqlserver`, `parser`, `renderer`, `validation`, `transpile`, `expression`
+
+#### Depends On
+- `Epic: R8 Dialect Support Gap Closure`
+
+---
+
+### Story R8-2
+
+#### Title
+`Story: Add MySQL DML result-clause support`
+
+#### User Story
+As an SQM user targeting MySQL, I want the dialect-supported `ResultClause` surface to be implemented end to end so DML statements that emit rows can be modeled, parsed, rendered, validated, and documented consistently with the shared result model.
+
+#### Acceptance Criteria
+- The exact MySQL version scope for the supported result-clause surface is confirmed before coding.
+- MySQL parser and renderer support is added for the supported `ResultClause` shape.
+- Validation and transpilation behavior are reviewed and updated explicitly.
+- DSL helpers, codegen, control, middleware, and integration impact are reviewed and updated where required.
+- Happy-path and failure-path tests cover supported and unsupported statement/result combinations.
+- `MODEL.md`, docs, and wiki pages are updated with the shipped scope.
+
+#### Labels
+`story`, `dialect`, `mysql`, `parser`, `renderer`, `validation`, `transpile`, `dml`
+
+#### Depends On
+- `Epic: R8 Dialect Support Gap Closure`
+
+---
+
+### Story R8-3
+
+#### Title
+`Story: Add MySQL LATERAL support`
+
+#### User Story
+As an SQM user targeting MySQL, I want `Lateral` relations to be supported where the dialect and version allow them so correlated relation semantics already represented in the shared model become available in the MySQL slice.
+
+#### Acceptance Criteria
+- MySQL version support for `LATERAL` is confirmed before implementation.
+- MySQL parser and renderer support is added for the existing `Lateral` node where the model fit is valid.
+- Validation and transpilation impact are reviewed and updated explicitly.
+- DSL, codegen, control, middleware, and integration impact are reviewed and updated where needed.
+- Unit tests cover supported usage, invalid syntax, and unsupported-boundary cases.
+- `MODEL.md`, docs, and wiki pages are updated.
+
+#### Labels
+`story`, `dialect`, `mysql`, `parser`, `renderer`, `validation`, `transpile`, `from-clause`
+
+#### Depends On
+- `Epic: R8 Dialect Support Gap Closure`
+
+---
+
+### Story R8-4
+
+#### Title
+`Story: Add SQL Server lateral-equivalent relation support`
+
+#### User Story
+As an SQM user targeting SQL Server, I want the SQL Server relation semantics equivalent to `Lateral` to be implemented or explicitly reclassified so SQM either supports the shared `Lateral` abstraction correctly or documents why the current support-matrix entry should change.
+
+#### Acceptance Criteria
+- The exact SQL Server feature and version assumptions behind the current `Lateral` entry are confirmed before coding.
+- If the existing `Lateral` node is the right fit, parser and renderer support are added end to end.
+- If the shared model is not the right fit, `MODEL.md` and this epic are updated instead of forcing an incorrect implementation.
+- Validation, transpilation, DSL, codegen, control, middleware, and integration impact are reviewed explicitly.
+- Tests cover shipped support or reclassification boundaries clearly.
+- Docs and wiki pages are updated to match the final decision.
+
+#### Labels
+`story`, `dialect`, `sqlserver`, `parser`, `renderer`, `validation`, `transpile`, `from-clause`
+
+#### Depends On
+- `Epic: R8 Dialect Support Gap Closure`
+
+---
+
+### Story R8-5
+
+#### Title
+`Story: Add table-valued function support in MySQL and SQL Server`
+
+#### User Story
+As an SQM user working with dialects that justify table-valued function support, I want `FunctionTable` to be available in the MySQL and SQL Server slices so table-function relations can be manipulated through the shared model instead of remaining documented gaps.
+
+#### Acceptance Criteria
+- The supported MySQL and SQL Server table-valued function surfaces are confirmed before coding.
+- Parser and renderer support are added for each dialect where the shared `FunctionTable` model is a valid fit.
+- If a dialect does not truly match the shared semantics, `MODEL.md` and this epic are updated instead of forcing support.
+- Validation, transpilation, DSL, codegen, control, middleware, and integration impact are reviewed and updated where needed.
+- Tests cover happy paths, invalid syntax, and unsupported-boundary cases for each dialect.
+- `MODEL.md`, docs, and wiki pages are updated.
+
+#### Labels
+`story`, `dialect`, `mysql`, `sqlserver`, `parser`, `renderer`, `validation`, `transpile`, `from-clause`
+
+#### Depends On
+- `Epic: R8 Dialect Support Gap Closure`
+
+---
+
+### Story R8-6
+
+#### Title
+`Story: Resolve VariableTableRef support beyond SQL Server`
+
+#### User Story
+As an SQM maintainer, I want the PostgreSQL and MySQL `VariableTableRef` support-matrix entries to be implemented or explicitly reclassified so the shared model no longer carries ambiguous dialect claims around variable-backed relation sinks.
+
+#### Acceptance Criteria
+- PostgreSQL and MySQL capability assumptions behind `VariableTableRef` are confirmed before coding.
+- If a dialect truly supports relation-shaped variable sinks compatible with `VariableTableRef`, end-to-end support is added.
+- If the current support assumption is incorrect, `MODEL.md` and this epic are updated instead of forcing unrelated variable syntax into the shared node.
+- Validation, transpilation, DSL, codegen, control, middleware, and integration impact are reviewed explicitly.
+- Tests and documentation clearly reflect the final supported or reclassified scope.
+
+#### Labels
+`story`, `dialect`, `postgresql`, `mysql`, `parser`, `renderer`, `validation`, `transpile`, `dml`
+
+#### Depends On
+- `Epic: R8 Dialect Support Gap Closure`
+
+---
+
+### Story R8-7
+
+#### Title
+`Story: Resolve TOP support-matrix entries for PostgreSQL and MySQL`
+
+#### User Story
+As an SQM maintainer, I want the PostgreSQL and MySQL `TopSpec` support-matrix entries to be implemented or explicitly reclassified so the roadmap no longer implies `TOP`-style support in dialects where the shared abstraction may not actually belong.
+
+#### Acceptance Criteria
+- PostgreSQL and MySQL capability assumptions behind the current `TopSpec` entries are confirmed before coding.
+- If the shared `TopSpec` node is genuinely appropriate for either dialect, end-to-end support is added.
+- If the current support assumption is incorrect, `MODEL.md` and this epic are updated instead of forcing `LIMIT`-style syntax into `TopSpec`.
+- Transpilation, validation, DSL, codegen, control, middleware, and integration impact are reviewed explicitly.
+- Tests and docs clearly reflect the final supported or reclassified scope.
+
+#### Labels
+`story`, `dialect`, `postgresql`, `mysql`, `parser`, `renderer`, `validation`, `transpile`, `pagination`
+
+#### Depends On
+- `Epic: R8 Dialect Support Gap Closure`
+
+---
+
+### Story R8-8
+
+#### Title
+`Story: Resolve array-family support-matrix entries for MySQL and SQL Server`
+
+#### User Story
+As an SQM maintainer, I want the MySQL and SQL Server array-family support-matrix entries to be implemented or explicitly reclassified so `ArrayExpr`, `ArraySubscriptExpr`, and `ArraySliceExpr` are only promised where the dialect semantics truly justify the shared nodes.
+
+#### Acceptance Criteria
+- MySQL and SQL Server capability assumptions for the array-family entries are confirmed before coding.
+- If the existing shared array nodes are the right fit, parser, renderer, validation, and transpilation support are added end to end.
+- If the support assumptions are incorrect or only approximate, `MODEL.md` and this epic are updated instead of forcing an invalid implementation.
+- DSL, codegen, control, middleware, and integration impact are reviewed explicitly.
+- Tests and docs clearly reflect the final supported or reclassified scope.
+
+#### Labels
+`story`, `dialect`, `mysql`, `sqlserver`, `parser`, `renderer`, `validation`, `transpile`, `expression`
+
+#### Depends On
+- `Epic: R8 Dialect Support Gap Closure`
+
+---
+
+## Publishing GitHub Issues
+
+The epic and stories can be published to GitHub issues from this markdown source.
+
+Preview:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\publish-r8-dialect-gap-issues.ps1 -WhatIf
+```
+
+Publish:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\publish-r8-dialect-gap-issues.ps1
+```
+
+The wrapper delegates to the generic publisher in `scripts/create-github-issues-from-epic-md.ps1`.
+
 This order prioritizes the stories that are most likely to map cleanly onto the current model before the more questionable support-matrix entries.
