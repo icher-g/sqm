@@ -62,8 +62,10 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitInsertStatement(InsertStatement statement) {
         var table = apply(statement.table());
         var source = apply(statement.source());
+        List<StatementHint> hints = new ArrayList<>(statement.hints().size());
         List<Assignment> conflictAssignments = new ArrayList<>(statement.conflictUpdateAssignments().size());
         boolean changed = table != statement.table() || source != statement.source();
+        changed |= apply(statement.hints(), hints);
         changed |= apply(statement.conflictUpdateAssignments(), conflictAssignments);
         var conflictWhere = apply(statement.conflictUpdateWhere());
         changed |= conflictWhere != statement.conflictUpdateWhere();
@@ -79,7 +81,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
                 statement.onConflictAction(),
                 conflictAssignments,
                 conflictWhere,
-                output);
+                output,
+                hints);
         }
         return statement;
     }
@@ -93,10 +96,12 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     @Override
     public Node visitUpdateStatement(UpdateStatement statement) {
         var table = apply(statement.table());
+        List<StatementHint> hints = new ArrayList<>(statement.hints().size());
         List<Assignment> assignments = new ArrayList<>(statement.assignments().size());
         List<Join> joins = new ArrayList<>(statement.joins().size());
         List<TableRef> from = new ArrayList<>(statement.from().size());
         boolean changed = table != statement.table();
+        changed |= apply(statement.hints(), hints);
         changed |= apply(statement.assignments(), assignments);
         changed |= apply(statement.joins(), joins);
         changed |= apply(statement.from(), from);
@@ -105,7 +110,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         var output = apply(statement.result());
         changed |= output != statement.result();
         if (changed) {
-            return UpdateStatement.of(table, assignments, joins, from, where, output, statement.optimizerHints());
+            return UpdateStatement.of(table, assignments, joins, from, where, output, hints);
         }
         return statement;
     }
@@ -119,9 +124,11 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     @Override
     public Node visitDeleteStatement(DeleteStatement statement) {
         var table = apply(statement.table());
+        List<StatementHint> hints = new ArrayList<>(statement.hints().size());
         List<TableRef> using = new ArrayList<>(statement.using().size());
         List<Join> joins = new ArrayList<>(statement.joins().size());
         boolean changed = table != statement.table();
+        changed |= apply(statement.hints(), hints);
         changed |= apply(statement.using(), using);
         changed |= apply(statement.joins(), joins);
         var where = apply(statement.where());
@@ -129,7 +136,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         var output = apply(statement.result());
         changed |= output != statement.result();
         if (changed) {
-            return DeleteStatement.of(table, using, joins, where, output, statement.optimizerHints());
+            return DeleteStatement.of(table, using, joins, where, output, hints);
         }
         return statement;
     }
@@ -143,6 +150,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     @Override
     public Node visitMergeStatement(MergeStatement statement) {
         var target = apply(statement.target());
+        List<StatementHint> hints = new ArrayList<>(statement.hints().size());
         var source = apply(statement.source());
         var on = apply(statement.on());
         var topSpec = apply(statement.topSpec());
@@ -153,11 +161,51 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             || on != statement.on()
             || topSpec != statement.topSpec()
             || result != statement.result();
+        changed |= apply(statement.hints(), hints);
         changed |= apply(statement.clauses(), clauses);
         if (changed) {
-            return MergeStatement.of(target, source, on, topSpec, clauses, result);
+            return MergeStatement.of(target, source, on, topSpec, clauses, result, hints);
         }
         return statement;
+    }
+
+    @Override
+    public Node visitStatementHint(StatementHint hint) {
+        List<HintArg> args = new ArrayList<>(hint.args().size());
+        boolean changed = apply(hint.args(), args);
+        if (changed) {
+            return StatementHint.of(hint.name(), args);
+        }
+        return hint;
+    }
+
+    @Override
+    public Node visitTableHint(TableHint hint) {
+        List<HintArg> args = new ArrayList<>(hint.args().size());
+        boolean changed = apply(hint.args(), args);
+        if (changed) {
+            return TableHint.of(hint.name(), args);
+        }
+        return hint;
+    }
+
+    @Override
+    public Node visitIdentifierHintArg(IdentifierHintArg arg) {
+        return arg;
+    }
+
+    @Override
+    public Node visitQualifiedNameHintArg(QualifiedNameHintArg arg) {
+        return arg;
+    }
+
+    @Override
+    public Node visitExpressionHintArg(ExpressionHintArg arg) {
+        var value = apply(arg.value());
+        if (value != arg.value()) {
+            return HintArg.expression(value);
+        }
+        return arg;
     }
 
     /**
@@ -642,6 +690,11 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
      */
     @Override
     public Node visitTable(Table t) {
+        List<TableHint> hints = new ArrayList<>(t.hints().size());
+        boolean changed = apply(t.hints(), hints);
+        if (changed) {
+            return t.withHints(hints);
+        }
         return t;
     }
 
@@ -1115,6 +1168,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitSelectQuery(SelectQuery q) {
         List<SelectItem> items = new ArrayList<>();
         boolean changed = apply(q.items(), items);
+        List<StatementHint> statementHints = new ArrayList<>(q.hints().size());
+        changed |= apply(q.hints(), statementHints);
         var distinct = apply(q.distinct());
         changed |= distinct != q.distinct();
         var topSpec = apply(q.topSpec());
@@ -1140,6 +1195,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         if (changed) {
             var builder = SelectQuery.builder()
                 .select(items)
+                .hints(statementHints)
                 .distinct(distinct)
                 .top(topSpec)
                 .from(from)

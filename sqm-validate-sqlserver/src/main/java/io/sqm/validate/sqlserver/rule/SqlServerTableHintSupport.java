@@ -6,7 +6,7 @@ import io.sqm.core.VariableTableRef;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
 
-import java.util.EnumSet;
+import java.util.HashSet;
 
 /**
  * Shared validation helpers for SQL Server table hint semantics.
@@ -16,24 +16,26 @@ final class SqlServerTableHintSupport {
     }
 
     static void validateHints(Table table, SchemaValidationContext context, String clausePath) {
-        if (table.lockHints().isEmpty()) {
+        var hints = table.hints().stream()
+            .filter(SqlServerTableHintSupport::isLockHint)
+            .toList();
+        if (hints.isEmpty()) {
             return;
         }
 
-        var seen = EnumSet.noneOf(Table.LockHintKind.class);
-        for (var hint : table.lockHints()) {
-            if (!seen.add(hint.kind())) {
+        var seen = new HashSet<String>();
+        for (var hint : hints) {
+            if (!seen.add(hint.name().value())) {
                 context.addProblem(
                     ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
-                    "Duplicate SQL Server table hint " + hint.kind().name(),
+                    "Duplicate SQL Server table hint " + hint.name().value(),
                     table,
                     clausePath
                 );
             }
         }
 
-        if (seen.contains(Table.LockHintKind.NOLOCK)
-            && (seen.contains(Table.LockHintKind.UPDLOCK) || seen.contains(Table.LockHintKind.HOLDLOCK))) {
+        if (seen.contains("NOLOCK") && (seen.contains("UPDLOCK") || seen.contains("HOLDLOCK"))) {
             context.addProblem(
                 ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
                 "SQL Server NOLOCK cannot be combined with UPDLOCK or HOLDLOCK",
@@ -59,7 +61,7 @@ final class SqlServerTableHintSupport {
             );
             return;
         }
-        if (targetTable.lockHints().isEmpty()) {
+        if (targetTable.hints().stream().noneMatch(SqlServerTableHintSupport::isLockHint)) {
             return;
         }
         context.addProblem(
@@ -68,5 +70,12 @@ final class SqlServerTableHintSupport {
             targetTable,
             clausePath
         );
+    }
+
+    private static boolean isLockHint(io.sqm.core.TableHint hint) {
+        return switch (hint.name().value()) {
+            case "NOLOCK", "UPDLOCK", "HOLDLOCK" -> true;
+            default -> false;
+        };
     }
 }

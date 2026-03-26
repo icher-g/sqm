@@ -12,7 +12,7 @@ class DeleteStatementTest {
     @Test
     void builderCreatesImmutableDeleteStatement() {
         var statement = delete(tbl("users"))
-            .optimizerHint("BKA(users)")
+            .hint("BKA", "users")
             .using(tbl("users"))
             .join(inner(tbl("orders").as("o")).on(col("users", "id").eq(col("o", "user_id"))))
             .where(col("id").eq(lit(1)))
@@ -20,12 +20,12 @@ class DeleteStatementTest {
 
         assertEquals("users", statement.table().name().value());
         assertEquals(col("id").eq(lit(1)), statement.where());
-        assertEquals(List.of("BKA(users)"), statement.optimizerHints());
+        assertEquals(List.of("BKA"), statement.hints().stream().map(h -> h.name().value()).toList());
         assertEquals(1, statement.using().size());
         assertEquals(1, statement.joins().size());
         assertThrows(UnsupportedOperationException.class, () -> statement.using().add(tbl("x")));
         assertThrows(UnsupportedOperationException.class, () -> statement.joins().add(inner(tbl("x")).on(col("x", "id").eq(col("users", "id")))));
-        assertThrows(UnsupportedOperationException.class, () -> statement.optimizerHints().add("NO_ICP(users)"));
+        assertThrows(UnsupportedOperationException.class, () -> statement.hints().add(statementHint("NO_ICP", "users")));
     }
 
     @Test
@@ -37,12 +37,12 @@ class DeleteStatementTest {
 
         var built = DeleteStatement.builder(tbl("users"))
             .table(tbl("accounts"))
-            .optimizerHints(List.of("MAX_EXECUTION_TIME(1000)"))
+            .hints(List.of(statementHint("MAX_EXECUTION_TIME", 1000)))
             .using(tbl("src"))
             .joins(inner(tbl("audit")).on(col("src", "id").eq(col("audit", "account_id"))))
             .build();
         assertEquals("accounts", built.table().name().value());
-        assertEquals(List.of("MAX_EXECUTION_TIME(1000)"), built.optimizerHints());
+        assertEquals(List.of("MAX_EXECUTION_TIME"), built.hints().stream().map(h -> h.name().value()).toList());
         assertEquals(1, built.using().size());
         assertEquals(1, built.joins().size());
     }
@@ -78,7 +78,7 @@ class DeleteStatementTest {
         assertTrue(statement.using().isEmpty());
         assertTrue(statement.joins().isEmpty());
         assertNull(statement.result());
-        assertTrue(statement.optimizerHints().isEmpty());
+        assertTrue(statement.hints().isEmpty());
     }
 
     @Test
@@ -112,26 +112,39 @@ class DeleteStatementTest {
         assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).join(null));
         assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).result((ResultItem[]) null));
         assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).result((List<ResultItem>) null));
-        assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).optimizerHints(null));
-        assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).optimizerHint(null));
+        assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).hints(null));
+        assertThrows(NullPointerException.class, () -> DeleteStatement.builder(tbl("users")).hint(null));
     }
 
     @Test
     void builderCanCopyExistingStatement() {
         var original = delete(tbl("users"))
-            .optimizerHint("BKA(users)")
+            .hint("BKA", "users")
             .result(deleted("id"))
             .using(tbl("source_users"))
             .build();
 
         var copied = DeleteStatement.builder(original)
-            .clearOptimizerHints()
+            .clearHints()
             .build();
 
-        assertEquals(List.of("BKA(users)"), original.optimizerHints());
-        assertTrue(copied.optimizerHints().isEmpty());
+        assertEquals(List.of("BKA"), original.hints().stream().map(h -> h.name().value()).toList());
+        assertTrue(copied.hints().isEmpty());
         assertEquals(original.result(), copied.result());
         assertEquals(original.using(), copied.using());
         assertEquals(original.table(), copied.table());
+    }
+
+    @Test
+    void supportsTypedStatementHints() {
+        var statement = delete(tbl("users"))
+            .hint(statementHint("MAX_EXECUTION_TIME", 1000))
+            .hint("BKA", "users")
+            .build();
+
+        assertEquals(2, statement.hints().size());
+        assertEquals("MAX_EXECUTION_TIME", statement.hints().getFirst().name().value());
+        assertEquals("users",
+            assertInstanceOf(IdentifierHintArg.class, statement.hints().getLast().args().getFirst()).value().value());
     }
 }

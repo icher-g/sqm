@@ -231,16 +231,16 @@ Prefer typed nodes when the framework needs to:
 
 ### Example
 
-Raw string form:
+Legacy raw-string form:
 
 ```java
-optimizerHint("MAX_EXECUTION_TIME(1000)")
+"MAX_EXECUTION_TIME(1000)"
 ```
 
 Structured form:
 
 ```java
-statementHint("MAX_EXECUTION_TIME", lit(1000))
+statementHint("MAX_EXECUTION_TIME", 1000)
 ```
 
 The structured form is better because transpilation, validation, and transformation can reason over:

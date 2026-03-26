@@ -34,8 +34,8 @@ class SelectQueryParserTest {
 
         assertTrue(result.ok());
         var select = (SelectQuery) result.value();
-        assertEquals(1, select.optimizerHints().size());
-        assertEquals("NO_RANGE_OPTIMIZATION(users)", select.optimizerHints().getFirst());
+        assertEquals(1, select.hints().size());
+        assertEquals("NO_RANGE_OPTIMIZATION", select.hints().getFirst().name().value());
     }
 
     @Test
@@ -45,8 +45,8 @@ class SelectQueryParserTest {
 
         assertTrue(result.ok());
         var select = (SelectQuery) result.value();
-        assertEquals(1, select.optimizerHints().size());
-        assertEquals("MAX_EXECUTION_TIME(1000)", select.optimizerHints().getFirst());
+        assertEquals(1, select.hints().size());
+        assertEquals("MAX_EXECUTION_TIME", select.hints().getFirst().name().value());
     }
 
     @Test
@@ -57,9 +57,9 @@ class SelectQueryParserTest {
 
         assertTrue(result.ok());
         var select = (SelectQuery) result.value();
-        assertEquals(2, select.optimizerHints().size());
-        assertEquals("SET_VAR(sort_buffer_size=16M)", select.optimizerHints().get(0));
-        assertEquals("BKA(users)", select.optimizerHints().get(1));
+        assertEquals(2, select.hints().size());
+        assertEquals("SET_VAR", select.hints().get(0).name().value());
+        assertEquals("BKA", select.hints().get(1).name().value());
         assertEquals(SelectModifier.CALC_FOUND_ROWS, select.modifiers().getFirst());
     }
 

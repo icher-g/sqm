@@ -18,12 +18,12 @@ Examples of the current weakness:
 
 ```java
 select(...)
-    .optimizerHint("MAX_EXECUTION_TIME(1000)")
+    .hint("MAX_EXECUTION_TIME", 1000)
 ```
 
 ```java
 update(...)
-    .optimizerHint("INDEX(users idx_users_name)")
+    .hint("INDEX", id("users"), id("idx_users_name"))
 ```
 
 These forms are easy to store, but difficult to manipulate. A transformer cannot answer questions like:
@@ -111,7 +111,7 @@ Current-style API:
 
 ```java
 select(...)
-    .optimizerHint("MAX_EXECUTION_TIME(1000)")
+    .hint("MAX_EXECUTION_TIME", 1000)
 ```
 
 Problems:
@@ -178,7 +178,6 @@ public non-sealed interface TableHint extends Hint {
 `HintArg` should be typed rather than plain strings. A simple first wave can model:
 
 - identifier argument
-- literal argument
 - expression argument
 - qualified-name argument
 
@@ -206,10 +205,7 @@ Instead of:
 Prefer:
 
 ```java
-StatementHint.of(
-    id("MAX_EXECUTION_TIME"),
-    List.of(HintArg.literal(lit(1000)))
-)
+statementHint("MAX_EXECUTION_TIME", 1000)
 ```
 
 Instead of:
@@ -221,13 +217,7 @@ Instead of:
 Prefer:
 
 ```java
-StatementHint.of(
-    id("INDEX"),
-    List.of(
-        HintArg.qualifiedName(QualifiedName.of("users")),
-        HintArg.identifier(id("idx_users_name"))
-    )
-)
+tableHint("USE_INDEX", "idx_users_name")
 ```
 
 ### Why this is better
@@ -260,7 +250,7 @@ Possible SQM shape:
 
 ```java
 select(...)
-    .hint(statementHint("MAX_EXECUTION_TIME", lit(1000)))
+    .hint("MAX_EXECUTION_TIME", 1000)
 ```
 
 ### Table Hint Example
@@ -275,13 +265,41 @@ Possible SQM shape:
 
 ```java
 tbl("users")
-    .hint(tableHint("NOLOCK"))
-    .hint(tableHint("HOLDLOCK"))
+    .hint("NOLOCK")
+    .hint("HOLDLOCK")
 ```
 
 ### Important design point
 
 The same textual hint name in two dialects should not automatically mean the same semantic node. The node carries generic structure; the dialect decides support and meaning.
+
+### Important syntax point
+
+The syntax wrapper should remain dialect-owned rather than being encoded directly in the core hint node shape.
+
+Examples:
+
+- Oracle `/*+ LEADING(...) USE_NL(...) */`
+- MySQL `/*+ MAX_EXECUTION_TIME(...) */`
+- Spark `/*+ BROADCAST(t) */`
+- SQL Server `OPTION (HASH JOIN, MAXDOP 4)`
+- SQL Server `FROM t WITH (NOLOCK, INDEX(idx))`
+- MySQL `USE INDEX (idx)`
+- Oracle `INDEX(t idx)`
+
+These examples show that:
+
+- the same semantic hint family can appear under different syntax envelopes
+- statement syntax may still target relation or join behavior semantically
+- grouped syntax such as SQL Server `WITH (...)` should be handled by parser/renderers unless the grouping itself later proves manipulation value
+
+The first-wave core model should therefore preserve:
+
+- normalized hint name
+- ordered typed arguments
+- attachment point
+
+It should not hard-code every dialect syntax wrapper.
 
 ---
 
@@ -313,6 +331,27 @@ Suggested change:
 
 - evolve current table-hint modeling toward generic `TableHint` nodes
 - keep convenience DSL methods for popular dialect hints
+
+## Future Join-Level Attachment
+
+Join hints should be treated as an explicit future attachment-model question rather than forced into the first wave prematurely.
+
+Relevant examples:
+
+- Oracle `USE_NL(...)`
+- Spark `BROADCAST(t)`
+- SQL Server `OPTION (HASH JOIN, ...)`
+
+These examples suggest:
+
+- some hints are statement-attached syntactically but join-oriented semantically
+- future supported dialects may justify join-owned hint attachment in the SQM model
+
+First-wave recommendation:
+
+- support statement-owned and table-owned typed hints only
+- keep the hint hierarchy extensible enough that join-owned hints can be introduced later if a supported dialect truly needs them
+- record join-hint attachment as the next design step instead of assuming statement hints are always sufficient
 
 ---
 
@@ -390,6 +429,24 @@ Output:
 
 - `Table`
 - typed `TableHint` list
+
+### SQL Server `WITH (...)` note
+
+SQL Server table hints are a good example of why the first wave should stay generic.
+
+Example:
+
+```sql
+FROM t WITH (NOLOCK, INDEX(idx))
+```
+
+Here `NOLOCK` is not a useful standalone semantic node for SQM by itself. It is one member of a dialect-owned grouped table-hint syntax that also carries forms like `INDEX(idx)`.
+
+Recommendation:
+
+- do not introduce dedicated `LockHint` or `IndexHint` core node types in the first wave
+- use generic typed `TableHint` nodes plus helper constructors
+- let SQL Server parser/renderers own the grouped `WITH (...)` syntax
 
 ## Guidance
 
@@ -481,7 +538,7 @@ For each hint, transpilation should be able to say:
 Input:
 
 ```java
-statementHint("MAX_EXECUTION_TIME", lit(1000))
+statementHint("MAX_EXECUTION_TIME", 1000)
 ```
 
 Possible target results:
@@ -517,7 +574,7 @@ The DSL should support both:
 Example:
 
 ```java
-statementHint("MAX_EXECUTION_TIME", lit(1000))
+statementHint("MAX_EXECUTION_TIME", 1000)
 tableHint("NOLOCK")
 ```
 
@@ -560,7 +617,7 @@ Fallback:
 
 ```java
 select(...)
-    .hint(statementHint("MAX_EXECUTION_TIME", lit(1000)))
+    .hint("MAX_EXECUTION_TIME", 1000)
 ```
 
 The important point is that generated code should preserve structure, not raw string fragments.
@@ -585,22 +642,22 @@ This is not optional if hints are promoted into `sqm-core`.
 
 ## Migration Strategy
 
-## Phase 1: Introduce typed nodes alongside existing surfaces
+## Phase 1: Introduce typed nodes and ergonomic construction
 
 - add core hint nodes
 - add DSL constructors
 - add JSON / visitor / transformer / matcher support
 - add parser / renderer support for first-wave dialect features
 
-## Phase 2: Adapt public statement surfaces
+## Phase 2: Migrate public statement surfaces fully
 
-- move statement hint storage from `List<String>` toward `List<StatementHint>`
+- move statement hint storage from `List<String>` to `List<StatementHint>`
 - adapt table hint surfaces toward typed nodes
 
-## Phase 3: Deprecate raw-string APIs where appropriate
+## Phase 3: Remove raw-string statement-hint APIs
 
-- retain compatibility temporarily if needed
-- document the typed API as canonical
+- keep one canonical typed hint surface
+- document the ergonomic typed API as canonical
 
 ---
 
@@ -634,8 +691,8 @@ Recommended first wave:
 
 ```java
 SelectQuery query = select(col("id"))
-    .from(tbl("users").hint(tableHint("NOLOCK")))
-    .hint(statementHint("MAX_EXECUTION_TIME", lit(1000)))
+    .from(tbl("users").hint("NOLOCK"))
+    .hint("MAX_EXECUTION_TIME", 1000)
     .build();
 ```
 
@@ -672,8 +729,9 @@ Reason:
 
 Recommendation:
 
-- yes, convenience helpers may remain specialized
-- but the underlying stored model should be generic typed hints
+- no dedicated table-hint semantic subtypes should be required in the first wave
+- convenience helpers may remain specialized
+- but the underlying stored model should stay generic typed hints unless a family later proves strong manipulation value
 
 ### 3. Should unknown hints be representable?
 
@@ -690,6 +748,26 @@ Recommendation:
 
 - no, not in the semantic model
 - preserve meaning, not source formatting
+
+### 5. Should SQL Server lock and index hints become dedicated core node types?
+
+Recommendation:
+
+- not in the first wave
+- use generic typed `TableHint` nodes plus helper constructors
+
+Reason:
+
+- SQL Server `NOLOCK` and `INDEX(idx)` live inside the same dialect-owned `WITH (...)` table-hint syntax group
+- dedicated subtype modeling would overfit too early
+- generic typed hints preserve manipulation structure without freezing premature hint-taxonomy decisions
+
+### 6. Should join hints be modeled now?
+
+Recommendation:
+
+- not yet
+- design attachment for join hints explicitly in a follow-up step after statement/table typed hints are established
 
 ---
 
@@ -791,8 +869,8 @@ As a SQM user, I want statement-level hints stored as typed nodes so transformat
 
 #### Acceptance Criteria
 - statement hint-bearing surfaces store typed `StatementHint` values for the selected scope
-- existing raw-string statement hint APIs are adapted or deprecated explicitly
-- compatibility behavior is documented where transitional APIs remain
+- legacy raw-string statement hint APIs are removed
+- documentation reflects the typed API as the only canonical statement-hint surface
 - tests cover typed statement hint construction, inspection, and migration behavior
 
 #### Labels

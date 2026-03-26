@@ -14,7 +14,7 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
     private final List<Join> joins = new ArrayList<>();
     private final List<WindowDef> windows = new ArrayList<>();
     private final List<SelectModifier> modifiers = new ArrayList<>();
-    private final List<String> optimizerHints = new ArrayList<>();
+    private final List<StatementHint> statementHints = new ArrayList<>();
     private GroupBy groupBy;
     private OrderBy orderBy;
     private TableRef tableRef;
@@ -51,7 +51,7 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
         this.lockingClause = query.lockFor();
         this.windows.addAll(query.windows());
         this.modifiers.addAll(query.modifiers());
-        this.optimizerHints.addAll(query.optimizerHints());
+        this.statementHints.addAll(query.hints());
     }
 
     @Override
@@ -141,15 +141,15 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
     }
 
     @Override
-    public SelectQueryBuilder optimizerHints(List<String> hints) {
+    public SelectQueryBuilder hints(List<StatementHint> hints) {
         Objects.requireNonNull(hints, "hints must not be null");
-        this.optimizerHints.addAll(hints);
+        this.statementHints.addAll(hints);
         return this;
     }
 
     @Override
-    public SelectQueryBuilder clearOptimizerHints() {
-        this.optimizerHints.clear();
+    public SelectQueryBuilder clearHints() {
+        this.statementHints.clear();
         return this;
     }
 
@@ -201,7 +201,7 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
             lockingClause,
             windows,
             modifiers,
-            optimizerHints
+            statementHints
         );
     }
 }

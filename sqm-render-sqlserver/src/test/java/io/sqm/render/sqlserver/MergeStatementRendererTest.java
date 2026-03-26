@@ -1,5 +1,6 @@
 package io.sqm.render.sqlserver;
 
+import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.sqlserver.spi.SqlServerDialect;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import static io.sqm.dsl.Dsl.topPercent;
 import static io.sqm.dsl.Dsl.topWithTies;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MergeStatementRendererTest {
 
@@ -130,6 +132,20 @@ class MergeStatementRendererTest {
             .build();
 
         assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(mergeStatement));
+    }
+
+    @Test
+    void rejectsMergeStatementHints() {
+        var mergeStatement = merge("users")
+            .hint("MERGE_HINT")
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .build();
+
+        var error = assertThrows(UnsupportedDialectFeatureException.class, () -> RenderContext.of(new SqlServerDialect()).render(mergeStatement));
+
+        assertTrue(error.getMessage().contains("statement hints"));
     }
 
     @Test

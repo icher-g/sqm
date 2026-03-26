@@ -25,7 +25,7 @@ public class SelectQueryRenderer extends io.sqm.render.ansi.SelectQueryRenderer 
      */
     @Override
     protected void renderAfterSelectKeyword(SelectQuery node, RenderContext ctx, SqlWriter w) {
-        OptimizerHintRendererSupport.renderHints(node.optimizerHints(), "SELECT optimizer hints", ctx, w);
+        MySqlHintRenderSupport.renderStatementHints(node.hints(), "SELECT optimizer hints", ctx, w);
 
         for (var modifier : node.modifiers()) {
             if (modifier == SelectModifier.CALC_FOUND_ROWS) {

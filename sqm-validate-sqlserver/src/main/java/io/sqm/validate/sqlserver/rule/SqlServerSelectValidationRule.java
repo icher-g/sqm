@@ -43,7 +43,7 @@ public final class SqlServerSelectValidationRule implements SchemaValidationRule
             );
         }
 
-        if (!node.optimizerHints().isEmpty()) {
+        if (!node.hints().isEmpty()) {
             context.addProblem(
                 ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
                 "SQL Server baseline support does not include optimizer hint comments",
@@ -165,7 +165,7 @@ public final class SqlServerSelectValidationRule implements SchemaValidationRule
 
         @Override
         public Void visitTable(Table table) {
-            if (!table.indexHints().isEmpty()) {
+            if (table.hints().stream().anyMatch(h -> h.name().value().matches("^(USE|IGNORE|FORCE)_INDEX(_FOR_(JOIN|ORDER_BY|GROUP_BY))?$"))) {
                 context.addProblem(
                     ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
                     "SQL Server does not support MySQL index hints",

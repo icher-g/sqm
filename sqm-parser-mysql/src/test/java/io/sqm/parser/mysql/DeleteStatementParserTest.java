@@ -37,7 +37,7 @@ class DeleteStatementParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertEquals("u", result.value().table().alias().value());
-        assertEquals(1, result.value().table().indexHints().size());
+        assertEquals(1, result.value().table().hints().size());
         assertEquals("u", result.value().using().getFirst().matchTableRef().table(t -> t.alias().value()).orElse(null));
         assertEquals(1, result.value().joins().size());
     }
@@ -49,7 +49,7 @@ class DeleteStatementParserTest {
             "DELETE /*+ BKA(users) */ FROM users WHERE users.id = 1");
 
         assertTrue(result.ok(), result.errorMessage());
-        assertEquals(java.util.List.of("BKA(users)"), result.value().optimizerHints());
+        assertEquals(java.util.List.of("BKA"), result.value().hints().stream().map(h -> h.name().value()).toList());
     }
 
     @Test

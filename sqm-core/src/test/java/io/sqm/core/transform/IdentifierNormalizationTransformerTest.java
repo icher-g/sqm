@@ -265,4 +265,21 @@ class IdentifierNormalizationTransformerTest {
         assertEquals("alice", ((LiteralExpr) mixedOut.value()).value());
         assertSame(normalized, normalizedOut);
     }
+
+    @Test
+    void normalizes_table_hint_and_hint_arg_identifiers() {
+        var tx = new IdentifierNormalizationTransformer();
+        var table = tbl("USERS")
+            .hint("USE_INDEX", "IDX_USERS_NAME")
+            .hint(TableHint.of("QUALIFIED", QualifiedName.of("APP", "USERS")));
+
+        var transformed = tx.apply(table);
+
+        assertEquals("users", transformed.name().value());
+        assertEquals("idx_users_name", ((IdentifierHintArg) transformed.hints().getFirst().args().getFirst()).value().value());
+        assertEquals(
+            java.util.List.of("app", "users"),
+            ((QualifiedNameHintArg) transformed.hints().get(1).args().getFirst()).value().values()
+        );
+    }
 }

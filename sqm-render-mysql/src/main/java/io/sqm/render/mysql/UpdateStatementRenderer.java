@@ -30,7 +30,7 @@ public class UpdateStatementRenderer extends io.sqm.render.ansi.UpdateStatementR
      */
     @Override
     protected void renderAfterUpdateKeyword(UpdateStatement node, RenderContext ctx, SqlWriter w) {
-        OptimizerHintRendererSupport.renderHints(node.optimizerHints(), "UPDATE optimizer hints", ctx, w);
+        MySqlHintRenderSupport.renderStatementHints(node.hints(), "UPDATE optimizer hints", ctx, w);
     }
 
     /**

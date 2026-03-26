@@ -159,6 +159,21 @@ class MergeStatementRendererTest {
     }
 
     @Test
+    void rejectsMergeStatementHints() {
+        var renderer = new MergeStatementRenderer();
+        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(15, 0)));
+        var writer = new DefaultSqlWriter(ctx);
+        MergeStatement statement = merge("users")
+            .hint("MERGE_HINT")
+            .source(tbl("src"))
+            .on(col("users", "id").eq(col("src", "id")))
+            .whenMatchedDelete()
+            .build();
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> renderer.render(statement, ctx, writer));
+    }
+
+    @Test
     void rendersClauseAndActionLeaves() {
         var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(18, 0)));
 

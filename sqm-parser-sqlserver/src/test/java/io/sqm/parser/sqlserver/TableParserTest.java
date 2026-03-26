@@ -21,8 +21,8 @@ class TableParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertEquals("u", result.value().alias().value());
-        assertEquals(2, result.value().lockHints().size());
-        assertEquals(Table.LockHintKind.UPDLOCK, result.value().lockHints().getFirst().kind());
+        assertEquals(2, result.value().hints().size());
+        assertEquals("UPDLOCK", result.value().hints().getFirst().name().value());
     }
 
     @Test

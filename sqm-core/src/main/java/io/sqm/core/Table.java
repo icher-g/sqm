@@ -2,6 +2,7 @@ package io.sqm.core;
 
 import io.sqm.core.walk.NodeVisitor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -33,50 +34,46 @@ public non-sealed interface Table extends TableRef {
     }
 
     /**
-     * Creates a table with quote-aware identifiers and index hints.
+     * Creates a table with quote-aware identifiers and typed table hints.
      *
      * @param schema      optional schema identifier
      * @param name        table name identifier (unqualified)
      * @param alias       optional table alias identifier
      * @param inheritance inheritance behavior
-     * @param indexHints  optional index hints
+     * @param hints       optional table hints
      * @return a newly created table instance
      */
-    static Table of(Identifier schema, Identifier name, Identifier alias, Inheritance inheritance, List<IndexHint> indexHints) {
+    static Table of(Identifier schema, Identifier name, Identifier alias, Inheritance inheritance, List<? extends TableHint> hints) {
         return new Impl(
             schema,
             Objects.requireNonNull(name),
             alias,
             inheritance,
-            copyHints(indexHints)
+            copyHints(hints)
         );
     }
 
-    /**
-     * Creates a table with quote-aware identifiers, index hints, and lock hints.
-     *
-     * @param schema      optional schema identifier
-     * @param name        table name identifier (unqualified)
-     * @param alias       optional table alias identifier
-     * @param inheritance inheritance behavior
-     * @param indexHints  optional index hints
-     * @param lockHints   optional lock hints
-     * @return a newly created table instance
-     */
-    static Table of(
-        Identifier schema,
-        Identifier name,
-        Identifier alias,
-        Inheritance inheritance,
-        List<IndexHint> indexHints,
-        List<LockHint> lockHints) {
-        return new Impl(
-            schema,
-            Objects.requireNonNull(name),
-            alias,
-            inheritance,
-            mergeHints(indexHints, lockHints)
+    private static TableHint indexHint(String name, String... indexes) {
+        return TableHint.of(
+            name,
+            toIdentifiers(indexes).stream()
+                .map(HintArg::identifier)
+                .toArray(HintArg[]::new)
         );
+    }
+
+    private static List<Identifier> toIdentifiers(String... indexes) {
+        Objects.requireNonNull(indexes, "indexes");
+        return java.util.Arrays.stream(indexes)
+            .map(Identifier::of)
+            .toList();
+    }
+
+    private static List<TableHint> copyHints(List<? extends TableHint> hints) {
+        if (hints == null || hints.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(hints);
     }
 
     /**
@@ -117,24 +114,6 @@ public non-sealed interface Table extends TableRef {
     }
 
     /**
-     * Returns index hints attached to this table reference.
-     *
-     * @return immutable list of index hints.
-     */
-    default List<IndexHint> indexHints() {
-        return filterHints(hints(), IndexHint.class);
-    }
-
-    /**
-     * Returns lock hints attached to this table reference.
-     *
-     * @return immutable list of lock hints.
-     */
-    default List<LockHint> lockHints() {
-        return filterHints(hints(), LockHint.class);
-    }
-
-    /**
      * Replaces all table hints.
      *
      * @param hints table hints.
@@ -145,53 +124,38 @@ public non-sealed interface Table extends TableRef {
     }
 
     /**
-     * Replaces index hints while preserving all non-index hints.
+     * Appends a typed table hint.
      *
-     * @param hints index hints.
-     * @return a new table with replaced index hints.
+     * @param hint table hint to append.
+     * @return a new table with appended hint.
      */
-    default Table withIndexHints(List<IndexHint> hints) {
-        var merged = new java.util.ArrayList<>(copyHints(hints));
-        merged.addAll(lockHints());
-        return withHints(merged);
-    }
-
-    /**
-     * Replaces lock hints while preserving all non-lock hints.
-     *
-     * @param hints lock hints.
-     * @return a new table with replaced lock hints.
-     */
-    default Table withLockHints(List<LockHint> hints) {
-        var merged = new java.util.ArrayList<TableHint>(indexHints());
-        merged.addAll(copyHints(hints));
-        return withHints(merged);
-    }
-
-    /**
-     * Appends an index hint.
-     *
-     * @param hint index hint to append.
-     * @return a new table with appended index hint.
-     */
-    default Table addIndexHint(IndexHint hint) {
+    default Table hint(TableHint hint) {
         Objects.requireNonNull(hint, "hint");
-        var updated = new java.util.ArrayList<>(hints());
+        var updated = new ArrayList<>(hints());
         updated.add(hint);
         return withHints(updated);
     }
 
     /**
-     * Appends a lock hint.
+     * Appends a typed table hint.
      *
-     * @param hint lock hint to append.
-     * @return a new table with appended lock hint.
+     * @param name hint name
+     * @param args hint arguments
+     * @return a typed table hint
      */
-    default Table addLockHint(LockHint hint) {
-        Objects.requireNonNull(hint, "hint");
-        var updated = new java.util.ArrayList<>(hints());
-        updated.add(hint);
-        return withHints(updated);
+    default Table hint(String name, Object... args) {
+        return hint(TableHint.of(name, args));
+    }
+
+    /**
+     * Appends a typed table hint.
+     *
+     * @param name hint name
+     * @param args hint arguments
+     * @return a typed table hint
+     */
+    default Table hint(Identifier name, Object... args) {
+        return hint(TableHint.of(name, args));
     }
 
     /**
@@ -201,7 +165,7 @@ public non-sealed interface Table extends TableRef {
      * @return a new table with appended hint.
      */
     default Table useIndex(String... indexes) {
-        return addIndexHint(IndexHint.use(IndexHintScope.DEFAULT, toIdentifiers(indexes)));
+        return hint(indexHint("USE_INDEX", indexes));
     }
 
     /**
@@ -211,7 +175,7 @@ public non-sealed interface Table extends TableRef {
      * @return a new table with appended hint.
      */
     default Table ignoreIndex(String... indexes) {
-        return addIndexHint(IndexHint.ignore(IndexHintScope.DEFAULT, toIdentifiers(indexes)));
+        return hint(indexHint("IGNORE_INDEX", indexes));
     }
 
     /**
@@ -221,7 +185,7 @@ public non-sealed interface Table extends TableRef {
      * @return a new table with appended hint.
      */
     default Table forceIndex(String... indexes) {
-        return addIndexHint(IndexHint.force(IndexHintScope.DEFAULT, toIdentifiers(indexes)));
+        return hint(indexHint("FORCE_INDEX", indexes));
     }
 
     /**
@@ -288,7 +252,7 @@ public non-sealed interface Table extends TableRef {
      * @return a new table with appended hint.
      */
     default Table withNoLock() {
-        return addLockHint(LockHint.nolock());
+        return hint(TableHint.of("NOLOCK"));
     }
 
     /**
@@ -297,7 +261,7 @@ public non-sealed interface Table extends TableRef {
      * @return a new table with appended hint.
      */
     default Table withUpdLock() {
-        return addLockHint(LockHint.updlock());
+        return hint(TableHint.of("UPDLOCK"));
     }
 
     /**
@@ -306,7 +270,7 @@ public non-sealed interface Table extends TableRef {
      * @return a new table with appended hint.
      */
     default Table withHoldLock() {
-        return addLockHint(LockHint.holdlock());
+        return hint(TableHint.of("HOLDLOCK"));
     }
 
     /**
@@ -320,34 +284,6 @@ public non-sealed interface Table extends TableRef {
     @Override
     default <R> R accept(NodeVisitor<R> v) {
         return v.visitTable(this);
-    }
-
-    private static List<Identifier> toIdentifiers(String... indexes) {
-        Objects.requireNonNull(indexes, "indexes");
-        return java.util.Arrays.stream(indexes)
-            .map(Identifier::of)
-            .toList();
-    }
-
-    private static List<TableHint> mergeHints(List<? extends TableHint> first, List<? extends TableHint> second) {
-        var merged = new java.util.ArrayList<TableHint>();
-        merged.addAll(copyHints(first));
-        merged.addAll(copyHints(second));
-        return List.copyOf(merged);
-    }
-
-    private static List<TableHint> copyHints(List<? extends TableHint> hints) {
-        if (hints == null || hints.isEmpty()) {
-            return List.of();
-        }
-        return List.copyOf(hints);
-    }
-
-    private static <T extends TableHint> List<T> filterHints(List<TableHint> hints, Class<T> type) {
-        return hints.stream()
-            .filter(type::isInstance)
-            .map(type::cast)
-            .toList();
     }
 
     /**
@@ -366,169 +302,6 @@ public non-sealed interface Table extends TableRef {
          * Explicitly include child tables via {@code table *} (PostgreSQL).
          */
         INCLUDE_DESCENDANTS
-    }
-
-    /**
-     * Marker interface for table hints.
-     */
-    sealed interface TableHint permits IndexHint, LockHint {
-    }
-
-    /**
-     * MySQL-compatible index hint type.
-     */
-    enum IndexHintType {
-        /**
-         * USE INDEX hint.
-         */
-        USE,
-        /**
-         * IGNORE INDEX hint.
-         */
-        IGNORE,
-        /**
-         * FORCE INDEX hint.
-         */
-        FORCE
-    }
-
-    /**
-     * Optional scope for index hints.
-     */
-    enum IndexHintScope {
-        /**
-         * No explicit scope.
-         */
-        DEFAULT,
-        /**
-         * Applies to JOIN access.
-         */
-        JOIN,
-        /**
-         * Applies to ORDER BY.
-         */
-        ORDER_BY,
-        /**
-         * Applies to GROUP BY.
-         */
-        GROUP_BY
-    }
-
-    /**
-     * Index hint attached to a table reference.
-     *
-     * @param type    hint type.
-     * @param scope   optional hint scope.
-     * @param indexes target index identifiers.
-     */
-    record IndexHint(IndexHintType type, IndexHintScope scope, List<Identifier> indexes) implements TableHint {
-        /**
-         * Creates an index hint.
-         */
-        public IndexHint {
-            Objects.requireNonNull(type, "type");
-            if (scope == null) {
-                scope = IndexHintScope.DEFAULT;
-            }
-            indexes = indexes == null ? List.of() : List.copyOf(indexes);
-            if (indexes.isEmpty()) {
-                throw new IllegalArgumentException("indexes cannot be empty");
-            }
-        }
-
-        /**
-         * Creates a USE INDEX hint.
-         *
-         * @param scope hint scope.
-         * @param indexes target index identifiers.
-         * @return index hint.
-         */
-        public static IndexHint use(IndexHintScope scope, List<Identifier> indexes) {
-            return new IndexHint(IndexHintType.USE, scope, indexes);
-        }
-
-        /**
-         * Creates an IGNORE INDEX hint.
-         *
-         * @param scope hint scope.
-         * @param indexes target index identifiers.
-         * @return index hint.
-         */
-        public static IndexHint ignore(IndexHintScope scope, List<Identifier> indexes) {
-            return new IndexHint(IndexHintType.IGNORE, scope, indexes);
-        }
-
-        /**
-         * Creates a FORCE INDEX hint.
-         *
-         * @param scope hint scope.
-         * @param indexes target index identifiers.
-         * @return index hint.
-         */
-        public static IndexHint force(IndexHintScope scope, List<Identifier> indexes) {
-            return new IndexHint(IndexHintType.FORCE, scope, indexes);
-        }
-    }
-
-    /**
-     * Lock hint kind.
-     */
-    enum LockHintKind {
-        /**
-         * {@code NOLOCK} hint.
-         */
-        NOLOCK,
-        /**
-         * {@code UPDLOCK} hint.
-         */
-        UPDLOCK,
-        /**
-         * {@code HOLDLOCK} hint.
-         */
-        HOLDLOCK
-    }
-
-    /**
-     * Lock hint attached to a table reference.
-     *
-     * @param kind hint kind.
-     */
-    record LockHint(LockHintKind kind) implements TableHint {
-        /**
-         * Creates a lock hint.
-         *
-         * @param kind hint kind.
-         */
-        public LockHint {
-            Objects.requireNonNull(kind, "kind");
-        }
-
-        /**
-         * Creates a {@code NOLOCK} hint.
-         *
-         * @return lock hint.
-         */
-        public static LockHint nolock() {
-            return new LockHint(LockHintKind.NOLOCK);
-        }
-
-        /**
-         * Creates an {@code UPDLOCK} hint.
-         *
-         * @return lock hint.
-         */
-        public static LockHint updlock() {
-            return new LockHint(LockHintKind.UPDLOCK);
-        }
-
-        /**
-         * Creates a {@code HOLDLOCK} hint.
-         *
-         * @return lock hint.
-         */
-        public static LockHint holdlock() {
-            return new LockHint(LockHintKind.HOLDLOCK);
-        }
     }
 
     /**
@@ -565,9 +338,9 @@ public non-sealed interface Table extends TableRef {
         /**
          * Creates a table implementation without hints.
          *
-         * @param schema table schema identifier
-         * @param name table name identifier
-         * @param alias table alias identifier
+         * @param schema      table schema identifier
+         * @param name        table name identifier
+         * @param alias       table alias identifier
          * @param inheritance table inheritance behavior
          */
         public Impl(Identifier schema, Identifier name, Identifier alias, Inheritance inheritance) {

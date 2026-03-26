@@ -11,6 +11,7 @@ import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.merge;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
+import static io.sqm.dsl.Dsl.statementHint;
 import static io.sqm.dsl.Dsl.tbl;
 import static io.sqm.dsl.Dsl.topPercent;
 import static io.sqm.dsl.Dsl.topWithTies;
@@ -211,5 +212,36 @@ class MergeStatementTest {
     @Test
     void mergeUpdateAction_requiresAssignments() {
         assertThrows(IllegalArgumentException.class, () -> MergeUpdateAction.of(List.of()));
+    }
+
+    @Test
+    void supportsTypedStatementHints() {
+        var statement = merge(tbl("users"))
+            .hint("MERGE_HINT")
+            .hint(statementHint("MAX_EXECUTION_TIME", 1000))
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .build();
+
+        assertEquals(2, statement.hints().size());
+        assertEquals("MERGE_HINT", statement.hints().getFirst().name().value());
+        assertEquals("MAX_EXECUTION_TIME", statement.hints().get(1).name().value());
+        assertThrows(UnsupportedOperationException.class, () -> statement.hints().add(statementHint("BKA", "users")));
+    }
+
+    @Test
+    void builderReplacesAndClearsTypedStatementHints() {
+        var statement = MergeStatement.builder(tbl("users"))
+            .hints(List.of(statementHint("MERGE_HINT"), statementHint("MAX_EXECUTION_TIME", 1000)))
+            .clearHints()
+            .hint("BKA", "users")
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .build();
+
+        assertEquals(1, statement.hints().size());
+        assertEquals("BKA", statement.hints().getFirst().name().value());
     }
 }

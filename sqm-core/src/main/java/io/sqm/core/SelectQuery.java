@@ -14,7 +14,7 @@ import java.util.List;
 public non-sealed interface SelectQuery extends Query {
 
     /**
-     * Creates an immutable {@link SelectQuery} from all SELECT clause parts, including select modifiers and optimizer hints.
+ * Creates an immutable {@link SelectQuery} from all SELECT clause parts, including select modifiers and typed statement hints.
      *
      * @param items select items (must not be {@code null})
      * @param from FROM table reference, or {@code null}
@@ -29,7 +29,7 @@ public non-sealed interface SelectQuery extends Query {
      * @param lockFor locking clause, or {@code null}
      * @param windows WINDOW clause definitions (must not be {@code null})
      * @param modifiers select modifiers
-     * @param optimizerHints optimizer hints (without comment delimiters)
+     * @param hints typed statement hints
      * @return immutable {@link SelectQuery} instance
      */
     static SelectQuery of(
@@ -46,8 +46,8 @@ public non-sealed interface SelectQuery extends Query {
         LockingClause lockFor,
         List<WindowDef> windows,
         List<SelectModifier> modifiers,
-        List<String> optimizerHints) {
-        return new Impl(items, from, joins, where, groupBy, having, orderBy, distinct, topSpec, limitOffset, lockFor, windows, modifiers, optimizerHints);
+        List<StatementHint> hints) {
+        return new Impl(items, from, joins, where, groupBy, having, orderBy, distinct, topSpec, limitOffset, lockFor, windows, modifiers, hints);
     }
 
     /**
@@ -163,17 +163,6 @@ public non-sealed interface SelectQuery extends Query {
     }
 
     /**
-     * Returns optimizer hints attached to this query.
-     * <p>
-     * Values do not include comment delimiters and are rendered as {@code /*+ ... *\/} by supporting renderers.
-     *
-     * @return immutable list of optimizer hints.
-     */
-    default List<String> optimizerHints() {
-        return List.of();
-    }
-
-    /**
      * Accepts a {@link NodeVisitor} and dispatches control to the
      * visitor method corresponding to the concrete subtype.
      *
@@ -202,7 +191,7 @@ public non-sealed interface SelectQuery extends Query {
      * @param lockFor locking clause, or {@code null}
      * @param windows WINDOW clause definitions (immutable copy)
      * @param modifiers select modifiers (immutable copy)
-     * @param optimizerHints optimizer hints (immutable copy)
+     * @param hints typed statement hints (immutable copy)
      */
     record Impl(List<SelectItem> items,
                 TableRef from,
@@ -217,7 +206,7 @@ public non-sealed interface SelectQuery extends Query {
                 LockingClause lockFor,
                 List<WindowDef> windows,
                 List<SelectModifier> modifiers,
-                List<String> optimizerHints) implements SelectQuery {
+                List<StatementHint> hints) implements SelectQuery {
 
         /**
          * Creates an immutable {@link SelectQuery} implementation and defensively copies list inputs.
@@ -227,11 +216,11 @@ public non-sealed interface SelectQuery extends Query {
             joins = List.copyOf(joins);
             windows = List.copyOf(windows);
             modifiers = modifiers == null ? List.of() : List.copyOf(modifiers);
-            optimizerHints = optimizerHints == null ? List.of() : List.copyOf(optimizerHints);
+            hints = hints == null ? List.of() : List.copyOf(hints);
         }
 
         /**
-         * Creates an immutable {@link SelectQuery} implementation without select modifiers and optimizer hints.
+         * Creates an immutable {@link SelectQuery} implementation without select modifiers and statement hints.
          *
          * @param items select items (must not be {@code null})
          * @param from FROM table reference, or {@code null}

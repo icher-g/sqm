@@ -102,7 +102,7 @@ class InsertStatementParserTest {
         );
 
         assertTrue(result.ok(), result.errorMessage());
-        assertEquals(1, result.value().table().lockHints().size());
-        assertEquals(Table.LockHintKind.HOLDLOCK, result.value().table().lockHints().getFirst().kind());
+        assertEquals(1, result.value().table().hints().size());
+        assertEquals("HOLDLOCK", result.value().table().hints().getFirst().name().value());
     }
 }

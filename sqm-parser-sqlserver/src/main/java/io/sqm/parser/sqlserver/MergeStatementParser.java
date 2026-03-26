@@ -83,7 +83,7 @@ public class MergeStatementParser extends io.sqm.parser.ansi.MergeStatementParse
             return error("Duplicate or unsupported SQL Server MERGE clause ordering", cur.fullPos());
         }
 
-        return ok(MergeStatement.of(target.value(), source.value(), on.value(), topSpec.value(), clauses.value(), result));
+        return ok(MergeStatement.of(target.value(), source.value(), on.value(), topSpec.value(), clauses.value(), result, List.of()));
     }
 
     private ParseResult<TopSpec> parseTopClause(Cursor cur, ParseContext ctx) {

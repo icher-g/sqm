@@ -3,6 +3,7 @@ package io.sqm.parser.mysql;
 import io.sqm.core.Join;
 import io.sqm.core.ResultClause;
 import io.sqm.core.ResultItem;
+import io.sqm.core.StatementHint;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.ansi.Indicators;
 import io.sqm.parser.core.Cursor;
@@ -32,16 +33,16 @@ public class UpdateStatementParser extends io.sqm.parser.ansi.UpdateStatementPar
      *
      * @param cur token cursor
      * @param ctx parse context
-     * @return parsed optimizer hints or an empty list when omitted
+     * @return parsed statement hints or an empty list when omitted
      */
     @Override
-    protected ParseResult<List<String>> parseAfterUpdateKeyword(Cursor cur, ParseContext ctx) {
-        var hints = new ArrayList<String>();
+    protected ParseResult<List<StatementHint>> parseAfterUpdateKeyword(Cursor cur, ParseContext ctx) {
+        var hints = new ArrayList<StatementHint>();
         while (cur.match(TokenType.COMMENT_HINT)) {
             if (!ctx.capabilities().supports(SqlFeature.OPTIMIZER_HINT_COMMENT)) {
                 return error("Optimizer hint comments are not supported by this dialect", cur.fullPos());
             }
-            hints.add(cur.advance().lexeme());
+            hints.addAll(MySqlHintParserSupport.parseCommentHints(cur.advance().lexeme(), ctx));
         }
         return ok(List.copyOf(hints));
     }

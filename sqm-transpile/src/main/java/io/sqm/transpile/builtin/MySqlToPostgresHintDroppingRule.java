@@ -8,7 +8,6 @@ import io.sqm.transpile.TranspileContext;
 import io.sqm.transpile.TranspileRuleResult;
 import io.sqm.transpile.rule.TranspileRule;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -65,40 +64,42 @@ public final class MySqlToPostgresHintDroppingRule implements TranspileRule {
         @Override
         public Node visitSelectQuery(SelectQuery query) {
             var transformed = (SelectQuery) super.visitSelectQuery(query);
-            if (transformed.optimizerHints().isEmpty()) {
+            if (transformed.hints().isEmpty()) {
                 return transformed;
             }
             return SelectQuery.builder(transformed)
-                .clearOptimizerHints()
+                .clearHints()
                 .build();
         }
 
         @Override
         public Node visitUpdateStatement(UpdateStatement statement) {
             var transformed = (UpdateStatement) super.visitUpdateStatement(statement);
-            if (transformed.optimizerHints().isEmpty()) {
+            if (transformed.hints().isEmpty()) {
                 return transformed;
             }
             return UpdateStatement.builder(transformed)
-                .clearOptimizerHints()
+                .clearHints()
                 .build();
         }
 
         @Override
         public Node visitDeleteStatement(DeleteStatement statement) {
             var transformed = (DeleteStatement) super.visitDeleteStatement(statement);
-            if (transformed.optimizerHints().isEmpty()) {
+            if (transformed.hints().isEmpty()) {
                 return transformed;
             }
             return DeleteStatement.builder(transformed)
-                .clearOptimizerHints()
+                .clearHints()
                 .build();
         }
 
         @Override
         public Node visitTable(Table table) {
-            if (!table.indexHints().isEmpty()) {
-                return table.withIndexHints(List.of());
+            if (table.hints().stream().anyMatch(h -> h.name().value().matches("^(USE|IGNORE|FORCE)_INDEX(_FOR_(JOIN|ORDER_BY|GROUP_BY))?$"))) {
+                return table.withHints(table.hints().stream()
+                    .filter(h -> !h.name().value().matches("^(USE|IGNORE|FORCE)_INDEX(_FOR_(JOIN|ORDER_BY|GROUP_BY))?$"))
+                    .toList());
             }
             return table;
         }

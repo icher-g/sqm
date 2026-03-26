@@ -2,6 +2,7 @@ package io.sqm.parser.sqlserver;
 
 import io.sqm.core.Identifier;
 import io.sqm.core.Table;
+import io.sqm.core.TableHint;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -9,7 +10,7 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 
 import static io.sqm.parser.spi.ParseResult.error;
@@ -49,7 +50,7 @@ public class TableParser extends io.sqm.parser.ansi.TableParser {
             alias = parseAliasIdentifier(cur);
         }
 
-        var hints = new ArrayList<Table.LockHint>();
+        var hints = new ArrayList<TableHint>();
         if (cur.consumeIf(TokenType.WITH)) {
             if (!ctx.capabilities().supports(SqlFeature.TABLE_LOCK_HINT)) {
                 return error("SQL Server table hints are not supported by this dialect", cur.fullPos());
@@ -63,16 +64,16 @@ public class TableParser extends io.sqm.parser.ansi.TableParser {
             cur.expect("Expected ) after SQL Server table hints", TokenType.RPAREN);
         }
 
-        return ok(Table.of(schema, name, alias, inheritance, java.util.List.of(), hints));
+        return ok(Table.of(schema, name, alias, inheritance, hints));
     }
 
     private boolean looksLikeAliasStart(Cursor cur) {
         return cur.match(TokenType.AS) || cur.match(TokenType.IDENT);
     }
 
-    private ParseResult<List<Table.LockHint>> parseHintList(Cursor cur) {
-        var hints = new ArrayList<Table.LockHint>();
-        var seen = EnumSet.noneOf(Table.LockHintKind.class);
+    private ParseResult<List<TableHint>> parseHintList(Cursor cur) {
+        var hints = new ArrayList<TableHint>();
+        var seen = new HashSet<String>();
 
         do {
             var hint = parseHint(cur);
@@ -80,30 +81,30 @@ public class TableParser extends io.sqm.parser.ansi.TableParser {
                 return error("Expected SQL Server table hint", cur.fullPos());
             }
 
-            if (!seen.add(hint.kind())) {
-                return error("Duplicate SQL Server table hint " + hint.kind().name(), cur.fullPos());
+            if (!seen.add(hint.name().value())) {
+                return error("Duplicate SQL Server table hint " + hint.name().value(), cur.fullPos());
             }
 
             hints.add(hint);
 
         } while (cur.consumeIf(TokenType.COMMA));
 
-        if (seen.contains(Table.LockHintKind.NOLOCK) && (seen.contains(Table.LockHintKind.UPDLOCK) || seen.contains(Table.LockHintKind.HOLDLOCK))) {
+        if (seen.contains("NOLOCK") && (seen.contains("UPDLOCK") || seen.contains("HOLDLOCK"))) {
             return error("SQL Server NOLOCK cannot be combined with UPDLOCK or HOLDLOCK", cur.fullPos());
         }
 
-        return ok(java.util.List.copyOf(hints));
+        return ok(List.copyOf(hints));
     }
 
-    private Table.LockHint parseHint(Cursor cur) {
+    private TableHint parseHint(Cursor cur) {
         if (cur.consumeIf(TokenType.NOLOCK)) {
-            return Table.LockHint.nolock();
+            return TableHint.of("NOLOCK");
         }
         if (cur.consumeIf(TokenType.UPDLOCK)) {
-            return Table.LockHint.updlock();
+            return TableHint.of("UPDLOCK");
         }
         if (cur.consumeIf(TokenType.HOLDLOCK)) {
-            return Table.LockHint.holdlock();
+            return TableHint.of("HOLDLOCK");
         }
         return null;
     }

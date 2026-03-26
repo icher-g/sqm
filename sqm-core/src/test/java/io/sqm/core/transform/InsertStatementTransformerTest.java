@@ -100,4 +100,26 @@ class InsertStatementTransformerTest {
 
         assertNotSame(statement, transformed);
     }
+
+    @Test
+    void rebuildsStatementWhenHintChanges() {
+        var statement = insert(tbl("users"))
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .values(row(lit(1)))
+            .build();
+
+        var transformed = (InsertStatement) new RecursiveNodeTransformer() {
+            @Override
+            public Node visitLiteralExpr(io.sqm.core.LiteralExpr literalExpr) {
+                if (Integer.valueOf(1000).equals(literalExpr.value())) {
+                    return lit(2000);
+                }
+                return literalExpr;
+            }
+        }.transform(statement);
+
+        assertNotSame(statement, transformed);
+        assertEquals(2000, transformed.hints().getFirst().args().getFirst()
+            .matchHintArg().expression(arg -> arg.value().matchExpression().literal(l -> l.value()).orElse(null)).otherwise(arg -> null));
+    }
 }

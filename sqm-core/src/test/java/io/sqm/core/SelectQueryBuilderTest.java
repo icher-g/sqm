@@ -3,11 +3,13 @@ package io.sqm.core;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.statementHint;
 import static io.sqm.dsl.Dsl.window;
 
 class SelectQueryBuilderTest {
@@ -64,28 +66,28 @@ class SelectQueryBuilderTest {
         assertThrows(NullPointerException.class, () -> builder.window((WindowDef) null));
     }
     @Test
-    void supports_select_modifiers_and_optimizer_hints() {
+    void supports_select_modifiers_and_statement_hints() {
         var query = SelectQuery.builder()
             .select(col("id"))
             .from(TableRef.table(Identifier.of("users")))
             .selectModifier(SelectModifier.CALC_FOUND_ROWS)
-            .optimizerHint("MAX_EXECUTION_TIME(1000)")
+            .hint("MAX_EXECUTION_TIME", 1000)
             .build();
 
         assertEquals(1, query.modifiers().size());
         assertEquals(SelectModifier.CALC_FOUND_ROWS, query.modifiers().getFirst());
-        assertEquals(1, query.optimizerHints().size());
-        assertEquals("MAX_EXECUTION_TIME(1000)", query.optimizerHints().getFirst());
+        assertEquals(1, query.hints().size());
+        assertEquals("MAX_EXECUTION_TIME", query.hints().getFirst().name().value());
     }
 
     @Test
-    void select_modifier_and_optimizer_hint_validate_null() {
+    void select_modifier_and_statement_hint_validate_null() {
         var builder = SelectQuery.builder().select(col("id"));
 
         assertThrows(NullPointerException.class, () -> builder.selectModifier(null));
-        assertThrows(NullPointerException.class, () -> builder.optimizerHint(null));
+        assertThrows(NullPointerException.class, () -> builder.hint(null));
         assertThrows(NullPointerException.class, () -> builder.selectModifiers(null));
-        assertThrows(NullPointerException.class, () -> builder.optimizerHints(null));
+        assertThrows(NullPointerException.class, () -> builder.hints(null));
     }
 
     @Test
@@ -93,17 +95,36 @@ class SelectQueryBuilderTest {
         var original = SelectQuery.builder()
             .select(col("id"))
             .from(TableRef.table(Identifier.of("users")))
-            .optimizerHint("MAX_EXECUTION_TIME(1000)")
+            .hint("MAX_EXECUTION_TIME", 1000)
             .build();
 
         var copied = SelectQuery.builder(original)
-            .clearOptimizerHints()
+            .clearHints()
             .build();
 
-        assertEquals(java.util.List.of("MAX_EXECUTION_TIME(1000)"), original.optimizerHints());
-        assertEquals(java.util.List.of(), copied.optimizerHints());
+        assertEquals(java.util.List.of("MAX_EXECUTION_TIME"),
+            original.hints().stream().map(h -> h.name().value()).toList());
+        assertEquals(java.util.List.of(), copied.hints());
         assertEquals(original.items(), copied.items());
         assertEquals(original.from(), copied.from());
+    }
+
+    @Test
+    void supportsTypedStatementHints() {
+        var query = SelectQuery.builder()
+            .select(col("id"))
+            .from(TableRef.table(Identifier.of("users")))
+            .hint(statementHint("MAX_EXECUTION_TIME", 1000))
+            .hint("BKA", "users")
+            .build();
+
+        assertEquals(2, query.hints().size());
+        assertEquals("MAX_EXECUTION_TIME", query.hints().get(0).name().value());
+        assertEquals(1000,
+            assertInstanceOf(LiteralExpr.class,
+                assertInstanceOf(ExpressionHintArg.class, query.hints().get(0).args().getFirst()).value()).value());
+        assertEquals("users",
+            assertInstanceOf(IdentifierHintArg.class, query.hints().get(1).args().getFirst()).value().value());
     }
 
     @Test

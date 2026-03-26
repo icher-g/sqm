@@ -43,7 +43,7 @@ class MySqlToPostgresHintDroppingRuleTest {
             .select(Dsl.col("id"))
             .from(Dsl.tbl("users").useIndex("idx_users_name"))
             .selectModifier(SelectModifier.CALC_FOUND_ROWS)
-            .optimizerHint("MAX_EXECUTION_TIME(1000)")
+            .hint("MAX_EXECUTION_TIME", 1000)
             .build();
 
         var result = new MySqlToPostgresHintDroppingRule().apply(statement, CONTEXT);
@@ -51,32 +51,32 @@ class MySqlToPostgresHintDroppingRuleTest {
 
         assertTrue(result.changed());
         assertEquals("MYSQL_HINTS_DROPPED", result.warnings().getFirst().code());
-        assertTrue(rewritten.optimizerHints().isEmpty());
+        assertTrue(rewritten.hints().isEmpty());
         assertEquals(statement.items(), rewritten.items());
-        assertTrue(((io.sqm.core.Table) rewritten.from()).indexHints().isEmpty());
+        assertTrue(((io.sqm.core.Table) rewritten.from()).hints().isEmpty());
     }
 
     @Test
     void dropsStatementHintsFromUpdateAndDelete() {
         var update = UpdateStatement.builder(Dsl.tbl("users").useIndex("idx_users_name"))
             .set(Dsl.set("name", Dsl.lit("alice")))
-            .optimizerHint("BKA(users)")
+            .hint("BKA", "users")
             .build();
         var delete = DeleteStatement.builder(Dsl.tbl("users"))
             .using(Dsl.tbl("users").ignoreIndex("idx_users_name"))
-            .optimizerHint("BKA(users)")
+            .hint("BKA", "users")
             .build();
 
         var updateResult = new MySqlToPostgresHintDroppingRule().apply(update, CONTEXT);
         var deleteResult = new MySqlToPostgresHintDroppingRule().apply(delete, CONTEXT);
 
         assertTrue(updateResult.changed());
-        assertTrue(((UpdateStatement) updateResult.statement()).optimizerHints().isEmpty());
-        assertTrue(((UpdateStatement) updateResult.statement()).table().indexHints().isEmpty());
+        assertTrue(updateResult.statement().hints().isEmpty());
+        assertTrue(((UpdateStatement) updateResult.statement()).table().hints().isEmpty());
 
         assertTrue(deleteResult.changed());
-        assertTrue(((DeleteStatement) deleteResult.statement()).optimizerHints().isEmpty());
-        assertTrue(((io.sqm.core.Table) ((DeleteStatement) deleteResult.statement()).using().getFirst()).indexHints().isEmpty());
+        assertTrue(deleteResult.statement().hints().isEmpty());
+        assertTrue(((io.sqm.core.Table) ((DeleteStatement) deleteResult.statement()).using().getFirst()).hints().isEmpty());
     }
 
     @Test
@@ -90,8 +90,8 @@ class MySqlToPostgresHintDroppingRuleTest {
 
         assertTrue(result.changed());
         assertEquals("MYSQL_HINTS_DROPPED", result.warnings().getFirst().code());
-        assertTrue(rewritten.optimizerHints().isEmpty());
-        assertTrue(((io.sqm.core.Table) rewritten.from()).indexHints().isEmpty());
+        assertTrue(rewritten.hints().isEmpty());
+        assertTrue(((io.sqm.core.Table) rewritten.from()).hints().isEmpty());
     }
 
     @Test

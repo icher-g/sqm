@@ -20,7 +20,7 @@ public non-sealed interface UpdateStatement extends Statement {
      * @param from           optional FROM sources
      * @param where          optional predicate
      * @param result         optional result projection
-     * @param optimizerHints optimizer hints (without comment delimiters)
+     * @param hints typed statement hints
      * @return immutable update statement
      */
     static UpdateStatement of(Table table,
@@ -29,8 +29,8 @@ public non-sealed interface UpdateStatement extends Statement {
         List<TableRef> from,
         Predicate where,
         ResultClause result,
-        List<String> optimizerHints) {
-        return new Impl(table, assignments, joins, from, where, result, optimizerHints);
+        List<StatementHint> hints) {
+        return new Impl(table, assignments, joins, from, where, result, hints);
     }
 
     /**
@@ -96,13 +96,6 @@ public non-sealed interface UpdateStatement extends Statement {
     ResultClause result();
 
     /**
-     * Returns optimizer hints attached to this statement.
-     *
-     * @return immutable optimizer hint list
-     */
-    List<String> optimizerHints();
-
-    /**
      * Accepts a {@link NodeVisitor}.
      *
      * @param visitor visitor instance
@@ -121,7 +114,7 @@ public non-sealed interface UpdateStatement extends Statement {
         private final List<Assignment> assignments = new ArrayList<>();
         private final List<Join> joins = new ArrayList<>();
         private final List<TableRef> from = new ArrayList<>();
-        private final List<String> optimizerHints = new ArrayList<>();
+        private final List<StatementHint> hints = new ArrayList<>();
         private Table table;
         private Predicate where;
         private ResultClause result;
@@ -147,7 +140,7 @@ public non-sealed interface UpdateStatement extends Statement {
             this.from.addAll(statement.from());
             this.where = statement.where();
             this.result = statement.result();
-            this.optimizerHints.addAll(statement.optimizerHints());
+            this.hints.addAll(statement.hints());
         }
 
         /**
@@ -335,36 +328,47 @@ public non-sealed interface UpdateStatement extends Statement {
         }
 
         /**
-         * Replaces optimizer hints attached to this statement.
+         * Replaces typed statement hints attached to this statement.
          *
-         * @param optimizerHints optimizer hints (without comment delimiters)
+         * @param hints typed statement hints
          * @return this builder
          */
-        public Builder optimizerHints(List<String> optimizerHints) {
-            Objects.requireNonNull(optimizerHints, "optimizerHints");
-            this.optimizerHints.clear();
-            this.optimizerHints.addAll(optimizerHints);
+        public Builder hints(List<StatementHint> hints) {
+            Objects.requireNonNull(hints, "hints");
+            this.hints.clear();
+            this.hints.addAll(hints);
             return this;
         }
 
         /**
-         * Appends one optimizer hint.
+         * Appends one typed statement hint.
          *
-         * @param optimizerHint optimizer hint (without comment delimiters)
+         * @param hint typed statement hint
          * @return this builder
          */
-        public Builder optimizerHint(String optimizerHint) {
-            this.optimizerHints.add(Objects.requireNonNull(optimizerHint, "optimizerHint"));
+        public Builder hint(StatementHint hint) {
+            this.hints.add(Objects.requireNonNull(hint, "hint"));
             return this;
         }
 
         /**
-         * Clears optimizer hints attached to this statement.
+         * Appends one typed statement hint using convenience arguments.
+         *
+         * @param name hint name
+         * @param args convenience hint arguments
+         * @return this builder
+         */
+        public Builder hint(String name, Object... args) {
+            return hint(StatementHint.of(name, args));
+        }
+
+        /**
+         * Clears typed statement hints attached to this statement.
          *
          * @return this builder
          */
-        public Builder clearOptimizerHints() {
-            this.optimizerHints.clear();
+        public Builder clearHints() {
+            this.hints.clear();
             return this;
         }
 
@@ -380,7 +384,7 @@ public non-sealed interface UpdateStatement extends Statement {
             if (assignments.isEmpty()) {
                 throw new IllegalStateException("at least one assignment is required");
             }
-            return UpdateStatement.of(table, assignments, joins, from, where, result, optimizerHints);
+            return UpdateStatement.of(table, assignments, joins, from, where, result, hints);
         }
     }
 
@@ -393,7 +397,7 @@ public non-sealed interface UpdateStatement extends Statement {
      * @param from           optional from sources
      * @param where          optional predicate
      * @param result         optional SQL Server result clause
-     * @param optimizerHints optimizer hints (without comment delimiters)
+     * @param hints typed statement hints
      */
     record Impl(Table table,
                 List<Assignment> assignments,
@@ -401,7 +405,7 @@ public non-sealed interface UpdateStatement extends Statement {
                 List<TableRef> from,
                 Predicate where,
                 ResultClause result,
-                List<String> optimizerHints) implements UpdateStatement {
+                List<StatementHint> hints) implements UpdateStatement {
         /**
          * Creates an immutable update statement implementation.
          */
@@ -410,7 +414,7 @@ public non-sealed interface UpdateStatement extends Statement {
             assignments = List.copyOf(Objects.requireNonNull(assignments, "assignments"));
             joins = joins == null ? List.of() : List.copyOf(joins);
             from = from == null ? List.of() : List.copyOf(from);
-            optimizerHints = optimizerHints == null ? List.of() : List.copyOf(optimizerHints);
+            hints = hints == null ? List.of() : List.copyOf(hints);
             if (assignments.isEmpty()) {
                 throw new IllegalArgumentException("assignments must not be empty");
             }

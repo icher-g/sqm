@@ -46,7 +46,8 @@ class InsertStatementTest {
             InsertStatement.OnConflictAction.NONE,
             List.of(),
             null,
-            null);
+            null,
+            List.of());
 
         assertEquals(InsertStatement.InsertMode.REPLACE, ofStatement.insertMode());
         assertEquals(0, ofStatement.columns().size());
@@ -98,7 +99,8 @@ class InsertStatementTest {
             InsertStatement.OnConflictAction.NONE,
             List.of(),
             null,
-            null);
+            null,
+            List.of());
         var statementWithoutColumns = InsertStatement.of(
             InsertStatement.InsertMode.STANDARD,
             tbl("users"),
@@ -108,7 +110,8 @@ class InsertStatementTest {
             InsertStatement.OnConflictAction.NONE,
             List.of(),
             null,
-            null);
+            null,
+            List.of());
 
         assertEquals(InsertStatement.InsertMode.STANDARD, statementWithColumns.insertMode());
         assertEquals(1, statementWithColumns.columns().size());
@@ -118,7 +121,7 @@ class InsertStatementTest {
 
     @Test
     void normalizesNullCollectionsInFactories() {
-        var statement = InsertStatement.of(InsertStatement.InsertMode.IGNORE, tbl("users"), null, row(lit(1)), null, null, null, null, null);
+        var statement = InsertStatement.of(InsertStatement.InsertMode.IGNORE, tbl("users"), null, row(lit(1)), null, null, null, null, null, null);
         var statementWithReturningOverload = InsertStatement.of(
             InsertStatement.InsertMode.REPLACE,
             tbl("users"),
@@ -128,7 +131,8 @@ class InsertStatementTest {
             InsertStatement.OnConflictAction.NONE,
             List.of(),
             null,
-            null);
+            null,
+            List.of());
 
         assertEquals(InsertStatement.InsertMode.IGNORE, statement.insertMode());
         assertTrue(statement.columns().isEmpty());
@@ -169,18 +173,47 @@ class InsertStatementTest {
 
     @Test
     void validatesRequiredMembers() {
-        var defaultModeStatement = InsertStatement.of(null, tbl("users"), List.of(), row(lit(1)), List.of(), null, List.of(), null, null);
+        var defaultModeStatement = InsertStatement.of(null, tbl("users"), List.of(), row(lit(1)), List.of(), null, List.of(), null, null, List.of());
         assertEquals(InsertStatement.InsertMode.STANDARD, defaultModeStatement.insertMode());
-        assertThrows(NullPointerException.class, () -> InsertStatement.of(InsertStatement.InsertMode.STANDARD, null, List.of(), row(lit(1)), List.of(), InsertStatement.OnConflictAction.NONE, List.of(), null, null));
-        assertThrows(NullPointerException.class, () -> InsertStatement.of(InsertStatement.InsertMode.STANDARD, tbl("users"), List.of(), null, List.of(), InsertStatement.OnConflictAction.NONE, List.of(), null, null));
+        assertThrows(NullPointerException.class, () -> InsertStatement.of(InsertStatement.InsertMode.STANDARD, null, List.of(), row(lit(1)), List.of(), InsertStatement.OnConflictAction.NONE, List.of(), null, null, List.of()));
+        assertThrows(NullPointerException.class, () -> InsertStatement.of(InsertStatement.InsertMode.STANDARD, tbl("users"), List.of(), null, List.of(), InsertStatement.OnConflictAction.NONE, List.of(), null, null, List.of()));
         assertThrows(IllegalStateException.class, () -> insert(tbl("users")).build());
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).table(null));
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).insertMode(null));
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).columns((Identifier[]) null));
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).source(null));
+        assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).hints(null));
+        assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).hint(null));
         assertThrows(NullPointerException.class, () -> InsertStatement.builder(tbl("users")).result((SelectItem[]) null));
-        assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(InsertStatement.InsertMode.STANDARD, tbl("users"), List.of(), row(lit(1)), List.of(), InsertStatement.OnConflictAction.DO_UPDATE, List.of(), null, null));
-        assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(InsertStatement.InsertMode.STANDARD, tbl("users"), List.of(), row(lit(1)), List.of(Identifier.of("id")), InsertStatement.OnConflictAction.NONE, List.of(), null, null));
-        assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(InsertStatement.InsertMode.STANDARD, tbl("users"), List.of(), row(lit(1)), List.of(), InsertStatement.OnConflictAction.DO_NOTHING, List.of(set("id", lit(2))), null, null));
+        assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(InsertStatement.InsertMode.STANDARD, tbl("users"), List.of(), row(lit(1)), List.of(), InsertStatement.OnConflictAction.DO_UPDATE, List.of(), null, null, List.of()));
+        assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(InsertStatement.InsertMode.STANDARD, tbl("users"), List.of(), row(lit(1)), List.of(Identifier.of("id")), InsertStatement.OnConflictAction.NONE, List.of(), null, null, List.of()));
+        assertThrows(IllegalArgumentException.class, () -> InsertStatement.of(InsertStatement.InsertMode.STANDARD, tbl("users"), List.of(), row(lit(1)), List.of(), InsertStatement.OnConflictAction.DO_NOTHING, List.of(set("id", lit(2))), null, null, List.of()));
+    }
+
+    @Test
+    void supportsTypedStatementHints() {
+        var statement = insert(tbl("users"))
+            .hint("APPEND")
+            .hint(statementHint("MAX_EXECUTION_TIME", 1000))
+            .values(row(lit(1)))
+            .build();
+
+        assertEquals(2, statement.hints().size());
+        assertEquals("APPEND", statement.hints().getFirst().name().value());
+        assertEquals("MAX_EXECUTION_TIME", statement.hints().get(1).name().value());
+        assertThrows(UnsupportedOperationException.class, () -> statement.hints().add(statementHint("BKA", "users")));
+    }
+
+    @Test
+    void builderReplacesAndClearsTypedStatementHints() {
+        var statement = InsertStatement.builder(tbl("users"))
+            .hints(List.of(statementHint("APPEND"), statementHint("MAX_EXECUTION_TIME", 1000)))
+            .clearHints()
+            .hint("BKA", "users")
+            .values(row(lit(1)))
+            .build();
+
+        assertEquals(1, statement.hints().size());
+        assertEquals("BKA", statement.hints().getFirst().name().value());
     }
 }

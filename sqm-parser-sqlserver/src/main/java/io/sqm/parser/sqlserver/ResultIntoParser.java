@@ -52,7 +52,10 @@ public class ResultIntoParser implements Parser<ResultInto> {
             if (table.isError()) {
                 return error(table);
             }
-            if (!table.value().lockHints().isEmpty()) {
+            if (table.value().hints().stream().anyMatch(h -> switch (h.name().value()) {
+                case "NOLOCK", "UPDLOCK", "HOLDLOCK" -> true;
+                default -> false;
+            })) {
                 return error("SQL Server table hints are not supported on OUTPUT INTO targets", cur.fullPos());
             }
             target = table.value();

@@ -20,29 +20,34 @@ public class InsertStatementRenderer extends io.sqm.render.ansi.InsertStatementR
     }
 
     /**
-     * Renders the leading MySQL insert keywords.
+     * Renders the leading MySQL insert keyword.
      *
      * @param node insert statement
      * @param ctx  render context
      * @param w    SQL writer
      */
     @Override
-    protected void renderInsertPrefix(InsertStatement node, RenderContext ctx, SqlWriter w) {
+    protected void renderInsertKeyword(InsertStatement node, RenderContext ctx, SqlWriter w) {
         switch (node.insertMode()) {
-            case STANDARD -> w.append("INSERT INTO").space().append(node.table());
+            case STANDARD -> w.append("INSERT");
             case IGNORE -> {
                 if (!ctx.dialect().capabilities().supports(SqlFeature.INSERT_IGNORE)) {
                     throw new UnsupportedDialectFeatureException("INSERT IGNORE", ctx.dialect().name());
                 }
-                w.append("INSERT IGNORE INTO").space().append(node.table());
+                w.append("INSERT IGNORE");
             }
             case REPLACE -> {
                 if (!ctx.dialect().capabilities().supports(SqlFeature.REPLACE_INTO)) {
                     throw new UnsupportedDialectFeatureException("REPLACE INTO", ctx.dialect().name());
                 }
-                w.append("REPLACE INTO").space().append(node.table());
+                w.append("REPLACE");
             }
         }
+    }
+
+    @Override
+    protected void renderInsertHints(InsertStatement node, RenderContext ctx, SqlWriter w) {
+        MySqlHintRenderSupport.renderStatementHints(node.hints(), "INSERT optimizer hints", ctx, w);
     }
 
     /**

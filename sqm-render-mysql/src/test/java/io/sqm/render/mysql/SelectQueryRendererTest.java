@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static io.sqm.dsl.Dsl.statementHint;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -19,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SelectQueryRendererTest {
 
     @Test
-    void rendersSqlCalcFoundRowsAndOptimizerHints() {
+    void rendersSqlCalcFoundRowsAndStatementHints() {
         SelectQuery query = SelectQuery.of(
             List.of(Dsl.col("id").toSelectItem()),
             Dsl.tbl("users"),
@@ -34,7 +35,7 @@ class SelectQueryRendererTest {
             null,
             List.of(),
             List.of(SelectModifier.CALC_FOUND_ROWS),
-            List.of("MAX_EXECUTION_TIME(1000)")
+            List.of(statementHint("MAX_EXECUTION_TIME", 1000))
         );
 
         var sql = RenderContext.of(new MySqlDialect()).render(query).sql();
@@ -44,7 +45,7 @@ class SelectQueryRendererTest {
     }
 
     @Test
-    void preservesOptimizerHintsByDefault() {
+    void preservesStatementHintsByDefault() {
         SelectQuery query = SelectQuery.of(
             List.of(Dsl.col("id").toSelectItem()),
             Dsl.tbl("users"),
@@ -59,16 +60,16 @@ class SelectQueryRendererTest {
             null,
             List.of(),
             List.of(),
-            List.of("  MAX_EXECUTION_TIME(1000)\n   BKA(users)  ")
+            List.of(statementHint("MAX_EXECUTION_TIME", 1000), statementHint("BKA", "users"))
         );
 
         var sql = RenderContext.of(new MySqlDialect()).render(query).sql();
 
-        assertTrue(sql.startsWith("SELECT /*+   MAX_EXECUTION_TIME(1000)\n   BKA(users)   */ id"));
+        assertTrue(sql.startsWith("SELECT /*+ MAX_EXECUTION_TIME(1000) BKA(users) */ id"));
     }
 
     @Test
-    void normalizesOptimizerHintsWhenPolicyIsEnabled() {
+    void normalizesStatementHintsWhenPolicyIsEnabled() {
         SelectQuery query = SelectQuery.of(
             List.of(Dsl.col("id").toSelectItem()),
             Dsl.tbl("users"),
@@ -83,7 +84,7 @@ class SelectQueryRendererTest {
             null,
             List.of(),
             List.of(),
-            List.of("  MAX_EXECUTION_TIME(1000)\n   BKA(users)  ")
+            List.of(statementHint("MAX_EXECUTION_TIME", 1000), statementHint("BKA", "users"))
         );
 
         var sql = RenderContext.of(new MySqlDialect(

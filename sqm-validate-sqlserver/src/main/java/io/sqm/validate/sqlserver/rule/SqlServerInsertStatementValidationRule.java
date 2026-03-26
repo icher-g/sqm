@@ -35,6 +35,14 @@ public final class SqlServerInsertStatementValidationRule implements SchemaValid
     @Override
     public void validate(InsertStatement node, SchemaValidationContext context) {
         SqlServerTableHintSupport.validateHints(node.table(), context, "insert.table");
+        if (!node.hints().isEmpty()) {
+            context.addProblem(
+                ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
+                "SQL Server baseline support does not include statement hints on INSERT",
+                node,
+                "insert.hint"
+            );
+        }
         if (node.insertMode() != InsertStatement.InsertMode.STANDARD) {
             context.addProblem(
                 ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,

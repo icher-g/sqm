@@ -3,6 +3,7 @@ package io.sqm.core.walk;
 import io.sqm.core.Assignment;
 import io.sqm.core.ExprResultItem;
 import io.sqm.core.InsertStatement;
+import io.sqm.core.StatementHint;
 import io.sqm.core.Table;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ class InsertStatementVisitorTest {
     @Test
     void recursiveVisitorTraversesInsertChildren() {
         var statement = insert(tbl("users"))
+            .hint("APPEND")
             .values(row(lit(1), lit("alice")))
             .onConflictDoUpdate(java.util.List.of(io.sqm.core.Identifier.of("id")), java.util.List.of(set("name", lit("alice2"))), col("id").eq(lit(1)))
             .result(inserted("id"))
@@ -42,6 +44,12 @@ class InsertStatementVisitorTest {
             }
 
             @Override
+            public Void visitStatementHint(StatementHint hint) {
+                visits.add("hint");
+                return super.visitStatementHint(hint);
+            }
+
+            @Override
             public Void visitRowExpr(io.sqm.core.RowExpr rowExpr) {
                 visits.add("row");
                 return super.visitRowExpr(rowExpr);
@@ -60,6 +68,6 @@ class InsertStatementVisitorTest {
             }
         }.accept(statement);
 
-        assertEquals(List.of("insert", "table", "row", "conflict-assignment", "result"), visits.subList(0, 5));
+        assertEquals(List.of("insert", "table", "hint", "row", "conflict-assignment", "result"), visits.subList(0, 6));
     }
 }

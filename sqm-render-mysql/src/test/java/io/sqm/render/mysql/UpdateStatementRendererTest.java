@@ -26,7 +26,7 @@ class UpdateStatementRendererTest {
     @Test
     void rendersJoinedUpdateStatement() {
         var statement = update(tbl("users"))
-            .optimizerHint("BKA(users)")
+            .hint("BKA", "users")
             .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
             .set(id("name"), lit("alice"))
             .where(col("orders", "state").eq(lit("closed")))
@@ -42,9 +42,7 @@ class UpdateStatementRendererTest {
     @Test
     void rendersJoinedUpdateWithAliasAndIndexHintsCanonically() {
         var statement = update(tbl("users").as("u").useIndex("idx_users_name"))
-            .join(inner(tbl("orders").as("o").addIndexHint(io.sqm.core.Table.IndexHint.force(
-                io.sqm.core.Table.IndexHintScope.JOIN,
-                java.util.List.of(io.sqm.core.Identifier.of("idx_orders_user")))))
+            .join(inner(tbl("orders").as("o").hint("FORCE_INDEX_FOR_JOIN", "idx_orders_user"))
                 .on(col("u", "id").eq(col("o", "user_id"))))
             .set(id("name"), lit("alice"))
             .where(col("o", "state").eq(lit("closed")))
@@ -90,7 +88,7 @@ class UpdateStatementRendererTest {
     @Test
     void rendersPlainUpdateWithoutJoins() {
         var statement = update(tbl("users"))
-            .optimizerHint("MAX_EXECUTION_TIME(1000)")
+            .hint("MAX_EXECUTION_TIME", 1000)
             .set(id("name"), lit("alice"))
             .build();
 
@@ -106,7 +104,8 @@ class UpdateStatementRendererTest {
     @Test
     void normalizesUpdateOptimizerHintsWhenPolicyIsEnabled() {
         var statement = update(tbl("users"))
-            .optimizerHint("  MAX_EXECUTION_TIME(1000)\n   BKA(users)  ")
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .hint("BKA", "users")
             .set(id("name"), lit("alice"))
             .build();
 
@@ -124,7 +123,7 @@ class UpdateStatementRendererTest {
     @Test
     void rejectsJoinedUpdateInDialectWithoutCapability() {
         UpdateStatement statement = update(tbl("users"))
-            .optimizerHint("BKA(users)")
+            .hint("BKA", "users")
             .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
             .set(id("name"), lit("alice"))
             .build();
@@ -139,7 +138,7 @@ class UpdateStatementRendererTest {
     @Test
     void rejectsUpdateOptimizerHintsWithoutCapability() {
         UpdateStatement statement = update(tbl("users"))
-            .optimizerHint("BKA(users)")
+            .hint("BKA", "users")
             .set(id("name"), lit("alice"))
             .build();
 

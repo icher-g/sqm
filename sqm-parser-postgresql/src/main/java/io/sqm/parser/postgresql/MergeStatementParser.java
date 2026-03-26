@@ -88,6 +88,6 @@ public class MergeStatementParser extends io.sqm.parser.ansi.MergeStatementParse
             return error("Duplicate or unsupported PostgreSQL MERGE clause ordering", cur.fullPos());
         }
 
-        return ok(MergeStatement.of(target.value(), source.value(), on.value(), null, List.copyOf(clauses), result));
+        return ok(MergeStatement.of(target.value(), source.value(), on.value(), null, List.copyOf(clauses), result, List.of()));
     }
 }

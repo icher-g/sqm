@@ -14,12 +14,12 @@ public non-sealed interface DeleteStatement extends Statement {
     /**
      * Creates an immutable delete statement.
      *
-     * @param table          target table
-     * @param using          optional USING sources
-     * @param joins          optional joined sources attached to the USING clause
-     * @param where          optional predicate
-     * @param result         optional result clause
-     * @param optimizerHints optimizer hints (without comment delimiters)
+     * @param table  target table
+     * @param using  optional USING sources
+     * @param joins  optional joined sources attached to the USING clause
+     * @param where  optional predicate
+     * @param result optional result clause
+     * @param hints  typed statement hints
      * @return immutable delete statement
      */
     static DeleteStatement of(Table table,
@@ -27,8 +27,8 @@ public non-sealed interface DeleteStatement extends Statement {
         List<Join> joins,
         Predicate where,
         ResultClause result,
-        List<String> optimizerHints) {
-        return new Impl(table, using, joins, where, result, optimizerHints);
+        List<StatementHint> hints) {
+        return new Impl(table, using, joins, where, result, hints);
     }
 
     /**
@@ -87,13 +87,6 @@ public non-sealed interface DeleteStatement extends Statement {
     ResultClause result();
 
     /**
-     * Returns optimizer hints attached to this statement.
-     *
-     * @return immutable optimizer hint list
-     */
-    List<String> optimizerHints();
-
-    /**
      * Accepts a {@link NodeVisitor}.
      *
      * @param visitor visitor instance
@@ -111,7 +104,7 @@ public non-sealed interface DeleteStatement extends Statement {
     final class Builder {
         private final List<TableRef> using = new ArrayList<>();
         private final List<Join> joins = new ArrayList<>();
-        private final List<String> optimizerHints = new ArrayList<>();
+        private final List<StatementHint> hints = new ArrayList<>();
         private Table table;
         private Predicate where;
         private ResultClause result;
@@ -136,7 +129,7 @@ public non-sealed interface DeleteStatement extends Statement {
             this.joins.addAll(statement.joins());
             this.where = statement.where();
             this.result = statement.result();
-            this.optimizerHints.addAll(statement.optimizerHints());
+            this.hints.addAll(statement.hints());
         }
 
         /**
@@ -266,36 +259,47 @@ public non-sealed interface DeleteStatement extends Statement {
         }
 
         /**
-         * Replaces optimizer hints attached to this statement.
+         * Replaces typed statement hints attached to this statement.
          *
-         * @param optimizerHints optimizer hints (without comment delimiters)
+         * @param hints typed statement hints
          * @return this builder
          */
-        public Builder optimizerHints(List<String> optimizerHints) {
-            Objects.requireNonNull(optimizerHints, "optimizerHints");
-            this.optimizerHints.clear();
-            this.optimizerHints.addAll(optimizerHints);
+        public Builder hints(List<StatementHint> hints) {
+            Objects.requireNonNull(hints, "hints");
+            this.hints.clear();
+            this.hints.addAll(hints);
             return this;
         }
 
         /**
-         * Appends one optimizer hint.
+         * Appends one typed statement hint.
          *
-         * @param optimizerHint optimizer hint (without comment delimiters)
+         * @param hint typed statement hint
          * @return this builder
          */
-        public Builder optimizerHint(String optimizerHint) {
-            this.optimizerHints.add(Objects.requireNonNull(optimizerHint, "optimizerHint"));
+        public Builder hint(StatementHint hint) {
+            this.hints.add(Objects.requireNonNull(hint, "hint"));
             return this;
         }
 
         /**
-         * Clears optimizer hints attached to this statement.
+         * Appends one typed statement hint using convenience arguments.
+         *
+         * @param name hint name
+         * @param args convenience hint arguments
+         * @return this builder
+         */
+        public Builder hint(String name, Object... args) {
+            return hint(StatementHint.of(name, args));
+        }
+
+        /**
+         * Clears typed statement hints attached to this statement.
          *
          * @return this builder
          */
-        public Builder clearOptimizerHints() {
-            this.optimizerHints.clear();
+        public Builder clearHints() {
+            this.hints.clear();
             return this;
         }
 
@@ -308,26 +312,26 @@ public non-sealed interface DeleteStatement extends Statement {
             if (table == null) {
                 throw new IllegalStateException("table must be set");
             }
-            return DeleteStatement.of(table, using, joins, where, result, optimizerHints);
+            return DeleteStatement.of(table, using, joins, where, result, hints);
         }
     }
 
     /**
      * Default immutable delete statement implementation.
      *
-     * @param table          target table
-     * @param using          optional using sources
-     * @param joins          optional joined sources attached to the USING clause
-     * @param where          optional predicate
-     * @param result         optional SQL Server result clause
-     * @param optimizerHints optimizer hints (without comment delimiters)
+     * @param table  target table
+     * @param using  optional using sources
+     * @param joins  optional joined sources attached to the USING clause
+     * @param where  optional predicate
+     * @param result optional SQL Server result clause
+     * @param hints  typed statement hints
      */
     record Impl(Table table,
                 List<TableRef> using,
                 List<Join> joins,
                 Predicate where,
                 ResultClause result,
-                List<String> optimizerHints) implements DeleteStatement {
+                List<StatementHint> hints) implements DeleteStatement {
         /**
          * Creates an immutable delete statement implementation.
          */
@@ -335,7 +339,7 @@ public non-sealed interface DeleteStatement extends Statement {
             Objects.requireNonNull(table, "table");
             using = using == null ? List.of() : List.copyOf(using);
             joins = joins == null ? List.of() : List.copyOf(joins);
-            optimizerHints = optimizerHints == null ? List.of() : List.copyOf(optimizerHints);
+            hints = hints == null ? List.of() : List.copyOf(hints);
         }
     }
 }

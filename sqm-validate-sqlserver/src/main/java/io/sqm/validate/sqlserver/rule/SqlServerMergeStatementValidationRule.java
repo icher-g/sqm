@@ -30,6 +30,14 @@ public final class SqlServerMergeStatementValidationRule implements SchemaValida
     @Override
     public void validate(MergeStatement node, SchemaValidationContext context) {
         SqlServerTableHintSupport.validateHints(node.target(), context, "merge.target");
+        if (!node.hints().isEmpty()) {
+            context.addProblem(
+                ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
+                "SQL Server baseline support does not include statement hints on MERGE",
+                node,
+                "merge.hint"
+            );
+        }
         if (node.source() instanceof Table sourceTable) {
             SqlServerTableHintSupport.validateHints(sourceTable, context, "merge.source");
         }

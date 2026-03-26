@@ -28,7 +28,7 @@ class DeleteStatementRendererTest {
     @Test
     void rendersDeleteUsingJoinStatement() {
         var statement = delete(tbl("users"))
-            .optimizerHint("BKA(users)")
+            .hint("BKA", "users")
             .using(tbl("users"))
             .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
             .where(col("orders", "state").eq(lit("closed")))
@@ -45,10 +45,8 @@ class DeleteStatementRendererTest {
     void rendersDeleteUsingJoinWithAliasAndIndexHintsCanonically() {
         var target = tbl("users").as("u").useIndex("idx_users_name");
         var using = Table.of(null, Identifier.of("users"), Identifier.of("u"), Table.Inheritance.DEFAULT,
-            List.of(Table.IndexHint.use(Table.IndexHintScope.DEFAULT, List.of(Identifier.of("idx_users_name")))));
-        var joinedOrders = tbl("orders").as("o").addIndexHint(Table.IndexHint.force(
-            Table.IndexHintScope.JOIN,
-            List.of(Identifier.of("idx_orders_user"))));
+            List.of(io.sqm.core.TableHint.of("USE_INDEX", "idx_users_name")));
+        var joinedOrders = tbl("orders").as("o").hint("FORCE_INDEX_FOR_JOIN", "idx_orders_user");
 
         var statement = delete(target)
             .using(using)
@@ -66,7 +64,7 @@ class DeleteStatementRendererTest {
     @Test
     void rendersPlainDeleteWithoutUsingOrJoins() {
         var statement = delete(tbl("users"))
-            .optimizerHint("MAX_EXECUTION_TIME(1000)")
+            .hint("MAX_EXECUTION_TIME", 1000)
             .build();
 
         var renderer = new DeleteStatementRenderer();
@@ -81,7 +79,8 @@ class DeleteStatementRendererTest {
     @Test
     void normalizesDeleteOptimizerHintsWhenPolicyIsEnabled() {
         var statement = delete(tbl("users"))
-            .optimizerHint("  MAX_EXECUTION_TIME(1000)\n   BKA(users)  ")
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .hint("BKA", "users")
             .build();
 
         var sql = RenderContext.of(new MySqlDialect(
@@ -114,7 +113,7 @@ class DeleteStatementRendererTest {
     @Test
     void rejectsDeleteUsingJoinInDialectWithoutCapability() {
         DeleteStatement statement = delete(tbl("users"))
-            .optimizerHint("BKA(users)")
+            .hint("BKA", "users")
             .using(tbl("users"))
             .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
             .build();
@@ -129,7 +128,7 @@ class DeleteStatementRendererTest {
     @Test
     void rejectsDeleteOptimizerHintsWithoutCapability() {
         DeleteStatement statement = delete(tbl("users"))
-            .optimizerHint("BKA(users)")
+            .hint("BKA", "users")
             .build();
 
         assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,

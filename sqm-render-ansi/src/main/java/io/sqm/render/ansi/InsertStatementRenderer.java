@@ -36,7 +36,10 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
      */
     @Override
     public void render(InsertStatement node, RenderContext ctx, SqlWriter w) {
-        renderInsertPrefix(node, ctx, w);
+        renderInsertKeyword(node, ctx, w);
+        renderInsertHints(node, ctx, w);
+        renderIntoKeyword(node, ctx, w);
+        renderInsertTarget(node, ctx, w);
 
         if (!node.columns().isEmpty()) {
             w.space().append("(");
@@ -62,11 +65,48 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
      * @param ctx  render context
      * @param w    SQL writer
      */
-    protected void renderInsertPrefix(InsertStatement node, RenderContext ctx, SqlWriter w) {
+    protected void renderInsertKeyword(InsertStatement node, RenderContext ctx, SqlWriter w) {
         if (node.insertMode() != InsertStatement.InsertMode.STANDARD) {
             throw new UnsupportedDialectFeatureException(unsupportedInsertModeName(node.insertMode()), ctx.dialect().name());
         }
-        w.append("INSERT INTO").space().append(node.table());
+        w.append("INSERT");
+    }
+
+    /**
+     * Renders optional insert-attached hints that appear between the insert keyword and {@code INTO}.
+     *
+     * @param node insert statement
+     * @param ctx  render context
+     * @param w    SQL writer
+     */
+    protected void renderInsertHints(InsertStatement node, RenderContext ctx, SqlWriter w) {
+        if (!node.hints().isEmpty()) {
+            throw new UnsupportedDialectFeatureException("INSERT statement hints", ctx.dialect().name());
+        }
+    }
+
+    /**
+     * Renders the {@code INTO} keyword.
+     *
+     * @param node insert statement
+     * @param ctx  render context
+     * @param w    SQL writer
+     */
+    @SuppressWarnings("unused")
+    protected void renderIntoKeyword(InsertStatement node, RenderContext ctx, SqlWriter w) {
+        w.space().append("INTO");
+    }
+
+    /**
+     * Renders the insert target table.
+     *
+     * @param node insert statement
+     * @param ctx  render context
+     * @param w    SQL writer
+     */
+    @SuppressWarnings("unused")
+    protected void renderInsertTarget(InsertStatement node, RenderContext ctx, SqlWriter w) {
+        w.space().append(node.table());
     }
 
     /**

@@ -51,7 +51,7 @@ public final class SqlServerDeleteStatementValidationRule implements SchemaValid
                 "delete.join"
             );
         }
-        if (!node.optimizerHints().isEmpty()) {
+        if (!node.hints().isEmpty()) {
             context.addProblem(
                 ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
                 "SQL Server baseline support does not include optimizer hint comments on DELETE",

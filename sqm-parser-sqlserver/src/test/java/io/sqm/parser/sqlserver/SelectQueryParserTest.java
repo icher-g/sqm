@@ -107,10 +107,10 @@ class SelectQueryParserTest {
         var result = context.parse(SelectQuery.class, "SELECT [u].[id] FROM [users] AS [u] WITH (UPDLOCK, HOLDLOCK)");
 
         assertFalse(result.isError(), result.errorMessage());
-        assertEquals(2, result.value().from().matchTableRef().table(t -> t.lockHints().size()).orElseThrow(AssertionError::new));
+        assertEquals(2, result.value().from().matchTableRef().table(t -> t.hints().size()).orElseThrow(AssertionError::new));
         assertEquals(
-            io.sqm.core.Table.LockHintKind.UPDLOCK,
-            result.value().from().matchTableRef().table(t -> t.lockHints().getFirst().kind()).orElseThrow(AssertionError::new)
+            "UPDLOCK",
+            result.value().from().matchTableRef().table(t -> t.hints().getFirst().name().value()).orElseThrow(AssertionError::new)
         );
     }
 

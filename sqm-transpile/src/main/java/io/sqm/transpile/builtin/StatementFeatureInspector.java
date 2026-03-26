@@ -228,7 +228,7 @@ final class StatementFeatureInspector {
         return found.get();
     }
 
-    static boolean hasOptimizerHints(Statement statement) {
+    static boolean hasStatementHints(Statement statement) {
         var found = new AtomicBoolean(false);
         statement.accept(new RecursiveNodeVisitor<Void>() {
             @Override
@@ -238,7 +238,7 @@ final class StatementFeatureInspector {
 
             @Override
             public Void visitSelectQuery(SelectQuery query) {
-                if (!query.optimizerHints().isEmpty()) {
+                if (!query.hints().isEmpty()) {
                     found.set(true);
                 }
                 return super.visitSelectQuery(query);
@@ -246,7 +246,7 @@ final class StatementFeatureInspector {
 
             @Override
             public Void visitUpdateStatement(UpdateStatement statement) {
-                if (!statement.optimizerHints().isEmpty()) {
+                if (!statement.hints().isEmpty()) {
                     found.set(true);
                 }
                 return super.visitUpdateStatement(statement);
@@ -254,10 +254,26 @@ final class StatementFeatureInspector {
 
             @Override
             public Void visitDeleteStatement(DeleteStatement statement) {
-                if (!statement.optimizerHints().isEmpty()) {
+                if (!statement.hints().isEmpty()) {
                     found.set(true);
                 }
                 return super.visitDeleteStatement(statement);
+            }
+
+            @Override
+            public Void visitInsertStatement(InsertStatement statement) {
+                if (!statement.hints().isEmpty()) {
+                    found.set(true);
+                }
+                return super.visitInsertStatement(statement);
+            }
+
+            @Override
+            public Void visitMergeStatement(MergeStatement statement) {
+                if (!statement.hints().isEmpty()) {
+                    found.set(true);
+                }
+                return super.visitMergeStatement(statement);
             }
         });
         return found.get();
@@ -273,7 +289,7 @@ final class StatementFeatureInspector {
 
             @Override
             public Void visitTable(Table table) {
-                if (!table.indexHints().isEmpty()) {
+                if (table.hints().stream().anyMatch(h -> h.name().value().matches("^(USE|IGNORE|FORCE)_INDEX(_FOR_(JOIN|ORDER_BY|GROUP_BY))?$"))) {
                     found.set(true);
                 }
                 return super.visitTable(table);
@@ -292,7 +308,10 @@ final class StatementFeatureInspector {
 
             @Override
             public Void visitTable(Table table) {
-                if (!table.lockHints().isEmpty()) {
+                if (table.hints().stream().anyMatch(h -> switch (h.name().value()) {
+                    case "NOLOCK", "UPDLOCK", "HOLDLOCK" -> true;
+                    default -> false;
+                })) {
                     found.set(true);
                 }
                 return super.visitTable(table);

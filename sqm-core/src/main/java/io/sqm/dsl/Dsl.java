@@ -162,6 +162,90 @@ public final class Dsl {
     }
 
     /**
+     * Creates a table hint with the provided hint name.
+     *
+     * @param name hint name
+     * @return a typed table hint
+     */
+    public static TableHint tableHint(String name) {
+        return TableHint.of(name);
+    }
+
+    /**
+     * Creates a table hint with the provided quote-aware hint name.
+     *
+     * @param name hint name
+     * @return a typed table hint
+     */
+    public static TableHint tableHint(Identifier name) {
+        return TableHint.of(name, List.of());
+    }
+
+    /**
+     * Creates a table hint with the provided hint name and arguments.
+     *
+     * @param name hint name
+     * @param args hint arguments
+     * @return a typed table hint
+     */
+    public static TableHint tableHint(String name, Object... args) {
+        return TableHint.of(name, args);
+    }
+
+    /**
+     * Creates a table hint with the provided quote-aware hint name and arguments.
+     *
+     * @param name hint name
+     * @param args hint arguments
+     * @return a typed table hint
+     */
+    public static TableHint tableHint(Identifier name, Object... args) {
+        return TableHint.of(name, args);
+    }
+
+    /**
+     * Creates a statement hint with the provided hint name.
+     *
+     * @param name hint name
+     * @return a typed statement hint
+     */
+    public static StatementHint statementHint(String name) {
+        return StatementHint.of(name);
+    }
+
+    /**
+     * Creates a statement hint with the provided quote-aware hint name.
+     *
+     * @param name hint name
+     * @return a typed statement hint
+     */
+    public static StatementHint statementHint(Identifier name) {
+        return StatementHint.of(name, List.of());
+    }
+
+    /**
+     * Creates a statement hint with the provided hint name and arguments.
+     *
+     * @param name hint name
+     * @param args convenience hint arguments
+     * @return a typed statement hint
+     */
+    public static StatementHint statementHint(String name, Object... args) {
+        return StatementHint.of(name, args);
+    }
+
+    /**
+     * Creates a statement hint with the provided quote-aware hint name and arguments.
+     *
+     * @param name hint name
+     * @param args convenience hint arguments
+     * @return a typed statement hint
+     */
+    public static StatementHint statementHint(Identifier name, Object... args) {
+        return StatementHint.of(name, args);
+    }
+
+    /**
      * Creates a SQL Server table-variable reference.
      *
      * @param name canonical variable name with or without leading {@code @}

@@ -6,6 +6,7 @@ import java.util.List;
 
 import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -73,7 +74,7 @@ class TableTest {
     }
 
     @Test
-    void index_hints_are_immutable_and_preserved_by_mutators() {
+    void hints_are_immutable_and_preserved_by_identifier_mutators() {
         var table = tbl("users")
             .useIndex("idx_users_name")
             .ignoreIndex("idx_users_email")
@@ -81,20 +82,17 @@ class TableTest {
             .as("u")
             .inSchema("app");
 
-        assertEquals(2, table.indexHints().size());
-        assertEquals(1, table.lockHints().size());
-        assertEquals(Table.IndexHintType.USE, table.indexHints().get(0).type());
-        assertEquals(Table.IndexHintType.IGNORE, table.indexHints().get(1).type());
-        assertThrows(UnsupportedOperationException.class, () -> table.indexHints().add(
-            new Table.IndexHint(Table.IndexHintType.FORCE, Table.IndexHintScope.DEFAULT, List.of(Identifier.of("idx")))
-        ));
-        assertThrows(UnsupportedOperationException.class, () -> table.lockHints().add(Table.LockHint.holdlock()));
+        assertEquals(3, table.hints().size());
+        assertEquals("USE_INDEX", table.hints().get(0).name().value());
+        assertEquals("IGNORE_INDEX", table.hints().get(1).name().value());
+        assertEquals("NOLOCK", table.hints().get(2).name().value());
+        assertThrows(UnsupportedOperationException.class, () -> table.hints().add(TableHint.of("HOLDLOCK")));
         assertEquals("u", table.alias().value());
         assertEquals("app", table.schema().value());
     }
 
     @Test
-    void withIdentifierMutatorsPreserveIndexHints() {
+    void withIdentifierMutatorsPreserveHints() {
         var table = tbl("users")
             .forceIndex("idx_users_id")
             .withUpdLock()
@@ -103,37 +101,27 @@ class TableTest {
 
         assertEquals("u", table.alias().value());
         assertEquals("app", table.schema().value());
-        assertEquals(Table.IndexHintType.FORCE, table.indexHints().getFirst().type());
-        assertEquals(Table.LockHintKind.UPDLOCK, table.lockHints().getFirst().kind());
+        assertEquals("FORCE_INDEX", table.hints().getFirst().name().value());
+        assertEquals("UPDLOCK", table.hints().getLast().name().value());
     }
 
     @Test
-    void ofTreatsNullIndexHintsAsEmptyList() {
+    void ofTreatsNullHintsAsEmptyList() {
         var table = Table.of(null, Identifier.of("users"), null, Table.Inheritance.DEFAULT, null);
-        assertEquals(List.of(), table.indexHints());
-        assertEquals(List.of(), table.lockHints());
+        assertEquals(List.of(), table.hints());
     }
 
     @Test
-    void ofTreatsNullSqlServerHintsAsEmptyList() {
-        var table = Table.of(null, Identifier.of("users"), null, Table.Inheritance.DEFAULT, List.of(), null);
-
-        assertEquals(List.of(), table.lockHints());
-    }
-
-    @Test
-    void withHintsCopiesAndFiltersByHintFamily() {
+    void withHintsCopiesValues() {
         var table = tbl("users").withHints(List.of(
-            Table.IndexHint.use(Table.IndexHintScope.DEFAULT, List.of(Identifier.of("idx_users_name"))),
-            Table.LockHint.updlock()
+            TableHint.of("USE_INDEX", HintArg.identifier("idx_users_name")),
+            TableHint.of("UPDLOCK")
         ));
 
         assertEquals(2, table.hints().size());
-        assertEquals(1, table.indexHints().size());
-        assertEquals(1, table.lockHints().size());
-        assertEquals(Table.IndexHintType.USE, table.indexHints().getFirst().type());
-        assertEquals(Table.LockHintKind.UPDLOCK, table.lockHints().getFirst().kind());
-        assertThrows(UnsupportedOperationException.class, () -> table.hints().add(Table.LockHint.holdlock()));
+        assertEquals("USE_INDEX", table.hints().getFirst().name().value());
+        assertEquals("UPDLOCK", table.hints().getLast().name().value());
+        assertThrows(UnsupportedOperationException.class, () -> table.hints().add(TableHint.of("HOLDLOCK")));
     }
 
     @Test
@@ -141,66 +129,63 @@ class TableTest {
         var table = tbl("users").withNoLock().useIndex("idx_users_id").withHints(null);
 
         assertTrue(table.hints().isEmpty());
-        assertTrue(table.indexHints().isEmpty());
-        assertTrue(table.lockHints().isEmpty());
     }
 
     @Test
-    void withIndexHintsReplacesIndexesAndPreservesLockHints() {
+    void addHintAppendsGenericHint() {
         var table = tbl("users")
             .withNoLock()
-            .useIndex("idx_old")
-            .withIndexHints(List.of(Table.IndexHint.force(Table.IndexHintScope.JOIN, List.of(Identifier.of("idx_new")))));
+            .hint(TableHint.of("INDEX", HintArg.identifier("idx_new")));
 
-        assertEquals(1, table.indexHints().size());
-        assertEquals(Table.IndexHintType.FORCE, table.indexHints().getFirst().type());
-        assertEquals(Table.IndexHintScope.JOIN, table.indexHints().getFirst().scope());
-        assertEquals(1, table.lockHints().size());
-        assertEquals(Table.LockHintKind.NOLOCK, table.lockHints().getFirst().kind());
+        assertEquals(2, table.hints().size());
+        assertEquals("NOLOCK", table.hints().getFirst().name().value());
+        assertEquals("INDEX", table.hints().getLast().name().value());
     }
 
     @Test
-    void withLockHintsReplacesLocksAndPreservesIndexHints() {
+    void hintAppendsGenericHint() {
         var table = tbl("users")
-            .withNoLock()
-            .useIndex("idx_users_id")
-            .withLockHints(List.of(Table.LockHint.holdlock()));
+            .hint(TableHint.of("NOLOCK"))
+            .hint(TableHint.of("HOLDLOCK"));
 
-        assertEquals(1, table.indexHints().size());
-        assertEquals(Table.IndexHintType.USE, table.indexHints().getFirst().type());
-        assertEquals(1, table.lockHints().size());
-        assertEquals(Table.LockHintKind.HOLDLOCK, table.lockHints().getFirst().kind());
+        assertEquals(2, table.hints().size());
+        assertEquals("NOLOCK", table.hints().getFirst().name().value());
+        assertEquals("HOLDLOCK", table.hints().getLast().name().value());
     }
 
     @Test
-    void indexHintDefaultsNullScopeAndCopiesIndexes() {
-        var indexes = new java.util.ArrayList<>(List.of(Identifier.of("idx_users_name")));
-        var hint = new Table.IndexHint(Table.IndexHintType.USE, null, indexes);
-        indexes.add(Identifier.of("idx_users_email"));
-
-        assertEquals(Table.IndexHintScope.DEFAULT, hint.scope());
-        assertEquals(1, hint.indexes().size());
-        assertEquals("idx_users_name", hint.indexes().getFirst().value());
-        assertThrows(UnsupportedOperationException.class, () -> hint.indexes().add(Identifier.of("idx_other")));
-    }
-
-    @Test
-    void indexHintRejectsEmptyIndexes() {
-        assertThrows(IllegalArgumentException.class,
-            () -> new Table.IndexHint(Table.IndexHintType.USE, Table.IndexHintScope.DEFAULT, List.of()));
-    }
-
-    @Test
-    void lockHintsAreImmutableAndPreservedByMutators() {
+    void helperHintsCreateGenericTypedHintArgs() {
         var table = tbl("users")
             .withNoLock()
             .withHoldLock()
             .useIndex("idx_users_id")
             .as("u");
 
-        assertEquals(2, table.lockHints().size());
-        assertEquals(Table.LockHintKind.NOLOCK, table.lockHints().get(0).kind());
-        assertEquals(Table.LockHintKind.HOLDLOCK, table.lockHints().get(1).kind());
-        assertEquals(Table.IndexHintType.USE, table.indexHints().getFirst().type());
+        assertEquals(3, table.hints().size());
+        assertEquals("NOLOCK", table.hints().get(0).name().value());
+        assertEquals("HOLDLOCK", table.hints().get(1).name().value());
+        assertEquals("USE_INDEX", table.hints().get(2).name().value());
+        var arg = (IdentifierHintArg) table.hints().get(2).args().getFirst();
+        assertEquals("idx_users_id", arg.value().value());
+    }
+
+    @Test
+    void hintConvenienceConversionUsesSingleHintArgMapping() {
+        var table = tbl("users")
+            .hint("USE_INDEX", "idx_users_name")
+            .hint(Identifier.of("MAX_EXECUTION_TIME"), 1000)
+            .hint("INDEX", QualifiedName.of("users", "idx_users_name"))
+            .hint("QB_NAME", Identifier.of("main_qb"));
+
+        assertEquals(4, table.hints().size());
+        assertEquals("idx_users_name",
+            assertInstanceOf(IdentifierHintArg.class, table.hints().get(0).args().getFirst()).value().value());
+        assertEquals(1000,
+            assertInstanceOf(LiteralExpr.class,
+                assertInstanceOf(ExpressionHintArg.class, table.hints().get(1).args().getFirst()).value()).value());
+        assertEquals(List.of("users", "idx_users_name"),
+            assertInstanceOf(QualifiedNameHintArg.class, table.hints().get(2).args().getFirst()).value().values());
+        assertEquals("main_qb",
+            assertInstanceOf(IdentifierHintArg.class, table.hints().get(3).args().getFirst()).value().value());
     }
 }

@@ -51,12 +51,19 @@ public class TableRenderer implements Renderer<Table> {
             w.space().append("AS").space().append(renderIdentifier(alias, quoter));
         }
 
-        if (!node.indexHints().isEmpty() && !ctx.dialect().capabilities().supports(SqlFeature.TABLE_INDEX_HINT)) {
-            throw new UnsupportedDialectFeatureException("table index hints", ctx.dialect().name());
-        }
+        renderTableHints(node, ctx, w);
+    }
 
-        if (!node.lockHints().isEmpty() && !ctx.dialect().capabilities().supports(SqlFeature.TABLE_LOCK_HINT)) {
-            throw new UnsupportedDialectFeatureException("SQL Server table hints", ctx.dialect().name());
+    /**
+     * Renders optional table-attached hints.
+     *
+     * @param node a node to render.
+     * @param ctx  a render context.
+     * @param w    a writer.
+     */
+    protected void renderTableHints(Table node, RenderContext ctx, SqlWriter w) {
+        if (!node.hints().isEmpty()) {
+            throw new UnsupportedDialectFeatureException("table hints", ctx.dialect().name());
         }
     }
 

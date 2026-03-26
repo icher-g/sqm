@@ -37,7 +37,7 @@ class UpdateStatementParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertEquals("u", result.value().table().alias().value());
-        assertEquals(1, result.value().table().indexHints().size());
+        assertEquals(1, result.value().table().hints().size());
         assertEquals(1, result.value().joins().size());
     }
 
@@ -48,7 +48,7 @@ class UpdateStatementParserTest {
             "UPDATE /*+ BKA(users) */ users SET name = 'alice'");
 
         assertTrue(result.ok(), result.errorMessage());
-        assertEquals(java.util.List.of("BKA(users)"), result.value().optimizerHints());
+        assertEquals(java.util.List.of("BKA"), result.value().hints().stream().map(h -> h.name().value()).toList());
     }
 
     @Test

@@ -52,6 +52,16 @@ class InsertStatementParserTest {
     }
 
     @Test
+    void parsesInsertOptimizerHintComment() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(InsertStatement.class, "INSERT /*+ MAX_EXECUTION_TIME(1000) */ INTO users VALUES (1)");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(1, result.value().hints().size());
+        assertEquals("MAX_EXECUTION_TIME", result.value().hints().getFirst().name().value());
+    }
+
+    @Test
     void parsesOnDuplicateKeyUpdateClause() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(InsertStatement.class, "INSERT INTO users (id, name) VALUES (1, 'alice') ON DUPLICATE KEY UPDATE name = 'alice2'");

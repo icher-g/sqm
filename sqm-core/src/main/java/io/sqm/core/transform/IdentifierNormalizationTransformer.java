@@ -39,10 +39,31 @@ public final class IdentifierNormalizationTransformer extends RecursiveNodeTrans
         var schema = normalizeIdentifier(t.schema());
         var name = normalizeIdentifier(t.name());
         var alias = normalizeIdentifier(t.alias());
-        if (schema == t.schema() && name == t.name() && alias == t.alias()) {
+        List<TableHint> hints = new ArrayList<>(t.hints().size());
+        boolean changed = apply(t.hints(), hints);
+        changed |= schema != t.schema() || name != t.name() || alias != t.alias();
+        if (!changed) {
             return t;
         }
-        return Table.of(schema, name, alias, t.inheritance(), t.indexHints(), t.lockHints());
+        return Table.of(schema, name, alias, t.inheritance(), hints);
+    }
+
+    @Override
+    public Node visitIdentifierHintArg(IdentifierHintArg arg) {
+        var value = normalizeIdentifier(arg.value());
+        if (value == arg.value()) {
+            return arg;
+        }
+        return HintArg.identifier(value);
+    }
+
+    @Override
+    public Node visitQualifiedNameHintArg(QualifiedNameHintArg arg) {
+        var value = normalizeQualifiedName(arg.value());
+        if (value == arg.value()) {
+            return arg;
+        }
+        return HintArg.qualifiedName(value);
     }
 
     @Override

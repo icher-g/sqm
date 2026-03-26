@@ -20,9 +20,9 @@ class TableParserTest {
         var result = ctx.parse(Table.class, "users USE INDEX (idx_users_name)");
 
         assertTrue(result.ok());
-        assertEquals(1, result.value().indexHints().size());
-        assertEquals(Table.IndexHintType.USE, result.value().indexHints().getFirst().type());
-        assertEquals("idx_users_name", result.value().indexHints().getFirst().indexes().getFirst().value());
+        assertEquals(1, result.value().hints().size());
+        assertEquals("USE_INDEX", result.value().hints().getFirst().name().value());
+        assertEquals("idx_users_name", ((io.sqm.core.IdentifierHintArg) result.value().hints().getFirst().args().getFirst()).value().value());
     }
 
     @Test
@@ -31,8 +31,8 @@ class TableParserTest {
         var result = ctx.parse(Table.class, "users USE KEY (idx_users_name)");
 
         assertTrue(result.ok(), result.errorMessage());
-        assertEquals(Table.IndexHintType.USE, result.value().indexHints().getFirst().type());
-        assertEquals("idx_users_name", result.value().indexHints().getFirst().indexes().getFirst().value());
+        assertEquals("USE_INDEX", result.value().hints().getFirst().name().value());
+        assertEquals("idx_users_name", ((io.sqm.core.IdentifierHintArg) result.value().hints().getFirst().args().getFirst()).value().value());
     }
 
     @Test
@@ -41,9 +41,8 @@ class TableParserTest {
         var result = ctx.parse(Table.class, "users u FORCE INDEX FOR JOIN (idx_join)");
 
         assertTrue(result.ok());
-        var hint = result.value().indexHints().getFirst();
-        assertEquals(Table.IndexHintType.FORCE, hint.type());
-        assertEquals(Table.IndexHintScope.JOIN, hint.scope());
+        var hint = result.value().hints().getFirst();
+        assertEquals("FORCE_INDEX_FOR_JOIN", hint.name().value());
         assertEquals("u", result.value().alias().value());
     }
 
@@ -53,9 +52,8 @@ class TableParserTest {
         var result = ctx.parse(Table.class, "users IGNORE INDEX FOR ORDER BY (idx_order)");
 
         assertTrue(result.ok());
-        var hint = result.value().indexHints().getFirst();
-        assertEquals(Table.IndexHintType.IGNORE, hint.type());
-        assertEquals(Table.IndexHintScope.ORDER_BY, hint.scope());
+        var hint = result.value().hints().getFirst();
+        assertEquals("IGNORE_INDEX_FOR_ORDER_BY", hint.name().value());
     }
 
     @Test
@@ -64,12 +62,11 @@ class TableParserTest {
         var result = ctx.parse(Table.class, "users FORCE KEY FOR GROUP BY (idx_a, idx_b)");
 
         assertTrue(result.ok());
-        var hint = result.value().indexHints().getFirst();
-        assertEquals(Table.IndexHintType.FORCE, hint.type());
-        assertEquals(Table.IndexHintScope.GROUP_BY, hint.scope());
-        assertEquals(2, hint.indexes().size());
-        assertEquals("idx_a", hint.indexes().get(0).value());
-        assertEquals("idx_b", hint.indexes().get(1).value());
+        var hint = result.value().hints().getFirst();
+        assertEquals("FORCE_INDEX_FOR_GROUP_BY", hint.name().value());
+        assertEquals(2, hint.args().size());
+        assertEquals("idx_a", ((io.sqm.core.IdentifierHintArg) hint.args().get(0)).value().value());
+        assertEquals("idx_b", ((io.sqm.core.IdentifierHintArg) hint.args().get(1)).value().value());
     }
 
     @Test
@@ -79,7 +76,7 @@ class TableParserTest {
 
         assertTrue(result.ok());
         assertEquals("u", result.value().alias().value());
-        assertEquals(Table.IndexHintType.USE, result.value().indexHints().getFirst().type());
+        assertEquals("USE_INDEX", result.value().hints().getFirst().name().value());
     }
 
     @Test
@@ -89,7 +86,7 @@ class TableParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertEquals("u", result.value().alias().value());
-        assertEquals(Table.IndexHintType.USE, result.value().indexHints().getFirst().type());
+        assertEquals("USE_INDEX", result.value().hints().getFirst().name().value());
     }
 
     @Test
@@ -99,10 +96,9 @@ class TableParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertEquals("u", result.value().alias().value());
-        assertEquals(2, result.value().indexHints().size());
-        assertEquals(Table.IndexHintType.USE, result.value().indexHints().get(0).type());
-        assertEquals(Table.IndexHintType.FORCE, result.value().indexHints().get(1).type());
-        assertEquals(Table.IndexHintScope.JOIN, result.value().indexHints().get(1).scope());
+        assertEquals(2, result.value().hints().size());
+        assertEquals("USE_INDEX", result.value().hints().get(0).name().value());
+        assertEquals("FORCE_INDEX_FOR_JOIN", result.value().hints().get(1).name().value());
     }
 
     @Test
