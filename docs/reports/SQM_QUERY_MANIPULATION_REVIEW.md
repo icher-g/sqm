@@ -117,11 +117,11 @@ String-based hint storage is convenient, but weak for manipulation.
 
 ### Example
 
-A string-based hint API looks like:
+A legacy string-based hint API looked like:
 
 ```java
 select(...)
-    .optimizerHint("MAX_EXECUTION_TIME(1000)")
+    .hint("MAX_EXECUTION_TIME", 1000)
 ```
 
 This is easy to store, but hard to manipulate. A transformer cannot safely answer:
@@ -145,7 +145,7 @@ If hints are raw strings:
 A typed model would allow nodes like:
 
 ```java
-StatementHint.of("MAX_EXECUTION_TIME", List.of(lit(1000)))
+statementHint("MAX_EXECUTION_TIME", 1000)
 ```
 
 or, even better, a richer family if needed:

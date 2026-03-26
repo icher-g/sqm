@@ -53,7 +53,7 @@ Priority levels:
 
 ### Epic MYSQL-R2B: MySQL Optimizer Hint Context Expansion (Completed)
 - Delivered scope: optimizer hint comments in MySQL `SELECT`, `UPDATE`, and `DELETE` statement contexts.
-- Core statement models now retain immutable optimizer hint bodies where those contexts are supported.
+- Core statement models now retain typed statement hints for those supported contexts.
 - Parser/render capability gating and deterministic canonical SQL output delivered.
 - Integration round-trip coverage delivered in `sqm-it`.
 

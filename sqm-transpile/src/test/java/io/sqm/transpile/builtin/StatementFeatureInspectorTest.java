@@ -98,7 +98,7 @@ class StatementFeatureInspectorTest {
     }
 
     @Test
-    void detectsFunctionsHintsInsertModesAndConflictActions() {
+    void detectsFunctionsStatementHintsInsertModesAndConflictActions() {
         var functionQuery = Dsl.select(FunctionExpr.of(
                 QualifiedName.of("json_extract"),
                 List.of(FunctionExpr.Arg.expr(Dsl.col("payload")), FunctionExpr.Arg.expr(Dsl.lit("$.id"))),
@@ -112,14 +112,24 @@ class StatementFeatureInspectorTest {
         var hintedSelect = SelectQuery.builder()
             .select(Dsl.col("id"))
             .from(Dsl.tbl("users"))
-            .optimizerHint("MAX_EXECUTION_TIME(1000)")
+            .hint("MAX_EXECUTION_TIME", 1000)
             .build();
         var hintedUpdate = UpdateStatement.builder(Dsl.tbl("users"))
             .set(Dsl.set("name", Dsl.lit("alice")))
-            .optimizerHint("BKA(users)")
+            .hint("BKA", "users")
             .build();
         var hintedDelete = DeleteStatement.builder(Dsl.tbl("users"))
-            .optimizerHint("BKA(users)")
+            .hint("BKA", "users")
+            .build();
+        var hintedInsert = InsertStatement.builder(Dsl.tbl("users"))
+            .hint("APPEND")
+            .values(Dsl.row(Dsl.lit(1)))
+            .build();
+        var hintedMerge = Dsl.merge("users")
+            .hint("MERGE_HINT")
+            .source(Dsl.tbl("src").as("s"))
+            .on(Dsl.col("users", "id").eq(Dsl.col("s", "id")))
+            .whenMatchedDelete()
             .build();
         var lockHintQuery = Dsl.select(Dsl.col("id"))
             .from(Dsl.tbl("users").withNoLock())
@@ -141,9 +151,11 @@ class StatementFeatureInspectorTest {
 
         assertTrue(StatementFeatureInspector.hasAnyFunctionName(functionQuery, Set.of("JSON_EXTRACT")));
         assertTrue(StatementFeatureInspector.hasAnyFunctionNamePrefix(functionQuery, Set.of("json_")));
-        assertTrue(StatementFeatureInspector.hasOptimizerHints(hintedSelect));
-        assertTrue(StatementFeatureInspector.hasOptimizerHints(hintedUpdate));
-        assertTrue(StatementFeatureInspector.hasOptimizerHints(hintedDelete));
+        assertTrue(StatementFeatureInspector.hasStatementHints(hintedSelect));
+        assertTrue(StatementFeatureInspector.hasStatementHints(hintedUpdate));
+        assertTrue(StatementFeatureInspector.hasStatementHints(hintedDelete));
+        assertTrue(StatementFeatureInspector.hasStatementHints(hintedInsert));
+        assertTrue(StatementFeatureInspector.hasStatementHints(hintedMerge));
         assertTrue(StatementFeatureInspector.hasIndexHints(functionQuery));
         assertTrue(StatementFeatureInspector.hasLockHints(lockHintQuery));
         assertTrue(StatementFeatureInspector.hasInsertMode(insertIgnore, InsertStatement.InsertMode.IGNORE));
@@ -151,7 +163,7 @@ class StatementFeatureInspectorTest {
 
         assertFalse(StatementFeatureInspector.hasAnyFunctionName(functionQuery, Set.of("JSON_OBJECT")));
         assertFalse(StatementFeatureInspector.hasAnyFunctionNamePrefix(functionQuery, Set.of("DATE_")));
-        assertFalse(StatementFeatureInspector.hasOptimizerHints(functionQuery));
+        assertFalse(StatementFeatureInspector.hasStatementHints(functionQuery));
         assertFalse(StatementFeatureInspector.hasIndexHints(hintedSelect));
         assertFalse(StatementFeatureInspector.hasLockHints(hintedSelect));
         assertFalse(StatementFeatureInspector.hasInsertMode(insertIgnore, InsertStatement.InsertMode.REPLACE));

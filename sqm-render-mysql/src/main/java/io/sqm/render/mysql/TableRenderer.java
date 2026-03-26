@@ -1,6 +1,7 @@
 package io.sqm.render.mysql;
 
 import io.sqm.core.Table;
+import io.sqm.core.TableHint;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
@@ -17,48 +18,38 @@ public class TableRenderer extends io.sqm.render.ansi.TableRenderer {
     public TableRenderer() {
     }
 
-    /**
-     * Renders table references including index hints.
-     *
-     * @param node a node to render.
-     * @param ctx  a render context.
-     * @param w    a writer.
-     */
     @Override
-    public void render(Table node, RenderContext ctx, SqlWriter w) {
-        super.render(node, ctx, w);
-
-        if (node.indexHints().isEmpty()) {
+    protected void renderTableHints(Table node, RenderContext ctx, SqlWriter w) {
+        var indexHints = node.hints().stream().filter(MySqlHintRenderSupport::isIndexHint).toList();
+        if (indexHints.isEmpty()) {
+            if (!node.hints().isEmpty()) {
+                throw new UnsupportedDialectFeatureException("table hints", ctx.dialect().name());
+            }
             return;
+        }
+
+        if (indexHints.size() != node.hints().size()) {
+            throw new UnsupportedDialectFeatureException("table hints", ctx.dialect().name());
         }
 
         if (!ctx.dialect().capabilities().supports(SqlFeature.TABLE_INDEX_HINT)) {
             throw new UnsupportedDialectFeatureException("table index hints", ctx.dialect().name());
         }
 
-        var quoter = ctx.dialect().quoter();
-        for (var hint : node.indexHints()) {
-            w.space().append(hint.type().name()).space().append("INDEX");
-            if (hint.scope() != Table.IndexHintScope.DEFAULT) {
-                w.space().append("FOR").space();
-                switch (hint.scope()) {
-                    case JOIN -> w.append("JOIN");
-                    case ORDER_BY -> w.append("ORDER BY");
-                    case GROUP_BY -> w.append("GROUP BY");
-                    default -> {
-                        // no-op
-                    }
-                }
-            }
-
-            w.space().append("(");
-            for (int i = 0; i < hint.indexes().size(); i++) {
-                if (i > 0) {
-                    w.append(", ");
-                }
-                w.append(renderIdentifier(hint.indexes().get(i), quoter));
-            }
-            w.append(")");
+        for (var hint : indexHints) {
+            renderIndexHint(hint, ctx, w);
         }
+    }
+
+    private void renderIndexHint(TableHint hint, RenderContext ctx, SqlWriter w) {
+        w.space().append(MySqlHintRenderSupport.indexHintKeyword(hint)).space().append("INDEX");
+        var scope = MySqlHintRenderSupport.indexHintScope(hint);
+        if (scope != null) {
+                w.space().append("FOR").space();
+            w.append(scope);
+        }
+        w.space().append("(");
+        MySqlHintRenderSupport.renderHintArgs(hint, ctx, w);
+        w.append(")");
     }
 }

@@ -120,7 +120,7 @@ final class MySqlExecutionCases {
             }
         ),
         new DialectExecutionCase<>(
-            "straight-join-with-optimizer-hint",
+            "straight-join-with-statement-hint",
             EnumSet.of(MySqlLiveFeature.OPTIMIZER_HINT_COMMENT, MySqlLiveFeature.STRAIGHT_JOIN),
             harness -> {
                 var query = select(col("u", "id"))
@@ -128,7 +128,7 @@ final class MySqlExecutionCases {
                     .join(straight(tbl("orders").as("o")).on(col("u", "id").eq(col("o", "user_id"))))
                     .where(col("o", "status").eq(lit("closed")))
                     .orderBy(order(col("u", "id")).asc())
-                    .optimizerHint("MAX_EXECUTION_TIME(1000)")
+                    .hint("MAX_EXECUTION_TIME", 1000)
                     .build();
 
                 var sql = harness.render(query);

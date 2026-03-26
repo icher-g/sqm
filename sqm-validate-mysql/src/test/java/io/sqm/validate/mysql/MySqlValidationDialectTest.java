@@ -5,7 +5,7 @@ import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.Identifier;
-import io.sqm.core.Table;
+import io.sqm.core.TableHint;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.SchemaStatementValidator;
 import org.junit.jupiter.api.Test;
@@ -32,9 +32,9 @@ class MySqlValidationDialectTest {
     void validate_reportsUseAndForceConflictInSameDefaultScope() {
         var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
         var query = select(col("u", "id"))
-            .from(tbl("users").as("u").withIndexHints(List.of(
-                Table.IndexHint.use(Table.IndexHintScope.DEFAULT, List.of(Identifier.of("idx_users_name"))),
-                Table.IndexHint.force(Table.IndexHintScope.DEFAULT, List.of(Identifier.of("idx_users_id")))
+            .from(tbl("users").as("u").withHints(List.of(
+                TableHint.of("USE_INDEX", Identifier.of("idx_users_name")),
+                TableHint.of("FORCE_INDEX", Identifier.of("idx_users_id"))
             )))
             .build();
 
@@ -51,9 +51,9 @@ class MySqlValidationDialectTest {
     void validate_reportsUseAndForceConflictForOverlappingScopes() {
         var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
         var query = select(col("u", "id"))
-            .from(tbl("users").as("u").withIndexHints(List.of(
-                Table.IndexHint.use(Table.IndexHintScope.DEFAULT, List.of(Identifier.of("idx_users_name"))),
-                Table.IndexHint.force(Table.IndexHintScope.JOIN, List.of(Identifier.of("idx_users_id")))
+            .from(tbl("users").as("u").withHints(List.of(
+                TableHint.of("USE_INDEX", Identifier.of("idx_users_name")),
+                TableHint.of("FORCE_INDEX_FOR_JOIN", Identifier.of("idx_users_id"))
             )))
             .build();
 
@@ -69,9 +69,9 @@ class MySqlValidationDialectTest {
     void validate_allowsUseAndForceForDifferentExplicitScopes() {
         var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
         var query = select(col("u", "id"))
-            .from(tbl("users").as("u").withIndexHints(List.of(
-                Table.IndexHint.use(Table.IndexHintScope.ORDER_BY, List.of(Identifier.of("idx_users_name"))),
-                Table.IndexHint.force(Table.IndexHintScope.JOIN, List.of(Identifier.of("idx_users_id")))
+            .from(tbl("users").as("u").withHints(List.of(
+                TableHint.of("USE_INDEX_FOR_ORDER_BY", Identifier.of("idx_users_name")),
+                TableHint.of("FORCE_INDEX_FOR_JOIN", Identifier.of("idx_users_id"))
             )))
             .build();
 

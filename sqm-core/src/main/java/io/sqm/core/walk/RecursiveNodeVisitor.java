@@ -41,6 +41,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitInsertStatement(InsertStatement statement) {
         accept(statement.table());
+        statement.hints().forEach(this::accept);
         accept(statement.source());
         statement.conflictUpdateAssignments().forEach(this::accept);
         accept(statement.conflictUpdateWhere());
@@ -57,6 +58,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitUpdateStatement(UpdateStatement statement) {
         accept(statement.table());
+        statement.hints().forEach(this::accept);
         statement.assignments().forEach(this::accept);
         statement.joins().forEach(this::accept);
         statement.from().forEach(this::accept);
@@ -74,6 +76,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitDeleteStatement(DeleteStatement statement) {
         accept(statement.table());
+        statement.hints().forEach(this::accept);
         statement.using().forEach(this::accept);
         statement.joins().forEach(this::accept);
         accept(statement.where());
@@ -90,6 +93,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitMergeStatement(MergeStatement statement) {
         accept(statement.target());
+        statement.hints().forEach(this::accept);
         accept(statement.source());
         accept(statement.on());
         accept(statement.topSpec());
@@ -509,6 +513,35 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
      */
     @Override
     public R visitTable(Table t) {
+        t.hints().forEach(this::accept);
+        return defaultResult();
+    }
+
+    @Override
+    public R visitStatementHint(StatementHint hint) {
+        hint.args().forEach(this::accept);
+        return defaultResult();
+    }
+
+    @Override
+    public R visitTableHint(TableHint hint) {
+        hint.args().forEach(this::accept);
+        return defaultResult();
+    }
+
+    @Override
+    public R visitIdentifierHintArg(IdentifierHintArg arg) {
+        return defaultResult();
+    }
+
+    @Override
+    public R visitQualifiedNameHintArg(QualifiedNameHintArg arg) {
+        return defaultResult();
+    }
+
+    @Override
+    public R visitExpressionHintArg(ExpressionHintArg arg) {
+        accept(arg.value());
         return defaultResult();
     }
 
@@ -966,6 +999,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitSelectQuery(SelectQuery q) {
         q.items().forEach(this::accept);
+        q.hints().forEach(this::accept);
         accept(q.distinct());
         accept(q.topSpec());
         accept(q.from());

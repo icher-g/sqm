@@ -20,10 +20,11 @@ public non-sealed interface MergeStatement extends Statement {
      * @param topSpec optional top specification
      * @param clauses merge clauses
      * @param result optional result clause
+     * @param hints typed statement hints
      * @return immutable merge statement
      */
-    static MergeStatement of(Table target, TableRef source, Predicate on, TopSpec topSpec, List<MergeClause> clauses, ResultClause result) {
-        return new Impl(target, source, on, topSpec, clauses, result);
+    static MergeStatement of(Table target, TableRef source, Predicate on, TopSpec topSpec, List<MergeClause> clauses, ResultClause result, List<StatementHint> hints) {
+        return new Impl(target, source, on, topSpec, clauses, result, hints);
     }
 
     /**
@@ -100,6 +101,7 @@ public non-sealed interface MergeStatement extends Statement {
         private Predicate on;
         private TopSpec topSpec;
         private ResultClause result;
+        private final List<StatementHint> hints = new ArrayList<>();
 
         /**
          * Creates a builder initialized with a target table.
@@ -172,6 +174,51 @@ public non-sealed interface MergeStatement extends Statement {
          */
         public Builder top(long count) {
             return top(Expression.literal(count));
+        }
+
+        /**
+         * Replaces typed statement hints attached to this statement.
+         *
+         * @param hints typed statement hints
+         * @return this builder
+         */
+        public Builder hints(List<StatementHint> hints) {
+            Objects.requireNonNull(hints, "hints");
+            this.hints.clear();
+            this.hints.addAll(hints);
+            return this;
+        }
+
+        /**
+         * Appends one typed statement hint.
+         *
+         * @param hint typed statement hint
+         * @return this builder
+         */
+        public Builder hint(StatementHint hint) {
+            this.hints.add(Objects.requireNonNull(hint, "hint"));
+            return this;
+        }
+
+        /**
+         * Appends one typed statement hint using convenience arguments.
+         *
+         * @param name hint name
+         * @param args convenience hint arguments
+         * @return this builder
+         */
+        public Builder hint(String name, Object... args) {
+            return hint(StatementHint.of(name, args));
+        }
+
+        /**
+         * Clears typed statement hints attached to this statement.
+         *
+         * @return this builder
+         */
+        public Builder clearHints() {
+            this.hints.clear();
+            return this;
         }
 
         /**
@@ -500,7 +547,7 @@ public non-sealed interface MergeStatement extends Statement {
             if (clauses.isEmpty()) {
                 throw new IllegalStateException("at least one merge clause is required");
             }
-            return MergeStatement.of(target, source, on, topSpec, clauses, result);
+            return MergeStatement.of(target, source, on, topSpec, clauses, result, hints);
         }
     }
 
@@ -513,13 +560,15 @@ public non-sealed interface MergeStatement extends Statement {
      * @param topSpec optional top specification
      * @param clauses merge clauses
      * @param result optional result clause
+     * @param hints typed statement hints
      */
     record Impl(Table target,
                 TableRef source,
                 Predicate on,
                 TopSpec topSpec,
                 List<MergeClause> clauses,
-                ResultClause result) implements MergeStatement {
+                ResultClause result,
+                List<StatementHint> hints) implements MergeStatement {
         /**
          * Creates an immutable merge statement implementation.
          */
@@ -528,6 +577,7 @@ public non-sealed interface MergeStatement extends Statement {
             Objects.requireNonNull(source, "source");
             Objects.requireNonNull(on, "on");
             clauses = List.copyOf(Objects.requireNonNull(clauses, "clauses"));
+            hints = hints == null ? List.of() : List.copyOf(hints);
             if (clauses.isEmpty()) {
                 throw new IllegalArgumentException("clauses must not be empty");
             }

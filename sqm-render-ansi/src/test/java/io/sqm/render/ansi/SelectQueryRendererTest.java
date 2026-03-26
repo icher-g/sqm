@@ -301,8 +301,8 @@ public class SelectQueryRendererTest {
     }
 
     @Test
-    @DisplayName("Rejects optimizer hint comments when capability is unavailable")
-    void rejects_optimizer_hints() {
+    @DisplayName("Rejects statement hint comments when capability is unavailable")
+    void rejects_statement_hints() {
         var q = io.sqm.core.SelectQuery.of(
             java.util.List.of(col("t", "c").toSelectItem()),
             tbl("t"),
@@ -317,7 +317,7 @@ public class SelectQueryRendererTest {
             null,
             java.util.List.of(),
             java.util.List.of(),
-            java.util.List.of("MAX_EXECUTION_TIME(1000)")
+            java.util.List.of(statementHint("MAX_EXECUTION_TIME", 1000))
         );
 
         assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,

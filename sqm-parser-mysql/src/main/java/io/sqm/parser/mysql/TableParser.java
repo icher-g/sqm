@@ -2,6 +2,7 @@ package io.sqm.parser.mysql;
 
 import io.sqm.core.Identifier;
 import io.sqm.core.Table;
+import io.sqm.core.TableHint;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.Token;
@@ -43,7 +44,7 @@ public class TableParser extends io.sqm.parser.ansi.TableParser {
         Identifier name,
         Table.Inheritance inheritance) {
 
-        var hints = new ArrayList<Table.IndexHint>();
+        var hints = new ArrayList<TableHint>();
         Identifier alias = null;
 
         while (true) {
@@ -72,38 +73,27 @@ public class TableParser extends io.sqm.parser.ansi.TableParser {
         return cur.match(TokenType.AS) || cur.match(TokenType.IDENT);
     }
 
-    private ParseResult<Table.IndexHint> parseIndexHint(Cursor cur) {
+    private ParseResult<TableHint> parseIndexHint(Cursor cur) {
         var typeToken = readIndexHintType(cur);
         if (typeToken == null) {
             return error("Expected USE, IGNORE or FORCE", cur.fullPos());
         }
 
-        Table.IndexHintType type = switch (typeToken.type()) {
-            case USE -> Table.IndexHintType.USE;
-            case IGNORE -> Table.IndexHintType.IGNORE;
-            case FORCE -> Table.IndexHintType.FORCE;
-            default -> null;
-        };
-
-        if (type == null) {
-            return error("Expected USE, IGNORE or FORCE", cur.fullPos());
-        }
-
         cur.expect("Expected INDEX or KEY in table index hint", TokenType.KEY, TokenType.INDEX);
 
-        Table.IndexHintScope scope = Table.IndexHintScope.DEFAULT;
+        String scope = "";
 
         if (cur.consumeIf(TokenType.FOR)) {
             if (cur.consumeIf(TokenType.JOIN)) {
-                scope = Table.IndexHintScope.JOIN;
+                scope = "JOIN";
             }
             else if (cur.consumeIf(TokenType.ORDER)) {
                 cur.expect("Expected BY after ORDER", TokenType.BY);
-                scope = Table.IndexHintScope.ORDER_BY;
+                scope = "ORDER_BY";
             }
             else if (cur.consumeIf(TokenType.GROUP)) {
                 cur.expect("Expected BY after GROUP", TokenType.BY);
-                scope = Table.IndexHintScope.GROUP_BY;
+                scope = "GROUP_BY";
             }
             else {
                 return error("Expected JOIN, ORDER BY or GROUP BY after FOR", cur.fullPos());
@@ -114,7 +104,10 @@ public class TableParser extends io.sqm.parser.ansi.TableParser {
         var indexes = parseIdentifierItems(cur, "Expected index identifier");
         cur.expect("Expected ) after INDEX hint", TokenType.RPAREN);
 
-        return ok(new Table.IndexHint(type, scope, indexes));
+        return ok(TableHint.of(
+            MySqlHintParserSupport.indexHintName(typeToken.type().name(), scope),
+            indexes.toArray()
+        ));
     }
 
     private Token readIndexHintType(Cursor cur) {

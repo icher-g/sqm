@@ -84,7 +84,7 @@ class MySqlDmlRoundTripIntegrationTest {
     }
 
     @Test
-    void roundTripJoinedUpdateWithOptimizerHint() {
+    void roundTripJoinedUpdateWithStatementHint() {
         assertRoundTrip(
             "UPDATE /*+ BKA(users) */ users INNER JOIN orders ON users.id = orders.user_id SET name = 'alice' WHERE orders.state = 'closed'",
             "UPDATE /*+ BKA(users) */ users INNER JOIN orders ON users.id = orders.user_id SET name = 'alice' WHERE orders.state = 'closed'"
@@ -108,7 +108,7 @@ class MySqlDmlRoundTripIntegrationTest {
     }
 
     @Test
-    void roundTripDeleteWithOptimizerHint() {
+    void roundTripDeleteWithStatementHint() {
         assertRoundTrip(
             "DELETE /*+ BKA(users) */ FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'",
             "DELETE /*+ BKA(users) */ FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'"

@@ -31,7 +31,11 @@ public class ResultIntoRenderer implements Renderer<ResultInto> {
             throw new UnsupportedOperationException("SQL Server OUTPUT INTO currently supports base tables and table variables only");
         }
 
-        if (node.target() instanceof Table target && !target.lockHints().isEmpty()) {
+        if (node.target() instanceof Table target
+            && target.hints().stream().anyMatch(h -> switch (h.name().value()) {
+                case "NOLOCK", "UPDLOCK", "HOLDLOCK" -> true;
+                default -> false;
+            })) {
             throw new UnsupportedOperationException("SQL Server table hints are not supported on OUTPUT INTO targets");
         }
 

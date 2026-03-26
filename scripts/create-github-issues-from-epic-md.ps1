@@ -166,16 +166,26 @@ function Create-Issue {
         return ""
     }
 
-    $args = @('issue', 'create', '--title', $Title, '--body', $Body)
-    if (-not [string]::IsNullOrWhiteSpace($RepoName)) {
-        $args += @('--repo', $RepoName)
-    }
+    $bodyFile = [System.IO.Path]::GetTempFileName()
+    try {
+        Set-Content -Path $bodyFile -Value $Body -Encoding UTF8
 
-    foreach ($label in $labels) {
-        $args += @('--label', $label)
-    }
+        $args = @('issue', 'create', '--title', $Title, '--body-file', $bodyFile)
+        if (-not [string]::IsNullOrWhiteSpace($RepoName)) {
+            $args += @('--repo', $RepoName)
+        }
 
-    return (& gh @args)
+        foreach ($label in $labels) {
+            $args += @('--label', $label)
+        }
+
+        return (& gh @args)
+    }
+    finally {
+        if (Test-Path -Path $bodyFile -PathType Leaf) {
+            Remove-Item -Path $bodyFile -Force
+        }
+    }
 }
 
 Require-Command -Name 'gh'

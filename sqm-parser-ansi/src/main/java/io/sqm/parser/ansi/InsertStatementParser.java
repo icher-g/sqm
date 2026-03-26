@@ -38,6 +38,11 @@ public class InsertStatementParser implements Parser<InsertStatement> {
             return error(insertMode);
         }
 
+        var afterInsertKeyword = parseAfterInsertKeyword(cur, ctx);
+        if (afterInsertKeyword.isError()) {
+            return error(afterInsertKeyword);
+        }
+
         cur.expect("Expected INTO after INSERT", TokenType.INTO);
 
         var table = ctx.parse(Table.class, cur);
@@ -87,7 +92,20 @@ public class InsertStatementParser implements Parser<InsertStatement> {
             conflict.value().action(),
             conflict.value().assignments(),
             conflict.value().where(),
-            output.value()));
+            output.value(),
+            afterInsertKeyword.value()));
+    }
+
+    /**
+     * Hook for dialect-specific tokens that may appear after the leading insert keyword
+     * and before {@code INTO}.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return parse result
+     */
+    protected ParseResult<List<StatementHint>> parseAfterInsertKeyword(Cursor cur, ParseContext ctx) {
+        return ok(List.of());
     }
 
     /**

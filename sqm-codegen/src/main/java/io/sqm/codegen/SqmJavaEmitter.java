@@ -34,18 +34,6 @@ final class SqmJavaEmitter {
             return "QualifiedName.of(" + joinInline(value.parts().stream().map(DslEmitterVisitor::emitIdentifier).toList()) + ")";
         }
 
-        private static String emitLockHint(Table.LockHint hint) {
-            return switch (hint.kind()) {
-                case NOLOCK -> "withNoLock()";
-                case UPDLOCK -> "withUpdLock()";
-                case HOLDLOCK -> "withHoldLock()";
-            };
-        }
-
-        private static String emitStringList(List<String> values) {
-            return "java.util.List.of(" + joinInline(values.stream().map(DslEmitterVisitor::quote).toList()) + ")";
-        }
-
         private static String emitLockMode(LockMode mode) {
             return switch (mode) {
                 case UPDATE -> "update()";
@@ -174,6 +162,9 @@ final class SqmJavaEmitter {
         @Override
         public String visitInsertStatement(InsertStatement statement) {
             var sb = new StringBuilder("insert(").append(emitNode(statement.table())).append(")");
+            for (var hint : statement.hints()) {
+                sb.append(".").append(emitStatementHintCall(hint));
+            }
             if (statement.insertMode() == InsertStatement.InsertMode.IGNORE) {
                 sb.append(".ignore()");
             }
@@ -231,8 +222,8 @@ final class SqmJavaEmitter {
         @Override
         public String visitUpdateStatement(UpdateStatement statement) {
             var sb = new StringBuilder("update(").append(emitNode(statement.table())).append(")");
-            if (!statement.optimizerHints().isEmpty()) {
-                sb.append(".optimizerHints(").append(emitStringList(statement.optimizerHints())).append(")");
+            for (var hint : statement.hints()) {
+                sb.append(".").append(emitStatementHintCall(hint));
             }
             if (!statement.joins().isEmpty()) {
                 sb.append(".joins(")
@@ -260,8 +251,8 @@ final class SqmJavaEmitter {
         @Override
         public String visitDeleteStatement(DeleteStatement statement) {
             var sb = new StringBuilder("delete(").append(emitNode(statement.table())).append(")");
-            if (!statement.optimizerHints().isEmpty()) {
-                sb.append(".optimizerHints(").append(emitStringList(statement.optimizerHints())).append(")");
+            for (var hint : statement.hints()) {
+                sb.append(".").append(emitStatementHintCall(hint));
             }
             if (!statement.using().isEmpty()) {
                 sb.append(".using(")
@@ -286,6 +277,9 @@ final class SqmJavaEmitter {
         @Override
         public String visitMergeStatement(MergeStatement statement) {
             var sb = new StringBuilder("merge(").append(emitNode(statement.target())).append(")");
+            for (var hint : statement.hints()) {
+                sb.append(".").append(emitStatementHintCall(hint));
+            }
             sb.append(".source(").append(emitNode(statement.source())).append(")");
             sb.append(".on(").append(emitNode(statement.on())).append(")");
             if (statement.topSpec() != null) {
@@ -417,6 +411,9 @@ final class SqmJavaEmitter {
             if (q.lockFor() != null) {
                 sb.append("\n.lockFor(").append(emitLockingClauseArgs(q.lockFor())).append(")");
             }
+            for (var hint : q.hints()) {
+                sb.append("\n.").append(emitStatementHintCall(hint));
+            }
             sb.append("\n.build()");
             return sb.toString();
         }
@@ -451,10 +448,48 @@ final class SqmJavaEmitter {
             if (t.inheritance() == Table.Inheritance.INCLUDE_DESCENDANTS) {
                 out.append(".includingDescendants()");
             }
-            for (var hint : t.lockHints()) {
-                out.append(".").append(emitLockHint(hint));
+            for (var hint : t.hints()) {
+                out.append(".").append(emitTableHintCall(hint));
             }
             return out.toString();
+        }
+
+        private String emitStatementHintCall(StatementHint hint) {
+            return "hint(" + quote(hint.name().value())
+                + emitHintArgsSuffix(hint.args()) + ")";
+        }
+
+        private String emitTableHintCall(TableHint hint) {
+            return switch (hint.name().value()) {
+                case "NOLOCK" -> "withNoLock()";
+                case "UPDLOCK" -> "withUpdLock()";
+                case "HOLDLOCK" -> "withHoldLock()";
+                default -> "hint(" + quote(hint.name().value()) + emitHintArgsSuffix(hint.args()) + ")";
+            };
+        }
+
+        private String emitHintArgsSuffix(List<HintArg> args) {
+            if (args.isEmpty()) {
+                return "";
+            }
+            return ", " + joinInline(args.stream().map(this::emitHintArgValue).toList());
+        }
+
+        private String emitHintArgValue(HintArg arg) {
+            return switch (arg) {
+                case IdentifierHintArg identifierHintArg -> quote(identifierHintArg.value().value());
+                case QualifiedNameHintArg qualifiedNameHintArg -> "QualifiedName.of("
+                    + joinInline(qualifiedNameHintArg.value().parts().stream().map(DslEmitterVisitor::emitIdentifier).toList())
+                    + ")";
+                case ExpressionHintArg expressionHintArg -> emitHintExpressionArgValue(expressionHintArg.value());
+            };
+        }
+
+        private String emitHintExpressionArgValue(Expression expression) {
+            if (expression instanceof LiteralExpr literalExpr && !(literalExpr.value() instanceof String)) {
+                return emitLiteralValue(literalExpr.value());
+            }
+            return emitNode(expression);
         }
 
         @Override

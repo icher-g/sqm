@@ -146,7 +146,7 @@ class MySqlSpecsTest {
         var result = ctx.parse(io.sqm.core.Table.class, "users USE INDEX (idx_users_name)");
 
         assertTrue(result.ok());
-        assertEquals(io.sqm.core.Table.IndexHintType.USE, result.value().indexHints().getFirst().type());
+        assertEquals("USE_INDEX", result.value().hints().getFirst().name().value());
     }
 
     @Test

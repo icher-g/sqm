@@ -290,20 +290,21 @@ class SqmJavaEmitterTest {
     @Test
     void emitStatement_coversDmlStatements() {
         var insert = insert(tbl("users"))
+            .hint("APPEND")
             .ignore()
             .columns(id("id"), id("name", QuoteStyle.BACKTICK))
             .values(row(lit(1), lit("alice")))
             .result(inserted("id").as("new_id"))
             .build();
         var update = update(tbl("users"))
-            .optimizerHint("MAX_EXECUTION_TIME(1000)")
+            .hint("MAX_EXECUTION_TIME", 1000)
             .set(set("u", "name", lit("alice")))
             .from(tbl("src"))
             .where(col("u", "id").eq(lit(1)))
             .result(resultInto(tableVar("audit"), id("user_id")), insertedAll(), inserted("id").as("user_id"))
             .build();
         var delete = delete(tbl("users"))
-            .optimizerHint("BKA(users)")
+            .hint("BKA", "users")
             .using(tbl("audit"))
             .where(col("users", "id").eq(col("audit", "user_id")))
             .result(deleted("id"))
@@ -314,19 +315,20 @@ class SqmJavaEmitterTest {
         var deleteSource = emitter.emitStatement(delete);
 
         assertTrue(insertSource.contains("insert(tbl(\"users\"))"));
+        assertTrue(insertSource.contains(".hint(\"APPEND\")"));
         assertTrue(insertSource.contains(".ignore()"));
         assertTrue(insertSource.contains(".columns(id(\"id\"), id(\"name\", QuoteStyle.BACKTICK))"));
         assertTrue(insertSource.contains(".values(row(lit(1), lit(\"alice\")))"));
         assertTrue(insertSource.contains(".result(inserted(id(\"id\")).as(id(\"new_id\")))"));
 
         assertTrue(updateSource.contains("update(tbl(\"users\"))"));
-        assertTrue(updateSource.contains(".optimizerHints(java.util.List.of(\"MAX_EXECUTION_TIME(1000)\"))"));
+        assertTrue(updateSource.contains(".hint(\"MAX_EXECUTION_TIME\", 1000)"));
         assertTrue(updateSource.contains(".set(set(QualifiedName.of(id(\"u\"), id(\"name\")), lit(\"alice\")))"));
         assertTrue(updateSource.contains(".from(tbl(\"src\"))"));
         assertTrue(updateSource.contains(".result(resultInto(tableVar(\"audit\"), id(\"user_id\")), insertedAll(), inserted(id(\"id\")).as(id(\"user_id\")))"));
 
         assertTrue(deleteSource.contains("delete(tbl(\"users\"))"));
-        assertTrue(deleteSource.contains(".optimizerHints(java.util.List.of(\"BKA(users)\"))"));
+        assertTrue(deleteSource.contains(".hint(\"BKA\", \"users\")"));
         assertTrue(deleteSource.contains(".using(tbl(\"audit\"))"));
         assertTrue(deleteSource.contains(".result(deleted(id(\"id\")))"));
     }
@@ -398,6 +400,7 @@ class SqmJavaEmitterTest {
     @Test
     void emitStatement_coversMergeStatements() {
         var mergeStatement = merge(tbl("users"))
+            .hint("MERGE_HINT")
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
             .top(top(5))
@@ -410,12 +413,21 @@ class SqmJavaEmitterTest {
         var source = emitter.emitStatement(mergeStatement);
 
         assertTrue(source.contains("merge(tbl(\"users\"))"));
+        assertTrue(source.contains(".hint(\"MERGE_HINT\")"));
         assertTrue(source.contains(".source(tbl(\"src\").as(\"s\"))"));
         assertTrue(source.contains(".top(lit(5L))"));
         assertTrue(source.contains(".whenMatchedUpdate(col(\"s\", \"active\").eq(lit(true)), set(id(\"name\"), col(\"s\", \"name\")))"));
         assertTrue(source.contains(".whenMatchedDelete(col(\"s\", \"deleted\").eq(lit(true)))"));
         assertTrue(source.contains(".whenNotMatchedBySourceDelete(col(\"users\", \"active\").eq(lit(false)))"));
         assertTrue(source.contains(".whenNotMatchedInsert(col(\"s\", \"name\").isNotNull(), java.util.List.of(id(\"id\"), id(\"name\")), row(col(\"s\", \"id\"), col(\"s\", \"name\")))"));
+    }
+
+    @Test
+    void emitStatement_emitsTypedStatementHints() {
+        var query = select(star()).from(tbl("users")).hint("MAX_EXECUTION_TIME", 1000).build();
+        var source = emitter.emitQuery(query);
+
+        assertTrue(source.contains(".hint(\"MAX_EXECUTION_TIME\", 1000)"));
     }
 
     @Test

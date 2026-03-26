@@ -108,7 +108,7 @@ class SelectQueryImplTest {
     }
 
     @Test
-    void modifiers_and_optimizer_hints_are_copied() {
+    void modifiers_and_statement_hints_are_copied() {
         var query = SelectQuery.of(
             List.of(col("id").toSelectItem()),
             tbl("users"),
@@ -123,13 +123,13 @@ class SelectQueryImplTest {
             null,
             List.of(),
             List.of(SelectModifier.CALC_FOUND_ROWS),
-            List.of("MAX_EXECUTION_TIME(1000)")
+            List.of(statementHint("MAX_EXECUTION_TIME", 1000))
         );
 
         assertEquals(SelectModifier.CALC_FOUND_ROWS, query.modifiers().getFirst());
-        assertEquals("MAX_EXECUTION_TIME(1000)", query.optimizerHints().getFirst());
+        assertEquals("MAX_EXECUTION_TIME", query.hints().getFirst().name().value());
         assertThrows(UnsupportedOperationException.class, () -> query.modifiers().add(SelectModifier.CALC_FOUND_ROWS));
-        assertThrows(UnsupportedOperationException.class, () -> query.optimizerHints().add("BKA(users)"));
+        assertThrows(UnsupportedOperationException.class, () -> query.hints().add(statementHint("BKA", "users")));
     }
 
     @Test
@@ -152,7 +152,7 @@ class SelectQueryImplTest {
         );
 
         assertEquals(List.of(), query.modifiers());
-        assertEquals(List.of(), query.optimizerHints());
+        assertEquals(List.of(), query.hints());
     }
 
     @Test
@@ -175,6 +175,6 @@ class SelectQueryImplTest {
         );
 
         assertEquals(List.of(), query.modifiers());
-        assertEquals(List.of(), query.optimizerHints());
+        assertEquals(List.of(), query.hints());
     }
 }

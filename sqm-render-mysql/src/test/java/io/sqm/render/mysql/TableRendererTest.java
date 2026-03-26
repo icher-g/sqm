@@ -2,6 +2,7 @@ package io.sqm.render.mysql;
 
 import io.sqm.core.Identifier;
 import io.sqm.core.Table;
+import io.sqm.core.TableHint;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.mysql.spi.MySqlDialect;
 import io.sqm.render.spi.RenderContext;
@@ -18,7 +19,7 @@ class TableRendererTest {
     @Test
     void rendersTableWithUseIndexHint() {
         var table = Table.of(null, Identifier.of("users"), Identifier.of("u"), Table.Inheritance.DEFAULT,
-            List.of(new Table.IndexHint(Table.IndexHintType.USE, Table.IndexHintScope.DEFAULT, List.of(Identifier.of("idx_users_name")))));
+            List.of(TableHint.of("USE_INDEX", Identifier.of("idx_users_name"))));
 
         var sql = RenderContext.of(new MySqlDialect()).render(table).sql();
 
@@ -29,8 +30,8 @@ class TableRendererTest {
     void rendersAliasBeforeMultipleIndexHintsCanonically() {
         var table = Table.of(null, Identifier.of("users"), Identifier.of("u"), Table.Inheritance.DEFAULT,
             List.of(
-                Table.IndexHint.use(Table.IndexHintScope.DEFAULT, List.of(Identifier.of("idx_a"))),
-                Table.IndexHint.force(Table.IndexHintScope.JOIN, List.of(Identifier.of("idx_b")))
+                TableHint.of("USE_INDEX", Identifier.of("idx_a")),
+                TableHint.of("FORCE_INDEX_FOR_JOIN", Identifier.of("idx_b"))
             ));
 
         var sql = RenderContext.of(new MySqlDialect()).render(table).sql();
@@ -41,7 +42,7 @@ class TableRendererTest {
     @Test
     void rendersTableWithScopedIndexHint() {
         var table = Table.of(null, Identifier.of("users"), null, Table.Inheritance.DEFAULT,
-            List.of(new Table.IndexHint(Table.IndexHintType.FORCE, Table.IndexHintScope.ORDER_BY, List.of(Identifier.of("idx_order")))));
+            List.of(TableHint.of("FORCE_INDEX_FOR_ORDER_BY", Identifier.of("idx_order"))));
 
         var sql = RenderContext.of(new MySqlDialect()).render(table).sql();
 
@@ -51,11 +52,7 @@ class TableRendererTest {
     @Test
     void rendersGroupByIndexHintWithMultipleIndexes() {
         var table = Table.of(null, Identifier.of("users"), null, Table.Inheritance.DEFAULT,
-            List.of(new Table.IndexHint(
-                Table.IndexHintType.IGNORE,
-                Table.IndexHintScope.GROUP_BY,
-                List.of(Identifier.of("idx_a"), Identifier.of("idx_b"))
-            )));
+            List.of(TableHint.of("IGNORE_INDEX_FOR_GROUP_BY", Identifier.of("idx_a"), Identifier.of("idx_b"))));
 
         var sql = RenderContext.of(new MySqlDialect()).render(table).sql();
 
@@ -65,7 +62,7 @@ class TableRendererTest {
     @Test
     void rejectsIndexHintsInDialectWithoutCapability() {
         var table = Table.of(null, Identifier.of("users"), null, Table.Inheritance.DEFAULT,
-            List.of(new Table.IndexHint(Table.IndexHintType.IGNORE, Table.IndexHintScope.DEFAULT, List.of(Identifier.of("idx_users_name")))));
+            List.of(TableHint.of("IGNORE_INDEX", Identifier.of("idx_users_name"))));
 
         var renderer = new TableRenderer();
         var ctx = RenderContext.of(new AnsiDialect());
@@ -77,6 +74,15 @@ class TableRendererTest {
     @Test
     void targetTypeIsTable() {
         assertEquals(Table.class, new TableRenderer().targetType());
+    }
+
+    @Test
+    void rejectsForeignTableHints() {
+        var table = Table.of(null, Identifier.of("users"), null, Table.Inheritance.DEFAULT,
+            List.of(TableHint.of("NOLOCK")));
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new MySqlDialect()).render(table));
     }
 
     private static String normalize(String sql) {

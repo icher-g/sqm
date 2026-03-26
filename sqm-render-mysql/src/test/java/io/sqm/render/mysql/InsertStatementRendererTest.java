@@ -104,7 +104,8 @@ class InsertStatementRendererTest {
             InsertStatement.OnConflictAction.DO_UPDATE,
             java.util.List.of(set("name", lit("alice2"))),
             col("id").eq(lit(1)),
-            null);
+            null,
+            java.util.List.of());
 
         assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
             () -> RenderContext.of(new MySqlDialect()).render(statement));
@@ -122,6 +123,18 @@ class InsertStatementRendererTest {
 
         assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
             () -> renderer.render(statement, ctx, new io.sqm.render.defaults.DefaultSqlWriter(ctx)));
+    }
+
+    @Test
+    void rendersInsertStatementHints() {
+        InsertStatement statement = insert("users")
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .values(row(lit(1)))
+            .build();
+
+        var sql = RenderContext.of(new MySqlDialect()).render(statement).sql();
+
+        assertEquals("INSERT /*+ MAX_EXECUTION_TIME(1000) */ INTO users VALUES (1)", normalize(sql));
     }
 
     @Test

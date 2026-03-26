@@ -31,7 +31,7 @@ class AtomicQueryParserTest {
     }
 
     @Test
-    void parsesSelectQueryWithLeadingOptimizerHint() {
+    void parsesSelectQueryWithLeadingStatementHintComment() {
         var ctx = contextWithAtomicQueryParsers();
         var result = ctx.parse(Query.class, "/*+ BKA(users) */ SELECT");
 

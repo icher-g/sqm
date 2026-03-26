@@ -23,6 +23,7 @@ public non-sealed interface InsertStatement extends Statement {
      * @param conflictUpdateAssignments conflict-update assignments, or empty when omitted
      * @param conflictUpdateWhere       optional conflict-update predicate
      * @param resultClause              result projection list, or null when omitted
+     * @param hints                     typed statement hints
      * @return immutable insert statement
      */
     static InsertStatement of(InsertMode insertMode,
@@ -33,7 +34,8 @@ public non-sealed interface InsertStatement extends Statement {
         OnConflictAction onConflictAction,
         List<Assignment> conflictUpdateAssignments,
         Predicate conflictUpdateWhere,
-        ResultClause resultClause) {
+        ResultClause resultClause,
+        List<StatementHint> hints) {
         return new Impl(insertMode,
             table,
             columns,
@@ -42,7 +44,8 @@ public non-sealed interface InsertStatement extends Statement {
             onConflictAction,
             conflictUpdateAssignments,
             conflictUpdateWhere,
-            resultClause);
+            resultClause,
+            hints);
     }
 
     /**
@@ -179,6 +182,7 @@ public non-sealed interface InsertStatement extends Statement {
         private OnConflictAction onConflictAction = OnConflictAction.NONE;
         private Predicate conflictUpdateWhere;
         private ResultClause resultClause;
+        private final List<StatementHint> hints = new ArrayList<>();
 
         /**
          * Creates a builder initialized with a target table.
@@ -291,6 +295,51 @@ public non-sealed interface InsertStatement extends Statement {
          */
         public Builder query(Query query) {
             return source(query);
+        }
+
+        /**
+         * Replaces typed statement hints attached to this statement.
+         *
+         * @param hints typed statement hints
+         * @return this builder
+         */
+        public Builder hints(List<StatementHint> hints) {
+            Objects.requireNonNull(hints, "hints");
+            this.hints.clear();
+            this.hints.addAll(hints);
+            return this;
+        }
+
+        /**
+         * Appends one typed statement hint.
+         *
+         * @param hint typed statement hint
+         * @return this builder
+         */
+        public Builder hint(StatementHint hint) {
+            this.hints.add(Objects.requireNonNull(hint, "hint"));
+            return this;
+        }
+
+        /**
+         * Appends one typed statement hint using convenience arguments.
+         *
+         * @param name hint name
+         * @param args convenience hint arguments
+         * @return this builder
+         */
+        public Builder hint(String name, Object... args) {
+            return hint(StatementHint.of(name, args));
+        }
+
+        /**
+         * Clears typed statement hints attached to this statement.
+         *
+         * @return this builder
+         */
+        public Builder clearHints() {
+            this.hints.clear();
+            return this;
         }
 
         /**
@@ -448,7 +497,8 @@ public non-sealed interface InsertStatement extends Statement {
                 onConflictAction,
                 conflictUpdateAssignments,
                 conflictUpdateWhere,
-                resultClause);
+                resultClause,
+                hints);
         }
     }
 
@@ -464,6 +514,7 @@ public non-sealed interface InsertStatement extends Statement {
      * @param conflictUpdateAssignments conflict-update assignments
      * @param conflictUpdateWhere       optional conflict-update predicate
      * @param result                    optional result projection list
+     * @param hints                     typed statement hints
      */
     record Impl(InsertMode insertMode,
                 Table table,
@@ -473,7 +524,8 @@ public non-sealed interface InsertStatement extends Statement {
                 OnConflictAction onConflictAction,
                 List<Assignment> conflictUpdateAssignments,
                 Predicate conflictUpdateWhere,
-                ResultClause result) implements InsertStatement {
+                ResultClause result,
+                List<StatementHint> hints) implements InsertStatement {
         /**
          * Creates an immutable insert statement implementation.
          */
@@ -485,6 +537,7 @@ public non-sealed interface InsertStatement extends Statement {
             conflictTarget = conflictTarget == null ? List.of() : List.copyOf(conflictTarget);
             onConflictAction = onConflictAction == null ? OnConflictAction.NONE : onConflictAction;
             conflictUpdateAssignments = conflictUpdateAssignments == null ? List.of() : List.copyOf(conflictUpdateAssignments);
+            hints = hints == null ? List.of() : List.copyOf(hints);
 
             if (onConflictAction == OnConflictAction.NONE) {
                 if (!conflictTarget.isEmpty() || !conflictUpdateAssignments.isEmpty() || conflictUpdateWhere != null) {

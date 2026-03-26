@@ -4,12 +4,14 @@ import io.sqm.core.Assignment;
 import io.sqm.core.InsertStatement.InsertMode;
 import io.sqm.core.ResultClause;
 import io.sqm.core.ResultItem;
+import io.sqm.core.StatementHint;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static io.sqm.parser.spi.ParseResult.error;
@@ -52,6 +54,25 @@ public class InsertStatementParser extends io.sqm.parser.ansi.InsertStatementPar
             return error("INSERT IGNORE is not supported by this dialect", cur.fullPos());
         }
         return ok(InsertMode.IGNORE);
+    }
+
+    /**
+     * Parses MySQL optimizer hint comments that may appear between the insert keyword and {@code INTO}.
+     *
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return parse result
+     */
+    @Override
+    protected ParseResult<List<StatementHint>> parseAfterInsertKeyword(Cursor cur, ParseContext ctx) {
+        var hints = new ArrayList<StatementHint>();
+        while (cur.match(TokenType.COMMENT_HINT)) {
+            if (!ctx.capabilities().supports(SqlFeature.OPTIMIZER_HINT_COMMENT)) {
+                return error("Optimizer hint comments are not supported by this dialect", cur.fullPos());
+            }
+            hints.addAll(MySqlHintParserSupport.parseCommentHints(cur.advance().lexeme(), ctx));
+        }
+        return ok(hints);
     }
 
     /**

@@ -36,7 +36,7 @@ public class SelectQueryParser extends io.sqm.parser.ansi.SelectQueryParser {
             if (!ctx.capabilities().supports(SqlFeature.OPTIMIZER_HINT_COMMENT)) {
                 return error("Optimizer hint comments are not supported by this dialect", cur.fullPos());
             }
-            q.optimizerHint(cur.advance().lexeme());
+            q.hints(MySqlHintParserSupport.parseCommentHints(cur.advance().lexeme(), ctx));
         }
         return ok(null);
     }
@@ -56,7 +56,7 @@ public class SelectQueryParser extends io.sqm.parser.ansi.SelectQueryParser {
                 if (!ctx.capabilities().supports(SqlFeature.OPTIMIZER_HINT_COMMENT)) {
                     return error("Optimizer hint comments are not supported by this dialect", cur.fullPos());
                 }
-                q.optimizerHint(cur.advance().lexeme());
+                q.hints(MySqlHintParserSupport.parseCommentHints(cur.advance().lexeme(), ctx));
                 continue;
             }
             if (cur.match(TokenType.IDENT) && "SQL_CALC_FOUND_ROWS".equalsIgnoreCase(cur.peek().lexeme())) {

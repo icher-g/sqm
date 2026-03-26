@@ -73,7 +73,7 @@ public class UpdateStatementRenderer implements Renderer<UpdateStatement> {
      * @param w    SQL writer
      */
     protected void renderAfterUpdateKeyword(UpdateStatement node, RenderContext ctx, SqlWriter w) {
-        if (!node.optimizerHints().isEmpty()) {
+        if (!node.hints().isEmpty()) {
             throw new UnsupportedDialectFeatureException("UPDATE optimizer hints", ctx.dialect().name());
         }
     }

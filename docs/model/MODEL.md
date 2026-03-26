@@ -126,6 +126,10 @@ Node
 |  |- StarResultItem
 |  |- QualifiedStarResultItem
 |  `- OutputStarResultItem
+|- Hint
+|  |- StatementHint
+|  `- TableHint
+|- HintArg
 |- ResultInto
 |- Statement
 |  |- Query
@@ -283,6 +287,10 @@ graph TD
   ResultItem --> StarResultItem
   ResultItem --> QualifiedStarResultItem
   ResultItem --> OutputStarResultItem
+  Node --> Hint
+  Hint --> StatementHint
+  Hint --> TableHint
+  Node --> HintArg
   Node --> ResultInto
 
   Node --> Statement
@@ -530,6 +538,26 @@ graph TD
 
 ---
 
+### Hints
+
+- **Hint**
+  Shared typed hint abstraction storing a normalized hint name plus ordered typed arguments.
+  Concrete attachment-point subtypes keep statement-owned and table-owned hints distinct.
+
+- **StatementHint**
+  Typed hint attached to a statement such as `SELECT`, `UPDATE`, or `DELETE`.
+  Dialects own the concrete syntax envelope, such as MySQL comment hints or future SQL Server `OPTION (...)` rendering.
+
+- **TableHint**
+  Typed hint attached to a table reference.
+  Dialects own grouped or positional table-hint syntax such as SQL Server `WITH (...)` or MySQL `USE INDEX (...)`.
+
+- **HintArg**
+  Typed hint argument abstraction used to preserve structural argument meaning instead of raw hint-body text.
+  Current shipped forms cover identifier, qualified-name, and expression arguments.
+
+---
+
 ### Statements
 
 - **Query**
@@ -539,9 +567,9 @@ graph TD
 - **InsertStatement**
   `INSERT INTO <table> [(columns...)] <source> [result clause]` where source is `VALUES (...)` or a query.
 - **UpdateStatement**
-  `UPDATE [/*+ ... */] <table> SET c1 = expr [, ...] [FROM ...] [WHERE ...]`, with optional optimizer hints stored as immutable hint strings.
+  `UPDATE [/*+ ... */] <table> SET c1 = expr [, ...] [FROM ...] [WHERE ...]`, with optional typed statement hints stored structurally as `StatementHint` nodes.
 - **DeleteStatement**
-  `DELETE [/*+ ... */] FROM <table> [USING ...] [WHERE ...]`, with optional optimizer hints stored as immutable hint strings.
+  `DELETE [/*+ ... */] FROM <table> [USING ...] [WHERE ...]`, with optional typed statement hints stored structurally as `StatementHint` nodes.
 - **MergeStatement**
   `MERGE [TOP (...)] INTO <target> USING <source> ON <predicate> <clauses...> [result clause]`.
   The current shared slice models `WHEN MATCHED [AND ...] THEN UPDATE|DELETE`, `WHEN NOT MATCHED [AND ...] THEN INSERT ... VALUES (...)`, and `WHEN NOT MATCHED BY SOURCE [AND ...] THEN UPDATE|DELETE`.

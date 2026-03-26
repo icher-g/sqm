@@ -94,6 +94,18 @@ class DslAdditionalHelpersTest {
     }
 
     @Test
+    void tableHintHelpersSupportStandaloneAndFluentTableUsage() {
+        var standalone = tableHint("INDEX", "idx_users_name");
+        var table = tbl("users")
+            .hint(tableHint("NOLOCK"))
+            .hint(tableHint("HOLDLOCK"));
+
+        assertEquals("INDEX", standalone.name().value());
+        assertEquals("idx_users_name", assertInstanceOf(IdentifierHintArg.class, standalone.args().getFirst()).value().value());
+        assertEquals(List.of("NOLOCK", "HOLDLOCK"), table.hints().stream().map(h -> h.name().value()).toList());
+    }
+
+    @Test
     void typedIdentifierHelpersForTableColumnCastAndOperator() {
         var table = tbl(id("Users"));
         var qualifiedTable = tbl(id("Public"), id("Users"));

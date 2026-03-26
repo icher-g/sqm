@@ -7,15 +7,12 @@ import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.Identifier;
 import io.sqm.core.LimitOffset;
 import io.sqm.core.SelectModifier;
-import io.sqm.core.Table;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.SchemaStatementValidator;
 import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class SqlServerValidationDialectTest {
     private static final CatalogSchema SCHEMA = CatalogSchema.of(
@@ -28,6 +25,10 @@ class SqlServerValidationDialectTest {
             CatalogColumn.of("age", CatalogType.INTEGER)
         )
     );
+
+    private static boolean hasDialectProblem(io.sqm.validate.api.ValidationResult result, ValidationProblem.Code code) {
+        return result.problems().stream().anyMatch(problem -> problem.code() == code);
+    }
 
     @Test
     void validate_acceptsBaselineSqlServerSelectWithTop() {
@@ -160,11 +161,11 @@ class SqlServerValidationDialectTest {
     void validate_reportsUnsupportedSqlServerSelectExtensions() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var query = select(col("u", "id"))
-            .from(tbl("users").as("u").withIndexHints(java.util.List.of(
-                Table.IndexHint.use(Table.IndexHintScope.DEFAULT, java.util.List.of(Identifier.of("idx_users_name")))
+            .from(tbl("users").as("u").withHints(java.util.List.of(
+                io.sqm.core.TableHint.of("USE_INDEX", Identifier.of("idx_users_name"))
             )))
             .selectModifier(SelectModifier.CALC_FOUND_ROWS)
-            .optimizerHint("INDEX(users idx_users_name)")
+            .hint("INDEX", "users", "idx_users_name")
             .orderBy(order(col("u", "id")).using(">"))
             .build();
 
@@ -614,13 +615,13 @@ class SqlServerValidationDialectTest {
             .join(inner(tbl("users").as("u2")).on(col("u2", "id").eq(col("users", "id"))))
             .from(tbl("users").as("u3"))
             .result(col("id").toSelectItem())
-            .optimizerHint("INDEX(users idx_users_name)")
+            .hint("INDEX", "users", "idx_users_name")
             .build();
         var deleteStatement = delete("users")
             .using(tbl("users").as("u"))
             .join(inner(tbl("users").as("u2")).on(col("u2", "id").eq(col("users", "id"))))
             .result(col("id").toSelectItem())
-            .optimizerHint("INDEX(users idx_users_name)")
+            .hint("INDEX", "users", "idx_users_name")
             .build();
 
         var insertResult = validator.validate(insertStatement);
@@ -680,9 +681,5 @@ class SqlServerValidationDialectTest {
         assertTrue(catalog.resolve("count").isPresent());
         assertTrue(catalog.resolve("STRING_AGG").isPresent());
         assertTrue(catalog.resolve(null).isEmpty());
-    }
-
-    private static boolean hasDialectProblem(io.sqm.validate.api.ValidationResult result, ValidationProblem.Code code) {
-        return result.problems().stream().anyMatch(problem -> problem.code() == code);
     }
 }

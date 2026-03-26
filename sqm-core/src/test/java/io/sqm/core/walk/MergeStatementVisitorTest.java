@@ -7,6 +7,7 @@ import io.sqm.core.MergeInsertAction;
 import io.sqm.core.LiteralExpr;
 import io.sqm.core.MergeStatement;
 import io.sqm.core.MergeUpdateAction;
+import io.sqm.core.StatementHint;
 import io.sqm.core.Table;
 import org.junit.jupiter.api.Test;
 
@@ -27,6 +28,7 @@ class MergeStatementVisitorTest {
     @Test
     void recursiveVisitorTraversesMergeChildren() {
         var statement = merge(tbl("users"))
+            .hint("MERGE_HINT")
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
             .top(top(5))
@@ -53,6 +55,12 @@ class MergeStatementVisitorTest {
             public Void visitTable(Table table) {
                 visits.add("table");
                 return super.visitTable(table);
+            }
+
+            @Override
+            public Void visitStatementHint(StatementHint hint) {
+                visits.add("hint");
+                return super.visitStatementHint(hint);
             }
 
             @Override
@@ -98,6 +106,6 @@ class MergeStatementVisitorTest {
             }
         }.accept(statement);
 
-        assertEquals(List.of("merge", "table", "table", "top", "literal", "clause", "literal", "update", "clause", "delete", "clause", "doNothing", "clause", "insert"), visits.subList(0, 14));
+        assertEquals(List.of("merge", "table", "hint", "table", "top", "literal", "clause", "literal", "update", "clause", "delete", "clause", "doNothing", "clause", "insert"), visits.subList(0, 15));
     }
 }

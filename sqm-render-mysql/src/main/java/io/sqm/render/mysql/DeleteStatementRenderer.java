@@ -31,7 +31,7 @@ public class DeleteStatementRenderer extends io.sqm.render.ansi.DeleteStatementR
      */
     @Override
     protected void renderAfterDeleteKeyword(DeleteStatement node, RenderContext ctx, SqlWriter w) {
-        OptimizerHintRendererSupport.renderHints(node.optimizerHints(), "DELETE optimizer hints", ctx, w);
+        MySqlHintRenderSupport.renderStatementHints(node.hints(), "DELETE optimizer hints", ctx, w);
     }
 
     /**

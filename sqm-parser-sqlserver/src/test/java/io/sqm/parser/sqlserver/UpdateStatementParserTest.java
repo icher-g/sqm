@@ -90,6 +90,6 @@ class UpdateStatementParserTest {
         );
 
         assertTrue(result.ok(), result.errorMessage());
-        assertEquals(2, result.value().table().lockHints().size());
+        assertEquals(2, result.value().table().hints().size());
     }
 }

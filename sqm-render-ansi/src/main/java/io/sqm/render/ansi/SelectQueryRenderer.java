@@ -55,7 +55,7 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
      * @param ctx  render context.
      */
     protected void validateQuery(SelectQuery node, RenderContext ctx) {
-        if (!node.optimizerHints().isEmpty()
+        if (!node.hints().isEmpty()
             && !ctx.dialect().capabilities().supports(SqlFeature.OPTIMIZER_HINT_COMMENT)) {
             throw new UnsupportedDialectFeatureException("optimizer hint comments", ctx.dialect().name());
         }

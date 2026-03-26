@@ -69,7 +69,7 @@ public class DeleteStatementRenderer implements Renderer<DeleteStatement> {
      * @param w    SQL writer
      */
     protected void renderAfterDeleteKeyword(DeleteStatement node, RenderContext ctx, SqlWriter w) {
-        if (!node.optimizerHints().isEmpty()) {
+        if (!node.hints().isEmpty()) {
             throw new UnsupportedDialectFeatureException("DELETE optimizer hints", ctx.dialect().name());
         }
     }

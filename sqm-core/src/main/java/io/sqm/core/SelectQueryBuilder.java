@@ -251,30 +251,41 @@ public interface SelectQueryBuilder {
     }
 
     /**
-     * Appends optimizer hint bodies (without comment delimiters).
+     * Appends typed statement hints.
      *
-     * @param hints hint bodies
+     * @param hints typed statement hints to append
      * @return this builder
      */
-    SelectQueryBuilder optimizerHints(List<String> hints);
+    SelectQueryBuilder hints(List<StatementHint> hints);
 
     /**
-     * Appends one optimizer hint body (without comment delimiters).
+     * Appends a typed statement hint.
      *
-     * @param hint hint body
+     * @param hint typed statement hint
      * @return this builder
      */
-    default SelectQueryBuilder optimizerHint(String hint) {
+    default SelectQueryBuilder hint(StatementHint hint) {
         Objects.requireNonNull(hint, "hint must not be null");
-        return optimizerHints(List.of(hint));
+        return hints(List.of(hint));
     }
 
     /**
-     * Clears optimizer hint bodies currently held by the builder.
+     * Appends a typed statement hint using convenience arguments.
+     *
+     * @param name hint name
+     * @param args convenience hint arguments
+     * @return this builder
+     */
+    default SelectQueryBuilder hint(String name, Object... args) {
+        return hint(StatementHint.of(name, args));
+    }
+
+    /**
+     * Clears typed statement hints currently held by the builder.
      *
      * @return this builder
      */
-    SelectQueryBuilder clearOptimizerHints();
+    SelectQueryBuilder clearHints();
 
     /**
      * Sets the limit/offset clause.

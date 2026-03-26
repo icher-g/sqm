@@ -3,6 +3,7 @@ package io.sqm.render.ansi;
 import io.sqm.core.Identifier;
 import io.sqm.core.QuoteStyle;
 import io.sqm.core.Table;
+import io.sqm.core.TableHint;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.dsl.Dsl;
 import io.sqm.render.SqlWriter;
@@ -81,28 +82,14 @@ class TableRendererTest {
     }
 
     @Test
-    @DisplayName("Rejects table index hints in ANSI renderer")
-    void rejects_index_hints() {
+    @DisplayName("Rejects table hints in ANSI renderer")
+    void rejects_table_hints() {
         var table = Table.of(
             null,
             Identifier.of("t"),
             null,
             Table.Inheritance.DEFAULT,
-            java.util.List.of(new Table.IndexHint(Table.IndexHintType.USE, Table.IndexHintScope.DEFAULT, java.util.List.of(Identifier.of("idx_t"))))
-        );
-        assertThrows(UnsupportedDialectFeatureException.class, () -> render(table));
-    }
-
-    @Test
-    @DisplayName("Rejects table lock hints in ANSI renderer")
-    void rejects_lock_hints() {
-        var table = Table.of(
-            null,
-            Identifier.of("t"),
-            null,
-            Table.Inheritance.DEFAULT,
-            java.util.List.of(),
-            java.util.List.of(Table.LockHint.nolock())
+            java.util.List.of(TableHint.of("USE_INDEX", Identifier.of("idx_t")))
         );
         assertThrows(UnsupportedDialectFeatureException.class, () -> render(table));
     }

@@ -28,7 +28,7 @@ class MergeStatementParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertEquals("users", result.value().target().name().value());
-        assertEquals(1, result.value().target().lockHints().size());
+        assertEquals(1, result.value().target().hints().size());
         assertNotNull(result.value().topSpec());
         assertTrue(result.value().topSpec().percent());
         assertEquals(2, result.value().clauses().size());

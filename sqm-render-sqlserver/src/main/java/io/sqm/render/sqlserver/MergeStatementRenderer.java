@@ -27,6 +27,9 @@ public class MergeStatementRenderer extends io.sqm.render.ansi.MergeStatementRen
         if (!ctx.dialect().capabilities().supports(SqlFeature.MERGE_STATEMENT)) {
             throw new UnsupportedDialectFeatureException("MERGE", ctx.dialect().name());
         }
+        if (!node.hints().isEmpty()) {
+            throw new UnsupportedDialectFeatureException("MERGE statement hints", ctx.dialect().name());
+        }
         validate(node);
 
         w.append("MERGE");

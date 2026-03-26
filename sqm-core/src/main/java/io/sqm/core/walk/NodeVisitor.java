@@ -13,6 +13,7 @@ import io.sqm.core.Node;
  */
 public interface NodeVisitor<R> extends
     ExpressionVisitor<R>,
+    HintVisitor<R>,
     PredicateVisitor<R>,
     FromVisitor<R>,
     SelectItemVisitor<R>,
