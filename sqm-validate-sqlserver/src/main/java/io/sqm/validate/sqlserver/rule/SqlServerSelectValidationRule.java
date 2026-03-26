@@ -165,14 +165,6 @@ public final class SqlServerSelectValidationRule implements SchemaValidationRule
 
         @Override
         public Void visitTable(Table table) {
-            if (table.hints().stream().anyMatch(h -> h.name().value().matches("^(USE|IGNORE|FORCE)_INDEX(_FOR_(JOIN|ORDER_BY|GROUP_BY))?$"))) {
-                context.addProblem(
-                    ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
-                    "SQL Server does not support MySQL index hints",
-                    table,
-                    "from.table"
-                );
-            }
             SqlServerTableHintSupport.validateHints(table, context, "from.table");
             if (table.inheritance() != Table.Inheritance.DEFAULT) {
                 context.addProblem(

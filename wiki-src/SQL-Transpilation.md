@@ -90,19 +90,31 @@ SELECT * FROM users WHERE LOWER(name) LIKE LOWER('al%')
   - `SIMILAR TO`
   - representative PostgreSQL operator families
 
-### MySQL -> PostgreSQL
+### MySQL -> non-MySQL target
 
 - Exact:
   - string concatenation through `ConcatExpr`
   - `<=>`
   - supported regex predicate subset
 - Warning-based rewrite:
-  - optimizer comments and index hints are dropped
+  - MySQL statement and table hints are dropped for any non-MySQL target
 - Unsupported:
   - `ON DUPLICATE KEY UPDATE`
   - `INSERT IGNORE`
   - `REPLACE`
   - representative MySQL JSON function family
+
+### SQL Server -> non-SQL Server target
+
+- Exact:
+  - `TOP` to standard row-limiting model / target `LIMIT`
+- Warning-based rewrite:
+  - SQL Server statement and table hints are dropped for any non-SQL Server target
+- Unsupported:
+  - `TOP ... PERCENT`
+  - `TOP ... WITH TIES`
+  - `OUTPUT`
+  - `MERGE`
 
 ## More
 

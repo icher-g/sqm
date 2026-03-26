@@ -59,6 +59,16 @@ public non-sealed interface InsertStatement extends Statement {
     }
 
     /**
+     * Creates a mutable builder initialized from an existing immutable insert statement.
+     *
+     * @param statement source statement
+     * @return builder initialized from the statement
+     */
+    static Builder builder(InsertStatement statement) {
+        return new Builder(statement);
+    }
+
+    /**
      * Returns the insert target table.
      *
      * @return target table
@@ -191,6 +201,25 @@ public non-sealed interface InsertStatement extends Statement {
          */
         private Builder(Table table) {
             this.table = Objects.requireNonNull(table, "table");
+        }
+
+        /**
+         * Creates a builder initialized from an existing immutable insert statement.
+         *
+         * @param statement source statement
+         */
+        private Builder(InsertStatement statement) {
+            Objects.requireNonNull(statement, "statement");
+            this.insertMode = statement.insertMode();
+            this.table = statement.table();
+            this.columns.addAll(statement.columns());
+            this.source = statement.source();
+            this.conflictTarget.addAll(statement.conflictTarget());
+            this.onConflictAction = statement.onConflictAction();
+            this.conflictUpdateAssignments.addAll(statement.conflictUpdateAssignments());
+            this.conflictUpdateWhere = statement.conflictUpdateWhere();
+            this.resultClause = statement.result();
+            this.hints.addAll(statement.hints());
         }
 
         /**

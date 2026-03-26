@@ -545,7 +545,7 @@ graph TD
   Concrete attachment-point subtypes keep statement-owned and table-owned hints distinct.
 
 - **StatementHint**
-  Typed hint attached to a statement such as `SELECT`, `UPDATE`, or `DELETE`.
+  Typed hint attached to a statement such as `SELECT`, `INSERT`, `UPDATE`, `DELETE`, or `MERGE`.
   Dialects own the concrete syntax envelope, such as MySQL comment hints or future SQL Server `OPTION (...)` rendering.
 
 - **TableHint**
@@ -565,13 +565,13 @@ graph TD
   - **SelectQuery** - main SELECT form
   - **WithQuery** - `WITH` plus child query
 - **InsertStatement**
-  `INSERT INTO <table> [(columns...)] <source> [result clause]` where source is `VALUES (...)` or a query.
+  `INSERT [statement hints] INTO <table> [(columns...)] <source> [result clause]` where source is `VALUES (...)` or a query.
 - **UpdateStatement**
   `UPDATE [/*+ ... */] <table> SET c1 = expr [, ...] [FROM ...] [WHERE ...]`, with optional typed statement hints stored structurally as `StatementHint` nodes.
 - **DeleteStatement**
   `DELETE [/*+ ... */] FROM <table> [USING ...] [WHERE ...]`, with optional typed statement hints stored structurally as `StatementHint` nodes.
 - **MergeStatement**
-  `MERGE [TOP (...)] INTO <target> USING <source> ON <predicate> <clauses...> [result clause]`.
+  `MERGE [statement hints] [TOP (...)] INTO <target> USING <source> ON <predicate> <clauses...> [result clause]`.
   The current shared slice models `WHEN MATCHED [AND ...] THEN UPDATE|DELETE`, `WHEN NOT MATCHED [AND ...] THEN INSERT ... VALUES (...)`, and `WHEN NOT MATCHED BY SOURCE [AND ...] THEN UPDATE|DELETE`.
   PostgreSQL additionally supports `DO NOTHING` for all three MERGE branch families.
   More specialized branches and SQL Server options remain dialect-gated follow-up work.

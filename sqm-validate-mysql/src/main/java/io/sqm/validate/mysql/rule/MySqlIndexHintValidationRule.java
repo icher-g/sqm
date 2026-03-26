@@ -87,7 +87,7 @@ public final class MySqlIndexHintValidationRule implements SchemaValidationRule<
         return scope;
     }
 
-    private static boolean isIndexHint(TableHint hint) {
+    static boolean isIndexHint(TableHint hint) {
         return hint.name().value().matches("^(USE|IGNORE|FORCE)_INDEX(_FOR_(JOIN|ORDER_BY|GROUP_BY))?$");
     }
 

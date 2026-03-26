@@ -38,6 +38,16 @@ public non-sealed interface MergeStatement extends Statement {
     }
 
     /**
+     * Creates a mutable builder initialized from an existing immutable merge statement.
+     *
+     * @param statement source statement
+     * @return builder initialized from the statement
+     */
+    static Builder builder(MergeStatement statement) {
+        return new Builder(statement);
+    }
+
+    /**
      * Returns the merge target table.
      *
      * @return target table
@@ -110,6 +120,22 @@ public non-sealed interface MergeStatement extends Statement {
          */
         private Builder(Table target) {
             this.target = Objects.requireNonNull(target, "target");
+        }
+
+        /**
+         * Creates a builder initialized from an existing immutable merge statement.
+         *
+         * @param statement source statement
+         */
+        private Builder(MergeStatement statement) {
+            Objects.requireNonNull(statement, "statement");
+            this.target = statement.target();
+            this.source = statement.source();
+            this.on = statement.on();
+            this.topSpec = statement.topSpec();
+            this.clauses.addAll(statement.clauses());
+            this.result = statement.result();
+            this.hints.addAll(statement.hints());
         }
 
         /**

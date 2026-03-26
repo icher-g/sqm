@@ -13,6 +13,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.delete;
+import static io.sqm.dsl.Dsl.insert;
+import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.merge;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.tbl;
 import static io.sqm.dsl.Dsl.update;
@@ -101,6 +105,145 @@ class MySqlValidationDialectTest {
         assertTrue(result.problems().stream().anyMatch(problem ->
             problem.code() == ValidationProblem.Code.COLUMN_NOT_FOUND
                 && "dml.assignment".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
+    void validate_acceptsFirstWaveMysqlStatementHints() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var selectQuery = select(col("id"))
+            .from(tbl("users"))
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .build();
+        var updateStatement = update("users")
+            .set(Identifier.of("name"), lit("alice"))
+            .hint("BKA", "users")
+            .build();
+        var deleteStatement = delete("users")
+            .hint("SET_VAR", "sort_buffer_size=16M")
+            .build();
+        var insertStatement = insert("users")
+            .columns(Identifier.of("id"))
+            .values(io.sqm.dsl.Dsl.rows(io.sqm.dsl.Dsl.row(lit(1L))))
+            .hint("QB_NAME", io.sqm.dsl.Dsl.lit("main"))
+            .build();
+
+        assertTrue(validator.validate(selectQuery).ok());
+        assertTrue(validator.validate(updateStatement).ok());
+        assertTrue(validator.validate(deleteStatement).ok());
+        assertTrue(validator.validate(insertStatement).ok());
+    }
+
+    @Test
+    void validate_reportsUnsupportedMysqlStatementHintNames() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var query = select(col("id"))
+            .from(tbl("users"))
+            .hint("INDEX", "users", "idx_users_name")
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "select.hint".equals(problem.clausePath())
+                && problem.message().contains("INDEX")
+        ));
+    }
+
+    @Test
+    void validate_reportsInvalidMysqlStatementHintArgShapes() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var query = select(col("id"))
+            .from(tbl("users"))
+            .hint("MAX_EXECUTION_TIME", "users")
+            .hint("BKA", 1000)
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "select.hint".equals(problem.clausePath())
+                && problem.message().contains("MAX_EXECUTION_TIME")
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "select.hint".equals(problem.clausePath())
+                && problem.message().contains("BKA")
+        ));
+    }
+
+    @Test
+    void validate_reportsInvalidMysqlStatementHintShapesForAdditionalFamilies() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var query = select(col("id"))
+            .from(tbl("users"))
+            .hint("NO_RANGE_OPTIMIZATION", "users", "extra")
+            .hint("SET_VAR", lit(1))
+            .hint("QB_NAME", lit(1))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "select.hint".equals(problem.clausePath())
+                && problem.message().contains("NO_RANGE_OPTIMIZATION")
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "select.hint".equals(problem.clausePath())
+                && problem.message().contains("SET_VAR")
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "select.hint".equals(problem.clausePath())
+                && problem.message().contains("QB_NAME")
+        ));
+    }
+
+    @Test
+    void validate_acceptsMysqlStatementHintsOnMergeAndQualifiedNameTargets() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var statement = merge("users")
+            .source(tbl("users").as("src"))
+            .on(col("users", "id").eq(col("src", "id")))
+            .whenMatchedDelete()
+            .hint("NO_RANGE_OPTIMIZATION", io.sqm.core.QualifiedName.of("public", "users"))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertTrue(result.ok());
+    }
+
+    @Test
+    void validate_reportsUnsupportedMysqlTableHintFamiliesAndArgShapes() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var query = select(col("id"))
+            .from(tbl("users")
+                .hint("NOLOCK")
+                .hint("USE_INDEX")
+                .hint("FORCE_INDEX", 1000))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "table.hint".equals(problem.clausePath())
+                && problem.message().contains("NOLOCK")
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "table.hint".equals(problem.clausePath())
+                && problem.message().contains("at least one index identifier")
+        ));
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "table.hint".equals(problem.clausePath())
+                && problem.message().contains("identifier arguments")
         ));
     }
 }

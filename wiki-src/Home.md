@@ -61,11 +61,17 @@ More:
 - Schema sources:
   - [Schema Introspection](Schema-Introspection)
 - Build-time generation:
-  - [SQL File Codegen](SQL-File-Codegen)
+- [SQL File Codegen](SQL-File-Codegen)
   - [SQL File Codegen Schema Validation](SQL-File-Codegen-Schema-Validation)
 - Testing and operations:
   - [Integration Testing with Docker](Integration-Testing-with-Docker)
   - [FAQ](FAQ)
+
+Current shipped model highlights:
+
+- shared typed statement and table hints
+- statement-level `hints()` on `SELECT`, `INSERT`, `UPDATE`, `DELETE`, and `MERGE`
+- cross-dialect hint dropping with warnings during transpilation when a target dialect does not share the source hint system
 
 ## Top Commands
 

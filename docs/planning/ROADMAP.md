@@ -110,9 +110,10 @@ Reference epic doc: `docs/epics/R5B_SQL_SERVER_ADVANCED_SUPPORT_COMPLETED.md`
 - Track executable coverage by shipped dialect feature families.
 Reference epic doc: `docs/epics/R6_DIALECT_LIVE_DB_EXECUTION_COVERAGE_COMPLETED.md`
 
-### Epic R7: Typed Hint Modeling
+### Epic R7: Typed Hint Modeling (Completed)
 - Introduce a typed hint model in `sqm-core`.
 - Align parser, renderer, validation, transpilation, DSL, codegen, and JSON behavior around first-class hint semantics.
+Reference epic doc: `docs/epics/R7_TYPED_HINT_MODELING_COMPLETED.md`
 
 ### DDL Track (Decision Required)
 - DDL is not currently committed as a framework feature.

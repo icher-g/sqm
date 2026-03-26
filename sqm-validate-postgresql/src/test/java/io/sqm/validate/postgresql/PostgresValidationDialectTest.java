@@ -404,6 +404,76 @@ class PostgresValidationDialectTest {
     }
 
     @Test
+    void validate_reportsPostgresStatementHintsAsUnsupported() {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(18, 0)));
+        Query query = select(col("id"))
+            .from(tbl("users"))
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "select.hint".equals(p.clausePath())));
+    }
+
+    @Test
+    void validate_reportsPostgresStatementHintsAsUnsupportedAcrossDmlStatements() {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(18, 0)));
+        var insertStatement = insert("users")
+            .columns(id("id"))
+            .values(rows(row(lit(1L))))
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .build();
+        var updateStatement = update("users")
+            .set(id("name"), lit("alice"))
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .build();
+        var deleteStatement = delete("users")
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .build();
+        var mergeStatement = merge("users")
+            .source(tbl("users").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .build();
+
+        var insertResult = validator.validate(insertStatement);
+        var updateResult = validator.validate(updateStatement);
+        var deleteResult = validator.validate(deleteStatement);
+        var mergeResult = validator.validate(mergeStatement);
+
+        assertTrue(insertResult.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "insert.hint".equals(p.clausePath())));
+        assertTrue(updateResult.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "update.hint".equals(p.clausePath())));
+        assertTrue(deleteResult.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "delete.hint".equals(p.clausePath())));
+        assertTrue(mergeResult.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "merge.hint".equals(p.clausePath())));
+    }
+
+    @Test
+    void validate_reportsPostgresTableHintsAsUnsupported() {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(18, 0)));
+        Query query = select(col("id"))
+            .from(tbl("users").hint("NOLOCK"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "table.hint".equals(p.clausePath())));
+    }
+
+    @Test
     void dialect_ofDefaultsToLatestSupportedVersion() {
         var dialect = PostgresValidationDialect.of();
 
@@ -422,12 +492,14 @@ class PostgresValidationDialectTest {
         assertNotNull(catalog);
         assertTrue(catalog.resolve("to_json").isPresent());
         assertFalse(catalog.resolve("to_jsonb").isPresent());
-        assertEquals(5, rules.size());
+        assertEquals(7, rules.size());
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectFeatureValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectClauseConsistencyRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresDistinctOnValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresCteFeatureValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresMergeFeatureValidationRule")));
+        assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresStatementHintValidationRule")));
+        assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresTableHintValidationRule")));
     }
 
     @Test

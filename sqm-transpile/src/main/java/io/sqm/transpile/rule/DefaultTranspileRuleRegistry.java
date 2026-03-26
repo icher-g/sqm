@@ -1,11 +1,11 @@
 package io.sqm.transpile.rule;
 
 import io.sqm.core.dialect.SqlDialectId;
+import io.sqm.transpile.builtin.MySqlHintDroppingRule;
 import io.sqm.transpile.builtin.MySqlToPostgresInsertModeUnsupportedRule;
 import io.sqm.transpile.builtin.MySqlToPostgresJsonFunctionUnsupportedRule;
 import io.sqm.transpile.builtin.MySqlToPostgresNullSafeComparisonRule;
 import io.sqm.transpile.builtin.MySqlToPostgresOnDuplicateKeyUnsupportedRule;
-import io.sqm.transpile.builtin.MySqlToPostgresHintDroppingRule;
 import io.sqm.transpile.builtin.PostgresToMySqlIlikeRule;
 import io.sqm.transpile.builtin.PostgresToMySqlNullSafeComparisonRule;
 import io.sqm.transpile.builtin.PostgresToMySqlDistinctOnUnsupportedRule;
@@ -16,9 +16,9 @@ import io.sqm.transpile.builtin.PostgresMergeUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlSimilarToUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToSqlServerDistinctOnUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToSqlServerReturningUnsupportedRule;
+import io.sqm.transpile.builtin.SqlServerHintDroppingRule;
 import io.sqm.transpile.builtin.SqlServerMergeUnsupportedRule;
 import io.sqm.transpile.builtin.SqlServerOutputUnsupportedRule;
-import io.sqm.transpile.builtin.SqlServerTableHintsUnsupportedRule;
 import io.sqm.transpile.builtin.SqlServerTopToLimitRule;
 import io.sqm.transpile.builtin.StandardLimitToSqlServerTopRule;
 
@@ -53,7 +53,7 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
             new PostgresToMySqlOperatorFamilyUnsupportedRule(),
             new PostgresMergeUnsupportedRule(),
             new MySqlToPostgresNullSafeComparisonRule(),
-            new MySqlToPostgresHintDroppingRule(),
+            new MySqlHintDroppingRule(),
             new MySqlToPostgresOnDuplicateKeyUnsupportedRule(),
             new MySqlToPostgresInsertModeUnsupportedRule(),
             new MySqlToPostgresJsonFunctionUnsupportedRule(),
@@ -61,7 +61,7 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
             new SqlServerTopToLimitRule(),
             new SqlServerOutputUnsupportedRule(),
             new SqlServerMergeUnsupportedRule(),
-            new SqlServerTableHintsUnsupportedRule(),
+            new SqlServerHintDroppingRule(),
             new PostgresToSqlServerDistinctOnUnsupportedRule(),
             new PostgresToSqlServerReturningUnsupportedRule()
         ));

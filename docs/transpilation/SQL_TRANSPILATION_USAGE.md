@@ -101,14 +101,14 @@ Expected warning:
   - representative PostgreSQL-specific operator families
   - PostgreSQL case-insensitive regex variants
 
-### MySQL -> PostgreSQL
+### MySQL -> non-MySQL target
 
 - Exact:
   - `ConcatExpr` / string concatenation
   - `<=>`
   - supported regex predicate subset
 - Warning-based rewrite:
-  - optimizer comments and index hints are dropped
+  - MySQL statement and table hints are dropped for non-MySQL targets
 - Unsupported:
   - `ON DUPLICATE KEY UPDATE`
   - `INSERT IGNORE`
@@ -120,14 +120,15 @@ Expected warning:
 - Exact:
   - row limiting rewrite from `LIMIT` to SQL Server `TOP`
 
-### SQL Server -> Standard / ANSI-style target
+### SQL Server -> non-SQL Server target
 
 - Exact:
   - `TOP` to standard row-limiting model / target `LIMIT`
+- Warning-based rewrite:
+  - SQL Server statement and table hints are dropped for non-SQL Server targets
 - Unsupported:
   - `TOP ... PERCENT`
   - `TOP ... WITH TIES`
-  - SQL Server table hints such as `WITH (NOLOCK)` / `WITH (UPDLOCK)` / `WITH (HOLDLOCK)`
   - `DISTINCT ON` when targeting SQL Server from PostgreSQL source
   - deferred SQL Server advanced DML features such as `OUTPUT` and `MERGE`
 
@@ -152,7 +153,7 @@ Use:
 SQL Server note:
 
 - The current SQL Server transpilation slice is intentionally baseline-focused.
-- More SQL Server-specific rule families are tracked in `docs/epics/R5B_SQL_SERVER_ADVANCED_SUPPORT.md`.
+- More SQL Server-specific rule families are tracked in `docs/epics/R5B_SQL_SERVER_ADVANCED_SUPPORT_COMPLETED.md`.
 
 ## Strict Warning Policy
 

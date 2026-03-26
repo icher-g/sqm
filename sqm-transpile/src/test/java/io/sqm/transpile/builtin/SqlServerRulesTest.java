@@ -89,16 +89,33 @@ class SqlServerRulesTest {
     }
 
     @Test
-    void sqlServerTableHintsRuleRejectsSqlServerHintsForNonSqlServerTargets() {
+    void sqlServerHintRuleDropsSqlServerHintsForNonSqlServerTargets() {
         Statement statement = Dsl.select(Dsl.col("id"))
             .from(Dsl.tbl("users").withNoLock())
             .build();
 
-        var result = new SqlServerTableHintsUnsupportedRule().apply(statement, context(SqlDialectId.SQLSERVER, SqlDialectId.POSTGRESQL));
+        var result = new SqlServerHintDroppingRule().apply(statement, context(SqlDialectId.SQLSERVER, SqlDialectId.POSTGRESQL));
 
-        assertEquals(io.sqm.transpile.RewriteFidelity.UNSUPPORTED, result.fidelity());
-        assertFalse(result.problems().isEmpty());
-        assertEquals("UNSUPPORTED_SQLSERVER_TABLE_HINTS", result.problems().getFirst().code());
+        assertEquals(io.sqm.transpile.RewriteFidelity.APPROXIMATE, result.fidelity());
+        assertTrue(result.problems().isEmpty());
+        assertEquals("SQLSERVER_HINTS_DROPPED", result.warnings().getFirst().code());
+        assertTrue(((io.sqm.core.Table) ((io.sqm.core.SelectQuery) result.statement()).from()).hints().isEmpty());
+    }
+
+    @Test
+    void sqlServerHintRuleDropsStatementAndGenericTableHintsToo() {
+        Statement statement = Dsl.select(Dsl.col("id"))
+            .from(Dsl.tbl("users").hint("INDEX", "idx_users_name"))
+            .hint("QUERYTRACEON", 4199)
+            .build();
+
+        var result = new SqlServerHintDroppingRule().apply(statement, context(SqlDialectId.SQLSERVER, SqlDialectId.POSTGRESQL));
+
+        assertEquals(io.sqm.transpile.RewriteFidelity.APPROXIMATE, result.fidelity());
+        assertTrue(result.problems().isEmpty());
+        assertEquals("SQLSERVER_HINTS_DROPPED", result.warnings().getFirst().code());
+        assertTrue(result.statement().hints().isEmpty());
+        assertTrue(((io.sqm.core.Table) ((io.sqm.core.SelectQuery) result.statement()).from()).hints().isEmpty());
     }
 
     @Test

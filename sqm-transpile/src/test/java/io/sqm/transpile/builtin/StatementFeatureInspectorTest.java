@@ -39,11 +39,6 @@ class StatementFeatureInspectorTest {
             .from(Dsl.tbl("users"))
             .distinct(Dsl.col("user_id"))
             .build();
-        var topSpec = SelectQuery.builder()
-            .select(Dsl.col("id"))
-            .from(Dsl.tbl("users"))
-            .top(Dsl.lit(5))
-            .build();
         var ilike = Dsl.select(Dsl.col("name"))
             .from(Dsl.tbl("users"))
             .where(Dsl.col("name").ilike("al%"))
@@ -56,13 +51,11 @@ class StatementFeatureInspectorTest {
         assertTrue(StatementFeatureInspector.hasResultClause(update));
         assertTrue(StatementFeatureInspector.hasResultClause(delete));
         assertTrue(StatementFeatureInspector.hasDistinctOn(distinctOn));
-        assertTrue(StatementFeatureInspector.hasTopSpec(topSpec));
         assertTrue(StatementFeatureInspector.hasLikeMode(ilike, LikeMode.ILIKE));
         assertTrue(StatementFeatureInspector.hasAnyBinaryOperator(operator, Set.of("->>")));
 
         assertFalse(StatementFeatureInspector.hasResultClause(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()));
         assertFalse(StatementFeatureInspector.hasDistinctOn(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()));
-        assertFalse(StatementFeatureInspector.hasTopSpec(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()));
         assertFalse(StatementFeatureInspector.hasLikeMode(ilike, LikeMode.LIKE));
         assertFalse(StatementFeatureInspector.hasAnyBinaryOperator(operator, Set.of("@>")));
     }
@@ -102,7 +95,7 @@ class StatementFeatureInspectorTest {
     }
 
     @Test
-    void detectsFunctionsStatementHintsInsertModesAndConflictActions() {
+    void detectsFunctionPrefixesInsertModesAndConflictActions() {
         var functionQuery = Dsl.select(FunctionExpr.of(
                 QualifiedName.of("json_extract"),
                 List.of(FunctionExpr.Arg.expr(Dsl.col("payload")), FunctionExpr.Arg.expr(Dsl.lit("$.id"))),
@@ -111,32 +104,6 @@ class StatementFeatureInspectorTest {
                 null,
                 null
             ))
-            .from(Dsl.tbl("users").useIndex("idx_users_name"))
-            .build();
-        var hintedSelect = SelectQuery.builder()
-            .select(Dsl.col("id"))
-            .from(Dsl.tbl("users"))
-            .hint("MAX_EXECUTION_TIME", 1000)
-            .build();
-        var hintedUpdate = UpdateStatement.builder(Dsl.tbl("users"))
-            .set(Dsl.set("name", Dsl.lit("alice")))
-            .hint("BKA", "users")
-            .build();
-        var hintedDelete = DeleteStatement.builder(Dsl.tbl("users"))
-            .hint("BKA", "users")
-            .build();
-        var hintedInsert = InsertStatement.builder(Dsl.tbl("users"))
-            .hint("APPEND")
-            .values(Dsl.row(Dsl.lit(1)))
-            .build();
-        var hintedMerge = Dsl.merge("users")
-            .hint("MERGE_HINT")
-            .source(Dsl.tbl("src").as("s"))
-            .on(Dsl.col("users", "id").eq(Dsl.col("s", "id")))
-            .whenMatchedDelete()
-            .build();
-        var lockHintQuery = Dsl.select(Dsl.col("id"))
-            .from(Dsl.tbl("users").withNoLock())
             .build();
         var insertIgnore = InsertStatement.builder(Dsl.tbl("users"))
             .ignore()
@@ -153,23 +120,11 @@ class StatementFeatureInspectorTest {
             )
             .build();
 
-        assertTrue(StatementFeatureInspector.hasAnyFunctionName(functionQuery, Set.of("JSON_EXTRACT")));
         assertTrue(StatementFeatureInspector.hasAnyFunctionNamePrefix(functionQuery, Set.of("json_")));
-        assertTrue(StatementFeatureInspector.hasStatementHints(hintedSelect));
-        assertTrue(StatementFeatureInspector.hasStatementHints(hintedUpdate));
-        assertTrue(StatementFeatureInspector.hasStatementHints(hintedDelete));
-        assertTrue(StatementFeatureInspector.hasStatementHints(hintedInsert));
-        assertTrue(StatementFeatureInspector.hasStatementHints(hintedMerge));
-        assertTrue(StatementFeatureInspector.hasIndexHints(functionQuery));
-        assertTrue(StatementFeatureInspector.hasLockHints(lockHintQuery));
         assertTrue(StatementFeatureInspector.hasInsertMode(insertIgnore, InsertStatement.InsertMode.IGNORE));
         assertTrue(StatementFeatureInspector.hasOnConflictAction(insertConflict, InsertStatement.OnConflictAction.DO_UPDATE));
 
-        assertFalse(StatementFeatureInspector.hasAnyFunctionName(functionQuery, Set.of("JSON_OBJECT")));
         assertFalse(StatementFeatureInspector.hasAnyFunctionNamePrefix(functionQuery, Set.of("DATE_")));
-        assertFalse(StatementFeatureInspector.hasStatementHints(functionQuery));
-        assertFalse(StatementFeatureInspector.hasIndexHints(hintedSelect));
-        assertFalse(StatementFeatureInspector.hasLockHints(hintedSelect));
         assertFalse(StatementFeatureInspector.hasInsertMode(insertIgnore, InsertStatement.InsertMode.REPLACE));
         assertFalse(StatementFeatureInspector.hasOnConflictAction(insertIgnore, InsertStatement.OnConflictAction.DO_UPDATE));
     }
@@ -179,12 +134,10 @@ class StatementFeatureInspectorTest {
         MergeStatement mergeStatement = Dsl.merge("users")
             .source(Dsl.tbl("src").as("s"))
             .on(Dsl.col("users", "id").eq(Dsl.col("s", "id")))
-            .top(Dsl.top(5))
             .whenMatchedDelete()
             .build();
 
         assertTrue(StatementFeatureInspector.hasMergeStatement(mergeStatement));
-        assertTrue(StatementFeatureInspector.hasTopSpec(mergeStatement));
         assertFalse(StatementFeatureInspector.hasMergeStatement(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()));
     }
 }

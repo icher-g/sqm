@@ -665,6 +665,44 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
+    void validate_reportsUnsupportedNonLockSqlServerTableHintsAcrossDmlTargets() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var insertStatement = insert(tbl("users").hint("INDEX", "idx_users_name"))
+            .columns(id("id"), id("name"))
+            .values(rows(row(lit(1L), lit("alice"))))
+            .build();
+        var updateStatement = update(tbl("users").hint("USE_INDEX", "idx_users_name"))
+            .set(Identifier.of("name"), lit("alice"))
+            .build();
+        var mergeStatement = merge(tbl("users").hint("INDEX", "idx_users_name"))
+            .source(tbl("users").as("s").hint("USE_INDEX", "idx_users_name"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .build();
+
+        var insertResult = validator.validate(insertStatement);
+        var updateResult = validator.validate(updateStatement);
+        var mergeResult = validator.validate(mergeStatement);
+
+        assertTrue(insertResult.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "insert.table".equals(problem.clausePath())
+        ));
+        assertTrue(updateResult.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "update.table".equals(problem.clausePath())
+        ));
+        assertTrue(mergeResult.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "merge.target".equals(problem.clausePath())
+        ));
+        assertTrue(mergeResult.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "merge.source".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
     void dialect_exposesSqlServerRules() {
         var dialect = SqlServerValidationDialect.of();
 

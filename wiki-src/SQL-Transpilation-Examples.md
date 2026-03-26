@@ -58,7 +58,7 @@ FROM users
 WHERE first_name IS NOT DISTINCT FROM last_name
 ```
 
-## Warning-Based MySQL -> PostgreSQL Conversion
+## Warning-Based MySQL -> non-MySQL Conversion
 
 Source SQL:
 
@@ -77,6 +77,30 @@ FROM users
 Expected warning:
 
 - `MYSQL_HINTS_DROPPED`
+
+The same warning-based drop policy applies for any non-MySQL target dialect.
+
+## Warning-Based SQL Server -> non-SQL Server Conversion
+
+Source SQL:
+
+```sql
+SELECT [u].[id]
+FROM [users] AS [u] WITH (NOLOCK)
+```
+
+Target SQL:
+
+```sql
+SELECT u.id
+FROM users AS u
+```
+
+Expected warning:
+
+- `SQLSERVER_HINTS_DROPPED`
+
+The same warning-based drop policy applies for any non-SQL Server target dialect.
 
 ## Unsupported Example
 
