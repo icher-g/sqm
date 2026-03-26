@@ -1,7 +1,7 @@
 ## Epic
 
 ### Title
-`Epic: R7 Typed Hint Modeling`
+`Epic: R7 Typed Hint Modeling (Completed)`
 
 ### Problem Statement
 SQM currently supports several hint-like constructs, but most of the model surface is still too string-oriented or too syntax-shaped for a framework whose main purpose is SQL query manipulation.
@@ -353,6 +353,96 @@ First-wave recommendation:
 - keep the hint hierarchy extensible enough that join-owned hints can be introduced later if a supported dialect truly needs them
 - record join-hint attachment as the next design step instead of assuming statement hints are always sufficient
 
+## Join-Hint Attachment Decision
+
+The next-step design decision should be:
+
+- do not classify hints by syntax wrapper
+- classify hints by semantic target
+
+That gives three distinct buckets:
+
+### 1. Statement-owned hints
+
+Use `StatementHint` when the hint affects the statement as a whole, overall plan shape, or coordination across multiple joins.
+
+Examples:
+
+- MySQL `MAX_EXECUTION_TIME(...)`
+- Oracle `LEADING(...)`
+- SQL Server `OPTION (HASH JOIN, MAXDOP 4)`
+
+These may influence join planning, but they are not naturally owned by one specific `Join` node.
+
+### 2. Table-owned hints
+
+Use `TableHint` when the hint targets a relation reference or alias, even if the source syntax is a statement comment rather than inline table syntax.
+
+Examples:
+
+- MySQL `USE INDEX (idx)`
+- Oracle `INDEX(t idx)`
+- Spark `BROADCAST(t)` when the hint is really selecting the relation side to broadcast
+- Oracle or Spark hint families that name one relation alias as the preferred join input
+
+These hints are semantically tied to a relation occurrence, not to the whole statement and not necessarily to one specific join edge syntax node.
+
+### 3. Join-owned hints
+
+Introduce `JoinHint` only when a supported dialect needs a hint that is semantically owned by a specific join edge rather than by:
+
+- the whole statement, or
+- one relation reference
+
+This is the right bucket for future hints whose meaning depends on a particular join operation between left and right inputs and would become ambiguous if stored only on a table or statement.
+
+### Practical modeling rule
+
+Before adding `JoinHint`, ask:
+
+> If the query is reordered, cloned, or one table reference is moved, does the hint logically move with one relation, with the whole statement, or with one exact join edge?
+
+Use the answer as the attachment point:
+
+- moves with the whole statement -> `StatementHint`
+- moves with one relation reference -> `TableHint`
+- moves with one exact join edge -> `JoinHint`
+
+### Consequence for current examples
+
+Under this rule:
+
+- Oracle `LEADING(...)` stays statement-owned
+- SQL Server `OPTION (HASH JOIN, ...)` stays statement-owned
+- MySQL `USE INDEX (idx)` stays table-owned
+- Oracle `INDEX(t idx)` is table-owned even though it appears in comment-hint syntax
+- Spark `BROADCAST(t)` should be modeled as table-owned unless later dialect evidence shows we need a more join-edge-specific meaning
+
+### Current supported-dialect note
+
+Among SQM's currently supported dialects:
+
+- PostgreSQL does not have native optimizer-hint support in scope
+- MySQL has join-related planning features, but they are currently statement-owned or table-owned rather than true join-edge hints
+- SQL Server does have native join hints such as `LOOP`, `HASH`, and `MERGE` attached to the join operator itself
+
+Even so, SQL Server join hints are currently out of scope for the active `R7` implementation slice and should be treated as explicitly unsupported until a dedicated follow-up story adds:
+
+- `JoinHint` modeling if still justified after implementation review
+- SQL Server parse/render/validate/transpile support for join-edge hints
+- DSL, codegen, JSON, visitor, transformer, and matcher coverage for the new attachment point
+
+### Future implementation recommendation
+
+If a supported dialect later proves true join-edge hint value, the future shape should be:
+
+- add `JoinHint extends Hint`
+- add `List<JoinHint> hints()` to `Join`
+- keep parser/renderers responsible for syntax placement
+- update visitors, transformers, JSON, matchers, DSL, codegen, validation, and transpilation explicitly
+
+Until a supported dialect requires that, relation-targeted join-strategy hints should prefer `TableHint`, not a premature `JoinHint` node.
+
 ---
 
 ## Hint Arguments
@@ -684,6 +774,7 @@ Recommended first wave:
 - exhaustive Oracle hint families
 - complex nested hint argument grammars
 - every possible MySQL index-hint variation if not already needed
+- SQL Server join-operator hints such as `LOOP`, `HASH`, and `MERGE`
 
 ---
 
@@ -707,7 +798,7 @@ SelectQuery query = select(col("id"))
 
 Possible internal model:
 
-- `SelectQuery.statementHints(): List<StatementHint>`
+- `Statement.hints(): List<StatementHint>`
 - `Table.hints(): List<TableHint>`
 
 ---
@@ -766,8 +857,17 @@ Reason:
 
 Recommendation:
 
-- not yet
-- design attachment for join hints explicitly in a follow-up step after statement/table typed hints are established
+- not as a required first-wave node family
+- use the semantic-target rule above:
+  - statement-global planner hints stay `StatementHint`
+  - relation-targeted join-strategy hints stay `TableHint`
+  - only true join-edge semantics justify a future `JoinHint`
+
+Reason:
+
+- many “join hints” in vendor SQL are actually statement-global or relation-targeted
+- introducing `JoinHint` too early would overfit syntax examples rather than manipulation value
+- a future `JoinHint` remains valid if a supported dialect later needs explicit join-edge ownership
 
 ---
 

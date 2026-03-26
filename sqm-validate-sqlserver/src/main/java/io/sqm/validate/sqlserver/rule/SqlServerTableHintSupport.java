@@ -16,10 +16,21 @@ final class SqlServerTableHintSupport {
     }
 
     static void validateHints(Table table, SchemaValidationContext context, String clausePath) {
+        if (table.hints().isEmpty()) {
+            return;
+        }
+
         var hints = table.hints().stream()
             .filter(SqlServerTableHintSupport::isLockHint)
             .toList();
-        if (hints.isEmpty()) {
+
+        if (hints.size() != table.hints().size()) {
+            context.addProblem(
+                ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
+                "SQL Server baseline support currently includes only lock-style table hints",
+                table,
+                clausePath
+            );
             return;
         }
 

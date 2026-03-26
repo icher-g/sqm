@@ -8,6 +8,7 @@ SQM represents queries as immutable, typed nodes.
 - `Expression`: columns, literals, functions, arithmetic, etc.
 - `Predicate`: `AND/OR`, comparison, `IN`, `EXISTS`, etc.
 - `TableRef` and joins
+- typed hints through `StatementHint`, `TableHint`, and `HintArg`
 
 Detailed hierarchy: `docs/model/MODEL.md`.
 
@@ -24,6 +25,21 @@ The core model documents what SQM can represent in the AST. That is not the same
 - `RecursiveNodeVisitor<R>` for analysis
 - `RecursiveNodeTransformer` for rewrites
 - `Match` API for typed dispatch without `instanceof` chains
+
+## Hints
+
+Hints are now part of the shared model rather than raw string baggage.
+
+- `Statement.hints()` carries typed `StatementHint` nodes for `SELECT`, `INSERT`, `UPDATE`, `DELETE`, and `MERGE`
+- `Table.hints()` carries typed `TableHint` nodes for relation-owned hint syntax
+- `HintArg` preserves argument structure as identifier, qualified-name, or expression data instead of flattening everything to hint-body text
+
+Dialects still own:
+
+- parsing support
+- rendering syntax
+- validation rules
+- transpilation behavior
 
 ## Example: Collect Used Columns
 

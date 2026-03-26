@@ -873,6 +873,7 @@ class DefaultSqlTranspilerTest {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.MYSQL)
             .targetDialect(SqlDialectId.POSTGRESQL)
+            .options(new TranspileOptions(true, false, true, true))
             .build();
 
         var result = transpiler.transpile("SELECT /*+ NO_RANGE_OPTIMIZATION(users) */ * FROM users");
@@ -880,6 +881,10 @@ class DefaultSqlTranspilerTest {
         assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
         assertEquals(normalizeSql("SELECT * FROM users"), normalizeSql(result.sql().orElseThrow()));
         assertEquals("MYSQL_HINTS_DROPPED", result.warnings().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "mysql-hint-dropping".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.APPROXIMATE
+        ));
     }
 
     @Test
@@ -887,6 +892,7 @@ class DefaultSqlTranspilerTest {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.MYSQL)
             .targetDialect(SqlDialectId.POSTGRESQL)
+            .options(new TranspileOptions(true, false, true, true))
             .build();
 
         var result = transpiler.transpile("/*+ MAX_EXECUTION_TIME(1000) */ SELECT id FROM users");
@@ -901,6 +907,7 @@ class DefaultSqlTranspilerTest {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.MYSQL)
             .targetDialect(SqlDialectId.POSTGRESQL)
+            .options(new TranspileOptions(true, false, true, true))
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users USE INDEX (idx_users_name)");
@@ -915,6 +922,7 @@ class DefaultSqlTranspilerTest {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.MYSQL)
             .targetDialect(SqlDialectId.POSTGRESQL)
+            .options(new TranspileOptions(true, false, true, true))
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users FORCE INDEX FOR JOIN (idx_users_name)");
@@ -929,6 +937,7 @@ class DefaultSqlTranspilerTest {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.MYSQL)
             .targetDialect(SqlDialectId.POSTGRESQL)
+            .options(new TranspileOptions(true, false, true, true))
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users IGNORE INDEX FOR ORDER BY (idx_users_name)");
@@ -943,7 +952,7 @@ class DefaultSqlTranspilerTest {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.MYSQL)
             .targetDialect(SqlDialectId.POSTGRESQL)
-            .options(new TranspileOptions(false, true, true, true))
+            .options(new TranspileOptions(true, true, true, true))
             .build();
 
         var result = transpiler.transpile("SELECT * FROM users USE INDEX (idx_users_name)");
@@ -951,6 +960,72 @@ class DefaultSqlTranspilerTest {
         assertEquals(TranspileStatus.UNSUPPORTED, result.status());
         assertEquals("WARNINGS_NOT_ALLOWED", result.problems().getFirst().code());
         assertEquals("MYSQL_HINTS_DROPPED", result.warnings().getFirst().code());
+    }
+
+    @Test
+    void genericMysqlHintFamiliesAreDroppedDuringTranspilation() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .options(new TranspileOptions(true, false, true, true))
+            .build();
+
+        var statement = Dsl.select(Dsl.col("id"))
+            .from(Dsl.tbl("users"))
+            .hint("JOIN_ORDER", "users")
+            .build();
+
+        var result = transpiler.transpile(statement);
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        assertEquals("MYSQL_HINTS_DROPPED", result.warnings().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "mysql-hint-dropping".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.APPROXIMATE
+        ));
+    }
+
+    @Test
+    void sqlServerHintsAreDroppedWithWarningDuringTranspilation() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.SQLSERVER)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .options(new TranspileOptions(true, false, true, true))
+            .build();
+
+        var statement = Dsl.select(Dsl.col("u", "id"))
+            .from(Dsl.tbl("users").as("u").withNoLock())
+            .hint("QUERYTRACEON", 4199)
+            .build();
+
+        var result = transpiler.transpile(statement);
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        assertEquals("SQLSERVER_HINTS_DROPPED", result.warnings().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "sqlserver-hint-dropping".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.APPROXIMATE
+        ));
+    }
+
+    @Test
+    void mysqlHintsAreDroppedForSqlServerTargetsToo() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.SQLSERVER)
+            .options(new TranspileOptions(true, false, true, true))
+            .build();
+
+        var result = transpiler.transpile("SELECT /*+ MAX_EXECUTION_TIME(1000) */ * FROM users USE INDEX (idx_users_name)");
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        assertFalse(normalizeSql(result.sql().orElseThrow()).contains("MAX_EXECUTION_TIME"));
+        assertFalse(normalizeSql(result.sql().orElseThrow()).contains("USE INDEX"));
+        assertEquals("MYSQL_HINTS_DROPPED", result.warnings().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "mysql-hint-dropping".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.APPROXIMATE
+        ));
     }
 
     @Test

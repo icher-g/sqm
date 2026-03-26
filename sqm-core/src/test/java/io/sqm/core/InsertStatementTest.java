@@ -216,4 +216,25 @@ class InsertStatementTest {
         assertEquals(1, statement.hints().size());
         assertEquals("BKA", statement.hints().getFirst().name().value());
     }
+
+    @Test
+    void builderCanCopyExistingStatement() {
+        var original = insert(tbl("users"))
+            .hint("APPEND")
+            .columns(id("id"))
+            .values(row(lit(1)))
+            .result(col("id"))
+            .build();
+
+        var copied = InsertStatement.builder(original)
+            .clearHints()
+            .hint("BKA", "users")
+            .build();
+
+        assertEquals(original.table(), copied.table());
+        assertEquals(original.columns(), copied.columns());
+        assertEquals(original.source(), copied.source());
+        assertEquals("APPEND", original.hints().getFirst().name().value());
+        assertEquals("BKA", copied.hints().getFirst().name().value());
+    }
 }

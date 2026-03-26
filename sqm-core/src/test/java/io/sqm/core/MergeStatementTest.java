@@ -244,4 +244,26 @@ class MergeStatementTest {
         assertEquals(1, statement.hints().size());
         assertEquals("BKA", statement.hints().getFirst().name().value());
     }
+
+    @Test
+    void builderCanCopyExistingStatement() {
+        var original = merge(tbl("users"))
+            .hint("MERGE_HINT")
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .build();
+
+        var copied = MergeStatement.builder(original)
+            .clearHints()
+            .hint("QUERYTRACEON", 4199)
+            .build();
+
+        assertEquals(original.target(), copied.target());
+        assertEquals(original.source(), copied.source());
+        assertEquals(original.on(), copied.on());
+        assertEquals(original.clauses(), copied.clauses());
+        assertEquals("MERGE_HINT", original.hints().getFirst().name().value());
+        assertEquals("QUERYTRACEON", copied.hints().getFirst().name().value());
+    }
 }

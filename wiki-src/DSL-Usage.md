@@ -16,6 +16,36 @@ Query q = select(
   .limit(10);
 ```
 
+## Typed Hints
+
+Statement and table hints can be expressed directly through the DSL:
+
+```java
+var query = select(col("id"))
+  .from(tbl("users").hint("NOLOCK"))
+  .hint("MAX_EXECUTION_TIME", 1000)
+  .build();
+```
+
+Standalone construction is also available when you want to build hints separately:
+
+```java
+var query = select(col("id"))
+  .from(tbl("users").hint(tableHint("USE_INDEX", "idx_users_name")))
+  .hint(statementHint("QB_NAME", lit("main")))
+  .build();
+```
+
+The same `hint(...)` style is available on DML builders:
+
+```java
+var insert = insertInto(tbl("users"))
+  .columns(col("id"), col("name"))
+  .values(row(lit(1), lit("alice")))
+  .hint("MAX_EXECUTION_TIME", 1000)
+  .build();
+```
+
 ## Tips
 
 - Keep aliases stable (`u`, `o`, etc.) for readability.
@@ -26,6 +56,7 @@ Query q = select(
 
 - Ambiguous unqualified columns in multi-table queries.
 - Using PostgreSQL-only constructs under ANSI dialect.
+- Attaching dialect-specific hints and assuming every renderer/transpiler will preserve them exactly.
 
 ## Next
 

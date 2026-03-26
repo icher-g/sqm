@@ -3,6 +3,8 @@ package io.sqm.validate.mysql;
 import io.sqm.core.Node;
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.validate.mysql.rule.MySqlIndexHintValidationRule;
+import io.sqm.validate.mysql.rule.MySqlStatementHintValidationRule;
+import io.sqm.validate.mysql.rule.MySqlTableHintValidationRule;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
 
@@ -11,8 +13,8 @@ import java.util.List;
 /**
  * MySQL-specific schema validation dialect.
  *
- * <p>This dialect currently contributes optional validation for conflicting
- * MySQL table index-hint combinations.</p>
+ * <p>This dialect contributes first-wave MySQL hint validation plus
+ * conflicting table index-hint checks.</p>
  */
 public final class MySqlValidationDialect implements SchemaValidationDialect {
     private static final MySqlValidationDialect INSTANCE = new MySqlValidationDialect();
@@ -46,6 +48,10 @@ public final class MySqlValidationDialect implements SchemaValidationDialect {
      */
     @Override
     public List<SchemaValidationRule<? extends Node>> additionalRules() {
-        return List.of(new MySqlIndexHintValidationRule());
+        return List.of(
+            new MySqlStatementHintValidationRule(),
+            new MySqlTableHintValidationRule(),
+            new MySqlIndexHintValidationRule()
+        );
     }
 }

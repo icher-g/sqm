@@ -404,6 +404,35 @@ class PostgresValidationDialectTest {
     }
 
     @Test
+    void validate_reportsPostgresStatementHintsAsUnsupported() {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(18, 0)));
+        Query query = select(col("id"))
+            .from(tbl("users"))
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "select.hint".equals(p.clausePath())));
+    }
+
+    @Test
+    void validate_reportsPostgresTableHintsAsUnsupported() {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(18, 0)));
+        Query query = select(col("id"))
+            .from(tbl("users").hint("NOLOCK"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream()
+            .anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "table.hint".equals(p.clausePath())));
+    }
+
+    @Test
     void dialect_ofDefaultsToLatestSupportedVersion() {
         var dialect = PostgresValidationDialect.of();
 
@@ -422,12 +451,14 @@ class PostgresValidationDialectTest {
         assertNotNull(catalog);
         assertTrue(catalog.resolve("to_json").isPresent());
         assertFalse(catalog.resolve("to_jsonb").isPresent());
-        assertEquals(5, rules.size());
+        assertEquals(7, rules.size());
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectFeatureValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectClauseConsistencyRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresDistinctOnValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresCteFeatureValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresMergeFeatureValidationRule")));
+        assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresStatementHintValidationRule")));
+        assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresTableHintValidationRule")));
     }
 
     @Test

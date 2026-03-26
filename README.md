@@ -29,11 +29,11 @@ Repository development rules for contributors and coding agents are defined in `
 
 ## Features
 
-- **Typed immutable SQL model** - composable AST for statements (queries + DML), expressions, predicates, joins, and dialect-specific nodes.
+- **Typed immutable SQL model** - composable AST for statements (queries + DML), expressions, predicates, joins, typed hints, and dialect-specific nodes.
 - **Dialect support** - ANSI + PostgreSQL + MySQL + SQL Server parser/renderer/spec implementations.
 - **Validation framework** - schema-aware statement validation with configurable limits and access policies (principal/tenant aware).
 - **Rewrite and normalization pipeline** - built-in and custom rewrite rules (limit injection, qualification, canonicalization, tenant predicate, etc.).
-- **SQL transpilation** - source-to-target PostgreSQL/MySQL conversion with exact, approximate, and unsupported diagnostics.
+- **SQL transpilation** - source-to-target PostgreSQL/MySQL/SQL Server slice with exact, approximate, and unsupported diagnostics, including warning-based dropping of dialect-local hints across non-native targets.
 - **Middleware decision engine** - analyze/enforce/explain workflow with guardrails, telemetry, auditing, and flow control.
 - **Transport hosts** - REST and MCP runtimes for externalized middleware usage.
 - **DSL and code generation** - fluent SQL construction plus SQL-file-to-Java generation for queries and DML statements.
@@ -183,6 +183,13 @@ Current scope boundary:
   - `OUTPUT`
   - `TOP (...)`
   - `TOP (...) PERCENT`
+
+Typed hint modeling is also delivered across the shared model:
+
+- statement-owned hints are exposed structurally through `Statement.hints()`
+- table-owned hints are exposed structurally through `Table.hints()`
+- DSL and codegen use typed `hint(...)`, `statementHint(...)`, and `tableHint(...)` construction
+- cross-dialect transpilation currently drops vendor-native MySQL and SQL Server hints with warnings rather than trying to translate them semantically
 
 ### PostgreSQL DML Example
 
@@ -353,6 +360,7 @@ SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM users
 ```
 
 Approximate rewrites such as PostgreSQL `ILIKE` are disabled by default and must be enabled through `TranspileOptions`.
+The same option gate also controls cross-dialect hint dropping, because dropped vendor hints are treated as approximate rewrites.
 
 **Rendered (ANSI):**
 

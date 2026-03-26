@@ -33,7 +33,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
 
         assertEquals(
             java.util.List.of(
-                "mysql-to-postgres-hint-dropping",
+                "mysql-hint-dropping",
                 "mysql-to-postgres-insert-mode-unsupported",
                 "mysql-to-postgres-json-function-unsupported",
                 "mysql-to-postgres-null-safe-comparison",
@@ -63,9 +63,9 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         );
         assertEquals(
             java.util.List.of(
+                "sqlserver-hint-dropping",
                 "sqlserver-merge-unsupported",
                 "sqlserver-output-unsupported",
-                "sqlserver-table-hints-unsupported",
                 "sqlserver-top-to-limit"
             ),
             sqlServerToPostgresRules.stream().map(TranspileRule::id).sorted().toList()
