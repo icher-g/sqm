@@ -13,6 +13,7 @@ import io.sqm.render.mysql.spi.MySqlDialect;
 import io.sqm.render.mysql.spi.MySqlOptimizerHintNormalizationPolicy;
 import io.sqm.render.spi.RenderContext;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,9 +33,11 @@ final class MySqlHintRenderSupport {
         }
 
         var policy = optimizationPolicy(ctx);
+        var renderedHints = new ArrayList<String>();
         for (var hint : hints) {
-            w.space().append("/*+ ").append(policy.normalize(renderHint(hint, ctx))).append(" */");
+            renderedHints.add(policy.normalize(renderHint(hint, ctx)));
         }
+        w.space().append("/*+ ").append(String.join(" ", renderedHints)).append(" */");
     }
 
     static boolean isIndexHint(TableHint hint) {

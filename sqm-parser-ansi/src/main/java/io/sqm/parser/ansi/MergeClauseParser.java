@@ -97,6 +97,7 @@ public class MergeClauseParser implements Parser<MergeClause> {
      * Parses the branch target after {@code WHEN NOT MATCHED BY}.
      *
      * @param cur parser cursor positioned after {@code BY}
+     * @param ctx parse context
      * @return resolved match type, or {@code null} when unsupported
      */
     protected MergeClause.MatchType parseNotMatchedBy(Cursor cur, ParseContext ctx) {

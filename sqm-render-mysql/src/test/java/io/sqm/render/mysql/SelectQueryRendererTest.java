@@ -65,7 +65,7 @@ class SelectQueryRendererTest {
 
         var sql = RenderContext.of(new MySqlDialect()).render(query).sql();
 
-        assertTrue(sql.startsWith("SELECT /*+ MAX_EXECUTION_TIME(1000) */ /*+ BKA(users) */ id"));
+        assertTrue(sql.startsWith("SELECT /*+ MAX_EXECUTION_TIME(1000) BKA(users) */ id"));
     }
 
     @Test
@@ -92,7 +92,7 @@ class SelectQueryRendererTest {
             MySqlOptimizerHintNormalizationPolicy.NORMALIZE_WHITESPACE
         )).render(query).sql();
 
-        assertTrue(sql.startsWith("SELECT /*+ MAX_EXECUTION_TIME(1000) */ /*+ BKA(users) */ id"));
+        assertTrue(sql.startsWith("SELECT /*+ MAX_EXECUTION_TIME(1000) BKA(users) */ id"));
     }
 
     @Test

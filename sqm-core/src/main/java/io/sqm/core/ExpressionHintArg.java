@@ -13,6 +13,7 @@ public non-sealed interface ExpressionHintArg extends HintArg {
      * Creates an expression-valued hint argument.
      *
      * @param value expression value
+     * @return immutable expression hint argument
      */
     static ExpressionHintArg of(Expression value) {
         return new Impl(value);
@@ -20,6 +21,8 @@ public non-sealed interface ExpressionHintArg extends HintArg {
 
     /**
      * Gets an expression value.
+     *
+     * @return expression value
      */
     Expression value();
 
