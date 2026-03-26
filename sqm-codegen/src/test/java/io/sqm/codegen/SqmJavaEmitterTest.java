@@ -431,6 +431,21 @@ class SqmJavaEmitterTest {
     }
 
     @Test
+    void emitQuery_emitsGenericTableHintsAndTypedHintArgs() {
+        Query query = select(star())
+            .from(tbl("users")
+                .hint(TableHint.of("GENERIC_TABLE_HINT", QualifiedName.of("app", "users"), lit("x")))
+            )
+            .hint(statementHint("QUALIFIED_HINT", QualifiedName.of("app", "users")))
+            .build();
+
+        var source = emitter.emitQuery(query);
+
+        assertTrue(source.contains(".hint(\"QUALIFIED_HINT\", QualifiedName.of(id(\"app\"), id(\"users\")))"));
+        assertTrue(source.contains(".hint(\"GENERIC_TABLE_HINT\", QualifiedName.of(id(\"app\"), id(\"users\")), lit(\"x\"))"));
+    }
+
+    @Test
     void emitStatement_coversMergeVariantsWithoutColumnsAndWithResultClause() {
         var mergeStatement = merge(tbl("users"))
             .source(tbl("src").as("s"))

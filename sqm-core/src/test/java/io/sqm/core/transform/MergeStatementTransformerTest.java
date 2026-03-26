@@ -149,4 +149,28 @@ class MergeStatementTransformerTest {
         assertNotSame(statement, transformed);
         assertEquals(2, transformed.topSpec().count().matchExpression().literal(l -> l.value()).orElse(null));
     }
+
+    @Test
+    void rebuildsStatementWhenHintChanges() {
+        var statement = merge(tbl("users"))
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .build();
+
+        var transformed = (MergeStatement) new RecursiveNodeTransformer() {
+            @Override
+            public Node visitLiteralExpr(io.sqm.core.LiteralExpr literalExpr) {
+                if (Integer.valueOf(1000).equals(literalExpr.value())) {
+                    return lit(2000);
+                }
+                return literalExpr;
+            }
+        }.transform(statement);
+
+        assertNotSame(statement, transformed);
+        assertEquals(2000, transformed.hints().getFirst().args().getFirst()
+            .matchHintArg().expression(arg -> arg.value().matchExpression().literal(l -> l.value()).orElse(null)).otherwise(arg -> null));
+    }
 }

@@ -88,6 +88,9 @@ class StatementFeatureInspectorTest {
             .whenMatchedDelete()
             .result(Dsl.deleted("id"))
             .build();
+        var outputDeleteAll = DeleteStatement.builder(Dsl.tbl("users"))
+            .result(Dsl.deletedAll())
+            .build();
 
         assertTrue(StatementFeatureInspector.hasResultClause(returningInsert));
         assertFalse(StatementFeatureInspector.hasSqlServerOutputClause(returningInsert));
@@ -95,6 +98,7 @@ class StatementFeatureInspectorTest {
         assertTrue(StatementFeatureInspector.hasSqlServerOutputClause(outputIntoUpdate));
         assertTrue(StatementFeatureInspector.hasResultClause(outputMerge));
         assertTrue(StatementFeatureInspector.hasSqlServerOutputClause(outputMerge));
+        assertTrue(StatementFeatureInspector.hasSqlServerOutputClause(outputDeleteAll));
     }
 
     @Test

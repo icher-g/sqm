@@ -229,4 +229,19 @@ class MergeStatementTest {
         assertEquals("MAX_EXECUTION_TIME", statement.hints().get(1).name().value());
         assertThrows(UnsupportedOperationException.class, () -> statement.hints().add(statementHint("BKA", "users")));
     }
+
+    @Test
+    void builderReplacesAndClearsTypedStatementHints() {
+        var statement = MergeStatement.builder(tbl("users"))
+            .hints(List.of(statementHint("MERGE_HINT"), statementHint("MAX_EXECUTION_TIME", 1000)))
+            .clearHints()
+            .hint("BKA", "users")
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDelete()
+            .build();
+
+        assertEquals(1, statement.hints().size());
+        assertEquals("BKA", statement.hints().getFirst().name().value());
+    }
 }
