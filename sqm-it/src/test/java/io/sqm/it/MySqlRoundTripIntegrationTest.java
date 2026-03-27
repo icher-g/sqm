@@ -100,6 +100,18 @@ class MySqlRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTrip_lateralDerivedTable() {
+        String sql = "SELECT sq.id FROM LATERAL (SELECT id FROM users) AS sq";
+
+        Query parsed = Utils.parseMySql(sql);
+        String rendered = Utils.renderMySql(parsed);
+        Query reparsed = Utils.parseMySql(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals("SELECT sq.id FROM LATERAL ( SELECT id FROM users ) AS sq", Utils.normalizeSql(rendered));
+    }
+
+    @Test
     void roundTrip_groupByWithRollupCanonicalForm() {
         String sql = "SELECT department, status FROM employees GROUP BY department, status WITH ROLLUP";
 

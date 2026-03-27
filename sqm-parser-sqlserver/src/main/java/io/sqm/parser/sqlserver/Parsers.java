@@ -27,6 +27,7 @@ public final class Parsers {
         var atomicExprParser = new AtomicExprParser();
         var postfixExprParser = new PostfixExprParser(atomicExprParser);
         return repository
+            .register(new JoinParser())
             .register(new InsertStatementParser())
             .register(new UpdateStatementParser())
             .register(new DeleteStatementParser())

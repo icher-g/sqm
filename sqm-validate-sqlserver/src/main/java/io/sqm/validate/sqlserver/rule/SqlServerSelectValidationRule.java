@@ -33,6 +33,7 @@ public final class SqlServerSelectValidationRule implements SchemaValidationRule
     public void validate(SelectQuery node, SchemaValidationContext context) {
         validateTop(node, context);
         validateLimitOffset(node, context);
+        validateLateralApplyShapes(node, context);
 
         if (node.lockFor() != null) {
             context.addProblem(
@@ -130,6 +131,78 @@ public final class SqlServerSelectValidationRule implements SchemaValidationRule
                 "limit_offset"
             );
         }
+    }
+
+    private void validateLateralApplyShapes(SelectQuery node, SchemaValidationContext context) {
+        if (node.from() instanceof Lateral lateral) {
+            context.addProblem(
+                ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
+                "SQL Server lateral relations must be expressed through APPLY joins",
+                lateral,
+                "from.lateral"
+            );
+        }
+
+        node.accept(new RecursiveNodeVisitor<Void>() {
+            @Override
+            protected Void defaultResult() {
+                return null;
+            }
+
+            @Override
+            public Void visitCrossJoin(CrossJoin join) {
+                return super.visitCrossJoin(join);
+            }
+
+            @Override
+            public Void visitNaturalJoin(NaturalJoin join) {
+                if (join.right() instanceof Lateral lateral) {
+                    context.addProblem(
+                        ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
+                        "SQL Server lateral joins must map to CROSS APPLY or OUTER APPLY",
+                        lateral,
+                        "from.lateral"
+                    );
+                }
+                return super.visitNaturalJoin(join);
+            }
+
+            @Override
+            public Void visitOnJoin(OnJoin join) {
+                if (join.right() instanceof Lateral && !isApplyCompatible(join)) {
+                    context.addProblem(
+                        ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
+                        "SQL Server lateral joins must map to CROSS APPLY or OUTER APPLY",
+                        join,
+                        "from.lateral"
+                    );
+                }
+                return super.visitOnJoin(join);
+            }
+
+            @Override
+            public Void visitUsingJoin(UsingJoin join) {
+                if (join.right() instanceof Lateral lateral) {
+                    context.addProblem(
+                        ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
+                        "SQL Server lateral joins must map to CROSS APPLY or OUTER APPLY",
+                        lateral,
+                        "from.lateral"
+                    );
+                }
+                return super.visitUsingJoin(join);
+            }
+        });
+    }
+
+    private static boolean isApplyCompatible(OnJoin join) {
+        return (join.kind() == JoinKind.INNER || join.kind() == JoinKind.LEFT) && isTruePredicate(join.on());
+    }
+
+    private static boolean isTruePredicate(Predicate predicate) {
+        return predicate instanceof UnaryPredicate unary
+            && unary.expr() instanceof LiteralExpr literal
+            && Boolean.TRUE.equals(literal.value());
     }
 
     private static final class SelectFeatureWalker extends RecursiveNodeVisitor<Void> {

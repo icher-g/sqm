@@ -377,6 +377,10 @@ public enum TokenType {
      */
     LATERAL,
     /**
+     * APPLY keyword token.
+     */
+    APPLY,
+    /**
      * RETURNING keyword token.
      */
     RETURNING,

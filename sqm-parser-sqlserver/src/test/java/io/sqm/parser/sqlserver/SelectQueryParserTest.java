@@ -1,17 +1,13 @@
 package io.sqm.parser.sqlserver;
 
-import io.sqm.core.Query;
-import io.sqm.core.SelectQuery;
+import io.sqm.core.*;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class SelectQueryParserTest {
 
@@ -112,6 +108,35 @@ class SelectQueryParserTest {
             "UPDLOCK",
             result.value().from().matchTableRef().table(t -> t.hints().getFirst().name().value()).orElseThrow(AssertionError::new)
         );
+    }
+
+    @Test
+    void parses_crossApply_asLateralCrossJoin() {
+        var context = ParseContext.of(new SqlServerSpecs());
+        var result = context.parse(
+            SelectQuery.class,
+            "SELECT [u].[id] FROM [users] AS [u] CROSS APPLY (SELECT [id] FROM [users]) AS [sq]"
+        );
+
+        assertFalse(result.isError(), result.errorMessage());
+        assertEquals(1, result.value().joins().size());
+        assertInstanceOf(CrossJoin.class, result.value().joins().getFirst());
+        assertInstanceOf(Lateral.class, result.value().joins().getFirst().right());
+    }
+
+    @Test
+    void parses_outerApply_asLeftLateralJoin() {
+        var context = ParseContext.of(new SqlServerSpecs());
+        var result = context.parse(
+            SelectQuery.class,
+            "SELECT [u].[id] FROM [users] AS [u] OUTER APPLY (SELECT [id] FROM [users]) AS [sq]"
+        );
+
+        assertFalse(result.isError(), result.errorMessage());
+        assertEquals(1, result.value().joins().size());
+        assertInstanceOf(OnJoin.class, result.value().joins().getFirst());
+        assertEquals(JoinKind.LEFT, ((io.sqm.core.OnJoin) result.value().joins().getFirst()).kind());
+        assertInstanceOf(Lateral.class, result.value().joins().getFirst().right());
     }
 
     @Test

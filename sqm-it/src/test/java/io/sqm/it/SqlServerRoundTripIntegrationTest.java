@@ -69,6 +69,62 @@ class SqlServerRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTrip_atTimeZone_query() {
+        String sql = """
+            SELECT [u].[created_at] AT TIME ZONE 'UTC' AS [created_utc]
+            FROM [users] AS [u]
+            """.trim();
+
+        Query parsed = Utils.parseSqlServer(sql);
+        String rendered = Utils.renderSqlServer(parsed);
+        Query reparsed = Utils.parseSqlServer(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals(
+            "SELECT [u].[created_at] AT TIME ZONE 'UTC' AS [created_utc] FROM [users] AS [u]",
+            Utils.normalizeSql(rendered)
+        );
+    }
+
+    @Test
+    void roundTrip_crossApply_query() {
+        String sql = """
+            SELECT [u].[id]
+            FROM [users] AS [u]
+            CROSS APPLY (SELECT [id] FROM [users]) AS [sq]
+            """.trim();
+
+        Query parsed = Utils.parseSqlServer(sql);
+        String rendered = Utils.renderSqlServer(parsed);
+        Query reparsed = Utils.parseSqlServer(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals(
+            "SELECT [u].[id] FROM [users] AS [u] CROSS APPLY ( SELECT [id] FROM [users] ) AS [sq]",
+            Utils.normalizeSql(rendered)
+        );
+    }
+
+    @Test
+    void roundTrip_outerApply_query() {
+        String sql = """
+            SELECT [u].[id]
+            FROM [users] AS [u]
+            OUTER APPLY (SELECT TOP (1) [id] FROM [users]) AS [sq]
+            """.trim();
+
+        Query parsed = Utils.parseSqlServer(sql);
+        String rendered = Utils.renderSqlServer(parsed);
+        Query reparsed = Utils.parseSqlServer(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals(
+            "SELECT [u].[id] FROM [users] AS [u] OUTER APPLY ( SELECT TOP (1) [id] FROM [users] ) AS [sq]",
+            Utils.normalizeSql(rendered)
+        );
+    }
+
+    @Test
     void parser_accepts_top_percent() {
         var ctx = ParseContext.of(new SqlServerSpecs());
         var result = ctx.parse(Query.class, "SELECT TOP 10 PERCENT [id] FROM [users]");

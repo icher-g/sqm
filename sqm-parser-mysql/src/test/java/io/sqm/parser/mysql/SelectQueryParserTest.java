@@ -1,8 +1,7 @@
 package io.sqm.parser.mysql;
 
-import io.sqm.core.Query;
-import io.sqm.core.SelectModifier;
-import io.sqm.core.SelectQuery;
+import io.sqm.core.*;
+import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
@@ -11,8 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class SelectQueryParserTest {
 
@@ -73,6 +71,44 @@ class SelectQueryParserTest {
         var select = (SelectQuery) result.value();
         assertEquals(1, select.joins().size());
         assertEquals(io.sqm.core.JoinKind.STRAIGHT, ((io.sqm.core.OnJoin) select.joins().getFirst()).kind());
+    }
+
+    @Test
+    void parsesLateralDerivedTableFromMysql8014() {
+        var ctx = ParseContext.of(new MySqlSpecs(SqlDialectVersion.of(8, 0, 14)));
+        var result = ctx.parse(Query.class, "SELECT sq.id FROM LATERAL (SELECT id FROM users) AS sq");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var select = (SelectQuery) result.value();
+        assertInstanceOf(Lateral.class, select.from());
+        assertInstanceOf(QueryTable.class, ((Lateral) select.from()).inner());
+    }
+
+    @Test
+    void parserRejectsLateralBeforeMysql8014() {
+        var ctx = ParseContext.of(new MySqlSpecs(SqlDialectVersion.of(8, 0, 13)));
+        var result = ctx.parse(Query.class, "SELECT sq.id FROM LATERAL (SELECT id FROM users) AS sq");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("LATERAL"));
+    }
+
+    @Test
+    void parserRejectsLateralBaseTableShape() {
+        var ctx = ParseContext.of(new MySqlSpecs(SqlDialectVersion.of(8, 0, 14)));
+        var result = ctx.parse(Query.class, "SELECT u.id FROM LATERAL users AS u");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("derived table"));
+    }
+
+    @Test
+    void parserRejectsLateralDerivedTableWithoutAlias() {
+        var ctx = ParseContext.of(new MySqlSpecs(SqlDialectVersion.of(8, 0, 14)));
+        var result = ctx.parse(Query.class, "SELECT id FROM LATERAL (SELECT id FROM users)");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("alias"));
     }
 
     @Test

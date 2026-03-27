@@ -59,9 +59,16 @@ class MySqlCapabilitiesTest {
     }
 
     @Test
-    void latest_matches_mysql_8_0_feature_support() {
+    void supportsLateralStartingWithMysql8014() {
+        assertFalse(MySqlCapabilities.of(SqlDialectVersion.of(8, 0, 13)).supports(SqlFeature.LATERAL));
+        assertTrue(MySqlCapabilities.of(SqlDialectVersion.of(8, 0, 14)).supports(SqlFeature.LATERAL));
+        assertTrue(MySqlCapabilities.of(SqlDialectVersion.of(8, 4)).supports(SqlFeature.LATERAL));
+    }
+
+    @Test
+    void latest_matches_mysql_8_0_14_feature_support() {
         var latest = MySqlCapabilities.latest();
-        var expected = MySqlCapabilities.of(SqlDialectVersion.of(8, 0));
+        var expected = MySqlCapabilities.of(SqlDialectVersion.of(8, 0, 14));
 
         assertEquals(expected.supports(SqlFeature.DATE_TYPED_LITERAL), latest.supports(SqlFeature.DATE_TYPED_LITERAL));
         assertEquals(expected.supports(SqlFeature.LOCKING_CLAUSE), latest.supports(SqlFeature.LOCKING_CLAUSE));
@@ -79,6 +86,7 @@ class MySqlCapabilitiesTest {
         assertEquals(expected.supports(SqlFeature.REPLACE_INTO), latest.supports(SqlFeature.REPLACE_INTO));
         assertEquals(expected.supports(SqlFeature.UPDATE_JOIN), latest.supports(SqlFeature.UPDATE_JOIN));
         assertEquals(expected.supports(SqlFeature.DELETE_USING_JOIN), latest.supports(SqlFeature.DELETE_USING_JOIN));
+        assertEquals(expected.supports(SqlFeature.LATERAL), latest.supports(SqlFeature.LATERAL));
         assertEquals(expected.supports(SqlFeature.DML_RESULT_CLAUSE), latest.supports(SqlFeature.DML_RESULT_CLAUSE));
     }
 

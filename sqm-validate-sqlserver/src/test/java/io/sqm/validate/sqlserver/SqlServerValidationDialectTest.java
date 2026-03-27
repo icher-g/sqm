@@ -7,6 +7,7 @@ import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.Identifier;
 import io.sqm.core.LimitOffset;
 import io.sqm.core.SelectModifier;
+import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.SchemaStatementValidator;
 import org.junit.jupiter.api.Test;
@@ -137,6 +138,96 @@ class SqlServerValidationDialectTest {
         var result = validator.validate(query);
 
         assertTrue(result.ok(), result.problems().toString());
+    }
+
+    @Test
+    void validate_acceptsAtTimeZoneForSupportedSqlServerVersions() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of(SqlDialectVersion.of(2019, 0)));
+        var query = select(col("u", "created_at").atTimeZone(lit("UTC")))
+            .from(tbl("users").as("u"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertFalse(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "expression.at_time_zone".equals(problem.clausePath())
+        ), result.problems().toString());
+    }
+
+    @Test
+    void validate_reportsAtTimeZoneForUnsupportedSqlServerVersions() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of(SqlDialectVersion.of(2014, 0)));
+        var query = select(col("u", "created_at").atTimeZone(lit("UTC")))
+            .from(tbl("users").as("u"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "expression.at_time_zone".equals(problem.clausePath())
+                && problem.message().contains("AT TIME ZONE")
+        ));
+    }
+
+    @Test
+    void validate_accepts_applyCompatibleLateralJoinShapes() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var innerApply = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .join(inner(tbl(select(col("id")).from(tbl("users")).build()).as("sq").lateral()).on(unary(lit(true))))
+            .build();
+        var outerApply = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .join(left(tbl(select(col("id")).from(tbl("users")).build()).as("sq").lateral()).on(unary(lit(true))))
+            .build();
+        var crossApply = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .join(cross(tbl(select(col("id")).from(tbl("users")).build()).as("sq").lateral()))
+            .build();
+
+        var innerResult = validator.validate(innerApply);
+        var outerResult = validator.validate(outerApply);
+        var crossResult = validator.validate(crossApply);
+
+        assertFalse(innerResult.problems().stream().anyMatch(problem -> "from.lateral".equals(problem.clausePath())));
+        assertFalse(outerResult.problems().stream().anyMatch(problem -> "from.lateral".equals(problem.clausePath())));
+        assertFalse(crossResult.problems().stream().anyMatch(problem -> "from.lateral".equals(problem.clausePath())));
+    }
+
+    @Test
+    void validate_reportsTopLevelLateralFromItemAsInvalid() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var query = select(col("sq", "id"))
+            .from(tbl(select(col("id")).from(tbl("users")).build()).as("sq").lateral())
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "from.lateral".equals(problem.clausePath())
+                && problem.message().contains("APPLY")
+        ));
+    }
+
+    @Test
+    void validate_reportsNonApplyCompatibleLateralJoinAsInvalid() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var query = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .join(inner(tbl(select(col("id")).from(tbl("users")).build()).as("sq").lateral())
+                .on(col("u", "id").eq(col("sq", "id"))))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "from.lateral".equals(problem.clausePath())
+                && problem.message().contains("APPLY")
+        ));
     }
 
     @Test
@@ -707,7 +798,7 @@ class SqlServerValidationDialectTest {
         var dialect = SqlServerValidationDialect.of();
 
         assertEquals("sqlserver", dialect.name());
-        assertEquals(5, dialect.additionalRules().size());
+        assertEquals(6, dialect.additionalRules().size());
         assertTrue(dialect.functionCatalog().resolve("len").isPresent());
         assertTrue(dialect.functionCatalog().resolve("getdate").isPresent());
     }

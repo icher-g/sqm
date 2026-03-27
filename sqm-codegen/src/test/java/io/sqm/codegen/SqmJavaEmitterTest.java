@@ -168,6 +168,17 @@ class SqmJavaEmitterTest {
     }
 
     @Test
+    void emitQuery_coversAtTimeZoneExpr() {
+        String source = emitter.emitQuery(
+            select(col("u", "created_at").atTimeZone(lit("UTC")).as("created_utc"))
+                .from(tbl("users").as("u"))
+                .build()
+        );
+
+        assertTrue(source.contains("col(\"u\", \"created_at\").atTimeZone(lit(\"UTC\"))"));
+    }
+
+    @Test
     void emitQuery_prefersSqlServerFunctionHelpersWhenAvailable() {
         var source = emitter.emitQuery(
             select(

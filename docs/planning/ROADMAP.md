@@ -128,6 +128,8 @@ Reference epic doc: `docs/epics/R7_TYPED_HINT_MODELING_COMPLETED.md`
 ### Epic R8: Dialect Support Gap Closure
 - Close the currently documented `Not implemented by SQM` dialect gaps from `MODEL.md`.
 - Require each story to confirm dialect/version capability before coding and either implement or reclassify deliberately.
+- MySQL `ResultClause` was reclassified out of this backlog once the shipped MySQL capability matrix and transpilation rules confirmed `RETURNING` is intentionally unsupported for the current supported MySQL slice.
+- Also includes a validation-hardening story to audit dialect feature-validation rules and add missing pre-execution diagnostics where parser/render capability gates currently fire first.
 
 ### Epic R9: Transformation Ergonomics
 - Improve transformation authoring ergonomics without replacing the current visitor/matcher/transformer model.

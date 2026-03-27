@@ -2,6 +2,7 @@ package io.sqm.render.mysql.spi;
 
 import io.sqm.core.QuoteStyle;
 import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.render.ansi.spi.AnsiBooleans;
 import io.sqm.render.ansi.spi.AnsiNullSorting;
 import io.sqm.render.defaults.DefaultValueFormatter;
@@ -28,6 +29,7 @@ class MySqlDialectTest {
         assertInstanceOf(MySqlPaginationStyle.class, dialect.paginationStyle());
         assertNotNull(dialect.renderers());
         assertNotNull(dialect.capabilities());
+        assertTrue(dialect.capabilities().supports(SqlFeature.LATERAL));
     }
 
     @Test

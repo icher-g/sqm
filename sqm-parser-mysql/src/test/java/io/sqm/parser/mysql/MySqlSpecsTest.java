@@ -56,7 +56,17 @@ class MySqlSpecsTest {
 
         assertSame(specs.capabilities(), specs.capabilities());
         assertSame(specs.operatorPolicy(), specs.operatorPolicy());
+        assertTrue(specs.capabilities().supports(SqlFeature.LATERAL));
         assertFalse(specs.capabilities().supports(SqlFeature.DML_RESULT_CLAUSE));
+    }
+
+    @Test
+    void capabilities_respectLateralPatchBoundary() {
+        var unsupported = new MySqlSpecs(SqlDialectVersion.of(8, 0, 13));
+        var supported = new MySqlSpecs(SqlDialectVersion.of(8, 0, 14));
+
+        assertFalse(unsupported.capabilities().supports(SqlFeature.LATERAL));
+        assertTrue(supported.capabilities().supports(SqlFeature.LATERAL));
     }
 
     @Test

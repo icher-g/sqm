@@ -27,10 +27,10 @@ public class MySqlDialect implements SqlDialect {
     private final MySqlOptimizerHintNormalizationPolicy optimizerHintNormalizationPolicy;
 
     /**
-     * Creates a MySQL dialect for baseline version 8.0 with backtick identifier quoting.
+     * Creates a MySQL dialect for baseline version 8.0.14 with backtick identifier quoting.
      */
     public MySqlDialect() {
-        this(SqlDialectVersion.of(8, 0), false, MySqlOptimizerHintNormalizationPolicy.PASS_THROUGH);
+        this(SqlDialectVersion.of(8, 0, 14), false, MySqlOptimizerHintNormalizationPolicy.PASS_THROUGH);
     }
 
     /**

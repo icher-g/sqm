@@ -12,11 +12,16 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.cross;
 import static io.sqm.dsl.Dsl.distinct;
 import static io.sqm.dsl.Dsl.id;
+import static io.sqm.dsl.Dsl.inner;
+import static io.sqm.dsl.Dsl.left;
+import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.top;
 import static io.sqm.dsl.Dsl.topWithTies;
 import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.unary;
 
 class SelectQueryRendererTest {
 
@@ -118,6 +123,62 @@ class SelectQueryRendererTest {
         var query = SelectQuery.builder()
             .select(Expression.literal(1))
             .from(tbl("users").withHoldLock().withHoldLock())
+            .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(query));
+    }
+
+    @Test
+    void renders_crossApply_fromCrossJoinLateral() {
+        var query = Query.select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .join(cross(tbl(Query.select(col("id")).from(tbl("users")).build()).as("sq").lateral()))
+            .build();
+
+        var rendered = RenderContext.of(new SqlServerDialect()).render(query);
+
+        assertEquals(
+            "SELECT u.id FROM users AS u CROSS APPLY ( SELECT id FROM users ) AS sq",
+            normalize(rendered.sql())
+        );
+    }
+
+    @Test
+    void renders_crossApply_fromInnerLateralJoin() {
+        var query = Query.select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .join(inner(tbl(Query.select(col("id")).from(tbl("users")).build()).as("sq").lateral()).on(unary(lit(true))))
+            .build();
+
+        var rendered = RenderContext.of(new SqlServerDialect()).render(query);
+
+        assertEquals(
+            "SELECT u.id FROM users AS u CROSS APPLY ( SELECT id FROM users ) AS sq",
+            normalize(rendered.sql())
+        );
+    }
+
+    @Test
+    void renders_outerApply_fromLeftLateralJoin() {
+        var query = Query.select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .join(left(tbl(Query.select(col("id")).from(tbl("users")).build()).as("sq").lateral()).on(unary(lit(true))))
+            .build();
+
+        var rendered = RenderContext.of(new SqlServerDialect()).render(query);
+
+        assertEquals(
+            "SELECT u.id FROM users AS u OUTER APPLY ( SELECT id FROM users ) AS sq",
+            normalize(rendered.sql())
+        );
+    }
+
+    @Test
+    void rejects_nonApplyCompatibleLateralJoinShape() {
+        var query = Query.select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .join(inner(tbl(Query.select(col("id")).from(tbl("users")).build()).as("sq").lateral())
+                .on(col("u", "id").eq(col("sq", "id"))))
             .build();
 
         assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(query));

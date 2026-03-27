@@ -6,6 +6,7 @@ import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.Identifier;
 import io.sqm.core.TableHint;
+import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.SchemaStatementValidator;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,10 @@ class MySqlValidationDialectTest {
         CatalogTable.of("public", "users",
             CatalogColumn.of("id", CatalogType.LONG),
             CatalogColumn.of("name", CatalogType.STRING)
+        ),
+        CatalogTable.of("public", "orders",
+            CatalogColumn.of("id", CatalogType.LONG),
+            CatalogColumn.of("user_id", CatalogType.LONG)
         )
     );
 
@@ -90,7 +95,68 @@ class MySqlValidationDialectTest {
         var dialect = MySqlValidationDialect.of();
 
         assertEquals("mysql", dialect.name());
+        assertEquals(SqlDialectVersion.of(8, 0, 14), dialect.version());
         assertFalse(dialect.additionalRules().isEmpty());
+    }
+
+    @Test
+    void validate_acceptsLateralDerivedTableFromMysql8014() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(8, 0, 14)));
+        var query = select(col("sq", "id"))
+            .from(tbl(select(col("id")).from(tbl("users")).build()).as("sq").lateral())
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.ok(), () -> result.problems().toString());
+    }
+
+    @Test
+    void validate_reportsUnsupportedLateralBeforeMysql8014() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(8, 0, 13)));
+        var query = select(col("sq", "id"))
+            .from(tbl(select(col("id")).from(tbl("users")).build()).as("sq").lateral())
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "from.lateral".equals(problem.clausePath())
+                && problem.message().contains("LATERAL")
+        ));
+    }
+
+    @Test
+    void validate_reportsInvalidMysqlLateralShapeForBaseTables() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(8, 0, 14)));
+        var query = select(col("u", "id"))
+            .from(tbl("users").as("u").lateral())
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "from.lateral".equals(problem.clausePath())
+                && problem.message().contains("derived tables")
+        ));
+    }
+
+    @Test
+    void validate_reportsMissingAliasForMysqlLateralDerivedTables() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(8, 0, 14)));
+        var query = select(col("id"))
+            .from(tbl(select(col("id")).from(tbl("users")).build()).lateral())
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "from.lateral".equals(problem.clausePath())
+                && problem.message().contains("alias")
+        ));
     }
 
     @Test

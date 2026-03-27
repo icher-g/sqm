@@ -25,6 +25,7 @@ public final class Parsers {
         return repository
             .register(new ConcatExprParser())
             .register(new IntervalLiteralExprParser())
+            .register(new LateralParser())
             .register(new InsertStatementParser())
             .register(new UpdateStatementParser())
             .register(new DeleteStatementParser())

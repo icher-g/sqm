@@ -2,6 +2,7 @@ package io.sqm.render.mysql;
 
 import io.sqm.core.SelectModifier;
 import io.sqm.core.SelectQuery;
+import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.dsl.Dsl;
 import io.sqm.render.ansi.spi.AnsiDialect;
@@ -131,6 +132,53 @@ class SelectQueryRendererTest {
         var sql = RenderContext.of(new MySqlDialect()).render(query).sql();
 
         assertEquals("SELECT u.id FROM users AS u STRAIGHT_JOIN orders AS o ON u.id = o.user_id", normalize(sql));
+    }
+
+    @Test
+    void rendersLateralDerivedTable() {
+        var query = Dsl.select(Dsl.col("sq", "id"))
+            .from(Dsl.tbl(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()).as("sq").lateral())
+            .build();
+
+        var sql = RenderContext.of(new MySqlDialect()).render(query).sql();
+
+        assertEquals("SELECT sq.id FROM LATERAL ( SELECT id FROM users ) AS sq", normalize(sql));
+    }
+
+    @Test
+    void rejectsLateralInUnsupportedMysqlVersion() {
+        var query = Dsl.select(Dsl.col("sq", "id"))
+            .from(Dsl.tbl(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()).as("sq").lateral())
+            .build();
+
+        var renderer = new LateralRenderer();
+        var ctx = RenderContext.of(new MySqlDialect(SqlDialectVersion.of(8, 0, 13)));
+
+        assertThrows(UnsupportedDialectFeatureException.class,
+            () -> renderer.render((io.sqm.core.Lateral) query.from(), ctx, new io.sqm.render.defaults.DefaultSqlWriter(ctx)));
+    }
+
+    @Test
+    void rejectsLateralWrappingBaseTable() {
+        var renderer = new LateralRenderer();
+        var ctx = RenderContext.of(new MySqlDialect());
+
+        var error = assertThrows(IllegalArgumentException.class,
+            () -> renderer.render(Dsl.tbl("users").lateral(), ctx, new io.sqm.render.defaults.DefaultSqlWriter(ctx)));
+
+        assertTrue(error.getMessage().contains("derived tables"));
+    }
+
+    @Test
+    void rejectsLateralDerivedTableWithoutAlias() {
+        var renderer = new LateralRenderer();
+        var ctx = RenderContext.of(new MySqlDialect());
+        var lateral = Dsl.tbl(Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build()).lateral();
+
+        var error = assertThrows(IllegalArgumentException.class,
+            () -> renderer.render(lateral, ctx, new io.sqm.render.defaults.DefaultSqlWriter(ctx)));
+
+        assertTrue(error.getMessage().contains("alias"));
     }
 
     @Test
