@@ -5,7 +5,9 @@ import io.sqm.core.OrderItem;
 import io.sqm.core.Query;
 import io.sqm.core.QuoteStyle;
 import io.sqm.core.SelectQuery;
+import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.spi.RenderContext;
+import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.sqlserver.spi.SqlServerDialect;
 import org.junit.jupiter.api.Test;
 
@@ -182,6 +184,66 @@ class SelectQueryRendererTest {
             .build();
 
         assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(query));
+    }
+
+    @Test
+    void crossJoinRenderer_rejectsLateralWhenCapabilityIsMissing() {
+        var renderer = new CrossJoinRenderer();
+        var ctx = RenderContext.of(new AnsiDialect());
+
+        assertThrows(
+            io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> renderer.render(
+                io.sqm.core.CrossJoin.of(tbl(Query.select(col("id")).from(tbl("users")).build()).as("sq").lateral()),
+                ctx,
+                new DefaultSqlWriter(ctx)
+            )
+        );
+    }
+
+    @Test
+    void crossJoinRenderer_fallsBackToRegularCrossJoinForNonLateralNodes() {
+        var renderer = new CrossJoinRenderer();
+        var ctx = RenderContext.of(new SqlServerDialect());
+        var writer = new DefaultSqlWriter(ctx);
+
+        renderer.render(io.sqm.core.CrossJoin.of(tbl("orders").as("o")), ctx, writer);
+
+        assertEquals("CROSS JOIN orders AS o", normalize(writer.toText(java.util.List.of()).sql()));
+    }
+
+    @Test
+    void onJoinRenderer_rejectsLateralWhenCapabilityIsMissing() {
+        var renderer = new OnJoinRenderer();
+        var ctx = RenderContext.of(new AnsiDialect());
+
+        assertThrows(
+            io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> renderer.render(
+                io.sqm.core.OnJoin.of(
+                    tbl(Query.select(col("id")).from(tbl("users")).build()).as("sq").lateral(),
+                    io.sqm.core.JoinKind.INNER,
+                    unary(lit(true))
+                ),
+                ctx,
+                new DefaultSqlWriter(ctx)
+            )
+        );
+    }
+
+    @Test
+    void onJoinRenderer_fallsBackToRegularJoinForNonLateralNodes() {
+        var renderer = new OnJoinRenderer();
+        var ctx = RenderContext.of(new SqlServerDialect());
+        var writer = new DefaultSqlWriter(ctx);
+
+        renderer.render(
+            io.sqm.core.OnJoin.of(tbl("orders").as("o"), io.sqm.core.JoinKind.RIGHT, col("u", "id").eq(col("o", "user_id"))),
+            ctx,
+            writer
+        );
+
+        assertEquals("RIGHT JOIN orders AS o ON u.id = o.user_id", normalize(writer.toText(java.util.List.of()).sql()));
     }
 
     private static String normalize(String sql) {

@@ -231,6 +231,70 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
+    void validate_reportsNaturalJoinLateralAsInvalid() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var query = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .join(natural(tbl(select(col("id")).from(tbl("users")).build()).as("sq").lateral()))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "from.lateral".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
+    void validate_reportsUsingJoinLateralAsInvalid() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var query = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .join(inner(tbl(select(col("id")).from(tbl("users")).build()).as("sq").lateral()).using("id"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "from.lateral".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
+    void validate_skipsNestedAtTimeZoneTraversalAndStillValidatesNestedQueries() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of(SqlDialectVersion.of(2014, 0)));
+        var scalarQuery = select(
+            io.sqm.core.Expression.subquery(
+                select(col("u2", "created_at").atTimeZone(lit("UTC")))
+                    .from(tbl("users").as("u2"))
+                    .build()
+            )
+        )
+            .from(tbl("users").as("u"))
+            .build();
+        var existsQuery = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .where(exists(
+                select(col("u2", "created_at").atTimeZone(lit("UTC")))
+                    .from(tbl("users").as("u2"))
+                    .build()
+            ))
+            .build();
+
+        var scalarResult = validator.validate(scalarQuery);
+        var existsResult = validator.validate(existsQuery);
+
+        assertEquals(1, scalarResult.problems().stream()
+            .filter(problem -> "expression.at_time_zone".equals(problem.clausePath()))
+            .count());
+        assertEquals(1, existsResult.problems().stream()
+            .filter(problem -> "expression.at_time_zone".equals(problem.clausePath()))
+            .count());
+    }
+
+    @Test
     void validate_reportsTopWithTiesWithoutOrderBy() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var query = select(col("u", "id"))
@@ -796,9 +860,13 @@ class SqlServerValidationDialectTest {
     @Test
     void dialect_exposesSqlServerRules() {
         var dialect = SqlServerValidationDialect.of();
+        var versionedDialect = SqlServerValidationDialect.of(SqlDialectVersion.of(2014, 0));
 
         assertEquals("sqlserver", dialect.name());
         assertEquals(6, dialect.additionalRules().size());
+        assertEquals(SqlDialectVersion.of(2019, 0), dialect.version());
+        assertTrue(dialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.LATERAL));
+        assertFalse(versionedDialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.AT_TIME_ZONE));
         assertTrue(dialect.functionCatalog().resolve("len").isPresent());
         assertTrue(dialect.functionCatalog().resolve("getdate").isPresent());
     }

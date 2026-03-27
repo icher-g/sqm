@@ -140,6 +140,42 @@ class SelectQueryParserTest {
     }
 
     @Test
+    void parses_regularJoinThroughSqlServerJoinParserFallback() {
+        var context = ParseContext.of(new SqlServerSpecs());
+        var result = context.parse(
+            SelectQuery.class,
+            "SELECT [u].[id] FROM [users] AS [u] INNER JOIN [orders] AS [o] ON [u].[id] = [o].[user_id]"
+        );
+
+        assertFalse(result.isError(), result.errorMessage());
+        assertEquals(1, result.value().joins().size());
+        assertInstanceOf(OnJoin.class, result.value().joins().getFirst());
+        assertEquals(JoinKind.INNER, ((OnJoin) result.value().joins().getFirst()).kind());
+    }
+
+    @Test
+    void rejects_crossApply_without_table_reference() {
+        var context = ParseContext.of(new SqlServerSpecs());
+        var result = context.parse(
+            Query.class,
+            "SELECT [u].[id] FROM [users] AS [u] CROSS APPLY"
+        );
+
+        assertTrue(result.isError());
+    }
+
+    @Test
+    void rejects_outerApply_without_table_reference() {
+        var context = ParseContext.of(new SqlServerSpecs());
+        var result = context.parse(
+            Query.class,
+            "SELECT [u].[id] FROM [users] AS [u] OUTER APPLY"
+        );
+
+        assertTrue(result.isError());
+    }
+
+    @Test
     void rejects_conflicting_sqlServerTableHints() {
         var context = ParseContext.of(new SqlServerSpecs());
         var result = context.parse(Query.class, "SELECT [u].[id] FROM [users] AS [u] WITH (NOLOCK, UPDLOCK)");
