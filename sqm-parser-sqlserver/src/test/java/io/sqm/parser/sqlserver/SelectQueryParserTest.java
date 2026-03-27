@@ -140,6 +140,31 @@ class SelectQueryParserTest {
     }
 
     @Test
+    void parses_functionTableInFromClause() {
+        var context = ParseContext.of(new SqlServerSpecs());
+        var result = context.parse(
+            SelectQuery.class,
+            "SELECT * FROM dbo.ufn_FindReports(1) AS [r]"
+        );
+
+        assertFalse(result.isError(), result.errorMessage());
+        assertInstanceOf(FunctionTable.class, result.value().from());
+        assertEquals("ufn_FindReports", ((FunctionTable) result.value().from()).function().name().values().getLast());
+    }
+
+    @Test
+    void rejects_functionTableWithOrdinality() {
+        var context = ParseContext.of(new SqlServerSpecs());
+        var result = context.parse(
+            Query.class,
+            "SELECT * FROM dbo.ufn_FindReports(1) WITH ORDINALITY AS [r]"
+        );
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("WITH ORDINALITY"));
+    }
+
+    @Test
     void parses_regularJoinThroughSqlServerJoinParserFallback() {
         var context = ParseContext.of(new SqlServerSpecs());
         var result = context.parse(

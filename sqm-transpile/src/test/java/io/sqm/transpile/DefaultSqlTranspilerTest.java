@@ -190,6 +190,54 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
+    void transpilesPostgresFunctionTableToSqlServerRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.SQLSERVER)
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM dbo.ufn_FindReports(1) AS r");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT * FROM dbo.ufn_FindReports(1) AS r"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
+    void postgresFunctionTableToMySqlIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM generate_series(1, 3) AS s(n)");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_FUNCTION_TABLE", result.problems().getFirst().code());
+        assertTrue(result.sql().isEmpty());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "function-table-to-mysql-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
+    void sqlServerFunctionTableToMySqlIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.SQLSERVER)
+            .targetDialect(SqlDialectId.MYSQL)
+            .build();
+
+        var result = transpiler.transpile("SELECT * FROM dbo.ufn_FindReports(1) AS r");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_FUNCTION_TABLE", result.problems().getFirst().code());
+        assertTrue(result.sql().isEmpty());
+    }
+
+    @Test
     void transpilesAnsiLimitToSqlServerTopRendering() {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.ANSI)

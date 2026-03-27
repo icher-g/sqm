@@ -31,6 +31,7 @@ public final class SqlServerCapabilities {
             .supports(SqlFeature.MERGE_NOT_MATCHED_BY_SOURCE_CLAUSE)
             .supports(SqlFeature.MERGE_RESULT_CLAUSE)
             .supports(SqlFeature.LATERAL)
+            .supports(SqlFeature.FUNCTION_TABLE)
             .supports(SqlFeature.AT_TIME_ZONE, sqlServer2016)
             .supports(SqlFeature.EXPR_COLLATE)
             .supports(SqlFeature.TABLE_LOCK_HINT)

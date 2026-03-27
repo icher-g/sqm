@@ -263,6 +263,34 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
+    void validate_acceptsSqlServerFunctionTable() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var query = select(star())
+            .from(tbl(func("dbo.ufn_FindReports", arg(lit(1)))).as("r"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertFalse(result.problems().stream().anyMatch(problem -> "from.function_table".equals(problem.clausePath())));
+    }
+
+    @Test
+    void validate_reportsSqlServerFunctionTableOrdinalityAsUnsupported() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var query = select(star())
+            .from(tbl(func("dbo.ufn_FindReports", arg(lit(1)))).withOrdinality().as("r"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "from.function_table".equals(problem.clausePath())
+                && problem.message().contains("WITH ORDINALITY")
+        ));
+    }
+
+    @Test
     void validate_skipsNestedAtTimeZoneTraversalAndStillValidatesNestedQueries() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of(SqlDialectVersion.of(2014, 0)));
         var scalarQuery = select(

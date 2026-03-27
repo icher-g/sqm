@@ -249,5 +249,18 @@ public final class SqlServerSelectValidationRule implements SchemaValidationRule
             }
             return super.visitTable(table);
         }
+
+        @Override
+        public Void visitFunctionTable(FunctionTable table) {
+            if (table.ordinality()) {
+                context.addProblem(
+                    ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
+                    "SQL Server does not support WITH ORDINALITY on function tables",
+                    table,
+                    "from.function_table"
+                );
+            }
+            return super.visitFunctionTable(table);
+        }
     }
 }

@@ -172,6 +172,24 @@ final class StatementFeatureInspector {
         return found.get();
     }
 
+    static boolean hasFunctionTable(Statement statement) {
+        var found = new AtomicBoolean(false);
+        statement.accept(new RecursiveNodeVisitor<Void>() {
+            @Override
+            protected Void defaultResult() {
+                return null;
+            }
+
+            @Override
+            public Void visitFunctionTable(FunctionTable table) {
+                found.set(true);
+                super.visitFunctionTable(table);
+                return null;
+            }
+        });
+        return found.get();
+    }
+
     static boolean hasInsertMode(Statement statement, InsertStatement.InsertMode mode) {
         var found = new AtomicBoolean(false);
         statement.accept(new RecursiveNodeVisitor<Void>() {

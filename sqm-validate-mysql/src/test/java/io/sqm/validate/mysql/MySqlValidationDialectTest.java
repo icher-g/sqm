@@ -16,12 +16,14 @@ import java.util.List;
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.delete;
 import static io.sqm.dsl.Dsl.exists;
+import static io.sqm.dsl.Dsl.func;
 import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.merge;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.tbl;
 import static io.sqm.dsl.Dsl.update;
+import static io.sqm.dsl.Dsl.arg;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -204,6 +206,38 @@ class MySqlValidationDialectTest {
         assertEquals(1, anyResult.problems().stream()
             .filter(problem -> "from.lateral".equals(problem.clausePath()))
             .count());
+    }
+
+    @Test
+    void validate_reportsFunctionTableAsUnsupportedInMysql() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var query = select(col("jt", "id"))
+            .from(tbl(func("generate_series", arg(lit(1)), arg(lit(2)))).as("jt"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "from.function_table".equals(problem.clausePath())
+                && problem.message().contains("Set-returning function")
+        ));
+    }
+
+    @Test
+    void validate_reportsFunctionTableOrdinalityAsUnsupportedInMysql() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var query = select(col("jt", "id"))
+            .from(tbl(func("generate_series", arg(lit(1)), arg(lit(2)))).withOrdinality().as("jt"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "from.function_table".equals(problem.clausePath())
+                && problem.message().contains("Set-returning function")
+        ));
     }
 
     @Test

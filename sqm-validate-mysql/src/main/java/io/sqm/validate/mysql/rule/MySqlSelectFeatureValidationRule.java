@@ -2,6 +2,7 @@ package io.sqm.validate.mysql.rule;
 
 import io.sqm.core.AnyAllPredicate;
 import io.sqm.core.ExistsPredicate;
+import io.sqm.core.FunctionTable;
 import io.sqm.core.Lateral;
 import io.sqm.core.Node;
 import io.sqm.core.QueryExpr;
@@ -100,6 +101,15 @@ public final class MySqlSelectFeatureValidationRule implements SchemaValidationR
                     lateral,
                     "from.lateral"
                 );
+            }
+            return defaultResult();
+        }
+
+        @Override
+        public Void visitFunctionTable(FunctionTable table) {
+            require(context, table, SqlFeature.FUNCTION_TABLE, "from.function_table");
+            if (table.ordinality()) {
+                require(context, table, SqlFeature.FUNCTION_TABLE_ORDINALITY, "from.function_table");
             }
             return defaultResult();
         }
