@@ -6,6 +6,7 @@ import io.sqm.transpile.builtin.MySqlToPostgresInsertModeUnsupportedRule;
 import io.sqm.transpile.builtin.MySqlToPostgresJsonFunctionUnsupportedRule;
 import io.sqm.transpile.builtin.MySqlToPostgresNullSafeComparisonRule;
 import io.sqm.transpile.builtin.MySqlToPostgresOnDuplicateKeyUnsupportedRule;
+import io.sqm.transpile.builtin.FunctionTableToMySqlUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlIlikeRule;
 import io.sqm.transpile.builtin.PostgresToMySqlNullSafeComparisonRule;
 import io.sqm.transpile.builtin.PostgresToMySqlDistinctOnUnsupportedRule;
@@ -46,6 +47,7 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
         return new DefaultTranspileRuleRegistry(List.of(
             new PostgresToMySqlNullSafeComparisonRule(),
             new PostgresToMySqlIlikeRule(),
+            new FunctionTableToMySqlUnsupportedRule(),
             new PostgresToMySqlReturningUnsupportedRule(),
             new PostgresToMySqlDistinctOnUnsupportedRule(),
             new PostgresToMySqlSimilarToUnsupportedRule(),

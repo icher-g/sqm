@@ -125,6 +125,24 @@ class SqlServerRoundTripIntegrationTest {
     }
 
     @Test
+    void roundTrip_functionTable_query() {
+        String sql = """
+            SELECT *
+            FROM [dbo].[ufn_FindReports](1) AS [r]
+            """.trim();
+
+        Query parsed = Utils.parseSqlServer(sql);
+        String rendered = Utils.renderSqlServer(parsed);
+        Query reparsed = Utils.parseSqlServer(rendered);
+
+        assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
+        assertEquals(
+            "SELECT * FROM [dbo].[ufn_FindReports](1) AS [r]",
+            Utils.normalizeSql(rendered)
+        );
+    }
+
+    @Test
     void parser_accepts_top_percent() {
         var ctx = ParseContext.of(new SqlServerSpecs());
         var result = ctx.parse(Query.class, "SELECT TOP 10 PERCENT [id] FROM [users]");

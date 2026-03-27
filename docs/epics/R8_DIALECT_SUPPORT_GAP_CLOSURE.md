@@ -89,21 +89,11 @@ This epic is driven by the entries currently marked `Not implemented by SQM` in 
 
 Those entries currently include:
 
-- `ArrayExpr` / `ArraySubscriptExpr` / `ArraySliceExpr`
-  - MySQL
-  - SQL Server
 - `AtTimeZoneExpr`
   - SQL Server
-- `TopSpec`
-  - PostgreSQL
-  - MySQL
 - `Lateral`
 - `FunctionTable`
-  - MySQL
   - SQL Server
-- `VariableTableRef`
-  - PostgreSQL
-  - MySQL
 
 If `MODEL.md` changes, this epic should be updated accordingly.
 
@@ -331,6 +321,10 @@ As an SQM user targeting SQL Server, I want `AtTimeZoneExpr` to parse, render, v
 #### Depends On
 - `Epic: R8 Dialect Support Gap Closure`
 
+Implementation note:
+- PostgreSQL and MySQL were reclassified to `Not supported by the dialect` for `TopSpec`.
+- Their row-limiting features are already modeled through `LimitOffset` and related pagination styles, not through SQL Server-style `TOP (...)`, `PERCENT`, or `WITH TIES`.
+
 ---
 
 ### Story R8-2
@@ -358,6 +352,10 @@ Implementation note:
 
 #### Depends On
 - `Epic: R8 Dialect Support Gap Closure`
+
+Implementation note:
+- MySQL and SQL Server were reclassified to `Not supported by the dialect` for the current shared array-expression family.
+- Their shipped array-like capabilities are JSON-oriented and do not map cleanly to `ArrayExpr`, `ArraySubscriptExpr`, or `ArraySliceExpr` as currently modeled.
 
 ---
 
@@ -392,17 +390,17 @@ Implementation note:
 ### Story R8-4
 
 #### Title
-`Story: Add table-valued function support in MySQL and SQL Server`
+`Story: Add SQL Server table-valued function support and resolve MySQL FunctionTable classification`
 
 #### User Story
-As an SQM user working with dialects that justify table-valued function support, I want `FunctionTable` to be available in the MySQL and SQL Server slices so table-function relations can be manipulated through the shared model instead of remaining documented gaps.
+As an SQM user working with dialects that justify table-valued function support, I want SQL Server `FunctionTable` support to be available where the shared model fits, and I want the MySQL support-matrix entry corrected if the shipped MySQL surface does not match the current generic `FunctionTable` node.
 
 #### Acceptance Criteria
 - The supported MySQL and SQL Server table-valued function surfaces are confirmed before coding.
-- Parser and renderer support are added for each dialect where the shared `FunctionTable` model is a valid fit.
-- If a dialect does not truly match the shared semantics, `MODEL.md` and this epic are updated instead of forcing support.
+- Parser and renderer support are added for SQL Server if the shared `FunctionTable` model is a valid fit.
+- If MySQL does not truly match the shared semantics, `MODEL.md` and this epic are updated instead of forcing support.
 - Validation, transpilation, DSL, codegen, control, middleware, and integration impact are reviewed and updated where needed.
-- Tests cover happy paths, invalid syntax, and unsupported-boundary cases for each dialect.
+- Tests cover SQL Server happy paths plus invalid and unsupported-boundary cases for both dialect decisions.
 - `MODEL.md`, docs, and wiki pages are updated.
 
 #### Labels
@@ -410,6 +408,10 @@ As an SQM user working with dialects that justify table-valued function support,
 
 #### Depends On
 - `Epic: R8 Dialect Support Gap Closure`
+
+Implementation note:
+- SQL Server fits the shared `FunctionTable` node for table-valued function calls in `FROM`.
+- MySQL was reclassified to `Not supported by SQM` for the current `FunctionTable` node because its shipped `JSON_TABLE()` support requires structure beyond the current generic `FunctionTable` model.
 
 ---
 
@@ -434,6 +436,10 @@ As an SQM maintainer, I want the PostgreSQL and MySQL `VariableTableRef` support
 #### Depends On
 - `Epic: R8 Dialect Support Gap Closure`
 
+Implementation note:
+- PostgreSQL and MySQL were reclassified to `Not supported by the dialect` for `VariableTableRef`.
+- Their shipped temp-table features remain plain `Table` semantics, and their variable features do not provide SQL Server-style relation-backed table variables such as `@audit`.
+
 ---
 
 ### Story R8-6
@@ -456,6 +462,10 @@ As an SQM maintainer, I want the PostgreSQL and MySQL `TopSpec` support-matrix e
 
 #### Depends On
 - `Epic: R8 Dialect Support Gap Closure`
+
+Implementation note:
+- The initial audit pass closed the largest remaining validation gap in the shipped MySQL slice.
+- Validation now reports MySQL DML feature boundaries for `INSERT IGNORE`, `REPLACE INTO`, `ON DUPLICATE KEY UPDATE`, `UPDATE ... JOIN`, `DELETE ... USING ... JOIN`, DML `RETURNING`, `SQL_CALC_FOUND_ROWS`, and version-gated optimizer hints before parser/render execution becomes the first failure point.
 
 ---
 

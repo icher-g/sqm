@@ -16,6 +16,8 @@ class SqlServerCapabilitiesTest {
         assertTrue(capabilities.supports(SqlFeature.DML_RESULT_CLAUSE));
         assertTrue(capabilities.supports(SqlFeature.EXPR_COLLATE));
         assertTrue(capabilities.supports(SqlFeature.LATERAL));
+        assertTrue(capabilities.supports(SqlFeature.FUNCTION_TABLE));
+        assertFalse(capabilities.supports(SqlFeature.FUNCTION_TABLE_ORDINALITY));
     }
 
     @Test

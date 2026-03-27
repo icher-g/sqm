@@ -187,6 +187,29 @@ class SelectQueryRendererTest {
     }
 
     @Test
+    void renders_functionTableInFromClause() {
+        var query = Query.select(Expression.literal(1))
+            .from(tbl(io.sqm.dsl.Dsl.func("dbo.ufn_FindReports", io.sqm.dsl.Dsl.arg(lit(1)))).as("r"))
+            .build();
+
+        var rendered = RenderContext.of(new SqlServerDialect()).render(query);
+
+        assertEquals("SELECT 1 FROM dbo.ufn_FindReports(1) AS r", normalize(rendered.sql()));
+    }
+
+    @Test
+    void rejects_functionTableWithOrdinality() {
+        var query = Query.select(Expression.literal(1))
+            .from(tbl(io.sqm.dsl.Dsl.func("dbo.ufn_FindReports", io.sqm.dsl.Dsl.arg(lit(1)))).withOrdinality().as("r"))
+            .build();
+
+        assertThrows(
+            io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new SqlServerDialect()).render(query)
+        );
+    }
+
+    @Test
     void crossJoinRenderer_rejectsLateralWhenCapabilityIsMissing() {
         var renderer = new CrossJoinRenderer();
         var ctx = RenderContext.of(new AnsiDialect());

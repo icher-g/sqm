@@ -5,6 +5,7 @@ import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.Identifier;
+import io.sqm.core.SelectModifier;
 import io.sqm.core.TableHint;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.validate.api.ValidationProblem;
@@ -16,12 +17,18 @@ import java.util.List;
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.delete;
 import static io.sqm.dsl.Dsl.exists;
+import static io.sqm.dsl.Dsl.func;
+import static io.sqm.dsl.Dsl.inner;
 import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.merge;
+import static io.sqm.dsl.Dsl.row;
+import static io.sqm.dsl.Dsl.rows;
 import static io.sqm.dsl.Dsl.select;
+import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
 import static io.sqm.dsl.Dsl.update;
+import static io.sqm.dsl.Dsl.arg;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -164,6 +171,23 @@ class MySqlValidationDialectTest {
     }
 
     @Test
+    void validate_reportsUnsupportedCalcFoundRowsBeforeMysql80() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(5, 7)));
+        var query = select(col("id"))
+            .from(tbl("users"))
+            .selectModifier(SelectModifier.CALC_FOUND_ROWS)
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "select.modifier".equals(problem.clausePath())
+                && problem.message().contains("SQL_CALC_FOUND_ROWS")
+        ));
+    }
+
+    @Test
     void validate_skipsNestedLateralTraversalAndStillValidatesNestedQueries() {
         var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(8, 0, 13)));
         var scalarQuery = select(
@@ -207,6 +231,38 @@ class MySqlValidationDialectTest {
     }
 
     @Test
+    void validate_reportsFunctionTableAsUnsupportedInMysql() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var query = select(col("jt", "id"))
+            .from(tbl(func("generate_series", arg(lit(1)), arg(lit(2)))).as("jt"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "from.function_table".equals(problem.clausePath())
+                && problem.message().contains("Set-returning function")
+        ));
+    }
+
+    @Test
+    void validate_reportsFunctionTableOrdinalityAsUnsupportedInMysql() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var query = select(col("jt", "id"))
+            .from(tbl(func("generate_series", arg(lit(1)), arg(lit(2)))).withOrdinality().as("jt"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "from.function_table".equals(problem.clausePath())
+                && problem.message().contains("Set-returning function")
+        ));
+    }
+
+    @Test
     void mysql_dialect_retains_base_dml_validation_rules() {
         var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
         var statement = update("users")
@@ -245,6 +301,129 @@ class MySqlValidationDialectTest {
         assertTrue(validator.validate(updateStatement).ok());
         assertTrue(validator.validate(deleteStatement).ok());
         assertTrue(validator.validate(insertStatement).ok());
+    }
+
+    @Test
+    void validate_reportsUnsupportedOptimizerHintsBeforeMysql80() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(5, 7)));
+        var query = select(col("id"))
+            .from(tbl("users"))
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "select.hint".equals(problem.clausePath())
+                && problem.message().contains("optimizer hint comment")
+        ));
+    }
+
+    @Test
+    void validate_reportsUnsupportedInsertIgnoreBeforeMysql80() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(5, 7)));
+        var statement = insert("users")
+            .ignore()
+            .columns(Identifier.of("id"))
+            .values(rows(row(lit(1L))))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "insert.mode".equals(problem.clausePath())
+                && problem.message().contains("INSERT IGNORE")
+        ));
+    }
+
+    @Test
+    void validate_reportsUnsupportedReplaceIntoBeforeMysql80() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(5, 7)));
+        var statement = insert("users")
+            .replace()
+            .columns(Identifier.of("id"))
+            .values(rows(row(lit(1L))))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "insert.mode".equals(problem.clausePath())
+                && problem.message().contains("REPLACE INTO")
+        ));
+    }
+
+    @Test
+    void validate_reportsUnsupportedOnDuplicateKeyUpdateBeforeMysql80() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(5, 7)));
+        var statement = insert("users")
+            .columns(Identifier.of("id"), Identifier.of("name"))
+            .values(rows(row(lit(1L), lit("alice"))))
+            .onConflictDoUpdate(set("name", lit("updated")))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "insert.conflict".equals(problem.clausePath())
+                && problem.message().contains("ON DUPLICATE KEY UPDATE")
+        ));
+    }
+
+    @Test
+    void validate_reportsUnsupportedInsertReturningInLatestMysqlSlice() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var statement = insert("users")
+            .columns(Identifier.of("id"))
+            .values(rows(row(lit(1L))))
+            .result(col("id").toSelectItem())
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "insert.result".equals(problem.clausePath())
+                && problem.message().contains("DML result clause")
+        ));
+    }
+
+    @Test
+    void validate_reportsUnsupportedUpdateJoinBeforeMysql80() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(5, 7)));
+        var statement = update("users")
+            .join(inner(tbl("orders").as("o")).on(col("o", "user_id").eq(col("users", "id"))))
+            .set(Identifier.of("name"), lit("alice"))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "update.join".equals(problem.clausePath())
+                && problem.message().contains("UPDATE ... JOIN")
+        ));
+    }
+
+    @Test
+    void validate_reportsUnsupportedDeleteUsingJoinBeforeMysql80() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(5, 7)));
+        var statement = delete("users")
+            .using(tbl("orders").as("o"))
+            .join(inner(tbl("users").as("u")).on(col("u", "id").eq(col("o", "user_id"))))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "delete.using".equals(problem.clausePath())
+                && problem.message().contains("DELETE ... USING ... JOIN")
+        ));
     }
 
     @Test

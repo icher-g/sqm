@@ -11,19 +11,31 @@ import io.sqm.core.SelectQuery;
 import io.sqm.core.Statement;
 import io.sqm.core.StatementHint;
 import io.sqm.core.UpdateStatement;
+import io.sqm.core.dialect.DialectCapabilities;
+import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
+
+import java.util.Objects;
 
 /**
  * Validates first-wave MySQL statement hint families structurally.
  */
 public final class MySqlStatementHintValidationRule implements SchemaValidationRule<Statement> {
+    private final DialectCapabilities capabilities;
+    private final SqlDialectVersion version;
 
     /**
      * Creates a MySQL statement-hint validation rule.
+     *
+     * @param capabilities dialect capabilities
+     * @param version MySQL version
      */
-    public MySqlStatementHintValidationRule() {
+    public MySqlStatementHintValidationRule(DialectCapabilities capabilities, SqlDialectVersion version) {
+        this.capabilities = Objects.requireNonNull(capabilities, "capabilities");
+        this.version = Objects.requireNonNull(version, "version");
     }
 
     @Override
@@ -41,6 +53,16 @@ public final class MySqlStatementHintValidationRule implements SchemaValidationR
     public void validate(Statement node, SchemaValidationContext context) {
         var clausePath = clausePath(node);
         if (clausePath == null) {
+            return;
+        }
+
+        if (!node.hints().isEmpty() && !capabilities.supports(SqlFeature.OPTIMIZER_HINT_COMMENT)) {
+            context.addProblem(
+                ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
+                "MySQL " + version + " does not support " + SqlFeature.OPTIMIZER_HINT_COMMENT.description(),
+                node,
+                clausePath
+            );
             return;
         }
 

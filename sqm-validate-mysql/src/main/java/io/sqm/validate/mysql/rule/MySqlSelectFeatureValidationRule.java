@@ -2,10 +2,12 @@ package io.sqm.validate.mysql.rule;
 
 import io.sqm.core.AnyAllPredicate;
 import io.sqm.core.ExistsPredicate;
+import io.sqm.core.FunctionTable;
 import io.sqm.core.Lateral;
 import io.sqm.core.Node;
 import io.sqm.core.QueryExpr;
 import io.sqm.core.QueryTable;
+import io.sqm.core.SelectModifier;
 import io.sqm.core.SelectQuery;
 import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectVersion;
@@ -43,6 +45,9 @@ public final class MySqlSelectFeatureValidationRule implements SchemaValidationR
 
     @Override
     public void validate(SelectQuery node, SchemaValidationContext context) {
+        if (node.modifiers().contains(SelectModifier.CALC_FOUND_ROWS)) {
+            require(context, node, SqlFeature.CALC_FOUND_ROWS_MODIFIER, "select.modifier");
+        }
         new SelectFeatureWalker(context).acceptNode(node);
     }
 
@@ -100,6 +105,15 @@ public final class MySqlSelectFeatureValidationRule implements SchemaValidationR
                     lateral,
                     "from.lateral"
                 );
+            }
+            return defaultResult();
+        }
+
+        @Override
+        public Void visitFunctionTable(FunctionTable table) {
+            require(context, table, SqlFeature.FUNCTION_TABLE, "from.function_table");
+            if (table.ordinality()) {
+                require(context, table, SqlFeature.FUNCTION_TABLE_ORDINALITY, "from.function_table");
             }
             return defaultResult();
         }
