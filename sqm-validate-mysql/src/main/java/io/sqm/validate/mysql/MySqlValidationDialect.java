@@ -6,6 +6,7 @@ import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.core.mysql.dialect.MySqlCapabilities;
 import io.sqm.validate.mysql.rule.MySqlIndexHintValidationRule;
+import io.sqm.validate.mysql.rule.MySqlDmlFeatureValidationRule;
 import io.sqm.validate.mysql.rule.MySqlSelectFeatureValidationRule;
 import io.sqm.validate.mysql.rule.MySqlStatementHintValidationRule;
 import io.sqm.validate.mysql.rule.MySqlTableHintValidationRule;
@@ -86,7 +87,8 @@ public final class MySqlValidationDialect implements SchemaValidationDialect {
     public List<SchemaValidationRule<? extends Node>> additionalRules() {
         return List.of(
             new MySqlSelectFeatureValidationRule(capabilities, version),
-            new MySqlStatementHintValidationRule(),
+            new MySqlDmlFeatureValidationRule(capabilities, version),
+            new MySqlStatementHintValidationRule(capabilities, version),
             new MySqlTableHintValidationRule(),
             new MySqlIndexHintValidationRule()
         );

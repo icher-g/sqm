@@ -7,6 +7,7 @@ import io.sqm.core.Lateral;
 import io.sqm.core.Node;
 import io.sqm.core.QueryExpr;
 import io.sqm.core.QueryTable;
+import io.sqm.core.SelectModifier;
 import io.sqm.core.SelectQuery;
 import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectVersion;
@@ -44,6 +45,9 @@ public final class MySqlSelectFeatureValidationRule implements SchemaValidationR
 
     @Override
     public void validate(SelectQuery node, SchemaValidationContext context) {
+        if (node.modifiers().contains(SelectModifier.CALC_FOUND_ROWS)) {
+            require(context, node, SqlFeature.CALC_FOUND_ROWS_MODIFIER, "select.modifier");
+        }
         new SelectFeatureWalker(context).acceptNode(node);
     }
 

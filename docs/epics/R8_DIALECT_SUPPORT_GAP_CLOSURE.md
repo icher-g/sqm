@@ -463,6 +463,10 @@ As an SQM maintainer, I want the PostgreSQL and MySQL `TopSpec` support-matrix e
 #### Depends On
 - `Epic: R8 Dialect Support Gap Closure`
 
+Implementation note:
+- The initial audit pass closed the largest remaining validation gap in the shipped MySQL slice.
+- Validation now reports MySQL DML feature boundaries for `INSERT IGNORE`, `REPLACE INTO`, `ON DUPLICATE KEY UPDATE`, `UPDATE ... JOIN`, `DELETE ... USING ... JOIN`, DML `RETURNING`, `SQL_CALC_FOUND_ROWS`, and version-gated optimizer hints before parser/render execution becomes the first failure point.
+
 ---
 
 ### Story R8-7
