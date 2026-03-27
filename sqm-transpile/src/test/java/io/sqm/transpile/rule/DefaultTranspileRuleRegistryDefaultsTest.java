@@ -13,6 +13,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
 
         assertEquals(
             java.util.List.of(
+                "function-table-to-mysql-unsupported",
                 "postgres-merge-unsupported",
                 "postgres-to-mysql-distinct-on-unsupported",
                 "postgres-to-mysql-ilike",
