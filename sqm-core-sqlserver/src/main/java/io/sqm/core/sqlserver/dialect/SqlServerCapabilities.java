@@ -24,11 +24,14 @@ public final class SqlServerCapabilities {
      */
     public static DialectCapabilities of(SqlDialectVersion version) {
         Objects.requireNonNull(version, "version");
+        var sqlServer2016 = SqlDialectVersion.of(2016, 0);
         return VersionedDialectCapabilities.builder(version)
             .supports(SqlFeature.DML_RESULT_CLAUSE)
             .supports(SqlFeature.MERGE_STATEMENT)
             .supports(SqlFeature.MERGE_NOT_MATCHED_BY_SOURCE_CLAUSE)
             .supports(SqlFeature.MERGE_RESULT_CLAUSE)
+            .supports(SqlFeature.LATERAL)
+            .supports(SqlFeature.AT_TIME_ZONE, sqlServer2016)
             .supports(SqlFeature.EXPR_COLLATE)
             .supports(SqlFeature.TABLE_LOCK_HINT)
             .build();

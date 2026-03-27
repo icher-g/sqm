@@ -214,7 +214,7 @@ public class SelectQueryParser implements Parser<SelectQuery> {
             q.join(CrossJoin.of(crossJoin.value()));
         }
 
-        while (cur.matchAny(Indicators.JOIN)) {
+        while (isJoinStart(cur)) {
             var join = ctx.parse(Join.class, cur);
             if (join.isError()) {
                 return error(join);
@@ -223,6 +223,16 @@ public class SelectQueryParser implements Parser<SelectQuery> {
         }
 
         return ok(null);
+    }
+
+    /**
+     * Checks whether the current cursor position starts a join clause.
+     *
+     * @param cur token cursor.
+     * @return {@code true} when the cursor is positioned at a join-start token.
+     */
+    protected boolean isJoinStart(Cursor cur) {
+        return cur.matchAny(Indicators.JOIN);
     }
 
     /**

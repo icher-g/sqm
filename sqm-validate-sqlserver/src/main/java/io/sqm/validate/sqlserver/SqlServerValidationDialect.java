@@ -1,18 +1,23 @@
 package io.sqm.validate.sqlserver;
 
 import io.sqm.core.Node;
+import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectId;
+import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.sqlserver.dialect.SqlServerCapabilities;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
 import io.sqm.validate.sqlserver.function.SqlServerFunctionCatalog;
 import io.sqm.validate.sqlserver.rule.SqlServerDeleteStatementValidationRule;
+import io.sqm.validate.sqlserver.rule.SqlServerExpressionFeatureValidationRule;
 import io.sqm.validate.sqlserver.rule.SqlServerInsertStatementValidationRule;
 import io.sqm.validate.sqlserver.rule.SqlServerMergeStatementValidationRule;
 import io.sqm.validate.sqlserver.rule.SqlServerSelectValidationRule;
 import io.sqm.validate.sqlserver.rule.SqlServerUpdateStatementValidationRule;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * SQL Server-specific schema validation dialect.
@@ -21,9 +26,12 @@ import java.util.List;
  * rules that are not enforced by the shared schema validator.</p>
  */
 public final class SqlServerValidationDialect implements SchemaValidationDialect {
-    private static final SqlServerValidationDialect INSTANCE = new SqlServerValidationDialect();
+    private final SqlDialectVersion version;
+    private final DialectCapabilities capabilities;
 
-    private SqlServerValidationDialect() {
+    private SqlServerValidationDialect(SqlDialectVersion version) {
+        this.version = Objects.requireNonNull(version, "version");
+        this.capabilities = SqlServerCapabilities.of(version);
     }
 
     /**
@@ -32,7 +40,35 @@ public final class SqlServerValidationDialect implements SchemaValidationDialect
      * @return SQL Server validation dialect.
      */
     public static SqlServerValidationDialect of() {
-        return INSTANCE;
+        return new SqlServerValidationDialect(SqlDialectVersion.of(2019, 0));
+    }
+
+    /**
+     * Creates SQL Server validation dialect for a specific version.
+     *
+     * @param version SQL Server version used for feature checks.
+     * @return SQL Server validation dialect.
+     */
+    public static SqlServerValidationDialect of(SqlDialectVersion version) {
+        return new SqlServerValidationDialect(version);
+    }
+
+    /**
+     * Returns SQL Server version used for feature checks.
+     *
+     * @return configured SQL Server version.
+     */
+    public SqlDialectVersion version() {
+        return version;
+    }
+
+    /**
+     * Returns dialect capabilities used by SQL Server feature-gating rules.
+     *
+     * @return SQL Server capabilities.
+     */
+    public DialectCapabilities capabilities() {
+        return capabilities;
     }
 
     /**
@@ -63,6 +99,7 @@ public final class SqlServerValidationDialect implements SchemaValidationDialect
     @Override
     public List<SchemaValidationRule<? extends Node>> additionalRules() {
         return List.of(
+            new SqlServerExpressionFeatureValidationRule(capabilities, version),
             new SqlServerSelectValidationRule(),
             new SqlServerInsertStatementValidationRule(),
             new SqlServerUpdateStatementValidationRule(),

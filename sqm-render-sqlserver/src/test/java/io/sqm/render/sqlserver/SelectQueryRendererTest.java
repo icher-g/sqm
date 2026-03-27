@@ -5,18 +5,25 @@ import io.sqm.core.OrderItem;
 import io.sqm.core.Query;
 import io.sqm.core.QuoteStyle;
 import io.sqm.core.SelectQuery;
+import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.spi.RenderContext;
+import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.sqlserver.spi.SqlServerDialect;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.cross;
 import static io.sqm.dsl.Dsl.distinct;
 import static io.sqm.dsl.Dsl.id;
+import static io.sqm.dsl.Dsl.inner;
+import static io.sqm.dsl.Dsl.left;
+import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.top;
 import static io.sqm.dsl.Dsl.topWithTies;
 import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.unary;
 
 class SelectQueryRendererTest {
 
@@ -121,6 +128,122 @@ class SelectQueryRendererTest {
             .build();
 
         assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(query));
+    }
+
+    @Test
+    void renders_crossApply_fromCrossJoinLateral() {
+        var query = Query.select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .join(cross(tbl(Query.select(col("id")).from(tbl("users")).build()).as("sq").lateral()))
+            .build();
+
+        var rendered = RenderContext.of(new SqlServerDialect()).render(query);
+
+        assertEquals(
+            "SELECT u.id FROM users AS u CROSS APPLY ( SELECT id FROM users ) AS sq",
+            normalize(rendered.sql())
+        );
+    }
+
+    @Test
+    void renders_crossApply_fromInnerLateralJoin() {
+        var query = Query.select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .join(inner(tbl(Query.select(col("id")).from(tbl("users")).build()).as("sq").lateral()).on(unary(lit(true))))
+            .build();
+
+        var rendered = RenderContext.of(new SqlServerDialect()).render(query);
+
+        assertEquals(
+            "SELECT u.id FROM users AS u CROSS APPLY ( SELECT id FROM users ) AS sq",
+            normalize(rendered.sql())
+        );
+    }
+
+    @Test
+    void renders_outerApply_fromLeftLateralJoin() {
+        var query = Query.select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .join(left(tbl(Query.select(col("id")).from(tbl("users")).build()).as("sq").lateral()).on(unary(lit(true))))
+            .build();
+
+        var rendered = RenderContext.of(new SqlServerDialect()).render(query);
+
+        assertEquals(
+            "SELECT u.id FROM users AS u OUTER APPLY ( SELECT id FROM users ) AS sq",
+            normalize(rendered.sql())
+        );
+    }
+
+    @Test
+    void rejects_nonApplyCompatibleLateralJoinShape() {
+        var query = Query.select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .join(inner(tbl(Query.select(col("id")).from(tbl("users")).build()).as("sq").lateral())
+                .on(col("u", "id").eq(col("sq", "id"))))
+            .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new SqlServerDialect()).render(query));
+    }
+
+    @Test
+    void crossJoinRenderer_rejectsLateralWhenCapabilityIsMissing() {
+        var renderer = new CrossJoinRenderer();
+        var ctx = RenderContext.of(new AnsiDialect());
+
+        assertThrows(
+            io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> renderer.render(
+                io.sqm.core.CrossJoin.of(tbl(Query.select(col("id")).from(tbl("users")).build()).as("sq").lateral()),
+                ctx,
+                new DefaultSqlWriter(ctx)
+            )
+        );
+    }
+
+    @Test
+    void crossJoinRenderer_fallsBackToRegularCrossJoinForNonLateralNodes() {
+        var renderer = new CrossJoinRenderer();
+        var ctx = RenderContext.of(new SqlServerDialect());
+        var writer = new DefaultSqlWriter(ctx);
+
+        renderer.render(io.sqm.core.CrossJoin.of(tbl("orders").as("o")), ctx, writer);
+
+        assertEquals("CROSS JOIN orders AS o", normalize(writer.toText(java.util.List.of()).sql()));
+    }
+
+    @Test
+    void onJoinRenderer_rejectsLateralWhenCapabilityIsMissing() {
+        var renderer = new OnJoinRenderer();
+        var ctx = RenderContext.of(new AnsiDialect());
+
+        assertThrows(
+            io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> renderer.render(
+                io.sqm.core.OnJoin.of(
+                    tbl(Query.select(col("id")).from(tbl("users")).build()).as("sq").lateral(),
+                    io.sqm.core.JoinKind.INNER,
+                    unary(lit(true))
+                ),
+                ctx,
+                new DefaultSqlWriter(ctx)
+            )
+        );
+    }
+
+    @Test
+    void onJoinRenderer_fallsBackToRegularJoinForNonLateralNodes() {
+        var renderer = new OnJoinRenderer();
+        var ctx = RenderContext.of(new SqlServerDialect());
+        var writer = new DefaultSqlWriter(ctx);
+
+        renderer.render(
+            io.sqm.core.OnJoin.of(tbl("orders").as("o"), io.sqm.core.JoinKind.RIGHT, col("u", "id").eq(col("o", "user_id"))),
+            ctx,
+            writer
+        );
+
+        assertEquals("RIGHT JOIN orders AS o ON u.id = o.user_id", normalize(writer.toText(java.util.List.of()).sql()));
     }
 
     private static String normalize(String sql) {

@@ -29,6 +29,7 @@ public final class Renderers {
             .register(new InsertStatementRenderer())
             .register(new UpdateStatementRenderer())
             .register(new DeleteStatementRenderer())
+            .register(new LateralRenderer())
             .register(new LimitOffsetRenderer())
             .register(new GroupByRenderer())
             .register(new ConcatExprRenderer())

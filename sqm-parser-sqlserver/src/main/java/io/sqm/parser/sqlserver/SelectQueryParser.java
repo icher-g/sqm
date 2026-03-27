@@ -3,6 +3,7 @@ package io.sqm.parser.sqlserver;
 import io.sqm.core.SelectQueryBuilder;
 import io.sqm.core.TopSpec;
 import io.sqm.parser.core.Cursor;
+import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
@@ -83,6 +84,18 @@ public class SelectQueryParser extends io.sqm.parser.ansi.SelectQueryParser {
             return error("TOP WITH TIES requires ORDER BY in SQL Server", cur.fullPos());
         }
         return ok(null);
+    }
+
+    /**
+     * Checks whether the current cursor position starts a SQL Server join,
+     * including bare {@code OUTER APPLY}.
+     *
+     * @param cur token cursor.
+     * @return {@code true} when the cursor is positioned at a SQL Server join-start token.
+     */
+    @Override
+    protected boolean isJoinStart(Cursor cur) {
+        return super.isJoinStart(cur) || cur.match(TokenType.OUTER);
     }
 
     private ParseResult<TopSpec> parseTopClause(Cursor cur, ParseContext ctx) {

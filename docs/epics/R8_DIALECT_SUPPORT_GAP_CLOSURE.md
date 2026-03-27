@@ -94,14 +94,10 @@ Those entries currently include:
   - SQL Server
 - `AtTimeZoneExpr`
   - SQL Server
-- `ResultClause`
-  - MySQL
 - `TopSpec`
   - PostgreSQL
   - MySQL
 - `Lateral`
-  - MySQL
-  - SQL Server
 - `FunctionTable`
   - MySQL
   - SQL Server
@@ -170,6 +166,14 @@ Mandatory review areas for every story:
 - `sqm-codegen` and `sqm-codegen-maven-plugin`
 - docs and wiki source
 
+### 4. Validation Rule Hardening Principle
+
+Parser and renderer capability gates are necessary, but they are not sufficient on their own for good pre-execution diagnostics.
+
+Where a dialect already has feature-aware validation rules, those rules should be treated as the proactive user-facing boundary for unsupported, version-gated, or shape-constrained features.
+
+That means follow-up work under this epic should not leave a feature enforced only by parse-time or render-time rejection if the same limitation can be reported earlier and more clearly through schema validation.
+
 ---
 
 ## Candidate Story Buckets
@@ -201,16 +205,7 @@ Mandatory review areas for every story:
 
 ### Bucket B: Shared DML Result Gaps
 
-#### B1. MySQL `ResultClause`
-- Goal:
-  implement the dialect-supported MySQL result-clause surface that maps to the shared `ResultClause` model.
-- Review focus:
-  - exact MySQL version scope
-  - parse/render behavior
-  - validation and transpilation stance
-  - interaction with existing DML coverage
-
-#### B2. Variable-backed result targets beyond SQL Server
+#### B1. Variable-backed result targets beyond SQL Server
 - Goal:
   implement dialect support for `VariableTableRef` in dialects currently marked `Not implemented by SQM`, if the dialect really supports a relation-like variable sink that fits the shared semantics.
 - Design warning:
@@ -250,6 +245,17 @@ Mandatory review areas for every story:
 - Design warning:
   avoid equating `LIMIT` support with `TOP` support unless the model is intentionally broadened.
 
+### Bucket E: Validation Rule Coverage Hardening
+
+#### E1. Dialect feature-validation rule audit
+- Goal:
+  review the dialect feature-validation rules for shipped dialects and add missing feature checks so unsupported or version-gated constructs are reported during validation before parser/render execution paths become the first user-visible failure point.
+- Mandatory outputs:
+  - inventory of existing dialect feature-validation rules and their current gaps
+  - added validation checks for missing shipped features where validation can provide earlier diagnostics
+  - explicit decision notes for cases that should remain parser-only or renderer-only
+  - tests covering validation-time diagnostics for the added feature checks
+
 ---
 
 ## Risks
@@ -263,7 +269,10 @@ Because the features are already represented in `sqm-core`, there will be pressu
 ### 3. Parser/Renderer-Only Delivery
 These gaps are only truly closed if validation, transpilation, DSL, codegen, and tests are reviewed too. This epic must not regress into parser/render-only work.
 
-### 4. Documentation Drift
+### 4. Validation Coverage Drift
+If dialects gain parse/render gating without parallel validation-rule coverage, users will keep discovering unsupported features too late in the pipeline. This epic should reduce that gap rather than expand it.
+
+### 5. Documentation Drift
 If the implementation or reclassification happens without updating `MODEL.md`, the support matrix will lose credibility again.
 
 ---
@@ -288,10 +297,10 @@ If the implementation or reclassification happens without updating `MODEL.md`, t
 ## Recommended Execution Order
 
 1. `AtTimeZoneExpr` for SQL Server
-2. MySQL `ResultClause`
-3. `Lateral` and `FunctionTable` stories
-4. `VariableTableRef` follow-up stories
-5. `TopSpec` stories only after re-validating the model fit
+2. `Lateral` and `FunctionTable` stories
+3. `VariableTableRef` follow-up stories
+4. `TopSpec` stories only after re-validating the model fit
+5. validation-rule hardening story across shipped dialects
 6. array-family stories only after re-validating the target dialect semantics
 
 ---
@@ -327,30 +336,6 @@ As an SQM user targeting SQL Server, I want `AtTimeZoneExpr` to parse, render, v
 ### Story R8-2
 
 #### Title
-`Story: Add MySQL DML result-clause support`
-
-#### User Story
-As an SQM user targeting MySQL, I want the dialect-supported `ResultClause` surface to be implemented end to end so DML statements that emit rows can be modeled, parsed, rendered, validated, and documented consistently with the shared result model.
-
-#### Acceptance Criteria
-- The exact MySQL version scope for the supported result-clause surface is confirmed before coding.
-- MySQL parser and renderer support is added for the supported `ResultClause` shape.
-- Validation and transpilation behavior are reviewed and updated explicitly.
-- DSL helpers, codegen, control, middleware, and integration impact are reviewed and updated where required.
-- Happy-path and failure-path tests cover supported and unsupported statement/result combinations.
-- `MODEL.md`, docs, and wiki pages are updated with the shipped scope.
-
-#### Labels
-`story`, `dialect`, `mysql`, `parser`, `renderer`, `validation`, `transpile`, `dml`
-
-#### Depends On
-- `Epic: R8 Dialect Support Gap Closure`
-
----
-
-### Story R8-3
-
-#### Title
 `Story: Add MySQL LATERAL support`
 
 #### User Story
@@ -364,6 +349,10 @@ As an SQM user targeting MySQL, I want `Lateral` relations to be supported where
 - Unit tests cover supported usage, invalid syntax, and unsupported-boundary cases.
 - `MODEL.md`, docs, and wiki pages are updated.
 
+Implementation note:
+- Shipped as MySQL lateral derived-table support from MySQL `8.0.14` onward.
+- MySQL support is intentionally narrower than the shared node: the dialect accepts `LATERAL` only for derived tables and requires an alias.
+
 #### Labels
 `story`, `dialect`, `mysql`, `parser`, `renderer`, `validation`, `transpile`, `from-clause`
 
@@ -372,7 +361,7 @@ As an SQM user targeting MySQL, I want `Lateral` relations to be supported where
 
 ---
 
-### Story R8-4
+### Story R8-3
 
 #### Title
 `Story: Add SQL Server lateral-equivalent relation support`
@@ -394,9 +383,13 @@ As an SQM user targeting SQL Server, I want the SQL Server relation semantics eq
 #### Depends On
 - `Epic: R8 Dialect Support Gap Closure`
 
+Implementation note:
+- Shipped using the existing shared `Lateral` node, with SQL Server syntax mapped through `CROSS APPLY` and `OUTER APPLY`.
+- Validation and rendering intentionally accept only APPLY-compatible join shapes for lateral relations.
+
 ---
 
-### Story R8-5
+### Story R8-4
 
 #### Title
 `Story: Add table-valued function support in MySQL and SQL Server`
@@ -420,7 +413,7 @@ As an SQM user working with dialects that justify table-valued function support,
 
 ---
 
-### Story R8-6
+### Story R8-5
 
 #### Title
 `Story: Resolve VariableTableRef support beyond SQL Server`
@@ -443,7 +436,7 @@ As an SQM maintainer, I want the PostgreSQL and MySQL `VariableTableRef` support
 
 ---
 
-### Story R8-7
+### Story R8-6
 
 #### Title
 `Story: Resolve TOP support-matrix entries for PostgreSQL and MySQL`
@@ -466,7 +459,7 @@ As an SQM maintainer, I want the PostgreSQL and MySQL `TopSpec` support-matrix e
 
 ---
 
-### Story R8-8
+### Story R8-7
 
 #### Title
 `Story: Resolve array-family support-matrix entries for MySQL and SQL Server`
@@ -483,6 +476,30 @@ As an SQM maintainer, I want the MySQL and SQL Server array-family support-matri
 
 #### Labels
 `story`, `dialect`, `mysql`, `sqlserver`, `parser`, `renderer`, `validation`, `transpile`, `expression`
+
+#### Depends On
+- `Epic: R8 Dialect Support Gap Closure`
+
+---
+
+### Story R8-8
+
+#### Title
+`Story: Audit and complete dialect feature-validation rules`
+
+#### User Story
+As an SQM user, I want dialect feature-validation rules to report unsupported, version-gated, and shape-constrained features before parser or renderer execution becomes the first failure point, so validation provides earlier and clearer diagnostics across shipped dialects.
+
+#### Acceptance Criteria
+- The existing dialect feature-validation rules are reviewed for all shipped dialect slices that already rely on parser/render feature gating.
+- Missing validation checks are added where a dialect feature can be diagnosed earlier during validation.
+- Unsupported, version-gated, and dialect-shape-constrained features are prioritized for validation coverage.
+- Any feature intentionally left parser-only or renderer-only is documented with a brief reason in the story design or follow-up notes.
+- Tests cover validation-time diagnostics for the newly added checks.
+- Epic/docs are updated so validation hardening is treated as part of dialect completeness, not optional cleanup.
+
+#### Labels
+`story`, `dialect`, `validation`, `parser`, `renderer`, `transpile`, `quality`
 
 #### Depends On
 - `Epic: R8 Dialect Support Gap Closure`

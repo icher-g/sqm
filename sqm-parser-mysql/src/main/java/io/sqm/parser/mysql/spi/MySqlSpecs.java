@@ -25,10 +25,10 @@ public class MySqlSpecs implements Specs {
     private OperatorPolicy operatorPolicy;
 
     /**
-     * Creates MySQL specs for the baseline 8.0 version using backtick identifier quoting.
+     * Creates MySQL specs for the baseline 8.0.14 version using backtick identifier quoting.
      */
     public MySqlSpecs() {
-        this(SqlDialectVersion.of(8, 0), Set.of());
+        this(SqlDialectVersion.of(8, 0, 14), Set.of());
     }
 
     /**

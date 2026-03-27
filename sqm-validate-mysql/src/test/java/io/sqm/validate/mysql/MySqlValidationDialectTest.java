@@ -6,6 +6,7 @@ import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.Identifier;
 import io.sqm.core.TableHint;
+import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.SchemaStatementValidator;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.delete;
+import static io.sqm.dsl.Dsl.exists;
 import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.merge;
@@ -29,6 +31,10 @@ class MySqlValidationDialectTest {
         CatalogTable.of("public", "users",
             CatalogColumn.of("id", CatalogType.LONG),
             CatalogColumn.of("name", CatalogType.STRING)
+        ),
+        CatalogTable.of("public", "orders",
+            CatalogColumn.of("id", CatalogType.LONG),
+            CatalogColumn.of("user_id", CatalogType.LONG)
         )
     );
 
@@ -88,9 +94,116 @@ class MySqlValidationDialectTest {
     @Test
     void dialect_exposesMysqlIndexHintRule() {
         var dialect = MySqlValidationDialect.of();
+        var versionedDialect = MySqlValidationDialect.of(SqlDialectVersion.of(8, 0, 13));
 
         assertEquals("mysql", dialect.name());
+        assertEquals(SqlDialectVersion.of(8, 0, 14), dialect.version());
+        assertTrue(dialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.LATERAL));
+        assertFalse(versionedDialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.LATERAL));
         assertFalse(dialect.additionalRules().isEmpty());
+    }
+
+    @Test
+    void validate_acceptsLateralDerivedTableFromMysql8014() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(8, 0, 14)));
+        var query = select(col("sq", "id"))
+            .from(tbl(select(col("id")).from(tbl("users")).build()).as("sq").lateral())
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.ok(), () -> result.problems().toString());
+    }
+
+    @Test
+    void validate_reportsUnsupportedLateralBeforeMysql8014() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(8, 0, 13)));
+        var query = select(col("sq", "id"))
+            .from(tbl(select(col("id")).from(tbl("users")).build()).as("sq").lateral())
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "from.lateral".equals(problem.clausePath())
+                && problem.message().contains("LATERAL")
+        ));
+    }
+
+    @Test
+    void validate_reportsInvalidMysqlLateralShapeForBaseTables() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(8, 0, 14)));
+        var query = select(col("u", "id"))
+            .from(tbl("users").as("u").lateral())
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "from.lateral".equals(problem.clausePath())
+                && problem.message().contains("derived tables")
+        ));
+    }
+
+    @Test
+    void validate_reportsMissingAliasForMysqlLateralDerivedTables() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(8, 0, 14)));
+        var query = select(col("id"))
+            .from(tbl(select(col("id")).from(tbl("users")).build()).lateral())
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "from.lateral".equals(problem.clausePath())
+                && problem.message().contains("alias")
+        ));
+    }
+
+    @Test
+    void validate_skipsNestedLateralTraversalAndStillValidatesNestedQueries() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of(SqlDialectVersion.of(8, 0, 13)));
+        var scalarQuery = select(
+            io.sqm.core.Expression.subquery(
+                select(col("sq", "id"))
+                    .from(tbl(select(col("id")).from(tbl("users")).build()).as("sq").lateral())
+                    .build()
+            )
+        )
+            .from(tbl("users").as("u"))
+            .build();
+        var existsQuery = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .where(exists(
+                select(col("sq", "id"))
+                    .from(tbl(select(col("id")).from(tbl("users")).build()).as("sq").lateral())
+                    .build()
+            ))
+            .build();
+        var anyQuery = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .where(col("u", "id").any(io.sqm.core.ComparisonOperator.EQ,
+                select(col("sq", "id"))
+                    .from(tbl(select(col("id")).from(tbl("users")).build()).as("sq").lateral())
+                    .build()))
+            .build();
+
+        var scalarResult = validator.validate(scalarQuery);
+        var existsResult = validator.validate(existsQuery);
+        var anyResult = validator.validate(anyQuery);
+
+        assertEquals(1, scalarResult.problems().stream()
+            .filter(problem -> "from.lateral".equals(problem.clausePath()))
+            .count());
+        assertEquals(1, existsResult.problems().stream()
+            .filter(problem -> "from.lateral".equals(problem.clausePath()))
+            .count());
+        assertEquals(1, anyResult.problems().stream()
+            .filter(problem -> "from.lateral".equals(problem.clausePath()))
+            .count());
     }
 
     @Test

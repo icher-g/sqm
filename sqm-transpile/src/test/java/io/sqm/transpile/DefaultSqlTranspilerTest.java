@@ -140,6 +140,56 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
+    void transpilesPostgresAtTimeZoneToSqlServerRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.SQLSERVER)
+            .build();
+
+        var result = transpiler.transpile("SELECT created_at AT TIME ZONE 'UTC' FROM users");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT created_at AT TIME ZONE 'UTC' FROM users"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
+    void transpilesPostgresLateralDerivedTableToMySqlRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
+            .build();
+
+        var result = transpiler.transpile("SELECT sq.id FROM LATERAL (SELECT id FROM users) AS sq");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT sq.id FROM LATERAL ( SELECT id FROM users ) AS sq"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
+    void transpilesPostgresLateralJoinToSqlServerApplyRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.SQLSERVER)
+            .build();
+
+        var result = transpiler.transpile(
+            "SELECT u.id FROM users AS u JOIN LATERAL (SELECT id FROM users) AS sq ON true"
+        );
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT u.id FROM users AS u CROSS APPLY ( SELECT id FROM users ) AS sq"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
     void transpilesAnsiLimitToSqlServerTopRendering() {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.ANSI)

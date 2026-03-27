@@ -38,6 +38,8 @@ public final class Renderers {
             .register(new OutputStarResultItemRenderer())
             .register(new FunctionExprRenderer())
             .register(new LimitOffsetRenderer())
+            .register(new CrossJoinRenderer())
+            .register(new OnJoinRenderer())
             .register(new SelectQueryRenderer())
             .register(new ResultClauseRenderer())
             .register(new ResultIntoRenderer());

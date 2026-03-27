@@ -699,6 +699,11 @@ final class SqmJavaEmitter {
         }
 
         @Override
+        public String visitAtTimeZoneExpr(AtTimeZoneExpr expr) {
+            return emitNode(expr.timestamp()) + ".atTimeZone(" + emitNode(expr.timezone()) + ")";
+        }
+
+        @Override
         public String visitExprResultItem(ExprResultItem item) {
             var expr = emitNode(item.expr());
             if (item.alias() != null) {
