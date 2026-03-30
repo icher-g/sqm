@@ -429,9 +429,9 @@ E1, E2, E3, E4
 
 1. `E1` canonical examples
 2. `E2` semantic inspection helpers
-3. `E3` reusable transform utilities
-4. `E4` convenience-method and construction-consistency review
-5. `E5` real adoption in transpilation, normalization, and tests
+3. `E3` identifier and relation transform utilities
+4. `E4` convenience and construction review
+5. `E5` adoption in real framework code
 
 ---
 

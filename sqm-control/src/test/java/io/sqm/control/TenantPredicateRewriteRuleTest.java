@@ -363,6 +363,32 @@ class TenantPredicateRewriteRuleTest {
     }
 
     @Test
+    void rewrites_only_top_level_select_block_and_not_nested_subqueries() {
+        var settings = BuiltInRewriteSettings.builder()
+            .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
+            .tenantFallbackMode(TenantRewriteFallbackMode.SKIP)
+            .build();
+        var rule = TenantPredicateRewriteRule.of(settings);
+
+        var query = parseQuery("""
+            select u.id
+            from public.users u
+            where exists (
+                select 1
+                from public.users x
+                where x.id = u.id
+            )
+            """);
+
+        var result = rule.apply(query, TENANT_ANALYZE);
+        var rendered = SqlStatementRenderer.standard().render(result.statement(), TENANT_ANALYZE).sql().toLowerCase();
+
+        assertTrue(result.rewritten());
+        assertTrue(rendered.contains("u.tenant_id"));
+        assertFalse(rendered.contains("x.tenant_id"));
+    }
+
+    @Test
     void skips_when_existing_constraint_uses_reversed_literal_equals_column() {
         var settings = BuiltInRewriteSettings.builder()
             .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))

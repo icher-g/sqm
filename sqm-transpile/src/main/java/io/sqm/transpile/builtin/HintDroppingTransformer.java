@@ -1,13 +1,7 @@
 package io.sqm.transpile.builtin;
 
-import io.sqm.core.DeleteStatement;
-import io.sqm.core.InsertStatement;
-import io.sqm.core.MergeStatement;
-import io.sqm.core.Node;
-import io.sqm.core.SelectQuery;
-import io.sqm.core.Statement;
-import io.sqm.core.Table;
-import io.sqm.core.UpdateStatement;
+import io.sqm.core.*;
+import io.sqm.core.transform.RelationTransforms;
 import io.sqm.core.transform.RecursiveNodeTransformer;
 
 import java.util.List;
@@ -17,7 +11,11 @@ import java.util.List;
  */
 final class HintDroppingTransformer extends RecursiveNodeTransformer {
     Statement transform(Statement statement) {
-        return apply(statement);
+        Statement withoutStatementHints = apply(statement);
+        return RelationTransforms.rewriteTableRefs(withoutStatementHints, tableRef -> tableRef.<TableRef>matchTableRef()
+            .table(table -> table.hints().isEmpty() ? table : table.withHints(List.of()))
+            .otherwise(ref -> ref)
+        );
     }
 
     @Override
@@ -75,11 +73,4 @@ final class HintDroppingTransformer extends RecursiveNodeTransformer {
             .build();
     }
 
-    @Override
-    public Node visitTable(Table table) {
-        if (table.hints().isEmpty()) {
-            return table;
-        }
-        return table.withHints(List.of());
-    }
 }

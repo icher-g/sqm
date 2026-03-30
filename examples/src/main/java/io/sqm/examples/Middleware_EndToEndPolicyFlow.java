@@ -5,24 +5,29 @@ import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.control.audit.AuditEventPublisher;
-import io.sqm.control.rewrite.BuiltInRewriteRule;
-import io.sqm.control.rewrite.BuiltInRewriteSettings;
+import io.sqm.control.config.RuntimeGuardrails;
+import io.sqm.control.config.SqlDecisionServiceConfig;
 import io.sqm.control.decision.DecisionResult;
+import io.sqm.control.decision.ReasonCode;
 import io.sqm.control.execution.ExecutionContext;
 import io.sqm.control.execution.ExecutionMode;
 import io.sqm.control.execution.ParameterizationMode;
 import io.sqm.control.pipeline.StatementRewriteResult;
 import io.sqm.control.pipeline.StatementRewriteRule;
-import io.sqm.control.config.RuntimeGuardrails;
+import io.sqm.control.rewrite.BuiltInRewriteRule;
+import io.sqm.control.rewrite.BuiltInRewriteSettings;
+import io.sqm.control.rewrite.TenantRewriteTablePolicy;
 import io.sqm.control.service.SqlDecisionExplainer;
 import io.sqm.control.service.SqlDecisionService;
-import io.sqm.control.config.SqlDecisionServiceConfig;
-import io.sqm.control.rewrite.TenantRewriteTablePolicy;
 import io.sqm.core.dialect.SqlDialectId;
+import io.sqm.core.transform.StatementTransforms;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.SchemaValidationSettingsLoader;
 
 import java.util.List;
+
+import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.lit;
 
 /**
  * Demonstrates end-to-end middleware usage with validation-only and full rewrite flows.
@@ -136,11 +141,21 @@ public final class Middleware_EndToEndPolicyFlow {
     }
 
     private static void runFlowWithCustomExtensions(CatalogSchema schema, String sql) {
-        StatementRewriteRule addTenantGuard = (query, context) -> {
+        StatementRewriteRule addTenantGuard = (statement, context) -> {
             if (context.tenant() == null || context.tenant().isBlank()) {
-                return StatementRewriteResult.unchanged(query);
+                return StatementRewriteResult.unchanged(statement);
             }
-            return StatementRewriteResult.rewritten(query, "tenant-guard", io.sqm.control.decision.ReasonCode.REWRITE_CANONICALIZATION);
+            var rewritten = StatementTransforms.andWherePerTableRecursively(statement, binding ->
+                col(binding.qualifier().value(), "tenant_id").eq(lit(context.tenant()))
+            );
+            if (rewritten == statement) {
+                return StatementRewriteResult.unchanged(statement);
+            }
+            return StatementRewriteResult.rewritten(
+                rewritten,
+                "tenant-guard",
+                ReasonCode.REWRITE_TENANT_PREDICATE
+            );
         };
 
         SqlDecisionService decisionService = SqlDecisionService.create(

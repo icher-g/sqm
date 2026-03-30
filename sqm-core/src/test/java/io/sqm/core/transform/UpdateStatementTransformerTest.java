@@ -72,15 +72,7 @@ class UpdateStatementTransformerTest {
             .set(set("name", lit("alice")))
             .build();
 
-        Node transformed = new RecursiveNodeTransformer() {
-            @Override
-            public Node visitTable(io.sqm.core.Table table) {
-                if ("source_users".equals(table.name().value())) {
-                    return tbl("alt_source");
-                }
-                return table;
-            }
-        }.transform(statement);
+        Node transformed = RelationTransforms.renameTable(statement, "source_users", "alt_source");
 
         assertNotSame(statement, transformed);
     }
@@ -92,15 +84,7 @@ class UpdateStatementTransformerTest {
             .from(tbl("source_users"))
             .build();
 
-        Node transformed = new RecursiveNodeTransformer() {
-            @Override
-            public Node visitTable(io.sqm.core.Table table) {
-                if ("source_users".equals(table.name().value())) {
-                    return tbl("alt_source");
-                }
-                return table;
-            }
-        }.transform(statement);
+        Node transformed = RelationTransforms.renameTable(statement, "source_users", "alt_source");
 
         assertNotSame(statement, transformed);
     }

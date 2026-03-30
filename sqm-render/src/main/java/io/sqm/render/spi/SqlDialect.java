@@ -1,10 +1,9 @@
 package io.sqm.render.spi;
 
 import io.sqm.core.Node;
-import io.sqm.core.OrdinalParamExpr;
 import io.sqm.core.collect.ParametersCollector;
 import io.sqm.core.dialect.DialectCapabilities;
-import io.sqm.core.transform.ParameterizeLiteralsTransformer;
+import io.sqm.core.transform.LiteralTransforms;
 
 import java.util.List;
 
@@ -31,10 +30,8 @@ public interface SqlDialect {
 
             if (collector.positional().isEmpty() && collector.named().isEmpty()) {
                 // convert all literals to params.
-                var literalsTransformer = new ParameterizeLiteralsTransformer((i) -> OrdinalParamExpr.of(i));
-                root = root.accept(literalsTransformer);
-
-                return PreparedNode.of(root, literalsTransformer.values());
+                var parameterized = LiteralTransforms.parameterize(root);
+                return PreparedNode.of(parameterized.node(), parameterized.values());
             }
             throw new IllegalStateException("BIND parameterization mode is not supported for query that already has parameters.");
         }

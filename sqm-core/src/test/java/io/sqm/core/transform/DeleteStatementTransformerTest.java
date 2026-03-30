@@ -57,15 +57,7 @@ class DeleteStatementTransformerTest {
             .using(tbl("source_users"))
             .build();
 
-        Node transformed = new RecursiveNodeTransformer() {
-            @Override
-            public Node visitTable(Table table) {
-                if ("source_users".equals(table.name().value())) {
-                    return tbl("alt_source");
-                }
-                return table;
-            }
-        }.transform(statement);
+        Node transformed = RelationTransforms.renameTable(statement, "source_users", "alt_source");
 
         assertNotSame(statement, transformed);
     }
@@ -77,15 +69,7 @@ class DeleteStatementTransformerTest {
             .join(inner(tbl("source_users")).on(col("users", "id").eq(col("source_users", "id"))))
             .build();
 
-        Node transformed = new RecursiveNodeTransformer() {
-            @Override
-            public Node visitTable(Table table) {
-                if ("source_users".equals(table.name().value())) {
-                    return tbl("alt_source");
-                }
-                return table;
-            }
-        }.transform(statement);
+        Node transformed = RelationTransforms.renameTable(statement, "source_users", "alt_source");
 
         assertNotSame(statement, transformed);
     }

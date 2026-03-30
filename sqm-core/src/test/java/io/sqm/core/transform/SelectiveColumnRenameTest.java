@@ -3,7 +3,6 @@ package io.sqm.core.transform;
 import io.sqm.core.ColumnExpr;
 import io.sqm.core.FunctionExpr;
 import io.sqm.core.Identifier;
-import io.sqm.core.Node;
 import io.sqm.core.QualifiedName;
 import io.sqm.core.RowExpr;
 import org.junit.jupiter.api.Test;
@@ -26,8 +25,7 @@ public class SelectiveColumnRenameTest {
         FunctionExpr lower = FunctionExpr.of(QualifiedName.of("lower"), List.of(FunctionExpr.Arg.expr(colName)), null, null, null, null);
         RowExpr row = RowExpr.of(List.of(colUid, lower));
 
-        RenameColumnTransformer t = new RenameColumnTransformer();
-        RowExpr out = (RowExpr) t.transform(row);
+        RowExpr out = IdentifierTransforms.renameColumn(row, "u", "id", "user_id");
 
         // Row is rebuilt if any child changed; check structural expectations
         assertEquals(2, out.items().size(), "Row must still have two items");
@@ -47,15 +45,4 @@ public class SelectiveColumnRenameTest {
         // It's safe to check semantic equality only:
         assertEquals("name", argCol.name().value());
     }
-
-    static class RenameColumnTransformer extends RecursiveNodeTransformer {
-        @Override
-        public Node visitColumnExpr(ColumnExpr c) {
-            if (c.tableAlias() != null && "u".equals(c.tableAlias().value()) && "id".equals(c.name().value())) {
-                return ColumnExpr.of(Identifier.of("u"), Identifier.of("user_id"));
-            }
-            return c;
-        }
-    }
 }
-

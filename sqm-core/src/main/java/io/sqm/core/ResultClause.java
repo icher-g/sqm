@@ -56,6 +56,28 @@ public non-sealed interface ResultClause extends Node {
     ResultInto into();
 
     /**
+     * Returns whether this clause redirects produced rows into a target relation.
+     *
+     * @return {@code true} when {@link #into()} is present
+     */
+    default boolean hasIntoTarget() {
+        return into() != null;
+    }
+
+    /**
+     * Returns whether this clause uses dialect specific result. Currently, it checks only for SQL Server-specific result item shapes.
+     *
+     * @return {@code true} when any item is an {@link OutputStarResultItem} or wraps an {@link OutputColumnExpr}
+     */
+    default boolean usesDialectSpecificResultItems() {
+        return items().stream().anyMatch(item -> item.<Boolean>matchResultItem()
+            .outputStar(outputStar -> true)
+            .expr(expr -> expr.expr().<Boolean>matchExpression().outputColumn(outputColumn -> true).orElse(false))
+            .orElse(false)
+        );
+    }
+
+    /**
      * Accepts a visitor.
      *
      * @param v visitor instance

@@ -6,8 +6,11 @@ import io.sqm.control.pipeline.StatementRewriteResult;
 import io.sqm.control.pipeline.StatementRewriteRule;
 import io.sqm.control.pipeline.RewriteDenyException;
 import io.sqm.core.*;
+import io.sqm.core.transform.StatementTransforms;
+import io.sqm.core.transform.VisibleTableBinding;
 
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Built-in rewrite rule that injects tenant predicates into supported top-level statements.
@@ -88,10 +91,6 @@ public final class TenantPredicateRewriteRule implements StatementRewriteRule {
         return equalsIgnoreCase(column.tableAlias().value(), target.qualifier().value());
     }
 
-    private static String tableKey(Identifier schema, Identifier table) {
-        return normalize(schema.value()) + "." + normalize(table.value());
-    }
-
     private static String normalizeContextTenant(String tenant) {
         if (tenant == null || tenant.isBlank()) {
             return null;
@@ -104,10 +103,6 @@ public final class TenantPredicateRewriteRule implements StatementRewriteRule {
             return null;
         }
         return value.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private static Predicate and(Predicate lhs, Predicate rhs) {
-        return lhs == null ? rhs : lhs.and(rhs);
     }
 
     private static boolean equalsIgnoreCase(String left, String right) {
@@ -163,73 +158,41 @@ public final class TenantPredicateRewriteRule implements StatementRewriteRule {
     }
 
     private Query rewriteSelect(SelectQuery select, ExecutionContext context) {
-        List<Target> targets = collectTargets(select);
-        Predicate tenantPredicate = tenantPredicate(select.where(), targets, context);
-
-        if (tenantPredicate == null) {
-            return select;
-        }
-
-        Predicate where = select.where() == null ? tenantPredicate : select.where().and(tenantPredicate);
-        return SelectQueryBuilder.of(select)
-            .where(where)
-            .build();
+        return StatementTransforms.andWherePerTable(select, tenantResolver(select.where(), context));
     }
 
     private UpdateStatement rewriteUpdate(UpdateStatement update, ExecutionContext context) {
-        List<Target> targets = collectTargets(update);
-        Predicate tenantPredicate = tenantPredicate(update.where(), targets, context);
-        if (tenantPredicate == null) {
-            return update;
-        }
-
-        Predicate where = update.where() == null ? tenantPredicate : update.where().and(tenantPredicate);
-        return UpdateStatement.builder(update.table())
-            .assignments(update.assignments())
-            .joins(update.joins())
-            .from(update.from())
-            .where(where)
-            .result(update.result())
-                .hints(update.hints())
-            .build();
+        return StatementTransforms.andWherePerTable(update, tenantResolver(update.where(), context));
     }
 
     private DeleteStatement rewriteDelete(DeleteStatement delete, ExecutionContext context) {
-        List<Target> targets = collectTargets(delete);
-        Predicate tenantPredicate = tenantPredicate(delete.where(), targets, context);
-        if (tenantPredicate == null) {
-            return delete;
-        }
-
-        Predicate where = delete.where() == null ? tenantPredicate : delete.where().and(tenantPredicate);
-        return DeleteStatement.builder(delete.table())
-            .using(delete.using())
-            .joins(delete.joins())
-            .where(where)
-            .result(delete.result())
-                .hints(delete.hints())
-            .build();
+        return StatementTransforms.andWherePerTable(delete, tenantResolver(delete.where(), context));
     }
 
-    private Predicate tenantPredicate(Predicate where, List<Target> targets, ExecutionContext context) {
-        if (targets.isEmpty()) {
-            return null;
-        }
-
+    private Function<VisibleTableBinding, Predicate> tenantResolver(Predicate where, ExecutionContext context) {
         String tenant = normalizeContextTenant(context.tenant());
-        Predicate tenantPredicate = null;
-        for (Target target : targets) {
-            if (tenant != null && isAlreadyConstrained(where, target, tenant)) {
-                continue;
+        return binding -> {
+            ResolvedPolicy resolved = resolvePolicy(binding.schema(), binding.tableName());
+            if (resolved == null) {
+                return null;
             }
-            switch (target.mode()) {
-                case SKIP -> {
-                    // Explicitly configured as no-op.
-                }
+            Target target = new Target(
+                resolved.tableKey(),
+                binding.qualifier(),
+                resolved.policy().tenantColumn(),
+                resolved.policy().mode()
+            );
+            if (tenant != null && isAlreadyConstrained(where, target, tenant)) {
+                return null;
+            }
+            return switch (target.mode()) {
+                case SKIP -> // Explicitly configured as no-op.
+                    null;
                 case OPTIONAL -> {
                     if (tenant != null) {
-                        tenantPredicate = and(tenantPredicate, target.predicateForTenant(tenant));
+                        yield target.predicateForTenant(tenant);
                     }
+                    yield null;
                 }
                 case REQUIRED -> {
                     if (tenant == null) {
@@ -238,81 +201,18 @@ public final class TenantPredicateRewriteRule implements StatementRewriteRule {
                             "Tenant context is required for tenant rewrite on table '%s'".formatted(target.tableKey())
                         );
                     }
-                    tenantPredicate = and(tenantPredicate, target.predicateForTenant(tenant));
+                    yield target.predicateForTenant(tenant);
                 }
-            }
-        }
-        return tenantPredicate;
+            };
+        };
     }
 
-    private List<Target> collectTargets(SelectQuery select) {
-        var targets = new ArrayList<Target>();
-        addTargetFromTableRef(targets, select.from());
-        for (Join join : select.joins()) {
-            addTargetFromTableRef(targets, join.right());
-        }
-        return List.copyOf(targets);
-    }
-
-    private List<Target> collectTargets(UpdateStatement update) {
-        var targets = new ArrayList<Target>();
-        addTargetFromTable(targets, update.table());
-        for (Join join : update.joins()) {
-            addTargetFromTableRef(targets, join.right());
-        }
-        for (TableRef fromItem : update.from()) {
-            addTargetFromTableRef(targets, fromItem);
-        }
-        return List.copyOf(targets);
-    }
-
-    private List<Target> collectTargets(DeleteStatement delete) {
-        var targets = new ArrayList<Target>();
-        addTargetFromTable(targets, delete.table());
-        for (TableRef usingItem : delete.using()) {
-            addTargetFromTableRef(targets, usingItem);
-        }
-        for (Join join : delete.joins()) {
-            addTargetFromTableRef(targets, join.right());
-        }
-        return List.copyOf(targets);
-    }
-
-    private void addTargetFromTable(List<Target> targets, Table table) {
-        ResolvedPolicy resolved = resolvePolicy(table);
-        if (resolved == null) {
-            return;
-        }
-        Identifier qualifier = table.alias() != null ? table.alias() : table.name();
-        targets.add(new Target(
-            resolved.tableKey(),
-            qualifier,
-            resolved.policy().tenantColumn(),
-            resolved.policy().mode()
-        ));
-    }
-
-    private void addTargetFromTableRef(List<Target> targets, TableRef ref) {
-        if (ref == null) {
-            return;
-        }
-        if (ref instanceof Lateral lateral) {
-            addTargetFromTableRef(targets, lateral.inner());
-            return;
-        }
-        if (!(ref instanceof Table table)) {
-            return;
-        }
-
-        addTargetFromTable(targets, table);
-    }
-
-    private ResolvedPolicy resolvePolicy(Table table) {
+    private ResolvedPolicy resolvePolicy(String schema, String tableName) {
         var policies = settings.tenantTablePolicies();
-        String name = normalize(table.name().value());
+        String name = normalize(tableName);
 
-        if (table.schema() != null) {
-            String key = tableKey(table.schema(), table.name());
+        if (schema != null) {
+            String key = normalize(schema) + "." + name;
             TenantRewriteTablePolicy policy = policies.get(key);
             return onMissingMapping(key, policy);
         }
