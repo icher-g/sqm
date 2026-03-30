@@ -92,6 +92,12 @@ class StatementFeatureInspectorTest {
         assertTrue(StatementFeatureInspector.hasResultClause(outputMerge));
         assertTrue(StatementFeatureInspector.hasSqlServerOutputClause(outputMerge));
         assertTrue(StatementFeatureInspector.hasSqlServerOutputClause(outputDeleteAll));
+
+        assertFalse(returningInsert.result().hasIntoTarget());
+        assertFalse(returningInsert.result().usesDialectSpecificResultItems());
+        assertTrue(outputUpdate.result().usesDialectSpecificResultItems());
+        assertTrue(outputIntoUpdate.result().hasIntoTarget());
+        assertTrue(outputIntoUpdate.result().into().isBaseTableTarget());
     }
 
     @Test

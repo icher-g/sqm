@@ -18,6 +18,7 @@ import io.sqm.control.service.SqlDecisionEngine;
 import io.sqm.core.Expression;
 import io.sqm.core.Query;
 import io.sqm.core.UpdateStatement;
+import io.sqm.core.transform.StatementTransforms;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -131,14 +132,19 @@ class SqlDecisionEngineTest {
             .set(io.sqm.core.Identifier.of("name"), lit("alice"))
             .where(col("id").eq(lit(1)))
             .build();
-        UpdateStatement rewritten = update("users")
-            .set(io.sqm.core.Identifier.of("name"), lit("alice"))
-            .where(col("id").eq(lit(1)).and(col("tenant_id").eq(lit("tenant_a"))))
-            .build();
 
         var engine = SqlDecisionEngine.of(
             (q, context) -> StatementValidateResult.ok(),
-            (q, context) -> StatementRewriteResult.rewritten(rewritten, "tenant-guard", ReasonCode.REWRITE_TENANT_PREDICATE),
+            (q, context) -> {
+                var rewritten = StatementTransforms.andWherePerTableRecursively(q, binding ->
+                    context.tenant() == null || context.tenant().isBlank()
+                        ? null
+                        : col(binding.qualifier().value(), "tenant_id").eq(lit(context.tenant()))
+                );
+                return rewritten == q
+                    ? StatementRewriteResult.unchanged(q)
+                    : StatementRewriteResult.rewritten(rewritten, "tenant-guard", ReasonCode.REWRITE_TENANT_PREDICATE);
+            },
             SqlStatementRenderer.standard()
         );
 

@@ -1,6 +1,5 @@
 package io.sqm.core.transform;
 
-import io.sqm.core.OrdinalParamExpr;
 import io.sqm.core.Query;
 import io.sqm.core.utils.HashUtils;
 import io.sqm.core.utils.SerializationUtils;
@@ -53,7 +52,6 @@ public final class QueryFingerprint {
     }
 
     private static Query normalizeLiterals(Query query) {
-        var transformer = new ParameterizeLiteralsTransformer(OrdinalParamExpr::of);
-        return (Query) transformer.transform(query);
+        return LiteralTransforms.normalizeLiterals(query);
     }
 }

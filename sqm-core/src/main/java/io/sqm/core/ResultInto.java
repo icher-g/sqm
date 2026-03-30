@@ -53,6 +53,33 @@ public non-sealed interface ResultInto extends Node {
     List<Identifier> columns();
 
     /**
+     * Returns whether this target writes into a catalog-backed base table.
+     *
+     * @return {@code true} when {@link #target()} is a {@link Table}
+     */
+    default boolean isBaseTableTarget() {
+        return target().<Boolean>matchTableRef().table(table -> true).orElse(false);
+    }
+
+    /**
+     * Returns whether this target writes into a table variable.
+     *
+     * @return {@code true} when {@link #target()} is a {@link VariableTableRef}
+     */
+    default boolean isVariableTarget() {
+        return target().<Boolean>matchTableRef().variableTable(table -> true).orElse(false);
+    }
+
+    /**
+     * Returns whether this target writes into a derived relation such as a subquery or function table.
+     *
+     * @return {@code true} when {@link #target()} is not a base table and not a table variable
+     */
+    default boolean isDerivedTarget() {
+        return !isBaseTableTarget() && !isVariableTarget();
+    }
+
+    /**
      * Accepts a visitor.
      *
      * @param v   visitor instance

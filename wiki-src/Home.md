@@ -52,6 +52,7 @@ More:
   - [Unsupported Features](Unsupported-Features)
   - [SQL Transpilation](SQL-Transpilation)
   - [SQL Transpilation Examples](SQL-Transpilation-Examples)
+  - [Query Transform Helpers](Query-Transform-Helpers)
   - [SQL Middleware Framework](SQL-Middleware-Framework)
 - Serialization:
   - [JSON Serialization](JSON-Serialization)

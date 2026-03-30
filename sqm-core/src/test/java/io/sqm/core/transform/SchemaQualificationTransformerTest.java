@@ -109,4 +109,13 @@ class SchemaQualificationTransformerTest {
         assertNotNull(fromTable.schema());
         assertEquals(QuoteStyle.DOUBLE_QUOTE, fromTable.schema().quoteStyle());
     }
+
+    @Test
+    void qualificationHelperCanBeReusedDirectlyForSchemaUpdates() {
+        var query = select(col("id")).from(tbl("users")).build();
+
+        var transformed = (SelectQuery) RelationTransforms.qualifyUnqualifiedTables(query, Identifier.of("app"));
+
+        assertEquals("app", ((Table) transformed.from()).schema().value());
+    }
 }

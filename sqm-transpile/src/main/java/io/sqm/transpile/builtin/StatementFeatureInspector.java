@@ -66,22 +66,10 @@ final class StatementFeatureInspector {
 
             @Override
             public Void visitResultClause(ResultClause clause) {
-                if (clause.into() != null) {
+                if (clause.hasIntoTarget() || clause.usesDialectSpecificResultItems()) {
                     found.set(true);
                 }
                 return super.visitResultClause(clause);
-            }
-
-            @Override
-            public Void visitOutputColumnExpr(OutputColumnExpr c) {
-                found.set(true);
-                return super.visitOutputColumnExpr(c);
-            }
-
-            @Override
-            public Void visitOutputStarResultItem(OutputStarResultItem i) {
-                found.set(true);
-                return super.visitOutputStarResultItem(i);
             }
         });
         return found.get();
