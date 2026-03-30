@@ -2,6 +2,29 @@
 
 ## [Unreleased]
 
+## [v0.4.0] - 2026-03-30
+
+### Added
+- First-class SQL Server delivery across the framework:
+  - new SQL Server dialect modules for shared capability/model artifacts, parser, renderer, validator, and catalog type mapping
+  - baseline and advanced SQL Server query/DML support including bracket identifiers, `TOP`, `TOP ... PERCENT`, `TOP ... WITH TIES`, `OFFSET/FETCH`, statement/table hints, `OUTPUT`, `OUTPUT ... INTO`, table variables, and `MERGE`
+  - SQL Server downstream support across DSL, codegen, control/middleware flows, transpilation, and integration tests
+- New live database integration module and engine-backed verification coverage for PostgreSQL, MySQL, and SQL Server.
+- Typed hint modeling in `sqm-core` with structured statement and table hint nodes used across parser, renderer, transpilation, DSL, codegen, JSON, and tests.
+- Transformation ergonomics helper layer in `sqm-core`:
+  - `IdentifierTransforms`
+  - `RelationTransforms`
+  - `StatementTransforms`
+  - `LiteralTransforms`
+  - result-clause semantic helpers for DML result inspection
+- Dedicated wiki guides for query transform helpers and examples.
+
+### Changed
+- Shared DML result modeling now cleanly covers PostgreSQL `RETURNING`, MySQL result-clause reachability, and SQL Server `OUTPUT` / `OUTPUT ... INTO` semantics through a unified result-clause surface.
+- SQL transpilation coverage expanded for SQL Server advanced features, typed-hint handling, and clearer unsupported/approximate diagnostics.
+- Core model and dialect support gaps were closed for high-value manipulation surfaces including `AT TIME ZONE`, `LATERAL`, `FunctionTable`, `TopSpec`, `VariableTableRef`, array support, and MySQL validation coverage.
+- Documentation, wiki navigation, examples, and downstream guides were refreshed to reflect SQL Server support and the new transform-helper workflow.
+
 ## [v0.3.3] - 2026-03-13
 
 ### Added

@@ -48,6 +48,8 @@ More:
 - SQL processing:
   - [Parsing SQL](Parsing-SQL)
   - [Rendering SQL](Rendering-SQL)
+  - [PostgreSQL Dialect](PostgreSQL-Dialect)
+  - [MySQL Dialect](MySQL-Dialect)
   - [SQL Server Dialect](SQL-Server-Dialect)
   - [Unsupported Features](Unsupported-Features)
   - [SQL Transpilation](SQL-Transpilation)
