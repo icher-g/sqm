@@ -18,7 +18,10 @@ Project wiki with feature guides and examples: https://github.com/icher-g/sqm/wi
 
 Direct wiki guides:
 
+- PostgreSQL syntax guide: [wiki-src/PostgreSQL-Dialect.md](wiki-src/PostgreSQL-Dialect.md)
+- MySQL syntax guide: [wiki-src/MySQL-Dialect.md](wiki-src/MySQL-Dialect.md)
 - SQL Server syntax guide: [wiki-src/SQL-Server-Dialect.md](wiki-src/SQL-Server-Dialect.md)
+- Query transform helpers: [wiki-src/Query-Transform-Helpers.md](wiki-src/Query-Transform-Helpers.md)
 - Unsupported features and scope boundaries: [wiki-src/Unsupported-Features.md](wiki-src/Unsupported-Features.md)
 
 ## Contributor Rules
@@ -33,6 +36,7 @@ Repository development rules for contributors and coding agents are defined in `
 - **Dialect support** - ANSI + PostgreSQL + MySQL + SQL Server parser/renderer/spec implementations.
 - **Validation framework** - schema-aware statement validation with configurable limits and access policies (principal/tenant aware).
 - **Rewrite and normalization pipeline** - built-in and custom rewrite rules (limit injection, qualification, canonicalization, tenant predicate, etc.).
+- **Transformation ergonomics** - task-oriented helper APIs for identifier, relation, statement, and literal rewrites, with canonical examples in the wiki.
 - **SQL transpilation** - source-to-target PostgreSQL/MySQL/SQL Server slice with exact, approximate, and unsupported diagnostics, including warning-based dropping of dialect-local hints across non-native targets.
 - **Middleware decision engine** - analyze/enforce/explain workflow with guardrails, telemetry, auditing, and flow control.
 - **Transport hosts** - REST and MCP runtimes for externalized middleware usage.
