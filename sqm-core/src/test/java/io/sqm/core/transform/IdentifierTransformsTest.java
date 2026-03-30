@@ -1,5 +1,6 @@
 package io.sqm.core.transform;
 
+import io.sqm.core.SelectQuery;
 import io.sqm.core.UpdateStatement;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import static io.sqm.dsl.Dsl.update;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class IdentifierTransformsTest {
 
@@ -129,5 +131,29 @@ class IdentifierTransformsTest {
                 .comparison(c -> c.rhs().matchExpression().column(column -> column.name().value()).orElse(null))
                 .orElse(null)
         );
+    }
+
+    @Test
+    void remapColumnsPreservesIdentityWhenMapperReturnsNull() {
+        SelectQuery query = select(col("id"))
+            .from(tbl("users"))
+            .where(col("id").eq(lit(1)))
+            .build();
+
+        var transformed = IdentifierTransforms.remapColumns(query, ref -> null);
+
+        assertSame(query, transformed);
+    }
+
+    @Test
+    void rewriteColumnsRejectsNullResults() {
+        SelectQuery query = select(col("id")).from(tbl("users")).build();
+
+        var ex = assertThrows(
+            IllegalArgumentException.class,
+            () -> IdentifierTransforms.rewriteColumns(query, column -> null)
+        );
+
+        assertEquals("Column rewriter must not return null for: " + col("id"), ex.getMessage());
     }
 }

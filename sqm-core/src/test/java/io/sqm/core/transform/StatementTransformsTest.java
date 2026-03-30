@@ -1,23 +1,37 @@
 package io.sqm.core.transform;
 
+import io.sqm.core.AndPredicate;
 import io.sqm.core.DeleteStatement;
+import io.sqm.core.InsertStatement;
+import io.sqm.core.Predicate;
+import io.sqm.core.Query;
 import io.sqm.core.SelectQuery;
 import io.sqm.core.UpdateStatement;
 import io.sqm.dsl.Dsl;
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.cross;
 import static io.sqm.dsl.Dsl.delete;
 import static io.sqm.dsl.Dsl.inner;
+import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.natural;
+import static io.sqm.dsl.Dsl.row;
+import static io.sqm.dsl.Dsl.rows;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
 import static io.sqm.dsl.Dsl.unary;
 import static io.sqm.dsl.Dsl.update;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class StatementTransformsTest {
 
@@ -291,5 +305,126 @@ class StatementTransformsTest {
         SelectQuery transformed = (SelectQuery) StatementTransforms.andWherePerTableRecursively(query, binding -> null);
 
         assertSame(query, transformed);
+    }
+
+    @Test
+    void andWhereRejectsUnsupportedInsertStatement() {
+        InsertStatement statement = insert("users")
+            .values(rows(row(1)))
+            .build();
+
+        var ex = assertThrows(
+            IllegalArgumentException.class,
+            () -> StatementTransforms.andWhere(statement, col("tenant_id").eq(lit(42)))
+        );
+
+        assertEquals("Unsupported statement type for WHERE injection: Impl", ex.getMessage());
+    }
+
+    @Test
+    void andWhereIfMissingRejectsUnsupportedInsertStatement() {
+        InsertStatement statement = insert("users")
+            .values(rows(row(1)))
+            .build();
+
+        var ex = assertThrows(
+            IllegalArgumentException.class,
+            () -> StatementTransforms.andWhereIfMissing(statement, col("tenant_id").eq(lit(42)))
+        );
+
+        assertEquals("Unsupported statement type for duplicate-aware WHERE injection: Impl", ex.getMessage());
+    }
+
+    @Test
+    void andWherePerTableRejectsUnsupportedInsertStatement() {
+        InsertStatement statement = insert("users")
+            .values(rows(row(1)))
+            .build();
+
+        var ex = assertThrows(
+            IllegalArgumentException.class,
+            () -> StatementTransforms.andWherePerTable(statement, binding -> col("tenant_id").eq(lit(42)))
+        );
+
+        assertEquals("Unsupported statement type for per-table WHERE injection: Impl", ex.getMessage());
+    }
+
+    @Test
+    void andWherePerTableSupportsQueryDispatch() {
+        Query query = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .build();
+
+        Query transformed = StatementTransforms.andWherePerTable(query, binding ->
+            "u".equals(binding.qualifier().value()) ? col("u", "tenant_id").eq(lit(42)) : null
+        );
+
+        var select = assertInstanceOf(SelectQuery.class, transformed);
+        assertEquals(
+            "tenant_id",
+            select.where().matchPredicate()
+                .comparison(c -> c.lhs().matchExpression().column(column -> column.name().value()).orElse(null))
+                .orElse(null)
+        );
+    }
+
+    @Test
+    void andWherePerTableCollectsVisibleTablesForUpdateFromAndJoinVariants() {
+        UpdateStatement statement = update(tbl("users").as("u"))
+            .set(set("name", lit("alice")))
+            .from(tbl("accounts").as("a"))
+            .join(inner(tbl("teams").as("t")).using("team_id"))
+            .join(cross(tbl("scopes").as("s")))
+            .join(natural(tbl("groups").as("g")))
+            .build();
+
+        UpdateStatement transformed = StatementTransforms.andWherePerTable(statement, binding -> switch (binding.qualifier().value()) {
+            case "u" -> col("u", "tenant_id").eq(lit(42));
+            case "a" -> col("a", "tenant_id").eq(lit(42));
+            case "t" -> col("t", "tenant_id").eq(lit(42));
+            case "s" -> unary(lit(true));
+            case "g" -> col("g", "tenant_id").eq(lit(42));
+            default -> null;
+        });
+
+        assertEquals(Set.of("u", "a", "t", "g"), predicateAliases(transformed.where()));
+    }
+
+    @Test
+    void andWherePerTableCollectsVisibleTablesForDeleteUsingAndJoins() {
+        DeleteStatement statement = delete(tbl("users").as("u"))
+            .using(tbl("orders").as("o"), tbl("scopes").as("s"))
+            .join(cross(tbl("groups").as("g")))
+            .build();
+
+        DeleteStatement transformed = StatementTransforms.andWherePerTable(statement, binding -> switch (binding.qualifier().value()) {
+            case "u" -> col("u", "tenant_id").eq(lit(42));
+            case "o" -> col("o", "tenant_id").eq(lit(42));
+            case "s" -> col("s", "tenant_id").eq(lit(42));
+            case "g" -> col("g", "tenant_id").eq(lit(42));
+            default -> null;
+        });
+
+        assertEquals(Set.of("u", "o", "s", "g"), predicateAliases(transformed.where()));
+    }
+
+    private static Set<String> predicateAliases(Predicate predicate) {
+        Set<String> aliases = new LinkedHashSet<>();
+        collectPredicateAliases(predicate, aliases);
+        return aliases;
+    }
+
+    private static void collectPredicateAliases(Predicate predicate, Set<String> aliases) {
+        if (predicate instanceof AndPredicate and) {
+            collectPredicateAliases(and.lhs(), aliases);
+            collectPredicateAliases(and.rhs(), aliases);
+            return;
+        }
+        predicate.matchPredicate()
+            .comparison(c -> c.lhs().matchExpression().column(column -> {
+                aliases.add(column.tableAlias().value());
+                return null;
+            }).orElse(null))
+            .orElse(null);
     }
 }
