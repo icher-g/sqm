@@ -6,6 +6,8 @@ import io.sqm.core.InsertStatement;
 import io.sqm.core.Predicate;
 import io.sqm.core.Query;
 import io.sqm.core.SelectQuery;
+import io.sqm.core.SetOperator;
+import io.sqm.core.Statement;
 import io.sqm.core.UpdateStatement;
 import io.sqm.dsl.Dsl;
 import org.junit.jupiter.api.Test;
@@ -192,6 +194,38 @@ class StatementTransformsTest {
     }
 
     @Test
+    void andWhereIfMissingPreservesIdentityForTrueFilter() {
+        SelectQuery query = select(col("id"))
+            .from(tbl("users"))
+            .where(col("active").eq(lit(true)))
+            .build();
+
+        SelectQuery transformed = StatementTransforms.andWhereIfMissing(query, unary(lit(true)));
+
+        assertSame(query, transformed);
+    }
+
+    @Test
+    void andWhereIfMissingAddsSimplifiedFilterWhenWhereMissing() {
+        SelectQuery query = select(col("id"))
+            .from(tbl("users"))
+            .build();
+
+        SelectQuery transformed = StatementTransforms.andWhereIfMissing(
+            query,
+            unary(lit(true)).and(col("tenant_id").eq(lit(42)))
+        );
+
+        assertNotSame(query, transformed);
+        assertEquals(
+            "tenant_id",
+            transformed.where().matchPredicate()
+                .comparison(c -> c.lhs().matchExpression().column(column -> column.name().value()).orElse(null))
+                .orElse(null)
+        );
+    }
+
+    @Test
     void andWherePerTableRecursivelyInjectsAliasTargetedFiltersIntoSelect() {
         SelectQuery query = select(col("u", "id"))
             .from(tbl("users").as("u"))
@@ -308,6 +342,17 @@ class StatementTransformsTest {
     }
 
     @Test
+    void andWherePerTablePreservesIdentityWhenResolverOnlyReturnsTrue() {
+        SelectQuery query = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .build();
+
+        SelectQuery transformed = StatementTransforms.andWherePerTable(query, binding -> unary(lit(true)));
+
+        assertSame(query, transformed);
+    }
+
+    @Test
     void andWhereRejectsUnsupportedInsertStatement() {
         InsertStatement statement = insert("users")
             .values(rows(row(1)))
@@ -369,6 +414,24 @@ class StatementTransformsTest {
     }
 
     @Test
+    void andWherePerTableRejectsUnsupportedCompositeQuery() {
+        Query query = Dsl.compose(
+            java.util.List.of(
+                select(col("id")).from(tbl("users")).build(),
+                select(col("id")).from(tbl("admins")).build()
+            ),
+            java.util.List.of(SetOperator.UNION)
+        );
+
+        var ex = assertThrows(
+            IllegalArgumentException.class,
+            () -> StatementTransforms.andWherePerTable(query, binding -> col("tenant_id").eq(lit(42)))
+        );
+
+        assertEquals("Unsupported query type for per-table WHERE injection: Impl", ex.getMessage());
+    }
+
+    @Test
     void andWherePerTableCollectsVisibleTablesForUpdateFromAndJoinVariants() {
         UpdateStatement statement = update(tbl("users").as("u"))
             .set(set("name", lit("alice")))
@@ -406,6 +469,38 @@ class StatementTransformsTest {
         });
 
         assertEquals(Set.of("u", "o", "s", "g"), predicateAliases(transformed.where()));
+    }
+
+    @Test
+    void andWherePerTableRecognizesLateralInnerTableBindings() {
+        SelectQuery query = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .join(cross(tbl("audit").as("a").lateral()))
+            .build();
+
+        SelectQuery transformed = StatementTransforms.andWherePerTable(query, binding -> switch (binding.qualifier().value()) {
+            case "u" -> col("u", "tenant_id").eq(lit(42));
+            case "a" -> col("a", "tenant_id").eq(lit(42));
+            default -> null;
+        });
+
+        assertEquals(Set.of("u", "a"), predicateAliases(transformed.where()));
+    }
+
+    @Test
+    void andWherePerTableRecursivelySupportsStatementDispatchForDelete() {
+        Statement statement = delete(tbl("users").as("u"))
+            .using(tbl("orders").as("o"))
+            .build();
+
+        Statement transformed = StatementTransforms.andWherePerTableRecursively(statement, binding -> switch (binding.qualifier().value()) {
+            case "u" -> col("u", "tenant_id").eq(lit(42));
+            case "o" -> col("o", "tenant_id").eq(lit(42));
+            default -> null;
+        });
+
+        var delete = assertInstanceOf(DeleteStatement.class, transformed);
+        assertEquals(Set.of("u", "o"), predicateAliases(delete.where()));
     }
 
     private static Set<String> predicateAliases(Predicate predicate) {
