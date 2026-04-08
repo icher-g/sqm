@@ -62,6 +62,7 @@
         <module>sqm-codegen</module>
         <module>sqm-codegen-maven-plugin</module>
         <module>sqm-middleware-api</module>
+        <module>sqm-playground-api</module>
         <module>sqm-middleware-core</module>
         <module>sqm-middleware-rest</module>
         <module>sqm-middleware-mcp</module>
