@@ -45,5 +45,19 @@ class CatalogSchemaTest {
         assertInstanceOf(CatalogSchema.TableLookupResult.NotFound.class, result);
         assertFalse(result.ok());
     }
+
+    @Test
+    void allowEverythingResolvesUnknownTablesAndExposesNoDeclaredTables() {
+        var schema = CatalogSchema.allowEverything();
+
+        var result = schema.resolve("custom_schema", "dynamic_table");
+
+        assertTrue(result.ok());
+        assertTrue(schema.tables().isEmpty());
+        var found = assertInstanceOf(CatalogSchema.TableLookupResult.Found.class, result);
+        assertEquals("custom_schema", found.table().schema());
+        assertEquals("dynamic_table", found.table().name());
+        assertFalse(found.table().strictColumns());
+    }
 }
 

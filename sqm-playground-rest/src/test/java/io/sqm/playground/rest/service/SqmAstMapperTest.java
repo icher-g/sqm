@@ -89,6 +89,21 @@ class SqmAstMapperTest {
         assertEquals("0", detail(ast, "columnAliasesQuotedCount").value());
     }
 
+    @Test
+    void mapsEnumsAndImplementationMetadataAsDetails() {
+        var mapper = new SqmAstMapper();
+        var orderItem = OrderItem.of(ColumnExpr.of(Identifier.of("c"), Identifier.of("id"))).desc().nullsLast();
+
+        var ast = mapper.toAst(orderItem);
+
+        assertEquals("orderItem", ast.category());
+        assertEquals("OrderItem", detail(ast, "interfaceSimpleName").value());
+        assertEquals("io.sqm.core.OrderItem$Impl", detail(ast, "implementationClass").value());
+        assertEquals("DESC", detail(ast, "direction").value());
+        assertEquals("LAST", detail(ast, "nulls").value());
+        assertNotNull(slot(ast, "expr"));
+    }
+
     private static boolean hasSlot(AstNodeDto node, String slot) {
         return node.children().stream().anyMatch(child -> Objects.equals(slot, child.slot()));
     }
