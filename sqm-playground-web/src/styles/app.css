@@ -122,6 +122,44 @@ textarea {
   resize: vertical;
 }
 
+.tab-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+
+.tab-button {
+  border: 1px solid #d8c8b2;
+  border-radius: 999px;
+  background: #f7f1e7;
+  color: #5d4a36;
+  padding: 0.55rem 0.85rem;
+}
+
+.tab-button-active {
+  border-color: #c96f1a;
+  background: #c96f1a;
+  color: #fff8f1;
+}
+
+.result-panel {
+  border: 1px solid #e3d4bf;
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
+  background: #fffdf8;
+}
+
+.result-panel h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.result-placeholder {
+  margin: 0;
+  color: #5f6b76;
+}
+
 @media (max-width: 900px) {
   .shell-grid {
     grid-template-columns: 1fr;
