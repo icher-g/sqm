@@ -303,6 +303,20 @@ V1 should be defensive but simple.
 - rate limit: 20 requests/minute per IP
 - timeout: short per request
 
+### Environment Variables
+
+The backend should be configurable with environment variables for hosted deployment.
+
+Recommended variables:
+
+- `SQM_PLAYGROUND_ALLOWED_ORIGINS`
+- `SQM_PLAYGROUND_RATE_LIMIT_ENABLED`
+- `SQM_PLAYGROUND_REQUESTS_PER_WINDOW`
+- `SQM_PLAYGROUND_WINDOW_SECONDS`
+- `SQM_PLAYGROUND_MAX_REQUEST_BYTES`
+- `SQM_PLAYGROUND_TRUST_PROXY_HEADERS`
+- `SQM_PLAYGROUND_CLIENT_IP_HEADER`
+
 ### Deployment Safety Modes
 
 #### Mode A: Local Only
