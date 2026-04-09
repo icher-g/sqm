@@ -16,5 +16,8 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Render" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Validate" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Transpile" })).toBeDisabled();
+    expect(screen.getByLabelText("SQL text")).toHaveValue(
+      "select id, name\nfrom customer\nwhere id = 1\norder by name"
+    );
   });
 });

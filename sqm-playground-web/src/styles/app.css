@@ -11,7 +11,8 @@ body {
 }
 
 button,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -99,6 +100,26 @@ select {
 .button-row button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.editor-label {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.sql-editor {
+  width: 100%;
+  min-height: 18rem;
+  box-sizing: border-box;
+  border: 1px solid #d4c3ad;
+  border-radius: 16px;
+  padding: 1rem;
+  background: #1b2430;
+  color: #f7f3eb;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  line-height: 1.6;
+  resize: vertical;
 }
 
 @media (max-width: 900px) {

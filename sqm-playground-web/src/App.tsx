@@ -1,7 +1,13 @@
+import { useState } from "react";
+
 /**
  * Root application component for the frontend shell.
  */
 export default function App() {
+  const [sqlText, setSqlText] = useState(
+    "select id, name\nfrom customer\nwhere id = 1\norder by name"
+  );
+
   return (
     <main className="app-shell">
       <header className="hero">
@@ -58,7 +64,18 @@ export default function App() {
 
         <article className="card">
           <h2>Editor</h2>
-          <p>The SQL editor will go here.</p>
+          <p>Edit the SQL text directly. Later stories will connect this input to backend operations.</p>
+
+          <label className="editor-label" htmlFor="sql-editor">
+            SQL text
+          </label>
+          <textarea
+            id="sql-editor"
+            className="sql-editor"
+            value={sqlText}
+            onChange={(event) => setSqlText(event.target.value)}
+            spellCheck={false}
+          />
         </article>
 
         <article className="card">
