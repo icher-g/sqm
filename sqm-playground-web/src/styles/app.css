@@ -1,0 +1,108 @@
+:root {
+  font-family: "Segoe UI", sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #1f2933;
+  background: #f5efe4;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+.app-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.hero {
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 0.8rem;
+  color: #8b5a2b;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: 2.5rem;
+}
+
+.hero-copy {
+  max-width: 60rem;
+}
+
+.shell-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+}
+
+.card {
+  background: #fffaf2;
+  border: 1px solid #e3d4bf;
+  border-radius: 20px;
+  padding: 1.25rem;
+  box-shadow: 0 12px 30px rgba(102, 71, 40, 0.08);
+}
+
+.card h2 {
+  margin-top: 0;
+}
+
+.control-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.control-field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.control-field label {
+  font-weight: 600;
+}
+
+.control-field select {
+  min-height: 2.75rem;
+  border: 1px solid #d4c3ad;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 0 0.75rem;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.button-row button {
+  border: 1px solid #c96f1a;
+  border-radius: 999px;
+  background: #c96f1a;
+  color: #fff8f1;
+  padding: 0.65rem 1rem;
+}
+
+.button-row button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .shell-grid {
+    grid-template-columns: 1fr;
+  }
+}
