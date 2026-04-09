@@ -220,7 +220,7 @@ As a developer, I want a minimal playground REST host so that I can run the back
 #### Acceptance Criteria
 - create the `sqm-playground-rest` module
 - application starts locally
-- `GET /api/v1/health` returns a successful response using the shared API contract where appropriate
+- `GET /sqm/playground/api/v1/health` returns a successful response using the shared API contract where appropriate
 - add startup and health endpoint tests
 - include JavaDoc for new public types and methods
 
@@ -241,7 +241,7 @@ As a developer, I want a minimal playground REST host so that I can run the back
 As a user, I want a small catalog of built-in SQL examples so that I can explore the playground without writing every query from scratch.
 
 #### Acceptance Criteria
-- implement `GET /api/v1/examples`
+- implement `GET /sqm/playground/api/v1/examples`
 - return a small fixed in-memory example list
 - examples include id, title, dialect, and SQL text
 - add controller and service tests
@@ -265,7 +265,7 @@ As a user, I want a small catalog of built-in SQL examples so that I can explore
 As a user, I want to parse SQL and receive SQM JSON so that I can inspect the serialized model produced by SQM.
 
 #### Acceptance Criteria
-- implement `POST /api/v1/parse`
+- implement `POST /sqm/playground/api/v1/parse`
 - parse request accepts SQL and source dialect
 - successful parse returns SQM JSON and summary metadata
 - parse failure returns structured diagnostics rather than raw exceptions
@@ -314,8 +314,8 @@ As a user, I want parse results to include a navigable AST tree so that I can un
 As a user, I want render and validate endpoints so that I can compare SQL output across dialects and inspect validation diagnostics from the backend.
 
 #### Acceptance Criteria
-- implement `POST /api/v1/render`
-- implement `POST /api/v1/validate`
+- implement `POST /sqm/playground/api/v1/render`
+- implement `POST /sqm/playground/api/v1/validate`
 - render endpoint returns rendered SQL or diagnostics
 - validate endpoint returns validity and diagnostics
 - add service and controller tests for both endpoints
@@ -339,7 +339,7 @@ As a user, I want render and validate endpoints so that I can compare SQL output
 As a user, I want to transpile SQL across dialects so that I can see exact, approximate, and unsupported conversion outcomes.
 
 #### Acceptance Criteria
-- implement `POST /api/v1/transpile`
+- implement `POST /sqm/playground/api/v1/transpile`
 - response exposes outcome classification and rendered SQL where applicable
 - unsupported and approximate outcomes are returned through diagnostics and explicit outcome fields
 - add service and controller tests for success and unsupported cases
@@ -431,7 +431,7 @@ As a user, I want an editor and operation controls so that I can see how the pla
 As a user, I want to load built-in examples from the backend so that I can start experimenting quickly.
 
 #### Acceptance Criteria
-- call `GET /api/v1/examples`
+- call `GET /sqm/playground/api/v1/examples`
 - display an example selector
 - loading an example updates the editor content and dialect state when appropriate
 - show loading and error UI for the examples request
@@ -455,7 +455,7 @@ As a user, I want to load built-in examples from the backend so that I can start
 As a user, I want parse results to appear in both JSON and AST views so that I can learn SQM from both serialized and structural perspectives.
 
 #### Acceptance Criteria
-- call `POST /api/v1/parse`
+- call `POST /sqm/playground/api/v1/parse`
 - show JSON results in a dedicated panel
 - show AST results in a dedicated panel or tab
 - AST tree supports expand and collapse
@@ -481,8 +481,8 @@ As a user, I want parse results to appear in both JSON and AST views so that I c
 As a user, I want render and validate results in the UI so that I can compare generated SQL and understand validation feedback.
 
 #### Acceptance Criteria
-- call `POST /api/v1/render`
-- call `POST /api/v1/validate`
+- call `POST /sqm/playground/api/v1/render`
+- call `POST /sqm/playground/api/v1/validate`
 - rendered SQL is displayed in a readable result panel
 - validation state and diagnostics are displayed clearly
 - loading and failure states are handled for both operations
@@ -505,7 +505,7 @@ As a user, I want render and validate results in the UI so that I can compare ge
 As a user, I want transpilation results in the UI so that I can explore cross-dialect conversion outcomes visually.
 
 #### Acceptance Criteria
-- call `POST /api/v1/transpile`
+- call `POST /sqm/playground/api/v1/transpile`
 - display transpiled SQL when available
 - display exact, approximate, or unsupported outcome state
 - diagnostics and warnings are visible in the shared diagnostics area

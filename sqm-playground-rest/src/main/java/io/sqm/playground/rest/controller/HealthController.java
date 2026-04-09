@@ -1,6 +1,7 @@
 package io.sqm.playground.rest.controller;
 
 import io.sqm.playground.api.HealthResponseDto;
+import io.sqm.playground.rest.PlaygroundApiPaths;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,7 +13,7 @@ import java.util.UUID;
  * HTTP controller exposing playground host health.
  */
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping(PlaygroundApiPaths.BASE_PATH)
 public final class HealthController {
 
     /**

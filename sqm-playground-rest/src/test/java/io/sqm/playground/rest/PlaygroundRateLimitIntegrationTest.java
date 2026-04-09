@@ -36,8 +36,8 @@ class PlaygroundRateLimitIntegrationTest {
      */
     @Test
     void rejectsRequestAboveRateLimit() {
-        var first = restTemplate.getForEntity(url("/api/v1/examples"), String.class);
-        var second = restTemplate.getForEntity(url("/api/v1/examples"), PlaygroundErrorResponse.class);
+        var first = restTemplate.getForEntity(url(PlaygroundApiPaths.BASE_PATH + "/examples"), String.class);
+        var second = restTemplate.getForEntity(url(PlaygroundApiPaths.BASE_PATH + "/examples"), PlaygroundErrorResponse.class);
 
         assertEquals(HttpStatus.OK, first.getStatusCode());
         assertEquals(HttpStatus.TOO_MANY_REQUESTS, second.getStatusCode());

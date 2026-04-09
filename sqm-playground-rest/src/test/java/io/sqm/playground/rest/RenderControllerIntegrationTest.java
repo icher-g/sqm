@@ -35,7 +35,7 @@ class RenderControllerIntegrationTest {
     @Test
     void renderEndpointReturnsRenderedSqlForValidSql() {
         var response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/v1/render",
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/render",
             new HttpEntity<>(new RenderRequestDto(
                 "select id, name from customer",
                 SqlDialectDto.ansi,
@@ -54,7 +54,7 @@ class RenderControllerIntegrationTest {
     @Test
     void renderEndpointReturnsDiagnosticsForInvalidSql() {
         var response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/v1/render",
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/render",
             new HttpEntity<>(new RenderRequestDto(
                 "select from",
                 SqlDialectDto.ansi,

@@ -1,5 +1,6 @@
 package io.sqm.playground.rest.config;
 
+import io.sqm.playground.rest.PlaygroundApiPaths;
 import io.sqm.playground.rest.filter.RequestSizeFilter;
 import io.sqm.playground.rest.ratelimit.FixedWindowRateLimiter;
 import io.sqm.playground.rest.ratelimit.RateLimitInterceptor;
@@ -64,7 +65,7 @@ public class PlaygroundHostConfiguration {
     public FilterRegistrationBean<RequestSizeFilter> requestSizeFilterRegistration(PlaygroundAbuseProtectionProperties properties) {
         var registration = new FilterRegistrationBean<>(new RequestSizeFilter(properties));
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
-        registration.addUrlPatterns("/api/v1/*");
+        registration.addUrlPatterns(PlaygroundApiPaths.FILTER_PATTERN);
         return registration;
     }
 }

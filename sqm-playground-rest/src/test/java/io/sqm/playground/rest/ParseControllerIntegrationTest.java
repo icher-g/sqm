@@ -36,7 +36,7 @@ class ParseControllerIntegrationTest {
     @Test
     void parseEndpointReturnsSqmJsonAndAstForValidSql() {
         var response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/v1/parse",
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/parse",
             new HttpEntity<>(new ParseRequestDto("select c.id from customer c where c.id = 1", SqlDialectDto.ansi)),
             ParseResponseDto.class
         );
@@ -55,7 +55,7 @@ class ParseControllerIntegrationTest {
     @Test
     void parseEndpointReturnsDiagnosticsForInvalidSql() {
         var response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/v1/parse",
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/parse",
             new HttpEntity<>(new ParseRequestDto("select from", SqlDialectDto.ansi)),
             ParseResponseDto.class
         );

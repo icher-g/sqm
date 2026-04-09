@@ -3,6 +3,7 @@ package io.sqm.playground.rest.controller;
 import io.sqm.playground.api.ExamplesResponseDto;
 import io.sqm.playground.api.ParseRequestDto;
 import io.sqm.playground.api.ParseResponseDto;
+import io.sqm.playground.rest.PlaygroundApiPaths;
 import io.sqm.playground.api.RenderRequestDto;
 import io.sqm.playground.api.RenderResponseDto;
 import io.sqm.playground.api.TranspileRequestDto;
@@ -26,7 +27,7 @@ import java.util.Objects;
  * HTTP controller exposing playground operations.
  */
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping(PlaygroundApiPaths.BASE_PATH)
 public final class PlaygroundController {
 
     private final ExampleService exampleService;

@@ -74,12 +74,12 @@ Keep the service methods small and operation-specific.
 The shared contract is defined in [SQM Playground Architecture](./SQM_PLAYGROUND_ARCHITECTURE.md).
 This backend should implement:
 
-- `GET /api/v1/health`
-- `GET /api/v1/examples`
-- `POST /api/v1/parse`
-- `POST /api/v1/render`
-- `POST /api/v1/validate`
-- `POST /api/v1/transpile`
+- `GET /sqm/playground/api/v1/health`
+- `GET /sqm/playground/api/v1/examples`
+- `POST /sqm/playground/api/v1/parse`
+- `POST /sqm/playground/api/v1/render`
+- `POST /sqm/playground/api/v1/validate`
+- `POST /sqm/playground/api/v1/transpile`
 
 ## Suggested Package Structure
 
@@ -373,7 +373,7 @@ As a developer, I want a minimal Spring Boot app so that I can run the backend l
 Acceptance:
 
 - app starts
-- `/api/v1/health` returns success
+- `/sqm/playground/api/v1/health` returns success
 
 ### BE-02: Example Endpoint
 
@@ -381,7 +381,7 @@ As a user, I want built-in example SQL so that I can explore the playground with
 
 Acceptance:
 
-- `/api/v1/examples` returns a small fixed list
+- `/sqm/playground/api/v1/examples` returns a small fixed list
 - tests cover response shape
 
 ### BE-03: Parse Endpoint
@@ -390,7 +390,7 @@ As a user, I want to parse SQL into SQM JSON so that I can inspect the structure
 
 Acceptance:
 
-- `/api/v1/parse` accepts SQL and dialect
+- `/sqm/playground/api/v1/parse` accepts SQL and dialect
 - successful parse returns SQM JSON
 - successful parse returns AST tree DTO
 - parse errors return structured diagnostics
@@ -401,7 +401,7 @@ As a user, I want to render SQL for a chosen dialect so that I can compare outpu
 
 Acceptance:
 
-- `/api/v1/render` accepts source and target dialects
+- `/sqm/playground/api/v1/render` accepts source and target dialects
 - rendered SQL is returned
 - unsupported render paths return diagnostics
 
@@ -411,7 +411,7 @@ As a user, I want validation feedback so that I can see whether my SQL fits the 
 
 Acceptance:
 
-- `/api/v1/validate` returns valid or invalid state
+- `/sqm/playground/api/v1/validate` returns valid or invalid state
 - diagnostics are returned consistently
 
 ### BE-06: Transpile Endpoint
@@ -420,7 +420,7 @@ As a user, I want transpilation results so that I can learn what SQM can convert
 
 Acceptance:
 
-- `/api/v1/transpile` returns outcome classification
+- `/sqm/playground/api/v1/transpile` returns outcome classification
 - exact, approximate, and unsupported cases are exposed
 
 ### BE-07: Abuse Protection
@@ -458,7 +458,7 @@ Do not start with full hosted-environment tests.
 ## API Evolution Rules
 
 - keep DTOs explicit
-- version endpoints under `/api/v1`
+- version endpoints under `/sqm/playground/api/v1`
 - add fields in a backward-compatible way
 - do not rename dialect IDs casually
 

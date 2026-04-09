@@ -34,7 +34,7 @@ class ValidateControllerIntegrationTest {
     @Test
     void validateEndpointIgnoresUnknownSchemaObjectsForDialectOnlyValidation() {
         var response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/v1/validate",
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/validate",
             new HttpEntity<>(new ValidateRequestDto(
                 "select missing_col from totally_unknown_table",
                 SqlDialectDto.ansi
@@ -52,7 +52,7 @@ class ValidateControllerIntegrationTest {
     @Test
     void validateEndpointReturnsDialectDiagnosticsForInvalidQuery() {
         var response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/v1/validate",
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/validate",
             new HttpEntity<>(new ValidateRequestDto(
                 "select distinct on (id) id, name from customer order by name",
                 SqlDialectDto.postgresql

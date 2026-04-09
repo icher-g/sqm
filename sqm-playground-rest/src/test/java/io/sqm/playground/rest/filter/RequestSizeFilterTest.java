@@ -1,5 +1,6 @@
 package io.sqm.playground.rest.filter;
 
+import io.sqm.playground.rest.PlaygroundApiPaths;
 import io.sqm.playground.rest.config.PlaygroundAbuseProtectionProperties;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ReadListener;
@@ -28,7 +29,7 @@ class RequestSizeFilterTest {
     @Test
     void disabledSizeLimitPassesRequestThrough() throws Exception {
         var filter = new RequestSizeFilter(properties(0));
-        var request = requestWithBody("/api/v1/parse", "{\"sql\":\"select 1\"}");
+        var request = requestWithBody(PlaygroundApiPaths.BASE_PATH + "/parse", "{\"sql\":\"select 1\"}");
         var response = new MockHttpServletResponse();
         var invoked = new AtomicBoolean();
 
@@ -41,7 +42,7 @@ class RequestSizeFilterTest {
     @Test
     void knownContentLengthWithinLimitPassesOriginalRequestThrough() throws Exception {
         var filter = new RequestSizeFilter(properties(64));
-        var request = requestWithBody("/api/v1/parse", "{\"sql\":\"select 1\"}");
+        var request = requestWithBody(PlaygroundApiPaths.BASE_PATH + "/parse", "{\"sql\":\"select 1\"}");
         var response = new MockHttpServletResponse();
         var invoked = new AtomicBoolean();
 
@@ -54,7 +55,7 @@ class RequestSizeFilterTest {
     @Test
     void unknownContentLengthCachesBodyBeforePassingDownstream() throws Exception {
         var filter = new RequestSizeFilter(properties(64));
-        var request = unknownLengthRequest("/api/v1/parse", "{\"sql\":\"select 1\"}");
+        var request = unknownLengthRequest(PlaygroundApiPaths.BASE_PATH + "/parse", "{\"sql\":\"select 1\"}");
         var response = new MockHttpServletResponse();
         var seenBody = new AtomicReference<String>();
 
@@ -66,7 +67,7 @@ class RequestSizeFilterTest {
     @Test
     void unknownContentLengthRejectsOversizedBody() throws Exception {
         var filter = new RequestSizeFilter(properties(4));
-        var request = unknownLengthRequest("/api/v1/parse", "{\"sql\":\"select 1\"}");
+        var request = unknownLengthRequest(PlaygroundApiPaths.BASE_PATH + "/parse", "{\"sql\":\"select 1\"}");
         var response = new MockHttpServletResponse();
 
         filter.doFilter(request, response, (req, res) -> {
@@ -80,7 +81,7 @@ class RequestSizeFilterTest {
     @Test
     void cachedBodyInputStreamRejectsAsyncReadListener() throws Exception {
         var filter = new RequestSizeFilter(properties(64));
-        var request = unknownLengthRequest("/api/v1/parse", "{\"sql\":\"select 1\"}");
+        var request = unknownLengthRequest(PlaygroundApiPaths.BASE_PATH + "/parse", "{\"sql\":\"select 1\"}");
         var response = new MockHttpServletResponse();
         var unsupported = new AtomicBoolean();
 

@@ -1,5 +1,6 @@
 package io.sqm.playground.rest.error;
 
+import io.sqm.playground.rest.PlaygroundApiPaths;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -18,19 +19,19 @@ class PlaygroundExceptionHandlerTest {
     @Test
     void handlesStableRequestExceptions() {
         var handler = new PlaygroundExceptionHandler();
-        var request = request("/api/v1/examples");
+        var request = request(PlaygroundApiPaths.BASE_PATH + "/examples");
 
         var response = handler.handlePlaygroundRequestException(new RateLimitExceededException("Too many"), request);
 
         assertEquals(HttpStatus.TOO_MANY_REQUESTS, response.getStatusCode());
         assertEquals("RATE_LIMIT_EXCEEDED", Objects.requireNonNull(response.getBody()).code());
-        assertEquals("/api/v1/examples", response.getBody().path());
+        assertEquals(PlaygroundApiPaths.BASE_PATH + "/examples", response.getBody().path());
     }
 
     @Test
     void handlesUnreadablePayloads() {
         var handler = new PlaygroundExceptionHandler();
-        var request = request("/api/v1/parse");
+        var request = request(PlaygroundApiPaths.BASE_PATH + "/parse");
 
         @SuppressWarnings("deprecation") var response = handler.handleUnreadablePayload(new HttpMessageNotReadableException("bad payload"), request);
 
@@ -42,7 +43,7 @@ class PlaygroundExceptionHandlerTest {
     @Test
     void handlesValidationExceptions() {
         var handler = new PlaygroundExceptionHandler();
-        var request = request("/api/v1/render");
+        var request = request(PlaygroundApiPaths.BASE_PATH + "/render");
 
         var response = handler.handleValidationException(new IllegalArgumentException("dialect is required"), request);
 
@@ -54,7 +55,7 @@ class PlaygroundExceptionHandlerTest {
     @Test
     void handlesUnexpectedExceptions() {
         var handler = new PlaygroundExceptionHandler();
-        var request = request("/api/v1/transpile");
+        var request = request(PlaygroundApiPaths.BASE_PATH + "/transpile");
 
         var response = handler.handleUnexpectedException(new IllegalStateException("boom"), request);
 

@@ -31,7 +31,7 @@ class ExamplesControllerIntegrationTest {
     @Test
     void examplesEndpointReturnsBuiltInExamples() {
         var response = restTemplate.getForEntity(
-            "http://localhost:" + port + "/api/v1/examples",
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/examples",
             ExamplesResponseDto.class
         );
 

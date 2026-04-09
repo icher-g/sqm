@@ -40,7 +40,7 @@ class PlaygroundCorsIntegrationTest {
         headers.setOrigin("http://localhost:5173");
 
         var response = restTemplate.exchange(
-            "http://localhost:" + port + "/api/v1/examples",
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/examples",
             HttpMethod.GET,
             new HttpEntity<>(headers),
             String.class

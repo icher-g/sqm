@@ -35,7 +35,7 @@ class TranspileControllerIntegrationTest {
     @Test
     void transpileEndpointReturnsExactRewrite() {
         var response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/v1/transpile",
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/transpile",
             new HttpEntity<>(new TranspileRequestDto(
                 "select first_name || ' ' || last_name as full_name from users",
                 SqlDialectDto.postgresql,
@@ -54,7 +54,7 @@ class TranspileControllerIntegrationTest {
     @Test
     void transpileEndpointReturnsWarningsForApproximateRewrite() {
         var response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/v1/transpile",
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/transpile",
             new HttpEntity<>(new TranspileRequestDto(
                 "select * from users where name ilike 'al%'",
                 SqlDialectDto.postgresql,

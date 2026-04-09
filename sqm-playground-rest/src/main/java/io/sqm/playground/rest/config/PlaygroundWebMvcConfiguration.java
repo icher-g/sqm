@@ -1,5 +1,6 @@
 package io.sqm.playground.rest.config;
 
+import io.sqm.playground.rest.PlaygroundApiPaths;
 import io.sqm.playground.rest.ratelimit.RateLimitInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -38,7 +39,7 @@ public class PlaygroundWebMvcConfiguration implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(rateLimitInterceptor).addPathPatterns("/api/v1/**");
+        registry.addInterceptor(rateLimitInterceptor).addPathPatterns(PlaygroundApiPaths.MVC_PATTERN);
     }
 
     /**
@@ -48,7 +49,7 @@ public class PlaygroundWebMvcConfiguration implements WebMvcConfigurer {
      */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        var mapping = registry.addMapping("/api/v1/**")
+        var mapping = registry.addMapping(PlaygroundApiPaths.MVC_PATTERN)
             .allowedMethods("GET", "POST", "OPTIONS");
         var allowedOrigins = corsProperties.getAllowedOrigins();
         if (!allowedOrigins.isEmpty()) {

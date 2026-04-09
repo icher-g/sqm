@@ -31,7 +31,7 @@ class HealthControllerIntegrationTest {
     @Test
     void healthEndpointReturnsUpStatus() {
         var response = restTemplate.getForEntity(
-            "http://localhost:" + port + "/api/v1/health",
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/health",
             HealthResponseDto.class
         );
 

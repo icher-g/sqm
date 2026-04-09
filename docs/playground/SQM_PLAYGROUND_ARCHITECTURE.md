@@ -183,7 +183,7 @@ Suggested diagnostic shape:
 
 ### Endpoints
 
-#### `POST /api/v1/parse`
+#### `POST /sqm/playground/api/v1/parse`
 
 Request:
 
@@ -241,7 +241,7 @@ Response:
 }
 ```
 
-#### `POST /api/v1/render`
+#### `POST /sqm/playground/api/v1/render`
 
 Request:
 
@@ -265,7 +265,7 @@ Response:
 }
 ```
 
-#### `POST /api/v1/validate`
+#### `POST /sqm/playground/api/v1/validate`
 
 Request:
 
@@ -288,7 +288,7 @@ Response:
 }
 ```
 
-#### `POST /api/v1/transpile`
+#### `POST /sqm/playground/api/v1/transpile`
 
 Request:
 
@@ -313,7 +313,7 @@ Response:
 }
 ```
 
-#### `GET /api/v1/examples`
+#### `GET /sqm/playground/api/v1/examples`
 
 Response:
 

@@ -41,7 +41,7 @@ class PlaygroundRequestSizeIntegrationTest {
         var headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         var response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/v1/parse",
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/parse",
             new HttpEntity<>("{\"sql\":\"select 1\",\"sourceDialect\":\"ansi\"}", headers),
             PlaygroundErrorResponse.class
         );
