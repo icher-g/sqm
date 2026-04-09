@@ -470,11 +470,14 @@ public final class SchemaValidationContext {
             return Optional.empty();
         }
         var lookup = schema.resolve(table.schema() == null ? null : table.schema().value(), table.name().value());
-        if (!(lookup instanceof CatalogSchema.TableLookupResult.Found(CatalogTable table1))) {
+        if (!(lookup instanceof CatalogSchema.TableLookupResult.Found(CatalogTable foundTable))) {
             return Optional.empty();
         }
+        if (!foundTable.strictColumns()) {
+            return Optional.of(CatalogColumn.of(column.value(), CatalogType.UNKNOWN));
+        }
         var normalizedColumn = normalize(column);
-        return table1.columns().stream()
+        return foundTable.columns().stream()
             .filter(candidate -> normalize(candidate.name()).equals(normalizedColumn))
             .findFirst();
     }
@@ -626,7 +629,7 @@ public final class SchemaValidationContext {
         for (var column : found.table().columns()) {
             columnsByName.put(normalize(column.name()), column);
         }
-        registerSource(aliasOrName, ResolvedSource.of(aliasOrName, columnsByName, true));
+        registerSource(aliasOrName, ResolvedSource.of(aliasOrName, columnsByName, found.table().strictColumns()));
     }
 
     /**

@@ -11,13 +11,15 @@ public final class CatalogTable {
     private final Map<String, CatalogColumn> columnsByName;
     private final List<String> primaryKeyColumns;
     private final List<CatalogForeignKey> foreignKeys;
+    private final boolean strictColumns;
 
     private CatalogTable(
         String schema,
         String name,
         List<CatalogColumn> columns,
         List<String> primaryKeyColumns,
-        List<CatalogForeignKey> foreignKeys
+        List<CatalogForeignKey> foreignKeys,
+        boolean strictColumns
     ) {
         this.schema = schema;
         this.name = Objects.requireNonNull(name, "name");
@@ -34,6 +36,7 @@ public final class CatalogTable {
         this.columnsByName = Collections.unmodifiableMap(map);
         this.primaryKeyColumns = List.copyOf(primaryKeyColumns);
         this.foreignKeys = List.copyOf(foreignKeys);
+        this.strictColumns = strictColumns;
     }
 
     /**
@@ -53,7 +56,7 @@ public final class CatalogTable {
         List<String> primaryKeyColumns,
         List<CatalogForeignKey> foreignKeys
     ) {
-        return new CatalogTable(schema, name, columns, primaryKeyColumns, foreignKeys);
+        return new CatalogTable(schema, name, columns, primaryKeyColumns, foreignKeys, true);
     }
 
     /**
@@ -65,7 +68,7 @@ public final class CatalogTable {
      * @return catalog table.
      */
     public static CatalogTable of(String schema, String name, List<CatalogColumn> columns) {
-        return new CatalogTable(schema, name, columns, List.of(), List.of());
+        return new CatalogTable(schema, name, columns, List.of(), List.of(), true);
     }
 
     /**
@@ -78,6 +81,17 @@ public final class CatalogTable {
      */
     public static CatalogTable of(String schema, String name, CatalogColumn... columns) {
         return of(schema, name, List.of(columns));
+    }
+
+    /**
+     * Creates table metadata that accepts any column reference without explicit declarations.
+     *
+     * @param schema schema name, may be null.
+     * @param name table name.
+     * @return permissive catalog table.
+     */
+    public static CatalogTable allowingAnyColumns(String schema, String name) {
+        return new CatalogTable(schema, name, List.of(), List.of(), List.of(), false);
     }
 
     /**
@@ -133,6 +147,15 @@ public final class CatalogTable {
      */
     public List<CatalogForeignKey> foreignKeys() {
         return foreignKeys;
+    }
+
+    /**
+     * Returns whether column references should be validated strictly against declared metadata.
+     *
+     * @return true when the table exposes a closed column set.
+     */
+    public boolean strictColumns() {
+        return strictColumns;
     }
 
     static String normalize(String value) {

@@ -18,7 +18,7 @@ class PlaygroundApiContractsTest {
 
     @Test
     void shouldSerializeDialectUsingLowercaseWireValue() throws Exception {
-        String json = mapper.writeValueAsString(SqlDialectDto.POSTGRESQL);
+        String json = mapper.writeValueAsString(SqlDialectDto.postgresql);
 
         assertEquals("\"postgresql\"", json);
     }
@@ -27,7 +27,7 @@ class PlaygroundApiContractsTest {
     void shouldDeserializeDialectFromLowercaseWireValue() throws Exception {
         SqlDialectDto dialect = mapper.readValue("\"mysql\"", SqlDialectDto.class);
 
-        assertEquals(SqlDialectDto.MYSQL, dialect);
+        assertEquals(SqlDialectDto.mysql, dialect);
     }
 
     @Test
@@ -43,10 +43,10 @@ class PlaygroundApiContractsTest {
     @Test
     void shouldSerializeDiagnosticWithExpectedWireShape() throws Exception {
         PlaygroundDiagnosticDto diagnostic = new PlaygroundDiagnosticDto(
-            DiagnosticSeverityDto.ERROR,
+            DiagnosticSeverityDto.error,
             "PARSER_UNEXPECTED_TOKEN",
             "Expected FROM but found WHERE",
-            DiagnosticPhaseDto.PARSE,
+            DiagnosticPhaseDto.parse,
             1,
             15
         );
@@ -67,10 +67,10 @@ class PlaygroundApiContractsTest {
             true,
             12L,
             List.of(new PlaygroundDiagnosticDto(
-                DiagnosticSeverityDto.INFO,
+                DiagnosticSeverityDto.info,
                 "EXAMPLE",
                 "Example diagnostic",
-                DiagnosticPhaseDto.HTTP,
+                DiagnosticPhaseDto.http,
                 null,
                 null
             ))
@@ -122,7 +122,7 @@ class PlaygroundApiContractsTest {
             "req-examples",
             true,
             2L,
-            List.of(new ExampleDto("basic-select", "Basic SELECT", SqlDialectDto.ANSI, "select 1")),
+            List.of(new ExampleDto("basic-select", "Basic SELECT", SqlDialectDto.ansi, "select 1")),
             List.of()
         );
 
@@ -141,7 +141,7 @@ class PlaygroundApiContractsTest {
             "req-transpile",
             true,
             18L,
-            TranspileOutcomeDto.EXACT,
+            TranspileOutcomeDto.exact,
             "SELECT TOP 5 * FROM customer",
             List.of()
         );
@@ -159,7 +159,25 @@ class PlaygroundApiContractsTest {
     void shouldDeserializeTranspileOutcomeFromLowercaseWireValue() throws Exception {
         TranspileOutcomeDto outcome = mapper.readValue("\"approximate\"", TranspileOutcomeDto.class);
 
-        assertEquals(TranspileOutcomeDto.APPROXIMATE, outcome);
+        assertEquals(TranspileOutcomeDto.approximate, outcome);
+    }
+
+    @Test
+    void shouldSerializeHealthResponseUsingCommonResponseFields() throws Exception {
+        HealthResponseDto response = new HealthResponseDto(
+            "req-health",
+            true,
+            1L,
+            "UP",
+            List.of()
+        );
+
+        String json = mapper.writeValueAsString(response);
+
+        assertTrue(json.contains("\"requestId\":\"req-health\""));
+        assertTrue(json.contains("\"success\":true"));
+        assertTrue(json.contains("\"durationMs\":1"));
+        assertTrue(json.contains("\"status\":\"UP\""));
     }
 
     /**
