@@ -12,15 +12,10 @@
     <name>SQM (playground-api)</name>
 
     <properties>
-        <playground.jackson.version>2.17.2</playground.jackson.version>
+        <playground.jackson.version>2.19.4</playground.jackson.version>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <version>${playground.jackson.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

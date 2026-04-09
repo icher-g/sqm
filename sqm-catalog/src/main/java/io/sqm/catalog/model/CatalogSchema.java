@@ -8,8 +8,13 @@ import java.util.*;
 public final class CatalogSchema {
     private final Map<TableKey, CatalogTable> tablesByKey;
     private final Map<String, List<CatalogTable>> tablesByName;
+    private final boolean allowEverything;
 
     private CatalogSchema(List<CatalogTable> tables) {
+        this(tables, false);
+    }
+
+    private CatalogSchema(List<CatalogTable> tables, boolean allowEverything) {
         Objects.requireNonNull(tables, "tables");
         var byKey = new LinkedHashMap<TableKey, CatalogTable>(tables.size());
         var byName = new LinkedHashMap<String, List<CatalogTable>>();
@@ -27,6 +32,7 @@ public final class CatalogSchema {
             immutableByName.put(entry.getKey(), List.copyOf(entry.getValue()));
         }
         this.tablesByName = Collections.unmodifiableMap(immutableByName);
+        this.allowEverything = allowEverything;
     }
 
     /**
@@ -50,6 +56,15 @@ public final class CatalogSchema {
     }
 
     /**
+     * Creates a permissive schema that accepts any table and any column reference.
+     *
+     * @return permissive catalog schema.
+     */
+    public static CatalogSchema allowEverything() {
+        return new CatalogSchema(List.of(), true);
+    }
+
+    /**
      * Returns tables in declaration order.
      *
      * @return immutable table list.
@@ -66,6 +81,9 @@ public final class CatalogSchema {
      * @return table lookup result.
      */
     public TableLookupResult resolve(String schema, String name) {
+        if (allowEverything) {
+            return TableLookupResult.found(CatalogTable.allowingAnyColumns(schema, name));
+        }
         var normalizedName = normalize(name);
         if (schema != null) {
             var table = tablesByKey.get(new TableKey(normalize(schema), normalizedName));
