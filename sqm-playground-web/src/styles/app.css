@@ -83,6 +83,12 @@ textarea {
   padding: 0 0.75rem;
 }
 
+.control-help {
+  margin: 0;
+  color: #5f6b76;
+  font-size: 0.95rem;
+}
+
 .button-row {
   display: flex;
   flex-wrap: wrap;

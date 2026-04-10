@@ -1,15 +1,65 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ControlBar } from "./components/ControlBar";
+import { ResultsPanel } from "./components/ResultsPanel";
+import { SqlEditorPanel } from "./components/SqlEditorPanel";
+import type { ExampleDto, ExamplesResponseDto } from "./types/api";
 
-type ResultTab = "ast" | "json" | "renderedSql" | "diagnostics" | "about";
+const PLAYGROUND_API_BASE_URL = import.meta.env.VITE_PLAYGROUND_API_BASE_URL ?? "http://localhost:8080/sqm/playground/api/v1";
 
 /**
  * Root application component for the frontend shell.
  */
 export default function App() {
-  const [sqlText, setSqlText] = useState(
-    "select id, name\nfrom customer\nwhere id = 1\norder by name"
-  );
-  const [activeResultTab, setActiveResultTab] = useState<ResultTab>("ast");
+  const [sqlText, setSqlText] = useState("Loading example...");
+  const [examples, setExamples] = useState<ExampleDto[]>([]);
+  const [selectedExampleId, setSelectedExampleId] = useState("");
+  const [examplesLoading, setExamplesLoading] = useState(true);
+  const [examplesError, setExamplesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void loadExamples();
+  }, []);
+
+  async function loadExamples() {
+    setExamplesLoading(true);
+    setExamplesError(null);
+
+    try {
+      const response = await fetch(`${PLAYGROUND_API_BASE_URL}/examples`, {
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Example request failed with status ${response.status}`);
+      }
+
+      const payload = (await response.json()) as ExamplesResponseDto;
+      setExamples(payload.examples);
+
+      const defaultExample = payload.examples.find((example) => example.dialect === "ansi") ?? payload.examples[0];
+      if (defaultExample) {
+        setSelectedExampleId(defaultExample.id);
+        setSqlText(defaultExample.sql);
+      } else {
+        setSqlText("");
+      }
+    } catch (error) {
+      setExamplesError(error instanceof Error ? error.message : "Failed to load examples");
+      setSqlText("");
+    } finally {
+      setExamplesLoading(false);
+    }
+  }
+
+  function handleExampleChange(nextExampleId: string) {
+    setSelectedExampleId(nextExampleId);
+    const example = examples.find((item) => item.id === nextExampleId);
+    if (example) {
+      setSqlText(example.sql);
+    }
+  }
 
   return (
     <main className="app-shell">
@@ -23,151 +73,17 @@ export default function App() {
       </header>
 
       <section className="shell-grid">
-        <article className="card">
-          <h2>Controls</h2>
-          <p>Choose the source and target dialects, then run one of the playground actions.</p>
+        <ControlBar
+          examples={examples}
+          selectedExampleId={selectedExampleId}
+          examplesLoading={examplesLoading}
+          examplesError={examplesError}
+          onExampleChange={handleExampleChange}
+        />
 
-          <div className="control-stack">
-            <div className="control-field">
-              <label htmlFor="source-dialect">Source dialect</label>
-              <select id="source-dialect" defaultValue="ansi">
-                <option value="ansi">ansi</option>
-                <option value="postgresql">postgresql</option>
-                <option value="mysql">mysql</option>
-                <option value="sqlserver">sqlserver</option>
-              </select>
-            </div>
+        <SqlEditorPanel sqlText={sqlText} onSqlTextChange={setSqlText} />
 
-            <div className="control-field">
-              <label htmlFor="target-dialect">Target dialect</label>
-              <select id="target-dialect" defaultValue="postgresql">
-                <option value="ansi">ansi</option>
-                <option value="postgresql">postgresql</option>
-                <option value="mysql">mysql</option>
-                <option value="sqlserver">sqlserver</option>
-              </select>
-            </div>
-
-            <div className="button-row">
-              <button type="button" disabled>
-                Parse
-              </button>
-              <button type="button" disabled>
-                Render
-              </button>
-              <button type="button" disabled>
-                Validate
-              </button>
-              <button type="button" disabled>
-                Transpile
-              </button>
-            </div>
-          </div>
-        </article>
-
-        <article className="card">
-          <h2>Editor</h2>
-          <p>Edit the SQL text directly. Later stories will connect this input to backend operations.</p>
-
-          <label className="editor-label" htmlFor="sql-editor">
-            SQL text
-          </label>
-          <textarea
-            id="sql-editor"
-            className="sql-editor"
-            value={sqlText}
-            onChange={(event) => setSqlText(event.target.value)}
-            spellCheck={false}
-          />
-        </article>
-
-        <article className="card">
-          <h2>Results</h2>
-          <p>The results area now uses tabs so each future response type has room to breathe.</p>
-
-          <div className="tab-row" role="tablist" aria-label="Result tabs">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeResultTab === "ast"}
-              className={activeResultTab === "ast" ? "tab-button tab-button-active" : "tab-button"}
-              onClick={() => setActiveResultTab("ast")}
-            >
-              AST
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeResultTab === "json"}
-              className={activeResultTab === "json" ? "tab-button tab-button-active" : "tab-button"}
-              onClick={() => setActiveResultTab("json")}
-            >
-              JSON
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeResultTab === "renderedSql"}
-              className={activeResultTab === "renderedSql" ? "tab-button tab-button-active" : "tab-button"}
-              onClick={() => setActiveResultTab("renderedSql")}
-            >
-              Rendered SQL
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeResultTab === "diagnostics"}
-              className={activeResultTab === "diagnostics" ? "tab-button tab-button-active" : "tab-button"}
-              onClick={() => setActiveResultTab("diagnostics")}
-            >
-              Diagnostics
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeResultTab === "about"}
-              className={activeResultTab === "about" ? "tab-button tab-button-active" : "tab-button"}
-              onClick={() => setActiveResultTab("about")}
-            >
-              About Result
-            </button>
-          </div>
-
-          {activeResultTab === "ast" ? (
-            <section className="result-panel" role="tabpanel" aria-label="AST">
-              <h3>AST</h3>
-              <p className="result-placeholder">Parse a query to inspect the SQM tree.</p>
-            </section>
-          ) : null}
-
-          {activeResultTab === "json" ? (
-            <section className="result-panel" role="tabpanel" aria-label="JSON">
-              <h3>JSON</h3>
-              <p className="result-placeholder">Serialized SQM JSON will appear here.</p>
-            </section>
-          ) : null}
-
-          {activeResultTab === "renderedSql" ? (
-            <section className="result-panel" role="tabpanel" aria-label="Rendered SQL">
-              <h3>Rendered SQL</h3>
-              <p className="result-placeholder">Rendered or transpiled SQL will appear here.</p>
-            </section>
-          ) : null}
-
-          {activeResultTab === "diagnostics" ? (
-            <section className="result-panel" role="tabpanel" aria-label="Diagnostics">
-              <h3>Diagnostics</h3>
-              <p className="result-placeholder">Warnings and errors will appear here.</p>
-            </section>
-          ) : null}
-
-          {activeResultTab === "about" ? (
-            <section className="result-panel" role="tabpanel" aria-label="About Result">
-              <h3>About Result</h3>
-              <p className="result-placeholder">Operation summary details will appear here.</p>
-            </section>
-          ) : null}
-        </article>
+        <ResultsPanel />
       </section>
     </main>
   );
