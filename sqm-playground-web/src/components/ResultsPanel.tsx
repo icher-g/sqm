@@ -1,4 +1,4 @@
-import type { ParseResponseDto, RenderResponseDto, ValidateResponseDto } from "../types/api";
+import type { ParseResponseDto, RenderResponseDto, TranspileResponseDto, ValidateResponseDto } from "../types/api";
 import { AstNodeTree } from "./AstNodeTree";
 
 export type ResultTab = "ast" | "dsl" | "json" | "renderedSql" | "diagnostics" | "about";
@@ -12,6 +12,9 @@ interface ResultsPanelProps {
   renderResponse: RenderResponseDto | null;
   renderLoading: boolean;
   renderError: string | null;
+  transpileResponse: TranspileResponseDto | null;
+  transpileLoading: boolean;
+  transpileError: string | null;
   validateResponse: ValidateResponseDto | null;
   validateLoading: boolean;
   validateError: string | null;
@@ -125,10 +128,14 @@ export function ResultsPanel(props: ResultsPanelProps) {
           <h3>Rendered SQL</h3>
           {props.renderLoading ? (
             <p className="result-placeholder">Rendering SQL for the selected target dialect...</p>
+          ) : props.transpileLoading ? (
+            <p className="result-placeholder">Transpiling SQL for the selected target dialect...</p>
           ) : props.renderResponse?.renderedSql ? (
             <pre className="result-code-block">{props.renderResponse.renderedSql}</pre>
+          ) : props.transpileResponse?.renderedSql ? (
+            <pre className="result-code-block">{props.transpileResponse.renderedSql}</pre>
           ) : (
-            <p className="result-placeholder">Rendered SQL will appear here after a render request.</p>
+            <p className="result-placeholder">Rendered or transpiled SQL will appear here after an output request.</p>
           )}
         </section>
       ) : null}
@@ -138,6 +145,18 @@ export function ResultsPanel(props: ResultsPanelProps) {
           <h3>Diagnostics</h3>
           {props.renderError ? (
             <p className="result-error">{props.renderError}</p>
+          ) : props.transpileError ? (
+            <p className="result-error">{props.transpileError}</p>
+          ) : props.transpileLoading ? (
+            <p className="result-placeholder">Transpiling SQL for the selected source and target dialects...</p>
+          ) : props.transpileResponse?.diagnostics.length ? (
+            <ul className="diagnostic-list">
+              {props.transpileResponse.diagnostics.map((diagnostic) => (
+                <li key={`${diagnostic.code}-${diagnostic.message}`} className="diagnostic-item">
+                  <strong>{diagnostic.severity}</strong> {diagnostic.code}: {diagnostic.message}
+                </li>
+              ))}
+            </ul>
           ) : props.validateError ? (
             <p className="result-error">{props.validateError}</p>
           ) : props.validateLoading ? (
@@ -174,6 +193,14 @@ export function ResultsPanel(props: ResultsPanelProps) {
                 ? "Validation succeeded with no diagnostics."
                 : "Validation completed with no structured diagnostics."}
             </p>
+          ) : props.transpileResponse ? (
+            <p className="result-placeholder">
+              {props.transpileResponse.outcome === "approximate"
+                ? "Transpilation completed approximately with no diagnostics."
+                : props.transpileResponse.outcome === "exact"
+                  ? "Transpilation completed exactly with no diagnostics."
+                  : "Transpilation did not produce diagnostics."}
+            </p>
           ) : props.renderResponse ? (
             <p className="result-placeholder">No diagnostics were returned for the last render.</p>
           ) : props.parseResponse ? (
@@ -187,7 +214,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
       {props.activeResultTab === "about" ? (
         <section className="result-panel" role="tabpanel" aria-label="About Result">
           <h3>About Result</h3>
-          {props.parseResponse || props.renderResponse || props.validateResponse ? (
+          {props.parseResponse || props.renderResponse || props.transpileResponse || props.validateResponse ? (
             <dl className="about-list">
               <div className="about-row">
                 <dt>Request ID</dt>
@@ -212,6 +239,18 @@ export function ResultsPanel(props: ResultsPanelProps) {
               <div className="about-row">
                 <dt>Last render duration</dt>
                 <dd>{props.renderResponse ? `${props.renderResponse.durationMs} ms` : "n/a"}</dd>
+              </div>
+              <div className="about-row">
+                <dt>Last transpile request</dt>
+                <dd>{props.transpileResponse?.requestId ?? "n/a"}</dd>
+              </div>
+              <div className="about-row">
+                <dt>Last transpile duration</dt>
+                <dd>{props.transpileResponse ? `${props.transpileResponse.durationMs} ms` : "n/a"}</dd>
+              </div>
+              <div className="about-row">
+                <dt>Transpile outcome</dt>
+                <dd>{props.transpileResponse?.outcome ?? "n/a"}</dd>
               </div>
               <div className="about-row">
                 <dt>Last validate request</dt>

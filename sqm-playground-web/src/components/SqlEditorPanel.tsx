@@ -8,12 +8,14 @@ interface SqlEditorPanelProps {
   examplesError: string | null;
   sourceDialect: SqlDialect;
   targetDialect: SqlDialect;
-  activeAction: "parse" | "render" | "validate" | null;
+  activeAction: "parse" | "render" | "validate" | "transpile" | null;
   parseLoading: boolean;
   renderLoading: boolean;
+  transpileLoading: boolean;
   validateLoading: boolean;
   canParse: boolean;
   canRender: boolean;
+  canTranspile: boolean;
   canValidate: boolean;
   onSqlTextChange: (nextSqlText: string) => void;
   onExampleChange: (nextExampleId: string) => void;
@@ -21,6 +23,7 @@ interface SqlEditorPanelProps {
   onTargetDialectChange: (nextDialect: SqlDialect) => void;
   onParse: () => void;
   onRender: () => void;
+  onTranspile: () => void;
   onValidate: () => void;
 }
 
@@ -77,7 +80,7 @@ export function SqlEditorPanel(props: SqlEditorPanelProps) {
                 type="button"
                 className={props.activeAction === "parse" ? "button-primary" : undefined}
                 onClick={props.onParse}
-                disabled={!props.canParse || props.parseLoading || props.renderLoading || props.validateLoading}
+                disabled={!props.canParse || props.parseLoading || props.renderLoading || props.transpileLoading || props.validateLoading}
               >
                 {props.parseLoading ? "Parsing..." : "Parse"}
               </button>
@@ -85,7 +88,7 @@ export function SqlEditorPanel(props: SqlEditorPanelProps) {
                 type="button"
                 className={props.activeAction === "validate" ? "button-primary" : undefined}
                 onClick={props.onValidate}
-                disabled={!props.canValidate || props.validateLoading || props.parseLoading || props.renderLoading}
+                disabled={!props.canValidate || props.validateLoading || props.parseLoading || props.renderLoading || props.transpileLoading}
               >
                 {props.validateLoading ? "Validating..." : "Validate"}
               </button>
@@ -111,12 +114,17 @@ export function SqlEditorPanel(props: SqlEditorPanelProps) {
                 type="button"
                 className={props.activeAction === "render" ? "button-primary" : undefined}
                 onClick={props.onRender}
-                disabled={!props.canRender || props.renderLoading || props.parseLoading || props.validateLoading}
+                disabled={!props.canRender || props.renderLoading || props.parseLoading || props.transpileLoading || props.validateLoading}
               >
                 {props.renderLoading ? "Rendering..." : "Render"}
               </button>
-              <button type="button" disabled>
-                Transpile
+              <button
+                type="button"
+                className={props.activeAction === "transpile" ? "button-primary" : undefined}
+                onClick={props.onTranspile}
+                disabled={!props.canTranspile || props.transpileLoading || props.parseLoading || props.renderLoading || props.validateLoading}
+              >
+                {props.transpileLoading ? "Transpiling..." : "Transpile"}
               </button>
             </div>
           </div>

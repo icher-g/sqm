@@ -4,6 +4,8 @@ import type {
   ParseResponseDto,
   RenderRequestDto,
   RenderResponseDto,
+  TranspileRequestDto,
+  TranspileResponseDto,
   ValidateRequestDto,
   ValidateResponseDto
 } from "../types/api";
@@ -86,4 +88,24 @@ export async function validateSql(request: ValidateRequestDto): Promise<Validate
   }
 
   return (await response.json()) as ValidateResponseDto;
+}
+
+/**
+ * Sends a transpile request to the playground backend.
+ */
+export async function transpileSql(request: TranspileRequestDto): Promise<TranspileResponseDto> {
+  const response = await fetch(`${PLAYGROUND_API_BASE_URL}/transpile`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(request)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Transpile request failed with status ${response.status}`);
+  }
+
+  return (await response.json()) as TranspileResponseDto;
 }

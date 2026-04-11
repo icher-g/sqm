@@ -136,6 +136,32 @@ export interface ValidateResponseDto {
 }
 
 /**
+ * Outcome classification returned by a transpile request.
+ */
+export type TranspileOutcome = "exact" | "approximate" | "unsupported";
+
+/**
+ * Transpile request payload sent to the playground backend.
+ */
+export interface TranspileRequestDto {
+  sql: string;
+  sourceDialect: SqlDialect;
+  targetDialect: SqlDialect;
+}
+
+/**
+ * Transpile response payload returned by the playground backend.
+ */
+export interface TranspileResponseDto {
+  requestId: string;
+  success: boolean;
+  durationMs: number;
+  outcome: TranspileOutcome;
+  renderedSql: string | null;
+  diagnostics: PlaygroundDiagnosticDto[];
+}
+
+/**
  * Examples response payload returned by the playground backend.
  */
 export interface ExamplesResponseDto {

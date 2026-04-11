@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
-import { fetchExamples, parseSql, renderSql, validateSql } from "./api/playgroundApi";
+import { fetchExamples, parseSql, renderSql, transpileSql, validateSql } from "./api/playgroundApi";
 import { ResultsPanel, type ResultTab } from "./components/ResultsPanel";
 import { SqlEditorPanel } from "./components/SqlEditorPanel";
-import type { ExampleDto, ParseResponseDto, RenderResponseDto, SqlDialect, ValidateResponseDto } from "./types/api";
+import type {
+  ExampleDto,
+  ParseResponseDto,
+  RenderResponseDto,
+  SqlDialect,
+  TranspileResponseDto,
+  ValidateResponseDto
+} from "./types/api";
 
 /**
  * Root application component for the frontend shell.
@@ -15,13 +22,16 @@ export default function App() {
   const [targetDialect, setTargetDialect] = useState<SqlDialect>("postgresql");
   const [examplesLoading, setExamplesLoading] = useState(true);
   const [examplesError, setExamplesError] = useState<string | null>(null);
-  const [activeAction, setActiveAction] = useState<"parse" | "render" | "validate" | null>(null);
+  const [activeAction, setActiveAction] = useState<"parse" | "render" | "validate" | "transpile" | null>(null);
   const [parseLoading, setParseLoading] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [parseResponse, setParseResponse] = useState<ParseResponseDto | null>(null);
   const [renderLoading, setRenderLoading] = useState(false);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [renderResponse, setRenderResponse] = useState<RenderResponseDto | null>(null);
+  const [transpileLoading, setTranspileLoading] = useState(false);
+  const [transpileError, setTranspileError] = useState<string | null>(null);
+  const [transpileResponse, setTranspileResponse] = useState<TranspileResponseDto | null>(null);
   const [validateLoading, setValidateLoading] = useState(false);
   const [validateError, setValidateError] = useState<string | null>(null);
   const [validateResponse, setValidateResponse] = useState<ValidateResponseDto | null>(null);
@@ -71,6 +81,8 @@ export default function App() {
     setParseResponse(null);
     setValidateError(null);
     setValidateResponse(null);
+    setTranspileError(null);
+    setTranspileResponse(null);
     setRenderError(null);
     setRenderResponse(null);
     setActiveResultTab("ast");
@@ -100,6 +112,8 @@ export default function App() {
     setParseResponse(null);
     setValidateError(null);
     setValidateResponse(null);
+    setTranspileError(null);
+    setTranspileResponse(null);
     setActiveResultTab("renderedSql");
 
     try {
@@ -128,6 +142,8 @@ export default function App() {
     setParseResponse(null);
     setRenderError(null);
     setRenderResponse(null);
+    setTranspileError(null);
+    setTranspileResponse(null);
     setActiveResultTab("diagnostics");
 
     try {
@@ -143,6 +159,36 @@ export default function App() {
       setActiveResultTab("diagnostics");
     } finally {
       setValidateLoading(false);
+    }
+  }
+
+  async function handleTranspile() {
+    setActiveAction("transpile");
+    setTranspileLoading(true);
+    setTranspileError(null);
+    setTranspileResponse(null);
+    setParseError(null);
+    setParseResponse(null);
+    setRenderError(null);
+    setRenderResponse(null);
+    setValidateError(null);
+    setValidateResponse(null);
+    setActiveResultTab("renderedSql");
+
+    try {
+      const response = await transpileSql({
+        sql: sqlText,
+        sourceDialect,
+        targetDialect
+      });
+      setTranspileResponse(response);
+      setActiveResultTab(response.success ? "renderedSql" : "diagnostics");
+    } catch (error) {
+      setTranspileResponse(null);
+      setTranspileError(error instanceof Error ? error.message : "Failed to transpile SQL");
+      setActiveResultTab("diagnostics");
+    } finally {
+      setTranspileLoading(false);
     }
   }
 
@@ -167,9 +213,11 @@ export default function App() {
             activeAction={activeAction}
             parseLoading={parseLoading}
             renderLoading={renderLoading}
+            transpileLoading={transpileLoading}
             validateLoading={validateLoading}
             canParse={sqlText.trim().length > 0}
             canRender={sqlText.trim().length > 0}
+            canTranspile={sqlText.trim().length > 0}
             canValidate={sqlText.trim().length > 0}
             onSqlTextChange={setSqlText}
             onExampleChange={handleExampleChange}
@@ -177,6 +225,7 @@ export default function App() {
             onTargetDialectChange={setTargetDialect}
             onParse={handleParse}
             onRender={handleRender}
+            onTranspile={handleTranspile}
             onValidate={handleValidate}
           />
         </div>
@@ -191,6 +240,9 @@ export default function App() {
             renderResponse={renderResponse}
             renderLoading={renderLoading}
             renderError={renderError}
+            transpileResponse={transpileResponse}
+            transpileLoading={transpileLoading}
+            transpileError={transpileError}
             validateResponse={validateResponse}
             validateLoading={validateLoading}
             validateError={validateError}

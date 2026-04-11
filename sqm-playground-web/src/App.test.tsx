@@ -84,6 +84,24 @@ const VALIDATE_RESPONSE = {
   diagnostics: []
 };
 
+const TRANSPILE_RESPONSE = {
+  requestId: "req-transpile",
+  success: true,
+  durationMs: 11,
+  outcome: "approximate",
+  renderedSql: "select id\nfrom customer",
+  diagnostics: [
+    {
+      severity: "warning",
+      phase: "transpile",
+      code: "APPROXIMATE_TRANSPILE",
+      message: "Output was approximated for the target dialect",
+      line: null,
+      column: null
+    }
+  ]
+};
+
 const PARSE_FAILURE_RESPONSE = {
   requestId: "req-parse-fail",
   success: false,
@@ -162,6 +180,14 @@ describe("App", () => {
             "Content-Type": "application/json"
           }
         })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(TRANSPILE_RESPONSE), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
       );
 
     render(<App />);
@@ -172,7 +198,7 @@ describe("App", () => {
     expect(screen.getByText("Choose an example, set the relevant dialects, and run actions directly above the SQL text.")).toBeInTheDocument();
     expect(screen.getByLabelText("Source dialect")).toHaveValue("ansi");
     expect(screen.getByLabelText("Target dialect")).toHaveValue("postgresql");
-    expect(screen.getByRole("button", { name: "Transpile" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Transpile" })).toBeEnabled();
 
     await waitFor(() => {
       expect(screen.getByLabelText("Example")).toHaveValue("basic-select");
@@ -274,6 +300,36 @@ describe("App", () => {
     await userEvent.click(screen.getByRole("tab", { name: "About Result" }));
     expect(screen.getByText("req-validate")).toBeInTheDocument();
     expect(screen.getByText("valid")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Transpile" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        5,
+        "http://localhost:8080/sqm/playground/api/v1/transpile",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            sql: "select distinct on (id) id\nfrom customer\norder by id",
+            sourceDialect: "postgresql",
+            targetDialect: "postgresql"
+          })
+        })
+      );
+    });
+
+    expect(screen.getByRole("button", { name: "Transpile" })).toHaveClass("button-primary");
+    expect(screen.getByRole("tab", { name: "Rendered SQL" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Rendered SQL" })).toHaveTextContent("select id");
+    expect(screen.getByRole("tabpanel", { name: "Rendered SQL" })).toHaveTextContent("from customer");
+
+    await userEvent.click(screen.getByRole("tab", { name: "Diagnostics" }));
+    expect(screen.getByRole("tabpanel", { name: "Diagnostics" })).toHaveTextContent("APPROXIMATE_TRANSPILE");
+    expect(screen.getByRole("tabpanel", { name: "Diagnostics" })).toHaveTextContent("Output was approximated for the target dialect");
+
+    await userEvent.click(screen.getByRole("tab", { name: "About Result" }));
+    expect(screen.getByText("req-transpile")).toBeInTheDocument();
+    expect(screen.getByText("approximate")).toBeInTheDocument();
   });
 
   it("switches to diagnostics when parse or render returns a failure response", async () => {
