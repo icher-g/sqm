@@ -1,5 +1,6 @@
+import { useState } from "react";
 import type { ParseResponseDto, RenderResponseDto, TranspileResponseDto, ValidateResponseDto } from "../types/api";
-import { AstNodeTree } from "./AstNodeTree";
+import { AstNodeTree, type AstTreeCommand } from "./AstNodeTree";
 import { CodeBlock } from "./CodeBlock";
 
 export type ResultTab = "ast" | "dsl" | "json" | "renderedSql" | "diagnostics" | "about";
@@ -25,6 +26,15 @@ interface ResultsPanelProps {
  * Renders the tabbed results shell.
  */
 export function ResultsPanel(props: ResultsPanelProps) {
+  const [astCommand, setAstCommand] = useState<AstTreeCommand | null>(null);
+
+  function runAstCommand(type: AstTreeCommand["type"]) {
+    setAstCommand((current) => ({
+      type,
+      version: (current?.version ?? 0) + 1
+    }));
+  }
+
   return (
     <article className="card">
       <h2>Results</h2>
@@ -89,11 +99,23 @@ export function ResultsPanel(props: ResultsPanelProps) {
 
       {props.activeResultTab === "ast" ? (
         <section className="result-panel result-panel-scroll" role="tabpanel" aria-label="AST">
-          <h3>AST</h3>
+          <div className="result-panel-header">
+            <h3>AST</h3>
+            {props.parseResponse?.ast ? (
+              <div className="ast-toolbar">
+                <button type="button" className="ast-toolbar-button" onClick={() => runAstCommand("collapse")}>
+                  Collapse all
+                </button>
+                <button type="button" className="ast-toolbar-button" onClick={() => runAstCommand("expand")}>
+                  Expand all
+                </button>
+              </div>
+            ) : null}
+          </div>
           {props.parseLoading ? (
             <p className="result-placeholder">Parsing SQL and building the AST...</p>
           ) : props.parseResponse?.ast ? (
-            <AstNodeTree node={props.parseResponse.ast} />
+            <AstNodeTree node={props.parseResponse.ast} command={astCommand} />
           ) : (
             <p className="result-placeholder">Parse a query to inspect the SQM tree.</p>
           )}

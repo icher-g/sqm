@@ -1,71 +1,156 @@
-import type { AstNodeDto } from "../types/api";
+import { useEffect, useState } from "react";
+import type { AstChildSlotDto, AstNodeDto } from "../types/api";
+
+export interface AstTreeCommand {
+  type: "expand" | "collapse";
+  version: number;
+}
 
 interface AstNodeTreeProps {
   node: AstNodeDto;
+  depth?: number;
+  command?: AstTreeCommand | null;
 }
 
 /**
  * Renders a single AST node and its recursive children.
  */
 export function AstNodeTree(props: AstNodeTreeProps) {
+  const depth = props.depth ?? 0;
+  const isExpandable = props.node.children.length > 0;
+  const [expanded, setExpanded] = useState(depth < 2);
+
+  useEffect(() => {
+    if (!props.command || !isExpandable) {
+      return;
+    }
+    setExpanded(props.command.type === "expand");
+  }, [isExpandable, props.command]);
+
   return (
     <div className="ast-node">
       <div className="ast-node-header">
+        {isExpandable ? (
+          <button
+            type="button"
+            className="ast-toggle"
+            aria-expanded={expanded}
+            onClick={() => setExpanded((current) => !current)}
+          >
+            {expanded ? "−" : "+"}
+          </button>
+        ) : (
+          <span className="ast-toggle ast-toggle-placeholder" aria-hidden="true">
+            •
+          </span>
+        )}
         <strong>{props.node.label}</strong>
         {props.node.label !== props.node.nodeType ? (
           <span className="ast-node-meta">{props.node.nodeType}</span>
         ) : null}
       </div>
 
-      {props.node.details.length > 0 ? (
-        <dl className="ast-detail-list">
-          {props.node.details.map((detail) => (
-            <div key={`${detail.name}-${detail.value}`} className="ast-detail-row">
-              <dt>{detail.name}</dt>
-              <dd>{detail.value}</dd>
+      {expanded ? (
+        <div className="ast-node-body">
+          {props.node.details.length > 0 ? (
+            <dl className="ast-detail-list">
+              {props.node.details.map((detail) => (
+                <div key={`${detail.name}-${detail.value}`} className="ast-detail-row">
+                  <dt>{detail.name}</dt>
+                  <dd>{detail.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+
+          {isExpandable ? (
+            <div className="ast-children">
+              {props.node.children.map((slot) => (
+                <AstSlotSection key={slot.slot} slot={slot} depth={depth} command={props.command} />
+              ))}
             </div>
-          ))}
-        </dl>
-      ) : null}
-
-      {props.node.children.length > 0 ? (
-        <div className="ast-children">
-          {props.node.children.map((slot) => (
-            <section key={slot.slot} className="ast-slot">
-              {shouldRenderInline(slot.nodes) ? (
-                <dl className="ast-inline-list">
-                  <div className="ast-detail-row">
-                    <dt>
-                      {slot.slot}
-                      {slot.multiple ? "[]" : ""}
-                    </dt>
-                    <dd className="ast-inline-value">
-                      <span className="ast-node-meta">{formatInlineType(slot.nodes)}</span>
-                      <span>{formatInlineValue(slot.nodes)}</span>
-                    </dd>
-                  </div>
-                </dl>
-              ) : (
-                <>
-                  <h4 className="ast-slot-title">
-                    {slot.slot}
-                    {slot.multiple ? "[]" : ""}
-                  </h4>
-
-                  {slot.nodes.length > 0 ? (
-                    slot.nodes.map((childNode, index) => (
-                      <AstNodeTree key={`${slot.slot}-${childNode.nodeType}-${index}`} node={childNode} />
-                    ))
-                  ) : (
-                    <p className="result-placeholder">No nodes in this slot.</p>
-                  )}
-                </>
-              )}
-            </section>
-          ))}
+          ) : null}
         </div>
       ) : null}
     </div>
+  );
+}
+
+interface AstSlotSectionProps {
+  slot: AstChildSlotDto;
+  depth: number;
+  command?: AstTreeCommand | null;
+}
+
+function AstSlotSection(props: AstSlotSectionProps) {
+  const isInline = shouldRenderInline(props.slot.nodes);
+  const isExpandable = !isInline && props.slot.nodes.length > 0;
+  const [expanded, setExpanded] = useState(props.depth < 1);
+
+  useEffect(() => {
+    if (!props.command || !isExpandable) {
+      return;
+    }
+    setExpanded(props.command.type === "expand");
+  }, [isExpandable, props.command]);
+
+  return (
+    <section className="ast-slot">
+      {isInline ? (
+        <dl className="ast-inline-list">
+          <div className="ast-detail-row">
+            <dt>
+              {props.slot.slot}
+              {props.slot.multiple ? "[]" : ""}
+            </dt>
+            <dd className="ast-inline-value">
+              <span className="ast-node-meta">{formatInlineType(props.slot.nodes)}</span>
+              <span>{formatInlineValue(props.slot.nodes)}</span>
+            </dd>
+          </div>
+        </dl>
+      ) : (
+        <>
+          <div className="ast-slot-header">
+            {isExpandable ? (
+              <button
+                type="button"
+                className="ast-toggle"
+                aria-expanded={expanded}
+                onClick={() => setExpanded((current) => !current)}
+              >
+                {expanded ? "−" : "+"}
+              </button>
+            ) : (
+              <span className="ast-toggle ast-toggle-placeholder" aria-hidden="true">
+                •
+              </span>
+            )}
+            <h4 className="ast-slot-title">
+              {props.slot.slot}
+              {props.slot.multiple ? "[]" : ""}
+            </h4>
+          </div>
+
+          {expanded ? (
+            <div className="ast-slot-body">
+              {props.slot.nodes.length > 0 ? (
+                props.slot.nodes.map((childNode, index) => (
+                  <AstNodeTree
+                    key={`${props.slot.slot}-${childNode.nodeType}-${index}`}
+                    node={childNode}
+                    depth={props.depth + 1}
+                    command={props.command}
+                  />
+                ))
+              ) : (
+                <p className="result-placeholder">No nodes in this slot.</p>
+              )}
+            </div>
+          ) : null}
+        </>
+      )}
+    </section>
   );
 }
 
