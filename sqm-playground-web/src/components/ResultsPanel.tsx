@@ -1,10 +1,11 @@
-import { useState } from "react";
 import type { ParseResponseDto, RenderResponseDto } from "../types/api";
 import { AstNodeTree } from "./AstNodeTree";
 
-type ResultTab = "ast" | "dsl" | "json" | "renderedSql" | "diagnostics" | "about";
+export type ResultTab = "ast" | "dsl" | "json" | "renderedSql" | "diagnostics" | "about";
 
 interface ResultsPanelProps {
+  activeResultTab: ResultTab;
+  onResultTabChange: (nextTab: ResultTab) => void;
   parseResponse: ParseResponseDto | null;
   parseLoading: boolean;
   parseError: string | null;
@@ -17,8 +18,6 @@ interface ResultsPanelProps {
  * Renders the tabbed results shell.
  */
 export function ResultsPanel(props: ResultsPanelProps) {
-  const [activeResultTab, setActiveResultTab] = useState<ResultTab>("ast");
-
   return (
     <article className="card">
       <h2>Results</h2>
@@ -28,60 +27,60 @@ export function ResultsPanel(props: ResultsPanelProps) {
         <button
           type="button"
           role="tab"
-          aria-selected={activeResultTab === "ast"}
-          className={activeResultTab === "ast" ? "tab-button tab-button-active" : "tab-button"}
-          onClick={() => setActiveResultTab("ast")}
+          aria-selected={props.activeResultTab === "ast"}
+          className={props.activeResultTab === "ast" ? "tab-button tab-button-active" : "tab-button"}
+          onClick={() => props.onResultTabChange("ast")}
         >
           AST
         </button>
         <button
             type="button"
             role="tab"
-            aria-selected={activeResultTab === "dsl"}
-            className={activeResultTab === "dsl" ? "tab-button tab-button-active" : "tab-button"}
-            onClick={() => setActiveResultTab("dsl")}
+            aria-selected={props.activeResultTab === "dsl"}
+            className={props.activeResultTab === "dsl" ? "tab-button tab-button-active" : "tab-button"}
+            onClick={() => props.onResultTabChange("dsl")}
         >
           DSL
         </button>
         <button
           type="button"
           role="tab"
-          aria-selected={activeResultTab === "json"}
-          className={activeResultTab === "json" ? "tab-button tab-button-active" : "tab-button"}
-          onClick={() => setActiveResultTab("json")}
+          aria-selected={props.activeResultTab === "json"}
+          className={props.activeResultTab === "json" ? "tab-button tab-button-active" : "tab-button"}
+          onClick={() => props.onResultTabChange("json")}
         >
           JSON
         </button>
         <button
           type="button"
           role="tab"
-          aria-selected={activeResultTab === "renderedSql"}
-          className={activeResultTab === "renderedSql" ? "tab-button tab-button-active" : "tab-button"}
-          onClick={() => setActiveResultTab("renderedSql")}
+          aria-selected={props.activeResultTab === "renderedSql"}
+          className={props.activeResultTab === "renderedSql" ? "tab-button tab-button-active" : "tab-button"}
+          onClick={() => props.onResultTabChange("renderedSql")}
         >
           Rendered SQL
         </button>
         <button
           type="button"
           role="tab"
-          aria-selected={activeResultTab === "diagnostics"}
-          className={activeResultTab === "diagnostics" ? "tab-button tab-button-active" : "tab-button"}
-          onClick={() => setActiveResultTab("diagnostics")}
+          aria-selected={props.activeResultTab === "diagnostics"}
+          className={props.activeResultTab === "diagnostics" ? "tab-button tab-button-active" : "tab-button"}
+          onClick={() => props.onResultTabChange("diagnostics")}
         >
           Diagnostics
         </button>
         <button
           type="button"
           role="tab"
-          aria-selected={activeResultTab === "about"}
-          className={activeResultTab === "about" ? "tab-button tab-button-active" : "tab-button"}
-          onClick={() => setActiveResultTab("about")}
+          aria-selected={props.activeResultTab === "about"}
+          className={props.activeResultTab === "about" ? "tab-button tab-button-active" : "tab-button"}
+          onClick={() => props.onResultTabChange("about")}
         >
           About Result
         </button>
       </div>
 
-      {activeResultTab === "ast" ? (
+      {props.activeResultTab === "ast" ? (
         <section className="result-panel result-panel-scroll" role="tabpanel" aria-label="AST">
           <h3>AST</h3>
           {props.parseLoading ? (
@@ -94,7 +93,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
         </section>
       ) : null}
 
-      {activeResultTab === "dsl" ? (
+      {props.activeResultTab === "dsl" ? (
           <section className="result-panel result-panel-scroll" role="tabpanel" aria-label="DSL">
             <h3>DSL</h3>
             {props.parseLoading ? (
@@ -102,23 +101,23 @@ export function ResultsPanel(props: ResultsPanelProps) {
             ) : props.parseResponse?.sqmDsl ? (
                 <pre className="result-code-block">{props.parseResponse.sqmDsl}</pre>
             ) : (
-                <p className="result-placeholder">Parse a query to inspect the SQM tree.</p>
+                <p className="result-placeholder">Parse a query to generate the SQM DSL.</p>
             )}
           </section>
       ) : null}
 
-      {activeResultTab === "json" ? (
+      {props.activeResultTab === "json" ? (
         <section className="result-panel" role="tabpanel" aria-label="JSON">
           <h3>JSON</h3>
           {props.parseResponse?.sqmJson ? (
             <pre className="result-code-block">{props.parseResponse.sqmJson}</pre>
           ) : (
-            <p className="result-placeholder">Serialized SQM JSON will appear here.</p>
+            <p className="result-placeholder">Parse a query to inspect the SQM JSON.</p>
           )}
         </section>
       ) : null}
 
-      {activeResultTab === "renderedSql" ? (
+      {props.activeResultTab === "renderedSql" ? (
         <section className="result-panel" role="tabpanel" aria-label="Rendered SQL">
           <h3>Rendered SQL</h3>
           {props.renderLoading ? (
@@ -131,7 +130,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
         </section>
       ) : null}
 
-      {activeResultTab === "diagnostics" ? (
+      {props.activeResultTab === "diagnostics" ? (
         <section className="result-panel" role="tabpanel" aria-label="Diagnostics">
           <h3>Diagnostics</h3>
           {props.renderError ? (
@@ -164,26 +163,26 @@ export function ResultsPanel(props: ResultsPanelProps) {
         </section>
       ) : null}
 
-      {activeResultTab === "about" ? (
+      {props.activeResultTab === "about" ? (
         <section className="result-panel" role="tabpanel" aria-label="About Result">
           <h3>About Result</h3>
-          {props.parseResponse ? (
+          {props.parseResponse || props.renderResponse ? (
             <dl className="about-list">
               <div className="about-row">
                 <dt>Request ID</dt>
-                <dd>{props.parseResponse.requestId}</dd>
+                <dd>{props.parseResponse?.requestId ?? "n/a"}</dd>
               </div>
               <div className="about-row">
                 <dt>Duration</dt>
-                <dd>{props.parseResponse.durationMs} ms</dd>
+                <dd>{props.parseResponse ? `${props.parseResponse.durationMs} ms` : "n/a"}</dd>
               </div>
               <div className="about-row">
                 <dt>Statement kind</dt>
-                <dd>{props.parseResponse.statementKind ?? "n/a"}</dd>
+                <dd>{props.parseResponse?.statementKind ?? "n/a"}</dd>
               </div>
               <div className="about-row">
                 <dt>Root node type</dt>
-                <dd>{props.parseResponse.summary?.rootNodeType ?? "n/a"}</dd>
+                <dd>{props.parseResponse?.summary?.rootNodeType ?? "n/a"}</dd>
               </div>
               <div className="about-row">
                 <dt>Last render request</dt>

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
@@ -76,8 +76,47 @@ const RENDER_RESPONSE = {
   diagnostics: []
 };
 
+const PARSE_FAILURE_RESPONSE = {
+  requestId: "req-parse-fail",
+  success: false,
+  durationMs: 4,
+  statementKind: null,
+  sqmJson: null,
+  sqmDsl: null,
+  ast: null,
+  summary: null,
+  diagnostics: [
+    {
+      severity: "error",
+      phase: "parse",
+      code: "PARSE_ERROR",
+      message: "Unexpected token",
+      line: 1,
+      column: 8
+    }
+  ]
+};
+
+const RENDER_FAILURE_RESPONSE = {
+  requestId: "req-render-fail",
+  success: false,
+  durationMs: 3,
+  renderedSql: null,
+  diagnostics: [
+    {
+      severity: "error",
+      phase: "render",
+      code: "RENDER_ERROR",
+      message: "Dialect does not support this statement",
+      line: null,
+      column: null
+    }
+  ]
+};
+
 describe("App", () => {
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
   });
 
@@ -112,9 +151,9 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByText("Frontend shell")).toBeInTheDocument();
-    expect(screen.getByText("Controls")).toBeInTheDocument();
     expect(screen.getByText("Editor")).toBeInTheDocument();
     expect(screen.getByText("Results")).toBeInTheDocument();
+    expect(screen.getByText("Choose an example, set the relevant dialects, and run actions directly above the SQL text.")).toBeInTheDocument();
     expect(screen.getByLabelText("Source dialect")).toHaveValue("ansi");
     expect(screen.getByLabelText("Target dialect")).toHaveValue("postgresql");
     expect(screen.getByRole("button", { name: "Validate" })).toBeDisabled();
@@ -157,8 +196,9 @@ describe("App", () => {
 
     expect(screen.getByRole("button", { name: "Parse" })).toHaveClass("button-primary");
     expect(screen.getByRole("button", { name: "Render" })).not.toHaveClass("button-primary");
+    expect(screen.getByRole("tab", { name: "AST" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "AST" })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("tab", { name: "AST" }));
     expect(screen.getAllByText("SelectQuery").length).toBeGreaterThan(0);
     expect(screen.getAllByText("SelectItem").length).toBeGreaterThan(0);
 
@@ -188,11 +228,63 @@ describe("App", () => {
 
     expect(screen.getByRole("button", { name: "Render" })).toHaveClass("button-primary");
     expect(screen.getByRole("button", { name: "Parse" })).not.toHaveClass("button-primary");
-
-    await userEvent.click(screen.getByRole("tab", { name: "Rendered SQL" }));
+    expect(screen.getByRole("tab", { name: "Rendered SQL" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tabpanel", { name: "Rendered SQL" })).toHaveTextContent("select distinct on (id) id");
+    expect(screen.queryByText("SelectQuery")).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("tab", { name: "About Result" }));
     expect(screen.getByText("req-render")).toBeInTheDocument();
+  });
+
+  it("switches to diagnostics when parse or render returns a failure response", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(EXAMPLES_RESPONSE), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(PARSE_FAILURE_RESPONSE), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(RENDER_FAILURE_RESPONSE), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+      );
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Example")).toHaveValue("basic-select");
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: "Parse" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: "Diagnostics" })).toHaveAttribute("aria-selected", "true");
+    });
+
+    expect(screen.getByRole("tabpanel", { name: "Diagnostics" })).toHaveTextContent("PARSE_ERROR");
+    expect(screen.getByRole("tabpanel", { name: "Diagnostics" })).toHaveTextContent("Unexpected token");
+
+    await userEvent.click(screen.getByRole("button", { name: "Render" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: "Diagnostics" })).toHaveAttribute("aria-selected", "true");
+    });
+
+    expect(screen.getByRole("tabpanel", { name: "Diagnostics" })).toHaveTextContent("RENDER_ERROR");
+    expect(screen.getByRole("tabpanel", { name: "Diagnostics" })).toHaveTextContent("Dialect does not support this statement");
   });
 });

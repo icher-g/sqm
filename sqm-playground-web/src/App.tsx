@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchExamples, parseSql, renderSql } from "./api/playgroundApi";
-import { ControlBar } from "./components/ControlBar";
-import { ResultsPanel } from "./components/ResultsPanel";
+import { ResultsPanel, type ResultTab } from "./components/ResultsPanel";
 import { SqlEditorPanel } from "./components/SqlEditorPanel";
 import type { ExampleDto, ParseResponseDto, RenderResponseDto, SqlDialect } from "./types/api";
 
@@ -23,6 +22,7 @@ export default function App() {
   const [renderLoading, setRenderLoading] = useState(false);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [renderResponse, setRenderResponse] = useState<RenderResponseDto | null>(null);
+  const [activeResultTab, setActiveResultTab] = useState<ResultTab>("ast");
 
   useEffect(() => {
     void loadExamples();
@@ -65,6 +65,10 @@ export default function App() {
     setActiveAction("parse");
     setParseLoading(true);
     setParseError(null);
+    setParseResponse(null);
+    setRenderError(null);
+    setRenderResponse(null);
+    setActiveResultTab("ast");
 
     try {
       const response = await parseSql({
@@ -72,9 +76,11 @@ export default function App() {
         dialect: sourceDialect
       });
       setParseResponse(response);
+      setActiveResultTab(response.success ? "ast" : "diagnostics");
     } catch (error) {
       setParseResponse(null);
       setParseError(error instanceof Error ? error.message : "Failed to parse SQL");
+      setActiveResultTab("diagnostics");
     } finally {
       setParseLoading(false);
     }
@@ -84,6 +90,10 @@ export default function App() {
     setActiveAction("render");
     setRenderLoading(true);
     setRenderError(null);
+    setRenderResponse(null);
+    setParseError(null);
+    setParseResponse(null);
+    setActiveResultTab("renderedSql");
 
     try {
       const response = await renderSql({
@@ -92,9 +102,11 @@ export default function App() {
         targetDialect
       });
       setRenderResponse(response);
+      setActiveResultTab(response.success ? "renderedSql" : "diagnostics");
     } catch (error) {
       setRenderResponse(null);
       setRenderError(error instanceof Error ? error.message : "Failed to render SQL");
+      setActiveResultTab("diagnostics");
     } finally {
       setRenderLoading(false);
     }
@@ -108,32 +120,34 @@ export default function App() {
         <p className="hero-copy">This slice loads examples and lets you parse SQL into real AST and JSON results.</p>
       </header>
 
-      <ControlBar
-        examples={examples}
-        selectedExampleId={selectedExampleId}
-        examplesLoading={examplesLoading}
-        examplesError={examplesError}
-        sourceDialect={sourceDialect}
-        targetDialect={targetDialect}
-        activeAction={activeAction}
-        parseLoading={parseLoading}
-        renderLoading={renderLoading}
-        canParse={sqlText.trim().length > 0}
-        canRender={sqlText.trim().length > 0}
-        onExampleChange={handleExampleChange}
-        onSourceDialectChange={setSourceDialect}
-        onTargetDialectChange={setTargetDialect}
-        onParse={handleParse}
-        onRender={handleRender}
-      />
-
       <section className="workspace-grid">
         <div className="workspace-column">
-          <SqlEditorPanel sqlText={sqlText} onSqlTextChange={setSqlText} />
+          <SqlEditorPanel
+            sqlText={sqlText}
+            examples={examples}
+            selectedExampleId={selectedExampleId}
+            examplesLoading={examplesLoading}
+            examplesError={examplesError}
+            sourceDialect={sourceDialect}
+            targetDialect={targetDialect}
+            activeAction={activeAction}
+            parseLoading={parseLoading}
+            renderLoading={renderLoading}
+            canParse={sqlText.trim().length > 0}
+            canRender={sqlText.trim().length > 0}
+            onSqlTextChange={setSqlText}
+            onExampleChange={handleExampleChange}
+            onSourceDialectChange={setSourceDialect}
+            onTargetDialectChange={setTargetDialect}
+            onParse={handleParse}
+            onRender={handleRender}
+          />
         </div>
 
         <div className="workspace-column">
           <ResultsPanel
+            activeResultTab={activeResultTab}
+            onResultTabChange={setActiveResultTab}
             parseResponse={parseResponse}
             parseLoading={parseLoading}
             parseError={parseError}

@@ -61,18 +61,6 @@ textarea {
   margin-top: 0;
 }
 
-.control-card {
-  align-self: start;
-  margin-bottom: 1rem;
-}
-
-.control-stack {
-  display: grid;
-  gap: 1rem 1.25rem;
-  grid-template-columns: minmax(320px, 1.5fr) repeat(2, minmax(180px, 0.8fr)) minmax(280px, 1.2fr);
-  align-items: start;
-}
-
 .control-field {
   display: grid;
   gap: 0.4rem;
@@ -101,25 +89,12 @@ textarea {
   font-size: 0.95rem;
 }
 
-.action-group {
+.button-column {
   display: grid;
-  gap: 0.7rem;
-  align-content: start;
-}
-
-.action-group-title {
-  margin: 0;
-  font-weight: 700;
-  color: #5d4a36;
-}
-
-.button-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(110px, 1fr));
   gap: 0.75rem;
 }
 
-.button-row button {
+.button-column button {
   border: 1px solid #c96f1a;
   border-radius: 14px;
   background: #fff6eb;
@@ -128,12 +103,12 @@ textarea {
   width: 100%;
 }
 
-.button-row button:disabled {
+.button-column button:disabled {
   opacity: 0.65;
   cursor: not-allowed;
 }
 
-.button-row .button-primary {
+.button-column .button-primary {
   background: #c96f1a;
   color: #fff8f1;
 }
@@ -142,9 +117,33 @@ textarea {
   min-width: 0;
 }
 
+.editor-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.editor-controls {
+  display: grid;
+  gap: 1rem;
+}
+
+.editor-action-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+}
+
+.editor-action-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px solid #e3d4bf;
+  border-radius: 16px;
+  background: #fffdf8;
+}
+
 .editor-label {
   display: inline-block;
-  margin-bottom: 0.5rem;
   font-weight: 600;
 }
 
@@ -302,7 +301,7 @@ textarea {
     grid-template-columns: 1fr;
   }
 
-  .control-stack {
+  .editor-action-grid {
     grid-template-columns: 1fr;
   }
 }
