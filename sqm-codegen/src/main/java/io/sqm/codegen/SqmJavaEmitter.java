@@ -163,46 +163,46 @@ final class SqmJavaEmitter {
         public String visitInsertStatement(InsertStatement statement) {
             var sb = new StringBuilder("insert(").append(emitNode(statement.table())).append(")");
             for (var hint : statement.hints()) {
-                sb.append(".").append(emitStatementHintCall(hint));
+                sb.append("\n.").append(emitStatementHintCall(hint));
             }
             if (statement.insertMode() == InsertStatement.InsertMode.IGNORE) {
-                sb.append(".ignore()");
+                sb.append("\n.ignore()");
             }
             if (statement.insertMode() == InsertStatement.InsertMode.REPLACE) {
-                sb.append(".replace()");
+                sb.append("\n.replace()");
             }
             if (!statement.columns().isEmpty()) {
-                sb.append(".columns(")
+                sb.append("\n.columns(")
                     .append(joinInline(statement.columns().stream().map(DslEmitterVisitor::emitIdentifier).toList()))
                     .append(")");
             }
             if (statement.source() instanceof Query query) {
-                sb.append(".query(").append(emitNode(query)).append(")");
+                sb.append("\n.query(").append(emitNode(query)).append(")");
             }
             else {
-                sb.append(".values(").append(emitNode(statement.source())).append(")");
+                sb.append("\n.values(").append(emitNode(statement.source())).append(")");
             }
             switch (statement.onConflictAction()) {
                 case NONE -> {
                 }
                 case DO_NOTHING -> {
                     if (statement.conflictTarget().isEmpty()) {
-                        sb.append(".onConflictDoNothing()");
+                        sb.append("\n.onConflictDoNothing()");
                     }
                     else {
-                        sb.append(".onConflictDoNothing(")
+                        sb.append("\n.onConflictDoNothing(")
                             .append(joinInline(statement.conflictTarget().stream().map(DslEmitterVisitor::emitIdentifier).toList()))
                             .append(")");
                     }
                 }
                 case DO_UPDATE -> {
                     if (statement.conflictTarget().isEmpty() && statement.conflictUpdateWhere() == null) {
-                        sb.append(".onConflictDoUpdate(")
+                        sb.append("\n.onConflictDoUpdate(")
                             .append(joinInline(statement.conflictUpdateAssignments().stream().map(this::emitNode).toList()))
                             .append(")");
                     }
                     else {
-                        sb.append(".onConflictDoUpdate(")
+                        sb.append("\n.onConflictDoUpdate(")
                             .append(emitIdentifierList(statement.conflictTarget()))
                             .append(", java.util.List.of(")
                             .append(joinInline(statement.conflictUpdateAssignments().stream().map(this::emitNode).toList()))
@@ -213,9 +213,9 @@ final class SqmJavaEmitter {
                 }
             }
             if (statement.result() != null) {
-                sb.append(emitResultBuilderCall(statement.result()));
+                sb.append("\n").append(emitResultBuilderCall(statement.result()));
             }
-            sb.append(".build()");
+            sb.append("\n.build()");
             return sb.toString();
         }
 
@@ -223,28 +223,28 @@ final class SqmJavaEmitter {
         public String visitUpdateStatement(UpdateStatement statement) {
             var sb = new StringBuilder("update(").append(emitNode(statement.table())).append(")");
             for (var hint : statement.hints()) {
-                sb.append(".").append(emitStatementHintCall(hint));
+                sb.append("\n.").append(emitStatementHintCall(hint));
             }
             if (!statement.joins().isEmpty()) {
-                sb.append(".joins(")
+                sb.append("\n.joins(")
                     .append(joinInline(statement.joins().stream().map(this::emitNode).toList()))
                     .append(")");
             }
             for (var assignment : statement.assignments()) {
-                sb.append(".set(").append(emitNode(assignment)).append(")");
+                sb.append("\n.set(").append(emitNode(assignment)).append(")");
             }
             if (!statement.from().isEmpty()) {
-                sb.append(".from(")
+                sb.append("\n.from(")
                     .append(joinInline(statement.from().stream().map(this::emitNode).toList()))
                     .append(")");
             }
             if (statement.where() != null) {
-                sb.append(".where(").append(emitNode(statement.where())).append(")");
+                sb.append("\n.where(").append(emitNode(statement.where())).append(")");
             }
             if (statement.result() != null) {
-                sb.append(emitResultBuilderCall(statement.result()));
+                sb.append("\n").append(emitResultBuilderCall(statement.result()));
             }
-            sb.append(".build()");
+            sb.append("\n.build()");
             return sb.toString();
         }
 
@@ -252,25 +252,25 @@ final class SqmJavaEmitter {
         public String visitDeleteStatement(DeleteStatement statement) {
             var sb = new StringBuilder("delete(").append(emitNode(statement.table())).append(")");
             for (var hint : statement.hints()) {
-                sb.append(".").append(emitStatementHintCall(hint));
+                sb.append("\n.").append(emitStatementHintCall(hint));
             }
             if (!statement.using().isEmpty()) {
-                sb.append(".using(")
+                sb.append("\n.using(")
                     .append(joinInline(statement.using().stream().map(this::emitNode).toList()))
                     .append(")");
             }
             if (!statement.joins().isEmpty()) {
-                sb.append(".joins(")
+                sb.append("\n.joins(")
                     .append(joinInline(statement.joins().stream().map(this::emitNode).toList()))
                     .append(")");
             }
             if (statement.where() != null) {
-                sb.append(".where(").append(emitNode(statement.where())).append(")");
+                sb.append("\n.where(").append(emitNode(statement.where())).append(")");
             }
             if (statement.result() != null) {
-                sb.append(emitResultBuilderCall(statement.result()));
+                sb.append("\n").append(emitResultBuilderCall(statement.result()));
             }
-            sb.append(".build()");
+            sb.append("\n.build()");
             return sb.toString();
         }
 
@@ -278,20 +278,20 @@ final class SqmJavaEmitter {
         public String visitMergeStatement(MergeStatement statement) {
             var sb = new StringBuilder("merge(").append(emitNode(statement.target())).append(")");
             for (var hint : statement.hints()) {
-                sb.append(".").append(emitStatementHintCall(hint));
+                sb.append("\n.").append(emitStatementHintCall(hint));
             }
-            sb.append(".source(").append(emitNode(statement.source())).append(")");
-            sb.append(".on(").append(emitNode(statement.on())).append(")");
+            sb.append("\n.source(").append(emitNode(statement.source())).append(")");
+            sb.append("\n.on(").append(emitNode(statement.on())).append(")");
             if (statement.topSpec() != null) {
-                sb.append(emitTopSpecTail(statement.topSpec()));
+                sb.append("\n").append(emitTopSpecTail(statement.topSpec()));
             }
             for (var clause : statement.clauses()) {
-                sb.append(emitMergeClauseBuilderCall(clause));
+                sb.append("\n").append(emitMergeClauseBuilderCall(clause));
             }
             if (statement.result() != null) {
-                sb.append(emitResultBuilderCall(statement.result()));
+                sb.append("\n").append(emitResultBuilderCall(statement.result()));
             }
-            sb.append(".build()");
+            sb.append("\n.build()");
             return sb.toString();
         }
 

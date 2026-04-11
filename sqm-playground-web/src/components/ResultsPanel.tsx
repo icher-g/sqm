@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { ParseResponseDto } from "../types/api";
 import { AstNodeTree } from "./AstNodeTree";
 
-type ResultTab = "ast" | "json" | "renderedSql" | "diagnostics" | "about";
+type ResultTab = "ast" | "dsl" | "json" | "renderedSql" | "diagnostics" | "about";
 
 interface ResultsPanelProps {
   parseResponse: ParseResponseDto | null;
@@ -30,6 +30,15 @@ export function ResultsPanel(props: ResultsPanelProps) {
           onClick={() => setActiveResultTab("ast")}
         >
           AST
+        </button>
+        <button
+            type="button"
+            role="tab"
+            aria-selected={activeResultTab === "dsl"}
+            className={activeResultTab === "dsl" ? "tab-button tab-button-active" : "tab-button"}
+            onClick={() => setActiveResultTab("dsl")}
+        >
+          DSL
         </button>
         <button
           type="button"
@@ -80,6 +89,19 @@ export function ResultsPanel(props: ResultsPanelProps) {
             <p className="result-placeholder">Parse a query to inspect the SQM tree.</p>
           )}
         </section>
+      ) : null}
+
+      {activeResultTab === "dsl" ? (
+          <section className="result-panel result-panel-scroll" role="tabpanel" aria-label="DSL">
+            <h3>DSL</h3>
+            {props.parseLoading ? (
+                <p className="result-placeholder">Parsing SQL and building the DSL...</p>
+            ) : props.parseResponse?.sqmDsl ? (
+                <pre className="result-code-block">{props.parseResponse.sqmDsl}</pre>
+            ) : (
+                <p className="result-placeholder">Parse a query to inspect the SQM tree.</p>
+            )}
+          </section>
       ) : null}
 
       {activeResultTab === "json" ? (

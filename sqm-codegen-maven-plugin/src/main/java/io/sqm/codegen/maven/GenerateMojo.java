@@ -311,6 +311,7 @@ public class GenerateMojo extends AbstractMojo {
                 basePackage,
                 resolvedDialect,
                 includeGenerationTimestamp,
+                true,
                 resolvedSchemaProvider,
                 failOnValidationError
             );

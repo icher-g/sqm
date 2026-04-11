@@ -326,6 +326,11 @@ class SqmJavaEmitterTest {
         var deleteSource = emitter.emitStatement(delete);
 
         assertTrue(insertSource.contains("insert(tbl(\"users\"))"));
+        assertTrue(insertSource.contains("\n.ignore()"));
+        assertTrue(insertSource.contains("\n.columns("));
+        assertTrue(insertSource.contains("\n.values("));
+        assertTrue(insertSource.contains("\n.result("));
+        assertTrue(insertSource.contains("\n.build()"));
         assertTrue(insertSource.contains(".hint(\"APPEND\")"));
         assertTrue(insertSource.contains(".ignore()"));
         assertTrue(insertSource.contains(".columns(id(\"id\"), id(\"name\", QuoteStyle.BACKTICK))"));
@@ -333,12 +338,21 @@ class SqmJavaEmitterTest {
         assertTrue(insertSource.contains(".result(inserted(id(\"id\")).as(id(\"new_id\")))"));
 
         assertTrue(updateSource.contains("update(tbl(\"users\"))"));
+        assertTrue(updateSource.contains("\n.set("));
+        assertTrue(updateSource.contains("\n.from("));
+        assertTrue(updateSource.contains("\n.where("));
+        assertTrue(updateSource.contains("\n.result("));
+        assertTrue(updateSource.contains("\n.build()"));
         assertTrue(updateSource.contains(".hint(\"MAX_EXECUTION_TIME\", 1000)"));
         assertTrue(updateSource.contains(".set(set(QualifiedName.of(id(\"u\"), id(\"name\")), lit(\"alice\")))"));
         assertTrue(updateSource.contains(".from(tbl(\"src\"))"));
         assertTrue(updateSource.contains(".result(resultInto(tableVar(\"audit\"), id(\"user_id\")), insertedAll(), inserted(id(\"id\")).as(id(\"user_id\")))"));
 
         assertTrue(deleteSource.contains("delete(tbl(\"users\"))"));
+        assertTrue(deleteSource.contains("\n.using("));
+        assertTrue(deleteSource.contains("\n.where("));
+        assertTrue(deleteSource.contains("\n.result("));
+        assertTrue(deleteSource.contains("\n.build()"));
         assertTrue(deleteSource.contains(".hint(\"BKA\", \"users\")"));
         assertTrue(deleteSource.contains(".using(tbl(\"audit\"))"));
         assertTrue(deleteSource.contains(".result(deleted(id(\"id\")))"));
@@ -424,6 +438,14 @@ class SqmJavaEmitterTest {
         var source = emitter.emitStatement(mergeStatement);
 
         assertTrue(source.contains("merge(tbl(\"users\"))"));
+        assertTrue(source.contains("\n.source("));
+        assertTrue(source.contains("\n.on("));
+        assertTrue(source.contains("\n.top("));
+        assertTrue(source.contains("\n.whenMatchedUpdate("));
+        assertTrue(source.contains("\n.whenMatchedDelete("));
+        assertTrue(source.contains("\n.whenNotMatchedBySourceDelete("));
+        assertTrue(source.contains("\n.whenNotMatchedInsert("));
+        assertTrue(source.contains("\n.build()"));
         assertTrue(source.contains(".hint(\"MERGE_HINT\")"));
         assertTrue(source.contains(".source(tbl(\"src\").as(\"s\"))"));
         assertTrue(source.contains(".top(lit(5L))"));

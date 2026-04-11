@@ -21,17 +21,20 @@ public final class ParseService {
 
     private final ObjectMapper mapper;
     private final SqmAstMapper astMapper;
+    private final SqmDslGenerator dslGenerator;
     private final PlaygroundStatementSupport statementSupport;
 
     /**
      * Creates the parse service.
      *
      * @param astMapper AST mapper
+     * @param dslGenerator DSL generator
      * @param statementSupport statement support
      */
-    public ParseService(SqmAstMapper astMapper, PlaygroundStatementSupport statementSupport) {
+    public ParseService(SqmAstMapper astMapper, SqmDslGenerator dslGenerator, PlaygroundStatementSupport statementSupport) {
         this.mapper = SqmJsonMixins.createPretty();
         this.astMapper = Objects.requireNonNull(astMapper, "astMapper must not be null");
+        this.dslGenerator = Objects.requireNonNull(dslGenerator, "dslGenerator must not be null");
         this.statementSupport = Objects.requireNonNull(statementSupport, "statementSupport must not be null");
     }
 
@@ -54,6 +57,7 @@ public final class ParseService {
                 null,
                 null,
                 null,
+                null,
                 parseAttempt.diagnostics()
             );
         }
@@ -65,6 +69,7 @@ public final class ParseService {
             0L,
             statementSupport.statementKind(statement),
             toSqmJson(statement),
+            dslGenerator.toDsl(statement, request.dialect()),
             astMapper.toAst(statement),
             new ParseResponseSummaryDto(
                 statement.getClass().getSimpleName(),

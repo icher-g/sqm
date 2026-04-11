@@ -56,7 +56,7 @@ public final class SqmAstMapper {
      * @return mapped AST node
      */
     AstNodeDto toAst(Node node) {
-        return toAst(node, java.util.Collections.newSetFromMap(new IdentityHashMap<>()));
+        return toAst(node, Collections.newSetFromMap(new IdentityHashMap<>()));
     }
 
     private AstNodeDto toAst(Node node, Set<Node> path) {

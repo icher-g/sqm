@@ -90,6 +90,7 @@ export interface ParseResponseDto {
   durationMs: number;
   statementKind: string | null;
   sqmJson: string | null;
+  sqmDsl: string | null;
   ast: AstNodeDto | null;
   summary: ParseResponseSummaryDto | null;
   diagnostics: PlaygroundDiagnosticDto[];
