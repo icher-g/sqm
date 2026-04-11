@@ -1,5 +1,6 @@
 import type { ParseResponseDto, RenderResponseDto, TranspileResponseDto, ValidateResponseDto } from "../types/api";
 import { AstNodeTree } from "./AstNodeTree";
+import { CodeBlock } from "./CodeBlock";
 
 export type ResultTab = "ast" | "dsl" | "json" | "renderedSql" | "diagnostics" | "about";
 
@@ -105,7 +106,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
             {props.parseLoading ? (
                 <p className="result-placeholder">Parsing SQL and building the DSL...</p>
             ) : props.parseResponse?.sqmDsl ? (
-                <pre className="result-code-block">{props.parseResponse.sqmDsl}</pre>
+                <CodeBlock code={props.parseResponse.sqmDsl} language="java" />
             ) : (
                 <p className="result-placeholder">Parse a query to generate the SQM DSL.</p>
             )}
@@ -116,7 +117,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
         <section className="result-panel" role="tabpanel" aria-label="JSON">
           <h3>JSON</h3>
           {props.parseResponse?.sqmJson ? (
-            <pre className="result-code-block">{props.parseResponse.sqmJson}</pre>
+            <CodeBlock code={props.parseResponse.sqmJson} language="json" />
           ) : (
             <p className="result-placeholder">Parse a query to inspect the SQM JSON.</p>
           )}
@@ -131,9 +132,9 @@ export function ResultsPanel(props: ResultsPanelProps) {
           ) : props.transpileLoading ? (
             <p className="result-placeholder">Transpiling SQL for the selected target dialect...</p>
           ) : props.renderResponse?.renderedSql ? (
-            <pre className="result-code-block">{props.renderResponse.renderedSql}</pre>
+            <CodeBlock code={props.renderResponse.renderedSql} language="sql" />
           ) : props.transpileResponse?.renderedSql ? (
-            <pre className="result-code-block">{props.transpileResponse.renderedSql}</pre>
+            <CodeBlock code={props.transpileResponse.renderedSql} language="sql" />
           ) : (
             <p className="result-placeholder">Rendered or transpiled SQL will appear here after an output request.</p>
           )}

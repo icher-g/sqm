@@ -196,8 +196,11 @@ export default function App() {
     <main className="app-shell">
       <header className="hero">
         <p className="eyebrow">SQM Playground</p>
-        <h1>Frontend shell</h1>
-        <p className="hero-copy">This slice loads examples and lets you parse SQL into real AST and JSON results.</p>
+        <h1>Explore SQL Through SQM</h1>
+        <p className="hero-copy">
+          Load example queries, inspect the SQM AST and JSON, generate DSL, and compare rendered or transpiled SQL
+          across dialects.
+        </p>
       </header>
 
       <section className="workspace-grid">

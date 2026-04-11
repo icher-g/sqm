@@ -208,10 +208,77 @@ textarea {
 
 .result-code-block {
   margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  background: #1f2430;
+  color: #e6edf3;
+  overflow-x: auto;
+  white-space: pre;
   font-family: "Cascadia Code", "Consolas", monospace;
   font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.result-code-block code {
+  font-family: inherit;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #7f8c98;
+}
+
+.token.punctuation {
+  color: #d9e0e8;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #7cc7ff;
+}
+
+.token.boolean,
+.token.number {
+  color: #f7b267;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a3d977;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #f78c6c;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #c792ea;
+}
+
+.token.function,
+.token.class-name {
+  color: #ffd166;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: #ff9cac;
 }
 
 .result-error {
