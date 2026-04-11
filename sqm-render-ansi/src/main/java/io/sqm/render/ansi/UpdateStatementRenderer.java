@@ -39,14 +39,14 @@ public class UpdateStatementRenderer implements Renderer<UpdateStatement> {
 
         renderJoins(node.joins(), ctx, w);
 
-        w.space().append("SET").space();
+        w.newline().append("SET").space();
         w.comma(node.assignments());
 
         renderOutput(node.result(), ctx, w);
         renderFrom(node.from(), ctx, w);
 
         if (node.where() != null) {
-            w.space().append("WHERE").space().append(node.where());
+            w.newline().append("WHERE").space().append(node.where());
         }
 
         renderReturning(node.result(), ctx, w);

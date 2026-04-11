@@ -36,10 +36,10 @@ public class MergeStatementRenderer extends io.sqm.render.ansi.MergeStatementRen
         }
 
         w.append("MERGE INTO").space().append(node.target());
-        w.space().append("USING").space().append(node.source());
-        w.space().append("ON").space().append(node.on());
+        w.newline().append("USING").space().append(node.source());
+        w.newline().append("ON").space().append(node.on());
         for (var clause : node.clauses()) {
-            w.space().append(clause);
+            w.newline().append(clause);
         }
         renderReturning(node.result(), ctx, w);
     }
@@ -58,6 +58,6 @@ public class MergeStatementRenderer extends io.sqm.render.ansi.MergeStatementRen
         if (!ctx.dialect().capabilities().supports(SqlFeature.MERGE_RESULT_CLAUSE)) {
             throw new UnsupportedDialectFeatureException("MERGE ... RETURNING", ctx.dialect().name());
         }
-        w.space().append("RETURNING").space().comma(result.items());
+        w.newline().append("RETURNING").space().comma(result.items());
     }
 }

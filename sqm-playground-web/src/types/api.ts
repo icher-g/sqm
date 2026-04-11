@@ -97,6 +97,26 @@ export interface ParseResponseDto {
 }
 
 /**
+ * Render request payload sent to the playground backend.
+ */
+export interface RenderRequestDto {
+  sql: string;
+  sourceDialect: SqlDialect;
+  targetDialect: SqlDialect;
+}
+
+/**
+ * Render response payload returned by the playground backend.
+ */
+export interface RenderResponseDto {
+  requestId: string;
+  success: boolean;
+  durationMs: number;
+  renderedSql: string | null;
+  diagnostics: PlaygroundDiagnosticDto[];
+}
+
+/**
  * Examples response payload returned by the playground backend.
  */
 export interface ExamplesResponseDto {

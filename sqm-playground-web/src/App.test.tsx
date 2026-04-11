@@ -30,6 +30,7 @@ const PARSE_RESPONSE = {
   durationMs: 12,
   statementKind: "query",
   sqmJson: "{\n  \"kind\": \"select\"\n}",
+  sqmDsl: "public final class MyQuery {\n    public static SelectQuery getStatement() {\n        return builder.select(\n            star()\n        );\n    }\n}",
   ast: {
     nodeType: "SelectQuery",
     nodeInterface: "io.sqm.core.api.Query",
@@ -67,6 +68,14 @@ const PARSE_RESPONSE = {
   diagnostics: []
 };
 
+const RENDER_RESPONSE = {
+  requestId: "req-render",
+  success: true,
+  durationMs: 9,
+  renderedSql: "select distinct on (id) id\nfrom customer\norder by id",
+  diagnostics: []
+};
+
 describe("App", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -90,6 +99,14 @@ describe("App", () => {
             "Content-Type": "application/json"
           }
         })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(RENDER_RESPONSE), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
       );
 
     render(<App />);
@@ -100,7 +117,6 @@ describe("App", () => {
     expect(screen.getByText("Results")).toBeInTheDocument();
     expect(screen.getByLabelText("Source dialect")).toHaveValue("ansi");
     expect(screen.getByLabelText("Target dialect")).toHaveValue("postgresql");
-    expect(screen.getByRole("button", { name: "Render" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Validate" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Transpile" })).toBeDisabled();
 
@@ -110,6 +126,7 @@ describe("App", () => {
 
     expect(screen.getByLabelText("SQL text")).toHaveValue("select id, name\nfrom customer\nwhere id = 1\norder by name");
     expect(screen.getByRole("button", { name: "Parse" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Render" })).toBeEnabled();
     expect(screen.getByRole("tab", { name: "AST" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tabpanel", { name: "AST" })).toBeInTheDocument();
 
@@ -138,6 +155,9 @@ describe("App", () => {
       );
     });
 
+    expect(screen.getByRole("button", { name: "Parse" })).toHaveClass("button-primary");
+    expect(screen.getByRole("button", { name: "Render" })).not.toHaveClass("button-primary");
+
     await userEvent.click(screen.getByRole("tab", { name: "AST" }));
     expect(screen.getAllByText("SelectQuery").length).toBeGreaterThan(0);
     expect(screen.getAllByText("SelectItem").length).toBeGreaterThan(0);
@@ -148,5 +168,31 @@ describe("App", () => {
     await userEvent.click(screen.getByRole("tab", { name: "About Result" }));
     expect(screen.getByText("req-parse")).toBeInTheDocument();
     expect(screen.getByText("query")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Render" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        3,
+        "http://localhost:8080/sqm/playground/api/v1/render",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            sql: "select distinct on (id) id\nfrom customer\norder by id",
+            sourceDialect: "postgresql",
+            targetDialect: "postgresql"
+          })
+        })
+      );
+    });
+
+    expect(screen.getByRole("button", { name: "Render" })).toHaveClass("button-primary");
+    expect(screen.getByRole("button", { name: "Parse" })).not.toHaveClass("button-primary");
+
+    await userEvent.click(screen.getByRole("tab", { name: "Rendered SQL" }));
+    expect(screen.getByRole("tabpanel", { name: "Rendered SQL" })).toHaveTextContent("select distinct on (id) id");
+
+    await userEvent.click(screen.getByRole("tab", { name: "About Result" }));
+    expect(screen.getByText("req-render")).toBeInTheDocument();
   });
 });

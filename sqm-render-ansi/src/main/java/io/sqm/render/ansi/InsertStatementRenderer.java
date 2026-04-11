@@ -158,12 +158,12 @@ public class InsertStatementRenderer implements Renderer<InsertStatement> {
 
     private void renderSource(InsertSource source, SqlWriter w) {
         if (source instanceof Query query) {
-            w.space().append(query);
+            w.newline().append(query);
             return;
         }
 
         if (source instanceof RowValues rowValues) {
-            w.space().append("VALUES").space();
+            w.newline().append("VALUES").space();
             w.append(RowValues.class, rowValues);
             return;
         }

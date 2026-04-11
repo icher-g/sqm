@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { ParseResponseDto } from "../types/api";
+import type { ParseResponseDto, RenderResponseDto } from "../types/api";
 import { AstNodeTree } from "./AstNodeTree";
 
 type ResultTab = "ast" | "dsl" | "json" | "renderedSql" | "diagnostics" | "about";
@@ -8,6 +8,9 @@ interface ResultsPanelProps {
   parseResponse: ParseResponseDto | null;
   parseLoading: boolean;
   parseError: string | null;
+  renderResponse: RenderResponseDto | null;
+  renderLoading: boolean;
+  renderError: string | null;
 }
 
 /**
@@ -118,14 +121,30 @@ export function ResultsPanel(props: ResultsPanelProps) {
       {activeResultTab === "renderedSql" ? (
         <section className="result-panel" role="tabpanel" aria-label="Rendered SQL">
           <h3>Rendered SQL</h3>
-          <p className="result-placeholder">Rendered or transpiled SQL will appear here.</p>
+          {props.renderLoading ? (
+            <p className="result-placeholder">Rendering SQL for the selected target dialect...</p>
+          ) : props.renderResponse?.renderedSql ? (
+            <pre className="result-code-block">{props.renderResponse.renderedSql}</pre>
+          ) : (
+            <p className="result-placeholder">Rendered SQL will appear here after a render request.</p>
+          )}
         </section>
       ) : null}
 
       {activeResultTab === "diagnostics" ? (
         <section className="result-panel" role="tabpanel" aria-label="Diagnostics">
           <h3>Diagnostics</h3>
-          {props.parseError ? (
+          {props.renderError ? (
+            <p className="result-error">{props.renderError}</p>
+          ) : props.renderResponse?.diagnostics.length ? (
+            <ul className="diagnostic-list">
+              {props.renderResponse.diagnostics.map((diagnostic) => (
+                <li key={`${diagnostic.code}-${diagnostic.message}`} className="diagnostic-item">
+                  <strong>{diagnostic.severity}</strong> {diagnostic.code}: {diagnostic.message}
+                </li>
+              ))}
+            </ul>
+          ) : props.parseError ? (
             <p className="result-error">{props.parseError}</p>
           ) : props.parseResponse?.diagnostics.length ? (
             <ul className="diagnostic-list">
@@ -135,6 +154,8 @@ export function ResultsPanel(props: ResultsPanelProps) {
                 </li>
               ))}
             </ul>
+          ) : props.renderResponse ? (
+            <p className="result-placeholder">No diagnostics were returned for the last render.</p>
           ) : props.parseResponse ? (
             <p className="result-placeholder">No diagnostics were returned for the last parse.</p>
           ) : (
@@ -163,6 +184,14 @@ export function ResultsPanel(props: ResultsPanelProps) {
               <div className="about-row">
                 <dt>Root node type</dt>
                 <dd>{props.parseResponse.summary?.rootNodeType ?? "n/a"}</dd>
+              </div>
+              <div className="about-row">
+                <dt>Last render request</dt>
+                <dd>{props.renderResponse?.requestId ?? "n/a"}</dd>
+              </div>
+              <div className="about-row">
+                <dt>Last render duration</dt>
+                <dd>{props.renderResponse ? `${props.renderResponse.durationMs} ms` : "n/a"}</dd>
               </div>
             </dl>
           ) : (

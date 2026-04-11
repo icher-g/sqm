@@ -35,7 +35,7 @@ public class DeleteStatementRenderer extends io.sqm.render.ansi.DeleteStatementR
         if (!ctx.dialect().capabilities().supports(SqlFeature.DELETE_USING)) {
             throw new UnsupportedDialectFeatureException("DELETE ... USING", ctx.dialect().name());
         }
-        w.space().append("USING").space().comma(using);
+        w.newline().append("USING").space().comma(using);
     }
 
     /**
@@ -53,7 +53,7 @@ public class DeleteStatementRenderer extends io.sqm.render.ansi.DeleteStatementR
         if (!ctx.dialect().capabilities().supports(SqlFeature.DML_RESULT_CLAUSE)) {
             throw new UnsupportedDialectFeatureException("DELETE ... RETURNING", ctx.dialect().name());
         }
-        w.space().append("RETURNING").space().comma(result.items());
+        w.newline().append("RETURNING").space().comma(result.items());
     }
 
     @Override

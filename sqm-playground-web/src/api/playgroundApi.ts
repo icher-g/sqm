@@ -1,4 +1,4 @@
-import type { ExamplesResponseDto, ParseRequestDto, ParseResponseDto } from "../types/api";
+import type { ExamplesResponseDto, ParseRequestDto, ParseResponseDto, RenderRequestDto, RenderResponseDto } from "../types/api";
 
 const PLAYGROUND_API_BASE_URL =
   import.meta.env.VITE_PLAYGROUND_API_BASE_URL ?? "http://localhost:8080/sqm/playground/api/v1";
@@ -38,4 +38,24 @@ export async function parseSql(request: ParseRequestDto): Promise<ParseResponseD
   }
 
   return (await response.json()) as ParseResponseDto;
+}
+
+/**
+ * Sends a render request to the playground backend.
+ */
+export async function renderSql(request: RenderRequestDto): Promise<RenderResponseDto> {
+  const response = await fetch(`${PLAYGROUND_API_BASE_URL}/render`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(request)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Render request failed with status ${response.status}`);
+  }
+
+  return (await response.json()) as RenderResponseDto;
 }

@@ -7,12 +7,16 @@ interface ControlBarProps {
   examplesError: string | null;
   sourceDialect: SqlDialect;
   targetDialect: SqlDialect;
+  activeAction: "parse" | "render" | null;
   parseLoading: boolean;
+  renderLoading: boolean;
   canParse: boolean;
+  canRender: boolean;
   onExampleChange: (nextExampleId: string) => void;
   onSourceDialectChange: (nextDialect: SqlDialect) => void;
   onTargetDialectChange: (nextDialect: SqlDialect) => void;
   onParse: () => void;
+  onRender: () => void;
 }
 
 /**
@@ -81,14 +85,19 @@ export function ControlBar(props: ControlBarProps) {
           <div className="button-row">
             <button
               type="button"
-              className="button-primary"
+              className={props.activeAction === "parse" ? "button-primary" : undefined}
               onClick={props.onParse}
-              disabled={!props.canParse || props.parseLoading}
+              disabled={!props.canParse || props.parseLoading || props.renderLoading}
             >
-            {props.parseLoading ? "Parsing..." : "Parse"}
+              {props.parseLoading ? "Parsing..." : "Parse"}
             </button>
-            <button type="button" disabled>
-              Render
+            <button
+              type="button"
+              className={props.activeAction === "render" ? "button-primary" : undefined}
+              onClick={props.onRender}
+              disabled={!props.canRender || props.renderLoading || props.parseLoading}
+            >
+              {props.renderLoading ? "Rendering..." : "Render"}
             </button>
             <button type="button" disabled>
               Validate

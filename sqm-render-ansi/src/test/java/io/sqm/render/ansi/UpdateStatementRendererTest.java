@@ -55,6 +55,26 @@ class UpdateStatementRendererTest {
     }
 
     @Test
+    void rendersUpdateClausesOnSeparateLines() {
+        var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
+        UpdateStatement statement = update("users")
+            .set(id("name"), lit("alice"))
+            .where(io.sqm.dsl.Dsl.col("id").eq(lit(1)))
+            .build();
+
+        var sql = ctx.render(statement).sql();
+
+        assertEquals(
+            """
+                UPDATE users
+                SET name = 'alice'
+                WHERE id = 1
+                """.trim(),
+            sql
+        );
+    }
+
+    @Test
     void statementRootRenderingSupportsUpdate() {
         var ctx = RenderContext.of(new io.sqm.render.ansi.spi.AnsiDialect());
         Statement statement = update("users")

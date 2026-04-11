@@ -37,13 +37,13 @@ public class MergeStatementRenderer extends io.sqm.render.ansi.MergeStatementRen
             SqlServerTopSpecRenderSupport.renderTopSpec(node.topSpec(), w);
         }
         w.space().append("INTO").space().append(node.target());
-        w.space().append("USING").space().append(node.source());
-        w.space().append("ON").space().append(node.on());
+        w.newline().append("USING").space().append(node.source());
+        w.newline().append("ON").space().append(node.on());
         for (var clause : node.clauses()) {
-            w.space().append(clause);
+            w.newline().append(clause);
         }
         if (node.result() != null) {
-            w.space().append(node.result());
+            w.newline().append(node.result());
         }
     }
 

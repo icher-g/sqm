@@ -38,7 +38,7 @@ public class InsertStatementRenderer extends io.sqm.render.ansi.InsertStatementR
             }
         }
 
-        w.space().append(result);
+        w.newline().append(result);
     }
 
     @Override

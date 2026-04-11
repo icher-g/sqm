@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { fetchExamples, parseSql } from "./api/playgroundApi";
+import { fetchExamples, parseSql, renderSql } from "./api/playgroundApi";
 import { ControlBar } from "./components/ControlBar";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { SqlEditorPanel } from "./components/SqlEditorPanel";
-import type { ExampleDto, ParseResponseDto, SqlDialect } from "./types/api";
+import type { ExampleDto, ParseResponseDto, RenderResponseDto, SqlDialect } from "./types/api";
 
 /**
  * Root application component for the frontend shell.
@@ -16,9 +16,13 @@ export default function App() {
   const [targetDialect, setTargetDialect] = useState<SqlDialect>("postgresql");
   const [examplesLoading, setExamplesLoading] = useState(true);
   const [examplesError, setExamplesError] = useState<string | null>(null);
+  const [activeAction, setActiveAction] = useState<"parse" | "render" | null>(null);
   const [parseLoading, setParseLoading] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [parseResponse, setParseResponse] = useState<ParseResponseDto | null>(null);
+  const [renderLoading, setRenderLoading] = useState(false);
+  const [renderError, setRenderError] = useState<string | null>(null);
+  const [renderResponse, setRenderResponse] = useState<RenderResponseDto | null>(null);
 
   useEffect(() => {
     void loadExamples();
@@ -58,6 +62,7 @@ export default function App() {
   }
 
   async function handleParse() {
+    setActiveAction("parse");
     setParseLoading(true);
     setParseError(null);
 
@@ -72,6 +77,26 @@ export default function App() {
       setParseError(error instanceof Error ? error.message : "Failed to parse SQL");
     } finally {
       setParseLoading(false);
+    }
+  }
+
+  async function handleRender() {
+    setActiveAction("render");
+    setRenderLoading(true);
+    setRenderError(null);
+
+    try {
+      const response = await renderSql({
+        sql: sqlText,
+        sourceDialect,
+        targetDialect
+      });
+      setRenderResponse(response);
+    } catch (error) {
+      setRenderResponse(null);
+      setRenderError(error instanceof Error ? error.message : "Failed to render SQL");
+    } finally {
+      setRenderLoading(false);
     }
   }
 
@@ -90,12 +115,16 @@ export default function App() {
         examplesError={examplesError}
         sourceDialect={sourceDialect}
         targetDialect={targetDialect}
+        activeAction={activeAction}
         parseLoading={parseLoading}
+        renderLoading={renderLoading}
         canParse={sqlText.trim().length > 0}
+        canRender={sqlText.trim().length > 0}
         onExampleChange={handleExampleChange}
         onSourceDialectChange={setSourceDialect}
         onTargetDialectChange={setTargetDialect}
         onParse={handleParse}
+        onRender={handleRender}
       />
 
       <section className="workspace-grid">
@@ -104,7 +133,14 @@ export default function App() {
         </div>
 
         <div className="workspace-column">
-          <ResultsPanel parseResponse={parseResponse} parseLoading={parseLoading} parseError={parseError} />
+          <ResultsPanel
+            parseResponse={parseResponse}
+            parseLoading={parseLoading}
+            parseError={parseError}
+            renderResponse={renderResponse}
+            renderLoading={renderLoading}
+            renderError={renderError}
+          />
         </div>
       </section>
     </main>

@@ -45,7 +45,7 @@ public class InsertStatementRenderer extends io.sqm.render.ansi.InsertStatementR
             throw new UnsupportedDialectFeatureException("INSERT ... ON CONFLICT", ctx.dialect().name());
         }
 
-        w.space().append("ON CONFLICT");
+        w.newline().append("ON CONFLICT");
 
         if (!target.isEmpty()) {
             w.space().append("(");
@@ -60,7 +60,7 @@ public class InsertStatementRenderer extends io.sqm.render.ansi.InsertStatementR
 
         w.space().append("DO UPDATE SET").space().comma(assignments);
         if (where != null) {
-            w.space().append("WHERE").space().append(where);
+            w.newline().append("WHERE").space().append(where);
         }
     }
 
@@ -79,7 +79,7 @@ public class InsertStatementRenderer extends io.sqm.render.ansi.InsertStatementR
         if (!ctx.dialect().capabilities().supports(SqlFeature.DML_RESULT_CLAUSE)) {
             throw new UnsupportedDialectFeatureException("INSERT ... RETURNING", ctx.dialect().name());
         }
-        w.space().append("RETURNING").space().comma(result.items());
+        w.newline().append("RETURNING").space().comma(result.items());
     }
 
     @Override
