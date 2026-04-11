@@ -1,11 +1,18 @@
-import type { ExampleDto } from "../types/api";
+import type { ExampleDto, SqlDialect } from "../types/api";
 
 interface ControlBarProps {
   examples: ExampleDto[];
   selectedExampleId: string;
   examplesLoading: boolean;
   examplesError: string | null;
+  sourceDialect: SqlDialect;
+  targetDialect: SqlDialect;
+  parseLoading: boolean;
+  canParse: boolean;
   onExampleChange: (nextExampleId: string) => void;
+  onSourceDialectChange: (nextDialect: SqlDialect) => void;
+  onTargetDialectChange: (nextDialect: SqlDialect) => void;
+  onParse: () => void;
 }
 
 /**
@@ -13,12 +20,12 @@ interface ControlBarProps {
  */
 export function ControlBar(props: ControlBarProps) {
   return (
-    <article className="card">
+    <article className="card control-card">
       <h2>Controls</h2>
       <p>Choose the source and target dialects, then run one of the playground actions.</p>
 
       <div className="control-stack">
-        <div className="control-field">
+        <div className="control-field control-field-example">
           <label htmlFor="example-picker">Example</label>
           <select
             id="example-picker"
@@ -43,7 +50,11 @@ export function ControlBar(props: ControlBarProps) {
 
         <div className="control-field">
           <label htmlFor="source-dialect">Source dialect</label>
-          <select id="source-dialect" defaultValue="ansi">
+          <select
+            id="source-dialect"
+            value={props.sourceDialect}
+            onChange={(event) => props.onSourceDialectChange(event.target.value as SqlDialect)}
+          >
             <option value="ansi">ansi</option>
             <option value="postgresql">postgresql</option>
             <option value="mysql">mysql</option>
@@ -53,7 +64,11 @@ export function ControlBar(props: ControlBarProps) {
 
         <div className="control-field">
           <label htmlFor="target-dialect">Target dialect</label>
-          <select id="target-dialect" defaultValue="postgresql">
+          <select
+            id="target-dialect"
+            value={props.targetDialect}
+            onChange={(event) => props.onTargetDialectChange(event.target.value as SqlDialect)}
+          >
             <option value="ansi">ansi</option>
             <option value="postgresql">postgresql</option>
             <option value="mysql">mysql</option>
@@ -61,19 +76,27 @@ export function ControlBar(props: ControlBarProps) {
           </select>
         </div>
 
-        <div className="button-row">
-          <button type="button" disabled>
-            Parse
-          </button>
-          <button type="button" disabled>
-            Render
-          </button>
-          <button type="button" disabled>
-            Validate
-          </button>
-          <button type="button" disabled>
-            Transpile
-          </button>
+        <div className="action-group">
+          <p className="action-group-title">Actions</p>
+          <div className="button-row">
+            <button
+              type="button"
+              className="button-primary"
+              onClick={props.onParse}
+              disabled={!props.canParse || props.parseLoading}
+            >
+            {props.parseLoading ? "Parsing..." : "Parse"}
+            </button>
+            <button type="button" disabled>
+              Render
+            </button>
+            <button type="button" disabled>
+              Validate
+            </button>
+            <button type="button" disabled>
+              Transpile
+            </button>
+          </div>
         </div>
       </div>
     </article>

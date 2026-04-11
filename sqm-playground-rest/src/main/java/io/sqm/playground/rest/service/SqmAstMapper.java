@@ -1,24 +1,15 @@
 package io.sqm.playground.rest.service;
 
-import io.sqm.core.Identifier;
-import io.sqm.core.Node;
-import io.sqm.core.Predicate;
-import io.sqm.core.Statement;
+import io.sqm.core.*;
+import io.sqm.playground.api.AstChildSlotDto;
+import io.sqm.playground.api.AstDetailDto;
+import io.sqm.playground.api.AstNodeDto;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-
-import io.sqm.playground.api.AstChildSlotDto;
-import io.sqm.playground.api.AstDetailDto;
-import io.sqm.playground.api.AstNodeDto;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Maps SQM model nodes into browser-friendly AST DTOs by reflecting over the SQM interfaces.
@@ -30,8 +21,23 @@ import io.sqm.playground.api.AstNodeDto;
 @Service
 public final class SqmAstMapper {
 
+    private static final Map<String, Integer> SLOT_ORDER = Map.ofEntries(
+        Map.entry("with", 10),
+        Map.entry("items", 20),
+        Map.entry("from", 30),
+        Map.entry("joins", 40),
+        Map.entry("where", 50),
+        Map.entry("groupBy", 60),
+        Map.entry("having", 70),
+        Map.entry("orderBy", 80),
+        Map.entry("limit", 90),
+        Map.entry("offset", 100),
+        Map.entry("fetch", 110)
+    );
+
     private static final Set<String> IGNORED_METHODS = Set.of(
         "accept",
+        "builder",
         "getTopLevelInterface",
         "matchStatement",
         "matchQuery",
@@ -60,10 +66,6 @@ public final class SqmAstMapper {
         var details = new ArrayList<AstDetailDto>();
         var children = new ArrayList<AstChildSlotDto>();
 
-        details.add(detail("interfaceSimpleName", nodeInterface.getSimpleName()));
-        if (!node.getClass().equals(nodeInterface)) {
-            details.add(detail("implementationClass", node.getClass().getName()));
-        }
         if (!path.add(node)) {
             details.add(detail("cycleDetected", "true"));
             return new AstNodeDto(
@@ -129,8 +131,14 @@ public final class SqmAstMapper {
             .filter(method -> !method.isDefault())
             .filter(method -> !method.isSynthetic())
             .filter(method -> !IGNORED_METHODS.contains(method.getName()))
-            .sorted(Comparator.comparing(Method::getName))
+            .sorted(Comparator
+                .comparingInt((Method method) -> slotOrder(method.getName()))
+                .thenComparing(Method::getName))
             .toList();
+    }
+
+    private int slotOrder(String slot) {
+        return SLOT_ORDER.getOrDefault(slot, Integer.MAX_VALUE);
     }
 
     private Object invoke(Node node, Method method) {
@@ -145,10 +153,11 @@ public final class SqmAstMapper {
 
     private List<AstDetailDto> detailsForValue(String name, Object value) {
         if (value instanceof Identifier identifier) {
-            return List.of(
-                detail(name, identifier.value()),
-                detail(name + "Quoted", Boolean.toString(identifier.quoted()))
-            );
+            return List.of(detail(name, renderIdentifier(identifier)));
+        }
+
+        if (value instanceof QualifiedName qualifiedName) {
+            return List.of(detail(name, renderQualifiedName(qualifiedName)));
         }
 
         if (value instanceof Enum<?> enumValue) {
@@ -169,10 +178,7 @@ public final class SqmAstMapper {
 
         if (values.stream().allMatch(Identifier.class::isInstance)) {
             var identifiers = values.stream().map(Identifier.class::cast).toList();
-            return List.of(
-                detail(name, identifiers.stream().map(Identifier::value).toList().toString()),
-                detail(name + "QuotedCount", Long.toString(identifiers.stream().filter(Identifier::quoted).count()))
-            );
+            return List.of(detail(name, identifiers.stream().map(this::renderIdentifier).toList().toString()));
         }
 
         var grouped = new LinkedHashMap<String, Integer>();
@@ -225,6 +231,21 @@ public final class SqmAstMapper {
             return value;
         }
         return Character.toLowerCase(value.charAt(0)) + value.substring(1);
+    }
+
+    private String renderQualifiedName(QualifiedName qualifiedName) {
+        return qualifiedName.parts().stream()
+            .map(this::renderIdentifier)
+            .collect(Collectors.joining("."));
+    }
+
+    private String renderIdentifier(Identifier identifier) {
+        return switch (identifier.quoteStyle()) {
+            case NONE -> identifier.value();
+            case DOUBLE_QUOTE -> "\"" + identifier.value() + "\"";
+            case BACKTICK -> "`" + identifier.value() + "`";
+            case BRACKETS -> "[" + identifier.value() + "]";
+        };
     }
 
     private AstDetailDto detail(String name, String value) {

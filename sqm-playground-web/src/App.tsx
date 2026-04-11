@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
+import { fetchExamples, parseSql } from "./api/playgroundApi";
 import { ControlBar } from "./components/ControlBar";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { SqlEditorPanel } from "./components/SqlEditorPanel";
-import type { ExampleDto, ExamplesResponseDto } from "./types/api";
-
-const PLAYGROUND_API_BASE_URL = import.meta.env.VITE_PLAYGROUND_API_BASE_URL ?? "http://localhost:8080/sqm/playground/api/v1";
+import type { ExampleDto, ParseResponseDto, SqlDialect } from "./types/api";
 
 /**
  * Root application component for the frontend shell.
@@ -13,8 +12,13 @@ export default function App() {
   const [sqlText, setSqlText] = useState("Loading example...");
   const [examples, setExamples] = useState<ExampleDto[]>([]);
   const [selectedExampleId, setSelectedExampleId] = useState("");
+  const [sourceDialect, setSourceDialect] = useState<SqlDialect>("ansi");
+  const [targetDialect, setTargetDialect] = useState<SqlDialect>("postgresql");
   const [examplesLoading, setExamplesLoading] = useState(true);
   const [examplesError, setExamplesError] = useState<string | null>(null);
+  const [parseLoading, setParseLoading] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [parseResponse, setParseResponse] = useState<ParseResponseDto | null>(null);
 
   useEffect(() => {
     void loadExamples();
@@ -25,23 +29,14 @@ export default function App() {
     setExamplesError(null);
 
     try {
-      const response = await fetch(`${PLAYGROUND_API_BASE_URL}/examples`, {
-        headers: {
-          Accept: "application/json"
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Example request failed with status ${response.status}`);
-      }
-
-      const payload = (await response.json()) as ExamplesResponseDto;
+      const payload = await fetchExamples();
       setExamples(payload.examples);
 
       const defaultExample = payload.examples.find((example) => example.dialect === "ansi") ?? payload.examples[0];
       if (defaultExample) {
         setSelectedExampleId(defaultExample.id);
         setSqlText(defaultExample.sql);
+        setSourceDialect(defaultExample.dialect);
       } else {
         setSqlText("");
       }
@@ -58,6 +53,25 @@ export default function App() {
     const example = examples.find((item) => item.id === nextExampleId);
     if (example) {
       setSqlText(example.sql);
+      setSourceDialect(example.dialect);
+    }
+  }
+
+  async function handleParse() {
+    setParseLoading(true);
+    setParseError(null);
+
+    try {
+      const response = await parseSql({
+        sql: sqlText,
+        dialect: sourceDialect
+      });
+      setParseResponse(response);
+    } catch (error) {
+      setParseResponse(null);
+      setParseError(error instanceof Error ? error.message : "Failed to parse SQL");
+    } finally {
+      setParseLoading(false);
     }
   }
 
@@ -66,24 +80,32 @@ export default function App() {
       <header className="hero">
         <p className="eyebrow">SQM Playground</p>
         <h1>Frontend shell</h1>
-        <p className="hero-copy">
-          This is the first learning slice. It only proves that the React app starts and renders a placeholder
-          workstation.
-        </p>
+        <p className="hero-copy">This slice loads examples and lets you parse SQL into real AST and JSON results.</p>
       </header>
 
-      <section className="shell-grid">
-        <ControlBar
-          examples={examples}
-          selectedExampleId={selectedExampleId}
-          examplesLoading={examplesLoading}
-          examplesError={examplesError}
-          onExampleChange={handleExampleChange}
-        />
+      <ControlBar
+        examples={examples}
+        selectedExampleId={selectedExampleId}
+        examplesLoading={examplesLoading}
+        examplesError={examplesError}
+        sourceDialect={sourceDialect}
+        targetDialect={targetDialect}
+        parseLoading={parseLoading}
+        canParse={sqlText.trim().length > 0}
+        onExampleChange={handleExampleChange}
+        onSourceDialectChange={setSourceDialect}
+        onTargetDialectChange={setTargetDialect}
+        onParse={handleParse}
+      />
 
-        <SqlEditorPanel sqlText={sqlText} onSqlTextChange={setSqlText} />
+      <section className="workspace-grid">
+        <div className="workspace-column">
+          <SqlEditorPanel sqlText={sqlText} onSqlTextChange={setSqlText} />
+        </div>
 
-        <ResultsPanel />
+        <div className="workspace-column">
+          <ResultsPanel parseResponse={parseResponse} parseLoading={parseLoading} parseError={parseError} />
+        </div>
       </section>
     </main>
   );

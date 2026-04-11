@@ -17,7 +17,7 @@ textarea {
 }
 
 .app-shell {
-  max-width: 1200px;
+  max-width: 1800px;
   margin: 0 auto;
   padding: 2rem;
 }
@@ -43,10 +43,10 @@ textarea {
   max-width: 60rem;
 }
 
-.shell-grid {
+.workspace-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  grid-template-columns: minmax(420px, 1fr) minmax(560px, 1.45fr);
 }
 
 .card {
@@ -61,14 +61,25 @@ textarea {
   margin-top: 0;
 }
 
+.control-card {
+  align-self: start;
+  margin-bottom: 1rem;
+}
+
 .control-stack {
   display: grid;
-  gap: 1rem;
+  gap: 1rem 1.25rem;
+  grid-template-columns: minmax(320px, 1.5fr) repeat(2, minmax(180px, 0.8fr)) minmax(280px, 1.2fr);
+  align-items: start;
 }
 
 .control-field {
   display: grid;
   gap: 0.4rem;
+}
+
+.control-field-example {
+  min-width: 0;
 }
 
 .control-field label {
@@ -81,6 +92,7 @@ textarea {
   border-radius: 14px;
   background: #ffffff;
   padding: 0 0.75rem;
+  width: 100%;
 }
 
 .control-help {
@@ -89,23 +101,45 @@ textarea {
   font-size: 0.95rem;
 }
 
+.action-group {
+  display: grid;
+  gap: 0.7rem;
+  align-content: start;
+}
+
+.action-group-title {
+  margin: 0;
+  font-weight: 700;
+  color: #5d4a36;
+}
+
 .button-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(110px, 1fr));
   gap: 0.75rem;
 }
 
 .button-row button {
   border: 1px solid #c96f1a;
-  border-radius: 999px;
-  background: #c96f1a;
-  color: #fff8f1;
+  border-radius: 14px;
+  background: #fff6eb;
+  color: #8f5314;
   padding: 0.65rem 1rem;
+  width: 100%;
 }
 
 .button-row button:disabled {
-  opacity: 0.5;
+  opacity: 0.65;
   cursor: not-allowed;
+}
+
+.button-row .button-primary {
+  background: #c96f1a;
+  color: #fff8f1;
+}
+
+.workspace-column {
+  min-width: 0;
 }
 
 .editor-label {
@@ -154,6 +188,13 @@ textarea {
   border-radius: 16px;
   padding: 0.9rem 1rem;
   background: #fffdf8;
+  min-height: 220px;
+  overflow: hidden;
+}
+
+.result-panel-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
 }
 
 .result-panel h3 {
@@ -166,8 +207,102 @@ textarea {
   color: #5f6b76;
 }
 
+.result-code-block {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: 0.95rem;
+}
+
+.result-error {
+  margin: 0;
+  color: #a32638;
+}
+
+.diagnostic-list {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.diagnostic-item + .diagnostic-item {
+  margin-top: 0.5rem;
+}
+
+.about-list,
+.ast-detail-list {
+  margin: 0;
+}
+
+.about-row,
+.ast-detail-row {
+  display: grid;
+  grid-template-columns: minmax(0, 10rem) minmax(0, 1fr);
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.about-row dt,
+.ast-detail-row dt {
+  font-weight: 700;
+}
+
+.about-row dd,
+.ast-detail-row dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.ast-inline-value {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.ast-node + .ast-node {
+  margin-top: 0.75rem;
+}
+
+.ast-node {
+  border-left: 3px solid #d2b48c;
+  padding-left: 0.9rem;
+  width: max-content;
+  min-width: 100%;
+}
+
+.ast-node-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.ast-node-meta {
+  color: #6b5a45;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.ast-children {
+  margin-top: 0.75rem;
+}
+
+.ast-slot + .ast-slot {
+  margin-top: 0.75rem;
+}
+
+.ast-slot-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+
 @media (max-width: 900px) {
-  .shell-grid {
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .control-stack {
     grid-template-columns: 1fr;
   }
 }

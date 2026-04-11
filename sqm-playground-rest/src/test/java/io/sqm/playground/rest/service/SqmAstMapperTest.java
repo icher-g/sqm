@@ -6,6 +6,8 @@ import io.sqm.core.Identifier;
 import io.sqm.core.OrderItem;
 import io.sqm.core.Query;
 import io.sqm.core.QueryTable;
+import io.sqm.core.QualifiedName;
+import io.sqm.core.QuoteStyle;
 import io.sqm.core.TableRef;
 import io.sqm.playground.api.AstChildSlotDto;
 import io.sqm.playground.api.AstDetailDto;
@@ -51,6 +53,7 @@ class SqmAstMapperTest {
         assertNotNull(slot(ast, "orderBy"));
         assertEquals("ExprSelectItem", slot(ast, "items").nodes().getFirst().nodeType());
         assertEquals("Table", slot(ast, "from").nodes().getFirst().nodeType());
+        assertEquals(List.of("items", "from", "where", "orderBy"), ast.children().stream().map(AstChildSlotDto::slot).toList());
     }
 
     @Test
@@ -86,22 +89,59 @@ class SqmAstMapperTest {
         assertNotNull(slot(ast, "query"));
         assertFalse(hasSlot(ast, "columnAliases"));
         assertEquals("[id, value]", detail(ast, "columnAliases").value());
-        assertEquals("0", detail(ast, "columnAliasesQuotedCount").value());
     }
 
     @Test
-    void mapsEnumsAndImplementationMetadataAsDetails() {
+    void mapsEnumsWithoutImplementationMetadataDetails() {
         var mapper = new SqmAstMapper();
         var orderItem = OrderItem.of(ColumnExpr.of(Identifier.of("c"), Identifier.of("id"))).desc().nullsLast();
 
         var ast = mapper.toAst(orderItem);
 
         assertEquals("orderItem", ast.category());
-        assertEquals("OrderItem", detail(ast, "interfaceSimpleName").value());
-        assertEquals("io.sqm.core.OrderItem$Impl", detail(ast, "implementationClass").value());
+        assertFalse(hasDetail(ast, "interfaceSimpleName"));
+        assertFalse(hasDetail(ast, "implementationClass"));
         assertEquals("DESC", detail(ast, "direction").value());
         assertEquals("LAST", detail(ast, "nulls").value());
         assertNotNull(slot(ast, "expr"));
+    }
+
+    @Test
+    void excludesBuilderMethodsFromAstDetails() {
+        var mapper = new SqmAstMapper();
+        var query = Query.select(Expression.literal(1)).from(TableRef.table(Identifier.of("customer"))).build();
+
+        var ast = mapper.toAst(query);
+
+        assertFalse(hasDetail(ast, "builder"));
+        assertFalse(hasSlot(ast, "builder"));
+    }
+
+    @Test
+    void mapsQualifiedNamesLikeIdentifierCollections() {
+        var mapper = new SqmAstMapper();
+        var assignment = io.sqm.core.Assignment.of(
+            QualifiedName.of(Identifier.of("o"), Identifier.of("status")),
+            Expression.literal("priority")
+        );
+
+        var ast = mapper.toAst(assignment);
+
+        assertEquals("o.status", detail(ast, "column").value());
+    }
+
+    @Test
+    void rendersQuotedIdentifiersInline() {
+        var mapper = new SqmAstMapper();
+        var column = ColumnExpr.of(
+            Identifier.of("Order", QuoteStyle.DOUBLE_QUOTE),
+            Identifier.of("Line Item", QuoteStyle.BRACKETS)
+        );
+
+        var ast = mapper.toAst(column);
+
+        assertEquals("\"Order\"", detail(ast, "tableAlias").value());
+        assertEquals("[Line Item]", detail(ast, "name").value());
     }
 
     private static boolean hasSlot(AstNodeDto node, String slot) {
@@ -120,5 +160,9 @@ class SqmAstMapperTest {
             .filter(detail -> Objects.equals(name, detail.name()))
             .findFirst()
             .orElseThrow(() -> new AssertionError("Missing AST detail: " + name));
+    }
+
+    private static boolean hasDetail(AstNodeDto node, String name) {
+        return node.details().stream().anyMatch(detail -> Objects.equals(name, detail.name()));
     }
 }
