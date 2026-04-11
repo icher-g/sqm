@@ -117,6 +117,25 @@ export interface RenderResponseDto {
 }
 
 /**
+ * Validate request payload sent to the playground backend.
+ */
+export interface ValidateRequestDto {
+  sql: string;
+  dialect: SqlDialect;
+}
+
+/**
+ * Validate response payload returned by the playground backend.
+ */
+export interface ValidateResponseDto {
+  requestId: string;
+  success: boolean;
+  durationMs: number;
+  valid: boolean;
+  diagnostics: PlaygroundDiagnosticDto[];
+}
+
+/**
  * Examples response payload returned by the playground backend.
  */
 export interface ExamplesResponseDto {

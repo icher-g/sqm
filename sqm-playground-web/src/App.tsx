@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { fetchExamples, parseSql, renderSql } from "./api/playgroundApi";
+import { fetchExamples, parseSql, renderSql, validateSql } from "./api/playgroundApi";
 import { ResultsPanel, type ResultTab } from "./components/ResultsPanel";
 import { SqlEditorPanel } from "./components/SqlEditorPanel";
-import type { ExampleDto, ParseResponseDto, RenderResponseDto, SqlDialect } from "./types/api";
+import type { ExampleDto, ParseResponseDto, RenderResponseDto, SqlDialect, ValidateResponseDto } from "./types/api";
 
 /**
  * Root application component for the frontend shell.
@@ -15,13 +15,16 @@ export default function App() {
   const [targetDialect, setTargetDialect] = useState<SqlDialect>("postgresql");
   const [examplesLoading, setExamplesLoading] = useState(true);
   const [examplesError, setExamplesError] = useState<string | null>(null);
-  const [activeAction, setActiveAction] = useState<"parse" | "render" | null>(null);
+  const [activeAction, setActiveAction] = useState<"parse" | "render" | "validate" | null>(null);
   const [parseLoading, setParseLoading] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [parseResponse, setParseResponse] = useState<ParseResponseDto | null>(null);
   const [renderLoading, setRenderLoading] = useState(false);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [renderResponse, setRenderResponse] = useState<RenderResponseDto | null>(null);
+  const [validateLoading, setValidateLoading] = useState(false);
+  const [validateError, setValidateError] = useState<string | null>(null);
+  const [validateResponse, setValidateResponse] = useState<ValidateResponseDto | null>(null);
   const [activeResultTab, setActiveResultTab] = useState<ResultTab>("ast");
 
   useEffect(() => {
@@ -66,6 +69,8 @@ export default function App() {
     setParseLoading(true);
     setParseError(null);
     setParseResponse(null);
+    setValidateError(null);
+    setValidateResponse(null);
     setRenderError(null);
     setRenderResponse(null);
     setActiveResultTab("ast");
@@ -93,6 +98,8 @@ export default function App() {
     setRenderResponse(null);
     setParseError(null);
     setParseResponse(null);
+    setValidateError(null);
+    setValidateResponse(null);
     setActiveResultTab("renderedSql");
 
     try {
@@ -109,6 +116,33 @@ export default function App() {
       setActiveResultTab("diagnostics");
     } finally {
       setRenderLoading(false);
+    }
+  }
+
+  async function handleValidate() {
+    setActiveAction("validate");
+    setValidateLoading(true);
+    setValidateError(null);
+    setValidateResponse(null);
+    setParseError(null);
+    setParseResponse(null);
+    setRenderError(null);
+    setRenderResponse(null);
+    setActiveResultTab("diagnostics");
+
+    try {
+      const response = await validateSql({
+        sql: sqlText,
+        dialect: sourceDialect
+      });
+      setValidateResponse(response);
+      setActiveResultTab("diagnostics");
+    } catch (error) {
+      setValidateResponse(null);
+      setValidateError(error instanceof Error ? error.message : "Failed to validate SQL");
+      setActiveResultTab("diagnostics");
+    } finally {
+      setValidateLoading(false);
     }
   }
 
@@ -133,14 +167,17 @@ export default function App() {
             activeAction={activeAction}
             parseLoading={parseLoading}
             renderLoading={renderLoading}
+            validateLoading={validateLoading}
             canParse={sqlText.trim().length > 0}
             canRender={sqlText.trim().length > 0}
+            canValidate={sqlText.trim().length > 0}
             onSqlTextChange={setSqlText}
             onExampleChange={handleExampleChange}
             onSourceDialectChange={setSourceDialect}
             onTargetDialectChange={setTargetDialect}
             onParse={handleParse}
             onRender={handleRender}
+            onValidate={handleValidate}
           />
         </div>
 
@@ -154,6 +191,9 @@ export default function App() {
             renderResponse={renderResponse}
             renderLoading={renderLoading}
             renderError={renderError}
+            validateResponse={validateResponse}
+            validateLoading={validateLoading}
+            validateError={validateError}
           />
         </div>
       </section>

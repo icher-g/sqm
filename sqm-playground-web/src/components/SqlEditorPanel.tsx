@@ -8,17 +8,20 @@ interface SqlEditorPanelProps {
   examplesError: string | null;
   sourceDialect: SqlDialect;
   targetDialect: SqlDialect;
-  activeAction: "parse" | "render" | null;
+  activeAction: "parse" | "render" | "validate" | null;
   parseLoading: boolean;
   renderLoading: boolean;
+  validateLoading: boolean;
   canParse: boolean;
   canRender: boolean;
+  canValidate: boolean;
   onSqlTextChange: (nextSqlText: string) => void;
   onExampleChange: (nextExampleId: string) => void;
   onSourceDialectChange: (nextDialect: SqlDialect) => void;
   onTargetDialectChange: (nextDialect: SqlDialect) => void;
   onParse: () => void;
   onRender: () => void;
+  onValidate: () => void;
 }
 
 /**
@@ -74,12 +77,17 @@ export function SqlEditorPanel(props: SqlEditorPanelProps) {
                 type="button"
                 className={props.activeAction === "parse" ? "button-primary" : undefined}
                 onClick={props.onParse}
-                disabled={!props.canParse || props.parseLoading || props.renderLoading}
+                disabled={!props.canParse || props.parseLoading || props.renderLoading || props.validateLoading}
               >
                 {props.parseLoading ? "Parsing..." : "Parse"}
               </button>
-              <button type="button" disabled>
-                Validate
+              <button
+                type="button"
+                className={props.activeAction === "validate" ? "button-primary" : undefined}
+                onClick={props.onValidate}
+                disabled={!props.canValidate || props.validateLoading || props.parseLoading || props.renderLoading}
+              >
+                {props.validateLoading ? "Validating..." : "Validate"}
               </button>
             </div>
           </div>
@@ -103,7 +111,7 @@ export function SqlEditorPanel(props: SqlEditorPanelProps) {
                 type="button"
                 className={props.activeAction === "render" ? "button-primary" : undefined}
                 onClick={props.onRender}
-                disabled={!props.canRender || props.renderLoading || props.parseLoading}
+                disabled={!props.canRender || props.renderLoading || props.parseLoading || props.validateLoading}
               >
                 {props.renderLoading ? "Rendering..." : "Render"}
               </button>

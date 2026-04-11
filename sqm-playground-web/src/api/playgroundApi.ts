@@ -1,4 +1,12 @@
-import type { ExamplesResponseDto, ParseRequestDto, ParseResponseDto, RenderRequestDto, RenderResponseDto } from "../types/api";
+import type {
+  ExamplesResponseDto,
+  ParseRequestDto,
+  ParseResponseDto,
+  RenderRequestDto,
+  RenderResponseDto,
+  ValidateRequestDto,
+  ValidateResponseDto
+} from "../types/api";
 
 const PLAYGROUND_API_BASE_URL =
   import.meta.env.VITE_PLAYGROUND_API_BASE_URL ?? "http://localhost:8080/sqm/playground/api/v1";
@@ -58,4 +66,24 @@ export async function renderSql(request: RenderRequestDto): Promise<RenderRespon
   }
 
   return (await response.json()) as RenderResponseDto;
+}
+
+/**
+ * Sends a validate request to the playground backend.
+ */
+export async function validateSql(request: ValidateRequestDto): Promise<ValidateResponseDto> {
+  const response = await fetch(`${PLAYGROUND_API_BASE_URL}/validate`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(request)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Validate request failed with status ${response.status}`);
+  }
+
+  return (await response.json()) as ValidateResponseDto;
 }

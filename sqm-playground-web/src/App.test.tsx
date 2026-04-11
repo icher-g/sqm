@@ -76,6 +76,14 @@ const RENDER_RESPONSE = {
   diagnostics: []
 };
 
+const VALIDATE_RESPONSE = {
+  requestId: "req-validate",
+  success: true,
+  durationMs: 5,
+  valid: true,
+  diagnostics: []
+};
+
 const PARSE_FAILURE_RESPONSE = {
   requestId: "req-parse-fail",
   success: false,
@@ -146,6 +154,14 @@ describe("App", () => {
             "Content-Type": "application/json"
           }
         })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(VALIDATE_RESPONSE), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
       );
 
     render(<App />);
@@ -156,7 +172,6 @@ describe("App", () => {
     expect(screen.getByText("Choose an example, set the relevant dialects, and run actions directly above the SQL text.")).toBeInTheDocument();
     expect(screen.getByLabelText("Source dialect")).toHaveValue("ansi");
     expect(screen.getByLabelText("Target dialect")).toHaveValue("postgresql");
-    expect(screen.getByRole("button", { name: "Validate" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Transpile" })).toBeDisabled();
 
     await waitFor(() => {
@@ -166,6 +181,7 @@ describe("App", () => {
     expect(screen.getByLabelText("SQL text")).toHaveValue("select id, name\nfrom customer\nwhere id = 1\norder by name");
     expect(screen.getByRole("button", { name: "Parse" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Render" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Validate" })).toBeEnabled();
     expect(screen.getByRole("tab", { name: "AST" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tabpanel", { name: "AST" })).toBeInTheDocument();
 
@@ -234,6 +250,30 @@ describe("App", () => {
 
     await userEvent.click(screen.getByRole("tab", { name: "About Result" }));
     expect(screen.getByText("req-render")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Validate" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        4,
+        "http://localhost:8080/sqm/playground/api/v1/validate",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            sql: "select distinct on (id) id\nfrom customer\norder by id",
+            dialect: "postgresql"
+          })
+        })
+      );
+    });
+
+    expect(screen.getByRole("button", { name: "Validate" })).toHaveClass("button-primary");
+    expect(screen.getByRole("tab", { name: "Diagnostics" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Diagnostics" })).toHaveTextContent("Validation succeeded with no diagnostics.");
+
+    await userEvent.click(screen.getByRole("tab", { name: "About Result" }));
+    expect(screen.getByText("req-validate")).toBeInTheDocument();
+    expect(screen.getByText("valid")).toBeInTheDocument();
   });
 
   it("switches to diagnostics when parse or render returns a failure response", async () => {
