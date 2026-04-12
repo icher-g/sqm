@@ -22,13 +22,15 @@ export default function App() {
   const [targetDialect, setTargetDialect] = useState<SqlDialect>("postgresql");
   const [examplesLoading, setExamplesLoading] = useState(true);
   const [examplesError, setExamplesError] = useState<string | null>(null);
-  const [activeAction, setActiveAction] = useState<"parse" | "render" | "validate" | "transpile" | null>(null);
+  const [activeAction, setActiveAction] = useState<"parse" | "format" | "render" | "validate" | "transpile" | null>(null);
   const [parseLoading, setParseLoading] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [parseResponse, setParseResponse] = useState<ParseResponseDto | null>(null);
+  const [formatLoading, setFormatLoading] = useState(false);
   const [renderLoading, setRenderLoading] = useState(false);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [renderResponse, setRenderResponse] = useState<RenderResponseDto | null>(null);
+  const [renderedSqlDialect, setRenderedSqlDialect] = useState<SqlDialect | null>(null);
   const [transpileLoading, setTranspileLoading] = useState(false);
   const [transpileError, setTranspileError] = useState<string | null>(null);
   const [transpileResponse, setTranspileResponse] = useState<TranspileResponseDto | null>(null);
@@ -85,6 +87,7 @@ export default function App() {
     setTranspileResponse(null);
     setRenderError(null);
     setRenderResponse(null);
+    setRenderedSqlDialect(null);
     setActiveResultTab("ast");
 
     try {
@@ -114,6 +117,7 @@ export default function App() {
     setValidateResponse(null);
     setTranspileError(null);
     setTranspileResponse(null);
+    setRenderedSqlDialect(null);
     setActiveResultTab("renderedSql");
 
     try {
@@ -123,13 +127,44 @@ export default function App() {
         targetDialect
       });
       setRenderResponse(response);
+      setRenderedSqlDialect(response.success && response.renderedSql ? targetDialect : null);
       setActiveResultTab(response.success ? "renderedSql" : "diagnostics");
     } catch (error) {
       setRenderResponse(null);
+      setRenderedSqlDialect(null);
       setRenderError(error instanceof Error ? error.message : "Failed to render SQL");
       setActiveResultTab("diagnostics");
     } finally {
       setRenderLoading(false);
+    }
+  }
+
+  async function handleFormat() {
+    setActiveAction("format");
+    setFormatLoading(true);
+    setRenderError(null);
+
+    try {
+      const response = await renderSql({
+        sql: sqlText,
+        sourceDialect,
+        targetDialect: sourceDialect
+      });
+
+      if (response.success && response.renderedSql) {
+        setSqlText(response.renderedSql);
+      } else {
+        setRenderResponse(response);
+        setRenderedSqlDialect(null);
+        setActiveResultTab("diagnostics");
+      }
+    } catch (error) {
+      setRenderResponse(null);
+      setRenderedSqlDialect(null);
+      setRenderError(error instanceof Error ? error.message : "Failed to format SQL");
+      setActiveResultTab("diagnostics");
+    } finally {
+      setFormatLoading(false);
     }
   }
 
@@ -142,6 +177,7 @@ export default function App() {
     setParseResponse(null);
     setRenderError(null);
     setRenderResponse(null);
+    setRenderedSqlDialect(null);
     setTranspileError(null);
     setTranspileResponse(null);
     setActiveResultTab("diagnostics");
@@ -173,6 +209,7 @@ export default function App() {
     setRenderResponse(null);
     setValidateError(null);
     setValidateResponse(null);
+    setRenderedSqlDialect(null);
     setActiveResultTab("renderedSql");
 
     try {
@@ -182,9 +219,11 @@ export default function App() {
         targetDialect
       });
       setTranspileResponse(response);
+      setRenderedSqlDialect(response.success && response.renderedSql ? targetDialect : null);
       setActiveResultTab(response.success ? "renderedSql" : "diagnostics");
     } catch (error) {
       setTranspileResponse(null);
+      setRenderedSqlDialect(null);
       setTranspileError(error instanceof Error ? error.message : "Failed to transpile SQL");
       setActiveResultTab("diagnostics");
     } finally {
@@ -215,10 +254,12 @@ export default function App() {
             targetDialect={targetDialect}
             activeAction={activeAction}
             parseLoading={parseLoading}
+            formatLoading={formatLoading}
             renderLoading={renderLoading}
             transpileLoading={transpileLoading}
             validateLoading={validateLoading}
             canParse={sqlText.trim().length > 0}
+            canFormat={sqlText.trim().length > 0}
             canRender={sqlText.trim().length > 0}
             canTranspile={sqlText.trim().length > 0}
             canValidate={sqlText.trim().length > 0}
@@ -227,6 +268,7 @@ export default function App() {
             onSourceDialectChange={setSourceDialect}
             onTargetDialectChange={setTargetDialect}
             onParse={handleParse}
+            onFormat={handleFormat}
             onRender={handleRender}
             onTranspile={handleTranspile}
             onValidate={handleValidate}
@@ -241,6 +283,7 @@ export default function App() {
             parseLoading={parseLoading}
             parseError={parseError}
             renderResponse={renderResponse}
+            renderedSqlDialect={renderedSqlDialect}
             renderLoading={renderLoading}
             renderError={renderError}
             transpileResponse={transpileResponse}

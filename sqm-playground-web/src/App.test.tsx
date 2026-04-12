@@ -3,6 +3,51 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
+vi.mock("@monaco-editor/react", () => ({
+  default: function MonacoEditorMock(props: {
+    value?: string;
+    onChange?: (value: string) => void;
+    onMount?: (editor: { getModel: () => { uri: { toString: () => string } } }, monaco: unknown) => void;
+    beforeMount?: (monaco: unknown) => void;
+    options?: {
+      ariaLabel?: string;
+    };
+  }) {
+    const monacoMock = {
+      languages: {
+        registerCompletionItemProvider: vi.fn(),
+        CompletionItemKind: {
+          Keyword: 1,
+          Snippet: 2
+        },
+        CompletionItemInsertTextRule: {
+          InsertAsSnippet: 4
+        }
+      }
+    };
+
+    props.beforeMount?.(monacoMock);
+    props.onMount?.(
+      {
+        getModel: () => ({
+          uri: {
+            toString: () => "inmemory://model.sql"
+          }
+        })
+      },
+      monacoMock
+    );
+
+    return (
+      <textarea
+        aria-label={props.options?.ariaLabel ?? "Editor"}
+        value={props.value ?? ""}
+        onChange={(event) => props.onChange?.(event.target.value)}
+      />
+    );
+  }
+}));
+
 const EXAMPLES_RESPONSE = {
   requestId: "req-1",
   success: true,
@@ -72,6 +117,14 @@ const RENDER_RESPONSE = {
   requestId: "req-render",
   success: true,
   durationMs: 9,
+  renderedSql: "select distinct on (id) id\nfrom customer\norder by id",
+  diagnostics: []
+};
+
+const FORMAT_RESPONSE = {
+  requestId: "req-format",
+  success: true,
+  durationMs: 8,
   renderedSql: "select distinct on (id) id\nfrom customer\norder by id",
   diagnostics: []
 };
@@ -158,6 +211,14 @@ describe("App", () => {
         })
       )
       .mockResolvedValueOnce(
+        new Response(JSON.stringify(FORMAT_RESPONSE), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+      )
+      .mockResolvedValueOnce(
         new Response(JSON.stringify(PARSE_RESPONSE), {
           status: 200,
           headers: {
@@ -209,6 +270,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Parse" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Render" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Validate" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Format SQL" })).toBeEnabled();
     expect(screen.getByRole("tab", { name: "AST" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tabpanel", { name: "AST" })).toBeInTheDocument();
 
@@ -221,11 +283,31 @@ describe("App", () => {
     expect(screen.getByRole("tabpanel", { name: "Diagnostics" })).toBeInTheDocument();
     expect(screen.queryByRole("tabpanel", { name: "AST" })).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "Parse" }));
+    await userEvent.click(screen.getByRole("button", { name: "Format SQL" }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
         2,
+        "http://localhost:8080/sqm/playground/api/v1/render",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            sql: "select distinct on (id) id\nfrom customer\norder by id",
+            sourceDialect: "postgresql",
+            targetDialect: "postgresql"
+          })
+        })
+      );
+    });
+
+    expect(screen.getByLabelText("SQL text")).toHaveValue("select distinct on (id) id\nfrom customer\norder by id");
+    expect(screen.getByRole("button", { name: "Format SQL" })).toHaveClass("button-primary");
+
+    await userEvent.click(screen.getByRole("button", { name: "Parse" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        3,
         "http://localhost:8080/sqm/playground/api/v1/parse",
         expect.objectContaining({
           method: "POST",
@@ -257,7 +339,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
-        3,
+        4,
         "http://localhost:8080/sqm/playground/api/v1/render",
         expect.objectContaining({
           method: "POST",
@@ -273,6 +355,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Render" })).toHaveClass("button-primary");
     expect(screen.getByRole("button", { name: "Parse" })).not.toHaveClass("button-primary");
     expect(screen.getByRole("tab", { name: "Rendered SQL" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Rendered SQL" })).toHaveTextContent("Dialect: PostgreSQL");
     expect(screen.getByRole("tabpanel", { name: "Rendered SQL" })).toHaveTextContent("select distinct on (id) id");
 
     await userEvent.click(screen.getByRole("tab", { name: "About Result" }));
@@ -282,7 +365,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
-        4,
+        5,
         "http://localhost:8080/sqm/playground/api/v1/validate",
         expect.objectContaining({
           method: "POST",
@@ -306,7 +389,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
-        5,
+        6,
         "http://localhost:8080/sqm/playground/api/v1/transpile",
         expect.objectContaining({
           method: "POST",
@@ -321,6 +404,7 @@ describe("App", () => {
 
     expect(screen.getByRole("button", { name: "Transpile" })).toHaveClass("button-primary");
     expect(screen.getByRole("tab", { name: "Rendered SQL" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Rendered SQL" })).toHaveTextContent("Dialect: PostgreSQL");
     expect(screen.getByRole("tabpanel", { name: "Rendered SQL" })).toHaveTextContent("select id");
     expect(screen.getByRole("tabpanel", { name: "Rendered SQL" })).toHaveTextContent("from customer");
 

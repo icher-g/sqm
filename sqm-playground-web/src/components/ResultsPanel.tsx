@@ -1,5 +1,11 @@
 import { useRef, useState } from "react";
-import type { ParseResponseDto, RenderResponseDto, TranspileResponseDto, ValidateResponseDto } from "../types/api";
+import type {
+  ParseResponseDto,
+  RenderResponseDto,
+  SqlDialect,
+  TranspileResponseDto,
+  ValidateResponseDto
+} from "../types/api";
 import { AstNodeTree, type AstTreeCommand } from "./AstNodeTree";
 import { CodeBlock } from "./CodeBlock";
 import { JsonTreeViewer, type JsonTreeCommand } from "./JsonTreeViewer";
@@ -13,6 +19,7 @@ interface ResultsPanelProps {
   parseLoading: boolean;
   parseError: string | null;
   renderResponse: RenderResponseDto | null;
+  renderedSqlDialect: SqlDialect | null;
   renderLoading: boolean;
   renderError: string | null;
   transpileResponse: TranspileResponseDto | null;
@@ -216,7 +223,12 @@ export function ResultsPanel(props: ResultsPanelProps) {
         aria-label="Rendered SQL"
         hidden={props.activeResultTab !== "renderedSql"}
       >
-          <h3>Rendered SQL</h3>
+          <div className="result-panel-header">
+            <h3>Rendered SQL</h3>
+            {(props.renderResponse?.renderedSql || props.transpileResponse?.renderedSql) && (
+              <span className="result-meta">Dialect: {formatDialectLabel(props.renderedSqlDialect)}</span>
+            )}
+          </div>
           {props.renderLoading ? (
             <p className="result-placeholder">Rendering SQL for the selected target dialect...</p>
           ) : props.transpileLoading ? (
@@ -397,4 +409,21 @@ function formatAstNode(node: NonNullable<ParseResponseDto["ast"]>, depth: number
   }
 
   return lines;
+}
+
+function formatDialectLabel(dialect: SqlDialect | null) {
+  if (!dialect) {
+    return "n/a";
+  }
+
+  switch (dialect) {
+    case "ansi":
+      return "ANSI";
+    case "postgresql":
+      return "PostgreSQL";
+    case "mysql":
+      return "MySQL";
+    case "sqlserver":
+      return "SQL Server";
+  }
 }

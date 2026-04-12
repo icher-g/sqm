@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -129,6 +130,7 @@ public final class SqmAstMapper {
             .filter(method -> method.getDeclaringClass() != Object.class)
             .filter(method -> method.getParameterCount() == 0)
             .filter(method -> !method.isDefault())
+            .filter(method -> !Modifier.isStatic(method.getModifiers()))
             .filter(method -> !method.isSynthetic())
             .filter(method -> !IGNORED_METHODS.contains(method.getName()))
             .sorted(Comparator
