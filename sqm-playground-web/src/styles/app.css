@@ -10,6 +10,10 @@ body {
   margin: 0;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 button,
 select,
 textarea {
@@ -17,9 +21,10 @@ textarea {
 }
 
 .app-shell {
-  max-width: 1800px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 2rem;
+  box-sizing: border-box;
 }
 
 .hero {
@@ -46,7 +51,8 @@ textarea {
 .workspace-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(420px, 1fr) minmax(560px, 1.45fr);
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+  align-items: start;
 }
 
 .card {
@@ -55,6 +61,9 @@ textarea {
   border-radius: 20px;
   padding: 1.25rem;
   box-shadow: 0 12px 30px rgba(102, 71, 40, 0.08);
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .card h2 {
@@ -169,7 +178,7 @@ textarea {
 .editor-action-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .editor-action-card {
@@ -179,6 +188,7 @@ textarea {
   border: 1px solid #e3d4bf;
   border-radius: 16px;
   background: #fffdf8;
+  min-width: 0;
 }
 
 .editor-label {
@@ -208,6 +218,18 @@ textarea {
 
 .sql-editor-monaco {
   min-height: 24rem;
+}
+
+.results-card {
+  min-height: 46rem;
+  display: grid;
+  grid-template-rows: auto auto auto 1fr;
+  min-width: 0;
+}
+
+.results-card .result-panel {
+  min-height: 0;
+  align-self: stretch;
 }
 
 .editor-secondary-button {
@@ -254,6 +276,7 @@ textarea {
   flex-wrap: wrap;
   gap: 0.6rem;
   margin-bottom: 0.9rem;
+  align-items: flex-start;
 }
 
 .tab-button {
@@ -262,6 +285,9 @@ textarea {
   background: #f7f1e7;
   color: #5d4a36;
   padding: 0.55rem 0.85rem;
+  flex: 0 1 auto;
+  max-width: 100%;
+  white-space: nowrap;
 }
 
 .tab-button-active {
@@ -277,11 +303,12 @@ textarea {
   background: #fffdf8;
   min-height: 220px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .result-panel-scroll {
-  overflow-x: auto;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .result-panel h3 {
@@ -329,10 +356,13 @@ textarea {
   background: #1f2430;
   color: #e6edf3;
   overflow-x: auto;
+  overflow-y: auto;
   white-space: pre;
   font-family: "Cascadia Code", "Consolas", monospace;
   font-size: 0.95rem;
   line-height: 1.6;
+  min-height: 0;
+  flex: 1 1 auto;
 }
 
 .result-code-block code {
@@ -469,6 +499,14 @@ textarea {
 
 .ast-node + .ast-node {
   margin-top: 0.75rem;
+}
+
+.result-panel-scroll > .ast-node,
+.result-panel-scroll > .json-node,
+.result-panel-scroll > .result-placeholder,
+.result-panel-scroll > .result-error {
+  min-height: 0;
+  overflow: auto;
 }
 
 .ast-node {
@@ -643,5 +681,25 @@ textarea {
 
   .editor-action-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    padding: 1rem;
+  }
+
+  .editor-action-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-field-header,
+  .result-panel-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ast-toolbar {
+    flex-wrap: wrap;
   }
 }
