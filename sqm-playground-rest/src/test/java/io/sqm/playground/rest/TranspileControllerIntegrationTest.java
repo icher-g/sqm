@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -49,6 +50,7 @@ class TranspileControllerIntegrationTest {
         assertTrue(response.getBody().success());
         assertEquals(TranspileOutcomeDto.exact, response.getBody().outcome());
         assertNotNull(response.getBody().renderedSql());
+        assertTrue(response.getBody().renderedSql().toLowerCase().contains("concat"));
     }
 
     @Test
@@ -68,5 +70,28 @@ class TranspileControllerIntegrationTest {
         assertTrue(response.getBody().success());
         assertEquals(TranspileOutcomeDto.approximate, response.getBody().outcome());
         assertFalse(response.getBody().diagnostics().isEmpty());
+    }
+
+    @Test
+    void transpileEndpointReturnsLineAndColumnForParseFailures() {
+        var response = restTemplate.postForEntity(
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/transpile",
+            new HttpEntity<>(new TranspileRequestDto(
+                "select from",
+                SqlDialectDto.ansi,
+                SqlDialectDto.mysql
+            )),
+            TranspileResponseDto.class
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().success());
+        assertEquals(TranspileOutcomeDto.unsupported, response.getBody().outcome());
+        assertNull(response.getBody().renderedSql());
+        assertFalse(response.getBody().diagnostics().isEmpty());
+        assertEquals("PARSE_ERROR", response.getBody().diagnostics().getFirst().code());
+        assertEquals(1, response.getBody().diagnostics().getFirst().line());
+        assertEquals(8, response.getBody().diagnostics().getFirst().column());
     }
 }

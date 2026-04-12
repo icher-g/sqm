@@ -3,37 +3,87 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
+const setModelMarkers = vi.fn();
+const revealLineInCenter = vi.fn();
+const setPosition = vi.fn();
+const setSelection = vi.fn();
+const focus = vi.fn();
+
 vi.mock("@monaco-editor/react", () => ({
   default: function MonacoEditorMock(props: {
     value?: string;
     onChange?: (value: string) => void;
-    onMount?: (editor: { getModel: () => { uri: { toString: () => string } } }, monaco: unknown) => void;
+    onMount?: (
+      editor: {
+        focus: () => void;
+        getModel: () => {
+          uri: { toString: () => string };
+          getFullModelRange: () => {
+            startLineNumber: number;
+            startColumn: number;
+            endLineNumber: number;
+            endColumn: number;
+          };
+        };
+        revealLineInCenter: (lineNumber: number) => void;
+        setPosition: (position: { lineNumber: number; column: number }) => void;
+        setSelection: (selection: {
+          startLineNumber: number;
+          startColumn: number;
+          endLineNumber: number;
+          endColumn: number;
+        }) => void;
+      },
+      monaco: unknown
+    ) => void;
     beforeMount?: (monaco: unknown) => void;
     options?: {
       ariaLabel?: string;
     };
   }) {
     const monacoMock = {
+      editor: {
+        setModelMarkers
+      },
       languages: {
         registerCompletionItemProvider: vi.fn(),
         CompletionItemKind: {
+          Field: 3,
+          Function: 4,
           Keyword: 1,
-          Snippet: 2
+          Snippet: 2,
+          Struct: 5,
+          Variable: 6
         },
         CompletionItemInsertTextRule: {
           InsertAsSnippet: 4
         }
+      },
+      MarkerSeverity: {
+        Error: 8,
+        Info: 2,
+        Warning: 4
       }
     };
 
     props.beforeMount?.(monacoMock);
     props.onMount?.(
       {
+        focus,
         getModel: () => ({
           uri: {
             toString: () => "inmemory://model.sql"
-          }
-        })
+          },
+          getFullModelRange: () => ({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: 3,
+            endColumn: 10
+          })
+        }),
+        revealLineInCenter,
+        setPosition,
+        setSelection
       },
       monacoMock
     );
@@ -155,6 +205,24 @@ const TRANSPILE_RESPONSE = {
   ]
 };
 
+const TRANSPILE_FAILURE_RESPONSE = {
+  requestId: "req-transpile-fail",
+  success: false,
+  durationMs: 6,
+  outcome: "unsupported",
+  renderedSql: null,
+  diagnostics: [
+    {
+      severity: "error",
+      phase: "transpile",
+      code: "TRANSPILE_ERROR",
+      message: "Cannot rewrite statement for target dialect",
+      line: null,
+      column: null
+    }
+  ]
+};
+
 const PARSE_FAILURE_RESPONSE = {
   requestId: "req-parse-fail",
   success: false,
@@ -197,6 +265,8 @@ describe("App", () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+    vi.clearAllMocks();
+    window.history.replaceState({}, "", "/");
   });
 
   it("loads examples and parses SQL through the backend", async () => {
@@ -458,6 +528,19 @@ describe("App", () => {
 
     expect(screen.getByRole("tabpanel", { name: "Diagnostics" })).toHaveTextContent("PARSE_ERROR");
     expect(screen.getByRole("tabpanel", { name: "Diagnostics" })).toHaveTextContent("Unexpected token");
+    expect(setModelMarkers).toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: /PARSE_ERROR: Unexpected token/i }));
+
+    expect(setPosition).toHaveBeenCalledWith({
+      lineNumber: 1,
+      column: 8
+    });
+    expect(revealLineInCenter).toHaveBeenCalledWith(1);
+
+    setPosition.mockClear();
+    revealLineInCenter.mockClear();
+    focus.mockClear();
 
     await userEvent.click(screen.getByRole("button", { name: "Render" }));
 
@@ -467,5 +550,89 @@ describe("App", () => {
 
     expect(screen.getByRole("tabpanel", { name: "Diagnostics" })).toHaveTextContent("RENDER_ERROR");
     expect(screen.getByRole("tabpanel", { name: "Diagnostics" })).toHaveTextContent("Dialect does not support this statement");
+
+    await userEvent.click(screen.getByRole("button", { name: /RENDER_ERROR: Dialect does not support this statement/i }));
+
+    expect(setPosition).toHaveBeenCalledWith({
+      lineNumber: 1,
+      column: 1
+    });
+    expect(revealLineInCenter).toHaveBeenCalledWith(1);
+    expect(focus).toHaveBeenCalled();
+  });
+
+  it("hydrates editor state from shareable URLs", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify(EXAMPLES_RESPONSE), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+    );
+
+    window.history.replaceState(
+      {},
+      "",
+      "/?sql=select%201&source=mysql&target=sqlserver&example=pg-distinct&tab=renderedSql"
+    );
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Example")).toHaveValue("pg-distinct");
+    });
+
+    expect(screen.getByLabelText("SQL text")).toHaveValue("select 1");
+    expect(screen.getByLabelText("Source dialect")).toHaveValue("mysql");
+    expect(screen.getByLabelText("Target dialect")).toHaveValue("sqlserver");
+    expect(screen.getByRole("tab", { name: "Rendered SQL" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("selects the SQL editor when transpile diagnostics have no source position", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(EXAMPLES_RESPONSE), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(TRANSPILE_FAILURE_RESPONSE), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+      );
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Example")).toHaveValue("basic-select");
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: "Transpile" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: "Diagnostics" })).toHaveAttribute("aria-selected", "true");
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: /TRANSPILE_ERROR: Cannot rewrite statement for target dialect/i }));
+
+    expect(setSelection).toHaveBeenCalledWith({
+      startLineNumber: 1,
+      startColumn: 1,
+      endLineNumber: 3,
+      endColumn: 10
+    });
+    expect(setPosition).toHaveBeenCalledWith({
+      lineNumber: 1,
+      column: 1
+    });
+    expect(revealLineInCenter).toHaveBeenCalledWith(1);
+    expect(focus).toHaveBeenCalled();
   });
 });

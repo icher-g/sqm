@@ -67,6 +67,20 @@ class PlaygroundStatementSupportTest {
 
         assertFalse(attempt.success());
         assertEquals("PARSE_ERROR", attempt.diagnostics().getFirst().code());
+        assertEquals(1, attempt.diagnostics().getFirst().line());
+        assertEquals(8, attempt.diagnostics().getFirst().column());
+    }
+
+    @Test
+    void failedParseReportsLineAndColumnForMultilineSql() {
+        var support = new PlaygroundStatementSupport();
+
+        var attempt = support.parse("select id\nwrite form customer", SqlDialectDto.ansi);
+
+        assertFalse(attempt.success());
+        assertEquals("PARSE_ERROR", attempt.diagnostics().getFirst().code());
+        assertEquals(2, attempt.diagnostics().getFirst().line());
+        assertEquals(7, attempt.diagnostics().getFirst().column());
     }
 
     @Test

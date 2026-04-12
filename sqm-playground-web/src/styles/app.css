@@ -411,6 +411,26 @@ textarea {
   margin-top: 0.5rem;
 }
 
+.diagnostic-button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #e3d4bf;
+  border-radius: 12px;
+  background: #fffaf2;
+  color: inherit;
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+}
+
+.diagnostic-button:hover {
+  box-shadow: 0 0 0 3px rgba(201, 111, 26, 0.12);
+}
+
+.diagnostic-button:focus-visible {
+  outline: 2px solid #c96f1a;
+  outline-offset: 2px;
+}
+
 .about-list,
 .ast-detail-list {
   margin: 0;

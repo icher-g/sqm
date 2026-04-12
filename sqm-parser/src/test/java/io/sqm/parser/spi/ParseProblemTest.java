@@ -9,25 +9,39 @@ class ParseProblemTest {
     @Test
     void shouldCreateProblemWithMessageAndPosition() {
         var problem = new ParseProblem("syntax error", 42);
-        
+
         assertEquals("syntax error", problem.message());
         assertEquals(42, problem.pos());
+        assertNull(problem.line());
+        assertNull(problem.column());
     }
 
     @Test
     void shouldHandleNegativePosition() {
         var problem = new ParseProblem("error", -1);
-        
+
         assertEquals("error", problem.message());
         assertEquals(-1, problem.pos());
+        assertNull(problem.line());
+        assertNull(problem.column());
     }
 
     @Test
     void shouldHandleZeroPosition() {
         var problem = new ParseProblem("error at start", 0);
-        
+
         assertEquals("error at start", problem.message());
         assertEquals(0, problem.pos());
+        assertNull(problem.line());
+        assertNull(problem.column());
+    }
+
+    @Test
+    void shouldStoreExplicitLineAndColumn() {
+        var problem = new ParseProblem("syntax error", 42, 3, 5);
+
+        assertEquals(3, problem.line());
+        assertEquals(5, problem.column());
     }
 
     @Test

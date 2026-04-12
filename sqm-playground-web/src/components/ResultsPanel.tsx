@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import type {
   ParseResponseDto,
+  PlaygroundDiagnosticDto,
   RenderResponseDto,
   SqlDialect,
   TranspileResponseDto,
@@ -20,6 +21,7 @@ interface ResultsPanelProps {
   parseError: string | null;
   renderResponse: RenderResponseDto | null;
   renderedSqlDialect: SqlDialect | null;
+  renderedSqlTimestamp: number | null;
   renderLoading: boolean;
   renderError: string | null;
   transpileResponse: TranspileResponseDto | null;
@@ -28,6 +30,7 @@ interface ResultsPanelProps {
   validateResponse: ValidateResponseDto | null;
   validateLoading: boolean;
   validateError: string | null;
+  onDiagnosticSelect: (diagnostic: PlaygroundDiagnosticDto) => void;
 }
 
 /**
@@ -226,7 +229,10 @@ export function ResultsPanel(props: ResultsPanelProps) {
           <div className="result-panel-header">
             <h3>Rendered SQL</h3>
             {(props.renderResponse?.renderedSql || props.transpileResponse?.renderedSql) && (
-              <span className="result-meta">Dialect: {formatDialectLabel(props.renderedSqlDialect)}</span>
+              <span className="result-meta">
+                Dialect: {formatDialectLabel(props.renderedSqlDialect)}
+                {props.renderedSqlTimestamp ? ` · ${formatTimestamp(props.renderedSqlTimestamp)}` : ""}
+              </span>
             )}
           </div>
           {props.renderLoading ? (
@@ -256,43 +262,19 @@ export function ResultsPanel(props: ResultsPanelProps) {
           ) : props.transpileLoading ? (
             <p className="result-placeholder">Transpiling SQL for the selected source and target dialects...</p>
           ) : props.transpileResponse?.diagnostics.length ? (
-            <ul className="diagnostic-list">
-              {props.transpileResponse.diagnostics.map((diagnostic) => (
-                <li key={`${diagnostic.code}-${diagnostic.message}`} className="diagnostic-item">
-                  <strong>{diagnostic.severity}</strong> {diagnostic.code}: {diagnostic.message}
-                </li>
-              ))}
-            </ul>
+            renderDiagnosticsList(props.transpileResponse.diagnostics, props.onDiagnosticSelect)
           ) : props.validateError ? (
             <p className="result-error">{props.validateError}</p>
           ) : props.validateLoading ? (
             <p className="result-placeholder">Validating SQL for the selected source dialect...</p>
           ) : props.validateResponse?.diagnostics.length ? (
-            <ul className="diagnostic-list">
-              {props.validateResponse.diagnostics.map((diagnostic) => (
-                <li key={`${diagnostic.code}-${diagnostic.message}`} className="diagnostic-item">
-                  <strong>{diagnostic.severity}</strong> {diagnostic.code}: {diagnostic.message}
-                </li>
-              ))}
-            </ul>
+            renderDiagnosticsList(props.validateResponse.diagnostics, props.onDiagnosticSelect)
           ) : props.renderResponse?.diagnostics.length ? (
-            <ul className="diagnostic-list">
-              {props.renderResponse.diagnostics.map((diagnostic) => (
-                <li key={`${diagnostic.code}-${diagnostic.message}`} className="diagnostic-item">
-                  <strong>{diagnostic.severity}</strong> {diagnostic.code}: {diagnostic.message}
-                </li>
-              ))}
-            </ul>
+            renderDiagnosticsList(props.renderResponse.diagnostics, props.onDiagnosticSelect)
           ) : props.parseError ? (
             <p className="result-error">{props.parseError}</p>
           ) : props.parseResponse?.diagnostics.length ? (
-            <ul className="diagnostic-list">
-              {props.parseResponse.diagnostics.map((diagnostic) => (
-                <li key={`${diagnostic.code}-${diagnostic.message}`} className="diagnostic-item">
-                  <strong>{diagnostic.severity}</strong> {diagnostic.code}: {diagnostic.message}
-                </li>
-              ))}
-            </ul>
+            renderDiagnosticsList(props.parseResponse.diagnostics, props.onDiagnosticSelect)
           ) : props.validateResponse ? (
             <p className="result-placeholder">
               {props.validateResponse.valid
@@ -426,4 +408,36 @@ function formatDialectLabel(dialect: SqlDialect | null) {
     case "sqlserver":
       return "SQL Server";
   }
+}
+
+function formatTimestamp(timestamp: number) {
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  }).format(timestamp);
+}
+
+function renderDiagnosticsList(
+  diagnostics: PlaygroundDiagnosticDto[],
+  onDiagnosticSelect: (diagnostic: PlaygroundDiagnosticDto) => void
+) {
+  return (
+    <ul className="diagnostic-list">
+      {diagnostics.map((diagnostic) => (
+        <li key={`${diagnostic.code}-${diagnostic.message}-${diagnostic.line ?? "na"}-${diagnostic.column ?? "na"}`}>
+          <button
+            type="button"
+            className="diagnostic-button"
+            onClick={() => onDiagnosticSelect(diagnostic)}
+          >
+            <strong>{diagnostic.severity}</strong> {diagnostic.code}: {diagnostic.message}
+            {diagnostic.line !== null && diagnostic.column !== null
+              ? ` (${diagnostic.line}:${diagnostic.column})`
+              : ""}
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
 }

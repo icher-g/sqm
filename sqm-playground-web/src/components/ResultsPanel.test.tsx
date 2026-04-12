@@ -73,6 +73,7 @@ describe("ResultsPanel", () => {
         parseError={null}
         renderResponse={null}
         renderedSqlDialect={null}
+        renderedSqlTimestamp={null}
         renderLoading={false}
         renderError={null}
         transpileResponse={null}
@@ -81,6 +82,7 @@ describe("ResultsPanel", () => {
         validateResponse={null}
         validateLoading={false}
         validateError={null}
+        onDiagnosticSelect={noop}
       />
     );
 
@@ -101,6 +103,7 @@ describe("ResultsPanel", () => {
         parseError={null}
         renderResponse={null}
         renderedSqlDialect={null}
+        renderedSqlTimestamp={null}
         renderLoading={false}
         renderError={null}
         transpileResponse={null}
@@ -109,6 +112,7 @@ describe("ResultsPanel", () => {
         validateResponse={null}
         validateLoading={false}
         validateError={null}
+        onDiagnosticSelect={noop}
       />
     );
 

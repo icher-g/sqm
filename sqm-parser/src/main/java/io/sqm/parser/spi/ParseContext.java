@@ -104,15 +104,19 @@ public interface ParseContext {
         if (spec.isBlank()) {
             return error("The spec cannot be blank.", -1);
         }
-        Parser<T> parser;
-        Cursor cur;
-        try {
-            parser = parsers().require(type);
-            cur = Cursor.of(spec, identifierQuoting());
-        } catch (Exception e) {
-            return error(e.getMessage(), -1);
+        try (var ignored = ParseLocations.open(spec)) {
+            Parser<T> parser;
+            Cursor cur;
+            try {
+                parser = parsers().require(type);
+                cur = Cursor.of(spec, identifierQuoting());
+            } catch (ParserException e) {
+                return error(e);
+            } catch (Exception e) {
+                return error(e.getMessage(), -1);
+            }
+            return parse(parser, cur);
         }
-        return parse(parser, cur);
     }
 
     /**
@@ -129,13 +133,17 @@ public interface ParseContext {
         if (spec.isBlank()) {
             return error("The spec cannot be blank.", -1);
         }
-        Cursor cur;
-        try {
-            cur = Cursor.of(spec, identifierQuoting());
-        } catch (Exception e) {
-            return error(e.getMessage(), -1);
+        try (var ignored = ParseLocations.open(spec)) {
+            Cursor cur;
+            try {
+                cur = Cursor.of(spec, identifierQuoting());
+            } catch (ParserException e) {
+                return error(e);
+            } catch (Exception e) {
+                return error(e.getMessage(), -1);
+            }
+            return parse(parser, cur);
         }
-        return parse(parser, cur);
     }
 
     /**

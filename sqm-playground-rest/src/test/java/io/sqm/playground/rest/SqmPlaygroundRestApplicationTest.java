@@ -21,7 +21,7 @@ class SqmPlaygroundRestApplicationTest {
         var parseService = new ParseService(new SqmAstMapper(), new SqmDslGenerator(), statementSupport);
         var renderService = new RenderService(statementSupport);
         var validateService = new ValidateService(statementSupport);
-        var transpileService = new TranspileService();
+        var transpileService = new TranspileService(statementSupport);
         var playgroundController = new PlaygroundController(
             new ExampleService(new ExampleCatalog()),
             parseService,

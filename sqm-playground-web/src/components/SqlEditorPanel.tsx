@@ -1,4 +1,4 @@
-import type { ExampleDto, SqlDialect } from "../types/api";
+import type { ExampleDto, PlaygroundDiagnosticDto, SqlDialect } from "../types/api";
 import { SqlCodeEditor } from "./SqlCodeEditor";
 
 interface SqlEditorPanelProps {
@@ -9,6 +9,8 @@ interface SqlEditorPanelProps {
   examplesError: string | null;
   sourceDialect: SqlDialect;
   targetDialect: SqlDialect;
+  editorDiagnostics: PlaygroundDiagnosticDto[];
+  focusedDiagnostic: { diagnostic: PlaygroundDiagnosticDto; version: number } | null;
   activeAction: "parse" | "format" | "render" | "validate" | "transpile" | null;
   parseLoading: boolean;
   formatLoading: boolean;
@@ -185,6 +187,8 @@ export function SqlEditorPanel(props: SqlEditorPanelProps) {
         <SqlCodeEditor
           ariaLabel="SQL text"
           dialect={props.sourceDialect}
+          diagnostics={props.editorDiagnostics}
+          focusedDiagnostic={props.focusedDiagnostic}
           value={props.sqlText}
           onChange={props.onSqlTextChange}
         />
