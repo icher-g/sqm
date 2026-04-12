@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AstChildSlotDto, AstNodeDto } from "../types/api";
 
 export interface AstTreeCommand {
@@ -19,11 +19,13 @@ export function AstNodeTree(props: AstNodeTreeProps) {
   const depth = props.depth ?? 0;
   const isExpandable = props.node.children.length > 0;
   const [expanded, setExpanded] = useState(depth < 2);
+  const lastAppliedCommandVersion = useRef<number | null>(props.command?.version ?? null);
 
   useEffect(() => {
-    if (!props.command || !isExpandable) {
+    if (!props.command || !isExpandable || props.command.version === lastAppliedCommandVersion.current) {
       return;
     }
+    lastAppliedCommandVersion.current = props.command.version;
     setExpanded(props.command.type === "expand");
   }, [isExpandable, props.command]);
 
@@ -37,17 +39,18 @@ export function AstNodeTree(props: AstNodeTreeProps) {
             aria-expanded={expanded}
             onClick={() => setExpanded((current) => !current)}
           >
-            {expanded ? "−" : "+"}
+            <span className="tree-toggle-glyph">{expanded ? "-" : "+"}</span>
           </button>
         ) : (
           <span className="ast-toggle ast-toggle-placeholder" aria-hidden="true">
-            •
+            <span className="tree-toggle-glyph">.</span>
           </span>
         )}
         <strong>{props.node.label}</strong>
         {props.node.label !== props.node.nodeType ? (
           <span className="ast-node-meta">{props.node.nodeType}</span>
         ) : null}
+        {!expanded ? <span className="ast-collapsed-summary">{formatCollapsedNodeSummary(props.node)}</span> : null}
       </div>
 
       {expanded ? (
@@ -86,11 +89,13 @@ function AstSlotSection(props: AstSlotSectionProps) {
   const isInline = shouldRenderInline(props.slot.nodes);
   const isExpandable = !isInline && props.slot.nodes.length > 0;
   const [expanded, setExpanded] = useState(props.depth < 1);
+  const lastAppliedCommandVersion = useRef<number | null>(props.command?.version ?? null);
 
   useEffect(() => {
-    if (!props.command || !isExpandable) {
+    if (!props.command || !isExpandable || props.command.version === lastAppliedCommandVersion.current) {
       return;
     }
+    lastAppliedCommandVersion.current = props.command.version;
     setExpanded(props.command.type === "expand");
   }, [isExpandable, props.command]);
 
@@ -119,17 +124,18 @@ function AstSlotSection(props: AstSlotSectionProps) {
                 aria-expanded={expanded}
                 onClick={() => setExpanded((current) => !current)}
               >
-                {expanded ? "−" : "+"}
+                <span className="tree-toggle-glyph">{expanded ? "-" : "+"}</span>
               </button>
             ) : (
               <span className="ast-toggle ast-toggle-placeholder" aria-hidden="true">
-                •
+                <span className="tree-toggle-glyph">.</span>
               </span>
             )}
             <h4 className="ast-slot-title">
               {props.slot.slot}
               {props.slot.multiple ? "[]" : ""}
             </h4>
+            {!expanded ? <span className="ast-collapsed-summary">{formatCollapsedSlotSummary(props.slot)}</span> : null}
           </div>
 
           {expanded ? (
@@ -225,4 +231,49 @@ function formatLiteralValue(value: string) {
   }
 
   return `'${value}'`;
+}
+
+function formatCollapsedNodeSummary(node: AstNodeDto) {
+  const summaryParts: string[] = [];
+
+  for (const detail of node.details.slice(0, 2)) {
+    summaryParts.push(`${detail.name}: ${detail.value}`);
+  }
+
+  const slotLabels = node.children.map((child) => `${child.slot}${child.multiple ? "[]" : ""}`);
+  if (slotLabels.length > 0) {
+    summaryParts.push(...slotLabels.slice(0, Math.max(0, 3 - summaryParts.length)));
+  }
+
+  const remainingCount = node.details.length + slotLabels.length - summaryParts.length;
+  if (remainingCount > 0) {
+    summaryParts.push("...");
+  }
+
+  if (summaryParts.length === 0) {
+    return "";
+  }
+
+  return `{ ${summaryParts.join(", ")} }`;
+}
+
+function formatCollapsedSlotSummary(slot: AstChildSlotDto) {
+  if (slot.nodes.length === 0) {
+    return "[ 0 nodes ]";
+  }
+
+  if (shouldRenderInline(slot.nodes)) {
+    return formatInlineValue(slot.nodes);
+  }
+
+  if (slot.nodes.length === 1) {
+    return formatCollapsedNodeSummary(slot.nodes[0]) || slot.nodes[0].label;
+  }
+
+  const distinctTypes = [...new Set(slot.nodes.map((node) => node.nodeType))];
+  if (distinctTypes.length === 1) {
+    return `[ ${slot.nodes.length} ${distinctTypes[0]} node${slot.nodes.length === 1 ? "" : "s"} ]`;
+  }
+
+  return `[ ${slot.nodes.length} nodes ]`;
 }

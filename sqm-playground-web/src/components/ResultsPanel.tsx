@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ParseResponseDto, RenderResponseDto, TranspileResponseDto, ValidateResponseDto } from "../types/api";
 import { AstNodeTree, type AstTreeCommand } from "./AstNodeTree";
 import { CodeBlock } from "./CodeBlock";
+import { JsonTreeViewer, type JsonTreeCommand } from "./JsonTreeViewer";
 
 export type ResultTab = "ast" | "dsl" | "json" | "renderedSql" | "diagnostics" | "about";
 
@@ -27,9 +28,17 @@ interface ResultsPanelProps {
  */
 export function ResultsPanel(props: ResultsPanelProps) {
   const [astCommand, setAstCommand] = useState<AstTreeCommand | null>(null);
+  const [jsonCommand, setJsonCommand] = useState<JsonTreeCommand | null>(null);
 
   function runAstCommand(type: AstTreeCommand["type"]) {
     setAstCommand((current) => ({
+      type,
+      version: (current?.version ?? 0) + 1
+    }));
+  }
+
+  function runJsonCommand(type: JsonTreeCommand["type"]) {
+    setJsonCommand((current) => ({
       type,
       version: (current?.version ?? 0) + 1
     }));
@@ -97,8 +106,12 @@ export function ResultsPanel(props: ResultsPanelProps) {
         </button>
       </div>
 
-      {props.activeResultTab === "ast" ? (
-        <section className="result-panel result-panel-scroll" role="tabpanel" aria-label="AST">
+      <section
+        className="result-panel result-panel-scroll"
+        role="tabpanel"
+        aria-label="AST"
+        hidden={props.activeResultTab !== "ast"}
+      >
           <div className="result-panel-header">
             <h3>AST</h3>
             {props.parseResponse?.ast ? (
@@ -120,10 +133,13 @@ export function ResultsPanel(props: ResultsPanelProps) {
             <p className="result-placeholder">Parse a query to inspect the SQM tree.</p>
           )}
         </section>
-      ) : null}
 
-      {props.activeResultTab === "dsl" ? (
-          <section className="result-panel result-panel-scroll" role="tabpanel" aria-label="DSL">
+      <section
+        className="result-panel result-panel-scroll"
+        role="tabpanel"
+        aria-label="DSL"
+        hidden={props.activeResultTab !== "dsl"}
+      >
             <h3>DSL</h3>
             {props.parseLoading ? (
                 <p className="result-placeholder">Parsing SQL and building the DSL...</p>
@@ -133,21 +149,39 @@ export function ResultsPanel(props: ResultsPanelProps) {
                 <p className="result-placeholder">Parse a query to generate the SQM DSL.</p>
             )}
           </section>
-      ) : null}
 
-      {props.activeResultTab === "json" ? (
-        <section className="result-panel" role="tabpanel" aria-label="JSON">
-          <h3>JSON</h3>
+      <section
+        className="result-panel result-panel-scroll"
+        role="tabpanel"
+        aria-label="JSON"
+        hidden={props.activeResultTab !== "json"}
+      >
+          <div className="result-panel-header">
+            <h3>JSON</h3>
+            {props.parseResponse?.sqmJson ? (
+              <div className="ast-toolbar">
+                <button type="button" className="ast-toolbar-button" onClick={() => runJsonCommand("collapse")}>
+                  Collapse all
+                </button>
+                <button type="button" className="ast-toolbar-button" onClick={() => runJsonCommand("expand")}>
+                  Expand all
+                </button>
+              </div>
+            ) : null}
+          </div>
           {props.parseResponse?.sqmJson ? (
-            <CodeBlock code={props.parseResponse.sqmJson} language="json" />
+            <JsonTreeViewer json={props.parseResponse.sqmJson} command={jsonCommand} />
           ) : (
             <p className="result-placeholder">Parse a query to inspect the SQM JSON.</p>
           )}
         </section>
-      ) : null}
 
-      {props.activeResultTab === "renderedSql" ? (
-        <section className="result-panel" role="tabpanel" aria-label="Rendered SQL">
+      <section
+        className="result-panel"
+        role="tabpanel"
+        aria-label="Rendered SQL"
+        hidden={props.activeResultTab !== "renderedSql"}
+      >
           <h3>Rendered SQL</h3>
           {props.renderLoading ? (
             <p className="result-placeholder">Rendering SQL for the selected target dialect...</p>
@@ -161,10 +195,13 @@ export function ResultsPanel(props: ResultsPanelProps) {
             <p className="result-placeholder">Rendered or transpiled SQL will appear here after an output request.</p>
           )}
         </section>
-      ) : null}
 
-      {props.activeResultTab === "diagnostics" ? (
-        <section className="result-panel" role="tabpanel" aria-label="Diagnostics">
+      <section
+        className="result-panel"
+        role="tabpanel"
+        aria-label="Diagnostics"
+        hidden={props.activeResultTab !== "diagnostics"}
+      >
           <h3>Diagnostics</h3>
           {props.renderError ? (
             <p className="result-error">{props.renderError}</p>
@@ -232,10 +269,13 @@ export function ResultsPanel(props: ResultsPanelProps) {
             <p className="result-placeholder">Warnings and errors will appear here.</p>
           )}
         </section>
-      ) : null}
 
-      {props.activeResultTab === "about" ? (
-        <section className="result-panel" role="tabpanel" aria-label="About Result">
+      <section
+        className="result-panel"
+        role="tabpanel"
+        aria-label="About Result"
+        hidden={props.activeResultTab !== "about"}
+      >
           <h3>About Result</h3>
           {props.parseResponse || props.renderResponse || props.transpileResponse || props.validateResponse ? (
             <dl className="about-list">
@@ -292,7 +332,6 @@ export function ResultsPanel(props: ResultsPanelProps) {
             <p className="result-placeholder">Operation summary details will appear here.</p>
           )}
         </section>
-      ) : null}
     </article>
   );
 }

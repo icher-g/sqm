@@ -181,6 +181,7 @@ describe("AstNodeTree", () => {
     expect(screen.queryByText("operator")).not.toBeInTheDocument();
     expect(screen.queryByText("EQ")).not.toBeInTheDocument();
     expect(screen.queryByText("lhs")).not.toBeInTheDocument();
+    expect(screen.getByText("{ operator: EQ, lhs }")).toBeInTheDocument();
   });
 
   it("lets users collapse and re-expand collection slots", async () => {
@@ -218,7 +219,8 @@ describe("AstNodeTree", () => {
     await userEvent.click(screen.getAllByRole("button", { expanded: true })[1]);
 
     expect(screen.getByText("joins[]")).toBeInTheDocument();
-    expect(screen.queryByText("OnJoin")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "OnJoin" })).not.toBeInTheDocument();
+    expect(screen.getByText("OnJoin")).toBeInTheDocument();
 
     await userEvent.click(screen.getAllByRole("button", { expanded: false })[0]);
 
@@ -255,7 +257,9 @@ describe("AstNodeTree", () => {
     const collapseCommand: AstTreeCommand = { type: "collapse", version: 1 };
     const expandCommand: AstTreeCommand = { type: "expand", version: 2 };
 
-    const { rerender } = render(<AstNodeTree node={node} command={collapseCommand} />);
+    const { rerender } = render(<AstNodeTree node={node} command={null} />);
+
+    rerender(<AstNodeTree node={node} command={collapseCommand} />);
 
     expect(screen.queryByText("items[]")).not.toBeInTheDocument();
 

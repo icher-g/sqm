@@ -376,11 +376,14 @@ textarea {
   background: #fff7eb;
   color: #8f5314;
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
   padding: 0;
   font-weight: 700;
   line-height: 1;
+  font-size: 0.95rem;
+  font-family: "Segoe UI", sans-serif;
+  vertical-align: middle;
 }
 
 .ast-toggle-placeholder {
@@ -391,6 +394,12 @@ textarea {
 
 .ast-node-meta {
   color: #6b5a45;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.ast-collapsed-summary {
+  color: #7f8c98;
   font-size: 0.9rem;
   overflow-wrap: anywhere;
 }
@@ -424,6 +433,92 @@ textarea {
 .ast-slot-title {
   margin: 0;
   font-size: 0.95rem;
+}
+
+.json-node + .json-node {
+  margin-top: 0.45rem;
+}
+
+.json-node {
+  width: max-content;
+  min-width: 100%;
+}
+
+.json-node-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: 0.95rem;
+}
+
+.json-node-body {
+  margin-left: 0.7rem;
+  padding-left: 1rem;
+  border-left: 3px solid #d2b48c;
+  margin-top: 0.4rem;
+}
+
+.json-node-footer {
+  margin-top: 0.35rem;
+  margin-left: 0.15rem;
+  font-family: "Cascadia Code", "Consolas", monospace;
+}
+
+.json-toggle {
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 1px solid #d2b48c;
+  border-radius: 999px;
+  background: #fff7eb;
+  color: #8f5314;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-weight: 700;
+  line-height: 1;
+  font-size: 0.95rem;
+  font-family: "Segoe UI", sans-serif;
+  vertical-align: middle;
+}
+
+.tree-toggle-glyph {
+  display: block;
+  line-height: 1;
+  position: relative;
+  top: -2px;
+}
+
+.json-key {
+  color: #2b5d9a;
+}
+
+.json-colon,
+.json-bracket {
+  color: #5d4a36;
+}
+
+.json-summary {
+  color: #7f8c98;
+}
+
+.json-value-string {
+  color: #2f8f5b;
+}
+
+.json-value-number,
+.json-value-boolean {
+  color: #b6681a;
+}
+
+.json-value-null {
+  color: #8d63b8;
+}
+
+.json-node-leaf .json-node-header {
+  padding-left: 1.85rem;
 }
 
 @media (max-width: 900px) {

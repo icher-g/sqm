@@ -245,7 +245,8 @@ describe("App", () => {
     expect(screen.getAllByText("SelectItem").length).toBeGreaterThan(0);
 
     await userEvent.click(screen.getByRole("tab", { name: "JSON" }));
-    expect(screen.getByRole("tabpanel", { name: "JSON" })).toHaveTextContent('"kind": "select"');
+    expect(screen.getByRole("tabpanel", { name: "JSON" })).toHaveTextContent("kind");
+    expect(screen.getByRole("tabpanel", { name: "JSON" })).toHaveTextContent('"select"');
 
     await userEvent.click(screen.getByRole("tab", { name: "About Result" }));
     expect(screen.getByText("req-parse")).toBeInTheDocument();
@@ -272,7 +273,6 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Parse" })).not.toHaveClass("button-primary");
     expect(screen.getByRole("tab", { name: "Rendered SQL" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tabpanel", { name: "Rendered SQL" })).toHaveTextContent("select distinct on (id) id");
-    expect(screen.queryByText("SelectQuery")).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("tab", { name: "About Result" }));
     expect(screen.getByText("req-render")).toBeInTheDocument();
