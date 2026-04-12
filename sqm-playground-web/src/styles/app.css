@@ -103,6 +103,45 @@ textarea {
   width: 100%;
 }
 
+.button-column button,
+.tab-button,
+.ast-toolbar-button,
+.ast-toggle,
+.json-toggle {
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    box-shadow 120ms ease,
+    transform 80ms ease;
+}
+
+.button-column button:hover:not(:disabled),
+.tab-button:hover,
+.ast-toolbar-button:hover,
+.ast-toggle:hover,
+.json-toggle:hover {
+  box-shadow: 0 0 0 3px rgba(201, 111, 26, 0.12);
+}
+
+.button-column button:active:not(:disabled),
+.tab-button:active,
+.ast-toolbar-button:active,
+.ast-toggle:active,
+.json-toggle:active {
+  transform: translateY(1px);
+}
+
+.button-column button:focus-visible,
+.tab-button:focus-visible,
+.ast-toolbar-button:focus-visible,
+.ast-toggle:focus-visible,
+.json-toggle:focus-visible {
+  outline: 2px solid #c96f1a;
+  outline-offset: 2px;
+}
+
 .button-column button:disabled {
   opacity: 0.65;
   cursor: not-allowed;

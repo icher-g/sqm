@@ -195,6 +195,7 @@ describe("App", () => {
     expect(screen.getByText("Explore SQL Through SQM")).toBeInTheDocument();
     expect(screen.getByText("Editor")).toBeInTheDocument();
     expect(screen.getByText("Results")).toBeInTheDocument();
+    expect(screen.getByText("Inspect SQM as a tree, review the generated JSON and DSL, compare rendered SQL, and capture diagnostics.")).toBeInTheDocument();
     expect(screen.getByText("Choose an example, set the relevant dialects, and run actions directly above the SQL text.")).toBeInTheDocument();
     expect(screen.getByLabelText("Source dialect")).toHaveValue("ansi");
     expect(screen.getByLabelText("Target dialect")).toHaveValue("postgresql");

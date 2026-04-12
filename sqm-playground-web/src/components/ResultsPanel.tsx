@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { ParseResponseDto, RenderResponseDto, TranspileResponseDto, ValidateResponseDto } from "../types/api";
 import { AstNodeTree, type AstTreeCommand } from "./AstNodeTree";
 import { CodeBlock } from "./CodeBlock";
@@ -29,6 +29,8 @@ interface ResultsPanelProps {
 export function ResultsPanel(props: ResultsPanelProps) {
   const [astCommand, setAstCommand] = useState<AstTreeCommand | null>(null);
   const [jsonCommand, setJsonCommand] = useState<JsonTreeCommand | null>(null);
+  const [copiedTarget, setCopiedTarget] = useState<"ast" | "json" | null>(null);
+  const copyResetTimeoutRef = useRef<number | null>(null);
 
   function runAstCommand(type: AstTreeCommand["type"]) {
     setAstCommand((current) => ({
@@ -44,10 +46,28 @@ export function ResultsPanel(props: ResultsPanelProps) {
     }));
   }
 
+  async function copyText(text: string, target: "ast" | "json") {
+    if (!navigator.clipboard) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(text);
+    setCopiedTarget(target);
+
+    if (copyResetTimeoutRef.current !== null) {
+      window.clearTimeout(copyResetTimeoutRef.current);
+    }
+
+    copyResetTimeoutRef.current = window.setTimeout(() => {
+      setCopiedTarget(null);
+      copyResetTimeoutRef.current = null;
+    }, 1500);
+  }
+
   return (
     <article className="card">
       <h2>Results</h2>
-      <p>The results area now uses tabs so each future response type has room to breathe.</p>
+      <p>Inspect SQM as a tree, review the generated JSON and DSL, compare rendered SQL, and capture diagnostics.</p>
 
       <div className="tab-row" role="tablist" aria-label="Result tabs">
         <button
@@ -116,6 +136,13 @@ export function ResultsPanel(props: ResultsPanelProps) {
             <h3>AST</h3>
             {props.parseResponse?.ast ? (
               <div className="ast-toolbar">
+                <button
+                  type="button"
+                  className="ast-toolbar-button"
+                  onClick={() => copyText(formatAstTree(props.parseResponse!.ast!), "ast")}
+                >
+                  {copiedTarget === "ast" ? "Copied AST" : "Copy AST"}
+                </button>
                 <button type="button" className="ast-toolbar-button" onClick={() => runAstCommand("collapse")}>
                   Collapse all
                 </button>
@@ -160,6 +187,13 @@ export function ResultsPanel(props: ResultsPanelProps) {
             <h3>JSON</h3>
             {props.parseResponse?.sqmJson ? (
               <div className="ast-toolbar">
+                <button
+                  type="button"
+                  className="ast-toolbar-button"
+                  onClick={() => copyText(props.parseResponse!.sqmJson!, "json")}
+                >
+                  {copiedTarget === "json" ? "Copied JSON" : "Copy JSON"}
+                </button>
                 <button type="button" className="ast-toolbar-button" onClick={() => runJsonCommand("collapse")}>
                   Collapse all
                 </button>
@@ -334,4 +368,33 @@ export function ResultsPanel(props: ResultsPanelProps) {
         </section>
     </article>
   );
+}
+
+function formatAstTree(node: NonNullable<ParseResponseDto["ast"]>) {
+  return formatAstNode(node, 0).join("\n");
+}
+
+function formatAstNode(node: NonNullable<ParseResponseDto["ast"]>, depth: number): string[] {
+  const indent = "  ".repeat(depth);
+  const lines = [`${indent}${node.label}`];
+
+  for (const detail of node.details) {
+    lines.push(`${indent}  ${detail.name}: ${detail.value}`);
+  }
+
+  for (const child of node.children) {
+    const slotLabel = `${child.slot}${child.multiple ? "[]" : ""}`;
+    lines.push(`${indent}  ${slotLabel}`);
+
+    if (child.nodes.length === 0) {
+      lines.push(`${indent}    <empty>`);
+      continue;
+    }
+
+    for (const childNode of child.nodes) {
+      lines.push(...formatAstNode(childNode, depth + 2));
+    }
+  }
+
+  return lines;
 }
