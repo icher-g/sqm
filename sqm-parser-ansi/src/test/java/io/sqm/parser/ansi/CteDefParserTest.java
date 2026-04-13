@@ -18,6 +18,7 @@ class CteDefParserTest {
     void rejects_materialized() {
         var res = ctx.parse(parser, "t AS MATERIALIZED (SELECT 1)");
         assertTrue(res.isError());
+        assertEquals(5, res.problems().getFirst().pos());
     }
 
     @Test
@@ -25,6 +26,7 @@ class CteDefParserTest {
     void rejects_not_materialized() {
         var res = ctx.parse(parser, "t AS NOT MATERIALIZED (SELECT 1)");
         assertTrue(res.isError());
+        assertEquals(5, res.problems().getFirst().pos());
     }
 
     @Test

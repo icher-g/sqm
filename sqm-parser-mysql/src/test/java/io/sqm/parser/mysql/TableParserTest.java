@@ -125,6 +125,7 @@ class TableParserTest {
         var result = ctx.parse(Table.class, "users USE INDEX FOR WHERE (idx_users_name)");
 
         assertTrue(result.isError());
+        assertEquals(16, result.problems().getFirst().pos());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected JOIN, ORDER BY or GROUP BY"));
     }
 

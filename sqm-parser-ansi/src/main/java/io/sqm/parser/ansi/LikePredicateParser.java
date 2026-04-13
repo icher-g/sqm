@@ -71,9 +71,10 @@ public class LikePredicateParser implements Parser<LikePredicate>, InfixParser<E
         LikeMode mode = LikeMode.LIKE;
 
         if (!cur.consumeIf(TokenType.LIKE)) {
+            int predicatePos = cur.fullPos();
             if (cur.consumeIf(TokenType.ILIKE)) {
                 if (!ctx.capabilities().supports(SqlFeature.ILIKE_PREDICATE)) {
-                    return error("ILIKE is not supported by this dialect", cur.fullPos());
+                    return error("ILIKE is not supported by this dialect", predicatePos);
                 }
                 mode = LikeMode.ILIKE;
             }

@@ -127,6 +127,7 @@ class MergeStatementParserTest {
         );
 
         assertTrue(result.isError());
+        assertEquals(15, result.problems().getFirst().pos());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("WITH TIES"));
     }
 
