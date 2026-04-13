@@ -73,9 +73,10 @@ public class MergeStatementParser extends io.sqm.parser.ansi.MergeStatementParse
         }
 
         ResultClause result = null;
+        var currentPos = cur.fullPos(); // keep the current cursor position in case of error.
         if (cur.consumeIf(TokenType.RETURNING)) {
             if (!ctx.capabilities().supports(SqlFeature.MERGE_RESULT_CLAUSE)) {
-                return error("PostgreSQL MERGE ... RETURNING is not supported by this PostgreSQL version", cur.fullPos());
+                return error("PostgreSQL MERGE ... RETURNING is not supported by this PostgreSQL version", currentPos);
             }
             var items = parseItems(ResultItem.class, cur, ctx);
             if (items.isError()) {

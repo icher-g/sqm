@@ -43,7 +43,12 @@ public record ParseResult<T>(T value, List<ParseProblem> problems) {
      * @return {@link ParseResult}.
      */
     public static <T> ParseResult<T> error(ParserException error) {
-        return new ParseResult<>(null, List.of(new ParseProblem(error.getMessage(), error.getPos())));
+        return new ParseResult<>(null, List.of(new ParseProblem(
+            error.getMessage(),
+            error.getPos(),
+            error.getLine(),
+            error.getColumn()
+        )));
     }
 
     /**

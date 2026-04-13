@@ -457,6 +457,7 @@ class SqlFileCodeGeneratorTest {
             "io.sqm.codegen.generated",
             SqlCodegenDialect.POSTGRESQL,
             false,
+            true,
             JsonSchemaProvider.of(schemaSnapshot),
             false
         );

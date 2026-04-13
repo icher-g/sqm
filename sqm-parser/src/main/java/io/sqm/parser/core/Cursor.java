@@ -15,7 +15,8 @@ import java.util.function.Function;
 public final class Cursor {
     private final List<Token> tokens;
     /**
-     * position in the cursor this cursor was built from.
+     * Source offset applied to token positions when this cursor was built from
+     * a relative token list.
      */
     private final int basePos;
     private int pos;
@@ -32,8 +33,8 @@ public final class Cursor {
     /**
      * Creates Cursor from the list of tokens and a start point.
      *
-     * @param tokens  a list of tokens.
-     * @param basePos a position in the cursor this cursor has been built from.
+     * @param tokens  a list of tokens
+     * @param basePos source offset applied to token positions in this cursor
      */
     public Cursor(List<Token> tokens, int basePos) {
         var copy = new ArrayList<>(tokens);
@@ -125,7 +126,7 @@ public final class Cursor {
         if (end < pos || end > tokens.size()) {
             throw new IndexOutOfBoundsException("Invalid slice end: " + end);
         }
-        var cur = new Cursor(tokens.subList(pos, end), pos);
+        var cur = new Cursor(tokens.subList(pos, end), basePos);
         pos = end;
         return cur;
     }
@@ -158,12 +159,12 @@ public final class Cursor {
     }
 
     /**
-     * Gets the current position of the cursor + the position of the cursor this one has been constructed from.
+     * Returns the source character offset of the current token.
      *
-     * @return a full position.
+     * @return current source character offset
      */
     public int fullPos() {
-        return basePos + pos;
+        return basePos + peek().pos();
     }
 
     /**

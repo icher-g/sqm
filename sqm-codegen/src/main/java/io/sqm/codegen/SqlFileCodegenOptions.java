@@ -3,8 +3,8 @@ package io.sqm.codegen;
 import io.sqm.catalog.SchemaProvider;
 
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Configuration for SQL file code generation.
@@ -15,6 +15,7 @@ public final class SqlFileCodegenOptions {
     private final String basePackage;
     private final SqlCodegenDialect dialect;
     private final boolean includeGenerationTimestamp;
+    private final boolean includeGenerationSourceAnnotations;
     private final SchemaProvider schemaProvider;
     private final boolean failOnValidationError;
 
@@ -24,6 +25,7 @@ public final class SqlFileCodegenOptions {
         String basePackage,
         SqlCodegenDialect dialect,
         boolean includeGenerationTimestamp,
+        boolean includeGenerationSourceAnnotations,
         SchemaProvider schemaProvider,
         boolean failOnValidationError
     ) {
@@ -32,6 +34,7 @@ public final class SqlFileCodegenOptions {
         this.basePackage = basePackage;
         this.dialect = dialect;
         this.includeGenerationTimestamp = includeGenerationTimestamp;
+        this.includeGenerationSourceAnnotations = includeGenerationSourceAnnotations;
         this.schemaProvider = schemaProvider;
         this.failOnValidationError = failOnValidationError;
     }
@@ -39,22 +42,22 @@ public final class SqlFileCodegenOptions {
     /**
      * Creates options for SQL file code generation.
      *
-     * @param sqlDirectory source directory that contains {@code *.sql} files.
+     * @param sqlDirectory              source directory that contains {@code *.sql} files.
      * @param generatedSourcesDirectory result directory where generated Java files are written.
-     * @param basePackage Java package for generated classes.
+     * @param basePackage               Java package for generated classes.
      * @return new immutable options.
      */
     public static SqlFileCodegenOptions of(Path sqlDirectory, Path generatedSourcesDirectory, String basePackage) {
-        return of(sqlDirectory, generatedSourcesDirectory, basePackage, SqlCodegenDialect.ANSI, false, null, true);
+        return of(sqlDirectory, generatedSourcesDirectory, basePackage, SqlCodegenDialect.ANSI, false, true, null, true);
     }
 
     /**
      * Creates options for SQL file code generation.
      *
-     * @param sqlDirectory source directory that contains {@code *.sql} files.
+     * @param sqlDirectory              source directory that contains {@code *.sql} files.
      * @param generatedSourcesDirectory result directory where generated Java files are written.
-     * @param basePackage Java package for generated classes.
-     * @param dialect SQL dialect used for parse validation.
+     * @param basePackage               Java package for generated classes.
+     * @param dialect                   SQL dialect used for parse validation.
      * @return new immutable options.
      */
     public static SqlFileCodegenOptions of(
@@ -63,16 +66,16 @@ public final class SqlFileCodegenOptions {
         String basePackage,
         SqlCodegenDialect dialect
     ) {
-        return of(sqlDirectory, generatedSourcesDirectory, basePackage, dialect, false, null, true);
+        return of(sqlDirectory, generatedSourcesDirectory, basePackage, dialect, false, true, null, true);
     }
 
     /**
      * Creates options for SQL file code generation.
      *
-     * @param sqlDirectory source directory that contains {@code *.sql} files.
-     * @param generatedSourcesDirectory result directory where generated Java files are written.
-     * @param basePackage Java package for generated classes.
-     * @param dialect SQL dialect used for parse validation.
+     * @param sqlDirectory               source directory that contains {@code *.sql} files.
+     * @param generatedSourcesDirectory  result directory where generated Java files are written.
+     * @param basePackage                Java package for generated classes.
+     * @param dialect                    SQL dialect used for parse validation.
      * @param includeGenerationTimestamp if {@code true}, generated classes include {@code @Generated(date=...)} metadata.
      * @return new immutable options.
      */
@@ -83,18 +86,18 @@ public final class SqlFileCodegenOptions {
         SqlCodegenDialect dialect,
         boolean includeGenerationTimestamp
     ) {
-        return of(sqlDirectory, generatedSourcesDirectory, basePackage, dialect, includeGenerationTimestamp, null, true);
+        return of(sqlDirectory, generatedSourcesDirectory, basePackage, dialect, includeGenerationTimestamp, true, null, true);
     }
 
     /**
      * Creates options for SQL file code generation.
      *
-     * @param sqlDirectory source directory that contains {@code *.sql} files.
-     * @param generatedSourcesDirectory result directory where generated Java files are written.
-     * @param basePackage Java package for generated classes.
-     * @param dialect SQL dialect used for parse validation.
+     * @param sqlDirectory               source directory that contains {@code *.sql} files.
+     * @param generatedSourcesDirectory  result directory where generated Java files are written.
+     * @param basePackage                Java package for generated classes.
+     * @param dialect                    SQL dialect used for parse validation.
      * @param includeGenerationTimestamp if {@code true}, generated classes include {@code @Generated(date=...)} metadata.
-     * @param schemaProvider optional schema provider used for semantic validation before source emission.
+     * @param schemaProvider             optional schema provider used for semantic validation before source emission.
      * @return new immutable options.
      */
     public static SqlFileCodegenOptions of(
@@ -111,6 +114,7 @@ public final class SqlFileCodegenOptions {
             basePackage,
             dialect,
             includeGenerationTimestamp,
+            true,
             schemaProvider,
             true
         );
@@ -119,13 +123,14 @@ public final class SqlFileCodegenOptions {
     /**
      * Creates options for SQL file code generation.
      *
-     * @param sqlDirectory source directory that contains {@code *.sql} files.
-     * @param generatedSourcesDirectory result directory where generated Java files are written.
-     * @param basePackage Java package for generated classes.
-     * @param dialect SQL dialect used for parse validation.
+     * @param sqlDirectory               source directory that contains {@code *.sql} files.
+     * @param generatedSourcesDirectory  result directory where generated Java files are written.
+     * @param basePackage                Java package for generated classes.
+     * @param dialect                    SQL dialect used for parse validation.
      * @param includeGenerationTimestamp if {@code true}, generated classes include {@code @Generated(date=...)} metadata.
-     * @param schemaProvider optional schema provider used for semantic validation before source emission.
-     * @param failOnValidationError if {@code true}, semantic validation failures stop generation.
+     * @param includeGenerationSourceAnnotations if {@code true}, generated classes include SQL source folder and file metadata.
+     * @param schemaProvider             optional schema provider used for semantic validation before source emission.
+     * @param failOnValidationError      if {@code true}, semantic validation failures stop generation.
      * @return new immutable options.
      */
     public static SqlFileCodegenOptions of(
@@ -134,6 +139,7 @@ public final class SqlFileCodegenOptions {
         String basePackage,
         SqlCodegenDialect dialect,
         boolean includeGenerationTimestamp,
+        boolean includeGenerationSourceAnnotations,
         SchemaProvider schemaProvider,
         boolean failOnValidationError
     ) {
@@ -151,6 +157,7 @@ public final class SqlFileCodegenOptions {
             normalizedPackage,
             dialect,
             includeGenerationTimestamp,
+            includeGenerationSourceAnnotations,
             schemaProvider,
             failOnValidationError
         );
@@ -217,5 +224,14 @@ public final class SqlFileCodegenOptions {
      */
     public boolean failOnValidationError() {
         return failOnValidationError;
+    }
+
+    /**
+     * Returns whether information about source folder and files needs to be added to the generated code.
+     *
+     * @return {@code true} when source folder and files information should be included.
+     */
+    public boolean includeGenerationSourceAnnotations() {
+        return includeGenerationSourceAnnotations;
     }
 }

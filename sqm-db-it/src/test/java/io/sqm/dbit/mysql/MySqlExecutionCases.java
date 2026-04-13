@@ -114,7 +114,7 @@ final class MySqlExecutionCases {
                     .build();
 
                 var sql = harness.render(statement);
-                assertTrue(sql.contains("USING orders INNER JOIN users"));
+                assertTrue(normalize(sql).contains("USING orders INNER JOIN users"));
                 assertEquals(1, harness.executeUpdate(sql, List.of()));
                 assertEquals(List.of("10", "11", "12"), harness.queryRows("select id from orders order by id"));
             }
@@ -177,5 +177,9 @@ final class MySqlExecutionCases {
             covered.addAll(testCase.features());
         }
         return covered;
+    }
+
+    private static String normalize(String sql) {
+        return sql.replaceAll("\\s+", " ").trim();
     }
 }

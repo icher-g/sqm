@@ -46,6 +46,8 @@ class ParseControllerIntegrationTest {
         assertTrue(response.getBody().success());
         assertEquals("query", response.getBody().statementKind());
         assertNotNull(response.getBody().sqmJson());
+        assertNotNull(response.getBody().sqmDsl());
+        assertTrue(response.getBody().sqmDsl().contains("public static SelectQuery getStatement()"));
         assertNotNull(response.getBody().summary());
         assertNotNull(response.getBody().ast());
         assertEquals("SelectQuery", response.getBody().ast().nodeType());
@@ -64,5 +66,23 @@ class ParseControllerIntegrationTest {
         assertNotNull(response.getBody());
         assertFalse(response.getBody().success());
         assertFalse(response.getBody().diagnostics().isEmpty());
+        assertEquals(1, response.getBody().diagnostics().getFirst().line());
+        assertEquals(8, response.getBody().diagnostics().getFirst().column());
+    }
+
+    @Test
+    void parseEndpointReturnsLineAndColumnForMultilineErrors() {
+        var response = restTemplate.postForEntity(
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/parse",
+            new HttpEntity<>(new ParseRequestDto("select id\nwrite form customer", SqlDialectDto.ansi)),
+            ParseResponseDto.class
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().success());
+        assertFalse(response.getBody().diagnostics().isEmpty());
+        assertEquals(2, response.getBody().diagnostics().getFirst().line());
+        assertEquals(7, response.getBody().diagnostics().getFirst().column());
     }
 }

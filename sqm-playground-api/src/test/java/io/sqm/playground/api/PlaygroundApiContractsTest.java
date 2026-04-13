@@ -92,14 +92,15 @@ class PlaygroundApiContractsTest {
             12L,
             "query",
             "{ \"kind\": \"select\" }",
+            "public static SelectQuery getStatement() { return select().build(); }",
             new AstNodeDto(
                 "SelectQuery",
                 "io.sqm.core.Query",
                 "select",
                 "statement",
                 "SelectQuery",
-                List.of(new AstDetailDto("interfaceSimpleName", "Query")),
-                List.of(new AstChildSlotDto("selectItems", true, List.of()))
+                List.of(new AstDetailDto("kind", "select")),
+                List.of(new AstChildSlotDto("items", true, List.of()))
             ),
             new ParseResponseSummaryDto("SelectQuery", "io.sqm.core.Query"),
             List.of()
@@ -109,9 +110,13 @@ class PlaygroundApiContractsTest {
 
         assertTrue(json.contains("\"statementKind\":\"query\""));
         assertTrue(json.contains("\"sqmJson\":\"{ \\\"kind\\\": \\\"select\\\" }\""));
+        assertTrue(json.contains("\"sqmDsl\":\"public static SelectQuery getStatement() { return select().build(); }\""));
         assertTrue(json.contains("\"ast\""));
         assertTrue(json.contains("\"nodeType\":\"SelectQuery\""));
-        assertTrue(json.contains("\"slot\":\"selectItems\""));
+        assertTrue(json.contains("\"nodeInterface\":\"io.sqm.core.Query\""));
+        assertTrue(json.contains("\"kind\":\"select\""));
+        assertTrue(json.contains("\"category\":\"statement\""));
+        assertTrue(json.contains("\"slot\":\"items\""));
         assertTrue(json.contains("\"rootNodeType\":\"SelectQuery\""));
         assertTrue(json.contains("\"rootInterface\":\"io.sqm.core.Query\""));
     }

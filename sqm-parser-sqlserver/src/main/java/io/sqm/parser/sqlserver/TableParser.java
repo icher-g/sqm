@@ -51,9 +51,10 @@ public class TableParser extends io.sqm.parser.ansi.TableParser {
         }
 
         var hints = new ArrayList<TableHint>();
+        int withPos = cur.fullPos();
         if (cur.consumeIf(TokenType.WITH)) {
             if (!ctx.capabilities().supports(SqlFeature.TABLE_LOCK_HINT)) {
-                return error("SQL Server table hints are not supported by this dialect", cur.fullPos());
+                return error("SQL Server table hints are not supported by this dialect", withPos);
             }
             cur.expect("Expected ( after WITH in SQL Server table hint clause", TokenType.LPAREN);
             var parsedHints = parseHintList(cur);
@@ -76,13 +77,14 @@ public class TableParser extends io.sqm.parser.ansi.TableParser {
         var seen = new HashSet<String>();
 
         do {
+            int hintPos = cur.fullPos();
             var hint = parseHint(cur);
             if (hint == null) {
                 return error("Expected SQL Server table hint", cur.fullPos());
             }
 
             if (!seen.add(hint.name().value())) {
-                return error("Duplicate SQL Server table hint " + hint.name().value(), cur.fullPos());
+                return error("Duplicate SQL Server table hint " + hint.name().value(), hintPos);
             }
 
             hints.add(hint);

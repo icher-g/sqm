@@ -38,7 +38,7 @@ public class DeleteStatementRenderer extends io.sqm.render.ansi.DeleteStatementR
             }
         }
 
-        w.space().append(result);
+        w.newline().append(result);
     }
 
     @Override

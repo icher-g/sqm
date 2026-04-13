@@ -42,7 +42,7 @@ public class DeleteStatementRenderer implements Renderer<DeleteStatement> {
         renderOutput(node.result(), ctx, w);
 
         if (node.where() != null) {
-            w.space().append("WHERE").space().append(node.where());
+            w.newline().append("WHERE").space().append(node.where());
         }
 
         renderReturning(node.result(), ctx, w);

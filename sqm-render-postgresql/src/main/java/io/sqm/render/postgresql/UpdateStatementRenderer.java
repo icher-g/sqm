@@ -35,7 +35,7 @@ public class UpdateStatementRenderer extends io.sqm.render.ansi.UpdateStatementR
         if (!ctx.dialect().capabilities().supports(SqlFeature.UPDATE_FROM)) {
             throw new UnsupportedDialectFeatureException("UPDATE ... FROM", ctx.dialect().name());
         }
-        w.space().append("FROM").space().comma(from);
+        w.newline().append("FROM").space().comma(from);
     }
 
     /**
@@ -53,7 +53,7 @@ public class UpdateStatementRenderer extends io.sqm.render.ansi.UpdateStatementR
         if (!ctx.dialect().capabilities().supports(SqlFeature.DML_RESULT_CLAUSE)) {
             throw new UnsupportedDialectFeatureException("UPDATE ... RETURNING", ctx.dialect().name());
         }
-        w.space().append("RETURNING").space().comma(result.items());
+        w.newline().append("RETURNING").space().comma(result.items());
     }
 
     @Override

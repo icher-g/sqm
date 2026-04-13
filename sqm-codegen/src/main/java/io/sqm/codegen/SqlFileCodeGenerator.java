@@ -1,6 +1,5 @@
 package io.sqm.codegen;
 
-import io.sqm.core.SelectQuery;
 import io.sqm.core.Statement;
 import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.core.Lexer;
@@ -8,15 +7,14 @@ import io.sqm.parser.core.Token;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
-import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
 import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.ParseContext;
-import io.sqm.parser.spi.ParseResult;
+import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.mysql.MySqlValidationDialect;
 import io.sqm.validate.postgresql.PostgresValidationDialect;
-import io.sqm.validate.sqlserver.SqlServerValidationDialect;
 import io.sqm.validate.schema.SchemaStatementValidator;
+import io.sqm.validate.sqlserver.SqlServerValidationDialect;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -25,7 +23,6 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
-import java.time.Instant;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,8 +33,6 @@ import java.util.regex.Pattern;
 public final class SqlFileCodeGenerator {
     private static final Pattern NAMED_PARAMETER_PATTERN = Pattern.compile(":([A-Za-z_][A-Za-z0-9_]*)");
     private static final String JAVA_EXTENSION = ".java";
-    private static final String NEWLINE = "\n";
-    private static final String INDENT = "    ";
     private static final String CACHE_FILE_NAME = ".sqm-codegen.hashes";
     private static final String GENERATOR_FORMAT_VERSION = "1";
     private static final Comparator<SqlSourceFile> SOURCE_FILE_ORDER = Comparator
@@ -49,16 +44,16 @@ public final class SqlFileCodeGenerator {
 
     private final SqlFileCodegenOptions options;
     private final List<ParseStage> parseStages;
-    private final SqmJavaEmitter emitter;
     private final SchemaStatementValidator schemaValidator;
     private final List<SqlValidationIssue> validationIssues;
+    private final SqmDslRenderer dslRenderer;
 
     private SqlFileCodeGenerator(SqlFileCodegenOptions options) {
         this.options = options;
         this.parseStages = parseStagesFor(options.dialect());
-        this.emitter = new SqmJavaEmitter();
         this.schemaValidator = createSchemaValidator(options);
         this.validationIssues = new ArrayList<>();
+        this.dslRenderer = new SqmDslRenderer(options);
     }
 
     /**
@@ -90,31 +85,11 @@ public final class SqlFileCodeGenerator {
         return new SqlFileCodegenException(message);
     }
 
-    private static String renderSetLiteral(Collection<String> values) {
-        if (values.isEmpty()) {
-            return "Set.of()";
-        }
-        var ordered = new ArrayList<>(values);
-        ordered.sort(String::compareTo);
-        var joined = ordered.stream()
-            .map(value -> "\"" + escapeJavaString(value) + "\"")
-            .reduce((left, right) -> left + ", " + right)
-            .orElse("");
-        return "Set.of(" + joined + ")";
-    }
 
     private static String normalizePath(Path path) {
         return path.toString().replace('\\', '/');
     }
 
-    private static String escapeJavaString(String value) {
-        return value.replace("\\", "\\\\").replace("\"", "\\\"");
-    }
-
-    private static String indentContinuationLines(String value, int spaces) {
-        var indent = " ".repeat(Math.max(0, spaces));
-        return value.replace(NEWLINE, NEWLINE + indent);
-    }
 
     private static String orderedPair(String left, String right) {
         return left.compareTo(right) <= 0
@@ -423,7 +398,7 @@ public final class SqlFileCodeGenerator {
         try {
             Files.createDirectories(Objects.requireNonNull(outputFile.getParent(), "outputFile parent"));
             if (!unchanged) {
-                Files.writeString(outputFile, renderGroup(group), StandardCharsets.UTF_8);
+                Files.writeString(outputFile, dslRenderer.render(group), StandardCharsets.UTF_8);
             }
             newCache.put(cacheKey, groupFingerprint);
             return outputFile;
@@ -483,100 +458,5 @@ public final class SqlFileCodeGenerator {
         }
         return sha256(sb.toString());
     }
-
-    private String renderGroup(SqlFolderGroup group) {
-        var code = new StringBuilder();
-        code.append("package ").append(options.basePackage()).append(";").append(NEWLINE).append(NEWLINE);
-        code.append("import javax.annotation.processing.Generated;").append(NEWLINE);
-        code.append("import io.sqm.core.*;").append(NEWLINE);
-        code.append("import java.util.Set;").append(NEWLINE);
-        code.append("import static io.sqm.dsl.Dsl.*;").append(NEWLINE).append(NEWLINE);
-        code.append("/**").append(NEWLINE);
-        code.append(" * Generated from SQL files located in ").append(normalizePath(group.folder())).append(".").append(NEWLINE);
-        code.append(" * Dialect: ").append(options.dialect().name()).append(".").append(NEWLINE);
-        code.append(" * Source SQL paths:").append(NEWLINE);
-        for (var file : group.files()) {
-            code.append(" * - ").append(normalizePath(file.relativePath())).append(NEWLINE);
-        }
-        code.append(" */").append(NEWLINE);
-        code.append(renderGeneratedAnnotation(group)).append(NEWLINE);
-        code.append("public final class ").append(group.className()).append(" {").append(NEWLINE).append(NEWLINE);
-        code.append(INDENT).append("private ").append(group.className()).append("() {").append(NEWLINE);
-        code.append(INDENT).append("}").append(NEWLINE).append(NEWLINE);
-        for (var file : group.files()) {
-            String statementExpression;
-            try {
-                statementExpression = emitter.emitStatement(file.statement());
-            } catch (IllegalStateException ex) {
-                throw new SqlFileCodegenException(normalizePath(file.relativePath()) + ": " + ex.getMessage());
-            }
-            code.append(INDENT).append("/**").append(NEWLINE);
-            code.append(INDENT).append(" * SQL source: ").append(normalizePath(file.relativePath())).append(NEWLINE);
-            code.append(INDENT).append(" *").append(NEWLINE);
-            code.append(INDENT).append(" * @return statement model for this SQL source.").append(NEWLINE);
-            code.append(INDENT).append(" */").append(NEWLINE);
-            code.append(INDENT).append("public static ")
-                .append(file.statement().getTopLevelInterface().getSimpleName()).append(" ")
-                .append(file.methodName()).append("() {").append(NEWLINE);
-            if (file.statement() instanceof SelectQuery) {
-                code.append(INDENT).append(INDENT).append("var builder = SelectQuery.builder();").append(NEWLINE);
-            }
-            code.append(INDENT).append(INDENT).append("return ")
-                .append(indentContinuationLines(statementExpression, 8))
-                .append(";").append(NEWLINE);
-            code.append(INDENT).append("}").append(NEWLINE).append(NEWLINE);
-            code.append(INDENT).append("/**").append(NEWLINE);
-            code.append(INDENT).append(" * Returns named parameters referenced by ").append(normalizePath(file.relativePath())).append(".").append(NEWLINE);
-            code.append(INDENT).append(" *").append(NEWLINE);
-            code.append(INDENT).append(" * @return immutable set of named parameter identifiers.").append(NEWLINE);
-            code.append(INDENT).append(" */").append(NEWLINE);
-            code.append(INDENT).append("public static Set<String> ").append(file.methodName()).append("Params() {").append(NEWLINE);
-            code.append(INDENT).append(INDENT).append("return ").append(renderSetLiteral(file.parameters())).append(";").append(NEWLINE);
-            code.append(INDENT).append("}").append(NEWLINE).append(NEWLINE);
-        }
-        code.append("}").append(NEWLINE);
-        return code.toString();
-    }
-
-    private String renderGeneratedAnnotation(SqlFolderGroup group) {
-        var comments = new StringBuilder("dialect=")
-            .append(options.dialect().name())
-            .append("; sqlFolder=")
-            .append(normalizePath(group.folder()))
-            .append("; sqlFiles=");
-        for (int i = 0; i < group.files().size(); i++) {
-            if (i > 0) {
-                comments.append(",");
-            }
-            comments.append(normalizePath(group.files().get(i).relativePath()));
-        }
-
-        var annotation = new StringBuilder();
-        annotation.append("@Generated(").append(NEWLINE);
-        annotation.append(INDENT).append("value = \"io.sqm.codegen.SqlFileCodeGenerator\",").append(NEWLINE);
-        annotation.append(INDENT).append("comments = \"").append(escapeJavaString(comments.toString())).append("\"");
-        if (options.includeGenerationTimestamp()) {
-            annotation.append(",").append(NEWLINE);
-            annotation.append(INDENT).append("date = \"").append(Instant.now().toString()).append("\"").append(NEWLINE);
-            annotation.append(")");
-            return annotation.toString();
-        }
-        annotation.append(NEWLINE).append(")");
-        return annotation.toString();
-    }
 }
 
-record SqlSourceFile(Path relativePath, Path folder, String methodName, Statement statement, Set<String> parameters, String sqlHash) {
-}
-
-record SqlFolderGroup(Path folder, String className, List<SqlSourceFile> files) {
-}
-
-record ParseStage(String name, ParseContext context) {
-}
-
-record ParseAttempt(String stage, ParseResult<? extends Statement> result, IdentifierQuoting identifierQuoting) {
-}
-
-record LineColumn(int line, int column) {
-}

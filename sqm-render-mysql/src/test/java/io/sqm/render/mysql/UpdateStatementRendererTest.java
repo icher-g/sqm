@@ -102,6 +102,27 @@ class UpdateStatementRendererTest {
     }
 
     @Test
+    void rendersJoinedUpdateAcrossMultipleLines() {
+        var statement = update(tbl("orders").as("o"))
+            .join(inner(tbl("customer").as("c")).on(col("c", "id").eq(col("o", "customer_id"))))
+            .set(io.sqm.core.QualifiedName.of("o", "status"), lit("priority"))
+            .where(col("c", "vip").eq(lit(1)))
+            .build();
+
+        var sql = RenderContext.of(new MySqlDialect()).render(statement).sql();
+
+        assertEquals(
+            """
+                UPDATE orders AS o
+                INNER JOIN customer AS c ON c.id = o.customer_id
+                SET o.status = 'priority'
+                WHERE c.vip = 1
+                """.trim(),
+            sql
+        );
+    }
+
+    @Test
     void normalizesUpdateOptimizerHintsWhenPolicyIsEnabled() {
         var statement = update(tbl("users"))
             .hint("MAX_EXECUTION_TIME", 1000)

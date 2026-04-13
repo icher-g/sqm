@@ -32,13 +32,14 @@ final class SqlServerTopSpecParserSupport {
         var percent = cur.consumeIf(TokenType.PERCENT);
 
         boolean withTies = false;
+        int withPos = cur.fullPos();
         if (cur.consumeIf(TokenType.WITH)) {
             cur.expect("Expected TIES after WITH in TOP clause", TokenType.TIES);
             withTies = true;
         }
 
         if (withTies && !allowWithTies) {
-            return error(unsupportedWithTiesMessage, cur.fullPos());
+            return error(unsupportedWithTiesMessage, withPos);
         }
 
         return ok(TopSpec.of(count, percent, withTies));

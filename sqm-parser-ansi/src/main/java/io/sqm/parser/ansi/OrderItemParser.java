@@ -68,28 +68,29 @@ public class OrderItemParser implements Parser<OrderItem> {
         var tokens = Set.of(TokenType.ASC, TokenType.DESC, TokenType.NULLS, TokenType.COLLATE, TokenType.USING);
 
         while (cur.matchAny(tokens)) {
+            int modifierPos = cur.fullPos();
             if (cur.consumeIf(TokenType.ASC)) {
                 if (direction != null) {
-                    return error("Direction specified more than once", cur.fullPos());
+                    return error("Direction specified more than once", modifierPos);
                 }
                 if (usingOperator != null) {
-                    return error("USING operator cannot be combined with ASC/DESC", cur.fullPos());
+                    return error("USING operator cannot be combined with ASC/DESC", modifierPos);
                 }
                 direction = Direction.ASC;
                 continue;
             }
             if (cur.consumeIf(TokenType.DESC)) {
                 if (direction != null) {
-                    return error("Direction specified more than once", cur.fullPos());
+                    return error("Direction specified more than once", modifierPos);
                 }
                 if (usingOperator != null) {
-                    return error("USING operator cannot be combined with ASC/DESC", cur.fullPos());
+                    return error("USING operator cannot be combined with ASC/DESC", modifierPos);
                 }
                 direction = Direction.DESC;
                 continue;
             }
             if (cur.consumeIf(TokenType.NULLS)) {
-                if (nulls != null) return error("NULLS specified more than once", cur.fullPos());
+                if (nulls != null) return error("NULLS specified more than once", modifierPos);
                 var t = cur.expect("Expected FIRST | LAST | DEFAULT after NULLS", TokenType.FIRST, TokenType.LAST, TokenType.DEFAULT);
                 if (t.type() == TokenType.FIRST) nulls = Nulls.FIRST;
                 else
@@ -101,7 +102,7 @@ public class OrderItemParser implements Parser<OrderItem> {
             }
             if (cur.consumeIf(TokenType.COLLATE)) {
                 if (collateName != null) {
-                    return error("COLLATE specified more than once", cur.fullPos());
+                    return error("COLLATE specified more than once", modifierPos);
                 }
                 var t = cur.expect("Expected collation name after COLLATE", TokenType.IDENT);
                 collateName = parseQualifiedName(toIdentifier(t), cur);
@@ -109,13 +110,13 @@ public class OrderItemParser implements Parser<OrderItem> {
             }
             if (cur.consumeIf(TokenType.USING)) {
                 if (!ctx.capabilities().supports(SqlFeature.ORDER_BY_USING)) {
-                    return error("ORDER BY ... USING is not supported by this dialect", cur.fullPos());
+                    return error("ORDER BY ... USING is not supported by this dialect", modifierPos);
                 }
                 if (usingOperator != null) {
-                    return error("USING specified more than once", cur.fullPos());
+                    return error("USING specified more than once", modifierPos);
                 }
                 if (direction != null) {
-                    return error("USING operator cannot be combined with ASC/DESC", cur.fullPos());
+                    return error("USING operator cannot be combined with ASC/DESC", modifierPos);
                 }
                 if (cur.match(TokenType.OPERATOR)) {
                     usingOperator = cur.advance().lexeme();

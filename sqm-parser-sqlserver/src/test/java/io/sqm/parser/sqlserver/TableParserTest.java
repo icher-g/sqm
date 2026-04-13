@@ -31,6 +31,7 @@ class TableParserTest {
         var result = ctx.parse(Table.class, "users WITH (HOLDLOCK, HOLDLOCK)");
 
         assertTrue(result.isError());
+        assertEquals(22, result.problems().getFirst().pos());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Duplicate"));
     }
 
@@ -52,6 +53,7 @@ class TableParserTest {
         var result = parser.parse(cur, ctx);
 
         assertTrue(result.isError());
+        assertEquals(6, result.problems().getFirst().pos());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("table hints"));
     }
 }

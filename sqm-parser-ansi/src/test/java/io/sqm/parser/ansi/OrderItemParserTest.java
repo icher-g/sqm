@@ -155,7 +155,8 @@ class OrderItemParserTest {
         void duplicate_direction() {
             var res = parse("c ASC DESC");
             Assertions.assertFalse(res.ok());
-            Assertions.assertEquals("Direction specified more than once at 3", res.errorMessage());
+            Assertions.assertEquals(6, res.problems().getFirst().pos());
+            Assertions.assertEquals("Direction specified more than once at 6", res.errorMessage());
         }
 
         @Test
@@ -163,7 +164,8 @@ class OrderItemParserTest {
         void duplicate_nulls() {
             var res = parse("c NULLS FIRST NULLS LAST");
             Assertions.assertFalse(res.ok());
-            Assertions.assertEquals("NULLS specified more than once at 4", res.errorMessage());
+            Assertions.assertEquals(14, res.problems().getFirst().pos());
+            Assertions.assertEquals("NULLS specified more than once at 14", res.errorMessage());
         }
 
         @Test
@@ -171,7 +173,8 @@ class OrderItemParserTest {
         void duplicate_collate() {
             var res = parse("c COLLATE de_CH COLLATE fr_CH");
             Assertions.assertFalse(res.ok());
-            Assertions.assertEquals("COLLATE specified more than once at 4", res.errorMessage());
+            Assertions.assertEquals(16, res.problems().getFirst().pos());
+            Assertions.assertEquals("COLLATE specified more than once at 16", res.errorMessage());
         }
 
         @Test

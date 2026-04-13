@@ -23,6 +23,16 @@ import java.util.UUID;
  */
 @Service
 public final class TranspileService {
+    private final PlaygroundStatementSupport statementSupport;
+
+    /**
+     * Creates the playground transpile service.
+     *
+     * @param statementSupport shared statement helper support
+     */
+    public TranspileService(PlaygroundStatementSupport statementSupport) {
+        this.statementSupport = Objects.requireNonNull(statementSupport, "statementSupport must not be null");
+    }
 
     /**
      * Transpiles SQL from the selected source dialect into the selected target dialect.
@@ -80,20 +90,20 @@ public final class TranspileService {
         return TranspileOutcomeDto.unsupported;
     }
 
-    private static List<PlaygroundDiagnosticDto> toDiagnostics(TranspileResult result) {
+    private List<PlaygroundDiagnosticDto> toDiagnostics(TranspileResult result) {
         var diagnostics = new ArrayList<PlaygroundDiagnosticDto>(result.problems().size() + result.warnings().size());
         for (var problem : result.problems()) {
-            diagnostics.add(new PlaygroundDiagnosticDto(
+            diagnostics.add(statementSupport.diagnostic(
                 DiagnosticSeverityDto.error,
                 problem.code(),
                 problem.message(),
                 DiagnosticPhaseDto.transpile,
-                null,
-                null
+                problem.line(),
+                problem.column()
             ));
         }
         for (var warning : result.warnings()) {
-            diagnostics.add(new PlaygroundDiagnosticDto(
+            diagnostics.add(statementSupport.diagnostic(
                 DiagnosticSeverityDto.warning,
                 warning.code(),
                 warning.message(),

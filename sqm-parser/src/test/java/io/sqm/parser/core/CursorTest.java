@@ -216,6 +216,40 @@ class CursorTest {
     }
 
     @Test
+    void fullPos_usesCurrentTokenSourceOffset() {
+        List<Token> tokens = List.of(
+            new Token(TokenType.SELECT, "SELECT", 0),
+            new Token(TokenType.OPERATOR, "*", 7),
+            new Token(TokenType.FROM, "FROM", 9)
+        );
+        Cursor cur = new Cursor(tokens);
+
+        assertEquals(0, cur.fullPos());
+        cur.advance();
+        assertEquals(7, cur.fullPos());
+        cur.advance();
+        assertEquals(9, cur.fullPos());
+    }
+
+    @Test
+    void advanceWithEnd_preservesAbsoluteSourceOffsetsInSubCursor() {
+        List<Token> tokens = List.of(
+            new Token(TokenType.SELECT, "SELECT", 0),
+            new Token(TokenType.OPERATOR, "*", 7),
+            new Token(TokenType.FROM, "FROM", 9),
+            new Token(TokenType.IDENT, "t", 14)
+        );
+        Cursor cur = new Cursor(tokens);
+
+        cur.advance();
+        Cursor sub = cur.advance(3);
+
+        assertEquals(7, sub.fullPos());
+        sub.advance();
+        assertEquals(9, sub.fullPos());
+    }
+
+    @Test
     void advanceWithEnd_createsSubCursor() {
         Cursor cur = Cursor.of("SELECT * FROM t", identifierQuoting);
         Cursor sub = cur.advance(3); // Take first 3 tokens

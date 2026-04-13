@@ -52,6 +52,27 @@ class RenderControllerIntegrationTest {
     }
 
     @Test
+    void renderEndpointReturnsMultilineFormattingForUpdateSql() {
+        var response = restTemplate.postForEntity(
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/render",
+            new HttpEntity<>(new RenderRequestDto(
+                "update orders o join customer c on c.id = o.customer_id set o.status = 'priority' where c.vip = 1",
+                SqlDialectDto.mysql,
+                SqlDialectDto.mysql
+            )),
+            RenderResponseDto.class
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().success());
+        assertNotNull(response.getBody().renderedSql());
+        assertTrue(response.getBody().renderedSql().contains("\nINNER JOIN customer AS c ON c.id = o.customer_id"));
+        assertTrue(response.getBody().renderedSql().contains("\nSET o.status = 'priority'"));
+        assertTrue(response.getBody().renderedSql().contains("\nWHERE c.vip = 1"));
+    }
+
+    @Test
     void renderEndpointReturnsDiagnosticsForInvalidSql() {
         var response = restTemplate.postForEntity(
             "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/render",

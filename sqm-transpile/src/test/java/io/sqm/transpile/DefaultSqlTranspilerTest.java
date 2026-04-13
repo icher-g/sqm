@@ -44,6 +44,22 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
+    void parseFailuresPreserveSourceOffsetsInProblems() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
+            .build();
+
+        var result = transpiler.transpile("select from");
+
+        assertEquals(TranspileStatus.PARSE_FAILED, result.status());
+        assertEquals("PARSE_ERROR", result.problems().getFirst().code());
+        assertEquals(7, result.problems().getFirst().sourceOffset());
+        assertEquals(1, result.problems().getFirst().line());
+        assertEquals(8, result.problems().getFirst().column());
+    }
+
+    @Test
     void transpilesPostgresConcatToMySqlRendering() {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.POSTGRESQL)

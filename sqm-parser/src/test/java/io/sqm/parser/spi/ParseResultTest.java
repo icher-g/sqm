@@ -1,6 +1,7 @@
 package io.sqm.parser.spi;
 
 import io.sqm.core.ColumnExpr;
+import io.sqm.core.Statement;
 import io.sqm.parser.core.ParserException;
 import org.junit.jupiter.api.Test;
 
@@ -30,19 +31,23 @@ class ParseResultTest {
         assertEquals(1, result.problems().size());
         assertEquals("test error", result.problems().getFirst().message());
         assertEquals(10, result.problems().getFirst().pos());
+        assertNull(result.problems().getFirst().line());
+        assertNull(result.problems().getFirst().column());
         assertFalse(result.ok());
         assertTrue(result.isError());
     }
 
     @Test
     void shouldCreateErrorResultFromException() {
-        var exception = new ParserException("parser error", 5);
+        var exception = new ParserException("parser error", 5, 2, 4);
         var result = ParseResult.<ColumnExpr>error(exception);
 
         assertNull(result.value());
         assertEquals(1, result.problems().size());
         assertEquals("parser error", result.problems().getFirst().message());
         assertEquals(5, result.problems().getFirst().pos());
+        assertEquals(2, result.problems().getFirst().line());
+        assertEquals(4, result.problems().getFirst().column());
         assertFalse(result.ok());
         assertTrue(result.isError());
     }
@@ -83,6 +88,30 @@ class ParseResultTest {
         var result = ParseResult.ok(column);
 
         assertNull(result.errorMessage());
+    }
+
+    @Test
+    void parseContextAttachesLineAndColumnToProblems() {
+        ParseResult<Statement> result;
+        try (var ignored = ParseLocations.open("select from")) {
+            result = ParseResult.error("Expected FROM", 7);
+        }
+
+        assertTrue(result.isError());
+        assertEquals(1, result.problems().getFirst().line());
+        assertEquals(8, result.problems().getFirst().column());
+    }
+
+    @Test
+    void parseContextAttachesLineAndColumnToLexerProblems() {
+        ParseResult<Statement> result;
+        try (var ignored = ParseLocations.open("select 'unterminated")) {
+            result = ParseResult.error(new ParserException("Unterminated string literal", 7));
+        }
+
+        assertTrue(result.isError());
+        assertEquals(1, result.problems().getFirst().line());
+        assertEquals(8, result.problems().getFirst().column());
     }
 }
 

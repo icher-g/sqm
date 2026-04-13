@@ -34,6 +34,23 @@ class RenderServiceTest {
     }
 
     @Test
+    void renderPreservesMultilineFormattingForUpdateClauses() {
+        var service = new RenderService(new PlaygroundStatementSupport());
+
+        var response = service.render(new RenderRequestDto(
+            "update orders o join customer c on c.id = o.customer_id set o.status = 'priority' where c.vip = 1",
+            SqlDialectDto.mysql,
+            SqlDialectDto.mysql
+        ));
+
+        assertTrue(response.success());
+        assertNotNull(response.renderedSql());
+        assertTrue(response.renderedSql().contains("\nINNER JOIN customer AS c ON c.id = o.customer_id"));
+        assertTrue(response.renderedSql().contains("\nSET o.status = 'priority'"));
+        assertTrue(response.renderedSql().contains("\nWHERE c.vip = 1"));
+    }
+
+    @Test
     void renderReturnsParseDiagnosticsForInvalidSql() {
         var service = new RenderService(new PlaygroundStatementSupport());
 

@@ -3,6 +3,7 @@ package io.sqm.playground.rest;
 import io.sqm.playground.api.SqlDialectDto;
 import io.sqm.playground.api.TranspileOutcomeDto;
 import io.sqm.playground.api.TranspileRequestDto;
+import io.sqm.playground.rest.service.PlaygroundStatementSupport;
 import io.sqm.playground.rest.service.TranspileService;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +20,7 @@ class TranspileServiceTest {
 
     @Test
     void transpileReturnsRenderedSqlForExactRewrite() {
-        var service = new TranspileService();
+        var service = new TranspileService(new PlaygroundStatementSupport());
 
         var response = service.transpile(new TranspileRequestDto(
             "select first_name || ' ' || last_name as full_name from users",
@@ -36,7 +37,7 @@ class TranspileServiceTest {
 
     @Test
     void transpileReturnsWarningsForApproximateRewrite() {
-        var service = new TranspileService();
+        var service = new TranspileService(new PlaygroundStatementSupport());
 
         var response = service.transpile(new TranspileRequestDto(
             "select * from users where name ilike 'al%'",
@@ -53,7 +54,7 @@ class TranspileServiceTest {
 
     @Test
     void transpileReturnsDiagnosticsForInvalidSql() {
-        var service = new TranspileService();
+        var service = new TranspileService(new PlaygroundStatementSupport());
 
         var response = service.transpile(new TranspileRequestDto(
             "select from",
@@ -66,5 +67,7 @@ class TranspileServiceTest {
         assertNull(response.renderedSql());
         assertFalse(response.diagnostics().isEmpty());
         assertEquals("PARSE_ERROR", response.diagnostics().getFirst().code());
+        assertEquals(1, response.diagnostics().getFirst().line());
+        assertEquals(8, response.diagnostics().getFirst().column());
     }
 }

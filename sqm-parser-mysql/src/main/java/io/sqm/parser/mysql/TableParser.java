@@ -83,6 +83,7 @@ public class TableParser extends io.sqm.parser.ansi.TableParser {
 
         String scope = "";
 
+        int forPos = cur.fullPos();
         if (cur.consumeIf(TokenType.FOR)) {
             if (cur.consumeIf(TokenType.JOIN)) {
                 scope = "JOIN";
@@ -96,7 +97,7 @@ public class TableParser extends io.sqm.parser.ansi.TableParser {
                 scope = "GROUP_BY";
             }
             else {
-                return error("Expected JOIN, ORDER BY or GROUP BY after FOR", cur.fullPos());
+                return error("Expected JOIN, ORDER BY or GROUP BY after FOR", forPos);
             }
         }
 

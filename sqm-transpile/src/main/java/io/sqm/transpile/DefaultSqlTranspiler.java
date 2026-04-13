@@ -187,7 +187,14 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
     private static List<TranspileProblem> parseProblems(io.sqm.parser.spi.ParseResult<?> parseResult) {
         var problems = new ArrayList<TranspileProblem>(parseResult.problems().size());
         for (var problem : parseResult.problems()) {
-            problems.add(new TranspileProblem("PARSE_ERROR", problem.message(), TranspileStage.PARSE));
+            problems.add(new TranspileProblem(
+                "PARSE_ERROR",
+                problem.message(),
+                TranspileStage.PARSE,
+                problem.pos(),
+                problem.line(),
+                problem.column()
+            ));
         }
         return List.copyOf(problems);
     }

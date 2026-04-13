@@ -32,9 +32,10 @@ public class DistinctSpecParser implements Parser<DistinctSpec> {
     @Override
     public ParseResult<? extends DistinctSpec> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected DISTINCT", TokenType.DISTINCT);
+        int onPos = cur.fullPos();
         if (cur.consumeIf(TokenType.ON)) {
             if (!ctx.capabilities().supports(SqlFeature.DISTINCT_ON)) {
-                return error("DISTINCT ON is not supported by this dialect", cur.fullPos());
+                return error("DISTINCT ON is not supported by this dialect", onPos);
             }
             cur.expect("Expected ( after DISTINCT ON", TokenType.LPAREN);
             var items = parseItems(Expression.class, cur, ctx);
