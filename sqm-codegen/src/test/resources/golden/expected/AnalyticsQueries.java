@@ -3,6 +3,7 @@ package io.sqm.codegen.generated;
 import javax.annotation.processing.Generated;
 import io.sqm.core.*;
 import java.util.Set;
+import java.util.List;
 import static io.sqm.dsl.Dsl.*;
 
 /**
@@ -28,10 +29,10 @@ public final class AnalyticsQueries {
     public static SelectQuery ranked() {
         var builder = SelectQuery.builder();
         return builder.select(
-          func("row_number").over(over(partition(col("dept")), orderBy(order(col("salary")).desc()))).as("rn")
-        )
-        .from(tbl("employees"))
-        .build();
+              func("row_number").over(over(partition(col("dept")), orderBy(order(col("salary")).desc()))).as("rn")
+            )
+            .from(tbl("employees"))
+            .build();
     }
 
     /**

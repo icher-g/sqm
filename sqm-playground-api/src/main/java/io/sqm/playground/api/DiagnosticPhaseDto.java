@@ -6,6 +6,7 @@ package io.sqm.playground.api;
 public enum DiagnosticPhaseDto {
     http,
     parse,
+    dsl,
     render,
     validate,
     transpile;

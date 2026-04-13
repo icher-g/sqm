@@ -4,6 +4,7 @@ import io.sqm.core.*;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -151,7 +152,7 @@ class SqmJavaEmitterTest {
         );
 
         assertTrue(plainTop.contains(".top(lit(5))"));
-        assertTrue(topPercentWithTies.contains(".top(TopSpec.of(lit(10), true, true))"));
+        assertTrue(topPercentWithTies.contains(".top(lit(10), true, true)"));
     }
 
     @Test
@@ -344,7 +345,7 @@ class SqmJavaEmitterTest {
         assertTrue(updateSource.contains("\n.result("));
         assertTrue(updateSource.contains("\n.build()"));
         assertTrue(updateSource.contains(".hint(\"MAX_EXECUTION_TIME\", 1000)"));
-        assertTrue(updateSource.contains(".set(set(QualifiedName.of(id(\"u\"), id(\"name\")), lit(\"alice\")))"));
+        assertTrue(updateSource.contains(".set(\"u\", \"name\", lit(\"alice\"))"));
         assertTrue(updateSource.contains(".from(tbl(\"src\"))"));
         assertTrue(updateSource.contains(".result(resultInto(tableVar(\"audit\"), id(\"user_id\")), insertedAll(), inserted(id(\"id\")).as(id(\"user_id\")))"));
 
@@ -361,11 +362,11 @@ class SqmJavaEmitterTest {
     @Test
     void emitQuery_usesGenericNodePathForNonSelectQueries() {
         Query query = compose(
-            java.util.List.of(
+            List.of(
                 select(star()).from(tbl("t1")).build(),
                 select(star()).from(tbl("t2")).build()
             ),
-            java.util.List.of(io.sqm.core.SetOperator.UNION)
+            List.of(io.sqm.core.SetOperator.UNION)
         );
 
         var error = assertThrows(IllegalStateException.class, () -> emitter.emitQuery(query));
@@ -384,8 +385,8 @@ class SqmJavaEmitterTest {
             .columns(id("id"), id("name"))
             .values(row(lit(1), lit("alice")))
             .onConflictDoUpdate(
-                java.util.List.of(id("id")),
-                java.util.List.of(set("name", lit("updated"))),
+                List.of(id("id")),
+                List.of(set("name", lit("updated"))),
                 col("name").isNotNull()
             )
             .build();
@@ -400,7 +401,7 @@ class SqmJavaEmitterTest {
         assertTrue(doNothingSource.contains(".query(select("));
         assertTrue(doNothingSource.contains(".onConflictDoNothing(id(\"id\"))"));
 
-        assertTrue(doUpdateSource.contains(".onConflictDoUpdate(java.util.List.of(id(\"id\")), java.util.List.of("));
+        assertTrue(doUpdateSource.contains(".onConflictDoUpdate(List.of(id(\"id\")), List.of("));
         assertTrue(doUpdateSource.contains("set(id(\"name\"), lit(\"updated\"))"));
         assertTrue(doUpdateSource.contains("col(\"name\").isNotNull()"));
 
@@ -429,10 +430,10 @@ class SqmJavaEmitterTest {
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
             .top(top(5))
-            .whenMatchedUpdate(col("s", "active").eq(lit(true)), java.util.List.of(set("name", col("s", "name"))))
+            .whenMatchedUpdate(col("s", "active").eq(lit(true)), List.of(set("name", col("s", "name"))))
             .whenMatchedDelete(col("s", "deleted").eq(lit(true)))
             .whenNotMatchedBySourceDelete(col("users", "active").eq(lit(false)))
-            .whenNotMatchedInsert(col("s", "name").isNotNull(), java.util.List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
+            .whenNotMatchedInsert(col("s", "name").isNotNull(), List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
             .build();
 
         var source = emitter.emitStatement(mergeStatement);
@@ -452,7 +453,7 @@ class SqmJavaEmitterTest {
         assertTrue(source.contains(".whenMatchedUpdate(col(\"s\", \"active\").eq(lit(true)), set(id(\"name\"), col(\"s\", \"name\")))"));
         assertTrue(source.contains(".whenMatchedDelete(col(\"s\", \"deleted\").eq(lit(true)))"));
         assertTrue(source.contains(".whenNotMatchedBySourceDelete(col(\"users\", \"active\").eq(lit(false)))"));
-        assertTrue(source.contains(".whenNotMatchedInsert(col(\"s\", \"name\").isNotNull(), java.util.List.of(id(\"id\"), id(\"name\")), row(col(\"s\", \"id\"), col(\"s\", \"name\")))"));
+        assertTrue(source.contains(".whenNotMatchedInsert(col(\"s\", \"name\").isNotNull(), List.of(id(\"id\"), id(\"name\")), row(col(\"s\", \"id\"), col(\"s\", \"name\")))"));
     }
 
     @Test
@@ -467,15 +468,15 @@ class SqmJavaEmitterTest {
     void emitQuery_emitsGenericTableHintsAndTypedHintArgs() {
         Query query = select(star())
             .from(tbl("users")
-                .hint(TableHint.of("GENERIC_TABLE_HINT", QualifiedName.of("app", "users"), lit("x")))
+                .hint(TableHint.of("GENERIC_TABLE_HINT", qualify("app", "users"), lit("x")))
             )
-            .hint(statementHint("QUALIFIED_HINT", QualifiedName.of("app", "users")))
+            .hint(statementHint("QUALIFIED_HINT", qualify("app", "users")))
             .build();
 
         var source = emitter.emitQuery(query);
 
-        assertTrue(source.contains(".hint(\"QUALIFIED_HINT\", QualifiedName.of(id(\"app\"), id(\"users\")))"));
-        assertTrue(source.contains(".hint(\"GENERIC_TABLE_HINT\", QualifiedName.of(id(\"app\"), id(\"users\")), lit(\"x\"))"));
+        assertTrue(source.contains(".hint(\"QUALIFIED_HINT\", qualify(id(\"app\"), id(\"users\")))"));
+        assertTrue(source.contains(".hint(\"GENERIC_TABLE_HINT\", qualify(id(\"app\"), id(\"users\")), lit(\"x\"))"));
     }
 
     @Test
@@ -530,13 +531,13 @@ class SqmJavaEmitterTest {
         var mergeStatement = merge(tbl("users"))
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
-            .top(TopSpec.of(lit(10), true, true))
+            .top(lit(10), true, true)
             .whenNotMatchedBySourceUpdate(set("name", lit("archived")))
             .build();
 
         var source = emitter.emitStatement(mergeStatement);
 
-        assertTrue(source.contains(".top(TopSpec.of(lit(10), true, true))"));
+        assertTrue(source.contains(".top(lit(10), true, true)"));
         assertTrue(source.contains(".whenNotMatchedBySourceUpdate(set(id(\"name\"), lit(\"archived\")))"));
     }
 

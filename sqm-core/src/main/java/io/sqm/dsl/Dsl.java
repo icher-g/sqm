@@ -57,6 +57,28 @@ public final class Dsl {
         return Identifier.of(value, quoteStyle);
     }
 
+    /* ========================= QualifiedName ========================= */
+
+    /**
+     * Creates a qualified name from string parts using default quote style.
+     *
+     * @param parts identifier values in source order
+     * @return a qualified name
+     */
+    public static QualifiedName qualify(String... parts) {
+        return QualifiedName.of(parts);
+    }
+
+    /**
+     * Creates a qualified name from identifier parts.
+     *
+     * @param parts identifier parts in source order
+     * @return a qualified name
+     */
+    public static QualifiedName qualify(Identifier... parts) {
+        return QualifiedName.of(parts);
+    }
+
     /* ========================= Tables ========================= */
 
     /**
@@ -2049,6 +2071,18 @@ public final class Dsl {
      */
     public static TopSpec top(Expression count) {
         return TopSpec.of(count);
+    }
+
+    /**
+     * Creates a plain {@code TOP (<count>)} specification using an expression.
+     *
+     * @param count    top count expression
+     * @param percent  whether {@code PERCENT} is present
+     * @param withTies whether {@code WITH TIES} is present
+     * @return top specification
+     */
+    public static TopSpec top(Expression count, boolean percent, boolean withTies) {
+        return TopSpec.of(count, percent, withTies);
     }
 
     /**

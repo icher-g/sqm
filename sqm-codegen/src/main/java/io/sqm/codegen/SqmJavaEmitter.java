@@ -27,11 +27,11 @@ final class SqmJavaEmitter {
         }
 
         private static String emitIdentifierList(List<Identifier> values) {
-            return "java.util.List.of(" + joinInline(values.stream().map(DslEmitterVisitor::emitIdentifier).toList()) + ")";
+            return "List.of(" + joinInline(values.stream().map(DslEmitterVisitor::emitIdentifier).toList()) + ")";
         }
 
         private static String emitQualifiedName(QualifiedName value) {
-            return "QualifiedName.of(" + joinInline(value.parts().stream().map(DslEmitterVisitor::emitIdentifier).toList()) + ")";
+            return "qualify(" + joinInline(value.parts().stream().map(DslEmitterVisitor::emitIdentifier).toList()) + ")";
         }
 
         private static String emitLockMode(LockMode mode) {
@@ -45,7 +45,7 @@ final class SqmJavaEmitter {
 
         private static String emitLockTargets(List<LockTarget> targets) {
             if (targets == null || targets.isEmpty()) {
-                return "java.util.List.of()";
+                return "List.of()";
             }
             return "ofTables(" + joinInline(targets.stream().map(LockTarget::identifier).map(DslEmitterVisitor::quote).toList()) + ")";
         }
@@ -160,6 +160,41 @@ final class SqmJavaEmitter {
         }
 
         @Override
+        public String visitWithQuery(WithQuery q) {
+            var sb = new StringBuilder("with(")
+                .append(joinInline(q.ctes().stream().map(this::emitNode).toList()))
+                .append(")");
+            if (q.recursive()) {
+                sb.append("\n.recursive(true)");
+            }
+            if (q.body() != null) {
+                sb.append("\n.body(").append(emitNode(q.body())).append(")");
+            }
+            return sb.toString();
+        }
+
+        @Override
+        public String visitCte(CteDef cte) {
+            var body = cte.body() == null ? "null" : emitNode(cte.body());
+            var sb = new StringBuilder("cte(")
+                .append(quote(cte.name()))
+                .append(", ")
+                .append(body)
+                .append(")");
+            if (cte.columnAliases() != null && !cte.columnAliases().isEmpty()) {
+                sb.append(".columnAliases(")
+                    .append(joinInline(cte.columnAliases().stream().map(DslEmitterVisitor::quote).toList()))
+                    .append(")");
+            }
+            if (cte.materialization() != null && cte.materialization() != CteDef.Materialization.DEFAULT) {
+                sb.append(".materialization(CteDef.Materialization.")
+                    .append(cte.materialization().name())
+                    .append(")");
+            }
+            return sb.toString();
+        }
+
+        @Override
         public String visitInsertStatement(InsertStatement statement) {
             var sb = new StringBuilder("insert(").append(emitNode(statement.table())).append(")");
             for (var hint : statement.hints()) {
@@ -204,7 +239,7 @@ final class SqmJavaEmitter {
                     else {
                         sb.append("\n.onConflictDoUpdate(")
                             .append(emitIdentifierList(statement.conflictTarget()))
-                            .append(", java.util.List.of(")
+                            .append(", List.of(")
                             .append(joinInline(statement.conflictUpdateAssignments().stream().map(this::emitNode).toList()))
                             .append("), ")
                             .append(statement.conflictUpdateWhere() == null ? "null" : emitNode(statement.conflictUpdateWhere()))
@@ -231,7 +266,22 @@ final class SqmJavaEmitter {
                     .append(")");
             }
             for (var assignment : statement.assignments()) {
-                sb.append("\n.set(").append(emitNode(assignment)).append(")");
+                sb.append("\n.set(");
+                if (assignment.column().parts().size() > 2) {
+                    sb.append(emitQualifiedName(assignment.column())).append(emitNode(assignment.value()));
+                }
+                else {
+                    for (var part : assignment.column().parts()) {
+                        if (part.quoted()) {
+                            sb.append(emitIdentifier(part)).append(", ");
+                        }
+                        else {
+                            sb.append(quote(part)).append(", ");
+                        }
+                    }
+                    sb.append(emitNode(assignment.value()));
+                }
+                sb.append(")");
             }
             if (!statement.from().isEmpty()) {
                 sb.append("\n.from(")
@@ -478,7 +528,7 @@ final class SqmJavaEmitter {
         private String emitHintArgValue(HintArg arg) {
             return switch (arg) {
                 case IdentifierHintArg identifierHintArg -> quote(identifierHintArg.value().value());
-                case QualifiedNameHintArg qualifiedNameHintArg -> "QualifiedName.of("
+                case QualifiedNameHintArg qualifiedNameHintArg -> "qualify("
                     + joinInline(qualifiedNameHintArg.value().parts().stream().map(DslEmitterVisitor::emitIdentifier).toList())
                     + ")";
                 case ExpressionHintArg expressionHintArg -> emitHintExpressionArgValue(expressionHintArg.value());
@@ -1005,13 +1055,13 @@ final class SqmJavaEmitter {
 
         private String emitTopSpecTail(TopSpec topSpec) {
             if (topSpec.percent() || topSpec.withTies()) {
-                return ".top(TopSpec.of("
+                return ".top("
                     + emitNode(topSpec.count())
                     + ", "
                     + topSpec.percent()
                     + ", "
                     + topSpec.withTies()
-                    + "))";
+                    + ")";
             }
             return ".top(" + emitNode(topSpec.count()) + ")";
         }

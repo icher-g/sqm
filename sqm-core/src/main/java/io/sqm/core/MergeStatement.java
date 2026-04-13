@@ -193,6 +193,18 @@ public non-sealed interface MergeStatement extends Statement {
         }
 
         /**
+         * Sets a plain {@code TOP (<count>)} specification using an expression.
+         *
+         * @param count top count expression
+         * @param percent whether {@code PERCENT} is present
+         * @param withTies whether {@code WITH TIES} is present
+         * @return this builder
+         */
+        public Builder top(Expression count, boolean percent, boolean withTies) {
+            return top(TopSpec.of(count, percent, withTies));
+        }
+
+        /**
          * Sets a plain {@code TOP (<count>)} specification.
          *
          * @param count top-count literal value

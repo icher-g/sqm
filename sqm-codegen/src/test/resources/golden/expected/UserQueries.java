@@ -3,6 +3,7 @@ package io.sqm.codegen.generated;
 import javax.annotation.processing.Generated;
 import io.sqm.core.*;
 import java.util.Set;
+import java.util.List;
 import static io.sqm.dsl.Dsl.*;
 
 /**
@@ -29,11 +30,11 @@ public final class UserQueries {
     public static SelectQuery aFindById() {
         var builder = SelectQuery.builder();
         return builder.select(
-          star()
-        )
-        .from(tbl("users"))
-        .where(col("id").eq(param("id")).and(col("status").eq(param("status"))))
-        .build();
+              star()
+            )
+            .from(tbl("users"))
+            .where(col("id").eq(param("id")).and(col("status").eq(param("status"))))
+            .build();
     }
 
     /**
@@ -53,11 +54,11 @@ public final class UserQueries {
     public static SelectQuery zListActive() {
         var builder = SelectQuery.builder();
         return builder.select(
-          star()
-        )
-        .from(tbl("users"))
-        .where(col("status").eq(param("status")))
-        .build();
+              star()
+            )
+            .from(tbl("users"))
+            .where(col("status").eq(param("status")))
+            .build();
     }
 
     /**
