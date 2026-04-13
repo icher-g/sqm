@@ -23,8 +23,12 @@ class ExampleServiceTest {
         assertTrue(response.success());
         assertNotNull(response.requestId());
         assertFalse(response.requestId().isBlank());
-        assertEquals(4, response.examples().size());
+        assertEquals(8, response.examples().size());
         assertEquals("basic-select", response.examples().getFirst().id());
         assertEquals("ansi", response.examples().getFirst().dialect().name());
+        assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("ansi-analytics-report")));
+        assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("postgres-merge-returning")));
+        assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("mysql-joined-update-hints")));
+        assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("sqlserver-merge-output")));
     }
 }

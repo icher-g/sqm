@@ -63,9 +63,12 @@ public final class SqmDslRenderer {
     public String render(SqlFolderGroup group) {
         var code = new StringBuilder();
         code.append("package ").append(options.basePackage()).append(";").append(NEWLINE).append(NEWLINE);
-        code.append("import javax.annotation.processing.Generated;").append(NEWLINE);
+        if (options.includeGenerationSourceAnnotations()) {
+            code.append("import javax.annotation.processing.Generated;").append(NEWLINE);
+        }
         code.append("import io.sqm.core.*;").append(NEWLINE);
         code.append("import java.util.Set;").append(NEWLINE);
+        code.append("import java.util.List;").append(NEWLINE);
         code.append("import static io.sqm.dsl.Dsl.*;").append(NEWLINE).append(NEWLINE);
         if (options.includeGenerationSourceAnnotations()) {
             code.append("/**").append(NEWLINE);
@@ -106,7 +109,7 @@ public final class SqmDslRenderer {
                 code.append(INDENT).append(INDENT).append("var builder = SelectQuery.builder();").append(NEWLINE);
             }
             code.append(INDENT).append(INDENT).append("return ")
-                .append(indentContinuationLines(statementExpression, 8))
+                .append(indentContinuationLines(statementExpression, 12))
                 .append(";").append(NEWLINE);
             code.append(INDENT).append("}").append(NEWLINE).append(NEWLINE);
             code.append(INDENT).append("/**").append(NEWLINE);

@@ -2,12 +2,9 @@ package io.sqm.playground.rest;
 
 import io.sqm.playground.api.ParseRequestDto;
 import io.sqm.playground.api.SqlDialectDto;
-import io.sqm.playground.rest.service.ParseService;
-import io.sqm.playground.rest.service.PlaygroundStatementSupport;
+import io.sqm.playground.rest.service.*;
 import io.sqm.playground.api.AstChildSlotDto;
 import io.sqm.playground.api.AstNodeDto;
-import io.sqm.playground.rest.service.SqmAstMapper;
-import io.sqm.playground.rest.service.SqmDslGenerator;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
@@ -25,7 +22,7 @@ class ParseServiceTest {
 
     @Test
     void parseReturnsSqmJsonAndAstForValidSql() {
-        var service = new ParseService(new SqmAstMapper(), new SqmDslGenerator(), new PlaygroundStatementSupport());
+        var service = new ParseService(new SqmAstMapper(), new SqmDslGenerator(new InMemoryCompiler()), new PlaygroundStatementSupport());
 
         var response = service.parse(new ParseRequestDto(
             "select c.id, c.name from customer c where c.id = 1 order by c.name",
@@ -65,7 +62,7 @@ class ParseServiceTest {
 
     @Test
     void parseReturnsDiagnosticsForInvalidSql() {
-        var service = new ParseService(new SqmAstMapper(), new SqmDslGenerator(), new PlaygroundStatementSupport());
+        var service = new ParseService(new SqmAstMapper(), new SqmDslGenerator(new InMemoryCompiler()), new PlaygroundStatementSupport());
 
         var response = service.parse(new ParseRequestDto(
             "select from",

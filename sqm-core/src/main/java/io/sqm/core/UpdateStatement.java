@@ -14,13 +14,13 @@ public non-sealed interface UpdateStatement extends Statement {
     /**
      * Creates an immutable update statement.
      *
-     * @param table          target table
-     * @param assignments    update assignments
-     * @param joins          optional joined sources attached to the target table
-     * @param from           optional FROM sources
-     * @param where          optional predicate
-     * @param result         optional result projection
-     * @param hints typed statement hints
+     * @param table       target table
+     * @param assignments update assignments
+     * @param joins       optional joined sources attached to the target table
+     * @param from        optional FROM sources
+     * @param where       optional predicate
+     * @param result      optional result projection
+     * @param hints       typed statement hints
      * @return immutable update statement
      */
     static UpdateStatement of(Table table,
@@ -260,6 +260,29 @@ public non-sealed interface UpdateStatement extends Statement {
         }
 
         /**
+         * Appends one assignment.
+         *
+         * @param column target column name
+         * @param value  assigned expression
+         * @return an assignment
+         */
+        public Builder set(String column, Expression value) {
+            return set(Identifier.of(column), value);
+        }
+
+        /**
+         * Appends one assignment.
+         *
+         * @param qualifier table or alias qualifier
+         * @param column    target column name
+         * @param value     assigned expression
+         * @return an assignment
+         */
+        public Builder set(String qualifier, String column, Expression value) {
+            return set(QualifiedName.of(qualifier, column), value);
+        }
+
+        /**
          * Sets the optional {@code WHERE} predicate.
          *
          * @param where predicate or {@code null}
@@ -391,13 +414,13 @@ public non-sealed interface UpdateStatement extends Statement {
     /**
      * Default immutable update statement implementation.
      *
-     * @param table          target table
-     * @param assignments    assignments
-     * @param joins          optional joined sources attached to the target table
-     * @param from           optional from sources
-     * @param where          optional predicate
-     * @param result         optional SQL Server result clause
-     * @param hints typed statement hints
+     * @param table       target table
+     * @param assignments assignments
+     * @param joins       optional joined sources attached to the target table
+     * @param from        optional from sources
+     * @param where       optional predicate
+     * @param result      optional SQL Server result clause
+     * @param hints       typed statement hints
      */
     record Impl(Table table,
                 List<Assignment> assignments,

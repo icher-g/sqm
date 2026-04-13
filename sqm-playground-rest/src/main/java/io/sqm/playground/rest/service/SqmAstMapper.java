@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 public final class SqmAstMapper {
 
     private static final Map<String, Integer> SLOT_ORDER = Map.ofEntries(
+        Map.entry("hints", 0),
         Map.entry("with", 10),
         Map.entry("items", 20),
         Map.entry("from", 30),
@@ -47,7 +48,12 @@ public final class SqmAstMapper {
         "matchSelectItem",
         "matchTableRef",
         "matchJoin",
-        "matchGroupItem"
+        "matchGroupItem",
+        "matchFromItem"
+    );
+
+    private static final Set<String> ALLOWED_DEFAULT_METHODS = Set.of(
+        "hints"
     );
 
     /**
@@ -126,10 +132,10 @@ public final class SqmAstMapper {
     }
 
     private List<Method> astMethods(Class<? extends Node> nodeInterface) {
-        return java.util.Arrays.stream(nodeInterface.getMethods())
+        return Arrays.stream(nodeInterface.getMethods())
             .filter(method -> method.getDeclaringClass() != Object.class)
             .filter(method -> method.getParameterCount() == 0)
-            .filter(method -> !method.isDefault())
+            .filter(method -> !method.isDefault() || ALLOWED_DEFAULT_METHODS.contains(method.getName()))
             .filter(method -> !Modifier.isStatic(method.getModifiers()))
             .filter(method -> !method.isSynthetic())
             .filter(method -> !IGNORED_METHODS.contains(method.getName()))
