@@ -33,6 +33,13 @@ public interface CodeBuilder {
     void reset();
 
     /**
+     * Gets the current line number within the builder.
+     *
+     * @return a current line number;
+     */
+    int currentLineNumber();
+
+    /**
      * Appends a string to the builder.
      *
      * @param s a string to append.
@@ -158,6 +165,7 @@ public interface CodeBuilder {
         private final int indentSize;
         private StringBuilder sb;
         private int indentLevel = 0;
+        private int currentLineNumber = 0;
         private boolean atLineStart = true;
 
         public Impl(int indentSize) {
@@ -177,6 +185,16 @@ public interface CodeBuilder {
             this.sb = new StringBuilder();
             this.indentLevel = 0;
             this.atLineStart = true;
+        }
+
+        /**
+         * Gets the current line number within the builder.
+         *
+         * @return a current line number;
+         */
+        @Override
+        public int currentLineNumber() {
+            return currentLineNumber;
         }
 
         /**
@@ -253,6 +271,7 @@ public interface CodeBuilder {
         public CodeBuilder nl() {
             sb.append('\n');
             atLineStart = true;
+            currentLineNumber++;
             return this;
         }
 

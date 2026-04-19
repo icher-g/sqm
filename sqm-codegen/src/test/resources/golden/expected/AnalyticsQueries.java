@@ -28,8 +28,13 @@ public final class AnalyticsQueries {
      */
     public static SelectQuery ranked() {
         var builder = SelectQuery.builder();
-        return builder.select(
-                func("row_number").over(over(partition(col("dept")), orderBy(order(col("salary")).desc()))).as("rn")
+        return select(
+                func("row_number")
+                    .over(
+                        partition(col("dept")), orderBy(order(col("salary")).desc())
+                    )
+                    .as("rn")
+            
             )
             .from(tbl("employees"))
             .build();

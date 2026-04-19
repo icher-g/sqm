@@ -2,13 +2,20 @@ package io.sqm.codegen;
 
 import io.sqm.core.*;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static io.sqm.dsl.Dsl.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class SqmJavaEmitterTest {
 
@@ -84,12 +91,13 @@ class SqmJavaEmitterTest {
             .build();
 
         String source = emitter.emit(query);
-        assertTrue(source.contains("builder.select("));
+        assertTrue(source.contains("select("));
         assertTrue(source.contains("select("));
         assertTrue(source.contains("star(\"u\")"));
-        assertTrue(source.contains(".withinGroup(orderBy("));
+        assertTrue(source.contains(".withinGroup("));
+        assertTrue(source.contains("orderBy("));
         assertTrue(source.contains(".filter("));
-        assertTrue(source.contains(".over(over("));
+        assertTrue(source.contains(".over("));
         assertTrue(source.contains(".lateral()"));
         assertTrue(source.contains("left("));
         assertTrue(source.contains("right("));
@@ -119,8 +127,9 @@ class SqmJavaEmitterTest {
     @Test
     void emit_coversOverVariantsAndLimitOffsetVariants() {
         String overBaseOnly = emitter.emit(select(func("f").over(overDef("base"))).from(tbl("t")).build());
-        assertTrue(overBaseOnly.contains("builder.select("));
-        assertTrue(overBaseOnly.contains("overDef(\"base\")"));
+        assertTrue(overBaseOnly.contains("select("));
+        assertTrue(overBaseOnly.contains(".over("));
+        assertTrue(overBaseOnly.contains("\"base\""));
 
         String overFrameExclude = emitter.emit(
             select(func("f").over(over(orderBy(order(col("x"))), rows(unboundedPreceding(), currentRow()), excludeGroup()))).from(tbl("t")).build()
@@ -130,7 +139,8 @@ class SqmJavaEmitterTest {
         String overPartitionOnly = emitter.emit(
             select(func("f").over(over(partition(col("p"))))).from(tbl("t")).build()
         );
-        assertTrue(overPartitionOnly.contains("over(partition("));
+        assertTrue(overPartitionOnly.contains(".over("));
+        assertTrue(overPartitionOnly.contains("partition("));
 
         String limitOnly = emitter.emit(select(star()).from(tbl("t")).limit(lit(5)).build());
         assertTrue(limitOnly.contains(".limit(lit(5))"));
@@ -551,25 +561,28 @@ class SqmJavaEmitterTest {
     @Test
     void emit_covers_remaining_window_distinct_and_limit_variants() {
         var baseFrameOnly = emitter.emit(
-            select(func("f").over(over("base", rows(currentRow())))).from(tbl("t")).build()
+            select(func("f").over("base", rows(currentRow()))).from(tbl("t")).build()
         );
         var baseOrderOnly = emitter.emit(
-            select(func("f").over(over("base", orderBy(order(col("x")))))).from(tbl("t")).build()
+            select(func("f").over("base", orderBy(order(col("x"))))).from(tbl("t")).build()
         );
         var partitionFrameOnly = emitter.emit(
-            select(func("f").over(over(partition(col("p")), rows(currentRow())))).from(tbl("t")).build()
+            select(func("f").over(partition(col("p")), rows(currentRow()))).from(tbl("t")).build()
         );
         var plainExcludeNoOthers = emitter.emit(
-            select(func("f").over(over(orderBy(order(col("x"))), rows(currentRow()), excludeNoOthers()))).from(tbl("t")).build()
+            select(func("f").over(orderBy(order(col("x"))), rows(currentRow()), excludeNoOthers())).from(tbl("t")).build()
         );
         var distinctOn = emitter.emit(
             select(star()).from(tbl("t")).distinct(distinctOn(col("t", "id"))).build()
         );
         var limitAllNoOffset = emitter.emit(select(star()).from(tbl("t")).limitOffset(limitAll()).build());
 
-        assertTrue(baseFrameOnly.contains("over(\"base\", rows(currentRow()))"));
-        assertTrue(baseOrderOnly.contains("over(\"base\", orderBy("));
-        assertTrue(partitionFrameOnly.contains("over(partition("));
+        assertTrue(baseFrameOnly.contains(".over("));
+        assertTrue(baseFrameOnly.contains("\"base\", rows(currentRow())"));
+        assertTrue(baseOrderOnly.contains(".over("));
+        assertTrue(baseOrderOnly.contains("\"base\", orderBy("));
+        assertTrue(partitionFrameOnly.contains(".over("));
+        assertTrue(partitionFrameOnly.contains("partition("));
         assertTrue(plainExcludeNoOthers.contains("excludeNoOthers()"));
         assertTrue(distinctOn.contains(".distinct(col(\"t\", \"id\"))"));
         assertTrue(limitAllNoOffset.contains(".limitOffset(limitAll())"));
@@ -607,9 +620,10 @@ class SqmJavaEmitterTest {
         assertTrue(querySource.contains("type(TypeKeyword.DOUBLE_PRECISION)"));
         assertTrue(querySource.contains(".op(\"?\", lit(\"name\"))"));
         assertTrue(querySource.contains(".op(op(qualify(\"pg_catalog\"), \"?\"), lit(\"name\"))"));
-        assertTrue(querySource.contains("over(null, rows(currentRow()), excludeCurrentRow())"));
-        assertTrue(querySource.contains("over(\"base\", null, rows(currentRow()), excludeGroup())"));
-        assertTrue(querySource.contains("over(partition(col(\"dept\")), null, rows(currentRow()), excludeNoOthers())"));
+        assertTrue(querySource.contains(".over("));
+        assertTrue(querySource.contains("null, rows(currentRow()), excludeCurrentRow()"));
+        assertTrue(querySource.contains("\"base\", null, rows(currentRow()), excludeGroup()"));
+        assertTrue(querySource.contains("partition(col(\"dept\")), null, rows(currentRow()), excludeNoOthers()"));
         assertTrue(querySource.contains(".any(ComparisonOperator.GT, select("));
         assertTrue(querySource.contains(".regex(RegexMode.MATCH_INSENSITIVE, lit(\"^a\"), true)"));
         assertTrue(querySource.contains(".lockFor(update(), List.of(), false, false)"));
@@ -692,15 +706,65 @@ class SqmJavaEmitterTest {
         assertTrue(source.contains(".isNotDistinctFrom(col(\"b\"))"));
         assertTrue(source.contains("kase("));
         assertTrue(source.contains(".elseExpr(lit(\"unknown\"))"));
-        assertTrue(source.contains("tbl(func(\"generate_series\", arg(lit(1)), arg(lit(3))))"));
+        assertTrue(source.contains("tbl("));
+        assertTrue(source.contains("func(\"generate_series\", arg(lit(1)), arg(lit(3)))"));
         assertTrue(source.contains(".or("));
         assertTrue(source.contains(".nullsDefault()"));
-        assertTrue(valuesSource.contains("tbl(rows(row(lit(1), lit(\"a\"))))"));
+        assertTrue(valuesSource.contains("tbl("));
+        assertTrue(valuesSource.contains("rows(row(lit(1), lit(\"a\")))"));
         assertTrue(withSource.contains("with(cte("));
         assertTrue(withSource.contains(".columnAliases(\"id\", \"name\")"));
         assertTrue(withSource.contains(".materialization(CteDef.Materialization.MATERIALIZED)"));
         assertTrue(withSource.contains(".recursive(true)"));
         assertTrue(withSource.contains(".body("));
+    }
+
+    @Test
+    void emittedFunctionOverDslCompilesAgainstCurrentOverloads(@TempDir Path tempDir) throws Exception {
+        List<Statement> statements = List.of(
+            select(func("f").over(over())).from(tbl("t")).build(),
+            select(func("f").over(orderBy(order(col("x"))))).from(tbl("t")).build(),
+            select(func("f").over(orderBy(order(col("x"))), rows(currentRow()))).from(tbl("t")).build(),
+            select(func("f").over(rows(currentRow()))).from(tbl("t")).build(),
+            select(func("f").over(rows(currentRow()), excludeNoOthers())).from(tbl("t")).build(),
+            select(func("f").over(partition(col("p")), orderBy(order(col("x"))), rows(currentRow()), excludeTies())).from(tbl("t")).build(),
+            select(func("f").over("base", null, rows(currentRow()), excludeGroup())).from(tbl("t")).build()
+        );
+
+        var source = new StringBuilder("""
+            package io.sqm.codegen.generated;
+
+            import io.sqm.core.*;
+            import java.util.*;
+            import static io.sqm.dsl.Dsl.*;
+
+            public final class EmittedDslSamples {
+            """);
+        for (int i = 0; i < statements.size(); i++) {
+            source.append("    public static Statement s").append(i).append("() {\n")
+                .append("        return ")
+                .append(emitter.emit(statements.get(i)).replace("\n", "\n        "))
+                .append(";\n")
+                .append("    }\n");
+        }
+        source.append("}\n");
+
+        var sourceFile = tempDir.resolve(Path.of("io", "sqm", "codegen", "generated", "EmittedDslSamples.java"));
+        Files.createDirectories(sourceFile.getParent());
+        Files.writeString(sourceFile, source, StandardCharsets.UTF_8);
+
+        var compiler = ToolProvider.getSystemJavaCompiler();
+        assertNotNull(compiler, "System Java compiler is required to validate generated DSL.");
+        var diagnostics = new DiagnosticCollector<JavaFileObject>();
+        try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+            var units = fileManager.getJavaFileObjectsFromFiles(List.of(sourceFile.toFile()));
+            var options = List.of(
+                "-classpath", System.getProperty("java.class.path"),
+                "-d", tempDir.resolve("classes").toString()
+            );
+            var success = compiler.getTask(null, fileManager, diagnostics, options, null, units).call();
+            assertEquals(Boolean.TRUE, success, "Generated DSL failed to compile: " + diagnostics.getDiagnostics());
+        }
     }
 }
 

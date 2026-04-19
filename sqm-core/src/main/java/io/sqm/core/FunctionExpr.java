@@ -273,6 +273,64 @@ public non-sealed interface FunctionExpr extends Expression {
     }
 
     /**
+     * Adds an inline {@code OVER(...)} specification with {@code ORDER BY}.
+     * <p>Example SQL:</p>
+     * <pre>
+     * ROW_NUMBER() OVER (ORDER BY created_at)
+     * </pre>
+     *
+     * @param orderBy the order-by specification
+     * @return an {@link FunctionExpr}
+     */
+    default FunctionExpr over(OrderBy orderBy) {
+        return over(OverSpec.def((Identifier) null, orderBy, null, null));
+    }
+
+    /**
+     * Adds an inline {@code OVER(...)} specification with {@code ORDER BY} and a frame.
+     *
+     * @param orderBy the order-by specification
+     * @param frame   the frame specification
+     * @return an {@link FunctionExpr}
+     */
+    default FunctionExpr over(OrderBy orderBy, FrameSpec frame) {
+        return over(OverSpec.def((Identifier) null, orderBy, frame, null));
+    }
+
+    /**
+     * Adds an inline {@code OVER(...)} specification with {@code ORDER BY}, frame and exclusion.
+     *
+     * @param orderBy the order-by specification
+     * @param frame   the frame specification
+     * @param exclude the exclusion clause
+     * @return an {@link OverSpec.Def}
+     */
+    default FunctionExpr over(OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude) {
+        return over(OverSpec.def((Identifier) null, orderBy, frame, exclude));
+    }
+
+    /**
+     * Adds an inline {@code OVER(...)} specification with a frame.
+     *
+     * @param frame the frame specification
+     * @return an {@link FunctionExpr}
+     */
+    default FunctionExpr over(FrameSpec frame) {
+        return over(OverSpec.def((Identifier) null, null, frame, null));
+    }
+
+    /**
+     * Adds an inline {@code OVER(...)} specification with a frame and exclusion.
+     *
+     * @param frame   the frame specification
+     * @param exclude the exclusion clause
+     * @return an {@link FunctionExpr}
+     */
+    default FunctionExpr over(FrameSpec frame, OverSpec.Exclude exclude) {
+        return over(OverSpec.def((Identifier) null, null, frame, exclude));
+    }
+
+    /**
      * Adds an {@code OVER(...)} specification extending a base window name.
      * <p>Example SQL:</p>
      * <pre>
