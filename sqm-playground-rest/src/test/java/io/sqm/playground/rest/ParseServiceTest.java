@@ -22,7 +22,7 @@ class ParseServiceTest {
 
     @Test
     void parseReturnsSqmJsonAndAstForValidSql() {
-        var service = new ParseService(new SqmAstMapper(), new SqmDslGenerator(new InMemoryCompiler()), new PlaygroundStatementSupport());
+        var service = new ParseService(new SqmAstMapper(), new SqmDslGenerator(), new PlaygroundStatementSupport());
 
         var response = service.parse(new ParseRequestDto(
             "select c.id, c.name from customer c where c.id = 1 order by c.name",
@@ -62,7 +62,7 @@ class ParseServiceTest {
 
     @Test
     void parseReturnsDiagnosticsForInvalidSql() {
-        var service = new ParseService(new SqmAstMapper(), new SqmDslGenerator(new InMemoryCompiler()), new PlaygroundStatementSupport());
+        var service = new ParseService(new SqmAstMapper(), new SqmDslGenerator(), new PlaygroundStatementSupport());
 
         var response = service.parse(new ParseRequestDto(
             "select from",

@@ -29,15 +29,15 @@ public final class ReportingQueries {
     public static SelectQuery kitchenSink() {
         var builder = SelectQuery.builder();
         return builder.select(
-              col("u", "id"),
-              col("u", "org_id"),
-              func("count", starArg()).as("total_orders"),
-              func("sum", arg(col("o", "amount"))).as("total_amount"),
-              func("row_number").over(over(partition(col("u", "org_id")), orderBy(order(col("o", "created_at")).desc()))).as("org_rank")
+                col("u", "id"),
+                col("u", "org_id"),
+                func("count", starArg()).as("total_orders"),
+                func("sum", arg(col("o", "amount"))).as("total_amount"),
+                func("row_number").over(over(partition(col("u", "org_id")), orderBy(order(col("o", "created_at")).desc()))).as("org_rank")
             )
             .from(tbl("users").as("u"))
             .join(
-              left(tbl("orders").as("o")).on(col("o", "user_id").eq(col("u", "id")))
+                left(tbl("orders").as("o")).on(col("o", "user_id").eq(col("u", "id")))
             )
             .where(col("u", "status").eq(param("status")).and(col("o", "created_at").gte(lit("2024-01-01"))).and(col("o", "created_at").lt(lit("2025-01-01"))).and(col("o", "kind").in(row(lit("A"), lit("B")))))
             .groupBy(group(col("u", "id")), group(col("u", "org_id")))

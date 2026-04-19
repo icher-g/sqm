@@ -26,7 +26,8 @@ class CollateExprTest {
 
     @Test
     void rejects_null_collation() {
-        assertThrows(NullPointerException.class, () -> ColumnExpr.of(null, Identifier.of("name")).collate(null));
+        assertThrows(NullPointerException.class, () -> ColumnExpr.of(null, Identifier.of("name")).collate((String) null));
+        assertThrows(NullPointerException.class, () -> ColumnExpr.of(null, Identifier.of("name")).collate((QualifiedName) null));
     }
 
     @Test

@@ -18,7 +18,7 @@ class SqmDslGeneratorTest {
             .where(param("status").isNotNull())
             .build();
 
-        var source = new SqmDslGenerator(new InMemoryCompiler()).toDsl(statement, SqlDialectDto.ansi);
+        var source = new SqmDslGenerator().toDsl(statement, SqlDialectDto.ansi);
 
         assertTrue(source.contains("package sqm.codegen;"));
         assertTrue(source.contains("public final class MyStatement"));
@@ -36,7 +36,7 @@ class SqmDslGeneratorTest {
             .where(col("c", "vip").eq(lit(1L)))
             .build();
 
-        var source = new SqmDslGenerator(new InMemoryCompiler()).toDsl(statement, SqlDialectDto.ansi);
+        var source = new SqmDslGenerator().toDsl(statement, SqlDialectDto.ansi);
 
         assertTrue(source.contains("return update(tbl(\"orders\").as(\"o\"))"));
         assertTrue(source.contains("\n            .joins("));
@@ -65,7 +65,7 @@ class SqmDslGeneratorTest {
             """;
         var statement = parseContext.parse(Query.class, sql).value();
 
-        var source = new SqmDslGenerator(new InMemoryCompiler()).toDsl(statement, SqlDialectDto.ansi);
+        var source = new SqmDslGenerator().toDsl(statement, SqlDialectDto.ansi);
 
         assertTrue(source.contains("return with("));
         assertTrue(source.contains("cte(\"regional_sales\", select("));

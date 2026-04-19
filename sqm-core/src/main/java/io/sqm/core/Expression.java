@@ -4,6 +4,7 @@ import io.sqm.core.match.ExpressionMatch;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Any value-producing node (scalar or boolean).
@@ -183,11 +184,28 @@ public sealed interface Expression extends Node
      * @return a {@link CollateExpr} wrapping this expression
      */
     default CollateExpr collate(String collation) {
-        java.util.Objects.requireNonNull(collation, "collation");
+        Objects.requireNonNull(collation, "collation");
         if (collation.isBlank()) {
             throw new IllegalArgumentException("collation must not be blank");
         }
         return CollateExpr.of(this, QualifiedName.of(collation.split("\\.")));
+    }
+
+    /**
+     * Applies a collation to the current expression.
+     * <p>Example:</p>
+     * <pre>
+     * {@code
+     * col("name").collate("de-CH")
+     * }
+     * </pre>
+     *
+     * @param collation collation name
+     * @return a {@link CollateExpr} wrapping this expression
+     */
+    default CollateExpr collate(QualifiedName collation) {
+        Objects.requireNonNull(collation, "collation");
+        return CollateExpr.of(this, collation);
     }
 
     /**
@@ -370,6 +388,18 @@ public sealed interface Expression extends Node
      */
     default NegativeArithmeticExpr neg() {
         return NegativeArithmeticExpr.of(this);
+    }
+
+    /**
+     * Creates a regular expression match predicate using the specified mode.
+     *
+     * @param mode    the regular expression matching mode to use
+     * @param pattern the regular expression pattern expression
+     * @param negated whether the predicate is negated
+     * @return a new {@link RegexPredicate} instance
+     */
+    default RegexPredicate regex(RegexMode mode, Expression pattern, boolean negated) {
+        return RegexPredicate.of(mode, this, pattern, negated);
     }
 
     /**
@@ -793,6 +823,20 @@ public sealed interface Expression extends Node
      * @return binary operator expression
      */
     default BinaryOperatorExpr op(String operator, Expression right) {
+        return BinaryOperatorExpr.of(this, operator, right);
+    }
+
+    /**
+     * Creates a binary operator expression using this expression as the left operand.
+     * <pre>{@code
+     * left.op("->", right)  // renders as: left -> right
+     * }</pre>
+     *
+     * @param operator operator token
+     * @param right    right operand
+     * @return binary operator expression
+     */
+    default BinaryOperatorExpr op(OperatorName operator, Expression right) {
         return BinaryOperatorExpr.of(this, operator, right);
     }
 
