@@ -42,7 +42,7 @@ class SqlFileCodeGeneratorTest {
         assertTrue(source.contains("import static io.sqm.dsl.Dsl.*;"));
         assertTrue(source.contains("public static SelectQuery aFindById()"));
         assertTrue(source.contains("var builder = SelectQuery.builder();"));
-        assertTrue(source.contains("return builder.select("));
+        assertTrue(source.contains("return select("));
         assertTrue(source.contains("param(\"id\")"));
         assertTrue(source.contains("param(\"status\")"));
         assertTrue(source.contains(".where("));
@@ -238,7 +238,9 @@ class SqlFileCodeGeneratorTest {
 
         var generatedFile = outputDir.resolve(Path.of("io", "sqm", "codegen", "generated", "AnalyticsQueries.java"));
         var source = Files.readString(generatedFile);
-        assertTrue(source.contains(".over(over(partition("));
+        assertTrue(source.contains(".over("));
+        assertTrue(source.contains("partition("));
+        assertTrue(source.contains("orderBy("));
     }
 
     @Test

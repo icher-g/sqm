@@ -29,11 +29,14 @@ public final class UserQueries {
      */
     public static SelectQuery aFindById() {
         var builder = SelectQuery.builder();
-        return builder.select(
+        return select(
                 star()
             )
             .from(tbl("users"))
-            .where(col("id").eq(param("id")).and(col("status").eq(param("status"))))
+            .where(
+                col("id").eq(param("id")).and(
+                col("status").eq(param("status")))
+            )
             .build();
     }
 
@@ -53,11 +56,13 @@ public final class UserQueries {
      */
     public static SelectQuery zListActive() {
         var builder = SelectQuery.builder();
-        return builder.select(
+        return select(
                 star()
             )
             .from(tbl("users"))
-            .where(col("status").eq(param("status")))
+            .where(
+                col("status").eq(param("status"))
+            )
             .build();
     }
 

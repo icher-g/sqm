@@ -85,73 +85,6 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         out.append(")");
     }
 
-    private void appendSelectQuery(SelectQuery q) {
-        out.in();
-        out.comma(q.items(), this::appendNode, true);
-        out.out();
-        out.nl().append(")");
-
-        if (q.from() != null) {
-            out.nl().append(".from(");
-            appendNode(q.from());
-            out.append(")");
-        }
-        if (q.joins() != null && !q.joins().isEmpty()) {
-            out.nl().append(".join(").nl();
-            out.in();
-            out.comma(q.joins(), this::appendNode);
-            out.out();
-            out.nl().append(")");
-        }
-        if (q.where() != null) {
-            out.nl().append(".where(");
-            appendNode(q.where());
-            out.append(")");
-        }
-        if (q.groupBy() != null && q.groupBy().items() != null && !q.groupBy().items().isEmpty()) {
-            out.nl().append(".groupBy(");
-            out.comma(q.groupBy().items(), this::appendNode);
-            out.append(")");
-        }
-        if (q.having() != null) {
-            out.nl().append(".having(");
-            appendNode(q.having());
-            out.append(")");
-        }
-        if (q.windows() != null && !q.windows().isEmpty()) {
-            out.nl().append(".window(");
-            out.comma(q.windows(), this::appendNode);
-            out.append(")");
-        }
-        if (q.orderBy() != null && q.orderBy().items() != null && !q.orderBy().items().isEmpty()) {
-            out.nl().append(".orderBy(");
-            out.comma(q.orderBy().items(), this::appendNode);
-            out.append(")");
-        }
-        if (q.distinct() != null) {
-            out.nl();
-            appendDistinctTail(q.distinct());
-        }
-        if (q.topSpec() != null) {
-            out.nl();
-            this.visitTopSpec(q.topSpec());
-        }
-        if (q.limitOffset() != null) {
-            out.nl();
-            this.visitLimitOffset(q.limitOffset());
-        }
-        if (q.lockFor() != null) {
-            out.nl().append(".lockFor(");
-            this.visitLockingClause(q.lockFor());
-            out.append(")");
-        }
-        for (var hint : q.hints()) {
-            out.nl().append(".");
-            this.visitStatementHint(hint);
-        }
-        out.nl().append(".build()");
-    }
-
     private void appendResultBuilderCall(ResultClause clause) {
         if (clause.into() == null) {
             out.append(".result(").comma(clause.items(), this::appendNode).append(")");
@@ -180,11 +113,6 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
 
     private void appendNode(Node node) {
         node.accept(this);
-    }
-
-    private void appendTopLevelSelectQuery(SelectQuery q) {
-        out.append("builder.select(").nl();
-        appendSelectQuery(q);
     }
 
     private void appendFunctionExpr(FunctionExpr f) {
@@ -281,12 +209,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     }
 
     public String emit(Statement statement) {
-        if (statement instanceof SelectQuery selectQuery) {
-            appendTopLevelSelectQuery(selectQuery);
-        }
-        else {
-            appendNode(statement);
-        }
+        appendNode(statement);
         var result = out.toString();
         out.reset();
         return result;
@@ -300,7 +223,78 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitSelectQuery(SelectQuery q) {
         out.append("select(").nl();
-        appendSelectQuery(q);
+        out.in();
+        out.comma(q.items(), this::appendNode, true);
+        out.out();
+        out.nl().append(")");
+
+        if (q.from() != null) {
+            out.nl().append(".from(");
+            appendNode(q.from());
+            out.append(")");
+        }
+        if (q.joins() != null && !q.joins().isEmpty()) {
+            out.nl().append(".join(").nl();
+            out.in();
+            out.comma(q.joins(), this::appendNode, true);
+            out.out();
+            out.nl().append(")");
+        }
+        if (q.where() != null) {
+            out.nl().append(".where(");
+            try (var ignore = new CodeScope(out, false)) {
+                appendNode(q.where());
+            }
+            out.append(")");
+        }
+        if (q.groupBy() != null && q.groupBy().items() != null && !q.groupBy().items().isEmpty()) {
+            out.nl().append(".groupBy(");
+            try (var ignore = new CodeScope(out, false)) {
+                out.comma(q.groupBy().items(), this::appendNode, true);
+            }
+            out.append(")");
+        }
+        if (q.having() != null) {
+            out.nl().append(".having(");
+            appendNode(q.having());
+            out.append(")");
+        }
+        if (q.windows() != null && !q.windows().isEmpty()) {
+            out.nl().append(".window(");
+            try (var ignore = new CodeScope(out, false)) {
+                out.comma(q.windows(), this::appendNode, true);
+            }
+            out.append(")");
+        }
+        if (q.orderBy() != null && q.orderBy().items() != null && !q.orderBy().items().isEmpty()) {
+            out.nl().append(".orderBy(");
+            try (var ignore = new CodeScope(out, false)) {
+                out.comma(q.orderBy().items(), this::appendNode, true);
+            }
+            out.append(")");
+        }
+        if (q.distinct() != null) {
+            out.nl();
+            appendDistinctTail(q.distinct());
+        }
+        if (q.topSpec() != null) {
+            out.nl();
+            this.visitTopSpec(q.topSpec());
+        }
+        if (q.limitOffset() != null) {
+            out.nl();
+            this.visitLimitOffset(q.limitOffset());
+        }
+        if (q.lockFor() != null) {
+            out.nl().append(".lockFor(");
+            this.visitLockingClause(q.lockFor());
+            out.append(")");
+        }
+        for (var hint : q.hints()) {
+            out.nl().append(".");
+            this.visitStatementHint(hint);
+        }
+        out.nl().append(".build()");
         return defaultResult();
     }
 
@@ -672,9 +666,12 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
 
     @Override
     public Void visitExprSelectItem(ExprSelectItem i) {
+        var lineNumber = out.currentLineNumber();
         appendNode(i.expr());
         if (i.alias() != null) {
-            out.append(".as(").quote(i.alias().value()).append(")");
+            try (var ignore = new CodeScope(out, lineNumber == out.currentLineNumber())) {
+                out.append(".as(").quote(i.alias().value()).append(")");
+            }
         }
         return defaultResult();
     }
@@ -765,7 +762,9 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitQueryTable(QueryTable t) {
         out.append("tbl(");
-        appendNode(t.query());
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(t.query());
+        }
         out.append(")");
         if (t.alias() != null) {
             out.append(".as(").quote(t.alias().value()).append(")");
@@ -934,6 +933,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     public Void visitAndPredicate(AndPredicate p) {
         appendNode(p.lhs());
         out.append(".and(");
+        out.nl();
         appendNode(p.rhs());
         out.append(")");
         return defaultResult();
@@ -943,6 +943,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     public Void visitOrPredicate(OrPredicate p) {
         appendNode(p.lhs());
         out.append(".or(");
+        out.nl();
         appendNode(p.rhs());
         out.append(")");
         return defaultResult();
@@ -1030,7 +1031,9 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     public Void visitExistsPredicate(ExistsPredicate p) {
         if (p.negated()) out.append("notExists(");
         else out.append("exists(");
-        appendNode(p.subquery());
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(p.subquery());
+        }
         out.append(")");
         return defaultResult();
     }
@@ -1300,7 +1303,9 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitFunctionTable(FunctionTable t) {
         out.append("tbl(");
-        appendNode(t.function());
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(t.function());
+        }
         out.append(")");
         return defaultResult();
     }
@@ -1308,7 +1313,9 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitValuesTable(ValuesTable t) {
         out.append("tbl(");
-        appendNode(t.values());
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(t.values());
+        }
         out.append(")");
         return defaultResult();
     }
@@ -1447,24 +1454,42 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitFunctionExpr(FunctionExpr f) {
         appendFunctionExpr(f);
+        out.in();
         if (Boolean.TRUE.equals(f.distinctArg())) {
-            out.append(".distinct()");
+            out.nl().append(".distinct()");
         }
         if (f.withinGroup() != null) {
-            out.append(".withinGroup(");
-            appendNode(f.withinGroup());
+            out.nl().append(".withinGroup(");
+            try (var ignore = new CodeScope(out, false)) {
+                out.comma(f.withinGroup().items(), this::appendNode, true);
+            }
             out.append(")");
         }
         if (f.filter() != null) {
-            out.append(".filter(");
-            appendNode(f.filter());
+            out.nl().append(".filter(");
+            try (var ignore = new CodeScope(out, false)) {
+                appendNode(f.filter());
+            }
             out.append(")");
         }
         if (f.over() != null) {
-            out.append(".over(");
-            appendNode(f.over());
+            out.nl().append(".over(");
+            if (f.over() instanceof OverSpec.Def def
+                && def.baseWindow() == null
+                && def.partitionBy() == null
+                && def.orderBy() == null
+                && def.frame() == null
+                && def.exclude() == null) {
+                out.append("over()");
+            }
+            else {
+                try (var ignore = new CodeScope(out, f.over() instanceof OverSpec.Ref)) {
+                    appendNode(f.over());
+                }
+            }
             out.append(")");
         }
+        out.out();
         return defaultResult();
     }
 
@@ -1478,7 +1503,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
 
     @Override
     public Void visitOverRef(OverSpec.Ref r) {
-        out.append("over(").quote(r.windowName().value()).append(")");
+        out.quote(r.windowName().value());
         return defaultResult();
     }
 
@@ -1486,41 +1511,36 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     public Void visitOverDef(OverSpec.Def d) {
         if (d.baseWindow() != null) {
             if (d.frame() != null && d.exclude() != null) {
-                out.append("over(").quote(d.baseWindow().value()).append(", ");
+                out.quote(d.baseWindow().value()).append(", ");
                 appendOrderByOrNull(d.orderBy());
                 out.append(", ");
                 appendNode(d.frame());
                 out.append(", ");
                 appendExcludeOrNull(d.exclude());
-                out.append(")");
                 return defaultResult();
             }
             if (d.frame() != null && d.orderBy() != null) {
-                out.append("over(").quote(d.baseWindow().value()).append(", ");
+                out.quote(d.baseWindow().value()).append(", ");
                 appendNode(d.orderBy());
                 out.append(", ");
                 appendNode(d.frame());
-                out.append(")");
                 return defaultResult();
             }
             if (d.frame() != null) {
-                out.append("over(").quote(d.baseWindow().value()).append(", ");
+                out.quote(d.baseWindow().value()).append(", ");
                 appendNode(d.frame());
-                out.append(")");
                 return defaultResult();
             }
             if (d.orderBy() != null) {
-                out.append("over(").quote(d.baseWindow().value()).append(", ");
+                out.quote(d.baseWindow().value()).append(", ");
                 appendNode(d.orderBy());
-                out.append(")");
                 return defaultResult();
             }
-            out.append("overDef(").quote(d.baseWindow().value()).append(")");
+            out.quote(d.baseWindow().value());
             return defaultResult();
         }
         if (d.partitionBy() != null) {
             if (d.frame() != null && d.exclude() != null) {
-                out.append("over(");
                 appendNode(d.partitionBy());
                 out.append(", ");
                 appendOrderByOrNull(d.orderBy());
@@ -1528,68 +1548,51 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
                 appendNode(d.frame());
                 out.append(", ");
                 appendExcludeOrNull(d.exclude());
-                out.append(")");
                 return defaultResult();
             }
             if (d.frame() != null && d.orderBy() != null) {
-                out.append("over(");
                 appendNode(d.partitionBy());
                 out.append(", ");
                 appendNode(d.orderBy());
                 out.append(", ");
                 appendNode(d.frame());
-                out.append(")");
                 return defaultResult();
             }
             if (d.frame() != null) {
-                out.append("over(");
                 appendNode(d.partitionBy());
                 out.append(", ");
                 appendNode(d.frame());
-                out.append(")");
                 return defaultResult();
             }
             if (d.orderBy() != null) {
-                out.append("over(");
                 appendNode(d.partitionBy());
                 out.append(", ");
                 appendNode(d.orderBy());
-                out.append(")");
                 return defaultResult();
             }
-            out.append("over(");
             appendNode(d.partitionBy());
-            out.append(")");
             return defaultResult();
         }
         if (d.frame() != null && d.exclude() != null) {
-            out.append("over(");
             appendOrderByOrNull(d.orderBy());
             out.append(", ");
             appendNode(d.frame());
             out.append(", ");
             appendExcludeOrNull(d.exclude());
-            out.append(")");
             return defaultResult();
         }
         if (d.frame() != null && d.orderBy() != null) {
-            out.append("over(");
             appendNode(d.orderBy());
             out.append(", ");
             appendNode(d.frame());
-            out.append(")");
             return defaultResult();
         }
         if (d.frame() != null) {
-            out.append("over(");
             appendNode(d.frame());
-            out.append(")");
             return defaultResult();
         }
         if (d.orderBy() != null) {
-            out.append("over(");
             appendNode(d.orderBy());
-            out.append(")");
             return defaultResult();
         }
         out.append("over()");

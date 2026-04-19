@@ -104,6 +104,31 @@ class FunctionExprTest {
             .orElse(null)
         );
         assertEquals(OverSpec.Exclude.CURRENT_ROW, over.matchOverSpec().def(def -> def.exclude()).orElse(null));
+        // check all variations without partition or base window
+        over = f.over(OrderBy.of(OrderItem.of(1))).over();
+        assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
+        assertNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
+        assertNull(over.matchOverSpec().def(d -> d.baseWindow()).orElse(null));
+        assertNotNull(over.matchOverSpec().def(d -> d.orderBy()).orElse(null));
+        over = f.over(OrderBy.of(OrderItem.of(1)), FrameSpec.single(FrameSpec.Unit.ROWS, BoundSpec.currentRow())).over();
+        assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
+        assertNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
+        assertNull(over.matchOverSpec().def(d -> d.baseWindow()).orElse(null));
+        assertNotNull(over.matchOverSpec().def(d -> d.orderBy()).orElse(null));
+        assertNotNull(over.matchOverSpec().def(d -> d.frame()).orElse(null));
+        over = f.over(FrameSpec.single(FrameSpec.Unit.ROWS, BoundSpec.currentRow())).over();
+        assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
+        assertNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
+        assertNull(over.matchOverSpec().def(d -> d.baseWindow()).orElse(null));
+        assertNull(over.matchOverSpec().def(d -> d.orderBy()).orElse(null));
+        assertNotNull(over.matchOverSpec().def(d -> d.frame()).orElse(null));
+        over = f.over(FrameSpec.single(FrameSpec.Unit.ROWS, BoundSpec.currentRow()), OverSpec.Exclude.NO_OTHERS).over();
+        assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
+        assertNull(over.matchOverSpec().def(d -> d.partitionBy()).orElse(null));
+        assertNull(over.matchOverSpec().def(d -> d.baseWindow()).orElse(null));
+        assertNull(over.matchOverSpec().def(d -> d.orderBy()).orElse(null));
+        assertNotNull(over.matchOverSpec().def(d -> d.frame()).orElse(null));
+        assertEquals(OverSpec.Exclude.NO_OTHERS, over.matchOverSpec().def(def -> def.exclude()).orElse(null));
         // check all variations of: over(String baseWindow, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude)
         over = f.over("w", OrderBy.of(OrderItem.of(1))).over();
         assertTrue(over.<Boolean>matchOverSpec().def(d -> true).orElse(false));
