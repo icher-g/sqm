@@ -705,14 +705,16 @@ class SqmJavaEmitterTest {
         assertTrue(source.contains(".isDistinctFrom(col(\"b\"))"));
         assertTrue(source.contains(".isNotDistinctFrom(col(\"b\"))"));
         assertTrue(source.contains("kase("));
-        assertTrue(source.contains(".elseExpr(lit(\"unknown\"))"));
+        assertTrue(source.contains(".elseExpr("));
+        assertTrue(source.contains("lit(\"unknown\")"));
         assertTrue(source.contains("tbl("));
         assertTrue(source.contains("func(\"generate_series\", arg(lit(1)), arg(lit(3)))"));
         assertTrue(source.contains(".or("));
         assertTrue(source.contains(".nullsDefault()"));
         assertTrue(valuesSource.contains("tbl("));
         assertTrue(valuesSource.contains("rows(row(lit(1), lit(\"a\")))"));
-        assertTrue(withSource.contains("with(cte("));
+        assertTrue(withSource.contains("with("));
+        assertTrue(withSource.contains("cte("));
         assertTrue(withSource.contains(".columnAliases(\"id\", \"name\")"));
         assertTrue(withSource.contains(".materialization(CteDef.Materialization.MATERIALIZED)"));
         assertTrue(withSource.contains(".recursive(true)"));

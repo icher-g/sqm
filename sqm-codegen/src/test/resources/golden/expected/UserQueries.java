@@ -28,16 +28,15 @@ public final class UserQueries {
      * @return statement model for this SQL source.
      */
     public static SelectQuery aFindById() {
-        var builder = SelectQuery.builder();
         return select(
-                star()
-            )
-            .from(tbl("users"))
-            .where(
-                col("id").eq(param("id")).and(
-                col("status").eq(param("status")))
-            )
-            .build();
+            star()
+        )
+        .from(tbl("users"))
+        .where(
+            col("id").eq(param("id")).and(
+            col("status").eq(param("status")))
+        )
+        .build();
     }
 
     /**
@@ -55,15 +54,14 @@ public final class UserQueries {
      * @return statement model for this SQL source.
      */
     public static SelectQuery zListActive() {
-        var builder = SelectQuery.builder();
         return select(
-                star()
-            )
-            .from(tbl("users"))
-            .where(
-                col("status").eq(param("status"))
-            )
-            .build();
+            star()
+        )
+        .from(tbl("users"))
+        .where(
+            col("status").eq(param("status"))
+        )
+        .build();
     }
 
     /**
