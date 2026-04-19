@@ -1417,7 +1417,7 @@ Then open:
 Once the image is published to Docker Hub, the intended end-user flow becomes a single command:
 
 ```bash
-docker run --rm -p 8080:8080 <dockerhub-namespace>/sqm-playground:latest
+docker run --rm -p 8080:8080 igorcher/sqm-playground:latest
 ```
 
 ### Docker Hub publishing
