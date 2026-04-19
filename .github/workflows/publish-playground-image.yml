@@ -1,9 +1,6 @@
-name: publish-playground-image
+name: Publish playground image
 
 on:
-  push:
-    branches: ["main"]
-    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
@@ -15,8 +12,14 @@ env:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: ${{ env.DOCKERHUB_NAMESPACE != '' }}
     steps:
+      - name: Validate Docker Hub configuration
+        run: |
+          if [ -z "${DOCKERHUB_NAMESPACE}" ]; then
+            echo "DOCKERHUB_NAMESPACE repository variable or DOCKERHUB_USERNAME secret must be configured."
+            exit 1
+          fi
+
       - uses: actions/checkout@v4
 
       - uses: docker/setup-buildx-action@v3
