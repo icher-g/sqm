@@ -208,6 +208,8 @@ class SqmJavaEmitterTest {
     void emit_fallsBackToGenericFunctionEmissionWhenSqlServerHelpersDoNotFit() {
         var source = emitter.emit(
             select(
+                func("LEN"),
+                func("ISNULL", arg(col("name"))),
                 func("GETDATE", arg(lit(1))),
                 func("DATEADD", arg(col("datepart")), arg(lit(1)), arg(col("created_at"))),
                 func("LEN", starArg())
@@ -216,6 +218,8 @@ class SqmJavaEmitterTest {
                 .build()
         );
 
+        assertTrue(source.contains("func(\"LEN\")"));
+        assertTrue(source.contains("func(\"ISNULL\", arg(col(\"name\")))"));
         assertTrue(source.contains("func(\"GETDATE\", arg(lit(1)))"));
         assertTrue(source.contains("func(\"DATEADD\", arg(col(\"datepart\")), arg(lit(1)), arg(col(\"created_at\")))"));
         assertTrue(source.contains("len(starArg())"));
@@ -576,7 +580,13 @@ class SqmJavaEmitterTest {
         var subquery = select(col("age")).from(tbl("limits")).build();
         var query = select(
             col("flags").unary("~"),
-            col("payload").cast(type(qualify("pg_catalog", "time"), List.of(lit(6)), 0, TimeZoneSpec.WITH_TIME_ZONE))
+            col("payload").cast(type(qualify("pg_catalog", "time"), List.of(lit(6)), 0, TimeZoneSpec.WITH_TIME_ZONE)),
+            lit("1").cast(type(TypeKeyword.DOUBLE_PRECISION)),
+            col("payload").op(op("?"), lit("name")),
+            col("payload").op(op(qualify("pg_catalog"), "?"), lit("name")),
+            func("dense_rank").over(OverSpec.def((Identifier) null, null, rows(currentRow()), OverSpec.Exclude.CURRENT_ROW)),
+            func("rank").over(OverSpec.def(Identifier.of("base"), null, rows(currentRow()), OverSpec.Exclude.GROUP)),
+            func("sum", arg(col("amount"))).over(OverSpec.def(partition(col("dept")), null, rows(currentRow()), OverSpec.Exclude.NO_OTHERS))
         )
             .from(tbl("users"))
             .where(
@@ -594,10 +604,103 @@ class SqmJavaEmitterTest {
 
         assertTrue(querySource.contains("col(\"flags\").unary(\"~\")"));
         assertTrue(querySource.contains("type(qualify(id(\"pg_catalog\"), id(\"time\")), List.of(lit(6)), 0, TimeZoneSpec.WITH_TIME_ZONE)"));
+        assertTrue(querySource.contains("type(TypeKeyword.DOUBLE_PRECISION)"));
+        assertTrue(querySource.contains(".op(\"?\", lit(\"name\"))"));
+        assertTrue(querySource.contains(".op(op(qualify(\"pg_catalog\"), \"?\"), lit(\"name\"))"));
+        assertTrue(querySource.contains("over(null, rows(currentRow()), excludeCurrentRow())"));
+        assertTrue(querySource.contains("over(\"base\", null, rows(currentRow()), excludeGroup())"));
+        assertTrue(querySource.contains("over(partition(col(\"dept\")), null, rows(currentRow()), excludeNoOthers())"));
         assertTrue(querySource.contains(".any(ComparisonOperator.GT, select("));
         assertTrue(querySource.contains(".regex(RegexMode.MATCH_INSENSITIVE, lit(\"^a\"), true)"));
         assertTrue(querySource.contains(".lockFor(update(), List.of(), false, false)"));
         assertTrue(updateSource.contains(".set(qualify(id(\"app\"), id(\"users\"), id(\"name\")), lit(\"alice\"))"));
+    }
+
+    @Test
+    void emit_coversAdditionalExpressionAndQueryNodes() {
+        var query = select(
+            date("2026-04-19"),
+            bit("1010"),
+            hex("ff"),
+            interval("1", "DAY"),
+            timestamp("2026-04-19 10:15:00", TimeZoneSpec.WITH_TIME_ZONE),
+            time("10:15:00", TimeZoneSpec.WITHOUT_TIME_ZONE),
+            dollar("tag", "body"),
+            escape("line\\n"),
+            array(lit(1), lit(2)),
+            col("items").slice(lit(1), lit(3)),
+            col("items").slice(null, lit(3)),
+            col("items").at(lit(1)),
+            col("name").collate(qualify("pg_catalog", "en_US")),
+            concat(col("first"), lit(" "), col("last")),
+            col("a").add(lit(1)),
+            col("a").sub(lit(1)),
+            col("a").mul(lit(2)),
+            col("a").div(lit(2)),
+            col("a").mod(lit(2)),
+            col("a").pow(lit(2)),
+            col("a").neg(),
+            col("a").isDistinctFrom(col("b")),
+            col("a").isNotDistinctFrom(col("b")),
+            kase(
+                when(col("active").eq(lit(true)), lit("active")),
+                when(col("active").eq(lit(false)), lit("inactive"))
+            ).elseExpr(lit("unknown"))
+        )
+            .from(tbl(func("generate_series", arg(lit(1)), arg(lit(3)))))
+            .where(col("a").ne(lit(0)).or(col("b").lte(lit(10))))
+            .orderBy(order(col("name")).nullsDefault())
+            .build();
+        var valuesQuery = select(star()).from(tbl(rows(row(lit(1), lit("a"))))).build();
+        var withQuery = with(
+            cte(
+                "active_users",
+                select(star()).from(tbl("users")).where(col("active").eq(lit(true))).build(),
+                List.of("id", "name"),
+                CteDef.Materialization.MATERIALIZED
+            )
+        )
+            .recursive(true)
+            .body(select(star()).from(tbl("active_users")).build());
+
+        var source = emitter.emit(query);
+        var valuesSource = emitter.emit(valuesQuery);
+        var withSource = emitter.emit(withQuery);
+
+        assertTrue(source.contains("date(\"2026-04-19\")"));
+        assertTrue(source.contains("bit(\"1010\")"));
+        assertTrue(source.contains("hex(\"ff\")"));
+        assertTrue(source.contains("interval(\"1\", \"DAY\")"));
+        assertTrue(source.contains("timestamp(\"2026-04-19 10:15:00\", TimeZoneSpec.WITH_TIME_ZONE)"));
+        assertTrue(source.contains("time(\"10:15:00\", TimeZoneSpec.WITHOUT_TIME_ZONE)"));
+        assertTrue(source.contains("dollar(\"tag\", \"body\")"));
+        assertTrue(source.contains("escape(\"line\\\\n\")"));
+        assertTrue(source.contains("array(lit(1), lit(2))"));
+        assertTrue(source.contains("col(\"items\").slice(lit(1), lit(3))"));
+        assertTrue(source.contains("col(\"items\").slice(null, lit(3))"));
+        assertTrue(source.contains("col(\"items\").at(lit(1))"));
+        assertTrue(source.contains("col(\"name\").collate(\"pg_catalog.en_US\")"));
+        assertTrue(source.contains("concat(col(\"first\"), lit(\" \"), col(\"last\"))"));
+        assertTrue(source.contains(".add(lit(1))"));
+        assertTrue(source.contains(".sub(lit(1))"));
+        assertTrue(source.contains(".mul(lit(2))"));
+        assertTrue(source.contains(".div(lit(2))"));
+        assertTrue(source.contains(".mod(lit(2))"));
+        assertTrue(source.contains(".pow(lit(2))"));
+        assertTrue(source.contains(".neg()"));
+        assertTrue(source.contains(".isDistinctFrom(col(\"b\"))"));
+        assertTrue(source.contains(".isNotDistinctFrom(col(\"b\"))"));
+        assertTrue(source.contains("kase("));
+        assertTrue(source.contains(".elseExpr(lit(\"unknown\"))"));
+        assertTrue(source.contains("tbl(func(\"generate_series\", arg(lit(1)), arg(lit(3))))"));
+        assertTrue(source.contains(".or("));
+        assertTrue(source.contains(".nullsDefault()"));
+        assertTrue(valuesSource.contains("tbl(rows(row(lit(1), lit(\"a\"))))"));
+        assertTrue(withSource.contains("with(cte("));
+        assertTrue(withSource.contains(".columnAliases(\"id\", \"name\")"));
+        assertTrue(withSource.contains(".materialization(CteDef.Materialization.MATERIALIZED)"));
+        assertTrue(withSource.contains(".recursive(true)"));
+        assertTrue(withSource.contains(".body("));
     }
 }
 
