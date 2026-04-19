@@ -35,7 +35,7 @@ class ParseServiceTest {
         assertTrue(response.sqmJson().contains("\"kind\""));
         assertNotNull(response.sqmDsl());
         assertTrue(response.sqmDsl().contains("public static SelectQuery getStatement()"));
-        assertTrue(response.sqmDsl().contains("return builder.select("));
+        assertTrue(response.sqmDsl().contains("return select("));
         assertNotNull(response.summary());
         assertEquals("SelectQuery", response.summary().rootInterface().substring(response.summary().rootInterface().lastIndexOf('.') + 1));
         assertNotNull(response.ast());
