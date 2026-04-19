@@ -1393,6 +1393,46 @@ cd sqm
 mvn clean install
 ```
 
+## Playground Docker
+
+The SQM playground can be packaged as a single Docker image that serves both the frontend and the REST API from one container.
+
+Build the image locally from the repository root:
+
+```bash
+docker build -f deploy/docker/playground/Dockerfile -t sqm-playground:local .
+```
+
+Run it:
+
+```bash
+docker run --rm -p 8080:8080 sqm-playground:local
+```
+
+Then open:
+
+- `http://localhost:8080` for the playground UI
+- `http://localhost:8080/sqm/playground/api/v1/health` for the backend health endpoint
+
+Once the image is published to Docker Hub, the intended end-user flow becomes a single command:
+
+```bash
+docker run --rm -p 8080:8080 <dockerhub-namespace>/sqm-playground:latest
+```
+
+### Docker Hub publishing
+
+The repository includes [`.github/workflows/publish-playground-image.yml`](.github/workflows/publish-playground-image.yml) to publish the single `sqm-playground` image on pushes to `main`, version tags like `v0.4.0`, and manual workflow runs.
+
+Configure these repository secrets before enabling publishing:
+
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
+
+Optionally configure this repository variable if the Docker Hub namespace differs from the username:
+
+- `DOCKERHUB_NAMESPACE`
+
 To run tests:
 ```bash
 mvn test

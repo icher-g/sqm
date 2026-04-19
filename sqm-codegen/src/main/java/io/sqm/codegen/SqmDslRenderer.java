@@ -87,7 +87,7 @@ public final class SqmDslRenderer {
         for (var file : group.files()) {
             String statementExpression;
             try {
-                statementExpression = emitter.emitStatement(file.statement());
+                statementExpression = emitter.emit(file.statement());
             } catch (IllegalStateException ex) {
                 throw new SqlFileCodegenException(normalizePath(file.relativePath()) + ": " + ex.getMessage());
             }

@@ -4,8 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.sqm.core.Statement;
 import io.sqm.json.SqmJsonMixins;
-import io.sqm.parser.core.ParserException;
-import io.sqm.playground.api.*;
+import io.sqm.playground.api.ParseRequestDto;
+import io.sqm.playground.api.ParseResponseDto;
+import io.sqm.playground.api.ParseResponseSummaryDto;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -63,31 +64,13 @@ public final class ParseService {
 
         var statement = parseAttempt.statement();
 
-        String dslCode;
-
-        try {
-            dslCode = dslGenerator.toDsl(statement, request.dialect());
-        } catch (ParserException e) {
-            return new ParseResponseDto(
-                UUID.randomUUID().toString(),
-                false,
-                0L,
-                null,
-                null,
-                null,
-                null,
-                null,
-                List.of(new PlaygroundDiagnosticDto(DiagnosticSeverityDto.error, null, e.getMessage(), DiagnosticPhaseDto.dsl, e.getLine(), e.getColumn()))
-            );
-        }
-
         return new ParseResponseDto(
             UUID.randomUUID().toString(),
             true,
             0L,
             statementSupport.statementKind(statement),
             toSqmJson(statement),
-            dslCode,
+            dslGenerator.toDsl(statement, request.dialect()),
             astMapper.toAst(statement),
             new ParseResponseSummaryDto(
                 statement.getClass().getSimpleName(),

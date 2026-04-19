@@ -15,7 +15,7 @@ class SqmJavaEmitterTest {
     private final SqmJavaEmitter emitter = new SqmJavaEmitter();
 
     @Test
-    void emitQuery_coversMostSupportedNodes() {
+    void emit_coversMostSupportedNodes() {
         Query query = select(
             star(),
             star("u"),
@@ -83,7 +83,7 @@ class SqmJavaEmitterTest {
             .lockFor(update(), ofTables("u"), true, false)
             .build();
 
-        String source = emitter.emitQuery(query);
+        String source = emitter.emit(query);
         assertTrue(source.contains("builder.select("));
         assertTrue(source.contains("select("));
         assertTrue(source.contains("star(\"u\")"));
@@ -117,37 +117,37 @@ class SqmJavaEmitterTest {
     }
 
     @Test
-    void emitQuery_coversOverVariantsAndLimitOffsetVariants() {
-        String overBaseOnly = emitter.emitQuery(select(func("f").over(overDef("base"))).from(tbl("t")).build());
+    void emit_coversOverVariantsAndLimitOffsetVariants() {
+        String overBaseOnly = emitter.emit(select(func("f").over(overDef("base"))).from(tbl("t")).build());
         assertTrue(overBaseOnly.contains("builder.select("));
         assertTrue(overBaseOnly.contains("overDef(\"base\")"));
 
-        String overFrameExclude = emitter.emitQuery(
+        String overFrameExclude = emitter.emit(
             select(func("f").over(over(orderBy(order(col("x"))), rows(unboundedPreceding(), currentRow()), excludeGroup()))).from(tbl("t")).build()
         );
         assertTrue(overFrameExclude.contains("excludeGroup()"));
 
-        String overPartitionOnly = emitter.emitQuery(
+        String overPartitionOnly = emitter.emit(
             select(func("f").over(over(partition(col("p"))))).from(tbl("t")).build()
         );
         assertTrue(overPartitionOnly.contains("over(partition("));
 
-        String limitOnly = emitter.emitQuery(select(star()).from(tbl("t")).limit(lit(5)).build());
+        String limitOnly = emitter.emit(select(star()).from(tbl("t")).limit(lit(5)).build());
         assertTrue(limitOnly.contains(".limit(lit(5))"));
 
-        String offsetOnly = emitter.emitQuery(select(star()).from(tbl("t")).offset(lit(7)).build());
+        String offsetOnly = emitter.emit(select(star()).from(tbl("t")).offset(lit(7)).build());
         assertTrue(offsetOnly.contains(".offset(lit(7))"));
 
-        String bothNull = emitter.emitQuery(select(star()).from(tbl("t")).limitOffset(limitOffset(null, null)).build());
+        String bothNull = emitter.emit(select(star()).from(tbl("t")).limitOffset(limitOffset(null, null)).build());
         assertTrue(bothNull.contains(".limitOffset(limitOffset(null, null))"));
     }
 
     @Test
-    void emitQuery_coversTopSpecVariants() {
-        String plainTop = emitter.emitQuery(
+    void emit_coversTopSpecVariants() {
+        String plainTop = emitter.emit(
             select(star()).from(tbl("t")).top(lit(5)).build()
         );
-        String topPercentWithTies = emitter.emitQuery(
+        String topPercentWithTies = emitter.emit(
             select(star()).from(tbl("t")).top(TopSpec.of(lit(10), true, true)).build()
         );
 
@@ -156,11 +156,11 @@ class SqmJavaEmitterTest {
     }
 
     @Test
-    void emitQuery_coversDistinctOnAndLimitAllWithoutOffsetVariants() {
-        String distinctOnSource = emitter.emitQuery(
+    void emit_coversDistinctOnAndLimitAllWithoutOffsetVariants() {
+        String distinctOnSource = emitter.emit(
             select(col("id")).from(tbl("t")).distinct(distinctOn(col("id"))).build()
         );
-        String limitAllSource = emitter.emitQuery(
+        String limitAllSource = emitter.emit(
             select(star()).from(tbl("t")).limitOffset(limitAll()).build()
         );
 
@@ -169,8 +169,8 @@ class SqmJavaEmitterTest {
     }
 
     @Test
-    void emitQuery_coversAtTimeZoneExpr() {
-        String source = emitter.emitQuery(
+    void emit_coversAtTimeZoneExpr() {
+        String source = emitter.emit(
             select(col("u", "created_at").atTimeZone(lit("UTC")).as("created_utc"))
                 .from(tbl("users").as("u"))
                 .build()
@@ -180,8 +180,8 @@ class SqmJavaEmitterTest {
     }
 
     @Test
-    void emitQuery_prefersSqlServerFunctionHelpersWhenAvailable() {
-        var source = emitter.emitQuery(
+    void emit_prefersSqlServerFunctionHelpersWhenAvailable() {
+        var source = emitter.emit(
             select(
                 len(col("name")),
                 dataLength(col("payload")),
@@ -205,9 +205,11 @@ class SqmJavaEmitterTest {
     }
 
     @Test
-    void emitQuery_fallsBackToGenericFunctionEmissionWhenSqlServerHelpersDoNotFit() {
-        var source = emitter.emitQuery(
+    void emit_fallsBackToGenericFunctionEmissionWhenSqlServerHelpersDoNotFit() {
+        var source = emitter.emit(
             select(
+                func("LEN"),
+                func("ISNULL", arg(col("name"))),
                 func("GETDATE", arg(lit(1))),
                 func("DATEADD", arg(col("datepart")), arg(lit(1)), arg(col("created_at"))),
                 func("LEN", starArg())
@@ -216,14 +218,16 @@ class SqmJavaEmitterTest {
                 .build()
         );
 
+        assertTrue(source.contains("func(\"LEN\")"));
+        assertTrue(source.contains("func(\"ISNULL\", arg(col(\"name\")))"));
         assertTrue(source.contains("func(\"GETDATE\", arg(lit(1)))"));
         assertTrue(source.contains("func(\"DATEADD\", arg(col(\"datepart\")), arg(lit(1)), arg(col(\"created_at\")))"));
         assertTrue(source.contains("len(starArg())"));
     }
 
     @Test
-    void emitQuery_formatsSupportedLiteralTypes() {
-        String source = emitter.emitQuery(
+    void emit_formatsSupportedLiteralTypes() {
+        String source = emitter.emit(
             select(
                 lit("text"),
                 lit('x'),
@@ -251,30 +255,30 @@ class SqmJavaEmitterTest {
     }
 
     @Test
-    void emitQuery_throwsOnUnsupportedLiteralType() {
+    void emit_throwsOnUnsupportedLiteralType() {
         Query query = select(lit(new BigDecimal("1.25"))).from(tbl("t")).build();
-        var error = assertThrows(IllegalStateException.class, () -> emitter.emitQuery(query));
+        var error = assertThrows(IllegalStateException.class, () -> emitter.emit(query));
         assertTrue(error.getMessage().contains("Unsupported literal value type"));
     }
 
     @Test
-    void emitQuery_throwsOnOrderItemWithoutExprAndOrdinal() {
+    void emit_throwsOnOrderItemWithoutExprAndOrdinal() {
         OrderItem broken = OrderItem.of(null, null, null, null, null, null);
         Query query = select(star()).from(tbl("t")).orderBy(broken).build();
 
-        var error = assertThrows(IllegalStateException.class, () -> emitter.emitQuery(query));
+        var error = assertThrows(IllegalStateException.class, () -> emitter.emit(query));
         assertTrue(error.getMessage().contains("Order item must have expression or ordinal"));
     }
 
     @Test
-    void emitQuery_emitsTableInheritanceIncludingDescendants() {
-        String source = emitter.emitQuery(select(star()).from(tbl("users").includingDescendants()).build());
+    void emit_emitsTableInheritanceIncludingDescendants() {
+        String source = emitter.emit(select(star()).from(tbl("users").includingDescendants()).build());
         assertTrue(source.contains(".includingDescendants()"));
     }
 
     @Test
-    void emitQuery_emitsSqlServerTableHintHelpers() {
-        String source = emitter.emitQuery(select(star()).from(tbl("users").withNoLock().withUpdLock().withHoldLock()).build());
+    void emit_emitsSqlServerTableHintHelpers() {
+        String source = emitter.emit(select(star()).from(tbl("users").withNoLock().withUpdLock().withHoldLock()).build());
 
         assertTrue(source.contains(".withNoLock()"));
         assertTrue(source.contains(".withUpdLock()"));
@@ -282,7 +286,7 @@ class SqmJavaEmitterTest {
     }
 
     @Test
-    void emitQuery_escapesIdentifierValuesFromTypedModelNodes() {
+    void emit_escapesIdentifierValuesFromTypedModelNodes() {
         Query query = select(
             col("t", "a").as("a\"b"),
             io.sqm.core.SelectItem.star(Identifier.of("q\\x"))
@@ -291,7 +295,7 @@ class SqmJavaEmitterTest {
             .window(io.sqm.core.WindowDef.of(Identifier.of("w\"1"), over()))
             .build();
 
-        String source = emitter.emitQuery(query);
+        String source = emitter.emit(query);
 
         assertTrue(source.contains(".as(\"a\\\"b\")"));
         assertTrue(source.contains("star(\"q\\\\x\")"));
@@ -300,7 +304,7 @@ class SqmJavaEmitterTest {
     }
 
     @Test
-    void emitStatement_coversDmlStatements() {
+    void emit_coversDmlStatements() {
         var insert = insert(tbl("users"))
             .hint("APPEND")
             .ignore()
@@ -322,9 +326,9 @@ class SqmJavaEmitterTest {
             .result(deleted("id"))
             .build();
 
-        var insertSource = emitter.emitStatement(insert);
-        var updateSource = emitter.emitStatement(update);
-        var deleteSource = emitter.emitStatement(delete);
+        var insertSource = emitter.emit(insert);
+        var updateSource = emitter.emit(update);
+        var deleteSource = emitter.emit(delete);
 
         assertTrue(insertSource.contains("insert(tbl(\"users\"))"));
         assertTrue(insertSource.contains("\n.ignore()"));
@@ -360,21 +364,24 @@ class SqmJavaEmitterTest {
     }
 
     @Test
-    void emitQuery_usesGenericNodePathForNonSelectQueries() {
+    void emit_compose() {
         Query query = compose(
             List.of(
                 select(star()).from(tbl("t1")).build(),
                 select(star()).from(tbl("t2")).build()
             ),
-            List.of(io.sqm.core.SetOperator.UNION)
+            List.of(SetOperator.UNION)
         );
 
-        var error = assertThrows(IllegalStateException.class, () -> emitter.emitQuery(query));
-        assertTrue(error.getMessage().contains("Unsupported node"));
+        var code = emitter.emit(query);
+        assertTrue(code.contains("compose("));
+        assertTrue(code.contains(".from(tbl(\"t1\"))\n"));
+        assertTrue(code.contains(".from(tbl(\"t2\"))\n"));
+        assertTrue(code.contains("SetOperator.UNION"));
     }
 
     @Test
-    void emitStatement_coversInsertConflictVariants_and_additional_lock_modes() {
+    void emit_coversInsertConflictVariants_and_additional_lock_modes() {
         var insertDoNothing = insert(tbl("users"))
             .replace()
             .columns(id("id"))
@@ -394,8 +401,8 @@ class SqmJavaEmitterTest {
         var shareLock = select(star()).from(tbl("users")).lockFor(share(), ofTables("users"), false, false).build();
         var keyShareLock = select(star()).from(tbl("users")).lockFor(keyShare(), ofTables("users"), true, false).build();
 
-        var doNothingSource = emitter.emitStatement(insertDoNothing);
-        var doUpdateSource = emitter.emitStatement(insertDoUpdate);
+        var doNothingSource = emitter.emit(insertDoNothing);
+        var doUpdateSource = emitter.emit(insertDoUpdate);
 
         assertTrue(doNothingSource.contains(".replace()"));
         assertTrue(doNothingSource.contains(".query(select("));
@@ -405,26 +412,26 @@ class SqmJavaEmitterTest {
         assertTrue(doUpdateSource.contains("set(id(\"name\"), lit(\"updated\"))"));
         assertTrue(doUpdateSource.contains("col(\"name\").isNotNull()"));
 
-        assertTrue(emitter.emitQuery(noKeyUpdateLock).contains(".lockFor(noKeyUpdate(), ofTables(\"users\"), false, true)"));
-        assertTrue(emitter.emitQuery(shareLock).contains(".lockFor(share(), ofTables(\"users\"), false, false)"));
-        assertTrue(emitter.emitQuery(keyShareLock).contains(".lockFor(keyShare(), ofTables(\"users\"), true, false)"));
+        assertTrue(emitter.emit(noKeyUpdateLock).contains(".lockFor(noKeyUpdate(), ofTables(\"users\"), false, true)"));
+        assertTrue(emitter.emit(shareLock).contains(".lockFor(share(), ofTables(\"users\"), false, false)"));
+        assertTrue(emitter.emit(keyShareLock).contains(".lockFor(keyShare(), ofTables(\"users\"), true, false)"));
     }
 
     @Test
-    void emitStatement_covers_generic_result_star_variants() {
+    void emit_covers_generic_result_star_variants() {
         var insert = insert(tbl("users"))
             .columns(id("id"))
             .values(row(lit(1)))
             .result(star(), star("u"))
             .build();
 
-        var source = emitter.emitStatement(insert);
+        var source = emitter.emit(insert);
 
         assertTrue(source.contains(".result(star(), star(id(\"u\")))"));
     }
 
     @Test
-    void emitStatement_coversMergeStatements() {
+    void emit_coversMergeStatements() {
         var mergeStatement = merge(tbl("users"))
             .hint("MERGE_HINT")
             .source(tbl("src").as("s"))
@@ -436,7 +443,7 @@ class SqmJavaEmitterTest {
             .whenNotMatchedInsert(col("s", "name").isNotNull(), List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
             .build();
 
-        var source = emitter.emitStatement(mergeStatement);
+        var source = emitter.emit(mergeStatement);
 
         assertTrue(source.contains("merge(tbl(\"users\"))"));
         assertTrue(source.contains("\n.source("));
@@ -457,15 +464,15 @@ class SqmJavaEmitterTest {
     }
 
     @Test
-    void emitStatement_emitsTypedStatementHints() {
+    void emitStatement_emitsTypedHints() {
         var query = select(star()).from(tbl("users")).hint("MAX_EXECUTION_TIME", 1000).build();
-        var source = emitter.emitQuery(query);
+        var source = emitter.emit(query);
 
         assertTrue(source.contains(".hint(\"MAX_EXECUTION_TIME\", 1000)"));
     }
 
     @Test
-    void emitQuery_emitsGenericTableHintsAndTypedHintArgs() {
+    void emit_emitsGenericTableHintsAndTypedHintArgs() {
         Query query = select(star())
             .from(tbl("users")
                 .hint(TableHint.of("GENERIC_TABLE_HINT", qualify("app", "users"), lit("x")))
@@ -473,14 +480,14 @@ class SqmJavaEmitterTest {
             .hint(statementHint("QUALIFIED_HINT", qualify("app", "users")))
             .build();
 
-        var source = emitter.emitQuery(query);
+        var source = emitter.emit(query);
 
         assertTrue(source.contains(".hint(\"QUALIFIED_HINT\", qualify(id(\"app\"), id(\"users\")))"));
         assertTrue(source.contains(".hint(\"GENERIC_TABLE_HINT\", qualify(id(\"app\"), id(\"users\")), lit(\"x\"))"));
     }
 
     @Test
-    void emitStatement_coversMergeVariantsWithoutColumnsAndWithResultClause() {
+    void emit_coversMergeVariantsWithoutColumnsAndWithResultClause() {
         var mergeStatement = merge(tbl("users"))
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
@@ -489,7 +496,7 @@ class SqmJavaEmitterTest {
             .result(inserted("id"))
             .build();
 
-        var source = emitter.emitStatement(mergeStatement);
+        var source = emitter.emit(mergeStatement);
 
         assertTrue(source.contains(".whenMatchedDelete()"));
         assertTrue(source.contains(".whenNotMatchedInsert(row(col(\"s\", \"id\")))"));
@@ -497,20 +504,20 @@ class SqmJavaEmitterTest {
     }
 
     @Test
-    void emitStatement_coversPredicateAwareMergeInsertWithoutColumns() {
+    void emit_coversPredicateAwareMergeInsertWithoutColumns() {
         var mergeStatement = merge(tbl("users"))
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
             .whenNotMatchedInsert(col("s", "id").gt(lit(0)), row(col("s", "id")))
             .build();
 
-        var source = emitter.emitStatement(mergeStatement);
+        var source = emitter.emit(mergeStatement);
 
         assertTrue(source.contains(".whenNotMatchedInsert(col(\"s\", \"id\").gt(lit(0)), row(col(\"s\", \"id\")))"));
     }
 
     @Test
-    void emitStatement_coversMergeDoNothingVariants() {
+    void emit_coversMergeDoNothingVariants() {
         var mergeStatement = merge(tbl("users"))
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
@@ -519,7 +526,7 @@ class SqmJavaEmitterTest {
             .whenNotMatchedBySourceDoNothing()
             .build();
 
-        var source = emitter.emitStatement(mergeStatement);
+        var source = emitter.emit(mergeStatement);
 
         assertTrue(source.contains(".whenMatchedDoNothing()"));
         assertTrue(source.contains(".whenNotMatchedDoNothing(col(\"s\", \"id\").gt(lit(0)))"));
@@ -527,7 +534,7 @@ class SqmJavaEmitterTest {
     }
 
     @Test
-    void emitStatement_coversMergeTopSpecAndVarargBySourceUpdateVariants() {
+    void emit_coversMergeTopSpecAndVarargBySourceUpdateVariants() {
         var mergeStatement = merge(tbl("users"))
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
@@ -535,30 +542,30 @@ class SqmJavaEmitterTest {
             .whenNotMatchedBySourceUpdate(set("name", lit("archived")))
             .build();
 
-        var source = emitter.emitStatement(mergeStatement);
+        var source = emitter.emit(mergeStatement);
 
         assertTrue(source.contains(".top(lit(10), true, true)"));
         assertTrue(source.contains(".whenNotMatchedBySourceUpdate(set(id(\"name\"), lit(\"archived\")))"));
     }
 
     @Test
-    void emitQuery_covers_remaining_window_distinct_and_limit_variants() {
-        var baseFrameOnly = emitter.emitQuery(
+    void emit_covers_remaining_window_distinct_and_limit_variants() {
+        var baseFrameOnly = emitter.emit(
             select(func("f").over(over("base", rows(currentRow())))).from(tbl("t")).build()
         );
-        var baseOrderOnly = emitter.emitQuery(
+        var baseOrderOnly = emitter.emit(
             select(func("f").over(over("base", orderBy(order(col("x")))))).from(tbl("t")).build()
         );
-        var partitionFrameOnly = emitter.emitQuery(
+        var partitionFrameOnly = emitter.emit(
             select(func("f").over(over(partition(col("p")), rows(currentRow())))).from(tbl("t")).build()
         );
-        var plainExcludeNoOthers = emitter.emitQuery(
+        var plainExcludeNoOthers = emitter.emit(
             select(func("f").over(over(orderBy(order(col("x"))), rows(currentRow()), excludeNoOthers()))).from(tbl("t")).build()
         );
-        var distinctOn = emitter.emitQuery(
+        var distinctOn = emitter.emit(
             select(star()).from(tbl("t")).distinct(distinctOn(col("t", "id"))).build()
         );
-        var limitAllNoOffset = emitter.emitQuery(select(star()).from(tbl("t")).limitOffset(limitAll()).build());
+        var limitAllNoOffset = emitter.emit(select(star()).from(tbl("t")).limitOffset(limitAll()).build());
 
         assertTrue(baseFrameOnly.contains("over(\"base\", rows(currentRow()))"));
         assertTrue(baseOrderOnly.contains("over(\"base\", orderBy("));
@@ -566,6 +573,134 @@ class SqmJavaEmitterTest {
         assertTrue(plainExcludeNoOthers.contains("excludeNoOthers()"));
         assertTrue(distinctOn.contains(".distinct(col(\"t\", \"id\"))"));
         assertTrue(limitAllNoOffset.contains(".limitOffset(limitAll())"));
+    }
+
+    @Test
+    void emit_coversDslSyntaxRegressionCases() {
+        var subquery = select(col("age")).from(tbl("limits")).build();
+        var query = select(
+            col("flags").unary("~"),
+            col("payload").cast(type(qualify("pg_catalog", "time"), List.of(lit(6)), 0, TimeZoneSpec.WITH_TIME_ZONE)),
+            lit("1").cast(type(TypeKeyword.DOUBLE_PRECISION)),
+            col("payload").op(op("?"), lit("name")),
+            col("payload").op(op(qualify("pg_catalog"), "?"), lit("name")),
+            func("dense_rank").over(OverSpec.def((Identifier) null, null, rows(currentRow()), OverSpec.Exclude.CURRENT_ROW)),
+            func("rank").over(OverSpec.def(Identifier.of("base"), null, rows(currentRow()), OverSpec.Exclude.GROUP)),
+            func("sum", arg(col("amount"))).over(OverSpec.def(partition(col("dept")), null, rows(currentRow()), OverSpec.Exclude.NO_OTHERS))
+        )
+            .from(tbl("users"))
+            .where(
+                col("age").any(ComparisonOperator.GT, subquery)
+                    .and(col("name").regex(RegexMode.MATCH_INSENSITIVE, lit("^a"), true))
+            )
+            .lockFor(update(), List.of(), false, false)
+            .build();
+        var updateStatement = update(tbl("users"))
+            .set(qualify("app", "users", "name"), lit("alice"))
+            .build();
+
+        var querySource = emitter.emit(query);
+        var updateSource = emitter.emit(updateStatement);
+
+        assertTrue(querySource.contains("col(\"flags\").unary(\"~\")"));
+        assertTrue(querySource.contains("type(qualify(id(\"pg_catalog\"), id(\"time\")), List.of(lit(6)), 0, TimeZoneSpec.WITH_TIME_ZONE)"));
+        assertTrue(querySource.contains("type(TypeKeyword.DOUBLE_PRECISION)"));
+        assertTrue(querySource.contains(".op(\"?\", lit(\"name\"))"));
+        assertTrue(querySource.contains(".op(op(qualify(\"pg_catalog\"), \"?\"), lit(\"name\"))"));
+        assertTrue(querySource.contains("over(null, rows(currentRow()), excludeCurrentRow())"));
+        assertTrue(querySource.contains("over(\"base\", null, rows(currentRow()), excludeGroup())"));
+        assertTrue(querySource.contains("over(partition(col(\"dept\")), null, rows(currentRow()), excludeNoOthers())"));
+        assertTrue(querySource.contains(".any(ComparisonOperator.GT, select("));
+        assertTrue(querySource.contains(".regex(RegexMode.MATCH_INSENSITIVE, lit(\"^a\"), true)"));
+        assertTrue(querySource.contains(".lockFor(update(), List.of(), false, false)"));
+        assertTrue(updateSource.contains(".set(qualify(id(\"app\"), id(\"users\"), id(\"name\")), lit(\"alice\"))"));
+    }
+
+    @Test
+    void emit_coversAdditionalExpressionAndQueryNodes() {
+        var query = select(
+            date("2026-04-19"),
+            bit("1010"),
+            hex("ff"),
+            interval("1", "DAY"),
+            timestamp("2026-04-19 10:15:00", TimeZoneSpec.WITH_TIME_ZONE),
+            time("10:15:00", TimeZoneSpec.WITHOUT_TIME_ZONE),
+            dollar("tag", "body"),
+            escape("line\\n"),
+            array(lit(1), lit(2)),
+            col("items").slice(lit(1), lit(3)),
+            col("items").slice(null, lit(3)),
+            col("items").at(lit(1)),
+            col("name").collate(qualify("pg_catalog", "en_US")),
+            concat(col("first"), lit(" "), col("last")),
+            col("a").add(lit(1)),
+            col("a").sub(lit(1)),
+            col("a").mul(lit(2)),
+            col("a").div(lit(2)),
+            col("a").mod(lit(2)),
+            col("a").pow(lit(2)),
+            col("a").neg(),
+            col("a").isDistinctFrom(col("b")),
+            col("a").isNotDistinctFrom(col("b")),
+            kase(
+                when(col("active").eq(lit(true)), lit("active")),
+                when(col("active").eq(lit(false)), lit("inactive"))
+            ).elseExpr(lit("unknown"))
+        )
+            .from(tbl(func("generate_series", arg(lit(1)), arg(lit(3)))))
+            .where(col("a").ne(lit(0)).or(col("b").lte(lit(10))))
+            .orderBy(order(col("name")).nullsDefault())
+            .build();
+        var valuesQuery = select(star()).from(tbl(rows(row(lit(1), lit("a"))))).build();
+        var withQuery = with(
+            cte(
+                "active_users",
+                select(star()).from(tbl("users")).where(col("active").eq(lit(true))).build(),
+                List.of("id", "name"),
+                CteDef.Materialization.MATERIALIZED
+            )
+        )
+            .recursive(true)
+            .body(select(star()).from(tbl("active_users")).build());
+
+        var source = emitter.emit(query);
+        var valuesSource = emitter.emit(valuesQuery);
+        var withSource = emitter.emit(withQuery);
+
+        assertTrue(source.contains("date(\"2026-04-19\")"));
+        assertTrue(source.contains("bit(\"1010\")"));
+        assertTrue(source.contains("hex(\"ff\")"));
+        assertTrue(source.contains("interval(\"1\", \"DAY\")"));
+        assertTrue(source.contains("timestamp(\"2026-04-19 10:15:00\", TimeZoneSpec.WITH_TIME_ZONE)"));
+        assertTrue(source.contains("time(\"10:15:00\", TimeZoneSpec.WITHOUT_TIME_ZONE)"));
+        assertTrue(source.contains("dollar(\"tag\", \"body\")"));
+        assertTrue(source.contains("escape(\"line\\\\n\")"));
+        assertTrue(source.contains("array(lit(1), lit(2))"));
+        assertTrue(source.contains("col(\"items\").slice(lit(1), lit(3))"));
+        assertTrue(source.contains("col(\"items\").slice(null, lit(3))"));
+        assertTrue(source.contains("col(\"items\").at(lit(1))"));
+        assertTrue(source.contains("col(\"name\").collate(\"pg_catalog.en_US\")"));
+        assertTrue(source.contains("concat(col(\"first\"), lit(\" \"), col(\"last\"))"));
+        assertTrue(source.contains(".add(lit(1))"));
+        assertTrue(source.contains(".sub(lit(1))"));
+        assertTrue(source.contains(".mul(lit(2))"));
+        assertTrue(source.contains(".div(lit(2))"));
+        assertTrue(source.contains(".mod(lit(2))"));
+        assertTrue(source.contains(".pow(lit(2))"));
+        assertTrue(source.contains(".neg()"));
+        assertTrue(source.contains(".isDistinctFrom(col(\"b\"))"));
+        assertTrue(source.contains(".isNotDistinctFrom(col(\"b\"))"));
+        assertTrue(source.contains("kase("));
+        assertTrue(source.contains(".elseExpr(lit(\"unknown\"))"));
+        assertTrue(source.contains("tbl(func(\"generate_series\", arg(lit(1)), arg(lit(3))))"));
+        assertTrue(source.contains(".or("));
+        assertTrue(source.contains(".nullsDefault()"));
+        assertTrue(valuesSource.contains("tbl(rows(row(lit(1), lit(\"a\"))))"));
+        assertTrue(withSource.contains("with(cte("));
+        assertTrue(withSource.contains(".columnAliases(\"id\", \"name\")"));
+        assertTrue(withSource.contains(".materialization(CteDef.Materialization.MATERIALIZED)"));
+        assertTrue(withSource.contains(".recursive(true)"));
+        assertTrue(withSource.contains(".body("));
     }
 }
 

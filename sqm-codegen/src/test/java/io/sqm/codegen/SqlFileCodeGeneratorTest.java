@@ -369,20 +369,6 @@ class SqlFileCodeGeneratorTest {
     }
 
     @Test
-    void generate_wrapsEmitterUnsupportedNodeErrorWithSourcePath() throws IOException {
-        var sqlDir = tempDir.resolve("sql-unsupported");
-        var outputDir = tempDir.resolve("generated-unsupported");
-        Files.createDirectories(sqlDir.resolve("user"));
-        Files.writeString(sqlDir.resolve("user/unsupported_expr.sql"), "select 1 + 2 from users");
-
-        var options = SqlFileCodegenOptions.of(sqlDir, outputDir, "io.sqm.codegen.generated");
-        var error = assertThrows(SqlFileCodegenException.class, () -> SqlFileCodeGenerator.of(options).generate());
-
-        assertTrue(error.getMessage().contains("user/unsupported_expr.sql"));
-        assertTrue(error.getMessage().contains("Unsupported node"));
-    }
-
-    @Test
     void generate_validatesAgainstJsonSchemaProviderWhenConfigured() throws Exception {
         var sqlDir = tempDir.resolve("sql-schema-valid");
         var outputDir = tempDir.resolve("generated-schema-valid");

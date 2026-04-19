@@ -15,10 +15,10 @@ class SqmPlaygroundRestApplicationTest {
 
     @Test
     void applicationAndHealthControllerCanBeConstructed() {
-        var app = new SqmPlaygroundRestApplication();
+        @SuppressWarnings("InstantiationOfUtilityClass") var app = new SqmPlaygroundRestApplication();
         var controller = new HealthController();
         var statementSupport = new PlaygroundStatementSupport();
-        var parseService = new ParseService(new SqmAstMapper(), new SqmDslGenerator(new InMemoryCompiler()), statementSupport);
+        var parseService = new ParseService(new SqmAstMapper(), new SqmDslGenerator(), statementSupport);
         var renderService = new RenderService(statementSupport);
         var validateService = new ValidateService(statementSupport);
         var transpileService = new TranspileService(statementSupport);

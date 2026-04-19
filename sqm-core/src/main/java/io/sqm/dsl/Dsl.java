@@ -584,27 +584,6 @@ public final class Dsl {
     }
 
     /**
-     * Creates an {@code INTERVAL '...'} literal without a qualifier.
-     *
-     * @param value interval literal value without surrounding quotes
-     * @return interval literal expression
-     */
-    public static IntervalLiteralExpr interval(String value) {
-        return IntervalLiteralExpr.of(value);
-    }
-
-    /**
-     * Creates an {@code INTERVAL '...'} literal with a qualifier.
-     *
-     * @param value     interval literal value without surrounding quotes
-     * @param qualifier interval qualifier such as {@code DAY}
-     * @return interval literal expression
-     */
-    public static IntervalLiteralExpr interval(String value, String qualifier) {
-        return IntervalLiteralExpr.of(value, qualifier);
-    }
-
-    /**
      * Creates a bare operator name (for example {@code +}, {@code ->}, {@code @>}).
      *
      * @param symbol operator symbol token
@@ -756,6 +735,100 @@ public final class Dsl {
      */
     public static LiteralExpr lit(Object value) {
         return Expression.literal(value);
+    }
+
+    /**
+     * Creates a date literal expression.
+     *
+     * @param value literal value without surrounding quotes
+     * @return a new {@link DateLiteralExpr}
+     */
+    public static DateLiteralExpr date(String value) {
+        return DateLiteralExpr.of(value);
+    }
+
+    /**
+     * Creates a time literal expression with the provided time zone spec.
+     *
+     * @param value        literal value without surrounding quotes
+     * @param timeZoneSpec time zone clause
+     * @return a new {@link TimeLiteralExpr}
+     */
+    public static TimeLiteralExpr time(String value, TimeZoneSpec timeZoneSpec) {
+        return TimeLiteralExpr.of(value, timeZoneSpec);
+    }
+
+    /**
+     * Creates a timestamp literal expression with the provided time zone spec.
+     *
+     * @param value        literal value without surrounding quotes
+     * @param timeZoneSpec time zone clause
+     * @return a new {@link TimestampLiteralExpr}
+     */
+    public static TimestampLiteralExpr timestamp(String value, TimeZoneSpec timeZoneSpec) {
+        return TimestampLiteralExpr.of(value, timeZoneSpec);
+    }
+
+    /**
+     * Creates a bit string literal expression.
+     *
+     * @param value literal value without surrounding quotes
+     * @return a new {@link BitStringLiteralExpr}
+     */
+    public static BitStringLiteralExpr bit(String value) {
+        return BitStringLiteralExpr.of(value);
+    }
+
+    /**
+     * Creates a hex string literal expression.
+     *
+     * @param value literal value without surrounding quotes
+     * @return a new {@link HexStringLiteralExpr}
+     */
+    public static HexStringLiteralExpr hex(String value) {
+        return HexStringLiteralExpr.of(value);
+    }
+
+    /**
+     * Creates an {@code INTERVAL '...'} literal without a qualifier.
+     *
+     * @param value interval literal value without surrounding quotes
+     * @return interval literal expression
+     */
+    public static IntervalLiteralExpr interval(String value) {
+        return IntervalLiteralExpr.of(value);
+    }
+
+    /**
+     * Creates an {@code INTERVAL '...'} literal with a qualifier.
+     *
+     * @param value     interval literal value without surrounding quotes
+     * @param qualifier interval qualifier such as {@code DAY}
+     * @return interval literal expression
+     */
+    public static IntervalLiteralExpr interval(String value, String qualifier) {
+        return IntervalLiteralExpr.of(value, qualifier);
+    }
+
+    /**
+     * Creates a dollar-quoted string literal expression.
+     *
+     * @param tag   dollar tag (empty for {@code $$...$$})
+     * @param value literal value without delimiters
+     * @return a new {@link DollarStringLiteralExpr}
+     */
+    public static DollarStringLiteralExpr dollar(String tag, String value) {
+        return DollarStringLiteralExpr.of(tag, value);
+    }
+
+    /**
+     * Creates an escape string literal expression.
+     *
+     * @param value literal value without surrounding quotes
+     * @return a new {@link EscapeStringLiteralExpr}
+     */
+    public static EscapeStringLiteralExpr escape(String value) {
+        return EscapeStringLiteralExpr.of(value);
     }
 
     /**
@@ -912,6 +985,76 @@ public final class Dsl {
      */
     public static TypeName type(QualifiedName qualifiedName) {
         return TypeName.of(qualifiedName, null, List.of(), 0, TimeZoneSpec.NONE);
+    }
+
+    /**
+     * Convenience factory for a qualified type name using a quote-aware qualified path.
+     *
+     * @param qualifiedName quote-aware qualified type name
+     * @param modifiers     optional type modifiers, such as {@code (10)} or {@code (10,2)}
+     * @return a qualified {@link TypeName}
+     */
+    public static TypeName type(QualifiedName qualifiedName, List<Expression> modifiers) {
+        return TypeName.of(qualifiedName, null, modifiers, 0, TimeZoneSpec.NONE);
+    }
+
+    /**
+     * Convenience factory for a qualified type name using a quote-aware qualified path.
+     *
+     * @param qualifiedName quote-aware qualified type name
+     * @param modifiers     optional type modifiers, such as {@code (10)} or {@code (10,2)}
+     * @param arrayDims     number of array dimensions
+     * @return a qualified {@link TypeName}
+     */
+    public static TypeName type(QualifiedName qualifiedName, List<Expression> modifiers, int arrayDims) {
+        return TypeName.of(qualifiedName, null, modifiers, arrayDims, TimeZoneSpec.NONE);
+    }
+
+    /**
+     * Convenience factory for a qualified type name using a quote-aware qualified path.
+     *
+     * @param qualifiedName quote-aware qualified type name
+     * @param modifiers     optional type modifiers, such as {@code (10)} or {@code (10,2)}
+     * @param arrayDims     number of array dimensions
+     * @param timeZoneSpec  time zone clause specification
+     * @return a qualified {@link TypeName}
+     */
+    public static TypeName type(QualifiedName qualifiedName, List<Expression> modifiers, int arrayDims, TimeZoneSpec timeZoneSpec) {
+        return TypeName.of(qualifiedName, null, modifiers, arrayDims, timeZoneSpec);
+    }
+
+    /**
+     * Convenience factory for a qualified type name using a quote-aware qualified path.
+     *
+     * @param qualifiedName quote-aware qualified type name
+     * @param arrayDims     number of array dimensions
+     * @return a qualified {@link TypeName}
+     */
+    public static TypeName type(QualifiedName qualifiedName, int arrayDims) {
+        return TypeName.of(qualifiedName, null, List.of(), arrayDims, TimeZoneSpec.NONE);
+    }
+
+    /**
+     * Convenience factory for a qualified type name using a quote-aware qualified path.
+     *
+     * @param qualifiedName quote-aware qualified type name
+     * @param timeZoneSpec  time zone clause specification
+     * @return a qualified {@link TypeName}
+     */
+    public static TypeName type(QualifiedName qualifiedName, TimeZoneSpec timeZoneSpec) {
+        return TypeName.of(qualifiedName, null, List.of(), 0, timeZoneSpec);
+    }
+
+    /**
+     * Convenience factory for a qualified type name using a quote-aware qualified path.
+     *
+     * @param qualifiedName quote-aware qualified type name
+     * @param arrayDims     number of array dimensions
+     * @param timeZoneSpec  time zone clause specification
+     * @return a qualified {@link TypeName}
+     */
+    public static TypeName type(QualifiedName qualifiedName, int arrayDims, TimeZoneSpec timeZoneSpec) {
+        return TypeName.of(qualifiedName, null, List.of(), arrayDims, timeZoneSpec);
     }
 
     /**
