@@ -108,4 +108,21 @@ class RenderServiceTest {
         assertFalse(response.diagnostics().isEmpty());
         assertEquals("PARSE_ERROR", response.diagnostics().getFirst().code());
     }
+
+    @Test
+    void renderReturnsRenderDiagnosticsWhenTargetDialectRejectsParsedStatement() {
+        var service = new RenderService(new PlaygroundStatementSupport());
+
+        var response = service.render(new RenderRequestDto(
+            "select distinct on (id) id from customer order by id",
+            SqlDialectDto.postgresql,
+            SqlDialectDto.mysql
+        ));
+
+        assertFalse(response.success());
+        assertNull(response.renderedSql());
+        assertTrue(response.params().isEmpty());
+        assertFalse(response.diagnostics().isEmpty());
+        assertEquals("RENDER_ERROR", response.diagnostics().getFirst().code());
+    }
 }

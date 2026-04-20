@@ -43,6 +43,13 @@ class SqlStatementRendererTest {
     }
 
     @Test
+    void rejects_non_statement_nodes() {
+        assertThrows(IllegalArgumentException.class, () -> SqlStatementRenderer.standard().render(
+            Expression.literal(1),
+            ExecutionContext.of("ansi", ExecutionMode.ANALYZE)));
+    }
+
+    @Test
     void rendersStatementSequenceWithTerminatingSemicolons() {
         var sequence = StatementSequence.of(
             Query.select(Expression.literal(1)).build(),

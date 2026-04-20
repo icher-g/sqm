@@ -166,10 +166,29 @@ class PlaygroundApiContractsTest {
     }
 
     @Test
+    void shouldDefaultRenderRequestParameterizationModeToInline() {
+        RenderRequestDto shortRequest = new RenderRequestDto("select 1", SqlDialectDto.ansi, SqlDialectDto.postgresql);
+        RenderRequestDto nullModeRequest = new RenderRequestDto("select 1", SqlDialectDto.ansi, SqlDialectDto.postgresql, null);
+
+        assertEquals(RenderParameterizationModeDto.inline, shortRequest.parameterizationMode());
+        assertEquals(RenderParameterizationModeDto.inline, nullModeRequest.parameterizationMode());
+    }
+
+    @Test
     void shouldDeserializeRenderParameterizationModeFromLowercaseWireValue() throws Exception {
         RenderParameterizationModeDto mode = mapper.readValue("\"bind\"", RenderParameterizationModeDto.class);
 
         assertEquals(RenderParameterizationModeDto.bind, mode);
+    }
+
+    @Test
+    void shouldRejectUnknownRenderParameterizationModeValue() {
+        IllegalArgumentException error = assertThrows(
+            IllegalArgumentException.class,
+            () -> RenderParameterizationModeDto.fromValue("named")
+        );
+
+        assertTrue(error.getMessage().contains("Unknown render parameterization mode"));
     }
 
     @Test
