@@ -52,6 +52,8 @@ The initial multi-statement implementation should use these decisions:
 - Middleware must not allow partial execution of a batch.
 - Playground multi-statement render and transpile output is combined output only.
 - Playground parse inspection remains statement-aware for AST, JSON, and DSL views.
+- Playground parse responses send one combined AST/JSON/DSL payload; per-statement
+  views are derived by the frontend from the `StatementSequence` root payload.
 - Code generation exposes both a sequence-level method and per-statement methods.
 - Batch APIs are introduced alongside existing single-statement APIs.
 - `ctx.parse(StatementSequence.class, sql)` is the batch parsing entry point.
@@ -278,26 +280,9 @@ Current playground API responses are singular.
 - AST
 - summary
 
-Introduce statement-indexed response objects, for example:
-
-```java
-public record ParsedStatementDto(
-    int index,
-    String statementKind,
-    String sqmJson,
-    String sqmDsl,
-    AstNodeDto ast,
-    ParseResponseSummaryDto summary,
-    List<PlaygroundDiagnosticDto> diagnostics
-) {
-}
-```
-
-Then update parse responses to return:
-
-```java
-List<ParsedStatementDto> statements
-```
+Parse responses should keep a single canonical parse payload. For multi-statement
+input, the root payload is a `StatementSequence`; the frontend derives
+per-statement AST, JSON, and DSL views from that root.
 
 Similar batch-aware structures are needed for:
 
@@ -309,6 +294,9 @@ For multi-statement render and transpile responses, the output SQL should be
 combined output only. Per-statement render and transpile details may exist in
 diagnostics or metadata, but the main SQL output should represent the full
 statement sequence.
+
+Diagnostics may include `statementIndex` when the failing operation is tied to a
+specific statement in a sequence.
 
 ## Playground UI
 
@@ -456,6 +444,20 @@ Transpilation tests:
 - Add render aggregation.
 - Add validation aggregation.
 - Add statement-indexed diagnostics.
+
+Current shared behavior:
+
+- `sqm-render` registers a `StatementSequence` renderer through the ANSI base
+  registry used by dialect renderers. It renders statements in order, separates
+  them with newlines, and terminates every rendered statement with a semicolon.
+- `sqm-control` can render both a single `Statement` and a `StatementSequence`
+  through the standard dialect-aware rendering API.
+- `sqm-validate` validates each statement in a `StatementSequence`
+  independently, aggregates all validation problems, and annotates each problem
+  with the one-based statement index.
+- Playground render and validate services parse `StatementSequence` and reuse
+  the shared render and validation APIs instead of carrying local batch logic.
+- Validation diagnostics include `statementIndex` when tied to a statement.
 
 ### Phase 5: Batch Transpile
 

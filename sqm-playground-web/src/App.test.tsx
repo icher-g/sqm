@@ -168,6 +168,7 @@ const RENDER_RESPONSE = {
   success: true,
   durationMs: 9,
   renderedSql: "select distinct on (id) id\nfrom customer\norder by id",
+  params: [],
   diagnostics: []
 };
 
@@ -176,6 +177,7 @@ const FORMAT_RESPONSE = {
   success: true,
   durationMs: 8,
   renderedSql: "select distinct on (id) id\nfrom customer\norder by id",
+  params: [],
   diagnostics: []
 };
 
@@ -249,6 +251,7 @@ const RENDER_FAILURE_RESPONSE = {
   success: false,
   durationMs: 3,
   renderedSql: null,
+  params: [],
   diagnostics: [
     {
       severity: "error",
@@ -330,6 +333,7 @@ describe("App", () => {
     expect(screen.getByText("Choose an example, set the relevant dialects, and run actions directly above the SQL text.")).toBeInTheDocument();
     expect(screen.getByLabelText("Source dialect")).toHaveValue("ansi");
     expect(screen.getByLabelText("Target dialect")).toHaveValue("postgresql");
+    expect(screen.getByRole("button", { name: "Inline" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Transpile" })).toBeEnabled();
 
     await waitFor(() => {
@@ -364,7 +368,8 @@ describe("App", () => {
           body: JSON.stringify({
             sql: "select distinct on (id) id\nfrom customer\norder by id",
             sourceDialect: "postgresql",
-            targetDialect: "postgresql"
+            targetDialect: "postgresql",
+            parameterizationMode: "inline"
           })
         })
       );
@@ -405,6 +410,9 @@ describe("App", () => {
     expect(screen.getByText("req-parse")).toBeInTheDocument();
     expect(screen.getByText("query")).toBeInTheDocument();
 
+    await userEvent.click(screen.getByRole("button", { name: "Bind" }));
+    expect(screen.getByRole("button", { name: "Bind" })).toHaveAttribute("aria-pressed", "true");
+
     await userEvent.click(screen.getByRole("button", { name: "Render" }));
 
     await waitFor(() => {
@@ -416,7 +424,8 @@ describe("App", () => {
           body: JSON.stringify({
             sql: "select distinct on (id) id\nfrom customer\norder by id",
             sourceDialect: "postgresql",
-            targetDialect: "postgresql"
+            targetDialect: "postgresql",
+            parameterizationMode: "bind"
           })
         })
       );
@@ -559,6 +568,54 @@ describe("App", () => {
     });
     expect(revealLineInCenter).toHaveBeenCalledWith(1);
     expect(focus).toHaveBeenCalled();
+  });
+
+  it("uses the target dialect as the render input dialect", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(EXAMPLES_RESPONSE), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(RENDER_RESPONSE), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+      );
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Example")).toHaveValue("basic-select");
+    });
+
+    expect(screen.getByLabelText("Source dialect")).toHaveValue("ansi");
+    expect(screen.getByLabelText("Target dialect")).toHaveValue("postgresql");
+
+    await userEvent.click(screen.getByRole("button", { name: "Render" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        "http://localhost:8080/sqm/playground/api/v1/render",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            sql: "select id, name\nfrom customer\nwhere id = 1\norder by name",
+            sourceDialect: "postgresql",
+            targetDialect: "postgresql",
+            parameterizationMode: "inline"
+          })
+        })
+      );
+    });
   });
 
   it("hydrates editor state from shareable URLs", async () => {

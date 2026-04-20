@@ -33,6 +33,7 @@ export interface PlaygroundDiagnosticDto {
   phase: DiagnosticPhase;
   line: number | null;
   column: number | null;
+  statementIndex?: number | null;
 }
 
 /**
@@ -98,12 +99,18 @@ export interface ParseResponseDto {
 }
 
 /**
+ * Literal parameterization mode for render requests.
+ */
+export type RenderParameterizationMode = "inline" | "bind";
+
+/**
  * Render request payload sent to the playground backend.
  */
 export interface RenderRequestDto {
   sql: string;
   sourceDialect: SqlDialect;
   targetDialect: SqlDialect;
+  parameterizationMode?: RenderParameterizationMode;
 }
 
 /**
@@ -114,6 +121,7 @@ export interface RenderResponseDto {
   success: boolean;
   durationMs: number;
   renderedSql: string | null;
+  params: unknown[];
   diagnostics: PlaygroundDiagnosticDto[];
 }
 

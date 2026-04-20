@@ -37,6 +37,7 @@ export function AstNodeTree(props: AstNodeTreeProps) {
             type="button"
             className="ast-toggle"
             aria-expanded={expanded}
+            title={expanded ? "Collapse this AST node." : "Expand this AST node."}
             onClick={() => setExpanded((current) => !current)}
           >
             <span className="tree-toggle-glyph">{expanded ? "-" : "+"}</span>
@@ -122,6 +123,7 @@ function AstSlotSection(props: AstSlotSectionProps) {
                 type="button"
                 className="ast-toggle"
                 aria-expanded={expanded}
+                title={expanded ? "Collapse this AST child slot." : "Expand this AST child slot."}
                 onClick={() => setExpanded((current) => !current)}
               >
                 <span className="tree-toggle-glyph">{expanded ? "-" : "+"}</span>

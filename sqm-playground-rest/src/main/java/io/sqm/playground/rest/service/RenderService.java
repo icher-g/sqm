@@ -2,8 +2,10 @@ package io.sqm.playground.rest.service;
 
 import io.sqm.control.execution.ExecutionContext;
 import io.sqm.control.execution.ExecutionMode;
+import io.sqm.control.execution.ParameterizationMode;
 import io.sqm.control.pipeline.SqlStatementRenderer;
 import io.sqm.playground.api.DiagnosticPhaseDto;
+import io.sqm.playground.api.RenderParameterizationModeDto;
 import io.sqm.playground.api.RenderRequestDto;
 import io.sqm.playground.api.RenderResponseDto;
 import org.springframework.stereotype.Service;
@@ -40,27 +42,33 @@ public final class RenderService {
     public RenderResponseDto render(RenderRequestDto request) {
         Objects.requireNonNull(request, "request must not be null");
 
-        var parseAttempt = statementSupport.parse(request.sql(), request.sourceDialect());
+        var parseAttempt = statementSupport.parseSequence(request.sql(), request.sourceDialect());
         if (!parseAttempt.success()) {
             return new RenderResponseDto(
                 UUID.randomUUID().toString(),
                 false,
                 0L,
                 null,
+                List.of(),
                 parseAttempt.diagnostics()
             );
         }
 
         try {
-            var rendered = renderer.render(
-                parseAttempt.statement(),
-                ExecutionContext.of(PlaygroundDialectSupport.toDialectId(request.targetDialect()).value(), ExecutionMode.ANALYZE)
+            var context = ExecutionContext.of(
+                PlaygroundDialectSupport.toDialectId(request.targetDialect()),
+                null,
+                null,
+                ExecutionMode.ANALYZE,
+                toParameterizationMode(request.parameterizationMode())
             );
+            var rendered = renderer.render(parseAttempt.sequence(), context);
             return new RenderResponseDto(
                 UUID.randomUUID().toString(),
                 true,
                 0L,
                 rendered.sql(),
+                rendered.params(),
                 List.of()
             );
         } catch (RuntimeException e) {
@@ -69,8 +77,16 @@ public final class RenderService {
                 false,
                 0L,
                 null,
+                List.of(),
                 List.of(statementSupport.diagnostic(DiagnosticPhaseDto.render, "RENDER_ERROR", e.getMessage()))
             );
         }
+    }
+
+    private static ParameterizationMode toParameterizationMode(RenderParameterizationModeDto mode) {
+        return switch (mode) {
+            case inline -> ParameterizationMode.OFF;
+            case bind -> ParameterizationMode.BIND;
+        };
     }
 }

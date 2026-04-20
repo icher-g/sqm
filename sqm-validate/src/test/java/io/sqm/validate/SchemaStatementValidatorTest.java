@@ -70,6 +70,21 @@ class SchemaStatementValidatorTest {
     }
 
     @Test
+    void validate_statementSequenceAnnotatesProblemsWithStatementIndex() {
+        var sequence = StatementSequence.of(
+            select(star()).from(tbl("users")).build(),
+            select(col("unknown_col")).from(tbl("users")).build()
+        );
+
+        var result = validator.validate(sequence);
+
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream().anyMatch(
+            p -> p.code() == ValidationProblem.Code.COLUMN_NOT_FOUND && Integer.valueOf(2).equals(p.statementIndex()))
+        );
+    }
+
+    @Test
     void validate_reportsDeniedTableByPolicy() {
 
         var settings = SchemaValidationSettings.builder()
