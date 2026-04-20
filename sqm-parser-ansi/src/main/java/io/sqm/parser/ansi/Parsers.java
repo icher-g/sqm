@@ -37,6 +37,7 @@ public final class Parsers {
         var atomicQueryParser = new AtomicQueryParser();
         var postfixExprParser = new PostfixExprParser(atomicExprParser);
         return r
+            .register(new StatementSequenceParser())
             .register(new StatementParser())
             .register(new InsertStatementParser())
             .register(new UpdateStatementParser())

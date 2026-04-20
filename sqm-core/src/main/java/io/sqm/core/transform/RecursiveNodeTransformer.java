@@ -53,6 +53,21 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
+     * Visits an ordered {@link StatementSequence}.
+     *
+     * @param sequence statement sequence to transform
+     * @return transformed sequence, or the original instance if unchanged
+     */
+    @Override
+    public Node visitStatementSequence(StatementSequence sequence) {
+        List<Statement> statements = new ArrayList<>(sequence.statements().size());
+        if (apply(sequence.statements(), statements)) {
+            return StatementSequence.of(statements);
+        }
+        return sequence;
+    }
+
+    /**
      * Visits a dialect-neutral {@link InsertStatement}.
      *
      * @param statement insert statement to transform
