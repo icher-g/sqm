@@ -104,7 +104,7 @@ public final class SqmDslRenderer {
                 .append(file.statement().getTopLevelInterface().getSimpleName()).append(" ")
                 .append(file.methodName()).append("() {").append(NEWLINE);
             code.append(INDENT).append(INDENT).append("return ")
-                .append(indentContinuationLines(statementExpression, 8))
+                .append(indentContinuationLines(statementExpression, 12))
                 .append(";").append(NEWLINE);
             code.append(INDENT).append("}").append(NEWLINE).append(NEWLINE);
             code.append(INDENT).append("/**").append(NEWLINE);

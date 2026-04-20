@@ -367,8 +367,10 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitInsertStatement(InsertStatement statement) {
         out.append("insert(");
-        appendNode(statement.table());
-        out.append(")");
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(statement.table());
+        }
+        out.nl().append(")");
         for (var hint : statement.hints()) {
             out.nl().append(".");
             this.visitStatementHint(hint);
@@ -386,13 +388,17 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         }
         if (statement.source() instanceof Query query) {
             out.nl().append(".query(");
-            appendNode(query);
-            out.append(")");
+            try (var ignore = new CodeScope(out, false)) {
+                appendNode(query);
+            }
+            out.nl().append(")");
         }
         else {
             out.nl().append(".values(");
-            appendNode(statement.source());
-            out.append(")");
+            try (var ignore = new CodeScope(out, false)) {
+                appendNode(statement.source());
+            }
+            out.nl().append(")");
         }
         switch (statement.onConflictAction()) {
             case NONE -> {
@@ -438,16 +444,20 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitUpdateStatement(UpdateStatement statement) {
         out.append("update(");
-        appendNode(statement.table());
-        out.append(")");
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(statement.table());
+        }
+        out.nl().append(")");
         for (var hint : statement.hints()) {
             out.nl().append(".");
             this.visitStatementHint(hint);
         }
         if (!statement.joins().isEmpty()) {
-            out.nl().append(".joins(")
-                .comma(statement.joins(), this::appendNode)
-                .append(")");
+            out.nl().append(".joins(");
+            try (var ignore = new CodeScope(out, false)) {
+                out.comma(statement.joins(), this::appendNode, true);
+            }
+            out.nl().append(")");
         }
         for (var assignment : statement.assignments()) {
             out.nl().append(".set(");
@@ -471,14 +481,18 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
             out.append(")");
         }
         if (!statement.from().isEmpty()) {
-            out.nl().append(".from(")
-                .comma(statement.from(), this::appendNode)
-                .append(")");
+            out.nl().append(".from(");
+            try (var ignore = new CodeScope(out, false)) {
+                out.comma(statement.from(), this::appendNode);
+            }
+            out.nl().append(")");
         }
         if (statement.where() != null) {
             out.nl().append(".where(");
-            appendNode(statement.where());
-            out.append(")");
+            try (var ignore = new CodeScope(out, false)) {
+                appendNode(statement.where());
+            }
+            out.nl().append(")");
         }
         if (statement.result() != null) {
             out.nl();
@@ -491,26 +505,34 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitDeleteStatement(DeleteStatement statement) {
         out.append("delete(");
-        appendNode(statement.table());
-        out.append(")");
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(statement.table());
+        }
+        out.nl().append(")");
         for (var hint : statement.hints()) {
             out.nl().append(".");
             this.visitStatementHint(hint);
         }
         if (!statement.using().isEmpty()) {
-            out.nl().append(".using(")
-                .comma(statement.using(), this::appendNode)
-                .append(")");
+            out.nl().append(".using(");
+            try (var ignore = new CodeScope(out, false)) {
+                out.comma(statement.using(), this::appendNode);
+            }
+            out.nl().append(")");
         }
         if (!statement.joins().isEmpty()) {
-            out.nl().append(".joins(")
-                .comma(statement.joins(), this::appendNode)
-                .append(")");
+            out.nl().append(".joins(");
+            try (var ignore = new CodeScope(out, false)) {
+                out.comma(statement.joins(), this::appendNode, true);
+            }
+            out.nl().append(")");
         }
         if (statement.where() != null) {
             out.nl().append(".where(");
-            appendNode(statement.where());
-            out.append(")");
+            try (var ignore = new CodeScope(out, false)) {
+                appendNode(statement.where());
+            }
+            out.nl().append(")");
         }
         if (statement.result() != null) {
             out.nl();
@@ -523,8 +545,10 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitMergeStatement(MergeStatement statement) {
         out.append("merge(");
-        appendNode(statement.target());
-        out.append(")");
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(statement.target());
+        }
+        out.nl().append(")");
         for (var hint : statement.hints()) {
             out.nl().append(".");
             this.visitStatementHint(hint);
@@ -533,8 +557,10 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         appendNode(statement.source());
         out.append(")");
         out.nl().append(".on(");
-        appendNode(statement.on());
-        out.append(")");
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(statement.on());
+        }
+        out.nl().append(")");
         if (statement.topSpec() != null) {
             out.nl();
             this.visitTopSpec(statement.topSpec());

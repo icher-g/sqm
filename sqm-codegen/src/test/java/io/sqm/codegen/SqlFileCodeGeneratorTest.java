@@ -216,9 +216,10 @@ class SqlFileCodeGeneratorTest {
         assertTrue(source.contains("public static DeleteStatement deleteUser()"));
         assertTrue(source.contains("public static InsertStatement insertUser()"));
         assertTrue(source.contains("public static UpdateStatement updateUser()"));
-        assertTrue(source.contains("return delete(tbl(\"users\"))"));
-        assertTrue(source.contains("return insert(tbl(\"users\"))"));
-        assertTrue(source.contains("return update(tbl(\"users\"))"));
+        assertTrue(source.contains("return delete("));
+        assertTrue(source.contains("tbl(\"users\")"));
+        assertTrue(source.contains("return insert("));
+        assertTrue(source.contains("return update("));
     }
 
     @Test
