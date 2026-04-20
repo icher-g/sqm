@@ -8,8 +8,7 @@ import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class StatementParserTest {
 
@@ -76,6 +75,24 @@ class StatementParserTest {
 
         assertTrue(result.ok());
         assertInstanceOf(MergeStatement.class, result.value());
+    }
+
+    @Test
+    void acceptsSingleTrailingSemicolon() {
+        var ctx = contextWithStatementParsers();
+        var result = ctx.parse(Statement.class, "SELECT;");
+
+        assertTrue(result.ok());
+        assertInstanceOf(Query.class, result.value());
+    }
+
+    @Test
+    void rejectsAdditionalStatementAfterSemicolon() {
+        var ctx = contextWithStatementParsers();
+        var result = ctx.parse(Statement.class, "SELECT; INSERT");
+
+        assertTrue(result.isError());
+        assertEquals("Expected EOF but found: INSERT at 8", result.errorMessage());
     }
 
     private static final class QueryStubParser implements Parser<Query> {

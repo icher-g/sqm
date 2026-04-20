@@ -280,6 +280,9 @@ public final class Lexer {
             case ',':
                 pos++;
                 return new Token(COMMA, ",", start);
+            case ';':
+                pos++;
+                return new Token(SEMICOLON, ";", start);
             case '(':
                 pos++;
                 return new Token(LPAREN, "(", start);

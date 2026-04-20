@@ -39,6 +39,17 @@ class ParseContextTest {
     }
 
     @Test
+    void parseFinalizationDoesNotTreatSemicolonAsExpressionTerminator() {
+        var repo = new DefaultParsersRepository();
+        repo.register(Expression.class, new SingleTokenExpressionParser());
+        var ctx = TestSupport.context(repo);
+
+        var result = ctx.parse(Expression.class, "a;");
+        assertTrue(result.isError());
+        assertEquals("Expected EOF but found: ; at 1", result.errorMessage());
+    }
+
+    @Test
     void parseIfMatchReturnsMatchedErrorForNonMatchableParser() {
         var repo = new DefaultParsersRepository();
         repo.register(Expression.class, new SingleTokenExpressionParser());

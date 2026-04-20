@@ -413,11 +413,25 @@ class LexerTest {
 
     @Test
     void lexer_handlesPunctuation() {
-        List<Token> tokens = Lexer.lexAll("( ) , .", quoting);
+        List<Token> tokens = Lexer.lexAll("( ) , . ;", quoting);
         assertEquals(TokenType.LPAREN, tokens.get(0).type());
         assertEquals(TokenType.RPAREN, tokens.get(1).type());
         assertEquals(TokenType.COMMA, tokens.get(2).type());
         assertEquals(TokenType.DOT, tokens.get(3).type());
+        assertEquals(TokenType.SEMICOLON, tokens.get(4).type());
+        assertEquals(";", tokens.get(4).lexeme());
+    }
+
+    @Test
+    void lexer_keepsSemicolonsInsideStringsAndComments() {
+        List<Token> tokens = Lexer.lexAll("SELECT ';' /* ; */ $$a;b$$ ;", quoting);
+
+        assertEquals(TokenType.SELECT, tokens.get(0).type());
+        assertEquals(TokenType.STRING, tokens.get(1).type());
+        assertEquals(";", tokens.get(1).lexeme());
+        assertEquals(TokenType.DOLLAR_STRING, tokens.get(2).type());
+        assertEquals("$$a;b$$", tokens.get(2).lexeme());
+        assertEquals(TokenType.SEMICOLON, tokens.get(3).type());
     }
 
     @Test
