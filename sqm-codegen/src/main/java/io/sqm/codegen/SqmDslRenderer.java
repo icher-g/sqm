@@ -1,7 +1,5 @@
 package io.sqm.codegen;
 
-import io.sqm.core.SelectQuery;
-
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -105,9 +103,6 @@ public final class SqmDslRenderer {
             code.append(INDENT).append("public static ")
                 .append(file.statement().getTopLevelInterface().getSimpleName()).append(" ")
                 .append(file.methodName()).append("() {").append(NEWLINE);
-            if (file.statement() instanceof SelectQuery) {
-                code.append(INDENT).append(INDENT).append("var builder = SelectQuery.builder();").append(NEWLINE);
-            }
             code.append(INDENT).append(INDENT).append("return ")
                 .append(indentContinuationLines(statementExpression, 12))
                 .append(";").append(NEWLINE);

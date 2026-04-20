@@ -315,6 +315,46 @@ class SqmJavaEmitterTest {
 
     @Test
     void emit_coversDmlStatements() {
+        final String insertExpected  = """
+            insert(
+                tbl("users")
+            )
+            .hint("APPEND")
+            .ignore()
+            .columns(id("id"), id("name", QuoteStyle.BACKTICK))
+            .values(
+                row(lit(1), lit("alice"))
+            )
+            .result(inserted(id("id")).as(id("new_id")))
+            .build()""";
+        final String updateExpected = """
+            update(
+                tbl("users")
+            )
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .set("u", "name", lit("alice"))
+            .from(
+                tbl("src")
+            )
+            .where(
+                col("u", "id").eq(lit(1))
+            )
+            .result(resultInto(tableVar("audit"), id("user_id")), insertedAll(), inserted(id("id")).as(id("user_id")))
+            .build()""";
+        final String deleteExpected = """
+            delete(
+                tbl("users")
+            )
+            .hint("BKA", "users")
+            .using(
+                tbl("audit")
+            )
+            .where(
+                col("users", "id").eq(col("audit", "user_id"))
+            )
+            .result(deleted(id("id")))
+            .build()""";
+
         var insert = insert(tbl("users"))
             .hint("APPEND")
             .ignore()
@@ -340,37 +380,9 @@ class SqmJavaEmitterTest {
         var updateSource = emitter.emit(update);
         var deleteSource = emitter.emit(delete);
 
-        assertTrue(insertSource.contains("insert(tbl(\"users\"))"));
-        assertTrue(insertSource.contains("\n.ignore()"));
-        assertTrue(insertSource.contains("\n.columns("));
-        assertTrue(insertSource.contains("\n.values("));
-        assertTrue(insertSource.contains("\n.result("));
-        assertTrue(insertSource.contains("\n.build()"));
-        assertTrue(insertSource.contains(".hint(\"APPEND\")"));
-        assertTrue(insertSource.contains(".ignore()"));
-        assertTrue(insertSource.contains(".columns(id(\"id\"), id(\"name\", QuoteStyle.BACKTICK))"));
-        assertTrue(insertSource.contains(".values(row(lit(1), lit(\"alice\")))"));
-        assertTrue(insertSource.contains(".result(inserted(id(\"id\")).as(id(\"new_id\")))"));
-
-        assertTrue(updateSource.contains("update(tbl(\"users\"))"));
-        assertTrue(updateSource.contains("\n.set("));
-        assertTrue(updateSource.contains("\n.from("));
-        assertTrue(updateSource.contains("\n.where("));
-        assertTrue(updateSource.contains("\n.result("));
-        assertTrue(updateSource.contains("\n.build()"));
-        assertTrue(updateSource.contains(".hint(\"MAX_EXECUTION_TIME\", 1000)"));
-        assertTrue(updateSource.contains(".set(\"u\", \"name\", lit(\"alice\"))"));
-        assertTrue(updateSource.contains(".from(tbl(\"src\"))"));
-        assertTrue(updateSource.contains(".result(resultInto(tableVar(\"audit\"), id(\"user_id\")), insertedAll(), inserted(id(\"id\")).as(id(\"user_id\")))"));
-
-        assertTrue(deleteSource.contains("delete(tbl(\"users\"))"));
-        assertTrue(deleteSource.contains("\n.using("));
-        assertTrue(deleteSource.contains("\n.where("));
-        assertTrue(deleteSource.contains("\n.result("));
-        assertTrue(deleteSource.contains("\n.build()"));
-        assertTrue(deleteSource.contains(".hint(\"BKA\", \"users\")"));
-        assertTrue(deleteSource.contains(".using(tbl(\"audit\"))"));
-        assertTrue(deleteSource.contains(".result(deleted(id(\"id\")))"));
+        assertEquals(insertExpected, insertSource);
+        assertEquals(updateExpected, updateSource);
+        assertEquals(deleteExpected, deleteSource);
     }
 
     @Test
@@ -415,7 +427,8 @@ class SqmJavaEmitterTest {
         var doUpdateSource = emitter.emit(insertDoUpdate);
 
         assertTrue(doNothingSource.contains(".replace()"));
-        assertTrue(doNothingSource.contains(".query(select("));
+        assertTrue(doNothingSource.contains(".query("));
+        assertTrue(doNothingSource.contains("select("));
         assertTrue(doNothingSource.contains(".onConflictDoNothing(id(\"id\"))"));
 
         assertTrue(doUpdateSource.contains(".onConflictDoUpdate(List.of(id(\"id\")), List.of("));
@@ -442,6 +455,22 @@ class SqmJavaEmitterTest {
 
     @Test
     void emit_coversMergeStatements() {
+        final String mergeExpected = """
+            merge(
+                tbl("users")
+            )
+            .hint("MERGE_HINT")
+            .source(tbl("src").as("s"))
+            .on(
+                col("users", "id").eq(col("s", "id"))
+            )
+            .top(lit(5L))
+            .whenMatchedUpdate(col("s", "active").eq(lit(true)), set(id("name"), col("s", "name")))
+            .whenMatchedDelete(col("s", "deleted").eq(lit(true)))
+            .whenNotMatchedBySourceDelete(col("users", "active").eq(lit(false)))
+            .whenNotMatchedInsert(col("s", "name").isNotNull(), List.of(id("id"), id("name")), row(col("s", "id"), col("s", "name")))
+            .build()""";
+
         var mergeStatement = merge(tbl("users"))
             .hint("MERGE_HINT")
             .source(tbl("src").as("s"))
@@ -455,22 +484,7 @@ class SqmJavaEmitterTest {
 
         var source = emitter.emit(mergeStatement);
 
-        assertTrue(source.contains("merge(tbl(\"users\"))"));
-        assertTrue(source.contains("\n.source("));
-        assertTrue(source.contains("\n.on("));
-        assertTrue(source.contains("\n.top("));
-        assertTrue(source.contains("\n.whenMatchedUpdate("));
-        assertTrue(source.contains("\n.whenMatchedDelete("));
-        assertTrue(source.contains("\n.whenNotMatchedBySourceDelete("));
-        assertTrue(source.contains("\n.whenNotMatchedInsert("));
-        assertTrue(source.contains("\n.build()"));
-        assertTrue(source.contains(".hint(\"MERGE_HINT\")"));
-        assertTrue(source.contains(".source(tbl(\"src\").as(\"s\"))"));
-        assertTrue(source.contains(".top(lit(5L))"));
-        assertTrue(source.contains(".whenMatchedUpdate(col(\"s\", \"active\").eq(lit(true)), set(id(\"name\"), col(\"s\", \"name\")))"));
-        assertTrue(source.contains(".whenMatchedDelete(col(\"s\", \"deleted\").eq(lit(true)))"));
-        assertTrue(source.contains(".whenNotMatchedBySourceDelete(col(\"users\", \"active\").eq(lit(false)))"));
-        assertTrue(source.contains(".whenNotMatchedInsert(col(\"s\", \"name\").isNotNull(), List.of(id(\"id\"), id(\"name\")), row(col(\"s\", \"id\"), col(\"s\", \"name\")))"));
+        assertEquals(mergeExpected, source);
     }
 
     @Test
@@ -705,14 +719,16 @@ class SqmJavaEmitterTest {
         assertTrue(source.contains(".isDistinctFrom(col(\"b\"))"));
         assertTrue(source.contains(".isNotDistinctFrom(col(\"b\"))"));
         assertTrue(source.contains("kase("));
-        assertTrue(source.contains(".elseExpr(lit(\"unknown\"))"));
+        assertTrue(source.contains(".elseExpr("));
+        assertTrue(source.contains("lit(\"unknown\")"));
         assertTrue(source.contains("tbl("));
         assertTrue(source.contains("func(\"generate_series\", arg(lit(1)), arg(lit(3)))"));
         assertTrue(source.contains(".or("));
         assertTrue(source.contains(".nullsDefault()"));
         assertTrue(valuesSource.contains("tbl("));
         assertTrue(valuesSource.contains("rows(row(lit(1), lit(\"a\")))"));
-        assertTrue(withSource.contains("with(cte("));
+        assertTrue(withSource.contains("with("));
+        assertTrue(withSource.contains("cte("));
         assertTrue(withSource.contains(".columnAliases(\"id\", \"name\")"));
         assertTrue(withSource.contains(".materialization(CteDef.Materialization.MATERIALIZED)"));
         assertTrue(withSource.contains(".recursive(true)"));

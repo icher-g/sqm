@@ -38,7 +38,7 @@ public class CodeScope implements Closeable {
     @Override
     public void close() {
         if (!this.inline) {
-            this.builder.out().nl();
+            this.builder.out();
         }
     }
 }

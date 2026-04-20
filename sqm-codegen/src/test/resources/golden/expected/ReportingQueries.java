@@ -27,7 +27,6 @@ public final class ReportingQueries {
      * @return statement model for this SQL source.
      */
     public static SelectQuery kitchenSink() {
-        var builder = SelectQuery.builder();
         return select(
                 col("u", "id"),
                 col("u", "org_id"),
@@ -38,11 +37,13 @@ public final class ReportingQueries {
                         partition(col("u", "org_id")), orderBy(order(col("o", "created_at")).desc())
                     )
                     .as("org_rank")
-            
             )
             .from(tbl("users").as("u"))
             .join(
-                left(tbl("orders").as("o")).on(col("o", "user_id").eq(col("u", "id")))
+                left(tbl("orders").as("o"))
+                    .on(
+                        col("o", "user_id").eq(col("u", "id"))
+                    )
             )
             .where(
                 col("u", "status").eq(param("status")).and(

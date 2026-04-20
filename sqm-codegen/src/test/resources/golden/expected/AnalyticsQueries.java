@@ -27,14 +27,12 @@ public final class AnalyticsQueries {
      * @return statement model for this SQL source.
      */
     public static SelectQuery ranked() {
-        var builder = SelectQuery.builder();
         return select(
                 func("row_number")
                     .over(
                         partition(col("dept")), orderBy(order(col("salary")).desc())
                     )
                     .as("rn")
-            
             )
             .from(tbl("employees"))
             .build();

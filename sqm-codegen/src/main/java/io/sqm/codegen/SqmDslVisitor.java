@@ -245,14 +245,14 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
             try (var ignore = new CodeScope(out, false)) {
                 appendNode(q.where());
             }
-            out.append(")");
+            out.nl().append(")");
         }
         if (q.groupBy() != null && q.groupBy().items() != null && !q.groupBy().items().isEmpty()) {
             out.nl().append(".groupBy(");
             try (var ignore = new CodeScope(out, false)) {
                 out.comma(q.groupBy().items(), this::appendNode, true);
             }
-            out.append(")");
+            out.nl().append(")");
         }
         if (q.having() != null) {
             out.nl().append(".having(");
@@ -264,14 +264,14 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
             try (var ignore = new CodeScope(out, false)) {
                 out.comma(q.windows(), this::appendNode, true);
             }
-            out.append(")");
+            out.nl().append(")");
         }
         if (q.orderBy() != null && q.orderBy().items() != null && !q.orderBy().items().isEmpty()) {
             out.nl().append(".orderBy(");
             try (var ignore = new CodeScope(out, false)) {
                 out.comma(q.orderBy().items(), this::appendNode, true);
             }
-            out.append(")");
+            out.nl().append(")");
         }
         if (q.distinct() != null) {
             out.nl();
@@ -300,18 +300,20 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
 
     @Override
     public Void visitWithQuery(WithQuery q) {
-        out.append("with(")
-            .comma(q.ctes(), this::appendNode)
-            .append(")");
+        out.append("with(");
+        try (var ignore = new CodeScope(out, false)) {
+            out.comma(q.ctes(), this::appendNode, true);
+        }
+        out.nl().append(")");
         if (q.recursive()) {
             out.nl().append(".recursive(true)");
         }
         if (q.body() != null) {
             out.nl().append(".body(");
-            out.in();
-            appendNode(q.body());
-            out.out();
-            out.append(")");
+            try (var ignore = new CodeScope(out, false)) {
+                appendNode(q.body());
+            }
+            out.nl().append(")");
         }
         return defaultResult();
     }
@@ -341,8 +343,12 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     public Void visitCte(CteDef cte) {
         out.append("cte(").quote(cte.name().value()).append(", ");
         if (cte.body() == null) out.append("null");
-        else appendNode(cte.body());
-        out.append(")");
+        else {
+            try (var ignore = new CodeScope(out, false)) {
+                appendNode(cte.body());
+            }
+        }
+        out.nl().append(")");
 
         if (cte.columnAliases() != null && !cte.columnAliases().isEmpty()) {
             out.append(".columnAliases(")
@@ -361,8 +367,10 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitInsertStatement(InsertStatement statement) {
         out.append("insert(");
-        appendNode(statement.table());
-        out.append(")");
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(statement.table());
+        }
+        out.nl().append(")");
         for (var hint : statement.hints()) {
             out.nl().append(".");
             this.visitStatementHint(hint);
@@ -380,13 +388,17 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         }
         if (statement.source() instanceof Query query) {
             out.nl().append(".query(");
-            appendNode(query);
-            out.append(")");
+            try (var ignore = new CodeScope(out, false)) {
+                appendNode(query);
+            }
+            out.nl().append(")");
         }
         else {
             out.nl().append(".values(");
-            appendNode(statement.source());
-            out.append(")");
+            try (var ignore = new CodeScope(out, false)) {
+                appendNode(statement.source());
+            }
+            out.nl().append(")");
         }
         switch (statement.onConflictAction()) {
             case NONE -> {
@@ -432,16 +444,20 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitUpdateStatement(UpdateStatement statement) {
         out.append("update(");
-        appendNode(statement.table());
-        out.append(")");
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(statement.table());
+        }
+        out.nl().append(")");
         for (var hint : statement.hints()) {
             out.nl().append(".");
             this.visitStatementHint(hint);
         }
         if (!statement.joins().isEmpty()) {
-            out.nl().append(".joins(")
-                .comma(statement.joins(), this::appendNode)
-                .append(")");
+            out.nl().append(".joins(");
+            try (var ignore = new CodeScope(out, false)) {
+                out.comma(statement.joins(), this::appendNode, true);
+            }
+            out.nl().append(")");
         }
         for (var assignment : statement.assignments()) {
             out.nl().append(".set(");
@@ -465,14 +481,18 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
             out.append(")");
         }
         if (!statement.from().isEmpty()) {
-            out.nl().append(".from(")
-                .comma(statement.from(), this::appendNode)
-                .append(")");
+            out.nl().append(".from(");
+            try (var ignore = new CodeScope(out, false)) {
+                out.comma(statement.from(), this::appendNode);
+            }
+            out.nl().append(")");
         }
         if (statement.where() != null) {
             out.nl().append(".where(");
-            appendNode(statement.where());
-            out.append(")");
+            try (var ignore = new CodeScope(out, false)) {
+                appendNode(statement.where());
+            }
+            out.nl().append(")");
         }
         if (statement.result() != null) {
             out.nl();
@@ -485,26 +505,34 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitDeleteStatement(DeleteStatement statement) {
         out.append("delete(");
-        appendNode(statement.table());
-        out.append(")");
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(statement.table());
+        }
+        out.nl().append(")");
         for (var hint : statement.hints()) {
             out.nl().append(".");
             this.visitStatementHint(hint);
         }
         if (!statement.using().isEmpty()) {
-            out.nl().append(".using(")
-                .comma(statement.using(), this::appendNode)
-                .append(")");
+            out.nl().append(".using(");
+            try (var ignore = new CodeScope(out, false)) {
+                out.comma(statement.using(), this::appendNode);
+            }
+            out.nl().append(")");
         }
         if (!statement.joins().isEmpty()) {
-            out.nl().append(".joins(")
-                .comma(statement.joins(), this::appendNode)
-                .append(")");
+            out.nl().append(".joins(");
+            try (var ignore = new CodeScope(out, false)) {
+                out.comma(statement.joins(), this::appendNode, true);
+            }
+            out.nl().append(")");
         }
         if (statement.where() != null) {
             out.nl().append(".where(");
-            appendNode(statement.where());
-            out.append(")");
+            try (var ignore = new CodeScope(out, false)) {
+                appendNode(statement.where());
+            }
+            out.nl().append(")");
         }
         if (statement.result() != null) {
             out.nl();
@@ -517,8 +545,10 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitMergeStatement(MergeStatement statement) {
         out.append("merge(");
-        appendNode(statement.target());
-        out.append(")");
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(statement.target());
+        }
+        out.nl().append(")");
         for (var hint : statement.hints()) {
             out.nl().append(".");
             this.visitStatementHint(hint);
@@ -527,8 +557,10 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         appendNode(statement.source());
         out.append(")");
         out.nl().append(".on(");
-        appendNode(statement.on());
-        out.append(")");
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(statement.on());
+        }
+        out.nl().append(")");
         if (statement.topSpec() != null) {
             out.nl();
             this.visitTopSpec(statement.topSpec());
@@ -765,7 +797,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         try (var ignore = new CodeScope(out, false)) {
             appendNode(t.query());
         }
-        out.append(")");
+        out.nl().append(")");
         if (t.alias() != null) {
             out.append(".as(").quote(t.alias().value()).append(")");
         }
@@ -801,9 +833,11 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         appendNode(j.right());
         out.append(")");
         if (j.on() != null) {
-            out.append(".on(");
-            appendNode(j.on());
-            out.append(")");
+            out.nl().in().append(".on(");
+            try (var ignore = new CodeScope(out, false)) {
+                appendNode(j.on());
+            }
+            out.nl().append(")").out();
         }
         return defaultResult();
     }
@@ -811,16 +845,20 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitCrossJoin(CrossJoin j) {
         out.append("cross(");
-        appendNode(j.right());
-        out.append(")");
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(j.right());
+        }
+        out.nl().append(")");
         return defaultResult();
     }
 
     @Override
     public Void visitNaturalJoin(NaturalJoin j) {
         out.append("natural(");
-        appendNode(j.right());
-        out.append(")");
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(j.right());
+        }
+        out.nl().append(")");
         return defaultResult();
     }
 
@@ -834,8 +872,10 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
             case STRAIGHT -> "straight";
         };
         out.append(fn).append("(");
-        appendNode(j.right());
-        out.append(")");
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(j.right());
+        }
+        out.nl().append(")");
         out.append(".using(").comma(j.usingColumns(), i -> out.quote(i.value())).append(")");
         return defaultResult();
     }
@@ -1306,7 +1346,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         try (var ignore = new CodeScope(out, false)) {
             appendNode(t.function());
         }
-        out.append(")");
+        out.nl().append(")");
         return defaultResult();
     }
 
@@ -1316,7 +1356,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         try (var ignore = new CodeScope(out, false)) {
             appendNode(t.values());
         }
-        out.append(")");
+        out.nl().append(")");
         return defaultResult();
     }
 
@@ -1431,8 +1471,10 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitQueryExpr(QueryExpr v) {
         out.append("expr(");
-        appendNode(v.subquery());
-        out.append(")");
+        try (var ignore = new CodeScope(out, false)) {
+            appendNode(v.subquery());
+        }
+        out.nl().append(")");
         return defaultResult();
     }
 
@@ -1463,14 +1505,14 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
             try (var ignore = new CodeScope(out, false)) {
                 out.comma(f.withinGroup().items(), this::appendNode, true);
             }
-            out.append(")");
+            out.nl().append(")");
         }
         if (f.filter() != null) {
             out.nl().append(".filter(");
             try (var ignore = new CodeScope(out, false)) {
                 appendNode(f.filter());
             }
-            out.append(")");
+            out.nl().append(")");
         }
         if (f.over() != null) {
             out.nl().append(".over(");
@@ -1487,7 +1529,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
                     appendNode(f.over());
                 }
             }
-            out.append(")");
+            out.nl().append(")");
         }
         out.out();
         return defaultResult();
@@ -1679,17 +1721,18 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
 
     @Override
     public Void visitCaseExpr(CaseExpr c) {
-        out.append("kase(").nl();
-        out.in();
-        out.comma(c.whens(), w -> appendNode(w));
-        if (c.whens().size() > 1) {
-            out.nl();
+        out.append("kase(");
+        try (var ignore = new CodeScope(out, false)) {
+            out.comma(c.whens(), w -> appendNode(w), true);
         }
-        out.out();
-        out.append(")");
+        out.nl().append(")");
         if (c.elseExpr() != null) {
+            var isLiteral = c.elseExpr() instanceof LiteralExpr;
             out.nl().append(".elseExpr(");
-            appendNode(c.elseExpr());
+            try (var ignore = new CodeScope(out, isLiteral)) {
+                appendNode(c.elseExpr());
+            }
+            if (!isLiteral) out.nl();
             out.append(")");
         }
         return defaultResult();
@@ -1701,9 +1744,9 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         appendNode(w.when());
         out.append(")");
         if (w.then() != null) {
-            out.append(".then(");
+            out.nl().in().append(".then(");
             appendNode(w.then());
-            out.append(")");
+            out.append(")").out();
         }
         return defaultResult();
     }

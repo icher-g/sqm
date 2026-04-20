@@ -41,7 +41,6 @@ class SqlFileCodeGeneratorTest {
         var source = Files.readString(generatedFile);
         assertTrue(source.contains("import static io.sqm.dsl.Dsl.*;"));
         assertTrue(source.contains("public static SelectQuery aFindById()"));
-        assertTrue(source.contains("var builder = SelectQuery.builder();"));
         assertTrue(source.contains("return select("));
         assertTrue(source.contains("param(\"id\")"));
         assertTrue(source.contains("param(\"status\")"));
@@ -217,9 +216,10 @@ class SqlFileCodeGeneratorTest {
         assertTrue(source.contains("public static DeleteStatement deleteUser()"));
         assertTrue(source.contains("public static InsertStatement insertUser()"));
         assertTrue(source.contains("public static UpdateStatement updateUser()"));
-        assertTrue(source.contains("return delete(tbl(\"users\"))"));
-        assertTrue(source.contains("return insert(tbl(\"users\"))"));
-        assertTrue(source.contains("return update(tbl(\"users\"))"));
+        assertTrue(source.contains("return delete("));
+        assertTrue(source.contains("tbl(\"users\")"));
+        assertTrue(source.contains("return insert("));
+        assertTrue(source.contains("return update("));
     }
 
     @Test
