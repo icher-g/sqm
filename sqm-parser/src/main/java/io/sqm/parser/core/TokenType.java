@@ -45,6 +45,10 @@ public enum TokenType {
      */
     COMMA,
     /**
+     * Semicolon statement terminator token.
+     */
+    SEMICOLON,
+    /**
      * Left parenthesis token.
      */
     LPAREN,

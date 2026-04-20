@@ -1,6 +1,7 @@
 package io.sqm.parser.spi;
 
 import io.sqm.core.Node;
+import io.sqm.core.Statement;
 import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.parser.DefaultParseContext;
 import io.sqm.parser.core.Cursor;
@@ -354,6 +355,9 @@ public interface ParseContext {
      */
     default <T> ParseResult<? extends T> finalize(Cursor cur, ParseResult<? extends T> pr) {
         if (pr.isError()) return pr;
+        if (callstack().isEmpty() && pr.value() instanceof Statement) {
+            cur.consumeIf(TokenType.SEMICOLON);
+        }
         if (callstack().isEmpty() && !cur.isEof()) {
             return error("Expected EOF but found: " + cur.peek().lexeme(), cur.fullPos());
         }
