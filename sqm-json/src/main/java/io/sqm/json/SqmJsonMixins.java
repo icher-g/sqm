@@ -24,6 +24,7 @@ public final class SqmJsonMixins {
     public static ObjectMapper configure(ObjectMapper mapper) {
         // Node
         mapper.addMixIn(Node.class, NodeMixin.class);
+        mapper.addMixIn(StatementSequence.class, NodeMixin.class);
         mapper.addMixIn(Hint.class, HintMixin.class);
         mapper.addMixIn(HintArg.class, HintArgMixin.class);
 

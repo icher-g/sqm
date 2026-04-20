@@ -13,6 +13,7 @@ import io.sqm.core.MergeStatement;
 import io.sqm.core.MergeUpdateAction;
 import io.sqm.core.ResultClause;
 import io.sqm.core.ResultInto;
+import io.sqm.core.StatementSequence;
 import io.sqm.core.TypeName;
 import io.sqm.core.UpdateStatement;
 import io.sqm.core.WhenThen;
@@ -23,6 +24,14 @@ import io.sqm.core.WhenThen;
  * @param <R> the result type produced by the visitor
  */
 public interface StatementVisitor<R> {
+
+    /**
+     * Visits an ordered statement sequence.
+     *
+     * @param sequence statement sequence being visited
+     * @return a result specific to the visitor implementation
+     */
+    R visitStatementSequence(StatementSequence sequence);
 
     /**
      * Visits a dialect-neutral {@link InsertStatement}.

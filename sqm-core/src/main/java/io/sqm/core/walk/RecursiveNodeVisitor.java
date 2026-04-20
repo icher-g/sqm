@@ -33,6 +33,18 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
+     * Visits an ordered {@link StatementSequence}.
+     *
+     * @param sequence statement sequence being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitStatementSequence(StatementSequence sequence) {
+        sequence.statements().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
      * Visits a dialect-neutral {@link InsertStatement}.
      *
      * @param statement insert statement being visited

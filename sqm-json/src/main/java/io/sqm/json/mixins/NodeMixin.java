@@ -9,6 +9,7 @@ import io.sqm.core.*;
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
+    @JsonSubTypes.Type(value = StatementSequence.Impl.class, name = "statementSequence"),
     @JsonSubTypes.Type(value = TypeName.Impl.class, name = "typeName"),
     @JsonSubTypes.Type(value = DistinctSpec.Impl.class, name = "distinctSpec"),
     @JsonSubTypes.Type(value = GroupBy.Impl.class, name = "groupBy"),

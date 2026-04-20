@@ -8,7 +8,7 @@ multiple statements separated by semicolons.
 The goal is to make multi-statement support explicit across parser, playground,
 code generation, validation, rendering, transpilation, and middleware behavior.
 The plan keeps existing single-statement APIs usable while introducing batch or
-script-oriented APIs where needed.
+statement-sequence APIs where needed.
 
 ## Recommended Direction
 
@@ -18,7 +18,7 @@ Instead of changing every parser API from `Statement` to `List<Statement>`, add
 an explicit top-level abstraction for multi-statement input:
 
 ```java
-SqlScript
+StatementSequence
 ```
 
 The existing API should remain single-statement oriented:
@@ -30,13 +30,13 @@ ctx.parse(Statement.class, sql)
 A new API should handle multi-statement inputs:
 
 ```java
-ctx.parse(SqlScript.class, sql)
+ctx.parse(StatementSequence.class, sql)
 ```
 
 or:
 
 ```java
-ctx.parseScript(sql)
+ctx.parseStatementSequence(sql)
 ```
 
 This keeps the current model stable and makes multi-statement parsing opt-in.
@@ -45,16 +45,16 @@ This keeps the current model stable and makes multi-statement parsing opt-in.
 
 The initial multi-statement implementation should use these decisions:
 
-- The canonical container name is `SqlScript`.
+- The canonical container name is `StatementSequence`.
 - Empty statements are ignored, for example `select 1;;` parses as one statement.
 - Direct single-statement parsing accepts one optional trailing semicolon.
-- Final rendered script SQL always includes a trailing semicolon.
+- Final rendered statement sequence SQL always includes a trailing semicolon.
 - Middleware must not allow partial execution of a batch.
 - Playground multi-statement render and transpile output is combined output only.
 - Playground parse inspection remains statement-aware for AST, JSON, and DSL views.
-- Code generation exposes both a script-level method and per-statement methods.
+- Code generation exposes both a sequence-level method and per-statement methods.
 - Batch APIs are introduced alongside existing single-statement APIs.
-- `ctx.parse(SqlScript.class, sql)` is the batch parsing entry point.
+- `ctx.parse(StatementSequence.class, sql)` is the batch parsing entry point.
 - The `Parser` interface remains unchanged.
 - DDL remains out of scope unless a separate DDL decision is made.
 
@@ -104,23 +104,23 @@ select 1; select 2
 The likely integration point is top-level parse finalization, currently where
 EOF is enforced.
 
-### Script Parser
+### Statement Sequence Parser
 
-Add a dedicated script or batch parser that parses:
+Add a dedicated statement sequence or batch parser that parses:
 
 ```text
 statement (';' statement)* ';'?
 ```
 
-The script parser should operate on tokens and cursor boundaries, not raw string
+The statement sequence parser should operate on tokens and cursor boundaries, not raw string
 splitting.
 
-Statement parsing inside a script must treat top-level `SEMICOLON` as a
+Statement parsing inside a statement sequence must treat top-level `SEMICOLON` as a
 statement boundary while still allowing semicolons in lexical constructs such as
 strings and comments.
 
 Empty statements should be ignored. For example, `select 1;;` should produce a
-`SqlScript` with one statement.
+`StatementSequence` with one statement.
 
 ## Diagnostics
 
@@ -153,7 +153,7 @@ lists.
 Possible shape:
 
 ```java
-public interface SqlScript extends Node {
+public interface StatementSequence extends Node {
     List<Statement> statements();
 }
 ```
@@ -209,8 +209,8 @@ Transpilation currently operates on a single `Statement`.
 Add a batch-oriented flow, such as:
 
 ```java
-transpileScript(String sql)
-transpileBatch(SqlScript script)
+transpileStatementSequence(String sql)
+transpileBatch(StatementSequence sequence)
 ```
 
 The result model should be able to represent:
@@ -308,7 +308,7 @@ Similar batch-aware structures are needed for:
 For multi-statement render and transpile responses, the output SQL should be
 combined output only. Per-statement render and transpile details may exist in
 diagnostics or metadata, but the main SQL output should represent the full
-script.
+statement sequence.
 
 ## Playground UI
 
@@ -334,16 +334,16 @@ The SQL file code generator needs an explicit policy for multi-statement files.
 
 Possible outputs:
 
-- one generated method returning a batch or script object
+- one generated method returning a batch or statement sequence object
 - one generated method per statement
 - both, with stable statement method names
 
 Recommended initial behavior:
 
-- Treat a multi-statement `.sql` file as one generated script method.
+- Treat a multi-statement `.sql` file as one generated statement-sequence method.
 - Expose individual statements using a stable generated naming convention.
 - Preserve statement order.
-- Extract named parameters across the whole script.
+- Extract named parameters across the whole statement sequence.
 
 Parameter handling must be specified. For example:
 
@@ -354,7 +354,7 @@ insert into audit(user_id) values (:id);
 
 The generator should define whether shared parameter names are one method
 argument or separate per-statement arguments. The most ergonomic initial rule is
-to deduplicate named parameters across the script and pass each name once.
+to deduplicate named parameters across the statement sequence and pass each name once.
 
 ## Middleware and Integration Modules
 
@@ -438,10 +438,10 @@ Transpilation tests:
 - Accept optional trailing semicolon for single-statement parsing.
 - Add lexer and parser tests.
 
-### Phase 2: Script Parser
+### Phase 2: Statement Sequence Parser
 
-- Add `SqlScript` container.
-- Add script parser.
+- Add `StatementSequence` container.
+- Add statement sequence parser.
 - Add source boundary metadata if needed for diagnostics.
 - Add parser tests for tricky semicolon locations.
 
@@ -466,8 +466,8 @@ Transpilation tests:
 ### Phase 6: Codegen
 
 - Define multi-statement `.sql` file API.
-- Implement script generation.
-- Generate both script-level and per-statement methods.
+- Implement statement-sequence generation.
+- Generate both sequence-level and per-statement methods.
 - Add parameter handling tests.
 
 ### Phase 7: Middleware
@@ -482,6 +482,6 @@ Transpilation tests:
 - Should middleware multi-statement support be enabled by default or guarded by
   explicit configuration?
 - Should middleware allow batches that mix read and write statements?
-- Should script rendering preserve comments and blank lines between statements,
+- Should statement-sequence rendering preserve comments and blank lines between statements,
   or is normalized output sufficient?
 - What stable naming convention should codegen use for per-statement methods?
