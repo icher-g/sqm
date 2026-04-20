@@ -72,6 +72,7 @@ function JsonTreeNode(props: JsonTreeNodeProps) {
           type="button"
           className="json-toggle"
           aria-expanded={expanded}
+          title={expanded ? "Collapse this JSON node." : "Expand this JSON node."}
           onClick={() => setExpanded((current) => !current)}
         >
           <span className="tree-toggle-glyph">{expanded ? "-" : "+"}</span>

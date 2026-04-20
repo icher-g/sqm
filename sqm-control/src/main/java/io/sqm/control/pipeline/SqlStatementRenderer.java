@@ -1,7 +1,9 @@
 package io.sqm.control.pipeline;
 
 import io.sqm.control.execution.ExecutionContext;
+import io.sqm.core.Node;
 import io.sqm.core.Statement;
+import io.sqm.core.StatementSequence;
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.mysql.spi.MySqlDialect;
@@ -18,7 +20,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
- * Renders SQM {@link Statement} models to SQL text for a target execution context.
+ * Renders SQM {@link Statement} and {@link StatementSequence} models to SQL text for a target execution context.
  */
 @FunctionalInterface
 public interface SqlStatementRenderer {
@@ -47,6 +49,9 @@ public interface SqlStatementRenderer {
         return (sql, context) -> {
             Objects.requireNonNull(sql, "sql must not be null");
             Objects.requireNonNull(context, "context must not be null");
+            if (!(sql instanceof Statement) && !(sql instanceof StatementSequence)) {
+                throw new IllegalArgumentException("Only Statement and StatementSequence nodes can be rendered by SqlStatementRenderer");
+            }
 
             var specsFactory = mappings.get(context.dialectId());
             if (specsFactory == null) {
@@ -84,13 +89,13 @@ public interface SqlStatementRenderer {
     }
 
     /**
-     * Renders a statement model to SQL text for the provided execution context.
+     * Renders a statement or statement-sequence model to SQL text for the provided execution context.
      *
-     * @param query   statement model to render
+     * @param query   statement or statement-sequence model to render
      * @param context execution context
      * @return rendered SQL text
      */
-    StatementRenderResult render(Statement query, ExecutionContext context);
+    StatementRenderResult render(Node query, ExecutionContext context);
 }
 
 

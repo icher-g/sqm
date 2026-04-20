@@ -98,6 +98,19 @@ public final class PlaygroundStatementSupport {
     }
 
     /**
+     * Creates a structured diagnostic for a statement-sequence operation failure.
+     *
+     * @param phase operation phase
+     * @param code diagnostic code
+     * @param message diagnostic message
+     * @param statementIndex one-based statement index
+     * @return structured diagnostic
+     */
+    public PlaygroundDiagnosticDto diagnostic(DiagnosticPhaseDto phase, String code, String message, int statementIndex) {
+        return diagnostic(DiagnosticSeverityDto.error, code, message, phase, null, null, statementIndex);
+    }
+
+    /**
      * Creates a structured diagnostic for an operation failure with explicit line and column.
      *
      * @param severity diagnostic severity
@@ -116,13 +129,38 @@ public final class PlaygroundStatementSupport {
         Integer line,
         Integer column
     ) {
+        return diagnostic(severity, code, message, phase, line, column, null);
+    }
+
+    /**
+     * Creates a structured diagnostic for an operation failure with explicit location and statement context.
+     *
+     * @param severity diagnostic severity
+     * @param code diagnostic code
+     * @param message diagnostic message
+     * @param phase operation phase
+     * @param line one-based source line when available
+     * @param column one-based source column when available
+     * @param statementIndex one-based statement index when available
+     * @return structured diagnostic
+     */
+    public PlaygroundDiagnosticDto diagnostic(
+        DiagnosticSeverityDto severity,
+        String code,
+        String message,
+        DiagnosticPhaseDto phase,
+        Integer line,
+        Integer column,
+        Integer statementIndex
+    ) {
         return new PlaygroundDiagnosticDto(
             severity,
             code,
             message,
             phase,
             line,
-            column
+            column,
+            statementIndex
         );
     }
 

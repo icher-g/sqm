@@ -1,6 +1,7 @@
 package io.sqm.playground.rest;
 
 import io.sqm.playground.api.RenderRequestDto;
+import io.sqm.playground.api.RenderParameterizationModeDto;
 import io.sqm.playground.api.SqlDialectDto;
 import io.sqm.playground.rest.service.PlaygroundStatementSupport;
 import io.sqm.playground.rest.service.RenderService;
@@ -30,6 +31,27 @@ class RenderServiceTest {
         assertTrue(response.success());
         assertNotNull(response.renderedSql());
         assertTrue(response.renderedSql().toLowerCase().contains("select"));
+        assertTrue(response.params().isEmpty());
+        assertTrue(response.diagnostics().isEmpty());
+    }
+
+    @Test
+    void renderReturnsCombinedSqlForStatementSequence() {
+        var service = new RenderService(new PlaygroundStatementSupport());
+
+        var response = service.render(new RenderRequestDto(
+            "select 1; select 2;",
+            SqlDialectDto.ansi,
+            SqlDialectDto.postgresql
+        ));
+
+        assertTrue(response.success());
+        assertNotNull(response.renderedSql());
+        assertTrue(response.renderedSql().stripTrailing().endsWith(";"));
+        assertEquals(2, response.renderedSql().chars().filter(ch -> ch == ';').count());
+        assertTrue(response.renderedSql().toLowerCase().contains("select 1"));
+        assertTrue(response.renderedSql().toLowerCase().contains("select 2"));
+        assertTrue(response.params().isEmpty());
         assertTrue(response.diagnostics().isEmpty());
     }
 
@@ -51,6 +73,26 @@ class RenderServiceTest {
     }
 
     @Test
+    void renderReturnsBindParametersWhenParameterizationIsEnabled() {
+        var service = new RenderService(new PlaygroundStatementSupport());
+
+        var response = service.render(new RenderRequestDto(
+            "select id from customer where id = 7; select name from customer where name = 'alice';",
+            SqlDialectDto.ansi,
+            SqlDialectDto.postgresql,
+            RenderParameterizationModeDto.bind
+        ));
+
+        assertTrue(response.success());
+        assertNotNull(response.renderedSql());
+        assertTrue(response.renderedSql().contains("?"));
+        assertEquals(2, response.params().size());
+        assertTrue(response.params().contains(7L));
+        assertTrue(response.params().contains("alice"));
+        assertTrue(response.diagnostics().isEmpty());
+    }
+
+    @Test
     void renderReturnsParseDiagnosticsForInvalidSql() {
         var service = new RenderService(new PlaygroundStatementSupport());
 
@@ -62,6 +104,7 @@ class RenderServiceTest {
 
         assertFalse(response.success());
         assertNull(response.renderedSql());
+        assertTrue(response.params().isEmpty());
         assertFalse(response.diagnostics().isEmpty());
         assertEquals("PARSE_ERROR", response.diagnostics().getFirst().code());
     }

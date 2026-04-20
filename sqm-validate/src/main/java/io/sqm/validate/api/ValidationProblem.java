@@ -9,12 +9,14 @@ import java.util.Objects;
  * @param message detailed human-readable message.
  * @param nodeKind optional node kind where problem occurred.
  * @param clausePath optional clause/path hint (for example {@code where}, {@code join.using}).
+ * @param statementIndex optional one-based statement index when validating a statement sequence.
  */
 public record ValidationProblem(
     ValidationProblem.Code code,
     String message,
     String nodeKind,
-    String clausePath
+    String clausePath,
+    Integer statementIndex
 ) {
     /**
      * Creates a validation problem without structured context.
@@ -23,7 +25,19 @@ public record ValidationProblem(
      * @param message detailed message.
      */
     public ValidationProblem(ValidationProblem.Code code, String message) {
-        this(code, message, null, null);
+        this(code, message, null, null, null);
+    }
+
+    /**
+     * Creates a validation problem with structured node context.
+     *
+     * @param code problem code.
+     * @param message detailed message.
+     * @param nodeKind optional node kind where problem occurred.
+     * @param clausePath optional clause/path hint.
+     */
+    public ValidationProblem(ValidationProblem.Code code, String message, String nodeKind, String clausePath) {
+        this(code, message, nodeKind, clausePath, null);
     }
 
     /**
@@ -35,6 +49,19 @@ public record ValidationProblem(
     public ValidationProblem {
         Objects.requireNonNull(code, "code");
         Objects.requireNonNull(message, "message");
+    }
+
+    /**
+     * Returns a copy of this problem annotated with a one-based statement index.
+     *
+     * @param statementIndex one-based statement index.
+     * @return validation problem with statement index.
+     */
+    public ValidationProblem withStatementIndex(int statementIndex) {
+        if (statementIndex < 1) {
+            throw new IllegalArgumentException("statementIndex must be greater than zero");
+        }
+        return new ValidationProblem(code, message, nodeKind, clausePath, statementIndex);
     }
 
     /**

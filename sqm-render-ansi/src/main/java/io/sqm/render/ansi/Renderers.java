@@ -2,6 +2,7 @@ package io.sqm.render.ansi;
 
 import io.sqm.render.QueryRenderer;
 import io.sqm.render.RowValuesRenderer;
+import io.sqm.render.StatementSequenceRenderer;
 import io.sqm.render.StatementRenderer;
 import io.sqm.render.repos.DefaultRenderersRepository;
 import io.sqm.render.spi.RenderersRepository;
@@ -39,6 +40,7 @@ public final class Renderers {
 
     private static RenderersRepository registerDefaults(RenderersRepository r) {
         return r
+            .register(new StatementSequenceRenderer())
             .register(new StatementRenderer())
             .register(new QueryRenderer())
             .register(new RowValuesRenderer())

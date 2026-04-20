@@ -1,9 +1,11 @@
 package io.sqm.playground.rest.service;
 
 import io.sqm.playground.api.DiagnosticPhaseDto;
+import io.sqm.playground.api.PlaygroundDiagnosticDto;
 import io.sqm.playground.api.SqlDialectDto;
 import io.sqm.playground.api.ValidateRequestDto;
 import io.sqm.playground.api.ValidateResponseDto;
+import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.mysql.MySqlValidationDialect;
 import io.sqm.validate.postgresql.PostgresValidationDialect;
 import io.sqm.validate.schema.SchemaStatementValidator;
@@ -42,7 +44,7 @@ public final class ValidateService {
     public ValidateResponseDto validate(ValidateRequestDto request) {
         Objects.requireNonNull(request, "request must not be null");
 
-        var parseAttempt = statementSupport.parse(request.sql(), request.dialect());
+        var parseAttempt = statementSupport.parseSequence(request.sql(), request.dialect());
         if (!parseAttempt.success()) {
             return new ValidateResponseDto(
                 UUID.randomUUID().toString(),
@@ -54,8 +56,11 @@ public final class ValidateService {
         }
 
         try {
-            var validation = validatorFor(request.dialect()).validate(parseAttempt.statement());
-            if (validation.problems().isEmpty()) {
+            var validation = validatorFor(request.dialect()).validate(parseAttempt.sequence());
+            var diagnostics = validation.problems().stream()
+                .map(this::validationDiagnostic)
+                .toList();
+            if (diagnostics.isEmpty()) {
                 return new ValidateResponseDto(
                     UUID.randomUUID().toString(),
                     true,
@@ -69,13 +74,7 @@ public final class ValidateService {
                 true,
                 0L,
                 false,
-                validation.problems().stream()
-                    .map(problem -> statementSupport.diagnostic(
-                        DiagnosticPhaseDto.validate,
-                        problem.code().name(),
-                        problem.message()
-                    ))
-                    .toList()
+                diagnostics
             );
         } catch (RuntimeException e) {
             return new ValidateResponseDto(
@@ -95,5 +94,14 @@ public final class ValidateService {
             case mysql -> SchemaStatementValidator.of(ValidationCatalogSchemas.allowEverything(), MySqlValidationDialect.of());
             case sqlserver -> SchemaStatementValidator.of(ValidationCatalogSchemas.allowEverything(), SqlServerValidationDialect.of());
         };
+    }
+
+    private PlaygroundDiagnosticDto validationDiagnostic(ValidationProblem problem) {
+        return statementSupport.diagnostic(
+            DiagnosticPhaseDto.validate,
+            problem.code().name(),
+            problem.message(),
+            problem.statementIndex()
+        );
     }
 }

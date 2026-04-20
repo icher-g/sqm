@@ -1,4 +1,4 @@
-import type { ExampleDto, PlaygroundDiagnosticDto, SqlDialect } from "../types/api";
+import type { ExampleDto, PlaygroundDiagnosticDto, RenderParameterizationMode, SqlDialect } from "../types/api";
 import { SqlCodeEditor } from "./SqlCodeEditor";
 
 interface SqlEditorPanelProps {
@@ -9,6 +9,7 @@ interface SqlEditorPanelProps {
   examplesError: string | null;
   sourceDialect: SqlDialect;
   targetDialect: SqlDialect;
+  renderParameterizationMode: RenderParameterizationMode;
   editorDiagnostics: PlaygroundDiagnosticDto[];
   focusedDiagnostic: { diagnostic: PlaygroundDiagnosticDto; version: number } | null;
   activeAction: "parse" | "format" | "render" | "validate" | "transpile" | null;
@@ -26,6 +27,7 @@ interface SqlEditorPanelProps {
   onExampleChange: (nextExampleId: string) => void;
   onSourceDialectChange: (nextDialect: SqlDialect) => void;
   onTargetDialectChange: (nextDialect: SqlDialect) => void;
+  onRenderParameterizationModeChange: (nextMode: RenderParameterizationMode) => void;
   onParse: () => void;
   onFormat: () => void;
   onRender: () => void;
@@ -85,6 +87,7 @@ export function SqlEditorPanel(props: SqlEditorPanelProps) {
               <button
                 type="button"
                 className={props.activeAction === "parse" ? "button-primary" : undefined}
+                title="Parse SQL using the selected source dialect and show its SQM AST, JSON, and DSL."
                 onClick={props.onParse}
                 disabled={
                   !props.canParse
@@ -100,6 +103,7 @@ export function SqlEditorPanel(props: SqlEditorPanelProps) {
               <button
                 type="button"
                 className={props.activeAction === "validate" ? "button-primary" : undefined}
+                title="Validate SQL using the selected source dialect and show diagnostics."
                 onClick={props.onValidate}
                 disabled={
                   !props.canValidate
@@ -129,10 +133,34 @@ export function SqlEditorPanel(props: SqlEditorPanelProps) {
                 <option value="sqlserver">sqlserver</option>
               </select>
             </div>
+            <div className="control-field parameterization-field">
+              <span className="control-label" id="render-parameterization-label">Render parameters</span>
+              <div className="segmented-control" role="group" aria-labelledby="render-parameterization-label">
+                <button
+                  type="button"
+                  className={props.renderParameterizationMode === "inline" ? "segmented-button segmented-button-active" : "segmented-button"}
+                  aria-pressed={props.renderParameterizationMode === "inline"}
+                  title="Render literal values directly in the SQL output."
+                  onClick={() => props.onRenderParameterizationModeChange("inline")}
+                >
+                  Inline
+                </button>
+                <button
+                  type="button"
+                  className={props.renderParameterizationMode === "bind" ? "segmented-button segmented-button-active" : "segmented-button"}
+                  aria-pressed={props.renderParameterizationMode === "bind"}
+                  title="Render literals as bind placeholders and return parameter values separately."
+                  onClick={() => props.onRenderParameterizationModeChange("bind")}
+                >
+                  Bind
+                </button>
+              </div>
+            </div>
             <div className="button-column">
               <button
                 type="button"
                 className={props.activeAction === "render" ? "button-primary" : undefined}
+                title="Render SQL using the selected target dialect."
                 onClick={props.onRender}
                 disabled={
                   !props.canRender
@@ -148,6 +176,7 @@ export function SqlEditorPanel(props: SqlEditorPanelProps) {
               <button
                 type="button"
                 className={props.activeAction === "transpile" ? "button-primary" : undefined}
+                title="Transpile SQL from the source dialect to the target dialect."
                 onClick={props.onTranspile}
                 disabled={
                   !props.canTranspile
@@ -171,6 +200,7 @@ export function SqlEditorPanel(props: SqlEditorPanelProps) {
           <button
             type="button"
             className={props.activeAction === "format" ? "editor-secondary-button button-primary" : "editor-secondary-button"}
+            title="Format the SQL text using the selected source dialect."
             onClick={props.onFormat}
             disabled={
               !props.canFormat

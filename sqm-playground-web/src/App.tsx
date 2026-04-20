@@ -6,6 +6,7 @@ import type {
   ExampleDto,
   ParseResponseDto,
   PlaygroundDiagnosticDto,
+  RenderParameterizationMode,
   RenderResponseDto,
   SqlDialect,
   TranspileResponseDto,
@@ -21,6 +22,7 @@ export default function App() {
   const [selectedExampleId, setSelectedExampleId] = useState("");
   const [sourceDialect, setSourceDialect] = useState<SqlDialect>("ansi");
   const [targetDialect, setTargetDialect] = useState<SqlDialect>("postgresql");
+  const [renderParameterizationMode, setRenderParameterizationMode] = useState<RenderParameterizationMode>("inline");
   const [examplesLoading, setExamplesLoading] = useState(true);
   const [examplesError, setExamplesError] = useState<string | null>(null);
   const [activeAction, setActiveAction] = useState<"parse" | "format" | "render" | "validate" | "transpile" | null>(null);
@@ -164,8 +166,9 @@ export default function App() {
     try {
       const response = await renderSql({
         sql: sqlText,
-        sourceDialect,
-        targetDialect
+        sourceDialect: targetDialect,
+        targetDialect,
+        parameterizationMode: renderParameterizationMode
       });
       setRenderResponse(response);
       setRenderedSqlDialect(response.success && response.renderedSql ? targetDialect : null);
@@ -192,7 +195,8 @@ export default function App() {
       const response = await renderSql({
         sql: sqlText,
         sourceDialect,
-        targetDialect: sourceDialect
+        targetDialect: sourceDialect,
+        parameterizationMode: "inline"
       });
 
       if (response.success && response.renderedSql) {
@@ -324,6 +328,7 @@ export default function App() {
             examplesError={examplesError}
             sourceDialect={sourceDialect}
             targetDialect={targetDialect}
+            renderParameterizationMode={renderParameterizationMode}
             editorDiagnostics={editorDiagnostics}
             focusedDiagnostic={focusedDiagnostic}
             activeAction={activeAction}
@@ -341,6 +346,7 @@ export default function App() {
             onExampleChange={handleExampleChange}
             onSourceDialectChange={setSourceDialect}
             onTargetDialectChange={setTargetDialect}
+            onRenderParameterizationModeChange={setRenderParameterizationMode}
             onParse={handleParse}
             onFormat={handleFormat}
             onRender={handleRender}

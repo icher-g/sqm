@@ -51,7 +51,7 @@ textarea {
 .workspace-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
   align-items: start;
 }
 
@@ -79,7 +79,8 @@ textarea {
   min-width: 0;
 }
 
-.control-field label {
+.control-field label,
+.control-label {
   font-weight: 600;
 }
 
@@ -101,6 +102,38 @@ textarea {
 .button-column {
   display: grid;
   gap: 0.75rem;
+  grid-row: 3;
+  align-self: end;
+}
+
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid #d4c3ad;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 0.2rem;
+  min-height: 2.3rem;
+  box-sizing: border-box;
+}
+
+.segmented-button {
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #5d4a36;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    box-shadow 120ms ease,
+    transform 80ms ease;
+}
+
+.segmented-button-active {
+  background: #c96f1a;
+  color: #fff8f1;
 }
 
 .button-column button {
@@ -108,13 +141,15 @@ textarea {
   border-radius: 14px;
   background: #fff6eb;
   color: #8f5314;
-  padding: 0.65rem 1rem;
+  min-height: 2.75rem;
+  padding: 0.45rem 1rem;
   width: 100%;
 }
 
 .button-column button,
 .tab-button,
 .ast-toolbar-button,
+.segmented-button,
 .ast-toggle,
 .json-toggle {
   cursor: pointer;
@@ -129,6 +164,7 @@ textarea {
 .button-column button:hover:not(:disabled),
 .tab-button:hover,
 .ast-toolbar-button:hover,
+.segmented-button:hover,
 .ast-toggle:hover,
 .json-toggle:hover {
   box-shadow: 0 0 0 3px rgba(201, 111, 26, 0.12);
@@ -137,6 +173,7 @@ textarea {
 .button-column button:active:not(:disabled),
 .tab-button:active,
 .ast-toolbar-button:active,
+.segmented-button:active,
 .ast-toggle:active,
 .json-toggle:active {
   transform: translateY(1px);
@@ -145,6 +182,7 @@ textarea {
 .button-column button:focus-visible,
 .tab-button:focus-visible,
 .ast-toolbar-button:focus-visible,
+.segmented-button:focus-visible,
 .ast-toggle:focus-visible,
 .json-toggle:focus-visible {
   outline: 2px solid #c96f1a;
@@ -183,12 +221,22 @@ textarea {
 
 .editor-action-card {
   display: grid;
+  grid-template-rows: auto 1fr auto;
   gap: 0.9rem;
   padding: 1rem;
   border: 1px solid #e3d4bf;
   border-radius: 16px;
   background: #fffdf8;
   min-width: 0;
+  min-height: 16.75rem;
+}
+
+.parameterization-field {
+  grid-row: 2;
+  grid-template-columns: minmax(5.5rem, 1fr) minmax(8rem, 10rem);
+  align-items: center;
+  align-self: start;
+  gap: 0.75rem;
 }
 
 .editor-label {
@@ -385,6 +433,21 @@ textarea {
 
 .result-code-block code {
   font-family: inherit;
+}
+
+.render-output-stack {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.render-params {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.render-params h4 {
+  margin: 0;
+  font-size: 0.95rem;
 }
 
 .token.comment,
@@ -699,6 +762,16 @@ textarea {
 
   .editor-action-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1200px) {
+  .parameterization-field {
+    grid-template-columns: 1fr;
+  }
+
+  .parameterization-field .segmented-control {
+    width: 100%;
   }
 }
 

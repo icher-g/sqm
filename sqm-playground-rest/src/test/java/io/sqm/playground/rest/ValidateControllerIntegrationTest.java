@@ -50,6 +50,25 @@ class ValidateControllerIntegrationTest {
     }
 
     @Test
+    void validateEndpointReturnsStatementIndexedDiagnosticsForBatch() {
+        var response = restTemplate.postForEntity(
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/validate",
+            new HttpEntity<>(new ValidateRequestDto(
+                "select id from customer; select distinct on (id) id, name from customer order by name;",
+                SqlDialectDto.postgresql
+            )),
+            ValidateResponseDto.class
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().success());
+        assertFalse(response.getBody().valid());
+        assertFalse(response.getBody().diagnostics().isEmpty());
+        assertEquals(2, response.getBody().diagnostics().getFirst().statementIndex());
+    }
+
+    @Test
     void validateEndpointReturnsDialectDiagnosticsForInvalidQuery() {
         var response = restTemplate.postForEntity(
             "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/validate",

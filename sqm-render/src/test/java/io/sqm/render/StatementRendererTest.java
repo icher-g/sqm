@@ -2,6 +2,7 @@ package io.sqm.render;
 
 import io.sqm.core.Node;
 import io.sqm.core.Statement;
+import io.sqm.core.StatementSequence;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 import org.junit.jupiter.api.Test;
@@ -124,8 +125,32 @@ class StatementRendererTest {
     }
 
     @Test
+    void rendersStatementSequenceWithSemicolonTerminatedStatements() {
+        var dialect = new RenderTestDialect()
+            .register(new StatementSequenceRenderer())
+            .register(new StatementRenderer())
+            .register(new QueryRenderer())
+            .register(new SelectRenderer())
+            .register(new InsertRenderer());
+        var ctx = RenderContext.of(dialect);
+        var sequence = StatementSequence.of(
+            select(lit(1)).build(),
+            insert("users").values(row(lit(2))).build()
+        );
+
+        var sql = ctx.render(sequence).sql();
+
+        assertEquals("SELECT-STUB;\nINSERT-STUB;", sql);
+    }
+
+    @Test
     void exposesStatementTargetType() {
         assertEquals(Statement.class, new StatementRenderer().targetType());
+    }
+
+    @Test
+    void exposesStatementSequenceTargetType() {
+        assertEquals(StatementSequence.class, new StatementSequenceRenderer().targetType());
     }
 
     private static final class RecordingWriter implements SqlWriter {

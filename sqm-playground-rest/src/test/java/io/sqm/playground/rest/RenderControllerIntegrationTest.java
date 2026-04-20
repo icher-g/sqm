@@ -1,6 +1,7 @@
 package io.sqm.playground.rest;
 
 import io.sqm.playground.api.RenderRequestDto;
+import io.sqm.playground.api.RenderParameterizationModeDto;
 import io.sqm.playground.api.RenderResponseDto;
 import io.sqm.playground.api.SqlDialectDto;
 import org.junit.jupiter.api.Test;
@@ -48,6 +49,50 @@ class RenderControllerIntegrationTest {
         assertNotNull(response.getBody());
         assertTrue(response.getBody().success());
         assertNotNull(response.getBody().renderedSql());
+        assertTrue(response.getBody().params().isEmpty());
+        assertTrue(response.getBody().diagnostics().isEmpty());
+    }
+
+    @Test
+    void renderEndpointReturnsCombinedSqlForStatementSequence() {
+        var response = restTemplate.postForEntity(
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/render",
+            new HttpEntity<>(new RenderRequestDto(
+                "select 1; select 2;",
+                SqlDialectDto.ansi,
+                SqlDialectDto.postgresql
+            )),
+            RenderResponseDto.class
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().success());
+        assertNotNull(response.getBody().renderedSql());
+        assertTrue(response.getBody().renderedSql().stripTrailing().endsWith(";"));
+        assertEquals(2, response.getBody().renderedSql().chars().filter(ch -> ch == ';').count());
+    }
+
+    @Test
+    void renderEndpointReturnsBindParametersWhenParameterizationIsEnabled() {
+        var response = restTemplate.postForEntity(
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/render",
+            new HttpEntity<>(new RenderRequestDto(
+                "select id from customer where id = 7 and name = 'alice'",
+                SqlDialectDto.ansi,
+                SqlDialectDto.postgresql,
+                RenderParameterizationModeDto.bind
+            )),
+            RenderResponseDto.class
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().success());
+        assertNotNull(response.getBody().renderedSql());
+        assertTrue(response.getBody().renderedSql().contains("?"));
+        assertEquals(2, response.getBody().params().size());
+        assertTrue(response.getBody().params().contains("alice"));
         assertTrue(response.getBody().diagnostics().isEmpty());
     }
 
@@ -88,6 +133,7 @@ class RenderControllerIntegrationTest {
         assertNotNull(response.getBody());
         assertFalse(response.getBody().success());
         assertNull(response.getBody().renderedSql());
+        assertTrue(response.getBody().params().isEmpty());
         assertFalse(response.getBody().diagnostics().isEmpty());
     }
 }

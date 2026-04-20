@@ -48,7 +48,8 @@ class PlaygroundApiContractsTest {
             "Expected FROM but found WHERE",
             DiagnosticPhaseDto.parse,
             1,
-            15
+            15,
+            2
         );
 
         String json = mapper.writeValueAsString(diagnostic);
@@ -58,6 +59,7 @@ class PlaygroundApiContractsTest {
         assertTrue(json.contains("\"phase\":\"parse\""));
         assertTrue(json.contains("\"line\":1"));
         assertTrue(json.contains("\"column\":15"));
+        assertTrue(json.contains("\"statementIndex\":2"));
     }
 
     @Test
@@ -142,7 +144,7 @@ class PlaygroundApiContractsTest {
 
     @Test
     void shouldSerializeRenderValidateAndTranspileResponsesUsingExplicitContracts() throws Exception {
-        RenderResponseDto render = new RenderResponseDto("req-render", true, 15L, "SELECT 1", List.of());
+        RenderResponseDto render = new RenderResponseDto("req-render", true, 15L, "SELECT ?", List.of(1), List.of());
         ValidateResponseDto validate = new ValidateResponseDto("req-validate", true, 10L, true, List.of());
         TranspileResponseDto transpile = new TranspileResponseDto(
             "req-transpile",
@@ -157,9 +159,17 @@ class PlaygroundApiContractsTest {
         String validateJson = mapper.writeValueAsString(validate);
         String transpileJson = mapper.writeValueAsString(transpile);
 
-        assertTrue(renderJson.contains("\"renderedSql\":\"SELECT 1\""));
+        assertTrue(renderJson.contains("\"renderedSql\":\"SELECT ?\""));
+        assertTrue(renderJson.contains("\"params\":[1]"));
         assertTrue(validateJson.contains("\"valid\":true"));
         assertTrue(transpileJson.contains("\"outcome\":\"exact\""));
+    }
+
+    @Test
+    void shouldDeserializeRenderParameterizationModeFromLowercaseWireValue() throws Exception {
+        RenderParameterizationModeDto mode = mapper.readValue("\"bind\"", RenderParameterizationModeDto.class);
+
+        assertEquals(RenderParameterizationModeDto.bind, mode);
     }
 
     @Test

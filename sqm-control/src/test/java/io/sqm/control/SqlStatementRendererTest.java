@@ -43,6 +43,24 @@ class SqlStatementRendererTest {
     }
 
     @Test
+    void rendersStatementSequenceWithTerminatingSemicolons() {
+        var sequence = StatementSequence.of(
+            Query.select(Expression.literal(1)).build(),
+            Query.select(Expression.literal(2)).build()
+        );
+
+        var result = SqlStatementRenderer.standard().render(
+            sequence,
+            ExecutionContext.of("ansi", ExecutionMode.ANALYZE)
+        );
+
+        assertEquals(2, result.sql().chars().filter(ch -> ch == ';').count());
+        assertTrue(result.sql().stripTrailing().endsWith(";"));
+        assertTrue(result.sql().toLowerCase().contains("select 1"));
+        assertTrue(result.sql().toLowerCase().contains("select 2"));
+    }
+
+    @Test
     void convenience_factories_and_blank_dialect_are_supported() {
         var query = Query.select(Expression.literal(1)).build();
         var ansiSql = SqlStatementRenderer.standard().render(query, ExecutionContext.of("ansi", ExecutionMode.ANALYZE));

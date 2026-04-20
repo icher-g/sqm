@@ -50,6 +50,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
   const selectedDsl = selectedStatement?.sqmDsl ?? props.parseResponse?.sqmDsl ?? null;
   const selectedJson = selectedStatement?.sqmJson ?? props.parseResponse?.sqmJson ?? null;
   const hasParseViewChoices = Boolean(props.parseResponse?.multiStatement && statementViews.length > 1);
+  const renderParams = props.renderResponse?.params ?? [];
 
   function runAstCommand(type: AstTreeCommand["type"]) {
     setAstCommand((current) => ({
@@ -94,6 +95,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
           role="tab"
           aria-selected={props.activeResultTab === "ast"}
           className={props.activeResultTab === "ast" ? "tab-button tab-button-active" : "tab-button"}
+          title="Show the parsed SQM abstract syntax tree."
           onClick={() => props.onResultTabChange("ast")}
         >
           AST
@@ -103,6 +105,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
             role="tab"
             aria-selected={props.activeResultTab === "dsl"}
             className={props.activeResultTab === "dsl" ? "tab-button tab-button-active" : "tab-button"}
+            title="Show generated Java DSL for the parsed SQM model."
             onClick={() => props.onResultTabChange("dsl")}
         >
           DSL
@@ -112,6 +115,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
           role="tab"
           aria-selected={props.activeResultTab === "json"}
           className={props.activeResultTab === "json" ? "tab-button tab-button-active" : "tab-button"}
+          title="Show the parsed SQM model as JSON."
           onClick={() => props.onResultTabChange("json")}
         >
           JSON
@@ -121,6 +125,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
           role="tab"
           aria-selected={props.activeResultTab === "renderedSql"}
           className={props.activeResultTab === "renderedSql" ? "tab-button tab-button-active" : "tab-button"}
+          title="Show SQL produced by render or transpile actions."
           onClick={() => props.onResultTabChange("renderedSql")}
         >
           Rendered SQL
@@ -130,6 +135,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
           role="tab"
           aria-selected={props.activeResultTab === "diagnostics"}
           className={props.activeResultTab === "diagnostics" ? "tab-button tab-button-active" : "tab-button"}
+          title="Show warnings and errors returned by the last operation."
           onClick={() => props.onResultTabChange("diagnostics")}
         >
           Diagnostics
@@ -139,6 +145,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
           role="tab"
           aria-selected={props.activeResultTab === "about"}
           className={props.activeResultTab === "about" ? "tab-button tab-button-active" : "tab-button"}
+          title="Show metadata for the latest playground operations."
           onClick={() => props.onResultTabChange("about")}
         >
           About Result
@@ -174,14 +181,25 @@ export function ResultsPanel(props: ResultsPanelProps) {
                 <button
                   type="button"
                   className="ast-toolbar-button"
+                  title="Copy the current AST view as plain text."
                   onClick={() => copyText(formatAstTree(selectedAst), "ast")}
                 >
                   {copiedTarget === "ast" ? "Copied AST" : "Copy AST"}
                 </button>
-                <button type="button" className="ast-toolbar-button" onClick={() => runAstCommand("collapse")}>
+                <button
+                  type="button"
+                  className="ast-toolbar-button"
+                  title="Collapse every expandable AST node."
+                  onClick={() => runAstCommand("collapse")}
+                >
                   Collapse all
                 </button>
-                <button type="button" className="ast-toolbar-button" onClick={() => runAstCommand("expand")}>
+                <button
+                  type="button"
+                  className="ast-toolbar-button"
+                  title="Expand every AST node."
+                  onClick={() => runAstCommand("expand")}
+                >
                   Expand all
                 </button>
               </div>
@@ -261,14 +279,25 @@ export function ResultsPanel(props: ResultsPanelProps) {
                 <button
                   type="button"
                   className="ast-toolbar-button"
+                  title="Copy the current JSON view."
                   onClick={() => copyText(selectedJson, "json")}
                 >
                   {copiedTarget === "json" ? "Copied JSON" : "Copy JSON"}
                 </button>
-                <button type="button" className="ast-toolbar-button" onClick={() => runJsonCommand("collapse")}>
+                <button
+                  type="button"
+                  className="ast-toolbar-button"
+                  title="Collapse every expandable JSON node."
+                  onClick={() => runJsonCommand("collapse")}
+                >
                   Collapse all
                 </button>
-                <button type="button" className="ast-toolbar-button" onClick={() => runJsonCommand("expand")}>
+                <button
+                  type="button"
+                  className="ast-toolbar-button"
+                  title="Expand every JSON node."
+                  onClick={() => runJsonCommand("expand")}
+                >
                   Expand all
                 </button>
               </div>
@@ -302,7 +331,15 @@ export function ResultsPanel(props: ResultsPanelProps) {
           ) : props.transpileLoading ? (
             <p className="result-placeholder">Transpiling SQL for the selected target dialect...</p>
           ) : props.renderResponse?.renderedSql ? (
-            <CodeBlock code={props.renderResponse.renderedSql} language="sql" />
+            <div className="render-output-stack">
+              <CodeBlock code={props.renderResponse.renderedSql} language="sql" />
+              {renderParams.length > 0 ? (
+                <div className="render-params">
+                  <h4>Parameters</h4>
+                  <CodeBlock code={JSON.stringify(renderParams, null, 2)} language="json" />
+                </div>
+              ) : null}
+            </div>
           ) : props.transpileResponse?.renderedSql ? (
             <CodeBlock code={props.transpileResponse.renderedSql} language="sql" />
           ) : (
@@ -561,9 +598,11 @@ function renderDiagnosticsList(
           <button
             type="button"
             className="diagnostic-button"
+            title="Focus the SQL editor at this diagnostic location."
             onClick={() => onDiagnosticSelect(diagnostic)}
           >
             <strong>{diagnostic.severity}</strong> {diagnostic.code}: {diagnostic.message}
+            {diagnostic.statementIndex != null ? ` (statement ${diagnostic.statementIndex})` : ""}
             {diagnostic.line !== null && diagnostic.column !== null
               ? ` (${diagnostic.line}:${diagnostic.column})`
               : ""}

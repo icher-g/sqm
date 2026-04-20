@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ResultsPanel } from "./ResultsPanel";
-import type { ParseResponseDto } from "../types/api";
+import type { ParseResponseDto, RenderResponseDto } from "../types/api";
 
 const PARSE_RESPONSE: ParseResponseDto = {
   requestId: "req-parse",
@@ -101,6 +101,15 @@ const MULTI_PARSE_RESPONSE: ParseResponseDto = {
     rootNodeType: "StatementSequence",
     rootInterface: "io.sqm.core.StatementSequence"
   }
+};
+
+const PARAMETERIZED_RENDER_RESPONSE: RenderResponseDto = {
+  requestId: "req-render",
+  success: true,
+  durationMs: 7,
+  renderedSql: "SELECT ?",
+  params: [7, "alice"],
+  diagnostics: []
 };
 
 describe("ResultsPanel", () => {
@@ -263,5 +272,37 @@ describe("ResultsPanel", () => {
     await userEvent.click(screen.getByRole("button", { name: "Copy JSON" }));
 
     expect(writeText).toHaveBeenCalledWith(JSON.stringify({ kind: "select", value: 2 }, null, 2));
+  });
+
+  it("shows bind parameters returned by render responses", () => {
+    const noop = () => {};
+
+    render(
+      <ResultsPanel
+        activeResultTab="renderedSql"
+        onResultTabChange={noop}
+        parseResponse={null}
+        parseLoading={false}
+        parseError={null}
+        renderResponse={PARAMETERIZED_RENDER_RESPONSE}
+        renderedSqlDialect="postgresql"
+        renderedSqlTimestamp={null}
+        renderLoading={false}
+        renderError={null}
+        transpileResponse={null}
+        transpileLoading={false}
+        transpileError={null}
+        validateResponse={null}
+        validateLoading={false}
+        validateError={null}
+        onDiagnosticSelect={noop}
+      />
+    );
+
+    const renderedPanel = screen.getByRole("tabpanel", { name: "Rendered SQL" });
+
+    expect(renderedPanel).toHaveTextContent("SELECT ?");
+    expect(renderedPanel).toHaveTextContent("Parameters");
+    expect(renderedPanel).toHaveTextContent("alice");
   });
 });

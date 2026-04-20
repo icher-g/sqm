@@ -30,6 +30,35 @@ class ValidateServiceTest {
     }
 
     @Test
+    void validateAggregatesValidStatementSequence() {
+        var service = new ValidateService(new PlaygroundStatementSupport());
+
+        var response = service.validate(new ValidateRequestDto(
+            "select id from customer; select name from customer;",
+            SqlDialectDto.ansi
+        ));
+
+        assertTrue(response.success());
+        assertTrue(response.valid());
+        assertTrue(response.diagnostics().isEmpty());
+    }
+
+    @Test
+    void validateReturnsStatementIndexedDiagnosticsForInvalidStatementInSequence() {
+        var service = new ValidateService(new PlaygroundStatementSupport());
+
+        var response = service.validate(new ValidateRequestDto(
+            "select id from customer; select distinct on (id) id, name from customer order by name;",
+            SqlDialectDto.postgresql
+        ));
+
+        assertTrue(response.success());
+        assertFalse(response.valid());
+        assertFalse(response.diagnostics().isEmpty());
+        assertEquals(2, response.diagnostics().getFirst().statementIndex());
+    }
+
+    @Test
     void validateReturnsDialectDiagnosticsForInvalidDialectSpecificQuery() {
         var service = new ValidateService(new PlaygroundStatementSupport());
 
