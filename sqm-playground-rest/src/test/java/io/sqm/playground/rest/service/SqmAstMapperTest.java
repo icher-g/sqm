@@ -8,6 +8,7 @@ import io.sqm.core.Query;
 import io.sqm.core.QueryTable;
 import io.sqm.core.QualifiedName;
 import io.sqm.core.QuoteStyle;
+import io.sqm.core.StatementSequence;
 import io.sqm.core.TableRef;
 import io.sqm.playground.api.AstChildSlotDto;
 import io.sqm.playground.api.AstDetailDto;
@@ -54,6 +55,20 @@ class SqmAstMapperTest {
         assertEquals("ExprSelectItem", slot(ast, "items").nodes().getFirst().nodeType());
         assertEquals("Table", slot(ast, "from").nodes().getFirst().nodeType());
         assertEquals(List.of("items", "from", "where", "orderBy"), ast.children().stream().map(AstChildSlotDto::slot).toList());
+    }
+
+    @Test
+    void mapsStatementSequenceAsBatchCategory() {
+        var mapper = new SqmAstMapper();
+
+        var ast = mapper.toAst(StatementSequence.of(
+            Query.select(Expression.literal(1)).build(),
+            Query.select(Expression.literal(2)).build()
+        ));
+
+        assertEquals("StatementSequence", ast.nodeType());
+        assertEquals("statementSequence", ast.category());
+        assertEquals(2, slot(ast, "statements").nodes().size());
     }
 
     @Test

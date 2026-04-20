@@ -89,6 +89,7 @@ export interface ParseResponseDto {
   success: boolean;
   durationMs: number;
   statementKind: string | null;
+  multiStatement: boolean;
   sqmJson: string | null;
   sqmDsl: string | null;
   ast: AstNodeDto | null;

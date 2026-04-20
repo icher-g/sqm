@@ -45,6 +45,7 @@ class ParseControllerIntegrationTest {
         assertNotNull(response.getBody());
         assertTrue(response.getBody().success());
         assertEquals("query", response.getBody().statementKind());
+        assertFalse(response.getBody().multiStatement());
         assertNotNull(response.getBody().sqmJson());
         assertNotNull(response.getBody().sqmDsl());
         assertTrue(response.getBody().sqmDsl().contains("public static SelectQuery getStatement()"));
@@ -52,6 +53,28 @@ class ParseControllerIntegrationTest {
         assertNotNull(response.getBody().ast());
         assertEquals("SelectQuery", response.getBody().ast().nodeType());
         assertTrue(response.getBody().ast().children().stream().anyMatch(slot -> Objects.equals("items", slot.slot())));
+    }
+
+    @Test
+    void parseEndpointReturnsStatementSequenceForMultiStatementSql() {
+        var response = restTemplate.postForEntity(
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/parse",
+            new HttpEntity<>(new ParseRequestDto("select 1; select 2;", SqlDialectDto.ansi)),
+            ParseResponseDto.class
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().success());
+        assertTrue(response.getBody().multiStatement());
+        assertEquals("sequence", response.getBody().statementKind());
+        assertEquals("StatementSequence", response.getBody().summary().rootNodeType());
+        assertEquals("StatementSequence", response.getBody().ast().nodeType());
+        var statements = response.getBody().ast().children().stream()
+            .filter(slot -> Objects.equals("statements", slot.slot()))
+            .findFirst()
+            .orElseThrow();
+        assertEquals(2, statements.nodes().size());
     }
 
     @Test

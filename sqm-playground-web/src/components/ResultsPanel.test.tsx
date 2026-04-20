@@ -9,6 +9,7 @@ const PARSE_RESPONSE: ParseResponseDto = {
   success: true,
   durationMs: 12,
   statementKind: "query",
+  multiStatement: false,
   sqmJson: "{\n  \"kind\": \"select\"\n}",
   sqmDsl: "builder.select(star())",
   ast: {
@@ -46,6 +47,60 @@ const PARSE_RESPONSE: ParseResponseDto = {
     rootInterface: "io.sqm.core.api.Query"
   },
   diagnostics: []
+};
+
+const MULTI_PARSE_RESPONSE: ParseResponseDto = {
+  ...PARSE_RESPONSE,
+  statementKind: "sequence",
+  multiStatement: true,
+  sqmDsl: [
+    "// Statement 1",
+    "public static SelectQuery getStatement() {",
+    "  return select(literal(1)).build();",
+    "}",
+    "",
+    "// Statement 2",
+    "public static SelectQuery getStatement() {",
+    "  return select(literal(2)).build();",
+    "}"
+  ].join("\n"),
+  sqmJson: JSON.stringify({
+    kind: "statementSequence",
+    statements: [
+      {
+        kind: "select",
+        value: 1
+      },
+      {
+        kind: "select",
+        value: 2
+      }
+    ]
+  }, null, 2),
+  ast: {
+    ...PARSE_RESPONSE.ast!,
+    nodeType: "StatementSequence",
+    label: "StatementSequence",
+    category: "statementSequence",
+    children: [
+      {
+        slot: "statements",
+        multiple: true,
+        nodes: [
+          PARSE_RESPONSE.ast!,
+          {
+            ...PARSE_RESPONSE.ast!,
+            label: "SecondSelect",
+            nodeType: "SecondSelect"
+          }
+        ]
+      }
+    ]
+  },
+  summary: {
+    rootNodeType: "StatementSequence",
+    rootInterface: "io.sqm.core.StatementSequence"
+  }
 };
 
 describe("ResultsPanel", () => {
@@ -120,5 +175,93 @@ describe("ResultsPanel", () => {
 
     expect(writeText).toHaveBeenNthCalledWith(2, PARSE_RESPONSE.sqmJson);
     expect(screen.getByRole("button", { name: "Copied JSON" })).toBeInTheDocument();
+  });
+
+  it("switches AST, DSL, and JSON views between statement sequence entries", async () => {
+    const noop = () => {};
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: {
+        writeText
+      }
+    });
+
+    const { rerender } = render(
+      <ResultsPanel
+        activeResultTab="ast"
+        onResultTabChange={noop}
+        parseResponse={MULTI_PARSE_RESPONSE}
+        parseLoading={false}
+        parseError={null}
+        renderResponse={null}
+        renderedSqlDialect={null}
+        renderedSqlTimestamp={null}
+        renderLoading={false}
+        renderError={null}
+        transpileResponse={null}
+        transpileLoading={false}
+        transpileError={null}
+        validateResponse={null}
+        validateLoading={false}
+        validateError={null}
+        onDiagnosticSelect={noop}
+      />
+    );
+
+    await userEvent.selectOptions(screen.getByLabelText("AST statement view"), "2");
+
+    expect(screen.getByText("SecondSelect")).toBeInTheDocument();
+
+    rerender(
+      <ResultsPanel
+        activeResultTab="dsl"
+        onResultTabChange={noop}
+        parseResponse={MULTI_PARSE_RESPONSE}
+        parseLoading={false}
+        parseError={null}
+        renderResponse={null}
+        renderedSqlDialect={null}
+        renderedSqlTimestamp={null}
+        renderLoading={false}
+        renderError={null}
+        transpileResponse={null}
+        transpileLoading={false}
+        transpileError={null}
+        validateResponse={null}
+        validateLoading={false}
+        validateError={null}
+        onDiagnosticSelect={noop}
+      />
+    );
+
+    const dslPanel = screen.getByRole("tabpanel", { name: "DSL" });
+    expect(dslPanel.textContent).toContain("literal(2)");
+    expect(dslPanel.textContent).not.toContain("literal(1)");
+
+    rerender(
+      <ResultsPanel
+        activeResultTab="json"
+        onResultTabChange={noop}
+        parseResponse={MULTI_PARSE_RESPONSE}
+        parseLoading={false}
+        parseError={null}
+        renderResponse={null}
+        renderedSqlDialect={null}
+        renderedSqlTimestamp={null}
+        renderLoading={false}
+        renderError={null}
+        transpileResponse={null}
+        transpileLoading={false}
+        transpileError={null}
+        validateResponse={null}
+        validateLoading={false}
+        validateError={null}
+        onDiagnosticSelect={noop}
+      />
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Copy JSON" }));
+
+    expect(writeText).toHaveBeenCalledWith(JSON.stringify({ kind: "select", value: 2 }, null, 2));
   });
 });

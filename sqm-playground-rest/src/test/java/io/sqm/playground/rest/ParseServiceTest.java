@@ -31,6 +31,7 @@ class ParseServiceTest {
 
         assertTrue(response.success());
         assertEquals("query", response.statementKind());
+        assertFalse(response.multiStatement());
         assertNotNull(response.sqmJson());
         assertTrue(response.sqmJson().contains("\"kind\""));
         assertNotNull(response.sqmDsl());
@@ -75,6 +76,31 @@ class ParseServiceTest {
         assertNull(response.summary());
         assertFalse(response.diagnostics().isEmpty());
         assertEquals("PARSE_ERROR", response.diagnostics().getFirst().code());
+    }
+
+    @Test
+    void parseReturnsSequenceAndPerStatementViewsForMultiStatementSql() {
+        var service = new ParseService(new SqmAstMapper(), new SqmDslGenerator(), new PlaygroundStatementSupport());
+
+        var response = service.parse(new ParseRequestDto(
+            "select 1; select 2;",
+            SqlDialectDto.ansi
+        ));
+
+        assertTrue(response.success());
+        assertEquals("sequence", response.statementKind());
+        assertTrue(response.multiStatement());
+        assertEquals("StatementSequence", response.summary().rootNodeType());
+        assertEquals("statementSequence", response.ast().category());
+        var statementSlot = slot(response.ast(), "statements");
+        assertEquals(2, statementSlot.nodes().size());
+        assertEquals("SelectQuery", statementSlot.nodes().getFirst().nodeType());
+        assertEquals("SelectQuery", statementSlot.nodes().get(1).nodeType());
+        assertTrue(response.sqmJson().contains("statementSequence"));
+        assertTrue(response.sqmJson().contains("\"statements\""));
+        assertTrue(response.sqmDsl().contains("// Statement 1"));
+        assertTrue(response.sqmDsl().contains("// Statement 2"));
+        assertTrue(response.diagnostics().isEmpty());
     }
 
     private static AstChildSlotDto slot(AstNodeDto node, String slot) {

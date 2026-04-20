@@ -39,8 +39,17 @@ interface ResultsPanelProps {
 export function ResultsPanel(props: ResultsPanelProps) {
   const [astCommand, setAstCommand] = useState<AstTreeCommand | null>(null);
   const [jsonCommand, setJsonCommand] = useState<JsonTreeCommand | null>(null);
+  const [parseView, setParseView] = useState<"sequence" | number>("sequence");
   const [copiedTarget, setCopiedTarget] = useState<"ast" | "json" | null>(null);
   const copyResetTimeoutRef = useRef<number | null>(null);
+  const statementViews = props.parseResponse ? deriveStatementViews(props.parseResponse) : [];
+  const selectedStatement = typeof parseView === "number"
+    ? statementViews.find((statement) => statement.index === parseView) ?? null
+    : null;
+  const selectedAst = selectedStatement?.ast ?? props.parseResponse?.ast ?? null;
+  const selectedDsl = selectedStatement?.sqmDsl ?? props.parseResponse?.sqmDsl ?? null;
+  const selectedJson = selectedStatement?.sqmJson ?? props.parseResponse?.sqmJson ?? null;
+  const hasParseViewChoices = Boolean(props.parseResponse?.multiStatement && statementViews.length > 1);
 
   function runAstCommand(type: AstTreeCommand["type"]) {
     setAstCommand((current) => ({
@@ -144,12 +153,28 @@ export function ResultsPanel(props: ResultsPanelProps) {
       >
           <div className="result-panel-header">
             <h3>AST</h3>
-            {props.parseResponse?.ast ? (
+            <div className="result-panel-actions">
+              {hasParseViewChoices ? (
+                <select
+                  className="statement-view-select"
+                  value={parseView}
+                  onChange={(event) => setParseView(event.target.value === "sequence" ? "sequence" : Number(event.target.value))}
+                  aria-label="AST statement view"
+                >
+                  <option value="sequence">All statements</option>
+                  {statementViews.map((statement) => (
+                    <option key={statement.index} value={statement.index}>
+                      Statement {statement.index}: {statement.label}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+              {selectedAst ? (
               <div className="ast-toolbar">
                 <button
                   type="button"
                   className="ast-toolbar-button"
-                  onClick={() => copyText(formatAstTree(props.parseResponse!.ast!), "ast")}
+                  onClick={() => copyText(formatAstTree(selectedAst), "ast")}
                 >
                   {copiedTarget === "ast" ? "Copied AST" : "Copy AST"}
                 </button>
@@ -160,12 +185,13 @@ export function ResultsPanel(props: ResultsPanelProps) {
                   Expand all
                 </button>
               </div>
-            ) : null}
+              ) : null}
+            </div>
           </div>
           {props.parseLoading ? (
             <p className="result-placeholder">Parsing SQL and building the AST...</p>
-          ) : props.parseResponse?.ast ? (
-            <AstNodeTree node={props.parseResponse.ast} command={astCommand} />
+          ) : selectedAst ? (
+            <AstNodeTree node={selectedAst} command={astCommand} />
           ) : (
             <p className="result-placeholder">Parse a query to inspect the SQM tree.</p>
           )}
@@ -177,11 +203,30 @@ export function ResultsPanel(props: ResultsPanelProps) {
         aria-label="DSL"
         hidden={props.activeResultTab !== "dsl"}
       >
-            <h3>DSL</h3>
+            <div className="result-panel-header">
+              <h3>DSL</h3>
+              <div className="result-panel-actions">
+                {hasParseViewChoices ? (
+                  <select
+                    className="statement-view-select"
+                    value={parseView}
+                    onChange={(event) => setParseView(event.target.value === "sequence" ? "sequence" : Number(event.target.value))}
+                    aria-label="DSL statement view"
+                  >
+                    <option value="sequence">All statements</option>
+                    {statementViews.map((statement) => (
+                      <option key={statement.index} value={statement.index}>
+                        Statement {statement.index}: {statement.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+              </div>
+            </div>
             {props.parseLoading ? (
                 <p className="result-placeholder">Parsing SQL and building the DSL...</p>
-            ) : props.parseResponse?.sqmDsl ? (
-                <CodeBlock code={props.parseResponse.sqmDsl} language="java" />
+            ) : selectedDsl ? (
+                <CodeBlock code={selectedDsl} language="java" />
             ) : (
                 <p className="result-placeholder">Parse a query to generate the SQM DSL.</p>
             )}
@@ -195,12 +240,28 @@ export function ResultsPanel(props: ResultsPanelProps) {
       >
           <div className="result-panel-header">
             <h3>JSON</h3>
-            {props.parseResponse?.sqmJson ? (
+            <div className="result-panel-actions">
+              {hasParseViewChoices ? (
+                <select
+                  className="statement-view-select"
+                  value={parseView}
+                  onChange={(event) => setParseView(event.target.value === "sequence" ? "sequence" : Number(event.target.value))}
+                  aria-label="JSON statement view"
+                >
+                  <option value="sequence">All statements</option>
+                  {statementViews.map((statement) => (
+                    <option key={statement.index} value={statement.index}>
+                      Statement {statement.index}: {statement.label}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+              {selectedJson ? (
               <div className="ast-toolbar">
                 <button
                   type="button"
                   className="ast-toolbar-button"
-                  onClick={() => copyText(props.parseResponse!.sqmJson!, "json")}
+                  onClick={() => copyText(selectedJson, "json")}
                 >
                   {copiedTarget === "json" ? "Copied JSON" : "Copy JSON"}
                 </button>
@@ -211,10 +272,11 @@ export function ResultsPanel(props: ResultsPanelProps) {
                   Expand all
                 </button>
               </div>
-            ) : null}
+              ) : null}
+            </div>
           </div>
-          {props.parseResponse?.sqmJson ? (
-            <JsonTreeViewer json={props.parseResponse.sqmJson} command={jsonCommand} />
+          {selectedJson ? (
+            <JsonTreeViewer json={selectedJson} command={jsonCommand} />
           ) : (
             <p className="result-placeholder">Parse a query to inspect the SQM JSON.</p>
           )}
@@ -320,6 +382,10 @@ export function ResultsPanel(props: ResultsPanelProps) {
                 <dd>{props.parseResponse?.statementKind ?? "n/a"}</dd>
               </div>
               <div className="about-row">
+                <dt>Statement count</dt>
+                <dd>{props.parseResponse ? statementCount(props.parseResponse) : "n/a"}</dd>
+              </div>
+              <div className="about-row">
                 <dt>Root node type</dt>
                 <dd>{props.parseResponse?.summary?.rootNodeType ?? "n/a"}</dd>
               </div>
@@ -362,6 +428,72 @@ export function ResultsPanel(props: ResultsPanelProps) {
         </section>
     </article>
   );
+}
+
+interface DerivedStatementView {
+  index: number;
+  label: string;
+  sqmDsl: string | null;
+  sqmJson: string | null;
+  ast: NonNullable<ParseResponseDto["ast"]> | null;
+}
+
+function deriveStatementViews(response: ParseResponseDto): DerivedStatementView[] {
+  const astStatements = response.ast?.children.find((child) => child.slot === "statements")?.nodes ?? [];
+  const dslStatements = extractStatementDsl(response.sqmDsl);
+  const jsonStatements = extractStatementJson(response.sqmJson);
+  const count = Math.max(astStatements.length, dslStatements.length, jsonStatements.length);
+
+  return Array.from({ length: count }, (_, offset) => {
+    const ast = astStatements[offset] ?? null;
+    return {
+      index: offset + 1,
+      label: ast?.nodeType ?? "statement",
+      sqmDsl: dslStatements[offset] ?? null,
+      sqmJson: jsonStatements[offset] ?? null,
+      ast
+    };
+  });
+}
+
+function statementCount(response: ParseResponseDto) {
+  if (!response.multiStatement) {
+    return response.success ? 1 : 0;
+  }
+  return deriveStatementViews(response).length;
+}
+
+function extractStatementJson(sqmJson: string | null): string[] {
+  if (!sqmJson) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(sqmJson) as { statements?: unknown };
+    if (!Array.isArray(parsed.statements)) {
+      return [];
+    }
+    return parsed.statements.map((statement) => JSON.stringify(statement, null, 2));
+  } catch {
+    return [];
+  }
+}
+
+function extractStatementDsl(sqmDsl: string | null): string[] {
+  if (!sqmDsl) {
+    return [];
+  }
+
+  const markers = Array.from(sqmDsl.matchAll(/^\/\/ Statement \d+\s*\r?\n/gm));
+  if (markers.length === 0) {
+    return [];
+  }
+
+  return markers.map((marker, index) => {
+    const start = (marker.index ?? 0) + marker[0].length;
+    const end = markers[index + 1]?.index ?? sqmDsl.length;
+    return sqmDsl.slice(start, end).trim();
+  });
 }
 
 function formatAstTree(node: NonNullable<ParseResponseDto["ast"]>) {
