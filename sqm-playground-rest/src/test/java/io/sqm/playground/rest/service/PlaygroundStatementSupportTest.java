@@ -34,6 +34,16 @@ class PlaygroundStatementSupportTest {
     }
 
     @Test
+    void parsesStatementSequenceAndIgnoresEmptyStatements() {
+        var support = new PlaygroundStatementSupport();
+
+        var attempt = support.parseSequence("select 1;; select 2;", SqlDialectDto.ansi);
+
+        assertTrue(attempt.success());
+        assertEquals(2, attempt.sequence().statements().size());
+    }
+
+    @Test
     void statementKindClassifiesSupportedStatementFamilies() {
         var support = new PlaygroundStatementSupport();
 

@@ -324,6 +324,24 @@ textarea {
   margin-bottom: 0.35rem;
 }
 
+.result-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.statement-view-select {
+  min-height: 2.1rem;
+  max-width: 18rem;
+  border: 1px solid #d8c8b2;
+  border-radius: 999px;
+  background: #fffaf2;
+  color: #5d4a36;
+  padding: 0.25rem 0.7rem;
+}
+
 .ast-toolbar {
   display: flex;
   gap: 0.5rem;
@@ -699,7 +717,13 @@ textarea {
     align-items: stretch;
   }
 
+  .result-panel-actions,
   .ast-toolbar {
     flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .statement-view-select {
+    max-width: 100%;
   }
 }

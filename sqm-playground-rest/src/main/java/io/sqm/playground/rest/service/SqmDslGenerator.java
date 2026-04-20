@@ -3,6 +3,7 @@ package io.sqm.playground.rest.service;
 import io.sqm.codegen.*;
 import io.sqm.core.NamedParamExpr;
 import io.sqm.core.Statement;
+import io.sqm.core.StatementSequence;
 import io.sqm.core.walk.RecursiveNodeVisitor;
 import io.sqm.playground.api.SqlDialectDto;
 import org.springframework.stereotype.Service;
@@ -58,6 +59,28 @@ public class SqmDslGenerator {
         );
         var renderer = new SqmDslRenderer(options);
         return renderer.render(toGroup(empty, statement));
+    }
+
+    /**
+     * Generates Java DSL source for each statement in the sequence.
+     *
+     * @param sequence parsed statement sequence
+     * @param dialect source dialect used for code generation settings
+     * @return generated Java DSL source sections
+     */
+    public String toDsl(StatementSequence sequence, SqlDialectDto dialect) {
+        Objects.requireNonNull(sequence, "sequence must not be null");
+
+        var sections = new StringBuilder();
+        var statements = sequence.statements();
+        for (int i = 0; i < statements.size(); i++) {
+            if (!sections.isEmpty()) {
+                sections.append(System.lineSeparator()).append(System.lineSeparator());
+            }
+            sections.append("// Statement ").append(i + 1).append(System.lineSeparator());
+            sections.append(toDsl(statements.get(i), dialect));
+        }
+        return sections.toString();
     }
 
     private static final class NamedParametersCollector extends RecursiveNodeVisitor<Void> {

@@ -9,6 +9,7 @@ import java.util.List;
  * @param success operation success flag
  * @param durationMs operation duration in milliseconds
  * @param statementKind high-level statement family
+ * @param multiStatement whether the parsed SQL contains more than one statement
  * @param sqmJson serialized SQM JSON
  * @param sqmDsl generated SQM DSL calls
  * @param ast AST tree representation
@@ -20,6 +21,7 @@ public record ParseResponseDto(
     boolean success,
     long durationMs,
     String statementKind,
+    boolean multiStatement,
     String sqmJson,
     String sqmDsl,
     AstNodeDto ast,

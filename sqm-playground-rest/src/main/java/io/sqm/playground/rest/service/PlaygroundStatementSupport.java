@@ -5,6 +5,7 @@ import io.sqm.core.InsertStatement;
 import io.sqm.core.MergeStatement;
 import io.sqm.core.Query;
 import io.sqm.core.Statement;
+import io.sqm.core.StatementSequence;
 import io.sqm.core.UpdateStatement;
 import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
@@ -45,6 +46,25 @@ public final class PlaygroundStatementSupport {
             return ParseAttempt.failure(result.problems().stream().map(this::toParseDiagnostic).toList());
         }
         return ParseAttempt.success(result.value());
+    }
+
+    /**
+     * Parses SQL text into a statement sequence using the selected dialect.
+     *
+     * @param sql SQL text
+     * @param dialect source dialect
+     * @return statement sequence parse result
+     */
+    public SequenceParseAttempt parseSequence(String sql, SqlDialectDto dialect) {
+        Objects.requireNonNull(sql, "sql must not be null");
+        Objects.requireNonNull(dialect, "dialect must not be null");
+
+        var parseContext = ParseContext.of(specsFor(dialect));
+        var result = parseContext.parse(StatementSequence.class, sql);
+        if (result.isError()) {
+            return SequenceParseAttempt.failure(result.problems().stream().map(this::toParseDiagnostic).toList());
+        }
+        return SequenceParseAttempt.success(result.value());
     }
 
     /**
@@ -154,6 +174,44 @@ public final class PlaygroundStatementSupport {
          */
         public boolean success() {
             return statement != null;
+        }
+    }
+
+    /**
+     * Statement sequence parse result wrapper used by playground services.
+     *
+     * @param sequence parsed statement sequence when successful
+     * @param diagnostics diagnostics when parsing failed
+     */
+    public record SequenceParseAttempt(StatementSequence sequence, List<PlaygroundDiagnosticDto> diagnostics) {
+
+        /**
+         * Creates a successful statement sequence parse attempt.
+         *
+         * @param sequence parsed statement sequence
+         * @return successful parse attempt
+         */
+        public static SequenceParseAttempt success(StatementSequence sequence) {
+            return new SequenceParseAttempt(Objects.requireNonNull(sequence, "sequence must not be null"), List.of());
+        }
+
+        /**
+         * Creates a failed statement sequence parse attempt.
+         *
+         * @param diagnostics parse diagnostics
+         * @return failed parse attempt
+         */
+        public static SequenceParseAttempt failure(List<PlaygroundDiagnosticDto> diagnostics) {
+            return new SequenceParseAttempt(null, List.copyOf(diagnostics));
+        }
+
+        /**
+         * Returns whether parsing succeeded.
+         *
+         * @return {@code true} when a statement sequence is available
+         */
+        public boolean success() {
+            return sequence != null;
         }
     }
 }

@@ -201,6 +201,9 @@ public final class SqmAstMapper {
     }
 
     private String categoryFor(Node node) {
+        if (node instanceof StatementSequence) {
+            return "statementSequence";
+        }
         if (node instanceof Statement) {
             return "statement";
         }

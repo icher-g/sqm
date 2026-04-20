@@ -91,6 +91,7 @@ class PlaygroundApiContractsTest {
             true,
             12L,
             "query",
+            false,
             "{ \"kind\": \"select\" }",
             "public static SelectQuery getStatement() { return select().build(); }",
             new AstNodeDto(
@@ -109,6 +110,7 @@ class PlaygroundApiContractsTest {
         String json = mapper.writeValueAsString(response);
 
         assertTrue(json.contains("\"statementKind\":\"query\""));
+        assertTrue(json.contains("\"multiStatement\":false"));
         assertTrue(json.contains("\"sqmJson\":\"{ \\\"kind\\\": \\\"select\\\" }\""));
         assertTrue(json.contains("\"sqmDsl\":\"public static SelectQuery getStatement() { return select().build(); }\""));
         assertTrue(json.contains("\"ast\""));

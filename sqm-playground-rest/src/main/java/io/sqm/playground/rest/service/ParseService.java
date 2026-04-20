@@ -2,16 +2,18 @@ package io.sqm.playground.rest.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.sqm.core.Node;
 import io.sqm.core.Statement;
+import io.sqm.core.StatementSequence;
 import io.sqm.json.SqmJsonMixins;
 import io.sqm.playground.api.ParseRequestDto;
 import io.sqm.playground.api.ParseResponseDto;
 import io.sqm.playground.api.ParseResponseSummaryDto;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.List;
 
 /**
  * Service providing SQL parse responses for the playground.
@@ -47,13 +49,14 @@ public final class ParseService {
     public ParseResponseDto parse(ParseRequestDto request) {
         Objects.requireNonNull(request, "request must not be null");
 
-        var parseAttempt = statementSupport.parse(request.sql(), request.dialect());
+        var parseAttempt = statementSupport.parseSequence(request.sql(), request.dialect());
         if (!parseAttempt.success()) {
             return new ParseResponseDto(
                 UUID.randomUUID().toString(),
                 false,
                 0L,
                 null,
+                false,
                 null,
                 null,
                 null,
@@ -62,27 +65,50 @@ public final class ParseService {
             );
         }
 
-        var statement = parseAttempt.statement();
+        var sequence = parseAttempt.sequence();
+        var statements = sequence.statements();
+        var root = rootNode(sequence);
 
         return new ParseResponseDto(
             UUID.randomUUID().toString(),
             true,
             0L,
-            statementSupport.statementKind(statement),
-            toSqmJson(statement),
-            dslGenerator.toDsl(statement, request.dialect()),
-            astMapper.toAst(statement),
-            new ParseResponseSummaryDto(
-                statement.getClass().getSimpleName(),
-                statement.getTopLevelInterface().getName()
-            ),
+            statementKind(sequence),
+            statements.size() > 1,
+            toSqmJson(root),
+            toSqmDsl(root, request),
+            astMapper.toAst(root),
+            summary(root),
             List.of()
         );
     }
 
-    private String toSqmJson(Statement statement) {
+    private Node rootNode(StatementSequence sequence) {
+        return sequence.statements().size() == 1 ? sequence.statements().getFirst() : sequence;
+    }
+
+    private String statementKind(StatementSequence sequence) {
+        return sequence.statements().size() == 1 ? statementSupport.statementKind(sequence.statements().getFirst()) : "sequence";
+    }
+
+    private String toSqmDsl(Node node, ParseRequestDto request) {
+        return switch (node) {
+            case Statement statement -> dslGenerator.toDsl(statement, request.dialect());
+            case StatementSequence sequence -> dslGenerator.toDsl(sequence, request.dialect());
+            default -> throw new IllegalArgumentException("Unsupported parse root node: " + node.getClass().getName());
+        };
+    }
+
+    private ParseResponseSummaryDto summary(Node node) {
+        return new ParseResponseSummaryDto(
+            node.getTopLevelInterface().getSimpleName(),
+            node.getTopLevelInterface().getName()
+        );
+    }
+
+    private String toSqmJson(Node node) {
         try {
-            return mapper.writeValueAsString(statement);
+            return mapper.writeValueAsString(node);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to serialize SQM JSON.", e);
         }
