@@ -10,6 +10,7 @@
 - [MySQL Dialect](MySQL-Dialect)
 - [SQL Server Dialect](SQL-Server-Dialect)
 - [Unsupported Features](Unsupported-Features)
+- [SQM Playground](SQM-Playground)
 - [SQL Transpilation](SQL-Transpilation)
 - [SQL Transpilation Examples](SQL-Transpilation-Examples)
 - [Query Transform Helpers](Query-Transform-Helpers)
