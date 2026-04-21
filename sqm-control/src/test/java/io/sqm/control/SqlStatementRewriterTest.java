@@ -17,6 +17,7 @@ import io.sqm.control.rewrite.BuiltInRewriteSettings;
 import io.sqm.core.Expression;
 import io.sqm.core.Query;
 import io.sqm.core.Statement;
+import io.sqm.core.StatementSequence;
 import io.sqm.core.UpdateStatement;
 import org.junit.jupiter.api.Test;
 
@@ -221,5 +222,60 @@ class SqlStatementRewriterTest {
         String rendered = SqlStatementRenderer.standard().render(result.statement(), ANALYZE).sql().toLowerCase();
         assertTrue(rendered.contains("update users"));
         assertTrue(rendered.contains("set name"));
+    }
+
+    @Test
+    void rewrites_statement_sequences_per_statement() {
+        var sequence = StatementSequence.of(
+            parseQuery("select id from users"),
+            parseQuery("select name from users")
+        );
+
+        var result = SqlStatementRewriter.builder()
+            .settings(BuiltInRewriteSettings.builder().defaultLimitInjectionValue(9).build())
+            .rules(BuiltInRewriteRule.LIMIT_INJECTION)
+            .build()
+            .rewrite(sequence, ANALYZE);
+
+        var rewrittenSequence = org.junit.jupiter.api.Assertions.assertInstanceOf(StatementSequence.class, result.statement());
+        assertTrue(result.rewritten());
+        assertEquals(2, rewrittenSequence.statements().size());
+        assertEquals(List.of("limit-injection", "limit-injection"), result.appliedRuleIds());
+    }
+
+    @Test
+    void leaves_statement_sequences_unchanged_when_no_statement_rewrites() {
+        var sequence = StatementSequence.of(
+            parseQuery("select id from users limit 1"),
+            parseQuery("select name from users limit 1")
+        );
+
+        var result = SqlStatementRewriter.noop().rewrite(sequence, ANALYZE);
+
+        assertSame(sequence, result.statement());
+        assertFalse(result.rewritten());
+    }
+
+    @Test
+    void rejects_unsupported_node_for_sequence_entrypoint() {
+        var rewriter = SqlStatementRewriter.noop();
+
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> rewriter.rewrite(Expression.literal(1), ANALYZE)
+        );
+    }
+
+    @Test
+    void rejects_rewrite_rule_that_returns_non_statement_node() {
+        Statement input = Query.select(Expression.literal(1)).build();
+        StatementRewriteRule rule = (statement, context) -> new StatementRewriteResult(
+            Expression.literal(2),
+            true,
+            List.of("bad-rule"),
+            ReasonCode.REWRITE_CANONICALIZATION
+        );
+
+        assertThrows(IllegalStateException.class, () -> SqlStatementRewriter.chain(rule).rewrite(input, ANALYZE));
     }
 }

@@ -1,6 +1,7 @@
 package io.sqm.control.pipeline;
 
 import io.sqm.control.decision.ReasonCode;
+import io.sqm.core.Node;
 import io.sqm.core.Statement;
 
 import java.util.List;
@@ -9,13 +10,13 @@ import java.util.Objects;
 /**
  * Result of applying one or more statement rewrite rules.
  *
- * @param statement         resulting statement model after rewrite evaluation
+ * @param statement         resulting statement or statement-sequence model after rewrite evaluation
  * @param rewritten         whether any rewrite was applied
  * @param appliedRuleIds    identifiers of applied rewrite rules in application order
  * @param primaryReasonCode primary rewrite reason code, or {@link ReasonCode#NONE} when unchanged
  */
 public record StatementRewriteResult(
-    Statement statement,
+    Node statement,
     boolean rewritten,
     List<String> appliedRuleIds,
     ReasonCode primaryReasonCode
@@ -24,7 +25,7 @@ public record StatementRewriteResult(
     /**
      * Validates and normalizes the rewrite result.
      *
-     * @param statement         resulting statement model
+     * @param statement         resulting statement or statement-sequence model
      * @param rewritten         whether any rewrite was applied
      * @param appliedRuleIds    identifiers of applied rewrite rules
      * @param primaryReasonCode primary reason code for rewrite decisions
@@ -56,10 +57,10 @@ public record StatementRewriteResult(
     /**
      * Creates a result representing no rewrite.
      *
-     * @param statement statement model
+     * @param statement statement or statement-sequence model
      * @return unchanged rewrite result
      */
-    public static StatementRewriteResult unchanged(Statement statement) {
+    public static StatementRewriteResult unchanged(Node statement) {
         return new StatementRewriteResult(statement, false, List.of(), ReasonCode.NONE);
     }
 

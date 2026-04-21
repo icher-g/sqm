@@ -90,6 +90,11 @@ public enum ReasonCodeDto {
     DENY_MAX_ROWS,
 
     /**
+     * Query denied because statement-count guardrail was violated.
+     */
+    DENY_MAX_STATEMENTS,
+
+    /**
      * Query was rewritten to enforce a limit.
      */
     REWRITE_LIMIT,

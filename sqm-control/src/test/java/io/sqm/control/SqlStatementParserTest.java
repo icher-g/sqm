@@ -7,6 +7,7 @@ import io.sqm.control.pipeline.SqlStatementParser;
 import io.sqm.core.InsertStatement;
 import io.sqm.core.MergeStatement;
 import io.sqm.core.Query;
+import io.sqm.core.StatementSequence;
 import io.sqm.core.UpdateStatement;
 import io.sqm.parser.ansi.AnsiSpecs;
 import org.junit.jupiter.api.Test;
@@ -88,6 +89,17 @@ class SqlStatementParserTest {
 
         var statement = parser.parse("INSERT INTO [users] ([name]) OUTPUT inserted.[id] VALUES ('alice')", context);
         assertInstanceOf(InsertStatement.class, statement);
+    }
+
+    @Test
+    void parses_multi_statement_sql_as_statement_sequence() {
+        var parser = SqlStatementParser.standard();
+        var context = ExecutionContext.of("postgresql", ExecutionMode.ANALYZE);
+
+        var statement = parser.parse("select 1; update users set name = 'alice' where id = 1;", context);
+
+        var sequence = assertInstanceOf(StatementSequence.class, statement);
+        org.junit.jupiter.api.Assertions.assertEquals(2, sequence.statements().size());
     }
 
     @Test

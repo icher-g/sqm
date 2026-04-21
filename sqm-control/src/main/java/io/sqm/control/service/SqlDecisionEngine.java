@@ -3,10 +3,13 @@ package io.sqm.control.service;
 import io.sqm.control.decision.DecisionResult;
 import io.sqm.control.execution.ExecutionContext;
 import io.sqm.control.pipeline.*;
+import io.sqm.core.Node;
 import io.sqm.core.Query;
-import io.sqm.core.Statement;
+import io.sqm.core.StatementSequence;
 import io.sqm.core.transform.QueryFingerprint;
+import io.sqm.core.utils.HashUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /**
@@ -32,11 +35,11 @@ public interface SqlDecisionEngine {
     /**
      * Evaluates statement model for the provided context and returns a decision.
      *
-     * @param query   parsed statement model
+     * @param query   parsed statement or statement-sequence model
      * @param context execution context
      * @return decision result
      */
-    DecisionResult evaluate(Statement query, ExecutionContext context);
+    DecisionResult evaluate(Node query, ExecutionContext context);
 
     /**
      * Default composed implementation of {@link SqlDecisionEngine}.
@@ -63,12 +66,12 @@ public interface SqlDecisionEngine {
         /**
          * Evaluates statement model for the provided context and returns a decision.
          *
-         * @param query   parsed statement model
+         * @param query   parsed statement or statement-sequence model
          * @param context execution context
          * @return decision result
          */
         @Override
-        public DecisionResult evaluate(Statement query, ExecutionContext context) {
+        public DecisionResult evaluate(Node query, ExecutionContext context) {
             Objects.requireNonNull(query, "query must not be null");
             Objects.requireNonNull(context, "context must not be null");
 
@@ -86,9 +89,7 @@ public interface SqlDecisionEngine {
             }
 
             if (!rewrite.rewritten()) {
-                return query instanceof Query queryModel
-                    ? DecisionResult.allow(QueryFingerprint.of(queryModel))
-                    : DecisionResult.allow();
+                return DecisionResult.allow(fingerprint(query));
             }
 
             var rewrittenValidation = statementValidator.validate(rewrite.statement(), context);
@@ -106,8 +107,28 @@ public interface SqlDecisionEngine {
                 message,
                 renderResult.sql(),
                 renderResult.params(),
-                rewrite.statement() instanceof Query rewrittenQuery ? QueryFingerprint.of(rewrittenQuery) : null
+                fingerprint(rewrite.statement())
             );
+        }
+
+        private String fingerprint(Node node) {
+            if (node instanceof Query query) {
+                return QueryFingerprint.of(query);
+            }
+            if (node instanceof StatementSequence sequence) {
+                var fingerprints = new StringBuilder();
+                for (var statement : sequence.statements()) {
+                    if (!(statement instanceof Query query)) {
+                        return null;
+                    }
+                    if (!fingerprints.isEmpty()) {
+                        fingerprints.append(';');
+                    }
+                    fingerprints.append(QueryFingerprint.of(query));
+                }
+                return HashUtils.sha256Hex(fingerprints.toString().getBytes(StandardCharsets.UTF_8));
+            }
+            return null;
         }
     }
 }

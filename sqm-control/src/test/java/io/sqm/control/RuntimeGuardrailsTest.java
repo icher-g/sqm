@@ -22,6 +22,7 @@ class RuntimeGuardrailsTest {
         assertNull(guardrails.maxSqlLength());
         assertNull(guardrails.timeoutMillis());
         assertNull(guardrails.maxRows());
+        assertNull(guardrails.maxStatementsPerRequest());
         assertFalse(guardrails.explainDryRun());
     }
 
@@ -30,6 +31,7 @@ class RuntimeGuardrailsTest {
         assertThrows(IllegalArgumentException.class, () -> new RuntimeGuardrails(0, null, null, false));
         assertThrows(IllegalArgumentException.class, () -> new RuntimeGuardrails(null, 0L, null, false));
         assertThrows(IllegalArgumentException.class, () -> new RuntimeGuardrails(null, null, 0, false));
+        assertThrows(IllegalArgumentException.class, () -> new RuntimeGuardrails(null, null, null, 0, false));
     }
 }
 

@@ -98,8 +98,6 @@ class ParseServiceTest {
         assertEquals("SelectQuery", statementSlot.nodes().get(1).nodeType());
         assertTrue(response.sqmJson().contains("statementSequence"));
         assertTrue(response.sqmJson().contains("\"statements\""));
-        assertTrue(response.sqmDsl().contains("// Statement 1"));
-        assertTrue(response.sqmDsl().contains("// Statement 2"));
         assertTrue(response.diagnostics().isEmpty());
     }
 

@@ -142,6 +142,14 @@ public final class ConfigKeys {
     );
 
     /**
+     * Runtime max statement count guardrail.
+     */
+    public static final Key GUARDRAILS_MAX_STATEMENTS_PER_REQUEST = Key.of(
+        "sqm.middleware.guardrails.maxStatementsPerRequest",
+        "SQM_MIDDLEWARE_GUARDRAILS_MAX_STATEMENTS_PER_REQUEST"
+    );
+
+    /**
      * Runtime explain dry-run guardrail.
      */
     public static final Key GUARDRAILS_EXPLAIN_DRY_RUN = Key.of(

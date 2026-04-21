@@ -4,6 +4,7 @@ import io.sqm.control.audit.*;
 import io.sqm.control.config.*;
 import io.sqm.control.decision.*;
 import io.sqm.control.execution.*;
+import io.sqm.control.impl.DefaultSqlDecisionService;
 import io.sqm.control.pipeline.*;
 import io.sqm.control.rewrite.*;
 import io.sqm.control.service.*;
@@ -13,6 +14,7 @@ import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.control.audit.InMemoryAuditEventPublisher;
+import io.sqm.core.Expression;
 import io.sqm.validate.schema.SchemaValidationLimits;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import org.junit.jupiter.api.Test;
@@ -101,6 +103,88 @@ class DefaultSqlDecisionServiceTest {
         var result = decisionService.enforce("select 1", ExecutionContext.of("postgresql", ExecutionMode.EXECUTE));
         assertEquals(DecisionKind.DENY, result.kind());
         assertEquals(ReasonCode.DENY_MAX_ROWS, result.reasonCode());
+    }
+
+    @Test
+    void factory_applies_max_statement_guardrail_to_multi_statement_sql() {
+        var decisionService = create(
+            SCHEMA,
+            SchemaValidationSettings.defaults(),
+            new RuntimeGuardrails(null, null, null, 1, false)
+        );
+
+        var result = decisionService.enforce(
+            "select 1; select 2;",
+            ExecutionContext.of("postgresql", ExecutionMode.EXECUTE)
+        );
+
+        assertEquals(DecisionKind.DENY, result.kind());
+        assertEquals(ReasonCode.DENY_MAX_STATEMENTS, result.reasonCode());
+    }
+
+    @Test
+    void factory_allows_single_statement_when_max_statement_guardrail_matches() {
+        var decisionService = create(
+            SCHEMA,
+            SchemaValidationSettings.defaults(),
+            new RuntimeGuardrails(null, null, null, 1, false)
+        );
+
+        var result = decisionService.enforce(
+            "select 1",
+            ExecutionContext.of("postgresql", ExecutionMode.EXECUTE)
+        );
+
+        assertEquals(DecisionKind.ALLOW, result.kind());
+    }
+
+    @Test
+    void default_factory_allows_multi_statement_sql_when_each_statement_is_allowed() {
+        var decisionService = create(SCHEMA);
+
+        var result = decisionService.enforce(
+            "select 1; update users set name = 'alice' where id = 1;",
+            ExecutionContext.of("postgresql", ExecutionMode.EXECUTE)
+        );
+
+        assertEquals(DecisionKind.ALLOW, result.kind());
+    }
+
+    @Test
+    void max_rows_guardrail_reports_statement_index_for_multi_statement_sql() {
+        var decisionService = create(
+            SCHEMA,
+            SchemaValidationSettings.defaults(),
+            new RuntimeGuardrails(null, null, 10, null, false)
+        );
+
+        var result = decisionService.enforce(
+            "select 1 limit 1; select 2;",
+            ExecutionContext.of("postgresql", ExecutionMode.EXECUTE)
+        );
+
+        assertEquals(DecisionKind.DENY, result.kind());
+        assertEquals(ReasonCode.DENY_MAX_ROWS, result.reasonCode());
+        assertTrue(result.message().startsWith("Statement 2:"));
+    }
+
+    @Test
+    void max_rows_guardrail_denies_unsupported_parsed_node() {
+        var decisionService = new DefaultSqlDecisionService(
+            (statement, context) -> DecisionResult.allow(),
+            SqlDecisionExplainer.basic(),
+            AuditEventPublisher.noop(),
+            new RuntimeGuardrails(null, null, 10, null, false),
+            (sql, context) -> Expression.literal(1)
+        );
+
+        var result = decisionService.enforce(
+            "select 1",
+            ExecutionContext.of("postgresql", ExecutionMode.EXECUTE)
+        );
+
+        assertEquals(DecisionKind.DENY, result.kind());
+        assertEquals(ReasonCode.DENY_PIPELINE_ERROR, result.reasonCode());
     }
 
     @Test
