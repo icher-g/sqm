@@ -436,7 +436,10 @@ Initial suggestion:
 
 - 20 requests/minute per IP
 - small maximum request body
-- no batch endpoints in V1
+- no separate batch endpoints in V1; existing parse, render, validate, and
+  transpile endpoints accept semicolon-separated scripts and return one combined
+  payload. The frontend derives per-statement AST/JSON/DSL views from that
+  payload instead of receiving duplicate whole-script and per-statement data.
 
 ### Observability
 

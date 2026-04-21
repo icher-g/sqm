@@ -55,6 +55,30 @@ class TranspileControllerIntegrationTest {
     }
 
     @Test
+    void transpileEndpointReturnsCombinedSqlForMultiStatementScript() {
+        var response = restTemplate.postForEntity(
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/transpile",
+            new HttpEntity<>(new TranspileRequestDto(
+                """
+                    select id from users;
+                    select first_name || ' ' || last_name as full_name from users;
+                    """,
+                SqlDialectDto.postgresql,
+                SqlDialectDto.mysql
+            )),
+            TranspileResponseDto.class
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().success());
+        assertEquals(TranspileOutcomeDto.exact, response.getBody().outcome());
+        assertNotNull(response.getBody().renderedSql());
+        assertEquals(2, response.getBody().renderedSql().chars().filter(ch -> ch == ';').count());
+        assertTrue(response.getBody().renderedSql().toLowerCase().contains("concat"));
+    }
+
+    @Test
     void transpileEndpointReturnsBindParamsWhenRequested() {
         var response = restTemplate.postForEntity(
             "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/transpile",

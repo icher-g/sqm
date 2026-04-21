@@ -58,6 +58,35 @@ class TransportParityIntegrationTest {
     }
 
     @Test
+    void rest_and_mcp_transports_match_core_service_for_multi_statement_script() {
+        var service = SqlMiddlewareServices.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
+                .buildValidationAndRewriteConfig()
+        );
+
+        var restController = new SqlMiddlewareRestController(new SqlMiddlewareRestAdapter(service));
+        var mcpRouter = new SqlMiddlewareMcpToolRouter(new SqlMiddlewareMcpAdapter(service));
+        var request = new AnalyzeRequest(
+            "select id from users; select name from users;",
+            new ExecutionContextDto("postgresql", null, null, null, null)
+        );
+
+        var direct = service.analyze(request);
+        var rest = restController.analyze(request);
+        var mcp = (DecisionResultDto) mcpRouter.invoke(SqlMiddlewareMcpToolRouter.ANALYZE_TOOL, request);
+
+        assertEquals(DecisionKindDto.REWRITE, direct.kind());
+        assertTrue(direct.rewrittenSql() != null && direct.rewrittenSql().contains(";"));
+        assertEquals(direct.kind(), rest.kind());
+        assertEquals(direct.reasonCode(), rest.reasonCode());
+        assertEquals(direct.rewrittenSql(), rest.rewrittenSql());
+
+        assertEquals(direct.kind(), mcp.kind());
+        assertEquals(direct.reasonCode(), mcp.reasonCode());
+        assertEquals(direct.rewrittenSql(), mcp.rewrittenSql());
+    }
+
+    @Test
     void rest_and_mcp_transports_match_core_service_for_mysql_dml_requests() {
         var service = SqlMiddlewareServices.create(
             SqlDecisionServiceConfig.builder(SCHEMA)

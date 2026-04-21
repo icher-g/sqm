@@ -10,6 +10,9 @@ Parameter values are bound later at SQL rendering or execution time.
 - Output source: generated Java classes under `target/generated-sources/sqm-codegen`.
 - Grouping rule: one generated class per folder under `src/main/sql`.
 - Method rule: one zero-argument method per SQL file.
+- Multi-statement SQL files are parsed as `StatementSequence`.
+- Multi-statement files generate one sequence-level method and per-statement
+  helper methods with stable names derived from statement intent and main table.
 - Dialect-aware parse validation at build time.
 - Build failure on invalid SQL or unsupported dialect features.
 
@@ -104,7 +107,9 @@ public final class UserQueries {
 
 ### Return type
 - V1 default: `io.sqm.core.query.Query`.
-- Optional future enhancement: narrow return type based on statement kind.
+- Single-statement SQL files return the parsed statement type.
+- Multi-statement SQL files return `io.sqm.core.StatementSequence` from the
+  sequence-level method, plus individual methods for each contained statement.
 
 ### Parameter handling
 - Query method remains zero-arg.

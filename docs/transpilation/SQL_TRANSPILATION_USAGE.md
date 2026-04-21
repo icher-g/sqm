@@ -83,6 +83,26 @@ Expected warning:
 
 - `APPROXIMATE_ILIKE_LOWERING`
 
+## Multi-Statement Scripts
+
+`SqlTranspiler` parses SQL text through `StatementSequence`, so the same
+`transpile(String)` entry point supports both single statements and
+semicolon-separated scripts:
+
+```java
+var result = transpiler.transpile("""
+    SELECT id FROM users;
+    SELECT first_name || ' ' || last_name AS full_name FROM users;
+    """);
+```
+
+Statements are transpiled in source order and rendered back as one combined SQL
+script only when the full sequence succeeds. The aggregate outcome is exact only
+when every statement is exact, warning-based when at least one statement is
+approximate or warning-producing, and unsupported/failed when any statement is
+unsupported, invalid, or cannot be rendered. Bind parameterization applies to the
+combined render result and `result.params()` preserves statement order.
+
 ## Current Supported Slice
 
 ### PostgreSQL -> MySQL

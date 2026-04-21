@@ -8,6 +8,11 @@ This document describes the current capabilities of `sqm-validate`, how to use i
 
 It is currently dialect-agnostic by default (core SQL semantics), with extension hooks for dialect-specific rules.
 
+`StatementSequence` inputs are validated statement by statement. A sequence is
+valid only when every contained statement is valid, and diagnostics include a
+one-based statement index so callers can point users to the failing statement in
+a script.
+
 ## Public API
 
 - Main validator:
@@ -274,6 +279,7 @@ Default behavior is unchanged when using:
 - Type inference is intentionally conservative and may return `UNKNOWN` for complex expressions.
 - Validation operates on the SQM model, not on actual database metadata snapshots at runtime.
 - It validates semantic model consistency, not execution plans or optimizer behavior.
+- DDL remains out of scope unless the project adopts a separate DDL design.
 
 ## Improvement Backlog
 
