@@ -1,5 +1,6 @@
 target/
 .m2/
+.wiki-tmp/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

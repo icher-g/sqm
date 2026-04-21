@@ -24,6 +24,8 @@ At `${schemaCachePath}.meta.properties`.
 ## How do I publish these wiki pages?
 
 Use `scripts/publish-wiki.ps1` after setting your wiki repo URL.
+The script publishes all files under `wiki-src`, including image assets such as
+`wiki-src/images/*.png`.
 
 ## Are stored procedures supported?
 

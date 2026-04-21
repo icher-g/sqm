@@ -21,8 +21,14 @@ if ($LASTEXITCODE -ne 0 -or -not (Test-Path $WorkDir)) {
     throw "Failed to clone wiki repository. Verify wiki is enabled and URL is correct: $WikiRepoUrl"
 }
 
-Get-ChildItem -Path $WorkDir -File -Filter *.md | Remove-Item -Force
-Copy-Item -Path (Join-Path $SourceDir "*.md") -Destination $WorkDir -Force
+$wikiRoot = Resolve-Path $WorkDir
+$sourceRoot = Resolve-Path $SourceDir
+
+Get-ChildItem -LiteralPath $wikiRoot -Force |
+    Where-Object { $_.Name -ne ".git" } |
+    Remove-Item -Recurse -Force
+
+Copy-Item -Path (Join-Path $sourceRoot "*") -Destination $wikiRoot -Recurse -Force
 
 Push-Location $WorkDir
 try {
