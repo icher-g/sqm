@@ -151,6 +151,59 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
+    void statementSequenceFailsWholeBatchWhenOneStatementFailsValidation() {
+        var schema = CatalogSchema.of(
+            CatalogTable.of("public", "users", CatalogColumn.of("id", CatalogType.LONG))
+        );
+        var sequence = StatementSequence.of(
+            Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build(),
+            Dsl.select(Dsl.col("name")).from(Dsl.tbl("users")).build()
+        );
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .targetSchema(schema)
+            .build();
+
+        var result = transpiler.transpile(sequence);
+
+        assertEquals(TranspileStatus.VALIDATION_FAILED, result.status());
+        assertTrue(result.sql().isEmpty());
+        assertFalse(result.problems().isEmpty());
+        assertEquals(2, result.problems().getFirst().statementIndex());
+    }
+
+    @Test
+    void statementSequenceReportsFinalBatchRenderFailure() {
+        var sequence = StatementSequence.of(
+            Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build(),
+            Dsl.select(Dsl.col("name")).from(Dsl.tbl("users")).build()
+        );
+        var failingDialect = new io.sqm.render.mysql.spi.MySqlDialect() {
+            @Override
+            public PreparedNode beforeRender(Node root, io.sqm.render.spi.RenderOptions options) {
+                if (root instanceof StatementSequence) {
+                    throw new UnsupportedOperationException("Batch boom");
+                }
+                return super.beforeRender(root, options);
+            }
+        };
+
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
+            .renderer(() -> failingDialect)
+            .build();
+
+        var result = transpiler.transpile(sequence);
+
+        assertEquals(TranspileStatus.RENDER_FAILED, result.status());
+        assertEquals("RENDER_FAILED", result.problems().getFirst().code());
+        assertEquals("Batch boom", result.problems().getFirst().message());
+        assertTrue(result.sql().isEmpty());
+    }
+
+    @Test
     void transpilesPostgresConcatToMySqlRendering() {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.POSTGRESQL)

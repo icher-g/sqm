@@ -186,6 +186,20 @@ class PlaygroundApiContractsTest {
     }
 
     @Test
+    void shouldDefaultLegacyTranspileResponseParamsToEmptyList() {
+        var response = new TranspileResponseDto(
+            "req-transpile",
+            true,
+            18L,
+            TranspileOutcomeDto.exact,
+            "SELECT 1",
+            List.of()
+        );
+
+        assertTrue(response.params().isEmpty());
+    }
+
+    @Test
     void shouldDeserializeRenderParameterizationModeFromLowercaseWireValue() throws Exception {
         RenderParameterizationModeDto mode = mapper.readValue("\"bind\"", RenderParameterizationModeDto.class);
 

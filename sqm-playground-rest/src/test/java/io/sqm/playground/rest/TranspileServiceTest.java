@@ -146,4 +146,21 @@ class TranspileServiceTest {
         assertEquals(1, response.diagnostics().getFirst().line());
         assertEquals(8, response.diagnostics().getFirst().column());
     }
+
+    @Test
+    void transpileReturnsErrorDiagnosticWhenRequestCannotBeMapped() {
+        var service = new TranspileService(new PlaygroundStatementSupport());
+
+        var response = service.transpile(new TranspileRequestDto(
+            "select 1",
+            null,
+            SqlDialectDto.mysql
+        ));
+
+        assertFalse(response.success());
+        assertEquals(TranspileOutcomeDto.unsupported, response.outcome());
+        assertNull(response.renderedSql());
+        assertTrue(response.params().isEmpty());
+        assertEquals("TRANSPILE_ERROR", response.diagnostics().getFirst().code());
+    }
 }
