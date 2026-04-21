@@ -272,7 +272,8 @@ export default function App() {
       const response = await transpileSql({
         sql: sqlText,
         sourceDialect,
-        targetDialect
+        targetDialect,
+        parameterizationMode: renderParameterizationMode
       });
       setTranspileResponse(response);
       setRenderedSqlDialect(response.success && response.renderedSql ? targetDialect : null);

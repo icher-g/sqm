@@ -195,6 +195,7 @@ const TRANSPILE_RESPONSE = {
   durationMs: 11,
   outcome: "approximate",
   renderedSql: "select id\nfrom customer",
+  params: [1],
   diagnostics: [
     {
       severity: "warning",
@@ -213,6 +214,7 @@ const TRANSPILE_FAILURE_RESPONSE = {
   durationMs: 6,
   outcome: "unsupported",
   renderedSql: null,
+  params: [],
   diagnostics: [
     {
       severity: "error",
@@ -475,7 +477,8 @@ describe("App", () => {
           body: JSON.stringify({
             sql: "select distinct on (id) id\nfrom customer\norder by id",
             sourceDialect: "postgresql",
-            targetDialect: "postgresql"
+            targetDialect: "postgresql",
+            parameterizationMode: "bind"
           })
         })
       );
@@ -486,6 +489,7 @@ describe("App", () => {
     expect(screen.getByRole("tabpanel", { name: "Rendered SQL" })).toHaveTextContent("Dialect: PostgreSQL");
     expect(screen.getByRole("tabpanel", { name: "Rendered SQL" })).toHaveTextContent("select id");
     expect(screen.getByRole("tabpanel", { name: "Rendered SQL" })).toHaveTextContent("from customer");
+    expect(screen.getByRole("tabpanel", { name: "Rendered SQL" })).toHaveTextContent("Parameters");
 
     await userEvent.click(screen.getByRole("tab", { name: "Diagnostics" }));
     expect(screen.getByRole("tabpanel", { name: "Diagnostics" })).toHaveTextContent("APPROXIMATE_TRANSPILE");

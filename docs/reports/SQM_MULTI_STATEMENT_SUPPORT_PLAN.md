@@ -59,12 +59,20 @@ The initial multi-statement implementation should use these decisions:
 - `ctx.parse(StatementSequence.class, sql)` is the batch parsing entry point.
 - The `Parser` interface remains unchanged.
 - DDL remains out of scope unless a separate DDL decision is made.
-
-The following behavior still needs product confirmation during middleware design:
-
-- Whether multi-statement support is enabled by default in middleware.
-- Whether batches can mix read and write statements.
-- Whether comments and formatting between statements need to be preserved.
+- Middleware multi-statement support is enabled by default.
+- Middleware must deny the whole batch when any statement is denied, invalid,
+  unsupported, or unsafe.
+- Query-only batches are treated as read batches.
+- Any batch containing `INSERT`, `UPDATE`, `DELETE`, or `MERGE` is treated as a
+  write batch.
+- Mixed read/write batches are allowed when write execution is allowed.
+- Read-only and analyze-safe middleware modes must deny the whole batch when
+  any DML statement is present.
+- Statement comments and blank lines do not need to be preserved in rendered
+  output, assuming comments cannot carry semantic hints.
+- Codegen per-statement method names should use statement intent plus the main
+  table name, with numeric suffixes for collisions. Use stable `statementN`
+  fallbacks when no main table can be determined.
 
 ## Parser Changes
 
@@ -260,11 +268,17 @@ Important decisions:
 
 Recommended initial policy:
 
-- Disable multi-statement execution by default in middleware.
-- Add a guardrail such as `allowMultiStatement`.
+- Enable multi-statement execution by default in middleware.
 - Add a maximum statement count such as `maxStatementsPerRequest`.
 - Deny the entire batch if any statement is denied.
 - Do not allow partial batch execution.
+- Treat query-only batches as read batches.
+- Treat any batch containing `INSERT`, `UPDATE`, `DELETE`, or `MERGE` as a write
+  batch.
+- Allow mixed read/write batches only when write execution is allowed.
+- Deny the entire batch in read-only or analyze-safe modes when any DML
+  statement is present.
+- Reject DDL statements because DDL remains out of scope.
 - Apply rewrites per statement only.
 - Render a full rewritten batch only after every statement passes validation.
 
@@ -332,6 +346,12 @@ Recommended initial behavior:
 - Expose individual statements using a stable generated naming convention.
 - Preserve statement order.
 - Extract named parameters across the whole statement sequence.
+- Name per-statement methods from statement intent and main table name, for
+  example `getUsers`, `updateUsers`, or `insertAuditLog`.
+- Add numeric suffixes for collisions, for example `getUsers2`.
+- Use stable fallbacks such as `statement1` and `statement2` when the statement
+  has no clear main table, such as `select 1`, CTE-only queries, set operations,
+  or derived-table-only queries.
 
 Parameter handling must be specified. For example:
 
@@ -481,9 +501,9 @@ Current shared behavior:
 
 ## Remaining Questions
 
-- Should middleware multi-statement support be enabled by default or guarded by
-  explicit configuration?
-- Should middleware allow batches that mix read and write statements?
-- Should statement-sequence rendering preserve comments and blank lines between statements,
-  or is normalized output sufficient?
-- What stable naming convention should codegen use for per-statement methods?
+- Can SQL comments ever carry semantic hints in supported dialects? If yes,
+  statement-sequence rendering may need to preserve or explicitly reject those
+  hints instead of dropping comments during normalized output.
+- Should middleware batch execution require transaction-level atomicity when the
+  backend supports transactions, or is policy-level all-or-nothing approval
+  sufficient for the initial implementation?

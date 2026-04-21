@@ -3,9 +3,11 @@ package io.sqm.playground.rest.service;
 import io.sqm.playground.api.DiagnosticPhaseDto;
 import io.sqm.playground.api.DiagnosticSeverityDto;
 import io.sqm.playground.api.PlaygroundDiagnosticDto;
+import io.sqm.playground.api.RenderParameterizationModeDto;
 import io.sqm.playground.api.TranspileOutcomeDto;
 import io.sqm.playground.api.TranspileRequestDto;
 import io.sqm.playground.api.TranspileResponseDto;
+import io.sqm.render.spi.ParameterizationMode;
 import io.sqm.transpile.SqlTranspiler;
 import io.sqm.transpile.TranspileOptions;
 import io.sqm.transpile.TranspileResult;
@@ -49,7 +51,7 @@ public final class TranspileService {
                 .targetDialect(PlaygroundDialectSupport.toDialectId(request.targetDialect()))
                 .sourceSchema(ValidationCatalogSchemas.allowEverything())
                 .targetSchema(ValidationCatalogSchemas.allowEverything())
-                .options(new TranspileOptions(true, false, true, true))
+                .options(new TranspileOptions(true, false, true, true, toParameterizationMode(request.parameterizationMode())))
                 .build()
                 .transpile(request.sql());
 
@@ -59,6 +61,7 @@ public final class TranspileService {
                 0L,
                 toOutcome(result),
                 result.sql().orElse(null),
+                result.params(),
                 toDiagnostics(result)
             );
         } catch (RuntimeException e) {
@@ -68,6 +71,7 @@ public final class TranspileService {
                 0L,
                 TranspileOutcomeDto.unsupported,
                 null,
+                List.of(),
                 List.of(new PlaygroundDiagnosticDto(
                     DiagnosticSeverityDto.error,
                     "TRANSPILE_ERROR",
@@ -99,7 +103,8 @@ public final class TranspileService {
                 problem.message(),
                 DiagnosticPhaseDto.transpile,
                 problem.line(),
-                problem.column()
+                problem.column(),
+                problem.statementIndex()
             ));
         }
         for (var warning : result.warnings()) {
@@ -109,9 +114,17 @@ public final class TranspileService {
                 warning.message(),
                 DiagnosticPhaseDto.transpile,
                 null,
-                null
+                null,
+                warning.statementIndex()
             ));
         }
         return List.copyOf(diagnostics);
+    }
+
+    private static ParameterizationMode toParameterizationMode(RenderParameterizationModeDto mode) {
+        return switch (mode) {
+            case inline -> ParameterizationMode.Inline;
+            case bind -> ParameterizationMode.Bind;
+        };
     }
 }

@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ResultsPanel } from "./ResultsPanel";
-import type { ParseResponseDto, RenderResponseDto } from "../types/api";
+import type { ParseResponseDto, RenderResponseDto, TranspileResponseDto } from "../types/api";
 
 const PARSE_RESPONSE: ParseResponseDto = {
   requestId: "req-parse",
@@ -109,6 +109,16 @@ const PARAMETERIZED_RENDER_RESPONSE: RenderResponseDto = {
   durationMs: 7,
   renderedSql: "SELECT ?",
   params: [7, "alice"],
+  diagnostics: []
+};
+
+const PARAMETERIZED_TRANSPILE_RESPONSE: TranspileResponseDto = {
+  requestId: "req-transpile",
+  success: true,
+  durationMs: 9,
+  outcome: "exact",
+  renderedSql: "SELECT ?",
+  params: ["bob"],
   diagnostics: []
 };
 
@@ -304,5 +314,37 @@ describe("ResultsPanel", () => {
     expect(renderedPanel).toHaveTextContent("SELECT ?");
     expect(renderedPanel).toHaveTextContent("Parameters");
     expect(renderedPanel).toHaveTextContent("alice");
+  });
+
+  it("shows bind parameters returned by transpile responses", () => {
+    const noop = () => {};
+
+    render(
+      <ResultsPanel
+        activeResultTab="renderedSql"
+        onResultTabChange={noop}
+        parseResponse={null}
+        parseLoading={false}
+        parseError={null}
+        renderResponse={null}
+        renderedSqlDialect="mysql"
+        renderedSqlTimestamp={null}
+        renderLoading={false}
+        renderError={null}
+        transpileResponse={PARAMETERIZED_TRANSPILE_RESPONSE}
+        transpileLoading={false}
+        transpileError={null}
+        validateResponse={null}
+        validateLoading={false}
+        validateError={null}
+        onDiagnosticSelect={noop}
+      />
+    );
+
+    const renderedPanel = screen.getByRole("tabpanel", { name: "Rendered SQL" });
+
+    expect(renderedPanel).toHaveTextContent("SELECT ?");
+    expect(renderedPanel).toHaveTextContent("Parameters");
+    expect(renderedPanel).toHaveTextContent("bob");
   });
 });
