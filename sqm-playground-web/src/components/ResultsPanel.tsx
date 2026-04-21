@@ -87,8 +87,10 @@ export function ResultsPanel(props: ResultsPanelProps) {
 
   return (
     <article className="card results-card">
-      <h2>Results</h2>
-      <p>Inspect SQM as a tree, review the generated JSON and DSL, compare rendered SQL, and capture diagnostics.</p>
+      <div className="panel-heading">
+        <h2>Results</h2>
+        <p>AST, DSL, JSON, SQL, diagnostics</p>
+      </div>
 
       <div className="tab-row" role="tablist" aria-label="Result tabs">
         <button

@@ -41,8 +41,10 @@ interface SqlEditorPanelProps {
 export function SqlEditorPanel(props: SqlEditorPanelProps) {
   return (
     <article className="card editor-card">
-      <h2>Editor</h2>
-      <p>Choose an example, set the relevant dialects, and run actions directly above the SQL text.</p>
+      <div className="panel-heading">
+        <h2>Editor</h2>
+        <p>Examples, dialects, actions</p>
+      </div>
 
       <div className="editor-controls">
         <div className="control-field control-field-example">
@@ -196,7 +198,7 @@ export function SqlEditorPanel(props: SqlEditorPanelProps) {
 
       <div className="editor-field">
         <div className="editor-field-header">
-          <span className="editor-label">SQL text</span>
+          <span className="editor-label">SQL</span>
           <button
             type="button"
             className={props.activeAction === "format" ? "editor-secondary-button button-primary" : "editor-secondary-button"}
