@@ -274,4 +274,27 @@ class SqlStatementValidatorTest {
         assertEquals(ReasonCode.DENY_TABLE, result.code());
         assertTrue(result.message().startsWith("Statement 2:"));
     }
+
+    @Test
+    void validates_statement_sequences_when_all_statements_are_valid() {
+        var validator = SqlStatementValidator.standard(SCHEMA);
+        var sequence = StatementSequence.of(
+            select(lit(1)).build(),
+            select(lit(2)).build()
+        );
+
+        var result = validator.validate(sequence, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+
+        assertEquals(ReasonCode.NONE, result.code());
+    }
+
+    @Test
+    void rejects_unsupported_node_for_sequence_entrypoint() {
+        var validator = SqlStatementValidator.standard(SCHEMA);
+
+        var result = validator.validate(lit(1), ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+
+        assertEquals(ReasonCode.DENY_PIPELINE_ERROR, result.code());
+        assertTrue(result.isFailed());
+    }
 }

@@ -360,6 +360,22 @@ class SqlMiddlewareRuntimeFactoryTest {
     }
 
     @Test
+    void applies_max_statements_guardrail_without_other_guardrails() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.GUARDRAILS_MAX_STATEMENTS_PER_REQUEST.property(), "2"
+        ), () -> {
+            var service = SqlMiddlewareRuntimeFactory.createFromEnvironment();
+
+            var allowed = service.analyze(
+                new AnalyzeRequest("select 1; select 2;", new ExecutionContextDto("postgresql", null, null, null, null))
+            );
+
+            assertNotSame(DENY, allowed.kind());
+        });
+    }
+
+    @Test
     void throws_when_tenant_requirement_mode_is_invalid() {
         withProperties(Map.of(
             ConfigKeys.SCHEMA_SOURCE.property(), "manual",
