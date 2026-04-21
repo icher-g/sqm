@@ -22,16 +22,17 @@ class SqmDslRendererTest {
             .where(param("status").isNotNull())
             .build();
 
+        var user = Path.of("user");
         var group = new SqlFolderGroup(
-            Path.of("user"),
+            user,
             "UserQueries",
             List.of(new SqlSourceFile(
                 Path.of("user", "find_active.sql"),
-                Path.of("user"),
+                user,
                 "findActive",
-                statement,
                 Set.of("status"),
-                "hash-1"
+                "hash-1",
+                List.of(statement)
             ))
         );
 

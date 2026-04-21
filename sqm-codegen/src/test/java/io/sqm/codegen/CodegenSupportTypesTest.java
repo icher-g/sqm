@@ -10,9 +10,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
-import static io.sqm.dsl.Dsl.select;
-import static io.sqm.dsl.Dsl.star;
-import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -37,23 +35,25 @@ class CodegenSupportTypesTest {
         assertSame(parseResult, parseAttempt.result());
         assertSame(quoting, parseAttempt.identifierQuoting());
 
+        var user = Path.of("user");
+        var relativePath = Path.of("user", "find_by_id.sql");
         var sqlSourceFile = new SqlSourceFile(
-            Path.of("user", "find_by_id.sql"),
-            Path.of("user"),
+            relativePath,
+            user,
             "findById",
-            statement,
             Set.of("id"),
-            "hash-1"
+            "hash-1",
+            List.of(statement)
         );
-        assertEquals(Path.of("user", "find_by_id.sql"), sqlSourceFile.relativePath());
-        assertEquals(Path.of("user"), sqlSourceFile.folder());
+        assertEquals(relativePath, sqlSourceFile.relativePath());
+        assertEquals(user, sqlSourceFile.folder());
         assertEquals("findById", sqlSourceFile.methodName());
-        assertSame(statement, sqlSourceFile.statement());
+        assertSame(statement, sqlSourceFile.statements().getFirst());
         assertEquals(Set.of("id"), sqlSourceFile.parameters());
         assertEquals("hash-1", sqlSourceFile.sqlHash());
 
-        var folderGroup = new SqlFolderGroup(Path.of("user"), "UserQueries", List.of(sqlSourceFile));
-        assertEquals(Path.of("user"), folderGroup.folder());
+        var folderGroup = new SqlFolderGroup(user, "UserQueries", List.of(sqlSourceFile));
+        assertEquals(user, folderGroup.folder());
         assertEquals("UserQueries", folderGroup.className());
         assertEquals(List.of(sqlSourceFile), folderGroup.files());
     }

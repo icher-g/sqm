@@ -223,6 +223,81 @@ class SqlFileCodeGeneratorTest {
     }
 
     @Test
+    void generate_emitsStatementSequenceAndPerStatementMethodsForMultiStatementFile() throws IOException {
+        var sqlDir = tempDir.resolve("sql-multi");
+        var outputDir = tempDir.resolve("generated-multi");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(sqlDir.resolve("user").resolve("sync_users.sql"), """
+            select * from users where id = :id;
+            update users set name = :name where id = :id;
+            insert into audit_log (user_id) values (:id);
+            """);
+
+        var options = SqlFileCodegenOptions.of(sqlDir, outputDir, "io.sqm.codegen.generated", SqlCodegenDialect.ANSI);
+        var generated = SqlFileCodeGenerator.of(options).generate();
+
+        assertEquals(1, generated.size());
+        var generatedFile = outputDir.resolve(Path.of("io", "sqm", "codegen", "generated", "UserQueries.java"));
+        var source = Files.readString(generatedFile);
+        assertTrue(source.contains("public static StatementSequence syncUsers()"));
+        assertTrue(source.contains("return statementSequence(getUsers(), updateUsers(), insertAuditLog());"));
+        assertTrue(source.contains("public static Set<String> syncUsersParams()"));
+        assertTrue(source.contains("return Set.of(\"id\", \"name\")"));
+        assertTrue(source.contains("public static SelectQuery getUsers()"));
+        assertTrue(source.contains("public static Set<String> getUsersParams()"));
+        assertTrue(source.contains("public static UpdateStatement updateUsers()"));
+        assertTrue(source.contains("public static Set<String> updateUsersParams()"));
+        assertTrue(source.contains("public static InsertStatement insertAuditLog()"));
+        assertTrue(source.contains("public static Set<String> insertAuditLogParams()"));
+        assertTrue(source.indexOf("public static StatementSequence syncUsers()") < source.indexOf("public static SelectQuery getUsers()"));
+        assertTrue(source.indexOf("public static SelectQuery getUsers()") < source.indexOf("public static UpdateStatement updateUsers()"));
+        assertTrue(source.indexOf("public static UpdateStatement updateUsers()") < source.indexOf("public static InsertStatement insertAuditLog()"));
+    }
+
+    @Test
+    void generate_suffixesPerStatementMethodsWhenNamesCollide() throws IOException {
+        var sqlDir = tempDir.resolve("sql-multi-collision");
+        var outputDir = tempDir.resolve("generated-multi-collision");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(sqlDir.resolve("user").resolve("sync_users.sql"), """
+            select * from users where id = :id;
+            select * from users where status = :status;
+            select 1;
+            """);
+
+        var options = SqlFileCodegenOptions.of(sqlDir, outputDir, "io.sqm.codegen.generated", SqlCodegenDialect.ANSI);
+        SqlFileCodeGenerator.of(options).generate();
+
+        var generatedFile = outputDir.resolve(Path.of("io", "sqm", "codegen", "generated", "UserQueries.java"));
+        var source = Files.readString(generatedFile);
+        assertTrue(source.contains("return statementSequence(getUsers(), getUsers2(), statement3());"));
+        assertTrue(source.contains("public static SelectQuery getUsers()"));
+        assertTrue(source.contains("public static SelectQuery getUsers2()"));
+        assertTrue(source.contains("public static SelectQuery statement3()"));
+    }
+
+    @Test
+    void generate_suffixesPerStatementMethodsWhenFileMethodAlreadyUsesName() throws IOException {
+        var sqlDir = tempDir.resolve("sql-multi-file-collision");
+        var outputDir = tempDir.resolve("generated-multi-file-collision");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(sqlDir.resolve("user").resolve("get_users.sql"), "select * from accounts");
+        Files.writeString(sqlDir.resolve("user").resolve("sync_users.sql"), """
+            select * from users where id = :id;
+            update users set status = :status where id = :id;
+            """);
+
+        var options = SqlFileCodegenOptions.of(sqlDir, outputDir, "io.sqm.codegen.generated", SqlCodegenDialect.ANSI);
+        SqlFileCodeGenerator.of(options).generate();
+
+        var generatedFile = outputDir.resolve(Path.of("io", "sqm", "codegen", "generated", "UserQueries.java"));
+        var source = Files.readString(generatedFile);
+        assertTrue(source.contains("public static SelectQuery getUsers()"));
+        assertTrue(source.contains("return statementSequence(getUsers2(), updateUsers());"));
+        assertTrue(source.contains("public static SelectQuery getUsers2()"));
+    }
+
+    @Test
     void generate_emitsOverClause() throws IOException {
         var sqlDir = tempDir.resolve("sql");
         var outputDir = tempDir.resolve("generated");

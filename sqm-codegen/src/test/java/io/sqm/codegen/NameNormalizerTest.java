@@ -47,4 +47,14 @@ class NameNormalizerTest {
     void toMethodName_forOnlySeparators_returnsDefaultQueryName() {
         assertEquals("query", NameNormalizer.toMethodName("__"));
     }
+
+    @Test
+    void toUpperCamelName_forSnakeCase_returnsPascalCase() {
+        assertEquals("AuditLog", NameNormalizer.toUpperCamelName("audit_log"));
+    }
+
+    @Test
+    void toUpperCamelName_forNumericPrefix_addsIdentifierPrefix() {
+        assertEquals("Q123Users", NameNormalizer.toUpperCamelName("123_users"));
+    }
 }

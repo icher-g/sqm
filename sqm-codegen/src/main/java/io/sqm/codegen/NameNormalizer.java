@@ -53,6 +53,26 @@ final class NameNormalizer {
         return methodName.toString();
     }
 
+    static String toUpperCamelName(String value) {
+        var tokens = splitToTokens(value);
+        if (tokens.isEmpty()) {
+            return "Statement";
+        }
+        var name = new StringBuilder();
+        for (var token : tokens) {
+            name.append(capitalize(token));
+        }
+        if (!Character.isJavaIdentifierStart(name.charAt(0))) {
+            name.insert(0, 'Q');
+        }
+        for (int i = 1; i < name.length(); i++) {
+            if (!Character.isJavaIdentifierPart(name.charAt(i))) {
+                name.setCharAt(i, '_');
+            }
+        }
+        return name.toString();
+    }
+
     private static List<String> splitToTokens(String value) {
         var parts = SEPARATOR_PATTERN.split(value);
         var tokens = new ArrayList<String>(parts.length);

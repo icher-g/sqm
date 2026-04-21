@@ -34,6 +34,26 @@ public final class Dsl {
     private Dsl() {
     }
 
+    /**
+     * Creates an ordered statement sequence from statements.
+     *
+     * @param statements statements in source order
+     * @return immutable statement sequence
+     */
+    public static StatementSequence statementSequence(Statement... statements) {
+        return StatementSequence.of(statements);
+    }
+
+    /**
+     * Creates an ordered statement sequence from a statement list.
+     *
+     * @param statements statements in source order
+     * @return immutable statement sequence
+     */
+    public static StatementSequence statementSequence(List<? extends Statement> statements) {
+        return StatementSequence.of(statements);
+    }
+
     /* ========================= Identifiers ========================= */
 
     /**

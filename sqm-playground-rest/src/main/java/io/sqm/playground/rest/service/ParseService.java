@@ -3,7 +3,6 @@ package io.sqm.playground.rest.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.sqm.core.Node;
-import io.sqm.core.Statement;
 import io.sqm.core.StatementSequence;
 import io.sqm.json.SqmJsonMixins;
 import io.sqm.playground.api.ParseRequestDto;
@@ -11,9 +10,9 @@ import io.sqm.playground.api.ParseResponseDto;
 import io.sqm.playground.api.ParseResponseSummaryDto;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.List;
 
 /**
  * Service providing SQL parse responses for the playground.
@@ -76,7 +75,7 @@ public final class ParseService {
             statementKind(sequence),
             statements.size() > 1,
             toSqmJson(root),
-            toSqmDsl(root, request),
+            dslGenerator.toDsl(root, request.dialect()),
             astMapper.toAst(root),
             summary(root),
             List.of()
@@ -89,14 +88,6 @@ public final class ParseService {
 
     private String statementKind(StatementSequence sequence) {
         return sequence.statements().size() == 1 ? statementSupport.statementKind(sequence.statements().getFirst()) : "sequence";
-    }
-
-    private String toSqmDsl(Node node, ParseRequestDto request) {
-        return switch (node) {
-            case Statement statement -> dslGenerator.toDsl(statement, request.dialect());
-            case StatementSequence sequence -> dslGenerator.toDsl(sequence, request.dialect());
-            default -> throw new IllegalArgumentException("Unsupported parse root node: " + node.getClass().getName());
-        };
     }
 
     private ParseResponseSummaryDto summary(Node node) {

@@ -492,6 +492,25 @@ Current shared behavior:
 - Generate both sequence-level and per-statement methods.
 - Add parameter handling tests.
 
+Current codegen behavior:
+
+- SQL files are parsed through `StatementSequence`.
+- Single-statement SQL files keep the existing generated API shape: the file
+  method returns the concrete statement type and the file params method returns
+  all named parameters.
+- Multi-statement SQL files generate a file-level method returning
+  `StatementSequence`.
+- Multi-statement SQL files also generate one method per statement, preserving
+  source order.
+- Per-statement methods are named from statement intent and main table name,
+  for example `getUsers`, `updateUsers`, `insertAuditLog`, with numeric suffixes
+  when a name is already used in the generated class.
+- Statements without a clear main table use stable fallbacks such as
+  `statement1`.
+- File-level params are deduplicated across the whole sequence, and
+  per-statement params methods expose only parameters used by that statement.
+- Generated sources use the `statementSequence(...)` DSL helper.
+
 ### Phase 7: Middleware
 
 - Add `allowMultiStatement` and statement-count guardrails.

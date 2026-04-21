@@ -224,23 +224,6 @@ export function ResultsPanel(props: ResultsPanelProps) {
       >
             <div className="result-panel-header">
               <h3>DSL</h3>
-              <div className="result-panel-actions">
-                {hasParseViewChoices ? (
-                  <select
-                    className="statement-view-select"
-                    value={parseView}
-                    onChange={(event) => setParseView(event.target.value === "sequence" ? "sequence" : Number(event.target.value))}
-                    aria-label="DSL statement view"
-                  >
-                    <option value="sequence">All statements</option>
-                    {statementViews.map((statement) => (
-                      <option key={statement.index} value={statement.index}>
-                        Statement {statement.index}: {statement.label}
-                      </option>
-                    ))}
-                  </select>
-                ) : null}
-              </div>
             </div>
             {props.parseLoading ? (
                 <p className="result-placeholder">Parsing SQL and building the DSL...</p>

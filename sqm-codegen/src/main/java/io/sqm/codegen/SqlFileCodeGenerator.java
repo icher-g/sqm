@@ -1,6 +1,7 @@
 package io.sqm.codegen;
 
 import io.sqm.core.Statement;
+import io.sqm.core.StatementSequence;
 import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.core.Lexer;
 import io.sqm.parser.core.Token;
@@ -34,7 +35,7 @@ public final class SqlFileCodeGenerator {
     private static final Pattern NAMED_PARAMETER_PATTERN = Pattern.compile(":([A-Za-z_][A-Za-z0-9_]*)");
     private static final String JAVA_EXTENSION = ".java";
     private static final String CACHE_FILE_NAME = ".sqm-codegen.hashes";
-    private static final String GENERATOR_FORMAT_VERSION = "1";
+    private static final String GENERATOR_FORMAT_VERSION = "2";
     private static final Comparator<SqlSourceFile> SOURCE_FILE_ORDER = Comparator
         .comparing(SqlSourceFile::methodName)
         .thenComparing(sourceFile -> normalizePath(sourceFile.relativePath()));
@@ -326,23 +327,29 @@ public final class SqlFileCodeGenerator {
         var methodName = NameNormalizer.toMethodName(baseName);
         try {
             var sql = Files.readString(sqlFile, StandardCharsets.UTF_8);
-            var statement = parseSql(relativePath, sql);
+            var statements = parseSql(relativePath, sql);
             var params = extractNamedParameters(sql);
             var hash = sha256(sql);
             var folder = relativePath.getParent();
-            return new SqlSourceFile(relativePath, folder == null ? Path.of("") : folder, methodName, statement, params, hash);
+            return new SqlSourceFile(relativePath, folder == null ? Path.of("") : folder, methodName, params, hash, statements);
         } catch (IOException ex) {
             throw new IllegalStateException("Failed to read SQL file " + sqlFile, ex);
         }
     }
 
-    private Statement parseSql(Path relativePath, String sql) {
+    private List<Statement> parseSql(Path relativePath, String sql) {
         var attempts = new ArrayList<ParseAttempt>(parseStages.size());
         for (var stage : parseStages) {
-            var result = stage.context().parse(Statement.class, sql);
+            var result = stage.context().parse(StatementSequence.class, sql);
             if (result.ok() && result.value() != null) {
-                validateStatement(relativePath, result.value());
-                return result.value();
+                var statements = result.value().statements();
+                if (statements.isEmpty()) {
+                    throw new SqlFileCodegenException(normalizePath(relativePath) + ":1:1 SQL file does not contain a statement.");
+                }
+                for (var statement : statements) {
+                    validateStatement(relativePath, statement);
+                }
+                return statements;
             }
             attempts.add(new ParseAttempt(stage.name(), result, stage.context().identifierQuoting()));
         }

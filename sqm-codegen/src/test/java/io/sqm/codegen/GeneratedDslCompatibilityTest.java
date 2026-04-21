@@ -29,6 +29,10 @@ class GeneratedDslCompatibilityTest {
 
         writeResource("golden/sql/user/a_find_by_id.sql", sqlDir.resolve("user/a_find_by_id.sql"));
         writeResource("golden/sql/user/z_list_active.sql", sqlDir.resolve("user/z_list_active.sql"));
+        Files.writeString(sqlDir.resolve("user/sync_users.sql"), """
+            select * from users where id = :id;
+            update users set status = :status where id = :id;
+            """, StandardCharsets.UTF_8);
         writeResource("golden/sql/analytics/ranked.sql", sqlDir.resolve("analytics/ranked.sql"));
         writeResource("golden/sql/reporting/kitchen_sink.sql", sqlDir.resolve("reporting/kitchen_sink.sql"));
 

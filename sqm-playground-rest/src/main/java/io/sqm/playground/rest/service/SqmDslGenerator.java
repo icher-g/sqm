@@ -2,6 +2,7 @@ package io.sqm.playground.rest.service;
 
 import io.sqm.codegen.*;
 import io.sqm.core.NamedParamExpr;
+import io.sqm.core.Node;
 import io.sqm.core.Statement;
 import io.sqm.core.StatementSequence;
 import io.sqm.core.walk.RecursiveNodeVisitor;
@@ -32,21 +33,22 @@ public class SqmDslGenerator {
         };
     }
 
-    private static SqlFolderGroup toGroup(Path path, Statement statement) {
+    private static SqlFolderGroup toGroup(Path path, Node node) {
         var collector = new NamedParametersCollector();
-        statement.accept(collector);
-        return new SqlFolderGroup(path, CLASS_NAME, List.of(new SqlSourceFile(path, path, "getStatement", statement, collector.parameters, "")));
+        node.accept(collector);
+        var statements = node instanceof Statement statement ? List.of(statement) : ((StatementSequence) node).statements();
+        return new SqlFolderGroup(path, CLASS_NAME, List.of(new SqlSourceFile(path, path, "getStatement", collector.parameters, "", statements)));
     }
 
     /**
      * Generates Java DSL source for the given statement using the requested dialect defaults.
      *
-     * @param statement parsed SQM statement
-     * @param dialect   source dialect used for code generation settings
+     * @param node    parsed SQM statement or sequence of statements
+     * @param dialect source dialect used for code generation settings
      * @return generated Java DSL source
      */
-    public String toDsl(Statement statement, SqlDialectDto dialect) {
-        var empty = Path.of("provided-by-user");
+    public String toDsl(Node node, SqlDialectDto dialect) {
+        var empty = Path.of("sqm-playground");
         SqlFileCodegenOptions options = SqlFileCodegenOptions.of(
             empty,
             empty,
@@ -58,29 +60,7 @@ public class SqmDslGenerator {
             false
         );
         var renderer = new SqmDslRenderer(options);
-        return renderer.render(toGroup(empty, statement));
-    }
-
-    /**
-     * Generates Java DSL source for each statement in the sequence.
-     *
-     * @param sequence parsed statement sequence
-     * @param dialect source dialect used for code generation settings
-     * @return generated Java DSL source sections
-     */
-    public String toDsl(StatementSequence sequence, SqlDialectDto dialect) {
-        Objects.requireNonNull(sequence, "sequence must not be null");
-
-        var sections = new StringBuilder();
-        var statements = sequence.statements();
-        for (int i = 0; i < statements.size(); i++) {
-            if (!sections.isEmpty()) {
-                sections.append(System.lineSeparator()).append(System.lineSeparator());
-            }
-            sections.append("// Statement ").append(i + 1).append(System.lineSeparator());
-            sections.append(toDsl(statements.get(i), dialect));
-        }
-        return sections.toString();
+        return renderer.render(toGroup(empty, node));
     }
 
     private static final class NamedParametersCollector extends RecursiveNodeVisitor<Void> {

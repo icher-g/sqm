@@ -1,6 +1,6 @@
 package io.sqm.codegen;
 
-import io.sqm.core.Statement;
+import io.sqm.core.Node;
 import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.ParseResult;
 
@@ -11,5 +11,5 @@ import io.sqm.parser.spi.ParseResult;
  * @param result parse result for the stage
  * @param identifierQuoting identifier quoting rules used for this attempt
  */
-record ParseAttempt(String stage, ParseResult<? extends Statement> result, IdentifierQuoting identifierQuoting) {
+record ParseAttempt(String stage, ParseResult<? extends Node> result, IdentifierQuoting identifierQuoting) {
 }
