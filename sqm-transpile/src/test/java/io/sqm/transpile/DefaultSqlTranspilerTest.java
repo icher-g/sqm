@@ -6,10 +6,12 @@ import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.Node;
 import io.sqm.core.Statement;
+import io.sqm.core.StatementSequence;
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.dsl.Dsl;
 import io.sqm.parser.spi.Specs;
 import io.sqm.render.spi.PreparedNode;
+import io.sqm.render.spi.ParameterizationMode;
 import io.sqm.transpile.rule.DefaultTranspileRuleRegistry;
 import io.sqm.transpile.rule.TranspileRule;
 import io.sqm.validate.schema.SchemaValidationSettings;
@@ -19,11 +21,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class DefaultSqlTranspilerTest {
 
@@ -57,6 +55,152 @@ class DefaultSqlTranspilerTest {
         assertEquals(7, result.problems().getFirst().sourceOffset());
         assertEquals(1, result.problems().getFirst().line());
         assertEquals(8, result.problems().getFirst().column());
+    }
+
+    @Test
+    void transpileUsesConfiguredBindParameterizationForRenderedSql() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
+            .options(new TranspileOptions(false, false, true, true, ParameterizationMode.Bind))
+            .build();
+
+        var result = transpiler.transpile("SELECT id FROM users WHERE name = 'alice'");
+
+        assertEquals(TranspileStatus.SUCCESS, result.status());
+        assertTrue(result.sql().orElseThrow().contains("?"));
+        assertFalse(result.sql().orElseThrow().contains("'alice'"));
+        assertEquals(List.of("alice"), result.params());
+    }
+
+    @Test
+    void transpilesStatementSequenceTextAndRendersCombinedSql() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
+            .build();
+
+        var result = transpiler.transpile("""
+            SELECT id FROM users LIMIT 5;
+            SELECT first_name || ' ' || last_name AS full_name FROM users;
+            """);
+
+        assertEquals(TranspileStatus.SUCCESS, result.status());
+        assertInstanceOf(StatementSequence.class, result.sourceAst().orElseThrow());
+        assertInstanceOf(StatementSequence.class, result.transpiledAst().orElseThrow());
+        assertEquals(2, result.sql().orElseThrow().chars().filter(ch -> ch == ';').count());
+        assertTrue(normalizeSql(result.sql().orElseThrow()).contains("SELECT id FROM users LIMIT 5;"));
+        assertTrue(normalizeSql(result.sql().orElseThrow()).contains("CONCAT(first_name, ' ', last_name)"));
+    }
+
+    @Test
+    void statementSequenceUsesConfiguredBindParameterizationForRenderedSql() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
+            .options(new TranspileOptions(false, false, true, true, ParameterizationMode.Bind))
+            .build();
+
+        var result = transpiler.transpile("""
+            SELECT id FROM users WHERE name = 'alice';
+            SELECT id FROM users WHERE age > 7;
+            """);
+
+        assertEquals(TranspileStatus.SUCCESS, result.status());
+        assertEquals(2, result.sql().orElseThrow().chars().filter(ch -> ch == '?').count());
+        assertEquals(List.of("alice", 7L), result.params());
+    }
+
+    @Test
+    void statementSequenceAggregatesWarningsAsApproximateOutcome() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.MYSQL)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .options(new TranspileOptions(true, false, true, true))
+            .build();
+
+        var result = transpiler.transpile("""
+            SELECT * FROM users USE INDEX (idx_users_name);
+            SELECT id FROM users;
+            """);
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        assertTrue(result.success());
+        assertEquals("MYSQL_HINTS_DROPPED", result.warnings().getFirst().code());
+        assertEquals(1, result.warnings().getFirst().statementIndex());
+        assertTrue(result.sql().orElseThrow().contains(";"));
+    }
+
+    @Test
+    void statementSequenceFailsWholeBatchWhenOneStatementIsUnsupported() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.MYSQL)
+            .build();
+
+        var result = transpiler.transpile("""
+            SELECT id FROM users;
+            SELECT DISTINCT ON (user_id) user_id FROM orders ORDER BY user_id;
+            """);
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertFalse(result.success());
+        assertTrue(result.sql().isEmpty());
+        assertEquals("UNSUPPORTED_DISTINCT_ON", result.problems().getFirst().code());
+        assertEquals(2, result.problems().getFirst().statementIndex());
+    }
+
+    @Test
+    void statementSequenceFailsWholeBatchWhenOneStatementFailsValidation() {
+        var schema = CatalogSchema.of(
+            CatalogTable.of("public", "users", CatalogColumn.of("id", CatalogType.LONG))
+        );
+        var sequence = StatementSequence.of(
+            Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build(),
+            Dsl.select(Dsl.col("name")).from(Dsl.tbl("users")).build()
+        );
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .targetSchema(schema)
+            .build();
+
+        var result = transpiler.transpile(sequence);
+
+        assertEquals(TranspileStatus.VALIDATION_FAILED, result.status());
+        assertTrue(result.sql().isEmpty());
+        assertFalse(result.problems().isEmpty());
+        assertEquals(2, result.problems().getFirst().statementIndex());
+    }
+
+    @Test
+    void statementSequenceReportsFinalBatchRenderFailure() {
+        var sequence = StatementSequence.of(
+            Dsl.select(Dsl.col("id")).from(Dsl.tbl("users")).build(),
+            Dsl.select(Dsl.col("name")).from(Dsl.tbl("users")).build()
+        );
+        var failingDialect = new io.sqm.render.mysql.spi.MySqlDialect() {
+            @Override
+            public PreparedNode beforeRender(Node root, io.sqm.render.spi.RenderOptions options) {
+                if (root instanceof StatementSequence) {
+                    throw new UnsupportedOperationException("Batch boom");
+                }
+                return super.beforeRender(root, options);
+            }
+        };
+
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.MYSQL)
+            .renderer(() -> failingDialect)
+            .build();
+
+        var result = transpiler.transpile(sequence);
+
+        assertEquals(TranspileStatus.RENDER_FAILED, result.status());
+        assertEquals("RENDER_FAILED", result.problems().getFirst().code());
+        assertEquals("Batch boom", result.problems().getFirst().message());
+        assertTrue(result.sql().isEmpty());
     }
 
     @Test

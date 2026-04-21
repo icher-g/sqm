@@ -144,6 +144,31 @@ class StatementRendererTest {
     }
 
     @Test
+    void rendersSingleStatementSequenceWithoutTerminatingSemicolon() {
+        var dialect = new RenderTestDialect()
+            .register(new StatementSequenceRenderer())
+            .register(new StatementRenderer())
+            .register(new QueryRenderer())
+            .register(new SelectRenderer());
+        var ctx = RenderContext.of(dialect);
+
+        var sql = ctx.render(StatementSequence.of(select(lit(1)).build())).sql();
+
+        assertEquals("SELECT-STUB", sql);
+    }
+
+    @Test
+    void rendersEmptyStatementSequenceAsEmptySql() {
+        var dialect = new RenderTestDialect()
+            .register(new StatementSequenceRenderer());
+        var ctx = RenderContext.of(dialect);
+
+        var sql = ctx.render(StatementSequence.of()).sql();
+
+        assertEquals("", sql);
+    }
+
+    @Test
     void exposesStatementTargetType() {
         assertEquals(Statement.class, new StatementRenderer().targetType());
     }

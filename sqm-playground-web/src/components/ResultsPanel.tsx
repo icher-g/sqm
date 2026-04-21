@@ -51,6 +51,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
   const selectedJson = selectedStatement?.sqmJson ?? props.parseResponse?.sqmJson ?? null;
   const hasParseViewChoices = Boolean(props.parseResponse?.multiStatement && statementViews.length > 1);
   const renderParams = props.renderResponse?.params ?? [];
+  const transpileParams = props.transpileResponse?.params ?? [];
 
   function runAstCommand(type: AstTreeCommand["type"]) {
     setAstCommand((current) => ({
@@ -341,7 +342,15 @@ export function ResultsPanel(props: ResultsPanelProps) {
               ) : null}
             </div>
           ) : props.transpileResponse?.renderedSql ? (
-            <CodeBlock code={props.transpileResponse.renderedSql} language="sql" />
+            <div className="render-output-stack">
+              <CodeBlock code={props.transpileResponse.renderedSql} language="sql" />
+              {transpileParams.length > 0 ? (
+                <div className="render-params">
+                  <h4>Parameters</h4>
+                  <CodeBlock code={JSON.stringify(transpileParams, null, 2)} language="json" />
+                </div>
+              ) : null}
+            </div>
           ) : (
             <p className="result-placeholder">Rendered or transpiled SQL will appear here after an output request.</p>
           )}

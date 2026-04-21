@@ -156,6 +156,7 @@ export interface TranspileRequestDto {
   sql: string;
   sourceDialect: SqlDialect;
   targetDialect: SqlDialect;
+  parameterizationMode?: RenderParameterizationMode;
 }
 
 /**
@@ -167,6 +168,7 @@ export interface TranspileResponseDto {
   durationMs: number;
   outcome: TranspileOutcome;
   renderedSql: string | null;
+  params: unknown[];
   diagnostics: PlaygroundDiagnosticDto[];
 }
 

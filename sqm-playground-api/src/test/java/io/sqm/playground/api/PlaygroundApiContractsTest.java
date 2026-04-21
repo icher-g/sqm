@@ -152,6 +152,7 @@ class PlaygroundApiContractsTest {
             18L,
             TranspileOutcomeDto.exact,
             "SELECT TOP 5 * FROM customer",
+            List.of(5),
             List.of()
         );
 
@@ -163,6 +164,7 @@ class PlaygroundApiContractsTest {
         assertTrue(renderJson.contains("\"params\":[1]"));
         assertTrue(validateJson.contains("\"valid\":true"));
         assertTrue(transpileJson.contains("\"outcome\":\"exact\""));
+        assertTrue(transpileJson.contains("\"params\":[5]"));
     }
 
     @Test
@@ -172,6 +174,29 @@ class PlaygroundApiContractsTest {
 
         assertEquals(RenderParameterizationModeDto.inline, shortRequest.parameterizationMode());
         assertEquals(RenderParameterizationModeDto.inline, nullModeRequest.parameterizationMode());
+    }
+
+    @Test
+    void shouldDefaultTranspileRequestParameterizationModeToInline() {
+        TranspileRequestDto shortRequest = new TranspileRequestDto("select 1", SqlDialectDto.ansi, SqlDialectDto.postgresql);
+        TranspileRequestDto nullModeRequest = new TranspileRequestDto("select 1", SqlDialectDto.ansi, SqlDialectDto.postgresql, null);
+
+        assertEquals(RenderParameterizationModeDto.inline, shortRequest.parameterizationMode());
+        assertEquals(RenderParameterizationModeDto.inline, nullModeRequest.parameterizationMode());
+    }
+
+    @Test
+    void shouldDefaultLegacyTranspileResponseParamsToEmptyList() {
+        var response = new TranspileResponseDto(
+            "req-transpile",
+            true,
+            18L,
+            TranspileOutcomeDto.exact,
+            "SELECT 1",
+            List.of()
+        );
+
+        assertTrue(response.params().isEmpty());
     }
 
     @Test

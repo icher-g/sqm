@@ -2,30 +2,30 @@ package io.sqm.transpile;
 
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.core.Statement;
+import io.sqm.core.StatementSequence;
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
-import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.Specs;
+import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.mysql.spi.MySqlDialect;
 import io.sqm.render.postgresql.spi.PostgresDialect;
-import io.sqm.render.sqlserver.spi.SqlServerDialect;
-import io.sqm.render.spi.ParameterizationMode;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.RenderOptions;
 import io.sqm.render.spi.SqlDialect;
+import io.sqm.render.sqlserver.spi.SqlServerDialect;
 import io.sqm.transpile.rule.DefaultTranspileRuleRegistry;
 import io.sqm.transpile.rule.TranspileRule;
 import io.sqm.transpile.rule.TranspileRuleRegistry;
 import io.sqm.validate.mysql.MySqlValidationDialect;
 import io.sqm.validate.postgresql.PostgresValidationDialect;
-import io.sqm.validate.sqlserver.SqlServerValidationDialect;
 import io.sqm.validate.schema.SchemaStatementValidator;
 import io.sqm.validate.schema.SchemaValidationSettings;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
+import io.sqm.validate.sqlserver.SqlServerValidationDialect;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,129 +59,14 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
         this.registry = builder.registry != null ? builder.registry : DefaultTranspileRuleRegistry.defaults();
     }
 
-    @Override
-    public TranspileResult transpile(String sql) {
-        Objects.requireNonNull(sql, "sql");
-        var ctx = ParseContext.of(parserFactory.get());
-        var parseResult = ctx.parse(Statement.class, sql);
-        if (parseResult.isError() || parseResult.value() == null) {
-            return new TranspileResult(
-                TranspileStatus.PARSE_FAILED,
-                Optional.empty(),
-                Optional.empty(),
-                Optional.empty(),
-                List.of(),
-                parseProblems(parseResult),
-                List.of()
-            );
+    private static TranspileStatus highestFailureStatus(List<TranspileProblem> problems) {
+        if (problems.stream().anyMatch(problem -> problem.stage() == TranspileStage.VALIDATE)) {
+            return TranspileStatus.VALIDATION_FAILED;
         }
-        return transpile(parseResult.value());
-    }
-
-    @Override
-    public TranspileResult transpile(Statement statement) {
-        Objects.requireNonNull(statement, "statement");
-        var context = new TranspileContext(
-            sourceDialect,
-            targetDialect,
-            options,
-            Optional.ofNullable(sourceSchema),
-            Optional.ofNullable(targetSchema)
-        );
-
-        Statement current = statement;
-        var steps = new ArrayList<TranspileStep>();
-        var warnings = new ArrayList<TranspileWarning>();
-        var problems = new ArrayList<TranspileProblem>();
-
-        for (TranspileRule rule : registry.rulesFor(sourceDialect, targetDialect)) {
-            var result = rule.apply(current, context);
-            current = result.statement();
-
-            steps.add(new TranspileStep(rule.id(), result.fidelity(), result.description(), result.changed()));
-            warnings.addAll(result.warnings());
-            problems.addAll(result.problems());
-
-            if (result.fidelity() == RewriteFidelity.APPROXIMATE && !options.allowApproximateRewrites()) {
-                problems.add(new TranspileProblem(
-                    "APPROXIMATE_REWRITE_DISABLED",
-                    "Approximate rewrite is disabled by transpilation options",
-                    TranspileStage.REWRITE
-                ));
-            }
+        if (problems.stream().anyMatch(problem -> problem.stage() == TranspileStage.RENDER)) {
+            return TranspileStatus.RENDER_FAILED;
         }
-
-        if (!problems.isEmpty()) {
-            return new TranspileResult(
-                TranspileStatus.UNSUPPORTED,
-                Optional.of(statement),
-                Optional.of(current),
-                Optional.empty(),
-                steps,
-                problems,
-                warnings
-            );
-        }
-
-        if (options.failOnWarnings() && !warnings.isEmpty()) {
-            return new TranspileResult(
-                TranspileStatus.UNSUPPORTED,
-                Optional.of(statement),
-                Optional.of(current),
-                Optional.empty(),
-                steps,
-                List.of(new TranspileProblem(
-                    "WARNINGS_NOT_ALLOWED",
-                    "Warnings are not allowed by transpilation options",
-                    TranspileStage.REWRITE
-                )),
-                warnings
-            );
-        }
-
-        if (options.validateTarget() && targetSchema != null) {
-            var validationResult = SchemaStatementValidator.of(targetSchema, validationFactory.get()).validate(current);
-            if (!validationResult.ok()) {
-                return new TranspileResult(
-                    TranspileStatus.VALIDATION_FAILED,
-                    Optional.of(statement),
-                    Optional.of(current),
-                    Optional.empty(),
-                    steps,
-                    validationProblems(validationResult.problems()),
-                    warnings
-                );
-            }
-        }
-
-        Optional<String> sql = Optional.empty();
-        if (options.renderSql()) {
-            try {
-                sql = Optional.of(RenderContext.of(rendererFactory.get())
-                    .render(current, RenderOptions.of(ParameterizationMode.Inline))
-                    .sql());
-            } catch (RuntimeException ex) {
-                return new TranspileResult(
-                    TranspileStatus.RENDER_FAILED,
-                    Optional.of(statement),
-                    Optional.of(current),
-                    Optional.empty(),
-                    steps,
-                    List.of(new TranspileProblem("RENDER_FAILED", ex.getMessage(), TranspileStage.RENDER)),
-                    warnings
-                );
-            }
-        }
-
-        return new TranspileResult(
-            warnings.isEmpty() ? TranspileStatus.SUCCESS : TranspileStatus.SUCCESS_WITH_WARNINGS,
-            Optional.of(statement),
-            Optional.of(current),
-            sql,
-            steps,
-            List.of(),
-            warnings
-        );
+        return TranspileStatus.UNSUPPORTED;
     }
 
     private static List<TranspileProblem> parseProblems(io.sqm.parser.spi.ParseResult<?> parseResult) {
@@ -244,12 +129,12 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
             SqlDialectId.MYSQL.equals(dialectId)
                 ? MySqlValidationDialect.of()
                 : SqlDialectId.POSTGRESQL.equals(dialectId)
-                ? PostgresValidationDialect.of()
-                : SqlDialectId.ANSI.equals(dialectId)
-                ? null
-                : SqlDialectId.SQLSERVER.equals(dialectId)
-                ? SqlServerValidationDialect.of()
-                : unsupportedValidationDialect(dialectId)
+                  ? PostgresValidationDialect.of()
+                  : SqlDialectId.ANSI.equals(dialectId)
+                    ? null
+                    : SqlDialectId.SQLSERVER.equals(dialectId)
+                      ? SqlServerValidationDialect.of()
+                      : unsupportedValidationDialect(dialectId)
         );
     }
 
@@ -272,6 +157,206 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
             .addRules(dialect.additionalRules())
             .addRules(base.additionalRules())
             .build();
+    }
+
+    @Override
+    public TranspileResult transpile(String sql) {
+        Objects.requireNonNull(sql, "sql");
+        var ctx = ParseContext.of(parserFactory.get());
+        var parseResult = ctx.parse(StatementSequence.class, sql);
+        if (parseResult.isError() || parseResult.value() == null) {
+            return new TranspileResult(
+                TranspileStatus.PARSE_FAILED,
+                null,
+                null,
+                null,
+                List.of(),
+                parseProblems(parseResult),
+                List.of()
+            );
+        }
+        var sequence = parseResult.value();
+        return transpile(sequence);
+    }
+
+    @Override
+    public TranspileResult transpile(Statement statement) {
+        Objects.requireNonNull(statement, "statement");
+        var context = new TranspileContext(
+            sourceDialect,
+            targetDialect,
+            options,
+            Optional.ofNullable(sourceSchema),
+            Optional.ofNullable(targetSchema)
+        );
+
+        Statement current = statement;
+        var steps = new ArrayList<TranspileStep>();
+        var warnings = new ArrayList<TranspileWarning>();
+        var problems = new ArrayList<TranspileProblem>();
+
+        for (TranspileRule rule : registry.rulesFor(sourceDialect, targetDialect)) {
+            var result = rule.apply(current, context);
+            current = result.statement();
+
+            steps.add(new TranspileStep(rule.id(), result.fidelity(), result.description(), result.changed()));
+            warnings.addAll(result.warnings());
+            problems.addAll(result.problems());
+
+            if (result.fidelity() == RewriteFidelity.APPROXIMATE && !options.allowApproximateRewrites()) {
+                problems.add(new TranspileProblem(
+                    "APPROXIMATE_REWRITE_DISABLED",
+                    "Approximate rewrite is disabled by transpilation options",
+                    TranspileStage.REWRITE
+                ));
+            }
+        }
+
+        if (!problems.isEmpty()) {
+            return new TranspileResult(
+                TranspileStatus.UNSUPPORTED,
+                statement,
+                current,
+                null,
+                steps,
+                problems,
+                warnings
+            );
+        }
+
+        if (options.failOnWarnings() && !warnings.isEmpty()) {
+            return new TranspileResult(
+                TranspileStatus.UNSUPPORTED,
+                statement,
+                current,
+                null,
+                steps,
+                List.of(new TranspileProblem(
+                    "WARNINGS_NOT_ALLOWED",
+                    "Warnings are not allowed by transpilation options",
+                    TranspileStage.REWRITE
+                )),
+                warnings
+            );
+        }
+
+        if (options.validateTarget() && targetSchema != null) {
+            var validationResult = SchemaStatementValidator.of(targetSchema, validationFactory.get()).validate(current);
+            if (!validationResult.ok()) {
+                return new TranspileResult(
+                    TranspileStatus.VALIDATION_FAILED,
+                    statement,
+                    current,
+                    null,
+                    steps,
+                    validationProblems(validationResult.problems()),
+                    warnings
+                );
+            }
+        }
+
+        Optional<String> sql = Optional.empty();
+        List<Object> params = List.of();
+        if (options.renderSql()) {
+            try {
+                var text = RenderContext.of(rendererFactory.get()).render(current, RenderOptions.of(options.renderParameterizationMode()));
+                sql = Optional.of(text.sql());
+                params = text.params();
+            } catch (RuntimeException ex) {
+                return new TranspileResult(
+                    TranspileStatus.RENDER_FAILED,
+                    statement,
+                    current,
+                    null,
+                    steps,
+                    List.of(new TranspileProblem("RENDER_FAILED", ex.getMessage(), TranspileStage.RENDER)),
+                    warnings
+                );
+            }
+        }
+
+        return new TranspileResult(
+            warnings.isEmpty() ? TranspileStatus.SUCCESS : TranspileStatus.SUCCESS_WITH_WARNINGS,
+            Optional.of(statement),
+            Optional.of(current),
+            sql,
+            params,
+            steps,
+            List.of(),
+            warnings
+        );
+    }
+
+    @Override
+    public TranspileResult transpile(StatementSequence sequence) {
+        Objects.requireNonNull(sequence, "sequence");
+
+        var transpiledStatements = new ArrayList<Statement>(sequence.statements().size());
+        var steps = new ArrayList<TranspileStep>();
+        var warnings = new ArrayList<TranspileWarning>();
+        var problems = new ArrayList<TranspileProblem>();
+
+        int statementIndex = 1;
+        for (Statement statement : sequence.statements()) {
+            int currentStatementIndex = statementIndex;
+            var result = transpile(statement);
+            steps.addAll(result.steps());
+            result.warnings().stream()
+                .map(warning -> warning.withStatementIndex(currentStatementIndex))
+                .forEach(warnings::add);
+            result.problems().stream()
+                .map(problem -> problem.withStatementIndex(currentStatementIndex))
+                .forEach(problems::add);
+
+            if (result.transpiledAst().orElse(null) instanceof Statement transpiledStatement) {
+                transpiledStatements.add(transpiledStatement);
+            }
+            statementIndex++;
+        }
+
+        if (!problems.isEmpty()) {
+            return new TranspileResult(
+                highestFailureStatus(problems),
+                sequence,
+                null,
+                null,
+                steps,
+                problems,
+                warnings
+            );
+        }
+
+        var transpiledSequence = StatementSequence.of(transpiledStatements);
+        Optional<String> sql = Optional.empty();
+        List<Object> params = List.of();
+        if (options.renderSql()) {
+            try {
+                var text = RenderContext.of(rendererFactory.get()).render(transpiledSequence, RenderOptions.of(options.renderParameterizationMode()));
+                sql = Optional.of(text.sql());
+                params = text.params();
+            } catch (RuntimeException ex) {
+                return new TranspileResult(
+                    TranspileStatus.RENDER_FAILED,
+                    sequence,
+                    transpiledSequence,
+                    null,
+                    steps,
+                    List.of(new TranspileProblem("RENDER_FAILED", ex.getMessage(), TranspileStage.RENDER)),
+                    warnings
+                );
+            }
+        }
+
+        return new TranspileResult(
+            warnings.isEmpty() ? TranspileStatus.SUCCESS : TranspileStatus.SUCCESS_WITH_WARNINGS,
+            Optional.of(sequence),
+            Optional.of(transpiledSequence),
+            sql,
+            params,
+            steps,
+            List.of(),
+            warnings
+        );
     }
 
     /**

@@ -1,6 +1,7 @@
 package io.sqm.playground.rest;
 
 import io.sqm.playground.api.SqlDialectDto;
+import io.sqm.playground.api.RenderParameterizationModeDto;
 import io.sqm.playground.api.TranspileOutcomeDto;
 import io.sqm.playground.api.TranspileRequestDto;
 import io.sqm.playground.api.TranspileResponseDto;
@@ -51,6 +52,29 @@ class TranspileControllerIntegrationTest {
         assertEquals(TranspileOutcomeDto.exact, response.getBody().outcome());
         assertNotNull(response.getBody().renderedSql());
         assertTrue(response.getBody().renderedSql().toLowerCase().contains("concat"));
+    }
+
+    @Test
+    void transpileEndpointReturnsBindParamsWhenRequested() {
+        var response = restTemplate.postForEntity(
+            "http://localhost:" + port + PlaygroundApiPaths.BASE_PATH + "/transpile",
+            new HttpEntity<>(new TranspileRequestDto(
+                "select id from users where name = 'alice'",
+                SqlDialectDto.postgresql,
+                SqlDialectDto.mysql,
+                RenderParameterizationModeDto.bind
+            )),
+            TranspileResponseDto.class
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().success());
+        assertNotNull(response.getBody().renderedSql());
+        assertTrue(response.getBody().renderedSql().contains("?"));
+        assertFalse(response.getBody().renderedSql().contains("'alice'"));
+        assertEquals(1, response.getBody().params().size());
+        assertEquals("alice", response.getBody().params().getFirst());
     }
 
     @Test

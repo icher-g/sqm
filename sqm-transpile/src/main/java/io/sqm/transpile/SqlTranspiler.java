@@ -2,6 +2,7 @@ package io.sqm.transpile;
 
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.core.Statement;
+import io.sqm.core.StatementSequence;
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.parser.spi.Specs;
 import io.sqm.render.spi.SqlDialect;
@@ -38,6 +39,14 @@ public interface SqlTranspiler {
      * @return transpilation result
      */
     TranspileResult transpile(Statement statement);
+
+    /**
+     * Transpiles an already parsed statement sequence.
+     *
+     * @param sequence source statement sequence model
+     * @return transpilation result
+     */
+    TranspileResult transpile(StatementSequence sequence);
 
     /**
      * Builder for {@link SqlTranspiler} instances.
