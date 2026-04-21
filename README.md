@@ -134,6 +134,12 @@ Model presence and dialect support are intentionally different concepts:
 - parser, renderer, validation, and transpilation support remain dialect-specific
 - support details and ambiguous node notes live in `docs/model/MODEL.md`
 
+Multi-statement SQL text is represented by `StatementSequence`. Parsers ignore
+empty statements, renderers emit semicolon-separated SQL for real scripts, and
+validation/transpilation/middleware process the sequence as an all-or-nothing
+unit. DDL remains out of scope unless it is introduced by a separate design
+decision.
+
 ➡️ [View the full hierarchy in docs/model/MODEL.md](docs/model/MODEL.md)
 
 ## DML Statement Support
@@ -469,6 +475,12 @@ HTTP endpoints:
 - `POST /sqm/middleware/v1/enforce`
 - `POST /sqm/middleware/v1/explain`
 
+The request contract remains a single `sql` text field. That field may contain
+a single statement or a semicolon-separated script; no separate batch DTO is
+required. Script decisions are all-or-nothing: any denied statement denies the
+request, rewrites are rendered back as one combined SQL script, and DDL remains
+out of scope.
+
 Versioning:
 
 - REST API is path-versioned.
@@ -768,6 +780,10 @@ import com.acme.generated.UserQueries;
 var query = UserQueries.findById();
 var params = UserQueries.findByIdParams(); // ["id"]
 ```
+
+Multi-statement `.sql` files are parsed as `StatementSequence`. Generated code
+exposes a sequence-level method plus per-statement methods with stable names,
+and parameter metadata is collected across the whole script.
 
 The plugin runs in `generate-sources`, writes generated Java files under `target/generated-sources/sqm-codegen`, and Maven compiles them together with your source code.
 

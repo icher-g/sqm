@@ -66,8 +66,9 @@ The initial multi-statement implementation should use these decisions:
 - Any batch containing `INSERT`, `UPDATE`, `DELETE`, or `MERGE` is treated as a
   write batch.
 - Mixed read/write batches are allowed when write execution is allowed.
-- Read-only and analyze-safe middleware modes must deny the whole batch when
-  any DML statement is present.
+- `ExecutionMode.ANALYZE` is non-executing analysis and may analyze batches that
+  contain DML. SQM does not currently expose a separate read-only execution
+  policy mode; adding one would be a separate middleware policy story.
 - Statement comments and blank lines do not need to be preserved in rendered
   output, assuming comments cannot carry semantic hints.
 - Codegen per-statement method names should use statement intent plus the main
@@ -276,8 +277,8 @@ Recommended initial policy:
 - Treat any batch containing `INSERT`, `UPDATE`, `DELETE`, or `MERGE` as a write
   batch.
 - Allow mixed read/write batches only when write execution is allowed.
-- Deny the entire batch in read-only or analyze-safe modes when any DML
-  statement is present.
+- `ExecutionMode.ANALYZE` remains non-executing analysis and may analyze DML.
+  SQM does not currently expose a separate read-only execution policy mode.
 - Reject DDL statements because DDL remains out of scope.
 - Apply rewrites per statement only.
 - Render a full rewritten batch only after every statement passes validation.
@@ -423,12 +424,12 @@ Codegen tests:
 
 Control and middleware tests:
 
-- multi-statement request denied by default
-- multi-statement request allowed when configured
+- multi-statement request allowed by default
+- statement-count guardrail denies requests above the configured maximum
 - any denied statement denies the batch
 - rewrites are applied per statement
 - rendered rewritten SQL joins statements with semicolons
-- audit contains batch and statement-level context as designed
+- audit contains one request-level decision event for the batch
 
 Transpilation tests:
 
@@ -484,6 +485,22 @@ Current shared behavior:
 - Add batch transpilation API.
 - Add aggregate outcome rules.
 - Add combined SQL rendering.
+
+Current transpile behavior:
+
+- `SqlTranspiler` parses SQL through `StatementSequence`, so single-statement
+  and multi-statement inputs use the same entry point.
+- Statement sequences are transpiled statement-by-statement while preserving
+  source order.
+- Aggregate outcomes follow the planned rules: `exact` only when all statements
+  are exact, `approximate` when at least one statement is approximate and none
+  are unsupported, and `unsupported` when any statement is unsupported or fails.
+- Combined SQL is rendered only when the full sequence is transpiled
+  successfully; partial rendered SQL is not returned for failing batches.
+- Render parameterization is controlled by `TranspileOptions` and propagated to
+  the combined render result, including bind parameters.
+- Playground transpile responses expose combined SQL and combined parameters
+  for multi-statement input.
 
 ### Phase 6: Codegen
 
@@ -541,11 +558,42 @@ Current middleware/control behavior:
 - REST and MCP middleware adapters compile and pass their tests against the
   updated control API without DTO changes.
 
-## Remaining Questions
+## Completion Status
 
-- Can SQL comments ever carry semantic hints in supported dialects? If yes,
-  statement-sequence rendering may need to preserve or explicitly reject those
-  hints instead of dropping comments during normalized output.
-- Should middleware batch execution require transaction-level atomicity when the
-  backend supports transactions, or is policy-level all-or-nothing approval
-  sufficient for the initial implementation?
+The initial multi-statement epic is complete.
+
+Completed behavior:
+
+- Parser support for semicolons, optional trailing semicolons, ignored empty
+  statements, and `StatementSequence` parsing.
+- Core model support for immutable ordered statement sequences.
+- DSL support for constructing statement sequences.
+- JSON support for `StatementSequence`.
+- Renderer support for `StatementSequence`, including trailing semicolons and
+  parameter aggregation.
+- Validation support for statement sequences with one-based statement-indexed
+  diagnostics.
+- Transpile support for statement sequences, aggregate outcomes, combined SQL,
+  and parameterized output.
+- Playground parse/render/validate/transpile support, including per-statement
+  AST/JSON/DSL views derived on the frontend from the single combined payload.
+- Code generation support for sequence-level methods, per-statement methods,
+  stable per-statement names, and parameter extraction.
+- Middleware/control support for batch parsing, validation, rewrite, rendering,
+  all-or-nothing decisions, request-level audit events, query-only fingerprints,
+  and statement-count guardrails.
+- REST and MCP middleware adapters pass against the updated control API without
+  DTO shape changes.
+
+Final decisions:
+
+- Comments and blank lines are not preserved in normalized statement-sequence
+  rendering. Current supported semantic hints are modeled explicitly, not carried
+  by raw SQL comments.
+- Middleware provides policy-level all-or-nothing approval. It does not enforce
+  database transaction atomicity because SQM middleware does not execute SQL.
+- DDL remains out of scope and requires a separate product and architecture
+  decision before planning or implementation.
+- A future read-only execution policy mode, if needed, should be designed as a
+  separate middleware policy story. It is not part of the initial
+  multi-statement epic.
