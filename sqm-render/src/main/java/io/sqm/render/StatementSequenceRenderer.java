@@ -27,9 +27,12 @@ public class StatementSequenceRenderer implements Renderer<StatementSequence> {
         var statements = node.statements();
         for (int i = 0; i < statements.size(); i++) {
             if (i > 0) {
+                w.append(";");
                 w.newline();
             }
             w.append(statements.get(i));
+        }
+        if (statements.size() > 1) {
             w.append(";");
         }
     }

@@ -331,8 +331,7 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
         List<Object> params = List.of();
         if (options.renderSql()) {
             try {
-                var text = RenderContext.of(rendererFactory.get())
-                    .render(transpiledSequence, RenderOptions.of(options.renderParameterizationMode()));
+                var text = RenderContext.of(rendererFactory.get()).render(transpiledSequence, RenderOptions.of(options.renderParameterizationMode()));
                 sql = Optional.of(text.sql());
                 params = text.params();
             } catch (RuntimeException ex) {

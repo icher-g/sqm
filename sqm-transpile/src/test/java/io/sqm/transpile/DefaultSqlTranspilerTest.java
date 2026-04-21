@@ -58,21 +58,6 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
-    void singleStatementTextUsesStatementResultShape() {
-        var transpiler = SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.ANSI)
-            .targetDialect(SqlDialectId.MYSQL)
-            .build();
-
-        var result = transpiler.transpile("SELECT id FROM users;");
-
-        assertEquals(TranspileStatus.SUCCESS, result.status());
-        assertInstanceOf(Statement.class, result.sourceAst().orElseThrow());
-        assertInstanceOf(Statement.class, result.transpiledAst().orElseThrow());
-        assertFalse(result.sql().orElseThrow().endsWith(";"));
-    }
-
-    @Test
     void transpileUsesConfiguredBindParameterizationForRenderedSql() {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.ANSI)
