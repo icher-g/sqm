@@ -6,7 +6,9 @@ import io.sqm.control.execution.ExecutionContext;
 import io.sqm.control.rewrite.BuiltInRewriteRule;
 import io.sqm.control.rewrite.BuiltInRewriteRules;
 import io.sqm.control.rewrite.BuiltInRewriteSettings;
+import io.sqm.core.Node;
 import io.sqm.core.Statement;
+import io.sqm.core.StatementSequence;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +69,10 @@ public interface SqlStatementRewriter {
                     rule.apply(current, context),
                     "rewrite rule must not return null"
                 );
-                current = result.statement();
+                if (!(result.statement() instanceof Statement resultStatement)) {
+                    throw new IllegalStateException("Rewrite rule must return a Statement");
+                }
+                current = resultStatement;
                 if (result.rewritten() && !rewritten) {
                     primaryReasonCode = result.primaryReasonCode();
                 }
@@ -79,6 +84,42 @@ public interface SqlStatementRewriter {
                 ? new StatementRewriteResult(current, true, appliedRuleIds, primaryReasonCode)
                 : StatementRewriteResult.unchanged(current);
         };
+    }
+
+    /**
+     * Rewrites the provided statement or statement sequence model for the given execution context.
+     *
+     * @param statement parsed statement or statement-sequence model
+     * @param context execution context
+     * @return rewrite result
+     */
+    default StatementRewriteResult rewrite(Node statement, ExecutionContext context) {
+        Objects.requireNonNull(statement, "statement must not be null");
+        if (statement instanceof Statement singleStatement) {
+            return rewrite(singleStatement, context);
+        }
+        if (statement instanceof StatementSequence sequence) {
+            var rewrittenStatements = new ArrayList<Statement>(sequence.statements().size());
+            var rewritten = false;
+            var appliedRuleIds = new ArrayList<String>();
+            var primaryReasonCode = ReasonCode.NONE;
+            for (int i = 0; i < sequence.statements().size(); i++) {
+                var result = rewrite(sequence.statements().get(i), context);
+                if (!(result.statement() instanceof Statement resultStatement)) {
+                    throw new IllegalStateException("Statement rewrite must return a Statement for statement " + (i + 1));
+                }
+                rewrittenStatements.add(resultStatement);
+                if (result.rewritten() && !rewritten) {
+                    primaryReasonCode = result.primaryReasonCode();
+                }
+                rewritten = rewritten || result.rewritten();
+                appliedRuleIds.addAll(result.appliedRuleIds());
+            }
+            return rewritten
+                ? new StatementRewriteResult(StatementSequence.of(rewrittenStatements), true, appliedRuleIds, primaryReasonCode)
+                : StatementRewriteResult.unchanged(sequence);
+        }
+        throw new IllegalArgumentException("Unsupported statement model: " + statement.getClass().getName());
     }
 
     /**

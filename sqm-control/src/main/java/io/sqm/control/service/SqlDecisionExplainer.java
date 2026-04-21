@@ -2,7 +2,7 @@ package io.sqm.control.service;
 
 import io.sqm.control.decision.DecisionResult;
 import io.sqm.control.execution.ExecutionContext;
-import io.sqm.core.Statement;
+import io.sqm.core.Node;
 
 /**
  * Functional contract for building decision explanations.
@@ -26,12 +26,12 @@ public interface SqlDecisionExplainer {
     /**
      * Builds an explanation for a decision.
      *
-     * @param query    parsed statement model
+     * @param query    parsed statement or statement-sequence model
      * @param context  execution context
      * @param decision decision result
      * @return explanation text
      */
-    String explain(Statement query, ExecutionContext context, DecisionResult decision);
+    String explain(Node query, ExecutionContext context, DecisionResult decision);
 }
 
 

@@ -108,7 +108,7 @@ public final class DefaultSqlDecisionService implements SqlDecisionService {
         validateInput(sql, context);
         var contextWithMode = context.withExecutionMode(mode);
         var startedNanos = System.nanoTime();
-        Statement statement = null;
+        Node statement = null;
 
         var decision = precheckSqlLength(sql);
         if (decision == null) {
@@ -119,9 +119,7 @@ public final class DefaultSqlDecisionService implements SqlDecisionService {
             }
         }
         if (decision == null) {
-            decision = evaluateWithTimeout(statement, contextWithMode);
-            decision = applyMaxRowsGuardrail(statement, decision);
-            decision = applyExplainDryRun(sql, mode, decision);
+            decision = evaluateParsed(statement, contextWithMode, sql, mode);
         }
 
         emitAuditEvent(sql, contextWithMode, decision, System.nanoTime() - startedNanos);
@@ -141,7 +139,7 @@ public final class DefaultSqlDecisionService implements SqlDecisionService {
         );
     }
 
-    private DecisionResult evaluateWithTimeout(Statement statement, ExecutionContext contextWithMode) {
+    private DecisionResult evaluateWithTimeout(Node statement, ExecutionContext contextWithMode) {
         if (guardrails.timeoutMillis() == null) {
             try {
                 return Objects.requireNonNull(engine.evaluate(statement, contextWithMode), "engine must return a decision");
@@ -174,11 +172,61 @@ public final class DefaultSqlDecisionService implements SqlDecisionService {
         }
     }
 
-    private DecisionResult applyMaxRowsGuardrail(Statement statement, DecisionResult decision) {
+    private DecisionResult applyMaxRowsGuardrail(Node statement, DecisionResult decision) {
         if (guardrails.maxRows() == null || decision.kind() == DecisionKind.DENY) {
             return decision;
         }
 
+        if (statement instanceof StatementSequence sequence) {
+            for (int i = 0; i < sequence.statements().size(); i++) {
+                var result = applyMaxRowsGuardrail(sequence.statements().get(i), decision);
+                if (result.kind() == DecisionKind.DENY) {
+                    return DecisionResult.deny(
+                        result.reasonCode(),
+                        "Statement %d: %s".formatted(i + 1, result.message())
+                    );
+                }
+            }
+            return decision;
+        }
+
+        if (statement instanceof Statement singleStatement) {
+            return applyMaxRowsGuardrail(singleStatement, decision);
+        }
+        return DecisionResult.deny(
+            ReasonCode.DENY_PIPELINE_ERROR,
+            "Unsupported statement model: " + statement.getClass().getName()
+        );
+    }
+
+    private DecisionResult applyMaxStatementsGuardrail(Node statement) {
+        if (guardrails.maxStatementsPerRequest() == null) {
+            return null;
+        }
+        var statementCount = statement instanceof StatementSequence sequence ? sequence.statements().size() : 1;
+        if (statementCount <= guardrails.maxStatementsPerRequest()) {
+            return null;
+        }
+        return DecisionResult.deny(
+            ReasonCode.DENY_MAX_STATEMENTS,
+            "Statement count %d exceeds configured maxStatementsPerRequest %d".formatted(
+                statementCount,
+                guardrails.maxStatementsPerRequest()
+            )
+        );
+    }
+
+    private DecisionResult evaluateParsed(Node statement, ExecutionContext contextWithMode, String sql, ExecutionMode mode) {
+        var decision = applyMaxStatementsGuardrail(statement);
+        if (decision == null) {
+            decision = evaluateWithTimeout(statement, contextWithMode);
+            decision = applyMaxRowsGuardrail(statement, decision);
+            decision = applyExplainDryRun(sql, mode, decision);
+        }
+        return decision;
+    }
+
+    private DecisionResult applyMaxRowsGuardrail(Statement statement, DecisionResult decision) {
         var detectedLimit = extractLimit(statement);
         if (detectedLimit == null) {
             return DecisionResult.deny(
@@ -230,7 +278,7 @@ public final class DefaultSqlDecisionService implements SqlDecisionService {
         }
     }
 
-    private record EvaluatedDecision(DecisionResult decision, Statement statement) {
+    private record EvaluatedDecision(DecisionResult decision, Node statement) {
     }
 }
 

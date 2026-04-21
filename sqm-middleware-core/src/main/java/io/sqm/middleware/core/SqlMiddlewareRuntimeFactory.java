@@ -150,6 +150,7 @@ public final class SqlMiddlewareRuntimeFactory {
         Long timeoutMillis = readLongNullable(ConfigKeys.GUARDRAILS_TIMEOUT_MILLIS);
         Long hostRequestTimeoutMillis = readLongNullable(ConfigKeys.HOST_REQUEST_TIMEOUT_MILLIS);
         Integer maxRows = readIntNullable(ConfigKeys.GUARDRAILS_MAX_ROWS);
+        Integer maxStatementsPerRequest = readIntNullable(ConfigKeys.GUARDRAILS_MAX_STATEMENTS_PER_REQUEST);
         boolean explainDryRun = readBoolean(ConfigKeys.GUARDRAILS_EXPLAIN_DRY_RUN, false);
 
         // Host-level timeout has precedence to avoid nested timeout wrappers (engine + host).
@@ -157,11 +158,21 @@ public final class SqlMiddlewareRuntimeFactory {
             timeoutMillis = null;
         }
 
-        if (maxSqlLength == null && timeoutMillis == null && maxRows == null && !explainDryRun) {
+        if (maxSqlLength == null
+            && timeoutMillis == null
+            && maxRows == null
+            && maxStatementsPerRequest == null
+            && !explainDryRun) {
             return;
         }
 
-        builder.guardrails(new RuntimeGuardrails(maxSqlLength, timeoutMillis, maxRows, explainDryRun));
+        builder.guardrails(new RuntimeGuardrails(
+            maxSqlLength,
+            timeoutMillis,
+            maxRows,
+            maxStatementsPerRequest,
+            explainDryRun
+        ));
     }
 
     private static void applyRewriteCustomizations(SqlDecisionServiceConfig.Builder builder) {

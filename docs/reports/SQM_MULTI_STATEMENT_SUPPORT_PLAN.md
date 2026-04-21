@@ -518,6 +518,29 @@ Current codegen behavior:
 - Add audit behavior.
 - Update REST and MCP contracts where needed.
 
+Current middleware/control behavior:
+
+- `SqlStatementParser.standard()` parses through `StatementSequence` and returns
+  the single statement for one-statement input or a `StatementSequence` for
+  multi-statement input.
+- `SqlDecisionService` and `SqlDecisionEngine` evaluate either a `Statement` or
+  `StatementSequence`.
+- Validation is applied per statement for a sequence. The first failing
+  statement denies the whole batch, with the statement number included in the
+  message.
+- Rewrite rules are applied per statement. The final rewritten SQL is rendered
+  only after all statements pass validation and rewrite processing.
+- Sequence rendering uses the existing dialect-aware `SqlStatementRenderer`.
+- `RuntimeGuardrails` now supports `maxStatementsPerRequest`; exceeding it
+  denies the whole request with `DENY_MAX_STATEMENTS`. Middleware runtime
+  configuration can set this through
+  `sqm.middleware.guardrails.maxStatementsPerRequest` or
+  `SQM_MIDDLEWARE_GUARDRAILS_MAX_STATEMENTS_PER_REQUEST`.
+- Query-only statement sequences receive a combined fingerprint. Sequences that
+  include DML return no query fingerprint.
+- REST and MCP middleware adapters compile and pass their tests against the
+  updated control API without DTO changes.
+
 ## Remaining Questions
 
 - Can SQL comments ever carry semantic hints in supported dialects? If yes,

@@ -17,6 +17,7 @@ import io.sqm.control.rewrite.TenantRewriteTablePolicy;
 import io.sqm.control.service.SqlDecisionEngine;
 import io.sqm.core.Expression;
 import io.sqm.core.Query;
+import io.sqm.core.StatementSequence;
 import io.sqm.core.UpdateStatement;
 import io.sqm.core.transform.StatementTransforms;
 import org.junit.jupiter.api.Test;
@@ -171,5 +172,52 @@ class SqlDecisionEngineTest {
 
         assertEquals(DecisionKind.ALLOW, result.kind());
         assertEquals(ReasonCode.NONE, result.reasonCode());
+    }
+
+    @Test
+    void evaluate_rewrites_statement_sequence_atomically() {
+        var input = StatementSequence.of(
+            select(col("id")).from(tbl("users")).build(),
+            select(col("name")).from(tbl("users")).build()
+        );
+
+        var engine = SqlDecisionEngine.of(
+            (q, context) -> StatementValidateResult.ok(),
+            SqlStatementRewriter.builder()
+                .settings(BuiltInRewriteSettings.builder().defaultLimitInjectionValue(5).build())
+                .rules(io.sqm.control.rewrite.BuiltInRewriteRule.LIMIT_INJECTION)
+                .build(),
+            SqlStatementRenderer.standard()
+        );
+
+        var result = engine.evaluate(input, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+
+        assertEquals(DecisionKind.REWRITE, result.kind());
+        assertEquals(ReasonCode.REWRITE_LIMIT, result.reasonCode());
+        assertTrue(result.rewrittenSql().contains("LIMIT 5"));
+        assertTrue(result.rewrittenSql().contains(";"));
+    }
+
+    @Test
+    void evaluate_denies_whole_statement_sequence_when_one_statement_fails_validation() {
+        var input = StatementSequence.of(
+            select(col("id")).from(tbl("users")).build(),
+            select(col("id")).from(tbl("orders")).build()
+        );
+        var validationCall = new int[]{0};
+
+        var engine = SqlDecisionEngine.of(
+            (q, context) -> ++validationCall[0] == 2
+                ? StatementValidateResult.failure(ReasonCode.DENY_TABLE, "orders denied")
+                : StatementValidateResult.ok(),
+            SqlStatementRewriter.noop(),
+            SqlStatementRenderer.standard()
+        );
+
+        var result = engine.evaluate(input, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+
+        assertEquals(DecisionKind.DENY, result.kind());
+        assertEquals(ReasonCode.DENY_TABLE, result.reasonCode());
+        assertTrue(result.message().startsWith("Statement 2:"));
     }
 }

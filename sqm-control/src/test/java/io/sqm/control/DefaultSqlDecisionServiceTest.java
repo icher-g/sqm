@@ -104,6 +104,35 @@ class DefaultSqlDecisionServiceTest {
     }
 
     @Test
+    void factory_applies_max_statement_guardrail_to_multi_statement_sql() {
+        var decisionService = create(
+            SCHEMA,
+            SchemaValidationSettings.defaults(),
+            new RuntimeGuardrails(null, null, null, 1, false)
+        );
+
+        var result = decisionService.enforce(
+            "select 1; select 2;",
+            ExecutionContext.of("postgresql", ExecutionMode.EXECUTE)
+        );
+
+        assertEquals(DecisionKind.DENY, result.kind());
+        assertEquals(ReasonCode.DENY_MAX_STATEMENTS, result.reasonCode());
+    }
+
+    @Test
+    void default_factory_allows_multi_statement_sql_when_each_statement_is_allowed() {
+        var decisionService = create(SCHEMA);
+
+        var result = decisionService.enforce(
+            "select 1; update users set name = 'alice' where id = 1;",
+            ExecutionContext.of("postgresql", ExecutionMode.EXECUTE)
+        );
+
+        assertEquals(DecisionKind.ALLOW, result.kind());
+    }
+
+    @Test
     void factory_allows_custom_audit_wiring() {
         var audit = InMemoryAuditEventPublisher.create();
         var decisionService = create(

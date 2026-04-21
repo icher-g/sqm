@@ -1,7 +1,9 @@
 package io.sqm.control.pipeline;
 
 import io.sqm.control.execution.ExecutionContext;
+import io.sqm.core.Node;
 import io.sqm.core.Statement;
+import io.sqm.core.StatementSequence;
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
@@ -16,7 +18,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
- * Parses SQL text into SQM {@link Statement} models.
+ * Parses SQL text into SQM {@link Statement} or {@link StatementSequence} models.
  */
 @FunctionalInterface
 public interface SqlStatementParser {
@@ -51,11 +53,12 @@ public interface SqlStatementParser {
             }
 
             var ctx = ParseContext.of(specsFactory.get());
-            var result = ctx.parse(Statement.class, sql);
+            var result = ctx.parse(StatementSequence.class, sql);
             if (result.isError() || result.value() == null) {
                 throw new IllegalArgumentException(result.errorMessage());
             }
-            return result.value();
+            var sequence = result.value();
+            return sequence.statements().size() == 1 ? sequence.statements().getFirst() : sequence;
         };
     }
 
@@ -76,13 +79,13 @@ public interface SqlStatementParser {
     }
 
     /**
-     * Parses SQL text into a statement model for the provided execution context.
+     * Parses SQL text into a statement or statement-sequence model for the provided execution context.
      *
      * @param sql     input SQL
      * @param context execution context
-     * @return parsed statement model
+     * @return parsed statement or statement-sequence model
      */
-    Statement parse(String sql, ExecutionContext context);
+    Node parse(String sql, ExecutionContext context);
 }
 
 

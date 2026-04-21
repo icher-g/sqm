@@ -3,7 +3,9 @@ package io.sqm.control.pipeline;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.control.decision.ReasonCode;
 import io.sqm.control.execution.ExecutionContext;
+import io.sqm.core.Node;
 import io.sqm.core.Statement;
+import io.sqm.core.StatementSequence;
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.mysql.MySqlValidationDialect;
@@ -160,6 +162,36 @@ public interface SqlStatementValidator {
             case DIALECT_FEATURE_UNSUPPORTED, DIALECT_CLAUSE_INVALID -> ReasonCode.DENY_UNSUPPORTED_DIALECT_FEATURE;
             default -> ReasonCode.DENY_VALIDATION;
         };
+    }
+
+    /**
+     * Validates a statement or statement sequence model for the provided execution context.
+     *
+     * @param query   statement or statement-sequence model
+     * @param context execution context
+     * @return validation result
+     */
+    default StatementValidateResult validate(Node query, ExecutionContext context) {
+        Objects.requireNonNull(query, "query must not be null");
+        if (query instanceof Statement statement) {
+            return validate(statement, context);
+        }
+        if (query instanceof StatementSequence sequence) {
+            for (int i = 0; i < sequence.statements().size(); i++) {
+                var result = validate(sequence.statements().get(i), context);
+                if (result.isFailed()) {
+                    return StatementValidateResult.failure(
+                        result.code(),
+                        "Statement %d: %s".formatted(i + 1, result.message())
+                    );
+                }
+            }
+            return StatementValidateResult.ok();
+        }
+        return StatementValidateResult.failure(
+            ReasonCode.DENY_PIPELINE_ERROR,
+            "Unsupported statement model: " + query.getClass().getName()
+        );
     }
 
     /**

@@ -97,6 +97,11 @@ public final class ReasonGuidanceCatalog {
                 "reduce_limit",
                 "Add or lower LIMIT so it is within allowed maximum rows."
             );
+            case DENY_MAX_STATEMENTS -> DecisionGuidance.retryable(
+                "The request contains too many SQL statements.",
+                "reduce_statement_count",
+                "Send fewer statements in one request or raise the statement-count guardrail."
+            );
             default -> null;
         };
     }

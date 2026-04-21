@@ -21,6 +21,7 @@ import java.util.Map;
 import static io.sqm.middleware.api.DecisionKindDto.DENY;
 import static io.sqm.middleware.api.DecisionKindDto.REWRITE;
 import static io.sqm.middleware.api.ReasonCodeDto.DENY_MAX_SELECT_COLUMNS;
+import static io.sqm.middleware.api.ReasonCodeDto.DENY_MAX_STATEMENTS;
 import static io.sqm.middleware.api.ReasonCodeDto.DENY_PIPELINE_ERROR;
 import static io.sqm.middleware.api.ReasonCodeDto.DENY_TABLE;
 import static io.sqm.middleware.api.ReasonCodeDto.DENY_TENANT_REQUIRED;
@@ -58,7 +59,9 @@ class SqlMiddlewareRuntimeFactoryTest {
                 withProperty(ConfigKeys.GUARDRAILS_MAX_SQL_LENGTH.property(), "5000", () ->
                     withProperty(ConfigKeys.GUARDRAILS_TIMEOUT_MILLIS.property(), "2000", () ->
                         withProperty(ConfigKeys.GUARDRAILS_MAX_ROWS.property(), "100", () ->
-                            assertDoesNotThrow(SqlMiddlewareRuntimeFactory::createFromEnvironment)
+                            withProperty(ConfigKeys.GUARDRAILS_MAX_STATEMENTS_PER_REQUEST.property(), "10", () ->
+                                assertDoesNotThrow(SqlMiddlewareRuntimeFactory::createFromEnvironment)
+                            )
                         )
                     )
                 )
@@ -336,6 +339,23 @@ class SqlMiddlewareRuntimeFactoryTest {
             );
             assertEquals(DENY, denied.kind());
             assertEquals(DENY_TENANT_REQUIRED, denied.reasonCode());
+        });
+    }
+
+    @Test
+    void applies_max_statements_guardrail_from_runtime_property() {
+        withProperties(Map.of(
+            ConfigKeys.SCHEMA_SOURCE.property(), "manual",
+            ConfigKeys.GUARDRAILS_MAX_STATEMENTS_PER_REQUEST.property(), "1"
+        ), () -> {
+            var service = SqlMiddlewareRuntimeFactory.createFromEnvironment();
+
+            var denied = service.analyze(
+                new AnalyzeRequest("select 1; select 2;", new ExecutionContextDto("postgresql", null, null, null, null))
+            );
+
+            assertEquals(DENY, denied.kind());
+            assertEquals(DENY_MAX_STATEMENTS, denied.reasonCode());
         });
     }
 

@@ -10,6 +10,7 @@ import io.sqm.control.execution.ExecutionContext;
 import io.sqm.control.execution.ExecutionMode;
 import io.sqm.control.pipeline.SqlStatementValidator;
 import io.sqm.core.Identifier;
+import io.sqm.core.StatementSequence;
 import io.sqm.core.UpdateStatement;
 import io.sqm.validate.schema.SchemaValidationLimits;
 import io.sqm.validate.schema.SchemaValidationSettings;
@@ -249,5 +250,28 @@ class SqlStatementValidatorTest {
             ExecutionContext.of("postgresql", "alice", null, ExecutionMode.ANALYZE)
         );
         assertEquals(ReasonCode.NONE, allowed.code());
+    }
+
+    @Test
+    void validates_statement_sequences_and_reports_statement_index() {
+        var policy = DefaultCatalogAccessPolicy.builder()
+            .denyTable("orders")
+            .build();
+        var settings = SchemaValidationSettings.builder()
+            .accessPolicy(policy)
+            .build();
+        var validator = SqlStatementValidator.standard(CatalogSchema.of(
+            CatalogTable.of("public", "users", CatalogColumn.of("id", CatalogType.LONG)),
+            CatalogTable.of("public", "orders", CatalogColumn.of("id", CatalogType.LONG))
+        ), settings);
+        var sequence = StatementSequence.of(
+            select(col("id")).from(tbl("users")).build(),
+            select(col("id")).from(tbl("orders")).build()
+        );
+
+        var result = validator.validate(sequence, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+
+        assertEquals(ReasonCode.DENY_TABLE, result.code());
+        assertTrue(result.message().startsWith("Statement 2:"));
     }
 }
