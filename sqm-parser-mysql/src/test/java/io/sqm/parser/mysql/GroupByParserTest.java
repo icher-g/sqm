@@ -2,6 +2,7 @@ package io.sqm.parser.mysql;
 
 import io.sqm.core.GroupBy;
 import io.sqm.core.GroupItem;
+import io.sqm.core.FunctionExpr;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -33,6 +35,17 @@ class GroupByParserTest {
 
         assertTrue(result.ok());
         assertEquals(2, result.value().items().size());
+    }
+
+    @Test
+    void parsesFunctionExpressionGroupItem() {
+        var result = ctx.parse(GroupBy.class, "GROUP BY DATE_FORMAT(order_date, '%Y-%m-01'), customer_id");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(2, result.value().items().size());
+        var first = (GroupItem.SimpleGroupItem) result.value().items().getFirst();
+        var function = assertInstanceOf(FunctionExpr.class, first.expr());
+        assertEquals("DATE_FORMAT", function.name().values().getLast());
     }
 
     @Test

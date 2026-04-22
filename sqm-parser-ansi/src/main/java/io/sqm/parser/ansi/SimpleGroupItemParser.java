@@ -1,6 +1,6 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.ColumnExpr;
+import io.sqm.core.Expression;
 import io.sqm.core.GroupItem;
 import io.sqm.core.utils.Numbers;
 import io.sqm.parser.core.Cursor;
@@ -38,7 +38,7 @@ public class SimpleGroupItemParser implements Parser<GroupItem.SimpleGroupItem> 
             return ok(GroupItem.of(pos));
         }
 
-        var result = ctx.parse(ColumnExpr.class, cur);
+        var result = ctx.parse(Expression.class, cur);
         if (result.isError()) {
             return error(result);
         }
