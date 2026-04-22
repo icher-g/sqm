@@ -106,4 +106,18 @@ class GroupItemTest {
         assertNotNull(exprItem.expr());
         assertNull(exprItem.ordinal());
     }
+
+    @Test
+    @DisplayName("GroupItem.from converts supported objects and rejects unsupported inputs")
+    void fromConvertsSupportedInputsAndRejectsUnsupportedInputs() {
+        var existing = GroupItem.of(col("existing"));
+        var expr = col("expr");
+
+        assertSame(existing, GroupItem.from(existing));
+        assertEquals("name", assertInstanceOf(ColumnExpr.class, ((GroupItem.SimpleGroupItem) GroupItem.from("name")).expr()).name().value());
+        assertEquals(4, ((GroupItem.SimpleGroupItem) GroupItem.from(4L)).ordinal());
+        assertSame(expr, ((GroupItem.SimpleGroupItem) GroupItem.from(expr)).expr());
+        assertThrows(NullPointerException.class, () -> GroupItem.from(null));
+        assertThrows(IllegalArgumentException.class, () -> GroupItem.from(new Object()));
+    }
 }

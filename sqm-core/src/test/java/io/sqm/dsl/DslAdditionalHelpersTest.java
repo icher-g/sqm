@@ -18,6 +18,11 @@ class DslAdditionalHelpersTest {
 
         var reset = item.nullsDefault();
         assertEquals(Nulls.DEFAULT, reset.nulls());
+
+        assertEquals(Direction.ASC, asc(2).direction());
+        assertEquals(2, asc(2).ordinal());
+        assertEquals(Direction.DESC, desc(3).direction());
+        assertEquals(3, desc(3).ordinal());
     }
 
     @Test

@@ -82,6 +82,19 @@ class ExpressionTest {
     }
 
     @Test
+    void orderItemHelpersCreateOrderItemsFromExpression() {
+        var expr = col("name");
+
+        var plain = expr.toOrderItem();
+        assertSame(expr, plain.expr());
+
+        assertEquals(Direction.ASC, expr.asc().direction());
+        assertEquals(Direction.DESC, expr.desc().direction());
+        assertEquals(Nulls.FIRST, expr.nulls(Nulls.FIRST).nulls());
+        assertEquals("<", expr.using("<").usingOperator());
+    }
+
+    @Test
     void rows() {
         var rows = Expression.rows(
             Expression.row(1, 2),

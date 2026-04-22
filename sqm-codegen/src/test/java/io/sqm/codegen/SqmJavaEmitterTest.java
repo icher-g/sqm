@@ -281,6 +281,30 @@ class SqmJavaEmitterTest {
     }
 
     @Test
+    void emit_coversOrderItemConversionBranches() {
+        Query query = select(star())
+            .from(tbl("t"))
+            .orderBy(
+                1,
+                col("collated").toOrderItem().collate("PG_CATALOG.C"),
+                col("nulls_only").nulls(Nulls.FIRST),
+                col("using_only").using("<"),
+                asc(2),
+                desc(3)
+            )
+            .build();
+
+        String source = emitter.emit(query);
+
+        assertTrue(source.contains("1,"));
+        assertTrue(source.contains("col(\"collated\").toOrderItem().collate(\"PG_CATALOG.C\")"));
+        assertTrue(source.contains("col(\"nulls_only\").nulls(Nulls.FIRST)"));
+        assertTrue(source.contains("col(\"using_only\").using(\"<\")"));
+        assertTrue(source.contains("order(2).asc()"));
+        assertTrue(source.contains("order(3).desc()"));
+    }
+
+    @Test
     void emit_emitsTableInheritanceIncludingDescendants() {
         String source = emitter.emit(select(star()).from(tbl("users").includingDescendants()).build());
         assertTrue(source.contains(".includingDescendants()"));

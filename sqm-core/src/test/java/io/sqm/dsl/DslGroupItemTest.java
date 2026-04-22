@@ -28,14 +28,18 @@ class DslGroupItemTest {
     void buildsGroupingExtensions() {
         var set = groupingSet("a", "b");
         assertInstanceOf(GroupItem.GroupingSet.class, set);
+        assertEquals(2, assertInstanceOf(GroupItem.GroupingSet.class, set).items().size());
 
-        var sets = groupingSets(groupingSet("a"));
+        var sets = groupingSets(groupingSet("a"), "b");
         assertInstanceOf(GroupItem.GroupingSets.class, sets);
+        assertEquals(2, assertInstanceOf(GroupItem.GroupingSets.class, sets).sets().size());
 
-        var rollupItem = rollup("a");
+        var rollupItem = rollup("a", 2);
         assertInstanceOf(GroupItem.Rollup.class, rollupItem);
+        assertEquals(2, assertInstanceOf(GroupItem.Rollup.class, rollupItem).items().size());
 
-        var cubeItem = cube("a");
+        var cubeItem = cube("a", col("b"));
         assertInstanceOf(GroupItem.Cube.class, cubeItem);
+        assertEquals(2, assertInstanceOf(GroupItem.Cube.class, cubeItem).items().size());
     }
 }
