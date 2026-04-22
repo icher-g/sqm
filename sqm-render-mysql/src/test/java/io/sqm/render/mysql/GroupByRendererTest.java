@@ -8,7 +8,6 @@ import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.col;
-import static io.sqm.dsl.Dsl.group;
 import static io.sqm.dsl.Dsl.rollup;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.tbl;
@@ -23,7 +22,7 @@ class GroupByRendererTest {
     void rendersRollupAsWithRollup() {
         var query = select(col("department"), col("status"))
             .from(tbl("employees"))
-            .groupBy(rollup(group("department"), group("status")))
+            .groupBy(rollup("department", "status"))
             .build();
 
         var sql = normalize(ctx.render(query).sql());
@@ -35,7 +34,7 @@ class GroupByRendererTest {
     void rendersRegularGroupByUnchanged() {
         var query = select(col("department"))
             .from(tbl("employees"))
-            .groupBy(group("department"))
+            .groupBy("department")
             .build();
 
         var sql = normalize(ctx.render(query).sql());
@@ -47,7 +46,7 @@ class GroupByRendererTest {
     void rejectsRollupWhenDialectDoesNotSupportIt() {
         var query = select(col("department"))
             .from(tbl("employees"))
-            .groupBy(rollup(group("department")))
+            .groupBy(rollup("department"))
             .build();
         var renderer = new GroupByRenderer();
         var ansiCtx = RenderContext.of(new AnsiDialect());

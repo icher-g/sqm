@@ -61,7 +61,7 @@ public class ComprehensiveIntegrationJsonTest {
                     .and(col("price").mul(col("quantity")).gt(ParamExpr.ordinal(1)))
                     .and(col("name").like("%Phone%"))
             )
-            .orderBy(order("total_amount").desc())
+            .orderBy(col("total_amount").desc())
             .limit(100L)
             .build();
 
@@ -262,7 +262,7 @@ public class ComprehensiveIntegrationJsonTest {
                     .and(col("category").like(ParamExpr.named("category_pattern")))
                     .and(col("status").notLike("CANCELLED%"))
             )
-            .groupBy(group(col("category")))
+            .groupBy(col("category"))
             .having(
                 func("sum", arg(col("price").mul(col("quantity")))).gt(ParamExpr.named("min_revenue"))
             )
@@ -351,7 +351,7 @@ public class ComprehensiveIntegrationJsonTest {
                     // Arithmetic in WHERE
                     .and(col("price").add(col("tax")).gt(lit(100)))
             )
-            .orderBy(order(col("id")).asc())
+            .orderBy(col("id").asc())
             .limit(50L)
             .offset(10L)
             .build();

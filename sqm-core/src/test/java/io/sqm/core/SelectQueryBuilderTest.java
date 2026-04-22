@@ -24,7 +24,7 @@ class SelectQueryBuilderTest {
             .groupBy(java.util.List.of(GroupItem.of(col("id"))))
             .having(Expression.literal(1).gt(0))
             .window(window("w", OverSpec.def((PartitionBy) null, null, null, null)))
-            .orderBy(java.util.List.of(OrderItem.of(col("id"))))
+            .orderBy(java.util.List.of(OrderItem.from(col("id"))))
             .limitOffset(LimitOffset.limit(10))
             .lockFor(LockingClause.of(LockMode.UPDATE, java.util.List.of(), false, false))
             .build();
@@ -132,7 +132,7 @@ class SelectQueryBuilderTest {
         var builder = SelectQuery.builder()
             .distinct(DistinctSpec.TRUE)
             .top(TopSpec.of(Expression.literal(3)))
-            .orderBy(OrderItem.of(col("id")))
+            .orderBy(col("id"))
             .limitOffset(LimitOffset.of(Expression.literal(5), Expression.literal(1)));
 
         assertNotNull(builder.currentDistinct());

@@ -47,6 +47,20 @@ class OrderItemTest {
     }
 
     @Test
+    void collateExprCannotBeUsedAsOrderItemSource() {
+        var collated = Expression.literal(1).collate("collate");
+
+        assertThrows(IllegalArgumentException.class, () -> OrderItem.of(collated));
+        assertThrows(IllegalArgumentException.class, () -> OrderItem.from(collated));
+        assertThrows(IllegalArgumentException.class, () -> OrderItem.of(collated, null, null, null, null, null));
+        assertThrows(IllegalArgumentException.class, collated::toOrderItem);
+        assertThrows(IllegalArgumentException.class, collated::asc);
+        assertThrows(IllegalArgumentException.class, collated::desc);
+        assertThrows(IllegalArgumentException.class, () -> collated.nulls(Nulls.FIRST));
+        assertThrows(IllegalArgumentException.class, () -> collated.using("<"));
+    }
+
+    @Test
     void of_with_all_fields() {
         var item = OrderItem.of(Expression.literal(1), null, Direction.DESC, Nulls.LAST, QualifiedName.of("collate"), ">");
         assertEquals(Direction.DESC, item.direction());

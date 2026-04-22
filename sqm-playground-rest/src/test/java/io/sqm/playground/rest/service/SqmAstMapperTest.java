@@ -1,15 +1,6 @@
 package io.sqm.playground.rest.service;
 
-import io.sqm.core.ColumnExpr;
-import io.sqm.core.Expression;
-import io.sqm.core.Identifier;
-import io.sqm.core.OrderItem;
-import io.sqm.core.Query;
-import io.sqm.core.QueryTable;
-import io.sqm.core.QualifiedName;
-import io.sqm.core.QuoteStyle;
-import io.sqm.core.StatementSequence;
-import io.sqm.core.TableRef;
+import io.sqm.core.*;
 import io.sqm.playground.api.AstChildSlotDto;
 import io.sqm.playground.api.AstDetailDto;
 import io.sqm.playground.api.AstNodeDto;
@@ -18,15 +9,34 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests reflective SQM AST mapping behavior.
  */
 class SqmAstMapperTest {
+
+    private static boolean hasSlot(AstNodeDto node, String slot) {
+        return node.children().stream().anyMatch(child -> Objects.equals(slot, child.slot()));
+    }
+
+    private static AstChildSlotDto slot(AstNodeDto node, String slot) {
+        return node.children().stream()
+            .filter(child -> Objects.equals(slot, child.slot()))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("Missing AST slot: " + slot));
+    }
+
+    private static AstDetailDto detail(AstNodeDto node, String name) {
+        return node.details().stream()
+            .filter(detail -> Objects.equals(name, detail.name()))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("Missing AST detail: " + name));
+    }
+
+    private static boolean hasDetail(AstNodeDto node, String name) {
+        return node.details().stream().anyMatch(detail -> Objects.equals(name, detail.name()));
+    }
 
     @Test
     void mapsStructuralAccessorsIntoChildSlots() {
@@ -40,7 +50,7 @@ class SqmAstMapperTest {
             )
             .from(TableRef.table(Identifier.of("customer")).as("c"))
             .where(customerId.eq(Expression.literal(1)))
-            .orderBy(OrderItem.of(customerName).desc())
+            .orderBy(customerName.desc())
             .build();
 
         var ast = mapper.toAst(query);
@@ -109,7 +119,7 @@ class SqmAstMapperTest {
     @Test
     void mapsEnumsWithoutImplementationMetadataDetails() {
         var mapper = new SqmAstMapper();
-        var orderItem = OrderItem.of(ColumnExpr.of(Identifier.of("c"), Identifier.of("id"))).desc().nullsLast();
+        var orderItem = ColumnExpr.of(Identifier.of("c"), Identifier.of("id")).desc().nullsLast();
 
         var ast = mapper.toAst(orderItem);
 
@@ -157,27 +167,5 @@ class SqmAstMapperTest {
 
         assertEquals("\"Order\"", detail(ast, "tableAlias").value());
         assertEquals("[Line Item]", detail(ast, "name").value());
-    }
-
-    private static boolean hasSlot(AstNodeDto node, String slot) {
-        return node.children().stream().anyMatch(child -> Objects.equals(slot, child.slot()));
-    }
-
-    private static AstChildSlotDto slot(AstNodeDto node, String slot) {
-        return node.children().stream()
-            .filter(child -> Objects.equals(slot, child.slot()))
-            .findFirst()
-            .orElseThrow(() -> new AssertionError("Missing AST slot: " + slot));
-    }
-
-    private static AstDetailDto detail(AstNodeDto node, String name) {
-        return node.details().stream()
-            .filter(detail -> Objects.equals(name, detail.name()))
-            .findFirst()
-            .orElseThrow(() -> new AssertionError("Missing AST detail: " + name));
-    }
-
-    private static boolean hasDetail(AstNodeDto node, String name) {
-        return node.details().stream().anyMatch(detail -> Objects.equals(name, detail.name()));
     }
 }

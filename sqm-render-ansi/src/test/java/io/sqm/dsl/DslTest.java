@@ -55,7 +55,7 @@ public class DslTest {
         var q = select(col("u", "id"), col("u", "name"))
             .from(tbl("users").as("u"))
             .where(col("u", "active").eq(true))
-            .orderBy(order("u", "name").asc())
+            .orderBy(col("u", "name").asc())
             .limit(10)
             .offset(20)
             .build();
@@ -76,7 +76,7 @@ public class DslTest {
     void groupByHaving() {
         var q = select(func("count", starArg()).as("cnt"), col("o", "status"))
             .from(tbl("orders").as("o"))
-            .groupBy(group(col("o", "status")))
+            .groupBy(col("o", "status"))
             .having(func("count", starArg()).gt(10))
             .build();
 

@@ -147,7 +147,7 @@ class IdentifierNormalizationTransformerTest {
         var cteBody = select(col("ID"))
             .from(tbl("USERS"))
             .build();
-        var windowDef = window("W", over(orderBy(order(col("U", "ID")).collate("PG_CATALOG.C"))));
+        var windowDef = window("W", over(orderBy(OrderItem.of(col("U", "ID")).collate("PG_CATALOG.C"))));
         var query = with(
             cte("C", cteBody, java.util.List.of("ID"))
         ).body(
@@ -157,7 +157,7 @@ class IdentifierNormalizationTransformerTest {
             )
                 .from(tbl("C").as("U"))
                 .window(windowDef)
-                .orderBy(order(col("U", "ID")).collate("PG_CATALOG.C"))
+                .orderBy(OrderItem.of(col("U", "ID")).collate("PG_CATALOG.C"))
                 .lockFor(update(), ofTables("U"), false, false)
                 .build()
         );
@@ -217,7 +217,7 @@ class IdentifierNormalizationTransformerTest {
         var qualifiedStarOut = tx.apply(qualifiedStar);
         assertEquals("t", qualifiedStarOut.qualifier().value());
 
-        var overDefWithoutBase = over(orderBy(order(col("T", "ID"))));
+        var overDefWithoutBase = over(orderBy(col("T", "ID")));
         var overDefOut = tx.apply(overDefWithoutBase);
         assertInstanceOf(OverSpec.Def.class, overDefOut);
         assertNull(overDefOut.baseWindow());
@@ -233,7 +233,7 @@ class IdentifierNormalizationTransformerTest {
         assertSame(bareBinary, tx.apply(bareBinary));
         assertSame(bareUnary, tx.apply(bareUnary));
 
-        var orderNoCollate = order(col("x"));
+        var orderNoCollate = col("x");
         assertSame(orderNoCollate, tx.apply(orderNoCollate));
     }
 

@@ -2,6 +2,7 @@ package io.sqm.core;
 
 import io.sqm.core.walk.NodeVisitor;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,6 +19,16 @@ public non-sealed interface GroupBy extends Node {
      */
     static GroupBy of(List<GroupItem> items) {
         return new Impl(items);
+    }
+
+    /**
+     * Creates GROUP BY statement from supported item inputs.
+     *
+     * @param items a list of group by item inputs.
+     * @return a new GROUP BY statement.
+     */
+    static GroupBy from(Object... items) {
+        return new Impl(Arrays.stream(items).map(GroupItem::from).toList());
     }
 
     /**

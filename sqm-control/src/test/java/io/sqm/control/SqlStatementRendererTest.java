@@ -105,7 +105,7 @@ class SqlStatementRendererTest {
         var statement = Query.select(col("u", "id"))
             .from(tbl(id("users", QuoteStyle.BRACKETS)).as(id("u", QuoteStyle.BRACKETS)).withNoLock())
             .top(TopSpec.of(lit(10), true, false))
-            .orderBy(order(col("u", "id")))
+            .orderBy(col("u", "id"))
             .build();
 
         var rendered = renderer.render(statement, ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE));

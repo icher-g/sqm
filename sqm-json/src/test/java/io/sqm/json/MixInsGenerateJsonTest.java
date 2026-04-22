@@ -102,7 +102,7 @@ public class MixInsGenerateJsonTest {
             .top(top(5))
             .where(col("o", "status").in("A", "B"))
             .join(inner(tbl("users").as("u")).on(col("u", "id").eq(col("o", "user_id"))))
-            .groupBy(group("u", "user_name"), group("o", "status"))
+            .groupBy(col("u", "user_name"), col("o", "status"))
             .having(func("count", starArg()).gt(10))
             .build();
 

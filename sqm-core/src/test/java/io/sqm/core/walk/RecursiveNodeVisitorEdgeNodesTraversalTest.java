@@ -29,7 +29,7 @@ public class RecursiveNodeVisitorEdgeNodesTraversalTest {
                         .from(tbl("B"))
                         .where(col("b").eq(select(col("x")).from(tbl("X"))))
                         .build())
-                .orderBy(order(col("b")).asc())
+                .orderBy(col("b").asc())
                 .limit(5L);
 
         var q = select(
@@ -42,7 +42,7 @@ public class RecursiveNodeVisitorEdgeNodesTraversalTest {
             .where(exists(select(lit(1)).from(tbl("dual")).build())
                 .and(not(col("m", "n").isNull()))
                 .and(unary(col("r", "ok"))))
-            .orderBy(order(col("m", "n")).asc())
+            .orderBy(col("m", "n").asc())
             .build();
 
         var v = new RecordingVisitor();

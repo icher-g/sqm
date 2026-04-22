@@ -34,7 +34,7 @@ public final class ReportingQueries {
                 func("sum", arg(col("o", "amount"))).as("total_amount"),
                 func("row_number")
                     .over(
-                        partition(col("u", "org_id")), orderBy(order(col("o", "created_at")).desc())
+                        partition(col("u", "org_id")), orderBy(col("o", "created_at").desc())
                     )
                     .as("org_rank")
             )
@@ -52,13 +52,13 @@ public final class ReportingQueries {
                 col("o", "kind").in(row(lit("A"), lit("B"))))
             )
             .groupBy(
-                group(col("u", "id")),
-                group(col("u", "org_id"))
+                col("u", "id"),
+                col("u", "org_id")
             )
             .having(func("count", starArg()).gt(lit(1L)))
             .orderBy(
-                order(func("sum", arg(col("o", "amount")))).desc().nullsLast(),
-                order(col("u", "id")).asc()
+                func("sum", arg(col("o", "amount"))).desc().nullsLast(),
+                col("u", "id").asc()
             )
             .limitOffset(limitOffset(lit(100L), lit(10L)))
             .lockFor(update(), ofTables("u", "o"), false, true)

@@ -19,7 +19,7 @@ class SqlServerRulesTest {
     void standardLimitToSqlServerTopLeavesOffsetQueriesUnchanged() {
         Statement statement = Dsl.select(Dsl.col("id"))
             .from(Dsl.tbl("users"))
-            .orderBy(Dsl.order(Dsl.col("id")))
+            .orderBy(Dsl.col("id"))
             .limit(5)
             .offset(2)
             .build();
@@ -35,7 +35,7 @@ class SqlServerRulesTest {
     void sqlServerTopToLimitLeavesStatementsWithoutTopUnchanged() {
         Statement statement = Dsl.select(Dsl.col("id"))
             .from(Dsl.tbl("users"))
-            .orderBy(Dsl.order(Dsl.col("id")))
+            .orderBy(Dsl.col("id"))
             .limit(5)
             .offset(2)
             .build();
@@ -65,7 +65,7 @@ class SqlServerRulesTest {
     void sqlServerTopToLimitRejectsTopWithTies() {
         Statement statement = Dsl.select(Dsl.col("id"))
             .from(Dsl.tbl("users"))
-            .orderBy(Dsl.order(Dsl.col("id")))
+            .orderBy(Dsl.col("id"))
             .top(Dsl.topWithTies(Dsl.lit(5)))
             .build();
 

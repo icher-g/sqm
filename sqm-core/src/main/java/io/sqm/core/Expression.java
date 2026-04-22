@@ -172,6 +172,68 @@ public sealed interface Expression extends Node
     }
 
     /**
+     * Creates an {@link OrderItem} from the current expression.
+     *
+     * @return {@link OrderItem} created from the current expression.
+     */
+    default OrderItem toOrderItem() {
+        if (this instanceof CollateExpr) {
+            throw new IllegalArgumentException("CollateExpr cannot be used directly as an ORDER BY item; call toOrderItem() before collate(...) instead");
+        }
+        return OrderItem.of(this);
+    }
+
+    /**
+     * Creates an {@link OrderItem} from the current expression with the {@link Direction#ASC} direction.
+     *
+     * @return {@link OrderItem} created from the current expression.
+     */
+    default OrderItem asc() {
+        if (this instanceof CollateExpr) {
+            throw new IllegalArgumentException("CollateExpr cannot be used directly as an ORDER BY item; call asc() before collate(...) instead");
+        }
+        return toOrderItem().asc();
+    }
+
+    /**
+     * Creates an {@link OrderItem} from the current expression with the {@link Direction#DESC} direction.
+     *
+     * @return {@link OrderItem} created from the current expression.
+     */
+    default OrderItem desc() {
+        if (this instanceof CollateExpr) {
+            throw new IllegalArgumentException("CollateExpr cannot be used directly as an ORDER BY item; call desc() before collate(...) instead");
+        }
+        return toOrderItem().desc();
+    }
+
+    /**
+     * Creates an {@link OrderItem} from the current expression with the provided {@link Nulls} definition.
+     *
+     * @param nulls nulls to be used in OrderBy clause.
+     * @return {@link OrderItem} created from the current expression.
+     */
+    default OrderItem nulls(Nulls nulls) {
+        if (this instanceof CollateExpr) {
+            throw new IllegalArgumentException("CollateExpr cannot be used directly as an ORDER BY item; call nulls(...) before collate(...) instead");
+        }
+        return toOrderItem().nulls(nulls);
+    }
+
+    /**
+     * Creates an {@link OrderItem} from the current expression with the provided {@code USING} operator.
+     *
+     * @param operator operator to be used in {@code ORDER BY ... USING <operator>}.
+     * @return {@link OrderItem} created from the current expression.
+     */
+    default OrderItem using(String operator) {
+        if (this instanceof CollateExpr) {
+            throw new IllegalArgumentException("CollateExpr cannot be used directly as an ORDER BY item; call using(...) before collate(...) instead");
+        }
+        return toOrderItem().using(operator);
+    }
+
+    /**
      * Applies a collation to the current expression.
      * <p>Example:</p>
      * <pre>

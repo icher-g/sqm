@@ -155,7 +155,7 @@ class IsDistinctFromPredicateRendererTest {
     void testRenderInHavingClause() {
         var query = select(col("dept"), func("COUNT", starArg()).as("cnt"))
             .from(tbl("employees"))
-            .groupBy(group("dept"))
+            .groupBy("dept")
             .having(IsDistinctFromPredicate.of(
                 func("COUNT", starArg()),
                 lit(10),

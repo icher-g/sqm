@@ -3,6 +3,7 @@ package io.sqm.dsl;
 import io.sqm.core.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -11,19 +12,6 @@ import java.util.List;
  * <p>
  * Usage (static import io.sqm.dsl.DSL.*):
  * </p>
- * <pre>
- * {@code
- *   Query q = q()
- *   .select(c("t","id"), c("t","name").as("n"), func("lower", argCol(c("t","name"))).as("nm"))
- *   .from(t("users").as("t"))
- *   .join(inner(t("orders").as("o")).on(join(c("t","id")).eq(c("o","user_id"))))
- *   .where(and(eq(c("t","active"), true), in(c("t","role"), List.of("admin","user"))))
- *   .groupBy(g(c("t","role")))
- *   .orderBy(asc(c("t","name")))
- *   .limit(100)
- *   .offset(0);
- * }
- * </pre>
  */
 public final class Dsl {
     /**
@@ -1193,118 +1181,43 @@ public final class Dsl {
     /* ========================= GROUP BY / ORDER BY ========================= */
 
     /**
-     * Creates a group by item from the provided column name.
-     *
-     * @param col the name of the table.
-     * @return a group by item.
-     */
-    public static GroupItem group(String col) {
-        return GroupItem.of(col(col));
-    }
-
-    /**
-     * Creates a group by item from the provided table name and column name.
-     *
-     * @param table the name of the column.
-     * @param col   the name of the table.
-     * @return a group by item.
-     */
-    public static GroupItem group(String table, String col) {
-        return GroupItem.of(col(table, col));
-    }
-
-    /**
-     * Creates a group by item from the provided column.
-     * For example: {@code GroupBy c1, c2, c3}
-     *
-     * @param col a column to be used in a group by statement.
-     * @return a group by item.
-     */
-    public static GroupItem group(Expression col) {
-        return GroupItem.of(col);
-    }
-
-    /**
-     * Creates a group by item from the ordinal value.
-     * For example: {@code GroupBy 1, 2, 3}
-     *
-     * @param ordinal a value.
-     * @return a group by item.
-     */
-    public static GroupItem group(int ordinal) {
-        return GroupItem.of(ordinal);
-    }
-
-    /**
      * Creates a grouping set item, for example {@code (a, b)} or {@code ()}.
      *
-     * @param items grouping items inside the set
+     * @param items grouping item inputs inside the set
      * @return a grouping set item
      */
-    public static GroupItem groupingSet(GroupItem... items) {
-        return GroupItem.groupingSet(items);
+    public static GroupItem groupingSet(Object... items) {
+        return GroupItem.groupingSet(Arrays.stream(items).map(GroupItem::from).toList());
     }
 
     /**
      * Creates a {@code GROUPING SETS (...)} item.
      *
-     * @param sets grouping set elements
+     * @param sets grouping set inputs
      * @return a grouping sets item
      */
-    public static GroupItem groupingSets(GroupItem... sets) {
-        return GroupItem.groupingSets(sets);
+    public static GroupItem groupingSets(Object... sets) {
+        return GroupItem.groupingSets(Arrays.stream(sets).map(GroupItem::from).toList());
     }
 
     /**
      * Creates a {@code ROLLUP (...)} item.
      *
-     * @param items grouping items inside the rollup
+     * @param items grouping item inputs inside the rollup
      * @return a rollup item
      */
-    public static GroupItem rollup(GroupItem... items) {
-        return GroupItem.rollup(items);
+    public static GroupItem rollup(Object... items) {
+        return GroupItem.rollup(Arrays.stream(items).map(GroupItem::from).toList());
     }
 
     /**
      * Creates a {@code CUBE (...)} item.
      *
-     * @param items grouping items inside the cube
+     * @param items grouping item inputs inside the cube
      * @return a cube item
      */
-    public static GroupItem cube(GroupItem... items) {
-        return GroupItem.cube(items);
-    }
-
-    /**
-     * Creates an order by item from the provided column name.
-     *
-     * @param col the name of the column.
-     * @return an order by item.
-     */
-    public static OrderItem order(String col) {
-        return OrderItem.of(col(col));
-    }
-
-    /**
-     * Creates an order by item from the provided table name and column name.
-     *
-     * @param table the name of the table.
-     * @param col   the name of the column.
-     * @return an order by item.
-     */
-    public static OrderItem order(String table, String col) {
-        return OrderItem.of(col(table, col));
-    }
-
-    /**
-     * Creates an order by item from the provided column.
-     * For example: {@code OrderBy c1, c2, c3}
-     *
-     * @param col a column
-     * @return an order by item.
-     */
-    public static OrderItem order(Expression col) {
-        return OrderItem.of(col);
+    public static GroupItem cube(Object... items) {
+        return GroupItem.cube(Arrays.stream(items).map(GroupItem::from).toList());
     }
 
     /**
@@ -1319,13 +1232,35 @@ public final class Dsl {
     }
 
     /**
+     * Creates an order by item from the ordinal value in ASC order.
+     * For example: {@code ORDER BY 1, 2, 3}
+     *
+     * @param ordinal an ordinal value.
+     * @return an order by item.
+     */
+    public static OrderItem asc(int ordinal) {
+        return OrderItem.of(ordinal).asc();
+    }
+
+    /**
+     * Creates an order by item from the ordinal value in DESC order.
+     * For example: {@code ORDER BY 1, 2, 3}
+     *
+     * @param ordinal an ordinal value.
+     * @return an order by item.
+     */
+    public static OrderItem desc(int ordinal) {
+        return OrderItem.of(ordinal).desc();
+    }
+
+    /**
      * Creates OrderBy statement from the list of provided items.
      *
-     * @param items a list of OrderBy items.
+     * @param items a list of OrderBy item inputs.
      * @return an OrderBy statement.
      */
-    public static OrderBy orderBy(OrderItem... items) {
-        return OrderBy.of(List.of(items));
+    public static OrderBy orderBy(Object... items) {
+        return OrderBy.from(items);
     }
 
     /* ========================= WINDOW clause (named windows on SELECT) ========================= */

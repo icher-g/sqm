@@ -55,7 +55,7 @@ public class DeepTransformationRebuildTest {
                 func("count", arg(col("u", "id")))
                     .over(
                         partition(col("acct_id")),
-                        orderBy(order(col("ts")).asc()),
+                        orderBy(col("ts").asc()),
                         rows(preceding(5))
                     ).as("cnt"),
                 func("lower", arg(func("sub", arg(col("u", "desc")))))
@@ -80,7 +80,7 @@ public class DeepTransformationRebuildTest {
                                 .or(col("o", "user").all(ComparisonOperator.EQ, select(lit(1)).build()))
                         )
                 )
-                .groupBy(group("u", "user_name"), group("o", "user_status"))
+                .groupBy(col("u", "user_name"), col("o", "user_status"))
                 .having(func("count", arg(col("u", "test"))).gt(10))
                 .window(
                     window("w", over(partition(col("acct_id")), rows(preceding(1), following(1)))),
@@ -88,7 +88,7 @@ public class DeepTransformationRebuildTest {
                     window("w", over(partition(col("acct_id")), rows(unboundedFollowing()))),
                     window("w", over(partition(col("acct_id")), rows(unboundedPreceding())))
                 )
-                .orderBy(order(col("o", "status")).desc())
+                .orderBy(col("o", "status").desc())
                 .limit(100)
                 .offset(10)
                 .build();

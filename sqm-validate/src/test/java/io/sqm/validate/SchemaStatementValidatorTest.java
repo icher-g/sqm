@@ -987,7 +987,7 @@ class SchemaStatementValidatorTest {
     void validate_reportsInvalidSetOperationOrderByExpression() {
         Query query = select(lit(1)).build()
             .union(select(lit(2)).build())
-            .orderBy(order(lit(3)));
+            .orderBy(lit(3));
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -999,7 +999,7 @@ class SchemaStatementValidatorTest {
     void validate_acceptsSetOperationOrderByProjectedExpression() {
         Query query = select(lit(1)).build()
             .union(select(lit(2)).build())
-            .orderBy(order(lit(1)));
+            .orderBy(lit(1));
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -1010,7 +1010,7 @@ class SchemaStatementValidatorTest {
         Query query = select(star())
             .from(tbl("users").as("u")).build()
             .union(select(star()).from(tbl("orders").as("o")).build())
-            .orderBy(order(lit(1)));
+            .orderBy(lit(1));
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1023,7 +1023,7 @@ class SchemaStatementValidatorTest {
         Query query = select(star())
             .from(tbl("users").as("u")).build()
             .union(select(star()).from(tbl("orders").as("o")).build())
-            .orderBy(order(1));
+            .orderBy(1);
 
         var result = validator.validate(query);
         assertTrue(result.ok());
@@ -1033,7 +1033,7 @@ class SchemaStatementValidatorTest {
     void validate_reportsInvalidOrderByOrdinalInSelectQuery() {
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .orderBy(order(2))
+            .orderBy(2)
             .build();
 
         var result = validator.validate(query);
@@ -1046,7 +1046,7 @@ class SchemaStatementValidatorTest {
     void validate_reportsOrderByOrdinalReferencingStarSelectItem() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .orderBy(order(1))
+            .orderBy(1)
             .build();
 
         var result = validator.validate(query);
@@ -1059,7 +1059,7 @@ class SchemaStatementValidatorTest {
     void validate_reportsInvalidZeroOrderByOrdinalInSelectQuery() {
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .orderBy(order(0))
+            .orderBy(0)
             .build();
 
         var result = validator.validate(query);
@@ -1072,7 +1072,7 @@ class SchemaStatementValidatorTest {
     void validate_reportsInvalidOrderByOrdinalInCompositeQuery() {
         Query query = select(lit(1)).build()
             .union(select(lit(2)).build())
-            .orderBy(order(2));
+            .orderBy(2);
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1084,7 +1084,7 @@ class SchemaStatementValidatorTest {
     void validate_acceptsValidOrderByOrdinal() {
         Query query = select(col("u", "id"), col("u", "status"))
             .from(tbl("users").as("u"))
-            .orderBy(order(2))
+            .orderBy(2)
             .build();
 
         var result = validator.validate(query);
@@ -1095,7 +1095,7 @@ class SchemaStatementValidatorTest {
     void validate_reportsInvalidGroupByOrdinal() {
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .groupBy(group(2))
+            .groupBy(2)
             .build();
 
         var result = validator.validate(query);
@@ -1108,7 +1108,7 @@ class SchemaStatementValidatorTest {
     void validate_reportsGroupByOrdinalReferencingStarSelectItem() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .groupBy(group(1))
+            .groupBy(1)
             .build();
 
         var result = validator.validate(query);
@@ -1121,7 +1121,7 @@ class SchemaStatementValidatorTest {
     void validate_reportsInvalidZeroGroupByOrdinal() {
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .groupBy(group(0))
+            .groupBy(0)
             .build();
 
         var result = validator.validate(query);
@@ -1134,7 +1134,7 @@ class SchemaStatementValidatorTest {
     void validate_reportsInvalidNestedGroupByOrdinal() {
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .groupBy(groupingSets(groupingSet(group(2))))
+            .groupBy(groupingSets(groupingSet(2)))
             .build();
 
         var result = validator.validate(query);
@@ -1147,7 +1147,7 @@ class SchemaStatementValidatorTest {
     void validate_acceptsValidGroupByOrdinal() {
         Query query = select(col("u", "status"), func("count", starArg()))
             .from(tbl("users").as("u"))
-            .groupBy(group(1))
+            .groupBy(1)
             .build();
 
         var result = validator.validate(query);
@@ -1158,7 +1158,7 @@ class SchemaStatementValidatorTest {
     void validate_reportsGroupedSelectNonAggregatedExpression() {
         Query query = select(col("u", "name"), col("u", "status"))
             .from(tbl("users").as("u"))
-            .groupBy(group(col("u", "name")))
+            .groupBy(col("u", "name"))
             .build();
 
         var result = validator.validate(query);
@@ -1170,7 +1170,7 @@ class SchemaStatementValidatorTest {
     void validate_acceptsGroupedSelectWithAggregate() {
         Query query = select(col("u", "status"), func("count", starArg()))
             .from(tbl("users").as("u"))
-            .groupBy(group(col("u", "status")))
+            .groupBy(col("u", "status"))
             .build();
 
         var result = validator.validate(query);
@@ -1193,7 +1193,7 @@ class SchemaStatementValidatorTest {
     void validate_reportsHavingWithNonGroupedColumnOutsideAggregate() {
         Query query = select(col("u", "status"), func("count", starArg()))
             .from(tbl("users").as("u"))
-            .groupBy(group(col("u", "status")))
+            .groupBy(col("u", "status"))
             .having(col("u", "name").eq(lit("x")))
             .build();
 
@@ -1206,7 +1206,7 @@ class SchemaStatementValidatorTest {
     void validate_acceptsHavingWithAggregatePredicate() {
         Query query = select(col("u", "status"), func("count", starArg()).as("cnt"))
             .from(tbl("users").as("u"))
-            .groupBy(group(col("u", "status")))
+            .groupBy(col("u", "status"))
             .having(func("count", starArg()).gt(lit(1)))
             .build();
 
@@ -1300,7 +1300,7 @@ class SchemaStatementValidatorTest {
             func("my_agg", arg(col("u", "name")))
         )
             .from(tbl("users").as("u"))
-            .groupBy(group(col("u", "status")))
+            .groupBy(col("u", "status"))
             .build();
 
         var result = customValidator.validate(query);
@@ -1319,7 +1319,7 @@ class SchemaStatementValidatorTest {
             func("my_agg", arg(col("u", "name")))
         )
             .from(tbl("users").as("u"))
-            .groupBy(group(col("u", "status")))
+            .groupBy(col("u", "status"))
             .build();
 
         var result = customValidator.validate(query);
@@ -1360,7 +1360,7 @@ class SchemaStatementValidatorTest {
     void validate_reportsSetOperationOrderByInvalidWhenProjectionIsNotExpressionOnly() {
         Query query = select(star()).from(tbl("users").as("u")).build()
             .union(select(star()).from(tbl("users").as("u2")).build())
-            .orderBy(order(col("u", "id")));
+            .orderBy(col("u", "id"));
 
         var result = validator.validate(query);
         assertFalse(result.ok());
@@ -1447,7 +1447,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsMissingBaseWindowReference() {
         Query query = select(
-            func("sum", arg(col("u", "age"))).over(over("missing_window", orderBy(order(col("u", "id")))))
+            func("sum", arg(col("u", "age"))).over(over("missing_window", orderBy(col("u", "id"))))
         ).from(tbl("users").as("u"))
             .build();
 
@@ -1530,7 +1530,7 @@ class SchemaStatementValidatorTest {
         )
             .from(tbl("users").as("u"))
             .window(
-                WindowDef.of(Identifier.of("w1"), OverSpec.def(Identifier.of("missing"), orderBy(order(col("u", "id"))), null, null))
+                WindowDef.of(Identifier.of("w1"), OverSpec.def(Identifier.of("missing"), orderBy(col("u", "id")), null, null))
             )
             .build();
 
@@ -1547,8 +1547,8 @@ class SchemaStatementValidatorTest {
         )
             .from(tbl("users").as("u"))
             .window(
-                WindowDef.of(Identifier.of("w1"), OverSpec.def(Identifier.of("w2"), orderBy(order(col("u", "id"))), null, null)),
-                WindowDef.of(Identifier.of("w2"), OverSpec.def(Identifier.of("w1"), orderBy(order(col("u", "status"))), null, null))
+                WindowDef.of(Identifier.of("w1"), OverSpec.def(Identifier.of("w2"), orderBy(col("u", "id")), null, null)),
+                WindowDef.of(Identifier.of("w2"), OverSpec.def(Identifier.of("w1"), orderBy(col("u", "status")), null, null))
             )
             .build();
 
@@ -1583,7 +1583,7 @@ class SchemaStatementValidatorTest {
         )
             .from(tbl("users").as("u"))
             .window(
-                WindowDef.of(Identifier.of("w1"), OverSpec.def(Identifier.of("w1"), orderBy(order(col("u", "id"))), null, null))
+                WindowDef.of(Identifier.of("w1"), OverSpec.def(Identifier.of("w1"), orderBy(col("u", "id")), null, null))
             )
             .build();
 
@@ -1601,7 +1601,7 @@ class SchemaStatementValidatorTest {
             .from(tbl("users").as("u"))
             .window(
                 window("w1", partition(col("u", "status"))),
-                WindowDef.of(Identifier.of("w2"), OverSpec.def(Identifier.of("w1"), orderBy(order(col("u", "id"))), null, null))
+                WindowDef.of(Identifier.of("w2"), OverSpec.def(Identifier.of("w1"), orderBy(col("u", "id")), null, null))
             )
             .build();
 
@@ -1655,7 +1655,7 @@ class SchemaStatementValidatorTest {
             func("sum", arg(col("u", "age"))).over("w")
         )
             .from(tbl("users").as("u"))
-            .window(window("w", partition(col("u", "status")), orderBy(order(col("u", "id"))), rows(following(1), currentRow())))
+            .window(window("w", partition(col("u", "status")), orderBy(col("u", "id")), rows(following(1), currentRow())))
             .build();
 
         var result = validator.validate(query);
@@ -1695,7 +1695,7 @@ class SchemaStatementValidatorTest {
     void validate_reportsRangeOffsetFrameWithMultipleOrderByItems() {
         Query query = select(
             func("sum", arg(col("u", "age")))
-                .over(over(orderBy(order(col("u", "id")), order(col("u", "age"))), range(preceding(1))))
+                .over(over(orderBy(col("u", "id"), col("u", "age")), range(preceding(1))))
         ).from(tbl("users").as("u"))
             .build();
 
@@ -1709,7 +1709,7 @@ class SchemaStatementValidatorTest {
     void validate_acceptsRangeOffsetFrameWithSingleOrderByItem() {
         Query query = select(
             func("sum", arg(col("u", "age")))
-                .over(over(orderBy(order(col("u", "id"))), range(preceding(1))))
+                .over(over(orderBy(col("u", "id")), range(preceding(1))))
         ).from(tbl("users").as("u"))
             .build();
 
@@ -1749,7 +1749,7 @@ class SchemaStatementValidatorTest {
         Query query = select(col("u", "status"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "status")))
-            .orderBy(order(col("u", "id")))
+            .orderBy(col("u", "id"))
             .build();
 
         var result = validator.validate(query);
@@ -1762,7 +1762,7 @@ class SchemaStatementValidatorTest {
         Query query = select(col("u", "status"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "status")))
-            .orderBy(order(col("u", "status")), order(col("u", "id")))
+            .orderBy(col("u", "status"), col("u", "id"))
             .build();
 
         var result = validator.validate(query);
@@ -1774,7 +1774,7 @@ class SchemaStatementValidatorTest {
         Query query = select(col("u", "status"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "status")))
-            .orderBy(order(1), order(2))
+            .orderBy(1, 2)
             .build();
 
         var result = validator.validate(query);

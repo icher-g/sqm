@@ -20,7 +20,7 @@ class WindowIdentifierRendererTest {
 
     @Test
     void renders_over_def_base_window_with_preserved_or_fallback_quote_style() {
-        var orderBy = OrderBy.of(OrderItem.of(col("v")));
+        var orderBy = OrderBy.from(col("v"));
         assertEquals("\"W\" ORDER BY v",
             ctx.render(OverSpec.def(Identifier.of("W", QuoteStyle.DOUBLE_QUOTE), orderBy, null, null)).sql());
         assertEquals("\"W\" ORDER BY v",
@@ -29,7 +29,7 @@ class WindowIdentifierRendererTest {
 
     @Test
     void renders_window_def_name_with_preserved_or_fallback_quote_style() {
-        var spec = OverSpec.def((io.sqm.core.PartitionBy) null, OrderBy.of(OrderItem.of(col("v"))), null, null);
+        var spec = OverSpec.def((io.sqm.core.PartitionBy) null, OrderBy.from(col("v")), null, null);
         assertEquals("WINDOW \"W\" AS (ORDER BY v)",
             ctx.render(WindowDef.of(Identifier.of("W", QuoteStyle.DOUBLE_QUOTE), spec)).sql());
         assertEquals("WINDOW \"W\" AS (ORDER BY v)",

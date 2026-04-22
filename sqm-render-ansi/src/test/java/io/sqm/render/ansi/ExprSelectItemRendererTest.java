@@ -90,7 +90,7 @@ class ExprSelectItemRendererTest {
     void aggregate_with_alias() {
         var query = select(col("status"), func("COUNT", arg(col("id"))).as("cnt"))
             .from(tbl("users"))
-            .groupBy(group("status"))
+            .groupBy("status")
             .build();
         String result = render(query);
         assertTrue(result.contains("COUNT"));

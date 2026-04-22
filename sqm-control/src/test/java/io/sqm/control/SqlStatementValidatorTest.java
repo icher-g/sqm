@@ -19,14 +19,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static io.sqm.dsl.Dsl.col;
-import static io.sqm.dsl.Dsl.lit;
-import static io.sqm.dsl.Dsl.select;
-import static io.sqm.dsl.Dsl.tbl;
-import static io.sqm.dsl.Dsl.update;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static io.sqm.dsl.Dsl.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 class SqlStatementValidatorTest {
     private static final CatalogSchema SCHEMA = CatalogSchema.of(
@@ -89,7 +83,7 @@ class SqlStatementValidatorTest {
         var statement = select(col("u", "id"))
             .from(tbl(Identifier.of("users", io.sqm.core.QuoteStyle.BRACKETS)).as(Identifier.of("u", io.sqm.core.QuoteStyle.BRACKETS)).withNoLock())
             .top(io.sqm.dsl.Dsl.topPercent(lit(10)))
-            .orderBy(io.sqm.dsl.Dsl.order(col("u", "id")))
+            .orderBy(col("u", "id"))
             .build();
 
         var result = validator.validate(statement, ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE));

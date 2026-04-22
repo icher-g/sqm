@@ -1,31 +1,24 @@
 package io.sqm.render.sqlserver;
 
 import io.sqm.core.Expression;
-import io.sqm.core.OrderItem;
 import io.sqm.core.Query;
 import io.sqm.core.QuoteStyle;
 import io.sqm.core.SelectQuery;
+import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.spi.RenderContext;
-import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.sqlserver.spi.SqlServerDialect;
 import org.junit.jupiter.api.Test;
 
+import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static io.sqm.dsl.Dsl.col;
-import static io.sqm.dsl.Dsl.cross;
-import static io.sqm.dsl.Dsl.distinct;
-import static io.sqm.dsl.Dsl.id;
-import static io.sqm.dsl.Dsl.inner;
-import static io.sqm.dsl.Dsl.left;
-import static io.sqm.dsl.Dsl.lit;
-import static io.sqm.dsl.Dsl.top;
-import static io.sqm.dsl.Dsl.topWithTies;
-import static io.sqm.dsl.Dsl.tbl;
-import static io.sqm.dsl.Dsl.unary;
 
 class SelectQueryRendererTest {
+
+    private static String normalize(String sql) {
+        return sql.replaceAll("\\s+", " ").trim();
+    }
 
     @Test
     void renders_distinct_top_query() {
@@ -45,7 +38,7 @@ class SelectQueryRendererTest {
     void renders_order_by_offset_fetch_query() {
         var query = SelectQuery.builder()
             .select(Expression.literal(1))
-            .orderBy(OrderItem.of(1))
+            .orderBy(1)
             .limitOffset(io.sqm.core.LimitOffset.of(Expression.literal(10), Expression.literal(5)))
             .build();
 
@@ -80,7 +73,7 @@ class SelectQueryRendererTest {
         var query = SelectQuery.builder()
             .top(topWithTies(Expression.literal(10)))
             .select(Expression.literal(1))
-            .orderBy(OrderItem.of(1))
+            .orderBy(1)
             .build();
 
         var rendered = RenderContext.of(new SqlServerDialect()).render(query);
@@ -267,9 +260,5 @@ class SelectQueryRendererTest {
         );
 
         assertEquals("RIGHT JOIN orders AS o ON u.id = o.user_id", normalize(writer.toText(java.util.List.of()).sql()));
-    }
-
-    private static String normalize(String sql) {
-        return sql.replaceAll("\\s+", " ").trim();
     }
 }
