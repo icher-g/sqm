@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static io.sqm.dsl.Dsl.col;
-import static io.sqm.dsl.Dsl.order;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -195,7 +194,7 @@ class OrderItemRendererTest {
         var d = dialect(passThruQuoter(), explicitNulls());
         var rc = RenderContext.of(d);
 
-        var item = order(col("t", "c")).asc().nulls(Nulls.FIRST).collate("de_CH");
+        var item = col("t", "c").asc().nulls(Nulls.FIRST).collate("de_CH");
         String sql = renderToSql(renderer, item, rc);
 
         // must include pieces in the right order
@@ -217,7 +216,7 @@ class OrderItemRendererTest {
         var rc = RenderContext.of(d);
 
         // DEFAULT + DESC -> dialect says FIRST
-        var item = order(col("t", "c")).desc().nulls(Nulls.DEFAULT);
+        var item = col("t", "c").desc().nulls(Nulls.DEFAULT);
         String sql = renderToSql(renderer, item, rc);
 
         assertTrue(sql.contains(" DESC"), "should render DESC");
@@ -231,7 +230,7 @@ class OrderItemRendererTest {
         var rc = RenderContext.of(d);
 
         // no direction -> renderer treats as ASC for default mapping -> LAST
-        var item = order(col("t", "c")).nulls(Nulls.DEFAULT);
+        var item = col("t", "c").nulls(Nulls.DEFAULT);
         String sql = renderToSql(renderer, item, rc);
 
         assertFalse(sql.contains(" ASC"), "direction unspecified -> no ASC printed");
@@ -244,7 +243,7 @@ class OrderItemRendererTest {
         var d = dialect(passThruQuoter(), noExplicitNulls());
         var rc = RenderContext.of(d);
 
-        var item = order(col("t", "c")).asc().nulls(Nulls.FIRST);
+        var item = col("t", "c").asc().nulls(Nulls.FIRST);
         String sql = renderToSql(renderer, item, rc);
 
         assertTrue(sql.contains(" ASC"), "should render ASC");
@@ -257,7 +256,7 @@ class OrderItemRendererTest {
         var d = dialect(quotingHyphenQuoter(), explicitNulls());
         var rc = RenderContext.of(d);
 
-        var item = order(col("t", "c")).collate("de-CH");
+        var item = OrderItem.of(col("t", "c")).collate("de-CH");
         String sql = renderToSql(renderer, item, rc);
 
         assertTrue(sql.contains(" COLLATE \"de-CH\""), "collation with hyphen should be quoted by quoter");
@@ -286,7 +285,7 @@ class OrderItemRendererTest {
         var d = dialect(passThruQuoter(), explicitNulls(), caps);
         var rc = RenderContext.of(d);
 
-        var item = order(col("t", "c")).using("<").nulls(Nulls.FIRST);
+        var item = col("t", "c").using("<").nulls(Nulls.FIRST);
         assertThrows(UnsupportedDialectFeatureException.class, () -> renderToSql(renderer, item, rc));
     }
 }

@@ -50,7 +50,7 @@ class SqlServerValidationDialectTest {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .orderBy(order(col("u", "id")))
+            .orderBy(col("u", "id"))
             .limitOffset(LimitOffset.of(lit(5L), lit(10L)))
             .build();
 
@@ -65,7 +65,7 @@ class SqlServerValidationDialectTest {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .orderBy(order(col("u", "id")))
+            .orderBy(col("u", "id"))
             .top(10)
             .limitOffset(LimitOffset.of(lit(5L), lit(10L)))
             .build();
@@ -131,7 +131,7 @@ class SqlServerValidationDialectTest {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var query = select(col("u", "id"))
             .from(tbl("users").as("u").withNoLock())
-            .orderBy(order(col("u", "id")))
+            .orderBy(col("u", "id"))
             .top(topWithTies(lit(10L)))
             .build();
 
@@ -349,7 +349,7 @@ class SqlServerValidationDialectTest {
             )))
             .selectModifier(SelectModifier.CALC_FOUND_ROWS)
             .hint("INDEX", "users", "idx_users_name")
-            .orderBy(order(col("u", "id")).using(">"))
+            .orderBy(col("u", "id").using(">"))
             .build();
 
         var result = validator.validate(query);
@@ -409,7 +409,7 @@ class SqlServerValidationDialectTest {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var query = select(col("u", "id"))
             .from(tbl("users").as("u").only())
-            .orderBy(order(col("u", "id")))
+            .orderBy(col("u", "id"))
             .limitOffset(limitAll())
             .lockFor(update(), ofTables("u"), false, false)
             .build();
@@ -748,10 +748,10 @@ class SqlServerValidationDialectTest {
             .build();
         var aggregateQuery = select(
             col("u", "age"),
-            stringAgg(col("u", "name"), lit(",")).withinGroup(orderBy(order(col("u", "name"))))
+            stringAgg(col("u", "name"), lit(",")).withinGroup(orderBy(col("u", "name")))
         )
             .from(tbl("users").as("u"))
-            .groupBy(group(col("u", "age")))
+            .groupBy(col("u", "age"))
             .build();
 
         var scalarResult = validator.validate(scalarQuery);

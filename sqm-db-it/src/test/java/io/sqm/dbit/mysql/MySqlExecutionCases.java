@@ -127,7 +127,7 @@ final class MySqlExecutionCases {
                     .from(tbl("users").as("u"))
                     .join(straight(tbl("orders").as("o")).on(col("u", "id").eq(col("o", "user_id"))))
                     .where(col("o", "status").eq(lit("closed")))
-                    .orderBy(order(col("u", "id")).asc())
+                    .orderBy(col("u", "id").asc())
                     .hint("MAX_EXECUTION_TIME", 1000)
                     .build();
 

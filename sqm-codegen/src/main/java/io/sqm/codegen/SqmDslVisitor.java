@@ -883,12 +883,10 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitSimpleGroupItem(GroupItem.SimpleGroupItem i) {
         if (i.ordinal() == null) {
-            out.append("group(");
             appendNode(i.expr());
-            out.append(")");
         }
         else {
-            out.append("group(").append(i.ordinal().toString()).append(")");
+            out.append(i.ordinal().toString());
         }
         return defaultResult();
     }
@@ -919,34 +917,48 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
 
     @Override
     public Void visitOrderItem(OrderItem i) {
+        boolean orderItemEmitted = false;
         if (i.expr() != null) {
-            out.append("order(");
             appendNode(i.expr());
-            out.append(")");
         }
-        else {
-            if (i.ordinal() != null) {
-                out.append("order(").append(i.ordinal().toString()).append(")");
+        else if (i.ordinal() != null) {
+            if (i.direction() == null && i.nulls() == null && i.collate() == null && i.usingOperator() == null) {
+                out.append(i.ordinal().toString());
             }
             else {
-                throw new IllegalStateException("Order item must have expression or ordinal");
+                out.append("order(").append(i.ordinal().toString()).append(")");
+                orderItemEmitted = true;
             }
+        }
+        else {
+            throw new IllegalStateException("Order item must have expression or ordinal");
         }
         if (i.direction() != null) {
             out.append(i.direction().name().equals("ASC") ? ".asc()" : ".desc()");
+            orderItemEmitted = true;
         }
         if (i.nulls() != null) {
-            out.append(switch (i.nulls()) {
-                case FIRST -> ".nullsFirst()";
-                case LAST -> ".nullsLast()";
-                case DEFAULT -> ".nullsDefault()";
-            });
-        }
-        if (i.collate() != null) {
-            out.append(".collate(").quote(String.join(".", i.collate().values())).append(")");
+            if (orderItemEmitted) {
+                out.append(switch (i.nulls()) {
+                    case FIRST -> ".nullsFirst()";
+                    case LAST -> ".nullsLast()";
+                    case DEFAULT -> ".nullsDefault()";
+                });
+            }
+            else {
+                out.append(".nulls(Nulls.").append(i.nulls().name()).append(")");
+                orderItemEmitted = true;
+            }
         }
         if (i.usingOperator() != null) {
             out.append(".using(").quote(i.usingOperator()).append(")");
+            orderItemEmitted = true;
+        }
+        if (i.collate() != null) {
+            if (!orderItemEmitted) {
+                out.append(".toOrderItem()");
+            }
+            out.append(".collate(").quote(String.join(".", i.collate().values())).append(")");
         }
         return defaultResult();
     }
@@ -1503,7 +1515,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         if (f.withinGroup() != null) {
             out.nl().append(".withinGroup(");
             try (var ignore = new CodeScope(out, false)) {
-                out.comma(f.withinGroup().items(), this::appendNode, true);
+                appendNode(f.withinGroup());
             }
             out.nl().append(")");
         }

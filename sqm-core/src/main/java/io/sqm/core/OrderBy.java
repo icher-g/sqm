@@ -2,6 +2,7 @@ package io.sqm.core;
 
 import io.sqm.core.walk.NodeVisitor;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,6 +29,16 @@ public non-sealed interface OrderBy extends Node {
      */
     static OrderBy of(List<OrderItem> items) {
         return new Impl(items);
+    }
+
+    /**
+     * Creates ORDER BY statement from supported item inputs.
+     *
+     * @param items a list of order by item inputs.
+     * @return a new instance of ORDER BY statement.
+     */
+    static OrderBy from(Object... items) {
+        return new Impl(Arrays.stream(items).map(OrderItem::from).toList());
     }
 
     /**

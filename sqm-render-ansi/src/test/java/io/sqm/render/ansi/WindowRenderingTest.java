@@ -28,7 +28,7 @@ public class WindowRenderingTest {
             .window(
                 window("w",
                     partition(col("dept")),
-                    orderBy(order(col("salary")).desc()))
+                    orderBy(col("salary").desc()))
             )
             .build();
 
@@ -50,7 +50,7 @@ public class WindowRenderingTest {
             func("SUM", arg(col("amount")))
                 .over(
                     partition(col("acct_id")),
-                    orderBy(order(col("ts")).asc()),
+                    orderBy(col("ts").asc()),
                     rows(preceding(5))
                 ).as("s")
         )
@@ -74,7 +74,7 @@ public class WindowRenderingTest {
             func("RANK")
                 .over(
                     partition(col("grp")),
-                    orderBy(order(col("score")).desc()),
+                    orderBy(col("score").desc()),
                     groups(preceding(1), following(1)),
                     excludeTies()
                 ).as("rk")
@@ -99,13 +99,13 @@ public class WindowRenderingTest {
             col("emp_name"),
             func("SUM", arg(col("salary")))
                 .over("w", rows(unboundedPreceding(), currentRow())
-            ).as("run_sum")
+                ).as("run_sum")
         )
             .from(tbl("employees"))
             .window(
                 window("w",
                     partition(col("dept")),
-                    orderBy(order(col("salary")).desc())
+                    orderBy(col("salary").desc())
                 )
             )
             .build();
@@ -132,8 +132,8 @@ public class WindowRenderingTest {
         )
             .from(tbl("t"))
             .window(
-                window("w1", partition(col("k")), orderBy(order(col("ts")).asc())),
-                window("w2", partition(), orderBy(order(col("v")).asc())) // partition() with 0 args -> no PARTITION BY
+                window("w1", partition(col("k")), orderBy(col("ts").asc())),
+                window("w2", partition(), orderBy(col("v").asc())) // partition() with 0 args -> no PARTITION BY
             )
             .build();
 
@@ -182,8 +182,8 @@ public class WindowRenderingTest {
             func("RANK").over("w").as("rk")
         )
             .from(tbl("t"))
-            .window(window("w", partition(), orderBy(order(col("val")).asc())))
-            .orderBy(order(col("val")).asc())
+            .window(window("w", partition(), orderBy(col("val").asc())))
+            .orderBy(col("val").asc())
             .build();
 
         var sql = render(q);

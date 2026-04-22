@@ -175,7 +175,7 @@ class LockingClauseRendererTest {
     void rendersLockingClauseWithOrderAndLimit() {
         var query = select(col("*"))
             .from(tbl("users"))
-            .orderBy(order("id"))
+            .orderBy("id")
             .limit(10)
             .lockFor(update(), List.of(), false, false)
             .build();

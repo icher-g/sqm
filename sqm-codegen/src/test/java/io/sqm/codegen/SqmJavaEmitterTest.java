@@ -29,9 +29,9 @@ class SqmJavaEmitterTest {
             col("u", "name").as("user_name"),
             func("count", starArg())
                 .distinct()
-                .withinGroup(orderBy(order(col("u", "name")).asc()))
+                .withinGroup(orderBy(col("u", "name").asc()))
                 .filter(col("u", "active").eq(lit(true)))
-                .over(over(partition(col("u", "dept")), orderBy(order(col("u", "salary")).desc()), rows(preceding(1), currentRow()), excludeTies()))
+                .over(over(partition(col("u", "dept")), orderBy(col("u", "salary").desc()), rows(preceding(1), currentRow()), excludeTies()))
                 .as("cnt"),
             func("rank").over(over("w_ref")).as("rk"),
             param(),
@@ -70,20 +70,20 @@ class SqmJavaEmitterTest {
                     .and(unary(lit(true)).not())
             )
             .groupBy(
-                group(col("u", "dept")),
-                group(1),
-                groupingSet(group(col("u", "team")), group(2)),
-                groupingSets(groupingSet(group(col("u", "x"))), groupingSet(group(3))),
-                rollup(group(col("u", "r")), group(4)),
-                cube(group(col("u", "c")), group(5))
+                col("u", "dept"),
+                1,
+                groupingSet(col("u", "team"), 2),
+                groupingSets(groupingSet(col("u", "x")), groupingSet(3)),
+                rollup(col("u", "r"), 4),
+                cube(col("u", "c"), 5)
             )
             .having(func("count", starArg()).gt(lit(0)))
             .window(
-                window("w1", partition(col("u", "dept")), orderBy(order(col("u", "salary")).desc()), rows(preceding(2), following(2)), excludeCurrentRow())
+                window("w1", partition(col("u", "dept")), orderBy(col("u", "salary").desc()), rows(preceding(2), following(2)), excludeCurrentRow())
             )
             .orderBy(
-                order(col("u", "name")).asc().nullsFirst().collate("en_US").using(">"),
-                order(1).desc().nullsLast()
+                col("u", "name").asc().nullsFirst().using(">").collate("en_US"),
+                desc(1).nullsLast()
             )
             .distinct(distinct())
             .limitOffset(limitAll(lit(10)))
@@ -132,7 +132,7 @@ class SqmJavaEmitterTest {
         assertTrue(overBaseOnly.contains("\"base\""));
 
         String overFrameExclude = emitter.emit(
-            select(func("f").over(over(orderBy(order(col("x"))), rows(unboundedPreceding(), currentRow()), excludeGroup()))).from(tbl("t")).build()
+            select(func("f").over(over(orderBy(col("x")), rows(unboundedPreceding(), currentRow()), excludeGroup()))).from(tbl("t")).build()
         );
         assertTrue(overFrameExclude.contains("excludeGroup()"));
 
@@ -199,7 +199,7 @@ class SqmJavaEmitterTest {
                 dateAdd("day", lit(1), col("created_at")),
                 dateDiff("day", col("created_at"), col("updated_at")),
                 isNullFn(col("name"), lit("unknown")),
-                stringAgg(col("name"), lit(",")).withinGroup(orderBy(order(col("name"))))
+                stringAgg(col("name"), lit(",")).withinGroup(orderBy(col("name")))
             )
                 .from(tbl("users"))
                 .build()
@@ -278,6 +278,30 @@ class SqmJavaEmitterTest {
 
         var error = assertThrows(IllegalStateException.class, () -> emitter.emit(query));
         assertTrue(error.getMessage().contains("Order item must have expression or ordinal"));
+    }
+
+    @Test
+    void emit_coversOrderItemConversionBranches() {
+        Query query = select(star())
+            .from(tbl("t"))
+            .orderBy(
+                1,
+                col("collated").toOrderItem().collate("PG_CATALOG.C"),
+                col("nulls_only").nulls(Nulls.FIRST),
+                col("using_only").using("<"),
+                asc(2),
+                desc(3)
+            )
+            .build();
+
+        String source = emitter.emit(query);
+
+        assertTrue(source.contains("1,"));
+        assertTrue(source.contains("col(\"collated\").toOrderItem().collate(\"PG_CATALOG.C\")"));
+        assertTrue(source.contains("col(\"nulls_only\").nulls(Nulls.FIRST)"));
+        assertTrue(source.contains("col(\"using_only\").using(\"<\")"));
+        assertTrue(source.contains("order(2).asc()"));
+        assertTrue(source.contains("order(3).desc()"));
     }
 
     @Test
@@ -578,13 +602,13 @@ class SqmJavaEmitterTest {
             select(func("f").over("base", rows(currentRow()))).from(tbl("t")).build()
         );
         var baseOrderOnly = emitter.emit(
-            select(func("f").over("base", orderBy(order(col("x"))))).from(tbl("t")).build()
+            select(func("f").over("base", orderBy(col("x")))).from(tbl("t")).build()
         );
         var partitionFrameOnly = emitter.emit(
             select(func("f").over(partition(col("p")), rows(currentRow()))).from(tbl("t")).build()
         );
         var plainExcludeNoOthers = emitter.emit(
-            select(func("f").over(orderBy(order(col("x"))), rows(currentRow()), excludeNoOthers())).from(tbl("t")).build()
+            select(func("f").over(orderBy(col("x")), rows(currentRow()), excludeNoOthers())).from(tbl("t")).build()
         );
         var distinctOn = emitter.emit(
             select(star()).from(tbl("t")).distinct(distinctOn(col("t", "id"))).build()
@@ -677,7 +701,7 @@ class SqmJavaEmitterTest {
         )
             .from(tbl(func("generate_series", arg(lit(1)), arg(lit(3)))))
             .where(col("a").ne(lit(0)).or(col("b").lte(lit(10))))
-            .orderBy(order(col("name")).nullsDefault())
+            .orderBy(col("name").nulls(Nulls.DEFAULT))
             .build();
         var valuesQuery = select(star()).from(tbl(rows(row(lit(1), lit("a"))))).build();
         var withQuery = with(
@@ -724,7 +748,7 @@ class SqmJavaEmitterTest {
         assertTrue(source.contains("tbl("));
         assertTrue(source.contains("func(\"generate_series\", arg(lit(1)), arg(lit(3)))"));
         assertTrue(source.contains(".or("));
-        assertTrue(source.contains(".nullsDefault()"));
+        assertTrue(source.contains(".nulls(Nulls.DEFAULT)"));
         assertTrue(valuesSource.contains("tbl("));
         assertTrue(valuesSource.contains("rows(row(lit(1), lit(\"a\")))"));
         assertTrue(withSource.contains("with("));
@@ -739,11 +763,11 @@ class SqmJavaEmitterTest {
     void emittedFunctionOverDslCompilesAgainstCurrentOverloads(@TempDir Path tempDir) throws Exception {
         List<Statement> statements = List.of(
             select(func("f").over(over())).from(tbl("t")).build(),
-            select(func("f").over(orderBy(order(col("x"))))).from(tbl("t")).build(),
-            select(func("f").over(orderBy(order(col("x"))), rows(currentRow()))).from(tbl("t")).build(),
+            select(func("f").over(orderBy(col("x")))).from(tbl("t")).build(),
+            select(func("f").over(orderBy(col("x")), rows(currentRow()))).from(tbl("t")).build(),
             select(func("f").over(rows(currentRow()))).from(tbl("t")).build(),
             select(func("f").over(rows(currentRow()), excludeNoOthers())).from(tbl("t")).build(),
-            select(func("f").over(partition(col("p")), orderBy(order(col("x"))), rows(currentRow()), excludeTies())).from(tbl("t")).build(),
+            select(func("f").over(partition(col("p")), orderBy(col("x")), rows(currentRow()), excludeTies())).from(tbl("t")).build(),
             select(func("f").over("base", null, rows(currentRow()), excludeGroup())).from(tbl("t")).build()
         );
 

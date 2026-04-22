@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static io.sqm.dsl.Dsl.col;
-import static io.sqm.dsl.Dsl.group;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("GroupItem Tests")
@@ -16,10 +15,10 @@ class GroupItemTest {
     @Test
     @DisplayName("Grouping set copies items")
     void groupingSetCopiesItems() {
-        var items = new ArrayList<>(List.of(group("a"), group("b")));
+        var items = new ArrayList<>(List.of(GroupItem.from("a"), GroupItem.from("b")));
         var set = (GroupItem.GroupingSet) GroupItem.groupingSet(items);
 
-        items.add(group("c"));
+        items.add(GroupItem.from("c"));
         assertEquals(2, set.items().size());
     }
 
@@ -27,20 +26,20 @@ class GroupItemTest {
     @DisplayName("Grouping sets copies elements")
     void groupingSetsCopiesElements() {
         var elements = new ArrayList<>(List.of(
-            GroupItem.groupingSet(group("a")),
+            GroupItem.groupingSet(GroupItem.from("a")),
             GroupItem.groupingSet()
         ));
         var sets = (GroupItem.GroupingSets) GroupItem.groupingSets(elements);
 
-        elements.add(GroupItem.groupingSet(group("b")));
+        elements.add(GroupItem.groupingSet(GroupItem.from("b")));
         assertEquals(2, sets.sets().size());
     }
 
     @Test
     @DisplayName("Rollup and cube keep items")
     void rollupAndCubeKeepItems() {
-        var rollup = (GroupItem.Rollup) GroupItem.rollup(group("a"), group("b"));
-        var cube = (GroupItem.Cube) GroupItem.cube(group("a"), group("b"));
+        var rollup = (GroupItem.Rollup) GroupItem.rollup(GroupItem.from("a"), GroupItem.from("b"));
+        var cube = (GroupItem.Cube) GroupItem.cube(GroupItem.from("a"), GroupItem.from("b"));
 
         assertEquals(2, rollup.items().size());
         assertEquals(2, cube.items().size());
@@ -50,10 +49,10 @@ class GroupItemTest {
     @DisplayName("Grouping nodes dispatch accept to dedicated visitor methods")
     void groupingAcceptDispatch() {
         var simple = GroupItem.of(1);
-        var groupingSet = (GroupItem.GroupingSet) GroupItem.groupingSet(group("a"));
+        var groupingSet = (GroupItem.GroupingSet) GroupItem.groupingSet(GroupItem.from("a"));
         var groupingSets = (GroupItem.GroupingSets) GroupItem.groupingSets(groupingSet);
-        var rollup = (GroupItem.Rollup) GroupItem.rollup(group("a"));
-        var cube = (GroupItem.Cube) GroupItem.cube(group("a"));
+        var rollup = (GroupItem.Rollup) GroupItem.rollup(GroupItem.from("a"));
+        var cube = (GroupItem.Cube) GroupItem.cube(GroupItem.from("a"));
 
         var visitor = new io.sqm.core.walk.RecursiveNodeVisitor<String>() {
             @Override
@@ -106,5 +105,19 @@ class GroupItemTest {
         assertFalse(exprItem.isOrdinal());
         assertNotNull(exprItem.expr());
         assertNull(exprItem.ordinal());
+    }
+
+    @Test
+    @DisplayName("GroupItem.from converts supported objects and rejects unsupported inputs")
+    void fromConvertsSupportedInputsAndRejectsUnsupportedInputs() {
+        var existing = GroupItem.of(col("existing"));
+        var expr = col("expr");
+
+        assertSame(existing, GroupItem.from(existing));
+        assertEquals("name", assertInstanceOf(ColumnExpr.class, ((GroupItem.SimpleGroupItem) GroupItem.from("name")).expr()).name().value());
+        assertEquals(4, ((GroupItem.SimpleGroupItem) GroupItem.from(4L)).ordinal());
+        assertSame(expr, ((GroupItem.SimpleGroupItem) GroupItem.from(expr)).expr());
+        assertThrows(NullPointerException.class, () -> GroupItem.from(null));
+        assertThrows(IllegalArgumentException.class, () -> GroupItem.from(new Object()));
     }
 }

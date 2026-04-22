@@ -30,7 +30,7 @@ public final class AnalyticsQueries {
         return select(
                 func("row_number")
                     .over(
-                        partition(col("dept")), orderBy(order(col("salary")).desc())
+                        partition(col("dept")), orderBy(col("salary").desc())
                     )
                     .as("rn")
             )

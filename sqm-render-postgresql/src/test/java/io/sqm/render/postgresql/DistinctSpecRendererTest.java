@@ -56,7 +56,7 @@ class DistinctSpecRendererTest {
         var query = Query.select(col("name"))
             .from(tbl("users"))
             .distinct(DistinctSpec.TRUE)
-            .orderBy(order("name"))
+            .orderBy("name")
             .build();
         
         var sql = renderContext.render(query).sql();
@@ -86,7 +86,7 @@ class DistinctSpecRendererTest {
         var query = Query.select(func("COUNT", starArg()))
             .from(tbl("users"))
             .distinct(DistinctSpec.TRUE)
-            .groupBy(group("department"))
+            .groupBy("department")
             .build();
         
         var sql = renderContext.render(query).sql();

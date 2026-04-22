@@ -1,6 +1,5 @@
 package io.sqm.dbit.sqlserver;
 
-import io.sqm.core.OrderItem;
 import io.sqm.core.QualifiedName;
 import io.sqm.core.QuoteStyle;
 import io.sqm.dbit.support.DialectExecutionCase;
@@ -22,7 +21,7 @@ final class SqlServerExecutionCases {
                 var query = select(col(id("u", QuoteStyle.BRACKETS), id("id", QuoteStyle.BRACKETS)))
                     .from(tbl(id("users", QuoteStyle.BRACKETS)).as(id("u", QuoteStyle.BRACKETS)))
                     .top(top(1))
-                    .orderBy(order(col(id("u", QuoteStyle.BRACKETS), id("id", QuoteStyle.BRACKETS))).asc())
+                    .orderBy(col(id("u", QuoteStyle.BRACKETS), id("id", QuoteStyle.BRACKETS)).asc())
                     .build();
 
                 var sql = harness.render(query);
@@ -37,7 +36,7 @@ final class SqlServerExecutionCases {
                 var query = select(col("id"))
                     .from(tbl("users"))
                     .top(topPercent(lit(50)))
-                    .orderBy(order(col("score")).desc(), order(col("id")).asc())
+                    .orderBy(col("score").desc(), col("id").asc())
                     .build();
 
                 var sql = harness.render(query);
@@ -52,7 +51,7 @@ final class SqlServerExecutionCases {
                 var query = select(col("id"))
                     .from(tbl("users"))
                     .top(topWithTies(lit(1)))
-                    .orderBy(order(col("score")).desc())
+                    .orderBy(col("score").desc())
                     .build();
 
                 var sql = harness.render(query);
@@ -66,7 +65,7 @@ final class SqlServerExecutionCases {
             harness -> {
                 var query = select(col("id"))
                     .from(tbl("users"))
-                    .orderBy(OrderItem.of(col("id")))
+                    .orderBy(col("id"))
                     .limitOffset(io.sqm.core.LimitOffset.of(lit(2), lit(1)))
                     .build();
 
@@ -81,7 +80,7 @@ final class SqlServerExecutionCases {
             harness -> {
                 var query = select(col("id"))
                     .from(tbl("users").withNoLock())
-                    .orderBy(order(col("id")).asc())
+                    .orderBy(col("id").asc())
                     .build();
 
                 var sql = harness.render(query);
@@ -133,7 +132,7 @@ final class SqlServerExecutionCases {
             EnumSet.of(SqlServerLiveFeature.STRING_AGG),
             harness -> {
                 var query = select(
-                    stringAgg(col("name"), lit(",")).withinGroup(orderBy(order(col("name"))))
+                    stringAgg(col("name"), lit(",")).withinGroup(orderBy(col("name")))
                 ).from(tbl("users"))
                     .where(col("active").eq(lit(1)))
                     .build();

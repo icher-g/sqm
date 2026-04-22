@@ -294,9 +294,9 @@ public class NodeSubtypesJsonTest {
             .from(tbl("products"))
             .distinct(DistinctSpec.TRUE)
             .where(col("price").gt(lit(100)))
-            .groupBy(group(col("category")))
+            .groupBy(col("category"))
             .having(func("count", starArg()).gt(lit(10)))
-            .orderBy(order(col("category")).asc())
+            .orderBy(col("category").asc())
             .build();
 
         var back = roundTrip(query, SelectQuery.class);
@@ -404,9 +404,9 @@ public class NodeSubtypesJsonTest {
             col("name").like("%Phone%")
                 .and(col("price").gt(lit(100)))
         )
-        .groupBy(group(col("id")), group(col("name")))
+        .groupBy(col("id"), col("name"))
         .having(func("count", starArg()).gt(lit(0)))
-        .orderBy(order(col("name")).asc())
+        .orderBy(col("name").asc())
         .limit(10L)
         .offset(0L)
             .build();

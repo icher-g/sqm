@@ -1,12 +1,12 @@
 package io.sqm.validate.postgresql;
 
-import io.sqm.core.CteDef;
-import io.sqm.core.Query;
-import io.sqm.core.RegexPredicate;
 import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
+import io.sqm.core.CteDef;
+import io.sqm.core.Query;
+import io.sqm.core.RegexPredicate;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.SchemaStatementValidator;
@@ -29,38 +29,6 @@ class PostgresValidationDialectVersionMatrixTest {
         )
     );
 
-    @ParameterizedTest(name = "{0}")
-    @MethodSource("featureCases")
-    void validate_respectsVersionedFeatures(
-        String name,
-        SqlDialectVersion version,
-        Query query,
-        boolean expectedUnsupported
-    ) {
-            var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(version));
-        var result = validator.validate(query);
-
-        var unsupportedCount = result.problems().stream()
-            .filter(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED)
-            .count();
-        assertEquals(expectedUnsupported ? 1L : 0L, unsupportedCount);
-    }
-
-    @ParameterizedTest(name = "{0}")
-    @MethodSource("nestedCases")
-    void validate_reportsUnsupportedFeatureOnlyOnceForNestedQueries(
-        String name,
-        Query query
-    ) {
-        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 0)));
-        var result = validator.validate(query);
-
-        var unsupportedCount = result.problems().stream()
-            .filter(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED)
-            .count();
-        assertEquals(1L, unsupportedCount);
-    }
-
     private static Stream<Arguments> featureCases() {
         var lateral = select(star()).from(tbl("users").lateral()).build();
         var withOrdinality = select(star())
@@ -68,7 +36,7 @@ class PostgresValidationDialectVersionMatrixTest {
             .build();
         var groupingSetsQuery = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .groupBy(groupingSets(group("u", "id")))
+            .groupBy(groupingSets(col("u", "id")))
             .build();
         var cteMaterialized = with(
             cte(
@@ -94,12 +62,12 @@ class PostgresValidationDialectVersionMatrixTest {
             .build();
         var groupsFrame = select(
             func("sum", arg(col("u", "id")))
-                .over(over(orderBy(order(col("u", "id"))), groups(unboundedPreceding(), currentRow())))
+                .over(over(orderBy(col("u", "id")), groups(unboundedPreceding(), currentRow())))
         ).from(tbl("users").as("u"))
             .build();
         var excludeFrame = select(
             func("sum", arg(col("u", "id")))
-                .over(over(orderBy(order(col("u", "id"))), rows(unboundedPreceding(), currentRow()), excludeTies()))
+                .over(over(orderBy(col("u", "id")), rows(unboundedPreceding(), currentRow()), excludeTies()))
         ).from(tbl("users").as("u"))
             .build();
         var ilike = select(star())
@@ -128,11 +96,11 @@ class PostgresValidationDialectVersionMatrixTest {
             .build();
         var rollupQuery = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .groupBy(rollup(group("u", "id")))
+            .groupBy(rollup(col("u", "id")))
             .build();
         var cubeQuery = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .groupBy(cube(group("u", "id")))
+            .groupBy(cube(col("u", "id")))
             .build();
 
         return Stream.of(
@@ -191,7 +159,7 @@ class PostgresValidationDialectVersionMatrixTest {
         var nestedAsQueryExpr = select(expr(
             select(col("i", "id"))
                 .from(tbl("users").as("i"))
-                .groupBy(groupingSets(group("i", "id")))
+                .groupBy(groupingSets(col("i", "id")))
                 .build()
         )).from(tbl("users").as("u"))
             .build();
@@ -200,7 +168,7 @@ class PostgresValidationDialectVersionMatrixTest {
             .from(tbl(
                 select(col("i", "id"))
                     .from(tbl("users").as("i"))
-                    .groupBy(groupingSets(group("i", "id")))
+                    .groupBy(groupingSets(col("i", "id")))
                     .build()
             ).as("x"))
             .build();
@@ -210,7 +178,7 @@ class PostgresValidationDialectVersionMatrixTest {
             .where(exists(
                 select(col("i", "id"))
                     .from(tbl("users").as("i"))
-                    .groupBy(groupingSets(group("i", "id")))
+                    .groupBy(groupingSets(col("i", "id")))
                     .build()
             ))
             .build();
@@ -220,6 +188,38 @@ class PostgresValidationDialectVersionMatrixTest {
             Arguments.of("nested-querytable-no-duplicate", nestedAsQueryTable),
             Arguments.of("nested-exists-no-duplicate", nestedAsExists)
         );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("featureCases")
+    void validate_respectsVersionedFeatures(
+        String name,
+        SqlDialectVersion version,
+        Query query,
+        boolean expectedUnsupported
+    ) {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(version));
+        var result = validator.validate(query);
+
+        var unsupportedCount = result.problems().stream()
+            .filter(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED)
+            .count();
+        assertEquals(expectedUnsupported ? 1L : 0L, unsupportedCount);
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("nestedCases")
+    void validate_reportsUnsupportedFeatureOnlyOnceForNestedQueries(
+        String name,
+        Query query
+    ) {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 0)));
+        var result = validator.validate(query);
+
+        var unsupportedCount = result.problems().stream()
+            .filter(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED)
+            .count();
+        assertEquals(1L, unsupportedCount);
     }
 }
 

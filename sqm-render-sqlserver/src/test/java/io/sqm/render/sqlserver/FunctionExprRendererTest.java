@@ -18,7 +18,7 @@ class FunctionExprRendererTest {
         assertEquals("GETDATE()", ctx.render(getDate()).sql());
         assertEquals("ISNULL(name, 'unknown')", ctx.render(isNullFn(col("name"), lit("unknown"))).sql());
         assertEquals("STRING_AGG(name, ',') WITHIN GROUP (ORDER BY name)",
-            ctx.render(stringAgg(col("name"), lit(",")).withinGroup(orderBy(order(col("name"))))).sql());
+            ctx.render(stringAgg(col("name"), lit(",")).withinGroup(orderBy("name"))).sql());
     }
 
     @Test

@@ -3,6 +3,7 @@ package io.sqm.core;
 import io.sqm.core.internal.SelectQueryBuilderImpl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -106,6 +107,17 @@ public interface SelectQueryBuilder {
     SelectQueryBuilder where(Predicate predicate);
 
     /**
+     * Sets group items from the provided objects. Only {@code String, Number and Expression} are supported.
+     *
+     * @param items a list of items.
+     * @return this builder
+     */
+    default SelectQueryBuilder groupBy(Object... items) {
+        var groupItems = Arrays.stream(items).map(GroupItem::from).toList();
+        return groupBy(groupItems);
+    }
+
+    /**
      * Sets the {@code GROUP BY} clause from items.
      *
      * @param items group-by items
@@ -121,6 +133,20 @@ public interface SelectQueryBuilder {
      */
     default SelectQueryBuilder groupBy(GroupItem... items) {
         return groupBy(List.of(items));
+    }
+
+    /**
+     * Sets order items from the provided objects.
+     *
+     * <p>Supported inputs are existing order items, column-name strings,
+     * numeric ordinals, and expressions.</p>
+     *
+     * @param items a list of items
+     * @return this builder
+     */
+    default SelectQueryBuilder orderBy(Object... items) {
+        var orderItems = Arrays.stream(items).map(OrderItem::from).toList();
+        return orderBy(orderItems);
     }
 
     /**
@@ -166,16 +192,6 @@ public interface SelectQueryBuilder {
     SelectQueryBuilder orderBy(List<OrderItem> items);
 
     /**
-     * Sets the {@code ORDER BY} clause from items.
-     *
-     * @param items order-by items
-     * @return this builder
-     */
-    default SelectQueryBuilder orderBy(OrderItem... items) {
-        return orderBy(List.of(items));
-    }
-
-    /**
      * Sets the distinct specification.
      *
      * @param distinctSpec distinct specification, may be {@code null}
@@ -214,8 +230,8 @@ public interface SelectQueryBuilder {
     /**
      * Sets a plain {@code TOP (<count>)} specification using an expression.
      *
-     * @param count top count expression
-     * @param percent whether {@code PERCENT} is present
+     * @param count    top count expression
+     * @param percent  whether {@code PERCENT} is present
      * @param withTies whether {@code WITH TIES} is present
      * @return this builder
      */

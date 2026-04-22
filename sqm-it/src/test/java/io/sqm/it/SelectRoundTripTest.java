@@ -15,13 +15,13 @@ public class SelectRoundTripTest {
                 col("u", "user_name"),
                 col("o", "status"),
                 func("count", starArg()).as("cnt"))
-            .from(tbl("orders").as("o"))
-            .join(inner(tbl("users").as("u"))
-                .on(col("u", "id").eq(col("o", "user_id"))))
-            .where(col("o", "status").in("A", "B"))
-            .groupBy(group("u", "user_name"), group("o", "status"))
-            .having(func("count", starArg()).gt(10))
-            .build();
+                .from(tbl("orders").as("o"))
+                .join(inner(tbl("users").as("u"))
+                    .on(col("u", "id").eq(col("o", "user_id"))))
+                .where(col("o", "status").in("A", "B"))
+                .groupBy(col("u", "user_name"), col("o", "status"))
+                .having(func("count", starArg()).gt(10))
+                .build();
 
         String sql = Utils.renderAnsi(original);
         Query reparsed = Utils.parse(sql);
@@ -35,11 +35,11 @@ public class SelectRoundTripTest {
     void select_with_order_by_limit_offset() {
         Query original =
             select(col("p", "id"), col("p", "name"))
-            .from(tbl("products").as("p"))
-            .orderBy(order(col("p", "name")).asc())
-            .limit(10)
-            .offset(20)
-            .build();
+                .from(tbl("products").as("p"))
+                .orderBy(col("p", "name").asc())
+                .limit(10)
+                .offset(20)
+                .build();
 
         String sql = Utils.renderAnsi(original);
         Query reparsed = Utils.parse(sql);

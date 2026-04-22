@@ -15,12 +15,36 @@ import io.sqm.core.walk.NodeVisitor;
  */
 public non-sealed interface OrderItem extends Node {
     /**
+     * Creates an {@link OrderItem} from the provided object.
+     *
+     * <p>Supported inputs are existing order items, column-name strings,
+     * numeric ordinals, and non-collation expressions.</p>
+     *
+     * @param item an item to create the {@link OrderItem} from.
+     * @return a new {@link OrderItem} instance.
+     */
+    static OrderItem from(Object item) {
+        return switch (item) {
+            case OrderItem o -> o;
+            case String s -> OrderItem.of(ColumnExpr.of(null, Identifier.of(s)));
+            case CollateExpr ignored -> throw new IllegalArgumentException("CollateExpr cannot be used directly as an ORDER BY item; call OrderItem.collate(...) after creating the order item instead");
+            case Expression e -> OrderItem.of(e);
+            case Number i -> OrderItem.of(i.intValue());
+            case null -> throw new NullPointerException("item is null");
+            default -> throw new IllegalArgumentException("The provided object type '" + item.getClass().getName() + "' is not supported");
+        };
+    }
+
+    /**
      * Creates an order by item for a provided expr.
      *
      * @param expr an expr to be used in an OrderBy clause.
      * @return A newly created instance of an order by item.
      */
     static OrderItem of(Expression expr) {
+        if (expr instanceof CollateExpr) {
+            throw new IllegalArgumentException("CollateExpr cannot be used directly as an ORDER BY item; call OrderItem.collate(...) after creating the order item instead");
+        }
         return of(expr, null, null, null, null, null);
     }
 
@@ -46,6 +70,9 @@ public non-sealed interface OrderItem extends Node {
      * @return a newly created instance of an order by item.
      */
     static OrderItem of(Expression expr, Integer ordinal, Direction direction, Nulls nulls, QualifiedName collate, String usingOperator) {
+        if (expr instanceof CollateExpr) {
+            throw new IllegalArgumentException("CollateExpr cannot be used directly as an ORDER BY item; call OrderItem.collate(...) after creating the order item instead");
+        }
         return new Impl(expr, ordinal, direction, nulls, collate, usingOperator);
     }
 

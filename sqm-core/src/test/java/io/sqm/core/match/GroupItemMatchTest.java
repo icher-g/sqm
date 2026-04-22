@@ -4,7 +4,6 @@ import io.sqm.core.GroupItem;
 import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.col;
-import static io.sqm.dsl.Dsl.group;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class GroupItemMatchTest {
@@ -23,7 +22,7 @@ class GroupItemMatchTest {
 
     @Test
     void matchesGroupingSet() {
-        var item = (GroupItem.GroupingSet) GroupItem.groupingSet(group("a"));
+        var item = (GroupItem.GroupingSet) GroupItem.groupingSet(GroupItem.from("a"));
 
         var result = item.matchGroupItem()
             .groupingSet(i -> "set")
@@ -34,7 +33,7 @@ class GroupItemMatchTest {
 
     @Test
     void matchesGroupingSets() {
-        var item = (GroupItem.GroupingSets) GroupItem.groupingSets(GroupItem.groupingSet(group("a")));
+        var item = (GroupItem.GroupingSets) GroupItem.groupingSets(GroupItem.groupingSet(GroupItem.from("a")));
 
         var result = item.matchGroupItem()
             .groupingSets(i -> "sets")
@@ -45,8 +44,8 @@ class GroupItemMatchTest {
 
     @Test
     void matchesRollupAndCube() {
-        var rollup = (GroupItem.Rollup) GroupItem.rollup(group("a"));
-        var cube = (GroupItem.Cube) GroupItem.cube(group("a"));
+        var rollup = (GroupItem.Rollup) GroupItem.rollup(GroupItem.from("a"));
+        var cube = (GroupItem.Cube) GroupItem.cube(GroupItem.from("a"));
 
         var rollupResult = rollup.matchGroupItem()
             .rollup(i -> "rollup")
@@ -61,7 +60,7 @@ class GroupItemMatchTest {
 
     @Test
     void otherwiseReturnsFallbackWhenNoHandlerMatches() {
-        var item = (GroupItem.GroupingSet) GroupItem.groupingSet(group("a"));
+        var item = (GroupItem.GroupingSet) GroupItem.groupingSet(GroupItem.from("a"));
 
         var result = item.matchGroupItem()
             .simple(i -> "simple")

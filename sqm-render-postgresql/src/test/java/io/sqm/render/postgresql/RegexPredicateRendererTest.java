@@ -120,7 +120,7 @@ class RegexPredicateRendererTest {
     void rendersRegexInHavingClause() {
         var query = select(col("category"), func("COUNT", starArg()).as("cnt"))
             .from(tbl("products"))
-            .groupBy(group("category"))
+            .groupBy("category")
             .having(RegexPredicate.of(RegexMode.MATCH_INSENSITIVE, col("category"), lit("^elec"), false))
             .build();
         

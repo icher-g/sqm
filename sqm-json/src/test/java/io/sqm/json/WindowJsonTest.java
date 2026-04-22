@@ -37,7 +37,7 @@ public class WindowJsonTest {
         )
             .from(tbl("employees"))
             .window(
-                window("w", partition(col("dept")), orderBy(order(col("salary")).desc()))
+                window("w", partition(col("dept")), orderBy(col("salary").desc()))
             )
             .build();
 
@@ -66,7 +66,7 @@ public class WindowJsonTest {
         var fx = func("sum", arg(col("amount")))
             .over(
                 partition(col("acct_id")),
-                orderBy(order(col("ts")).asc()),
+                orderBy(col("ts").asc()),
                 rows(preceding(5))
             );
 
@@ -96,7 +96,7 @@ public class WindowJsonTest {
         var fx = func("rank")
             .over(
                 partition(col("grp")),
-                orderBy(order(col("score")).desc()),
+                orderBy(col("score").desc()),
                 groups(preceding(1), following(1)),
                 excludeTies()
             );
@@ -128,7 +128,7 @@ public class WindowJsonTest {
         )
             .from(tbl("employees"))
             .window(
-                window("w", partition(col("dept")), orderBy(order(col("salary")).desc()))
+                window("w", partition(col("dept")), orderBy(col("salary").desc()))
             )
             .build();
 
@@ -180,8 +180,8 @@ public class WindowJsonTest {
     @Test
     void windowDef_list_serialization_is_stable() throws Exception {
         var defs = java.util.List.of(
-            window("w1", partition(col("k")), orderBy(order(col("ts")).asc())),
-            window("w2", partition(), orderBy(order(col("v")).desc()))
+            window("w1", partition(col("k")), orderBy(col("ts").asc())),
+            window("w2", partition(), orderBy(col("v").desc()))
         );
 
         String json = mapper.writeValueAsString(defs);

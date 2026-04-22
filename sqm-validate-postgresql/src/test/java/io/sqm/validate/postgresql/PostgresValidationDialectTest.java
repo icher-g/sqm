@@ -1,14 +1,14 @@
 package io.sqm.validate.postgresql;
 
-import io.sqm.core.CteDef;
-import io.sqm.core.MergeStatement;
-import io.sqm.core.Query;
 import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
-import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.CteDef;
+import io.sqm.core.MergeStatement;
+import io.sqm.core.Query;
 import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.SchemaStatementValidator;
 import org.junit.jupiter.api.Test;
@@ -16,11 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static io.sqm.dsl.Dsl.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class PostgresValidationDialectTest {
     // Touch file to force test recompilation after Dsl.select(...) return-type refactor.
@@ -30,6 +26,11 @@ class PostgresValidationDialectTest {
             CatalogColumn.of("name", CatalogType.STRING)
         )
     );
+
+    private static boolean hasUnsupportedFeature(List<ValidationProblem> problems, String clausePath) {
+        return problems.stream().anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+            && clausePath.equals(p.clausePath()));
+    }
 
     @Test
     void validate_reportsUnsupportedLateralInPostgres90() {
@@ -88,7 +89,7 @@ class PostgresValidationDialectTest {
         var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 0)));
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .groupBy(groupingSets(group("u", "id")))
+            .groupBy(groupingSets(col("u", "id")))
             .build();
 
         var result = validator.validate(query);
@@ -153,7 +154,7 @@ class PostgresValidationDialectTest {
         Query query = select(col("u", "name"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "name")))
-            .orderBy(order(col("u", "id")))
+            .orderBy(col("u", "id"))
             .build();
 
         var result = validator.validate(query);
@@ -169,7 +170,7 @@ class PostgresValidationDialectTest {
         Query query = select(col("u", "name"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "name")))
-            .orderBy(order(3))
+            .orderBy(3)
             .build();
 
         var result = validator.validate(query);
@@ -185,7 +186,7 @@ class PostgresValidationDialectTest {
         Query query = select(star(), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "id")))
-            .orderBy(order(1))
+            .orderBy(1)
             .build();
 
         var result = validator.validate(query);
@@ -201,7 +202,7 @@ class PostgresValidationDialectTest {
         Query query = select(col("u", "name"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "name")))
-            .orderBy(order(col("u", "name")), order(col("u", "id")))
+            .orderBy(col("u", "name"), col("u", "id"))
             .build();
 
         var result = validator.validate(query);
@@ -216,7 +217,7 @@ class PostgresValidationDialectTest {
         Query query = select(col("u", "name"), col("u", "id"))
             .from(tbl("users").as("u"))
             .distinct(distinctOn(col("u", "name")))
-            .orderBy(order(1), order(2))
+            .orderBy(1, 2)
             .build();
 
         var result = validator.validate(query);
@@ -230,7 +231,7 @@ class PostgresValidationDialectTest {
         var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .orderBy(order(col("u", "id")).using(">").asc())
+            .orderBy(col("u", "id").using(">").asc())
             .build();
 
         var result = validator.validate(query);
@@ -272,7 +273,7 @@ class PostgresValidationDialectTest {
         var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .groupBy(group("u", "id"))
+            .groupBy(col("u", "id"))
             .lockFor(update(), List.of(), false, false)
             .build();
 
@@ -318,7 +319,7 @@ class PostgresValidationDialectTest {
         var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(col("u", "id"))
             .from(tbl("users").as("u"))
-            .orderBy(order(col("u", "id")).using(" "))
+            .orderBy(col("u", "id").using(" "))
             .build();
 
         var result = validator.validate(query);
@@ -596,11 +597,6 @@ class PostgresValidationDialectTest {
     @Test
     void dialect_ofRejectsNullVersion() {
         assertThrows(NullPointerException.class, () -> PostgresValidationDialect.of(null));
-    }
-
-    private static boolean hasUnsupportedFeature(List<ValidationProblem> problems, String clausePath) {
-        return problems.stream().anyMatch(p -> p.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
-            && clausePath.equals(p.clausePath()));
     }
 }
 

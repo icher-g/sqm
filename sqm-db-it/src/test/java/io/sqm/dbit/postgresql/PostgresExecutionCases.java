@@ -20,8 +20,8 @@ final class PostgresExecutionCases {
                     .from(tbl("events").as("e"))
                     .distinct(distinctOn(col("e", "user_id")))
                     .orderBy(
-                        order(col("e", "user_id")).asc(),
-                        order(col("e", "version")).desc()
+                        col("e", "user_id").asc(),
+                        col("e", "version").desc()
                     )
                     .build();
 

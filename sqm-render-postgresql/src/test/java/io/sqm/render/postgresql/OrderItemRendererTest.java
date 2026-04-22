@@ -1,5 +1,7 @@
 package io.sqm.render.postgresql;
 
+import io.sqm.core.OrderItem;
+
 import io.sqm.core.Nulls;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.ansi.OrderItemRenderer;
@@ -12,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static io.sqm.dsl.Dsl.col;
-import static io.sqm.dsl.Dsl.order;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -30,7 +31,7 @@ class OrderItemRendererTest {
         var rc = RenderContext.of(new PostgresDialect());
         var renderer = new OrderItemRenderer();
 
-        var item = order(col("t", "c")).using("<").nulls(Nulls.FIRST);
+        var item = col("t", "c").using("<").nulls(Nulls.FIRST);
         String sql = renderToSql(renderer, item, rc);
 
         int iExpr = sql.indexOf("t.c");
@@ -63,7 +64,7 @@ class OrderItemRendererTest {
         var rc = RenderContext.of(new PostgresDialect());
         var renderer = new OrderItemRenderer();
 
-        var item = order(col("t", "c")).collate("de-CH");
+        var item = OrderItem.of(col("t", "c")).collate("de-CH");
         String sql = renderToSql(renderer, item, rc);
 
         assertTrue(sql.contains(" COLLATE \"de-CH\""), "collation should be quoted");

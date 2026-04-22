@@ -1,7 +1,7 @@
 package io.sqm.core;
 
-import io.sqm.core.walk.NodeVisitor;
 import io.sqm.core.match.GroupItemMatch;
+import io.sqm.core.walk.NodeVisitor;
 
 import java.util.List;
 import java.util.Objects;
@@ -14,6 +14,27 @@ import java.util.Objects;
  * or {@code CUBE}.
  */
 public non-sealed interface GroupItem extends Node {
+
+    /**
+     * Creates an {@link GroupItem} from the provided object.
+     *
+     * <p>Supported inputs are existing group items, column-name strings,
+     * numeric ordinals, and expressions.</p>
+     *
+     * @param item an item to create the {@link GroupItem} from.
+     * @return a new {@link GroupItem} instance.
+     */
+    static GroupItem from(Object item) {
+        return switch (item) {
+            case GroupItem g -> g;
+            case String s -> GroupItem.of(ColumnExpr.of(null, Identifier.of(s)));
+            case Expression e -> GroupItem.of(e);
+            case Number i -> GroupItem.of(i.intValue());
+            case null -> throw new NullPointerException("item is null");
+            default -> throw new IllegalArgumentException("The provided object type '" + item.getClass().getName() + "' is not supported");
+        };
+    }
+
     /**
      * Creates a group by item from column.
      *

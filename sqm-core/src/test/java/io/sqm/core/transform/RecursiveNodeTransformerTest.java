@@ -54,11 +54,11 @@ class RecursiveNodeTransformerTest {
 
     @Test
     void visitFunctionExpr() {
-        var func = func("count", starArg()).withinGroup(OrderItem.of(1));
+        var func = func("count", starArg()).withinGroup(order(1));
         var groupTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitOrderItem(OrderItem i) {
-                return OrderItem.of(2);
+                return order(2);
             }
         };
         var f1 = (FunctionExpr) func.accept(groupTransformer);
@@ -299,7 +299,7 @@ class RecursiveNodeTransformerTest {
 
     @Test
     void visitGroupBy() {
-        var gb = GroupBy.of(List.of(group("c1"), group("c2")));
+        var gb = GroupBy.from("c1", "c2");
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
@@ -324,7 +324,7 @@ class RecursiveNodeTransformerTest {
 
     @Test
     void visitSimpleGroupItem() {
-        var item = (GroupItem.SimpleGroupItem) group("c1");
+        var item = (GroupItem.SimpleGroupItem) GroupItem.from("c1");
         var transformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
@@ -345,8 +345,8 @@ class RecursiveNodeTransformerTest {
     @Test
     void visitGroupingSets() {
         var item = groupingSets(
-            groupingSet(group("c1")),
-            groupingSet(group("c2")),
+            groupingSet("c1"),
+            groupingSet("c2"),
             groupingSet()
         );
         var transformer = new RecursiveNodeTransformer() {
@@ -367,7 +367,7 @@ class RecursiveNodeTransformerTest {
 
     @Test
     void visitRollup() {
-        var rollup = rollup(group("c1"), group("c2"));
+        var rollup = rollup("c1", "c2");
         var transformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
@@ -383,7 +383,7 @@ class RecursiveNodeTransformerTest {
 
     @Test
     void visitCube() {
-        var cube = cube(group("c1"));
+        var cube = cube("c1");
         var transformed = (GroupItem.Cube) cube.accept(new NothingTransformer());
         assertSame(cube, transformed);
     }
@@ -736,7 +736,7 @@ class RecursiveNodeTransformerTest {
     void visitCompositeQuery() {
         var query1 = select(lit(1)).build();
         var query2 = select(lit(2)).build();
-        var cq = query1.union(query2).orderBy(order("c1")).limit(1L);
+        var cq = query1.union(query2).orderBy(OrderItem.from("c1")).limit(1L);
         // change one of the queries
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
@@ -873,7 +873,7 @@ class RecursiveNodeTransformerTest {
 
     @Test
     void visitOverDef() {
-        var over = over(partition(col("p1")), orderBy(order(lit(1))), rows(currentRow()));
+        var over = over(partition(col("p1")), orderBy(lit(1)), rows(currentRow()));
         var columnTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitColumnExpr(ColumnExpr c) {
@@ -913,7 +913,7 @@ class RecursiveNodeTransformerTest {
             .def(d -> d.frame().unit())
             .orElse(null)
         );
-        var baseOver = over("w", orderBy(order(lit(1))));
+        var baseOver = over("w", orderBy(lit(1)));
         var baseOver1 = (OverSpec) baseOver.accept(literalTransformer);
         assertEquals(2, baseOver1.matchOverSpec()
             .def(d -> d.orderBy().items().getFirst().expr().matchExpression()

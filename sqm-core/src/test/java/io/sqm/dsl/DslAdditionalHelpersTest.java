@@ -18,6 +18,11 @@ class DslAdditionalHelpersTest {
 
         var reset = item.nullsDefault();
         assertEquals(Nulls.DEFAULT, reset.nulls());
+
+        assertEquals(Direction.ASC, asc(2).direction());
+        assertEquals(2, asc(2).ordinal());
+        assertEquals(Direction.DESC, desc(3).direction());
+        assertEquals(3, desc(3).ordinal());
     }
 
     @Test
@@ -31,7 +36,7 @@ class DslAdditionalHelpersTest {
 
     @Test
     void overHelpersWithoutPartition() {
-        var byOrder = over(orderBy(order(col("created_at")).desc()));
+        var byOrder = over(orderBy(col("created_at").desc()));
         assertInstanceOf(OverSpec.Def.class, byOrder);
         assertNotNull(byOrder.orderBy());
 
@@ -42,7 +47,7 @@ class DslAdditionalHelpersTest {
         assertInstanceOf(OverSpec.Def.class, baseOnly);
         assertEquals("w", baseOnly.baseWindow().value());
 
-        var withExclude = over(orderBy(order(col("created_at"))), rows(preceding(1), currentRow()), excludeNoOthers());
+        var withExclude = over(orderBy("created_at"), rows(preceding(1), currentRow()), excludeNoOthers());
         assertInstanceOf(OverSpec.Def.class, withExclude);
         assertEquals(OverSpec.Exclude.NO_OTHERS, withExclude.exclude());
     }
@@ -166,8 +171,8 @@ class DslAdditionalHelpersTest {
         var leftJoin = left(tbl("teams"));
         var rightJoin = right(tbl("teams"));
         var fullJoin = full(tbl("accounts"));
-        var tableColumnOrder = order("u", "name");
-        var orderBy = orderBy(order(col("name")));
+        var tableColumnOrder = col("u", "name");
+        var orderBy = orderBy("name");
         var namedWindow = window("w", partition(col("dept")), orderBy);
         var withFrameWindow = window("wf", partition(col("dept")), orderBy, rows(currentRow()));
         var withExcludeWindow = window("we", partition(col("dept")), orderBy, rows(currentRow()), excludeGroup());
@@ -246,7 +251,7 @@ class DslAdditionalHelpersTest {
         assertEquals(JoinKind.LEFT, leftJoin.kind());
         assertEquals(JoinKind.RIGHT, rightJoin.kind());
         assertEquals(JoinKind.FULL, fullJoin.kind());
-        assertEquals("u", assertInstanceOf(ColumnExpr.class, tableColumnOrder.expr()).tableAlias().value());
+        assertEquals("u", assertInstanceOf(ColumnExpr.class, tableColumnOrder).tableAlias().value());
         assertEquals(1, namedWindow.spec().orderBy().items().size());
         assertNotNull(withFrameWindow.spec().frame());
         assertEquals(OverSpec.Exclude.GROUP, withExcludeWindow.spec().exclude());

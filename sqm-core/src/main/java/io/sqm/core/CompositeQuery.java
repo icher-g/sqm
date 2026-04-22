@@ -84,11 +84,11 @@ public non-sealed interface CompositeQuery extends Query {
     /**
      * Adds an OrderBy statement to the composite query.
      *
-     * @param items a list of items in the OrderBy statement.
+     * @param items a list of item inputs in the OrderBy statement.
      * @return A new instance of the composite query with the provided OrderBy items. All the rest of the fields are preserved.
      */
-    default CompositeQuery orderBy(OrderItem... items) {
-        return new Impl(terms(), ops(), OrderBy.of(List.of(items)), limitOffset());
+    default CompositeQuery orderBy(Object... items) {
+        return new Impl(terms(), ops(), OrderBy.from(items), limitOffset());
     }
 
     /**

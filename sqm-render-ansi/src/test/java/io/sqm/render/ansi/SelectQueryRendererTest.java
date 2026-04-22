@@ -1,8 +1,8 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.dialect.DialectCapabilities;
-import io.sqm.render.defaults.DefaultRenderContext;
 import io.sqm.render.ansi.spi.AnsiDialect;
+import io.sqm.render.defaults.DefaultRenderContext;
 import io.sqm.render.spi.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -138,138 +138,6 @@ public class SelectQueryRendererTest {
     // Tests
     // -----------------------
 
-    @Nested
-    @DisplayName("LIMIT / OFFSET style")
-    class LimitOffsetStyle {
-
-        @Test
-        @DisplayName("LIMIT + OFFSET -> tail 'LIMIT n OFFSET m'")
-        void limitAndOffset() {
-            var ctx = ctxWith(limitOffset());
-
-            var q = select(col("t1", "c1"))
-                .from(tbl("t1"))
-                .orderBy(order("t1", "c1").asc())
-                .limit(10L)
-                .offset(5L)
-                .build();
-
-            String sql = ctx.render(q).sql();
-
-            assertTrue(sql.contains("LIMIT 10"), "should contain LIMIT 10");
-            assertTrue(sql.contains("OFFSET 5"), "should contain OFFSET 5");
-            assertTrue(sql.indexOf("LIMIT 10") < sql.indexOf("OFFSET 5"), "LIMIT should appear before OFFSET for ANSI/MySQL/PG style");
-        }
-
-        @Test
-        @DisplayName("LIMIT only -> tail 'LIMIT n'")
-        void limitOnly() {
-            var ctx = ctxWith(limitOffset());
-
-            var q = select(col("t", "c"))
-                .from(tbl("t"))
-                .limit(3L)
-                .build();
-
-            String sql = ctx.render(q).sql();
-            assertTrue(sql.endsWith("LIMIT 3") || sql.contains("\nLIMIT 3"),
-                "expected LIMIT 3 tail");
-        }
-
-        @Test
-        @DisplayName("OFFSET only -> tail 'OFFSET m'")
-        void offsetOnly() {
-            var ctx = ctxWith(limitOffset());
-
-            var q = select(col("t", "c"))
-                .from(tbl("t"))
-                .offset(7L)
-                .build();
-
-            String sql = ctx.render(q).sql();
-            assertTrue(sql.endsWith("OFFSET 7") || sql.contains("\nOFFSET 7"),
-                "expected OFFSET 7 tail");
-        }
-    }
-
-    @Nested
-    @DisplayName("OFFSET Ã¢â‚¬Â¦ FETCH style")
-    class OffsetFetchStyle {
-        @Test
-        @DisplayName("ORDER BY present -> 'ORDER BY Ã¢â‚¬Â¦ OFFSET m ROWS FETCH NEXT n ROWS ONLY'")
-        void offsetFetch_ok() {
-            var ctx = ctxWith(offsetFetch());
-
-            var q = select(col("t1", "c1"))
-                .from(tbl("t1"))
-                .orderBy(order("t1", "c1").asc())
-                .limit(10L)
-                .offset(5L)
-                .build();
-
-            String sql = ctx.render(q).sql();
-            assertTrue(sql.contains("ORDER BY"), "must include ORDER BY");
-            assertTrue(sql.contains("OFFSET 5 ROWS"), "must include OFFSET 5 ROWS");
-            assertTrue(sql.contains("FETCH NEXT 10 ROWS ONLY"), "must include FETCH NEXT 10 ROWS ONLY");
-            assertTrue(sql.indexOf("ORDER BY") < sql.indexOf("OFFSET"), "ORDER BY must precede OFFSET Ã¢â‚¬Â¦ FETCH");
-        }
-
-        @Test
-        @DisplayName("Only OFFSET -> 'ORDER BY Ã¢â‚¬Â¦ OFFSET m ROWS'")
-        void onlyOffset_ok() {
-            var ctx = ctxWith(offsetFetch());
-
-            var q = select(col("t", "c"))
-                .from(tbl("t"))
-                .orderBy(order("t", "c").asc())
-                .offset(12L)
-                .build();
-
-            String sql = ctx.render(q).sql();
-            assertTrue(sql.contains("ORDER BY"), "must include ORDER BY");
-            assertTrue(sql.contains("OFFSET 12 ROWS"), "must include OFFSET 12 ROWS");
-            assertFalse(sql.contains("FETCH NEXT"), "should not include FETCH NEXT when limit is absent");
-        }
-    }
-
-    @Nested
-    @DisplayName("TOP style")
-    class TopStyle {
-
-        @Test
-        @DisplayName("LIMIT -> 'SELECT TOP n Ã¢â‚¬Â¦' injected in head")
-        void top_in_head() {
-            var ctx = ctxWith(topOnly());
-
-            var q = select(col("t", "c"))
-                .top(top(4L))
-                .from(tbl("t"))
-                .build();
-
-            String sql = ctx.render(q).sql();
-            // Allow both "SELECT TOP (4)" and "SELECT DISTINCT TOP (4)" if user sets distinct elsewhere.
-            assertTrue(
-                sql.startsWith("SELECT TOP (4)") || sql.startsWith("SELECT DISTINCT TOP (4)"),
-                "TOP should be injected right after SELECT[/DISTINCT]"
-            );
-            assertFalse(sql.contains("OFFSET"), "TOP style should not produce OFFSET");
-        }
-
-        @Test
-        @DisplayName("OFFSET with TOP style -> throws UnsupportedOperationException")
-        void top_with_offset_throws() {
-            var ctx = ctxWith(topOnly());
-
-            var q = select(col("t", "c"))
-                .top(top(4L))
-                .from(tbl("t"))
-                .offset(2L)
-                .build();
-
-            UnsupportedOperationException ex = assertThrows(UnsupportedOperationException.class, () -> ctx.render(q));
-            assertTrue(ex.getMessage().toLowerCase().contains("offset"), "message should mention OFFSET not supported");
-        }
-    }
     @Test
     @DisplayName("Renderer target type is SelectQuery")
     void targetTypeIsSelectQuery() {
@@ -342,5 +210,138 @@ public class SelectQueryRendererTest {
             .build();
 
         assertTrue(ctx.render(withTies).sql().startsWith("SELECT TOP (10) WITH TIES"));
+    }
+
+    @Nested
+    @DisplayName("LIMIT / OFFSET style")
+    class LimitOffsetStyle {
+
+        @Test
+        @DisplayName("LIMIT + OFFSET -> tail 'LIMIT n OFFSET m'")
+        void limitAndOffset() {
+            var ctx = ctxWith(limitOffset());
+
+            var q = select(col("t1", "c1"))
+                .from(tbl("t1"))
+                .orderBy(col("t1", "c1").asc())
+                .limit(10L)
+                .offset(5L)
+                .build();
+
+            String sql = ctx.render(q).sql();
+
+            assertTrue(sql.contains("LIMIT 10"), "should contain LIMIT 10");
+            assertTrue(sql.contains("OFFSET 5"), "should contain OFFSET 5");
+            assertTrue(sql.indexOf("LIMIT 10") < sql.indexOf("OFFSET 5"), "LIMIT should appear before OFFSET for ANSI/MySQL/PG style");
+        }
+
+        @Test
+        @DisplayName("LIMIT only -> tail 'LIMIT n'")
+        void limitOnly() {
+            var ctx = ctxWith(limitOffset());
+
+            var q = select(col("t", "c"))
+                .from(tbl("t"))
+                .limit(3L)
+                .build();
+
+            String sql = ctx.render(q).sql();
+            assertTrue(sql.endsWith("LIMIT 3") || sql.contains("\nLIMIT 3"),
+                "expected LIMIT 3 tail");
+        }
+
+        @Test
+        @DisplayName("OFFSET only -> tail 'OFFSET m'")
+        void offsetOnly() {
+            var ctx = ctxWith(limitOffset());
+
+            var q = select(col("t", "c"))
+                .from(tbl("t"))
+                .offset(7L)
+                .build();
+
+            String sql = ctx.render(q).sql();
+            assertTrue(sql.endsWith("OFFSET 7") || sql.contains("\nOFFSET 7"),
+                "expected OFFSET 7 tail");
+        }
+    }
+
+    @Nested
+    @DisplayName("OFFSET Ã¢â‚¬Â¦ FETCH style")
+    class OffsetFetchStyle {
+        @Test
+        @DisplayName("ORDER BY present -> 'ORDER BY Ã¢â‚¬Â¦ OFFSET m ROWS FETCH NEXT n ROWS ONLY'")
+        void offsetFetch_ok() {
+            var ctx = ctxWith(offsetFetch());
+
+            var q = select(col("t1", "c1"))
+                .from(tbl("t1"))
+                .orderBy(col("t1", "c1").asc())
+                .limit(10L)
+                .offset(5L)
+                .build();
+
+            String sql = ctx.render(q).sql();
+            assertTrue(sql.contains("ORDER BY"), "must include ORDER BY");
+            assertTrue(sql.contains("OFFSET 5 ROWS"), "must include OFFSET 5 ROWS");
+            assertTrue(sql.contains("FETCH NEXT 10 ROWS ONLY"), "must include FETCH NEXT 10 ROWS ONLY");
+            assertTrue(sql.indexOf("ORDER BY") < sql.indexOf("OFFSET"), "ORDER BY must precede OFFSET Ã¢â‚¬Â¦ FETCH");
+        }
+
+        @Test
+        @DisplayName("Only OFFSET -> 'ORDER BY Ã¢â‚¬Â¦ OFFSET m ROWS'")
+        void onlyOffset_ok() {
+            var ctx = ctxWith(offsetFetch());
+
+            var q = select(col("t", "c"))
+                .from(tbl("t"))
+                .orderBy(col("t", "c").asc())
+                .offset(12L)
+                .build();
+
+            String sql = ctx.render(q).sql();
+            assertTrue(sql.contains("ORDER BY"), "must include ORDER BY");
+            assertTrue(sql.contains("OFFSET 12 ROWS"), "must include OFFSET 12 ROWS");
+            assertFalse(sql.contains("FETCH NEXT"), "should not include FETCH NEXT when limit is absent");
+        }
+    }
+
+    @Nested
+    @DisplayName("TOP style")
+    class TopStyle {
+
+        @Test
+        @DisplayName("LIMIT -> 'SELECT TOP n Ã¢â‚¬Â¦' injected in head")
+        void top_in_head() {
+            var ctx = ctxWith(topOnly());
+
+            var q = select(col("t", "c"))
+                .top(top(4L))
+                .from(tbl("t"))
+                .build();
+
+            String sql = ctx.render(q).sql();
+            // Allow both "SELECT TOP (4)" and "SELECT DISTINCT TOP (4)" if user sets distinct elsewhere.
+            assertTrue(
+                sql.startsWith("SELECT TOP (4)") || sql.startsWith("SELECT DISTINCT TOP (4)"),
+                "TOP should be injected right after SELECT[/DISTINCT]"
+            );
+            assertFalse(sql.contains("OFFSET"), "TOP style should not produce OFFSET");
+        }
+
+        @Test
+        @DisplayName("OFFSET with TOP style -> throws UnsupportedOperationException")
+        void top_with_offset_throws() {
+            var ctx = ctxWith(topOnly());
+
+            var q = select(col("t", "c"))
+                .top(top(4L))
+                .from(tbl("t"))
+                .offset(2L)
+                .build();
+
+            UnsupportedOperationException ex = assertThrows(UnsupportedOperationException.class, () -> ctx.render(q));
+            assertTrue(ex.getMessage().toLowerCase().contains("offset"), "message should mention OFFSET not supported");
+        }
     }
 }

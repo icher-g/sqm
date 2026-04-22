@@ -19,7 +19,7 @@ public class Transform_RenameColumnTransformer {
                 inner(tbl("users").as("u")).on(col("u", "id").eq(col("o", "user_id")))
             )
             .where(col("o", "status").in("A", "B"))
-            .groupBy(group("u", "user_name"), group("o", "status"))
+            .groupBy(col("u", "user_name"), col("o", "status"))
             .having(func("count", starArg()).gt(10))
             .build();
 

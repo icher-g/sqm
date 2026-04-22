@@ -28,8 +28,8 @@ class GroupByRendererTest {
         var query = select(col("a"), func("count", arg(col("b"))))
             .from(tbl("t"))
             .groupBy(groupingSets(
-                group("a"),
-                groupingSet(group("a"), group("b")),
+                "a",
+                groupingSet("a", "b"),
                 groupingSet()
             ))
             .build();
@@ -43,7 +43,7 @@ class GroupByRendererTest {
     void rendersRollup() {
         var query = select(col("a"), func("count", arg(col("b"))))
             .from(tbl("t"))
-            .groupBy(rollup(group("a"), group("b")))
+            .groupBy(rollup("a", "b"))
             .build();
 
         String result = render(query);
@@ -55,7 +55,7 @@ class GroupByRendererTest {
     void rendersCube() {
         var query = select(col("a"), func("count", arg(col("b"))))
             .from(tbl("t"))
-            .groupBy(cube(group("a"), group("b")))
+            .groupBy(cube("a", "b"))
             .build();
 
         String result = render(query);

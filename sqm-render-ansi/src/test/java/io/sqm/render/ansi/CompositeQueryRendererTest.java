@@ -36,7 +36,7 @@ class CompositeQueryRendererTest {
         var t2 = sel("archived_users", "a", "id", "name");
 
         var cq = t1.unionAll(t2)
-            .orderBy(order(col("1", "id")).asc())
+            .orderBy(col("1", "id").asc())
             .limit(10L);
 
         var sql = render(cq);
