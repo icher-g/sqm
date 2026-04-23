@@ -11,7 +11,11 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.expr;
+import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.row;
+import static io.sqm.dsl.Dsl.select;
+import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -22,6 +26,10 @@ class ComparisonPredicateRendererTest {
     private String render(Predicate p) {
         var ctx = RenderContext.of(new AnsiDialect());
         return ctx.render(p).sql();
+    }
+
+    private static String normalize(String sql) {
+        return sql.replaceAll("\\s+", " ").trim();
     }
 
     @Test
@@ -36,6 +44,18 @@ class ComparisonPredicateRendererTest {
         Predicate p = col("t", "c").eq(col("v", "d"));
         var result = render(p);
         assertEquals("t.c = v.d", result);
+    }
+
+    @Test
+    void eq_scalarSubquery() {
+        Predicate p = col("t", "c").eq(
+            expr(select(col("u", "id")).from(tbl("users").as("u")).limit(lit(1)).build())
+        );
+        var result = render(p);
+        assertEquals(
+            "t.c = ( SELECT u.id FROM users AS u OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY )",
+            normalize(result)
+        );
     }
 
     // --- Simple binary/unary operators (single value) ---

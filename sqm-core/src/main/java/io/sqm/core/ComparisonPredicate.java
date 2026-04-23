@@ -71,14 +71,19 @@ public non-sealed interface ComparisonPredicate extends Predicate {
     record Impl(Expression lhs, ComparisonOperator operator, Expression rhs) implements ComparisonPredicate {
 
         /**
-         * This constructor validates that rhs is a {@link ValueSet}.
+         * This constructor rejects row-valued right-hand operands such as
+         * {@link RowExpr} and {@link RowListExpr}.
+         *
+         * <p>Scalar subqueries remain valid comparison operands because they are
+         * expressions even though they also implement {@link ValueSet} for
+         * contexts such as {@code IN (SELECT ...)}.</p>
          *
          * @param lhs      a left-hand-sided expression.
          * @param operator a comparison operator.
          * @param rhs      a right-hand-sided expression.
          */
         public Impl {
-            if (rhs instanceof ValueSet) {
+            if (rhs instanceof RowValues) {
                 throw new IllegalArgumentException(operator + " operator cannot be applied to a list of values.");
             }
         }

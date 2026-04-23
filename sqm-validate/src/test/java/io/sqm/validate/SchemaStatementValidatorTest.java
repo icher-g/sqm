@@ -422,6 +422,25 @@ class SchemaStatementValidatorTest {
     }
 
     @Test
+    void validate_acceptsComparableScalarSubqueryInComparison() {
+        Query query = select(star())
+            .from(tbl("users").as("u"))
+            .where(col("u", "id").eq(
+                Expression.subquery(
+                    select(col("o", "id"))
+                        .from(tbl("orders").as("o"))
+                        .where(col("o", "user_id").eq(col("u", "id")))
+                        .limit(lit(1))
+                        .build()
+                )
+            ))
+            .build();
+
+        var result = validator.validate(query);
+        assertTrue(result.ok());
+    }
+
+    @Test
     void validate_reportsTypeMismatchForBetween() {
         Query query = select(star())
             .from(tbl("users").as("u"))
