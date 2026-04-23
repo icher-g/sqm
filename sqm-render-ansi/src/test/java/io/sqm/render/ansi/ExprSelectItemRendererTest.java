@@ -88,7 +88,7 @@ class ExprSelectItemRendererTest {
     @Test
     @DisplayName("Aggregate function with alias")
     void aggregate_with_alias() {
-        var query = select(col("status"), func("COUNT", arg(col("id"))).as("cnt"))
+        var query = select(col("status"), func("COUNT", col("id")).as("cnt"))
             .from(tbl("users"))
             .groupBy("status")
             .build();

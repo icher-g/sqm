@@ -168,6 +168,10 @@ public interface CodeBuilder {
         private int currentLineNumber = 0;
         private boolean atLineStart = true;
 
+        /**
+         * Constructs default implementation.
+         * @param indentSize the size of the indent to use.
+         */
         public Impl(int indentSize) {
             this.sb = new StringBuilder();
             this.indentSize = Math.max(0, indentSize);

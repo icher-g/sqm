@@ -9,7 +9,13 @@ import java.util.Objects;
  */
 public abstract class PlaygroundRequestException extends RuntimeException {
 
+    /**
+     * stable error code
+     */
     private final String code;
+    /**
+     * HTTP status
+     */
     private final HttpStatus status;
 
     /**

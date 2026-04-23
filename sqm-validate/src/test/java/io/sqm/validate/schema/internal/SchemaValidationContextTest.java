@@ -80,7 +80,7 @@ class SchemaValidationContextTest {
     void sourceKey_handlesAllSupportedTableRefKinds() {
         var subqueryTable = tbl(select(col("id")).from(tbl("users")).build()).as("sq");
         var valuesTable = tbl(rows(row(lit(1)))).as("v");
-        var functionTable = tbl(func("unnest", arg(rows(row(lit(1)))))).as("f");
+        var functionTable = tbl(func("unnest", rows(row(lit(1))))).as("f");
         TableRef lateral = tbl("users").as("u").lateral();
 
         assertEquals("sq", contextSourceKey(subqueryTable));
@@ -103,7 +103,7 @@ class SchemaValidationContextTest {
         assertEquals(CatalogType.DECIMAL, context.inferType(lit(1L).add(lit(2.5))).orElseThrow());
         assertEquals(CatalogType.INTEGER, context.inferType(lit(1).neg()).orElseThrow());
         assertTrue(context.inferType(lit("bad").neg()).isEmpty());
-        assertEquals(CatalogType.DECIMAL, context.inferType(func("fnum", arg(lit(1)))).orElseThrow());
+        assertEquals(CatalogType.DECIMAL, context.inferType(func("fnum", lit(1))).orElseThrow());
     }
 
     @Test

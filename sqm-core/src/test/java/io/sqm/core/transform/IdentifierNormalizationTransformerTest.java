@@ -62,7 +62,7 @@ class IdentifierNormalizationTransformerTest {
             lit(1),
             type("PG_CATALOG", "INT4")
         ).collate("PG_CATALOG.C");
-        FunctionExpr functionExpr = func("PG_CATALOG.LOWER", arg(col("NAME")));
+        FunctionExpr functionExpr = func("PG_CATALOG.LOWER", col("NAME"));
         Query query = select(typedAndCollated, functionExpr).from(tbl("USERS")).build();
 
         var transformed = (SelectQuery) new IdentifierNormalizationTransformer().apply(query);
@@ -153,7 +153,7 @@ class IdentifierNormalizationTransformerTest {
         ).body(
             select(
                 col("U", "ID").as("CNT"),
-                func("SUM", arg(col("U", "ID"))).over("W")
+                func("SUM", col("U", "ID")).over("W")
             )
                 .from(tbl("C").as("U"))
                 .window(windowDef)
@@ -187,7 +187,7 @@ class IdentifierNormalizationTransformerTest {
         var main = select(col("SUB", "ID"), col("V", "X"), col("F", "VAL"))
             .from(tbl(sub).as("SUB").columnAliases("ID"))
             .join(inner(tbl(rows(row(1))).as("V").columnAliases("X")).using("ID"))
-            .join(inner(tbl(func("PG_CATALOG.GENERATE_SERIES", arg(lit(1)), arg(lit(2)))).as("F").columnAliases("VAL")).on(unary(lit(true))))
+            .join(inner(tbl(func("PG_CATALOG.GENERATE_SERIES", lit(1), lit(2))).as("F").columnAliases("VAL")).on(unary(lit(true))))
             .build();
 
         var transformed = new IdentifierNormalizationTransformer().apply(main);

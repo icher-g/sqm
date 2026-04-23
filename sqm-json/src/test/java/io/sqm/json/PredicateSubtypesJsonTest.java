@@ -368,7 +368,7 @@ public class PredicateSubtypesJsonTest {
         // Test regex with column, literal, and parameter as value
         var regexWithCol = RegexPredicate.of(col("field"), lit("pattern"), false);
         var regexWithFunc = RegexPredicate.of(
-            func("lower", arg(col("field"))),
+            func("lower", col("field")),
             lit("pattern"),
             false
         );

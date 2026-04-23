@@ -14,24 +14,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static io.sqm.dsl.Dsl.col;
-import static io.sqm.dsl.Dsl.delete;
-import static io.sqm.dsl.Dsl.exists;
-import static io.sqm.dsl.Dsl.func;
-import static io.sqm.dsl.Dsl.inner;
-import static io.sqm.dsl.Dsl.insert;
-import static io.sqm.dsl.Dsl.lit;
-import static io.sqm.dsl.Dsl.merge;
-import static io.sqm.dsl.Dsl.row;
-import static io.sqm.dsl.Dsl.rows;
-import static io.sqm.dsl.Dsl.select;
-import static io.sqm.dsl.Dsl.set;
-import static io.sqm.dsl.Dsl.tbl;
-import static io.sqm.dsl.Dsl.update;
-import static io.sqm.dsl.Dsl.arg;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static io.sqm.dsl.Dsl.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 class MySqlValidationDialectTest {
     private static final CatalogSchema SCHEMA = CatalogSchema.of(
@@ -234,7 +218,7 @@ class MySqlValidationDialectTest {
     void validate_reportsFunctionTableAsUnsupportedInMysql() {
         var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
         var query = select(col("jt", "id"))
-            .from(tbl(func("generate_series", arg(lit(1)), arg(lit(2)))).as("jt"))
+            .from(tbl(func("generate_series", lit(1), lit(2))).as("jt"))
             .build();
 
         var result = validator.validate(query);
@@ -250,7 +234,7 @@ class MySqlValidationDialectTest {
     void validate_reportsFunctionTableOrdinalityAsUnsupportedInMysql() {
         var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
         var query = select(col("jt", "id"))
-            .from(tbl(func("generate_series", arg(lit(1)), arg(lit(2)))).withOrdinality().as("jt"))
+            .from(tbl(func("generate_series", lit(1), lit(2))).withOrdinality().as("jt"))
             .build();
 
         var result = validator.validate(query);

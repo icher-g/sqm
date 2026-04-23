@@ -221,7 +221,7 @@ public class ParamExprJsonTest {
     @DisplayName("Named parameter in function argument")
     void namedParam_inFunctionArg() throws Exception {
         var query = select(
-            func("CONCAT", arg(col("first_name")), arg(ParamExpr.named("separator")), arg(col("last_name"))).as("full_name")
+            func("CONCAT", col("first_name"), ParamExpr.named("separator"), col("last_name")).as("full_name")
         ).from(tbl("users")).build();
 
         var back = roundTrip(query, SelectQuery.class);

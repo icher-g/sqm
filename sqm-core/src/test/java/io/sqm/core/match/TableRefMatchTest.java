@@ -13,7 +13,7 @@ class TableRefMatchTest {
     @Test
     @DisplayName("Match function table")
     void matchFunctionTable() {
-        var func = func("generate_series", arg(lit(1)), arg(lit(10)));
+        var func = func("generate_series", lit(1), lit(10));
         TableRef table = func.asTable().as("t");
 
         var result = table.matchTableRef()
@@ -93,7 +93,7 @@ class TableRefMatchTest {
     @Test
     @DisplayName("Extract function from function table")
     void extractFunctionFromFunctionTable() {
-        var func = func("unnest", arg(array(lit(1), lit(2), lit(3))));
+        var func = func("unnest", array(lit(1), lit(2), lit(3)));
         TableRef table = func.asTable().as("t");
 
         var result = table.matchTableRef()
@@ -150,7 +150,7 @@ class TableRefMatchTest {
     @Test
     @DisplayName("Match with complex extraction")
     void matchWithComplexExtraction() {
-        var func = func("json_each", arg(col("data")));
+        var func = func("json_each", col("data"));
         TableRef table = func.asTable().as("t").columnAliases("key", "value");
 
         var result = table.matchTableRef()
@@ -167,7 +167,7 @@ class TableRefMatchTest {
     @Test
     @DisplayName("Match lateral wrapping function table")
     void matchLateralWrappingFunctionTable() {
-        var func = func("unnest", arg(col("arr")));
+        var func = func("unnest", col("arr"));
         TableRef table = func.asTable().as("t").lateral();
 
         var result = table.matchTableRef()
@@ -182,7 +182,7 @@ class TableRefMatchTest {
     @Test
     @DisplayName("Match with otherwiseEmpty")
     void matchWithOtherwiseEmpty() {
-        var func = func("generate_series", arg(lit(1)), arg(lit(10)));
+        var func = func("generate_series", lit(1), lit(10));
         TableRef table = func.asTable();
 
         var result = table.matchTableRef()
@@ -196,7 +196,7 @@ class TableRefMatchTest {
     @Test
     @DisplayName("Match function table with otherwiseEmpty returns value")
     void matchFunctionTableWithOtherwiseEmptyReturnsValue() {
-        var func = func("generate_series", arg(lit(1)), arg(lit(10)));
+        var func = func("generate_series", lit(1), lit(10));
         TableRef table = func.asTable();
 
         var result = table.matchTableRef()

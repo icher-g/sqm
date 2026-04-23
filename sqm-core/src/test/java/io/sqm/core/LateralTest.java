@@ -23,7 +23,7 @@ class LateralTest {
     @Test
     @DisplayName("Create lateral with function table")
     void createWithFunctionTable() {
-        var func = func("unnest", arg(col("arr")));
+        var func = func("unnest", col("arr"));
         var funcTable = func.asTable().as("t");
         var lateral = Lateral.of(funcTable);
 

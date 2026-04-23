@@ -273,7 +273,7 @@ public class ArithmeticExprJsonTest {
     @DisplayName("Arithmetic in function argument: SUM(price * quantity)")
     void arithmetic_inFunctionArg() throws Exception {
         var query = select(
-            func("sum", arg(col("price").mul(col("quantity")))).as("total_value")
+            func("sum", col("price").mul(col("quantity"))).as("total_value")
         ).from(tbl("orders")).build();
 
         var back = roundTrip(query, SelectQuery.class);

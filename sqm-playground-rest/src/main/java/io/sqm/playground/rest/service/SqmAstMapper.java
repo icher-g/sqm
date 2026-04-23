@@ -22,6 +22,13 @@ import java.util.stream.Collectors;
 @Service
 public final class SqmAstMapper {
 
+    /**
+     * Constructs a new instance of the class.
+     */
+    public SqmAstMapper() {
+
+    }
+
     private static final Map<String, Integer> SLOT_ORDER = Map.ofEntries(
         Map.entry("hints", 0),
         Map.entry("with", 10),

@@ -100,8 +100,8 @@ class ArrayExprRenderTest {
     @DisplayName("Render array with function calls")
     void rendersArrayWithFunctions() {
         var arr = array(
-            func("LOWER", arg(col("a"))),
-            func("UPPER", arg(col("b")))
+            func("LOWER", col("a")),
+            func("UPPER", col("b"))
         );
         var sql = renderContext.render(arr).sql();
 

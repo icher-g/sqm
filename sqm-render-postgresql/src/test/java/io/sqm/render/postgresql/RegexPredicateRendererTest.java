@@ -108,7 +108,7 @@ class RegexPredicateRendererTest {
     @Test
     @DisplayName("Render regex with function value")
     void rendersRegexWithFunctionValue() {
-        var func = func("UPPER", arg(col("name")));
+        var func = func("UPPER", col("name"));
         var pred = RegexPredicate.of(RegexMode.MATCH, func, lit("^A.*"), false);
         var sql = renderContext.render(pred).sql();
         

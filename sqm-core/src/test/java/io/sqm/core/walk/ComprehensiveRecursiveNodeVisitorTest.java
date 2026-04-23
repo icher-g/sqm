@@ -49,7 +49,7 @@ class ComprehensiveRecursiveNodeVisitorTest {
 
     @Test
     void visitFunctionExpr() {
-        FunctionExpr func = func("LOWER", arg(col("name")));
+        FunctionExpr func = func("LOWER", col("name"));
         CountingVisitor visitor = new CountingVisitor();
         func.accept(visitor);
         // Should count function and column argument
@@ -66,7 +66,7 @@ class ComprehensiveRecursiveNodeVisitorTest {
 
     @Test
     void visitFunctionExpr_multipleLiteralArgs() {
-        FunctionExpr func = func("SUBSTRING", arg(col("text")), arg(lit(1)), arg(lit(5)));
+        FunctionExpr func = func("SUBSTRING", col("text"), lit(1), lit(5));
         CountingVisitor visitor = new CountingVisitor();
         func.accept(visitor);
         // Function + arguments should be counted
@@ -181,7 +181,7 @@ class ComprehensiveRecursiveNodeVisitorTest {
 
     @Test
     void visitFunctionArgExpr_exprArg() {
-        FunctionExpr.Arg arg = arg(lit(42));
+        FunctionExpr.Arg arg = Expression.funcArg(lit(42));
         CountingVisitor visitor = new CountingVisitor();
         arg.accept(visitor);
         // Should visit expression argument
@@ -228,7 +228,7 @@ class ComprehensiveRecursiveNodeVisitorTest {
         ColumnCollector visitor = new ColumnCollector();
         SelectQuery query = select(
             col("id"),
-            func("LOWER", arg(col("name"))).as("lower_name")
+            func("LOWER", col("name")).as("lower_name")
         ).from(tbl("users")).build();
         query.accept(visitor);
 
@@ -253,8 +253,8 @@ class ComprehensiveRecursiveNodeVisitorTest {
     @Test
     void visitNestedFunctionCalls() {
         // Create: UPPER(LOWER(name))
-        FunctionExpr inner = func("LOWER", arg(col("name")));
-        FunctionExpr outer = func("UPPER", arg(inner));
+        FunctionExpr inner = func("LOWER", col("name"));
+        FunctionExpr outer = func("UPPER", inner);
 
         CountingVisitor visitor = new CountingVisitor();
         outer.accept(visitor);

@@ -47,7 +47,7 @@ public class WindowRenderingTest {
         var q = select(
             col("acct_id"),
             col("ts"),
-            func("SUM", arg(col("amount")))
+            func("SUM", col("amount"))
                 .over(
                     partition(col("acct_id")),
                     orderBy(col("ts").asc()),
@@ -97,7 +97,7 @@ public class WindowRenderingTest {
         var q = select(
             col("dept"),
             col("emp_name"),
-            func("SUM", arg(col("salary")))
+            func("SUM", col("salary"))
                 .over("w", rows(unboundedPreceding(), currentRow())
                 ).as("run_sum")
         )
@@ -128,7 +128,7 @@ public class WindowRenderingTest {
         var q = select(
             col("x"),
             func("ROW_NUMBER").over("w1").as("rn"),
-            func("AVG", arg(col("v"))).over("w2").as("avg_all")
+            func("AVG", col("v")).over("w2").as("avg_all")
         )
             .from(tbl("t"))
             .window(
@@ -151,7 +151,7 @@ public class WindowRenderingTest {
         // SELECT dept, COUNT(DISTINCT user_id) FILTER (WHERE active) OVER (PARTITION BY dept) AS active_users
         // FROM users
         var countDistinctActive =
-            func("COUNT", arg(col("user_id")))
+            func("COUNT", col("user_id"))
                 .distinct()
                 .filter(col("active").eq(lit(true)))
                 .over(over(partition(col("dept"))));

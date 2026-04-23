@@ -152,7 +152,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         }
 
         out.append(helperName).append("(");
-        appendExprArg(f.args().getFirst());
+        appendNode(f.args().getFirst());
         out.append(")");
     }
 
@@ -163,9 +163,9 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         }
 
         out.append(helperName).append("(");
-        appendExprArg(f.args().getFirst());
+        appendNode(f.args().getFirst());
         out.append(", ");
-        appendExprArg(f.args().get(1));
+        appendNode(f.args().get(1));
         out.append(")");
     }
 
@@ -184,19 +184,10 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         }
 
         out.append(helperName).append("(").quote(datePart).append(", ");
-        appendExprArg(f.args().get(1));
+        appendNode(f.args().get(1));
         out.append(", ");
-        appendExprArg(f.args().get(2));
+        appendNode(f.args().get(2));
         out.append(")");
-    }
-
-    private void appendExprArg(FunctionExpr.Arg arg) {
-        if (arg instanceof FunctionExpr.Arg.ExprArg exprArg) {
-            appendNode(exprArg.expr());
-        }
-        else {
-            appendNode(arg);
-        }
     }
 
     private void appendOrderByOrNull(OrderBy orderBy) {
@@ -1493,9 +1484,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     @Override
     public Void visitFunctionArgExpr(FunctionExpr.Arg a) {
         if (a instanceof FunctionExpr.Arg.ExprArg exprArg) {
-            out.append("arg(");
             appendNode(exprArg.expr());
-            out.append(")");
             return defaultResult();
         }
         if (a instanceof FunctionExpr.Arg.StarArg) {

@@ -28,7 +28,7 @@ class FunctionTableRendererTest {
     @Test
     @DisplayName("Render simple table function")
     void rendersSimpleTableFunction() {
-        var func = func("generate_series", arg(lit(1)), arg(lit(10)));
+        var func = func("generate_series", lit(1), lit(10));
         var table = TableRef.function(func);
         var sql = renderContext.render(table).sql();
 
@@ -38,7 +38,7 @@ class FunctionTableRendererTest {
     @Test
     @DisplayName("Render table function with alias")
     void rendersTableFunctionWithAlias() {
-        var func = func("generate_series", arg(lit(1)), arg(lit(10)));
+        var func = func("generate_series", lit(1), lit(10));
         var table = TableRef.function(func).as("nums");
         var sql = renderContext.render(table).sql();
 
@@ -48,7 +48,7 @@ class FunctionTableRendererTest {
     @Test
     @DisplayName("Render table function with column aliases")
     void rendersTableFunctionWithColumnAliases() {
-        var func = func("generate_series", arg(lit(1)), arg(lit(10)));
+        var func = func("generate_series", lit(1), lit(10));
         var table = TableRef.function(func).as("t").columnAliases("n");
         var sql = renderContext.render(table).sql();
 
@@ -58,7 +58,7 @@ class FunctionTableRendererTest {
     @Test
     @DisplayName("Render table function WITH ORDINALITY")
     void rendersTableFunctionWithOrdinality() {
-        var func = func("generate_series", arg(lit(1)), arg(lit(3)));
+        var func = func("generate_series", lit(1), lit(3));
         var table = TableRef.function(func)
             .withOrdinality()
             .as("t")
@@ -72,7 +72,7 @@ class FunctionTableRendererTest {
     @DisplayName("Render unnest function")
     void rendersUnnestFunction() {
         var arr = array(lit(1), lit(2), lit(3));
-        var func = func("unnest", arg(arr));
+        var func = func("unnest", arr);
         var table = TableRef.function(func);
         var sql = renderContext.render(table).sql();
 
@@ -83,7 +83,7 @@ class FunctionTableRendererTest {
     @DisplayName("Render json_array_elements function")
     void rendersJsonArrayElementsFunction() {
         var cast = CastExpr.of(lit("[1,2,3]"), type("json"));
-        var func = func("json_array_elements", arg(cast));
+        var func = func("json_array_elements", cast);
         var table = TableRef.function(func);
         var sql = renderContext.render(table).sql();
 
@@ -93,7 +93,7 @@ class FunctionTableRendererTest {
     @Test
     @DisplayName("Render table function in FROM clause")
     void rendersTableFunctionInFromClause() {
-        var func = func("generate_series", arg(lit(1)), arg(lit(10)));
+        var func = func("generate_series", lit(1), lit(10));
         var query = select(col("*"))
             .from(TableRef.function(func).as("s").columnAliases("n"))
             .build();
@@ -106,7 +106,7 @@ class FunctionTableRendererTest {
     @Test
     @DisplayName("Render table function in JOIN")
     void rendersTableFunctionInJoin() {
-        var func = func("generate_series", arg(lit(1)), arg(lit(10)));
+        var func = func("generate_series", lit(1), lit(10));
         var query = select(col("*"))
             .from(tbl("users").as("u"))
             .join(inner(TableRef.function(func).as("s").columnAliases("n"))
@@ -121,8 +121,8 @@ class FunctionTableRendererTest {
     @Test
     @DisplayName("Render multiple table functions")
     void rendersMultipleTableFunctions() {
-        var func1 = func("generate_series", arg(lit(1)), arg(lit(5)));
-        var func2 = func("generate_series", arg(lit(1)), arg(lit(3)));
+        var func1 = func("generate_series", lit(1), lit(5));
+        var func2 = func("generate_series", lit(1), lit(3));
 
         var query = select(col("*"))
             .from(TableRef.function(func1).as("s1"))
@@ -138,7 +138,7 @@ class FunctionTableRendererTest {
     @Test
     @DisplayName("Render table function with column reference in argument")
     void rendersTableFunctionWithColumnArg() {
-        var func = func("unnest", arg(col("u", "tags")));
+        var func = func("unnest", col("u", "tags"));
         var query = select(star())
             .from(tbl("users").as("u"))
             .join(cross(TableRef.function(func).as("t").columnAliases("tag")))
@@ -152,7 +152,7 @@ class FunctionTableRendererTest {
     @Test
     @DisplayName("Render table function with multiple column aliases")
     void rendersTableFunctionWithMultipleColumnAliases() {
-        var func = func("json_to_recordset", arg(col("data")));
+        var func = func("json_to_recordset", col("data"));
         var table = TableRef.function(func).as("t").columnAliases("id", "name", "email");
         var sql = renderContext.render(table).sql();
 

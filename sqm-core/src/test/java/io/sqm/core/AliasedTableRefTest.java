@@ -39,7 +39,7 @@ class AliasedTableRefTest {
     @Test
     @DisplayName("FunctionTable implements AliasedTableRef")
     void functionTableImplementsAliasedTableRef() {
-        var func = func("generate_series", arg(lit(1)), arg(lit(10)));
+        var func = func("generate_series", lit(1), lit(10));
         AliasedTableRef aliased = func.asTable().as("series").columnAliases("num");
 
         assertEquals("series", aliased.alias().value());
@@ -60,7 +60,7 @@ class AliasedTableRefTest {
     @Test
     @DisplayName("AliasedTableRef with empty column aliases")
     void aliasedTableRefWithEmptyColumnAliases() {
-        var func = func("unnest", arg(array(lit(1), lit(2))));
+        var func = func("unnest", array(lit(1), lit(2)));
         AliasedTableRef aliased = func.asTable().as("t").columnAliases(List.of());
 
         assertEquals("t", aliased.alias().value());
@@ -70,7 +70,7 @@ class AliasedTableRefTest {
     @Test
     @DisplayName("Column aliases are immutable")
     void columnAliasesAreImmutable() {
-        var func = func("json_each", arg(col("data")));
+        var func = func("json_each", col("data"));
         AliasedTableRef aliased = func.asTable().as("t").columnAliases("key", "value");
 
         assertThrows(UnsupportedOperationException.class, () ->
@@ -89,7 +89,7 @@ class AliasedTableRefTest {
             .from(tbl(select(col("id")).from(tbl("users")).build()).as("sub").columnAliases("id"))
             .join(inner(tbl(rows(row(1, "a"))).as("v").columnAliases("id", "name"))
                 .on(col("sub", "id").eq(col("v", "id"))))
-            .join(inner(func("generate_series", arg(lit(1)), arg(lit(10)))
+            .join(inner(func("generate_series", lit(1), lit(10))
                 .asTable().as("s").columnAliases("num"))
                 .on(col("s", "num").eq(col("v", "id"))))
             .build();

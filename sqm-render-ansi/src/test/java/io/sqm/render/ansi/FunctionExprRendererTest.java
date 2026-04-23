@@ -31,7 +31,7 @@ class FunctionExprRendererTest {
     @Test
     @DisplayName("Bare function with column arg and alias")
     void bareFunc_withColumnArg_andAlias() {
-        var fc = func("lower", arg(col("t", "name"))).as("lname");
+        var fc = func("lower", col("t", "name")).as("lname");
         var sql = render(fc);
         assertEquals("lower(t.name) AS lname", sql);
     }
@@ -39,7 +39,7 @@ class FunctionExprRendererTest {
     @Test
     @DisplayName("Schema-qualified function name")
     void qualifiedFuncName() {
-        var fc = func("pg_catalog.lower", arg(col("name")));
+        var fc = func("pg_catalog.lower", col("name"));
         var sql = render(fc);
         assertEquals("pg_catalog.lower(name)", sql);
     }
@@ -79,7 +79,7 @@ class FunctionExprRendererTest {
     void distinct_singleColumn() {
         var fc = func(
             "count",
-            arg(col("t", "id"))).distinct();
+            col("t", "id")).distinct();
         var sql = render(fc);
         assertEquals("count(DISTINCT t.id)", sql);
     }
@@ -95,7 +95,7 @@ class FunctionExprRendererTest {
     @Test
     @DisplayName("ColumnRef without table")
     void columnRef_withoutTable() {
-        var fc = func("upper", arg(col("city")));
+        var fc = func("upper", col("city"));
         var sql = render(fc);
         assertEquals("upper(city)", sql);
     }
@@ -103,7 +103,7 @@ class FunctionExprRendererTest {
     @Test
     @DisplayName("ColumnRef with table")
     void columnRef_withTable() {
-        var fc = func("upper", arg(col("addr", "city")));
+        var fc = func("upper", col("addr", "city"));
         var sql = render(fc);
         assertEquals("upper(addr.city)", sql);
     }
@@ -113,11 +113,11 @@ class FunctionExprRendererTest {
     void literals_various() {
         var fc = func(
             "coalesce",
-            arg(lit(NULL)),              // NULL
-            arg(lit(true)),        // TRUE
-            arg(lit(42)),          // number
-            arg(lit(3.14)),        // decimal
-            arg(lit("O'Reilly"))   // string with quote to be doubled
+            lit(NULL),              // NULL
+            lit(true),        // TRUE
+            lit(42),          // number
+            lit(3.14),        // decimal
+            lit("O'Reilly")   // string with quote to be doubled
         );
         var sql = render(fc);
         assertEquals("coalesce(NULL, TRUE, 42, 3.14, 'O''Reilly')", sql);
@@ -128,9 +128,9 @@ class FunctionExprRendererTest {
     void concat_withLiterals() {
         var fc = func(
             "concat",
-            arg(lit("Hello")),
-            arg(lit(", ")),
-            arg(lit("World"))
+            lit("Hello"),
+            lit(", "),
+            lit("World")
         ).as("greeting");
         var sql = render(fc);
         assertEquals("concat('Hello', ', ', 'World') AS greeting", sql);
@@ -149,8 +149,8 @@ class FunctionExprRendererTest {
     void distinct_multipleArgs() {
         var fc = func(
             "some_func",
-            arg(col("t", "a")),
-            arg(col("t", "b"))).distinct();
+            col("t", "a"),
+            col("t", "b")).distinct();
         var sql = render(fc);
         // DISTINCT prefix is applied once before the full comma-separated list
         assertEquals("some_func(DISTINCT t.a, t.b)", sql);
@@ -159,8 +159,8 @@ class FunctionExprRendererTest {
     @Test
     @DisplayName("Nested function as argument")
     void nestedFuncArg() {
-        var inner = func("nullif", arg(lit("x")), arg(lit("y")));
-        var outer = func("coalesce", arg(inner), arg(lit("fallback")));
+        var inner = func("nullif", lit("x"), lit("y"));
+        var outer = func("coalesce", inner, lit("fallback"));
         var sql = render(outer);
         assertEquals("coalesce(nullif('x', 'y'), 'fallback')", sql);
     }
@@ -168,9 +168,9 @@ class FunctionExprRendererTest {
     @Test
     void lower_of_case_expr_renders_correctly() {
         var q = select(
-            func("lower", arg(
+            func("lower", 
                 kase(when(col("u", "flag").gt(0)).then(col("u", "name")))
-            )).as("ln")
+            ).as("ln")
         ).from(tbl("users").as("u")).build();
 
         String sql = render(q);
@@ -180,10 +180,10 @@ class FunctionExprRendererTest {
 
     @Test
     void coalesce_with_scalar_subquery_argument_renders() {
-        var sub = select(func("max", arg(col("t", "v")))).from(tbl("t")).build();
+        var sub = select(func("max", col("t", "v"))).from(tbl("t")).build();
 
         var q = select(
-            func("coalesce", arg(expr(sub)), arg(lit(0))).as("mx")
+            func("coalesce", expr(sub), lit(0)).as("mx")
         ).from(tbl("dual")).build();
 
         String sql = norm(render(q).stripIndent().toLowerCase());
@@ -205,8 +205,8 @@ class FunctionExprRendererTest {
     void coalesce_lower_col_and_literal_renders() {
         var q = select(
             func("coalesce",
-                arg(func("lower", arg(col("u", "name")))),
-                arg(lit("N/A"))
+                func("lower", col("u", "name")),
+                lit("N/A")
             ).as("val")
         ).from(tbl("users").as("u")).build();
 

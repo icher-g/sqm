@@ -427,6 +427,23 @@ public non-sealed interface FunctionExpr extends Expression {
      */
     sealed interface Arg extends Expression permits Arg.ExprArg, Arg.StarArg {
         /**
+         * Creates a function argument from an expression.
+         *
+         * <p>Existing function arguments are preserved. Other expressions are
+         * wrapped as expression arguments.</p>
+         *
+         * @param value expression to convert into a function argument.
+         * @return a function argument.
+         */
+        static Arg from(Expression value) {
+            return switch (value) {
+                case Arg arg -> arg;
+                case Expression expression -> expr(expression);
+                case null -> throw new NullPointerException("value is null");
+            };
+        }
+
+        /**
          * Creates column function argument.
          *
          * @param e a column reference.

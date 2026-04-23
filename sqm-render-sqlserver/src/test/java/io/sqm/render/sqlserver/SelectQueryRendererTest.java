@@ -182,7 +182,7 @@ class SelectQueryRendererTest {
     @Test
     void renders_functionTableInFromClause() {
         var query = Query.select(Expression.literal(1))
-            .from(tbl(io.sqm.dsl.Dsl.func("dbo.ufn_FindReports", io.sqm.dsl.Dsl.arg(lit(1)))).as("r"))
+            .from(tbl(io.sqm.dsl.Dsl.func("dbo.ufn_FindReports", lit(1))).as("r"))
             .build();
 
         var rendered = RenderContext.of(new SqlServerDialect()).render(query);
@@ -193,7 +193,7 @@ class SelectQueryRendererTest {
     @Test
     void rejects_functionTableWithOrdinality() {
         var query = Query.select(Expression.literal(1))
-            .from(tbl(io.sqm.dsl.Dsl.func("dbo.ufn_FindReports", io.sqm.dsl.Dsl.arg(lit(1)))).withOrdinality().as("r"))
+            .from(tbl(io.sqm.dsl.Dsl.func("dbo.ufn_FindReports", lit(1))).withOrdinality().as("r"))
             .build();
 
         assertThrows(

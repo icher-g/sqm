@@ -73,8 +73,8 @@ class ExpressionIsDistinctFromTest {
     @Test
     @DisplayName("isNotDistinctFrom with function expressions")
     void isNotDistinctFromWithFunctions() {
-        var pred = func("upper", arg(col("a")))
-            .isNotDistinctFrom(func("upper", arg(col("b"))));
+        var pred = func("upper", col("a"))
+            .isNotDistinctFrom(func("upper", col("b")));
 
         assertInstanceOf(FunctionExpr.class, pred.lhs());
         assertInstanceOf(FunctionExpr.class, pred.rhs());

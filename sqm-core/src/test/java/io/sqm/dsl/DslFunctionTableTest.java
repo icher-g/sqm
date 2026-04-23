@@ -13,7 +13,7 @@ class DslFunctionTableTest {
     @Test
     @DisplayName("tbl() with FunctionExpr")
     void tblWithFunctionExpr() {
-        var func = func("generate_series", arg(lit(1)), arg(lit(10)));
+        var func = func("generate_series", lit(1), lit(10));
         var table = tbl(func);
 
         assertNotNull(table);
@@ -24,7 +24,7 @@ class DslFunctionTableTest {
     @Test
     @DisplayName("tbl() creates function table with DSL")
     void tblCreatesFunctionTable() {
-        var table = tbl(func("unnest", arg(array(lit(1), lit(2), lit(3)))));
+        var table = tbl(func("unnest", array(lit(1), lit(2), lit(3))));
 
         assertNotNull(table);
         assertInstanceOf(FunctionTable.class, table);
@@ -35,7 +35,7 @@ class DslFunctionTableTest {
     @DisplayName("Function table in FROM clause")
     void functionTableInFromClause() {
         var query = select(col("num"))
-            .from(tbl(func("generate_series", arg(lit(1)), arg(lit(10)))).as("series"))
+            .from(tbl(func("generate_series", lit(1), lit(10))).as("series"))
             .build();
 
         assertNotNull(query);
@@ -46,7 +46,7 @@ class DslFunctionTableTest {
     @Test
     @DisplayName("Function table with column aliases")
     void functionTableWithColumnAliases() {
-        var table = tbl(func("json_each", arg(col("data"))))
+        var table = tbl(func("json_each", col("data")))
             .as("t")
             .columnAliases("key", "value");
 
@@ -58,7 +58,7 @@ class DslFunctionTableTest {
     @Test
     @DisplayName("Function table WITH ORDINALITY")
     void functionTableWithOrdinality() {
-        var table = tbl(func("generate_series", arg(lit(1)), arg(lit(3))))
+        var table = tbl(func("generate_series", lit(1), lit(3)))
             .withOrdinality()
             .as("s")
             .columnAliases("num", "ord");
@@ -82,7 +82,7 @@ class DslFunctionTableTest {
     @Test
     @DisplayName("Lateral wrapping function table")
     void lateralWrappingFunctionTable() {
-        var func = func("unnest", arg(col("arr")));
+        var func = func("unnest", col("arr"));
         var lateral = tbl(func).as("t").lateral();
 
         assertNotNull(lateral);
@@ -96,7 +96,7 @@ class DslFunctionTableTest {
         var query = select(col("t", "id"), col("u", "val"))
             .from(tbl("t"))
             .join(inner(
-                tbl(func("unnest", arg(col("t", "arr")))).as("u").columnAliases("val").lateral())
+                tbl(func("unnest", col("t", "arr"))).as("u").columnAliases("val").lateral())
                 .on(col("t", "id").gt(lit(0)))
             )
             .build();
@@ -114,8 +114,8 @@ class DslFunctionTableTest {
     @DisplayName("Multiple function tables in query")
     void multipleFunctionTablesInQuery() {
         var query = select(col("s", "num"), col("u", "val"))
-            .from(tbl(func("generate_series", arg(lit(1)), arg(lit(10)))).as("s").columnAliases("num"))
-            .join(cross(tbl(func("unnest", arg(array(lit("a"), lit("b"))))).as("u").columnAliases("val")))
+            .from(tbl(func("generate_series", lit(1), lit(10))).as("s").columnAliases("num"))
+            .join(cross(tbl(func("unnest", array(lit("a"), lit("b")))).as("u").columnAliases("val")))
             .build();
 
         assertNotNull(query);
@@ -130,7 +130,7 @@ class DslFunctionTableTest {
     @DisplayName("Lateral in subquery")
     void lateralInSubquery() {
         var innerQuery = select(col("*"))
-            .from(tbl(func("generate_series", arg(lit(1)), arg(col("t", "max")))).as("s").lateral())
+            .from(tbl(func("generate_series", lit(1), col("t", "max"))).as("s").lateral())
             .build();
         
         var outerQuery = select(col("*"))

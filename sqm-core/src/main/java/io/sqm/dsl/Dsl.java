@@ -503,11 +503,11 @@ public final class Dsl {
      * Creates a column that represents a function call.
      *
      * @param name a name of the function.
-     * @param args an array of arguments for the function. An array can be empty if a function does not accept any arguments.
+     * @param args an array of argument expressions for the function. An array can be empty if a function does not accept any arguments.
      * @return a function column.
      */
-    public static FunctionExpr func(String name, FunctionExpr.Arg... args) {
-        return FunctionExpr.of(QualifiedName.of(name.split("\\.")), List.of(args), null, null, null, null);
+    public static FunctionExpr func(String name, Expression... args) {
+        return FunctionExpr.of(QualifiedName.of(name.split("\\.")), Arrays.stream(args).map(FunctionExpr.Arg::from).toList(), null, null, null, null);
     }
 
     /**
@@ -517,7 +517,7 @@ public final class Dsl {
      * @return SQL Server {@code LEN(...)} function expression.
      */
     public static FunctionExpr len(Expression expr) {
-        return func("LEN", arg(expr));
+        return func("LEN", expr);
     }
 
     /**
@@ -527,7 +527,7 @@ public final class Dsl {
      * @return SQL Server {@code DATALENGTH(...)} function expression.
      */
     public static FunctionExpr dataLength(Expression expr) {
-        return func("DATALENGTH", arg(expr));
+        return func("DATALENGTH", expr);
     }
 
     /**
@@ -551,7 +551,7 @@ public final class Dsl {
      * @return SQL Server {@code DATEADD(...)} function expression.
      */
     public static FunctionExpr dateAdd(String datePart, Expression number, Expression date) {
-        return func("DATEADD", arg(lit(datePart)), arg(number), arg(date));
+        return func("DATEADD", lit(datePart), number, date);
     }
 
     /**
@@ -566,7 +566,7 @@ public final class Dsl {
      * @return SQL Server {@code DATEDIFF(...)} function expression.
      */
     public static FunctionExpr dateDiff(String datePart, Expression start, Expression end) {
-        return func("DATEDIFF", arg(lit(datePart)), arg(start), arg(end));
+        return func("DATEDIFF", lit(datePart), start, end);
     }
 
     /**
@@ -577,7 +577,7 @@ public final class Dsl {
      * @return SQL Server {@code ISNULL(...)} function expression.
      */
     public static FunctionExpr isNullFn(Expression expr, Expression replacement) {
-        return func("ISNULL", arg(expr), arg(replacement));
+        return func("ISNULL", expr, replacement);
     }
 
     /**
@@ -588,7 +588,7 @@ public final class Dsl {
      * @return SQL Server {@code STRING_AGG(...)} function expression.
      */
     public static FunctionExpr stringAgg(Expression expr, Expression separator) {
-        return func("STRING_AGG", arg(expr), arg(separator));
+        return func("STRING_AGG", expr, separator);
     }
 
     /**
@@ -621,36 +621,6 @@ public final class Dsl {
      */
     public static OperatorName op(QualifiedName schema, String symbol) {
         return OperatorName.operator(schema, symbol);
-    }
-
-    /**
-     * Creates a function argument represented by a column.
-     *
-     * @param col a column to be passed to a function.
-     * @return a function argument.
-     */
-    public static FunctionExpr.Arg arg(ColumnExpr col) {
-        return Expression.funcArg(col);
-    }
-
-    /**
-     * Creates a function argument represented by an expression.
-     *
-     * @param expr an expression.
-     * @return a function argument.
-     */
-    public static FunctionExpr.Arg arg(Expression expr) {
-        return Expression.funcArg(expr);
-    }
-
-    /**
-     * Creates a function argument represented by a nested function call.
-     *
-     * @param call a nested function call.
-     * @return a function argument.
-     */
-    public static FunctionExpr.Arg arg(FunctionExpr call) {
-        return Expression.funcArg(call);
     }
 
     /**

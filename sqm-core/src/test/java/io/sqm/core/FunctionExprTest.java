@@ -28,6 +28,16 @@ class FunctionExprTest {
     }
 
     @Test
+    void argFromConvertsSupportedInputs() {
+        var existing = FunctionExpr.Arg.star();
+        var expression = Expression.literal(1);
+
+        assertSame(existing, FunctionExpr.Arg.from(existing));
+        assertSame(expression, assertInstanceOf(FunctionExpr.Arg.ExprArg.class, FunctionExpr.Arg.from(expression)).expr());
+        assertThrows(NullPointerException.class, () -> FunctionExpr.Arg.from(null));
+    }
+
+    @Test
     void withinGroup() {
         OrderItem item = OrderItem.of(1);
         OrderBy withinGroups = OrderBy.of(List.of(item));

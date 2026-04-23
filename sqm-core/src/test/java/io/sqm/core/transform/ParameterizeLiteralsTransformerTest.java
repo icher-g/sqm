@@ -178,7 +178,7 @@ class ParameterizeLiteralsTransformerTest {
 
     @Test
     void parameterizeLiteralInFunctionCall() {
-        FunctionExpr func = func("CONCAT", arg(col("first_name")), arg(lit(" ")), arg(col("last_name")));
+        FunctionExpr func = func("CONCAT", col("first_name"), lit(" "), col("last_name"));
         ParameterizeLiteralsTransformer transformer = new ParameterizeLiteralsTransformer(i -> param(i));
 
         Node result = func.accept(transformer);

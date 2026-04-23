@@ -52,13 +52,13 @@ public class DeepTransformationRebuildTest {
             select(
                 kase(when(col("u", "name").gt(10)).then(col("o", "name"))),
                 col("o", "status"),
-                func("count", arg(col("u", "id")))
+                func("count", col("u", "id"))
                     .over(
                         partition(col("acct_id")),
                         orderBy(col("ts").asc()),
                         rows(preceding(5))
                     ).as("cnt"),
-                func("lower", arg(func("sub", arg(col("u", "desc")))))
+                func("lower", func("sub", col("u", "desc")))
                     .over("w").as("lwr"),
                 star(),
                 star("o")
@@ -72,7 +72,7 @@ public class DeepTransformationRebuildTest {
                     col("o", "state")
                         .in("A", "B")
                         .and(
-                            func("count", arg(col("u", "id"))).gt(10)
+                            func("count", col("u", "id")).gt(10)
                         )
                         .and(
                             col("o", "flag").isNull()
@@ -81,7 +81,7 @@ public class DeepTransformationRebuildTest {
                         )
                 )
                 .groupBy(col("u", "user_name"), col("o", "user_status"))
-                .having(func("count", arg(col("u", "test"))).gt(10))
+                .having(func("count", col("u", "test")).gt(10))
                 .window(
                     window("w", over(partition(col("acct_id")), rows(preceding(1), following(1)))),
                     window("w", over(partition(col("acct_id")), rows(currentRow()))),

@@ -287,7 +287,7 @@ class SchemaStatementValidatorTest {
             .build();
         var policyValidator = SchemaStatementValidator.of(SCHEMA, settings);
 
-        Query query = select(func("lower", arg(col("u", "name"))))
+        Query query = select(func("lower", col("u", "name")))
             .from(tbl("users").as("u"))
             .build();
         var result = policyValidator.validate(query);
@@ -304,7 +304,7 @@ class SchemaStatementValidatorTest {
             .build();
         var policyValidator = SchemaStatementValidator.of(SCHEMA, settings);
 
-        Query query = select(func("length", arg(col("u", "name"))))
+        Query query = select(func("length", col("u", "name")))
             .from(tbl("users").as("u"))
             .build();
         var result = policyValidator.validate(query);
@@ -1217,8 +1217,8 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_acceptsKnownFunctionSignatures() {
         Query query = select(
-            func("lower", arg(col("u", "name"))),
-            func("sum", arg(col("u", "age"))),
+            func("lower", col("u", "name")),
+            func("sum", col("u", "age")),
             func("count", starArg())
         ).from(tbl("users").as("u"))
             .build();
@@ -1230,7 +1230,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsFunctionArityMismatch() {
         Query query = select(
-            func("lower", arg(col("u", "name")), arg(col("u", "status")))
+            func("lower", col("u", "name"), col("u", "status"))
         ).from(tbl("users").as("u"))
             .build();
 
@@ -1243,7 +1243,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsFunctionTypeMismatch() {
         Query query = select(
-            func("lower", arg(col("u", "age")))
+            func("lower", col("u", "age"))
         ).from(tbl("users").as("u"))
             .build();
 
@@ -1256,7 +1256,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_includesStructuredDiagnosticContext() {
         Query query = select(
-            func("lower", arg(col("u", "age")))
+            func("lower", col("u", "age"))
         ).from(tbl("users").as("u"))
             .build();
 
@@ -1278,7 +1278,7 @@ class SchemaStatementValidatorTest {
         var customValidator = SchemaStatementValidator.of(SCHEMA, catalog);
 
         Query query = select(
-            func("lower", arg(col("u", "name")))
+            func("lower", col("u", "name"))
         ).from(tbl("users").as("u"))
             .build();
 
@@ -1297,7 +1297,7 @@ class SchemaStatementValidatorTest {
 
         Query query = select(
             col("u", "status"),
-            func("my_agg", arg(col("u", "name")))
+            func("my_agg", col("u", "name"))
         )
             .from(tbl("users").as("u"))
             .groupBy(col("u", "status"))
@@ -1316,7 +1316,7 @@ class SchemaStatementValidatorTest {
 
         Query query = select(
             col("u", "status"),
-            func("my_agg", arg(col("u", "name")))
+            func("my_agg", col("u", "name"))
         )
             .from(tbl("users").as("u"))
             .groupBy(col("u", "status"))
@@ -1434,7 +1434,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsMissingWindowReference() {
         Query query = select(
-            func("sum", arg(col("u", "age"))).over("missing_window")
+            func("sum", col("u", "age")).over("missing_window")
         ).from(tbl("users").as("u"))
             .build();
 
@@ -1447,7 +1447,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsMissingBaseWindowReference() {
         Query query = select(
-            func("sum", arg(col("u", "age"))).over(over("missing_window", orderBy(col("u", "id"))))
+            func("sum", col("u", "age")).over(over("missing_window", orderBy(col("u", "id"))))
         ).from(tbl("users").as("u"))
             .build();
 
@@ -1460,7 +1460,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_acceptsDeclaredWindowReference() {
         Query query = select(
-            func("sum", arg(col("u", "age"))).over("w")
+            func("sum", col("u", "age")).over("w")
         )
             .from(tbl("users").as("u"))
             .window(window("w", partition(col("u", "status"))))
@@ -1473,7 +1473,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsDuplicateWindowNames() {
         Query query = select(
-            func("sum", arg(col("u", "age"))).over("w")
+            func("sum", col("u", "age")).over("w")
         )
             .from(tbl("users").as("u"))
             .window(
@@ -1491,7 +1491,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsDuplicateWindowNamesCaseInsensitive() {
         Query query = select(
-            func("sum", arg(col("u", "age"))).over("w")
+            func("sum", col("u", "age")).over("w")
         )
             .from(tbl("users").as("u"))
             .window(
@@ -1509,8 +1509,8 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_acceptsDistinctWindowNames() {
         Query query = select(
-            func("sum", arg(col("u", "age"))).over("w1"),
-            func("avg", arg(col("u", "age"))).over("w2")
+            func("sum", col("u", "age")).over("w1"),
+            func("avg", col("u", "age")).over("w2")
         )
             .from(tbl("users").as("u"))
             .window(
@@ -1526,7 +1526,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsMissingBaseWindowInWindowDefinition() {
         Query query = select(
-            func("sum", arg(col("u", "age"))).over("w1")
+            func("sum", col("u", "age")).over("w1")
         )
             .from(tbl("users").as("u"))
             .window(
@@ -1543,7 +1543,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsWindowInheritanceCycle() {
         Query query = select(
-            func("sum", arg(col("u", "age"))).over("w1")
+            func("sum", col("u", "age")).over("w1")
         )
             .from(tbl("users").as("u"))
             .window(
@@ -1561,7 +1561,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsRangeOffsetFrameWhenWindowOrderByResolutionFallsBackToCycleGuard() {
         Query query = select(
-            func("sum", arg(col("u", "age"))).over("w1")
+            func("sum", col("u", "age")).over("w1")
         )
             .from(tbl("users").as("u"))
             .window(
@@ -1579,7 +1579,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsSelfWindowInheritanceCycle() {
         Query query = select(
-            func("sum", arg(col("u", "age"))).over("w1")
+            func("sum", col("u", "age")).over("w1")
         )
             .from(tbl("users").as("u"))
             .window(
@@ -1596,7 +1596,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_acceptsWindowInheritanceChain() {
         Query query = select(
-            func("sum", arg(col("u", "age"))).over("w2")
+            func("sum", col("u", "age")).over("w2")
         )
             .from(tbl("users").as("u"))
             .window(
@@ -1612,7 +1612,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsWindowFrameNonNumericBoundExpression() {
         Query query = select(
-            func("sum", arg(col("u", "age"))).over(over(rows(preceding(lit("x")))))
+            func("sum", col("u", "age")).over(over(rows(preceding(lit("x")))))
         ).from(tbl("users").as("u"))
             .build();
 
@@ -1625,7 +1625,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsWindowFrameNegativeBoundExpression() {
         Query query = select(
-            func("sum", arg(col("u", "age"))).over(over(rows(preceding(lit(-1)))))
+            func("sum", col("u", "age")).over(over(rows(preceding(lit(-1)))))
         ).from(tbl("users").as("u"))
             .build();
 
@@ -1638,7 +1638,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsWindowFrameInvalidBetweenBoundOrderInlineOver() {
         Query query = select(
-            func("sum", arg(col("u", "age")))
+            func("sum", col("u", "age"))
                 .over(over(rows(following(1), preceding(1))))
         ).from(tbl("users").as("u"))
             .build();
@@ -1652,7 +1652,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsWindowFrameInvalidBetweenBoundOrderNamedWindow() {
         Query query = select(
-            func("sum", arg(col("u", "age"))).over("w")
+            func("sum", col("u", "age")).over("w")
         )
             .from(tbl("users").as("u"))
             .window(window("w", partition(col("u", "status")), orderBy(col("u", "id")), rows(following(1), currentRow())))
@@ -1667,7 +1667,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_acceptsWindowFrameValidBetweenBounds() {
         Query query = select(
-            func("sum", arg(col("u", "age")))
+            func("sum", col("u", "age"))
                 .over(over(rows(unboundedPreceding(), currentRow())))
         ).from(tbl("users").as("u"))
             .build();
@@ -1680,7 +1680,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsRangeOffsetFrameWithoutOrderBy() {
         Query query = select(
-            func("sum", arg(col("u", "age")))
+            func("sum", col("u", "age"))
                 .over(over(range(preceding(1))))
         ).from(tbl("users").as("u"))
             .build();
@@ -1694,7 +1694,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsRangeOffsetFrameWithMultipleOrderByItems() {
         Query query = select(
-            func("sum", arg(col("u", "age")))
+            func("sum", col("u", "age"))
                 .over(over(orderBy(col("u", "id"), col("u", "age")), range(preceding(1))))
         ).from(tbl("users").as("u"))
             .build();
@@ -1708,7 +1708,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_acceptsRangeOffsetFrameWithSingleOrderByItem() {
         Query query = select(
-            func("sum", arg(col("u", "age")))
+            func("sum", col("u", "age"))
                 .over(over(orderBy(col("u", "id")), range(preceding(1))))
         ).from(tbl("users").as("u"))
             .build();
@@ -1721,7 +1721,7 @@ class SchemaStatementValidatorTest {
     @Test
     void validate_reportsGroupsFrameWithDecimalOffset() {
         Query query = select(
-            func("sum", arg(col("u", "age")))
+            func("sum", col("u", "age"))
                 .over(over(groups(preceding(lit(1.5)))))
         ).from(tbl("users").as("u"))
             .build();
@@ -1849,7 +1849,7 @@ class SchemaStatementValidatorTest {
     void validate_reportsInvalidLimitTypeForFunctionReturnType() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .limit(func("lower", arg(col("u", "name"))))
+            .limit(func("lower", col("u", "name")))
             .build();
 
         var result = validator.validate(query);
@@ -1862,7 +1862,7 @@ class SchemaStatementValidatorTest {
     void validate_acceptsNumericLimitForFunctionReturnType() {
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .limit(func("length", arg(col("u", "name"))))
+            .limit(func("length", col("u", "name")))
             .build();
 
         var result = validator.validate(query);
@@ -1950,7 +1950,7 @@ class SchemaStatementValidatorTest {
 
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .limit(func("foo", arg(col("u", "id"))))
+            .limit(func("foo", col("u", "id")))
             .build();
 
         var result = customValidator.validate(query);

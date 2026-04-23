@@ -219,9 +219,9 @@ class SqmJavaEmitterTest {
         var source = emitter.emit(
             select(
                 func("LEN"),
-                func("ISNULL", arg(col("name"))),
-                func("GETDATE", arg(lit(1))),
-                func("DATEADD", arg(col("datepart")), arg(lit(1)), arg(col("created_at"))),
+                func("ISNULL", col("name")),
+                func("GETDATE", lit(1)),
+                func("DATEADD", col("datepart"), lit(1), col("created_at")),
                 func("LEN", starArg())
             )
                 .from(tbl("users"))
@@ -229,9 +229,9 @@ class SqmJavaEmitterTest {
         );
 
         assertTrue(source.contains("func(\"LEN\")"));
-        assertTrue(source.contains("func(\"ISNULL\", arg(col(\"name\")))"));
-        assertTrue(source.contains("func(\"GETDATE\", arg(lit(1)))"));
-        assertTrue(source.contains("func(\"DATEADD\", arg(col(\"datepart\")), arg(lit(1)), arg(col(\"created_at\")))"));
+        assertTrue(source.contains("func(\"ISNULL\", col(\"name\"))"));
+        assertTrue(source.contains("func(\"GETDATE\", lit(1))"));
+        assertTrue(source.contains("func(\"DATEADD\", col(\"datepart\"), lit(1), col(\"created_at\"))"));
         assertTrue(source.contains("len(starArg())"));
     }
 
@@ -637,7 +637,7 @@ class SqmJavaEmitterTest {
             col("payload").op(op(qualify("pg_catalog"), "?"), lit("name")),
             func("dense_rank").over(OverSpec.def((Identifier) null, null, rows(currentRow()), OverSpec.Exclude.CURRENT_ROW)),
             func("rank").over(OverSpec.def(Identifier.of("base"), null, rows(currentRow()), OverSpec.Exclude.GROUP)),
-            func("sum", arg(col("amount"))).over(OverSpec.def(partition(col("dept")), null, rows(currentRow()), OverSpec.Exclude.NO_OTHERS))
+            func("sum", col("amount")).over(OverSpec.def(partition(col("dept")), null, rows(currentRow()), OverSpec.Exclude.NO_OTHERS))
         )
             .from(tbl("users"))
             .where(
@@ -699,7 +699,7 @@ class SqmJavaEmitterTest {
                 when(col("active").eq(lit(false)), lit("inactive"))
             ).elseExpr(lit("unknown"))
         )
-            .from(tbl(func("generate_series", arg(lit(1)), arg(lit(3)))))
+            .from(tbl(func("generate_series", lit(1), lit(3))))
             .where(col("a").ne(lit(0)).or(col("b").lte(lit(10))))
             .orderBy(col("name").nulls(Nulls.DEFAULT))
             .build();
@@ -746,7 +746,7 @@ class SqmJavaEmitterTest {
         assertTrue(source.contains(".elseExpr("));
         assertTrue(source.contains("lit(\"unknown\")"));
         assertTrue(source.contains("tbl("));
-        assertTrue(source.contains("func(\"generate_series\", arg(lit(1)), arg(lit(3)))"));
+        assertTrue(source.contains("func(\"generate_series\", lit(1), lit(3))"));
         assertTrue(source.contains(".or("));
         assertTrue(source.contains(".nulls(Nulls.DEFAULT)"));
         assertTrue(valuesSource.contains("tbl("));

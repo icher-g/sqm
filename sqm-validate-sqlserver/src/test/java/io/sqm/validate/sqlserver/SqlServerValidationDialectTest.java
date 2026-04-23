@@ -266,7 +266,7 @@ class SqlServerValidationDialectTest {
     void validate_acceptsSqlServerFunctionTable() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var query = select(star())
-            .from(tbl(func("dbo.ufn_FindReports", arg(lit(1)))).as("r"))
+            .from(tbl(func("dbo.ufn_FindReports", lit(1))).as("r"))
             .build();
 
         var result = validator.validate(query);
@@ -278,7 +278,7 @@ class SqlServerValidationDialectTest {
     void validate_reportsSqlServerFunctionTableOrdinalityAsUnsupported() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var query = select(star())
-            .from(tbl(func("dbo.ufn_FindReports", arg(lit(1)))).withOrdinality().as("r"))
+            .from(tbl(func("dbo.ufn_FindReports", lit(1))).withOrdinality().as("r"))
             .build();
 
         var result = validator.validate(query);

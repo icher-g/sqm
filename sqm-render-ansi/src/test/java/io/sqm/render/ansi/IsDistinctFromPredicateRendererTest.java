@@ -85,7 +85,7 @@ class IsDistinctFromPredicateRendererTest {
 
     @Test
     void testRenderWithFunctionCall() {
-        var lhs = func("UPPER", arg(col("name")));
+        var lhs = func("UPPER", col("name"));
         var predicate = IsDistinctFromPredicate.of(lhs, lit("JOHN"), true);
         var sql = ctx.render(predicate).sql();
 
@@ -177,7 +177,7 @@ class IsDistinctFromPredicateRendererTest {
     @Test
     void testRenderWithCastExpression() {
         var lhs = col("created_at");
-        var rhs = func("CAST", arg(lit("2024-01-01")));
+        var rhs = func("CAST", lit("2024-01-01"));
         var predicate = IsDistinctFromPredicate.of(lhs, rhs, true);
         
         var sql = ctx.render(predicate).sql();

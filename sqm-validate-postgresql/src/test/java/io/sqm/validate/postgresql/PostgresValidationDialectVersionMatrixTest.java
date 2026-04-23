@@ -32,7 +32,7 @@ class PostgresValidationDialectVersionMatrixTest {
     private static Stream<Arguments> featureCases() {
         var lateral = select(star()).from(tbl("users").lateral()).build();
         var withOrdinality = select(star())
-            .from(tbl(func("unnest", arg(array(lit(1L))))).as("u").withOrdinality())
+            .from(tbl(func("unnest", array(lit(1L)))).as("u").withOrdinality())
             .build();
         var groupingSetsQuery = select(col("u", "id"))
             .from(tbl("users").as("u"))
@@ -61,12 +61,12 @@ class PostgresValidationDialectVersionMatrixTest {
             .from(tbl("users").as("u"))
             .build();
         var groupsFrame = select(
-            func("sum", arg(col("u", "id")))
+            func("sum", col("u", "id"))
                 .over(over(orderBy(col("u", "id")), groups(unboundedPreceding(), currentRow())))
         ).from(tbl("users").as("u"))
             .build();
         var excludeFrame = select(
-            func("sum", arg(col("u", "id")))
+            func("sum", col("u", "id"))
                 .over(over(orderBy(col("u", "id")), rows(unboundedPreceding(), currentRow()), excludeTies()))
         ).from(tbl("users").as("u"))
             .build();

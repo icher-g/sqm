@@ -11,7 +11,7 @@ public class RecursiveNodeVisitorEdgeNodesTraversalTest {
 
     @Test
     void edgeNodes_areVisited() {
-        var sub = select(func("max", arg(col("t", "v")))).from(tbl("t")).build();
+        var sub = select(func("max", col("t", "v"))).from(tbl("t")).build();
 
         var cteBody = select(col("c")).from(tbl("cte_source")).build();
         var withQuery = with(cte("w", cteBody))
@@ -33,7 +33,7 @@ public class RecursiveNodeVisitorEdgeNodesTraversalTest {
                 .limit(5L);
 
         var q = select(
-            func("coalesce", arg(col("m", "n")), arg(expr(sub))),
+            func("coalesce", col("m", "n"), expr(sub)),
             row(col("r", "c1"), col("r", "c2")))
             .from(tbl(rows(
                 row(lit(1), lit("X")),
