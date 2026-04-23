@@ -21,7 +21,7 @@ public class NoopPreservesIdentityTest {
     void unchangedTree_returnsSameInstances() {
         ColumnExpr colUid = ColumnExpr.of(Identifier.of("u"), Identifier.of("id"));
         ColumnExpr colName = ColumnExpr.of(null, Identifier.of("name"));
-        FunctionExpr lower = FunctionExpr.of(QualifiedName.of("lower"), List.of(FunctionExpr.Arg.expr(colName)), null, null, null, null);
+        FunctionExpr lower = FunctionExpr.of(QualifiedName.of("lower"), List.of(FunctionExpr.Arg.expr(colName)), null, null, null, null, null);
         RowExpr row = RowExpr.of(List.of(colUid, lower));
 
         NoopTransformer t = new NoopTransformer();

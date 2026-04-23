@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FunctionExprRendererTest {
@@ -56,6 +57,7 @@ class FunctionExprRendererTest {
             null,
             null,
             null,
+            null,
             null
         );
         assertEquals("pg_catalog.\"Lower\"(name)", render(preserved));
@@ -69,9 +71,17 @@ class FunctionExprRendererTest {
             null,
             null,
             null,
+            null,
             null
         );
         assertEquals("pg_catalog.\"Lower\"(name)", render(fallback));
+    }
+
+    @Test
+    void rejectsAggregateInputOrderBy() {
+        var function = func("ARRAY_AGG", col("name")).orderBy(col("name"));
+
+        assertThrows(UnsupportedOperationException.class, () -> render(function));
     }
 
     @Test

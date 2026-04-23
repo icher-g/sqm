@@ -340,6 +340,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitFunctionExpr(FunctionExpr f) {
         f.args().forEach(this::accept);
+        accept(f.orderBy());
         accept(f.withinGroup());
         accept(f.filter());
         accept(f.over());

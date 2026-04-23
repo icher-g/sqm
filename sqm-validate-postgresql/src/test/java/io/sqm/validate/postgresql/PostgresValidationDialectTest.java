@@ -33,6 +33,32 @@ class PostgresValidationDialectTest {
     }
 
     @Test
+    void validate_acceptsAggregateInputOrderByOnKnownAggregate() {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of());
+        Query query = select(func("array_agg", col("u", "name")).orderBy(col("u", "name")))
+            .from(tbl("users").as("u"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.ok());
+    }
+
+    @Test
+    void validate_reportsAggregateInputOrderByOnKnownNonAggregate() {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of());
+        Query query = select(func("lower", col("u", "name")).orderBy(col("u", "name")))
+            .from(tbl("users").as("u"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream()
+            .anyMatch(problem -> problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "function.orderBy".equals(problem.clausePath())));
+    }
+
+    @Test
     void validate_reportsUnsupportedLateralInPostgres90() {
         var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 0)));
         Query query = select(star()).from(tbl("users").lateral()).build();
@@ -493,7 +519,7 @@ class PostgresValidationDialectTest {
         assertNotNull(catalog);
         assertTrue(catalog.resolve("to_json").isPresent());
         assertFalse(catalog.resolve("to_jsonb").isPresent());
-        assertEquals(7, rules.size());
+        assertEquals(8, rules.size());
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectFeatureValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectClauseConsistencyRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresDistinctOnValidationRule")));
@@ -501,6 +527,7 @@ class PostgresValidationDialectTest {
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresMergeFeatureValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresStatementHintValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresTableHintValidationRule")));
+        assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresFunctionOrderByValidationRule")));
     }
 
     @Test

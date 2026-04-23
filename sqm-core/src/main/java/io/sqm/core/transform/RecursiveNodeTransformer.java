@@ -436,6 +436,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitFunctionExpr(FunctionExpr f) {
         List<FunctionExpr.Arg> args = new ArrayList<>();
         boolean changed = apply(f.args(), args);
+        var orderBy = apply(f.orderBy());
+        changed |= orderBy != f.orderBy();
         var withinGroup = apply(f.withinGroup());
         changed |= withinGroup != f.withinGroup();
         var filter = apply(f.filter());
@@ -443,7 +445,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         var over = apply(f.over());
         changed |= over != f.over();
         if (changed) {
-            return FunctionExpr.of(f.name(), args, f.distinctArg(), withinGroup, filter, over);
+            return FunctionExpr.of(f.name(), args, f.distinctArg(), orderBy, withinGroup, filter, over);
         }
         return f;
     }

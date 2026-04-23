@@ -236,6 +236,24 @@ class SqmJavaEmitterTest {
     }
 
     @Test
+    void emit_includesFunctionOrderBy() {
+        var source = emitter.emit(
+            select(
+                func("ARRAY_AGG", col("o", "sales_channel"))
+                    .distinct()
+                    .orderBy(col("o", "sales_channel"))
+            )
+                .from(tbl("orders").as("o"))
+                .build()
+        );
+
+        assertTrue(source.contains("func(\"ARRAY_AGG\", col(\"o\", \"sales_channel\"))"));
+        assertTrue(source.contains(".distinct()"));
+        assertTrue(source.contains(".orderBy("));
+        assertTrue(source.contains("orderBy(col(\"o\", \"sales_channel\"))"));
+    }
+
+    @Test
     void emit_formatsSupportedLiteralTypes() {
         String source = emitter.emit(
             select(

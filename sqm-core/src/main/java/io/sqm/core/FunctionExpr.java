@@ -24,13 +24,14 @@ public non-sealed interface FunctionExpr extends Expression {
      * @param name a function name (possibly qualified) with quote metadata
      * @param args          an array of function arguments.
      * @param distinctArg   indicates whether DISTINCT should be added before the list of arguments in the function call.
-     * @param withinGroup   defines an ordered-set aggregates.
+     * @param orderBy       defines ordering inside aggregate function arguments.
+     * @param withinGroup   defines ordered-set aggregate ordering.
      * @param filter        a filter used to filter rows only for aggregates.
      * @param over          an OVER specification.
      * @return a newly created instance of a function call expression.
      */
-    static FunctionExpr of(QualifiedName name, List<FunctionExpr.Arg> args, Boolean distinctArg, OrderBy withinGroup, Predicate filter, OverSpec over) {
-        return new Impl(Objects.requireNonNull(name, "name"), args, distinctArg, withinGroup, filter, over);
+    static FunctionExpr of(QualifiedName name, List<FunctionExpr.Arg> args, Boolean distinctArg, OrderBy orderBy, OrderBy withinGroup, Predicate filter, OverSpec over) {
+        return new Impl(Objects.requireNonNull(name, "name"), args, distinctArg, orderBy, withinGroup, filter, over);
     }
 
     /**
@@ -54,6 +55,20 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return True if DISTINCT needs to be added and False otherwise.
      */
     Boolean distinctArg();
+
+    /**
+     * Gets aggregate input ordering if provided or NULL otherwise.
+     * <p>Example:</p>
+     * <pre>
+     *     {@code
+     *     ARRAY_AGG(name ORDER BY name)
+     *     STRING_AGG(name, ',' ORDER BY name DESC)
+     *     }
+     * </pre>
+     *
+     * @return aggregate input ordering or NULL.
+     */
+    OrderBy orderBy();
 
     /**
      * Gets a WITHIN GROUP definition if provided or NULL otherwise.
@@ -106,7 +121,44 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return A newly created instance of the function call expression with the added indication. All other fields are preserved.
      */
     default FunctionExpr distinct() {
-        return new Impl(name(), args(), true, withinGroup(), filter(), over());
+        return new Impl(name(), args(), true, orderBy(), withinGroup(), filter(), over());
+    }
+
+    /**
+     * Adds aggregate input ordering to the function expression.
+     * <p>Example:</p>
+     * <pre>
+     *     {@code
+     *     ARRAY_AGG(name ORDER BY name)
+     *     STRING_AGG(name, ',' ORDER BY name DESC)
+     *     }
+     * </pre>
+     *
+     * @param orderBy aggregate input ordering.
+     * @return a new function expression with aggregate input ordering.
+     */
+    default FunctionExpr orderBy(OrderBy orderBy) {
+        return new Impl(name(), args(), distinctArg(), orderBy, withinGroup(), filter(), over());
+    }
+
+    /**
+     * Adds aggregate input ordering to the function expression.
+     *
+     * @param items ORDER BY items.
+     * @return a new function expression with aggregate input ordering.
+     */
+    default FunctionExpr orderBy(OrderItem... items) {
+        return orderBy(OrderBy.of(items));
+    }
+
+    /**
+     * Adds aggregate input ordering to the function expression.
+     *
+     * @param expressions expressions to order by.
+     * @return a new function expression with aggregate input ordering.
+     */
+    default FunctionExpr orderBy(Expression... expressions) {
+        return orderBy(OrderBy.of(java.util.Arrays.stream(expressions).map(OrderItem::of).toList()));
     }
 
     /**
@@ -124,7 +176,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return this.
      */
     default FunctionExpr withinGroup(OrderBy withinGroup) {
-        return new Impl(name(), args(), distinctArg(), withinGroup, filter(), over());
+        return new Impl(name(), args(), distinctArg(), orderBy(), withinGroup, filter(), over());
     }
 
     /**
@@ -142,7 +194,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return this.
      */
     default FunctionExpr withinGroup(OrderItem... items) {
-        return new Impl(name(), args(), distinctArg(), OrderBy.of(List.of(items)), filter(), over());
+        return new Impl(name(), args(), distinctArg(), orderBy(), OrderBy.of(List.of(items)), filter(), over());
     }
 
     /**
@@ -160,7 +212,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return this.
      */
     default FunctionExpr filter(Predicate filter) {
-        return new Impl(name(), args(), distinctArg(), withinGroup(), filter, over());
+        return new Impl(name(), args(), distinctArg(), orderBy(), withinGroup(), filter, over());
     }
 
     /**
@@ -178,7 +230,7 @@ public non-sealed interface FunctionExpr extends Expression {
      * @return this.
      */
     default FunctionExpr over(OverSpec over) {
-        return new Impl(name(), args(), distinctArg(), withinGroup(), filter(), over);
+        return new Impl(name(), args(), distinctArg(), orderBy(), withinGroup(), filter(), over);
     }
 
     /**
@@ -533,18 +585,20 @@ public non-sealed interface FunctionExpr extends Expression {
      * @param name the name of the function.
      * @param args          a list of arguments. Can be NULL or empty if there are no arguments.
      * @param distinctArg   indicates whether DISTINCT should be added before the list of arguments in the function call. {@code COUNT(DISTINCT t.id) AS c}.
-     * @param withinGroup   defines an ordered-set aggregates.
+     * @param orderBy       defines ordering inside aggregate function arguments.
+     * @param withinGroup   defines ordered-set aggregate ordering.
      * @param filter        a filter used to filter rows only for aggregates.
      * @param over          an OVER specification.
      */
-    record Impl(QualifiedName name, List<Arg> args, Boolean distinctArg, OrderBy withinGroup, Predicate filter, OverSpec over) implements FunctionExpr {
+    record Impl(QualifiedName name, List<Arg> args, Boolean distinctArg, OrderBy orderBy, OrderBy withinGroup, Predicate filter, OverSpec over) implements FunctionExpr {
         /**
          * This constructor ensures the arguments list is immutable.
          *
          * @param name the name of the function.
          * @param args          a list of arguments. Can be NULL or empty if there are no arguments.
          * @param distinctArg   indicates whether DISTINCT should be added before the list of arguments in the function call. {@code COUNT(DISTINCT t.id) AS c}.
-         * @param withinGroup   defines an ordered-set aggregates.
+         * @param orderBy       defines ordering inside aggregate function arguments.
+         * @param withinGroup   defines ordered-set aggregate ordering.
          * @param filter        a filter used to filter rows only for aggregates.
          * @param over          an OVER specification.
          */

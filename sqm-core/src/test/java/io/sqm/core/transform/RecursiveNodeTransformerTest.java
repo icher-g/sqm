@@ -54,7 +54,7 @@ class RecursiveNodeTransformerTest {
 
     @Test
     void visitFunctionExpr() {
-        var func = func("count", starArg()).withinGroup(order(1));
+        var func = func("count", starArg()).orderBy(order(1)).withinGroup(order(1));
         var groupTransformer = new RecursiveNodeTransformer() {
             @Override
             public Node visitOrderItem(OrderItem i) {
@@ -62,6 +62,7 @@ class RecursiveNodeTransformerTest {
             }
         };
         var f1 = (FunctionExpr) func.accept(groupTransformer);
+        assertEquals(2, f1.orderBy().items().getFirst().ordinal());
         assertEquals(2, f1.withinGroup().items().getFirst().ordinal());
         func = func.filter(col("c").in(1, 2, 3));
         var filterTransformer = new RecursiveNodeTransformer() {
@@ -85,6 +86,7 @@ class RecursiveNodeTransformerTest {
 
         assertEquals(List.of(4, 5, 6), values);
         var f3 = (FunctionExpr) func.accept(new NothingTransformer());
+        assertEquals(1, f3.orderBy().items().getFirst().ordinal());
         assertEquals(1, f3.withinGroup().items().getFirst().ordinal());
         assertEquals(List.of(1, 2, 3), f3.filter().matchPredicate()
             .in(p -> p.rhs().matchValueSet()

@@ -143,6 +143,8 @@ public final class IdentifierNormalizationTransformer extends RecursiveNodeTrans
         var name = normalizeQualifiedName(f.name());
         List<FunctionExpr.Arg> args = new ArrayList<>();
         boolean changed = apply(f.args(), args);
+        var orderBy = apply(f.orderBy());
+        changed |= orderBy != f.orderBy();
         var withinGroup = apply(f.withinGroup());
         changed |= withinGroup != f.withinGroup();
         var filter = apply(f.filter());
@@ -153,7 +155,7 @@ public final class IdentifierNormalizationTransformer extends RecursiveNodeTrans
         if (!changed) {
             return f;
         }
-        return FunctionExpr.of(name, args, f.distinctArg(), withinGroup, filter, over);
+        return FunctionExpr.of(name, args, f.distinctArg(), orderBy, withinGroup, filter, over);
     }
 
     @Override

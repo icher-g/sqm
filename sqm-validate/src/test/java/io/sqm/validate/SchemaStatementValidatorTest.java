@@ -1178,6 +1178,17 @@ class SchemaStatementValidatorTest {
     }
 
     @Test
+    void validate_acceptsGroupedSelectWithAggregateInputOrderBy() {
+        Query query = select(col("u", "status"), func("array_agg", col("u", "name")).orderBy(col("u", "name")))
+            .from(tbl("users").as("u"))
+            .groupBy(col("u", "status"))
+            .build();
+
+        var result = validator.validate(query);
+        assertTrue(result.ok());
+    }
+
+    @Test
     void validate_reportsHavingWithoutGroupOrAggregate() {
         Query query = select(star())
             .from(tbl("users").as("u"))

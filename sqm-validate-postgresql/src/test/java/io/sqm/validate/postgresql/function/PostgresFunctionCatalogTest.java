@@ -65,6 +65,19 @@ class PostgresFunctionCatalogTest {
     }
 
     @Test
+    void resolve_declaresArrayAggAsPostgresAggregate() {
+        var catalog = PostgresFunctionCatalog.of(SqlDialectVersion.of(9, 0));
+
+        var signature = catalog.resolve("array_agg");
+
+        assertTrue(signature.isPresent());
+        assertTrue(signature.get().aggregate());
+        assertEquals(1, signature.get().minArity());
+        assertEquals(1, signature.get().maxArity());
+        assertEquals(FunctionArgKind.ANY_EXPR, signature.get().argKinds().getFirst());
+    }
+
+    @Test
     void resolve_hidesJsonTypeofBefore92() {
         var catalog = PostgresFunctionCatalog.of(SqlDialectVersion.of(9, 1));
 

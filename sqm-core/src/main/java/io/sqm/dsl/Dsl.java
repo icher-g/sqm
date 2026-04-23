@@ -507,7 +507,7 @@ public final class Dsl {
      * @return a function column.
      */
     public static FunctionExpr func(String name, Expression... args) {
-        return FunctionExpr.of(QualifiedName.of(name.split("\\.")), Arrays.stream(args).map(FunctionExpr.Arg::from).toList(), null, null, null, null);
+        return FunctionExpr.of(QualifiedName.of(name.split("\\.")), Arrays.stream(args).map(FunctionExpr.Arg::from).toList(), null, null, null, null, null);
     }
 
     /**
