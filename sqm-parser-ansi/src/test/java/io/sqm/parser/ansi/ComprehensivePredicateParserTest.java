@@ -125,6 +125,14 @@ class ComprehensivePredicateParserTest {
     }
 
     @Test
+    void parsesComparisonWithScalarSubquery() {
+        var result = ctx.parse(Predicate.class, "user_id = (SELECT id FROM users LIMIT 1)");
+        assertTrue(result.ok());
+        var pred = assertInstanceOf(ComparisonPredicate.class, result.value());
+        assertInstanceOf(QueryExpr.class, pred.rhs());
+    }
+
+    @Test
     void parsesIsNullPredicate() {
         var result = ctx.parse(Predicate.class, "email IS NULL");
         assertTrue(result.ok());
