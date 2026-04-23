@@ -74,6 +74,29 @@ class SelectQueryParserTest {
     }
 
     @Test
+    void parsesDateFormatExpressionInSelectAndGroupBy() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Query.class, """
+            SELECT
+                DATE_FORMAT(o.order_date, '%Y-%m-01') AS month_start,
+                o.customer_id,
+                SUM(o.total_amount) AS monthly_total
+            FROM orders o
+            WHERE o.order_date >= '2025-01-01'
+            GROUP BY
+                DATE_FORMAT(o.order_date, '%Y-%m-01'),
+                o.customer_id
+            """);
+
+        assertTrue(result.ok(), result.errorMessage());
+        var select = assertInstanceOf(SelectQuery.class, result.value());
+        assertNotNull(select.groupBy());
+        assertEquals(2, select.groupBy().items().size());
+        var groupedFunction = assertInstanceOf(FunctionExpr.class, ((GroupItem.SimpleGroupItem) select.groupBy().items().getFirst()).expr());
+        assertEquals("DATE_FORMAT", groupedFunction.name().values().getLast());
+    }
+
+    @Test
     void parsesLateralDerivedTableFromMysql8014() {
         var ctx = ParseContext.of(new MySqlSpecs(SqlDialectVersion.of(8, 0, 14)));
         var result = ctx.parse(Query.class, "SELECT sq.id FROM LATERAL (SELECT id FROM users) AS sq");

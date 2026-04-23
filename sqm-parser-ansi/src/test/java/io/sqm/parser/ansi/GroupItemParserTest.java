@@ -2,6 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.ColumnExpr;
 import io.sqm.core.Expression;
+import io.sqm.core.FunctionExpr;
 import io.sqm.core.GroupItem;
 import io.sqm.core.Identifier;
 import io.sqm.core.QuoteStyle;
@@ -90,6 +91,17 @@ class GroupItemParserTest {
         Assertions.assertNull(res.value().ordinal());
     }
 
+    @Test
+    @DisplayName("Expression: 'LOWER(c)' -> function expression group item")
+    void expression_function() {
+        var res = parse("LOWER(c)");
+
+        Assertions.assertTrue(res.ok(), () -> "expected ok, got error: " + res.errorMessage());
+        var function = Assertions.assertInstanceOf(FunctionExpr.class, res.value().expr());
+        Assertions.assertEquals("LOWER", function.name().values().getLast());
+        Assertions.assertNull(res.value().ordinal());
+    }
+
     // ---------- Errors / propagation ----------
 
     @Test
@@ -101,10 +113,10 @@ class GroupItemParserTest {
     }
 
     @Test
-    @DisplayName("Garbage (expr.g., '-') -> error propagated from column parser")
+    @DisplayName("Garbage (expr.g., '-') -> error propagated from expression parser")
     void garbage_error() {
         var res = parse("-");
-        Assertions.assertFalse(res.ok(), "dash is not a valid ordinal or column");
+        Assertions.assertFalse(res.ok(), "dash is not a valid ordinal or expression");
         Assertions.assertNotNull(res.errorMessage());
         Assertions.assertFalse(Objects.requireNonNull(res.errorMessage()).isBlank());
     }
