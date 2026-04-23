@@ -191,6 +191,33 @@ class SchemaStatementValidatorTest {
     }
 
     @Test
+    void validate_allowsAnyAllExpressionSourceInSharedSchemaValidator() {
+        Query query = select(star())
+            .from(tbl("users").as("u"))
+            .where(col("u", "age").eqAny(col("u", "name")))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertFalse(result.problems().stream().anyMatch(p -> "predicate.any_all".equals(p.clausePath())));
+    }
+
+    @Test
+    void validate_reportsAnyAllTypeMismatchForQuerySource() {
+        Query query = select(star())
+            .from(tbl("users").as("u"))
+            .where(col("u", "age").eqAny(select(col("a", "id")).from(tbl("accounts").as("a")).build()))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(p ->
+            p.code() == ValidationProblem.Code.TYPE_MISMATCH
+                && "predicate.any_all".equals(p.clausePath())
+        ));
+    }
+
+    @Test
     void validate_reportsInvalidUsingColumn() {
         Query query = select(star())
             .from(tbl("users").as("u"))

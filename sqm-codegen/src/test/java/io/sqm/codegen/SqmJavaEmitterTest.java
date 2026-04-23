@@ -689,6 +689,27 @@ class SqmJavaEmitterTest {
     }
 
     @Test
+    void emit_usesQuantifiedPredicateHelpersAcrossOperators() {
+        var query = select(
+            col("c_eq_any").eqAny(col("path_eq_any")),
+            col("c_ne_any").neAny(col("path_ne_any")),
+            col("c_eq_all").eqAll(col("path_eq_all")),
+            col("c_ne_all").neAll(col("path_ne_all")),
+            col("c_gt_any").any(ComparisonOperator.GT, col("path_gt_any")),
+            col("c_lt_all").all(ComparisonOperator.LT, col("path_lt_all"))
+        ).build();
+
+        var querySource = emitter.emit(query);
+
+        assertTrue(querySource.contains("col(\"c_eq_any\").eqAny(col(\"path_eq_any\"))"));
+        assertTrue(querySource.contains("col(\"c_ne_any\").neAny(col(\"path_ne_any\"))"));
+        assertTrue(querySource.contains("col(\"c_eq_all\").eqAll(col(\"path_eq_all\"))"));
+        assertTrue(querySource.contains("col(\"c_ne_all\").neAll(col(\"path_ne_all\"))"));
+        assertTrue(querySource.contains("col(\"c_gt_any\").any(ComparisonOperator.GT, col(\"path_gt_any\"))"));
+        assertTrue(querySource.contains("col(\"c_lt_all\").all(ComparisonOperator.LT, col(\"path_lt_all\"))"));
+    }
+
+    @Test
     void emit_coversAdditionalExpressionAndQueryNodes() {
         var query = select(
             date("2026-04-19"),

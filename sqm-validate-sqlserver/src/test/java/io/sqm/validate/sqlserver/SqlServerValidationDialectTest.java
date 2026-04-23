@@ -63,6 +63,21 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
+    void validate_allowsAnyAllQuerySource() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var query = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .where(col("u", "id").eqAny(select(col("id")).from(tbl("users")).build()))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertFalse(result.problems().stream().anyMatch(problem ->
+            "predicate.any_all.source".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
     void validate_acceptsBaselineSqlServerSelectWithTop() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var query = select(col("u", "id"))
