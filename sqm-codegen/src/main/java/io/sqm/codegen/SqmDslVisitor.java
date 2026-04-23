@@ -1521,7 +1521,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         if (f.orderBy() != null) {
             out.nl().append(".orderBy(");
             try (var ignore = new CodeScope(out, false)) {
-                appendNode(f.orderBy());
+                out.comma(f.orderBy().items(), this::appendNode, true);
             }
             out.nl().append(")");
         }
@@ -1812,13 +1812,15 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         }
         if (l.limit() != null) {
             out.append(".limit(");
-            appendNode(l.limit());
+            if (l.limit() instanceof LiteralExpr lit) appendLiteralValue(lit.value());
+            else appendNode(l.limit());
             out.append(")");
             return defaultResult();
         }
         if (l.offset() != null) {
             out.append(".offset(");
-            appendNode(l.offset());
+            if (l.limit() instanceof LiteralExpr lit) appendLiteralValue(lit.value());
+            else appendNode(l.offset());
             out.append(")");
             return defaultResult();
         }
