@@ -1819,7 +1819,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         }
         if (l.offset() != null) {
             out.append(".offset(");
-            if (l.limit() instanceof LiteralExpr lit) appendLiteralValue(lit.value());
+            if (l.offset() instanceof LiteralExpr lit) appendLiteralValue(lit.value());
             else appendNode(l.offset());
             out.append(")");
             return defaultResult();

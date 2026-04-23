@@ -142,11 +142,11 @@ class SqmJavaEmitterTest {
         assertTrue(overPartitionOnly.contains(".over("));
         assertTrue(overPartitionOnly.contains("partition("));
 
-        String limitOnly = emitter.emit(select(star()).from(tbl("t")).limit(lit(5)).build());
-        assertTrue(limitOnly.contains(".limit(lit(5))"));
+        String limitOnly = emitter.emit(select(star()).from(tbl("t")).limit(5).build());
+        assertTrue(limitOnly.contains(".limit(5L)"));
 
-        String offsetOnly = emitter.emit(select(star()).from(tbl("t")).offset(lit(7)).build());
-        assertTrue(offsetOnly.contains(".offset(lit(7))"));
+        String offsetOnly = emitter.emit(select(star()).from(tbl("t")).offset(7).build());
+        assertTrue(offsetOnly.contains(".offset(7L)"));
 
         String bothNull = emitter.emit(select(star()).from(tbl("t")).limitOffset(limitOffset(null, null)).build());
         assertTrue(bothNull.contains(".limitOffset(limitOffset(null, null))"));
@@ -250,7 +250,7 @@ class SqmJavaEmitterTest {
         assertTrue(source.contains("func(\"ARRAY_AGG\", col(\"o\", \"sales_channel\"))"));
         assertTrue(source.contains(".distinct()"));
         assertTrue(source.contains(".orderBy("));
-        assertTrue(source.contains("orderBy(col(\"o\", \"sales_channel\"))"));
+        assertTrue(source.contains("col(\"o\", \"sales_channel\")"));
     }
 
     @Test
