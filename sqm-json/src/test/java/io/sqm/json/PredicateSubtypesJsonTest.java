@@ -28,6 +28,18 @@ public class PredicateSubtypesJsonTest {
         return mapper.readTree(mapper.writeValueAsBytes(value));
     }
 
+    @Test
+    @DisplayName("AnyAllPredicate: expression source")
+    void anyAllPredicate_expressionSource() throws Exception {
+        var predicate = col("category_id").eqAny(col("path"));
+
+        var back = roundTrip(predicate, AnyAllPredicate.class);
+
+        assertInstanceOf(ColumnExpr.class, back.source());
+        var json = toTree(predicate);
+        assertEquals("column", json.get("source").get("kind").asText());
+    }
+
     /* ==================== LikePredicate Tests ==================== */
 
     @Test

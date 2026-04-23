@@ -658,7 +658,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
 
     /**
      * Visits an {@link AnyAllPredicate}, representing
-     * {@code <expr> = ANY(<subquery>)} or {@code <expr> > ALL(<subquery>)} constructs.
+     * {@code <expr> = ANY(<source>)} or {@code <expr> > ALL(<source>)} constructs.
      *
      * @param p the predicate being visited
      * @return a result produced by the visitor
@@ -666,7 +666,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitAnyAllPredicate(AnyAllPredicate p) {
         accept(p.lhs());
-        accept(p.subquery());
+        accept(p.source());
         return defaultResult();
     }
 

@@ -660,6 +660,7 @@ class SqmJavaEmitterTest {
             .from(tbl("users"))
             .where(
                 col("age").any(ComparisonOperator.GT, subquery)
+                    .and(col("category_id").eqAny(col("path")))
                     .and(col("name").regex(RegexMode.MATCH_INSENSITIVE, lit("^a"), true))
             )
             .lockFor(update(), List.of(), false, false)
@@ -681,6 +682,7 @@ class SqmJavaEmitterTest {
         assertTrue(querySource.contains("\"base\", null, rows(currentRow()), excludeGroup()"));
         assertTrue(querySource.contains("partition(col(\"dept\")), null, rows(currentRow()), excludeNoOthers()"));
         assertTrue(querySource.contains(".any(ComparisonOperator.GT, select("));
+        assertTrue(querySource.contains(".eqAny(col(\"path\"))"));
         assertTrue(querySource.contains(".regex(RegexMode.MATCH_INSENSITIVE, lit(\"^a\"), true)"));
         assertTrue(querySource.contains(".lockFor(update(), List.of(), false, false)"));
         assertTrue(updateSource.contains(".set(qualify(id(\"app\"), id(\"users\"), id(\"name\")), lit(\"alice\"))"));

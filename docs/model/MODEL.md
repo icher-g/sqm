@@ -31,6 +31,7 @@ Status terms used below:
 | `DistinctSpec`                                               | Select-level distinct modifier abstraction                                           | `Support` for ANSI `DISTINCT`                                                                    | `Support` for ANSI `DISTINCT` plus shipped variants such as `DISTINCT ON`                        | `Support` for ANSI `DISTINCT`                                                                    | `Support` for ANSI `DISTINCT`                                                                    | Dialects may define additional distinct variants beyond ANSI `DISTINCT`                          | Shared abstraction; concrete supported variants remain dialect-specific                                                                                                  |
 | `AnonymousParamExpr` / `NamedParamExpr` / `OrdinalParamExpr` | Placeholder expressions for parameterized SQL                                        | `Support` for anonymous and named forms in shipped ANSI behavior                                 | `Support` for ordinal parameters such as `$1` and other shared forms in shipped scope            | `Support` for anonymous and named forms in shipped scope                                         | `Support` for anonymous and named forms in shipped scope                                         | Placeholder syntax is dialect-shaped even when the semantic role is shared                       | Shared parameter family                                                                                                                                                  |
 | `ArrayExpr` / `ArraySubscriptExpr` / `ArraySliceExpr`        | Array construction and array access semantics                                        | `Not supported by the dialect`                                                                   | `Support`                                                                                        | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | Some databases may support related array features differently                                    | Shared semantic family primarily exercised by PostgreSQL today; MySQL and SQL Server expose JSON-oriented array access instead of the current SQL-array node family      |
+| `QuantifiedSource`                                           | Source role for `ANY` / `ALL` predicates                                             | Query sources only                                                                               | Query sources plus array-expression sources                                                      | Query sources only                                                                               | Query sources only                                                                               | PostgreSQL supports array-expression sources such as `ANY(path)`                                 | Shared role interface implemented by `Query` and `Expression`; dialects opt in to non-query sources                                                                      |
 | `AtTimeZoneExpr`                                             | Time-zone conversion expression                                                      | `Not supported by the dialect`                                                                   | `Support`                                                                                        | `Not supported by the dialect`                                                                   | `Support`                                                                                        | This table records SQM dialect support, not a full claim about every database product capability | Shared node for a dialect-gated expression family                                                                                                                        |
 | `ResultClause`                                               | DML statement emits result rows                                                      | `Support` for the shared shape only where delivered by the ANSI-based DML slice                  | `Support` through shipped `RETURNING` support                                                    | `Not supported by the dialect` for current shipped MySQL versions                                | `Support` through shipped `OUTPUT` support                                                       | The database syntax differs by dialect (`RETURNING`, `OUTPUT`, and future equivalents)           | Shared semantics, dialect-specific syntax                                                                                                                                |
 | `ResultInto`                                                 | DML result rows are redirected into a relation target                                | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Support` for `OUTPUT ... INTO`                                                                  | The current shipped support is SQL Server-specific                                               | Shared sink concept, currently only shipped for SQL Server                                                                                                               |
@@ -146,6 +147,9 @@ Node
 |- InsertSource
 |  |- Query
 |  `- RowValues
+|- QuantifiedSource
+|  |- Query
+|  `- Expression
 |- CteDef
 |- FromItem
 |  |- Join
@@ -304,6 +308,9 @@ graph TD
   Statement --> UpdateStatement
   Statement --> DeleteStatement
   Statement --> MergeStatement
+  Node --> QuantifiedSource
+  QuantifiedSource --> Query
+  QuantifiedSource --> Expression
   Query --> CompositeQuery
   Query --> SelectQuery
   Query --> WithQuery
@@ -387,6 +394,9 @@ graph TD
 
 - **InsertSource**
   Base type for INSERT value sources (`Query` and `RowValues`).
+
+- **QuantifiedSource**
+  Base role for sources accepted by `AnyAllPredicate`; standard query sources are always representable, while dialects such as PostgreSQL may also support expression sources such as arrays.
 
 ---
 

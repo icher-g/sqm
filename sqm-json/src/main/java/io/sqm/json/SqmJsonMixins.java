@@ -41,6 +41,7 @@ public final class SqmJsonMixins {
         // Value sets
         mapper.addMixIn(ValueSet.class, ValueSetMixin.class);
         mapper.addMixIn(InsertSource.class, InsertSourceMixin.class);
+        mapper.addMixIn(QuantifiedSource.class, QuantifiedSourceMixin.class);
         mapper.addMixIn(Assignment.class, AssignmentMixin.class);
 
         // Select items

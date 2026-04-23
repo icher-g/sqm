@@ -17,8 +17,18 @@ class AnyAllPredicateTest {
         assertInstanceOf(AnyAllPredicate.class, predicate);
         assertEquals(lhs, predicate.lhs());
         assertEquals(ComparisonOperator.EQ, predicate.operator());
+        assertEquals(subquery, predicate.source());
         assertEquals(subquery, predicate.subquery());
         assertEquals(Quantifier.ANY, predicate.quantifier());
+    }
+
+    @Test
+    void ofWithExpressionSource() {
+        var source = col("ct", "path");
+        var predicate = AnyAllPredicate.of(col("c", "category_id"), ComparisonOperator.EQ, source, Quantifier.ANY);
+
+        assertEquals(source, predicate.source());
+        assertThrows(IllegalStateException.class, predicate::subquery);
     }
 
     @Test

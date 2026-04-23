@@ -435,6 +435,23 @@ class RecursiveNodeTransformerTest {
     }
 
     @Test
+    void visitAnyAllPredicateWithExpressionSource() {
+        var any = col("c1").eqAny(col("path"));
+        var transformer = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitColumnExpr(ColumnExpr c) {
+                return col(c.name().value() + "_x");
+            }
+        };
+
+        var transformed = (AnyAllPredicate) any.accept(transformer);
+
+        assertEquals("c1_x", transformed.lhs().matchExpression().column(c -> c.name().value()).orElse(null));
+        var source = assertInstanceOf(Expression.class, transformed.source());
+        assertEquals("path_x", source.matchExpression().column(c -> c.name().value()).orElse(null));
+    }
+
+    @Test
     void visitBetweenPredicate() {
         var p = col("c1").between(1, 5);
         // change value

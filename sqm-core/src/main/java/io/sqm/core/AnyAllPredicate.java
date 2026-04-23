@@ -18,12 +18,12 @@ public non-sealed interface AnyAllPredicate extends Predicate {
      *
      * @param lhs        he left-hand-side of the predicate.
      * @param operator   a comparison operator.
-     * @param subquery   a sub query that provides a set of values to compare against.
+     * @param source     a source that provides a set of values to compare against.
      * @param quantifier indicates what type of predicate is this: ANY or ALL.
      * @return a new instance of the predicate.
      */
-    static AnyAllPredicate of(Expression lhs, ComparisonOperator operator, Query subquery, Quantifier quantifier) {
-        return new Impl(lhs, operator, subquery, quantifier);
+    static AnyAllPredicate of(Expression lhs, ComparisonOperator operator, QuantifiedSource source, Quantifier quantifier) {
+        return new Impl(lhs, operator, source, quantifier);
     }
 
     /**
@@ -41,11 +41,24 @@ public non-sealed interface AnyAllPredicate extends Predicate {
     ComparisonOperator operator();
 
     /**
-     * Gets a sub query that provides a set of values to compare against.
+     * Gets a source that provides a set of values to compare against.
+     *
+     * @return a quantified source.
+     */
+    QuantifiedSource source();
+
+    /**
+     * Gets the source as a sub query.
      *
      * @return a sub query.
+     * @throws IllegalStateException if the quantified source is not a query.
      */
-    Query subquery();
+    default Query subquery() {
+        if (source() instanceof Query query) {
+            return query;
+        }
+        throw new IllegalStateException("Quantified source is not a query");
+    }
 
     /**
      * Indicates what type of predicate is this: ANY or ALL.
@@ -78,9 +91,9 @@ public non-sealed interface AnyAllPredicate extends Predicate {
      *
      * @param lhs        the left-hand-side of the predicate.
      * @param operator   a comparison operator.
-     * @param subquery   a sub query that provides a set of values to compare against.
+     * @param source     a source that provides a set of values to compare against.
      * @param quantifier indicates what type of predicate is this: ANY or ALL.
      */
-    record Impl(Expression lhs, ComparisonOperator operator, Query subquery, Quantifier quantifier) implements AnyAllPredicate {
+    record Impl(Expression lhs, ComparisonOperator operator, QuantifiedSource source, Quantifier quantifier) implements AnyAllPredicate {
     }
 }

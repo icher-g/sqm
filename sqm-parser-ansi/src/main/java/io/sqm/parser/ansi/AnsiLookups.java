@@ -542,8 +542,13 @@ public class AnsiLookups implements Lookups {
      */
     @Override
     public boolean looksLikeSelectQuery(Cursor cur, Lookahead pos) {
-        if (cur.match(TokenType.SELECT, pos.current())) {
-            pos.increment();
+        var p = Lookahead.at(pos.current());
+        if (cur.match(TokenType.COMMENT_HINT, p.current())) {
+            p.increment();
+        }
+        if (cur.match(TokenType.SELECT, p.current())) {
+            p.increment();
+            pos.increment(p.current() - pos.current());
             return true;
         }
         return false;

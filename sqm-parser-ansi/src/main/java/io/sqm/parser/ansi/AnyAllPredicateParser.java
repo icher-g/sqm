@@ -3,6 +3,7 @@ package io.sqm.parser.ansi;
 import io.sqm.core.AnyAllPredicate;
 import io.sqm.core.Expression;
 import io.sqm.core.Quantifier;
+import io.sqm.core.QuantifiedSource;
 import io.sqm.core.Query;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -85,12 +86,23 @@ public class AnyAllPredicateParser implements Parser<AnyAllPredicate>, InfixPars
 
         cur.expect("Expected (", TokenType.LPAREN);
 
-        var query = ctx.parse(Query.class, cur);
-        if (query.isError()) {
-            return error(query);
+        var source = parseSource(cur, ctx);
+        if (source.isError()) {
+            return error(source);
         }
 
         cur.expect("Expected )", TokenType.RPAREN);
-        return ok(AnyAllPredicate.of(lhs, operator, query.value(), quantifier));
+        return ok(AnyAllPredicate.of(lhs, operator, source.value(), quantifier));
+    }
+
+    /**
+     * Parses the parenthesized source for the quantified predicate.
+     *
+     * @param cur the cursor positioned after the opening parenthesis.
+     * @param ctx the parse context.
+     * @return the parsed quantified source.
+     */
+    protected ParseResult<? extends QuantifiedSource> parseSource(Cursor cur, ParseContext ctx) {
+        return ctx.parse(Query.class, cur);
     }
 }
