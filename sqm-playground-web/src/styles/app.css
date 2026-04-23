@@ -135,6 +135,7 @@ textarea {
   min-height: 2.3rem;
   width: 100%;
   min-width: 0;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
@@ -146,6 +147,8 @@ textarea {
   padding: 0.3rem 0.6rem;
   min-width: 0;
   white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
   transition:
     background-color 120ms ease,
@@ -257,15 +260,43 @@ textarea {
   background: #fffdf8;
   min-width: 0;
   min-height: 15.25rem;
+  container-type: inline-size;
 }
 
 .parameterization-field {
   grid-row: 2;
-  grid-template-columns: minmax(5.5rem, 1fr) minmax(8rem, 10rem);
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: start;
   align-self: start;
   gap: 0.75rem;
   min-width: 0;
+}
+
+.parameterization-field .control-label {
+  min-width: 0;
+}
+
+.parameterization-field .segmented-control {
+  width: 100%;
+  max-width: none;
+}
+
+@container (min-width: 15rem) {
+  .parameterization-field {
+    grid-template-columns: minmax(4.75rem, 5.75rem) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .parameterization-field .control-label {
+    white-space: normal;
+    line-height: 1.25;
+  }
+
+  .parameterization-field .segmented-control {
+    justify-self: end;
+    max-width: 10rem;
+  }
 }
 
 .editor-label {
@@ -811,16 +842,6 @@ textarea {
 
   .sql-editor-monaco {
     min-height: 24rem;
-  }
-}
-
-@media (max-width: 1400px) {
-  .parameterization-field {
-    grid-template-columns: 1fr;
-  }
-
-  .parameterization-field .segmented-control {
-    width: 100%;
   }
 }
 
