@@ -126,4 +126,13 @@ class FunctionExprParserTest {
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected WHERE"));
     }
+
+    @Test
+    void rejectsAggregateInputOrderBy() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        var result = ctx.parse(FunctionExpr.class, "ARRAY_AGG(name ORDER BY name)");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected ')'"));
+    }
 }

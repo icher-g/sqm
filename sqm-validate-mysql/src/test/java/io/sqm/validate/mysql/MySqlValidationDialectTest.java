@@ -30,6 +30,21 @@ class MySqlValidationDialectTest {
     );
 
     @Test
+    void validate_reportsUnsupportedAggregateInputOrderBy() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var query = select(func("array_agg", col("u", "name")).orderBy(col("u", "name")))
+            .from(tbl("users").as("u"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "function.orderBy".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
     void validate_reportsUseAndForceConflictInSameDefaultScope() {
         var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
         var query = select(col("u", "id"))

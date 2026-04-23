@@ -105,6 +105,8 @@ public final class PostgresFunctionCatalog implements FunctionCatalog {
             FunctionSignature.of(1, 2, CatalogType.JSON, FunctionArgKind.ANY_EXPR, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 2), "row_to_json",
             FunctionSignature.of(1, 2, CatalogType.JSON, FunctionArgKind.ANY_EXPR, FunctionArgKind.ANY_EXPR));
+        put(signatures, version, SqlDialectVersion.of(9, 0), "array_agg",
+            FunctionSignature.ofAggregate(1, 1, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 0), "string_agg",
             FunctionSignature.ofAggregate(2, 2, CatalogType.STRING, FunctionArgKind.ANY_EXPR, FunctionArgKind.ANY_EXPR));
         put(signatures, version, SqlDialectVersion.of(9, 4), "json_build_object",

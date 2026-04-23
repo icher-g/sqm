@@ -16,13 +16,13 @@ class FunctionExprTest {
         OrderBy withinGroups = OrderBy.of(List.of(OrderItem.of(1)));
         Predicate filter = col("c").eq(1);
         OverSpec over = Dsl.over("w");
-        assertInstanceOf(FunctionExpr.class, FunctionExpr.of(QualifiedName.of("rank"), List.of(), null, null, null, null));
-        assertInstanceOf(FunctionExpr.class, FunctionExpr.of(QualifiedName.of("rank"), args, true, withinGroups, filter, over));
+        assertInstanceOf(FunctionExpr.class, FunctionExpr.of(QualifiedName.of("rank"), List.of(), null, null, null, null, null));
+        assertInstanceOf(FunctionExpr.class, FunctionExpr.of(QualifiedName.of("rank"), args, true, null, withinGroups, filter, over));
     }
 
     @Test
     void distinct() {
-        var f = FunctionExpr.of(QualifiedName.of("count"), List.of(FunctionExpr.Arg.star()), null, null, null, null).distinct();
+        var f = FunctionExpr.of(QualifiedName.of("count"), List.of(FunctionExpr.Arg.star()), null, null, null, null, null).distinct();
         assertInstanceOf(FunctionExpr.class, f);
         assertTrue(f.distinctArg());
     }
@@ -41,22 +41,35 @@ class FunctionExprTest {
     void withinGroup() {
         OrderItem item = OrderItem.of(1);
         OrderBy withinGroups = OrderBy.of(List.of(item));
-        var f1 = FunctionExpr.of(QualifiedName.of("count"), List.of(FunctionExpr.Arg.star()), null, null, null, null).withinGroup(item);
+        var f1 = FunctionExpr.of(QualifiedName.of("count"), List.of(FunctionExpr.Arg.star()), null, null, null, null, null).withinGroup(item);
         assertEquals(withinGroups, f1.withinGroup());
-        var f2 = FunctionExpr.of(QualifiedName.of("count"), List.of(FunctionExpr.Arg.star()), null, null, null, null).withinGroup(withinGroups);
+        var f2 = FunctionExpr.of(QualifiedName.of("count"), List.of(FunctionExpr.Arg.star()), null, null, null, null, null).withinGroup(withinGroups);
         assertEquals(withinGroups, f2.withinGroup());
+    }
+
+    @Test
+    void orderBy() {
+        OrderItem item = OrderItem.of(col("name"));
+        OrderBy orderBy = OrderBy.of(List.of(item));
+        var f1 = FunctionExpr.of(QualifiedName.of("array_agg"), List.of(FunctionExpr.Arg.expr(col("name"))), null, null, null, null, null).orderBy(item);
+        var f2 = FunctionExpr.of(QualifiedName.of("array_agg"), List.of(FunctionExpr.Arg.expr(col("name"))), null, null, null, null, null).orderBy(orderBy);
+        var f3 = FunctionExpr.of(QualifiedName.of("array_agg"), List.of(FunctionExpr.Arg.expr(col("name"))), null, null, null, null, null).orderBy(col("name"));
+
+        assertEquals(orderBy, f1.orderBy());
+        assertEquals(orderBy, f2.orderBy());
+        assertEquals(orderBy, f3.orderBy());
     }
 
     @Test
     void filter() {
         var predicate = col("c").eq(1);
-        var f = FunctionExpr.of(QualifiedName.of("count"), List.of(FunctionExpr.Arg.star()), null, null, null, null).filter(predicate);
+        var f = FunctionExpr.of(QualifiedName.of("count"), List.of(FunctionExpr.Arg.star()), null, null, null, null, null).filter(predicate);
         assertEquals(predicate, f.filter());
     }
 
     @Test
     void over() {
-        var f = FunctionExpr.of(QualifiedName.of("count"), List.of(FunctionExpr.Arg.star()), null, null, null, null);
+        var f = FunctionExpr.of(QualifiedName.of("count"), List.of(FunctionExpr.Arg.star()), null, null, null, null, null);
         assertInstanceOf(OverSpec.Ref.class, f.over("w").over());
         assertInstanceOf(OverSpec.Ref.class, f.over("w").over());
         // check all variations of: over(PartitionBy partitionBy, OrderBy orderBy, FrameSpec frame, OverSpec.Exclude exclude)

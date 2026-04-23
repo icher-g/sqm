@@ -27,7 +27,7 @@ public class DeepTransformationRebuildTest {
         ColumnExpr colName = ColumnExpr.of(null, Identifier.of("name"));
 
         // lower(u.id)
-        FunctionExpr lower = FunctionExpr.of(QualifiedName.of("lower"), List.of(FunctionExpr.Arg.expr(colUid)), null, null, null, null);
+        FunctionExpr lower = FunctionExpr.of(QualifiedName.of("lower"), List.of(FunctionExpr.Arg.expr(colUid)), null, null, null, null, null);
         // Row: [ name, lower(u.id) ]
         RowExpr row = RowExpr.of(List.of(colName, lower));
 

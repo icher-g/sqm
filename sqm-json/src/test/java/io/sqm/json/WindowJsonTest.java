@@ -90,6 +90,19 @@ public class WindowJsonTest {
     }
 
     @Test
+    void aggregateInputOrderBy_roundTrips() throws Exception {
+        var fx = func("array_agg", col("name")).orderBy(col("name").desc());
+
+        var back = roundTrip(fx, FunctionExpr.class);
+
+        JsonNode orderBy = toTree(fx).path("orderBy");
+        assertFalse(orderBy.isMissingNode());
+        assertNotNull(back.orderBy());
+        assertEquals(1, back.orderBy().items().size());
+        assertEquals(Direction.DESC, back.orderBy().items().getFirst().direction());
+    }
+
+    @Test
     void over_inline_groups_between_with_exclude_ties_json() throws Exception {
         // RANK() OVER (PARTITION BY grp ORDER BY score DESC
         //              GROUPS BETWEEN 1 PRECEDING AND 1 FOLLOWING EXCLUDE TIES)

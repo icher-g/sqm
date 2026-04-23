@@ -108,6 +108,7 @@ class StatementFeatureInspectorTest {
                 false,
                 null,
                 null,
+                null,
                 null
             ))
             .build();

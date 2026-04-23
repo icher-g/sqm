@@ -96,6 +96,7 @@ public final class PostgresToMySqlIlikeRule implements TranspileRule {
                 null,
                 null,
                 null,
+                null,
                 null
             );
         }

@@ -44,6 +44,11 @@ public class FunctionExprParser implements MatchableParser<FunctionExpr> {
             return error(args);
         }
 
+        var orderBy = parseOrderBy(cur, ctx, functionName, args.value());
+        if (orderBy.isError()) {
+            return error(orderBy);
+        }
+
         cur.expect("Expected ')' to close function", TokenType.RPAREN);
 
         var withinGroup = parseWithinGroup(cur, ctx, functionName);
@@ -61,7 +66,7 @@ public class FunctionExprParser implements MatchableParser<FunctionExpr> {
             return error(over);
         }
 
-        return ok(buildFunction(functionName, args.value(), distinct, withinGroup.value(), filter.value(), over.value()));
+        return ok(buildFunction(functionName, args.value(), distinct, orderBy.value(), withinGroup.value(), filter.value(), over.value()));
     }
 
     /**
@@ -129,6 +134,24 @@ public class FunctionExprParser implements MatchableParser<FunctionExpr> {
         QualifiedName functionName
     ) {
         return ctx.parse(FunctionExpr.Arg.class, cur);
+    }
+
+    /**
+     * Parses optional ordering inside the function argument list.
+     *
+     * @param cur cursor positioned after parsed arguments.
+     * @param ctx parser context.
+     * @param functionName parsed qualified function name.
+     * @param args parsed function arguments.
+     * @return parsed order-by clause or {@code null}.
+     */
+    protected ParseResult<? extends OrderBy> parseOrderBy(
+        Cursor cur,
+        ParseContext ctx,
+        QualifiedName functionName,
+        List<FunctionExpr.Arg> args
+    ) {
+        return ok(null);
     }
 
     /**
@@ -202,6 +225,7 @@ public class FunctionExprParser implements MatchableParser<FunctionExpr> {
      * @param functionName parsed qualified function name.
      * @param args parsed arguments.
      * @param distinct optional distinct marker.
+     * @param orderBy optional aggregate input ordering.
      * @param withinGroup optional within-group clause.
      * @param filter optional filter clause.
      * @param over optional over clause.
@@ -211,11 +235,12 @@ public class FunctionExprParser implements MatchableParser<FunctionExpr> {
         QualifiedName functionName,
         List<FunctionExpr.Arg> args,
         Boolean distinct,
+        OrderBy orderBy,
         OrderBy withinGroup,
         Predicate filter,
         OverSpec over
     ) {
-        return FunctionExpr.of(functionName, args, distinct, withinGroup, filter, over);
+        return FunctionExpr.of(functionName, args, distinct, orderBy, withinGroup, filter, over);
     }
 
     /**

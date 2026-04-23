@@ -30,6 +30,7 @@ public class FunctionExprRenderer implements Renderer<FunctionExpr> {
         renderOpenParen(node, ctx, w);
         renderDistinct(node, ctx, w);
         renderArguments(node, ctx, w);
+        renderOrderBy(node, ctx, w);
         renderCloseParen(node, ctx, w);
         renderWithinGroup(node, ctx, w);
         renderFilter(node, ctx, w);
@@ -107,6 +108,19 @@ public class FunctionExprRenderer implements Renderer<FunctionExpr> {
         SqlWriter w
     ) {
         w.append(arg);
+    }
+
+    /**
+     * Renders ordering inside the function argument list.
+     *
+     * @param node function expression to render.
+     * @param ctx render context.
+     * @param w SQL writer.
+     */
+    protected void renderOrderBy(FunctionExpr node, RenderContext ctx, SqlWriter w) {
+        if (node.orderBy() != null) {
+            throw new UnsupportedOperationException("Function argument ORDER BY is not supported by the ANSI renderer");
+        }
     }
 
     /**

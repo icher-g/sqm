@@ -64,7 +64,7 @@ final class AggregationAnalysis {
         if (functionExpr.over() != null) {
             return false;
         }
-        if (functionExpr.filter() != null || functionExpr.withinGroup() != null) {
+        if (functionExpr.filter() != null || functionExpr.orderBy() != null || functionExpr.withinGroup() != null) {
             return true;
         }
         return functionCatalog.resolve(functionName(functionExpr))

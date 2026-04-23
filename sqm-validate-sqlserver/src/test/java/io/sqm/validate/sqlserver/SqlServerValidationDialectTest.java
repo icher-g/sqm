@@ -32,6 +32,21 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
+    void validate_reportsUnsupportedAggregateInputOrderBy() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var query = select(func("array_agg", col("u", "name")).orderBy(col("u", "name")))
+            .from(tbl("users").as("u"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "function.orderBy".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
     void validate_acceptsBaselineSqlServerSelectWithTop() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var query = select(col("u", "id"))
@@ -891,7 +906,7 @@ class SqlServerValidationDialectTest {
         var versionedDialect = SqlServerValidationDialect.of(SqlDialectVersion.of(2014, 0));
 
         assertEquals("sqlserver", dialect.name());
-        assertEquals(6, dialect.additionalRules().size());
+        assertEquals(7, dialect.additionalRules().size());
         assertEquals(SqlDialectVersion.of(2019, 0), dialect.version());
         assertTrue(dialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.LATERAL));
         assertFalse(versionedDialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.AT_TIME_ZONE));

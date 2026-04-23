@@ -1501,6 +1501,13 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         if (Boolean.TRUE.equals(f.distinctArg())) {
             out.nl().append(".distinct()");
         }
+        if (f.orderBy() != null) {
+            out.nl().append(".orderBy(");
+            try (var ignore = new CodeScope(out, false)) {
+                appendNode(f.orderBy());
+            }
+            out.nl().append(")");
+        }
         if (f.withinGroup() != null) {
             out.nl().append(".withinGroup(");
             try (var ignore = new CodeScope(out, false)) {

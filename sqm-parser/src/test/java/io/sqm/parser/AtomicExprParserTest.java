@@ -246,7 +246,7 @@ class AtomicExprParserTest {
         @Override
         public ParseResult<? extends FunctionExpr> parse(Cursor cur, ParseContext ctx) {
             cur.expect("Expected function name", TokenType.IDENT);
-            return ParseResult.ok(FunctionExpr.of(QualifiedName.of("fn"), java.util.List.of(), null, null, null, null));
+            return ParseResult.ok(FunctionExpr.of(QualifiedName.of("fn"), java.util.List.of(), null, null, null, null, null));
         }
 
         @Override
