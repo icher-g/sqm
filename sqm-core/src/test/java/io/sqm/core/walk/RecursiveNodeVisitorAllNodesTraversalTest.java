@@ -20,13 +20,13 @@ public class RecursiveNodeVisitorAllNodesTraversalTest {
             select(
                 kase(when(col("u", "name").gt(10)).then(col("o", "name"))),
                 col("o", "status"),
-                func("count", arg(col("u", "id")))
+                func("count", col("u", "id"))
                     .over(
                         partition(col("acct_id")),
                         orderBy(col("ts").asc()),
                         rows(preceding(5))
                     ).as("cnt"),
-                func("lower", arg(func("sub", arg(col("u", "desc")))))
+                func("lower", func("sub", col("u", "desc")))
                     .over("w").as("lwr"),
                 star(),
                 star("o")
@@ -40,7 +40,7 @@ public class RecursiveNodeVisitorAllNodesTraversalTest {
                     col("o", "state")
                         .in("A", "B")
                         .and(
-                            func("count", arg(col("u", "id"))).gt(10)
+                            func("count", col("u", "id")).gt(10)
                         )
                         .and(
                             col("o", "flag").isNull()
@@ -49,7 +49,7 @@ public class RecursiveNodeVisitorAllNodesTraversalTest {
                         )
                 )
                 .groupBy(col("u", "user_name"), col("o", "user_status"))
-                .having(func("count", arg(col("u", "test"))).gt(10))
+                .having(func("count", col("u", "test")).gt(10))
                 .window(
                     window("w", over(partition(col("acct_id")), rows(preceding(1), following(1)))),
                     window("w", over(partition(col("acct_id")), rows(currentRow()))),
@@ -97,8 +97,8 @@ public class RecursiveNodeVisitorAllNodesTraversalTest {
             select(
                 kase(when(col("u", "name").gt(10)).then(col("o", "name"))),
                 col("o", "status"),
-                func("count", arg(col("u", "id"))).as("cnt"),
-                func("lower", arg(func("sub", arg(col("u", "desc"))))).as("lwr")
+                func("count", col("u", "id")).as("cnt"),
+                func("lower", func("sub", col("u", "desc"))).as("lwr")
             )
                 .from(tbl("orders").as("o"))
                 .join(
@@ -106,7 +106,7 @@ public class RecursiveNodeVisitorAllNodesTraversalTest {
                 )
                 .where(col("o", "state").in("A", "B"))
                 .groupBy(col("u", "user_name"), col("o", "user_status"))
-                .having(func("count", arg(col("u", "test"))).gt(10))
+                .having(func("count", col("u", "test")).gt(10))
                 .build();
 
         var expectedColumns = Set.of("u.name", "o.name", "o.status", "u.id", "u.desc", "u.sid", "o.user_id", "o.state", "u.user_name",

@@ -39,7 +39,7 @@ class ExpressionTest {
 
     @Test
     void funcWithArgs() {
-        var func = func("f", Expression.funcArg(Expression.literal(1)));
+        var func = func("f", Expression.literal(1));
         assertInstanceOf(FunctionExpr.class, func);
         assertEquals(1, func.args().size());
     }

@@ -25,7 +25,7 @@ class GroupByRendererTest {
     @Test
     @DisplayName("Render GROUPING SETS")
     void rendersGroupingSets() {
-        var query = select(col("a"), func("count", arg(col("b"))))
+        var query = select(col("a"), func("count", col("b")))
             .from(tbl("t"))
             .groupBy(groupingSets(
                 "a",
@@ -41,7 +41,7 @@ class GroupByRendererTest {
     @Test
     @DisplayName("Render ROLLUP")
     void rendersRollup() {
-        var query = select(col("a"), func("count", arg(col("b"))))
+        var query = select(col("a"), func("count", col("b")))
             .from(tbl("t"))
             .groupBy(rollup("a", "b"))
             .build();
@@ -53,7 +53,7 @@ class GroupByRendererTest {
     @Test
     @DisplayName("Render CUBE")
     void rendersCube() {
-        var query = select(col("a"), func("count", arg(col("b"))))
+        var query = select(col("a"), func("count", col("b")))
             .from(tbl("t"))
             .groupBy(cube("a", "b"))
             .build();

@@ -46,7 +46,7 @@ class PostgresValidationDialectTest {
     void validate_reportsUnsupportedWithOrdinalityInPostgres93() {
         var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(9, 3)));
         Query query = select(star())
-            .from(tbl(func("unnest", arg(array(lit(1L))))).as("u").withOrdinality())
+            .from(tbl(func("unnest", array(lit(1L)))).as("u").withOrdinality())
             .build();
 
         var result = validator.validate(query);
@@ -123,7 +123,7 @@ class PostgresValidationDialectTest {
     @Test
     void validate_reportsPostgresFunctionSignatureMismatch() {
         var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
-        Query query = select(func("generate_series", arg(lit("a")), arg(lit("b"))))
+        Query query = select(func("generate_series", lit("a"), lit("b")))
             .from(tbl("users").as("u"))
             .build();
 
@@ -139,7 +139,7 @@ class PostgresValidationDialectTest {
         var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of(SqlDialectVersion.of(12, 0)));
         Query query = select(star())
             .from(tbl("users").as("u"))
-            .limit(func("to_jsonb", arg(col("u", "id"))))
+            .limit(func("to_jsonb", col("u", "id")))
             .build();
 
         var result = validator.validate(query);

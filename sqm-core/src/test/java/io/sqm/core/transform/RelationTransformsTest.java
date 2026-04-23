@@ -144,7 +144,7 @@ class RelationTransformsTest {
         var innerQuery = select(col("id")).from(tbl("orders")).build();
         var statement = update(tbl("users"))
             .set(set("name", lit("alice")))
-            .from(tbl(rows(row(1))), tbl(func("OPENJSON", arg(lit("{}")))))
+            .from(tbl(rows(row(1))), tbl(func("OPENJSON", lit("{}"))))
             .join(cross(tbl(innerQuery).lateral()))
             .build();
 

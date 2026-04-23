@@ -43,7 +43,7 @@ class LateralRendererTest {
     @Test
     @DisplayName("Render LATERAL with function call")
     void rendersLateralWithFunction() {
-        var func = func("unnest", arg(col("u", "tags")));
+        var func = func("unnest", col("u", "tags"));
         var lateral = Lateral.of(TableRef.function(func).as("t").columnAliases("tag"));
         var sql = renderContext.render(lateral).sql();
 

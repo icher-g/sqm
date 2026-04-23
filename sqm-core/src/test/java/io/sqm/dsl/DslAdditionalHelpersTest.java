@@ -94,7 +94,7 @@ class DslAdditionalHelpersTest {
         ValuesTable valuesTable = tbl(rows(row(1, "a")));
         assertNotNull(valuesTable.values());
 
-        FunctionTable functionTable = tbl(func("unnest", arg(array(lit(1), lit(2)))));
+        FunctionTable functionTable = tbl(func("unnest", array(lit(1), lit(2))));
         assertNotNull(functionTable.function());
     }
 
@@ -342,6 +342,7 @@ class DslAdditionalHelpersTest {
         var dateDiffFn = dateDiff("day", col("created_at"), col("updated_at"));
         var isNullFnExpr = isNullFn(col("name"), lit("unknown"));
         var stringAggFn = stringAgg(col("name"), lit(","));
+        var dateFormatFn = func("DATE_FORMAT", col("o", "order_date"), lit("%Y-%m-01"));
 
         assertEquals("LEN", lenFn.name().values().getLast());
         assertEquals("DATALENGTH", dataLengthFn.name().values().getLast());
@@ -352,6 +353,9 @@ class DslAdditionalHelpersTest {
         assertEquals("DATEDIFF", dateDiffFn.name().values().getLast());
         assertEquals("ISNULL", isNullFnExpr.name().values().getLast());
         assertEquals("STRING_AGG", stringAggFn.name().values().getLast());
+        assertEquals("DATE_FORMAT", dateFormatFn.name().values().getLast());
+        assertInstanceOf(ColumnExpr.class, assertInstanceOf(FunctionExpr.Arg.ExprArg.class, dateFormatFn.args().getFirst()).expr());
+        assertEquals("%Y-%m-01", assertInstanceOf(LiteralExpr.class, assertInstanceOf(FunctionExpr.Arg.ExprArg.class, dateFormatFn.args().get(1)).expr()).value());
     }
 
     @Test

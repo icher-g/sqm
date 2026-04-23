@@ -21,6 +21,13 @@ import java.util.Set;
 @Service
 public class SqmDslGenerator {
 
+    /**
+     * Constructs a new instance of the class.
+     */
+    public SqmDslGenerator() {
+
+    }
+
     private static final String CLASS_NAME = "MyStatement";
 
     private static SqlCodegenDialect toCodegenDialect(SqlDialectDto dialect) {

@@ -36,7 +36,7 @@ class LateralRendererTest {
     @Test
     @DisplayName("LATERAL with function table throws UnsupportedDialectFeatureException")
     void lateralWithFunctionTableThrowsException() {
-        var funcTable = tbl(func("unnest", arg(col("arr"))));
+        var funcTable = tbl(func("unnest", col("arr")));
         var lateral = Lateral.of(funcTable.as("t"));
         var writer = new DefaultSqlWriter(ctx);
 

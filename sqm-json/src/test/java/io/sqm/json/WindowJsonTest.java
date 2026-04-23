@@ -63,7 +63,7 @@ public class WindowJsonTest {
     @Test
     void over_inline_with_rows_single_bound() throws Exception {
         // SUM(amount) OVER (PARTITION BY acct_id ORDER BY ts ROWS 5 PRECEDING)
-        var fx = func("sum", arg(col("amount")))
+        var fx = func("sum", col("amount"))
             .over(
                 partition(col("acct_id")),
                 orderBy(col("ts").asc()),
@@ -122,7 +122,7 @@ public class WindowJsonTest {
         var q = select(
             col("dept"),
             col("emp_name"),
-            func("sum", arg(col("salary")))
+            func("sum", col("salary"))
                 .over(over("w", rows(unboundedPreceding(), currentRow()))
             ).as("run_sum")
         )
@@ -156,7 +156,7 @@ public class WindowJsonTest {
     @Test
     void aggregate_with_filter_and_over_partition_json() throws Exception {
         // COUNT(DISTINCT user_id) FILTER (WHERE active) OVER (PARTITION BY dept)
-        var fx = func("count", arg(col("user_id"))).distinct()
+        var fx = func("count", col("user_id")).distinct()
                                                    .filter(col("active").eq(lit(true)))
                                                    .over(over(partition(col("dept"))));
 

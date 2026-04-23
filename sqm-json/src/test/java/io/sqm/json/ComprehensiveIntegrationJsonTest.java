@@ -248,11 +248,11 @@ public class ComprehensiveIntegrationJsonTest {
 
         var query = select(
             col("category"),
-            func("sum", arg(col("price").mul(col("quantity")))).as("total_revenue"),
-            func("sum", arg(
+            func("sum", col("price").mul(col("quantity"))).as("total_revenue"),
+            func("sum", 
                 col("price").add(col("tax")).mul(col("quantity")).sub(col("discount"))
-            )).as("total_with_tax"),
-            func("avg", arg(col("price").cast(TypeName.of(QualifiedName.of(List.of("decimal")), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE)))).as("avg_price"),
+            ).as("total_with_tax"),
+            func("avg", col("price").cast(TypeName.of(QualifiedName.of(List.of("decimal")), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE))).as("avg_price"),
             func("count", starArg()).as("count")
         )
             .from(tbl("sales"))
@@ -264,7 +264,7 @@ public class ComprehensiveIntegrationJsonTest {
             )
             .groupBy(col("category"))
             .having(
-                func("sum", arg(col("price").mul(col("quantity")))).gt(ParamExpr.named("min_revenue"))
+                func("sum", col("price").mul(col("quantity"))).gt(ParamExpr.named("min_revenue"))
             )
             .build();
 
@@ -335,7 +335,7 @@ public class ComprehensiveIntegrationJsonTest {
             // Unary operator
             col("mask").unary("~").as("inverted_mask"),
             // Function with param
-            func("concat", arg(col("first")), arg(ParamExpr.named("sep")), arg(col("last"))).as("full_name")
+            func("concat", col("first"), ParamExpr.named("sep"), col("last")).as("full_name")
         )
             .from(tbl("test_table"))
             .distinct(DistinctSpec.TRUE)

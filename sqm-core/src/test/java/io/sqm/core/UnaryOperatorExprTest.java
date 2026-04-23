@@ -89,7 +89,7 @@ class UnaryOperatorExprTest {
 
     @Test
     void withFunction() {
-        var func = func("abs", Expression.funcArg(col("x")));
+        var func = func("abs", col("x"));
         var expr = UnaryOperatorExpr.of("-", func);
         assertInstanceOf(FunctionExpr.class, expr.expr());
     }

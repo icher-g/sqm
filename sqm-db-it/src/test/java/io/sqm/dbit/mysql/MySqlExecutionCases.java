@@ -23,7 +23,7 @@ final class MySqlExecutionCases {
                         lit(1),
                         lit("Ignored"),
                         lit(false),
-                        func("JSON_OBJECT", arg(lit("user")), arg(func("JSON_OBJECT", arg(lit("id")), arg(lit(99))))),
+                        func("JSON_OBJECT", lit("user"), func("JSON_OBJECT", lit("id"), lit(99))),
                         lit("2024-02-01 00:00:00")
                     ))
                     .build();
@@ -44,7 +44,7 @@ final class MySqlExecutionCases {
                         lit(1),
                         lit("Alicia"),
                         lit(false),
-                        func("JSON_OBJECT", arg(lit("user")), arg(func("JSON_OBJECT", arg(lit("id")), arg(lit(1))))),
+                        func("JSON_OBJECT", lit("user"), func("JSON_OBJECT", lit("id"), lit(1))),
                         lit("2024-02-01 00:00:00")
                     ))
                     .onConflictDoUpdate(List.of(set("name", lit("Alicia"))))
@@ -67,7 +67,7 @@ final class MySqlExecutionCases {
                         lit(4),
                         lit("Dylan"),
                         lit(true),
-                        func("JSON_OBJECT", arg(lit("user")), arg(func("JSON_OBJECT", arg(lit("id")), arg(lit(4))))),
+                        func("JSON_OBJECT", lit("user"), func("JSON_OBJECT", lit("id"), lit(4))),
                         lit("2024-02-02 11:00:00")
                     ))
                     .build();
@@ -146,11 +146,11 @@ final class MySqlExecutionCases {
             ),
             harness -> {
                 var query = select(
-                    func("CONCAT_WS", arg(lit("-")), arg(lit("user")), arg(col("name")))
+                    func("CONCAT_WS", lit("-"), lit("user"), col("name"))
                 ).from(tbl("users"))
                     .where(
-                        func("JSON_EXTRACT", arg(col("payload")), arg(lit("$.user.id"))).eq(lit(1))
-                            .and(func("DATE_ADD", arg(col("created_at")), arg(interval("1", "DAY")))
+                        func("JSON_EXTRACT", col("payload"), lit("$.user.id")).eq(lit(1))
+                            .and(func("DATE_ADD", col("created_at"), interval("1", "DAY"))
                                 .eq(lit("2024-01-02 10:15:00")))
                     )
                     .build();

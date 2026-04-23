@@ -28,7 +28,7 @@ class GroupByRendererTest {
     @Test
     @DisplayName("GROUP BY single column")
     void group_by_single_column() {
-        var query = select(col("dept"), func("count", arg(col("id"))))
+        var query = select(col("dept"), func("count", col("id")))
             .from(tbl("employees"))
             .groupBy("dept")
             .build();
@@ -39,7 +39,7 @@ class GroupByRendererTest {
     @Test
     @DisplayName("GROUP BY multiple columns")
     void group_by_multiple_columns() {
-        var query = select(col("dept"), col("status"), func("count", arg(col("id"))))
+        var query = select(col("dept"), col("status"), func("count", col("id")))
             .from(tbl("employees"))
             .groupBy("dept", "status")
             .build();
@@ -52,7 +52,7 @@ class GroupByRendererTest {
     @Test
     @DisplayName("GROUP BY with qualified column")
     void group_by_qualified_column() {
-        var query = select(col("e", "dept"), func("count", arg(col("id"))))
+        var query = select(col("e", "dept"), func("count", col("id")))
             .from(tbl("employees").as("e"))
             .groupBy(col("e", "dept"))
             .build();
@@ -64,7 +64,7 @@ class GroupByRendererTest {
     @Test
     @DisplayName("GROUP BY renders with keyword")
     void group_by_keyword_rendered() {
-        var query = select(col("category"), func("count", arg(col("id"))))
+        var query = select(col("category"), func("count", col("id")))
             .from(tbl("products"))
             .groupBy("category")
             .build();
@@ -75,10 +75,10 @@ class GroupByRendererTest {
     @Test
     @DisplayName("GROUP BY with aggregate and HAVING")
     void group_by_with_having() {
-        var query = select(col("dept"), func("count", arg(col("id"))).as("cnt"))
+        var query = select(col("dept"), func("count", col("id")).as("cnt"))
             .from(tbl("employees"))
             .groupBy("dept")
-            .having(func("count", arg(col("id"))).gt(5))
+            .having(func("count", col("id")).gt(5))
             .build();
         String result = render(query);
         assertTrue(result.contains("GROUP BY"));
@@ -88,7 +88,7 @@ class GroupByRendererTest {
     @Test
     @DisplayName("GROUP BY with ROLLUP is rejected in ANSI renderer")
     void group_by_rollup_rejected() {
-        var query = select(col("dept"), func("count", arg(col("id"))))
+        var query = select(col("dept"), func("count", col("id")))
             .from(tbl("employees"))
             .groupBy(rollup("dept", "status"))
             .build();
@@ -99,7 +99,7 @@ class GroupByRendererTest {
     @Test
     @DisplayName("GROUP BY with GROUPING SETS is rejected in ANSI renderer")
     void group_by_grouping_sets_rejected() {
-        var query = select(col("dept"), func("count", arg(col("id"))))
+        var query = select(col("dept"), func("count", col("id")))
             .from(tbl("employees"))
             .groupBy(groupingSets("dept", groupingSet()))
             .build();
@@ -110,7 +110,7 @@ class GroupByRendererTest {
     @Test
     @DisplayName("GROUP BY with grouping set is rejected in ANSI renderer")
     void group_by_grouping_set_rejected() {
-        var query = select(col("dept"), func("count", arg(col("id"))))
+        var query = select(col("dept"), func("count", col("id")))
             .from(tbl("employees"))
             .groupBy(groupingSet("dept"))
             .build();
@@ -121,7 +121,7 @@ class GroupByRendererTest {
     @Test
     @DisplayName("GROUP BY with CUBE is rejected in ANSI renderer")
     void group_by_cube_rejected() {
-        var query = select(col("dept"), func("count", arg(col("id"))))
+        var query = select(col("dept"), func("count", col("id")))
             .from(tbl("employees"))
             .groupBy(cube("dept", "status"))
             .build();

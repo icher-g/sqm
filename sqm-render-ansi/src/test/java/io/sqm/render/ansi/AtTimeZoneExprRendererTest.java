@@ -110,7 +110,7 @@ class AtTimeZoneExprRendererTest {
     @Test
     void throwsWithComplexTimezoneExpression() {
         var expr = col("created_at")
-            .atTimeZone(func("get_timezone", arg(col("user_id"))));
+            .atTimeZone(func("get_timezone", col("user_id")));
 
         var exception = assertThrows(UnsupportedOperationException.class,
             () -> ansiCtx.render(expr).sql(),

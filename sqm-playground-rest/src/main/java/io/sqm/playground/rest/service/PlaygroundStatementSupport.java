@@ -1,12 +1,6 @@
 package io.sqm.playground.rest.service;
 
-import io.sqm.core.DeleteStatement;
-import io.sqm.core.InsertStatement;
-import io.sqm.core.MergeStatement;
-import io.sqm.core.Query;
-import io.sqm.core.Statement;
-import io.sqm.core.StatementSequence;
-import io.sqm.core.UpdateStatement;
+import io.sqm.core.*;
 import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
@@ -30,9 +24,16 @@ import java.util.Objects;
 public final class PlaygroundStatementSupport {
 
     /**
+     * Constructs a new instance of the class.
+     */
+    public PlaygroundStatementSupport() {
+
+    }
+
+    /**
      * Parses SQL text into a statement using the selected dialect.
      *
-     * @param sql SQL text
+     * @param sql     SQL text
      * @param dialect source dialect
      * @return parse result
      */
@@ -51,7 +52,7 @@ public final class PlaygroundStatementSupport {
     /**
      * Parses SQL text into a statement sequence using the selected dialect.
      *
-     * @param sql SQL text
+     * @param sql     SQL text
      * @param dialect source dialect
      * @return statement sequence parse result
      */
@@ -88,8 +89,8 @@ public final class PlaygroundStatementSupport {
     /**
      * Creates a structured diagnostic for non-parse operation failures.
      *
-     * @param phase operation phase
-     * @param code diagnostic code
+     * @param phase   operation phase
+     * @param code    diagnostic code
      * @param message diagnostic message
      * @return structured diagnostic
      */
@@ -100,9 +101,9 @@ public final class PlaygroundStatementSupport {
     /**
      * Creates a structured diagnostic for a statement-sequence operation failure.
      *
-     * @param phase operation phase
-     * @param code diagnostic code
-     * @param message diagnostic message
+     * @param phase          operation phase
+     * @param code           diagnostic code
+     * @param message        diagnostic message
      * @param statementIndex one-based statement index
      * @return structured diagnostic
      */
@@ -114,11 +115,11 @@ public final class PlaygroundStatementSupport {
      * Creates a structured diagnostic for an operation failure with explicit line and column.
      *
      * @param severity diagnostic severity
-     * @param code diagnostic code
-     * @param message diagnostic message
-     * @param phase operation phase
-     * @param line one-based source line when available
-     * @param column one-based source column when available
+     * @param code     diagnostic code
+     * @param message  diagnostic message
+     * @param phase    operation phase
+     * @param line     one-based source line when available
+     * @param column   one-based source column when available
      * @return structured diagnostic
      */
     public PlaygroundDiagnosticDto diagnostic(
@@ -135,12 +136,12 @@ public final class PlaygroundStatementSupport {
     /**
      * Creates a structured diagnostic for an operation failure with explicit location and statement context.
      *
-     * @param severity diagnostic severity
-     * @param code diagnostic code
-     * @param message diagnostic message
-     * @param phase operation phase
-     * @param line one-based source line when available
-     * @param column one-based source column when available
+     * @param severity       diagnostic severity
+     * @param code           diagnostic code
+     * @param message        diagnostic message
+     * @param phase          operation phase
+     * @param line           one-based source line when available
+     * @param column         one-based source column when available
      * @param statementIndex one-based statement index when available
      * @return structured diagnostic
      */
@@ -180,7 +181,7 @@ public final class PlaygroundStatementSupport {
     /**
      * Parse result wrapper used by playground services.
      *
-     * @param statement parsed statement when successful
+     * @param statement   parsed statement when successful
      * @param diagnostics diagnostics when parsing failed
      */
     public record ParseAttempt(Statement statement, List<PlaygroundDiagnosticDto> diagnostics) {
@@ -218,7 +219,7 @@ public final class PlaygroundStatementSupport {
     /**
      * Statement sequence parse result wrapper used by playground services.
      *
-     * @param sequence parsed statement sequence when successful
+     * @param sequence    parsed statement sequence when successful
      * @param diagnostics diagnostics when parsing failed
      */
     public record SequenceParseAttempt(StatementSequence sequence, List<PlaygroundDiagnosticDto> diagnostics) {

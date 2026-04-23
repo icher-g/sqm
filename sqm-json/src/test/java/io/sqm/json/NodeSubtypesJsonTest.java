@@ -396,7 +396,7 @@ public class NodeSubtypesJsonTest {
             col("id"),
             col("name"),
             col("price").cast(TypeName.of(QualifiedName.of(List.of("decimal")), null, List.of(lit(10), lit(2)), 0, TimeZoneSpec.NONE)).as("price_decimal"),
-            func("upper", arg(col("status"))).as("upper_status")
+            func("upper", col("status")).as("upper_status")
         )
         .from(tbl("products"))
         .distinct(DistinctSpec.TRUE)

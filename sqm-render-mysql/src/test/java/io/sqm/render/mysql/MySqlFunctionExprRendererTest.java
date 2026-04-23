@@ -14,9 +14,9 @@ class MySqlFunctionExprRendererTest {
 
     @Test
     void rendersJsonAndStringFunctions() {
-        var jsonExtract = Dsl.func("JSON_EXTRACT", Dsl.arg(Dsl.col("payload")), Dsl.arg(Dsl.lit("$.user.id")));
+        var jsonExtract = Dsl.func("JSON_EXTRACT", Dsl.col("payload"), Dsl.lit("$.user.id"));
         var concat = ConcatExpr.of(Dsl.col("first_name"), Dsl.lit(" "), Dsl.col("last_name"));
-        var concatWs = Dsl.func("CONCAT_WS", Dsl.arg(Dsl.lit("-")), Dsl.arg(Dsl.col("first_name")), Dsl.arg(Dsl.col("last_name")));
+        var concatWs = Dsl.func("CONCAT_WS", Dsl.lit("-"), Dsl.col("first_name"), Dsl.col("last_name"));
         var ctx = RenderContext.of(new MySqlDialect());
 
         assertEquals("JSON_EXTRACT(payload, '$.user.id')", ctx.render(jsonExtract).sql());
@@ -26,7 +26,7 @@ class MySqlFunctionExprRendererTest {
 
     @Test
     void rendersDateAddWithIntervalLiteralArgument() {
-        var function = Dsl.func("DATE_ADD", Dsl.arg(Dsl.col("created_at")), Dsl.arg(Dsl.interval("1", "DAY")));
+        var function = Dsl.func("DATE_ADD", Dsl.col("created_at"), Dsl.interval("1", "DAY"));
 
         var sql = RenderContext.of(new MySqlDialect()).render(function).sql();
 

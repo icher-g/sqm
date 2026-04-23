@@ -31,7 +31,7 @@ public final class ReportingQueries {
                 col("u", "id"),
                 col("u", "org_id"),
                 func("count", starArg()).as("total_orders"),
-                func("sum", arg(col("o", "amount"))).as("total_amount"),
+                func("sum", col("o", "amount")).as("total_amount"),
                 func("row_number")
                     .over(
                         partition(col("u", "org_id")), orderBy(col("o", "created_at").desc())
@@ -57,7 +57,7 @@ public final class ReportingQueries {
             )
             .having(func("count", starArg()).gt(lit(1L)))
             .orderBy(
-                func("sum", arg(col("o", "amount"))).desc().nullsLast(),
+                func("sum", col("o", "amount")).desc().nullsLast(),
                 col("u", "id").asc()
             )
             .limitOffset(limitOffset(lit(100L), lit(10L)))

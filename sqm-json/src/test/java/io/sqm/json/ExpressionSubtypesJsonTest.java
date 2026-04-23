@@ -185,7 +185,7 @@ public class ExpressionSubtypesJsonTest {
         var expr = ArrayExpr.of(
             lit("hello"),
             col("name"),
-            func("lower", arg(col("email")))
+            func("lower", col("email"))
         );
 
         var back = roundTrip(expr, ArrayExpr.class);

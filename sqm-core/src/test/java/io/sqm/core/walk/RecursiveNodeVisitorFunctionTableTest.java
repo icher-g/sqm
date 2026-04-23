@@ -14,7 +14,7 @@ class RecursiveNodeVisitorTest {
     @Test
     @DisplayName("Visit FunctionTable")
     void visitFunctionTable() {
-        var func = func("generate_series", arg(lit(1)), arg(lit(10)));
+        var func = func("generate_series", lit(1), lit(10));
         var table = func.asTable().as("t");
 
         var collector = new NodeCollector();
@@ -42,7 +42,7 @@ class RecursiveNodeVisitorTest {
     @Test
     @DisplayName("Visit nested Lateral with FunctionTable")
     void visitNestedLateralWithFunctionTable() {
-        var func = func("unnest", arg(col("arr")));
+        var func = func("unnest", col("arr"));
         var lateral = func.asTable().as("t").lateral();
 
         var collector = new NodeCollector();
@@ -57,7 +57,7 @@ class RecursiveNodeVisitorTest {
     @Test
     @DisplayName("Visit query with FunctionTable in FROM")
     void visitQueryWithFunctionTableInFrom() {
-        var func = func("generate_series", arg(lit(1)), arg(lit(10)));
+        var func = func("generate_series", lit(1), lit(10));
         var query = select(col("num")).from(func.asTable().as("series")).build();
 
         var collector = new NodeCollector();
@@ -71,7 +71,7 @@ class RecursiveNodeVisitorTest {
     @Test
     @DisplayName("Visit query with Lateral JOIN")
     void visitQueryWithLateralJoin() {
-        var func = func("unnest", arg(col("t", "arr")));
+        var func = func("unnest", col("t", "arr"));
         var query = select(col("*"))
             .from(tbl("t"))
             .join(inner(func.asTable().as("u").lateral())
@@ -90,7 +90,7 @@ class RecursiveNodeVisitorTest {
     @Test
     @DisplayName("Transform FunctionTable")
     void transformFunctionTable() {
-        var func = func("generate_series", arg(lit(1)), arg(lit(10)));
+        var func = func("generate_series", lit(1), lit(10));
         var table = func.asTable().as("t");
 
         var transformer = new RenameTableTransformer();
@@ -118,7 +118,7 @@ class RecursiveNodeVisitorTest {
     @Test
     @DisplayName("Transform FunctionTable function arguments")
     void transformFunctionTableArguments() {
-        var func = func("generate_series", arg(lit(1)), arg(lit(10)));
+        var func = func("generate_series", lit(1), lit(10));
         var table = func.asTable().as("t");
 
         var transformer = new IncrementLiteralsTransformer();
