@@ -2,6 +2,8 @@ package io.sqm.render.ansi;
 
 import io.sqm.core.AnyAllPredicate;
 import io.sqm.core.Quantifier;
+import io.sqm.core.QuantifiedSource;
+import io.sqm.core.Query;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -32,7 +34,22 @@ public class AnyAllPredicateRenderer implements Renderer<AnyAllPredicate> {
         operatorRenderer.render(node.operator(), ctx, w);
         w.space();
         w.append(node.quantifier() == Quantifier.ALL ? "ALL" : "ANY").space();
-        w.append(node.subquery(), true, true);
+        renderSource(node.source(), ctx, w);
+    }
+
+    /**
+     * Renders the quantified source.
+     *
+     * @param source the source to render.
+     * @param ctx    the render context.
+     * @param w      the writer.
+     */
+    protected void renderSource(QuantifiedSource source, RenderContext ctx, SqlWriter w) {
+        if (source instanceof Query query) {
+            w.append(query, true, true);
+            return;
+        }
+        throw new UnsupportedOperationException("ANSI renderer supports only query sources for ANY/ALL predicates");
     }
 
     /**

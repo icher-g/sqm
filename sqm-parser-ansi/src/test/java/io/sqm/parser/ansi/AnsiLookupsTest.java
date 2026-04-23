@@ -51,6 +51,8 @@ class AnsiLookupsTest {
     void detects_predicate_forms() {
         assertTrue(lookups.looksLikeComparisonPredicate(cursor("a = b"), Lookahead.initial()));
         assertTrue(lookups.looksLikeAnyAllPredicate(cursor("a = ANY"), Lookahead.initial()));
+        assertTrue(lookups.looksLikeAnyAllPredicate(cursor("a = ALL"), Lookahead.initial()));
+        assertFalse(lookups.looksLikeAnyAllPredicate(cursor("a = b"), Lookahead.initial()));
         assertTrue(lookups.looksLikeBetweenPredicate(cursor("a BETWEEN b AND c"), Lookahead.initial()));
         assertTrue(lookups.looksLikeInPredicate(cursor("a IN"), Lookahead.initial()));
         assertTrue(lookups.looksLikeLikePredicate(cursor("a LIKE b"), Lookahead.initial()));

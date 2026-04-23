@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AnyAllPredicateRendererTest {
@@ -46,5 +47,13 @@ class AnyAllPredicateRendererTest {
         assertTrue(sql.contains("a = ALL"));
         assertTrue(sql.contains("SELECT 1"));
         assertTrue(sql.contains("FROM nums"));
+    }
+
+    @Test
+    @DisplayName("Expression source is rejected by ANSI renderer")
+    void rejectsExpressionSource() {
+        var predicate = col("a").eqAny(col("path"));
+
+        assertThrows(UnsupportedOperationException.class, () -> render(predicate));
     }
 }

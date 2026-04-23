@@ -660,6 +660,7 @@ class SqmJavaEmitterTest {
             .from(tbl("users"))
             .where(
                 col("age").any(ComparisonOperator.GT, subquery)
+                    .and(col("category_id").eqAny(col("path")))
                     .and(col("name").regex(RegexMode.MATCH_INSENSITIVE, lit("^a"), true))
             )
             .lockFor(update(), List.of(), false, false)
@@ -681,9 +682,31 @@ class SqmJavaEmitterTest {
         assertTrue(querySource.contains("\"base\", null, rows(currentRow()), excludeGroup()"));
         assertTrue(querySource.contains("partition(col(\"dept\")), null, rows(currentRow()), excludeNoOthers()"));
         assertTrue(querySource.contains(".any(ComparisonOperator.GT, select("));
+        assertTrue(querySource.contains(".eqAny(col(\"path\"))"));
         assertTrue(querySource.contains(".regex(RegexMode.MATCH_INSENSITIVE, lit(\"^a\"), true)"));
         assertTrue(querySource.contains(".lockFor(update(), List.of(), false, false)"));
         assertTrue(updateSource.contains(".set(qualify(id(\"app\"), id(\"users\"), id(\"name\")), lit(\"alice\"))"));
+    }
+
+    @Test
+    void emit_usesQuantifiedPredicateHelpersAcrossOperators() {
+        var query = select(
+            col("c_eq_any").eqAny(col("path_eq_any")),
+            col("c_ne_any").neAny(col("path_ne_any")),
+            col("c_eq_all").eqAll(col("path_eq_all")),
+            col("c_ne_all").neAll(col("path_ne_all")),
+            col("c_gt_any").any(ComparisonOperator.GT, col("path_gt_any")),
+            col("c_lt_all").all(ComparisonOperator.LT, col("path_lt_all"))
+        ).build();
+
+        var querySource = emitter.emit(query);
+
+        assertTrue(querySource.contains("col(\"c_eq_any\").eqAny(col(\"path_eq_any\"))"));
+        assertTrue(querySource.contains("col(\"c_ne_any\").neAny(col(\"path_ne_any\"))"));
+        assertTrue(querySource.contains("col(\"c_eq_all\").eqAll(col(\"path_eq_all\"))"));
+        assertTrue(querySource.contains("col(\"c_ne_all\").neAll(col(\"path_ne_all\"))"));
+        assertTrue(querySource.contains("col(\"c_gt_any\").any(ComparisonOperator.GT, col(\"path_gt_any\"))"));
+        assertTrue(querySource.contains("col(\"c_lt_all\").all(ComparisonOperator.LT, col(\"path_lt_all\"))"));
     }
 
     @Test

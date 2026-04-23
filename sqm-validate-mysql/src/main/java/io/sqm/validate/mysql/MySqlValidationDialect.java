@@ -11,6 +11,7 @@ import io.sqm.validate.mysql.rule.MySqlSelectFeatureValidationRule;
 import io.sqm.validate.mysql.rule.MySqlStatementHintValidationRule;
 import io.sqm.validate.mysql.rule.MySqlTableHintValidationRule;
 import io.sqm.validate.mysql.rule.MySqlFunctionOrderByValidationRule;
+import io.sqm.validate.mysql.rule.MySqlAnyAllPredicateValidationRule;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
 
@@ -92,6 +93,7 @@ public final class MySqlValidationDialect implements SchemaValidationDialect {
             new MySqlStatementHintValidationRule(capabilities, version),
             new MySqlTableHintValidationRule(),
             new MySqlIndexHintValidationRule(),
+            new MySqlAnyAllPredicateValidationRule(),
             new MySqlFunctionOrderByValidationRule()
         );
     }

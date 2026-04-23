@@ -1000,7 +1000,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
 
     /**
      * Visits an {@link AnyAllPredicate}, representing
-     * {@code <expr> = ANY(<subquery>)} or {@code <expr> > ALL(<subquery>)} constructs.
+     * {@code <expr> = ANY(<source>)} or {@code <expr> > ALL(<source>)} constructs.
      *
      * @param p the predicate being visited
      * @return a result produced by the visitor
@@ -1008,9 +1008,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     @Override
     public Node visitAnyAllPredicate(AnyAllPredicate p) {
         var lhs = apply(p.lhs());
-        var subquery = apply(p.subquery());
-        if (lhs != p.lhs() || subquery != p.subquery()) {
-            return AnyAllPredicate.of(lhs, p.operator(), subquery, p.quantifier());
+        var source = apply(p.source());
+        if (lhs != p.lhs() || source != p.source()) {
+            return AnyAllPredicate.of(lhs, p.operator(), source, p.quantifier());
         }
         return p;
     }

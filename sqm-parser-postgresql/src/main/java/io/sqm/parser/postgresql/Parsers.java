@@ -33,6 +33,7 @@ public class Parsers {
             .register(new MergeDeleteActionParser())
             .register(new MergeDoNothingActionParser())
             .register(new MergeInsertActionParser())
+            .register(new AnyAllPredicateParser())
             .register(new FunctionExprParser())
             .register(new ConcatExprParser())
             .register(new BinaryOperatorExprParser())

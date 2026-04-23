@@ -45,6 +45,22 @@ class PostgresValidationDialectTest {
     }
 
     @Test
+    void validate_acceptsAnyAllExpressionSource() {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of());
+        Query query = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .where(col("u", "id").eqAny(col("u", "name")))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertFalse(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "predicate.any_all.source".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
     void validate_reportsAggregateInputOrderByOnKnownNonAggregate() {
         var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of());
         Query query = select(func("lower", col("u", "name")).orderBy(col("u", "name")))

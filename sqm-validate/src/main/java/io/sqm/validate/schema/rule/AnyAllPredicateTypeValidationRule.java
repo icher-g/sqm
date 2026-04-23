@@ -1,6 +1,7 @@
 package io.sqm.validate.schema.rule;
 
 import io.sqm.core.AnyAllPredicate;
+import io.sqm.core.Query;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
 import io.sqm.validate.schema.model.CatalogTypeSemantics;
@@ -38,7 +39,10 @@ final class AnyAllPredicateTypeValidationRule implements SchemaValidationRule<An
      */
     @Override
     public void validate(AnyAllPredicate node, SchemaValidationContext context) {
-        if (!projectionShapeInspector.isSingleExpressionProjection(node.subquery())) {
+        if (!(node.source() instanceof Query query)) {
+            return;
+        }
+        if (!projectionShapeInspector.isSingleExpressionProjection(query)) {
             context.addProblem(
                 ValidationProblem.Code.SUBQUERY_SHAPE_MISMATCH,
                 "ANY/ALL subquery must project exactly one expression column",
@@ -48,7 +52,7 @@ final class AnyAllPredicateTypeValidationRule implements SchemaValidationRule<An
             return;
         }
         var leftType = context.inferType(node.lhs());
-        var rightType = context.inferSingleColumnType(node.subquery());
+        var rightType = context.inferSingleColumnType(query);
         if (leftType.isPresent() && rightType.isPresent() && !CatalogTypeSemantics.comparable(leftType.get(), rightType.get())) {
             context.addProblem(
                 ValidationProblem.Code.TYPE_MISMATCH,

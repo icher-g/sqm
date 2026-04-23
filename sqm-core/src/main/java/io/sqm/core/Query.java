@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Represents a base interface for all queries.
  */
-public sealed interface Query extends Statement, InsertSource permits CompositeQuery, DialectQuery, SelectQuery, WithQuery {
+public sealed interface Query extends Statement, InsertSource, QuantifiedSource permits CompositeQuery, DialectQuery, SelectQuery, WithQuery {
     /**
      * Creates SELECT query with a list of expressions.
      *

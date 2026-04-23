@@ -1083,11 +1083,28 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
 
     @Override
     public Void visitAnyAllPredicate(AnyAllPredicate p) {
-        var method = p.quantifier() == Quantifier.ANY ? ".any(" : ".all(";
+        String method;
+        if (p.quantifier() == Quantifier.ANY) {
+            method = switch (p.operator()) {
+                case ComparisonOperator.EQ -> ".eqAny(";
+                case ComparisonOperator.NE -> ".neAny(";
+                default -> ".any(";
+            };
+        }
+        else {
+            method = switch (p.operator()) {
+                case ComparisonOperator.EQ -> ".eqAll(";
+                case ComparisonOperator.NE -> ".neAll(";
+                default -> ".all(";
+            };
+        }
         appendNode(p.lhs());
-        out.append(method).append("ComparisonOperator.").append(p.operator().name());
-        out.append(", ");
-        appendNode(p.subquery());
+        out.append(method);
+        if (p.operator() != ComparisonOperator.EQ && p.operator() != ComparisonOperator.NE) {
+            out.append("ComparisonOperator.").append(p.operator().name());
+            out.append(", ");
+        }
+        appendNode(p.source());
         out.append(")");
         return defaultResult();
     }

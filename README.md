@@ -10,6 +10,10 @@
 **SQM (Structured Query Model)** is a Java framework for representing SQL as a typed immutable model and running end-to-end SQL pipelines.
 It supports parse, validate, transform/rewrite, render, serialize, and runtime policy enforcement across multiple dialects and transports.
 
+The AST example can be seen on the right side of the SQM Playground App.
+
+![Overview](images/main-view.png)
+
 Live dialect confidence is backed by real-engine execution coverage: shipped PostgreSQL, MySQL, and SQL Server syntax is exercised in Docker/Testcontainers suites against the actual database engines, not only parser/renderer round trips.
 
 ## Wiki

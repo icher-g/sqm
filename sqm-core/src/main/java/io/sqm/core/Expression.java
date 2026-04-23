@@ -9,7 +9,7 @@ import java.util.Objects;
 /**
  * Any value-producing node (scalar or boolean).
  */
-public sealed interface Expression extends Node
+public sealed interface Expression extends Node, QuantifiedSource
     permits ArithmeticExpr, ArrayExpr, ArraySliceExpr, ArraySubscriptExpr, AtTimeZoneExpr, BinaryOperatorExpr, CaseExpr, CastExpr, CollateExpr, ColumnExpr, ConcatExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, OutputColumnExpr, ParamExpr, Predicate, UnaryOperatorExpr, ValueSet {
 
     /**
@@ -834,11 +834,11 @@ public sealed interface Expression extends Node
      * </pre>
      *
      * @param operator a comparison operator to be used.
-     * @param subquery a sub query providing set of values to compare with.
+     * @param source a source providing set of values to compare with.
      * @return A newly created ANY predicate.
      */
-    default AnyAllPredicate any(ComparisonOperator operator, Query subquery) {
-        return AnyAllPredicate.of(this, operator, subquery, Quantifier.ANY);
+    default AnyAllPredicate any(ComparisonOperator operator, QuantifiedSource source) {
+        return AnyAllPredicate.of(this, operator, source, Quantifier.ANY);
     }
 
     /**
@@ -851,11 +851,51 @@ public sealed interface Expression extends Node
      * </pre>
      *
      * @param operator a comparison operator to be used.
-     * @param subquery a sub query providing set of values to compare with.
+     * @param source a source providing set of values to compare with.
      * @return A newly created ALL predicate.
      */
-    default AnyAllPredicate all(ComparisonOperator operator, Query subquery) {
-        return AnyAllPredicate.of(this, operator, subquery, Quantifier.ALL);
+    default AnyAllPredicate all(ComparisonOperator operator, QuantifiedSource source) {
+        return AnyAllPredicate.of(this, operator, source, Quantifier.ALL);
+    }
+
+    /**
+     * Creates an {@code = ANY(source)} predicate for the current expression.
+     *
+     * @param source a quantified source to compare with.
+     * @return A newly created ANY predicate.
+     */
+    default AnyAllPredicate eqAny(QuantifiedSource source) {
+        return any(ComparisonOperator.EQ, source);
+    }
+
+    /**
+     * Creates a {@code <> ANY(source)} predicate for the current expression.
+     *
+     * @param source a quantified source to compare with.
+     * @return A newly created ANY predicate.
+     */
+    default AnyAllPredicate neAny(QuantifiedSource source) {
+        return any(ComparisonOperator.NE, source);
+    }
+
+    /**
+     * Creates an {@code = ALL(source)} predicate for the current expression.
+     *
+     * @param source a quantified source to compare with.
+     * @return A newly created ALL predicate.
+     */
+    default AnyAllPredicate eqAll(QuantifiedSource source) {
+        return all(ComparisonOperator.EQ, source);
+    }
+
+    /**
+     * Creates a {@code <> ALL(source)} predicate for the current expression.
+     *
+     * @param source a quantified source to compare with.
+     * @return A newly created ALL predicate.
+     */
+    default AnyAllPredicate neAll(QuantifiedSource source) {
+        return all(ComparisonOperator.NE, source);
     }
 
     /**

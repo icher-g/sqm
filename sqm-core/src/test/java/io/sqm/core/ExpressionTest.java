@@ -247,6 +247,20 @@ class ExpressionTest {
     }
 
     @Test
+    void quantifiedComparisonHelpers() {
+        var source = col("ct", "path");
+
+        assertEquals(ComparisonOperator.EQ, col("c").eqAny(source).operator());
+        assertEquals(Quantifier.ANY, col("c").eqAny(source).quantifier());
+        assertEquals(ComparisonOperator.NE, col("c").neAny(source).operator());
+        assertEquals(Quantifier.ANY, col("c").neAny(source).quantifier());
+        assertEquals(ComparisonOperator.EQ, col("c").eqAll(source).operator());
+        assertEquals(Quantifier.ALL, col("c").eqAll(source).quantifier());
+        assertEquals(ComparisonOperator.NE, col("c").neAll(source).operator());
+        assertEquals(Quantifier.ALL, col("c").neAll(source).quantifier());
+    }
+
+    @Test
     void unary() {
         Predicate unary = Expression.literal(true).unary();
         assertInstanceOf(UnaryPredicate.class, unary);

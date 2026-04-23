@@ -45,6 +45,22 @@ class MySqlValidationDialectTest {
     }
 
     @Test
+    void validate_reportsUnsupportedAnyAllExpressionSource() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var query = select(col("u", "id"))
+            .from(tbl("users").as("u"))
+            .where(col("u", "id").eqAny(col("u", "name")))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "predicate.any_all.source".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
     void validate_reportsUseAndForceConflictInSameDefaultScope() {
         var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
         var query = select(col("u", "id"))

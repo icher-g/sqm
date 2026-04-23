@@ -250,6 +250,14 @@ class ComprehensivePredicateParserTest {
         assertInstanceOf(AnyAllPredicate.class, pred);
         AnyAllPredicate anyAll = (AnyAllPredicate) pred;
         assertEquals(Quantifier.ANY, anyAll.quantifier());
+        assertInstanceOf(Query.class, anyAll.source());
+    }
+
+    @Test
+    void rejectsAnyWithExpressionSource() {
+        var result = ctx.parse(Predicate.class, "category_id = ANY (path)");
+
+        assertTrue(result.isError());
     }
 
     @Test
