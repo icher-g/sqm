@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+## [v0.4.1] - 2026-05-02
+
+### Added
+- SQL playground API, REST service, and React frontend with parse, render, validate, transpile, AST, JSON, DSL, diagnostics, examples, rate limiting, and deployment support.
+- Statement-sequence model, parser, renderer, control-flow, middleware, codegen, and integration coverage for multi-statement SQL workflows.
+- Script-level and per-statement SQL file codegen APIs with expanded DSL rendering support.
+- Batch rendering, validation, transpilation, and decision aggregation flows across control and middleware modules.
+
+### Changed
+- DSL ergonomics improved for functions, `GROUP BY`, `ORDER BY`, limits, quantified predicates, scalar/query comparisons, and generated examples.
+- Parser cursor-position diagnostics and parse-location reporting were hardened.
+- Validation, transpilation, parser, renderer, JSON, and schema tests were expanded across supported dialects.
+- Playground UI layout, editor, result panels, syntax highlighting, JSON tree view, and overflow behavior were refined.
+- Documentation, wiki content, images, deployment notes, and example programs were refreshed for the new workflows.
+
+### Fixed
+- Integration and unit test regressions around parser, renderer, codegen, middleware, and UI flows.
+- Playground image publishing workflow and Docker run namespace issues.
+
 ## [v0.4.0] - 2026-03-30
 
 ### Added
