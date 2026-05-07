@@ -9,6 +9,8 @@ import io.sqm.transpile.builtin.MySqlToPostgresNullSafeComparisonRule;
 import io.sqm.transpile.builtin.MySqlToPostgresOnDuplicateKeyUnsupportedRule;
 import io.sqm.transpile.builtin.OracleHintDroppingRule;
 import io.sqm.transpile.builtin.OracleResultClauseUnsupportedRule;
+import io.sqm.transpile.builtin.PostgresMergeDoNothingUnsupportedRule;
+import io.sqm.transpile.builtin.PostgresMergeNotMatchedBySourceToOracleUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresMergeUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlDistinctOnUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlIlikeRule;
@@ -57,6 +59,8 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
             new PostgresToMySqlRegexVariantUnsupportedRule(),
             new PostgresToMySqlOperatorFamilyUnsupportedRule(),
             new PostgresMergeUnsupportedRule(),
+            new PostgresMergeDoNothingUnsupportedRule(),
+            new PostgresMergeNotMatchedBySourceToOracleUnsupportedRule(),
             new PostgresToOracleDistinctOnUnsupportedRule(),
             new MySqlToPostgresNullSafeComparisonRule(),
             new MySqlHintDroppingRule(),

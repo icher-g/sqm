@@ -510,6 +510,64 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
+    void transpilesPortablePostgresMergeToOracleRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.ORACLE)
+            .build();
+
+        var result = transpiler.transpile("""
+            MERGE INTO users
+            USING src_users AS s
+            ON users.id = s.id
+            WHEN MATCHED THEN UPDATE SET name = s.name
+            WHEN NOT MATCHED THEN INSERT (id, name) VALUES (s.id, s.name)
+            """);
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("""
+                MERGE INTO users
+                USING src_users AS s
+                ON (users.id = s.id)
+                WHEN MATCHED THEN UPDATE SET name = s.name
+                WHEN NOT MATCHED THEN INSERT (id, name) VALUES (s.id, s.name)
+                """),
+            normalizeSql(result.sql().orElseThrow())
+        );
+        assertTrue(result.steps().stream().noneMatch(step ->
+            "postgres-merge-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
+    void transpilesPortablePostgresMergeToSqlServerRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.SQLSERVER)
+            .build();
+
+        var result = transpiler.transpile("""
+            MERGE INTO users
+            USING src
+            ON users.id = src.id
+            WHEN MATCHED THEN DELETE
+            """);
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("""
+                MERGE INTO users
+                USING src
+                ON users.id = src.id
+                WHEN MATCHED THEN DELETE
+                """),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
     void sqlServerTopPercentIsRejectedAsUnsupportedTranspilation() {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.SQLSERVER)
@@ -1202,6 +1260,50 @@ class DefaultSqlTranspilerTest {
         assertEquals("UNSUPPORTED_DISTINCT_ON", result.problems().getFirst().code());
         assertTrue(result.steps().stream().anyMatch(step ->
             "postgres-to-oracle-distinct-on-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
+    void postgresMergeDoNothingIsRejectedBeforeOracleRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.ORACLE)
+            .build();
+
+        var result = transpiler.transpile("""
+            MERGE INTO users
+            USING src
+            ON users.id = src.id
+            WHEN MATCHED THEN DO NOTHING
+            """);
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_MERGE_DO_NOTHING", result.problems().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "postgres-merge-do-nothing-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
+    void postgresMergeNotMatchedBySourceIsRejectedBeforeOracleRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.ORACLE)
+            .build();
+
+        var result = transpiler.transpile("""
+            MERGE INTO users
+            USING src
+            ON users.id = src.id
+            WHEN NOT MATCHED BY SOURCE THEN DELETE
+            """);
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_MERGE_NOT_MATCHED_BY_SOURCE", result.problems().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "postgres-merge-not-matched-by-source-to-oracle-unsupported".equals(step.ruleId())
                 && step.fidelity() == RewriteFidelity.UNSUPPORTED
         ));
     }

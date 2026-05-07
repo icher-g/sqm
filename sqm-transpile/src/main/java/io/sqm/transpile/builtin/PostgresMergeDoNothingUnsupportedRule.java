@@ -9,19 +9,18 @@ import io.sqm.transpile.rule.TranspileRule;
 import java.util.Set;
 
 /**
- * Rejects PostgreSQL MERGE statements for targets without a MERGE renderer.
+ * Rejects PostgreSQL MERGE {@code DO NOTHING} actions for targets that do not support them.
  */
-public final class PostgresMergeUnsupportedRule implements TranspileRule {
-
+public final class PostgresMergeDoNothingUnsupportedRule implements TranspileRule {
     /**
-     * Creates a PostgreSQL MERGE rejection rule.
+     * Creates a PostgreSQL MERGE do-nothing rejection rule.
      */
-    public PostgresMergeUnsupportedRule() {
+    public PostgresMergeDoNothingUnsupportedRule() {
     }
 
     @Override
     public String id() {
-        return "postgres-merge-unsupported";
+        return "postgres-merge-do-nothing-unsupported";
     }
 
     @Override
@@ -31,24 +30,23 @@ public final class PostgresMergeUnsupportedRule implements TranspileRule {
 
     @Override
     public Set<SqlDialectId> targetDialects() {
-        return Set.of(SqlDialectId.ANSI, SqlDialectId.MYSQL);
+        return Set.of(SqlDialectId.ORACLE, SqlDialectId.SQLSERVER);
     }
 
     @Override
     public int order() {
-        return 100;
+        return 90;
     }
 
     @Override
     public TranspileRuleResult apply(Statement statement, TranspileContext context) {
-        if (!StatementFeatureInspector.hasMergeStatement(statement)) {
-            return TranspileRuleResult.unchanged(statement, "No PostgreSQL MERGE usage detected");
+        if (!StatementFeatureInspector.hasMergeDoNothingAction(statement)) {
+            return TranspileRuleResult.unchanged(statement, "No PostgreSQL MERGE DO NOTHING usage detected");
         }
-
         return TranspileRuleResult.unsupported(
             statement,
-            "UNSUPPORTED_POSTGRES_MERGE",
-            "PostgreSQL MERGE cannot be transpiled exactly to targets without MERGE support"
+            "UNSUPPORTED_MERGE_DO_NOTHING",
+            "PostgreSQL MERGE DO NOTHING actions cannot be transpiled exactly to this target dialect"
         );
     }
 }

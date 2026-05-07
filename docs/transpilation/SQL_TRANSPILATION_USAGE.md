@@ -168,29 +168,36 @@ combined render result and `result.params()` preserves statement order.
 - Exact:
   - shared SELECT/DML forms rendered with Oracle defaults
   - standard/PostgreSQL row limiting rendered as Oracle `OFFSET ... FETCH`
+  - portable PostgreSQL `MERGE` subset rendered as Oracle `MERGE`
   - SQL Server baseline `TOP` rewritten to the shared row-limiting model and rendered as Oracle `FETCH FIRST`
 - Warning-based rewrite:
   - MySQL and SQL Server hints are dropped when targeting Oracle
 - Unsupported:
   - generic DML result clauses, because Oracle requires `RETURNING ... INTO`
   - SQL Server `OUTPUT` and advanced `MERGE`
-  - PostgreSQL `DISTINCT ON` and PostgreSQL `MERGE`
+  - PostgreSQL `DISTINCT ON`
+  - PostgreSQL `MERGE DO NOTHING` and `WHEN NOT MATCHED BY SOURCE` when targeting Oracle
 
 ## Rule Matrix
 
-| Source                | Target                | Rule family                       | Outcome                                             |
-|-----------------------|-----------------------|-----------------------------------|-----------------------------------------------------|
-| Oracle                | PostgreSQL/MySQL/ANSI | `OFFSET ... FETCH`                | Exact shared row-limiting render                    |
-| Oracle                | SQL Server            | limit-only row limiting           | Exact rewrite to `TOP`                              |
-| Oracle                | non-Oracle            | hints                             | Approximate drop with `ORACLE_HINTS_DROPPED`        |
-| PostgreSQL/MySQL/ANSI | Oracle                | shared row limiting               | Exact Oracle `OFFSET ... FETCH` render              |
-| SQL Server            | Oracle                | baseline `TOP`                    | Exact rewrite to Oracle `FETCH FIRST`               |
-| PostgreSQL            | Oracle                | `RETURNING`/generic result clause | Unsupported with `UNSUPPORTED_ORACLE_RESULT_CLAUSE` |
-| PostgreSQL            | Oracle                | `DISTINCT ON`                     | Unsupported with `UNSUPPORTED_DISTINCT_ON`          |
-| PostgreSQL            | Oracle                | `MERGE`                           | Unsupported with `UNSUPPORTED_POSTGRES_MERGE`       |
-| SQL Server            | Oracle                | `OUTPUT`                          | Unsupported with `UNSUPPORTED_SQLSERVER_OUTPUT`     |
-| SQL Server            | Oracle                | `MERGE`                           | Unsupported with `UNSUPPORTED_SQLSERVER_MERGE`      |
-| MySQL/SQL Server      | Oracle                | hints                             | Approximate drop with dialect-specific hint warning |
+| Source                | Target                | Rule family                        | Outcome                                                    |
+|-----------------------|-----------------------|------------------------------------|------------------------------------------------------------|
+| Oracle                | PostgreSQL/MySQL/ANSI | `OFFSET ... FETCH`                 | Exact shared row-limiting render                           |
+| Oracle                | SQL Server            | limit-only row limiting            | Exact rewrite to `TOP`                                     |
+| Oracle                | non-Oracle            | hints                              | Approximate drop with `ORACLE_HINTS_DROPPED`               |
+| PostgreSQL/MySQL/ANSI | Oracle                | shared row limiting                | Exact Oracle `OFFSET ... FETCH` render                     |
+| SQL Server            | Oracle                | baseline `TOP`                     | Exact rewrite to Oracle `FETCH FIRST`                      |
+| PostgreSQL            | Oracle                | `RETURNING`/generic result clause  | Unsupported with `UNSUPPORTED_ORACLE_RESULT_CLAUSE`        |
+| PostgreSQL            | Oracle                | `DISTINCT ON`                      | Unsupported with `UNSUPPORTED_DISTINCT_ON`                 |
+| PostgreSQL            | Oracle                | portable `MERGE` subset            | Exact Oracle `MERGE` render                                |
+| PostgreSQL            | Oracle                | `MERGE DO NOTHING`                 | Unsupported with `UNSUPPORTED_MERGE_DO_NOTHING`            |
+| PostgreSQL            | Oracle                | `MERGE WHEN NOT MATCHED BY SOURCE` | Unsupported with `UNSUPPORTED_MERGE_NOT_MATCHED_BY_SOURCE` |
+| PostgreSQL            | SQL Server            | portable `MERGE` subset            | Exact SQL Server `MERGE` render                            |
+| PostgreSQL            | SQL Server            | `MERGE DO NOTHING`                 | Unsupported with `UNSUPPORTED_MERGE_DO_NOTHING`            |
+| PostgreSQL            | ANSI/MySQL            | `MERGE`                            | Unsupported with `UNSUPPORTED_POSTGRES_MERGE`              |
+| SQL Server            | Oracle                | `OUTPUT`                           | Unsupported with `UNSUPPORTED_SQLSERVER_OUTPUT`            |
+| SQL Server            | Oracle                | `MERGE`                            | Unsupported with `UNSUPPORTED_SQLSERVER_MERGE`             |
+| MySQL/SQL Server      | Oracle                | hints                              | Approximate drop with dialect-specific hint warning        |
 
 ## Reading Results
 

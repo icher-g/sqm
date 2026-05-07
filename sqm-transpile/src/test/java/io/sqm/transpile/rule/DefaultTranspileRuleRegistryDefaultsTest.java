@@ -55,7 +55,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
 
         assertEquals(
             java.util.List.of(
-                "postgres-merge-unsupported",
+                "postgres-merge-do-nothing-unsupported",
                 "postgres-to-sqlserver-distinct-on-unsupported",
                 "postgres-to-sqlserver-returning-unsupported",
                 "standard-limit-to-sqlserver-top"
@@ -91,7 +91,8 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         assertEquals(
             java.util.List.of(
                 "oracle-result-clause-unsupported",
-                "postgres-merge-unsupported",
+                "postgres-merge-do-nothing-unsupported",
+                "postgres-merge-not-matched-by-source-to-oracle-unsupported",
                 "postgres-to-oracle-distinct-on-unsupported"
             ),
             postgresToOracleRules.stream().map(TranspileRule::id).sorted().toList()
