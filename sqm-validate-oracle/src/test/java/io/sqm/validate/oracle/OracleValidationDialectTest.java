@@ -83,6 +83,52 @@ class OracleValidationDialectTest {
     }
 
     @Test
+    void rejectsNonOracleInsertModesAndConflictClauses() {
+        var validator = SchemaStatementValidator.of(SCHEMA, OracleValidationDialect.of());
+
+        assertTrue(hasDialectProblem(
+            validator.validate(insert("users").ignore().columns(id("id")).values(row(lit(1L))).build()),
+            "insert.mode"
+        ));
+        assertTrue(hasDialectProblem(
+            validator.validate(insert("users").replace().columns(id("id")).values(row(lit(1L))).build()),
+            "insert.mode"
+        ));
+        assertTrue(hasDialectProblem(
+            validator.validate(insert("users").columns(id("id")).values(row(lit(1L))).onConflictDoNothing().build()),
+            "insert.conflict"
+        ));
+    }
+
+    @Test
+    void rejectsNonOracleUpdateFromAndJoinClauses() {
+        var validator = SchemaStatementValidator.of(SCHEMA, OracleValidationDialect.of());
+
+        assertTrue(hasDialectProblem(
+            validator.validate(update("users").set("name", lit("alice")).from(tbl("src_users")).build()),
+            "update.from"
+        ));
+        assertTrue(hasDialectProblem(
+            validator.validate(update("users").set("name", lit("alice")).join(io.sqm.core.CrossJoin.of(tbl("src_users"))).build()),
+            "update.join"
+        ));
+    }
+
+    @Test
+    void rejectsNonOracleDeleteUsingAndJoinClauses() {
+        var validator = SchemaStatementValidator.of(SCHEMA, OracleValidationDialect.of());
+
+        assertTrue(hasDialectProblem(
+            validator.validate(delete("users").using(tbl("src_users")).build()),
+            "delete.using"
+        ));
+        assertTrue(hasDialectProblem(
+            validator.validate(delete("users").join(io.sqm.core.CrossJoin.of(tbl("src_users"))).build()),
+            "delete.using"
+        ));
+    }
+
+    @Test
     void rejectsNonOracleMergeShapes() {
         var validator = SchemaStatementValidator.of(SCHEMA, OracleValidationDialect.of());
         var top = merge("users")
@@ -106,10 +152,16 @@ class OracleValidationDialectTest {
                 io.sqm.core.MergeUpdateAction.of(java.util.List.of(set("name", col("s", "name"))))
             ))
             .build();
+        var doNothing = merge("users")
+            .source(tbl("src_users").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDoNothing()
+            .build();
 
         assertTrue(hasDialectProblem(validator.validate(top), "merge.top"));
         assertTrue(hasDialectProblem(validator.validate(result), "merge.result"));
         assertTrue(hasDialectProblem(validator.validate(bySource), "merge.clause"));
+        assertTrue(hasDialectProblem(validator.validate(doNothing), "merge.action"));
     }
 
     private static boolean hasDialectProblem(io.sqm.validate.api.ValidationResult result, String clausePath) {

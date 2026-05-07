@@ -66,11 +66,32 @@ class OracleSpecsTest {
     }
 
     @Test
+    void parses_oracle_offset_only_row_limiting() {
+        var context = ParseContext.of(new OracleSpecs());
+        var result = context.parse(Query.class, "SELECT id FROM users ORDER BY id OFFSET 5 ROWS");
+
+        assertFalse(result.isError());
+        var query = assertInstanceOf(SelectQuery.class, result.value());
+        assertNull(query.limitOffset().limit());
+        assertNotNull(query.limitOffset().offset());
+    }
+
+    @Test
     void rejects_limit_syntax_for_oracle() {
         var context = ParseContext.of(new OracleSpecs());
         var result = context.parse(Query.class, "SELECT id FROM users LIMIT 10");
 
         assertTrue(result.isError());
+    }
+
+    @Test
+    void rejects_malformed_oracle_row_limiting() {
+        var context = ParseContext.of(new OracleSpecs());
+
+        assertTrue(context.parse(Query.class, "SELECT id FROM users OFFSET ROWS").isError());
+        assertTrue(context.parse(Query.class, "SELECT id FROM users FETCH 10 ROWS ONLY").isError());
+        assertTrue(context.parse(Query.class, "SELECT id FROM users FETCH FIRST 10 ONLY").isError());
+        assertTrue(context.parse(Query.class, "SELECT id FROM users FETCH FIRST 10 ROWS").isError());
     }
 
     @Test
@@ -135,5 +156,16 @@ class OracleSpecsTest {
         assertTrue(context.parse(MergeStatement.class, "MERGE INTO users USING src ON users.id = src.id WHEN NOT MATCHED BY SOURCE THEN UPDATE SET name = src.name").isError());
         assertTrue(context.parse(MergeStatement.class, "MERGE INTO users USING src ON users.id = src.id WHEN MATCHED THEN DO NOTHING").isError());
         assertTrue(context.parse(MergeStatement.class, "MERGE INTO users USING src ON users.id = src.id WHEN MATCHED THEN UPDATE SET name = src.name OUTPUT inserted.id").isError());
+    }
+
+    @Test
+    void rejects_malformed_oracle_merge_shapes() {
+        var context = ParseContext.of(new OracleSpecs());
+
+        assertTrue(context.parse(MergeStatement.class, "MERGE INTO users USING src ON users.id = src.id").isError());
+        assertTrue(context.parse(MergeStatement.class, "MERGE INTO users USING src ON users.id = src.id WHEN MATCHED THEN UPDATE SET name = src.name RETURNING id").isError());
+        assertTrue(context.parse(MergeStatement.class, "MERGE INTO USING src ON users.id = src.id WHEN MATCHED THEN UPDATE SET name = src.name").isError());
+        assertTrue(context.parse(MergeStatement.class, "MERGE INTO users USING ON users.id = src.id WHEN MATCHED THEN UPDATE SET name = src.name").isError());
+        assertTrue(context.parse(MergeStatement.class, "MERGE INTO users USING src ON WHEN MATCHED THEN UPDATE SET name = src.name").isError());
     }
 }

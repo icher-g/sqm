@@ -1,7 +1,12 @@
 package io.sqm.render.oracle;
 
+import io.sqm.core.LimitOffset;
 import io.sqm.core.MergeClause;
+import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
+import io.sqm.core.dialect.VersionedDialectCapabilities;
+import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.oracle.spi.OracleDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.Test;
@@ -44,6 +49,28 @@ class OracleRenderSmokeTest {
         var sql = RenderContext.of(new OracleDialect()).render(query).sql();
 
         assertEquals("SELECT 1 FROM dual OFFSET 5 ROWS FETCH FIRST 10 ROWS ONLY", sql.replaceAll("\\s+", " ").trim());
+    }
+
+    @Test
+    void rendersOracleOffsetOnlyAndEmptyLimitOffset() {
+        var dialect = new OracleDialect();
+        var offsetOnly = select(lit(1L)).from(tbl("dual")).offset(lit(5L)).build();
+        var writer = new DefaultSqlWriter(RenderContext.of(dialect));
+
+        new LimitOffsetRenderer().render(LimitOffset.of((io.sqm.core.Expression) null, null), RenderContext.of(dialect), writer);
+
+        assertEquals("", writer.toText(java.util.List.of()).sql());
+        assertEquals("SELECT 1 FROM dual OFFSET 5 ROWS", normalize(RenderContext.of(dialect).render(offsetOnly).sql()));
+    }
+
+    @Test
+    void rejectsLimitAllForOracle() {
+        var dialect = new OracleDialect();
+        var writer = new DefaultSqlWriter(RenderContext.of(dialect));
+
+        assertThrows(UnsupportedOperationException.class, () ->
+            new LimitOffsetRenderer().render(LimitOffset.all(), RenderContext.of(dialect), writer)
+        );
     }
 
     @Test
@@ -110,13 +137,39 @@ class OracleRenderSmokeTest {
             .whenMatchedUpdate(java.util.List.of(set("name", col("s", "name"))))
             .result(col("id"))
             .build();
+        var hint = merge("users")
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .hint("MERGE_HINT")
+            .whenMatchedUpdate(java.util.List.of(set("name", col("s", "name"))))
+            .build();
+        var doNothing = merge("users")
+            .source(tbl("src").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedDoNothing()
+            .build();
 
         assertThrows(UnsupportedDialectFeatureException.class, () -> RenderContext.of(new OracleDialect()).render(top));
         assertThrows(UnsupportedDialectFeatureException.class, () -> RenderContext.of(new OracleDialect()).render(bySource));
         assertThrows(UnsupportedDialectFeatureException.class, () -> RenderContext.of(new OracleDialect()).render(returning));
+        assertThrows(UnsupportedDialectFeatureException.class, () -> RenderContext.of(new OracleDialect()).render(hint));
+        assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new OracleDialect()).render(doNothing));
+        assertThrows(UnsupportedDialectFeatureException.class, () -> RenderContext.of(new NoMergeOracleDialect()).render(doNothing));
     }
 
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
+    }
+
+    private static final class NoMergeOracleDialect extends OracleDialect {
+        /**
+         * Returns an empty capability set so MERGE rendering takes the dialect feature rejection path.
+         *
+         * @return empty dialect capabilities
+         */
+        @Override
+        public DialectCapabilities capabilities() {
+            return VersionedDialectCapabilities.builder(SqlDialectVersion.of(19, 0)).build();
+        }
     }
 }
