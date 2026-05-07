@@ -15,6 +15,10 @@ class SqlDialectIdTest {
         assertEquals(SqlDialectId.ANSI, SqlDialectId.of("ansi"));
         assertEquals(SqlDialectId.MYSQL, SqlDialectId.of("mysql"));
         assertEquals(SqlDialectId.POSTGRESQL, SqlDialectId.of("postgresql"));
+        assertEquals(SqlDialectId.SQLSERVER, SqlDialectId.of("mssql"));
+        assertEquals(SqlDialectId.SQLSERVER, SqlDialectId.of("tsql"));
+        assertEquals(SqlDialectId.ORACLE, SqlDialectId.of("oracle"));
+        assertEquals(SqlDialectId.ORACLE, SqlDialectId.of("ORA"));
     }
 
     @Test

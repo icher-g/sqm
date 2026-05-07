@@ -31,6 +31,11 @@ public record SqlDialectId(String value) implements Serializable {
     public static final SqlDialectId SQLSERVER = new SqlDialectId("sqlserver");
 
     /**
+     * Built-in Oracle dialect identifier.
+     */
+    public static final SqlDialectId ORACLE = new SqlDialectId("oracle");
+
+    /**
      * Creates a normalized dialect identifier.
      *
      * @param value normalized dialect identifier
@@ -56,6 +61,7 @@ public record SqlDialectId(String value) implements Serializable {
             case "mysql" -> MYSQL;
             case "postgres", "postgresql" -> POSTGRESQL;
             case "sqlserver", "mssql", "tsql" -> SQLSERVER;
+            case "oracle", "ora" -> ORACLE;
             default -> new SqlDialectId(normalized);
         };
     }
