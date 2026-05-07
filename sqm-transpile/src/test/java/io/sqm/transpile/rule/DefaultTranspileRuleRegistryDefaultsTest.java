@@ -76,5 +76,47 @@ class DefaultTranspileRuleRegistryDefaultsTest {
             ansiToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()
         );
     }
+
+    @Test
+    void defaultsIncludeOracleBuiltIns() {
+        var postgresToOracleRules = DefaultTranspileRuleRegistry.defaults()
+            .rulesFor(SqlDialectId.POSTGRESQL, SqlDialectId.ORACLE);
+        var oracleToPostgresRules = DefaultTranspileRuleRegistry.defaults()
+            .rulesFor(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL);
+        var sqlServerToOracleRules = DefaultTranspileRuleRegistry.defaults()
+            .rulesFor(SqlDialectId.SQLSERVER, SqlDialectId.ORACLE);
+        var oracleToSqlServerRules = DefaultTranspileRuleRegistry.defaults()
+            .rulesFor(SqlDialectId.ORACLE, SqlDialectId.SQLSERVER);
+
+        assertEquals(
+            java.util.List.of(
+                "oracle-result-clause-unsupported",
+                "postgres-merge-unsupported",
+                "postgres-to-oracle-distinct-on-unsupported"
+            ),
+            postgresToOracleRules.stream().map(TranspileRule::id).sorted().toList()
+        );
+        assertEquals(
+            java.util.List.of("oracle-hint-dropping"),
+            oracleToPostgresRules.stream().map(TranspileRule::id).sorted().toList()
+        );
+        assertEquals(
+            java.util.List.of(
+                "oracle-result-clause-unsupported",
+                "sqlserver-hint-dropping",
+                "sqlserver-merge-unsupported",
+                "sqlserver-output-unsupported",
+                "sqlserver-top-to-limit"
+            ),
+            sqlServerToOracleRules.stream().map(TranspileRule::id).sorted().toList()
+        );
+        assertEquals(
+            java.util.List.of(
+                "oracle-hint-dropping",
+                "standard-limit-to-sqlserver-top"
+            ),
+            oracleToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()
+        );
+    }
 }
 

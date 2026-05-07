@@ -39,7 +39,7 @@ public final class SqlServerTopToLimitRule implements TranspileRule {
 
     @Override
     public Set<SqlDialectId> targetDialects() {
-        return Set.of(SqlDialectId.ANSI, SqlDialectId.MYSQL, SqlDialectId.POSTGRESQL);
+        return Set.of(SqlDialectId.ANSI, SqlDialectId.MYSQL, SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL);
     }
 
     @Override

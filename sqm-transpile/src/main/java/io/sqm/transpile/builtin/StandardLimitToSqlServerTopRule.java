@@ -32,7 +32,7 @@ public final class StandardLimitToSqlServerTopRule implements TranspileRule {
 
     @Override
     public Set<SqlDialectId> sourceDialects() {
-        return Set.of(SqlDialectId.ANSI, SqlDialectId.MYSQL, SqlDialectId.POSTGRESQL);
+        return Set.of(SqlDialectId.ANSI, SqlDialectId.MYSQL, SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL);
     }
 
     @Override

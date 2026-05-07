@@ -1,20 +1,23 @@
 package io.sqm.transpile.rule;
 
 import io.sqm.core.dialect.SqlDialectId;
+import io.sqm.transpile.builtin.FunctionTableToMySqlUnsupportedRule;
 import io.sqm.transpile.builtin.MySqlHintDroppingRule;
 import io.sqm.transpile.builtin.MySqlToPostgresInsertModeUnsupportedRule;
 import io.sqm.transpile.builtin.MySqlToPostgresJsonFunctionUnsupportedRule;
 import io.sqm.transpile.builtin.MySqlToPostgresNullSafeComparisonRule;
 import io.sqm.transpile.builtin.MySqlToPostgresOnDuplicateKeyUnsupportedRule;
-import io.sqm.transpile.builtin.FunctionTableToMySqlUnsupportedRule;
+import io.sqm.transpile.builtin.OracleHintDroppingRule;
+import io.sqm.transpile.builtin.OracleResultClauseUnsupportedRule;
+import io.sqm.transpile.builtin.PostgresMergeUnsupportedRule;
+import io.sqm.transpile.builtin.PostgresToMySqlDistinctOnUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlIlikeRule;
 import io.sqm.transpile.builtin.PostgresToMySqlNullSafeComparisonRule;
-import io.sqm.transpile.builtin.PostgresToMySqlDistinctOnUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlOperatorFamilyUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlRegexVariantUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlReturningUnsupportedRule;
-import io.sqm.transpile.builtin.PostgresMergeUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToMySqlSimilarToUnsupportedRule;
+import io.sqm.transpile.builtin.PostgresToOracleDistinctOnUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToSqlServerDistinctOnUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToSqlServerReturningUnsupportedRule;
 import io.sqm.transpile.builtin.SqlServerHintDroppingRule;
@@ -54,11 +57,14 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
             new PostgresToMySqlRegexVariantUnsupportedRule(),
             new PostgresToMySqlOperatorFamilyUnsupportedRule(),
             new PostgresMergeUnsupportedRule(),
+            new PostgresToOracleDistinctOnUnsupportedRule(),
             new MySqlToPostgresNullSafeComparisonRule(),
             new MySqlHintDroppingRule(),
             new MySqlToPostgresOnDuplicateKeyUnsupportedRule(),
             new MySqlToPostgresInsertModeUnsupportedRule(),
             new MySqlToPostgresJsonFunctionUnsupportedRule(),
+            new OracleResultClauseUnsupportedRule(),
+            new OracleHintDroppingRule(),
             new StandardLimitToSqlServerTopRule(),
             new SqlServerTopToLimitRule(),
             new SqlServerOutputUnsupportedRule(),

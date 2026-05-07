@@ -10,28 +10,28 @@ import io.sqm.transpile.rule.TranspileRule;
 import java.util.Set;
 
 /**
- * Drops MySQL-native hints when transpiling to non-MySQL dialects.
+ * Drops Oracle-native hints when transpiling to non-Oracle dialects.
  */
-public final class MySqlHintDroppingRule implements TranspileRule {
+public final class OracleHintDroppingRule implements TranspileRule {
     /**
-     * Creates a MySQL cross-dialect hint-dropping rule.
+     * Creates an Oracle cross-dialect hint-dropping rule.
      */
-    public MySqlHintDroppingRule() {
+    public OracleHintDroppingRule() {
     }
 
     @Override
     public String id() {
-        return "mysql-hint-dropping";
+        return "oracle-hint-dropping";
     }
 
     @Override
     public Set<SqlDialectId> sourceDialects() {
-        return Set.of(SqlDialectId.MYSQL);
+        return Set.of(SqlDialectId.ORACLE);
     }
 
     @Override
     public Set<SqlDialectId> targetDialects() {
-        return Set.of(SqlDialectId.ANSI, SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL, SqlDialectId.SQLSERVER);
+        return Set.of(SqlDialectId.ANSI, SqlDialectId.MYSQL, SqlDialectId.POSTGRESQL, SqlDialectId.SQLSERVER);
     }
 
     @Override
@@ -44,14 +44,14 @@ public final class MySqlHintDroppingRule implements TranspileRule {
         var transformer = new HintDroppingTransformer();
         var rewritten = transformer.transform(statement);
         if (rewritten == statement) {
-            return TranspileRuleResult.unchanged(statement, "No MySQL hints detected");
+            return TranspileRuleResult.unchanged(statement, "No Oracle hints detected");
         }
         return TranspileRuleResult.rewrittenWithWarning(
             rewritten,
             RewriteFidelity.APPROXIMATE,
-            "MYSQL_HINTS_DROPPED",
-            "MySQL hints were dropped during non-MySQL transpilation",
-            "Dropped MySQL hints for non-MySQL transpilation"
+            "ORACLE_HINTS_DROPPED",
+            "Oracle hints were dropped during non-Oracle transpilation",
+            "Dropped Oracle hints for non-Oracle transpilation"
         );
     }
 }

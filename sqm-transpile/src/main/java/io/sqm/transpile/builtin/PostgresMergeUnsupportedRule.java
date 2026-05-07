@@ -31,7 +31,7 @@ public final class PostgresMergeUnsupportedRule implements TranspileRule {
 
     @Override
     public Set<SqlDialectId> targetDialects() {
-        return Set.of(SqlDialectId.ANSI, SqlDialectId.MYSQL, SqlDialectId.SQLSERVER);
+        return Set.of(SqlDialectId.ANSI, SqlDialectId.MYSQL, SqlDialectId.ORACLE, SqlDialectId.SQLSERVER);
     }
 
     @Override

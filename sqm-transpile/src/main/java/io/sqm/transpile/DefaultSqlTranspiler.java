@@ -6,12 +6,14 @@ import io.sqm.core.StatementSequence;
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
+import io.sqm.parser.oracle.spi.OracleSpecs;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.Specs;
 import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.mysql.spi.MySqlDialect;
+import io.sqm.render.oracle.spi.OracleDialect;
 import io.sqm.render.postgresql.spi.PostgresDialect;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.RenderOptions;
@@ -21,6 +23,7 @@ import io.sqm.transpile.rule.DefaultTranspileRuleRegistry;
 import io.sqm.transpile.rule.TranspileRule;
 import io.sqm.transpile.rule.TranspileRuleRegistry;
 import io.sqm.validate.mysql.MySqlValidationDialect;
+import io.sqm.validate.oracle.OracleValidationDialect;
 import io.sqm.validate.postgresql.PostgresValidationDialect;
 import io.sqm.validate.schema.SchemaStatementValidator;
 import io.sqm.validate.schema.SchemaValidationSettings;
@@ -102,6 +105,9 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
         if (SqlDialectId.POSTGRESQL.equals(dialectId)) {
             return PostgresSpecs::new;
         }
+        if (SqlDialectId.ORACLE.equals(dialectId)) {
+            return OracleSpecs::new;
+        }
         if (SqlDialectId.SQLSERVER.equals(dialectId)) {
             return SqlServerSpecs::new;
         }
@@ -118,6 +124,9 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
         if (SqlDialectId.POSTGRESQL.equals(dialectId)) {
             return PostgresDialect::new;
         }
+        if (SqlDialectId.ORACLE.equals(dialectId)) {
+            return OracleDialect::new;
+        }
         if (SqlDialectId.SQLSERVER.equals(dialectId)) {
             return SqlServerDialect::new;
         }
@@ -132,9 +141,11 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
                   ? PostgresValidationDialect.of()
                   : SqlDialectId.ANSI.equals(dialectId)
                     ? null
-                    : SqlDialectId.SQLSERVER.equals(dialectId)
-                      ? SqlServerValidationDialect.of()
-                      : unsupportedValidationDialect(dialectId)
+                    : SqlDialectId.ORACLE.equals(dialectId)
+                      ? OracleValidationDialect.of()
+                      : SqlDialectId.SQLSERVER.equals(dialectId)
+                        ? SqlServerValidationDialect.of()
+                        : unsupportedValidationDialect(dialectId)
         );
     }
 
