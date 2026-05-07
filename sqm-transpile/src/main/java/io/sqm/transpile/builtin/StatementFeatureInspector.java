@@ -79,6 +79,42 @@ final class StatementFeatureInspector {
         return statement instanceof MergeStatement;
     }
 
+    static boolean hasMergeDoNothingAction(Statement statement) {
+        var found = new AtomicBoolean(false);
+        statement.accept(new RecursiveNodeVisitor<Void>() {
+            @Override
+            protected Void defaultResult() {
+                return null;
+            }
+
+            @Override
+            public Void visitMergeDoNothingAction(MergeDoNothingAction action) {
+                found.set(true);
+                return super.visitMergeDoNothingAction(action);
+            }
+        });
+        return found.get();
+    }
+
+    static boolean hasMergeNotMatchedBySourceClause(Statement statement) {
+        var found = new AtomicBoolean(false);
+        statement.accept(new RecursiveNodeVisitor<Void>() {
+            @Override
+            protected Void defaultResult() {
+                return null;
+            }
+
+            @Override
+            public Void visitMergeClause(MergeClause clause) {
+                if (clause.matchType() == MergeClause.MatchType.NOT_MATCHED_BY_SOURCE) {
+                    found.set(true);
+                }
+                return super.visitMergeClause(clause);
+            }
+        });
+        return found.get();
+    }
+
     static boolean hasDistinctOn(Statement statement) {
         var found = new AtomicBoolean(false);
         statement.accept(new RecursiveNodeVisitor<Void>() {

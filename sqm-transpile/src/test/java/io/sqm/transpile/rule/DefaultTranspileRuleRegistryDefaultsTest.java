@@ -55,7 +55,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
 
         assertEquals(
             java.util.List.of(
-                "postgres-merge-unsupported",
+                "postgres-merge-do-nothing-unsupported",
                 "postgres-to-sqlserver-distinct-on-unsupported",
                 "postgres-to-sqlserver-returning-unsupported",
                 "standard-limit-to-sqlserver-top"
@@ -74,6 +74,49 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         assertEquals(
             java.util.List.of("standard-limit-to-sqlserver-top"),
             ansiToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()
+        );
+    }
+
+    @Test
+    void defaultsIncludeOracleBuiltIns() {
+        var postgresToOracleRules = DefaultTranspileRuleRegistry.defaults()
+            .rulesFor(SqlDialectId.POSTGRESQL, SqlDialectId.ORACLE);
+        var oracleToPostgresRules = DefaultTranspileRuleRegistry.defaults()
+            .rulesFor(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL);
+        var sqlServerToOracleRules = DefaultTranspileRuleRegistry.defaults()
+            .rulesFor(SqlDialectId.SQLSERVER, SqlDialectId.ORACLE);
+        var oracleToSqlServerRules = DefaultTranspileRuleRegistry.defaults()
+            .rulesFor(SqlDialectId.ORACLE, SqlDialectId.SQLSERVER);
+
+        assertEquals(
+            java.util.List.of(
+                "oracle-result-clause-unsupported",
+                "postgres-merge-do-nothing-unsupported",
+                "postgres-merge-not-matched-by-source-to-oracle-unsupported",
+                "postgres-to-oracle-distinct-on-unsupported"
+            ),
+            postgresToOracleRules.stream().map(TranspileRule::id).sorted().toList()
+        );
+        assertEquals(
+            java.util.List.of("oracle-hint-dropping"),
+            oracleToPostgresRules.stream().map(TranspileRule::id).sorted().toList()
+        );
+        assertEquals(
+            java.util.List.of(
+                "oracle-result-clause-unsupported",
+                "sqlserver-hint-dropping",
+                "sqlserver-merge-unsupported",
+                "sqlserver-output-unsupported",
+                "sqlserver-top-to-limit"
+            ),
+            sqlServerToOracleRules.stream().map(TranspileRule::id).sorted().toList()
+        );
+        assertEquals(
+            java.util.List.of(
+                "oracle-hint-dropping",
+                "standard-limit-to-sqlserver-top"
+            ),
+            oracleToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()
         );
     }
 }

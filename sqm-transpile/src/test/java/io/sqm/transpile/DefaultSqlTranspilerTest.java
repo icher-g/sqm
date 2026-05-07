@@ -438,6 +438,136 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
+    void transpilesOracleFetchOffsetToPostgresLimitRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ORACLE)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .build();
+
+        var result = transpiler.transpile("SELECT id FROM users ORDER BY id OFFSET 5 ROWS FETCH NEXT 10 ROWS ONLY");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT id FROM users ORDER BY id LIMIT 10 OFFSET 5"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
+    void transpilesPostgresLimitOffsetToOracleFetchRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.ORACLE)
+            .build();
+
+        var result = transpiler.transpile("SELECT id FROM users ORDER BY id LIMIT 10 OFFSET 5");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT id FROM users ORDER BY id OFFSET 5 ROWS FETCH FIRST 10 ROWS ONLY"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
+    void transpilesSqlServerTopToOracleFetchRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.SQLSERVER)
+            .targetDialect(SqlDialectId.ORACLE)
+            .build();
+
+        var result = transpiler.transpile("SELECT TOP (5) id FROM users");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT id FROM users FETCH FIRST 5 ROWS ONLY"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "sqlserver-top-to-limit".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.EXACT
+        ));
+    }
+
+    @Test
+    void oracleLimitIsRewrittenToSqlServerTopRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ORACLE)
+            .targetDialect(SqlDialectId.SQLSERVER)
+            .build();
+
+        var result = transpiler.transpile("SELECT id FROM users FETCH FIRST 5 ROWS ONLY");
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("SELECT TOP (5) id FROM users"),
+            normalizeSql(result.sql().orElseThrow())
+        );
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "standard-limit-to-sqlserver-top".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.EXACT
+        ));
+    }
+
+    @Test
+    void transpilesPortablePostgresMergeToOracleRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.ORACLE)
+            .build();
+
+        var result = transpiler.transpile("""
+            MERGE INTO users
+            USING src_users AS s
+            ON users.id = s.id
+            WHEN MATCHED THEN UPDATE SET name = s.name
+            WHEN NOT MATCHED THEN INSERT (id, name) VALUES (s.id, s.name)
+            """);
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("""
+                MERGE INTO users
+                USING src_users AS s
+                ON (users.id = s.id)
+                WHEN MATCHED THEN UPDATE SET name = s.name
+                WHEN NOT MATCHED THEN INSERT (id, name) VALUES (s.id, s.name)
+                """),
+            normalizeSql(result.sql().orElseThrow())
+        );
+        assertTrue(result.steps().stream().noneMatch(step ->
+            "postgres-merge-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
+    void transpilesPortablePostgresMergeToSqlServerRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.SQLSERVER)
+            .build();
+
+        var result = transpiler.transpile("""
+            MERGE INTO users
+            USING src
+            ON users.id = src.id
+            WHEN MATCHED THEN DELETE
+            """);
+
+        assertTrue(result.success());
+        assertEquals(
+            normalizeSql("""
+                MERGE INTO users
+                USING src
+                ON users.id = src.id
+                WHEN MATCHED THEN DELETE
+                """),
+            normalizeSql(result.sql().orElseThrow())
+        );
+    }
+
+    @Test
     void sqlServerTopPercentIsRejectedAsUnsupportedTranspilation() {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.SQLSERVER)
@@ -486,6 +616,23 @@ class DefaultSqlTranspilerTest {
 
         assertEquals(TranspileStatus.VALIDATION_FAILED, result.status());
         assertTrue(result.problems().stream().anyMatch(problem -> problem.code().contains("DIALECT_CLAUSE_INVALID")));
+    }
+
+    @Test
+    void oracleTargetValidationUsesDefaultDialectRules() {
+        var schema = CatalogSchema.of(
+            CatalogTable.of("public", "users", CatalogColumn.of("id", CatalogType.LONG))
+        );
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.ORACLE)
+            .targetSchema(schema)
+            .build();
+
+        var result = transpiler.transpile("SELECT name FROM users");
+
+        assertEquals(TranspileStatus.VALIDATION_FAILED, result.status());
+        assertTrue(result.problems().stream().anyMatch(problem -> problem.code().contains("COLUMN_NOT_FOUND")));
     }
 
     @Test
@@ -727,12 +874,12 @@ class DefaultSqlTranspilerTest {
     @Test
     void unsupportedDefaultDialectsAreRejectedAtBuildTime() {
         assertThrows(IllegalArgumentException.class, () -> SqlTranspiler.builder()
-            .sourceDialect(SqlDialectId.of("oracle"))
+            .sourceDialect(new SqlDialectId("db2"))
             .targetDialect(SqlDialectId.MYSQL)
             .build());
         assertThrows(IllegalArgumentException.class, () -> SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.ANSI)
-            .targetDialect(SqlDialectId.of("oracle"))
+            .targetDialect(new SqlDialectId("db2"))
             .build());
     }
 
@@ -1024,10 +1171,46 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
+    void postgresReturningToOracleIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.ORACLE)
+            .build();
+
+        var result = transpiler.transpile("UPDATE users SET name = 'alice' RETURNING id");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertTrue(result.sql().isEmpty());
+        assertEquals("UNSUPPORTED_ORACLE_RESULT_CLAUSE", result.problems().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "oracle-result-clause-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
     void sqlServerOutputIsRejectedBeforeRendering() {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.SQLSERVER)
             .targetDialect(SqlDialectId.POSTGRESQL)
+            .build();
+
+        var result = transpiler.transpile("UPDATE users SET name = 'alice' OUTPUT deleted.name, inserted.name");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertTrue(result.sql().isEmpty());
+        assertEquals("UNSUPPORTED_SQLSERVER_OUTPUT", result.problems().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "sqlserver-output-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
+    void sqlServerOutputToOracleIsRejectedBeforeRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.SQLSERVER)
+            .targetDialect(SqlDialectId.ORACLE)
             .build();
 
         var result = transpiler.transpile("UPDATE users SET name = 'alice' OUTPUT deleted.name, inserted.name");
@@ -1057,6 +1240,70 @@ class DefaultSqlTranspilerTest {
         assertEquals("UNSUPPORTED_DISTINCT_ON", result.problems().getFirst().code());
         assertTrue(result.steps().stream().anyMatch(step ->
             "postgres-to-sqlserver-distinct-on-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
+    void postgresDistinctOnIsRejectedBeforeOracleRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.ORACLE)
+            .build();
+
+        var result = transpiler.transpile(
+            "SELECT DISTINCT ON (user_id) user_id, created_at FROM orders ORDER BY user_id, created_at DESC"
+        );
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertTrue(result.sql().isEmpty());
+        assertEquals("UNSUPPORTED_DISTINCT_ON", result.problems().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "postgres-to-oracle-distinct-on-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
+    void postgresMergeDoNothingIsRejectedBeforeOracleRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.ORACLE)
+            .build();
+
+        var result = transpiler.transpile("""
+            MERGE INTO users
+            USING src
+            ON users.id = src.id
+            WHEN MATCHED THEN DO NOTHING
+            """);
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_MERGE_DO_NOTHING", result.problems().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "postgres-merge-do-nothing-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
+    void postgresMergeNotMatchedBySourceIsRejectedBeforeOracleRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.ORACLE)
+            .build();
+
+        var result = transpiler.transpile("""
+            MERGE INTO users
+            USING src
+            ON users.id = src.id
+            WHEN NOT MATCHED BY SOURCE THEN DELETE
+            """);
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_MERGE_NOT_MATCHED_BY_SOURCE", result.problems().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "postgres-merge-not-matched-by-source-to-oracle-unsupported".equals(step.ruleId())
                 && step.fidelity() == RewriteFidelity.UNSUPPORTED
         ));
     }
@@ -1264,6 +1511,48 @@ class DefaultSqlTranspilerTest {
             "sqlserver-hint-dropping".equals(step.ruleId())
                 && step.fidelity() == RewriteFidelity.APPROXIMATE
         ));
+    }
+
+    @Test
+    void oracleHintsAreDroppedWithWarningDuringTranspilation() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ORACLE)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .options(new TranspileOptions(true, false, true, true))
+            .build();
+
+        var statement = Dsl.select(Dsl.col("id"))
+            .from(Dsl.tbl("users"))
+            .hint("LEADING", "users")
+            .build();
+
+        var result = transpiler.transpile(statement);
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        assertEquals("ORACLE_HINTS_DROPPED", result.warnings().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "oracle-hint-dropping".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.APPROXIMATE
+        ));
+    }
+
+    @Test
+    void oracleHintsAreRejectedWhenApproximateRewritesAreDisabled() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ORACLE)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .build();
+
+        var statement = Dsl.select(Dsl.col("id"))
+            .from(Dsl.tbl("users"))
+            .hint("LEADING", "users")
+            .build();
+
+        var result = transpiler.transpile(statement);
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("ORACLE_HINTS_DROPPED", result.warnings().getFirst().code());
+        assertEquals("APPROXIMATE_REWRITE_DISABLED", result.problems().getLast().code());
     }
 
     @Test

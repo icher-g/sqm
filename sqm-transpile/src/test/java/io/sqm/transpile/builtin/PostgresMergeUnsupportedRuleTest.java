@@ -29,19 +29,61 @@ class PostgresMergeUnsupportedRuleTest {
     }
 
     @Test
-    void rejectsMergeForNonPostgresTargets() {
+    void rejectsMergeForTargetsWithoutMergeSupport() {
         Statement statement = Dsl.merge("users")
             .source(Dsl.tbl("src").as("s"))
             .on(Dsl.col("users", "id").eq(Dsl.col("s", "id")))
-            .whenMatchedDoNothing()
-            .whenNotMatchedBySourceDoNothing(Dsl.col("users", "active").eq(Dsl.lit(true)))
-            .result(Dsl.col("users", "id").toSelectItem())
+            .whenMatchedDelete()
             .build();
 
-        var result = new PostgresMergeUnsupportedRule().apply(statement, context(SqlDialectId.POSTGRESQL, SqlDialectId.SQLSERVER));
+        var result = new PostgresMergeUnsupportedRule().apply(statement, context(SqlDialectId.POSTGRESQL, SqlDialectId.MYSQL));
 
         assertEquals(io.sqm.transpile.RewriteFidelity.UNSUPPORTED, result.fidelity());
         assertFalse(result.problems().isEmpty());
         assertEquals("UNSUPPORTED_POSTGRES_MERGE", result.problems().getFirst().code());
+    }
+
+    @Test
+    void leavesPortableMergeForMergeCapableTargetsUnchanged() {
+        Statement statement = Dsl.merge("users")
+            .source(Dsl.tbl("src").as("s"))
+            .on(Dsl.col("users", "id").eq(Dsl.col("s", "id")))
+            .whenMatchedDelete()
+            .build();
+
+        var result = new PostgresMergeUnsupportedRule().apply(statement, context(SqlDialectId.POSTGRESQL, SqlDialectId.SQLSERVER));
+
+        assertFalse(result.changed());
+        assertSame(statement, result.statement());
+    }
+
+    @Test
+    void mergeDoNothingRuleRejectsDoNothingForOracleAndSqlServer() {
+        Statement statement = Dsl.merge("users")
+            .source(Dsl.tbl("src").as("s"))
+            .on(Dsl.col("users", "id").eq(Dsl.col("s", "id")))
+            .whenMatchedDoNothing()
+            .build();
+
+        var result = new PostgresMergeDoNothingUnsupportedRule()
+            .apply(statement, context(SqlDialectId.POSTGRESQL, SqlDialectId.ORACLE));
+
+        assertEquals(io.sqm.transpile.RewriteFidelity.UNSUPPORTED, result.fidelity());
+        assertEquals("UNSUPPORTED_MERGE_DO_NOTHING", result.problems().getFirst().code());
+    }
+
+    @Test
+    void mergeNotMatchedBySourceRuleRejectsOracleTarget() {
+        Statement statement = Dsl.merge("users")
+            .source(Dsl.tbl("src").as("s"))
+            .on(Dsl.col("users", "id").eq(Dsl.col("s", "id")))
+            .whenNotMatchedBySourceDelete(Dsl.col("users", "active").eq(Dsl.lit(true)))
+            .build();
+
+        var result = new PostgresMergeNotMatchedBySourceToOracleUnsupportedRule()
+            .apply(statement, context(SqlDialectId.POSTGRESQL, SqlDialectId.ORACLE));
+
+        assertEquals(io.sqm.transpile.RewriteFidelity.UNSUPPORTED, result.fidelity());
+        assertEquals("UNSUPPORTED_MERGE_NOT_MATCHED_BY_SOURCE", result.problems().getFirst().code());
     }
 }
