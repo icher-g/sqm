@@ -14,6 +14,8 @@ The AST example can be seen on the right side of the SQM Playground App.
 
 ![Overview](images/main-view.png)
 
+To run the app locally: docker run --rm -p 8080:8080 igorcher/sqm-playground:latest
+
 Live dialect confidence is backed by real-engine execution coverage: shipped PostgreSQL, MySQL, and SQL Server syntax is exercised in Docker/Testcontainers suites against the actual database engines, not only parser/renderer round trips.
 
 ## Wiki
