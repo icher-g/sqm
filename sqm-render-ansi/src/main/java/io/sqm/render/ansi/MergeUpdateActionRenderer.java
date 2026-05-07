@@ -22,6 +22,17 @@ public class MergeUpdateActionRenderer implements Renderer<MergeUpdateAction> {
         throw new UnsupportedDialectFeatureException("MERGE UPDATE action", ctx.dialect().name());
     }
 
+    /**
+     * Renders the shared MERGE update-action subset used by dialect-specific implementations.
+     *
+     * @param node merge update action to render
+     * @param w SQL writer
+     */
+    protected final void renderSupportedAction(MergeUpdateAction node, SqlWriter w) {
+        w.append("UPDATE SET").space();
+        w.comma(node.assignments());
+    }
+
     @Override
     public Class<MergeUpdateAction> targetType() {
         return MergeUpdateAction.class;

@@ -1,16 +1,16 @@
-package io.sqm.render.postgresql;
+package io.sqm.render.oracle;
 
 import io.sqm.core.MergeInsertAction;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 
 /**
- * Renders PostgreSQL MERGE insert actions.
+ * Renders Oracle MERGE insert actions.
  */
 public class MergeInsertActionRenderer extends io.sqm.render.ansi.MergeInsertActionRenderer {
 
     /**
-     * Creates a PostgreSQL merge-insert-action renderer.
+     * Creates an Oracle merge-insert-action renderer.
      */
     public MergeInsertActionRenderer() {
     }

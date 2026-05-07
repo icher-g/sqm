@@ -22,6 +22,35 @@ public class MergeInsertActionRenderer implements Renderer<MergeInsertAction> {
         throw new UnsupportedDialectFeatureException("MERGE INSERT action", ctx.dialect().name());
     }
 
+    /**
+     * Renders the shared MERGE insert-action subset used by dialect-specific implementations.
+     *
+     * @param node merge insert action to render
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected final void renderSupportedAction(MergeInsertAction node, RenderContext ctx, SqlWriter w) {
+        w.append("INSERT");
+        if (!node.columns().isEmpty()) {
+            w.space().append("(");
+            for (int i = 0; i < node.columns().size(); i++) {
+                if (i > 0) {
+                    w.append(", ");
+                }
+                w.append(renderIdentifier(node.columns().get(i), ctx.dialect().quoter()));
+            }
+            w.append(")");
+        }
+        w.space().append("VALUES").space().append("(");
+        for (int i = 0; i < node.values().items().size(); i++) {
+            if (i > 0) {
+                w.append(", ");
+            }
+            w.append(node.values().items().get(i));
+        }
+        w.append(")");
+    }
+
     @Override
     public Class<MergeInsertAction> targetType() {
         return MergeInsertAction.class;
