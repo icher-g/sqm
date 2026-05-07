@@ -17,7 +17,6 @@ public class MergeUpdateActionRenderer extends io.sqm.render.ansi.MergeUpdateAct
 
     @Override
     public void render(MergeUpdateAction node, RenderContext ctx, SqlWriter w) {
-        w.append("UPDATE SET").space();
-        w.comma(node.assignments());
+        renderSupportedAction(node, w);
     }
 }

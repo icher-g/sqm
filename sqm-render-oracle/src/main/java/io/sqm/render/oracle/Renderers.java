@@ -18,7 +18,7 @@ public final class Renderers {
      */
     public static RenderersRepository oracle() {
         if (repository == null) {
-            repository = io.sqm.render.ansi.Renderers.ansiCopy();
+            repository = registerOracleOverrides(io.sqm.render.ansi.Renderers.ansiCopy());
         }
         return repository;
     }
@@ -29,6 +29,15 @@ public final class Renderers {
      * @return isolated Oracle renderers repository.
      */
     public static RenderersRepository oracleCopy() {
-        return io.sqm.render.ansi.Renderers.ansiCopy();
+        return registerOracleOverrides(io.sqm.render.ansi.Renderers.ansiCopy());
+    }
+
+    private static RenderersRepository registerOracleOverrides(RenderersRepository repository) {
+        return repository
+            .register(new MergeStatementRenderer())
+            .register(new MergeClauseRenderer())
+            .register(new MergeUpdateActionRenderer())
+            .register(new MergeInsertActionRenderer())
+            .register(new LimitOffsetRenderer());
     }
 }

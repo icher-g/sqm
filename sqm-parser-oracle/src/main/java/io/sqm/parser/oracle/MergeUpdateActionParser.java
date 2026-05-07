@@ -1,4 +1,4 @@
-package io.sqm.parser.postgresql;
+package io.sqm.parser.oracle;
 
 import io.sqm.core.MergeUpdateAction;
 import io.sqm.parser.core.Cursor;
@@ -6,12 +6,12 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
 /**
- * Parses PostgreSQL {@code MERGE ... WHEN MATCHED THEN UPDATE SET ...} actions.
+ * Parses Oracle {@code MERGE ... WHEN MATCHED THEN UPDATE SET ...} actions.
  */
 public class MergeUpdateActionParser extends io.sqm.parser.ansi.MergeUpdateActionParser {
 
     /**
-     * Creates a PostgreSQL merge-update-action parser.
+     * Creates an Oracle merge-update-action parser.
      */
     public MergeUpdateActionParser() {
     }
