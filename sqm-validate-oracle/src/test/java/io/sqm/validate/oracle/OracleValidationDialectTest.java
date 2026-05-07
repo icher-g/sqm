@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.delete;
+import static io.sqm.dsl.Dsl.func;
 import static io.sqm.dsl.Dsl.id;
 import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
@@ -42,6 +43,7 @@ class OracleValidationDialectTest {
 
         assertEquals("oracle", dialect.name());
         assertTrue(dialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.MERGE_STATEMENT));
+        assertTrue(dialect.functionCatalog().resolve("nvl").isPresent());
         assertThrows(NullPointerException.class, () -> OracleValidationDialect.of(null));
     }
 
@@ -80,6 +82,32 @@ class OracleValidationDialectTest {
             validator.validate(delete("users").result(col("id")).build()),
             "delete.result"
         ));
+    }
+
+    @Test
+    void validatesOracleFunctionCatalogSignatures() {
+        var validator = SchemaStatementValidator.of(SCHEMA, OracleValidationDialect.of());
+        var query = io.sqm.dsl.Dsl.select(
+            func("nvl", col("u", "name"), lit("unknown")),
+            func("to_char", col("u", "id")),
+            func("sysdate")
+        ).from(tbl("users").as("u")).build();
+
+        assertTrue(validator.validate(query).ok());
+    }
+
+    @Test
+    void rejectsOracleFunctionSignatureMismatches() {
+        var validator = SchemaStatementValidator.of(SCHEMA, OracleValidationDialect.of());
+        var arityMismatch = io.sqm.dsl.Dsl.select(func("nvl", col("u", "name")))
+            .from(tbl("users").as("u"))
+            .build();
+        var typeMismatch = io.sqm.dsl.Dsl.select(func("substr", col("u", "id"), lit(1L)))
+            .from(tbl("users").as("u"))
+            .build();
+
+        assertTrue(hasFunctionProblem(validator.validate(arityMismatch)));
+        assertTrue(hasFunctionProblem(validator.validate(typeMismatch)));
     }
 
     @Test
@@ -168,6 +196,13 @@ class OracleValidationDialectTest {
         return result.problems().stream().anyMatch(problem ->
             problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
                 && clausePath.equals(problem.clausePath())
+        );
+    }
+
+    private static boolean hasFunctionProblem(io.sqm.validate.api.ValidationResult result) {
+        return result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.FUNCTION_SIGNATURE_MISMATCH
+                && "function.call".equals(problem.clausePath())
         );
     }
 }

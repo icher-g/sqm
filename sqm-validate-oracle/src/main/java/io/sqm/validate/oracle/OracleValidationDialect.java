@@ -5,9 +5,11 @@ import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.core.oracle.dialect.OracleCapabilities;
+import io.sqm.validate.oracle.function.OracleFunctionCatalog;
 import io.sqm.validate.oracle.rule.OracleDmlFeatureValidationRule;
 import io.sqm.validate.oracle.rule.OracleMergeFeatureValidationRule;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
+import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
 
 import java.util.List;
@@ -65,6 +67,16 @@ public final class OracleValidationDialect implements SchemaValidationDialect {
     @Override
     public String name() {
         return SqlDialectId.ORACLE.value();
+    }
+
+    /**
+     * Returns Oracle-specific function signatures.
+     *
+     * @return Oracle function catalog.
+     */
+    @Override
+    public FunctionCatalog functionCatalog() {
+        return OracleFunctionCatalog.of(version);
     }
 
     @Override
