@@ -78,6 +78,16 @@ class SqlStatementValidatorTest {
     }
 
     @Test
+    void standard_supports_oracle_dialect_validation() {
+        var validator = SqlStatementValidator.standard(SCHEMA);
+        var query = select(col("id")).from(tbl("users")).orderBy(col("id")).offset(2).limit(5).build();
+
+        var result = validator.validate(query, ExecutionContext.of("oracle", ExecutionMode.ANALYZE));
+
+        assertEquals(ReasonCode.NONE, result.code());
+    }
+
+    @Test
     void standard_supports_sqlserver_advanced_merge_validation() {
         var validator = SqlStatementValidator.standard(SCHEMA);
         var statement = select(col("u", "id"))

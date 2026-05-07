@@ -3,6 +3,7 @@ package io.sqm.playground.rest.service;
 import io.sqm.core.*;
 import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
+import io.sqm.parser.oracle.spi.OracleSpecs;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseProblem;
@@ -171,6 +172,7 @@ public final class PlaygroundStatementSupport {
             case postgresql -> new PostgresSpecs();
             case mysql -> new MySqlSpecs();
             case sqlserver -> new SqlServerSpecs();
+            case oracle -> new OracleSpecs();
         };
     }
 

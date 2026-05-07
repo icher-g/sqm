@@ -74,6 +74,24 @@ class SqlStatementParserTest {
     }
 
     @Test
+    void parses_oracle_query() {
+        var parser = SqlStatementParser.standard();
+        var context = ExecutionContext.of("oracle", ExecutionMode.ANALYZE);
+
+        var query = parser.parse("select id from users order by id offset 2 rows fetch next 5 rows only", context);
+        assertInstanceOf(Query.class, query);
+    }
+
+    @Test
+    void parses_oracle_alias_dialect() {
+        var parser = SqlStatementParser.standard();
+        var context = ExecutionContext.of("ora", ExecutionMode.ANALYZE);
+
+        var query = parser.parse("select 1", context);
+        assertInstanceOf(Query.class, query);
+    }
+
+    @Test
     void parses_sqlserver_insert_statement() {
         var parser = SqlStatementParser.standard();
         var context = ExecutionContext.of("sqlserver", ExecutionMode.ANALYZE);

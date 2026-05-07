@@ -7,6 +7,7 @@ import io.sqm.playground.api.ValidateRequestDto;
 import io.sqm.playground.api.ValidateResponseDto;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.mysql.MySqlValidationDialect;
+import io.sqm.validate.oracle.OracleValidationDialect;
 import io.sqm.validate.postgresql.PostgresValidationDialect;
 import io.sqm.validate.schema.SchemaStatementValidator;
 import io.sqm.validate.schema.SchemaValidationSettings;
@@ -93,6 +94,7 @@ public final class ValidateService {
             case postgresql -> SchemaStatementValidator.of(ValidationCatalogSchemas.allowEverything(), PostgresValidationDialect.of());
             case mysql -> SchemaStatementValidator.of(ValidationCatalogSchemas.allowEverything(), MySqlValidationDialect.of());
             case sqlserver -> SchemaStatementValidator.of(ValidationCatalogSchemas.allowEverything(), SqlServerValidationDialect.of());
+            case oracle -> SchemaStatementValidator.of(ValidationCatalogSchemas.allowEverything(), OracleValidationDialect.of());
         };
     }
 

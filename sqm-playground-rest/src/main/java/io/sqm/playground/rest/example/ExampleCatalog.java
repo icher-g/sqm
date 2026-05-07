@@ -123,6 +123,19 @@ public final class ExampleCatalog {
                     values ([src].[id], [src].[customer_id], [src].[status], [src].[total])
                 output inserted.[id], inserted.[status], inserted.[total]
                 """
+            ),
+            new ExampleDto(
+                "oracle-offset-fetch",
+                "Oracle OFFSET FETCH",
+                SqlDialectDto.oracle,
+                """
+                select
+                    c.id,
+                    c.name
+                from customer c
+                order by c.id
+                offset 5 rows fetch next 10 rows only
+                """
             )
         );
     }

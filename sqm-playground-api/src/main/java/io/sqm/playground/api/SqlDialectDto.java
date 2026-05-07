@@ -7,7 +7,8 @@ public enum SqlDialectDto {
     ansi,
     postgresql,
     mysql,
-    sqlserver;
+    sqlserver,
+    oracle;
 
     /**
      * Resolves a dialect from its lowercase API value.

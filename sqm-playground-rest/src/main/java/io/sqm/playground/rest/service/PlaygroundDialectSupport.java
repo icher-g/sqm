@@ -26,6 +26,7 @@ public final class PlaygroundDialectSupport {
             case postgresql -> SqlDialectId.POSTGRESQL;
             case mysql -> SqlDialectId.MYSQL;
             case sqlserver -> SqlDialectId.SQLSERVER;
+            case oracle -> SqlDialectId.ORACLE;
         };
     }
 }

@@ -147,7 +147,8 @@ export function getSqlCompletionSpecs(
     ansi: ["fetch first", "offset", "current date"],
     postgresql: ["distinct on", "ilike", "returning", "nulls first", "nulls last"],
     mysql: ["straight_join", "limit", "replace into", "on duplicate key update"],
-    sqlserver: ["top", "output", "with", "offset fetch"]
+    sqlserver: ["top", "output", "with", "offset fetch"],
+    oracle: ["fetch first", "offset", "merge", "dual"]
   };
 
   const tableSpecs = getTableSpecs();

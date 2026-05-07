@@ -32,6 +32,13 @@ describe("SqlEditorLanguageSupport", () => {
     expect(specs.some((spec) => spec.label === "OUTPUT")).toBe(true);
   });
 
+  it("includes Oracle-specific completions", () => {
+    const specs = getSqlCompletionSpecs("oracle");
+
+    expect(specs.some((spec) => spec.label === "FETCH FIRST")).toBe(true);
+    expect(specs.some((spec) => spec.label === "DUAL")).toBe(true);
+  });
+
   it("prefers table names after FROM-like clauses", () => {
     const specs = getSqlCompletionSpecs("ansi", "select * from cu", "select * from cu");
 

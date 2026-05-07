@@ -31,6 +31,7 @@ class PlaygroundStatementSupportTest {
         assertTrue(support.parse("select distinct on (id) id from customer order by id", SqlDialectDto.postgresql).success());
         assertTrue(support.parse("select `id` from `customer`", SqlDialectDto.mysql).success());
         assertTrue(support.parse("select top (1) id from customer", SqlDialectDto.sqlserver).success());
+        assertTrue(support.parse("select id from customer order by id offset 2 rows fetch next 5 rows only", SqlDialectDto.oracle).success());
     }
 
     @Test

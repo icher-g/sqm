@@ -72,6 +72,24 @@ class MiddlewareServiceParityTest {
     }
 
     @Test
+    void oracle_request_matches_control_without_pipeline_failure() {
+        var decisionService = SqlDecisionService.create(
+            SqlDecisionServiceConfig.builder(SCHEMA)
+                .buildValidationConfig()
+        );
+        var service = new SqlMiddlewareCoreService(decisionService);
+        var sql = "select id from users order by id offset 2 rows fetch next 5 rows only";
+        var context = new ExecutionContextDto("oracle", null, null, null, null);
+
+        var direct = decisionService.analyze(sql, ExecutionContext.of("oracle", ExecutionMode.ANALYZE));
+        var viaService = service.analyze(new AnalyzeRequest(sql, context));
+
+        assertEquals(direct.reasonCode().name(), viaService.reasonCode().name());
+        assertEquals(direct.kind().name(), viaService.kind().name());
+        assertNotEquals("DENY_PIPELINE_ERROR", viaService.reasonCode().name());
+    }
+
+    @Test
     void sqlserver_advanced_requests_match_control_without_pipeline_failure() {
         var decisionService = SqlDecisionService.create(
             SqlDecisionServiceConfig.builder(SCHEMA)
