@@ -151,8 +151,8 @@ class DslAdditionalHelpersTest {
         var tableHintById = tableHint(id("INDEX"), id("idx_users"));
         var bareStatementHintById = statementHint(id("RECOMPILE"));
         var statementHintById = statementHint(id("MAX_EXECUTION_TIME"), 1000);
-        var resultIntoWithoutColumns = resultInto(tableVar("audit"));
-        var resultIntoByIds = resultInto(tableVar("audit"), id("user_id"), id("changed_at"));
+        var RelationResultTargetWithoutColumns = resultRelationTarget(tableVar("audit"));
+        var RelationResultTargetByIds = resultRelationTarget(tableVar("audit"), id("user_id"), id("changed_at"));
         var insertedColumn = inserted(id("id"));
         var deletedColumn = deleted(id("id"));
         var intervalWithoutQualifier = interval("1 day");
@@ -230,8 +230,8 @@ class DslAdditionalHelpersTest {
         assertEquals("RECOMPILE", bareStatementHintById.name().value());
         assertTrue(bareStatementHintById.args().isEmpty());
         assertEquals("MAX_EXECUTION_TIME", statementHintById.name().value());
-        assertTrue(resultIntoWithoutColumns.columns().isEmpty());
-        assertEquals(List.of("user_id", "changed_at"), resultIntoByIds.columns().stream().map(Identifier::value).toList());
+        assertTrue(RelationResultTargetWithoutColumns.columns().isEmpty());
+        assertEquals(List.of("user_id", "changed_at"), RelationResultTargetByIds.columns().stream().map(Identifier::value).toList());
         assertEquals(OutputRowSource.INSERTED, insertedColumn.source());
         assertEquals(OutputRowSource.DELETED, deletedColumn.source());
         assertTrue(intervalWithoutQualifier.qualifier().isEmpty());
@@ -362,7 +362,7 @@ class DslAdditionalHelpersTest {
     void outputIntoHelpersAcceptTableVariablesWithOrWithoutSigil() {
         var withSigil = tableVar("@audit");
         var withoutSigil = tableVar("audit");
-        var into = resultInto(withSigil, "user_id");
+        var into = resultRelationTarget(withSigil, "user_id");
 
         assertEquals("audit", withSigil.name().value());
         assertEquals(withSigil, withoutSigil);

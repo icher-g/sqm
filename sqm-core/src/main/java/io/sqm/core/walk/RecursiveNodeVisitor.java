@@ -182,7 +182,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitResultClause(ResultClause clause) {
         clause.items().forEach(this::accept);
-        accept(clause.into());
+        accept(clause.target());
         return defaultResult();
     }
 
@@ -260,14 +260,26 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
-     * Visits a SQL Server {@link ResultInto} target.
+     * Visits a SQL Server {@link RelationResultTarget} target.
      *
-     * @param into result-into target being visited
+     * @param target relation result target being visited
      * @return a result produced by the visitor
      */
     @Override
-    public R visitResultInto(ResultInto into) {
-        accept(into.target());
+    public R visitRelationResultTarget(RelationResultTarget target) {
+        accept(target.target());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a variable DML result target.
+     *
+     * @param target variable result target being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitVariableResultTarget(VariableResultTarget target) {
+        target.variables().forEach(this::accept);
         return defaultResult();
     }
 

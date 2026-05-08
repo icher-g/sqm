@@ -1,6 +1,6 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.ResultInto;
+import io.sqm.core.RelationResultTarget;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
@@ -11,12 +11,12 @@ import static io.sqm.parser.spi.ParseResult.error;
 /**
  * Parses {@code OUTPUT / RETURNING ... INTO ...} targets.
  */
-public class ResultIntoParser implements Parser<ResultInto> {
+public class RelationResultTargetParser implements Parser<RelationResultTarget> {
 
     /**
      * Creates a result-into parser.
      */
-    public ResultIntoParser() {
+    public RelationResultTargetParser() {
     }
 
     /**
@@ -27,7 +27,7 @@ public class ResultIntoParser implements Parser<ResultInto> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<ResultInto> parse(Cursor cur, ParseContext ctx) {
+    public ParseResult<RelationResultTarget> parse(Cursor cur, ParseContext ctx) {
         return error("OUTPUT / RETURNING ... INTO ... is not supported by this dialect", cur.fullPos());
     }
 
@@ -37,7 +37,7 @@ public class ResultIntoParser implements Parser<ResultInto> {
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<ResultInto> targetType() {
-        return ResultInto.class;
+    public Class<RelationResultTarget> targetType() {
+        return RelationResultTarget.class;
     }
 }

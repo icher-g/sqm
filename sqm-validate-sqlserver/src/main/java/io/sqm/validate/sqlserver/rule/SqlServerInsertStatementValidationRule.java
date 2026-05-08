@@ -59,7 +59,7 @@ public final class SqlServerInsertStatementValidationRule implements SchemaValid
                 "insert.on_conflict"
             );
         }
-        SqlServerTableHintSupport.validateResultIntoTarget(node.result() == null ? null : node.result().into(), context, "insert.result");
+        SqlServerTableHintSupport.validateResultTarget(node.result(), context, "insert.result");
         if (node.result() != null) {
             for (var item : node.result().items()) {
                 if (usesOutputSource(item, OutputRowSource.DELETED)) {

@@ -327,27 +327,15 @@ public non-sealed interface UpdateStatement extends Statement {
         }
 
         /**
-         * Adds projection items from expressions or result items.
+         * Adds projection items with a result target.
          *
-         * @param into  result-into target
+         * @param target result target
          * @param nodes nodes accepted in the result clause: OUTPUT/RETURNING
          * @return this builder
          */
-        public Builder result(ResultInto into, Node... nodes) {
+        public Builder result(ResultTarget target, Node... nodes) {
             var items = ResultItem.fromNodes(nodes);
-            return result(ResultClause.of(items, into));
-        }
-
-        /**
-         * Adds projection items from expressions or result items.
-         *
-         * @param into  result-into target
-         * @param nodes nodes accepted in the result clause: OUTPUT/RETURNING
-         * @return this builder
-         */
-        public Builder result(Table into, Node... nodes) {
-            var items = ResultItem.fromNodes(nodes);
-            return result(ResultClause.of(items, ResultInto.of(into)));
+            return result(ResultClause.of(items, target));
         }
 
         /**

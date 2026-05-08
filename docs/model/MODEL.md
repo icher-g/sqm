@@ -34,7 +34,8 @@ Status terms used below:
 | `QuantifiedSource`                                           | Source role for `ANY` / `ALL` predicates                                             | Query sources only                                                                               | Query sources plus array-expression sources                                                      | Query sources only                                                                               | Query sources only                                                                               | PostgreSQL supports array-expression sources such as `ANY(path)`                                 | Shared role interface implemented by `Query` and `Expression`; dialects opt in to non-query sources                                                                      |
 | `AtTimeZoneExpr`                                             | Time-zone conversion expression                                                      | `Not supported by the dialect`                                                                   | `Support`                                                                                        | `Not supported by the dialect`                                                                   | `Support`                                                                                        | This table records SQM dialect support, not a full claim about every database product capability | Shared node for a dialect-gated expression family                                                                                                                        |
 | `ResultClause`                                               | DML statement emits result rows                                                      | `Support` for the shared shape only where delivered by the ANSI-based DML slice                  | `Support` through shipped `RETURNING` support                                                    | `Not supported by the dialect` for current shipped MySQL versions                                | `Support` through shipped `OUTPUT` support                                                       | The database syntax differs by dialect (`RETURNING`, `OUTPUT`, and future equivalents)           | Shared semantics, dialect-specific syntax                                                                                                                                |
-| `ResultInto`                                                 | DML result rows are redirected into a relation target                                | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Support` for `OUTPUT ... INTO`                                                                  | The current shipped support is SQL Server-specific                                               | Shared sink concept, currently only shipped for SQL Server                                                                                                               |
+| `RelationResultTarget`                                       | DML result rows are redirected into a relation target                                | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Support` for `OUTPUT ... INTO`                                                                  | The current shipped support is SQL Server-specific                                               | Shared sink concept, currently only shipped for SQL Server                                                                                                               |
+| `VariableResultTarget`                                       | DML result expressions are assigned into variables                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | The current shipped support is Oracle-specific                                                   | Shared sink concept for dialects such as Oracle `RETURNING ... INTO`; Oracle support lives in the Oracle modules                                                         |
 | `OutputColumnExpr`                                           | SQL Server pseudo-row source expression such as `inserted.id`                        | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Support`                                                                                        | SQL Server-specific concept                                                                      | Kept explicit so SQL Server output semantics stay distinguishable from generic result projections                                                                        |
 | `OutputStarResultItem`                                       | SQL Server pseudo-row source star such as `inserted.*`                               | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Support`                                                                                        | SQL Server-specific concept                                                                      | SQL Server-specific result item semantics                                                                                                                                |
 | `TopSpec`                                                    | Select-head row limiting model                                                       | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Support`                                                                                        | `TOP`-style row limiting is dialect-specific                                                     | Shared node for `TOP`-style semantics, currently exercised by SQL Server; PostgreSQL/MySQL row limiting remains modeled through `LimitOffset`, not `TopSpec`             |
@@ -125,6 +126,9 @@ Node
 |  |- StarSelectItem
 |  `- QualifiedStarSelectItem
 |- ResultClause
+|- ResultTarget
+|  |- RelationResultTarget
+|  `- VariableResultTarget
 |- ResultItem
 |  |- ExprResultItem
 |  |- StarResultItem
@@ -134,7 +138,6 @@ Node
 |  |- StatementHint
 |  `- TableHint
 |- HintArg
-|- ResultInto
 |- Statement
 |  |- Query
 |  |  |- CompositeQuery
@@ -300,7 +303,9 @@ graph TD
   Hint --> StatementHint
   Hint --> TableHint
   Node --> HintArg
-  Node --> ResultInto
+  Node --> ResultTarget
+  ResultTarget --> RelationResultTarget
+  ResultTarget --> VariableResultTarget
 
   Node --> Statement
   Statement --> Query
@@ -680,14 +685,16 @@ graph TD
 
 ---
 
-### SQL Server DML output
+### DML result clauses
 
-- **ResultClause** - shared DML result clause used by SQL Server `OUTPUT` and PostgreSQL/MySQL `RETURNING`
+- **ResultClause** - shared DML result clause used by SQL Server `OUTPUT`, PostgreSQL/MySQL `RETURNING`, and Oracle `RETURNING ... INTO`
 - **ResultItem** - base type for one projected expression or star item inside a DML result clause
 - **ExprResultItem** - expression result item with an optional alias
 - **StarResultItem** - unqualified `*` result item
 - **QualifiedStarResultItem** - generic qualified star result item such as `t.*`
-- **ResultInto** - optional SQL Server `OUTPUT ... INTO ...` target relation and target column list, including base tables and SQL Server table variables
+- **ResultTarget** - optional target sink for produced DML values
+- **RelationResultTarget** - optional SQL Server `OUTPUT ... INTO ...` target relation and target column list, including base tables and SQL Server table variables
+- **VariableResultTarget** - Oracle-style variable sink for `RETURNING ... INTO :var` targets
 - **OutputColumnExpr** - SQL Server pseudo-column reference used only inside `OUTPUT`, such as `inserted.id` or `deleted.status`
 - **OutputStarResultItem** - SQL Server pseudo-row-source star used only inside `OUTPUT`, such as `inserted.*` or `deleted.*`
 
@@ -696,8 +703,11 @@ graph TD
 - **ResultClause**
   Shared semantic node for mutation-result projections. The keyword and exact syntax are dialect-specific (`RETURNING`, `OUTPUT`, and future equivalents).
 
-- **ResultInto**
+- **RelationResultTarget**
   Shared semantic node for redirecting mutation-result rows into a relation target. The current shipped dialect support is SQL Server `OUTPUT ... INTO`.
+
+- **VariableResultTarget**
+  Shared semantic node for assigning mutation-result expressions into host or procedural variables. The current shipped dialect support is Oracle `RETURNING ... INTO`.
 
 - **OutputColumnExpr** and **OutputStarResultItem**
   SQL Server-specific result projection semantics represented explicitly in the shared AST so transforms, validation, and transpilation can distinguish them from generic mutation-result projections.

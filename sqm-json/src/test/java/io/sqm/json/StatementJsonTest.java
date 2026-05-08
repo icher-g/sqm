@@ -81,7 +81,7 @@ class StatementJsonTest {
         var mapper = SqmJsonMixins.createDefault();
         var json = mapper.writeValueAsString(update(tbl("users"))
             .set(set("name", lit("alice")))
-            .result(resultInto(tbl("audit"), "user_id"), insertedAll(), inserted("id").as("user_id"))
+            .result(resultRelationTarget(tbl("audit"), "user_id"), insertedAll(), inserted("id").as("user_id"))
             .build());
 
         var statement = (UpdateStatement) mapper.readValue(json, Statement.class);

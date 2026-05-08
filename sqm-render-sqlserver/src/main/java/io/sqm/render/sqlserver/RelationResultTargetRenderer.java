@@ -1,6 +1,6 @@
 package io.sqm.render.sqlserver;
 
-import io.sqm.core.ResultInto;
+import io.sqm.core.RelationResultTarget;
 import io.sqm.core.Table;
 import io.sqm.core.VariableTableRef;
 import io.sqm.render.SqlWriter;
@@ -10,12 +10,12 @@ import io.sqm.render.spi.Renderer;
 /**
  * Renders SQL Server-style {@code OUTPUT ... INTO ...} targets.
  */
-public class ResultIntoRenderer implements Renderer<ResultInto> {
+public class RelationResultTargetRenderer implements Renderer<RelationResultTarget> {
 
     /**
      * Creates a result-into renderer.
      */
-    public ResultIntoRenderer() {
+    public RelationResultTargetRenderer() {
     }
 
     /**
@@ -26,7 +26,7 @@ public class ResultIntoRenderer implements Renderer<ResultInto> {
      * @param w    a writer.
      */
     @Override
-    public void render(ResultInto node, RenderContext ctx, SqlWriter w) {
+    public void render(RelationResultTarget node, RenderContext ctx, SqlWriter w) {
         if (!(node.target() instanceof Table || node.target() instanceof VariableTableRef)) {
             throw new UnsupportedOperationException("SQL Server OUTPUT INTO currently supports base tables and table variables only");
         }
@@ -53,7 +53,7 @@ public class ResultIntoRenderer implements Renderer<ResultInto> {
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<ResultInto> targetType() {
-        return ResultInto.class;
+    public Class<RelationResultTarget> targetType() {
+        return RelationResultTarget.class;
     }
 }

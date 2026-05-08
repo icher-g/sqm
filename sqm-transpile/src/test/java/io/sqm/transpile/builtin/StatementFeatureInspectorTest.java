@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class StatementFeatureInspectorTest {
@@ -73,7 +74,11 @@ class StatementFeatureInspectorTest {
             .build();
         var outputIntoUpdate = UpdateStatement.builder(Dsl.tbl("users"))
             .set(Dsl.set("name", Dsl.lit("alice")))
-            .result(Dsl.resultInto(Dsl.tbl("audit"), "old_name"), Dsl.deleted("name"))
+            .result(Dsl.resultRelationTarget(Dsl.tbl("audit"), "old_name"), Dsl.deleted("name"))
+            .build();
+        var returningIntoUpdate = UpdateStatement.builder(Dsl.tbl("users"))
+            .set(Dsl.set("name", Dsl.lit("alice")))
+            .result(Dsl.resultVariableTarget("id"), Dsl.col("id").toSelectItem())
             .build();
         var outputMerge = Dsl.merge("users")
             .source(Dsl.tbl("src").as("s"))
@@ -89,15 +94,17 @@ class StatementFeatureInspectorTest {
         assertFalse(StatementFeatureInspector.hasSqlServerOutputClause(returningInsert));
         assertTrue(StatementFeatureInspector.hasSqlServerOutputClause(outputUpdate));
         assertTrue(StatementFeatureInspector.hasSqlServerOutputClause(outputIntoUpdate));
+        assertFalse(StatementFeatureInspector.hasSqlServerOutputClause(returningIntoUpdate));
+        assertTrue(StatementFeatureInspector.hasVariableResultTarget(returningIntoUpdate));
         assertTrue(StatementFeatureInspector.hasResultClause(outputMerge));
         assertTrue(StatementFeatureInspector.hasSqlServerOutputClause(outputMerge));
         assertTrue(StatementFeatureInspector.hasSqlServerOutputClause(outputDeleteAll));
 
-        assertFalse(returningInsert.result().hasIntoTarget());
+        assertFalse(returningInsert.result().target() instanceof io.sqm.core.RelationResultTarget);
         assertFalse(returningInsert.result().usesDialectSpecificResultItems());
         assertTrue(outputUpdate.result().usesDialectSpecificResultItems());
-        assertTrue(outputIntoUpdate.result().hasIntoTarget());
-        assertTrue(outputIntoUpdate.result().into().isBaseTableTarget());
+        var target = assertInstanceOf(io.sqm.core.RelationResultTarget.class, outputIntoUpdate.result().target());
+        assertTrue(target.isBaseTableTarget());
     }
 
     @Test

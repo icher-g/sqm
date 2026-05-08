@@ -16,7 +16,8 @@ import java.util.Objects;
  * </ul>
  * <p>
  * A result clause contains a list of returned items and may optionally redirect them into a target
- * table-like destination, as supported by T-SQL via {@code OUTPUT ... INTO}.
+ * relation or variable sink, as supported by T-SQL via {@code OUTPUT ... INTO} and Oracle via
+ * {@code RETURNING ... INTO}.
  */
 public non-sealed interface ResultClause extends Node {
 
@@ -27,18 +28,18 @@ public non-sealed interface ResultClause extends Node {
      * @return a new {@link ResultClause}.
      */
     static ResultClause of(List<ResultItem> items) {
-        return of(items, null);
+        return of(items, (ResultTarget) null);
     }
 
     /**
      * Creates a new {@link ResultClause}.
      *
      * @param items returned items. Must not be {@code null}.
-     * @param into optional target for redirecting produced rows. May be {@code null}.
+     * @param target optional target for produced values. May be {@code null}.
      * @return a new {@link ResultClause}.
      */
-    static ResultClause of(List<ResultItem> items, ResultInto into) {
-        return new Impl(items, into);
+    static ResultClause of(List<ResultItem> items, ResultTarget target) {
+        return new Impl(items, target);
     }
 
     /**
@@ -49,20 +50,11 @@ public non-sealed interface ResultClause extends Node {
     List<ResultItem> items();
 
     /**
-     * Returns the optional target that receives produced rows.
+     * Returns the optional target that receives produced values.
      *
      * @return target clause or {@code null} when result rows are returned directly.
      */
-    ResultInto into();
-
-    /**
-     * Returns whether this clause redirects produced rows into a target relation.
-     *
-     * @return {@code true} when {@link #into()} is present
-     */
-    default boolean hasIntoTarget() {
-        return into() != null;
-    }
+    ResultTarget target();
 
     /**
      * Returns whether this clause uses dialect specific result. Currently, it checks only for SQL Server-specific result item shapes.
@@ -93,15 +85,15 @@ public non-sealed interface ResultClause extends Node {
      * Default immutable implementation.
      *
      * @param items projected result items
-     * @param into optional result-into target
+     * @param target optional result target
      */
-    record Impl(List<ResultItem> items, ResultInto into) implements ResultClause {
+    record Impl(List<ResultItem> items, ResultTarget target) implements ResultClause {
 
         /**
-         * Creates an result clause implementation.
+         * Creates a result clause implementation.
          *
          * @param items projected result items
-         * @param into optional result-into target
+         * @param target optional result target
          */
         public Impl {
             items = List.copyOf(Objects.requireNonNull(items, "items"));

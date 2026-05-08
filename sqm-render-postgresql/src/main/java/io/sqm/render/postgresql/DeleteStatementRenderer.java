@@ -53,6 +53,9 @@ public class DeleteStatementRenderer extends io.sqm.render.ansi.DeleteStatementR
         if (!ctx.dialect().capabilities().supports(SqlFeature.DML_RESULT_CLAUSE)) {
             throw new UnsupportedDialectFeatureException("DELETE ... RETURNING", ctx.dialect().name());
         }
+        if (result.target() != null) {
+            throw new UnsupportedDialectFeatureException("DELETE ... RETURNING INTO", ctx.dialect().name());
+        }
         w.newline().append("RETURNING").space().comma(result.items());
     }
 

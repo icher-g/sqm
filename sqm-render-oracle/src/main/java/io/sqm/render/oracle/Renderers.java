@@ -34,10 +34,16 @@ public final class Renderers {
 
     private static RenderersRepository registerOracleOverrides(RenderersRepository repository) {
         return repository
+            .register(new InsertStatementRenderer())
+            .register(new UpdateStatementRenderer())
+            .register(new DeleteStatementRenderer())
             .register(new MergeStatementRenderer())
             .register(new MergeClauseRenderer())
             .register(new MergeUpdateActionRenderer())
             .register(new MergeInsertActionRenderer())
-            .register(new LimitOffsetRenderer());
+            .register(new LimitOffsetRenderer())
+            .register(new VariableResultTargetRenderer())
+            .register(new NamedParamExprRenderer())
+            .register(new OrdinalParamExprRenderer());
     }
 }

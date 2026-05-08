@@ -536,7 +536,7 @@ class SqlServerValidationDialectTest {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var updateStatement = update("users")
             .set(Identifier.of("name"), lit("alice"))
-            .result(resultInto(tbl("audit").withNoLock(), "user_id"), inserted("id"))
+            .result(resultRelationTarget(tbl("audit").withNoLock(), "user_id"), inserted("id"))
             .build();
 
         var result = validator.validate(updateStatement);
@@ -553,7 +553,7 @@ class SqlServerValidationDialectTest {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var updateStatement = update("users")
             .set(Identifier.of("name"), lit("alice"))
-            .result(resultInto(tableVar("@audit"), "user_id"), inserted("id"))
+            .result(resultRelationTarget(tableVar("@audit"), "user_id"), inserted("id"))
             .build();
 
         var result = validator.validate(updateStatement);
@@ -569,7 +569,7 @@ class SqlServerValidationDialectTest {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var updateStatement = update("users")
             .set(Identifier.of("name"), lit("alice"))
-            .result(resultInto(tbl("users"), "id"), inserted("id"))
+            .result(resultRelationTarget(tbl("users"), "id"), inserted("id"))
             .build();
 
         var result = validator.validate(updateStatement);
@@ -634,7 +634,7 @@ class SqlServerValidationDialectTest {
             .on(col("users", "id").eq(col("s", "id")))
             .whenMatchedUpdate(java.util.List.of(set("users", "name", col("s", "name"))))
             .whenMatchedDelete()
-            .result(resultInto(tbl("audit").withNoLock(), "user_id"), inserted("id"))
+            .result(resultRelationTarget(tbl("audit").withNoLock(), "user_id"), inserted("id"))
             .build();
 
         var result = validator.validate(mergeStatement);
@@ -656,7 +656,7 @@ class SqlServerValidationDialectTest {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var updateStatement = update("users")
             .set(Identifier.of("name"), lit("alice"))
-            .result(resultInto(tbl(select(lit(1L)).build()).as("audit_rows"), "user_id"), inserted("id"))
+            .result(resultRelationTarget(tbl(select(lit(1L)).build()).as("audit_rows"), "user_id"), inserted("id"))
             .build();
 
         var result = validator.validate(updateStatement);

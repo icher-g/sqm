@@ -77,7 +77,7 @@ SQM already has the beginnings of the right separation:
 
 - `ResultClause`
 - `ResultItem`
-- `ResultInto`
+- `RelationResultTarget`
 - SQL Server-specific output item nodes
 
 This is good, but this area still represents an ongoing design pressure:

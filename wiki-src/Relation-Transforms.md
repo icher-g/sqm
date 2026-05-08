@@ -197,6 +197,6 @@ output inserted.id into audit_log(user_id)
 
 Use this when a single logical table was renamed across environments.
 
-## Note About `ResultInto`
+## Note About `RelationResultTarget`
 
-Relation rewrites already affect `OUTPUT ... INTO ...` table targets because `ResultInto.target()` is part of the normal `TableRef` tree. A dedicated result-target transform is usually unnecessary unless you specifically need to rewrite only the `INTO` target and not other tables.
+Relation rewrites already affect `OUTPUT ... INTO ...` table targets because `RelationResultTarget.target()` is part of the normal `TableRef` tree. A dedicated result-target transform is usually unnecessary unless you specifically need to rewrite only the `INTO` target and not other tables.

@@ -4,6 +4,7 @@ import io.sqm.core.FunctionTable;
 import io.sqm.core.Lateral;
 import io.sqm.core.Query;
 import io.sqm.core.QueryTable;
+import io.sqm.core.RelationResultTarget;
 import io.sqm.core.Table;
 import io.sqm.core.UpdateStatement;
 import io.sqm.core.ValuesTable;
@@ -23,7 +24,7 @@ class RelationTransformsTest {
             .join(inner(tbl("audit")).on(col("users", "id").eq(col("audit", "user_id"))))
             .set(set("name", lit("alice")))
             .from(tbl("audit"))
-            .result(resultInto(tbl("audit"), "user_id"), col("id"))
+            .result(resultRelationTarget(tbl("audit"), "user_id"), col("id"))
             .build();
 
         UpdateStatement transformed = RelationTransforms.renameTable(statement, "audit", "audit_log");
@@ -31,14 +32,15 @@ class RelationTransformsTest {
         assertNotSame(statement, transformed);
         assertEquals("audit_log", transformed.joins().getFirst().right().matchTableRef().table(t -> t.name().value()).orElse(null));
         assertEquals("audit_log", transformed.from().getFirst().matchTableRef().table(t -> t.name().value()).orElse(null));
-        assertEquals("audit_log", transformed.result().into().target().matchTableRef().table(t -> t.name().value()).orElse(null));
+        var target = assertInstanceOf(RelationResultTarget.class, transformed.result().target());
+        assertEquals("audit_log", target.target().matchTableRef().table(t -> t.name().value()).orElse(null));
     }
 
     @Test
     void rewriteTableRefsSupportsVariableTargets() {
         var statement = update(tbl("users"))
             .set(set("name", lit("alice")))
-            .result(resultInto(tableVar("@audit_rows"), "user_id"), col("id"))
+            .result(resultRelationTarget(tableVar("@audit_rows"), "user_id"), col("id"))
             .build();
 
         UpdateStatement transformed = RelationTransforms.rewriteTableRefs(statement, tableRef -> tableRef.<io.sqm.core.TableRef>matchTableRef()
@@ -47,9 +49,10 @@ class RelationTransformsTest {
         );
 
         assertNotSame(statement, transformed);
+        var target = assertInstanceOf(RelationResultTarget.class, transformed.result().target());
         assertEquals(
             "audit_archive",
-            transformed.result().into().target().matchTableRef().variableTable(v -> v.name().value()).orElse(null)
+            target.target().matchTableRef().variableTable(v -> v.name().value()).orElse(null)
         );
     }
 
@@ -102,7 +105,7 @@ class RelationTransformsTest {
             .join(inner(tbl("orders")).on(col("users", "id").eq(col("orders", "user_id"))))
             .set(set("name", lit("alice")))
             .from(tbl("orders"))
-            .result(resultInto(tbl("audit"), "user_id"), col("id"))
+            .result(resultRelationTarget(tbl("audit"), "user_id"), col("id"))
             .build();
 
         UpdateStatement transformed = RelationTransforms.remapTables(
@@ -114,7 +117,8 @@ class RelationTransformsTest {
         assertEquals("tenant_users", transformed.table().name().value());
         assertEquals("tenant_orders", transformed.joins().getFirst().right().matchTableRef().table(t -> t.name().value()).orElse(null));
         assertEquals("tenant_orders", transformed.from().getFirst().matchTableRef().table(t -> t.name().value()).orElse(null));
-        assertEquals("tenant_audit", transformed.result().into().target().matchTableRef().table(t -> t.name().value()).orElse(null));
+        var target = assertInstanceOf(RelationResultTarget.class, transformed.result().target());
+        assertEquals("tenant_audit", target.target().matchTableRef().table(t -> t.name().value()).orElse(null));
     }
 
     @Test

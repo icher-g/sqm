@@ -17,6 +17,8 @@ import static io.sqm.dsl.Dsl.id;
 import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.merge;
+import static io.sqm.dsl.Dsl.param;
+import static io.sqm.dsl.Dsl.resultVariableTarget;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.set;
@@ -99,6 +101,29 @@ class OracleRenderSmokeTest {
         assertEquals("INSERT INTO users (id, name) VALUES (1, 'alice')", normalize(RenderContext.of(dialect).render(insert).sql()));
         assertEquals("UPDATE users SET name = 'alice' WHERE id = 1", normalize(RenderContext.of(dialect).render(update).sql()));
         assertEquals("DELETE FROM users WHERE id = 1", normalize(RenderContext.of(dialect).render(delete).sql()));
+    }
+
+    @Test
+    void rendersOracleReturningIntoForDml() {
+        var dialect = new OracleDialect();
+        var insert = insert("users")
+            .columns(id("id"), id("name"))
+            .values(row(lit(1L), lit("alice")))
+            .result(resultVariableTarget(param("id"), param("name")), col("id"), col("name"))
+            .build();
+        var update = update("users")
+            .set("name", lit("alice"))
+            .where(col("id").eq(lit(1L)))
+            .result(resultVariableTarget(param(1)), col("id"))
+            .build();
+        var delete = delete("users")
+            .where(col("id").eq(lit(1L)))
+            .result(resultVariableTarget(param("id")), col("id"))
+            .build();
+
+        assertEquals("INSERT INTO users (id, name) VALUES (1, 'alice') RETURNING id, name INTO :id, :name", normalize(RenderContext.of(dialect).render(insert).sql()));
+        assertEquals("UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id INTO :1", normalize(RenderContext.of(dialect).render(update).sql()));
+        assertEquals("DELETE FROM users WHERE id = 1 RETURNING id INTO :id", normalize(RenderContext.of(dialect).render(delete).sql()));
     }
 
     @Test

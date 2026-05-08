@@ -25,5 +25,5 @@ Examples on this page family use the SQM DSL.
 ## Notes
 
 - All helpers preserve identity when nothing changes.
-- Relation rewrites already cover `ResultInto` table targets because those targets are part of the normal `TableRef` tree.
+- Relation rewrites already cover `RelationResultTarget` table targets because those targets are part of the normal `TableRef` tree.
 - Per-table `WHERE` helpers operate on real `Table` references visible in a statement block, not derived `FROM` items such as subquery aliases.

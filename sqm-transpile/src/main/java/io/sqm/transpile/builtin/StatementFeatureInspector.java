@@ -56,6 +56,44 @@ final class StatementFeatureInspector {
         return found.get();
     }
 
+    static boolean hasResultClauseWithoutVariableTarget(Statement statement) {
+        var found = new AtomicBoolean(false);
+        statement.accept(new RecursiveNodeVisitor<Void>() {
+            @Override
+            protected Void defaultResult() {
+                return null;
+            }
+
+            @Override
+            public Void visitResultClause(ResultClause clause) {
+                if (!(clause.target() instanceof VariableResultTarget)) {
+                    found.set(true);
+                }
+                return super.visitResultClause(clause);
+            }
+        });
+        return found.get();
+    }
+
+    static boolean hasVariableResultTarget(Statement statement) {
+        var found = new AtomicBoolean(false);
+        statement.accept(new RecursiveNodeVisitor<Void>() {
+            @Override
+            protected Void defaultResult() {
+                return null;
+            }
+
+            @Override
+            public Void visitResultClause(ResultClause clause) {
+                if (clause.target() instanceof VariableResultTarget) {
+                    found.set(true);
+                }
+                return super.visitResultClause(clause);
+            }
+        });
+        return found.get();
+    }
+
     static boolean hasSqlServerOutputClause(Statement statement) {
         var found = new AtomicBoolean(false);
         statement.accept(new RecursiveNodeVisitor<Void>() {
@@ -66,7 +104,7 @@ final class StatementFeatureInspector {
 
             @Override
             public Void visitResultClause(ResultClause clause) {
-                if (clause.hasIntoTarget() || clause.usesDialectSpecificResultItems()) {
+                if (clause.target() instanceof RelationResultTarget || clause.usesDialectSpecificResultItems()) {
                     found.set(true);
                 }
                 return super.visitResultClause(clause);

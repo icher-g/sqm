@@ -46,6 +46,6 @@ public final class Parsers {
             .register(new PowerArithmeticExprParser(postfixExprParser))
             .register(new SelectQueryParser())
             .register(new ResultClauseParser())
-            .register(new ResultIntoParser());
+            .register(new RelationResultTargetParser());
     }
 }

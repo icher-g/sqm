@@ -12,10 +12,11 @@ import io.sqm.core.MergeInsertAction;
 import io.sqm.core.MergeStatement;
 import io.sqm.core.MergeUpdateAction;
 import io.sqm.core.ResultClause;
-import io.sqm.core.ResultInto;
+import io.sqm.core.RelationResultTarget;
 import io.sqm.core.StatementSequence;
 import io.sqm.core.TypeName;
 import io.sqm.core.UpdateStatement;
+import io.sqm.core.VariableResultTarget;
 import io.sqm.core.WhenThen;
 
 /**
@@ -114,12 +115,20 @@ public interface StatementVisitor<R> {
     R visitResultClause(ResultClause clause);
 
     /**
-     * Visits a SQL Server {@link ResultInto} target.
+     * Visits a SQL Server {@link RelationResultTarget} target.
      *
-     * @param into result-into target being visited
+     * @param target relation result target being visited
      * @return a result specific to the visitor implementation
      */
-    R visitResultInto(ResultInto into);
+    R visitRelationResultTarget(RelationResultTarget target);
+
+    /**
+     * Visits a variable DML result target.
+     *
+     * @param target variable result target being visited
+     * @return a result specific to the visitor implementation
+     */
+    R visitVariableResultTarget(VariableResultTarget target);
 
     /**
      * Visits a single {@link Assignment} within an update statement.

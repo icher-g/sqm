@@ -1,6 +1,7 @@
 package io.sqm.validate.sqlserver.rule;
 
-import io.sqm.core.ResultInto;
+import io.sqm.core.RelationResultTarget;
+import io.sqm.core.ResultClause;
 import io.sqm.core.Table;
 import io.sqm.core.VariableTableRef;
 import io.sqm.validate.api.ValidationProblem;
@@ -56,7 +57,7 @@ final class SqlServerTableHintSupport {
         }
     }
 
-    static void validateResultIntoTarget(ResultInto into, SchemaValidationContext context, String clausePath) {
+    static void validateRelationResultTargetTarget(RelationResultTarget into, SchemaValidationContext context, String clausePath) {
         if (into == null) {
             return;
         }
@@ -79,6 +80,22 @@ final class SqlServerTableHintSupport {
             ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
             "SQL Server table hints are not supported on OUTPUT INTO targets",
             targetTable,
+            clausePath
+        );
+    }
+
+    static void validateResultTarget(ResultClause result, SchemaValidationContext context, String clausePath) {
+        if (result == null || result.target() == null) {
+            return;
+        }
+        if (result.target() instanceof RelationResultTarget target) {
+            validateRelationResultTargetTarget(target, context, clausePath);
+            return;
+        }
+        context.addProblem(
+            ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED,
+            "SQL Server OUTPUT supports only relation targets in OUTPUT INTO",
+            result.target(),
             clausePath
         );
     }

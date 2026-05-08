@@ -193,10 +193,10 @@ Where stable semantics are repeatedly rediscovered by callers, add focused conve
 
 Candidate examples:
 
-- `ResultClause.hasIntoTarget()`
+- `ResultClause.target() instanceof RelationResultTarget`
 - `ResultClause.usesDialectSpecificResultItems()`
-- `ResultInto.isVariableTarget()`
-- `ResultInto.isBaseTableTarget()`
+- `RelationResultTarget.isVariableTarget()`
+- `RelationResultTarget.isBaseTableTarget()`
 
 Delivery rule:
 

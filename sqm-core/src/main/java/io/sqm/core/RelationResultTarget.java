@@ -15,26 +15,26 @@ import java.util.Objects;
  * OUTPUT INSERTED.id, INSERTED.name INTO audit_table(id, name)
  * }</pre>
  */
-public non-sealed interface ResultInto extends Node {
+public non-sealed interface RelationResultTarget extends ResultTarget {
 
     /**
-     * Creates a result-into target without an explicit target column list.
+     * Creates a relation result target without an explicit target column list.
      *
      * @param target target relation
-     * @return result-into specification
+     * @return relation result target
      */
-    static ResultInto of(TableRef target) {
+    static RelationResultTarget of(TableRef target) {
         return of(target, List.of());
     }
 
     /**
-     * Creates a result-into target specification.
+     * Creates a relation result target.
      *
      * @param target  target relation
      * @param columns optional target columns
-     * @return result-into specification
+     * @return relation result target
      */
-    static ResultInto of(TableRef target, List<Identifier> columns) {
+    static RelationResultTarget of(TableRef target, List<Identifier> columns) {
         return new Impl(target, columns);
     }
 
@@ -88,7 +88,7 @@ public non-sealed interface ResultInto extends Node {
      */
     @Override
     default <R> R accept(NodeVisitor<R> v) {
-        return v.visitResultInto(this);
+        return v.visitRelationResultTarget(this);
     }
 
     /**
@@ -97,10 +97,10 @@ public non-sealed interface ResultInto extends Node {
      * @param target  target relation
      * @param columns optional target columns
      */
-    record Impl(TableRef target, List<Identifier> columns) implements ResultInto {
+    record Impl(TableRef target, List<Identifier> columns) implements RelationResultTarget {
 
         /**
-         * Creates a result-into implementation.
+         * Creates a relation result target implementation.
          *
          * @param target  target relation
          * @param columns optional target columns

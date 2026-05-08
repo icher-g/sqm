@@ -59,7 +59,7 @@ public final class Renderers {
             .register(new AssignmentRenderer())
             .register(new ResultClauseRenderer())
             .register(new ExprResultItemRenderer())
-            .register(new ResultIntoRenderer())
+            .register(new RelationResultTargetRenderer())
             .register(new OutputColumnExprRenderer())
             .register(new OutputStarResultItemRenderer())
             .register(new FunctionExprRenderer())

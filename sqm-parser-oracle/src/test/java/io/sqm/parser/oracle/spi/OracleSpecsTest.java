@@ -8,6 +8,7 @@ import io.sqm.core.Query;
 import io.sqm.core.SelectQuery;
 import io.sqm.core.Statement;
 import io.sqm.core.UpdateStatement;
+import io.sqm.core.VariableResultTarget;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.spi.ParseContext;
@@ -146,6 +147,33 @@ class OracleSpecsTest {
         assertTrue(context.parse(InsertStatement.class, "INSERT INTO users (id) VALUES (1) RETURNING id").isError());
         assertTrue(context.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' OUTPUT inserted.name").isError());
         assertTrue(context.parse(DeleteStatement.class, "DELETE FROM users OUTPUT deleted.id").isError());
+    }
+
+    @Test
+    void parses_oracle_returning_into_bind_variables() {
+        var context = ParseContext.of(new OracleSpecs());
+
+        var insert = context.parse(InsertStatement.class, "INSERT INTO users (id, name) VALUES (1, 'alice') RETURNING id, name INTO :id, :name");
+        var update = context.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id INTO :1");
+        var delete = context.parse(DeleteStatement.class, "DELETE FROM users WHERE id = 1 RETURNING id INTO :id");
+
+        assertTrue(insert.ok(), insert.errorMessage());
+        assertTrue(update.ok(), update.errorMessage());
+        assertTrue(delete.ok(), delete.errorMessage());
+
+        var target = assertInstanceOf(VariableResultTarget.class, insert.value().result().target());
+        assertEquals(2, insert.value().result().items().size());
+        assertEquals(2, target.variables().size());
+        assertInstanceOf(VariableResultTarget.class, update.value().result().target());
+    }
+
+    @Test
+    void rejects_malformed_oracle_returning_into_bind_variables() {
+        var context = ParseContext.of(new OracleSpecs());
+
+        assertTrue(context.parse(InsertStatement.class, "INSERT INTO users (id) VALUES (1) RETURNING id INTO").isError());
+        assertTrue(context.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' RETURNING id INTO id").isError());
+        assertTrue(context.parse(DeleteStatement.class, "DELETE FROM users RETURNING id INTO :").isError());
     }
 
     @Test

@@ -199,14 +199,14 @@ class MergeStatementTest {
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
             .whenMatchedDelete()
-            .result(ResultInto.of(tbl("audit"), List.of(id("user_id"))), inserted("id"))
+            .result(RelationResultTarget.of(tbl("audit"), List.of(id("user_id"))), inserted("id"))
             .build();
 
         assertEquals("u", statement.target().alias().value());
         assertEquals(5L, ((LiteralExpr) statement.topSpec().count()).value());
         assertNotNull(statement.result());
         assertNotNull(intoStatement.result());
-        assertNotNull(intoStatement.result().into());
+        assertInstanceOf(RelationResultTarget.class, intoStatement.result().target());
     }
 
     @Test

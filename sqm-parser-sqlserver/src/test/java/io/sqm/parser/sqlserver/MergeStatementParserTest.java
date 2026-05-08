@@ -1,6 +1,7 @@
 package io.sqm.parser.sqlserver;
 
 import io.sqm.core.MergeStatement;
+import io.sqm.core.RelationResultTarget;
 import io.sqm.core.Statement;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
@@ -70,12 +71,12 @@ class MergeStatementParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertNotNull(result.value().result());
-        assertNotNull(result.value().result().into());
+        var target = assertInstanceOf(RelationResultTarget.class, result.value().result().target());
         assertEquals(
             "audit",
-            result.value().result().into().target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
+            target.target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
         );
-        assertEquals(1, result.value().result().into().columns().size());
+        assertEquals(1, target.columns().size());
     }
 
     @Test

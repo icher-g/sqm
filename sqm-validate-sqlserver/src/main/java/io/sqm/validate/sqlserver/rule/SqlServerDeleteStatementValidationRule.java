@@ -59,7 +59,7 @@ public final class SqlServerDeleteStatementValidationRule implements SchemaValid
                 "delete.hint"
             );
         }
-        SqlServerTableHintSupport.validateResultIntoTarget(node.result() == null ? null : node.result().into(), context, "delete.result");
+        SqlServerTableHintSupport.validateResultTarget(node.result(), context, "delete.result");
         if (node.result() != null) {
             for (var item : node.result().items()) {
                 if (usesOutputSource(item, OutputRowSource.INSERTED)) {

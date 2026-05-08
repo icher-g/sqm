@@ -2,14 +2,14 @@
 
 SQM also includes a few semantic helper methods on result-clause model nodes. These are useful when you need to inspect DML result behavior without re-matching low-level node shapes by hand.
 
-## `ResultClause.hasIntoTarget()`
+## `ResultClause.target() instanceof RelationResultTarget`
 
 Checks whether the statement result writes into an `INTO` target.
 
 Java:
 
 ```java
-if (statement.result() != null && statement.result().hasIntoTarget()) {
+if (statement.result() != null && statement.result().target() instanceof RelationResultTarget target) {
     // handle OUTPUT ... INTO ...
 }
 ```
@@ -61,14 +61,14 @@ output inserted.id, deleted.name
 
 This helper is useful in feature inspection, validation, and transpilation decisions.
 
-## `ResultInto.isBaseTableTarget()`
+## `RelationResultTarget.isBaseTableTarget()`
 
 Checks whether the `INTO` target is a normal table.
 
 Java:
 
 ```java
-if (resultInto.isBaseTableTarget()) {
+if (target.isBaseTableTarget()) {
     // target is a normal table
 }
 ```
@@ -85,14 +85,14 @@ After:
 output inserted.id into audit_rows(user_id)
 ```
 
-## `ResultInto.isVariableTarget()`
+## `RelationResultTarget.isVariableTarget()`
 
 Checks whether the `INTO` target is a table variable.
 
 Java:
 
 ```java
-if (resultInto.isVariableTarget()) {
+if (target.isVariableTarget()) {
     // target is a table variable
 }
 ```
@@ -109,14 +109,14 @@ After:
 output inserted.id into @audit_rows(user_id)
 ```
 
-## `ResultInto.isDerivedTarget()`
+## `RelationResultTarget.isDerivedTarget()`
 
 Checks whether the `INTO` target is a derived table-like form rather than a normal table or table variable.
 
 Java:
 
 ```java
-if (resultInto.isDerivedTarget()) {
+if (target.isDerivedTarget()) {
     // target is a derived relation form
 }
 ```
@@ -133,4 +133,4 @@ After:
 output inserted.id into (select ...)
 ```
 
-These `ResultInto` helpers are inspection-oriented and are mainly useful when feature handling depends on the kind of target being used.
+These `RelationResultTarget` helpers are inspection-oriented and are mainly useful when feature handling depends on the kind of target being used.

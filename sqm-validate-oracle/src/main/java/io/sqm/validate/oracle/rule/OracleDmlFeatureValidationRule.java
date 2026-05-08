@@ -3,8 +3,10 @@ package io.sqm.validate.oracle.rule;
 import io.sqm.core.DeleteStatement;
 import io.sqm.core.InsertStatement;
 import io.sqm.core.Node;
+import io.sqm.core.ResultClause;
 import io.sqm.core.Statement;
 import io.sqm.core.UpdateStatement;
+import io.sqm.core.VariableResultTarget;
 import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.core.dialect.SqlFeature;
@@ -84,16 +86,37 @@ public final class OracleDmlFeatureValidationRule implements SchemaValidationRul
         rejectResult(node.result(), context, "delete.result");
     }
 
-    private void rejectResult(Node result, SchemaValidationContext context, String clausePath) {
-        if (result == null || capabilities.supports(SqlFeature.DML_RESULT_CLAUSE)) {
+    private void rejectResult(ResultClause result, SchemaValidationContext context, String clausePath) {
+        if (result == null) {
             return;
         }
-        unsupported(
-            context,
-            result,
-            "Oracle " + version + " RETURNING INTO is not supported by SQM DML result clauses",
-            clausePath
-        );
+        if (!capabilities.supports(SqlFeature.DML_RESULT_CLAUSE)
+            || !capabilities.supports(SqlFeature.DML_RESULT_VARIABLE_TARGET)) {
+            unsupported(
+                context,
+                result,
+                "Oracle " + version + " RETURNING INTO is not supported by SQM DML result clauses",
+                clausePath
+            );
+            return;
+        }
+        if (!(result.target() instanceof VariableResultTarget target)) {
+            unsupported(
+                context,
+                result,
+                "Oracle RETURNING requires INTO bind variables",
+                clausePath
+            );
+            return;
+        }
+        if (result.items().size() != target.variables().size()) {
+            context.addProblem(
+                ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
+                "Oracle RETURNING expression count must match INTO variable count",
+                result,
+                clausePath
+            );
+        }
     }
 
     private void unsupported(SchemaValidationContext context, Node node, String message, String clausePath) {

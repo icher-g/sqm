@@ -301,10 +301,10 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitResultClause(ResultClause clause) {
         List<ResultItem> items = new ArrayList<>(clause.items().size());
         boolean changed = apply(clause.items(), items);
-        var into = apply(clause.into());
-        changed |= into != clause.into();
+        var target = apply(clause.target());
+        changed |= target != clause.target();
         if (changed) {
-            return ResultClause.of(items, into);
+            return ResultClause.of(items, target);
         }
         return clause;
     }
@@ -358,18 +358,33 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
-     * Visits a DML {@link ResultInto} target.
+     * Visits a DML {@link RelationResultTarget} target.
      *
-     * @param into result-into target to transform
-     * @return transformed result-into target, or the original instance if unchanged
+     * @param relationTarget relation result target to transform
+     * @return transformed relation result target, or the original instance if unchanged
      */
     @Override
-    public Node visitResultInto(ResultInto into) {
-        var target = apply(into.target());
-        if (target != into.target()) {
-            return ResultInto.of(target, into.columns());
+    public Node visitRelationResultTarget(RelationResultTarget relationTarget) {
+        var target = apply(relationTarget.target());
+        if (target != relationTarget.target()) {
+            return RelationResultTarget.of(target, relationTarget.columns());
         }
-        return into;
+        return relationTarget;
+    }
+
+    /**
+     * Visits a variable DML result target.
+     *
+     * @param target variable result target to transform
+     * @return transformed variable result target, or the original instance if unchanged
+     */
+    @Override
+    public Node visitVariableResultTarget(VariableResultTarget target) {
+        List<ParamExpr> variables = new ArrayList<>(target.variables().size());
+        if (apply(target.variables(), variables)) {
+            return VariableResultTarget.of(variables);
+        }
+        return target;
     }
 
     /**

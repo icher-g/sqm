@@ -53,6 +53,9 @@ public class UpdateStatementRenderer extends io.sqm.render.ansi.UpdateStatementR
         if (!ctx.dialect().capabilities().supports(SqlFeature.DML_RESULT_CLAUSE)) {
             throw new UnsupportedDialectFeatureException("UPDATE ... RETURNING", ctx.dialect().name());
         }
+        if (result.target() != null) {
+            throw new UnsupportedDialectFeatureException("UPDATE ... RETURNING INTO", ctx.dialect().name());
+        }
         w.newline().append("RETURNING").space().comma(result.items());
     }
 

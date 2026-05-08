@@ -42,6 +42,6 @@ public final class Renderers {
             .register(new OnJoinRenderer())
             .register(new SelectQueryRenderer())
             .register(new ResultClauseRenderer())
-            .register(new ResultIntoRenderer());
+            .register(new RelationResultTargetRenderer());
     }
 }

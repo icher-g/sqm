@@ -40,8 +40,8 @@ public final class OracleResultClauseUnsupportedRule implements TranspileRule {
 
     @Override
     public TranspileRuleResult apply(Statement statement, TranspileContext context) {
-        if (!StatementFeatureInspector.hasResultClause(statement)) {
-            return TranspileRuleResult.unchanged(statement, "No DML result clause usage detected");
+        if (!StatementFeatureInspector.hasResultClauseWithoutVariableTarget(statement)) {
+            return TranspileRuleResult.unchanged(statement, "No unsupported Oracle DML result clause usage detected");
         }
         return TranspileRuleResult.unsupported(
             statement,

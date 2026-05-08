@@ -141,12 +141,12 @@ returning id into :id
 
 This looks like PostgreSQL `RETURNING`, but it is not the same client-result semantic. PostgreSQL returns rows to the client. SQL Server `OUTPUT INTO` redirects rows into a relation target. Oracle `RETURNING ... INTO` assigns values into host or PL/SQL variables.
 
-The current model has:
+The pre-R11 model had:
 
 - `ResultClause`: DML result items.
-- `ResultInto`: target relation for SQL Server `OUTPUT ... INTO`.
+- `RelationResultTarget`: target relation for SQL Server `OUTPUT ... INTO`.
 
-`ResultInto` currently stores a `TableRef target`, which cannot represent Oracle host variables.
+That relation target stores a `TableRef target`, which cannot represent Oracle host variables by itself.
 
 ### Model Decision
 
@@ -200,23 +200,19 @@ Possible binding styles:
 
 The exact variable representation should align with existing parameter nodes if possible. If `NamedParamExpr` and `OrdinalParamExpr` already represent bind parameters well enough, `VariableResultTarget` can store `List<ParamExpr>` instead of adding `ResultVariable`.
 
-### Compatibility Plan
+### Implementation Choice
 
-Current public APIs expose `ResultClause.into()` and `ResultInto.target()`. Implementation needs a compatibility review before code changes.
-
-Preferred migration path:
+The public result-target API is normalized around `ResultClause.target()`.
 
 - Keep `ResultClause.of(items)` for direct returns.
-- Keep existing `ResultClause.of(items, ResultInto)` and `ResultInto.of(TableRef, columns)` factories for SQL Server compatibility.
-- Add `ResultClause.of(items, ResultTarget)` or equivalent builder methods.
-- Make existing `ResultInto` either:
-  - a relation-target implementation under the new abstraction, or
-  - a deprecated compatibility wrapper around `RelationResultTarget`.
+- Use `ResultClause.of(items, ResultTarget)` for target-bearing result clauses.
+- Model SQL Server table/table-variable sinks as `RelationResultTarget`.
+- Model Oracle bind-variable sinks as `VariableResultTarget`.
+- Do not keep a `ResultClause.into()` compatibility method or a legacy relation-target wrapper while the API is still pre-stable.
 - Add DSL helpers:
   - `result(nodes...)`
-  - `resultInto(table, columns...)`
-  - `resultIntoVars(params...)`
-  - `returningInto(...)` only if naming clarity outweighs dialect-neutrality concerns.
+  - `resultRelationTarget(table, columns...)`
+  - `resultVariableTarget(params...)`
 
 ### Dialect Behavior
 
@@ -948,7 +944,7 @@ Suggested DSL additions:
 ```java
 nextValue("users_seq")
 currentValue("users_seq")
-resultIntoVars(param("id"), param("name"))
+resultVariableTarget(param("id"), param("name"))
 hierarchy().startWith(...).connectBy(...)
 pivot(source).measure(...).forExpr(...).in(...)
 jsonTable(jsonExpr, "$").column(...)

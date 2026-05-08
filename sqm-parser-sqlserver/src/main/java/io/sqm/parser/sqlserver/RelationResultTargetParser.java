@@ -1,7 +1,7 @@
 package io.sqm.parser.sqlserver;
 
 import io.sqm.core.Identifier;
-import io.sqm.core.ResultInto;
+import io.sqm.core.RelationResultTarget;
 import io.sqm.core.Table;
 import io.sqm.core.TableRef;
 import io.sqm.core.VariableTableRef;
@@ -19,12 +19,12 @@ import static io.sqm.parser.spi.ParseResult.ok;
 /**
  * Parses SQL Server-style {@code OUTPUT ... INTO ...} targets.
  */
-public class ResultIntoParser implements Parser<ResultInto> {
+public class RelationResultTargetParser implements Parser<RelationResultTarget> {
 
     /**
      * Creates a result-into parser.
      */
-    public ResultIntoParser() {
+    public RelationResultTargetParser() {
     }
 
     /**
@@ -35,7 +35,7 @@ public class ResultIntoParser implements Parser<ResultInto> {
      * @return a parsing result.
      */
     @Override
-    public ParseResult<ResultInto> parse(Cursor cur, ParseContext ctx) {
+    public ParseResult<RelationResultTarget> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected INTO after OUTPUT projection", TokenType.INTO);
 
         TableRef target;
@@ -67,7 +67,7 @@ public class ResultIntoParser implements Parser<ResultInto> {
             cur.expect("Expected ) after OUTPUT INTO target columns", TokenType.RPAREN);
         }
 
-        return ok(ResultInto.of(target, columns));
+        return ok(RelationResultTarget.of(target, columns));
     }
 
     /**
@@ -76,7 +76,7 @@ public class ResultIntoParser implements Parser<ResultInto> {
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<ResultInto> targetType() {
-        return ResultInto.class;
+    public Class<RelationResultTarget> targetType() {
+        return RelationResultTarget.class;
     }
 }

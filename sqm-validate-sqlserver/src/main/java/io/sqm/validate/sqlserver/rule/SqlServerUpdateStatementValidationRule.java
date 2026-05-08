@@ -54,6 +54,6 @@ public final class SqlServerUpdateStatementValidationRule implements SchemaValid
                 "update.hint"
             );
         }
-        SqlServerTableHintSupport.validateResultIntoTarget(node.result() == null ? null : node.result().into(), context, "update.result");
+        SqlServerTableHintSupport.validateResultTarget(node.result(), context, "update.result");
     }
 }

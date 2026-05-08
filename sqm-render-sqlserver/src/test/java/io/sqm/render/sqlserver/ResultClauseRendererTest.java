@@ -1,7 +1,7 @@
 package io.sqm.render.sqlserver;
 
 import io.sqm.core.ResultClause;
-import io.sqm.core.ResultInto;
+import io.sqm.core.RelationResultTarget;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.sqlserver.spi.SqlServerDialect;
 import org.junit.jupiter.api.Test;
@@ -50,7 +50,7 @@ class ResultClauseRendererTest {
     @Test
     void rendersOutputClauseWithIntoWithoutColumns() {
         var ctx = RenderContext.of(new SqlServerDialect());
-        ResultInto into = ResultInto.of(tbl("dest"));
+        RelationResultTarget into = RelationResultTarget.of(tbl("dest"));
         ResultClause clause = result(into, lit(1));
 
         var sql = normalize(ctx.render(clause).sql());
@@ -61,7 +61,7 @@ class ResultClauseRendererTest {
     @Test
     void rendersOutputClauseWithIntoAndColumns() {
         var ctx = RenderContext.of(new SqlServerDialect());
-        ResultInto into = ResultInto.of(tbl("dest"), List.of(id("col_a"), id("col_b")));
+        RelationResultTarget into = RelationResultTarget.of(tbl("dest"), List.of(id("col_a"), id("col_b")));
         ResultClause clause = result(into, lit(1));
 
         var sql = normalize(ctx.render(clause).sql());

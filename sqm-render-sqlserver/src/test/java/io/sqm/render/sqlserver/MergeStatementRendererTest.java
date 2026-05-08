@@ -11,7 +11,7 @@ import static io.sqm.dsl.Dsl.id;
 import static io.sqm.dsl.Dsl.inserted;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.merge;
-import static io.sqm.dsl.Dsl.resultInto;
+import static io.sqm.dsl.Dsl.resultRelationTarget;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
@@ -195,7 +195,7 @@ class MergeStatementRendererTest {
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
             .whenMatchedDelete()
-            .result(resultInto(tbl("audit"), "deleted_id"), deleted("id"))
+            .result(resultRelationTarget(tbl("audit"), "deleted_id"), deleted("id"))
             .build();
 
         var rendered = RenderContext.of(new SqlServerDialect()).render(mergeStatement);
