@@ -1537,6 +1537,24 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
+    void oracleReturningIntoIsRejectedBeforeNonOracleRendering() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ORACLE)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .build();
+
+        var result = transpiler.transpile("UPDATE users SET name = 'alice' RETURNING id INTO :id");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertTrue(result.sql().isEmpty());
+        assertEquals("UNSUPPORTED_ORACLE_RETURNING_INTO", result.problems().getFirst().code());
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "oracle-returning-into-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.UNSUPPORTED
+        ));
+    }
+
+    @Test
     void oracleHintsAreRejectedWhenApproximateRewritesAreDisabled() {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.ORACLE)

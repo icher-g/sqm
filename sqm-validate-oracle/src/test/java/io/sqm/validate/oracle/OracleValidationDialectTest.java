@@ -5,8 +5,11 @@ import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.MergeClause;
+import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.validate.api.ValidationProblem;
+import io.sqm.validate.oracle.rule.OracleDmlFeatureValidationRule;
 import io.sqm.validate.schema.SchemaStatementValidator;
+import io.sqm.validate.schema.SchemaValidationSettings;
 import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.col;
@@ -16,6 +19,8 @@ import static io.sqm.dsl.Dsl.id;
 import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.merge;
+import static io.sqm.dsl.Dsl.param;
+import static io.sqm.dsl.Dsl.resultVariableTarget;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
@@ -82,6 +87,39 @@ class OracleValidationDialectTest {
             validator.validate(delete("users").result(col("id")).build()),
             "delete.result"
         ));
+    }
+
+    @Test
+    void validatesOracleReturningIntoVariableTargets() {
+        var validator = SchemaStatementValidator.of(SCHEMA, OracleValidationDialect.of());
+        var valid = insert("users")
+            .columns(id("id"), id("name"))
+            .values(row(lit(1L), lit("alice")))
+            .result(resultVariableTarget(param("id"), param("name")), col("id"), col("name"))
+            .build();
+        var mismatch = update("users")
+            .set("name", lit("alice"))
+            .result(resultVariableTarget(param("id")), col("id"), col("name"))
+            .build();
+
+        assertFalse(hasDialectProblem(validator.validate(valid), "insert.result"));
+        assertTrue(validator.validate(mismatch).problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "update.result".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
+    void rejectsOracleReturningIntoWhenCapabilitiesAreMissing() {
+        var settings = SchemaValidationSettings.builder()
+            .addRule(new OracleDmlFeatureValidationRule(feature -> false, SqlDialectVersion.of(19, 0)))
+            .build();
+        var validator = SchemaStatementValidator.of(SCHEMA, settings);
+        var statement = delete("users")
+            .result(resultVariableTarget(param("id")), col("id"))
+            .build();
+
+        assertTrue(hasDialectProblem(validator.validate(statement), "delete.result"));
     }
 
     @Test

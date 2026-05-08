@@ -157,7 +157,8 @@ Oracle-specific validation is implemented in a dedicated dialect module:
 ### Oracle-Specific Feature Validation
 
 - Version-gated Oracle features (`DIALECT_FEATURE_UNSUPPORTED`), including:
-  - PostgreSQL-style and SQL Server-style DML result clauses that do not model Oracle `RETURNING ... INTO`
+  - Oracle `RETURNING ... INTO` variable targets, including expression/variable count matching
+  - PostgreSQL-style and SQL Server-style DML result clauses that do not use Oracle variable targets
   - non-Oracle DML extensions such as `INSERT IGNORE`, `REPLACE`, `ON CONFLICT`, `UPDATE FROM`, `UPDATE JOIN`, and `DELETE USING/JOIN`
   - non-Oracle `MERGE` shapes such as `TOP`, `WHEN NOT MATCHED BY SOURCE`, and `DO NOTHING`
 

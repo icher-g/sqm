@@ -381,7 +381,7 @@ class SqmJavaEmitterTest {
             .where(
                 col("u", "id").eq(lit(1))
             )
-            .result(resultInto(tableVar("audit"), id("user_id")), insertedAll(), inserted(id("id")).as(id("user_id")))
+            .result(resultRelationTarget(tableVar("audit"), id("user_id")), insertedAll(), inserted(id("id")).as(id("user_id")))
             .build()""";
         final String deleteExpected = """
             delete(
@@ -409,7 +409,7 @@ class SqmJavaEmitterTest {
             .set(set("u", "name", lit("alice")))
             .from(tbl("src"))
             .where(col("u", "id").eq(lit(1)))
-            .result(resultInto(tableVar("audit"), id("user_id")), insertedAll(), inserted("id").as("user_id"))
+            .result(resultRelationTarget(tableVar("audit"), id("user_id")), insertedAll(), inserted("id").as("user_id"))
             .build();
         var delete = delete(tbl("users"))
             .hint("BKA", "users")
@@ -425,6 +425,18 @@ class SqmJavaEmitterTest {
         assertEquals(insertExpected, insertSource);
         assertEquals(updateExpected, updateSource);
         assertEquals(deleteExpected, deleteSource);
+    }
+
+    @Test
+    void emit_coversVariableResultTargets() {
+        var statement = update(tbl("users"))
+            .set(set("name", lit("alice")))
+            .result(resultVariableTarget("id"), col("id"))
+            .build();
+
+        var source = emitter.emit(statement);
+
+        assertTrue(source.contains(".result(resultVariableTarget(param(\"id\")), col(\"id\"))"));
     }
 
     @Test

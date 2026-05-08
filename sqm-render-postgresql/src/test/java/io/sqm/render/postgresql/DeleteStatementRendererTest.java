@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.delete;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.param;
+import static io.sqm.dsl.Dsl.resultVariableTarget;
 import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -52,6 +54,16 @@ class DeleteStatementRendererTest {
         var sql = normalize(ctx.render(statement).sql());
 
         assertEquals("DELETE FROM users WHERE id = 1", sql);
+    }
+
+    @Test
+    void rejectsDeleteReturningTargets() {
+        var ctx = RenderContext.of(new PostgresDialect());
+        DeleteStatement statement = delete("users")
+            .result(resultVariableTarget(param("id")), col("id"))
+            .build();
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> ctx.render(statement));
     }
 
     @Test

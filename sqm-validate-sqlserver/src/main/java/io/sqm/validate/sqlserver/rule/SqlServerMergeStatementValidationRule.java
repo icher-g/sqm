@@ -49,11 +49,7 @@ public final class SqlServerMergeStatementValidationRule implements SchemaValida
                 "merge.top"
             );
         }
-        SqlServerTableHintSupport.validateResultIntoTarget(
-            node.result() == null ? null : node.result().into(),
-            context,
-            "merge.result"
-        );
+        SqlServerTableHintSupport.validateResultTarget(node.result(), context, "merge.result");
 
         if (node.clauses().stream().anyMatch(clause -> clause.action() instanceof MergeDoNothingAction)) {
             context.addProblem(

@@ -62,7 +62,7 @@ public final class Parsers {
             .register(new MergeInsertActionParser())
             .register(new ResultClauseParser())
             .register(new ExprResultItemParser())
-            .register(new ResultIntoParser())
+            .register(new RelationResultTargetParser())
             .register(new OutputColumnExprParser())
             .register(new OutputStarResultItemParser())
             .register(new ValueSetParser())

@@ -30,6 +30,8 @@ public final class OracleCapabilities {
             .supports(SqlFeature.DATE_TYPED_LITERAL)
             .supports(SqlFeature.TIMESTAMP_TYPED_LITERAL)
             .supports(SqlFeature.INTERVAL_LITERAL)
+            .supports(SqlFeature.DML_RESULT_CLAUSE)
+            .supports(SqlFeature.DML_RESULT_VARIABLE_TARGET)
             .supports(SqlFeature.MERGE_STATEMENT)
             .supports(SqlFeature.GROUPING_SETS)
             .supports(SqlFeature.ROLLUP)

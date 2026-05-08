@@ -19,7 +19,7 @@ class UpdateStatementVisitorTest {
             .set(set("name", lit("alice")))
             .from(tbl("source_users"))
             .where(col("id").eq(lit(1)))
-            .result(resultInto(tableVar("audit_rows"), "name"), deleted("name"), inserted("name"))
+            .result(resultRelationTarget(tableVar("audit_rows"), "name"), deleted("name"), inserted("name"))
             .build();
         var visits = new ArrayList<String>();
 

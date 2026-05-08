@@ -8,10 +8,15 @@ import io.sqm.core.Query;
 import io.sqm.core.SelectQuery;
 import io.sqm.core.Statement;
 import io.sqm.core.UpdateStatement;
+import io.sqm.core.VariableResultTarget;
+import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.VersionedDialectCapabilities;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
+
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -149,6 +154,45 @@ class OracleSpecsTest {
     }
 
     @Test
+    void parses_oracle_returning_into_bind_variables() {
+        var context = ParseContext.of(new OracleSpecs());
+
+        var insert = context.parse(InsertStatement.class, "INSERT INTO users (id, name) VALUES (1, 'alice') RETURNING id, name INTO :id, :name");
+        var update = context.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id INTO :1");
+        var delete = context.parse(DeleteStatement.class, "DELETE FROM users WHERE id = 1 RETURNING id INTO :id");
+
+        assertTrue(insert.ok(), insert.errorMessage());
+        assertTrue(update.ok(), update.errorMessage());
+        assertTrue(delete.ok(), delete.errorMessage());
+
+        var target = assertInstanceOf(VariableResultTarget.class, insert.value().result().target());
+        assertEquals(2, insert.value().result().items().size());
+        assertEquals(2, target.variables().size());
+        assertInstanceOf(VariableResultTarget.class, update.value().result().target());
+    }
+
+    @Test
+    void rejects_malformed_oracle_returning_into_bind_variables() {
+        var context = ParseContext.of(new OracleSpecs());
+
+        assertTrue(context.parse(InsertStatement.class, "INSERT INTO users (id) VALUES (1) RETURNING id INTO").isError());
+        assertTrue(context.parse(InsertStatement.class, "INSERT INTO users (id) VALUES (1) RETURNING INTO :id").isError());
+        assertTrue(context.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' RETURNING id INTO id").isError());
+        assertTrue(context.parse(UpdateStatement.class, "UPDATE users SET name = 'alice' RETURNING id INTO : id").isError());
+        assertTrue(context.parse(DeleteStatement.class, "DELETE FROM users RETURNING id INTO :").isError());
+        assertTrue(context.parse(DeleteStatement.class, "DELETE FROM users RETURNING id INTO : 1").isError());
+    }
+
+    @Test
+    void rejects_oracle_returning_into_when_capabilities_are_missing() {
+        var context = ParseContext.of(new NoReturningOracleSpecs());
+        var result = context.parse(InsertStatement.class, "INSERT INTO users (id) VALUES (1) RETURNING id INTO :id");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("INSERT ... RETURNING INTO is not supported"));
+    }
+
+    @Test
     void rejects_non_oracle_merge_shapes() {
         var context = ParseContext.of(new OracleSpecs());
 
@@ -167,5 +211,17 @@ class OracleSpecsTest {
         assertTrue(context.parse(MergeStatement.class, "MERGE INTO USING src ON users.id = src.id WHEN MATCHED THEN UPDATE SET name = src.name").isError());
         assertTrue(context.parse(MergeStatement.class, "MERGE INTO users USING ON users.id = src.id WHEN MATCHED THEN UPDATE SET name = src.name").isError());
         assertTrue(context.parse(MergeStatement.class, "MERGE INTO users USING src ON WHEN MATCHED THEN UPDATE SET name = src.name").isError());
+    }
+
+    private static final class NoReturningOracleSpecs extends OracleSpecs {
+        /**
+         * Returns an empty capability set so Oracle RETURNING INTO parsing takes the feature-rejection path.
+         *
+         * @return empty dialect capabilities
+         */
+        @Override
+        public DialectCapabilities capabilities() {
+            return VersionedDialectCapabilities.builder(SqlDialectVersion.of(19, 0)).build();
+        }
     }
 }

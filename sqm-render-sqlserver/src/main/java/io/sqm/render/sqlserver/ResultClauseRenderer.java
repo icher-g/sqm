@@ -1,6 +1,7 @@
 package io.sqm.render.sqlserver;
 
 import io.sqm.core.ResultClause;
+import io.sqm.core.RelationResultTarget;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -27,8 +28,11 @@ public class ResultClauseRenderer implements Renderer<ResultClause> {
     public void render(ResultClause node, RenderContext ctx, SqlWriter w) {
         w.append("OUTPUT").space();
         w.comma(node.items());
-        if (node.into() != null) {
-            w.space().append(node.into());
+        if (node.target() != null) {
+            if (!(node.target() instanceof RelationResultTarget)) {
+                throw new UnsupportedOperationException("SQL Server OUTPUT supports only relation targets in OUTPUT INTO");
+            }
+            w.space().append(node.target());
         }
     }
 

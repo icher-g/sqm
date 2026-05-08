@@ -15,6 +15,8 @@ import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.id;
 import static io.sqm.dsl.Dsl.inner;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.param;
+import static io.sqm.dsl.Dsl.resultVariableTarget;
 import static io.sqm.dsl.Dsl.straight;
 import static io.sqm.dsl.Dsl.tbl;
 import static io.sqm.dsl.Dsl.update;
@@ -210,6 +212,17 @@ class UpdateStatementRendererTest {
         var sql = RenderContext.of(new ReturningMySqlDialect()).render(statement).sql();
 
         assertEquals("UPDATE users SET name = 'alice' RETURNING id", normalize(sql));
+    }
+
+    @Test
+    void rejectsUpdateReturningTargetsWhenCapabilityIsEnabled() {
+        UpdateStatement statement = update(tbl("users"))
+            .set(id("name"), lit("alice"))
+            .result(resultVariableTarget(param("id")), col("id"))
+            .build();
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new ReturningMySqlDialect()).render(statement));
     }
 
     private static String normalize(String sql) {

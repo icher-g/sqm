@@ -2,6 +2,7 @@ package io.sqm.parser.sqlserver;
 
 import io.sqm.core.ResultClause;
 import io.sqm.core.ResultItem;
+import io.sqm.core.RelationResultTarget;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ class ResultClauseParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertEquals(1, result.value().items().size());
-        assertNull(result.value().into());
+        assertNull(result.value().target());
     }
 
     @Test
@@ -48,12 +49,12 @@ class ResultClauseParserTest {
         var result = ctx.parse(ResultClause.class, "OUTPUT 1 INTO my_table");
 
         assertTrue(result.ok(), result.errorMessage());
-        assertNotNull(result.value().into());
+        var target = assertInstanceOf(RelationResultTarget.class, result.value().target());
         assertEquals(
             "my_table",
-            result.value().into().target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
+            target.target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
         );
-        assertTrue(result.value().into().columns().isEmpty());
+        assertTrue(target.columns().isEmpty());
     }
 
     @Test
@@ -62,14 +63,14 @@ class ResultClauseParserTest {
         var result = ctx.parse(ResultClause.class, "OUTPUT 1 INTO my_table (col_a, col_b)");
 
         assertTrue(result.ok(), result.errorMessage());
-        assertNotNull(result.value().into());
+        var target = assertInstanceOf(RelationResultTarget.class, result.value().target());
         assertEquals(
             "my_table",
-            result.value().into().target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
+            target.target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
         );
-        assertEquals(2, result.value().into().columns().size());
-        assertEquals("col_a", result.value().into().columns().get(0).value());
-        assertEquals("col_b", result.value().into().columns().get(1).value());
+        assertEquals(2, target.columns().size());
+        assertEquals("col_a", target.columns().get(0).value());
+        assertEquals("col_b", target.columns().get(1).value());
     }
 
     @Test

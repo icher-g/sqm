@@ -435,10 +435,10 @@ public final class Dsl {
      * Creates a {@code OUTPUT INTO} target without explicit target columns.
      *
      * @param target target relation
-     * @return result-into specification
+     * @return relation result target
      */
-    public static ResultInto resultInto(TableRef target) {
-        return ResultInto.of(target);
+    public static RelationResultTarget resultRelationTarget(TableRef target) {
+        return RelationResultTarget.of(target);
     }
 
     /**
@@ -446,10 +446,10 @@ public final class Dsl {
      *
      * @param target  target relation
      * @param columns target columns
-     * @return result-into specification
+     * @return relation result target
      */
-    public static ResultInto resultInto(TableRef target, Identifier... columns) {
-        return ResultInto.of(target, List.of(columns));
+    public static RelationResultTarget resultRelationTarget(TableRef target, Identifier... columns) {
+        return RelationResultTarget.of(target, List.of(columns));
     }
 
     /**
@@ -457,10 +457,10 @@ public final class Dsl {
      *
      * @param target  target relation
      * @param columns target column names
-     * @return result-into specification
+     * @return relation result target
      */
-    public static ResultInto resultInto(TableRef target, String... columns) {
-        return resultInto(target, java.util.Arrays.stream(columns).map(Identifier::of).toArray(Identifier[]::new));
+    public static RelationResultTarget resultRelationTarget(TableRef target, String... columns) {
+        return resultRelationTarget(target, java.util.Arrays.stream(columns).map(Identifier::of).toArray(Identifier[]::new));
     }
 
     /**
@@ -468,10 +468,30 @@ public final class Dsl {
      *
      * @param target  target table
      * @param columns target column names
-     * @return result-into specification
+     * @return relation result target
      */
-    public static ResultInto resultInto(String target, String... columns) {
-        return resultInto(tbl(target), java.util.Arrays.stream(columns).map(Identifier::of).toArray(Identifier[]::new));
+    public static RelationResultTarget resultRelationTarget(String target, String... columns) {
+        return resultRelationTarget(tbl(target), java.util.Arrays.stream(columns).map(Identifier::of).toArray(Identifier[]::new));
+    }
+
+    /**
+     * Creates a {@code RETURNING ... INTO} variable target.
+     *
+     * @param variables target bind variables
+     * @return variable result target
+     */
+    public static VariableResultTarget resultVariableTarget(ParamExpr... variables) {
+        return VariableResultTarget.of(List.of(variables));
+    }
+
+    /**
+     * Creates a {@code RETURNING ... INTO} variable target from parameter names.
+     *
+     * @param variables target bind variable names
+     * @return variable result target
+     */
+    public static VariableResultTarget resultVariableTarget(String... variables) {
+        return resultVariableTarget(java.util.Arrays.stream(variables).map(ParamExpr::named).toArray(ParamExpr[]::new));
     }
 
     /**
@@ -486,15 +506,15 @@ public final class Dsl {
     }
 
     /**
-     * Creates a result clause with an {@code INTO} target.
+     * Creates a result clause with a target.
      *
-     * @param into  result-into target
-     * @param nodes result items
+     * @param target result target
+     * @param nodes  result items
      * @return result clause
      */
-    public static ResultClause result(ResultInto into, Node... nodes) {
+    public static ResultClause result(ResultTarget target, Node... nodes) {
         var items = ResultItem.fromNodes(nodes);
-        return ResultClause.of(items, into);
+        return ResultClause.of(items, target);
     }
 
     /* ========================= Functions ========================= */

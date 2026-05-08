@@ -94,6 +94,9 @@ public class InsertStatementRenderer extends io.sqm.render.ansi.InsertStatementR
         if (!ctx.dialect().capabilities().supports(SqlFeature.DML_RESULT_CLAUSE)) {
             throw new UnsupportedDialectFeatureException("INSERT ... RETURNING", ctx.dialect().name());
         }
+        if (result.target() != null) {
+            throw new UnsupportedDialectFeatureException("INSERT ... RETURNING INTO", ctx.dialect().name());
+        }
         w.space().append("RETURNING").space().comma(result.items());
     }
 

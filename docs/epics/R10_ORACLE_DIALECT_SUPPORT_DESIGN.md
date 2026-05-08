@@ -282,7 +282,7 @@ Oracle `RETURNING ... INTO :bind` stores returned values into host or PL/SQL var
 
 Options:
 
-- Add a semantic `ResultInto` variant that can represent variable/host targets outside SQL Server table targets.
+- Add a semantic `RelationResultTarget` variant that can represent variable/host targets outside SQL Server table targets.
 - Add an Oracle-specific result target node such as `HostVariableResultTarget`.
 - Keep Oracle DML `RETURNING` unsupported in baseline render/parse until the target model exists.
 
@@ -511,7 +511,7 @@ Documentation must state Query, DML, and DDL scope separately.
 | `JsonTable` future node         | `Not implemented by SQM`                                                   | Requires dedicated model design.                                         |
 | `AtTimeZoneExpr`                | `Not supported by SQM` initially                                           | Oracle time-zone conversion needs semantic review against existing node. |
 | `ResultClause`                  | `Not implemented by SQM` initially for Oracle                              | Needs `RETURNING ... INTO` target model.                                 |
-| `ResultInto`                    | `Not implemented by SQM` for Oracle host targets                           | Existing SQL Server table-target semantics are not enough.               |
+| `RelationResultTarget`                    | `Not implemented by SQM` for Oracle host targets                           | Existing SQL Server table-target semantics are not enough.               |
 | `MergeStatement`                | `Support` for baseline Oracle subset                                       | Reject SQL Server/PostgreSQL-only branches.                              |
 | `VariableTableRef`              | `Not supported by the dialect`                                             | PL/SQL variables are not relation references in SQM baseline.            |
 | `HierarchicalQuery` future node | `Not implemented by SQM`                                                   | Dedicated story for `CONNECT BY`.                                        |

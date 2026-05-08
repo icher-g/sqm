@@ -86,12 +86,12 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     }
 
     private void appendResultBuilderCall(ResultClause clause) {
-        if (clause.into() == null) {
+        if (clause.target() == null) {
             out.append(".result(").comma(clause.items(), this::appendNode).append(")");
         }
         else {
             out.append(".result(");
-            appendNode(clause.into());
+            appendNode(clause.target());
             out.append(", ").comma(clause.items(), this::appendNode).append(")");
         }
     }
@@ -1198,21 +1198,27 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitResultInto(ResultInto into) {
-        out.append("resultInto(");
-        appendNode(into.target());
-        if (!into.columns().isEmpty()) {
-            out.append(", ").comma(into.columns(), this::appendIdentifier);
+    public Void visitRelationResultTarget(RelationResultTarget target) {
+        out.append("resultRelationTarget(");
+        appendNode(target.target());
+        if (!target.columns().isEmpty()) {
+            out.append(", ").comma(target.columns(), this::appendIdentifier);
         }
         out.append(")");
         return defaultResult();
     }
 
     @Override
+    public Void visitVariableResultTarget(VariableResultTarget target) {
+        out.append("resultVariableTarget(").comma(target.variables(), this::appendNode).append(")");
+        return defaultResult();
+    }
+
+    @Override
     public Void visitResultClause(ResultClause clause) {
         out.append("result(");
-        if (clause.into() != null) {
-            appendNode(clause.into());
+        if (clause.target() != null) {
+            appendNode(clause.target());
             out.append(", ");
         }
         out.comma(clause.items(), this::appendNode).append(")");

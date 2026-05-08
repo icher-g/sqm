@@ -58,6 +58,9 @@ public class MergeStatementRenderer extends io.sqm.render.ansi.MergeStatementRen
         if (!ctx.dialect().capabilities().supports(SqlFeature.MERGE_RESULT_CLAUSE)) {
             throw new UnsupportedDialectFeatureException("MERGE ... RETURNING", ctx.dialect().name());
         }
+        if (result.target() != null) {
+            throw new UnsupportedDialectFeatureException("MERGE ... RETURNING INTO", ctx.dialect().name());
+        }
         w.newline().append("RETURNING").space().comma(result.items());
     }
 }

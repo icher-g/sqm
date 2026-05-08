@@ -199,6 +199,17 @@ class InsertStatementRendererTest {
         assertEquals("INSERT INTO users VALUES (1) RETURNING id", normalize(sql));
     }
 
+    @Test
+    void rejectsInsertReturningTargetsWhenCapabilityIsEnabled() {
+        InsertStatement statement = insert("users")
+            .values(row(lit(1)))
+            .result(resultVariableTarget(param("id")), col("id"))
+            .build();
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new ReturningMySqlDialect()).render(statement));
+    }
+
     private static final class ReturningMySqlDialect extends MySqlDialect {
         @Override
         public DialectCapabilities capabilities() {

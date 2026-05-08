@@ -48,6 +48,10 @@ public enum SqlFeature {
      */
     DML_RESULT_CLAUSE("DML result clause"),
     /**
+     * DML result clauses that assign values into variables, such as Oracle {@code RETURNING ... INTO}.
+     */
+    DML_RESULT_VARIABLE_TARGET("DML result variable target"),
+    /**
      * SQL {@code MERGE} statement support.
      */
     MERGE_STATEMENT("MERGE statement"),

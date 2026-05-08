@@ -26,6 +26,8 @@ class OracleCapabilitiesTest {
         assertTrue(capabilities.supports(SqlFeature.LOCKING_NOWAIT));
         assertTrue(capabilities.supports(SqlFeature.LOCKING_SKIP_LOCKED));
         assertTrue(capabilities.supports(SqlFeature.OPTIMIZER_HINT_COMMENT));
+        assertTrue(capabilities.supports(SqlFeature.DML_RESULT_CLAUSE));
+        assertTrue(capabilities.supports(SqlFeature.DML_RESULT_VARIABLE_TARGET));
         assertTrue(capabilities.supports(SqlFeature.LATERAL));
     }
 
@@ -34,7 +36,6 @@ class OracleCapabilitiesTest {
         var capabilities = OracleCapabilities.of(SqlDialectVersion.of(19, 0));
 
         assertFalse(capabilities.supports(SqlFeature.TIME_TYPED_LITERAL));
-        assertFalse(capabilities.supports(SqlFeature.DML_RESULT_CLAUSE));
         assertFalse(capabilities.supports(SqlFeature.MERGE_RESULT_CLAUSE));
         assertFalse(capabilities.supports(SqlFeature.DISTINCT_ON));
         assertFalse(capabilities.supports(SqlFeature.INSERT_ON_CONFLICT));

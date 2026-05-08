@@ -53,12 +53,12 @@ class UpdateStatementRendererTest {
     }
 
     @Test
-    void rendersUpdateResultIntoClause() {
+    void rendersUpdateRelationResultTargetClause() {
         var ctx = RenderContext.of(new SqlServerDialect());
         UpdateStatement statement = update("users")
             .set(id("name"), lit("alice"))
             .result(
-                resultInto("audit", "old_name", "new_name"),
+                resultRelationTarget("audit", "old_name", "new_name"),
                 deleted("name"),
                 inserted("name")
             )
@@ -95,7 +95,7 @@ class UpdateStatementRendererTest {
         var ctx = RenderContext.of(new SqlServerDialect());
         UpdateStatement statement = update("users")
             .set(id("name"), lit("alice"))
-            .result(resultInto(tbl("audit").withNoLock(), "user_id"), inserted("id"))
+            .result(resultRelationTarget(tbl("audit").withNoLock(), "user_id"), inserted("id"))
             .build();
 
         assertThrows(UnsupportedOperationException.class, () -> ctx.render(statement));

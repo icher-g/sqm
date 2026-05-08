@@ -32,6 +32,9 @@ public final class Parsers {
 
     private static ParsersRepository registerOracleOverrides(ParsersRepository repository) {
         return repository
+            .register(new InsertStatementParser())
+            .register(new UpdateStatementParser())
+            .register(new DeleteStatementParser())
             .register(new MergeStatementParser())
             .register(new MergeClauseParser())
             .register(new MergeUpdateActionParser())

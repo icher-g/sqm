@@ -53,7 +53,7 @@ class DeleteStatementParserTest {
     }
 
     @Test
-    void parsesDeleteResultIntoClause() {
+    void parsesDeleteRelationResultTargetClause() {
         var ctx = ParseContext.of(new SqlServerSpecs());
         var result = ctx.parse(
             DeleteStatement.class,
@@ -62,12 +62,12 @@ class DeleteStatementParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertNotNull(result.value().result());
-        assertNotNull(result.value().result().into());
+        var target = assertInstanceOf(io.sqm.core.RelationResultTarget.class, result.value().result().target());
         assertEquals(
             "audit",
-            result.value().result().into().target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
+            target.target().matchTableRef().table(table -> table.name().value()).orElseThrow(AssertionError::new)
         );
-        assertEquals("user_id", result.value().result().into().columns().getFirst().value());
+        assertEquals("user_id", target.columns().getFirst().value());
     }
 
     @Test

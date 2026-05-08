@@ -1,6 +1,6 @@
 package io.sqm.render.ansi;
 
-import io.sqm.core.ResultInto;
+import io.sqm.core.RelationResultTarget;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
@@ -9,12 +9,12 @@ import io.sqm.render.spi.Renderer;
 /**
  * Renders {@code OUTPUT / RETURNING ... INTO ...} targets.
  */
-public class ResultIntoRenderer implements Renderer<ResultInto> {
+public class RelationResultTargetRenderer implements Renderer<RelationResultTarget> {
 
     /**
      * Creates a result-into renderer.
      */
-    public ResultIntoRenderer() {
+    public RelationResultTargetRenderer() {
     }
 
     /**
@@ -25,7 +25,7 @@ public class ResultIntoRenderer implements Renderer<ResultInto> {
      * @param w    a writer.
      */
     @Override
-    public void render(ResultInto node, RenderContext ctx, SqlWriter w) {
+    public void render(RelationResultTarget node, RenderContext ctx, SqlWriter w) {
         throw new UnsupportedDialectFeatureException("INSERT / UPDATE / DELETE ... OUTPUT / RETURNING INTO", ctx.dialect().name());
     }
 
@@ -35,7 +35,7 @@ public class ResultIntoRenderer implements Renderer<ResultInto> {
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<ResultInto> targetType() {
-        return ResultInto.class;
+    public Class<RelationResultTarget> targetType() {
+        return RelationResultTarget.class;
     }
 }

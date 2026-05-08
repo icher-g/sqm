@@ -163,7 +163,7 @@ final class SqlServerExecutionCases {
             harness -> {
                 var statement = update("users")
                     .set(id("name"), lit("Alicia"))
-                    .result(resultInto("audit_names", "old_name", "new_name"), deleted("name"), inserted("name"))
+                    .result(resultRelationTarget("audit_names", "old_name", "new_name"), deleted("name"), inserted("name"))
                     .where(col("id").eq(lit(1)))
                     .build();
 

@@ -1,7 +1,7 @@
 package io.sqm.parser.sqlserver;
 
 import io.sqm.core.ResultClause;
-import io.sqm.core.ResultInto;
+import io.sqm.core.RelationResultTarget;
 import io.sqm.core.ResultItem;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -39,17 +39,17 @@ public class ResultClauseParser implements Parser<ResultClause> {
             return error(items);
         }
 
-        ResultInto into = null;
+        RelationResultTarget target = null;
         
         if (cur.match(TokenType.INTO)) {
-            var parsedInto = ctx.parse(ResultInto.class, cur);
-            if (parsedInto.isError()) {
-                return error(parsedInto);
+            var parsedTarget = ctx.parse(RelationResultTarget.class, cur);
+            if (parsedTarget.isError()) {
+                return error(parsedTarget);
             }
-            into = parsedInto.value();
+            target = parsedTarget.value();
         }
 
-        return ok(ResultClause.of(items.value(), into));
+        return ok(ResultClause.of(items.value(), target));
     }
 
     /**

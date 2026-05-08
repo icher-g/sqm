@@ -98,7 +98,10 @@ class DefaultTranspileRuleRegistryDefaultsTest {
             postgresToOracleRules.stream().map(TranspileRule::id).sorted().toList()
         );
         assertEquals(
-            java.util.List.of("oracle-hint-dropping"),
+            java.util.List.of(
+                "oracle-hint-dropping",
+                "oracle-returning-into-unsupported"
+            ),
             oracleToPostgresRules.stream().map(TranspileRule::id).sorted().toList()
         );
         assertEquals(
@@ -114,6 +117,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         assertEquals(
             java.util.List.of(
                 "oracle-hint-dropping",
+                "oracle-returning-into-unsupported",
                 "standard-limit-to-sqlserver-top"
             ),
             oracleToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()

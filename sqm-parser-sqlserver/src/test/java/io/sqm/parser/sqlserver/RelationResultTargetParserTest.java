@@ -1,6 +1,6 @@
 package io.sqm.parser.sqlserver;
 
-import io.sqm.core.ResultInto;
+import io.sqm.core.RelationResultTarget;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
 import org.junit.jupiter.api.Test;
@@ -9,12 +9,12 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ResultIntoParserTest {
+class RelationResultTargetParserTest {
 
     @Test
     void parsesIntoTargetWithoutColumns() {
         var ctx = ParseContext.of(new SqlServerSpecs());
-        var result = ctx.parse(ResultInto.class, "INTO my_table");
+        var result = ctx.parse(RelationResultTarget.class, "INTO my_table");
 
         assertTrue(result.ok(), result.errorMessage());
         assertEquals(
@@ -27,7 +27,7 @@ class ResultIntoParserTest {
     @Test
     void parsesIntoTargetWithColumns() {
         var ctx = ParseContext.of(new SqlServerSpecs());
-        var result = ctx.parse(ResultInto.class, "INTO my_table (col_a, col_b)");
+        var result = ctx.parse(RelationResultTarget.class, "INTO my_table (col_a, col_b)");
 
         assertTrue(result.ok(), result.errorMessage());
         assertEquals(
@@ -40,7 +40,7 @@ class ResultIntoParserTest {
     @Test
     void parsesIntoTableVariableTarget() {
         var ctx = ParseContext.of(new SqlServerSpecs());
-        var result = ctx.parse(ResultInto.class, "INTO @audit (col_a, col_b)");
+        var result = ctx.parse(RelationResultTarget.class, "INTO @audit (col_a, col_b)");
 
         assertTrue(result.ok(), result.errorMessage());
         assertEquals(
@@ -53,7 +53,7 @@ class ResultIntoParserTest {
     @Test
     void errorWhenIntoTargetMissing() {
         var ctx = ParseContext.of(new SqlServerSpecs());
-        var result = ctx.parse(ResultInto.class, "INTO");
+        var result = ctx.parse(RelationResultTarget.class, "INTO");
 
         assertTrue(result.isError());
         assertNotNull(result.errorMessage());
@@ -62,7 +62,7 @@ class ResultIntoParserTest {
     @Test
     void errorWhenOutputIntoColumnsUnterminated() {
         var ctx = ParseContext.of(new SqlServerSpecs());
-        var result = ctx.parse(ResultInto.class, "INTO my_table (col_a, col_b");
+        var result = ctx.parse(RelationResultTarget.class, "INTO my_table (col_a, col_b");
 
         assertTrue(result.isError());
         assertNotNull(result.errorMessage());
@@ -71,7 +71,7 @@ class ResultIntoParserTest {
     @Test
     void errorWhenOutputIntoTargetContainsTableHints() {
         var ctx = ParseContext.of(new SqlServerSpecs());
-        var result = ctx.parse(ResultInto.class, "INTO audit WITH (NOLOCK)");
+        var result = ctx.parse(RelationResultTarget.class, "INTO audit WITH (NOLOCK)");
 
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("table hints"));

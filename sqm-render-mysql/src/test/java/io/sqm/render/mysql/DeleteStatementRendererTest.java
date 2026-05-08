@@ -19,6 +19,8 @@ import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.delete;
 import static io.sqm.dsl.Dsl.inner;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.param;
+import static io.sqm.dsl.Dsl.resultVariableTarget;
 import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -184,6 +186,16 @@ class DeleteStatementRendererTest {
         var sql = RenderContext.of(new ReturningMySqlDialect()).render(statement).sql();
 
         assertEquals("DELETE FROM users WHERE users.id = 1 RETURNING id", normalize(sql));
+    }
+
+    @Test
+    void rejectsDeleteReturningTargetsWhenCapabilityIsEnabled() {
+        DeleteStatement statement = delete(tbl("users"))
+            .result(resultVariableTarget(param("id")), col("id"))
+            .build();
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new ReturningMySqlDialect()).render(statement));
     }
 
     private static String normalize(String sql) {
