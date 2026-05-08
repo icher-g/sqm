@@ -27,6 +27,25 @@ class OracleSqlTypeMapperTest {
     }
 
     @Test
+    void map_handles_oracle_integer_boolean_date_and_string_aliases() {
+        assertEquals(CatalogType.INTEGER, mapper.map("BINARY_INTEGER", Types.OTHER));
+        assertEquals(CatalogType.INTEGER, mapper.map("PLS_INTEGER", Types.OTHER));
+        assertEquals(CatalogType.BOOLEAN, mapper.map("BOOLEAN", Types.OTHER));
+        assertEquals(CatalogType.DATE, mapper.map("DATE", Types.OTHER));
+        assertEquals(CatalogType.STRING, mapper.map("XMLTYPE", Types.OTHER));
+        assertEquals(CatalogType.STRING, mapper.map("UROWID", Types.OTHER));
+    }
+
+    @Test
+    void map_handles_oracle_decimal_and_binary_aliases() {
+        assertEquals(CatalogType.DECIMAL, mapper.map("DEC", Types.OTHER));
+        assertEquals(CatalogType.DECIMAL, mapper.map("BINARY_FLOAT", Types.OTHER));
+        assertEquals(CatalogType.DECIMAL, mapper.map("BINARY_DOUBLE", Types.OTHER));
+        assertEquals(CatalogType.BYTES, mapper.map("LONG RAW", Types.OTHER));
+        assertEquals(CatalogType.BYTES, mapper.map("BFILE", Types.OTHER));
+    }
+
+    @Test
     void map_falls_back_to_jdbc_type_when_native_type_is_unknown() {
         assertEquals(CatalogType.STRING, mapper.map("custom_string_type", Types.CLOB));
         assertEquals(CatalogType.DECIMAL, mapper.map(null, Types.NUMERIC));
@@ -38,5 +57,16 @@ class OracleSqlTypeMapperTest {
     void map_returns_unknown_when_neither_native_nor_jdbc_type_is_recognized() {
         assertEquals(CatalogType.UNKNOWN, mapper.map("sdo_geometry", Types.OTHER));
         assertEquals(CatalogType.UNKNOWN, mapper.map(null, Types.REF_CURSOR));
+    }
+
+    @Test
+    void map_falls_back_to_remaining_jdbc_type_families() {
+        assertEquals(CatalogType.INTEGER, mapper.map(null, Types.TINYINT));
+        assertEquals(CatalogType.BOOLEAN, mapper.map(null, Types.BOOLEAN));
+        assertEquals(CatalogType.STRING, mapper.map(null, Types.SQLXML));
+        assertEquals(CatalogType.DATE, mapper.map(null, Types.DATE));
+        assertEquals(CatalogType.TIME, mapper.map(null, Types.TIME_WITH_TIMEZONE));
+        assertEquals(CatalogType.TIMESTAMP, mapper.map(null, Types.TIMESTAMP_WITH_TIMEZONE));
+        assertEquals(CatalogType.BYTES, mapper.map(null, Types.LONGVARBINARY));
     }
 }

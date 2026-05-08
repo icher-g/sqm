@@ -87,4 +87,17 @@ class ValidateServiceTest {
         assertFalse(response.diagnostics().isEmpty());
         assertEquals("PARSE_ERROR", response.diagnostics().getFirst().code());
     }
+
+    @Test
+    void validateUsesEveryDialectValidator() {
+        var service = new ValidateService(new PlaygroundStatementSupport());
+
+        for (var dialect : SqlDialectDto.values()) {
+            var response = service.validate(new ValidateRequestDto("select id from customer", dialect));
+
+            assertTrue(response.success());
+            assertTrue(response.valid());
+            assertTrue(response.diagnostics().isEmpty());
+        }
+    }
 }
