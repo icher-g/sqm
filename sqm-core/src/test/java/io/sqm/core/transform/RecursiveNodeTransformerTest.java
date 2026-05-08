@@ -1479,6 +1479,31 @@ class RecursiveNodeTransformerTest {
     }
 
     @Test
+    void visitVariableResultTargetVariables() {
+        var statement = update("users")
+            .set(id("name"), lit("alice"))
+            .result(resultVariableTarget(param("id")), col("id"))
+            .build();
+
+        var transformer = new RecursiveNodeTransformer() {
+            @Override
+            public Node visitNamedParamExpr(NamedParamExpr p) {
+                return "id".equals(p.name()) ? param("archive_id") : p;
+            }
+        };
+
+        var transformed = (UpdateStatement) statement.accept(transformer);
+
+        assertNotSame(statement, transformed);
+        var target = assertInstanceOf(VariableResultTarget.class, transformed.result().target());
+        assertEquals(
+            "archive_id",
+            target.variables().getFirst().matchParam().named(NamedParamExpr::name).orElseThrow(AssertionError::new)
+        );
+        assertSame(statement, statement.accept(new NothingTransformer()));
+    }
+
+    @Test
     void visitVariableTableRefWithoutChangesPreservesIdentity() {
         var variable = tableVar("audit_rows");
 

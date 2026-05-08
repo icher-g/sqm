@@ -5,8 +5,11 @@ import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.MergeClause;
+import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.validate.api.ValidationProblem;
+import io.sqm.validate.oracle.rule.OracleDmlFeatureValidationRule;
 import io.sqm.validate.schema.SchemaStatementValidator;
+import io.sqm.validate.schema.SchemaValidationSettings;
 import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.col;
@@ -104,6 +107,19 @@ class OracleValidationDialectTest {
             problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
                 && "update.result".equals(problem.clausePath())
         ));
+    }
+
+    @Test
+    void rejectsOracleReturningIntoWhenCapabilitiesAreMissing() {
+        var settings = SchemaValidationSettings.builder()
+            .addRule(new OracleDmlFeatureValidationRule(feature -> false, SqlDialectVersion.of(19, 0)))
+            .build();
+        var validator = SchemaStatementValidator.of(SCHEMA, settings);
+        var statement = delete("users")
+            .result(resultVariableTarget(param("id")), col("id"))
+            .build();
+
+        assertTrue(hasDialectProblem(validator.validate(statement), "delete.result"));
     }
 
     @Test

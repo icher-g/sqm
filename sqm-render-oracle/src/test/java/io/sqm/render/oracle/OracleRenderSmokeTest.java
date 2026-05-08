@@ -127,6 +127,31 @@ class OracleRenderSmokeTest {
     }
 
     @Test
+    void rejectsOracleReturningIntoWithoutVariableTargetsOrCapabilities() {
+        var missingTarget = insert("users")
+            .values(row(lit(1L)))
+            .result(col("id"))
+            .build();
+        var unsupportedCapabilities = insert("users")
+            .values(row(lit(1L)))
+            .result(resultVariableTarget(param("id")), col("id"))
+            .build();
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> RenderContext.of(new OracleDialect()).render(missingTarget));
+        assertThrows(UnsupportedDialectFeatureException.class, () -> RenderContext.of(new NoMergeOracleDialect()).render(unsupportedCapabilities));
+    }
+
+    @Test
+    void skipsNullOracleReturningClause() {
+        var ctx = RenderContext.of(new OracleDialect());
+        var writer = new DefaultSqlWriter(ctx);
+
+        OracleResultRendering.renderReturningInto("INSERT ... RETURNING INTO", null, ctx, writer);
+
+        assertEquals("", writer.toText(java.util.List.of()).sql());
+    }
+
+    @Test
     void rendersBaselineOracleMerge() {
         var statement = merge("users")
             .source(tbl("src_users").as("s"))

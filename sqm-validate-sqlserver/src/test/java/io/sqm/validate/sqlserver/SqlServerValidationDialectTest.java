@@ -932,6 +932,23 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
+    void validate_reportsUnsupportedSqlServerOutputVariableTargets() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var statement = update("users")
+            .set(id("name"), lit("alice"))
+            .result(resultVariableTarget(param("id")), inserted("id"))
+            .build();
+
+        var result = validator.validate(statement);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "update.result".equals(problem.clausePath())
+                && problem.message().contains("relation targets")
+        ));
+    }
+
+    @Test
     void dialect_exposesSqlServerRules() {
         var dialect = SqlServerValidationDialect.of();
         var versionedDialect = SqlServerValidationDialect.of(SqlDialectVersion.of(2014, 0));

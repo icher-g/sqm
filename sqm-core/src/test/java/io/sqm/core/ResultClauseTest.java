@@ -38,6 +38,9 @@ class ResultClauseTest {
         assertThrows(IllegalArgumentException.class, () -> ResultClause.of(java.util.List.of()));
         assertThrows(NullPointerException.class, () -> ResultItem.expr(null));
         assertThrows(NullPointerException.class, () -> RelationResultTarget.of(null));
+        //noinspection DataFlowIssue
+        assertThrows(NullPointerException.class, () -> VariableResultTarget.of(null));
+        assertThrows(IllegalArgumentException.class, () -> VariableResultTarget.of(List.of()));
         assertThrows(NullPointerException.class, () -> OutputColumnExpr.of(null, id("x")));
         assertThrows(NullPointerException.class, () -> OutputColumnExpr.of(OutputRowSource.INSERTED, null));
         assertThrows(NullPointerException.class, () -> OutputStarResultItem.of(null));

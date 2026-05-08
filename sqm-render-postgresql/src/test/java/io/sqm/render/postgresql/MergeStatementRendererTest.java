@@ -33,6 +33,8 @@ import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.id;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.merge;
+import static io.sqm.dsl.Dsl.param;
+import static io.sqm.dsl.Dsl.resultVariableTarget;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
 import static io.sqm.dsl.Dsl.tbl;
@@ -219,6 +221,21 @@ class MergeStatementRendererTest {
         renderer.renderReturning(null, ctx, writer);
 
         assertEquals("", writer.toText(java.util.List.of()).sql());
+    }
+
+    @Test
+    void rejectsMergeReturningTargets() {
+        var renderer = new MergeStatementRenderer();
+        var ctx = RenderContext.of(new PostgresDialect(SqlDialectVersion.of(18, 0)));
+        var writer = new DefaultSqlWriter(ctx);
+        MergeStatement statement = merge("users")
+            .source(tbl("src"))
+            .on(col("users", "id").eq(col("src", "id")))
+            .whenMatchedDelete()
+            .result(resultVariableTarget(param("id")), col("id"))
+            .build();
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> renderer.render(statement, ctx, writer));
     }
 
     @Test

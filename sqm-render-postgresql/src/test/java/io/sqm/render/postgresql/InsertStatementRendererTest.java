@@ -11,6 +11,8 @@ import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.id;
 import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
+import static io.sqm.dsl.Dsl.param;
+import static io.sqm.dsl.Dsl.resultVariableTarget;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -95,6 +97,17 @@ class InsertStatementRendererTest {
         var sql = normalize(ctx.render(statement).sql());
 
         assertEquals("INSERT INTO users VALUES (1, 'alice')", sql);
+    }
+
+    @Test
+    void rejectsInsertReturningTargets() {
+        var ctx = RenderContext.of(new PostgresDialect());
+        InsertStatement statement = insert("users")
+            .values(row(lit(1)))
+            .result(resultVariableTarget(param("id")), col("id"))
+            .build();
+
+        assertThrows(UnsupportedDialectFeatureException.class, () -> ctx.render(statement));
     }
 
     @Test
