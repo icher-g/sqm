@@ -9,6 +9,7 @@ import io.sqm.core.StatementSequence;
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.mysql.MySqlValidationDialect;
+import io.sqm.validate.oracle.OracleValidationDialect;
 import io.sqm.validate.postgresql.PostgresValidationDialect;
 import io.sqm.validate.schema.SchemaStatementValidator;
 import io.sqm.validate.schema.SchemaValidationSettings;
@@ -48,6 +49,7 @@ public interface SqlStatementValidator {
         return dialectAwareIds(schema, Map.of(
             SqlDialectId.ANSI, () -> settings,
             SqlDialectId.MYSQL, () -> mergeDialectSettings(settings, MySqlValidationDialect.of()),
+            SqlDialectId.ORACLE, () -> mergeDialectSettings(settings, OracleValidationDialect.of()),
             SqlDialectId.POSTGRESQL, () -> mergeDialectSettings(settings, PostgresValidationDialect.of()),
             SqlDialectId.SQLSERVER, () -> mergeDialectSettings(settings, SqlServerValidationDialect.of())
         ));

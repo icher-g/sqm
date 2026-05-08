@@ -7,12 +7,14 @@ import io.sqm.parser.core.Lexer;
 import io.sqm.parser.core.Token;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
+import io.sqm.parser.oracle.spi.OracleSpecs;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.IdentifierQuoting;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.mysql.MySqlValidationDialect;
+import io.sqm.validate.oracle.OracleValidationDialect;
 import io.sqm.validate.postgresql.PostgresValidationDialect;
 import io.sqm.validate.schema.SchemaStatementValidator;
 import io.sqm.validate.sqlserver.SqlServerValidationDialect;
@@ -103,12 +105,14 @@ public final class SqlFileCodeGenerator {
         var postgres = ParseContext.of(new PostgresSpecs());
         var mysql = ParseContext.of(new MySqlSpecs());
         var sqlServer = ParseContext.of(new SqlServerSpecs());
+        var oracle = ParseContext.of(new OracleSpecs());
         return switch (dialect) {
             case ANSI -> List.of(
                 new ParseStage("ansi", ansi),
                 new ParseStage("postgresql", postgres),
                 new ParseStage("mysql", mysql),
-                new ParseStage("sqlserver", sqlServer)
+                new ParseStage("sqlserver", sqlServer),
+                new ParseStage("oracle", oracle)
             );
             case POSTGRESQL -> List.of(
                 new ParseStage("postgresql", postgres),
@@ -120,6 +124,10 @@ public final class SqlFileCodeGenerator {
             );
             case SQLSERVER -> List.of(
                 new ParseStage("sqlserver", sqlServer),
+                new ParseStage("ansi", ansi)
+            );
+            case ORACLE -> List.of(
+                new ParseStage("oracle", oracle),
                 new ParseStage("ansi", ansi)
             );
         };
@@ -196,6 +204,7 @@ public final class SqlFileCodeGenerator {
                 case POSTGRESQL -> SchemaStatementValidator.of(schema, PostgresValidationDialect.of());
                 case MYSQL -> SchemaStatementValidator.of(schema, MySqlValidationDialect.of());
                 case SQLSERVER -> SchemaStatementValidator.of(schema, SqlServerValidationDialect.of());
+                case ORACLE -> SchemaStatementValidator.of(schema, OracleValidationDialect.of());
             };
         } catch (SQLException ex) {
             throw new SqlFileCodegenException("Failed to load schema for validation: " + ex.getMessage());

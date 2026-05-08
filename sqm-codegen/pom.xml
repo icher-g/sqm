@@ -43,6 +43,11 @@
         </dependency>
         <dependency>
             <groupId>io.sqm</groupId>
+            <artifactId>sqm-parser-oracle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.sqm</groupId>
             <artifactId>sqm-catalog</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -64,6 +69,11 @@
         <dependency>
             <groupId>io.sqm</groupId>
             <artifactId>sqm-validate-sqlserver</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.sqm</groupId>
+            <artifactId>sqm-validate-oracle</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

@@ -36,10 +36,19 @@ class SqlStatementRendererTest {
     }
 
     @Test
+    void for_dialect_supports_oracle() {
+        var result = SqlStatementRenderer.standard().render(
+            Query.select(Expression.literal(1)).build(),
+            ExecutionContext.of("oracle", ExecutionMode.ANALYZE));
+
+        assertTrue(result.sql().toLowerCase().contains("select"));
+    }
+
+    @Test
     void for_dialect_rejects_unsupported_dialect() {
         assertThrows(IllegalArgumentException.class, () -> SqlStatementRenderer.standard().render(
             Query.select(Expression.literal(1)).build(),
-            ExecutionContext.of("oracle", ExecutionMode.ANALYZE)));
+            ExecutionContext.of("db2", ExecutionMode.ANALYZE)));
     }
 
     @Test
@@ -97,6 +106,19 @@ class SqlStatementRendererTest {
 
         assertTrue(rendered.sql().contains("SELECT"));
         assertTrue(rendered.sql().contains("1"));
+    }
+
+    @Test
+    void renders_oracle_query() {
+        var renderer = SqlStatementRenderer.standard();
+        var statement = select(col("id")).from(tbl("users")).orderBy(col("id")).offset(2).limit(5).build();
+
+        var rendered = renderer.render(statement, ExecutionContext.of("oracle", ExecutionMode.ANALYZE));
+
+        assertEquals(
+            "SELECT id FROM users ORDER BY id OFFSET 2 ROWS FETCH FIRST 5 ROWS ONLY",
+            rendered.sql().replaceAll("\\s+", " ").trim()
+        );
     }
 
     @Test

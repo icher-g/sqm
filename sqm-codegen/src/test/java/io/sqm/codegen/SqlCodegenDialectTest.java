@@ -32,6 +32,12 @@ class SqlCodegenDialectTest {
     }
 
     @Test
+    void from_resolvesOracleAliases() {
+        assertEquals(SqlCodegenDialect.ORACLE, SqlCodegenDialect.from("oracle"));
+        assertEquals(SqlCodegenDialect.ORACLE, SqlCodegenDialect.from("ora"));
+    }
+
+    @Test
     void from_throwsOnUnsupportedDialect() {
         assertThrows(IllegalArgumentException.class, () -> SqlCodegenDialect.from("sqlite"));
     }

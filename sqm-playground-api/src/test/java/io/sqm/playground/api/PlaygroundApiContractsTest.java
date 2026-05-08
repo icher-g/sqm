@@ -25,16 +25,16 @@ class PlaygroundApiContractsTest {
 
     @Test
     void shouldDeserializeDialectFromLowercaseWireValue() throws Exception {
-        SqlDialectDto dialect = mapper.readValue("\"mysql\"", SqlDialectDto.class);
+        SqlDialectDto dialect = mapper.readValue("\"oracle\"", SqlDialectDto.class);
 
-        assertEquals(SqlDialectDto.mysql, dialect);
+        assertEquals(SqlDialectDto.oracle, dialect);
     }
 
     @Test
     void shouldRejectUnknownDialectValue() {
         IllegalArgumentException error = assertThrows(
             IllegalArgumentException.class,
-            () -> SqlDialectDto.fromValue("oracle")
+            () -> SqlDialectDto.fromValue("db2")
         );
 
         assertTrue(error.getMessage().contains("Unknown SQL dialect"));

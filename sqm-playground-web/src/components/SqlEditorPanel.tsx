@@ -83,6 +83,7 @@ export function SqlEditorPanel(props: SqlEditorPanelProps) {
                 <option value="postgresql">postgresql</option>
                 <option value="mysql">mysql</option>
                 <option value="sqlserver">sqlserver</option>
+                <option value="oracle">oracle</option>
               </select>
             </div>
             <div className="button-column">
@@ -133,6 +134,7 @@ export function SqlEditorPanel(props: SqlEditorPanelProps) {
                 <option value="postgresql">postgresql</option>
                 <option value="mysql">mysql</option>
                 <option value="sqlserver">sqlserver</option>
+                <option value="oracle">oracle</option>
               </select>
             </div>
             <div className="control-field parameterization-field">

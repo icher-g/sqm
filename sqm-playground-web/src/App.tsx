@@ -400,7 +400,7 @@ function readShareState(): {
 }
 
 function readDialect(value: string | null): SqlDialect | null {
-  if (value === "ansi" || value === "postgresql" || value === "mysql" || value === "sqlserver") {
+  if (value === "ansi" || value === "postgresql" || value === "mysql" || value === "sqlserver" || value === "oracle") {
     return value;
   }
 

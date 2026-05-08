@@ -37,6 +37,7 @@ public class SqmDslGenerator {
             case postgresql -> SqlCodegenDialect.POSTGRESQL;
             case mysql -> SqlCodegenDialect.MYSQL;
             case sqlserver -> SqlCodegenDialect.SQLSERVER;
+            case oracle -> SqlCodegenDialect.ORACLE;
         };
     }
 

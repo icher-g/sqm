@@ -570,6 +570,8 @@ function formatDialectLabel(dialect: SqlDialect | null) {
       return "MySQL";
     case "sqlserver":
       return "SQL Server";
+    case "oracle":
+      return "Oracle";
   }
 }
 

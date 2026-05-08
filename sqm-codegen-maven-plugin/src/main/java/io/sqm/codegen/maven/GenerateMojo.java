@@ -6,6 +6,7 @@ import io.sqm.catalog.jdbc.DefaultSqlTypeMapper;
 import io.sqm.catalog.jdbc.JdbcSchemaProvider;
 import io.sqm.catalog.jdbc.SqlTypeMapper;
 import io.sqm.catalog.mysql.MySqlSqlTypeMapper;
+import io.sqm.catalog.oracle.OracleSqlTypeMapper;
 import io.sqm.catalog.postgresql.PostgresSqlTypeMapper;
 import io.sqm.catalog.sqlserver.SqlServerSqlTypeMapper;
 import io.sqm.catalog.snapshot.JsonSchemaProvider;
@@ -452,6 +453,7 @@ public class GenerateMojo extends AbstractMojo {
             case POSTGRESQL -> PostgresSqlTypeMapper.standard();
             case MYSQL -> MySqlSqlTypeMapper.standard();
             case SQLSERVER -> SqlServerSqlTypeMapper.standard();
+            case ORACLE -> OracleSqlTypeMapper.standard();
             case ANSI -> DefaultSqlTypeMapper.standard();
         };
     }

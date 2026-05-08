@@ -1,7 +1,7 @@
 /**
  * Supported SQL dialect identifiers.
  */
-export type SqlDialect = "ansi" | "postgresql" | "mysql" | "sqlserver";
+export type SqlDialect = "ansi" | "postgresql" | "mysql" | "sqlserver" | "oracle";
 
 /**
  * Severity level returned in playground diagnostics.

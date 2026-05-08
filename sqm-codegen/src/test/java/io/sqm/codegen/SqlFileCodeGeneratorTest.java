@@ -163,6 +163,26 @@ class SqlFileCodeGeneratorTest {
     }
 
     @Test
+    void generate_supportsOracleDialectSpecificQueries() throws IOException {
+        var sqlDir = tempDir.resolve("sql-oracle");
+        var outputDir = tempDir.resolve("generated-oracle");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(
+            sqlDir.resolve("user").resolve("paged_users.sql"),
+            "select u.id from users u order by u.id offset 2 rows fetch next 5 rows only"
+        );
+
+        var options = SqlFileCodegenOptions.of(sqlDir, outputDir, "io.sqm.codegen.generated", SqlCodegenDialect.ORACLE);
+        var generated = SqlFileCodeGenerator.of(options).generate();
+
+        assertEquals(1, generated.size());
+        var generatedFile = outputDir.resolve(Path.of("io", "sqm", "codegen", "generated", "UserQueries.java"));
+        var source = Files.readString(generatedFile);
+        assertTrue(source.contains("public static SelectQuery pagedUsers()"));
+        assertTrue(source.contains(".limitOffset(limitOffset("));
+    }
+
+    @Test
     void generate_supportsSqlServerAdvancedQueryAndMergeFiles() throws IOException {
         var sqlDir = tempDir.resolve("sql-sqlserver-advanced");
         var outputDir = tempDir.resolve("generated-sqlserver-advanced");
@@ -585,6 +605,36 @@ class SqlFileCodeGeneratorTest {
             outputDir,
             "io.sqm.codegen.generated",
             SqlCodegenDialect.SQLSERVER,
+            false,
+            JsonSchemaProvider.of(schemaSnapshot)
+        );
+
+        var generated = SqlFileCodeGenerator.of(options).generate();
+
+        assertEquals(1, generated.size());
+        assertTrue(Files.readString(generated.getFirst()).contains("public static SelectQuery pagedUsers()"));
+    }
+
+    @Test
+    void generate_validates_oracle_queries_against_schema_provider() throws Exception {
+        var sqlDir = tempDir.resolve("sql-oracle-schema");
+        var outputDir = tempDir.resolve("generated-oracle-schema");
+        var schemaSnapshot = tempDir.resolve("schema-oracle.json");
+        Files.createDirectories(sqlDir.resolve("user"));
+        Files.writeString(
+            sqlDir.resolve("user").resolve("paged_users.sql"),
+            "select u.id from users u order by u.id offset 2 rows fetch next 5 rows only"
+        );
+
+        JsonSchemaProvider.of(schemaSnapshot).save(CatalogSchema.of(
+            CatalogTable.of("public", "users", CatalogColumn.of("id", CatalogType.LONG))
+        ));
+
+        var options = SqlFileCodegenOptions.of(
+            sqlDir,
+            outputDir,
+            "io.sqm.codegen.generated",
+            SqlCodegenDialect.ORACLE,
             false,
             JsonSchemaProvider.of(schemaSnapshot)
         );

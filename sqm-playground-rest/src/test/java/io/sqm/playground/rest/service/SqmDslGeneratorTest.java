@@ -72,4 +72,21 @@ class SqmDslGeneratorTest {
         assertTrue(source.contains(".body("));
         assertTrue(source.contains("tbl(\"regional_sales\")"));
     }
+
+    @Test
+    void toDslSupportsEveryPlaygroundCodegenDialect() {
+        var statement = select(star())
+            .from(tbl("customer"))
+            .where(param("status").isNotNull())
+            .build();
+        var generator = new SqmDslGenerator();
+
+        for (var dialect : SqlDialectDto.values()) {
+            var source = generator.toDsl(statement, dialect);
+
+            assertTrue(source.contains("package sqm.codegen;"));
+            assertTrue(source.contains("public static SelectQuery getStatement()"));
+            assertTrue(source.contains("param(\"status\")"));
+        }
+    }
 }
