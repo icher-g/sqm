@@ -14,7 +14,6 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         assertEquals(
             java.util.List.of(
                 "function-table-to-mysql-unsupported",
-                "hierarchical-query-unsupported",
                 "postgres-merge-unsupported",
                 "postgres-to-mysql-distinct-on-unsupported",
                 "postgres-to-mysql-ilike",
@@ -36,7 +35,6 @@ class DefaultTranspileRuleRegistryDefaultsTest {
 
         assertEquals(
             java.util.List.of(
-                "hierarchical-query-unsupported",
                 "mysql-hint-dropping",
                 "mysql-to-postgres-insert-mode-unsupported",
                 "mysql-to-postgres-json-function-unsupported",
@@ -69,7 +67,6 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         );
         assertEquals(
             java.util.List.of(
-                "hierarchical-query-unsupported",
                 "sqlserver-hint-dropping",
                 "sqlserver-merge-unsupported",
                 "sqlserver-output-unsupported",
@@ -105,7 +102,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         );
         assertEquals(
             java.util.List.of(
-                "hierarchical-query-unsupported",
+                "hierarchical-query-to-recursive-cte",
                 "oracle-hint-dropping",
                 "oracle-returning-into-unsupported"
             ),

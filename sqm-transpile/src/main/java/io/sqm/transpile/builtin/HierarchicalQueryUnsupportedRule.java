@@ -39,13 +39,13 @@ public final class HierarchicalQueryUnsupportedRule implements TranspileRule {
     }
 
     /**
-     * Returns target dialects that cannot exactly represent hierarchical queries.
+     * Returns target dialects that cannot currently render the recursive CTE rewrite.
      *
      * @return unsupported target dialects
      */
     @Override
     public Set<SqlDialectId> targetDialects() {
-        return Set.of(SqlDialectId.ANSI, SqlDialectId.MYSQL, SqlDialectId.POSTGRESQL, SqlDialectId.SQLSERVER);
+        return Set.of(SqlDialectId.SQLSERVER);
     }
 
     /**
