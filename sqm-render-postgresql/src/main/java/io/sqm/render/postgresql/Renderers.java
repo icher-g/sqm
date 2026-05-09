@@ -38,6 +38,7 @@ public final class Renderers {
             .register(new MergeInsertActionRenderer())
             .register(new AnyAllPredicateRenderer())
             .register(new FunctionExprRenderer())
+            .register(new SequenceValueExprRenderer())
             .register(new CastExprRenderer());
     }
 }

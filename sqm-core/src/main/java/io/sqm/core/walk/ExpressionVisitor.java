@@ -54,6 +54,14 @@ public interface ExpressionVisitor<R> {
     R visitFunctionArgExpr(FunctionExpr.Arg a);
 
     /**
+     * Visits a {@link SequenceValueExpr} node.
+     *
+     * @param expr sequence value expression being visited
+     * @return visitor result
+     */
+    R visitSequenceValueExpr(SequenceValueExpr expr);
+
+    /**
      * Visits an {@link AnonymousParamExpr}, representing an anonymous positional
      * parameter such as {@code ?}.
      *

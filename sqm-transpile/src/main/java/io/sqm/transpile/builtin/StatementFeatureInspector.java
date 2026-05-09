@@ -173,6 +173,42 @@ final class StatementFeatureInspector {
         return found.get();
     }
 
+    static boolean hasSequenceValueExpression(Statement statement) {
+        var found = new AtomicBoolean(false);
+        statement.accept(new RecursiveNodeVisitor<Void>() {
+            @Override
+            protected Void defaultResult() {
+                return null;
+            }
+
+            @Override
+            public Void visitSequenceValueExpr(SequenceValueExpr expr) {
+                found.set(true);
+                return super.visitSequenceValueExpr(expr);
+            }
+        });
+        return found.get();
+    }
+
+    static boolean hasCurrentSequenceValueExpression(Statement statement) {
+        var found = new AtomicBoolean(false);
+        statement.accept(new RecursiveNodeVisitor<Void>() {
+            @Override
+            protected Void defaultResult() {
+                return null;
+            }
+
+            @Override
+            public Void visitSequenceValueExpr(SequenceValueExpr expr) {
+                if (expr.kind() == SequenceValueKind.CURRENT_VALUE) {
+                    found.set(true);
+                }
+                return super.visitSequenceValueExpr(expr);
+            }
+        });
+        return found.get();
+    }
+
     static boolean hasLikeMode(Statement statement, LikeMode mode) {
         var found = new AtomicBoolean(false);
         statement.accept(new RecursiveNodeVisitor<Void>() {

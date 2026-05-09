@@ -71,6 +71,16 @@ class AtomicExprParserTest {
     }
 
     @Test
+    void parsesSequenceValueExpressionBeforeFunctionFallback() {
+        var ctx = contextWithAtomicExprParsers();
+
+        var result = ctx.parse(Expression.class, "seq");
+
+        assertTrue(result.ok());
+        assertInstanceOf(SequenceValueExpr.class, result.value());
+    }
+
+    @Test
     void parsesAnonymousParamExpression() {
         var ctx = contextWithAtomicExprParsers();
 
@@ -118,6 +128,7 @@ class AtomicExprParserTest {
             .register(CaseExpr.class, new NoMatchParser<>(CaseExpr.class))
             .register(CastExpr.class, new CastExprParser())
             .register(ArrayExpr.class, new NoMatchParser<>(ArrayExpr.class))
+            .register(SequenceValueExpr.class, new SequenceExprParser())
             .register(FunctionExpr.class, new FunctionExprParser())
             .register(AnonymousParamExpr.class, new AnonymousParamExprParser())
             .register(NamedParamExpr.class, new NoMatchParser<>(NamedParamExpr.class))
@@ -141,6 +152,7 @@ class AtomicExprParserTest {
             .register(CaseExpr.class, new NoMatchParser<>(CaseExpr.class))
             .register(CastExpr.class, new NoMatchInfixParser<>(CastExpr.class))
             .register(ArrayExpr.class, new NoMatchParser<>(ArrayExpr.class))
+            .register(SequenceValueExpr.class, new NoMatchParser<>(SequenceValueExpr.class))
             .register(FunctionExpr.class, new NoMatchParser<>(FunctionExpr.class))
             .register(AnonymousParamExpr.class, new NoMatchParser<>(AnonymousParamExpr.class))
             .register(NamedParamExpr.class, new NoMatchParser<>(NamedParamExpr.class))
@@ -252,6 +264,24 @@ class AtomicExprParserTest {
         @Override
         public Class<FunctionExpr> targetType() {
             return FunctionExpr.class;
+        }
+    }
+
+    private static final class SequenceExprParser implements MatchableParser<SequenceValueExpr> {
+        @Override
+        public boolean match(Cursor cur, ParseContext ctx) {
+            return cur.match(TokenType.IDENT) && "seq".equalsIgnoreCase(cur.peek().lexeme());
+        }
+
+        @Override
+        public ParseResult<? extends SequenceValueExpr> parse(Cursor cur, ParseContext ctx) {
+            cur.expect("Expected sequence marker", TokenType.IDENT);
+            return ParseResult.ok(SequenceValueExpr.of(QualifiedName.of("users_seq"), SequenceValueKind.NEXT_VALUE));
+        }
+
+        @Override
+        public Class<SequenceValueExpr> targetType() {
+            return SequenceValueExpr.class;
         }
     }
 

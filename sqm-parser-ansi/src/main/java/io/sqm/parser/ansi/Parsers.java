@@ -51,6 +51,7 @@ public final class Parsers {
             .register(new ExpressionParser())
             .register(new CaseExprParser())
             .register(new ConcatExprParser())
+            .register(new SequenceValueExprParser())
             .register(new FunctionExprParser())
             .register(new PredicateParser())
             .register(new AssignmentParser())

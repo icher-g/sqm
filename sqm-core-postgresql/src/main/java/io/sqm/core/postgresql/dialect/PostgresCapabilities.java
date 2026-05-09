@@ -66,6 +66,7 @@ public final class PostgresCapabilities {
                 SqlFeature.CUSTOM_OPERATOR,
                 SqlFeature.AT_TIME_ZONE,
                 SqlFeature.EXPR_COLLATE,
+                SqlFeature.SEQUENCE_VALUE_EXPRESSION,
                 SqlFeature.EXPONENTIATION_OPERATOR
             )
             .supports(pg93,

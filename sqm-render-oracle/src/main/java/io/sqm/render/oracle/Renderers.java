@@ -43,6 +43,7 @@ public final class Renderers {
             .register(new MergeInsertActionRenderer())
             .register(new LimitOffsetRenderer())
             .register(new VariableResultTargetRenderer())
+            .register(new SequenceValueExprRenderer())
             .register(new NamedParamExprRenderer())
             .register(new OrdinalParamExprRenderer());
     }

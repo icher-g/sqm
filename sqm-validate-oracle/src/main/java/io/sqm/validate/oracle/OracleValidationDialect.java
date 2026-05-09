@@ -10,6 +10,7 @@ import io.sqm.validate.oracle.rule.OracleDmlFeatureValidationRule;
 import io.sqm.validate.oracle.rule.OracleMergeFeatureValidationRule;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
 import io.sqm.validate.schema.function.FunctionCatalog;
+import io.sqm.validate.schema.rule.SequenceValueFeatureValidationRule;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
 
 import java.util.List;
@@ -83,7 +84,8 @@ public final class OracleValidationDialect implements SchemaValidationDialect {
     public List<SchemaValidationRule<? extends Node>> additionalRules() {
         return List.of(
             new OracleDmlFeatureValidationRule(capabilities, version),
-            new OracleMergeFeatureValidationRule(capabilities, version)
+            new OracleMergeFeatureValidationRule(capabilities, version),
+            new SequenceValueFeatureValidationRule(name(), version, capabilities, true)
         );
     }
 }

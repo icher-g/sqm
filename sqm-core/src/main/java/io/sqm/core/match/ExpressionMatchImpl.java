@@ -248,6 +248,21 @@ public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
     }
 
     /**
+     * Registers a handler to be applied when the subject is a {@link SequenceValueExpr}.
+     *
+     * @param f handler for {@code SequenceValueExpr}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public ExpressionMatch<R> sequenceValue(Function<SequenceValueExpr, R> f) {
+        if (!matched && expr instanceof SequenceValueExpr sequenceValueExpr) {
+            result = f.apply(sequenceValueExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
      * Registers a handler to be applied when the subject is a {@link ParamExpr}.
      *
      * @param f handler for {@code ParamExpr}

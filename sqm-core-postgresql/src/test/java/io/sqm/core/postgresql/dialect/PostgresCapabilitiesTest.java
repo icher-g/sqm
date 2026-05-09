@@ -33,6 +33,7 @@ class PostgresCapabilitiesTest {
         assertTrue(capabilities.supports(SqlFeature.POSTGRES_TYPECAST));
         assertTrue(capabilities.supports(SqlFeature.EXPONENTIATION_OPERATOR));
         assertTrue(capabilities.supports(SqlFeature.EXPR_COLLATE));
+        assertTrue(capabilities.supports(SqlFeature.SEQUENCE_VALUE_EXPRESSION));
     }
 
     @Test

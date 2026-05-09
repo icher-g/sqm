@@ -39,6 +39,7 @@ public final class Parsers {
             .register(new MergeClauseParser())
             .register(new MergeUpdateActionParser())
             .register(new MergeInsertActionParser())
+            .register(new SequenceValueExprParser())
             .register(new LimitOffsetParser());
     }
 }

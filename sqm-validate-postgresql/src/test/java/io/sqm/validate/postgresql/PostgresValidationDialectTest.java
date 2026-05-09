@@ -61,6 +61,21 @@ class PostgresValidationDialectTest {
     }
 
     @Test
+    void validate_acceptsSequenceValueExpressions() {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of());
+        Query query = select(currentValue("users_seq"))
+            .from(tbl("users"))
+            .build();
+
+        var result = validator.validate(query);
+
+        assertFalse(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "expression.sequence_value".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
     void validate_reportsAggregateInputOrderByOnKnownNonAggregate() {
         var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of());
         Query query = select(func("lower", col("u", "name")).orderBy(col("u", "name")))
@@ -535,7 +550,7 @@ class PostgresValidationDialectTest {
         assertNotNull(catalog);
         assertTrue(catalog.resolve("to_json").isPresent());
         assertFalse(catalog.resolve("to_jsonb").isPresent());
-        assertEquals(8, rules.size());
+        assertEquals(9, rules.size());
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectFeatureValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectClauseConsistencyRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresDistinctOnValidationRule")));
@@ -544,6 +559,7 @@ class PostgresValidationDialectTest {
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresStatementHintValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresTableHintValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresFunctionOrderByValidationRule")));
+        assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("SequenceValueFeatureValidationRule")));
     }
 
     @Test

@@ -61,6 +61,19 @@ class MySqlValidationDialectTest {
     }
 
     @Test
+    void validate_reportsUnsupportedSequenceValueExpression() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var query = select(nextValue("users_seq")).from(tbl("users")).build();
+
+        var result = validator.validate(query);
+
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "expression.sequence_value".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
     void validate_reportsUseAndForceConflictInSameDefaultScope() {
         var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
         var query = select(col("u", "id"))

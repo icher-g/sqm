@@ -63,6 +63,21 @@ class SqlServerValidationDialectTest {
     }
 
     @Test
+    void validate_acceptsNextSequenceValueAndRejectsCurrentSequenceValue() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var next = select(nextValue("users_seq")).from(tbl("users")).build();
+        var current = select(currentValue("users_seq")).from(tbl("users")).build();
+
+        assertFalse(validator.validate(next).problems().stream().anyMatch(problem ->
+            "expression.sequence_value".equals(problem.clausePath())
+        ));
+        assertTrue(validator.validate(current).problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "expression.sequence_value".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
     void validate_allowsAnyAllQuerySource() {
         var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
         var query = select(col("u", "id"))
@@ -954,7 +969,7 @@ class SqlServerValidationDialectTest {
         var versionedDialect = SqlServerValidationDialect.of(SqlDialectVersion.of(2014, 0));
 
         assertEquals("sqlserver", dialect.name());
-        assertEquals(8, dialect.additionalRules().size());
+        assertEquals(9, dialect.additionalRules().size());
         assertEquals(SqlDialectVersion.of(2019, 0), dialect.version());
         assertTrue(dialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.LATERAL));
         assertFalse(versionedDialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.AT_TIME_ZONE));

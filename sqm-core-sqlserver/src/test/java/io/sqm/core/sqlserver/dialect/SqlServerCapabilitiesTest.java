@@ -17,6 +17,7 @@ class SqlServerCapabilitiesTest {
         assertTrue(capabilities.supports(SqlFeature.EXPR_COLLATE));
         assertTrue(capabilities.supports(SqlFeature.LATERAL));
         assertTrue(capabilities.supports(SqlFeature.FUNCTION_TABLE));
+        assertTrue(capabilities.supports(SqlFeature.SEQUENCE_VALUE_EXPRESSION));
         assertFalse(capabilities.supports(SqlFeature.FUNCTION_TABLE_ORDINALITY));
     }
 

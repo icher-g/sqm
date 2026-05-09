@@ -87,6 +87,46 @@ public final class Dsl {
         return QualifiedName.of(parts);
     }
 
+    /**
+     * Creates a sequence value expression for the next sequence value.
+     *
+     * @param sequence sequence name, optionally qualified with dots
+     * @return a sequence next-value expression
+     */
+    public static SequenceValueExpr nextValue(String sequence) {
+        return nextValue(QualifiedName.of(sequence.split("\\.")));
+    }
+
+    /**
+     * Creates a sequence value expression for the next sequence value.
+     *
+     * @param sequence sequence name
+     * @return a sequence next-value expression
+     */
+    public static SequenceValueExpr nextValue(QualifiedName sequence) {
+        return SequenceValueExpr.of(sequence, SequenceValueKind.NEXT_VALUE);
+    }
+
+    /**
+     * Creates a sequence value expression for the current sequence value.
+     *
+     * @param sequence sequence name, optionally qualified with dots
+     * @return a sequence current-value expression
+     */
+    public static SequenceValueExpr currentValue(String sequence) {
+        return currentValue(QualifiedName.of(sequence.split("\\.")));
+    }
+
+    /**
+     * Creates a sequence value expression for the current sequence value.
+     *
+     * @param sequence sequence name
+     * @return a sequence current-value expression
+     */
+    public static SequenceValueExpr currentValue(QualifiedName sequence) {
+        return SequenceValueExpr.of(sequence, SequenceValueKind.CURRENT_VALUE);
+    }
+
     /* ========================= Tables ========================= */
 
     /**

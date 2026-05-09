@@ -13,6 +13,7 @@ import io.sqm.validate.mysql.rule.MySqlTableHintValidationRule;
 import io.sqm.validate.mysql.rule.MySqlFunctionOrderByValidationRule;
 import io.sqm.validate.mysql.rule.MySqlAnyAllPredicateValidationRule;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
+import io.sqm.validate.schema.rule.SequenceValueFeatureValidationRule;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
 
 import java.util.List;
@@ -94,7 +95,8 @@ public final class MySqlValidationDialect implements SchemaValidationDialect {
             new MySqlTableHintValidationRule(),
             new MySqlIndexHintValidationRule(),
             new MySqlAnyAllPredicateValidationRule(),
-            new MySqlFunctionOrderByValidationRule()
+            new MySqlFunctionOrderByValidationRule(),
+            new SequenceValueFeatureValidationRule(name(), version, capabilities, false)
         );
     }
 }
