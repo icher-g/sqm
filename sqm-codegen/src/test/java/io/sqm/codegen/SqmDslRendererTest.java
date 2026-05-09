@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import static io.sqm.dsl.Dsl.param;
+import static io.sqm.dsl.Dsl.nextValue;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.star;
 import static io.sqm.dsl.Dsl.tbl;
@@ -58,5 +59,38 @@ class SqmDslRendererTest {
         assertTrue(source.contains("public static Set<String> findActiveParams()"));
         assertTrue(source.contains("return Set.of(\"status\")"));
         assertFalse(source.contains("@Generated("));
+    }
+
+    @Test
+    void renderEmitsSequenceValueDslHelpers() {
+        var statement = select(nextValue("users_seq")).from(tbl("dual")).build();
+        var user = Path.of("sequence");
+        var group = new SqlFolderGroup(
+            user,
+            "SequenceQueries",
+            List.of(new SqlSourceFile(
+                Path.of("sequence", "next_user_id.sql"),
+                user,
+                "nextUserId",
+                Set.of(),
+                "hash-2",
+                List.of(statement)
+            ))
+        );
+
+        var options = SqlFileCodegenOptions.of(
+            Path.of("sql"),
+            Path.of("generated"),
+            "io.sqm.codegen.generated",
+            SqlCodegenDialect.ORACLE,
+            false,
+            false,
+            null,
+            true
+        );
+
+        var source = new SqmDslRenderer(options).render(group);
+
+        assertTrue(source.contains("nextValue(qualify(id(\"users_seq\")))"));
     }
 }

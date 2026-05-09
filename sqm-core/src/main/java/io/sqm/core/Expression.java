@@ -10,7 +10,7 @@ import java.util.Objects;
  * Any value-producing node (scalar or boolean).
  */
 public sealed interface Expression extends Node, QuantifiedSource
-    permits ArithmeticExpr, ArrayExpr, ArraySliceExpr, ArraySubscriptExpr, AtTimeZoneExpr, BinaryOperatorExpr, CaseExpr, CastExpr, CollateExpr, ColumnExpr, ConcatExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, OutputColumnExpr, ParamExpr, Predicate, UnaryOperatorExpr, ValueSet {
+    permits ArithmeticExpr, ArrayExpr, ArraySliceExpr, ArraySubscriptExpr, AtTimeZoneExpr, BinaryOperatorExpr, CaseExpr, CastExpr, CollateExpr, ColumnExpr, ConcatExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, OutputColumnExpr, ParamExpr, Predicate, SequenceValueExpr, UnaryOperatorExpr, ValueSet {
 
     /**
      * Creates a literal expression.

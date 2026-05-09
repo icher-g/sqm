@@ -21,7 +21,8 @@ class DefaultTranspileRuleRegistryDefaultsTest {
                 "postgres-to-mysql-operator-family-unsupported",
                 "postgres-to-mysql-regex-variant-unsupported",
                 "postgres-to-mysql-returning-unsupported",
-                "postgres-to-mysql-similar-to-unsupported"
+                "postgres-to-mysql-similar-to-unsupported",
+                "sequence-value-unsupported"
             ),
             rules.stream().map(TranspileRule::id).sorted().toList()
         );
@@ -58,6 +59,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
                 "postgres-merge-do-nothing-unsupported",
                 "postgres-to-sqlserver-distinct-on-unsupported",
                 "postgres-to-sqlserver-returning-unsupported",
+                "sequence-value-unsupported",
                 "standard-limit-to-sqlserver-top"
             ),
             postgresToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()
@@ -72,7 +74,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
             sqlServerToPostgresRules.stream().map(TranspileRule::id).sorted().toList()
         );
         assertEquals(
-            java.util.List.of("standard-limit-to-sqlserver-top"),
+            java.util.List.of("sequence-value-unsupported", "standard-limit-to-sqlserver-top"),
             ansiToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()
         );
     }
@@ -118,6 +120,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
             java.util.List.of(
                 "oracle-hint-dropping",
                 "oracle-returning-into-unsupported",
+                "sequence-value-unsupported",
                 "standard-limit-to-sqlserver-top"
             ),
             oracleToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()

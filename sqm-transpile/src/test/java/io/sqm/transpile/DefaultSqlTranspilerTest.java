@@ -1537,6 +1537,90 @@ class DefaultSqlTranspilerTest {
     }
 
     @Test
+    void oracleSequenceValuesRenderInPostgresSyntax() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ORACLE)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .build();
+
+        var result = transpiler.transpile("SELECT users_seq.NEXTVAL FROM dual");
+
+        assertEquals(TranspileStatus.SUCCESS, result.status());
+        assertEquals(normalizeSql("SELECT nextval('users_seq') FROM dual"), normalizeSql(result.sql().orElseThrow()));
+    }
+
+    @Test
+    void postgresSequenceValuesRenderInOracleSyntax() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.POSTGRESQL)
+            .targetDialect(SqlDialectId.ORACLE)
+            .build();
+
+        var result = transpiler.transpile("SELECT currval('app.users_seq')");
+
+        assertEquals(TranspileStatus.SUCCESS, result.status());
+        assertEquals(normalizeSql("SELECT app.users_seq.CURRVAL"), normalizeSql(result.sql().orElseThrow()));
+    }
+
+    @Test
+    void sqlServerSequenceValuesRenderInPostgresSyntax() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.SQLSERVER)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .build();
+
+        var result = transpiler.transpile("SELECT NEXT VALUE FOR app.users_seq");
+
+        assertEquals(TranspileStatus.SUCCESS, result.status());
+        assertEquals(normalizeSql("SELECT nextval('app.users_seq')"), normalizeSql(result.sql().orElseThrow()));
+    }
+
+    @Test
+    void nextSequenceValuesRenderForSqlServerTargets() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ORACLE)
+            .targetDialect(SqlDialectId.SQLSERVER)
+            .build();
+
+        var result = transpiler.transpile("SELECT users_seq.NEXTVAL FROM dual");
+
+        assertEquals(TranspileStatus.SUCCESS, result.status());
+        assertEquals(normalizeSql("SELECT NEXT VALUE FOR users_seq FROM dual"), normalizeSql(result.sql().orElseThrow()));
+        assertTrue(result.steps().stream().anyMatch(step ->
+            "sequence-value-unsupported".equals(step.ruleId())
+                && step.fidelity() == RewriteFidelity.EXACT
+        ));
+    }
+
+    @Test
+    void currentSequenceValuesAreRejectedForSqlServerTargets() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ORACLE)
+            .targetDialect(SqlDialectId.SQLSERVER)
+            .build();
+
+        var result = transpiler.transpile("SELECT users_seq.CURRVAL FROM dual");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_SEQUENCE_CURRENT_VALUE", result.problems().getFirst().code());
+        assertTrue(result.sql().isEmpty());
+    }
+
+    @Test
+    void sequenceValuesAreRejectedForMySqlTargets() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ORACLE)
+            .targetDialect(SqlDialectId.MYSQL)
+            .build();
+
+        var result = transpiler.transpile("SELECT users_seq.NEXTVAL FROM dual");
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertEquals("UNSUPPORTED_SEQUENCE_VALUE", result.problems().getFirst().code());
+        assertTrue(result.sql().isEmpty());
+    }
+
+    @Test
     void oracleReturningIntoIsRejectedBeforeNonOracleRendering() {
         var transpiler = SqlTranspiler.builder()
             .sourceDialect(SqlDialectId.ORACLE)

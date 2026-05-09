@@ -29,6 +29,7 @@ class OracleCapabilitiesTest {
         assertTrue(capabilities.supports(SqlFeature.DML_RESULT_CLAUSE));
         assertTrue(capabilities.supports(SqlFeature.DML_RESULT_VARIABLE_TARGET));
         assertTrue(capabilities.supports(SqlFeature.LATERAL));
+        assertTrue(capabilities.supports(SqlFeature.SEQUENCE_VALUE_EXPRESSION));
     }
 
     @Test
@@ -65,6 +66,7 @@ class OracleCapabilitiesTest {
         assertEquals(expected.supports(SqlFeature.MERGE_STATEMENT), latest.supports(SqlFeature.MERGE_STATEMENT));
         assertEquals(expected.supports(SqlFeature.LATERAL), latest.supports(SqlFeature.LATERAL));
         assertEquals(expected.supports(SqlFeature.DML_RESULT_CLAUSE), latest.supports(SqlFeature.DML_RESULT_CLAUSE));
+        assertEquals(expected.supports(SqlFeature.SEQUENCE_VALUE_EXPRESSION), latest.supports(SqlFeature.SEQUENCE_VALUE_EXPRESSION));
     }
 
     @Test

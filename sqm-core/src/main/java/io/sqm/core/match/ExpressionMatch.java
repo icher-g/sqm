@@ -155,6 +155,14 @@ public interface ExpressionMatch<R> extends Match<Expression, R> {
     ExpressionMatch<R> funcArg(Function<FunctionExpr.Arg, R> f);
 
     /**
+     * Registers a handler to be applied when the subject is a {@link SequenceValueExpr}.
+     *
+     * @param f handler for {@code SequenceValueExpr}
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> sequenceValue(Function<SequenceValueExpr, R> f);
+
+    /**
      * Registers a handler to be applied when the subject is a {@link ParamExpr}.
      *
      * @param f handler for {@code ParamExpr}

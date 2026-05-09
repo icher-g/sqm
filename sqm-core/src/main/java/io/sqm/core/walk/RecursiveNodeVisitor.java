@@ -360,6 +360,17 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
+     * Visits a {@link SequenceValueExpr} leaf node.
+     *
+     * @param expr sequence value expression being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitSequenceValueExpr(SequenceValueExpr expr) {
+        return defaultResult();
+    }
+
+    /**
      * Visits an {@link AnonymousParamExpr}, representing an anonymous positional
      * parameter such as {@code ?}.
      *

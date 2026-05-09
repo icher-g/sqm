@@ -243,6 +243,10 @@ public enum SqlFeature {
      */
     EXPR_COLLATE("Expression-level COLLATE"),
     /**
+     * Sequence value expression.
+     */
+    SEQUENCE_VALUE_EXPRESSION("Sequence value expression"),
+    /**
      * PostgreSQL exponentiation operator.
      * Example: {@code a ^ b}
      */

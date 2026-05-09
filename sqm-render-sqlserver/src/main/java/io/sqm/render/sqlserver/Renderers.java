@@ -37,6 +37,7 @@ public final class Renderers {
             .register(new OutputColumnExprRenderer())
             .register(new OutputStarResultItemRenderer())
             .register(new FunctionExprRenderer())
+            .register(new SequenceValueExprRenderer())
             .register(new LimitOffsetRenderer())
             .register(new CrossJoinRenderer())
             .register(new OnJoinRenderer())

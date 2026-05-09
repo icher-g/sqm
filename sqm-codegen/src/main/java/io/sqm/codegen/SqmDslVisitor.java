@@ -1567,6 +1567,14 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     }
 
     @Override
+    public Void visitSequenceValueExpr(SequenceValueExpr expr) {
+        out.append(expr.kind() == SequenceValueKind.NEXT_VALUE ? "nextValue(" : "currentValue(");
+        appendQualifiedName(expr.sequence());
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
     public Void visitWindowDef(WindowDef w) {
         out.append("window(").quote(w.name().value()).append(", ");
         appendNode(w.spec());

@@ -49,6 +49,7 @@ class MySqlCapabilitiesTest {
         assertFalse(capabilities.supports(SqlFeature.POSTGRES_TYPECAST));
         assertFalse(capabilities.supports(SqlFeature.DOLLAR_STRING_LITERAL));
         assertFalse(capabilities.supports(SqlFeature.ARRAY_LITERAL));
+        assertFalse(capabilities.supports(SqlFeature.SEQUENCE_VALUE_EXPRESSION));
     }
 
     @Test
@@ -88,6 +89,7 @@ class MySqlCapabilitiesTest {
         assertEquals(expected.supports(SqlFeature.DELETE_USING_JOIN), latest.supports(SqlFeature.DELETE_USING_JOIN));
         assertEquals(expected.supports(SqlFeature.LATERAL), latest.supports(SqlFeature.LATERAL));
         assertEquals(expected.supports(SqlFeature.DML_RESULT_CLAUSE), latest.supports(SqlFeature.DML_RESULT_CLAUSE));
+        assertEquals(expected.supports(SqlFeature.SEQUENCE_VALUE_EXPRESSION), latest.supports(SqlFeature.SEQUENCE_VALUE_EXPRESSION));
     }
 
     @Test

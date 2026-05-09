@@ -23,6 +23,7 @@ import io.sqm.transpile.builtin.PostgresToMySqlSimilarToUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToOracleDistinctOnUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToSqlServerDistinctOnUnsupportedRule;
 import io.sqm.transpile.builtin.PostgresToSqlServerReturningUnsupportedRule;
+import io.sqm.transpile.builtin.SequenceValueUnsupportedRule;
 import io.sqm.transpile.builtin.SqlServerHintDroppingRule;
 import io.sqm.transpile.builtin.SqlServerMergeUnsupportedRule;
 import io.sqm.transpile.builtin.SqlServerOutputUnsupportedRule;
@@ -77,7 +78,8 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
             new SqlServerMergeUnsupportedRule(),
             new SqlServerHintDroppingRule(),
             new PostgresToSqlServerDistinctOnUnsupportedRule(),
-            new PostgresToSqlServerReturningUnsupportedRule()
+            new PostgresToSqlServerReturningUnsupportedRule(),
+            new SequenceValueUnsupportedRule()
         ));
     }
 

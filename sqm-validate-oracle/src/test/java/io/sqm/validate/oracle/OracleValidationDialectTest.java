@@ -19,6 +19,7 @@ import static io.sqm.dsl.Dsl.id;
 import static io.sqm.dsl.Dsl.insert;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.merge;
+import static io.sqm.dsl.Dsl.nextValue;
 import static io.sqm.dsl.Dsl.param;
 import static io.sqm.dsl.Dsl.resultVariableTarget;
 import static io.sqm.dsl.Dsl.row;
@@ -69,6 +70,19 @@ class OracleValidationDialectTest {
         assertFalse(hasDialectProblem(validator.validate(update), "update.result"));
         assertFalse(hasDialectProblem(validator.validate(delete), "delete.result"));
         assertFalse(hasDialectProblem(validator.validate(merge), "merge.result"));
+    }
+
+    @Test
+    void validatesOracleSequenceValueExpressions() {
+        var validator = SchemaStatementValidator.of(SCHEMA, OracleValidationDialect.of());
+        var query = io.sqm.dsl.Dsl.select(nextValue("users_seq")).from(tbl("users")).build();
+
+        var result = validator.validate(query);
+
+        assertFalse(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "expression.sequence_value".equals(problem.clausePath())
+        ));
     }
 
     @Test

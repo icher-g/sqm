@@ -144,6 +144,25 @@ class StatementFeatureInspectorTest {
     }
 
     @Test
+    void detectsSequenceValueExpressions() {
+        var next = Dsl.select(Dsl.nextValue("users_seq"))
+            .from(Dsl.tbl("users"))
+            .build();
+        var current = Dsl.select(Dsl.currentValue("users_seq"))
+            .from(Dsl.tbl("users"))
+            .build();
+        var plain = Dsl.select(Dsl.col("id"))
+            .from(Dsl.tbl("users"))
+            .build();
+
+        assertTrue(StatementFeatureInspector.hasSequenceValueExpression(next));
+        assertTrue(StatementFeatureInspector.hasSequenceValueExpression(current));
+        assertTrue(StatementFeatureInspector.hasCurrentSequenceValueExpression(current));
+        assertFalse(StatementFeatureInspector.hasCurrentSequenceValueExpression(next));
+        assertFalse(StatementFeatureInspector.hasSequenceValueExpression(plain));
+    }
+
+    @Test
     void detectsMergeStatements() {
         MergeStatement mergeStatement = Dsl.merge("users")
             .source(Dsl.tbl("src").as("s"))

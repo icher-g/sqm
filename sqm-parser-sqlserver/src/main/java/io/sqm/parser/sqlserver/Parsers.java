@@ -42,6 +42,7 @@ public final class Parsers {
             .register(new OutputColumnExprParser())
             .register(new OutputStarResultItemParser())
             .register(new FunctionExprParser())
+            .register(new SequenceValueExprParser())
             .register(new LimitOffsetParser())
             .register(new PowerArithmeticExprParser(postfixExprParser))
             .register(new SelectQueryParser())

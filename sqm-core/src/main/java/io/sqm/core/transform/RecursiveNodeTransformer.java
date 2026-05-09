@@ -466,6 +466,17 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
+     * Visits a {@link SequenceValueExpr} leaf node.
+     *
+     * @param expr sequence value expression
+     * @return the original sequence value expression
+     */
+    @Override
+    public Node visitSequenceValueExpr(SequenceValueExpr expr) {
+        return expr;
+    }
+
+    /**
      * Visits a {@link FunctionExpr.Arg} node representing a single argument of a function call.
      *
      * @param a the function argument
