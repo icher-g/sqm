@@ -238,6 +238,13 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
             }
             out.nl().append(")");
         }
+        if (q.hierarchical() != null) {
+            out.nl().append(".hierarchical(");
+            try (var ignore = new CodeScope(out, false)) {
+                appendNode(q.hierarchical());
+            }
+            out.nl().append(")");
+        }
         if (q.groupBy() != null && q.groupBy().items() != null && !q.groupBy().items().isEmpty()) {
             out.nl().append(".groupBy(");
             try (var ignore = new CodeScope(out, false)) {
@@ -1570,6 +1577,31 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     public Void visitSequenceValueExpr(SequenceValueExpr expr) {
         out.append(expr.kind() == SequenceValueKind.NEXT_VALUE ? "nextValue(" : "currentValue(");
         appendQualifiedName(expr.sequence());
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPriorExpr(PriorExpr expr) {
+        out.append("prior(");
+        appendNode(expr.expr());
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitHierarchicalQueryClause(HierarchicalQueryClause clause) {
+        out.append("hierarchy(");
+        if (clause.startWith() == null) {
+            out.append("null");
+        }
+        else {
+            appendNode(clause.startWith());
+        }
+        out.append(", ");
+        appendNode(clause.connectBy());
+        out.append(", ").append(String.valueOf(clause.noCycle())).append(", ");
+        appendOrderByOrNull(clause.orderSiblingsBy());
         out.append(")");
         return defaultResult();
     }

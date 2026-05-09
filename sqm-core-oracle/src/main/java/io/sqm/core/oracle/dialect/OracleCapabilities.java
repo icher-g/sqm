@@ -41,6 +41,7 @@ public final class OracleCapabilities {
             .supports(SqlFeature.LOCKING_SKIP_LOCKED)
             .supports(SqlFeature.OPTIMIZER_HINT_COMMENT)
             .supports(SqlFeature.SEQUENCE_VALUE_EXPRESSION)
+            .supports(SqlFeature.HIERARCHICAL_QUERY)
             .supports(ORACLE_12_1, SqlFeature.LATERAL)
             .build();
     }

@@ -20,6 +20,7 @@ public non-sealed interface SelectQuery extends Query {
      * @param from FROM table reference, or {@code null}
      * @param joins joins (must not be {@code null})
      * @param where WHERE predicate, or {@code null}
+     * @param hierarchical hierarchical query clause, or {@code null}
      * @param groupBy GROUP BY clause, or {@code null}
      * @param having HAVING predicate, or {@code null}
      * @param orderBy ORDER BY clause, or {@code null}
@@ -37,6 +38,7 @@ public non-sealed interface SelectQuery extends Query {
         TableRef from,
         List<Join> joins,
         Predicate where,
+        HierarchicalQueryClause hierarchical,
         GroupBy groupBy,
         Predicate having,
         OrderBy orderBy,
@@ -47,7 +49,7 @@ public non-sealed interface SelectQuery extends Query {
         List<WindowDef> windows,
         List<SelectModifier> modifiers,
         List<StatementHint> hints) {
-        return new Impl(items, from, joins, where, groupBy, having, orderBy, distinct, topSpec, limitOffset, lockFor, windows, modifiers, hints);
+        return new Impl(items, from, joins, where, hierarchical, groupBy, having, orderBy, distinct, topSpec, limitOffset, lockFor, windows, modifiers, hints);
     }
 
     /**
@@ -96,6 +98,13 @@ public non-sealed interface SelectQuery extends Query {
      * @return predicate or {@code null}
      */
     Predicate where();
+
+    /**
+     * Gets the hierarchical query clause.
+     *
+     * @return hierarchical query clause or {@code null}
+     */
+    HierarchicalQueryClause hierarchical();
 
     /**
      * Gets the GROUP BY clause.
@@ -182,6 +191,7 @@ public non-sealed interface SelectQuery extends Query {
      * @param from FROM table reference, or {@code null}
      * @param joins joins (immutable copy)
      * @param where WHERE predicate, or {@code null}
+     * @param hierarchical hierarchical query clause, or {@code null}
      * @param groupBy GROUP BY clause, or {@code null}
      * @param having HAVING predicate, or {@code null}
      * @param orderBy ORDER BY clause, or {@code null}
@@ -197,6 +207,7 @@ public non-sealed interface SelectQuery extends Query {
                 TableRef from,
                 List<Join> joins,
                 Predicate where,
+                HierarchicalQueryClause hierarchical,
                 GroupBy groupBy,
                 Predicate having,
                 OrderBy orderBy,
@@ -226,6 +237,7 @@ public non-sealed interface SelectQuery extends Query {
          * @param from FROM table reference, or {@code null}
          * @param joins joins (must not be {@code null})
          * @param where WHERE predicate, or {@code null}
+         * @param hierarchical hierarchical query clause, or {@code null}
          * @param groupBy GROUP BY clause, or {@code null}
          * @param having HAVING predicate, or {@code null}
          * @param orderBy ORDER BY clause, or {@code null}
@@ -239,6 +251,7 @@ public non-sealed interface SelectQuery extends Query {
                     TableRef from,
                     List<Join> joins,
                     Predicate where,
+                    HierarchicalQueryClause hierarchical,
                     GroupBy groupBy,
                     Predicate having,
                     OrderBy orderBy,
@@ -247,7 +260,7 @@ public non-sealed interface SelectQuery extends Query {
                     LimitOffset limitOffset,
                     LockingClause lockFor,
                     List<WindowDef> windows) {
-            this(items, from, joins, where, groupBy, having, orderBy, distinct, topSpec, limitOffset, lockFor, windows, List.of(), List.of());
+            this(items, from, joins, where, hierarchical, groupBy, having, orderBy, distinct, topSpec, limitOffset, lockFor, windows, List.of(), List.of());
         }
     }
 }

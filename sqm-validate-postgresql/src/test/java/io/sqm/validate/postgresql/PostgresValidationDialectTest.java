@@ -550,7 +550,7 @@ class PostgresValidationDialectTest {
         assertNotNull(catalog);
         assertTrue(catalog.resolve("to_json").isPresent());
         assertFalse(catalog.resolve("to_jsonb").isPresent());
-        assertEquals(9, rules.size());
+        assertEquals(10, rules.size());
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectFeatureValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectClauseConsistencyRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresDistinctOnValidationRule")));
@@ -560,6 +560,7 @@ class PostgresValidationDialectTest {
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresTableHintValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresFunctionOrderByValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("SequenceValueFeatureValidationRule")));
+        assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("HierarchicalQueryFeatureValidationRule")));
     }
 
     @Test

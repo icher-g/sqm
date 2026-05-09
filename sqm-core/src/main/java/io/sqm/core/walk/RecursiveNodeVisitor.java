@@ -371,6 +371,18 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
+     * Visits a {@link PriorExpr} node and its wrapped expression.
+     *
+     * @param expr prior expression being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitPriorExpr(PriorExpr expr) {
+        accept(expr.expr());
+        return defaultResult();
+    }
+
+    /**
      * Visits an {@link AnonymousParamExpr}, representing an anonymous positional
      * parameter such as {@code ?}.
      *
@@ -1041,12 +1053,27 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         accept(q.from());
         q.joins().forEach(this::accept);
         accept(q.where());
+        accept(q.hierarchical());
         accept(q.groupBy());
         accept(q.having());
         q.windows().forEach(this::accept);
         accept(q.orderBy());
         accept(q.limitOffset());
         accept(q.lockFor());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a hierarchical query clause and its predicates/order clause.
+     *
+     * @param clause hierarchical query clause being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitHierarchicalQueryClause(HierarchicalQueryClause clause) {
+        accept(clause.startWith());
+        accept(clause.connectBy());
+        accept(clause.orderSiblingsBy());
         return defaultResult();
     }
 

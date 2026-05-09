@@ -34,6 +34,7 @@ class SelectQueryRendererTest {
             null,
             null,
             null,
+            null,
             List.of(),
             List.of(SelectModifier.CALC_FOUND_ROWS),
             List.of(statementHint("MAX_EXECUTION_TIME", 1000))
@@ -51,6 +52,7 @@ class SelectQueryRendererTest {
             List.of(Dsl.col("id").toSelectItem()),
             Dsl.tbl("users"),
             List.of(),
+            null,
             null,
             null,
             null,
@@ -83,6 +85,7 @@ class SelectQueryRendererTest {
             null,
             null,
             null,
+            null,
             List.of(),
             List.of(),
             List.of(statementHint("MAX_EXECUTION_TIME", 1000), statementHint("BKA", "users"))
@@ -102,6 +105,7 @@ class SelectQueryRendererTest {
             List.of(Dsl.col("id").toSelectItem()),
             Dsl.tbl("users"),
             List.of(),
+            null,
             null,
             null,
             null,

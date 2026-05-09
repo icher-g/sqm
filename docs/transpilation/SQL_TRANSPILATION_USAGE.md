@@ -161,7 +161,8 @@ combined render result and `result.params()` preserves statement order.
   - Oracle statement and table hints are dropped for non-Oracle targets
 - Unsupported:
   - Oracle DML `RETURNING ... INTO` is modeled and parsed, but exact transpilation to non-Oracle result channels is unsupported until an explicit conversion rule is designed
-  - advanced Oracle-only query features such as hierarchical queries and `MODEL` clauses require separate model stories
+  - Oracle hierarchical queries (`CONNECT BY`) are modeled and rendered for Oracle, but exact transpilation to recursive CTEs is unsupported by default with `UNSUPPORTED_HIERARCHICAL_QUERY`
+  - advanced Oracle-only query features such as `MODEL` clauses require separate model stories
 
 ### non-Oracle source -> Oracle
 
@@ -186,6 +187,7 @@ combined render result and `result.params()` preserves statement order.
 | Oracle                | SQL Server            | limit-only row limiting            | Exact rewrite to `TOP`                                     |
 | Oracle                | non-Oracle            | hints                              | Approximate drop with `ORACLE_HINTS_DROPPED`               |
 | Oracle                | non-Oracle            | `RETURNING ... INTO`               | Unsupported with `UNSUPPORTED_ORACLE_RETURNING_INTO`       |
+| Oracle                | non-Oracle            | hierarchical query (`CONNECT BY`)  | Unsupported with `UNSUPPORTED_HIERARCHICAL_QUERY`          |
 | PostgreSQL/MySQL/ANSI | Oracle                | shared row limiting                | Exact Oracle `OFFSET ... FETCH` render                     |
 | SQL Server            | Oracle                | baseline `TOP`                     | Exact rewrite to Oracle `FETCH FIRST`                      |
 | PostgreSQL            | Oracle                | `RETURNING`/generic result clause  | Unsupported with `UNSUPPORTED_ORACLE_RESULT_CLAUSE`        |

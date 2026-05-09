@@ -6,8 +6,12 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
+import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.hierarchy;
 import static io.sqm.dsl.Dsl.param;
 import static io.sqm.dsl.Dsl.nextValue;
+import static io.sqm.dsl.Dsl.orderBy;
+import static io.sqm.dsl.Dsl.prior;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.star;
 import static io.sqm.dsl.Dsl.tbl;
@@ -92,5 +96,43 @@ class SqmDslRendererTest {
         var source = new SqmDslRenderer(options).render(group);
 
         assertTrue(source.contains("nextValue(qualify(id(\"users_seq\")))"));
+    }
+
+    @Test
+    void renderEmitsHierarchicalQueryDslHelpers() {
+        var statement = select(star())
+            .from(tbl("categories"))
+            .hierarchical(hierarchy(col("parent_id").isNull(), prior(col("id")).eq(col("parent_id")), true, orderBy(col("name"))))
+            .build();
+        var user = Path.of("hierarchy");
+        var group = new SqlFolderGroup(
+            user,
+            "HierarchyQueries",
+            List.of(new SqlSourceFile(
+                Path.of("hierarchy", "tree.sql"),
+                user,
+                "tree",
+                Set.of(),
+                "hash-3",
+                List.of(statement)
+            ))
+        );
+
+        var options = SqlFileCodegenOptions.of(
+            Path.of("sql"),
+            Path.of("generated"),
+            "io.sqm.codegen.generated",
+            SqlCodegenDialect.ORACLE,
+            false,
+            false,
+            null,
+            true
+        );
+
+        var source = new SqmDslRenderer(options).render(group);
+
+        assertTrue(source.contains(".hierarchical("));
+        assertTrue(source.contains("hierarchy("));
+        assertTrue(source.contains("prior(col(\"id\"))"));
     }
 }

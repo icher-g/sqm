@@ -969,7 +969,7 @@ class SqlServerValidationDialectTest {
         var versionedDialect = SqlServerValidationDialect.of(SqlDialectVersion.of(2014, 0));
 
         assertEquals("sqlserver", dialect.name());
-        assertEquals(9, dialect.additionalRules().size());
+        assertEquals(10, dialect.additionalRules().size());
         assertEquals(SqlDialectVersion.of(2019, 0), dialect.version());
         assertTrue(dialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.LATERAL));
         assertFalse(versionedDialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.AT_TIME_ZONE));

@@ -425,6 +425,26 @@ public enum TokenType {
      */
     NEXT,
     /**
+     * START keyword token.
+     */
+    START,
+    /**
+     * CONNECT keyword token.
+     */
+    CONNECT,
+    /**
+     * PRIOR keyword token.
+     */
+    PRIOR,
+    /**
+     * NOCYCLE keyword token.
+     */
+    NOCYCLE,
+    /**
+     * SIBLINGS keyword token.
+     */
+    SIBLINGS,
+    /**
      * ROW keyword token.
      */
     ROW,

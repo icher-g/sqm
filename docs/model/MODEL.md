@@ -34,6 +34,7 @@ Status terms used below:
 | `QuantifiedSource`                                           | Source role for `ANY` / `ALL` predicates                                             | Query sources only                                                                               | Query sources plus array-expression sources                                                      | Query sources only                                                                               | Query sources only                                                                               | PostgreSQL supports array-expression sources such as `ANY(path)`                                 | Shared role interface implemented by `Query` and `Expression`; dialects opt in to non-query sources                                                                      |
 | `AtTimeZoneExpr`                                             | Time-zone conversion expression                                                      | `Not supported by the dialect`                                                                   | `Support`                                                                                        | `Not supported by the dialect`                                                                   | `Support`                                                                                        | This table records SQM dialect support, not a full claim about every database product capability | Shared node for a dialect-gated expression family                                                                                                                        |
 | `SequenceValueExpr`                                          | Reads the next or current value from a named sequence                                | `Not supported by the dialect`                                                                   | `Support` through `nextval('seq')` / `currval('seq')`                                            | `Not supported by the dialect`                                                                   | `Support` for next values through `NEXT VALUE FOR`; current values are rejected                  | Sequence syntax is dialect-shaped even when the semantic role is shared                          | Shared expression node for sequence reads; Oracle renders `seq.NEXTVAL` / `seq.CURRVAL`, PostgreSQL renders function syntax, and SQL Server only supports next values    |
+| `HierarchicalQueryClause` / `PriorExpr`                      | Hierarchical traversal semantics attached to `SelectQuery`                           | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | Oracle currently ships parser/renderer/validation support                                        | Shared query clause plus parent-row expression node for Oracle `START WITH`, `CONNECT BY`, `NOCYCLE`, `PRIOR`, and `ORDER SIBLINGS BY`                                   |
 | `ResultClause`                                               | DML statement emits result rows                                                      | `Support` for the shared shape only where delivered by the ANSI-based DML slice                  | `Support` through shipped `RETURNING` support                                                    | `Not supported by the dialect` for current shipped MySQL versions                                | `Support` through shipped `OUTPUT` support                                                       | The database syntax differs by dialect (`RETURNING`, `OUTPUT`, and future equivalents)           | Shared semantics, dialect-specific syntax                                                                                                                                |
 | `RelationResultTarget`                                       | DML result rows are redirected into a relation target                                | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Support` for `OUTPUT ... INTO`                                                                  | The current shipped support is SQL Server-specific                                               | Shared sink concept, currently only shipped for SQL Server                                                                                                               |
 | `VariableResultTarget`                                       | DML result expressions are assigned into variables                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | The current shipped support is Oracle-specific                                                   | Shared sink concept for dialects such as Oracle `RETURNING ... INTO`; Oracle support lives in the Oracle modules                                                         |
@@ -69,6 +70,7 @@ Node
 |  |- ColumnExpr
 |  |- OutputColumnExpr
 |  |- SequenceValueExpr
+|  |- PriorExpr
 |  |- FunctionExpr
 |  |  `- FunctionExpr.Arg
 |  |     |- FunctionExpr.Arg.Column
@@ -184,6 +186,7 @@ Node
 |  |- GroupItem.Rollup
 |  `- GroupItem.Cube
 |- WindowDef
+|- HierarchicalQueryClause
 |- BoundSpec
 |  |- BoundSpec.UnboundedPreceding
 |  |- BoundSpec.Preceding
@@ -229,6 +232,7 @@ graph TD
   Expression --> ColumnExpr
   Expression --> OutputColumnExpr
   Expression --> SequenceValueExpr
+  Expression --> PriorExpr
   Expression --> FunctionExpr
   Expression --> ParamExpr
   Expression --> ArithmeticExpr
@@ -358,6 +362,7 @@ graph TD
   GroupItem --> GroupItem_Rollup
   GroupItem --> GroupItem_Cube
   Node --> WindowDef
+  Node --> HierarchicalQueryClause
 
   Node --> BoundSpec
   BoundSpec --> BoundSpec_UnboundedPreceding
@@ -421,6 +426,9 @@ graph TD
 
 - **SequenceValueExpr**
   Reads a named sequence value, either next value or current value. Dialects render the shared semantic node through their own syntax, such as Oracle `seq.NEXTVAL`, PostgreSQL `nextval('seq')`, or SQL Server `NEXT VALUE FOR seq`.
+
+- **PriorExpr**
+  Marks an expression as being evaluated against the parent row in a hierarchical query. The current shipped syntax support is Oracle `PRIOR <expr>` inside `CONNECT BY` predicates.
 
 - **FunctionExpr**
   Call to a SQL function (built-in or user defined), including the function name and argument list.
@@ -591,7 +599,7 @@ graph TD
 
 - **Query**
   - **CompositeQuery** - `UNION`, `INTERSECT`, `EXCEPT`
-  - **SelectQuery** - main SELECT form
+  - **SelectQuery** - main SELECT form, including optional `HierarchicalQueryClause`
   - **WithQuery** - `WITH` plus child query
 - **InsertStatement**
   `INSERT [statement hints] INTO <table> [(columns...)] <source> [result clause]` where source is `VALUES (...)` or a query.
@@ -606,6 +614,9 @@ graph TD
   More specialized branches and SQL Server options remain dialect-gated follow-up work.
 - **CteDef**
   CTE definition.
+
+- **HierarchicalQueryClause**
+  Shared semantic clause for hierarchical traversal attached to `SelectQuery`. It stores an optional `startWith` root predicate, a required `connectBy` parent-child predicate, a `noCycle` flag, and optional sibling ordering. Oracle currently renders this as `START WITH`, `CONNECT BY [NOCYCLE]`, and `ORDER SIBLINGS BY`; other shipped dialects reject it explicitly.
 
 ### MERGE
 

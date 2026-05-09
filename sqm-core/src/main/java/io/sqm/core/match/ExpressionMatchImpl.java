@@ -263,6 +263,21 @@ public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
     }
 
     /**
+     * Registers a handler to be applied when the subject is a {@link PriorExpr}.
+     *
+     * @param f handler for {@code PriorExpr}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public ExpressionMatch<R> prior(Function<PriorExpr, R> f) {
+        if (!matched && expr instanceof PriorExpr priorExpr) {
+            result = f.apply(priorExpr);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
      * Registers a handler to be applied when the subject is a {@link ParamExpr}.
      *
      * @param f handler for {@code ParamExpr}

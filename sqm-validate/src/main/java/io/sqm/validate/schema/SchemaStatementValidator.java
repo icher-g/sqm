@@ -367,6 +367,19 @@ public final class SchemaStatementValidator implements StatementValidator {
             return defaultResult();
         }
 
+        /**
+         * Validates hierarchical query feature support after normal traversal.
+         *
+         * @param clause hierarchical query clause.
+         * @return default result.
+         */
+        @Override
+        public Void visitHierarchicalQueryClause(HierarchicalQueryClause clause) {
+            super.visitHierarchicalQueryClause(clause);
+            registry.validate(clause, context);
+            return defaultResult();
+        }
+
         @Override
         public Void visitComparisonPredicate(ComparisonPredicate p) {
             super.visitComparisonPredicate(p);

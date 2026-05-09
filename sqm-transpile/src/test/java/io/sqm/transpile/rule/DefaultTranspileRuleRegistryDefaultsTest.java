@@ -14,6 +14,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         assertEquals(
             java.util.List.of(
                 "function-table-to-mysql-unsupported",
+                "hierarchical-query-unsupported",
                 "postgres-merge-unsupported",
                 "postgres-to-mysql-distinct-on-unsupported",
                 "postgres-to-mysql-ilike",
@@ -35,6 +36,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
 
         assertEquals(
             java.util.List.of(
+                "hierarchical-query-unsupported",
                 "mysql-hint-dropping",
                 "mysql-to-postgres-insert-mode-unsupported",
                 "mysql-to-postgres-json-function-unsupported",
@@ -56,6 +58,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
 
         assertEquals(
             java.util.List.of(
+                "hierarchical-query-unsupported",
                 "postgres-merge-do-nothing-unsupported",
                 "postgres-to-sqlserver-distinct-on-unsupported",
                 "postgres-to-sqlserver-returning-unsupported",
@@ -66,6 +69,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         );
         assertEquals(
             java.util.List.of(
+                "hierarchical-query-unsupported",
                 "sqlserver-hint-dropping",
                 "sqlserver-merge-unsupported",
                 "sqlserver-output-unsupported",
@@ -74,7 +78,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
             sqlServerToPostgresRules.stream().map(TranspileRule::id).sorted().toList()
         );
         assertEquals(
-            java.util.List.of("sequence-value-unsupported", "standard-limit-to-sqlserver-top"),
+            java.util.List.of("hierarchical-query-unsupported", "sequence-value-unsupported", "standard-limit-to-sqlserver-top"),
             ansiToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()
         );
     }
@@ -101,6 +105,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         );
         assertEquals(
             java.util.List.of(
+                "hierarchical-query-unsupported",
                 "oracle-hint-dropping",
                 "oracle-returning-into-unsupported"
             ),
@@ -118,6 +123,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         );
         assertEquals(
             java.util.List.of(
+                "hierarchical-query-unsupported",
                 "oracle-hint-dropping",
                 "oracle-returning-into-unsupported",
                 "sequence-value-unsupported",

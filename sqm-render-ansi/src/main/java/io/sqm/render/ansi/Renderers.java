@@ -64,6 +64,8 @@ public final class Renderers {
             .register(new OutputStarResultItemRenderer())
             .register(new FunctionExprRenderer())
             .register(new SequenceValueExprRenderer())
+            .register(new PriorExprRenderer())
+            .register(new HierarchicalQueryClauseRenderer())
             .register(new GroupByRenderer())
             .register(new GroupingSetsRenderer())
             .register(new GroupingSetRenderer())

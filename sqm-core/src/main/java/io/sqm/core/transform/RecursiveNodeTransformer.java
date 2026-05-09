@@ -477,6 +477,21 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
+     * Visits a {@link PriorExpr} node.
+     *
+     * @param expr prior expression
+     * @return transformed prior expression, or the original instance if unchanged
+     */
+    @Override
+    public Node visitPriorExpr(PriorExpr expr) {
+        var inner = apply(expr.expr());
+        if (inner != expr.expr()) {
+            return PriorExpr.of(inner);
+        }
+        return expr;
+    }
+
+    /**
      * Visits a {@link FunctionExpr.Arg} node representing a single argument of a function call.
      *
      * @param a the function argument
@@ -1223,6 +1238,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         changed |= apply(q.joins(), joins);
         var where = apply(q.where());
         changed |= where != q.where();
+        var hierarchical = apply(q.hierarchical());
+        changed |= hierarchical != q.hierarchical();
         var groupBy = apply(q.groupBy());
         changed |= groupBy != q.groupBy();
         var having = apply(q.having());
@@ -1244,6 +1261,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
                 .from(from)
                 .join(joins)
                 .where(where)
+                .hierarchical(hierarchical)
                 .having(having)
                 .window(windows);
 
@@ -1262,6 +1280,25 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             return builder.build();
         }
         return q;
+    }
+
+    /**
+     * Visits a {@link HierarchicalQueryClause}.
+     *
+     * @param clause hierarchical query clause to transform
+     * @return transformed clause, or the original instance if unchanged
+     */
+    @Override
+    public Node visitHierarchicalQueryClause(HierarchicalQueryClause clause) {
+        var startWith = apply(clause.startWith());
+        var connectBy = apply(clause.connectBy());
+        var orderSiblingsBy = apply(clause.orderSiblingsBy());
+        if (startWith != clause.startWith()
+            || connectBy != clause.connectBy()
+            || orderSiblingsBy != clause.orderSiblingsBy()) {
+            return HierarchicalQueryClause.of(startWith, connectBy, clause.noCycle(), orderSiblingsBy);
+        }
+        return clause;
     }
 
     /**

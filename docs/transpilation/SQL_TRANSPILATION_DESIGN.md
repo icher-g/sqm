@@ -1254,30 +1254,31 @@ The current initial transpilation slice should stay explicit about what is exact
 
 ### PostgreSQL -> MySQL
 
-| Category | Source construct | Current handling | Notes |
-|----------|------------------|------------------|-------|
-| Exact | `ConcatExpr` / string concatenation | Shared semantic node rendered as `CONCAT(...)` | Handled through `sqm-core`, not a pair-specific rule |
-| Exact | `IS NOT DISTINCT FROM` | Rewritten to MySQL null-safe equality | Uses canonical distinctness semantics |
-| Exact | `IS DISTINCT FROM` | Rewritten to `NOT (<=>)` form | Preserves exact distinctness semantics |
-| Exact | Regex predicate subset | Rendered through existing regex semantic support | Limited to the subset that already maps cleanly |
-| Approximate | `ILIKE` | Lowered to `LOWER(lhs) LIKE LOWER(rhs)` with warning | Includes `NOT ILIKE` and `ESCAPE`; collation and indexing may differ |
-| Unsupported | `RETURNING` | Rejected with structured transpilation problem | No safe current MySQL equivalent in this slice |
-| Unsupported | `DISTINCT ON` | Rejected with structured transpilation problem | Query-shape semantics, not a token substitution |
-| Unsupported | `SIMILAR TO` | Rejected with structured transpilation problem | No safe equivalent in current scope |
-| Unsupported | Representative PostgreSQL operator families | Rejected with structured transpilation problem | Includes representative JSON and specialized operator cases |
-| Unsupported | PostgreSQL case-insensitive regex variants | Rejected with structured transpilation problem | `~*` and `!~*` remain backlog |
+| Category    | Source construct                            | Current handling                                                      | Notes                                                                                         |
+|-------------|---------------------------------------------|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| Exact       | `ConcatExpr` / string concatenation         | Shared semantic node rendered as `CONCAT(...)`                        | Handled through `sqm-core`, not a pair-specific rule                                          |
+| Exact       | `IS NOT DISTINCT FROM`                      | Rewritten to MySQL null-safe equality                                 | Uses canonical distinctness semantics                                                         |
+| Exact       | `IS DISTINCT FROM`                          | Rewritten to `NOT (<=>)` form                                         | Preserves exact distinctness semantics                                                        |
+| Exact       | Regex predicate subset                      | Rendered through existing regex semantic support                      | Limited to the subset that already maps cleanly                                               |
+| Approximate | `ILIKE`                                     | Lowered to `LOWER(lhs) LIKE LOWER(rhs)` with warning                  | Includes `NOT ILIKE` and `ESCAPE`; collation and indexing may differ                          |
+| Unsupported | `RETURNING`                                 | Rejected with structured transpilation problem                        | No safe current MySQL equivalent in this slice                                                |
+| Unsupported | `DISTINCT ON`                               | Rejected with structured transpilation problem                        | Query-shape semantics, not a token substitution                                               |
+| Unsupported | `SIMILAR TO`                                | Rejected with structured transpilation problem                        | No safe equivalent in current scope                                                           |
+| Unsupported | Representative PostgreSQL operator families | Rejected with structured transpilation problem                        | Includes representative JSON and specialized operator cases                                   |
+| Unsupported | PostgreSQL case-insensitive regex variants  | Rejected with structured transpilation problem                        | `~*` and `!~*` remain backlog                                                                 |
+| Unsupported | Hierarchical queries (`CONNECT BY`)         | Rejected with `UNSUPPORTED_HIERARCHICAL_QUERY` for non-Oracle targets | Exact recursive CTE lowering is not guaranteed and remains a separately designed opt-in story |
 
 ### MySQL -> PostgreSQL
 
-| Category | Source construct | Current handling | Notes |
-|----------|------------------|------------------|-------|
-| Exact | `ConcatExpr` / string concatenation | Shared semantic node rendered with `||` | Handled through `sqm-core`, not a pair-specific rule |
-| Exact | `<=>` | Rewritten to PostgreSQL distinctness predicates | Uses canonical SQM semantic form before render |
-| Exact | Regex predicate subset | Rendered through existing regex semantic support | Limited to the subset that already maps cleanly |
-| Approximate | Optimizer comments and index hints | Dropped with warning | Rewritten out of the AST so resulting SQL stays executable |
-| Unsupported | `ON DUPLICATE KEY UPDATE` | Rejected with structured transpilation problem | No exact PostgreSQL lowering in the initial slice |
-| Unsupported | `INSERT IGNORE` / `REPLACE` | Rejected with structured transpilation problem | Conflict-handling semantics remain backlog |
-| Unsupported | MySQL JSON function family | Rejected with structured transpilation problem | Intentionally conservative to avoid misleading rewrites |
+| Category    | Source construct                    | Current handling                                 | Notes                                                      |
+|-------------|-------------------------------------|--------------------------------------------------|------------------------------------------------------------|
+| Exact       | `ConcatExpr` / string concatenation | Shared semantic node rendered with `             |                                                            |` | Handled through `sqm-core`, not a pair-specific rule |
+| Exact       | `<=>`                               | Rewritten to PostgreSQL distinctness predicates  | Uses canonical SQM semantic form before render             |
+| Exact       | Regex predicate subset              | Rendered through existing regex semantic support | Limited to the subset that already maps cleanly            |
+| Approximate | Optimizer comments and index hints  | Dropped with warning                             | Rewritten out of the AST so resulting SQL stays executable |
+| Unsupported | `ON DUPLICATE KEY UPDATE`           | Rejected with structured transpilation problem   | No exact PostgreSQL lowering in the initial slice          |
+| Unsupported | `INSERT IGNORE` / `REPLACE`         | Rejected with structured transpilation problem   | Conflict-handling semantics remain backlog                 |
+| Unsupported | MySQL JSON function family          | Rejected with structured transpilation problem   | Intentionally conservative to avoid misleading rewrites    |
 
 ## Contribution Guidelines
 

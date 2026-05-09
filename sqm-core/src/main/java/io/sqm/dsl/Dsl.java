@@ -127,6 +127,41 @@ public final class Dsl {
         return SequenceValueExpr.of(sequence, SequenceValueKind.CURRENT_VALUE);
     }
 
+    /**
+     * Creates a {@code PRIOR} expression for hierarchical queries.
+     *
+     * @param expr expression evaluated against the parent row
+     * @return prior expression
+     */
+    public static PriorExpr prior(Expression expr) {
+        return PriorExpr.of(expr);
+    }
+
+    /**
+     * Creates a hierarchical query clause.
+     *
+     * @param startWith optional root-row predicate
+     * @param connectBy parent-child relationship predicate
+     * @param noCycle whether cycle-safe traversal is requested
+     * @param orderSiblingsBy optional sibling ordering clause
+     * @return hierarchical query clause
+     */
+    public static HierarchicalQueryClause hierarchy(Predicate startWith, Predicate connectBy, boolean noCycle, OrderBy orderSiblingsBy) {
+        return HierarchicalQueryClause.of(startWith, connectBy, noCycle, orderSiblingsBy);
+    }
+
+    /**
+     * Creates a hierarchical query clause without sibling ordering.
+     *
+     * @param startWith optional root-row predicate
+     * @param connectBy parent-child relationship predicate
+     * @param noCycle whether cycle-safe traversal is requested
+     * @return hierarchical query clause
+     */
+    public static HierarchicalQueryClause hierarchy(Predicate startWith, Predicate connectBy, boolean noCycle) {
+        return hierarchy(startWith, connectBy, noCycle, null);
+    }
+
     /* ========================= Tables ========================= */
 
     /**

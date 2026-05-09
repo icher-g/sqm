@@ -69,6 +69,11 @@ public class SelectQueryParser implements Parser<SelectQuery> {
             return error(where);
         }
 
+        var hierarchical = parseHierarchicalQueryClause(cur, ctx, q);
+        if (hierarchical.isError()) {
+            return error(hierarchical);
+        }
+
         var groupBy = parseGroupByClause(cur, ctx, q);
         if (groupBy.isError()) {
             return error(groupBy);
@@ -253,6 +258,26 @@ public class SelectQueryParser implements Parser<SelectQuery> {
             return error(where);
         }
         q.where(where.value());
+        return ok(null);
+    }
+
+    /**
+     * Parses hierarchical query clauses through the registered node parser.
+     *
+     * @param cur token cursor.
+     * @param ctx parse context.
+     * @param q   mutable query builder.
+     * @return parsing result.
+     */
+    protected ParseResult<Void> parseHierarchicalQueryClause(Cursor cur, ParseContext ctx, SelectQueryBuilder q) {
+        var hierarchy = ctx.parseIfMatch(HierarchicalQueryClause.class, cur);
+        if (!hierarchy.match()) {
+            return ok(null);
+        }
+        if (hierarchy.result().isError()) {
+            return error(hierarchy.result());
+        }
+        q.hierarchical(hierarchy.result().value());
         return ok(null);
     }
 

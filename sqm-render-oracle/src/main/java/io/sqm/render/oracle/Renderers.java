@@ -44,6 +44,8 @@ public final class Renderers {
             .register(new LimitOffsetRenderer())
             .register(new VariableResultTargetRenderer())
             .register(new SequenceValueExprRenderer())
+            .register(new PriorExprRenderer())
+            .register(new HierarchicalQueryClauseRenderer())
             .register(new NamedParamExprRenderer())
             .register(new OrdinalParamExprRenderer());
     }

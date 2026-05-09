@@ -22,3 +22,4 @@ Current scope notes:
 - DDL is intentionally outside this matrix.
 - `sqm-codegen-maven-plugin` JDBC schema loading uses dedicated PostgreSQL, MySQL, and SQL Server type mappers where available.
 - SQL Server support in this matrix includes the advanced R5B closure shipped across validation, control, codegen, middleware, and integration layers.
+- Oracle query support includes the modeled hierarchical query slice (`CONNECT BY`) in parser, renderer, validation, codegen, JSON, and conservative transpilation rejection paths.

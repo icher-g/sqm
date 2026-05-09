@@ -19,6 +19,7 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
     private OrderBy orderBy;
     private TableRef tableRef;
     private Predicate where;
+    private HierarchicalQueryClause hierarchical;
     private Predicate having;
     private DistinctSpec distinctSpec;
     private TopSpec topSpec;
@@ -42,6 +43,7 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
         this.tableRef = query.from();
         this.joins.addAll(query.joins());
         this.where = query.where();
+        this.hierarchical = query.hierarchical();
         this.groupBy = query.groupBy();
         this.having = query.having();
         this.orderBy = query.orderBy();
@@ -84,6 +86,12 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
     @Override
     public SelectQueryBuilder where(Predicate predicate) {
         this.where = predicate;
+        return this;
+    }
+
+    @Override
+    public SelectQueryBuilder hierarchical(HierarchicalQueryClause clause) {
+        this.hierarchical = clause;
         return this;
     }
 
@@ -192,6 +200,7 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
             tableRef,
             joins,
             where,
+            hierarchical,
             groupBy,
             having,
             orderBy,

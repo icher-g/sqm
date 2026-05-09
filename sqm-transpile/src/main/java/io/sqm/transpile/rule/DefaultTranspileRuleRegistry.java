@@ -2,6 +2,7 @@ package io.sqm.transpile.rule;
 
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.transpile.builtin.FunctionTableToMySqlUnsupportedRule;
+import io.sqm.transpile.builtin.HierarchicalQueryUnsupportedRule;
 import io.sqm.transpile.builtin.MySqlHintDroppingRule;
 import io.sqm.transpile.builtin.MySqlToPostgresInsertModeUnsupportedRule;
 import io.sqm.transpile.builtin.MySqlToPostgresJsonFunctionUnsupportedRule;
@@ -79,7 +80,8 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
             new SqlServerHintDroppingRule(),
             new PostgresToSqlServerDistinctOnUnsupportedRule(),
             new PostgresToSqlServerReturningUnsupportedRule(),
-            new SequenceValueUnsupportedRule()
+            new SequenceValueUnsupportedRule(),
+            new HierarchicalQueryUnsupportedRule()
         ));
     }
 

@@ -209,6 +209,23 @@ final class StatementFeatureInspector {
         return found.get();
     }
 
+    static boolean hasHierarchicalQuery(Statement statement) {
+        var found = new AtomicBoolean(false);
+        statement.accept(new RecursiveNodeVisitor<Void>() {
+            @Override
+            protected Void defaultResult() {
+                return null;
+            }
+
+            @Override
+            public Void visitHierarchicalQueryClause(HierarchicalQueryClause clause) {
+                found.set(true);
+                return super.visitHierarchicalQueryClause(clause);
+            }
+        });
+        return found.get();
+    }
+
     static boolean hasLikeMode(Statement statement, LikeMode mode) {
         var found = new AtomicBoolean(false);
         statement.accept(new RecursiveNodeVisitor<Void>() {

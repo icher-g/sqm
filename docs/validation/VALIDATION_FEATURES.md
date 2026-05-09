@@ -158,6 +158,7 @@ Oracle-specific validation is implemented in a dedicated dialect module:
 
 - Version-gated Oracle features (`DIALECT_FEATURE_UNSUPPORTED`), including:
   - Oracle `RETURNING ... INTO` variable targets, including expression/variable count matching
+  - Oracle hierarchical queries through `HierarchicalQueryClause` (`START WITH`, `CONNECT BY`, `NOCYCLE`, `ORDER SIBLINGS BY`)
   - PostgreSQL-style and SQL Server-style DML result clauses that do not use Oracle variable targets
   - non-Oracle DML extensions such as `INSERT IGNORE`, `REPLACE`, `ON CONFLICT`, `UPDATE FROM`, `UPDATE JOIN`, and `DELETE USING/JOIN`
   - non-Oracle `MERGE` shapes such as `TOP`, `WHEN NOT MATCHED BY SOURCE`, and `DO NOTHING`
@@ -167,7 +168,7 @@ Oracle-specific validation is implemented in a dedicated dialect module:
 - Oracle-aware function signatures and return-type inference are provided by
   `io.sqm.validate.oracle.function.OracleFunctionCatalog`.
 - The initial Oracle catalog covers a practical 19c baseline across null handling, string, numeric, date/time, JSON scalar, and aggregate functions.
-- Advanced Oracle table-producing and hierarchical constructs such as `JSON_TABLE` and `CONNECT BY` remain outside this function-catalog slice and require dedicated model review before validation support.
+- Advanced Oracle table-producing constructs such as `JSON_TABLE` remain outside this function-catalog slice and require dedicated model review before validation support. Hierarchical query support is modeled and validated separately from the function catalog.
 
 ## Extension Architecture
 

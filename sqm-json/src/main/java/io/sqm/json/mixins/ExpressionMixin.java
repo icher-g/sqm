@@ -26,6 +26,7 @@ import io.sqm.core.*;
     @JsonSubTypes.Type(value = OutputColumnExpr.Impl.class, name = "result-column"),
     @JsonSubTypes.Type(value = FunctionExpr.Impl.class, name = "function"),
     @JsonSubTypes.Type(value = SequenceValueExpr.Impl.class, name = "sequence-value"),
+    @JsonSubTypes.Type(value = PriorExpr.Impl.class, name = "prior"),
     @JsonSubTypes.Type(value = LiteralExpr.Impl.class, name = "literal"),
     @JsonSubTypes.Type(value = DateLiteralExpr.Impl.class, name = "date-literal"),
     @JsonSubTypes.Type(value = TimeLiteralExpr.Impl.class, name = "time-literal"),

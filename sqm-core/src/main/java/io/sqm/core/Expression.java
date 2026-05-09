@@ -10,7 +10,7 @@ import java.util.Objects;
  * Any value-producing node (scalar or boolean).
  */
 public sealed interface Expression extends Node, QuantifiedSource
-    permits ArithmeticExpr, ArrayExpr, ArraySliceExpr, ArraySubscriptExpr, AtTimeZoneExpr, BinaryOperatorExpr, CaseExpr, CastExpr, CollateExpr, ColumnExpr, ConcatExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, OutputColumnExpr, ParamExpr, Predicate, SequenceValueExpr, UnaryOperatorExpr, ValueSet {
+    permits ArithmeticExpr, ArrayExpr, ArraySliceExpr, ArraySubscriptExpr, AtTimeZoneExpr, BinaryOperatorExpr, CaseExpr, CastExpr, CollateExpr, ColumnExpr, ConcatExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, OutputColumnExpr, ParamExpr, Predicate, PriorExpr, SequenceValueExpr, UnaryOperatorExpr, ValueSet {
 
     /**
      * Creates a literal expression.
@@ -1007,6 +1007,15 @@ public sealed interface Expression extends Node, QuantifiedSource
      */
     default AtTimeZoneExpr atTimeZone(Expression timezone) {
         return AtTimeZoneExpr.of(this, timezone);
+    }
+
+    /**
+     * Creates a {@code PRIOR} expression for hierarchical queries.
+     *
+     * @return a {@link PriorExpr} wrapping this expression
+     */
+    default PriorExpr prior() {
+        return PriorExpr.of(this);
     }
 
     /**

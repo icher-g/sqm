@@ -83,6 +83,11 @@ public final class Lexer {
         KEYWORDS.put("OFFSET", OFFSET);
         KEYWORDS.put("FETCH", FETCH);
         KEYWORDS.put("NEXT", NEXT);
+        KEYWORDS.put("START", START);
+        KEYWORDS.put("CONNECT", CONNECT);
+        KEYWORDS.put("PRIOR", PRIOR);
+        KEYWORDS.put("NOCYCLE", NOCYCLE);
+        KEYWORDS.put("SIBLINGS", SIBLINGS);
         KEYWORDS.put("ROW", ROW);
         KEYWORDS.put("ROWS", ROWS);
         KEYWORDS.put("ONLY", ONLY);

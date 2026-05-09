@@ -40,6 +40,7 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
         renderFromClause(node, ctx, w);
         renderJoins(node, ctx, w);
         renderWhereClause(node, ctx, w);
+        renderHierarchicalQueryClause(node, ctx, w);
         renderGroupByClause(node, ctx, w);
         renderHavingClause(node, ctx, w);
         renderWindowClause(node, ctx, w);
@@ -67,6 +68,11 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
 
         if (node.topSpec() != null && !ctx.dialect().paginationStyle().supportsTop()) {
             throw new UnsupportedOperationException("TOP is not supported by " + ctx.dialect().name());
+        }
+
+        if (node.hierarchical() != null
+            && !ctx.dialect().capabilities().supports(SqlFeature.HIERARCHICAL_QUERY)) {
+            throw new UnsupportedDialectFeatureException(SqlFeature.HIERARCHICAL_QUERY.description(), ctx.dialect().name());
         }
     }
 
@@ -170,6 +176,19 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
         if (node.where() != null) {
             w.newline().append("WHERE").space();
             w.append(node.where());
+        }
+    }
+
+    /**
+     * Renders the hierarchical query clause when present.
+     *
+     * @param node query node.
+     * @param ctx  render context.
+     * @param w    sql writer.
+     */
+    protected void renderHierarchicalQueryClause(SelectQuery node, RenderContext ctx, SqlWriter w) {
+        if (node.hierarchical() != null) {
+            w.newline().append(node.hierarchical());
         }
     }
 

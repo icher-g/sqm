@@ -119,6 +119,11 @@ public class AtomicExprParser {
             return matched.result();
         }
 
+        matched = ctx.parseIfMatch(PriorExpr.class, cur);
+        if (matched.match()) {
+            return matched.result();
+        }
+
         matched = ctx.parseIfMatch(FunctionExpr.class, cur);
         if (matched.match()) {
             return matched.result();

@@ -159,6 +159,7 @@ public class SelectQueryRendererTest {
             null,
             null,
             null,
+            null,
             java.util.List.of(),
             java.util.List.of(io.sqm.core.SelectModifier.CALC_FOUND_ROWS),
             java.util.List.of()
@@ -175,6 +176,7 @@ public class SelectQueryRendererTest {
             java.util.List.of(col("t", "c").toSelectItem()),
             tbl("t"),
             java.util.List.of(),
+            null,
             null,
             null,
             null,

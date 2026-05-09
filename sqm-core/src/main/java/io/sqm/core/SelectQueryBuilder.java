@@ -107,6 +107,27 @@ public interface SelectQueryBuilder {
     SelectQueryBuilder where(Predicate predicate);
 
     /**
+     * Sets the hierarchical query clause.
+     *
+     * @param clause hierarchical query clause, may be {@code null}
+     * @return this builder
+     */
+    SelectQueryBuilder hierarchical(HierarchicalQueryClause clause);
+
+    /**
+     * Sets the hierarchical query clause from explicit parts.
+     *
+     * @param startWith optional root-row predicate
+     * @param connectBy parent-child relationship predicate
+     * @param noCycle whether cycle-safe traversal is requested
+     * @param orderSiblingsBy optional sibling ordering clause
+     * @return this builder
+     */
+    default SelectQueryBuilder hierarchical(Predicate startWith, Predicate connectBy, boolean noCycle, OrderBy orderSiblingsBy) {
+        return hierarchical(HierarchicalQueryClause.of(startWith, connectBy, noCycle, orderSiblingsBy));
+    }
+
+    /**
      * Sets group items from the provided objects. Only {@code String, Number and Expression} are supported.
      *
      * @param items a list of items.

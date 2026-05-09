@@ -35,6 +35,7 @@ import io.sqm.core.*;
     @JsonSubTypes.Type(value = ResultClause.Impl.class, name = "resultClause"),
     @JsonSubTypes.Type(value = RelationResultTarget.Impl.class, name = "relationResultTarget"),
     @JsonSubTypes.Type(value = VariableResultTarget.Impl.class, name = "variableResultTarget"),
+    @JsonSubTypes.Type(value = HierarchicalQueryClause.Impl.class, name = "hierarchicalQuery"),
     @JsonSubTypes.Type(value = LimitOffset.Impl.class, name = "limitOffset"),
     @JsonSubTypes.Type(value = Assignment.Impl.class, name = "assignment"),
     @JsonSubTypes.Type(value = WindowDef.Impl.class, name = "window"),

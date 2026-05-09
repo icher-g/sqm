@@ -247,6 +247,10 @@ public enum SqlFeature {
      */
     SEQUENCE_VALUE_EXPRESSION("Sequence value expression"),
     /**
+     * Hierarchical query clause such as Oracle {@code CONNECT BY}.
+     */
+    HIERARCHICAL_QUERY("Hierarchical query"),
+    /**
      * PostgreSQL exponentiation operator.
      * Example: {@code a ^ b}
      */

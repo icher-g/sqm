@@ -121,6 +121,7 @@ class SelectQueryImplTest {
             null,
             null,
             null,
+            null,
             List.of(),
             List.of(SelectModifier.CALC_FOUND_ROWS),
             List.of(statementHint("MAX_EXECUTION_TIME", 1000))
@@ -146,6 +147,7 @@ class SelectQueryImplTest {
             null,
             null,
             null,
+            null,
             List.of(),
             List.of(),
             List.of()
@@ -161,6 +163,7 @@ class SelectQueryImplTest {
             List.of(col("id").toSelectItem()),
             tbl("users"),
             List.of(),
+            null,
             null,
             null,
             null,
