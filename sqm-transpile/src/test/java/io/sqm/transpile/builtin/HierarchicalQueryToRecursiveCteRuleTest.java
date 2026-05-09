@@ -15,6 +15,10 @@ import org.junit.jupiter.api.Test;
 import java.util.Optional;
 import java.util.Set;
 
+import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.insert;
+import static io.sqm.dsl.Dsl.select;
+import static io.sqm.dsl.Dsl.tbl;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HierarchicalQueryToRecursiveCteRuleTest {
@@ -87,6 +91,55 @@ class HierarchicalQueryToRecursiveCteRuleTest {
         assertEquals(RewriteFidelity.UNSUPPORTED, result.fidelity());
         assertEquals("UNSUPPORTED_HIERARCHICAL_QUERY_REWRITE", result.problems().getFirst().code());
         assertTrue(result.problems().getFirst().message().contains("ORDER SIBLINGS BY"));
+    }
+
+    @Test
+    void leavesStatementWithoutHierarchicalQueryUnchanged() {
+        var query = select(col("id")).from(tbl("categories")).build();
+
+        var result = new HierarchicalQueryToRecursiveCteRule()
+            .apply(query, context(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL));
+
+        assertFalse(result.changed());
+        assertSame(query, result.statement());
+        assertEquals("No hierarchical query detected", result.description());
+    }
+
+    @Test
+    void leavesSelectWithOnlyNestedHierarchicalQueryUnchanged() {
+        var inner = parse("""
+            SELECT id
+            FROM categories
+            CONNECT BY PRIOR id = parent_id
+            """);
+        var outer = select(inner).build();
+
+        var result = new HierarchicalQueryToRecursiveCteRule()
+            .apply(outer, context(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL));
+
+        assertFalse(result.changed());
+        assertSame(outer, result.statement());
+    }
+
+    @Test
+    void rejectsHierarchicalQueryInsideNonSelectStatement() {
+        var query = parse("""
+            SELECT id
+            FROM categories
+            CONNECT BY PRIOR id = parent_id
+            """);
+        var insert = insert(tbl("category_copy"))
+            .columns(col("id").name())
+            .query(query)
+            .build();
+
+        var result = new HierarchicalQueryToRecursiveCteRule()
+            .apply(insert, context(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL));
+
+        assertFalse(result.changed());
+        assertEquals(RewriteFidelity.UNSUPPORTED, result.fidelity());
+        assertEquals("UNSUPPORTED_HIERARCHICAL_QUERY_REWRITE", result.problems().getFirst().code());
+        assertTrue(result.problems().getFirst().message().contains("top-level SELECT"));
     }
 
     private static SelectQuery parse(String sql) {
