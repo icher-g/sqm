@@ -40,12 +40,13 @@ class ExamplesControllerIntegrationTest {
         assertTrue(response.getBody().success());
         assertNotNull(response.getBody().requestId());
         assertFalse(response.getBody().requestId().isBlank());
-        assertEquals(9, response.getBody().examples().size());
+        assertEquals(10, response.getBody().examples().size());
         assertEquals("basic-select", response.getBody().examples().getFirst().id());
         assertTrue(response.getBody().examples().stream().anyMatch(example -> example.id().equals("ansi-analytics-report")));
         assertTrue(response.getBody().examples().stream().anyMatch(example -> example.id().equals("postgres-merge-returning")));
         assertTrue(response.getBody().examples().stream().anyMatch(example -> example.id().equals("mysql-joined-update-hints")));
         assertTrue(response.getBody().examples().stream().anyMatch(example -> example.id().equals("sqlserver-merge-output")));
         assertTrue(response.getBody().examples().stream().anyMatch(example -> example.id().equals("oracle-offset-fetch")));
+        assertTrue(response.getBody().examples().stream().anyMatch(example -> example.id().equals("oracle-hierarchical-query")));
     }
 }

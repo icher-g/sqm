@@ -20,7 +20,7 @@ class HierarchicalQueryUnsupportedRuleTest {
 
         assertEquals("hierarchical-query-unsupported", rule.id());
         assertEquals(Set.of(), rule.sourceDialects());
-        assertEquals(Set.of(SqlDialectId.ANSI, SqlDialectId.MYSQL, SqlDialectId.POSTGRESQL, SqlDialectId.SQLSERVER), rule.targetDialects());
+        assertEquals(Set.of(SqlDialectId.SQLSERVER), rule.targetDialects());
     }
 
     @Test
@@ -35,13 +35,13 @@ class HierarchicalQueryUnsupportedRuleTest {
     }
 
     @Test
-    void rejectsHierarchicalQueriesForUnsupportedTargets() {
+    void rejectsHierarchicalQueriesForSqlServer() {
         var statement = select(col("id"))
             .from(tbl("categories"))
             .hierarchical(hierarchy(null, prior(col("id")).eq(col("parent_id")), false))
             .build();
         var result = new HierarchicalQueryUnsupportedRule()
-            .apply(statement, context(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL));
+            .apply(statement, context(SqlDialectId.ORACLE, SqlDialectId.SQLSERVER));
 
         assertEquals(RewriteFidelity.UNSUPPORTED, result.fidelity());
         assertEquals("UNSUPPORTED_HIERARCHICAL_QUERY", result.problems().getFirst().code());

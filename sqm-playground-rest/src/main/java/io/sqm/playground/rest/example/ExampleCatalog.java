@@ -136,6 +136,20 @@ public final class ExampleCatalog {
                 order by c.id
                 offset 5 rows fetch next 10 rows only
                 """
+            ),
+            new ExampleDto(
+                "oracle-hierarchical-query",
+                "Oracle Hierarchical Query",
+                SqlDialectDto.oracle,
+                """
+                select
+                    id,
+                    parent_id,
+                    level
+                from categories
+                start with parent_id is null
+                connect by prior id = parent_id
+                """
             )
         );
     }

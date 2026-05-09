@@ -404,7 +404,8 @@ Oracle:
 Other dialects:
 
 - Reject `HierarchicalQueryClause` explicitly.
-- Transpilation to recursive CTE is unsupported initially because exact behavior is not guaranteed.
+- Simple single-table hierarchical queries can be transpiled to recursive CTEs when `CONNECT BY` is an equality between one `PRIOR` parent column and one child column, projections are plain columns or `LEVEL`, and `NOCYCLE` / `ORDER SIBLINGS BY` are absent.
+- More complex hierarchical queries remain unsupported for recursive CTE rewriting because exact behavior is not guaranteed.
 
 ### Transpilation
 
@@ -412,7 +413,7 @@ Unsupported initially for all non-Oracle targets:
 
 - stable code: `UNSUPPORTED_HIERARCHICAL_QUERY`
 
-Future approximate transpilation to recursive CTE can be designed separately and must be opt-in.
+Future expansion of recursive CTE transpilation must explicitly cover cycle handling, sibling ordering, joins, filtering order, and pseudocolumn semantics.
 
 ## 4. `PIVOT` And `UNPIVOT`
 
