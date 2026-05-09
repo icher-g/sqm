@@ -6,6 +6,8 @@ import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.*;
+import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.VersionedDialectCapabilities;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.SchemaStatementValidator;
 import io.sqm.validate.schema.SchemaValidationLimits;
@@ -15,6 +17,7 @@ import io.sqm.validate.schema.function.FunctionArgKind;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.function.FunctionSignature;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
+import io.sqm.validate.schema.rule.SequenceValueFeatureValidationRule;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -2069,6 +2072,28 @@ class SchemaStatementValidatorTest {
 
         var result = validator.validate(query);
         assertTrue(result.ok());
+    }
+
+    @Test
+    void validate_dispatchesSequenceValueRules() {
+        var version = SqlDialectVersion.of(1);
+        var settings = SchemaValidationSettings.builder()
+            .addRule(new SequenceValueFeatureValidationRule(
+                "test",
+                version,
+                VersionedDialectCapabilities.builder(version).build(),
+                true
+            ))
+            .build();
+        var sequenceValidator = SchemaStatementValidator.of(SCHEMA, settings);
+
+        var result = sequenceValidator.validate(select(nextValue("users_seq")).build());
+
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "expression.sequence_value".equals(problem.clausePath())
+        ));
     }
 }
 

@@ -5,6 +5,7 @@ import io.sqm.core.Query;
 import io.sqm.core.SequenceValueExpr;
 import io.sqm.core.SequenceValueKind;
 import io.sqm.core.SelectQuery;
+import io.sqm.parser.core.Cursor;
 import io.sqm.parser.oracle.spi.OracleSpecs;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,15 @@ class SequenceValueExprParserTest {
         var result = ctx.parse(SequenceValueExpr.class, "nextval('users_seq')");
 
         assertTrue(result.isError());
+    }
+
+    @Test
+    void matchRejectsInvalidOracleDotSyntax() {
+        var parser = new SequenceValueExprParser();
+
+        assertFalse(parser.match(Cursor.of("users_seq", ctx.identifierQuoting()), ctx));
+        assertFalse(parser.match(Cursor.of("users_seq.", ctx.identifierQuoting()), ctx));
+        assertFalse(parser.match(Cursor.of("users_seq.lastval", ctx.identifierQuoting()), ctx));
     }
 
     private static SequenceValueExpr firstExpression(Query query) {

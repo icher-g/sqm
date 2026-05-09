@@ -5,6 +5,7 @@ import io.sqm.core.Query;
 import io.sqm.core.SequenceValueExpr;
 import io.sqm.core.SequenceValueKind;
 import io.sqm.core.SelectQuery;
+import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,16 @@ class SequenceValueExprParserTest {
     @Test
     void rejectsCurrentValueFunctionStyle() {
         assertTrue(ctx.parse(SequenceValueExpr.class, "currval('users_seq')").isError());
+    }
+
+    @Test
+    void matchRejectsIncompleteNextValueForSyntax() {
+        var parser = new SequenceValueExprParser();
+
+        assertFalse(parser.match(Cursor.of("CURRENT VALUE FOR users_seq", ctx.identifierQuoting()), ctx));
+        assertFalse(parser.match(Cursor.of("NEXT FOR users_seq", ctx.identifierQuoting()), ctx));
+        assertFalse(parser.match(Cursor.of("NEXT VALUE users_seq", ctx.identifierQuoting()), ctx));
+        assertFalse(parser.match(Cursor.of("NEXT VALUE FOR", ctx.identifierQuoting()), ctx));
     }
 
     private static SequenceValueExpr firstExpression(Query query) {

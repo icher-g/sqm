@@ -6,6 +6,7 @@ import io.sqm.core.Query;
 import io.sqm.core.SequenceValueExpr;
 import io.sqm.core.SequenceValueKind;
 import io.sqm.core.SelectQuery;
+import io.sqm.parser.core.Cursor;
 import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,15 @@ class SequenceValueExprParserTest {
         var select = assertInstanceOf(SelectQuery.class, result.value());
         var item = assertInstanceOf(ExprSelectItem.class, select.items().getFirst());
         assertInstanceOf(FunctionExpr.class, item.expr());
+    }
+
+    @Test
+    void matchRejectsNonLiteralSequenceCalls() {
+        var parser = new SequenceValueExprParser();
+
+        assertFalse(parser.match(Cursor.of("lastval('users_seq')", ctx.identifierQuoting()), ctx));
+        assertFalse(parser.match(Cursor.of("nextval(sequence_name)", ctx.identifierQuoting()), ctx));
+        assertFalse(parser.match(Cursor.of("nextval('users_seq'", ctx.identifierQuoting()), ctx));
     }
 
     private static SequenceValueExpr firstExpression(Query query) {
