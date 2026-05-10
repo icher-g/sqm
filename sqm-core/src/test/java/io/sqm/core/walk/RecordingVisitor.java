@@ -100,6 +100,36 @@ public class RecordingVisitor extends RecursiveNodeVisitor<Void> {
     }
 
     @Override
+    public Void visitPivotTable(PivotTable t) {
+        mark(t);
+        return super.visitPivotTable(t);
+    }
+
+    @Override
+    public Void visitPivotMeasure(PivotMeasure measure) {
+        mark(measure);
+        return super.visitPivotMeasure(measure);
+    }
+
+    @Override
+    public Void visitPivotValue(PivotValue value) {
+        mark(value);
+        return super.visitPivotValue(value);
+    }
+
+    @Override
+    public Void visitUnpivotTable(UnpivotTable t) {
+        mark(t);
+        return super.visitUnpivotTable(t);
+    }
+
+    @Override
+    public Void visitUnpivotInput(UnpivotInput input) {
+        mark(input);
+        return super.visitUnpivotInput(input);
+    }
+
+    @Override
     public Void visitOnJoin(OnJoin j) {
         mark(j);
         return super.visitOnJoin(j);

@@ -16,6 +16,7 @@ import io.sqm.validate.schema.function.FunctionSignature;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
+import java.util.List;
 
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -82,12 +83,66 @@ class SchemaValidationContextTest {
         var valuesTable = tbl(rows(row(lit(1)))).as("v");
         var functionTable = tbl(func("unnest", rows(row(lit(1))))).as("f");
         TableRef lateral = tbl("users").as("u").lateral();
+        var pivotWithoutAlias = pivot(
+            tbl("users").as("u"),
+            List.of(pivotMeasure(func("sum", col("age")))),
+            col("name"),
+            List.of(pivotValue(lit("Alice")))
+        );
+        var pivotWithAlias = pivot(
+            tbl("users"),
+            List.of(pivotMeasure(func("sum", col("age")))),
+            col("name"),
+            List.of(pivotValue(lit("Alice")))
+        ).as("p");
+        var unpivotWithoutAlias = unpivot(
+            tbl("users").as("u"),
+            "age",
+            "metric",
+            List.of(unpivotInput("age", lit("age")))
+        );
+        var unpivotWithAlias = unpivot(
+            tbl("users"),
+            "age",
+            "metric",
+            List.of(unpivotInput("age", lit("age")))
+        ).as("up");
 
         assertEquals("sq", contextSourceKey(subqueryTable));
         assertEquals("v", contextSourceKey(valuesTable));
         assertEquals("f", contextSourceKey(functionTable));
         assertEquals("u", contextSourceKey(lateral));
+        assertEquals("u", contextSourceKey(pivotWithoutAlias));
+        assertEquals("p", contextSourceKey(pivotWithAlias));
+        assertEquals("u", contextSourceKey(unpivotWithoutAlias));
+        assertEquals("up", contextSourceKey(unpivotWithAlias));
         assertTrue(new SchemaValidationContext(SCHEMA).sourceKey(tbl(select(col("id")).from(tbl("users")).build())).isEmpty());
+    }
+
+    @Test
+    void registerTableRef_handlesPivotAndUnpivotAliases() {
+        var context = new SchemaValidationContext(SCHEMA);
+        context.pushScope();
+        try {
+            context.registerTableRef(pivot(
+                tbl("users").as("u"),
+                List.of(pivotMeasure(func("sum", col("age")))),
+                col("name"),
+                List.of(pivotValue(lit("Alice")))
+            ));
+            context.registerTableRef(unpivot(
+                tbl("orders"),
+                "id",
+                "metric",
+                List.of(unpivotInput("id", lit("id")))
+            ).as("unp"));
+
+            assertEquals(Set.of("u", "unp"), Set.copyOf(context.currentScopeSourceKeys()));
+            assertEquals(1, context.countStrictSourcesWithColumn("age", null));
+            assertTrue(context.sourceColumnType("unp", "anything").isEmpty());
+        } finally {
+            context.popScope();
+        }
     }
 
     @Test
