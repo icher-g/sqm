@@ -134,6 +134,7 @@ public final class Lexer {
         KEYWORDS.put("FOLLOWING", FOLLOWING);
         KEYWORDS.put("CURRENT", CURRENT);
         KEYWORDS.put("EXCLUDE", EXCLUDE);
+        KEYWORDS.put("INCLUDE", INCLUDE);
         KEYWORDS.put("TIES", TIES);
         KEYWORDS.put("NO", NO);
         KEYWORDS.put("OTHERS", OTHERS);
@@ -142,6 +143,8 @@ public final class Lexer {
         KEYWORDS.put("CAST", CAST);
         KEYWORDS.put("ARRAY", ARRAY);
         KEYWORDS.put("FOR", FOR);
+        KEYWORDS.put("PIVOT", PIVOT);
+        KEYWORDS.put("UNPIVOT", UNPIVOT);
         KEYWORDS.put("UPDATE", UPDATE);
         KEYWORDS.put("SHARE", SHARE);
         KEYWORDS.put("KEY", KEY);

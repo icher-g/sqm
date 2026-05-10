@@ -251,6 +251,14 @@ public enum SqlFeature {
      */
     HIERARCHICAL_QUERY("Hierarchical query"),
     /**
+     * Relational {@code PIVOT} table transform.
+     */
+    PIVOT_TABLE("PIVOT table transform"),
+    /**
+     * Relational {@code UNPIVOT} table transform.
+     */
+    UNPIVOT_TABLE("UNPIVOT table transform"),
+    /**
      * PostgreSQL exponentiation operator.
      * Example: {@code a ^ b}
      */

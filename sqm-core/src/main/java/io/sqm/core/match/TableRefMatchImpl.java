@@ -87,12 +87,42 @@ public class TableRefMatchImpl<R> implements TableRefMatch<R> {
     /**
      * Registers a handler for a table-variable reference.
      *
-     * @param f handler for {@code VariableTableRef}
+     * @param f handler for {@code VariableTable}
      * @return {@code this} for fluent chaining
      */
     @Override
-    public TableRefMatch<R> variableTable(Function<VariableTableRef, R> f) {
-        if (!matched && table instanceof VariableTableRef t) {
+    public TableRefMatch<R> variableTable(Function<VariableTable, R> f) {
+        if (!matched && table instanceof VariableTable t) {
+            result = f.apply(t);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Registers a handler for a {@link PivotTable}.
+     *
+     * @param f handler for {@code PivotTable}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public TableRefMatch<R> pivot(Function<PivotTable, R> f) {
+        if (!matched && table instanceof PivotTable t) {
+            result = f.apply(t);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Registers a handler for an {@link UnpivotTable}.
+     *
+     * @param f handler for {@code UnpivotTable}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public TableRefMatch<R> unpivot(Function<UnpivotTable, R> f) {
+        if (!matched && table instanceof UnpivotTable t) {
             result = f.apply(t);
             matched = true;
         }

@@ -207,7 +207,7 @@ even though semantically it is:
 
 - a variable-backed relation reference
 
-The move to `VariableTableRef` is a good example of improving semantic precision.
+The move to `VariableTable` is a good example of improving semantic precision.
 
 ### Broader lesson
 
@@ -280,7 +280,7 @@ Then keep explicit behavior in every layer:
 
 ### Small example
 
-If `VariableTableRef` exists in core:
+If `VariableTable` exists in core:
 
 - ANSI parser should reject it
 - ANSI renderer should reject it
@@ -309,7 +309,7 @@ Today a transform often looks like:
 ```java
 new RecursiveNodeTransformer() {
     @Override
-    public Node visitVariableTableRef(VariableTableRef t) {
+    public Node visitVariableTable(VariableTable t) {
         return tableVar("audit_archive");
     }
 }
@@ -432,7 +432,7 @@ Keep the distinctions semantic where they affect framework behavior.
 Likely direction:
 
 - temp tables can remain `Table`
-- variable-backed relations deserve `VariableTableRef`
+- variable-backed relations deserve `VariableTable`
 
 This is a good example of where "table-like" is not enough for a manipulation framework.
 
@@ -460,7 +460,7 @@ Improve documentation around three separate ideas:
 
 Instead of only saying:
 
-- "`VariableTableRef` is a core node"
+- "`VariableTable` is a core node"
 
 also document:
 

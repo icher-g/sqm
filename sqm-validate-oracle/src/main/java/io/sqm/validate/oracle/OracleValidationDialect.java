@@ -11,6 +11,7 @@ import io.sqm.validate.oracle.rule.OracleMergeFeatureValidationRule;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.rule.HierarchicalQueryFeatureValidationRule;
+import io.sqm.validate.schema.rule.PivotFeatureValidationRule;
 import io.sqm.validate.schema.rule.SequenceValueFeatureValidationRule;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
 
@@ -87,7 +88,8 @@ public final class OracleValidationDialect implements SchemaValidationDialect {
             new OracleDmlFeatureValidationRule(capabilities, version),
             new OracleMergeFeatureValidationRule(capabilities, version),
             new SequenceValueFeatureValidationRule(name(), version, capabilities, true),
-            new HierarchicalQueryFeatureValidationRule(name(), version, capabilities)
+            new HierarchicalQueryFeatureValidationRule(name(), version, capabilities),
+            new PivotFeatureValidationRule(name(), version, capabilities)
         );
     }
 }

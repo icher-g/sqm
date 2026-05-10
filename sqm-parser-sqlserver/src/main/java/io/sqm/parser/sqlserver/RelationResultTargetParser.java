@@ -4,7 +4,7 @@ import io.sqm.core.Identifier;
 import io.sqm.core.RelationResultTarget;
 import io.sqm.core.Table;
 import io.sqm.core.TableRef;
-import io.sqm.core.VariableTableRef;
+import io.sqm.core.VariableTable;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
@@ -40,7 +40,7 @@ public class RelationResultTargetParser implements Parser<RelationResultTarget> 
 
         TableRef target;
 
-        var tableVariable = ctx.parseIfMatch(VariableTableRef.class, cur);
+        var tableVariable = ctx.parseIfMatch(VariableTable.class, cur);
         if (tableVariable.match()) {
             if (tableVariable.result().isError()) {
                 return error(tableVariable.result());

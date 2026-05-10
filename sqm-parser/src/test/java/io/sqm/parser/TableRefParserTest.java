@@ -3,6 +3,7 @@ package io.sqm.parser;
 import io.sqm.core.*;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
+import io.sqm.parser.spi.InfixParser;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
@@ -97,7 +98,9 @@ class TableRefParserTest {
             .register(QueryTable.class, new QueryTableParser())
             .register(ValuesTable.class, new ValuesTableParser())
             .register(FunctionTable.class, new FunctionTableParser())
-            .register(Table.class, new TableParser());
+            .register(Table.class, new TableParser())
+            .register(PivotTable.class, new NonMatchingPivotTableParser())
+            .register(UnpivotTable.class, new NonMatchingUnpivotTableParser());
         return TestSupport.context(repo);
     }
 
@@ -202,6 +205,50 @@ class TableRefParserTest {
         @Override
         public Class<Table> targetType() {
             return Table.class;
+        }
+    }
+
+    private static final class NonMatchingPivotTableParser implements MatchableParser<PivotTable>, InfixParser<TableRef, PivotTable> {
+        @Override
+        public boolean match(Cursor cur, ParseContext ctx) {
+            return false;
+        }
+
+        @Override
+        public ParseResult<? extends PivotTable> parse(Cursor cur, ParseContext ctx) {
+            return ParseResult.error("Unexpected pivot parser invocation", cur.fullPos());
+        }
+
+        @Override
+        public ParseResult<PivotTable> parse(TableRef source, Cursor cur, ParseContext ctx) {
+            return ParseResult.error("Unexpected pivot parser invocation", cur.fullPos());
+        }
+
+        @Override
+        public Class<PivotTable> targetType() {
+            return PivotTable.class;
+        }
+    }
+
+    private static final class NonMatchingUnpivotTableParser implements MatchableParser<UnpivotTable>, InfixParser<TableRef, UnpivotTable> {
+        @Override
+        public boolean match(Cursor cur, ParseContext ctx) {
+            return false;
+        }
+
+        @Override
+        public ParseResult<? extends UnpivotTable> parse(Cursor cur, ParseContext ctx) {
+            return ParseResult.error("Unexpected unpivot parser invocation", cur.fullPos());
+        }
+
+        @Override
+        public ParseResult<UnpivotTable> parse(TableRef source, Cursor cur, ParseContext ctx) {
+            return ParseResult.error("Unexpected unpivot parser invocation", cur.fullPos());
+        }
+
+        @Override
+        public Class<UnpivotTable> targetType() {
+            return UnpivotTable.class;
         }
     }
 }

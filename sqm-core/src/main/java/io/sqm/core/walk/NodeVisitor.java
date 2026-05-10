@@ -24,6 +24,7 @@ public interface NodeVisitor<R> extends
     StatementVisitor<R>,
     QueryVisitor<R>,
     HierarchicalQueryVisitor<R>,
+    PivotVisitor<R>,
     WindowVisitor<R>,
     DistinctVisitor<R> {
 }

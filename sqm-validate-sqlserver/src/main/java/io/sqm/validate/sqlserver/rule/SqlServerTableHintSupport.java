@@ -3,7 +3,7 @@ package io.sqm.validate.sqlserver.rule;
 import io.sqm.core.RelationResultTarget;
 import io.sqm.core.ResultClause;
 import io.sqm.core.Table;
-import io.sqm.core.VariableTableRef;
+import io.sqm.core.VariableTable;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
 
@@ -61,7 +61,7 @@ final class SqlServerTableHintSupport {
         if (into == null) {
             return;
         }
-        if (into.target() instanceof VariableTableRef) {
+        if (into.target() instanceof VariableTable) {
             return;
         }
         if (!(into.target() instanceof Table targetTable)) {

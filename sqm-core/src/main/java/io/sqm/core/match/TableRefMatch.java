@@ -60,10 +60,26 @@ public interface TableRefMatch<R> extends Match<TableRef, R> {
     /**
      * Registers a handler for a table-variable reference.
      *
-     * @param f handler for {@code VariableTableRef}
+     * @param f handler for {@code VariableTable}
      * @return {@code this} for fluent chaining
      */
-    TableRefMatch<R> variableTable(Function<VariableTableRef, R> f);
+    TableRefMatch<R> variableTable(Function<VariableTable, R> f);
+
+    /**
+     * Registers a handler for a {@link PivotTable}.
+     *
+     * @param f handler for {@code PivotTable}
+     * @return {@code this} for fluent chaining
+     */
+    TableRefMatch<R> pivot(Function<PivotTable, R> f);
+
+    /**
+     * Registers a handler for an {@link UnpivotTable}.
+     *
+     * @param f handler for {@code UnpivotTable}
+     * @return {@code this} for fluent chaining
+     */
+    TableRefMatch<R> unpivot(Function<UnpivotTable, R> f);
 
     /**
      * Matches a {@link Lateral}.

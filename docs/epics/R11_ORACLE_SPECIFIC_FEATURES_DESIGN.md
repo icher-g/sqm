@@ -451,7 +451,7 @@ Add shared relation transform nodes. Do not encode Oracle spelling in the node n
 Possible shape:
 
 ```java
-public non-sealed interface PivotTableRef extends TableRef {
+public non-sealed interface PivotTable extends TableRef {
     TableRef source();
     List<PivotMeasure> measures();
     Expression forExpression();
@@ -461,14 +461,14 @@ public non-sealed interface PivotTableRef extends TableRef {
 ```
 
 ```java
-PivotMeasure(Expression aggregateExpression, Identifier alias)
+PivotMeasure(FunctionExpr aggregateFunction, Identifier alias)
 PivotValue(Expression value, Identifier alias)
 ```
 
 For unpivot:
 
 ```java
-public non-sealed interface UnpivotTableRef extends TableRef {
+public non-sealed interface UnpivotTable extends TableRef {
     TableRef source();
     List<Identifier> valueColumns();
     Identifier nameColumn();

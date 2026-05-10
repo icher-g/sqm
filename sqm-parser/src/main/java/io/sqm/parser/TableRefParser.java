@@ -31,19 +31,19 @@ public class TableRefParser implements Parser<TableRef> {
     public ParseResult<? extends TableRef> parse(Cursor cur, ParseContext ctx) {
         MatchResult<? extends TableRef> matched = ctx.parseIfMatch(Lateral.class, cur);
         if (matched.match()) {
-            return matched.result();
+            return parseRelationTransforms(matched.result(), cur, ctx);
         }
 
         // ( ... ) – could be either a subquery or a parenthesized table ref
         if (cur.match(TokenType.LPAREN)) {
             matched = ctx.parseIfMatch(QueryTable.class, cur);
             if (matched.match()) {
-                return matched.result();
+                return parseRelationTransforms(matched.result(), cur, ctx);
             }
 
             matched = ctx.parseIfMatch(ValuesTable.class, cur);
             if (matched.match()) {
-                return matched.result();
+                return parseRelationTransforms(matched.result(), cur, ctx);
             }
 
             cur.advance(); // skip (
@@ -53,7 +53,7 @@ public class TableRefParser implements Parser<TableRef> {
                 if (matched.result().ok()) {
                     cur.expect("Expected ')' after VALUES", TokenType.RPAREN);
                 }
-                return matched.result();
+                return parseRelationTransforms(matched.result(), cur, ctx);
             }
 
             matched = ctx.parseIfMatch(Table.class, cur);
@@ -61,7 +61,7 @@ public class TableRefParser implements Parser<TableRef> {
                 if (matched.result().ok()) {
                     cur.expect("Expected ')' after table reference", TokenType.RPAREN);
                 }
-                return matched.result();
+                return parseRelationTransforms(matched.result(), cur, ctx);
             }
 
             return error("Unexpected table reference token: " + cur.peek().lexeme(), cur.fullPos());
@@ -69,17 +69,17 @@ public class TableRefParser implements Parser<TableRef> {
 
         matched = ctx.parseIfMatch(ValuesTable.class, cur);
         if (matched.match()) {
-            return matched.result();
+            return parseRelationTransforms(matched.result(), cur, ctx);
         }
 
         matched = ctx.parseIfMatch(FunctionTable.class, cur);
         if (matched.match()) {
-            return matched.result();
+            return parseRelationTransforms(matched.result(), cur, ctx);
         }
 
         matched = ctx.parseIfMatch(Table.class, cur);
         if (matched.match()) {
-            return matched.result();
+            return parseRelationTransforms(matched.result(), cur, ctx);
         }
 
         return error("Unexpected table reference token: " + cur.peek().lexeme(), cur.fullPos());
@@ -93,5 +93,38 @@ public class TableRefParser implements Parser<TableRef> {
     @Override
     public Class<TableRef> targetType() {
         return TableRef.class;
+    }
+
+    private static ParseResult<? extends TableRef> parseRelationTransforms(
+        ParseResult<? extends TableRef> result,
+        Cursor cur,
+        ParseContext ctx
+    ) {
+        if (result.isError()) {
+            return result;
+        }
+
+        TableRef table = result.value();
+        while (true) {
+            MatchResult<? extends TableRef> matched = ctx.parseIfMatch(PivotTable.class, table, cur);
+            if (matched.match()) {
+                if (matched.result().isError()) {
+                    return matched.result();
+                }
+                table = matched.result().value();
+                continue;
+            }
+
+            matched = ctx.parseIfMatch(UnpivotTable.class, table, cur);
+            if (matched.match()) {
+                if (matched.result().isError()) {
+                    return matched.result();
+                }
+                table = matched.result().value();
+                continue;
+            }
+
+            return ParseResult.ok(table);
+        }
     }
 }

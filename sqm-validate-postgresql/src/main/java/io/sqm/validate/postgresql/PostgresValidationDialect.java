@@ -10,6 +10,7 @@ import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.postgresql.function.PostgresFunctionCatalog;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
 import io.sqm.validate.schema.rule.HierarchicalQueryFeatureValidationRule;
+import io.sqm.validate.schema.rule.PivotFeatureValidationRule;
 import io.sqm.validate.schema.rule.SequenceValueFeatureValidationRule;
 import io.sqm.validate.postgresql.rule.PostgresSelectClauseConsistencyRule;
 import io.sqm.validate.postgresql.rule.PostgresCteFeatureValidationRule;
@@ -97,7 +98,8 @@ public final class PostgresValidationDialect implements SchemaValidationDialect 
             new PostgresTableHintValidationRule(),
             new PostgresFunctionOrderByValidationRule(functionCatalog()),
             new SequenceValueFeatureValidationRule(name(), version, capabilities, true),
-            new HierarchicalQueryFeatureValidationRule(name(), version, capabilities)
+            new HierarchicalQueryFeatureValidationRule(name(), version, capabilities),
+            new PivotFeatureValidationRule(name(), version, capabilities)
         );
     }
 }

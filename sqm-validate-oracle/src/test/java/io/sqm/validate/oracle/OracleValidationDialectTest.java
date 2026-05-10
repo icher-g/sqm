@@ -21,10 +21,16 @@ import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.merge;
 import static io.sqm.dsl.Dsl.nextValue;
 import static io.sqm.dsl.Dsl.param;
+import static io.sqm.dsl.Dsl.pivot;
+import static io.sqm.dsl.Dsl.pivotMeasure;
+import static io.sqm.dsl.Dsl.pivotValue;
 import static io.sqm.dsl.Dsl.resultVariableTarget;
 import static io.sqm.dsl.Dsl.row;
 import static io.sqm.dsl.Dsl.set;
+import static io.sqm.dsl.Dsl.star;
 import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.unpivot;
+import static io.sqm.dsl.Dsl.unpivotInput;
 import static io.sqm.dsl.Dsl.update;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -40,6 +46,12 @@ class OracleValidationDialectTest {
         CatalogTable.of("public", "src_users",
             CatalogColumn.of("id", CatalogType.LONG),
             CatalogColumn.of("name", CatalogType.STRING)
+        ),
+        CatalogTable.of("public", "sales",
+            CatalogColumn.of("amount", CatalogType.DECIMAL),
+            CatalogColumn.of("quarter", CatalogType.STRING),
+            CatalogColumn.of("q1", CatalogType.DECIMAL),
+            CatalogColumn.of("q2", CatalogType.DECIMAL)
         )
     );
 
@@ -82,6 +94,37 @@ class OracleValidationDialectTest {
         assertFalse(result.problems().stream().anyMatch(problem ->
             problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
                 && "expression.sequence_value".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
+    void validatesOraclePivotTables() {
+        var validator = SchemaStatementValidator.of(SCHEMA, OracleValidationDialect.of());
+        var pivotQuery = io.sqm.dsl.Dsl.select(star())
+            .from(pivot(
+                tbl("sales"),
+                java.util.List.of(pivotMeasure(func("sum", col("amount")), "total")),
+                col("quarter"),
+                java.util.List.of(pivotValue(lit("Q1"), "q1"), pivotValue(lit("Q2"), "q2"))))
+            .build();
+        var unpivotQuery = io.sqm.dsl.Dsl.select(star())
+            .from(unpivot(
+                tbl("sales"),
+                "amount",
+                "quarter",
+                java.util.List.of(unpivotInput("q1", lit("q1")), unpivotInput("q2", lit("q2")))))
+            .build();
+
+        var pivotResult = validator.validate(pivotQuery);
+        var unpivotResult = validator.validate(unpivotQuery);
+
+        assertFalse(pivotResult.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "from.pivot".equals(problem.clausePath())
+        ));
+        assertFalse(unpivotResult.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "from.unpivot".equals(problem.clausePath())
         ));
     }
 

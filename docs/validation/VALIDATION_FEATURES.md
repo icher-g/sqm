@@ -105,6 +105,7 @@ PostgreSQL-specific validation is implemented in a dedicated dialect module:
   - `DISTINCT ON`
   - locking variants (`FOR SHARE`, `FOR KEY SHARE`, `FOR NO KEY UPDATE`, `OF`, `NOWAIT`, `SKIP LOCKED`)
   - `LATERAL`, function tables and `WITH ORDINALITY`
+  - `PIVOT` and `UNPIVOT` relation transforms, which are not supported by the PostgreSQL dialect slice
   - PostgreSQL expression/predicate features (`ILIKE`, `SIMILAR TO`, regex predicates, arrays, `COLLATE`, `AT TIME ZONE`, custom operators, PostgreSQL cast syntax, power operator)
   - grouping extensions (`GROUPING SETS`, `ROLLUP`, `CUBE`)
   - window extensions (`GROUPS`, `EXCLUDE`)
@@ -134,6 +135,7 @@ SQL Server-specific validation is implemented in a dedicated dialect module:
 
 - Version-gated SQL Server features (`DIALECT_FEATURE_UNSUPPORTED`), including:
   - non-SQL Server DML extensions such as `RETURNING`, `ON CONFLICT`, `ON DUPLICATE KEY UPDATE`, and `REPLACE`
+  - baseline `PIVOT` and `UNPIVOT` relation transforms are accepted by the SQL Server dialect slice
 
 ### SQL Server Clause Consistency Validation
 
@@ -142,6 +144,7 @@ SQL Server-specific validation is implemented in a dedicated dialect module:
   - `TOP ... WITH TIES` without `ORDER BY`
   - `OFFSET/FETCH` without `ORDER BY`
   - SQL Server `MERGE` action-shape rules and `MERGE TOP` syntax constraints
+  - SQL Server `PIVOT` / `UNPIVOT` subset restrictions, including Oracle-style aliases and null-treatment clauses
   - `OUTPUT` pseudo-row-source legality (`inserted`/`deleted` column and star usage by statement type)
 
 ### SQL Server Function Catalog
@@ -159,6 +162,7 @@ Oracle-specific validation is implemented in a dedicated dialect module:
 - Version-gated Oracle features (`DIALECT_FEATURE_UNSUPPORTED`), including:
   - Oracle `RETURNING ... INTO` variable targets, including expression/variable count matching
   - Oracle hierarchical queries through `HierarchicalQueryClause` (`START WITH`, `CONNECT BY`, `NOCYCLE`, `ORDER SIBLINGS BY`)
+  - baseline `PIVOT` and `UNPIVOT` relation transforms
   - PostgreSQL-style and SQL Server-style DML result clauses that do not use Oracle variable targets
   - non-Oracle DML extensions such as `INSERT IGNORE`, `REPLACE`, `ON CONFLICT`, `UPDATE FROM`, `UPDATE JOIN`, and `DELETE USING/JOIN`
   - non-Oracle `MERGE` shapes such as `TOP`, `WHEN NOT MATCHED BY SOURCE`, and `DO NOTHING`

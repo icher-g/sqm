@@ -18,7 +18,7 @@ The core model documents what SQM can represent in the AST. That is not the same
 
 - `sqm-core` representability means the framework can model the construct
 - parser, renderer, validation, and transpilation support remain dialect-specific
-- `docs/model/MODEL.md` contains the fuller support notes and ambiguity table for shared-model nodes such as `ResultClause`, `RelationResultTarget`, `OutputColumnExpr`, and `VariableTableRef`
+- `docs/model/MODEL.md` contains the fuller support notes and ambiguity table for shared-model nodes such as `ResultClause`, `RelationResultTarget`, `OutputColumnExpr`, and `VariableTable`
 
 ## Traversal
 

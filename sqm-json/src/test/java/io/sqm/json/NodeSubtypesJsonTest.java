@@ -218,11 +218,43 @@ public class NodeSubtypesJsonTest {
 
         var back = roundTrip(tableVariable, TableRef.class);
 
-        assertInstanceOf(VariableTableRef.class, back);
-        assertEquals("audit", ((VariableTableRef) back).name().value());
+        assertInstanceOf(VariableTable.class, back);
+        assertEquals("audit", ((VariableTable) back).name().value());
 
         JsonNode node = toTree(tableVariable);
         assertEquals("variable_table", node.path("kind").asText());
+    }
+
+    @Test
+    @DisplayName("Pivot table: direct root round-trip")
+    void pivotTable_asTableRefRoot() throws Exception {
+        var pivot = pivot(
+            tbl("sales"),
+            List.of(pivotMeasure(func("sum", col("amount")), "total")),
+            col("quarter"),
+            List.of(pivotValue(lit("Q1"), "q1")));
+
+        var back = roundTrip(pivot, TableRef.class);
+
+        assertInstanceOf(PivotTable.class, back);
+        JsonNode node = toTree(pivot);
+        assertEquals("pivot_table", node.path("kind").asText());
+    }
+
+    @Test
+    @DisplayName("Unpivot table: direct root round-trip")
+    void unpivotTable_asTableRefRoot() throws Exception {
+        var unpivot = unpivot(
+            tbl("sales"),
+            "amount",
+            "quarter",
+            List.of(unpivotInput("q1", lit("Q1"))));
+
+        var back = roundTrip(unpivot, TableRef.class);
+
+        assertInstanceOf(UnpivotTable.class, back);
+        JsonNode node = toTree(unpivot);
+        assertEquals("unpivot_table", node.path("kind").asText());
     }
     /* ==================== DistinctSpec Tests ==================== */
 

@@ -9,7 +9,7 @@ import io.sqm.core.QueryTable;
 import io.sqm.core.Table;
 import io.sqm.core.TableRef;
 import io.sqm.core.ValuesTable;
-import io.sqm.core.VariableTableRef;
+import io.sqm.core.VariableTable;
 
 import java.util.Map;
 import java.util.Objects;
@@ -42,7 +42,7 @@ public final class RelationTransforms {
             }
 
             @Override
-            public Node visitVariableTableRef(VariableTableRef table) {
+            public Node visitVariableTable(VariableTable table) {
                 return requireTableRefResult(rewriter.apply(table), table);
             }
 

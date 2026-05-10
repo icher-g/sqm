@@ -2,10 +2,12 @@ package io.sqm.core;
 
 import io.sqm.core.match.TableRefMatch;
 
+import java.util.List;
+
 /**
  * Anything that can appear in FROM/JOIN: table, subquery, VALUES, etc.
  */
-public sealed interface TableRef extends FromItem permits AliasedTableRef, DialectTableRef, Lateral, Table, VariableTableRef {
+public sealed interface TableRef extends FromItem permits AliasedTableRef, DialectTableRef, Lateral, PivotTable, Table, UnpivotTable, VariableTable {
     /**
      * Creates a table with the provided name. All other fields are set to NULL.
      *
@@ -82,8 +84,39 @@ public sealed interface TableRef extends FromItem permits AliasedTableRef, Diale
      * @param name canonical variable name without leading {@code @}
      * @return table-variable reference
      */
-    static VariableTableRef tableVariable(Identifier name) {
-        return VariableTableRef.of(name);
+    static VariableTable tableVariable(Identifier name) {
+        return VariableTable.of(name);
+    }
+
+    /**
+     * Creates a pivoted table reference.
+     *
+     * @param source source relation to pivot
+     * @param measures aggregate measures to produce
+     * @param forExpression expression whose values become output columns
+     * @param values explicit pivot values
+     * @return pivot table reference
+     */
+    static PivotTable pivot(TableRef source, List<PivotMeasure> measures, Expression forExpression, List<PivotValue> values) {
+        return PivotTable.of(source, measures, forExpression, values);
+    }
+
+    /**
+     * Creates an unpivoted table reference.
+     *
+     * @param source source relation to unpivot
+     * @param valueColumns output value columns
+     * @param nameColumn output name column
+     * @param inputs input column groups and labels
+     * @param nullTreatment null-row treatment
+     * @return unpivot table reference
+     */
+    static UnpivotTable unpivot(TableRef source,
+        List<Identifier> valueColumns,
+        Identifier nameColumn,
+        List<UnpivotInput> inputs,
+        UnpivotTable.NullTreatment nullTreatment) {
+        return UnpivotTable.of(source, valueColumns, nameColumn, inputs, nullTreatment);
     }
 
     /**

@@ -10,7 +10,7 @@ import java.util.Objects;
  * The stored identifier is the canonical variable name without the leading
  * variable sigil used by the dialect.
  */
-public non-sealed interface VariableTableRef extends TableRef {
+public non-sealed interface VariableTable extends TableRef {
 
     /**
      * Creates a table-variable reference from a variable name.
@@ -18,7 +18,7 @@ public non-sealed interface VariableTableRef extends TableRef {
      * @param name canonical variable name without leading {@code @}
      * @return table-variable reference
      */
-    static VariableTableRef of(String name) {
+    static VariableTable of(String name) {
         return of(Identifier.of(name));
     }
 
@@ -28,7 +28,7 @@ public non-sealed interface VariableTableRef extends TableRef {
      * @param name canonical variable name without leading {@code @}
      * @return table-variable reference
      */
-    static VariableTableRef of(Identifier name) {
+    static VariableTable of(Identifier name) {
         return new Impl(name);
     }
 
@@ -48,7 +48,7 @@ public non-sealed interface VariableTableRef extends TableRef {
      */
     @Override
     default <R> R accept(NodeVisitor<R> v) {
-        return v.visitVariableTableRef(this);
+        return v.visitVariableTable(this);
     }
 
     /**
@@ -56,7 +56,7 @@ public non-sealed interface VariableTableRef extends TableRef {
      *
      * @param name canonical variable name without leading {@code @}
      */
-    record Impl(Identifier name) implements VariableTableRef {
+    record Impl(Identifier name) implements VariableTable {
 
         /**
          * Creates a table-variable reference implementation.

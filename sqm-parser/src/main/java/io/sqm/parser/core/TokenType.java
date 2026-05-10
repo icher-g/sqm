@@ -305,6 +305,10 @@ public enum TokenType {
      */
     EXCLUDE,
     /**
+     * INCLUDE keyword token.
+     */
+    INCLUDE,
+    /**
      * ASC keyword token.
      */
     ASC,
@@ -592,6 +596,14 @@ public enum TokenType {
      * FOR keyword token.
      */
     FOR,
+    /**
+     * PIVOT keyword token.
+     */
+    PIVOT,
+    /**
+     * UNPIVOT keyword token.
+     */
+    UNPIVOT,
     /**
      * UPDATE keyword token.
      */

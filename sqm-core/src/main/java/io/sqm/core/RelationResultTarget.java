@@ -64,7 +64,7 @@ public non-sealed interface RelationResultTarget extends ResultTarget {
     /**
      * Returns whether this target writes into a table variable.
      *
-     * @return {@code true} when {@link #target()} is a {@link VariableTableRef}
+     * @return {@code true} when {@link #target()} is a {@link VariableTable}
      */
     default boolean isVariableTarget() {
         return target().<Boolean>matchTableRef().variableTable(table -> true).orElse(false);
