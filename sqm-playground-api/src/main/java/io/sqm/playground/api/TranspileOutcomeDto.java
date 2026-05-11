@@ -4,8 +4,17 @@ package io.sqm.playground.api;
  * Outcome classification for a transpilation request.
  */
 public enum TranspileOutcomeDto {
+    /**
+     * exact transpilation
+     */
     exact,
+    /**
+     * approximate transpilation, for example 'Value' ilike 'lookup' is converted to low('value') like low('lookup')
+     */
     approximate,
+    /**
+     * transpilation is not supported for the current query
+     */
     unsupported;
 
     /**

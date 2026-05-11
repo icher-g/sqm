@@ -4,10 +4,25 @@ package io.sqm.playground.api;
  * Stable SQL dialect identifiers used by the playground API.
  */
 public enum SqlDialectDto {
+    /**
+     * ANSI dialect
+     */
     ansi,
+    /**
+     * PostgreSQL dialect
+     */
     postgresql,
+    /**
+     * MySQL dialect
+     */
     mysql,
+    /**
+     * SQL Server dialect
+     */
     sqlserver,
+    /**
+     * Oracle dialect
+     */
     oracle;
 
     /**

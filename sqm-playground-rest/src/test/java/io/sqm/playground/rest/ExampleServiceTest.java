@@ -26,7 +26,7 @@ class ExampleServiceTest {
         assertTrue(response.success());
         assertNotNull(response.requestId());
         assertFalse(response.requestId().isBlank());
-        assertEquals(10, response.examples().size());
+        assertEquals(11, response.examples().size());
         assertEquals("basic-select", response.examples().getFirst().id());
         assertEquals("ansi", response.examples().getFirst().dialect().name());
         assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("ansi-analytics-report")));
@@ -35,6 +35,7 @@ class ExampleServiceTest {
         assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("sqlserver-merge-output")));
         assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("oracle-offset-fetch")));
         assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("oracle-hierarchical-query")));
+        assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("oracle-pivot-query")));
     }
 
     @Test
