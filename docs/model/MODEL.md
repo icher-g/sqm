@@ -672,7 +672,7 @@ graph TD
   ANSI explicitly rejects this node, and other dialects do not currently ship parser or renderer support for it.
 
 - **PivotTable**
-  Shared relation transform for `PIVOT`-style row-to-column rotation. It stores the source relation, aggregate `PivotMeasure` list, the pivot-for expression, explicit `PivotValue` list, and an optional relation alias. Oracle and SQL Server ship parser, renderer, validation, JSON, and codegen support for the baseline explicit-value subset; ANSI, PostgreSQL, and MySQL reject it explicitly.
+  Shared relation transform for `PIVOT`-style row-to-column rotation. It stores the source relation, aggregate `PivotMeasure` list, the pivot-for expression, explicit `PivotValue` list, and an optional relation alias. Oracle and SQL Server ship parser, renderer, validation, JSON, and codegen support for the baseline explicit-value subset; ANSI, PostgreSQL, and MySQL reject it natively. Simple top-level pivot queries can be approximately transpiled to conditional aggregation when approximate rewrites are enabled.
 
 - **PivotMeasure**
   Aggregate function produced by a pivot transform, with an optional output alias.
@@ -681,7 +681,7 @@ graph TD
   Explicit pivot value listed in the pivot `IN` list, with an optional output alias.
 
 - **UnpivotTable**
-  Shared relation transform for `UNPIVOT`-style column-to-row rotation. It stores the source relation, output value column or columns, output name column, `UnpivotInput` branches, null-row treatment, and an optional relation alias. Oracle and SQL Server ship parser, renderer, validation, JSON, and codegen support for the baseline subset; ANSI, PostgreSQL, and MySQL reject it explicitly.
+  Shared relation transform for `UNPIVOT`-style column-to-row rotation. It stores the source relation, output value column or columns, output name column, `UnpivotInput` branches, null-row treatment, and an optional relation alias. Oracle and SQL Server ship parser, renderer, validation, JSON, and codegen support for the baseline subset; ANSI, PostgreSQL, and MySQL reject it natively. Simple top-level unpivot queries can be approximately transpiled to `UNION ALL` when approximate rewrites are enabled.
 
 - **UnpivotInput**
   One input branch of an unpivot transform, pairing source column or columns with the label emitted into the unpivot name column.

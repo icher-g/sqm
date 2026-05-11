@@ -163,6 +163,29 @@ class StatementFeatureInspectorTest {
     }
 
     @Test
+    void detectsPivotAndUnpivotTables() {
+        var pivot = Dsl.select(Dsl.col("region"))
+            .from(Dsl.pivot(
+                Dsl.tbl("sales"),
+                List.of(Dsl.pivotMeasure(Dsl.func("sum", Dsl.col("amount")))),
+                Dsl.col("quarter"),
+                List.of(Dsl.pivotValue(Dsl.lit("Q1"), "q1"))))
+            .build();
+        var unpivot = Dsl.select(Dsl.col("region"))
+            .from(Dsl.unpivot(
+                Dsl.tbl("sales"),
+                "amount",
+                "quarter",
+                List.of(Dsl.unpivotInput("q1", Dsl.lit("Q1")))))
+            .build();
+        var plain = Dsl.select(Dsl.col("region")).from(Dsl.tbl("sales")).build();
+
+        assertTrue(StatementFeatureInspector.hasPivotOrUnpivotTable(pivot));
+        assertTrue(StatementFeatureInspector.hasPivotOrUnpivotTable(unpivot));
+        assertFalse(StatementFeatureInspector.hasPivotOrUnpivotTable(plain));
+    }
+
+    @Test
     void detectsMergeStatements() {
         MergeStatement mergeStatement = Dsl.merge("users")
             .source(Dsl.tbl("src").as("s"))

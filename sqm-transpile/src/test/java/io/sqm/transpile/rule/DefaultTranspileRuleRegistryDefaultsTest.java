@@ -67,6 +67,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         );
         assertEquals(
             java.util.List.of(
+                "pivot-unpivot-approximate-rewrite",
                 "sqlserver-hint-dropping",
                 "sqlserver-merge-unsupported",
                 "sqlserver-output-unsupported",
@@ -104,7 +105,8 @@ class DefaultTranspileRuleRegistryDefaultsTest {
             java.util.List.of(
                 "hierarchical-query-to-recursive-cte",
                 "oracle-hint-dropping",
-                "oracle-returning-into-unsupported"
+                "oracle-returning-into-unsupported",
+                "pivot-unpivot-approximate-rewrite"
             ),
             oracleToPostgresRules.stream().map(TranspileRule::id).sorted().toList()
         );
