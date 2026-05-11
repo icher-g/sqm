@@ -278,6 +278,22 @@ public final class SchemaValidationContext {
         }
         switch (ref) {
             case Lateral lateral -> registerTableRef(lateral.inner());
+            case PivotTable pivot -> {
+                if (pivot.alias() == null) {
+                    registerTableRef(pivot.source());
+                }
+                else {
+                    registerDerivedSource(pivot.alias(), List.of());
+                }
+            }
+            case UnpivotTable unpivot -> {
+                if (unpivot.alias() == null) {
+                    registerTableRef(unpivot.source());
+                }
+                else {
+                    registerDerivedSource(unpivot.alias(), List.of());
+                }
+            }
             case Table table -> registerPhysicalTable(table);
             case QueryTable queryTable -> registerDerivedSource(
                 queryTable.alias(),
@@ -308,6 +324,12 @@ public final class SchemaValidationContext {
         }
         return switch (ref) {
             case Lateral lateral -> sourceKey(lateral.inner());
+            case PivotTable pivot -> pivot.alias() == null
+                ? sourceKey(pivot.source())
+                : Optional.of(normalize(pivot.alias()));
+            case UnpivotTable unpivot -> unpivot.alias() == null
+                ? sourceKey(unpivot.source())
+                : Optional.of(normalize(unpivot.alias()));
             case Table table -> Optional.of(normalize(table.alias() == null ? table.name() : table.alias()));
             case QueryTable queryTable -> queryTable.alias() == null
                 ? Optional.empty()

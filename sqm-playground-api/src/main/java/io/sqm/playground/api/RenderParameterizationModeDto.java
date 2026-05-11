@@ -4,7 +4,13 @@ package io.sqm.playground.api;
  * Literal parameterization modes supported by playground render requests.
  */
 public enum RenderParameterizationModeDto {
+    /**
+     * keep all parameters as part of the SQL itself
+     */
     inline,
+    /**
+     * extract parameters from the query and keep them outside
+     */
     bind;
 
     /**

@@ -35,6 +35,8 @@ public final class SqlServerCapabilities {
             .supports(SqlFeature.AT_TIME_ZONE, sqlServer2016)
             .supports(SqlFeature.EXPR_COLLATE)
             .supports(SqlFeature.SEQUENCE_VALUE_EXPRESSION)
+            .supports(SqlFeature.PIVOT_TABLE)
+            .supports(SqlFeature.UNPIVOT_TABLE)
             .supports(SqlFeature.TABLE_LOCK_HINT)
             .build();
     }

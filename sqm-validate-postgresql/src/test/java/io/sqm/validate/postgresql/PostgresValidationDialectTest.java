@@ -24,6 +24,12 @@ class PostgresValidationDialectTest {
         CatalogTable.of("public", "users",
             CatalogColumn.of("id", CatalogType.LONG),
             CatalogColumn.of("name", CatalogType.STRING)
+        ),
+        CatalogTable.of("public", "sales",
+            CatalogColumn.of("amount", CatalogType.DECIMAL),
+            CatalogColumn.of("quarter", CatalogType.STRING),
+            CatalogColumn.of("q1", CatalogType.DECIMAL),
+            CatalogColumn.of("q2", CatalogType.DECIMAL)
         )
     );
 
@@ -73,6 +79,28 @@ class PostgresValidationDialectTest {
             problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
                 && "expression.sequence_value".equals(problem.clausePath())
         ));
+    }
+
+    @Test
+    void validate_reportsUnsupportedPivotAndUnpivotTables() {
+        var validator = SchemaStatementValidator.of(SCHEMA, PostgresValidationDialect.of());
+        var pivotQuery = select(star())
+            .from(pivot(
+                tbl("sales"),
+                List.of(pivotMeasure(func("sum", col("amount")))),
+                col("quarter"),
+                List.of(pivotValue(lit("Q1")))))
+            .build();
+        var unpivotQuery = select(star())
+            .from(unpivot(
+                tbl("sales"),
+                "amount",
+                "quarter",
+                List.of(unpivotInput("q1", lit("q1")), unpivotInput("q2", lit("q2")))))
+            .build();
+
+        assertTrue(hasUnsupportedFeature(validator.validate(pivotQuery).problems(), "from.pivot"));
+        assertTrue(hasUnsupportedFeature(validator.validate(unpivotQuery).problems(), "from.unpivot"));
     }
 
     @Test
@@ -550,7 +578,7 @@ class PostgresValidationDialectTest {
         assertNotNull(catalog);
         assertTrue(catalog.resolve("to_json").isPresent());
         assertFalse(catalog.resolve("to_jsonb").isPresent());
-        assertEquals(10, rules.size());
+        assertEquals(11, rules.size());
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectFeatureValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectClauseConsistencyRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresDistinctOnValidationRule")));
@@ -561,6 +589,7 @@ class PostgresValidationDialectTest {
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresFunctionOrderByValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("SequenceValueFeatureValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("HierarchicalQueryFeatureValidationRule")));
+        assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PivotFeatureValidationRule")));
     }
 
     @Test

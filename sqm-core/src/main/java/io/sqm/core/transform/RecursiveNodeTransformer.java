@@ -803,14 +803,96 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
-     * Visits a {@link VariableTableRef}.
+     * Visits a {@link VariableTable}.
      *
      * @param t table-variable reference to transform
      * @return transformed table-variable reference, or the original instance if unchanged
      */
     @Override
-    public Node visitVariableTableRef(VariableTableRef t) {
+    public Node visitVariableTable(VariableTable t) {
         return t;
+    }
+
+    /**
+     * Visits a {@link PivotTable}.
+     *
+     * @param t pivot table reference to transform
+     * @return transformed pivot table reference, or the original instance if unchanged
+     */
+    @Override
+    public Node visitPivotTable(PivotTable t) {
+        var source = apply(t.source());
+        List<PivotMeasure> measures = new ArrayList<>(t.measures().size());
+        boolean measuresChanged = apply(t.measures(), measures);
+        var forExpression = apply(t.forExpression());
+        List<PivotValue> values = new ArrayList<>(t.values().size());
+        boolean valuesChanged = apply(t.values(), values);
+        if (source != t.source() || measuresChanged || forExpression != t.forExpression() || valuesChanged) {
+            return PivotTable.of(source, measures, forExpression, values, t.alias());
+        }
+        return t;
+    }
+
+    /**
+     * Visits an {@link UnpivotTable}.
+     *
+     * @param t unpivot table reference to transform
+     * @return transformed unpivot table reference, or the original instance if unchanged
+     */
+    @Override
+    public Node visitUnpivotTable(UnpivotTable t) {
+        var source = apply(t.source());
+        List<UnpivotInput> inputs = new ArrayList<>(t.inputs().size());
+        boolean inputsChanged = apply(t.inputs(), inputs);
+        if (source != t.source() || inputsChanged) {
+            return UnpivotTable.of(source, t.valueColumns(), t.nameColumn(), inputs, t.nullTreatment(), t.alias());
+        }
+        return t;
+    }
+
+    /**
+     * Visits a {@link PivotMeasure}.
+     *
+     * @param measure pivot measure to transform
+     * @return transformed pivot measure, or the original instance if unchanged
+     */
+    @Override
+    public Node visitPivotMeasure(PivotMeasure measure) {
+        var aggregateFunction = apply(measure.aggregateFunction());
+        if (aggregateFunction != measure.aggregateFunction()) {
+            return PivotMeasure.of(aggregateFunction, measure.alias());
+        }
+        return measure;
+    }
+
+    /**
+     * Visits a {@link PivotValue}.
+     *
+     * @param value pivot value to transform
+     * @return transformed pivot value, or the original instance if unchanged
+     */
+    @Override
+    public Node visitPivotValue(PivotValue value) {
+        var expr = apply(value.value());
+        if (expr != value.value()) {
+            return PivotValue.of(expr, value.alias());
+        }
+        return value;
+    }
+
+    /**
+     * Visits an {@link UnpivotInput}.
+     *
+     * @param input unpivot input to transform
+     * @return transformed unpivot input, or the original instance if unchanged
+     */
+    @Override
+    public Node visitUnpivotInput(UnpivotInput input) {
+        var label = apply(input.label());
+        if (label != input.label()) {
+            return UnpivotInput.of(input.sourceColumns(), label);
+        }
+        return input;
     }
 
     /**

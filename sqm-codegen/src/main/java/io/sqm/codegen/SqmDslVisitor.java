@@ -813,8 +813,72 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitVariableTableRef(VariableTableRef t) {
+    public Void visitVariableTable(VariableTable t) {
         out.append("tableVar(").quote(t.name().value()).append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPivotTable(PivotTable t) {
+        out.append("pivot(");
+        appendNode(t.source());
+        out.append(", List.of(").comma(t.measures(), this::appendNode).append("), ");
+        appendNode(t.forExpression());
+        out.append(", List.of(").comma(t.values(), this::appendNode).append("))");
+        if (t.alias() != null) {
+            out.append(".as(").quote(t.alias().value()).append(")");
+        }
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPivotMeasure(PivotMeasure measure) {
+        out.append("pivotMeasure(");
+        appendNode(measure.aggregateFunction());
+        if (measure.alias() != null) {
+            out.append(", ").quote(measure.alias().value());
+        }
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPivotValue(PivotValue value) {
+        out.append("pivotValue(");
+        appendNode(value.value());
+        if (value.alias() != null) {
+            out.append(", ").quote(value.alias().value());
+        }
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitUnpivotTable(UnpivotTable t) {
+        if (t.valueColumns().size() != 1 || t.nullTreatment() != UnpivotTable.NullTreatment.DIALECT_DEFAULT) {
+            throw unsupported("unpivot table reference", t);
+        }
+        out.append("unpivot(");
+        appendNode(t.source());
+        out.append(", ").quote(t.valueColumns().getFirst().value());
+        out.append(", ").quote(t.nameColumn().value());
+        out.append(", List.of(").comma(t.inputs(), this::appendNode).append("))");
+        if (t.alias() != null) {
+            out.append(".as(").quote(t.alias().value()).append(")");
+        }
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitUnpivotInput(UnpivotInput input) {
+        if (input.sourceColumns().size() != 1) {
+            throw unsupported("unpivot input", input);
+        }
+        out.append("unpivotInput(")
+            .quote(input.sourceColumns().getFirst().value())
+            .append(", ");
+        appendNode(input.label());
+        out.append(")");
         return defaultResult();
     }
 

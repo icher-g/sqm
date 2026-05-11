@@ -47,7 +47,7 @@ Keep syntax-specific behavior in dialect layers:
 Good:
 
 - `ResultClause` as a shared “DML returns rows” concept
-- `VariableTableRef` as a shared semantic relation kind
+- `VariableTable` as a shared semantic relation kind
 
 Not preferred:
 
@@ -93,7 +93,7 @@ Why:
 - a variable table is a variable-backed relation reference
 - the manipulation semantics differ
 
-That is why `VariableTableRef` is better than overloading `Table`.
+That is why `VariableTable` is better than overloading `Table`.
 
 ### Counter-balance
 
@@ -135,7 +135,7 @@ Each layer must be explicit about whether the feature is:
 
 ### Example
 
-`VariableTableRef` exists in `sqm-core`.
+`VariableTable` exists in `sqm-core`.
 
 That does not mean:
 
@@ -178,7 +178,7 @@ Dialect modules own:
 
 Good:
 
-- `VariableTableRef` in `sqm-core`
+- `VariableTable` in `sqm-core`
 - `@audit` parsing/rendering in SQL Server parser/renderer modules
 
 Not preferred:

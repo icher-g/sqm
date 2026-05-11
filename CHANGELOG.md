@@ -41,7 +41,7 @@
 ### Changed
 - Shared DML result modeling now cleanly covers PostgreSQL `RETURNING`, MySQL result-clause reachability, and SQL Server `OUTPUT` / `OUTPUT ... INTO` semantics through a unified result-clause surface.
 - SQL transpilation coverage expanded for SQL Server advanced features, typed-hint handling, and clearer unsupported/approximate diagnostics.
-- Core model and dialect support gaps were closed for high-value manipulation surfaces including `AT TIME ZONE`, `LATERAL`, `FunctionTable`, `TopSpec`, `VariableTableRef`, array support, and MySQL validation coverage.
+- Core model and dialect support gaps were closed for high-value manipulation surfaces including `AT TIME ZONE`, `LATERAL`, `FunctionTable`, `TopSpec`, `VariableTable`, array support, and MySQL validation coverage.
 - Documentation, wiki navigation, examples, and downstream guides were refreshed to reflect SQL Server support and the new transform-helper workflow.
 
 ## [v0.3.3] - 2026-03-13

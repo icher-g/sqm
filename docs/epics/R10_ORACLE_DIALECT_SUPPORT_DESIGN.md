@@ -511,9 +511,9 @@ Documentation must state Query, DML, and DDL scope separately.
 | `JsonTable` future node         | `Not implemented by SQM`                                                   | Requires dedicated model design.                                         |
 | `AtTimeZoneExpr`                | `Not supported by SQM` initially                                           | Oracle time-zone conversion needs semantic review against existing node. |
 | `ResultClause`                  | `Not implemented by SQM` initially for Oracle                              | Needs `RETURNING ... INTO` target model.                                 |
-| `RelationResultTarget`                    | `Not implemented by SQM` for Oracle host targets                           | Existing SQL Server table-target semantics are not enough.               |
+| `RelationResultTarget`          | `Not implemented by SQM` for Oracle host targets                           | Existing SQL Server table-target semantics are not enough.               |
 | `MergeStatement`                | `Support` for baseline Oracle subset                                       | Reject SQL Server/PostgreSQL-only branches.                              |
-| `VariableTableRef`              | `Not supported by the dialect`                                             | PL/SQL variables are not relation references in SQM baseline.            |
+| `VariableTable`                 | `Not supported by the dialect`                                             | PL/SQL variables are not relation references in SQM baseline.            |
 | `HierarchicalQuery` future node | `Not implemented by SQM`                                                   | Dedicated story for `CONNECT BY`.                                        |
 | DDL nodes                       | Out of scope                                                               | Requires separate framework decision.                                    |
 

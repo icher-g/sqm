@@ -356,7 +356,7 @@ public final class Dsl {
      * @param name canonical variable name with or without leading {@code @}
      * @return SQL Server table-variable reference
      */
-    public static VariableTableRef tableVar(String name) {
+    public static VariableTable tableVar(String name) {
         return tableVar(Identifier.of(stripTableVariableSigil(name)));
     }
 
@@ -366,8 +366,104 @@ public final class Dsl {
      * @param name canonical variable identifier without leading {@code @}
      * @return SQL Server table-variable reference
      */
-    public static VariableTableRef tableVar(Identifier name) {
+    public static VariableTable tableVar(Identifier name) {
         return TableRef.tableVariable(name);
+    }
+
+    /**
+     * Creates a pivot measure.
+     *
+     * @param aggregateFunction aggregate function used by the pivot
+     * @return pivot measure
+     */
+    public static PivotMeasure pivotMeasure(FunctionExpr aggregateFunction) {
+        return PivotMeasure.of(aggregateFunction, null);
+    }
+
+    /**
+     * Creates a pivot measure with an alias.
+     *
+     * @param aggregateFunction aggregate function used by the pivot
+     * @param alias measure alias
+     * @return pivot measure
+     */
+    public static PivotMeasure pivotMeasure(FunctionExpr aggregateFunction, String alias) {
+        return PivotMeasure.of(aggregateFunction, Identifier.of(alias));
+    }
+
+    /**
+     * Creates a pivot value.
+     *
+     * @param value source value that maps to a pivot output column
+     * @return pivot value
+     */
+    public static PivotValue pivotValue(Expression value) {
+        return PivotValue.of(value, null);
+    }
+
+    /**
+     * Creates a pivot value with an alias.
+     *
+     * @param value source value that maps to a pivot output column
+     * @param alias output alias
+     * @return pivot value
+     */
+    public static PivotValue pivotValue(Expression value, String alias) {
+        return PivotValue.of(value, Identifier.of(alias));
+    }
+
+    /**
+     * Creates a pivot table transform.
+     *
+     * @param source source relation to pivot
+     * @param measures aggregate measures to produce
+     * @param forExpression expression whose values become output columns
+     * @param values explicit pivot values
+     * @return pivot table reference
+     */
+    public static PivotTable pivot(TableRef source, List<PivotMeasure> measures, Expression forExpression, List<PivotValue> values) {
+        return PivotTable.of(source, measures, forExpression, values);
+    }
+
+    /**
+     * Creates an unpivot input.
+     *
+     * @param sourceColumn source column read for this input branch
+     * @param label label emitted into the unpivot name column
+     * @return unpivot input
+     */
+    public static UnpivotInput unpivotInput(String sourceColumn, Expression label) {
+        return UnpivotInput.of(Identifier.of(sourceColumn), label);
+    }
+
+    /**
+     * Creates an unpivot input.
+     *
+     * @param sourceColumns source columns read for this input branch
+     * @param label label emitted into the unpivot name column
+     * @return unpivot input
+     */
+    public static UnpivotInput unpivotInput(List<Identifier> sourceColumns, Expression label) {
+        return UnpivotInput.of(sourceColumns, label);
+    }
+
+    /**
+     * Creates an unpivot table transform using dialect-default null handling.
+     *
+     * @param source source relation to unpivot
+     * @param valueColumn output value column
+     * @param nameColumn output name column
+     * @param inputs input column groups and labels
+     * @return unpivot table reference
+     */
+    public static UnpivotTable unpivot(TableRef source, String valueColumn, String nameColumn, List<UnpivotInput> inputs) {
+        return UnpivotTable.of(
+            source,
+            List.of(Identifier.of(valueColumn)),
+            Identifier.of(nameColumn),
+            inputs,
+            UnpivotTable.NullTreatment.DIALECT_DEFAULT
+        );
     }
 
     /* ========================= Columns ========================= */

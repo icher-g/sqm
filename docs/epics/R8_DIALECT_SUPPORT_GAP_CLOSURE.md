@@ -197,9 +197,9 @@ That means follow-up work under this epic should not leave a feature enforced on
 
 #### B1. Variable-backed result targets beyond SQL Server
 - Goal:
-  implement dialect support for `VariableTableRef` in dialects currently marked `Not implemented by SQM`, if the dialect really supports a relation-like variable sink that fits the shared semantics.
+  implement dialect support for `VariableTable` in dialects currently marked `Not implemented by SQM`, if the dialect really supports a relation-like variable sink that fits the shared semantics.
 - Design warning:
-  do not force unrelated variable constructs into `VariableTableRef` if the dialect feature is not truly relation-shaped.
+  do not force unrelated variable constructs into `VariableTable` if the dialect feature is not truly relation-shaped.
 
 ### Bucket C: Query Table-Reference Gaps
 
@@ -288,7 +288,7 @@ If the implementation or reclassification happens without updating `MODEL.md`, t
 
 1. `AtTimeZoneExpr` for SQL Server
 2. `Lateral` and `FunctionTable` stories
-3. `VariableTableRef` follow-up stories
+3. `VariableTable` follow-up stories
 4. `TopSpec` stories only after re-validating the model fit
 5. validation-rule hardening story across shipped dialects
 6. array-family stories only after re-validating the target dialect semantics
@@ -418,14 +418,14 @@ Implementation note:
 ### Story R8-5
 
 #### Title
-`Story: Resolve VariableTableRef support beyond SQL Server`
+`Story: Resolve VariableTable support beyond SQL Server`
 
 #### User Story
-As an SQM maintainer, I want the PostgreSQL and MySQL `VariableTableRef` support-matrix entries to be implemented or explicitly reclassified so the shared model no longer carries ambiguous dialect claims around variable-backed relation sinks.
+As an SQM maintainer, I want the PostgreSQL and MySQL `VariableTable` support-matrix entries to be implemented or explicitly reclassified so the shared model no longer carries ambiguous dialect claims around variable-backed relation sinks.
 
 #### Acceptance Criteria
-- PostgreSQL and MySQL capability assumptions behind `VariableTableRef` are confirmed before coding.
-- If a dialect truly supports relation-shaped variable sinks compatible with `VariableTableRef`, end-to-end support is added.
+- PostgreSQL and MySQL capability assumptions behind `VariableTable` are confirmed before coding.
+- If a dialect truly supports relation-shaped variable sinks compatible with `VariableTable`, end-to-end support is added.
 - If the current support assumption is incorrect, `MODEL.md` and this epic are updated instead of forcing unrelated variable syntax into the shared node.
 - Validation, transpilation, DSL, codegen, control, middleware, and integration impact are reviewed explicitly.
 - Tests and documentation clearly reflect the final supported or reclassified scope.
@@ -437,7 +437,7 @@ As an SQM maintainer, I want the PostgreSQL and MySQL `VariableTableRef` support
 - `Epic: R8 Dialect Support Gap Closure`
 
 Implementation note:
-- PostgreSQL and MySQL were reclassified to `Not supported by the dialect` for `VariableTableRef`.
+- PostgreSQL and MySQL were reclassified to `Not supported by the dialect` for `VariableTable`.
 - Their shipped temp-table features remain plain `Table` semantics, and their variable features do not provide SQL Server-style relation-backed table variables such as `@audit`.
 
 ---

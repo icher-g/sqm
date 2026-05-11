@@ -637,7 +637,71 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
      * @return a result produced by the visitor
      */
     @Override
-    public R visitVariableTableRef(VariableTableRef t) {
+    public R visitVariableTable(VariableTable t) {
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link PivotTable}.
+     *
+     * @param t pivot table reference
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitPivotTable(PivotTable t) {
+        accept(t.source());
+        t.measures().forEach(this::accept);
+        accept(t.forExpression());
+        t.values().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
+     * Visits an {@link UnpivotTable}.
+     *
+     * @param t unpivot table reference
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitUnpivotTable(UnpivotTable t) {
+        accept(t.source());
+        t.inputs().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link PivotMeasure}.
+     *
+     * @param measure pivot measure
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitPivotMeasure(PivotMeasure measure) {
+        accept(measure.aggregateFunction());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link PivotValue}.
+     *
+     * @param value pivot value
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitPivotValue(PivotValue value) {
+        accept(value.value());
+        return defaultResult();
+    }
+
+    /**
+     * Visits an {@link UnpivotInput}.
+     *
+     * @param input unpivot input
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitUnpivotInput(UnpivotInput input) {
+        accept(input.label());
         return defaultResult();
     }
 

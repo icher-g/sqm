@@ -7,10 +7,13 @@ import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.Identifier;
 import io.sqm.core.LimitOffset;
 import io.sqm.core.SelectModifier;
+import io.sqm.core.UnpivotTable;
 import io.sqm.core.dialect.SqlDialectVersion;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.SchemaStatementValidator;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,6 +27,12 @@ class SqlServerValidationDialectTest {
             CatalogColumn.of("created_at", CatalogType.TIMESTAMP),
             CatalogColumn.of("updated_at", CatalogType.TIMESTAMP),
             CatalogColumn.of("age", CatalogType.INTEGER)
+        ),
+        CatalogTable.of("public", "sales",
+            CatalogColumn.of("amount", CatalogType.DECIMAL),
+            CatalogColumn.of("quarter", CatalogType.STRING),
+            CatalogColumn.of("q1", CatalogType.DECIMAL),
+            CatalogColumn.of("q2", CatalogType.DECIMAL)
         )
     );
 
@@ -104,6 +113,63 @@ class SqlServerValidationDialectTest {
 
         assertFalse(hasDialectProblem(result, ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED));
         assertFalse(hasDialectProblem(result, ValidationProblem.Code.DIALECT_CLAUSE_INVALID));
+    }
+
+    @Test
+    void validate_acceptsPivotAndUnpivotTables() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var pivotQuery = select(star())
+            .from(pivot(
+                tbl("sales"),
+                List.of(pivotMeasure(func("sum", col("amount")))),
+                col("quarter"),
+                List.of(pivotValue(lit("Q1")))))
+            .build();
+        var unpivotQuery = select(star())
+            .from(unpivot(
+                tbl("sales"),
+                "amount",
+                "quarter",
+                List.of(unpivotInput("q1", lit("q1")), unpivotInput("q2", lit("q2")))))
+            .build();
+
+        assertFalse(validator.validate(pivotQuery).problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "from.pivot".equals(problem.clausePath())
+        ));
+        assertFalse(validator.validate(unpivotQuery).problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "from.unpivot".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
+    void validate_reportsUnsupportedSqlServerPivotOptions() {
+        var validator = SchemaStatementValidator.of(SCHEMA, SqlServerValidationDialect.of());
+        var pivotQuery = select(star())
+            .from(pivot(
+                tbl("sales"),
+                List.of(pivotMeasure(func("sum", col("amount")), "total")),
+                col("quarter"),
+                List.of(pivotValue(lit("Q1"), "q1"))))
+            .build();
+        var unpivotQuery = select(star())
+            .from(UnpivotTable.of(
+                tbl("sales"),
+                List.of(id("amount")),
+                id("quarter"),
+                List.of(unpivotInput("q1", lit("q1"))),
+                UnpivotTable.NullTreatment.INCLUDE_NULLS))
+            .build();
+
+        assertTrue(validator.validate(pivotQuery).problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "from.pivot".equals(problem.clausePath())
+        ));
+        assertTrue(validator.validate(unpivotQuery).problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "from.unpivot".equals(problem.clausePath())
+        ));
     }
 
     @Test
@@ -969,7 +1035,11 @@ class SqlServerValidationDialectTest {
         var versionedDialect = SqlServerValidationDialect.of(SqlDialectVersion.of(2014, 0));
 
         assertEquals("sqlserver", dialect.name());
-        assertEquals(10, dialect.additionalRules().size());
+        assertEquals(12, dialect.additionalRules().size());
+        assertTrue(dialect.additionalRules().stream()
+            .anyMatch(rule -> rule.getClass().getSimpleName().equals("PivotFeatureValidationRule")));
+        assertTrue(dialect.additionalRules().stream()
+            .anyMatch(rule -> rule.getClass().getSimpleName().equals("SqlServerPivotValidationRule")));
         assertEquals(SqlDialectVersion.of(2019, 0), dialect.version());
         assertTrue(dialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.LATERAL));
         assertFalse(versionedDialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.AT_TIME_ZONE));

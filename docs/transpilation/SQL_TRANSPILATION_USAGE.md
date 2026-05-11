@@ -146,9 +146,11 @@ combined render result and `result.params()` preserves statement order.
   - `TOP` to standard row-limiting model / target `LIMIT`
 - Warning-based rewrite:
   - SQL Server statement and table hints are dropped for non-SQL Server targets
+  - simple top-level `PIVOT`/`UNPIVOT` transforms are rewritten approximately to conditional aggregation or `UNION ALL` for PostgreSQL/MySQL/ANSI targets when `allowApproximateRewrites` is enabled
 - Unsupported:
   - `TOP ... PERCENT`
   - `TOP ... WITH TIES`
+  - complex or nested `PIVOT`/`UNPIVOT` shapes are rejected with `UNSUPPORTED_PIVOT_UNPIVOT_REWRITE`
   - `DISTINCT ON` when targeting SQL Server from PostgreSQL source
   - deferred SQL Server advanced DML features such as `OUTPUT` and `MERGE`
 
@@ -160,9 +162,11 @@ combined render result and `result.params()` preserves statement order.
   - Simple Oracle hierarchical queries to PostgreSQL/MySQL/ANSI recursive CTEs when the query is a single-table `START WITH ... CONNECT BY PRIOR parent = child` shape with projected columns and optional `LEVEL`
 - Warning-based rewrite:
   - Oracle statement and table hints are dropped for non-Oracle targets
+  - simple top-level `PIVOT`/`UNPIVOT` transforms are rewritten approximately to conditional aggregation or `UNION ALL` for PostgreSQL/MySQL/ANSI targets when `allowApproximateRewrites` is enabled
 - Unsupported:
   - Oracle DML `RETURNING ... INTO` is modeled and parsed, but exact transpilation to non-Oracle result channels is unsupported until an explicit conversion rule is designed
   - Complex Oracle hierarchical queries, including `NOCYCLE`, `ORDER SIBLINGS BY`, joins, grouping, pagination, locking, or non-column projections, are rejected with `UNSUPPORTED_HIERARCHICAL_QUERY_REWRITE`
+  - complex or nested `PIVOT`/`UNPIVOT` shapes are rejected with `UNSUPPORTED_PIVOT_UNPIVOT_REWRITE`
   - Oracle hierarchical queries targeting SQL Server are rejected with `UNSUPPORTED_HIERARCHICAL_QUERY` until SQL Server recursive CTE rendering is modeled separately
   - advanced Oracle-only query features such as `MODEL` clauses require separate model stories
 
@@ -183,28 +187,30 @@ combined render result and `result.params()` preserves statement order.
 
 ## Rule Matrix
 
-| Source                | Target                | Rule family                               | Outcome                                                    |
-|-----------------------|-----------------------|-------------------------------------------|------------------------------------------------------------|
-| Oracle                | PostgreSQL/MySQL/ANSI | `OFFSET ... FETCH`                        | Exact shared row-limiting render                           |
-| Oracle                | SQL Server            | limit-only row limiting                   | Exact rewrite to `TOP`                                     |
-| Oracle                | non-Oracle            | hints                                     | Approximate drop with `ORACLE_HINTS_DROPPED`               |
-| Oracle                | non-Oracle            | `RETURNING ... INTO`                      | Unsupported with `UNSUPPORTED_ORACLE_RETURNING_INTO`       |
-| Oracle                | PostgreSQL/MySQL/ANSI | simple hierarchical query (`CONNECT BY`)  | Exact rewrite to recursive CTE                             |
-| Oracle                | PostgreSQL/MySQL/ANSI | complex hierarchical query (`CONNECT BY`) | Unsupported with `UNSUPPORTED_HIERARCHICAL_QUERY_REWRITE`  |
-| Oracle                | SQL Server            | hierarchical query (`CONNECT BY`)         | Unsupported with `UNSUPPORTED_HIERARCHICAL_QUERY`          |
-| PostgreSQL/MySQL/ANSI | Oracle                | shared row limiting                       | Exact Oracle `OFFSET ... FETCH` render                     |
-| SQL Server            | Oracle                | baseline `TOP`                            | Exact rewrite to Oracle `FETCH FIRST`                      |
-| PostgreSQL            | Oracle                | `RETURNING`/generic result clause         | Unsupported with `UNSUPPORTED_ORACLE_RESULT_CLAUSE`        |
-| PostgreSQL            | Oracle                | `DISTINCT ON`                             | Unsupported with `UNSUPPORTED_DISTINCT_ON`                 |
-| PostgreSQL            | Oracle                | portable `MERGE` subset                   | Exact Oracle `MERGE` render                                |
-| PostgreSQL            | Oracle                | `MERGE DO NOTHING`                        | Unsupported with `UNSUPPORTED_MERGE_DO_NOTHING`            |
-| PostgreSQL            | Oracle                | `MERGE WHEN NOT MATCHED BY SOURCE`        | Unsupported with `UNSUPPORTED_MERGE_NOT_MATCHED_BY_SOURCE` |
-| PostgreSQL            | SQL Server            | portable `MERGE` subset                   | Exact SQL Server `MERGE` render                            |
-| PostgreSQL            | SQL Server            | `MERGE DO NOTHING`                        | Unsupported with `UNSUPPORTED_MERGE_DO_NOTHING`            |
-| PostgreSQL            | ANSI/MySQL            | `MERGE`                                   | Unsupported with `UNSUPPORTED_POSTGRES_MERGE`              |
-| SQL Server            | Oracle                | `OUTPUT`                                  | Unsupported with `UNSUPPORTED_SQLSERVER_OUTPUT`            |
-| SQL Server            | Oracle                | `MERGE`                                   | Unsupported with `UNSUPPORTED_SQLSERVER_MERGE`             |
-| MySQL/SQL Server      | Oracle                | hints                                     | Approximate drop with dialect-specific hint warning        |
+| Source                | Target                | Rule family                               | Outcome                                                                   |
+|-----------------------|-----------------------|-------------------------------------------|---------------------------------------------------------------------------|
+| Oracle                | PostgreSQL/MySQL/ANSI | `OFFSET ... FETCH`                        | Exact shared row-limiting render                                          |
+| Oracle                | SQL Server            | limit-only row limiting                   | Exact rewrite to `TOP`                                                    |
+| Oracle                | non-Oracle            | hints                                     | Approximate drop with `ORACLE_HINTS_DROPPED`                              |
+| Oracle                | non-Oracle            | `RETURNING ... INTO`                      | Unsupported with `UNSUPPORTED_ORACLE_RETURNING_INTO`                      |
+| Oracle                | PostgreSQL/MySQL/ANSI | simple hierarchical query (`CONNECT BY`)  | Exact rewrite to recursive CTE                                            |
+| Oracle                | PostgreSQL/MySQL/ANSI | complex hierarchical query (`CONNECT BY`) | Unsupported with `UNSUPPORTED_HIERARCHICAL_QUERY_REWRITE`                 |
+| Oracle/SQL Server     | PostgreSQL/MySQL/ANSI | simple top-level `PIVOT` / `UNPIVOT`      | Approximate rewrite with `APPROXIMATE_PIVOT_UNPIVOT_REWRITE` when enabled |
+| Oracle/SQL Server     | PostgreSQL/MySQL/ANSI | complex `PIVOT` / `UNPIVOT`               | Unsupported with `UNSUPPORTED_PIVOT_UNPIVOT_REWRITE`                      |
+| Oracle                | SQL Server            | hierarchical query (`CONNECT BY`)         | Unsupported with `UNSUPPORTED_HIERARCHICAL_QUERY`                         |
+| PostgreSQL/MySQL/ANSI | Oracle                | shared row limiting                       | Exact Oracle `OFFSET ... FETCH` render                                    |
+| SQL Server            | Oracle                | baseline `TOP`                            | Exact rewrite to Oracle `FETCH FIRST`                                     |
+| PostgreSQL            | Oracle                | `RETURNING`/generic result clause         | Unsupported with `UNSUPPORTED_ORACLE_RESULT_CLAUSE`                       |
+| PostgreSQL            | Oracle                | `DISTINCT ON`                             | Unsupported with `UNSUPPORTED_DISTINCT_ON`                                |
+| PostgreSQL            | Oracle                | portable `MERGE` subset                   | Exact Oracle `MERGE` render                                               |
+| PostgreSQL            | Oracle                | `MERGE DO NOTHING`                        | Unsupported with `UNSUPPORTED_MERGE_DO_NOTHING`                           |
+| PostgreSQL            | Oracle                | `MERGE WHEN NOT MATCHED BY SOURCE`        | Unsupported with `UNSUPPORTED_MERGE_NOT_MATCHED_BY_SOURCE`                |
+| PostgreSQL            | SQL Server            | portable `MERGE` subset                   | Exact SQL Server `MERGE` render                                           |
+| PostgreSQL            | SQL Server            | `MERGE DO NOTHING`                        | Unsupported with `UNSUPPORTED_MERGE_DO_NOTHING`                           |
+| PostgreSQL            | ANSI/MySQL            | `MERGE`                                   | Unsupported with `UNSUPPORTED_POSTGRES_MERGE`                             |
+| SQL Server            | Oracle                | `OUTPUT`                                  | Unsupported with `UNSUPPORTED_SQLSERVER_OUTPUT`                           |
+| SQL Server            | Oracle                | `MERGE`                                   | Unsupported with `UNSUPPORTED_SQLSERVER_MERGE`                            |
+| MySQL/SQL Server      | Oracle                | hints                                     | Approximate drop with dialect-specific hint warning                       |
 
 ## Reading Results
 

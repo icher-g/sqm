@@ -2,7 +2,7 @@ package io.sqm.render.sqlserver;
 
 import io.sqm.core.RelationResultTarget;
 import io.sqm.core.Table;
-import io.sqm.core.VariableTableRef;
+import io.sqm.core.VariableTable;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
@@ -27,7 +27,7 @@ public class RelationResultTargetRenderer implements Renderer<RelationResultTarg
      */
     @Override
     public void render(RelationResultTarget node, RenderContext ctx, SqlWriter w) {
-        if (!(node.target() instanceof Table || node.target() instanceof VariableTableRef)) {
+        if (!(node.target() instanceof Table || node.target() instanceof VariableTable)) {
             throw new UnsupportedOperationException("SQL Server OUTPUT INTO currently supports base tables and table variables only");
         }
 

@@ -1463,7 +1463,7 @@ class RecursiveNodeTransformerTest {
 
         var transformer = new RecursiveNodeTransformer() {
             @Override
-            public Node visitVariableTableRef(VariableTableRef t) {
+            public Node visitVariableTable(VariableTable t) {
                 return tableVar("audit_archive");
             }
         };
@@ -1504,11 +1504,71 @@ class RecursiveNodeTransformerTest {
     }
 
     @Test
-    void visitVariableTableRefWithoutChangesPreservesIdentity() {
+    void visitVariableTableWithoutChangesPreservesIdentity() {
         var variable = tableVar("audit_rows");
 
         var transformed = variable.accept(new NothingTransformer());
 
         assertSame(variable, transformed);
+    }
+
+    @Test
+    void visitPivotTable() {
+        var pivot = pivot(
+            tbl("sales"),
+            List.of(pivotMeasure(func("sum", col("amount")), "total")),
+            col("quarter"),
+            List.of(pivotValue(lit("Q1"), "q1")))
+            .as("p");
+
+        var unchanged = pivot.accept(new NothingTransformer());
+        assertSame(pivot, unchanged);
+
+        var transformed = (PivotTable) pivot.accept(new RecursiveNodeTransformer() {
+            @Override
+            public Node visitColumnExpr(ColumnExpr c) {
+                if ("quarter".equals(c.name().value())) {
+                    return col("fiscal_quarter");
+                }
+                return c;
+            }
+        });
+
+        assertNotSame(pivot, transformed);
+        assertEquals("fiscal_quarter", transformed.forExpression().matchExpression()
+            .column(c -> c.name().value())
+            .orElse(null));
+        assertSame(pivot.source(), transformed.source());
+        assertEquals("total", transformed.measures().getFirst().alias().value());
+    }
+
+    @Test
+    void visitUnpivotTable() {
+        var unpivot = unpivot(
+            tbl("sales"),
+            "amount",
+            "quarter",
+            List.of(unpivotInput("q1", lit("Q1"))))
+            .as("u");
+
+        var unchanged = unpivot.accept(new NothingTransformer());
+        assertSame(unpivot, unchanged);
+
+        var transformed = (UnpivotTable) unpivot.accept(new RecursiveNodeTransformer() {
+            @Override
+            public Node visitLiteralExpr(LiteralExpr l) {
+                if ("Q1".equals(l.value())) {
+                    return lit("FY-Q1");
+                }
+                return l;
+            }
+        });
+
+        assertNotSame(unpivot, transformed);
+        assertEquals("FY-Q1", transformed.inputs().getFirst().label().matchExpression()
+            .literal(l -> l.value())
+            .orElse(null));
+        assertSame(unpivot.source(), transformed.source());
+        assertEquals("quarter", transformed.nameColumn().value());
     }
 }

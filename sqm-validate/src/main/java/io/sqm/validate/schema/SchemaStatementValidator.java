@@ -342,6 +342,32 @@ public final class SchemaStatementValidator implements StatementValidator {
         }
 
         /**
+         * Validates pivot feature support after traversal.
+         *
+         * @param table pivot table reference.
+         * @return default result.
+         */
+        @Override
+        public Void visitPivotTable(PivotTable table) {
+            super.visitPivotTable(table);
+            registry.validate(table, context);
+            return defaultResult();
+        }
+
+        /**
+         * Validates unpivot feature support after traversal.
+         *
+         * @param table unpivot table reference.
+         * @return default result.
+         */
+        @Override
+        public Void visitUnpivotTable(UnpivotTable table) {
+            super.visitUnpivotTable(table);
+            registry.validate(table, context);
+            return defaultResult();
+        }
+
+        /**
          * Validates function signature constraints after traversing arguments.
          *
          * @param f function expression.

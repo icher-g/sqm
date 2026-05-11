@@ -1,6 +1,6 @@
 package io.sqm.parser.sqlserver;
 
-import io.sqm.core.VariableTableRef;
+import io.sqm.core.VariableTable;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.sqlserver.spi.SqlServerSpecs;
@@ -12,12 +12,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class VariableTableRefParserTest {
+class VariableTableParserTest {
 
     @Test
-    void parsesSqlServerVariableTableReference() {
+    void parsesSqlServerVariableTable() {
         var ctx = ParseContext.of(new SqlServerSpecs());
-        var result = ctx.parse(VariableTableRef.class, "@audit");
+        var result = ctx.parse(VariableTable.class, "@audit");
 
         assertTrue(result.ok(), result.errorMessage());
         assertEquals("audit", result.value().name().value());
@@ -25,18 +25,18 @@ class VariableTableRefParserTest {
 
     @Test
     void parserMatchesOnlyAtSignIdentifierPattern() {
-        var parser = new VariableTableRefParser();
+        var parser = new VariableTableParser();
         var ctx = ParseContext.of(new SqlServerSpecs());
 
         assertTrue(parser.match(Cursor.of("@audit", ctx.identifierQuoting()), ctx));
         assertFalse(parser.match(Cursor.of("@", ctx.identifierQuoting()), ctx));
         assertFalse(parser.match(Cursor.of("audit", ctx.identifierQuoting()), ctx));
-        assertEquals(VariableTableRef.class, parser.targetType());
+        assertEquals(VariableTable.class, parser.targetType());
     }
 
     @Test
     void parserReportsErrorWhenCursorDoesNotContainVariableTable() {
-        var parser = new VariableTableRefParser();
+        var parser = new VariableTableParser();
         var ctx = ParseContext.of(new SqlServerSpecs());
         var result = parser.parse(Cursor.of("audit", ctx.identifierQuoting()), ctx);
 

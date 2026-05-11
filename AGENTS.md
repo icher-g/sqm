@@ -25,6 +25,10 @@ Agents should read it first and follow it throughout the task.
 - Preserve node immutability contracts: transformers must return new nodes when changed and the same instance when unchanged.
 - Dialect-specific features must be validated at both parse time and render time.
 - New parser/renderer implementations must be registered in the corresponding dialect registries.
+- `sqm-parser` is for top-level routing parsers and shared parser infrastructure; concrete node parsers must live in `sqm-parser-ansi` or dialect parser modules.
+- Every semantic node must have dedicated parser and renderer pairs in ANSI, even when ANSI only rejects unsupported syntax.
+- Dialect parser/renderer implementations should exist only when the dialect has behavior to override; do not add empty dialect adapters or registrations.
+- Do not fold child-node parsing or rendering into parent parsers/renderers; child nodes need their own registered parser/renderer pairs.
 - For any new node types, ensure:
   - Dedicated visitor interface methods and RecursiveNodeVisitor implementations (leaf nodes only).
   - RecursiveNodeTransformer coverage.

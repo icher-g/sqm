@@ -42,6 +42,8 @@ public final class OracleCapabilities {
             .supports(SqlFeature.OPTIMIZER_HINT_COMMENT)
             .supports(SqlFeature.SEQUENCE_VALUE_EXPRESSION)
             .supports(SqlFeature.HIERARCHICAL_QUERY)
+            .supports(SqlFeature.PIVOT_TABLE)
+            .supports(SqlFeature.UNPIVOT_TABLE)
             .supports(ORACLE_12_1, SqlFeature.LATERAL)
             .build();
     }

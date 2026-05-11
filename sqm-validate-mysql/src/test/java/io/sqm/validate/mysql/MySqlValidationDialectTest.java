@@ -26,6 +26,10 @@ class MySqlValidationDialectTest {
         CatalogTable.of("public", "orders",
             CatalogColumn.of("id", CatalogType.LONG),
             CatalogColumn.of("user_id", CatalogType.LONG)
+        ),
+        CatalogTable.of("public", "sales",
+            CatalogColumn.of("amount", CatalogType.DECIMAL),
+            CatalogColumn.of("quarter", CatalogType.STRING)
         )
     );
 
@@ -70,6 +74,37 @@ class MySqlValidationDialectTest {
         assertTrue(result.problems().stream().anyMatch(problem ->
             problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
                 && "expression.sequence_value".equals(problem.clausePath())
+        ));
+    }
+
+    @Test
+    void validate_reportsUnsupportedPivotAndUnpivotTables() {
+        var validator = SchemaStatementValidator.of(SCHEMA, MySqlValidationDialect.of());
+        var pivotQuery = select(star())
+            .from(pivot(
+                tbl("sales"),
+                List.of(pivotMeasure(func("sum", col("amount")), "total")),
+                col("quarter"),
+                List.of(pivotValue(lit("Q1"), "q1"))))
+            .build();
+        var unpivotQuery = select(star())
+            .from(unpivot(
+                tbl("sales"),
+                "amount",
+                "quarter",
+                List.of(unpivotInput("q1", lit("q1")), unpivotInput("q2", lit("q2")))))
+            .build();
+
+        var pivotResult = validator.validate(pivotQuery);
+        var unpivotResult = validator.validate(unpivotQuery);
+
+        assertTrue(pivotResult.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "from.pivot".equals(problem.clausePath())
+        ));
+        assertTrue(unpivotResult.problems().stream().anyMatch(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_FEATURE_UNSUPPORTED
+                && "from.unpivot".equals(problem.clausePath())
         ));
     }
 

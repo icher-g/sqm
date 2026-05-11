@@ -51,7 +51,23 @@ public interface FromVisitor<R> {
      * @param t the table-variable reference being visited
      * @return a result produced by the visitor
      */
-    R visitVariableTableRef(VariableTableRef t);
+    R visitVariableTable(VariableTable t);
+
+    /**
+     * Visits a {@link PivotTable}.
+     *
+     * @param t pivot table reference
+     * @return a result produced by the visitor
+     */
+    R visitPivotTable(PivotTable t);
+
+    /**
+     * Visits an {@link UnpivotTable}.
+     *
+     * @param t unpivot table reference
+     * @return a result produced by the visitor
+     */
+    R visitUnpivotTable(UnpivotTable t);
 
     /**
      * Visits an {@link OnJoin}, a join with an {@code ON} predicate and a specific join kind

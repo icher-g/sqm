@@ -22,4 +22,4 @@ Current scope notes:
 - DDL is intentionally outside this matrix.
 - `sqm-codegen-maven-plugin` JDBC schema loading uses dedicated PostgreSQL, MySQL, and SQL Server type mappers where available.
 - SQL Server support in this matrix includes the advanced R5B closure shipped across validation, control, codegen, middleware, and integration layers.
-- Oracle query support includes the modeled hierarchical query slice (`CONNECT BY`) in parser, renderer, validation, codegen, JSON, and recursive-CTE transpilation for the supported simple parent-child subset.
+- Oracle query support includes modeled hierarchical queries (`CONNECT BY`) plus baseline `PIVOT` / `UNPIVOT` relation transforms in parser, renderer, validation, codegen, and JSON. The hierarchical slice also includes recursive-CTE transpilation for the supported simple parent-child subset, and pivot/unpivot includes opt-in approximate rewrites for simple top-level transforms to PostgreSQL/MySQL/ANSI targets.

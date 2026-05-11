@@ -48,9 +48,9 @@ class UpdateStatementVisitorTest {
             }
 
             @Override
-            public Void visitVariableTableRef(VariableTableRef tableVariable) {
+            public Void visitVariableTable(VariableTable tableVariable) {
                 visits.add("tableVar");
-                return super.visitVariableTableRef(tableVariable);
+                return super.visitVariableTable(tableVariable);
             }
         }.accept(statement);
 

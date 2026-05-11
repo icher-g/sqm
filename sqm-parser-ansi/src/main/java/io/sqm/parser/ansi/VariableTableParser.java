@@ -1,24 +1,22 @@
-package io.sqm.parser.sqlserver;
+package io.sqm.parser.ansi;
 
-import io.sqm.core.VariableTableRef;
+import io.sqm.core.VariableTable;
 import io.sqm.parser.core.Cursor;
-import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
 import static io.sqm.parser.spi.ParseResult.error;
-import static io.sqm.parser.spi.ParseResult.ok;
 
 /**
- * Parses SQL Server table-variable references such as {@code @audit}.
+ * Rejects variable-table references in ANSI parsing.
  */
-public class VariableTableRefParser implements MatchableParser<VariableTableRef> {
+public class VariableTableParser implements MatchableParser<VariableTable> {
 
     /**
-     * Creates a SQL Server table-variable parser.
+     * Creates a variable-table parser.
      */
-    public VariableTableRefParser() {
+    public VariableTableParser() {
     }
 
     /**
@@ -29,14 +27,8 @@ public class VariableTableRefParser implements MatchableParser<VariableTableRef>
      * @return a parsing result.
      */
     @Override
-    public ParseResult<VariableTableRef> parse(Cursor cur, ParseContext ctx) {
-        if (!match(cur, ctx)) {
-            return error("Expected SQL Server table variable", cur.fullPos());
-        }
-
-        cur.advance();
-        var name = toIdentifier(cur.expect("Expected SQL Server table-variable name", TokenType.IDENT));
-        return ok(VariableTableRef.of(name));
+    public ParseResult<VariableTable> parse(Cursor cur, ParseContext ctx) {
+        return error("Variable tables are not supported by this dialect", cur.fullPos());
     }
 
     /**
@@ -45,8 +37,8 @@ public class VariableTableRefParser implements MatchableParser<VariableTableRef>
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<VariableTableRef> targetType() {
-        return VariableTableRef.class;
+    public Class<VariableTable> targetType() {
+        return VariableTable.class;
     }
 
     /**
@@ -55,11 +47,10 @@ public class VariableTableRefParser implements MatchableParser<VariableTableRef>
      *
      * @param cur the current cursor pointing to the next token to be parsed
      * @param ctx the parsing context providing configuration, helpers and nested parsing
-     * @return {@code true} if this parser should be used to parse the upcoming
-     * construct, {@code false} otherwise
+     * @return {@code false} because ANSI never parses variable tables
      */
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
-        return cur.match(TokenType.OPERATOR, "@") && cur.match(TokenType.IDENT, 1);
+        return false;
     }
 }

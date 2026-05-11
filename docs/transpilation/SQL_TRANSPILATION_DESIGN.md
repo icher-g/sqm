@@ -1269,6 +1269,8 @@ The current initial transpilation slice should stay explicit about what is exact
 | Exact       | Simple Oracle hierarchical queries (`CONNECT BY`)  | Rewritten to recursive CTE for PostgreSQL/MySQL/ANSI targets                             | Limited to a single base table, projected columns/`LEVEL`, and `CONNECT BY PRIOR parent = child` without `NOCYCLE` or sibling ordering |
 | Unsupported | Complex Oracle hierarchical queries (`CONNECT BY`) | Rejected with `UNSUPPORTED_HIERARCHICAL_QUERY_REWRITE` for PostgreSQL/MySQL/ANSI targets | `NOCYCLE`, `ORDER SIBLINGS BY`, joins, grouping, pagination, locking, and non-column projections need separate semantic lowering       |
 | Unsupported | Oracle hierarchical queries targeting SQL Server   | Rejected with `UNSUPPORTED_HIERARCHICAL_QUERY`                                           | SQL Server recursive CTE rendering does not use `WITH RECURSIVE` and needs a dedicated renderer/model story                            |
+| Approximate | Simple Oracle/SQL Server `PIVOT` / `UNPIVOT`       | Rewritten to conditional aggregation or `UNION ALL` for PostgreSQL/MySQL/ANSI targets    | Requires `allowApproximateRewrites`; limited to explicit top-level projections and conservative query shapes                           |
+| Unsupported | Complex Oracle/SQL Server `PIVOT` / `UNPIVOT`      | Rejected with `UNSUPPORTED_PIVOT_UNPIVOT_REWRITE`                                        | Nested transforms, star projections, multiple pivot measures, and surrounding clauses need separate lowering rules                     |
 
 ### MySQL -> PostgreSQL
 

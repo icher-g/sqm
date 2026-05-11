@@ -226,6 +226,29 @@ final class StatementFeatureInspector {
         return found.get();
     }
 
+    static boolean hasPivotOrUnpivotTable(Statement statement) {
+        var found = new AtomicBoolean(false);
+        statement.accept(new RecursiveNodeVisitor<Void>() {
+            @Override
+            protected Void defaultResult() {
+                return null;
+            }
+
+            @Override
+            public Void visitPivotTable(PivotTable table) {
+                found.set(true);
+                return super.visitPivotTable(table);
+            }
+
+            @Override
+            public Void visitUnpivotTable(UnpivotTable table) {
+                found.set(true);
+                return super.visitUnpivotTable(table);
+            }
+        });
+        return found.get();
+    }
+
     static boolean hasLikeMode(Statement statement, LikeMode mode) {
         var found = new AtomicBoolean(false);
         statement.accept(new RecursiveNodeVisitor<Void>() {

@@ -451,7 +451,7 @@ Add shared relation transform nodes. Do not encode Oracle spelling in the node n
 Possible shape:
 
 ```java
-public non-sealed interface PivotTableRef extends TableRef {
+public non-sealed interface PivotTable extends TableRef {
     TableRef source();
     List<PivotMeasure> measures();
     Expression forExpression();
@@ -461,14 +461,14 @@ public non-sealed interface PivotTableRef extends TableRef {
 ```
 
 ```java
-PivotMeasure(Expression aggregateExpression, Identifier alias)
+PivotMeasure(FunctionExpr aggregateFunction, Identifier alias)
 PivotValue(Expression value, Identifier alias)
 ```
 
 For unpivot:
 
 ```java
-public non-sealed interface UnpivotTableRef extends TableRef {
+public non-sealed interface UnpivotTable extends TableRef {
     TableRef source();
     List<Identifier> valueColumns();
     Identifier nameColumn();
@@ -513,18 +513,26 @@ SQL Server:
 
 PostgreSQL/MySQL/ANSI:
 
-- Reject unless a future transpilation story rewrites to conditional aggregation.
+- Reject natively. Simple top-level transforms can be approximated during transpilation when the user enables approximate rewrites.
 
 ### Transpilation
 
 Exact:
 
-- Oracle subset to SQL Server subset when shapes match.
-- SQL Server subset to Oracle subset when shapes match.
+- Oracle subset to SQL Server subset when shapes already fit the SQL Server-supported model.
+- SQL Server subset to Oracle subset when shapes already fit the Oracle-supported model.
 
 Approximate:
 
-- Pivot to conditional aggregation can be opt-in only because column naming and null behavior can differ.
+- Simple top-level `PIVOT` to conditional aggregation for Oracle/SQL Server sources targeting ANSI, PostgreSQL, or MySQL. This is opt-in only because column naming, grouping assumptions, and null behavior can differ.
+- Simple top-level `UNPIVOT` to a `UNION ALL` branch query for Oracle/SQL Server sources targeting ANSI, PostgreSQL, or MySQL. `INCLUDE NULLS` emits all branches, while default/exclude-null handling adds branch `IS NOT NULL` filters.
+
+Unsupported:
+
+- Nested pivot/unpivot relation transforms.
+- Star projections where output columns cannot be mapped explicitly.
+- Multiple pivot measures or aggregate options that do not lower to conditional aggregation safely.
+- Existing `WHERE`, `GROUP BY`, `HAVING`, `ORDER BY`, window definitions, pagination, locking, or hierarchical clauses around the table transform.
 
 ## 5. `JSON_TABLE`
 
@@ -1009,6 +1017,7 @@ Acceptance:
 - Oracle and SQL Server compatible subset parse/render/validate.
 - Other dialects reject explicitly.
 - Oracle-only and SQL Server-only options are dialect-gated.
+- Approximate transpilation rewrites the conservative top-level `PIVOT`/`UNPIVOT` subset when `allowApproximateRewrites` is enabled and reports structured warnings.
 - DSL/codegen/docs/tests updated.
 
 ### R11-5: Add Generic `JSON_TABLE`

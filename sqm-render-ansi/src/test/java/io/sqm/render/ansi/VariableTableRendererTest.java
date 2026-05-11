@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import static io.sqm.dsl.Dsl.tableVar;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class VariableTableRefRendererTest {
+class VariableTableRendererTest {
 
     @Test
     void rejectsVariableTableRenderingInAnsiDialect() {

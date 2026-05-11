@@ -4,8 +4,17 @@ package io.sqm.playground.api;
  * Identifies the severity level of a playground diagnostic.
  */
 public enum DiagnosticSeverityDto {
+    /**
+     * error severity
+     */
     error,
+    /**
+     * warning severity
+     */
     warning,
+    /**
+     * just an information
+     */
     info;
 
     /**

@@ -1,6 +1,6 @@
 package io.sqm.render.ansi;
 
-import io.sqm.core.VariableTableRef;
+import io.sqm.core.VariableTable;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
@@ -9,12 +9,12 @@ import io.sqm.render.spi.Renderer;
 /**
  * Rejects variable-table references for dialects that do not support them.
  */
-public class VariableTableRefRenderer implements Renderer<VariableTableRef> {
+public class VariableTableRenderer implements Renderer<VariableTable> {
 
     /**
      * Creates a variable-table renderer.
      */
-    public VariableTableRefRenderer() {
+    public VariableTableRenderer() {
     }
 
     /**
@@ -25,7 +25,7 @@ public class VariableTableRefRenderer implements Renderer<VariableTableRef> {
      * @param w    a writer.
      */
     @Override
-    public void render(VariableTableRef node, RenderContext ctx, SqlWriter w) {
+    public void render(VariableTable node, RenderContext ctx, SqlWriter w) {
         throw new UnsupportedDialectFeatureException("Variable tables", ctx.dialect().name());
     }
 
@@ -35,7 +35,7 @@ public class VariableTableRefRenderer implements Renderer<VariableTableRef> {
      * @return an entity type to be handled by the handler.
      */
     @Override
-    public Class<VariableTableRef> targetType() {
-        return VariableTableRef.class;
+    public Class<VariableTable> targetType() {
+        return VariableTable.class;
     }
 }
