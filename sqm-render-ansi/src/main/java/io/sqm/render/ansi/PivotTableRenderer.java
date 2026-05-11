@@ -31,7 +31,7 @@ public class PivotTableRenderer implements Renderer<PivotTable> {
         }
 
         w.append(node.source())
-            .space()
+            .newline()
             .append("PIVOT")
             .space()
             .append("(")

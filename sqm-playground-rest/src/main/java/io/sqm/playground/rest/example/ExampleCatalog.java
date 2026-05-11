@@ -29,99 +29,98 @@ public final class ExampleCatalog {
                 "basic-select",
                 "Basic SELECT",
                 SqlDialectDto.ansi,
-                "select id, name from customer"
+                "SELECT id, name FROM customer"
             ),
             new ExampleDto(
                 "ansi-analytics-report",
                 "ANSI Analytics Report",
                 SqlDialectDto.ansi,
                 """
-                with regional_sales as (
-                    select
+                WITH regional_sales AS (
+                    SELECT
                         c.region,
                         o.customer_id,
-                        sum(o.total) as revenue,
-                        count(*) as order_count
-                    from orders o
-                    join customer c on c.id = o.customer_id
-                    where o.status in ('SHIPPED', 'DELIVERED')
-                    group by c.region, o.customer_id
+                        SUM(o.total) AS revenue,
+                        COUNT(*) AS order_count
+                    FROM orders o
+                    JOIN customer c ON c.id = o.customer_id
+                    WHERE o.status IN ('SHIPPED', 'DELIVERED')
+                    GROUP BY c.region, o.customer_id
                 )
-                select
+                SELECT
                     region,
                     customer_id,
                     revenue,
                     order_count
-                from regional_sales
-                where revenue > 1000
-                order by revenue desc, customer_id asc
-                offset 5 rows fetch next 10 rows only
+                FROM regional_sales
+                WHERE revenue > 1000
+                ORDER BY revenue DESC, customer_id ASC
+                OFFSET 5 ROWS FETCH NEXT 10 ROWS ONLY
                 """
             ),
             new ExampleDto(
                 "postgres-returning",
                 "PostgreSQL RETURNING",
                 SqlDialectDto.postgresql,
-                "insert into customer (id, name) values (1, 'Alice') returning id, name"
+                "INSERT INTO customer (id, name) VALUES (1, 'Alice') RETURNING id, name"
             ),
             new ExampleDto(
                 "postgres-merge-returning",
                 "PostgreSQL MERGE RETURNING",
                 SqlDialectDto.postgresql,
                 """
-                merge into customer as c
-                using incoming_customer as s
-                    on c.id = s.id
-                when matched and s.active = true then
-                    update set name = s.name, status = s.status
-                when not matched and s.active = true then
-                    insert (id, name, status)
-                    values (s.id, s.name, s.status)
-                returning c.id, c.name, c.status
+                MERGE INTO customer AS c
+                USING incoming_customer AS s ON c.id = s.id
+                WHEN MATCHED AND s.active = true THEN
+                    UPDATE set name = s.name, status = s.status
+                WHEN NOT MATCHED AND s.active = true THEN
+                    INSERT (id, name, status)
+                    VALUES (s.id, s.name, s.status)
+                RETURNING c.id, c.name, c.status
                 """
             ),
             new ExampleDto(
                 "mysql-update-join",
                 "MySQL UPDATE JOIN",
                 SqlDialectDto.mysql,
-                "update orders o join customer c on c.id = o.customer_id set o.status = 'priority' where c.vip = 1"
+                "UPDATE orders o JOIN customer c ON c.id = o.customer_id SET o.status = 'priority' WHERE c.vip = 1"
             ),
             new ExampleDto(
                 "mysql-joined-update-hints",
                 "MySQL Joined UPDATE With Hints",
                 SqlDialectDto.mysql,
                 """
-                update /*+ BKA(o) */ orders as o use index (idx_orders_customer)
-                inner join customer as c force index for join (idx_customer_region)
-                    on c.id = o.customer_id
-                set
+                UPDATE /*+ BKA(o) */ orders AS o USE INDEX (idx_orders_customer)
+                INNER JOIN customer AS c FORCE INDEX FOR JOIN (idx_customer_region)
+                    ON c.id = o.customer_id
+                SET
                     o.status = 'priority',
                     o.review_flag = 'Y'
-                where c.vip = 1
-                  and c.region in ('EU', 'US')
-                  and o.status <> 'shipped'
+                WHERE c.vip = 1
+                  AND c.region IN ('EU', 'US')
+                  AND o.status <> 'shipped'
                 """
             ),
             new ExampleDto(
                 "sqlserver-top",
                 "SQL Server TOP",
                 SqlDialectDto.sqlserver,
-                "select top 5 id, total from orders order by total desc"
+                "SELECT TOP 5 id, total FROM orders ORDER BY total DESC"
             ),
             new ExampleDto(
                 "sqlserver-merge-output",
                 "SQL Server MERGE OUTPUT",
                 SqlDialectDto.sqlserver,
                 """
-                merge top (10) into [orders] as [target]
-                using [incoming_orders] as [src]
-                    on [target].[id] = [src].[id]
-                when matched and [src].[status] <> 'cancelled' then
-                    update set [target].[status] = [src].[status], [target].[total] = [src].[total]
-                when not matched then
-                    insert ([id], [customer_id], [status], [total])
-                    values ([src].[id], [src].[customer_id], [src].[status], [src].[total])
-                output inserted.[id], inserted.[status], inserted.[total]
+                MERGE TOP (10) INTO [orders] AS [target]
+                USING [incoming_orders] AS [src]
+                    ON [target].[id] = [src].[id]
+                WHEN MATCHED AND [src].[status] <> 'cancelled' THEN
+                    UPDATE SET [target].[status] = [src].[status], [target].[total] = [src].[total]
+                WHEN NOT MATCHED THEN
+                    INSERT ([id], [customer_id], [status], [total])
+                    VALUES ([src].[id], [src].[customer_id], [src].[status], [src].[total])
+                OUTPUT inserted.[id], inserted.[status], inserted.[total]
                 """
             ),
             new ExampleDto(
@@ -129,12 +128,12 @@ public final class ExampleCatalog {
                 "Oracle OFFSET FETCH",
                 SqlDialectDto.oracle,
                 """
-                select
+                SELECT
                     c.id,
                     c.name
-                from customer c
-                order by c.id
-                offset 5 rows fetch next 10 rows only
+                FROM customer c
+                ORDER BY c.id
+                OFFSET 5 ROWS FETCH NEXT 10 ROWS ONLY
                 """
             ),
             new ExampleDto(
@@ -142,13 +141,26 @@ public final class ExampleCatalog {
                 "Oracle Hierarchical Query",
                 SqlDialectDto.oracle,
                 """
-                select
+                SELECT
                     id,
                     parent_id,
                     level
-                from categories
-                start with parent_id is null
-                connect by prior id = parent_id
+                FROM categories
+                START WITH parent_id IS null
+                CONNECT BY PRIOR id = parent_id
+                """
+            ),
+            new ExampleDto(
+                "oracle-pivot-query",
+                "Oracle Pivot Query",
+                SqlDialectDto.oracle,
+                """
+                SELECT p.region, p.q1, m.manager_name
+                FROM sales
+                PIVOT (sum(amount) FOR quarter IN ('Q1' AS q1)) p
+                JOIN managers m ON m.region = p.region
+                WHERE m.active = 1
+                ORDER BY p.region
                 """
             )
         );
