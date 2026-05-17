@@ -28,7 +28,7 @@ class PivotTableRendererTest {
             .build();
 
         assertEquals(
-            "SELECT * FROM sales PIVOT (sum(amount) FOR quarter IN ([Q1], [Q2])) AS p",
+            "SELECT * FROM sales PIVOT ( sum(amount) FOR quarter IN ( [Q1], [Q2] ) ) AS p",
             normalize(ctx.render(query).sql())
         );
     }
@@ -45,7 +45,7 @@ class PivotTableRendererTest {
             .build();
 
         assertEquals(
-            "SELECT * FROM sales UNPIVOT (amount FOR quarter IN (q1, q2)) AS u",
+            "SELECT * FROM sales UNPIVOT ( amount FOR quarter IN ( q1, q2 ) ) AS u",
             normalize(ctx.render(query).sql())
         );
     }

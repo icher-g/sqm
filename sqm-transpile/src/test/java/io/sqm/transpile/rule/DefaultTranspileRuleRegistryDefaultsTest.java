@@ -125,6 +125,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
                 "hierarchical-query-unsupported",
                 "oracle-hint-dropping",
                 "oracle-returning-into-unsupported",
+                "oracle-to-sqlserver-pivot-unpivot-rule",
                 "sequence-value-unsupported",
                 "standard-limit-to-sqlserver-top"
             ),

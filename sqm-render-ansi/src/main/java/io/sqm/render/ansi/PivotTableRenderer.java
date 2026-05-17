@@ -34,19 +34,20 @@ public class PivotTableRenderer implements Renderer<PivotTable> {
             .newline()
             .append("PIVOT")
             .space()
-            .append("(")
+            .append("(").newline().indent()
             .comma(node.measures())
-            .space()
+            .newline()
             .append("FOR")
             .space()
             .append(node.forExpression())
             .space()
             .append("IN")
             .space()
-            .append("(")
+            .append("(").newline().indent()
             .comma(node.values())
-            .append(")")
-            .append(")");
+            .outdent().newline().append(")")
+            .outdent().newline().append(")");
+
         if (node.alias() != null) {
             w.space().append("AS").space().append(renderIdentifier(node.alias(), ctx.dialect().quoter()));
         }

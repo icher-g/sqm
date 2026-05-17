@@ -64,6 +64,12 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
     }
 
     @Override
+    public SelectQueryBuilder clearSelect() {
+        this.items.clear();
+        return this;
+    }
+
+    @Override
     public SelectQueryBuilder from(TableRef tableRef) {
         this.tableRef = tableRef;
         return this;

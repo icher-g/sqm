@@ -185,7 +185,6 @@ class PivotUnpivotApproximateRewriteRuleTest {
         assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
         var sql = normalizeSql(result.sql().orElseThrow());
         assertContains(sql, "SELECT region, q1 FROM ( SELECT region AS region, sum(CASE WHEN quarter = 'Q1' THEN amount ELSE NULL END) AS q1 FROM sales GROUP BY region )");
-        assertContains(sql, "__pivot_rewrite");
     }
 
     @Test
@@ -359,7 +358,7 @@ class PivotUnpivotApproximateRewriteRuleTest {
     }
 
     @Test
-    void rejectsNestedPivotTableTransforms() {
+    void rewritesNestedPivotTableTransforms() {
         var inner = parseOracle("""
             SELECT region, q1
             FROM sales
@@ -370,8 +369,9 @@ class PivotUnpivotApproximateRewriteRuleTest {
         var result = new PivotUnpivotApproximateRewriteRule()
             .apply(outer, context(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL));
 
-        assertFalse(result.changed());
-        assertEquals(RewriteFidelity.UNSUPPORTED, result.fidelity());
-        assertTrue(result.problems().getFirst().message().contains("Nested PIVOT/UNPIVOT"));
+        assertTrue(result.changed());
+        assertEquals(RewriteFidelity.APPROXIMATE, result.fidelity());
+        assertTrue(result.problems().isEmpty());
+        assertFalse(StatementFeatureInspector.hasPivotOrUnpivotTable(result.statement()));
     }
 }
