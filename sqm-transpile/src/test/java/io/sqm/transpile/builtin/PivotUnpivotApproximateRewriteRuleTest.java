@@ -4,15 +4,18 @@ import io.sqm.core.PivotTable;
 import io.sqm.core.Query;
 import io.sqm.core.QueryTable;
 import io.sqm.core.SelectQuery;
+import io.sqm.core.UnpivotTable;
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.parser.oracle.spi.OracleSpecs;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.transpile.*;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PivotUnpivotApproximateRewriteRuleTest {
@@ -355,6 +358,43 @@ class PivotUnpivotApproximateRewriteRuleTest {
         assertEquals(RewriteFidelity.UNSUPPORTED, result.fidelity());
         assertEquals("UNSUPPORTED_PIVOT_UNPIVOT_REWRITE", result.problems().getFirst().code());
         assertTrue(result.problems().getFirst().message().contains("cannot infer implicit grouping columns"));
+    }
+
+    @Test
+    void rejectsUnpivotWithStarProjection() {
+        var query = parseOracle("""
+            SELECT *
+            FROM sales
+            UNPIVOT (amount FOR quarter IN (q1 AS 'Q1'))
+            """);
+
+        var result = new PivotUnpivotApproximateRewriteRule()
+            .apply(query, context(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL));
+
+        assertFalse(result.changed());
+        assertEquals(RewriteFidelity.UNSUPPORTED, result.fidelity());
+        assertTrue(result.problems().getFirst().message().contains("explicit expression SELECT items"));
+    }
+
+    @Test
+    void rejectsUnpivotWhenInputColumnCountDoesNotMatchValueColumns() {
+        var unpivot = UnpivotTable.of(
+            tbl("sales"),
+            List.of(id("amount"), id("quantity")),
+            id("quarter"),
+            List.of(unpivotInput("q1_amount", lit("Q1"))),
+            UnpivotTable.NullTreatment.DIALECT_DEFAULT
+        );
+        var query = select(col("amount"), col("quantity"), col("quarter"))
+            .from(unpivot)
+            .build();
+
+        var result = new PivotUnpivotApproximateRewriteRule()
+            .apply(query, context(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL));
+
+        assertFalse(result.changed());
+        assertEquals(RewriteFidelity.UNSUPPORTED, result.fidelity());
+        assertTrue(result.problems().getFirst().message().contains("match the output value column count"));
     }
 
     @Test

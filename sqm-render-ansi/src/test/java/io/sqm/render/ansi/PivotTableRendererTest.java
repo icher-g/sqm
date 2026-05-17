@@ -89,6 +89,21 @@ class PivotTableRendererTest {
         );
     }
 
+    @Test
+    void rendersUnpivotTableWithDialectDefaultNullTreatment() {
+        var unpivoted = unpivot(
+            tbl("sales"),
+            "amount",
+            "quarter",
+            List.of(unpivotInput("q1", lit("Q1")))
+        );
+
+        assertEquals(
+            "sales UNPIVOT ( amount FOR quarter IN ( q1 AS 'Q1' ) )",
+            normalize(enabled.render(unpivoted).sql())
+        );
+    }
+
     private static String normalize(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
     }

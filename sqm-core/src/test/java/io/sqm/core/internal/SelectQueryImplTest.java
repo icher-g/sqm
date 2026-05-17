@@ -94,6 +94,18 @@ class SelectQueryImplTest {
     }
 
     @Test
+    void builder_exposes_current_clause_state() {
+        var builder = Query.select()
+            .distinct(DistinctSpec.TRUE)
+            .top(TopSpec.of(lit(5)))
+            .orderBy(OrderItem.of(1));
+
+        assertEquals(DistinctSpec.TRUE, builder.currentDistinct());
+        assertEquals(5L, ((Number) ((LiteralExpr) builder.currentTopSpec().count()).value()).longValue());
+        assertEquals(1, builder.currentOrderBy().items().size());
+    }
+
+    @Test
     void exposed_lists_are_immutable() {
         var query = Query.select(col("id"))
             .join(Join.inner(tbl("t2")))

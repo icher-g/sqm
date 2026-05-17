@@ -110,6 +110,20 @@ class OracleToSqlServerPivotUnpivotRuleTest {
     }
 
     @Test
+    void transpilerRendersQualifiedOraclePivotAliasAsSqlServerProjectionAlias() {
+        var result = oracleToSqlServer().transpile("""
+            SELECT p.region, p.q1
+            FROM sales
+            PIVOT (sum(amount) FOR quarter IN ('Q1' AS q1)) p
+            """);
+
+        assertEquals(TranspileStatus.SUCCESS, result.status());
+        var sql = normalizeSql(result.sql().orElseThrow());
+        assertContains(sql, "SELECT p.region, p.[Q1] AS q1 FROM sales");
+        assertContains(sql, "PIVOT ( sum(amount) FOR quarter IN ( [Q1] ) ) AS p");
+    }
+
+    @Test
     void transpilerRendersSingleColumnOracleUnpivotAsSqlServerUnpivotWithLabelCase() {
         var result = oracleToSqlServer().transpile("""
             SELECT region, amount, quarter
@@ -147,6 +161,24 @@ class OracleToSqlServerPivotUnpivotRuleTest {
         assertContains(sql, "SELECT s.region, upt.amount, upt.quantity, upt.quarter FROM sales AS s");
         assertContains(sql, "CROSS APPLY (VALUES (s.q1_amount, s.q1_quantity, 'Q1'), (s.q2_amount, s.q2_quantity, 'Q2')) AS upt(amount, quantity, quarter)");
         assertContains(sql, "WHERE upt.amount IS NOT NULL OR upt.quantity IS NOT NULL");
+    }
+
+    @Test
+    void transpilerRendersMultiColumnIncludeNullsUnpivotWithoutCrossApplyFilter() {
+        var result = oracleToSqlServerWithApproximateRewrites().transpile("""
+            SELECT region, amount, quantity, quarter
+            FROM sales upt
+            UNPIVOT INCLUDE NULLS (
+                (amount, quantity)
+                FOR quarter IN ((q1_amount, q1_quantity) AS 'Q1')
+            )
+            """);
+
+        assertEquals(TranspileStatus.SUCCESS, result.status(), () -> result.problems().toString());
+        var sql = normalizeSql(result.sql().orElseThrow());
+        assertContains(sql, "SELECT upt.region, upt0.amount, upt0.quantity, upt0.quarter FROM sales AS upt");
+        assertContains(sql, "CROSS APPLY (VALUES (upt.q1_amount, upt.q1_quantity, 'Q1')) AS upt0(amount, quantity, quarter)");
+        assertFalse(sql.contains("IS NOT NULL"), sql);
     }
 
     @Test
