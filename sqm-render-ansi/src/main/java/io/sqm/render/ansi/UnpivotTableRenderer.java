@@ -21,8 +21,8 @@ public class UnpivotTableRenderer implements Renderer<UnpivotTable> {
      * Renders the node into a SQL writer.
      *
      * @param node unpivot table reference
-     * @param ctx render context
-     * @param w SQL writer
+     * @param ctx  render context
+     * @param w    SQL writer
      */
     @Override
     public void render(UnpivotTable node, RenderContext ctx, SqlWriter w) {
@@ -32,32 +32,46 @@ public class UnpivotTableRenderer implements Renderer<UnpivotTable> {
 
         var quoter = ctx.dialect().quoter();
         w.append(node.source())
-            .space()
+            .newline()
             .append("UNPIVOT");
+
         if (node.nullTreatment() == UnpivotTable.NullTreatment.INCLUDE_NULLS) {
             w.space().append("INCLUDE NULLS");
         }
-        else if (node.nullTreatment() == UnpivotTable.NullTreatment.EXCLUDE_NULLS) {
-            w.space().append("EXCLUDE NULLS");
-        }
+        else
+            if (node.nullTreatment() == UnpivotTable.NullTreatment.EXCLUDE_NULLS) {
+                w.space().append("EXCLUDE NULLS");
+            }
+
         w.space().append("(");
+        w.newline().indent();
+
         if (node.valueColumns().size() == 1) {
             w.append(renderIdentifier(node.valueColumns().getFirst(), quoter));
         }
         else {
             w.append("(").comma(node.valueColumns(), quoter).append(")");
         }
-        w.space()
+
+        w.newline()
             .append("FOR")
             .space()
             .append(renderIdentifier(node.nameColumn(), quoter))
             .space()
             .append("IN")
             .space()
-            .append("(")
-            .comma(node.inputs())
-            .append(")")
-            .append(")");
+            .append("(").newline().indent();
+
+        for (int i = 0; i < node.inputs().size(); i++) {
+            if (i > 0) {
+                w.append(",").newline();
+            }
+            w.append(node.inputs().get(i));
+        }
+
+        w.outdent().newline().append(")");
+        w.outdent().newline().append(")");
+
         if (node.alias() != null) {
             w.space().append("AS").space().append(renderIdentifier(node.alias(), quoter));
         }

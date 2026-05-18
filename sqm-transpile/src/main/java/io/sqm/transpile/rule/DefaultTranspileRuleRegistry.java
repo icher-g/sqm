@@ -1,37 +1,7 @@
 package io.sqm.transpile.rule;
 
 import io.sqm.core.dialect.SqlDialectId;
-import io.sqm.transpile.builtin.FunctionTableToMySqlUnsupportedRule;
-import io.sqm.transpile.builtin.HierarchicalQueryToRecursiveCteRule;
-import io.sqm.transpile.builtin.HierarchicalQueryUnsupportedRule;
-import io.sqm.transpile.builtin.MySqlHintDroppingRule;
-import io.sqm.transpile.builtin.MySqlToPostgresInsertModeUnsupportedRule;
-import io.sqm.transpile.builtin.MySqlToPostgresJsonFunctionUnsupportedRule;
-import io.sqm.transpile.builtin.MySqlToPostgresNullSafeComparisonRule;
-import io.sqm.transpile.builtin.MySqlToPostgresOnDuplicateKeyUnsupportedRule;
-import io.sqm.transpile.builtin.OracleHintDroppingRule;
-import io.sqm.transpile.builtin.OracleResultClauseUnsupportedRule;
-import io.sqm.transpile.builtin.OracleReturningIntoUnsupportedRule;
-import io.sqm.transpile.builtin.PostgresMergeDoNothingUnsupportedRule;
-import io.sqm.transpile.builtin.PostgresMergeNotMatchedBySourceToOracleUnsupportedRule;
-import io.sqm.transpile.builtin.PostgresMergeUnsupportedRule;
-import io.sqm.transpile.builtin.PostgresToMySqlDistinctOnUnsupportedRule;
-import io.sqm.transpile.builtin.PostgresToMySqlIlikeRule;
-import io.sqm.transpile.builtin.PostgresToMySqlNullSafeComparisonRule;
-import io.sqm.transpile.builtin.PostgresToMySqlOperatorFamilyUnsupportedRule;
-import io.sqm.transpile.builtin.PostgresToMySqlRegexVariantUnsupportedRule;
-import io.sqm.transpile.builtin.PostgresToMySqlReturningUnsupportedRule;
-import io.sqm.transpile.builtin.PostgresToMySqlSimilarToUnsupportedRule;
-import io.sqm.transpile.builtin.PostgresToOracleDistinctOnUnsupportedRule;
-import io.sqm.transpile.builtin.PostgresToSqlServerDistinctOnUnsupportedRule;
-import io.sqm.transpile.builtin.PostgresToSqlServerReturningUnsupportedRule;
-import io.sqm.transpile.builtin.PivotUnpivotApproximateRewriteRule;
-import io.sqm.transpile.builtin.SequenceValueUnsupportedRule;
-import io.sqm.transpile.builtin.SqlServerHintDroppingRule;
-import io.sqm.transpile.builtin.SqlServerMergeUnsupportedRule;
-import io.sqm.transpile.builtin.SqlServerOutputUnsupportedRule;
-import io.sqm.transpile.builtin.SqlServerTopToLimitRule;
-import io.sqm.transpile.builtin.StandardLimitToSqlServerTopRule;
+import io.sqm.transpile.builtin.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -85,7 +55,8 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
             new SequenceValueUnsupportedRule(),
             new PivotUnpivotApproximateRewriteRule(),
             new HierarchicalQueryToRecursiveCteRule(),
-            new HierarchicalQueryUnsupportedRule()
+            new HierarchicalQueryUnsupportedRule(),
+            new OracleToSqlServerPivotUnpivotRule()
         ));
     }
 

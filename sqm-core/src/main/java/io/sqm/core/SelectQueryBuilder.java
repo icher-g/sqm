@@ -65,6 +65,13 @@ public interface SelectQueryBuilder {
     SelectQueryBuilder select(List<SelectItem> items);
 
     /**
+     * Clears the select items.
+     *
+     * @return this builder
+     */
+    SelectQueryBuilder clearSelect();
+
+    /**
      * Sets the {@code FROM} clause.
      *
      * @param tableRef table reference, may be {@code null}
@@ -117,9 +124,9 @@ public interface SelectQueryBuilder {
     /**
      * Sets the hierarchical query clause from explicit parts.
      *
-     * @param startWith optional root-row predicate
-     * @param connectBy parent-child relationship predicate
-     * @param noCycle whether cycle-safe traversal is requested
+     * @param startWith       optional root-row predicate
+     * @param connectBy       parent-child relationship predicate
+     * @param noCycle         whether cycle-safe traversal is requested
      * @param orderSiblingsBy optional sibling ordering clause
      * @return this builder
      */

@@ -2,6 +2,7 @@ package io.sqm.transpile.builtin;
 
 import io.sqm.core.*;
 import io.sqm.core.dialect.SqlDialectId;
+import io.sqm.core.transform.RecursiveNodeTransformer;
 import io.sqm.transpile.RewriteFidelity;
 import io.sqm.transpile.TranspileContext;
 import io.sqm.transpile.TranspileRuleResult;
@@ -9,6 +10,9 @@ import io.sqm.transpile.rule.TranspileRule;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static io.sqm.core.Expression.funcArg;
+import static io.sqm.dsl.Dsl.*;
 
 /**
  * Rewrites {@code PIVOT}/{@code UNPIVOT} table transforms to portable query shapes.
@@ -30,66 +34,42 @@ public final class PivotUnpivotApproximateRewriteRule implements TranspileRule {
             return unsupported(query, "PIVOT approximate rewrite requires at least one aggregate measure");
         }
 
-        Map<String, PivotOutput> outputColumns = new LinkedHashMap<>();
-        for (PivotValue value : pivot.values()) {
-            for (PivotMeasure measure : pivot.measures()) {
-                String outputName;
-                try {
-                    outputName = pivotOutputName(value, measure, pivot.measures().size());
-                } catch (UnsupportedPivotRewriteException ex) {
-                    return unsupported(query, ex.getMessage());
-                }
-                if (outputColumns.putIfAbsent(outputName, new PivotOutput(outputName, value, measure)) != null) {
-                    return unsupported(query, "PIVOT approximate rewrite requires unique output column names");
+        try {
+            Map<String, PivotOutput> outputColumns = new LinkedHashMap<>();
+            for (PivotValue value : pivot.values()) {
+                for (PivotMeasure measure : pivot.measures()) {
+                    String outputName = pivotOutputName(value, measure, pivot.measures().size());
+                    if (outputColumns.putIfAbsent(outputName, new PivotOutput(outputName, value, measure)) != null) {
+                        return unsupported(query, "PIVOT approximate rewrite requires unique output column names");
+                    }
                 }
             }
-        }
 
-        List<GroupProjection> grouping;
-        try {
-            grouping = pivotGroupingProjections(query, pivot, outputColumns);
+            List<SelectItem> selectItems = new ArrayList<>();
+            List<GroupItem> groupItems = new ArrayList<>();
+
+            List<GroupProjection> grouping = pivotGroupingProjections(query, pivot, outputColumns);
+            for (GroupProjection projection : grouping) {
+                selectItems.add(projection.expr().as(projection.alias()));
+                groupItems.add(GroupItem.of(projection.expr()));
+            }
+
+            for (PivotOutput output : outputColumns.values()) {
+                selectItems.add(conditionalAggregate(output.measure(), pivot.forExpression(), output.value()).as(output.name()));
+            }
+
+            var builder = SelectQuery.builder()
+                .select(selectItems)
+                .from(pivot.source());
+
+            if (!groupItems.isEmpty()) {
+                builder.groupBy(groupItems);
+            }
+
+            return approximate(builder.build(), "Rewrote PIVOT to derived-table conditional aggregation");
         } catch (UnsupportedPivotRewriteException ex) {
             return unsupported(query, ex.getMessage());
         }
-
-        List<SelectItem> coreItems = new ArrayList<>();
-        List<GroupItem> groupItems = new ArrayList<>();
-        for (GroupProjection projection : grouping) {
-            coreItems.add(ExprSelectItem.of(projection.expr(), projection.alias()));
-            groupItems.add(GroupItem.of(projection.expr()));
-        }
-
-        for (PivotOutput output : outputColumns.values()) {
-            try {
-                coreItems.add(ExprSelectItem.of(
-                    conditionalAggregate(output.measure(), pivot.forExpression(), output.value()),
-                    Identifier.of(output.name())
-                ));
-            } catch (UnsupportedPivotRewriteException ex) {
-                return unsupported(query, ex.getMessage());
-            }
-        }
-
-        var core = SelectQuery.of(
-            coreItems,
-            pivot.source(),
-            List.of(),
-            null,
-            null,
-            groupItems.isEmpty() ? null : GroupBy.of(groupItems),
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            List.of(),
-            List.of(),
-            List.of()
-        );
-
-        var rewritten = wrapOuterQuery(query, core, pivot.alias(), "__pivot_rewrite");
-        return approximate(rewritten, "Rewrote PIVOT to derived-table conditional aggregation");
     }
 
     private static TranspileRuleResult rewriteUnpivot(SelectQuery query, UnpivotTable unpivot) {
@@ -109,59 +89,24 @@ public final class PivotUnpivotApproximateRewriteRule implements TranspileRule {
                 }
                 branchItems.add(rewriteUnpivotSelectItem(exprItem, unpivot, input));
             }
-            branches.add(SelectQuery.of(
-                branchItems,
-                unpivot.source(),
-                List.of(),
-                unpivotNullFilter(unpivot, input),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                List.of(),
-                List.of(),
-                List.of()
-            ));
+            var builder = SelectQuery.builder()
+                .select(branchItems)
+                .from(unpivot.source())
+                .where(unpivotNullFilter(unpivot, input));
+            branches.add(builder.build());
         }
-
         var core = CompositeQuery.of(
             branches,
             java.util.Collections.nCopies(branches.size() - 1, SetOperator.UNION_ALL)
         );
-        var rewritten = wrapOuterQuery(query, core, unpivot.alias(), "__unpivot_rewrite");
-        return approximate(rewritten, "Rewrote UNPIVOT to derived-table UNION ALL");
+        return approximate(core, "Rewrote UNPIVOT to derived-table UNION ALL");
     }
 
-    private static SelectQuery wrapOuterQuery(SelectQuery original, Query core, Identifier alias, String fallbackAlias) {
-        var tableAlias = alias == null ? Identifier.of(fallbackAlias) : alias;
-        return SelectQuery.of(
-            original.items(),
-            QueryTable.of(core, tableAlias, List.of()),
-            original.joins(),
-            original.where(),
-            original.hierarchical(),
-            original.groupBy(),
-            original.having(),
-            original.orderBy(),
-            original.distinct(),
-            original.topSpec(),
-            original.limitOffset(),
-            original.lockFor(),
-            original.windows(),
-            original.modifiers(),
-            original.hints()
-        );
-    }
-
-    private static io.sqm.core.Predicate unpivotNullFilter(UnpivotTable unpivot, UnpivotInput input) {
+    private static Predicate unpivotNullFilter(UnpivotTable unpivot, UnpivotInput input) {
         if (unpivot.nullTreatment() == UnpivotTable.NullTreatment.INCLUDE_NULLS) {
             return null;
         }
-        io.sqm.core.Predicate filter = null;
+        Predicate filter = null;
         for (Identifier sourceColumn : input.sourceColumns()) {
             var predicate = ColumnExpr.of(null, sourceColumn).isNotNull();
             filter = filter == null ? predicate : filter.or(predicate);
@@ -169,15 +114,15 @@ public final class PivotUnpivotApproximateRewriteRule implements TranspileRule {
         return filter;
     }
 
-    private static ExprSelectItem rewriteUnpivotSelectItem(ExprSelectItem item, UnpivotTable unpivot, UnpivotInput input) {
+    private static SelectItem rewriteUnpivotSelectItem(ExprSelectItem item, UnpivotTable unpivot, UnpivotInput input) {
         if (item.expr() instanceof ColumnExpr column) {
             for (int i = 0; i < unpivot.valueColumns().size(); i++) {
                 if (sameIdentifier(column.name(), unpivot.valueColumns().get(i))) {
-                    return ExprSelectItem.of(ColumnExpr.of(column.tableAlias(), input.sourceColumns().get(i)), outputAlias(item, unpivot.valueColumns().get(i)));
+                    return ColumnExpr.of(column.tableAlias(), input.sourceColumns().get(i)).as(outputAlias(item, unpivot.valueColumns().get(i)));
                 }
             }
             if (sameIdentifier(column.name(), unpivot.nameColumn())) {
-                return ExprSelectItem.of(input.label(), outputAlias(item, unpivot.nameColumn()));
+                return input.label().as(outputAlias(item, unpivot.nameColumn()));
             }
         }
         return item;
@@ -246,6 +191,7 @@ public final class PivotUnpivotApproximateRewriteRule implements TranspileRule {
             .map(PivotUnpivotApproximateRewriteRule::measureArgColumnName)
             .filter(name -> name != null)
             .collect(Collectors.toSet());
+
         List<GroupProjection> result = new ArrayList<>();
         for (SelectItem item : sourceQuery.items()) {
             if (!(item instanceof ExprSelectItem exprItem)) {
@@ -301,10 +247,10 @@ public final class PivotUnpivotApproximateRewriteRule implements TranspileRule {
             throw new UnsupportedPivotRewriteException("PIVOT approximate rewrite requires single-argument aggregate functions");
         }
         var condition = forExpression.eq(pivotComparisonValue(value.value()));
-        var caze = CaseExpr.of(List.of(WhenThen.of(condition, arg)), Expression.literal(null));
+        var kase = kase(when(condition).then(arg)).elseExpr(lit(null));
         return FunctionExpr.of(
             aggregate.name(),
-            List.of(FunctionExpr.Arg.expr(caze)),
+            List.of(funcArg(kase)),
             aggregate.distinctArg(),
             null,
             null,
@@ -426,16 +372,57 @@ public final class PivotUnpivotApproximateRewriteRule implements TranspileRule {
         if (!StatementFeatureInspector.hasPivotOrUnpivotTable(statement)) {
             return TranspileRuleResult.unchanged(statement, "No PIVOT or UNPIVOT usage detected");
         }
-        if (!(statement instanceof SelectQuery query)) {
-            return unsupported(statement, "PIVOT/UNPIVOT rewrites currently require a top-level SELECT query");
+
+        var transformer = new RecursiveNodeTransformer() {
+            private final Stack<SelectQuery> stack = new Stack<>();
+            private TranspileRuleResult result;
+
+            @Override
+            public Node visitSelectQuery(SelectQuery q) {
+                try {
+                    stack.push(q);
+                    return super.visitSelectQuery(q);
+                } finally {
+                    stack.pop();
+                }
+            }
+
+            @Override
+            public Node visitQueryTable(QueryTable t) {
+                var table = super.visitQueryTable(t);
+                if (table != t && table instanceof QueryTable q) {
+                    return q.as(t.alias());
+                }
+                return t;
+            }
+
+            @Override
+            public Node visitPivotTable(PivotTable t) {
+                var query = stack.peek();
+                result = rewritePivot(query, t);
+                return result.changed() ? tbl((Query) result.statement()) : super.visitPivotTable(t);
+            }
+
+            @Override
+            public Node visitUnpivotTable(UnpivotTable t) {
+                var query = stack.peek();
+                result = rewriteUnpivot(query, t);
+                return result.changed() ? tbl((Query) result.statement()) : super.visitUnpivotTable(t);
+            }
+        };
+
+        var transformedStatement = (Statement) statement.accept(transformer);
+        if (transformer.result == null) {
+            return TranspileRuleResult.unchanged(statement, "No PIVOT or UNPIVOT usage detected");
         }
-        if (query.from() instanceof PivotTable pivot) {
-            return rewritePivot(query, pivot);
-        }
-        if (query.from() instanceof UnpivotTable unpivot) {
-            return rewriteUnpivot(query, unpivot);
-        }
-        return unsupported(statement, "Nested PIVOT/UNPIVOT table transforms are not supported for approximate transpilation");
+        return new TranspileRuleResult(
+            transformedStatement,
+            transformer.result.changed(),
+            transformer.result.fidelity(),
+            transformer.result.warnings(),
+            transformer.result.problems(),
+            transformer.result.description()
+        );
     }
 
     private record PivotOutput(String name, PivotValue value, PivotMeasure measure) {

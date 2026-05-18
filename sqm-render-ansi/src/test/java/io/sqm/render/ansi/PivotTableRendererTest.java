@@ -55,7 +55,7 @@ class PivotTableRendererTest {
             .build();
 
         assertEquals(
-            "SELECT * FROM sales PIVOT (sum(amount) AS total, max(discount) FOR quarter IN ('Q1' AS q1, 'Q2')) AS p",
+            "SELECT * FROM sales PIVOT ( sum(amount) AS total, max(discount) FOR quarter IN ( 'Q1' AS q1, 'Q2' ) ) AS p",
             normalize(enabled.render(query).sql())
         );
     }
@@ -80,12 +80,27 @@ class PivotTableRendererTest {
         );
 
         assertEquals(
-            "sales UNPIVOT INCLUDE NULLS ((amount, quantity) FOR quarter IN ((q1_amount, q1_quantity) AS 'Q1', q2_amount AS 'Q2')) AS u",
+            "sales UNPIVOT INCLUDE NULLS ( (amount, quantity) FOR quarter IN ( (q1_amount, q1_quantity) AS 'Q1', q2_amount AS 'Q2' ) ) AS u",
             normalize(enabled.render(includeNulls).sql())
         );
         assertEquals(
-            "sales UNPIVOT EXCLUDE NULLS (amount FOR quarter IN (q1 AS 'Q1'))",
+            "sales UNPIVOT EXCLUDE NULLS ( amount FOR quarter IN ( q1 AS 'Q1' ) )",
             normalize(enabled.render(excludeNulls).sql())
+        );
+    }
+
+    @Test
+    void rendersUnpivotTableWithDialectDefaultNullTreatment() {
+        var unpivoted = unpivot(
+            tbl("sales"),
+            "amount",
+            "quarter",
+            List.of(unpivotInput("q1", lit("Q1")))
+        );
+
+        assertEquals(
+            "sales UNPIVOT ( amount FOR quarter IN ( q1 AS 'Q1' ) )",
+            normalize(enabled.render(unpivoted).sql())
         );
     }
 
