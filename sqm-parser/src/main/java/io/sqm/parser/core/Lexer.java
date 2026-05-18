@@ -145,6 +145,7 @@ public final class Lexer {
         KEYWORDS.put("FOR", FOR);
         KEYWORDS.put("PIVOT", PIVOT);
         KEYWORDS.put("UNPIVOT", UNPIVOT);
+        KEYWORDS.put("JSON_TABLE", JSON_TABLE);
         KEYWORDS.put("UPDATE", UPDATE);
         KEYWORDS.put("SHARE", SHARE);
         KEYWORDS.put("KEY", KEY);

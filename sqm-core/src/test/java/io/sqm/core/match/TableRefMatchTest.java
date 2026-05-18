@@ -226,7 +226,7 @@ class TableRefMatchTest {
             tbl("sales"),
             java.util.List.of(pivotMeasure(func("sum", col("amount")))),
             col("quarter"),
-            java.util.List.of(pivotValue(lit("Q1"))));
+            pivotValue(lit("Q1")));
 
         var result = table.matchTableRef()
             .pivot(p -> p.forExpression().matchExpression().column(c -> c.name().value()).orElse("Unknown"))
@@ -236,13 +236,28 @@ class TableRefMatchTest {
     }
 
     @Test
+    @DisplayName("Match JSON_TABLE reference")
+    void matchJsonTableRef() {
+        TableRef table = jsonTable(
+            col("payload"),
+            jsonPath("$.items[*]"),
+            jsonScalar("id", type("NUMBER"), jsonPath("$.id"))).as("jt");
+
+        var result = table.matchTableRef()
+            .jsonTable(j -> j.alias().value())
+            .orElse("Unknown");
+
+        assertEquals("jt", result);
+    }
+
+    @Test
     @DisplayName("Match unpivot table reference")
     void matchUnpivotTable() {
         TableRef table = unpivot(
             tbl("sales"),
             "amount",
             "quarter",
-            java.util.List.of(unpivotInput("q1", lit("Q1"))));
+            unpivotInput("q1", lit("Q1")));
 
         var result = table.matchTableRef()
             .unpivot(u -> u.nameColumn().value())

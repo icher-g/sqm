@@ -1,7 +1,7 @@
 package io.sqm.render.sqlserver;
 
-import io.sqm.render.sqlserver.spi.SqlServerDialect;
 import io.sqm.render.spi.RenderContext;
+import io.sqm.render.sqlserver.spi.SqlServerDialect;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,16 +13,19 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class PivotTableRendererTest {
     private final RenderContext ctx = RenderContext.of(new SqlServerDialect());
 
+    private static String normalize(String sql) {
+        return sql.replaceAll("\\s+", " ").trim();
+    }
+
     @Test
     void rendersPivotTable() {
         var pivoted = pivot(
             tbl("sales"),
             List.of(pivotMeasure(func("sum", col("amount")))),
             col("quarter"),
-            List.of(
-                pivotValue(col(id("Q1", io.sqm.core.QuoteStyle.BRACKETS))),
-                pivotValue(col(id("Q2", io.sqm.core.QuoteStyle.BRACKETS)))))
-            .as("p");
+            pivotValue(col(id("Q1", io.sqm.core.QuoteStyle.BRACKETS))),
+            pivotValue(col(id("Q2", io.sqm.core.QuoteStyle.BRACKETS)))
+        ).as("p");
         var query = select(star())
             .from(pivoted)
             .build();
@@ -40,7 +43,7 @@ class PivotTableRendererTest {
                 tbl("sales"),
                 "amount",
                 "quarter",
-                List.of(unpivotInput("q1", lit("q1")), unpivotInput("q2", lit("q2"))))
+                unpivotInput("q1", lit("q1")), unpivotInput("q2", lit("q2")))
                 .as("u"))
             .build();
 
@@ -56,12 +59,12 @@ class PivotTableRendererTest {
             tbl("sales"),
             List.of(pivotMeasure(func("sum", col("amount")), "total")),
             col("quarter"),
-            List.of(pivotValue(col(id("Q1", io.sqm.core.QuoteStyle.BRACKETS)))));
+            pivotValue(col(id("Q1", io.sqm.core.QuoteStyle.BRACKETS))));
         var pivotWithValueAlias = pivot(
             tbl("sales"),
             List.of(pivotMeasure(func("sum", col("amount")))),
             col("quarter"),
-            List.of(pivotValue(col(id("Q1", io.sqm.core.QuoteStyle.BRACKETS)), "q1")));
+            pivotValue(col(id("Q1", io.sqm.core.QuoteStyle.BRACKETS)), "q1"));
         var unpivotWithNullTreatment = io.sqm.core.UnpivotTable.of(
             tbl("sales"),
             List.of(id("amount")),
@@ -72,9 +75,5 @@ class PivotTableRendererTest {
         assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class, () -> ctx.render(pivotWithMeasureAlias));
         assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class, () -> ctx.render(pivotWithValueAlias));
         assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class, () -> ctx.render(unpivotWithNullTreatment));
-    }
-
-    private static String normalize(String sql) {
-        return sql.replaceAll("\\s+", " ").trim();
     }
 }

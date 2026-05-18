@@ -44,6 +44,7 @@ public final class OracleCapabilities {
             .supports(SqlFeature.HIERARCHICAL_QUERY)
             .supports(SqlFeature.PIVOT_TABLE)
             .supports(SqlFeature.UNPIVOT_TABLE)
+            .supports(SqlFeature.JSON_TABLE)
             .supports(ORACLE_12_1, SqlFeature.LATERAL)
             .build();
     }

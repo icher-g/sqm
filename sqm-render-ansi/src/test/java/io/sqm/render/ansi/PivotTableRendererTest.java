@@ -25,7 +25,7 @@ class PivotTableRendererTest {
             tbl("sales"),
             List.of(pivotMeasure(func("sum", col("amount")))),
             col("quarter"),
-            List.of(pivotValue(lit("Q1"))));
+            pivotValue(lit("Q1")));
 
         assertThrows(UnsupportedDialectFeatureException.class, () -> ctx.render(pivoted));
     }
@@ -36,7 +36,7 @@ class PivotTableRendererTest {
             tbl("sales"),
             "amount",
             "quarter",
-            List.of(unpivotInput("q1", lit("Q1"))));
+            unpivotInput("q1", lit("Q1")));
 
         assertThrows(UnsupportedDialectFeatureException.class, () -> ctx.render(unpivoted));
     }
@@ -50,7 +50,7 @@ class PivotTableRendererTest {
                     pivotMeasure(func("sum", col("amount")), "total"),
                     pivotMeasure(func("max", col("discount")))),
                 col("quarter"),
-                List.of(pivotValue(lit("Q1"), "q1"), pivotValue(lit("Q2"))))
+                pivotValue(lit("Q1"), "q1"), pivotValue(lit("Q2")))
                 .as("p"))
             .build();
 
@@ -95,7 +95,7 @@ class PivotTableRendererTest {
             tbl("sales"),
             "amount",
             "quarter",
-            List.of(unpivotInput("q1", lit("Q1")))
+            unpivotInput("q1", lit("Q1"))
         );
 
         assertEquals(

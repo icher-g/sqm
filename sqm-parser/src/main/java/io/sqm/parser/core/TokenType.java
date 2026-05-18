@@ -605,6 +605,34 @@ public enum TokenType {
      */
     UNPIVOT,
     /**
+     * JSON_TABLE keyword token.
+     */
+    JSON_TABLE,
+    /**
+     * COLUMNS keyword token.
+     */
+    COLUMNS,
+    /**
+     * PATH keyword token.
+     */
+    PATH,
+    /**
+     * NESTED keyword token.
+     */
+    NESTED,
+    /**
+     * EMPTY keyword token.
+     */
+    EMPTY,
+    /**
+     * ERROR keyword token.
+     */
+    ERROR,
+    /**
+     * WRAPPER keyword token.
+     */
+    WRAPPER,
+    /**
      * UPDATE keyword token.
      */
     UPDATE,

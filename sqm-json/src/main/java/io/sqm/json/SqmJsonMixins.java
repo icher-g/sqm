@@ -73,6 +73,7 @@ public final class SqmJsonMixins {
 
         // Tables
         mapper.addMixIn(TableRef.class, TableRefMixin.class);
+        mapper.addMixIn(JsonTableColumn.class, JsonTableColumnMixin.class);
 
         // Grouping / ordering
         mapper.addMixIn(GroupItem.class, GroupItemMixin.class);

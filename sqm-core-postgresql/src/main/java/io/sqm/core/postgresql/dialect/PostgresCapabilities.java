@@ -31,6 +31,7 @@ public final class PostgresCapabilities {
         var pg11 = SqlDialectVersion.of(11, 0);
         var pg12 = SqlDialectVersion.of(12, 0);
         var pg15 = SqlDialectVersion.of(15, 0);
+        var pg17 = SqlDialectVersion.of(17, 0);
         var pg18 = SqlDialectVersion.of(18, 0);
         return VersionedDialectCapabilities.builder(version)
             .supports(pg90,
@@ -87,6 +88,7 @@ public final class PostgresCapabilities {
             )
             .supports(pg12, SqlFeature.CTE_MATERIALIZATION)
             .supports(pg15, SqlFeature.MERGE_STATEMENT)
+            .supports(pg17, SqlFeature.JSON_TABLE)
             .supports(pg18,
                 SqlFeature.MERGE_NOT_MATCHED_BY_SOURCE_CLAUSE,
                 SqlFeature.MERGE_RESULT_CLAUSE

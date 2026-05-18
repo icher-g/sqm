@@ -87,25 +87,25 @@ class SchemaValidationContextTest {
             tbl("users").as("u"),
             List.of(pivotMeasure(func("sum", col("age")))),
             col("name"),
-            List.of(pivotValue(lit("Alice")))
+            pivotValue(lit("Alice"))
         );
         var pivotWithAlias = pivot(
             tbl("users"),
             List.of(pivotMeasure(func("sum", col("age")))),
             col("name"),
-            List.of(pivotValue(lit("Alice")))
+            pivotValue(lit("Alice"))
         ).as("p");
         var unpivotWithoutAlias = unpivot(
             tbl("users").as("u"),
             "age",
             "metric",
-            List.of(unpivotInput("age", lit("age")))
+            unpivotInput("age", lit("age"))
         );
         var unpivotWithAlias = unpivot(
             tbl("users"),
             "age",
             "metric",
-            List.of(unpivotInput("age", lit("age")))
+            unpivotInput("age", lit("age"))
         ).as("up");
 
         assertEquals("sq", contextSourceKey(subqueryTable));
@@ -128,13 +128,13 @@ class SchemaValidationContextTest {
                 tbl("users").as("u"),
                 List.of(pivotMeasure(func("sum", col("age")))),
                 col("name"),
-                List.of(pivotValue(lit("Alice")))
+                pivotValue(lit("Alice"))
             ));
             context.registerTableRef(unpivot(
                 tbl("orders"),
                 "id",
                 "metric",
-                List.of(unpivotInput("id", lit("id")))
+                unpivotInput("id", lit("id"))
             ).as("unp"));
 
             assertEquals(Set.of("u", "unp"), Set.copyOf(context.currentScopeSourceKeys()));

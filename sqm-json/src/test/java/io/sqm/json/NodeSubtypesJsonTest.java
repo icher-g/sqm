@@ -232,7 +232,7 @@ public class NodeSubtypesJsonTest {
             tbl("sales"),
             List.of(pivotMeasure(func("sum", col("amount")), "total")),
             col("quarter"),
-            List.of(pivotValue(lit("Q1"), "q1")));
+            pivotValue(lit("Q1"), "q1"));
 
         var back = roundTrip(pivot, TableRef.class);
 
@@ -248,7 +248,7 @@ public class NodeSubtypesJsonTest {
             tbl("sales"),
             "amount",
             "quarter",
-            List.of(unpivotInput("q1", lit("Q1"))));
+            unpivotInput("q1", lit("Q1")));
 
         var back = roundTrip(unpivot, TableRef.class);
 

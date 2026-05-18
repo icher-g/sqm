@@ -8,6 +8,7 @@ import io.sqm.core.sqlserver.dialect.SqlServerCapabilities;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.rule.HierarchicalQueryFeatureValidationRule;
+import io.sqm.validate.schema.rule.JsonTableFeatureValidationRule;
 import io.sqm.validate.schema.rule.PivotFeatureValidationRule;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
 import io.sqm.validate.schema.rule.SequenceValueFeatureValidationRule;
@@ -116,6 +117,7 @@ public final class SqlServerValidationDialect implements SchemaValidationDialect
             new SequenceValueFeatureValidationRule(name(), version, capabilities, false),
             new HierarchicalQueryFeatureValidationRule(name(), version, capabilities),
             new PivotFeatureValidationRule(name(), version, capabilities),
+            new JsonTableFeatureValidationRule(name(), version, capabilities),
             new SqlServerPivotValidationRule()
         );
     }

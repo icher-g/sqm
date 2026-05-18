@@ -2,6 +2,7 @@ package io.sqm.core.transform;
 
 import io.sqm.core.FunctionTable;
 import io.sqm.core.Identifier;
+import io.sqm.core.JsonTableRef;
 import io.sqm.core.Lateral;
 import io.sqm.core.Node;
 import io.sqm.core.Query;
@@ -61,6 +62,12 @@ public final class RelationTransforms {
             @Override
             public Node visitFunctionTable(FunctionTable table) {
                 var transformed = (FunctionTable) super.visitFunctionTable(table);
+                return requireTableRefResult(rewriter.apply(transformed), transformed);
+            }
+
+            @Override
+            public Node visitJsonTableRef(JsonTableRef table) {
+                var transformed = (JsonTableRef) super.visitJsonTableRef(table);
                 return requireTableRefResult(rewriter.apply(transformed), transformed);
             }
 

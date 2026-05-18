@@ -149,14 +149,14 @@ class SqmDslRendererTest {
                 tbl("sales"),
                 List.of(pivotMeasure(io.sqm.dsl.Dsl.func("sum", col("amount")), "total")),
                 col("quarter"),
-                List.of(pivotValue(lit("Q1"), "q1"))))
+                pivotValue(lit("Q1"), "q1")))
             .build();
         var unpivotStatement = select(star())
             .from(unpivot(
                 tbl("sales"),
                 "amount",
                 "quarter",
-                List.of(unpivotInput("q1", lit("Q1")))))
+                unpivotInput("q1", lit("Q1"))))
             .build();
         var user = Path.of("pivot");
         var group = new SqlFolderGroup(

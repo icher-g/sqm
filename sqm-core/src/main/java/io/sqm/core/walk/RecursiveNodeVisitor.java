@@ -631,6 +631,19 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
+     * Visits a {@link JsonTableRef}.
+     *
+     * @param t JSON table reference
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitJsonTableRef(JsonTableRef t) {
+        accept(t.json());
+        t.columns().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
      * Visits a table-variable reference.
      *
      * @param t the table-variable reference being visited
@@ -638,6 +651,68 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
      */
     @Override
     public R visitVariableTable(VariableTable t) {
+        return defaultResult();
+    }
+
+    /**
+     * Visits a scalar JSON table column.
+     *
+     * @param column scalar JSON table column
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitJsonTableScalarColumn(JsonTableScalarColumn column) {
+        accept(column.type());
+        accept(column.onEmpty());
+        accept(column.onError());
+        return defaultResult();
+    }
+
+    /**
+     * Visits an ordinality JSON table column.
+     *
+     * @param column ordinality JSON table column
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitJsonTableOrdinalityColumn(JsonTableOrdinalityColumn column) {
+        return defaultResult();
+    }
+
+    /**
+     * Visits an existence-test JSON table column.
+     *
+     * @param column existence-test JSON table column
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitJsonTableExistsColumn(JsonTableExistsColumn column) {
+        accept(column.type());
+        accept(column.onError());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a nested-path JSON table column group.
+     *
+     * @param column nested-path JSON table column group
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitJsonTableNestedPathColumn(JsonTableNestedPathColumn column) {
+        column.columns().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
+     * Visits a JSON table behavior.
+     *
+     * @param behavior JSON table behavior
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitJsonTableBehavior(JsonTableBehavior behavior) {
+        accept(behavior.defaultExpression());
         return defaultResult();
     }
 

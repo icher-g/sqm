@@ -85,6 +85,21 @@ public class TableRefMatchImpl<R> implements TableRefMatch<R> {
     }
 
     /**
+     * Registers a handler for a {@link JsonTableRef}.
+     *
+     * @param f handler for {@code JsonTableRef}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public TableRefMatch<R> jsonTable(Function<JsonTableRef, R> f) {
+        if (!matched && table instanceof JsonTableRef t) {
+            result = f.apply(t);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
      * Registers a handler for a table-variable reference.
      *
      * @param f handler for {@code VariableTable}

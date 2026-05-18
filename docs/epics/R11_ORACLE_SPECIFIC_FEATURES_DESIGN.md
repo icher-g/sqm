@@ -38,21 +38,21 @@ This document only covers features beyond that baseline.
 
 ## Design Summary
 
-| Priority | Feature | Existing Node Reuse | Proposed Shape | Dialect Generality |
-|---|---|---|---|---|
-| 1 | Oracle `RETURNING ... INTO` | Reuse `ResultClause` items | Generalize result targets beyond relation targets | Oracle now; SQL Server relation target already exists; PostgreSQL direct-return target |
-| 1 | Sequence value expressions | No existing semantic node | New generic `SequenceValueExpr` | Oracle, PostgreSQL, SQL Server, DB2-style dialects |
-| 1 | `CONNECT BY` / `START WITH` | No existing semantic node | New `HierarchicalQueryClause` family | Oracle first, generic semantic name |
-| 2 | `PIVOT` / `UNPIVOT` | Relation model can host it, but no node | New generic relation transform nodes | Oracle and SQL Server first |
-| 2 | `JSON_TABLE` | Do not force into `FunctionTable` | New generic `JsonTableRef` family | Oracle and MySQL first, SQL-standard-friendly |
-| 2 | Flashback query `AS OF` | `Table` can be decorated only with new field/node | New generic table version spec | Oracle first; concept reusable for temporal dialects |
-| 2 | Table partition selector | `Table` identifies base table but not selected partitions | Generic table access selector | Oracle first; reusable where dialects expose partition selection |
-| 2 | Table sampling | No current table sample node | Generic `TableSample` relation modifier | Oracle, PostgreSQL, SQL Server-style dialects |
-| 3 | Oracle `AT TIME ZONE` | Reuse `AtTimeZoneExpr` | Add Oracle parse/render/validation | PostgreSQL and SQL Server already have related support |
-| 3 | Oracle locking variants | Reuse `LockingClause` where possible | Extend locking for `WAIT n` only if needed | Oracle, PostgreSQL, SQL Server variants |
-| 3 | `MATCH_RECOGNIZE` | No existing semantic node | New row-pattern recognition clause | SQL standard, Oracle, Snowflake, Trino-style dialects |
-| 4 | Oracle `MODEL` clause | No existing semantic node | Dedicated model-clause family, deferred | Mostly Oracle-specific |
-| 4 | Legacy outer join `(+)` | Existing joins can represent normalized semantics | Migration/transpile parser story, not a persisted syntax node | Oracle legacy only |
+| Priority | Feature                     | Existing Node Reuse                                       | Proposed Shape                                                | Dialect Generality                                                                     |
+|----------|-----------------------------|-----------------------------------------------------------|---------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| 1        | Oracle `RETURNING ... INTO` | Reuse `ResultClause` items                                | Generalize result targets beyond relation targets             | Oracle now; SQL Server relation target already exists; PostgreSQL direct-return target |
+| 1        | Sequence value expressions  | No existing semantic node                                 | New generic `SequenceValueExpr`                               | Oracle, PostgreSQL, SQL Server, DB2-style dialects                                     |
+| 1        | `CONNECT BY` / `START WITH` | No existing semantic node                                 | New `HierarchicalQueryClause` family                          | Oracle first, generic semantic name                                                    |
+| 2        | `PIVOT` / `UNPIVOT`         | Relation model can host it, but no node                   | New generic relation transform nodes                          | Oracle and SQL Server first                                                            |
+| 2        | `JSON_TABLE`                | Do not force into `FunctionTable`                         | New generic `JsonTableRef` family                             | Oracle, MySQL, and PostgreSQL 17+ first, SQL-standard-friendly                         |
+| 2        | Flashback query `AS OF`     | `Table` can be decorated only with new field/node         | New generic table version spec                                | Oracle first; concept reusable for temporal dialects                                   |
+| 2        | Table partition selector    | `Table` identifies base table but not selected partitions | Generic table access selector                                 | Oracle first; reusable where dialects expose partition selection                       |
+| 2        | Table sampling              | No current table sample node                              | Generic `TableSample` relation modifier                       | Oracle, PostgreSQL, SQL Server-style dialects                                          |
+| 3        | Oracle `AT TIME ZONE`       | Reuse `AtTimeZoneExpr`                                    | Add Oracle parse/render/validation                            | PostgreSQL and SQL Server already have related support                                 |
+| 3        | Oracle locking variants     | Reuse `LockingClause` where possible                      | Extend locking for `WAIT n` only if needed                    | Oracle, PostgreSQL, SQL Server variants                                                |
+| 3        | `MATCH_RECOGNIZE`           | No existing semantic node                                 | New row-pattern recognition clause                            | SQL standard, Oracle, Snowflake, Trino-style dialects                                  |
+| 4        | Oracle `MODEL` clause       | No existing semantic node                                 | Dedicated model-clause family, deferred                       | Mostly Oracle-specific                                                                 |
+| 4        | Legacy outer join `(+)`     | Existing joins can represent normalized semantics         | Migration/transpile parser story, not a persisted syntax node | Oracle legacy only                                                                     |
 
 ## Reuse-First Decisions
 
@@ -556,7 +556,7 @@ Forcing this into `FunctionTable(FunctionExpr)` would be too stringly and would 
 Add a generic `JsonTableRef` relation node.
 
 ```java
-public non-sealed interface JsonTableRef extends AliasedTableRef {
+public non-sealed interface JsonTableRef extends TableRef {
     Expression json();
     JsonPathSpec rootPath();
     List<JsonTableColumn> columns();
@@ -615,7 +615,13 @@ MySQL:
 - Support the compatible subset.
 - Validate dialect differences.
 
-PostgreSQL/SQL Server/ANSI:
+PostgreSQL:
+
+- Support the compatible SQL/JSON subset on PostgreSQL 17 and newer.
+- Reject at parse, render, and validation time for PostgreSQL versions before 17.
+- Treat PostgreSQL-only SQL/JSON options such as `PASSING`, top-level `ON ERROR`, quote handling, and PostgreSQL-specific JSON path behavior as follow-up scope unless they fit the first-story compatible subset exactly.
+
+SQL Server/ANSI:
 
 - Reject the node unless a future mapping to dialect-specific JSON row expansion is designed.
 
@@ -623,8 +629,7 @@ PostgreSQL/SQL Server/ANSI:
 
 Exact:
 
-- Oracle to MySQL only for compatible subset.
-- MySQL to Oracle only for compatible subset.
+- Oracle, MySQL, and PostgreSQL 17+ between each other only for the compatible subset.
 
 Unsupported:
 
@@ -1025,7 +1030,8 @@ Acceptance:
 Acceptance:
 
 - `JsonTableRef` and column variants are modeled.
-- Oracle and MySQL compatible subset parse/render/validate.
+- Oracle, MySQL, and PostgreSQL 17+ compatible subset parse/render/validate.
+- PostgreSQL versions before 17 reject explicitly.
 - Other dialects reject explicitly.
 - JSON path body is preserved safely as `JsonPathSpec`.
 - DSL/codegen/docs/tests updated.
