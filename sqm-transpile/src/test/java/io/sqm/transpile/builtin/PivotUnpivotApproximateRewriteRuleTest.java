@@ -1,8 +1,14 @@
 package io.sqm.transpile.builtin;
 
 import io.sqm.core.PivotTable;
+import io.sqm.core.Expression;
+import io.sqm.core.FunctionExpr;
+import io.sqm.core.PivotMeasure;
+import io.sqm.core.PivotValue;
+import io.sqm.core.QualifiedName;
 import io.sqm.core.Query;
 import io.sqm.core.QueryTable;
+import io.sqm.core.SelectItem;
 import io.sqm.core.SelectQuery;
 import io.sqm.core.UnpivotTable;
 import io.sqm.core.dialect.SqlDialectId;
@@ -160,6 +166,22 @@ class PivotUnpivotApproximateRewriteRuleTest {
     }
 
     @Test
+    void transpilerRendersApproximateMultiColumnUnpivotWithOrNullFilter() {
+        var result = postgresTranspiler(SqlDialectId.ORACLE).transpile("""
+            SELECT region, amount, quantity, quarter
+            FROM sales
+            UNPIVOT (
+                (amount, quantity)
+                FOR quarter IN ((q1_amount, q1_quantity) AS 'Q1')
+            )
+            """);
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        var sql = normalizeSql(result.sql().orElseThrow());
+        assertContains(sql, "WHERE q1_amount IS NOT NULL OR q1_quantity IS NOT NULL");
+    }
+
+    @Test
     void rewritesIncludeNullsUnpivotWithoutBranchFilter() {
         var transpiler = new DefaultSqlTranspiler.Builder()
             .sourceDialect(SqlDialectId.ORACLE)
@@ -209,6 +231,37 @@ class PivotUnpivotApproximateRewriteRuleTest {
         assertContains(sql, "sum(CASE WHEN quarter = 'Q2' THEN amount ELSE NULL END) AS q2_total");
         assertContains(sql, "count(CASE WHEN quarter = 'Q2' THEN 1 ELSE NULL END) AS q2_cnt");
         assertContains(sql, "GROUP BY region");
+    }
+
+    @Test
+    void transpilerRendersMultiMeasurePivotWithInferredMeasureNames() {
+        var result = postgresTranspiler(SqlDialectId.ORACLE).transpile("""
+            SELECT region, q1_sum, q1_count
+            FROM sales
+            PIVOT (
+                sum(amount),
+                count(*)
+                FOR quarter IN ('Q1' AS q1)
+            )
+            """);
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        var sql = normalizeSql(result.sql().orElseThrow());
+        assertContains(sql, "sum(CASE WHEN quarter = 'Q1' THEN amount ELSE NULL END) AS q1_sum");
+        assertContains(sql, "count(CASE WHEN quarter = 'Q1' THEN 1 ELSE NULL END) AS q1_count");
+    }
+
+    @Test
+    void transpilerRendersPivotValueLiteralNameWhenAliasIsMissing() {
+        var result = postgresTranspiler(SqlDialectId.ORACLE).transpile("""
+            SELECT region, q1
+            FROM sales
+            PIVOT (sum(amount) FOR quarter IN ('Q1'))
+            """);
+
+        assertEquals(TranspileStatus.SUCCESS_WITH_WARNINGS, result.status());
+        var sql = normalizeSql(result.sql().orElseThrow());
+        assertContains(sql, "sum(CASE WHEN quarter = 'Q1' THEN amount ELSE NULL END) AS q1");
     }
 
     @Test
@@ -361,6 +414,62 @@ class PivotUnpivotApproximateRewriteRuleTest {
     }
 
     @Test
+    void rejectsNonColumnPivotGroupingProjectionWhenOuterJoinIsPresent() {
+        var query = parseOracle("""
+            SELECT coalesce(region, 'unknown') AS region_name, q1
+            FROM sales
+            PIVOT (sum(amount) FOR quarter IN ('Q1' AS q1)) p
+            JOIN regions r ON r.region = p.region
+            """);
+
+        var result = new PivotUnpivotApproximateRewriteRule()
+            .apply(query, context(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL));
+
+        assertFalse(result.changed());
+        assertEquals(RewriteFidelity.UNSUPPORTED, result.fidelity());
+        assertTrue(result.problems().getFirst().message().contains("cannot infer implicit grouping columns"));
+    }
+
+    @Test
+    void fallsBackToOuterProjectionWhenSourceProjectionContainsNonExpressionItems() {
+        var source = select(SelectItem.star(), col("quarter"), col("amount"))
+            .from(tbl("sales"))
+            .build();
+        var pivot = PivotTable.of(
+            QueryTable.of(source),
+            List.of(pivotMeasure(func("sum", col("amount")))),
+            col("quarter"),
+            List.of(pivotValue(lit("Q1"), "q1"))
+        );
+        var query = select(col("region"), col("q1")).from(pivot).build();
+
+        var result = new PivotUnpivotApproximateRewriteRule()
+            .apply(query, context(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL));
+
+        assertTrue(result.changed());
+        assertEquals(RewriteFidelity.APPROXIMATE, result.fidelity());
+        assertTrue(result.problems().isEmpty());
+    }
+
+    @Test
+    void rejectsDuplicatePivotOutputNames() {
+        var pivot = PivotTable.of(
+            tbl("sales"),
+            List.of(pivotMeasure(func("sum", col("amount")))),
+            col("quarter"),
+            List.of(pivotValue(lit("Q1"), "q1"), pivotValue(lit("Q2"), "q1"))
+        );
+        var query = select(col("region"), col("q1")).from(pivot).build();
+
+        var result = new PivotUnpivotApproximateRewriteRule()
+            .apply(query, context(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL));
+
+        assertFalse(result.changed());
+        assertEquals(RewriteFidelity.UNSUPPORTED, result.fidelity());
+        assertTrue(result.problems().getFirst().message().contains("unique output column names"));
+    }
+
+    @Test
     void rejectsUnpivotWithStarProjection() {
         var query = parseOracle("""
             SELECT *
@@ -395,6 +504,90 @@ class PivotUnpivotApproximateRewriteRuleTest {
         assertFalse(result.changed());
         assertEquals(RewriteFidelity.UNSUPPORTED, result.fidelity());
         assertTrue(result.problems().getFirst().message().contains("match the output value column count"));
+    }
+
+    @Test
+    void rejectsPivotAggregateOptions() {
+        var aggregate = func("sum", col("amount")).filter(col("amount").gt(0));
+        var pivot = PivotTable.of(
+            tbl("sales"),
+            List.of(PivotMeasure.of(aggregate, null)),
+            col("quarter"),
+            List.of(pivotValue(lit("Q1"), "q1"))
+        );
+        var query = select(col("region"), col("q1")).from(pivot).build();
+
+        var result = new PivotUnpivotApproximateRewriteRule()
+            .apply(query, context(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL));
+
+        assertFalse(result.changed());
+        assertEquals(RewriteFidelity.UNSUPPORTED, result.fidelity());
+        assertTrue(result.problems().getFirst().message().contains("aggregate options"));
+    }
+
+    @Test
+    void rejectsPivotValueWithoutOutputName() {
+        var pivot = PivotTable.of(
+            tbl("sales"),
+            List.of(pivotMeasure(func("sum", col("amount")))),
+            col("quarter"),
+            List.of(PivotValue.of(lit(null), null))
+        );
+        var query = select(col("region"), col("q1")).from(pivot).build();
+
+        var result = new PivotUnpivotApproximateRewriteRule()
+            .apply(query, context(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL));
+
+        assertFalse(result.changed());
+        assertEquals(RewriteFidelity.UNSUPPORTED, result.fidelity());
+        assertTrue(result.problems().getFirst().message().contains("without alias"));
+    }
+
+    @Test
+    void rejectsPivotAggregateWithMultipleArguments() {
+        var aggregate = FunctionExpr.of(
+            QualifiedName.of("percentile_disc"),
+            List.of(Expression.funcArg(col("amount")), Expression.funcArg(col("discount"))),
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+        var pivot = PivotTable.of(
+            tbl("sales"),
+            List.of(PivotMeasure.of(aggregate, null)),
+            col("quarter"),
+            List.of(pivotValue(lit("Q1"), "q1"))
+        );
+        var query = select(col("region"), col("q1")).from(pivot).build();
+
+        var result = new PivotUnpivotApproximateRewriteRule()
+            .apply(query, context(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL));
+
+        assertFalse(result.changed());
+        assertEquals(RewriteFidelity.UNSUPPORTED, result.fidelity());
+        assertTrue(result.problems().getFirst().message().contains("single-argument aggregate functions"));
+    }
+
+    @Test
+    void preservesQueryTableAliasWhenNestedPivotIsRewritten() {
+        var inner = parseOracle("""
+            SELECT region, q1
+            FROM sales
+            PIVOT (sum(amount) FOR quarter IN ('Q1' AS q1))
+            """);
+        var outer = select(col("p", "region"), col("p", "q1"))
+            .from(QueryTable.of(inner).as("p"))
+            .build();
+
+        var result = new PivotUnpivotApproximateRewriteRule()
+            .apply(outer, context(SqlDialectId.ORACLE, SqlDialectId.POSTGRESQL));
+
+        assertTrue(result.changed());
+        var rewritten = assertInstanceOf(SelectQuery.class, result.statement());
+        assertEquals("p", assertInstanceOf(QueryTable.class, rewritten.from()).alias().value());
+        assertFalse(StatementFeatureInspector.hasPivotOrUnpivotTable(rewritten));
     }
 
     @Test

@@ -98,11 +98,17 @@ class SelectQueryImplTest {
         var builder = Query.select()
             .distinct(DistinctSpec.TRUE)
             .top(TopSpec.of(lit(5)))
+            .limitOffset(LimitOffset.of(lit(10), lit(20)))
+            .join(Join.inner(tbl("roles")))
             .orderBy(OrderItem.of(1));
 
         assertEquals(DistinctSpec.TRUE, builder.currentDistinct());
         assertEquals(5L, ((Number) ((LiteralExpr) builder.currentTopSpec().count()).value()).longValue());
+        assertEquals(10L, ((Number) ((LiteralExpr) builder.currentLimitOffset().limit()).value()).longValue());
         assertEquals(1, builder.currentOrderBy().items().size());
+        assertEquals(1, builder.build().joins().size());
+
+        assertEquals(0, builder.clearSelect().build().items().size());
     }
 
     @Test

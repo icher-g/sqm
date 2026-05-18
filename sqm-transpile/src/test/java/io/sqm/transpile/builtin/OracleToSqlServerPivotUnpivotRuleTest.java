@@ -1,8 +1,8 @@
 package io.sqm.transpile.builtin;
 
-import io.sqm.core.PivotTable;
-import io.sqm.core.Query;
-import io.sqm.core.SelectQuery;
+import io.sqm.core.*;
+import io.sqm.core.transform.RecursiveNodeTransformer;
+import io.sqm.core.walk.NodeVisitor;
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.parser.oracle.spi.OracleSpecs;
 import io.sqm.parser.spi.ParseContext;
@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Optional;
 import java.util.Set;
 
+import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class OracleToSqlServerPivotUnpivotRuleTest {
@@ -62,6 +63,20 @@ class OracleToSqlServerPivotUnpivotRuleTest {
         return sql.replaceAll("\\s+", " ").trim();
     }
 
+    private static SelectQuery multiColumnUnpivotQuery(TableRef source, SelectItem... items) {
+        var unpivot = UnpivotTable.of(
+            source,
+            java.util.List.of(id("amount"), id("quantity")),
+            id("quarter"),
+            java.util.List.of(unpivotInput(java.util.List.of(id("q1_amount"), id("q1_quantity")), lit("Q1"))),
+            UnpivotTable.NullTreatment.EXCLUDE_NULLS
+        );
+        return SelectQuery.builder()
+            .select(java.util.List.of(items))
+            .from(unpivot)
+            .build();
+    }
+
     @Test
     void exposesSupportedDialectPair() {
         var rule = new OracleToSqlServerPivotUnpivotRule();
@@ -89,6 +104,30 @@ class OracleToSqlServerPivotUnpivotRuleTest {
         assertTrue(pivot.values().stream().allMatch(value -> value.alias() == null));
         assertEquals("Q1", pivot.values().get(0).value().matchExpression().column(c -> c.name().value()).orElse(null));
         assertEquals("Q2", pivot.values().get(1).value().matchExpression().column(c -> c.name().value()).orElse(null));
+    }
+
+    @Test
+    void rewritesOraclePivotWhileLeavingNonMappedSelectItemsAlone() {
+        var query = SelectQuery.builder()
+            .select(java.util.List.of(
+                SelectItem.star(),
+                func("coalesce", col("region"), lit("unknown")).toSelectItem(),
+                col("q1").toSelectItem()
+            ))
+            .from(pivot(
+                tbl("sales"),
+                java.util.List.of(pivotMeasure(func("sum", col("amount")))),
+                col("quarter"),
+                java.util.List.of(pivotValue(lit("Q1"), "q1"))
+            ))
+            .build();
+
+        var result = new OracleToSqlServerPivotUnpivotRule().apply(query, context());
+
+        assertTrue(result.changed());
+        var rewritten = assertInstanceOf(SelectQuery.class, result.statement());
+        assertInstanceOf(StarSelectItem.class, rewritten.items().get(0));
+        assertSame(query.items().get(1), rewritten.items().get(1));
     }
 
     @Test
@@ -179,6 +218,194 @@ class OracleToSqlServerPivotUnpivotRuleTest {
         assertContains(sql, "SELECT upt.region, upt0.amount, upt0.quantity, upt0.quarter FROM sales AS upt");
         assertContains(sql, "CROSS APPLY (VALUES (upt.q1_amount, upt.q1_quantity, 'Q1')) AS upt0(amount, quantity, quarter)");
         assertFalse(sql.contains("IS NOT NULL"), sql);
+    }
+
+    @Test
+    void rewritesSingleColumnUnpivotWhileLeavingStarSelectItemsAlone() {
+        var query = parseOracle("""
+            SELECT *, amount, quarter
+            FROM sales
+            UNPIVOT (amount FOR quarter IN (q1 AS 'Q1'))
+            """);
+
+        var result = new OracleToSqlServerPivotUnpivotRule().apply(query, context());
+
+        assertTrue(result.changed());
+        var rewritten = assertInstanceOf(SelectQuery.class, result.statement());
+        assertInstanceOf(StarSelectItem.class, rewritten.items().getFirst());
+        assertInstanceOf(ExprSelectItem.class, rewritten.items().get(1));
+        assertInstanceOf(ExprSelectItem.class, rewritten.items().get(2));
+    }
+
+    @Test
+    void combinesExistingWhereWithGeneratedCrossApplyNullFilter() {
+        var query = SelectQuery.builder()
+            .select(col("region"), col("amount"), col("quarter"))
+            .from(UnpivotTable.of(
+                tbl("sales"),
+                java.util.List.of(id("amount"), id("quantity")),
+                id("quarter"),
+                java.util.List.of(unpivotInput(java.util.List.of(id("q1_amount"), id("q1_quantity")), lit("Q1"))),
+                UnpivotTable.NullTreatment.DIALECT_DEFAULT
+            ))
+            .where(col("active").eq(lit(1)))
+            .build();
+
+        var result = new OracleToSqlServerPivotUnpivotRule().apply(query, context());
+
+        assertTrue(result.changed());
+        var rewritten = assertInstanceOf(SelectQuery.class, result.statement());
+        assertNotNull(rewritten.where());
+        assertEquals(RewriteFidelity.APPROXIMATE, result.fidelity());
+    }
+
+    @Test
+    void rewritesCrossApplyForFunctionSourceAndStarProjections() {
+        var source = FunctionTable.of(func("sales_rows")).as("f");
+        var query = multiColumnUnpivotQuery(
+            source,
+            SelectItem.star(),
+            SelectItem.star(id("f")),
+            new TestDialectSelectItem(),
+            func("coalesce", col("region"), lit("unknown")).toSelectItem(),
+            col("amount").toSelectItem(),
+            col("quarter").toSelectItem()
+        );
+
+        var result = new OracleToSqlServerPivotUnpivotRule().apply(query, context());
+
+        assertTrue(result.changed());
+        assertEquals(RewriteFidelity.APPROXIMATE, result.fidelity());
+        var rewritten = assertInstanceOf(SelectQuery.class, result.statement());
+        assertEquals(source, rewritten.from());
+        assertEquals(1, rewritten.joins().size());
+        assertInstanceOf(QualifiedStarSelectItem.class, rewritten.items().get(0));
+        assertInstanceOf(QualifiedStarSelectItem.class, rewritten.items().get(1));
+        assertSame(query.items().get(2), rewritten.items().get(2));
+        assertSame(query.items().get(3), rewritten.items().get(3));
+    }
+
+    @Test
+    void rewritesCrossApplyForQueryValuesLateralPivotAndVariableSources() {
+        var querySource = QueryTable.of(select(col("q1_amount"), col("q1_quantity")).from(tbl("base_sales")).build());
+        var valuesSource = ValuesTable.of(RowListExpr.of(java.util.List.of(RowExpr.of(java.util.List.of(lit(1), lit(2))))));
+        var lateralSource = Lateral.of(valuesSource);
+        var pivotSource = pivot(
+            tbl("sales"),
+            java.util.List.of(pivotMeasure(func("sum", col("amount")))),
+            col("quarter"),
+            java.util.List.of(pivotValue(lit("Q1"), "q1"))
+        );
+        var variableSource = VariableTable.of("audit_rows");
+        var nestedUnpivotSource = unpivot(
+            tbl("wide_sales"),
+            "amount",
+            "quarter",
+            java.util.List.of(unpivotInput("q1_amount", lit("Q1")))
+        ).as("inner_unpivot");
+
+        for (var source : java.util.List.of(querySource, valuesSource, lateralSource, pivotSource, variableSource, nestedUnpivotSource)) {
+            var query = multiColumnUnpivotQuery(
+                source,
+                col("region").toSelectItem(),
+                col("amount").toSelectItem(),
+                col("quarter").toSelectItem()
+            );
+
+            var result = new OracleToSqlServerPivotUnpivotRule().apply(query, context());
+
+            assertTrue(result.changed(), () -> source.toString());
+            assertEquals(RewriteFidelity.APPROXIMATE, result.fidelity());
+            assertEquals(1, assertInstanceOf(SelectQuery.class, result.statement()).joins().size());
+        }
+    }
+
+    @Test
+    void rewritesCrossApplyForAliasedDerivedSourcesAndUnaliasedFunctionSource() {
+        var querySource = QueryTable.of(select(col("q1_amount"), col("q1_quantity")).from(tbl("base_sales")).build()).as("q");
+        var valuesSource = ValuesTable.of(RowListExpr.of(java.util.List.of(RowExpr.of(java.util.List.of(lit(1), lit(2)))))).as("v");
+        var functionSource = FunctionTable.of(func("sales_rows"));
+        var pivotSource = pivot(
+            tbl("sales"),
+            java.util.List.of(pivotMeasure(func("sum", col("amount")))),
+            col("quarter"),
+            java.util.List.of(pivotValue(lit("Q1"), "q1"))
+        ).as("p");
+        var unpivotSource = unpivot(
+            tbl("wide_sales"),
+            "amount",
+            "quarter",
+            java.util.List.of(unpivotInput("q1_amount", lit("Q1")))
+        );
+
+        for (var source : java.util.List.of(querySource, valuesSource, functionSource, pivotSource, unpivotSource)) {
+            var query = multiColumnUnpivotQuery(
+                source,
+                col("region").toSelectItem(),
+                col("amount").toSelectItem(),
+                col("quarter").toSelectItem()
+            );
+
+            var result = new OracleToSqlServerPivotUnpivotRule().apply(query, context());
+
+            assertTrue(result.changed(), () -> source.toString());
+            assertEquals(RewriteFidelity.APPROXIMATE, result.fidelity());
+            assertEquals(1, assertInstanceOf(SelectQuery.class, result.statement()).joins().size());
+        }
+    }
+
+    @Test
+    void rewritesCrossApplyForDialectSpecificSource() {
+        var source = new TestDialectTableRef();
+        var query = multiColumnUnpivotQuery(
+            source,
+            col("amount").toSelectItem(),
+            col("quarter").toSelectItem()
+        );
+
+        var result = new OracleToSqlServerPivotUnpivotRule().apply(query, context());
+
+        assertTrue(result.changed());
+        var rewritten = assertInstanceOf(SelectQuery.class, result.statement());
+        assertSame(source, rewritten.from());
+        assertEquals(1, rewritten.joins().size());
+    }
+
+    @Test
+    void leavesOuterSelectQueryUnchangedAfterNestedPivotRewrite() {
+        var inner = parseOracle("""
+            SELECT region, q1
+            FROM sales
+            PIVOT (sum(amount) FOR quarter IN ('Q1' AS q1))
+            """);
+        var outer = select(Expression.subquery(inner)).build();
+
+        var result = new OracleToSqlServerPivotUnpivotRule().apply(outer, context());
+
+        assertTrue(result.changed());
+        assertInstanceOf(SelectQuery.class, result.statement());
+    }
+
+    private static final class TestDialectSelectItem implements DialectSelectItem {
+        @Override
+        @SuppressWarnings("unchecked")
+        public <R> R accept(NodeVisitor<R> v) {
+            if (v instanceof RecursiveNodeTransformer) {
+                return (R) this;
+            }
+            return null;
+        }
+    }
+
+    private static final class TestDialectTableRef implements DialectTableRef {
+        @Override
+        @SuppressWarnings("unchecked")
+        public <R> R accept(NodeVisitor<R> v) {
+            if (v instanceof RecursiveNodeTransformer) {
+                return (R) this;
+            }
+            return null;
+        }
     }
 
     @Test
