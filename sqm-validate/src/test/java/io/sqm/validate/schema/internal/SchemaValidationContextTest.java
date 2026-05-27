@@ -146,6 +146,33 @@ class SchemaValidationContextTest {
     }
 
     @Test
+    void registerTableRef_handlesJsonTableAliasAndFlattenedNestedColumns() {
+        var context = new SchemaValidationContext(SCHEMA);
+        var table = jsonTable(
+            col("payload"),
+            jsonPath("$.items[*]"),
+            jsonScalar("id", type("NUMBER"), jsonPath("$.id")),
+            jsonExists("present", type("BOOLEAN"), jsonPath("$.present")),
+            jsonNested(jsonPath("$.children[*]"), jsonScalar("child_id", type("NUMBER"), jsonPath("$.id")))
+        ).as("jt");
+
+        context.pushScope();
+        try {
+            context.registerTableRef(table);
+
+            assertEquals("jt", context.sourceKey(table).orElseThrow());
+            assertEquals(Set.of("jt"), Set.copyOf(context.currentScopeSourceKeys()));
+            assertTrue(context.sourceColumnType("jt", "id").isEmpty());
+            assertTrue(context.resolveColumn(col("jt", "id"), true).isEmpty());
+            assertTrue(context.resolveColumn(col("present"), true).isEmpty());
+            assertTrue(context.resolveColumn(col("child_id"), true).isEmpty());
+            assertEquals(0, context.countStrictSourcesWithColumn("id", null));
+        } finally {
+            context.popScope();
+        }
+    }
+
+    @Test
     void inferType_supportsCastArithmeticAndFunctionCatalog() {
         FunctionCatalog catalog = name -> "fnum".equalsIgnoreCase(name)
             ? java.util.Optional.of(FunctionSignature.of(1, 1, CatalogType.DECIMAL))

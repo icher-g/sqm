@@ -44,6 +44,49 @@ class JsonTableRefRendererTest {
         assertThrows(UnsupportedDialectFeatureException.class, () -> RenderContext.of(new AnsiDialect()).render(table).sql());
     }
 
+    @Test
+    void rendersNestedExistsWrappersDefaultBehaviorAndQuotedPaths() {
+        var table = jsonTable(
+            col("payload"),
+            jsonPath("$.items['odd']"),
+            jsonScalar(
+                id("items"),
+                type("JSON"),
+                jsonPath("$.items"),
+                JsonTableScalarColumn.Wrapper.WITH,
+                null,
+                jsonBehavior(JsonTableBehavior.Kind.DEFAULT, lit("[]"))
+            ),
+            jsonScalar(
+                id("maybe_items"),
+                type("JSON"),
+                jsonPath("$.maybe"),
+                JsonTableScalarColumn.Wrapper.CONDITIONAL,
+                jsonBehavior(JsonTableBehavior.Kind.EMPTY),
+                null
+            ),
+            jsonScalar(
+                id("raw_item"),
+                type("JSON"),
+                jsonPath("$.raw"),
+                JsonTableScalarColumn.Wrapper.WITHOUT,
+                null,
+                null
+            ),
+            jsonExists(id("present"), type("BOOLEAN"), jsonPath("$.present"), jsonBehavior(JsonTableBehavior.Kind.NULL)),
+            jsonNested(jsonPath("$.children[*]"), jsonScalar("child_id", type("NUMBER"), jsonPath("$.id")))
+        ).as("jt");
+
+        var sql = RenderContext.of(new JsonTableDialect()).render(table).sql().replaceAll("\\s+", " ").trim();
+
+        assertTrue(sql.contains("'$.items[''odd'']'"));
+        assertTrue(sql.contains("items JSON PATH '$.items' WITH WRAPPER DEFAULT '[]' ON ERROR"));
+        assertTrue(sql.contains("maybe_items JSON PATH '$.maybe' WITH CONDITIONAL WRAPPER EMPTY ON EMPTY"));
+        assertTrue(sql.contains("raw_item JSON PATH '$.raw' WITHOUT WRAPPER"));
+        assertTrue(sql.contains("present BOOLEAN EXISTS PATH '$.present' NULL ON ERROR"));
+        assertTrue(sql.contains("NESTED PATH '$.children[*]' COLUMNS ( child_id NUMBER PATH '$.id' )"));
+    }
+
     private static final class JsonTableDialect extends AnsiDialect {
         @Override
         public DialectCapabilities capabilities() {

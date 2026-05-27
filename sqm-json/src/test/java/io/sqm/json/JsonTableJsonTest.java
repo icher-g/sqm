@@ -1,6 +1,8 @@
 package io.sqm.json;
 
+import io.sqm.core.JsonTableBehavior;
 import io.sqm.core.JsonTableRef;
+import io.sqm.core.JsonTableScalarColumn;
 import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.*;
@@ -13,7 +15,17 @@ class JsonTableJsonTest {
         var table = jsonTable(
             col("payload"),
             jsonPath("$.items[*]"),
-            jsonScalar("id", type("NUMBER"), jsonPath("$.id")), jsonOrdinality("ord")
+            jsonScalar(
+                id("id"),
+                type("NUMBER"),
+                jsonPath("$.id"),
+                JsonTableScalarColumn.Wrapper.WITHOUT,
+                jsonBehavior(JsonTableBehavior.Kind.NULL),
+                jsonBehavior(JsonTableBehavior.Kind.DEFAULT, lit("fallback"))
+            ),
+            jsonExists(id("present"), type("BOOLEAN"), jsonPath("$.present"), jsonBehavior(JsonTableBehavior.Kind.ERROR)),
+            jsonNested(jsonPath("$.children[*]"), jsonScalar("child_id", type("NUMBER"), jsonPath("$.id"))),
+            jsonOrdinality("ord")
         ).as("jt");
 
         var json = mapper.writeValueAsString(table);
@@ -21,5 +33,6 @@ class JsonTableJsonTest {
 
         assertEquals(table, roundTrip);
         assertTrue(json.contains("\"kind\":\"json_table\""));
+        assertTrue(json.contains("\"kind\":\"DEFAULT\""));
     }
 }
