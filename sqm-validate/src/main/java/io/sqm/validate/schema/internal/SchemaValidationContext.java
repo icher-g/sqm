@@ -307,6 +307,10 @@ public final class SchemaValidationContext {
                 functionTable.alias(),
                 functionTable.columnAliases()
             );
+            case JsonTableRef jsonTable -> registerDerivedSource(
+                jsonTable.alias(),
+                jsonTableColumnNames(jsonTable.columns())
+            );
             default -> {
             }
         }
@@ -340,8 +344,28 @@ public final class SchemaValidationContext {
             case FunctionTable functionTable -> functionTable.alias() == null
                 ? Optional.empty()
                 : Optional.of(normalize(functionTable.alias()));
+            case JsonTableRef jsonTable -> jsonTable.alias() == null
+                ? Optional.empty()
+                : Optional.of(normalize(jsonTable.alias()));
             default -> Optional.empty();
         };
+    }
+
+    private static List<Identifier> jsonTableColumnNames(List<JsonTableColumn> columns) {
+        var names = new ArrayList<Identifier>();
+        collectJsonTableColumnNames(columns, names);
+        return names;
+    }
+
+    private static void collectJsonTableColumnNames(List<JsonTableColumn> columns, List<Identifier> names) {
+        for (var column : columns) {
+            if (column instanceof JsonTableNestedPathColumn nested) {
+                collectJsonTableColumnNames(nested.columns(), names);
+            }
+            else if (column.name() != null) {
+                names.add(column.name());
+            }
+        }
     }
 
     /**

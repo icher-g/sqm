@@ -85,14 +85,14 @@ class MySqlValidationDialectTest {
                 tbl("sales"),
                 List.of(pivotMeasure(func("sum", col("amount")), "total")),
                 col("quarter"),
-                List.of(pivotValue(lit("Q1"), "q1"))))
+                pivotValue(lit("Q1"), "q1")))
             .build();
         var unpivotQuery = select(star())
             .from(unpivot(
                 tbl("sales"),
                 "amount",
                 "quarter",
-                List.of(unpivotInput("q1", lit("q1")), unpivotInput("q2", lit("q2")))))
+                unpivotInput("q1", lit("q1")), unpivotInput("q2", lit("q2"))))
             .build();
 
         var pivotResult = validator.validate(pivotQuery);

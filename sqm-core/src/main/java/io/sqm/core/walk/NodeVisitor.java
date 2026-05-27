@@ -19,6 +19,7 @@ public interface NodeVisitor<R> extends
     SelectItemVisitor<R>,
     ResultItemVisitor<R>,
     GroupVisitor<R>,
+    JsonTableVisitor<R>,
     OrderVisitor<R>,
     PaginationVisitor<R>,
     StatementVisitor<R>,

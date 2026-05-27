@@ -38,6 +38,7 @@ public final class PlaygroundExceptionHandler {
     /**
      * Handles malformed request payloads.
      *
+     * @param exception an error
      * @param request HTTP request
      * @return response entity with stable error payload
      */

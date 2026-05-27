@@ -267,6 +267,129 @@ public final class Dsl {
     }
 
     /**
+     * Creates a JSON path specification.
+     *
+     * @param text JSON path text without SQL string literal delimiters
+     * @return JSON path specification
+     */
+    public static JsonPathSpec jsonPath(String text) {
+        return JsonPathSpec.of(text);
+    }
+
+    /**
+     * Creates a JSON table reference.
+     *
+     * @param json JSON context expression
+     * @param rootPath row-pattern JSON path
+     * @param columns output columns
+     * @return JSON table reference
+     */
+    public static JsonTableRef jsonTable(Expression json, JsonPathSpec rootPath, JsonTableColumn... columns) {
+        return JsonTableRef.of(json, rootPath, List.of(columns));
+    }
+
+    /**
+     * Creates a scalar JSON table column with dialect-default behavior.
+     *
+     * @param name column name
+     * @param type SQL result type
+     * @param path JSON path
+     * @return scalar JSON table column
+     */
+    public static JsonTableScalarColumn jsonScalar(String name, TypeName type, JsonPathSpec path) {
+        return JsonTableScalarColumn.of(Identifier.of(name), type, path);
+    }
+
+    /**
+     * Creates a scalar JSON table column.
+     *
+     * @param name column name
+     * @param type SQL result type
+     * @param path JSON path
+     * @param wrapper wrapper behavior
+     * @param onEmpty empty-result behavior
+     * @param onError error behavior
+     * @return scalar JSON table column
+     */
+    public static JsonTableScalarColumn jsonScalar(
+        Identifier name,
+        TypeName type,
+        JsonPathSpec path,
+        JsonTableScalarColumn.Wrapper wrapper,
+        JsonTableBehavior onEmpty,
+        JsonTableBehavior onError
+    ) {
+        return JsonTableScalarColumn.of(name, type, path, wrapper, onEmpty, onError);
+    }
+
+    /**
+     * Creates an ordinality JSON table column.
+     *
+     * @param name column name
+     * @return ordinality JSON table column
+     */
+    public static JsonTableOrdinalityColumn jsonOrdinality(String name) {
+        return JsonTableOrdinalityColumn.of(Identifier.of(name));
+    }
+
+    /**
+     * Creates an existence-test JSON table column with dialect-default behavior.
+     *
+     * @param name column name
+     * @param type SQL result type
+     * @param path JSON path
+     * @return existence-test JSON table column
+     */
+    public static JsonTableExistsColumn jsonExists(String name, TypeName type, JsonPathSpec path) {
+        return JsonTableExistsColumn.of(Identifier.of(name), type, path);
+    }
+
+    /**
+     * Creates an existence-test JSON table column.
+     *
+     * @param name column name
+     * @param type SQL result type
+     * @param path JSON path
+     * @param onError error behavior
+     * @return existence-test JSON table column
+     */
+    public static JsonTableExistsColumn jsonExists(Identifier name, TypeName type, JsonPathSpec path, JsonTableBehavior onError) {
+        return JsonTableExistsColumn.of(name, type, path, onError);
+    }
+
+    /**
+     * Creates a nested-path JSON table column group.
+     *
+     * @param path nested JSON path
+     * @param columns nested output columns
+     * @return nested-path JSON table column group
+     */
+    public static JsonTableNestedPathColumn jsonNested(JsonPathSpec path, JsonTableColumn... columns) {
+        return JsonTableNestedPathColumn.of(path, List.of(columns));
+    }
+
+    /**
+     * Creates a JSON table empty/error behavior without a default expression.
+     *
+     * @param kind behavior kind
+     * @return JSON table behavior
+     */
+    public static JsonTableBehavior jsonBehavior(JsonTableBehavior.Kind kind) {
+        return JsonTableBehavior.of(kind);
+    }
+
+    /**
+     * Creates a JSON table empty/error behavior.
+     *
+     * @param kind behavior kind
+     * @param defaultExpression expression used by {@link JsonTableBehavior.Kind#DEFAULT}
+     * @return JSON table behavior
+     */
+    public static JsonTableBehavior jsonBehavior(JsonTableBehavior.Kind kind, Expression defaultExpression) {
+        return JsonTableBehavior.of(kind, defaultExpression);
+    }
+
+    /**
      * Creates a table hint with the provided hint name.
      *
      * @param name hint name
@@ -421,8 +544,8 @@ public final class Dsl {
      * @param values explicit pivot values
      * @return pivot table reference
      */
-    public static PivotTable pivot(TableRef source, List<PivotMeasure> measures, Expression forExpression, List<PivotValue> values) {
-        return PivotTable.of(source, measures, forExpression, values);
+    public static PivotTable pivot(TableRef source, List<PivotMeasure> measures, Expression forExpression, PivotValue... values) {
+        return PivotTable.of(source, measures, forExpression, List.of(values));
     }
 
     /**
@@ -456,12 +579,12 @@ public final class Dsl {
      * @param inputs input column groups and labels
      * @return unpivot table reference
      */
-    public static UnpivotTable unpivot(TableRef source, String valueColumn, String nameColumn, List<UnpivotInput> inputs) {
+    public static UnpivotTable unpivot(TableRef source, String valueColumn, String nameColumn, UnpivotInput... inputs) {
         return UnpivotTable.of(
             source,
             List.of(Identifier.of(valueColumn)),
             Identifier.of(nameColumn),
-            inputs,
+            List.of(inputs),
             UnpivotTable.NullTreatment.DIALECT_DEFAULT
         );
     }

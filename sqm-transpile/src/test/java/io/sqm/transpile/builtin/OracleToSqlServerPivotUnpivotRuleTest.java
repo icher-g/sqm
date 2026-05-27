@@ -118,7 +118,7 @@ class OracleToSqlServerPivotUnpivotRuleTest {
                 tbl("sales"),
                 java.util.List.of(pivotMeasure(func("sum", col("amount")))),
                 col("quarter"),
-                java.util.List.of(pivotValue(lit("Q1"), "q1"))
+                pivotValue(lit("Q1"), "q1")
             ))
             .build();
 
@@ -294,14 +294,14 @@ class OracleToSqlServerPivotUnpivotRuleTest {
             tbl("sales"),
             java.util.List.of(pivotMeasure(func("sum", col("amount")))),
             col("quarter"),
-            java.util.List.of(pivotValue(lit("Q1"), "q1"))
+            pivotValue(lit("Q1"), "q1")
         );
         var variableSource = VariableTable.of("audit_rows");
         var nestedUnpivotSource = unpivot(
             tbl("wide_sales"),
             "amount",
             "quarter",
-            java.util.List.of(unpivotInput("q1_amount", lit("Q1")))
+            unpivotInput("q1_amount", lit("Q1"))
         ).as("inner_unpivot");
 
         for (var source : java.util.List.of(querySource, valuesSource, lateralSource, pivotSource, variableSource, nestedUnpivotSource)) {
@@ -329,13 +329,13 @@ class OracleToSqlServerPivotUnpivotRuleTest {
             tbl("sales"),
             java.util.List.of(pivotMeasure(func("sum", col("amount")))),
             col("quarter"),
-            java.util.List.of(pivotValue(lit("Q1"), "q1"))
+            pivotValue(lit("Q1"), "q1")
         ).as("p");
         var unpivotSource = unpivot(
             tbl("wide_sales"),
             "amount",
             "quarter",
-            java.util.List.of(unpivotInput("q1_amount", lit("Q1")))
+            unpivotInput("q1_amount", lit("Q1"))
         );
 
         for (var source : java.util.List.of(querySource, valuesSource, functionSource, pivotSource, unpivotSource)) {

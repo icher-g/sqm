@@ -73,7 +73,7 @@ class PivotFeatureValidationRuleTest {
             tbl("sales"),
             List.of(pivotMeasure(func("sum", col("amount")))),
             col("quarter"),
-            List.of(pivotValue(lit("Q1")))
+            pivotValue(lit("Q1"))
         );
     }
 
@@ -82,7 +82,7 @@ class PivotFeatureValidationRuleTest {
             tbl("sales"),
             "amount",
             "quarter",
-            List.of(unpivotInput("q1", lit("Q1")))
+            unpivotInput("q1", lit("Q1"))
         );
     }
 

@@ -123,14 +123,14 @@ class SqlServerValidationDialectTest {
                 tbl("sales"),
                 List.of(pivotMeasure(func("sum", col("amount")))),
                 col("quarter"),
-                List.of(pivotValue(lit("Q1")))))
+                pivotValue(lit("Q1"))))
             .build();
         var unpivotQuery = select(star())
             .from(unpivot(
                 tbl("sales"),
                 "amount",
                 "quarter",
-                List.of(unpivotInput("q1", lit("q1")), unpivotInput("q2", lit("q2")))))
+                unpivotInput("q1", lit("q1")), unpivotInput("q2", lit("q2"))))
             .build();
 
         assertFalse(validator.validate(pivotQuery).problems().stream().anyMatch(problem ->
@@ -151,7 +151,7 @@ class SqlServerValidationDialectTest {
                 tbl("sales"),
                 List.of(pivotMeasure(func("sum", col("amount")), "total")),
                 col("quarter"),
-                List.of(pivotValue(lit("Q1"), "q1"))))
+                pivotValue(lit("Q1"), "q1")))
             .build();
         var unpivotQuery = select(star())
             .from(UnpivotTable.of(
@@ -1035,11 +1035,13 @@ class SqlServerValidationDialectTest {
         var versionedDialect = SqlServerValidationDialect.of(SqlDialectVersion.of(2014, 0));
 
         assertEquals("sqlserver", dialect.name());
-        assertEquals(12, dialect.additionalRules().size());
+        assertEquals(13, dialect.additionalRules().size());
         assertTrue(dialect.additionalRules().stream()
             .anyMatch(rule -> rule.getClass().getSimpleName().equals("PivotFeatureValidationRule")));
         assertTrue(dialect.additionalRules().stream()
             .anyMatch(rule -> rule.getClass().getSimpleName().equals("SqlServerPivotValidationRule")));
+        assertTrue(dialect.additionalRules().stream()
+            .anyMatch(rule -> rule.getClass().getSimpleName().equals("JsonTableFeatureValidationRule")));
         assertEquals(SqlDialectVersion.of(2019, 0), dialect.version());
         assertTrue(dialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.LATERAL));
         assertFalse(versionedDialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.AT_TIME_ZONE));

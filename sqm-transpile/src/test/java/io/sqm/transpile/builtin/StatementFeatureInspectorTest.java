@@ -15,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Set;
 
+import static io.sqm.dsl.Dsl.pivotValue;
+import static io.sqm.dsl.Dsl.unpivotInput;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -169,14 +171,14 @@ class StatementFeatureInspectorTest {
                 Dsl.tbl("sales"),
                 List.of(Dsl.pivotMeasure(Dsl.func("sum", Dsl.col("amount")))),
                 Dsl.col("quarter"),
-                List.of(Dsl.pivotValue(Dsl.lit("Q1"), "q1"))))
+                pivotValue(Dsl.lit("Q1"), "q1")))
             .build();
         var unpivot = Dsl.select(Dsl.col("region"))
             .from(Dsl.unpivot(
                 Dsl.tbl("sales"),
                 "amount",
                 "quarter",
-                List.of(Dsl.unpivotInput("q1", Dsl.lit("Q1")))))
+                unpivotInput("q1", Dsl.lit("Q1"))))
             .build();
         var plain = Dsl.select(Dsl.col("region")).from(Dsl.tbl("sales")).build();
 

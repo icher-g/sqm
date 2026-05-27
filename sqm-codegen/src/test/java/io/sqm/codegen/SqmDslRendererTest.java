@@ -1,5 +1,7 @@
 package io.sqm.codegen;
 
+import io.sqm.core.JsonTableBehavior;
+import io.sqm.core.JsonTableScalarColumn;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
@@ -8,6 +10,14 @@ import java.util.Set;
 
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.hierarchy;
+import static io.sqm.dsl.Dsl.id;
+import static io.sqm.dsl.Dsl.jsonBehavior;
+import static io.sqm.dsl.Dsl.jsonExists;
+import static io.sqm.dsl.Dsl.jsonNested;
+import static io.sqm.dsl.Dsl.jsonOrdinality;
+import static io.sqm.dsl.Dsl.jsonPath;
+import static io.sqm.dsl.Dsl.jsonScalar;
+import static io.sqm.dsl.Dsl.jsonTable;
 import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.param;
 import static io.sqm.dsl.Dsl.nextValue;
@@ -149,14 +159,14 @@ class SqmDslRendererTest {
                 tbl("sales"),
                 List.of(pivotMeasure(io.sqm.dsl.Dsl.func("sum", col("amount")), "total")),
                 col("quarter"),
-                List.of(pivotValue(lit("Q1"), "q1"))))
+                pivotValue(lit("Q1"), "q1")))
             .build();
         var unpivotStatement = select(star())
             .from(unpivot(
                 tbl("sales"),
                 "amount",
                 "quarter",
-                List.of(unpivotInput("q1", lit("Q1")))))
+                unpivotInput("q1", lit("Q1"))))
             .build();
         var user = Path.of("pivot");
         var group = new SqlFolderGroup(
@@ -190,5 +200,61 @@ class SqmDslRendererTest {
         assertTrue(source.contains("pivotValue(lit(\"Q1\"), \"q1\")"));
         assertTrue(source.contains("unpivot("));
         assertTrue(source.contains("unpivotInput(\"q1\", lit(\"Q1\"))"));
+    }
+
+    @Test
+    void renderEmitsJsonTableDslHelpers() {
+        var statement = select(star())
+            .from(jsonTable(
+                col("payload"),
+                jsonPath("$.items[*]"),
+                jsonScalar(
+                    id("id"),
+                    io.sqm.dsl.Dsl.type("NUMBER"),
+                    jsonPath("$.id"),
+                    JsonTableScalarColumn.Wrapper.WITHOUT,
+                    jsonBehavior(JsonTableBehavior.Kind.NULL),
+                    jsonBehavior(JsonTableBehavior.Kind.DEFAULT, lit("fallback"))
+                ),
+                jsonOrdinality("ord"),
+                jsonExists(id("present"), io.sqm.dsl.Dsl.type("BOOLEAN"), jsonPath("$.present"), jsonBehavior(JsonTableBehavior.Kind.ERROR)),
+                jsonNested(jsonPath("$.children[*]"), jsonScalar("child_id", io.sqm.dsl.Dsl.type("NUMBER"), jsonPath("$.id")))
+            ).as("jt"))
+            .build();
+        var user = Path.of("json");
+        var group = new SqlFolderGroup(
+            user,
+            "JsonQueries",
+            List.of(new SqlSourceFile(
+                Path.of("json", "items.sql"),
+                user,
+                "items",
+                Set.of(),
+                "hash-5",
+                List.of(statement)
+            ))
+        );
+
+        var options = SqlFileCodegenOptions.of(
+            Path.of("sql"),
+            Path.of("generated"),
+            "io.sqm.codegen.generated",
+            SqlCodegenDialect.POSTGRESQL,
+            false,
+            false,
+            null,
+            true
+        );
+
+        var source = new SqmDslRenderer(options).render(group);
+
+        assertTrue(source.contains("jsonTable("));
+        assertTrue(source.contains("jsonPath(\"$.items[*]\")"));
+        assertTrue(source.contains("JsonTableScalarColumn.Wrapper.WITHOUT"));
+        assertTrue(source.contains("jsonBehavior(JsonTableBehavior.Kind.DEFAULT, lit(\"fallback\"))"));
+        assertTrue(source.contains("jsonOrdinality(\"ord\")"));
+        assertTrue(source.contains("jsonExists(id(\"present\")"));
+        assertTrue(source.contains("jsonNested("));
+        assertTrue(source.contains(".as(\"jt\")"));
     }
 }

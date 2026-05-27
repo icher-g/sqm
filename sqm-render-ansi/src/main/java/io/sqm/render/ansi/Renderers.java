@@ -153,6 +153,7 @@ public final class Renderers {
             .register(new IsDistinctFromPredicateRenderer())
             .register(new LateralRenderer())
             .register(new FunctionTableRenderer())
+            .register(new JsonTableRefRenderer())
             .register(new LockingClauseRenderer())
             .register(new DistinctSpecRenderer())
             .register(new ArraySubscriptExprRenderer())

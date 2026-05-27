@@ -62,6 +62,10 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         out.append("List.of(").comma(values, this::appendIdentifier).append(")");
     }
 
+    private void appendJsonPath(JsonPathSpec path) {
+        out.append("jsonPath(").quote(path.text()).append(")");
+    }
+
     private void appendQualifiedName(QualifiedName value) {
         out.append("qualify(").comma(value.parts(), this::appendIdentifier).append(")");
     }
@@ -824,7 +828,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         appendNode(t.source());
         out.append(", List.of(").comma(t.measures(), this::appendNode).append("), ");
         appendNode(t.forExpression());
-        out.append(", List.of(").comma(t.values(), this::appendNode).append("))");
+        out.append(", ").comma(t.values(), this::appendNode).append(")");
         if (t.alias() != null) {
             out.append(".as(").quote(t.alias().value()).append(")");
         }
@@ -862,7 +866,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         appendNode(t.source());
         out.append(", ").quote(t.valueColumns().getFirst().value());
         out.append(", ").quote(t.nameColumn().value());
-        out.append(", List.of(").comma(t.inputs(), this::appendNode).append("))");
+        out.append(", ").comma(t.inputs(), this::appendNode).append(")");
         if (t.alias() != null) {
             out.append(".as(").quote(t.alias().value()).append(")");
         }
@@ -1445,6 +1449,83 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         }
         out.nl().append(")");
         return defaultResult();
+    }
+
+    @Override
+    public Void visitJsonTableRef(JsonTableRef t) {
+        out.append("jsonTable(");
+        appendNode(t.json());
+        out.append(", ");
+        appendJsonPath(t.rootPath());
+        out.append(", ").comma(t.columns(), this::appendNode).append(")");
+        if (t.alias() != null) {
+            out.append(".as(").quote(t.alias().value()).append(")");
+        }
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitJsonTableScalarColumn(JsonTableScalarColumn column) {
+        out.append("jsonScalar(");
+        appendIdentifier(column.name());
+        out.append(", ");
+        appendNode(column.type());
+        out.append(", ");
+        appendJsonPath(column.path());
+        out.append(", JsonTableScalarColumn.Wrapper.").append(column.wrapper().name());
+        out.append(", ");
+        appendJsonTableBehavior(column.onEmpty());
+        out.append(", ");
+        appendJsonTableBehavior(column.onError());
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitJsonTableOrdinalityColumn(JsonTableOrdinalityColumn column) {
+        out.append("jsonOrdinality(").quote(column.name().value()).append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitJsonTableExistsColumn(JsonTableExistsColumn column) {
+        out.append("jsonExists(");
+        appendIdentifier(column.name());
+        out.append(", ");
+        appendNode(column.type());
+        out.append(", ");
+        appendJsonPath(column.path());
+        out.append(", ");
+        appendJsonTableBehavior(column.onError());
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitJsonTableNestedPathColumn(JsonTableNestedPathColumn column) {
+        out.append("jsonNested(");
+        appendJsonPath(column.path());
+        out.append(", ").comma(column.columns(), this::appendNode).append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitJsonTableBehavior(JsonTableBehavior behavior) {
+        appendJsonTableBehavior(behavior);
+        return defaultResult();
+    }
+
+    private void appendJsonTableBehavior(JsonTableBehavior behavior) {
+        if (behavior == null) {
+            out.append("null");
+            return;
+        }
+        out.append("jsonBehavior(JsonTableBehavior.Kind.").append(behavior.kind().name());
+        if (behavior.defaultExpression() != null) {
+            out.append(", ");
+            appendNode(behavior.defaultExpression());
+        }
+        out.append(")");
     }
 
     @Override

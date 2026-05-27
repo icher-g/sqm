@@ -259,6 +259,10 @@ public enum SqlFeature {
      */
     UNPIVOT_TABLE("UNPIVOT table transform"),
     /**
+     * SQL/JSON {@code JSON_TABLE} table reference.
+     */
+    JSON_TABLE("JSON_TABLE table reference"),
+    /**
      * PostgreSQL exponentiation operator.
      * Example: {@code a ^ b}
      */

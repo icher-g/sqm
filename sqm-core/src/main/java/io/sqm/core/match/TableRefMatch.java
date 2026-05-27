@@ -58,6 +58,14 @@ public interface TableRefMatch<R> extends Match<TableRef, R> {
     TableRefMatch<R> function(Function<FunctionTable, R> f);
 
     /**
+     * Registers a handler for a {@link JsonTableRef}.
+     *
+     * @param f handler for {@code JsonTableRef}
+     * @return {@code this} for fluent chaining
+     */
+    TableRefMatch<R> jsonTable(Function<JsonTableRef, R> f);
+
+    /**
      * Registers a handler for a table-variable reference.
      *
      * @param f handler for {@code VariableTable}

@@ -368,6 +368,19 @@ public final class SchemaStatementValidator implements StatementValidator {
         }
 
         /**
+         * Validates JSON table feature support after traversal.
+         *
+         * @param table JSON table reference
+         * @return default result
+         */
+        @Override
+        public Void visitJsonTableRef(JsonTableRef table) {
+            super.visitJsonTableRef(table);
+            registry.validate(table, context);
+            return defaultResult();
+        }
+
+        /**
          * Validates function signature constraints after traversing arguments.
          *
          * @param f function expression.

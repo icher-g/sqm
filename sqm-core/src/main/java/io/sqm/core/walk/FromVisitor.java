@@ -46,6 +46,14 @@ public interface FromVisitor<R> {
     R visitFunctionTable(FunctionTable t);
 
     /**
+     * Visits a {@link JsonTableRef}.
+     *
+     * @param t JSON table reference
+     * @return a result produced by the visitor
+     */
+    R visitJsonTableRef(JsonTableRef t);
+
+    /**
      * Visits a table-variable reference.
      *
      * @param t the table-variable reference being visited

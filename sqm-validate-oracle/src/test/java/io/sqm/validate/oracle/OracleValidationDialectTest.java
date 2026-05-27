@@ -105,14 +105,14 @@ class OracleValidationDialectTest {
                 tbl("sales"),
                 java.util.List.of(pivotMeasure(func("sum", col("amount")), "total")),
                 col("quarter"),
-                java.util.List.of(pivotValue(lit("Q1"), "q1"), pivotValue(lit("Q2"), "q2"))))
+                pivotValue(lit("Q1"), "q1"), pivotValue(lit("Q2"), "q2")))
             .build();
         var unpivotQuery = io.sqm.dsl.Dsl.select(star())
             .from(unpivot(
                 tbl("sales"),
                 "amount",
                 "quarter",
-                java.util.List.of(unpivotInput("q1", lit("q1")), unpivotInput("q2", lit("q2")))))
+                unpivotInput("q1", lit("q1")), unpivotInput("q2", lit("q2"))))
             .build();
 
         var pivotResult = validator.validate(pivotQuery);

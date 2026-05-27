@@ -29,14 +29,14 @@ class TableRefsCollectorTest {
             facts,
             List.of(pivotMeasure(func("sum", col("amount")))),
             col("quarter"),
-            List.of(pivotValue(lit("Q1"), "q1"))
+            pivotValue(lit("Q1"), "q1")
         );
         var wideSales = tbl("wide_sales");
         var unpivoted = unpivot(
             wideSales,
             "amount",
             "quarter",
-            List.of(unpivotInput("q1", lit("Q1")))
+            unpivotInput("q1", lit("Q1"))
         );
         var lateral = Lateral.of(values);
 

@@ -87,25 +87,25 @@ class SchemaValidationContextTest {
             tbl("users").as("u"),
             List.of(pivotMeasure(func("sum", col("age")))),
             col("name"),
-            List.of(pivotValue(lit("Alice")))
+            pivotValue(lit("Alice"))
         );
         var pivotWithAlias = pivot(
             tbl("users"),
             List.of(pivotMeasure(func("sum", col("age")))),
             col("name"),
-            List.of(pivotValue(lit("Alice")))
+            pivotValue(lit("Alice"))
         ).as("p");
         var unpivotWithoutAlias = unpivot(
             tbl("users").as("u"),
             "age",
             "metric",
-            List.of(unpivotInput("age", lit("age")))
+            unpivotInput("age", lit("age"))
         );
         var unpivotWithAlias = unpivot(
             tbl("users"),
             "age",
             "metric",
-            List.of(unpivotInput("age", lit("age")))
+            unpivotInput("age", lit("age"))
         ).as("up");
 
         assertEquals("sq", contextSourceKey(subqueryTable));
@@ -128,18 +128,45 @@ class SchemaValidationContextTest {
                 tbl("users").as("u"),
                 List.of(pivotMeasure(func("sum", col("age")))),
                 col("name"),
-                List.of(pivotValue(lit("Alice")))
+                pivotValue(lit("Alice"))
             ));
             context.registerTableRef(unpivot(
                 tbl("orders"),
                 "id",
                 "metric",
-                List.of(unpivotInput("id", lit("id")))
+                unpivotInput("id", lit("id"))
             ).as("unp"));
 
             assertEquals(Set.of("u", "unp"), Set.copyOf(context.currentScopeSourceKeys()));
             assertEquals(1, context.countStrictSourcesWithColumn("age", null));
             assertTrue(context.sourceColumnType("unp", "anything").isEmpty());
+        } finally {
+            context.popScope();
+        }
+    }
+
+    @Test
+    void registerTableRef_handlesJsonTableAliasAndFlattenedNestedColumns() {
+        var context = new SchemaValidationContext(SCHEMA);
+        var table = jsonTable(
+            col("payload"),
+            jsonPath("$.items[*]"),
+            jsonScalar("id", type("NUMBER"), jsonPath("$.id")),
+            jsonExists("present", type("BOOLEAN"), jsonPath("$.present")),
+            jsonNested(jsonPath("$.children[*]"), jsonScalar("child_id", type("NUMBER"), jsonPath("$.id")))
+        ).as("jt");
+
+        context.pushScope();
+        try {
+            context.registerTableRef(table);
+
+            assertEquals("jt", context.sourceKey(table).orElseThrow());
+            assertEquals(Set.of("jt"), Set.copyOf(context.currentScopeSourceKeys()));
+            assertTrue(context.sourceColumnType("jt", "id").isEmpty());
+            assertTrue(context.resolveColumn(col("jt", "id"), true).isEmpty());
+            assertTrue(context.resolveColumn(col("present"), true).isEmpty());
+            assertTrue(context.resolveColumn(col("child_id"), true).isEmpty());
+            assertEquals(0, context.countStrictSourcesWithColumn("id", null));
         } finally {
             context.popScope();
         }

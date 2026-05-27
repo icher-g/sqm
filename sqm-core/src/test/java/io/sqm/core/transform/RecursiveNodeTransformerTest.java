@@ -1518,7 +1518,7 @@ class RecursiveNodeTransformerTest {
             tbl("sales"),
             List.of(pivotMeasure(func("sum", col("amount")), "total")),
             col("quarter"),
-            List.of(pivotValue(lit("Q1"), "q1")))
+            pivotValue(lit("Q1"), "q1"))
             .as("p");
 
         var unchanged = pivot.accept(new NothingTransformer());
@@ -1548,7 +1548,7 @@ class RecursiveNodeTransformerTest {
             tbl("sales"),
             "amount",
             "quarter",
-            List.of(unpivotInput("q1", lit("Q1"))))
+            unpivotInput("q1", lit("Q1")))
             .as("u");
 
         var unchanged = unpivot.accept(new NothingTransformer());

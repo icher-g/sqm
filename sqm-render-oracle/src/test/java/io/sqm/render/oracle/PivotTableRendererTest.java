@@ -19,7 +19,7 @@ class PivotTableRendererTest {
                 tbl("sales"),
                 List.of(pivotMeasure(func("sum", col("amount")), "total")),
                 col("quarter"),
-                List.of(pivotValue(lit("Q1"), "q1"), pivotValue(lit("Q2"), "q2"))))
+                pivotValue(lit("Q1"), "q1"), pivotValue(lit("Q2"), "q2")))
             .build();
 
         assertEquals(
@@ -35,7 +35,7 @@ class PivotTableRendererTest {
                 tbl("sales"),
                 "amount",
                 "quarter",
-                List.of(unpivotInput("q1", lit("Q1")), unpivotInput("q2", lit("Q2"))))
+                unpivotInput("q1", lit("Q1")), unpivotInput("q2", lit("Q2")))
                 .as("u"))
             .build();
 

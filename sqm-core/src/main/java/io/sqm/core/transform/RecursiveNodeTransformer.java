@@ -803,6 +803,23 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
+     * Visits a {@link JsonTableRef}.
+     *
+     * @param t JSON table reference to transform
+     * @return transformed JSON table reference, or the original instance if unchanged
+     */
+    @Override
+    public Node visitJsonTableRef(JsonTableRef t) {
+        var json = apply(t.json());
+        List<JsonTableColumn> columns = new ArrayList<>(t.columns().size());
+        boolean columnsChanged = apply(t.columns(), columns);
+        if (json != t.json() || columnsChanged) {
+            return JsonTableRef.of(json, t.rootPath(), columns, t.alias());
+        }
+        return t;
+    }
+
+    /**
      * Visits a {@link VariableTable}.
      *
      * @param t table-variable reference to transform
@@ -811,6 +828,81 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     @Override
     public Node visitVariableTable(VariableTable t) {
         return t;
+    }
+
+    /**
+     * Visits a scalar JSON table column.
+     *
+     * @param column scalar JSON table column to transform
+     * @return transformed scalar column, or the original instance if unchanged
+     */
+    @Override
+    public Node visitJsonTableScalarColumn(JsonTableScalarColumn column) {
+        var type = apply(column.type());
+        var onEmpty = apply(column.onEmpty());
+        var onError = apply(column.onError());
+        if (type != column.type() || onEmpty != column.onEmpty() || onError != column.onError()) {
+            return JsonTableScalarColumn.of(column.name(), type, column.path(), column.wrapper(), onEmpty, onError);
+        }
+        return column;
+    }
+
+    /**
+     * Visits an ordinality JSON table column.
+     *
+     * @param column ordinality JSON table column to transform
+     * @return original ordinality column
+     */
+    @Override
+    public Node visitJsonTableOrdinalityColumn(JsonTableOrdinalityColumn column) {
+        return column;
+    }
+
+    /**
+     * Visits an existence-test JSON table column.
+     *
+     * @param column existence-test JSON table column to transform
+     * @return transformed existence-test column, or the original instance if unchanged
+     */
+    @Override
+    public Node visitJsonTableExistsColumn(JsonTableExistsColumn column) {
+        var type = apply(column.type());
+        var onError = apply(column.onError());
+        if (type != column.type() || onError != column.onError()) {
+            return JsonTableExistsColumn.of(column.name(), type, column.path(), onError);
+        }
+        return column;
+    }
+
+    /**
+     * Visits a nested-path JSON table column group.
+     *
+     * @param column nested-path JSON table column group to transform
+     * @return transformed nested-path group, or the original instance if unchanged
+     */
+    @Override
+    public Node visitJsonTableNestedPathColumn(JsonTableNestedPathColumn column) {
+        List<JsonTableColumn> columns = new ArrayList<>(column.columns().size());
+        boolean columnsChanged = apply(column.columns(), columns);
+        if (columnsChanged) {
+            return JsonTableNestedPathColumn.of(column.path(), columns);
+        }
+        return column;
+    }
+
+    /**
+     * Visits a JSON table behavior.
+     *
+     * @param behavior JSON table behavior to transform
+     * @return transformed behavior, or the original instance if unchanged
+     */
+    @Override
+    public Node visitJsonTableBehavior(JsonTableBehavior behavior) {
+        var defaultExpression = apply(behavior.defaultExpression());
+        if (defaultExpression != behavior.defaultExpression()) {
+            return JsonTableBehavior.of(behavior.kind(), defaultExpression);
+        }
+        return behavior;
     }
 
     /**
