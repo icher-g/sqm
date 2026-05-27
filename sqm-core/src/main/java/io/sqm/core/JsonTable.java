@@ -8,7 +8,7 @@ import java.util.Objects;
 /**
  * Table reference produced by a SQL/JSON {@code JSON_TABLE} expression.
  */
-public non-sealed interface JsonTableRef extends TableRef {
+public non-sealed interface JsonTable extends TableRef {
     /**
      * Creates a JSON table reference without an alias.
      *
@@ -17,7 +17,7 @@ public non-sealed interface JsonTableRef extends TableRef {
      * @param columns output column definitions
      * @return JSON table reference
      */
-    static JsonTableRef of(Expression json, JsonPathSpec rootPath, List<JsonTableColumn> columns) {
+    static JsonTable of(Expression json, JsonPathSpec rootPath, List<JsonTableColumn> columns) {
         return of(json, rootPath, columns, null);
     }
 
@@ -30,7 +30,7 @@ public non-sealed interface JsonTableRef extends TableRef {
      * @param alias optional table alias
      * @return JSON table reference
      */
-    static JsonTableRef of(Expression json, JsonPathSpec rootPath, List<JsonTableColumn> columns, Identifier alias) {
+    static JsonTable of(Expression json, JsonPathSpec rootPath, List<JsonTableColumn> columns, Identifier alias) {
         return new Impl(json, rootPath, columns, alias);
     }
 
@@ -68,7 +68,7 @@ public non-sealed interface JsonTableRef extends TableRef {
      * @param alias table alias
      * @return JSON table reference with alias
      */
-    default JsonTableRef as(String alias) {
+    default JsonTable as(String alias) {
         return as(alias == null ? null : Identifier.of(alias));
     }
 
@@ -78,7 +78,7 @@ public non-sealed interface JsonTableRef extends TableRef {
      * @param alias table alias
      * @return JSON table reference with alias
      */
-    default JsonTableRef as(Identifier alias) {
+    default JsonTable as(Identifier alias) {
         return of(json(), rootPath(), columns(), alias);
     }
 
@@ -102,7 +102,7 @@ public non-sealed interface JsonTableRef extends TableRef {
      * @param columns output column definitions
      * @param alias optional table alias
      */
-    record Impl(Expression json, JsonPathSpec rootPath, List<JsonTableColumn> columns, Identifier alias) implements JsonTableRef {
+    record Impl(Expression json, JsonPathSpec rootPath, List<JsonTableColumn> columns, Identifier alias) implements JsonTable {
         /**
          * Creates an immutable JSON table reference.
          */

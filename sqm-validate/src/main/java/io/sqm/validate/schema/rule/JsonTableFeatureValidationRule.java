@@ -1,6 +1,6 @@
 package io.sqm.validate.schema.rule;
 
-import io.sqm.core.JsonTableRef;
+import io.sqm.core.JsonTable;
 import io.sqm.core.Node;
 import io.sqm.core.TableRef;
 import io.sqm.core.dialect.DialectCapabilities;
@@ -39,7 +39,7 @@ public final class JsonTableFeatureValidationRule implements SchemaValidationRul
 
     @Override
     public void validate(TableRef node, SchemaValidationContext context) {
-        if (node instanceof JsonTableRef && !capabilities.supports(SqlFeature.JSON_TABLE)) {
+        if (node instanceof JsonTable && !capabilities.supports(SqlFeature.JSON_TABLE)) {
             unsupported(context, node);
         }
     }

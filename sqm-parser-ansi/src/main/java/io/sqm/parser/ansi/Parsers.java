@@ -167,7 +167,7 @@ public final class Parsers {
             .register(new IsDistinctFromPredicateParser())
             .register(new LateralParser())
             .register(new FunctionTableParser())
-            .register(new JsonTableRefParser())
+            .register(new JsonTableParser())
             .register(new LockingClauseParser())
             .register(new ArraySubscriptExprParser(atomicExprParser))
             .register(new ArraySliceExprParser(atomicExprParser))

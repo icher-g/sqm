@@ -67,13 +67,13 @@ public class TableRefsCollector extends RecursiveNodeVisitor<Void> {
     }
 
     /**
-     * Visits a {@link JsonTableRef}.
+     * Visits a {@link JsonTable}.
      *
      * @param t JSON table reference
      * @return a result produced by the visitor
      */
     @Override
-    public Void visitJsonTableRef(JsonTableRef t) {
+    public Void visitJsonTableRef(JsonTable t) {
         tableRefs.add(t);
         return super.visitJsonTableRef(t);
     }

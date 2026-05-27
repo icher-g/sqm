@@ -10,15 +10,15 @@ import io.sqm.render.spi.Renderer;
 /**
  * Renders SQL/JSON {@code JSON_TABLE} table references.
  */
-public class JsonTableRefRenderer implements Renderer<JsonTableRef> {
+public class JsonTableRenderer implements Renderer<JsonTable> {
     /**
      * Creates a JSON table-reference renderer.
      */
-    public JsonTableRefRenderer() {
+    public JsonTableRenderer() {
     }
 
     @Override
-    public void render(JsonTableRef node, RenderContext ctx, SqlWriter w) {
+    public void render(JsonTable node, RenderContext ctx, SqlWriter w) {
         if (!ctx.dialect().capabilities().supports(SqlFeature.JSON_TABLE)) {
             throw new UnsupportedDialectFeatureException("JSON_TABLE", ctx.dialect().name());
         }
@@ -42,8 +42,8 @@ public class JsonTableRefRenderer implements Renderer<JsonTableRef> {
     }
 
     @Override
-    public Class<? extends JsonTableRef> targetType() {
-        return JsonTableRef.class;
+    public Class<? extends JsonTable> targetType() {
+        return JsonTable.class;
     }
 
     private void renderColumns(Iterable<JsonTableColumn> columns, RenderContext ctx, SqlWriter w) {

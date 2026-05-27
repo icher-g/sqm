@@ -45,9 +45,9 @@ This document only covers features beyond that baseline.
 | 1        | `CONNECT BY` / `START WITH` | No existing semantic node                                 | New `HierarchicalQueryClause` family                          | Oracle first, generic semantic name                                                    |
 | 2        | `PIVOT` / `UNPIVOT`         | Relation model can host it, but no node                   | New generic relation transform nodes                          | Oracle and SQL Server first                                                            |
 | 2        | `JSON_TABLE`                | Do not force into `FunctionTable`                         | New generic `JsonTableRef` family                             | Oracle, MySQL, and PostgreSQL 17+ first, SQL-standard-friendly                         |
-| 2        | Flashback query `AS OF`     | `Table` can be decorated only with new field/node         | New generic table version spec                                | Oracle first; concept reusable for temporal dialects                                   |
-| 2        | Table partition selector    | `Table` identifies base table but not selected partitions | Generic table access selector                                 | Oracle first; reusable where dialects expose partition selection                       |
-| 2        | Table sampling              | No current table sample node                              | Generic `TableSample` relation modifier                       | Oracle, PostgreSQL, SQL Server-style dialects                                          |
+| 2        | Flashback query `AS OF`     | `Table` can be decorated only with new field/node         | New generic table version spec                                | Oracle and SQL Server temporal access first; other time-travel dialects later          |
+| 2        | Table partition selector    | `Table` identifies base table but not selected partitions | Generic table access selector                                 | Oracle and MySQL selector syntax first                                                 |
+| 2        | Table sampling              | No current table sample node                              | Generic `SampledTable` relation wrapper plus `TableSample`     | Oracle, PostgreSQL, and SQL Server sampling syntax                                     |
 | 3        | Oracle `AT TIME ZONE`       | Reuse `AtTimeZoneExpr`                                    | Add Oracle parse/render/validation                            | PostgreSQL and SQL Server already have related support                                 |
 | 3        | Oracle locking variants     | Reuse `LockingClause` where possible                      | Extend locking for `WAIT n` only if needed                    | Oracle, PostgreSQL, SQL Server variants                                                |
 | 3        | `MATCH_RECOGNIZE`           | No existing semantic node                                 | New row-pattern recognition clause                            | SQL standard, Oracle, Snowflake, Trino-style dialects                                  |
@@ -652,6 +652,7 @@ This is a table access semantic: read a table as of a database time or SCN.
 Other dialects have related concepts:
 
 - SQL Server temporal tables: `FOR SYSTEM_TIME AS OF`
+- SQL Server temporal range forms: `FROM ... TO`, `BETWEEN ... AND ...`, `CONTAINED IN (...)`, and `ALL`
 - Some warehouses have time travel syntax.
 
 ### Model Decision
@@ -662,6 +663,8 @@ Add a generic table version spec, not an Oracle-only node.
 TableVersionSpec {
     TableVersionKind kind;
     Expression value;
+    Expression start;
+    Expression end;
 }
 ```
 
@@ -674,7 +677,7 @@ Kinds:
 - `CONTAINED_IN`
 - `ALL`
 
-Attach to `Table` if versioning only makes sense for base table references. If derived tables need versioning in a future dialect, introduce a wrapper `VersionedTableRef`.
+Attach to `Table` if versioning only makes sense for base table references. If derived tables need versioning in a future dialect, introduce a wrapper `VersionedTable`.
 
 Preferred first slice:
 
@@ -692,7 +695,15 @@ Oracle:
 SQL Server:
 
 - `FOR SYSTEM_TIME AS OF expr` can reuse `AS_OF_TIMESTAMP`.
-- Other `FOR SYSTEM_TIME` ranges can map to range kinds later.
+- `FOR SYSTEM_TIME FROM expr TO expr` maps to `FROM_TO`.
+- `FOR SYSTEM_TIME BETWEEN expr AND expr` maps to `BETWEEN`.
+- `FOR SYSTEM_TIME CONTAINED IN (expr, expr)` maps to `CONTAINED_IN`.
+- `FOR SYSTEM_TIME ALL` maps to `ALL`.
+- SQL Server temporal support must be included in this story rather than left as an implicit follow-up.
+
+PostgreSQL/MySQL:
+
+- Reject explicitly unless an exact table-reference time-travel syntax is added for a supported version.
 
 Other dialects:
 
@@ -735,9 +746,14 @@ Oracle:
 
 - Render `PARTITION (...)` and `SUBPARTITION (...)`.
 
-Other dialects:
+MySQL:
 
-- Reject unless a compatible feature is added.
+- Render `PARTITION (...)`.
+- Reject `SUBPARTITION (...)` unless MySQL support for that exact table-reference selector is deliberately added.
+
+PostgreSQL/SQL Server/ANSI:
+
+- Reject explicitly. These dialects may support partitioned tables as storage, but do not expose the same table-reference selector semantics in the supported SQM dialect surface.
 
 ### Transpilation
 
@@ -762,8 +778,9 @@ Add a generic relation modifier:
 ```java
 TableSample {
     SampleMethod method;
-    Expression percentage;
-    Expression seed;
+    SampleUnit unit;
+    Expression amount;
+    Expression repeatableSeed;
 }
 ```
 
@@ -775,29 +792,46 @@ Methods:
 - `SYSTEM`
 - `DIALECT_DEFAULT`
 
-Attach to `Table` or to a wrapper `SampledTableRef`. A wrapper is more flexible and avoids overloading `Table` with every relation modifier:
+Units:
+
+- `PERCENT`
+- `ROWS`
+- `UNSPECIFIED`
+
+Attach to a wrapper `SampledTable`, not directly to `Table`. A wrapper is more flexible and avoids overloading `Table` with every relation modifier:
 
 ```java
-SampledTableRef(TableRef source, TableSample sample)
+SampledTable(TableRef source, TableSample sample)
 ```
 
 ### Dialect Behavior
 
 Oracle:
 
-- `SAMPLE` and `SAMPLE BLOCK`.
+- `SAMPLE (amount)` maps to method `DIALECT_DEFAULT`, unit `PERCENT`.
+- `SAMPLE BLOCK (amount)` maps to method `BLOCK`, unit `PERCENT`.
+- `SEED (expr)` maps to `repeatableSeed`.
 
 PostgreSQL:
 
-- `TABLESAMPLE BERNOULLI/SYSTEM`.
+- `TABLESAMPLE BERNOULLI (amount)` maps to method `BERNOULLI`, unit `PERCENT`.
+- `TABLESAMPLE SYSTEM (amount)` maps to method `SYSTEM`, unit `PERCENT`.
+- `REPEATABLE (expr)` maps to `repeatableSeed`.
 
 SQL Server:
 
-- `TABLESAMPLE`.
+- `TABLESAMPLE (amount PERCENT)` maps to method `SYSTEM`, unit `PERCENT`.
+- `TABLESAMPLE (amount ROWS)` maps to method `SYSTEM`, unit `ROWS`.
+- `TABLESAMPLE SYSTEM (...)` is accepted as the same method when present.
+- `REPEATABLE (expr)` maps to `repeatableSeed`.
 
 MySQL/ANSI:
 
 - Reject by default.
+
+### Transpilation
+
+Transpile sampling only when the source and target sampling method, unit, and repeatability semantics are exact. Do not silently translate block/page/system sampling to row-level random predicates. Unsupported combinations should produce explicit diagnostics.
 
 ## 9. `MATCH_RECOGNIZE`
 
@@ -1040,15 +1074,19 @@ Acceptance:
 
 Scope:
 
-- Flashback/temporal table versioning.
-- Partition/subpartition selectors.
-- Table sampling.
+- Flashback/temporal table versioning for Oracle and SQL Server.
+- Partition/subpartition selectors for Oracle, plus MySQL `PARTITION (...)`.
+- Table sampling for Oracle, PostgreSQL, and SQL Server.
+- Explicit rejection for dialects without matching table-reference semantics.
 
 Acceptance:
 
 - Generic nodes are chosen for each accepted modifier.
 - Oracle support is implemented.
-- Any reusable SQL Server/PostgreSQL support is added or explicitly rejected.
+- SQL Server temporal table access is implemented for supported `FOR SYSTEM_TIME` forms, or any intentionally deferred form is rejected explicitly with tests.
+- PostgreSQL and SQL Server table sampling support is implemented.
+- MySQL table partition selector support is implemented.
+- Unsupported dialect/feature combinations are rejected at parse, validation, and render time.
 - Transpilation rules are conservative.
 - DSL/codegen/docs/tests updated.
 

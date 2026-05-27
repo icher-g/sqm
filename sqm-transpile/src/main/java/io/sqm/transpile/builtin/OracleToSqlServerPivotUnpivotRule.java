@@ -59,7 +59,7 @@ public final class OracleToSqlServerPivotUnpivotRule implements TranspileRule {
         return switch (tableRef) {
             case Table t -> t.alias() != null ? t.alias().value() : generateAlias(shortenTableName(t.name().value()), occupiedAliases);
             case FunctionTable t -> t.alias() != null ? t.alias().value() : generateAlias("ft", occupiedAliases);
-            case JsonTableRef t -> t.alias() != null ? t.alias().value() : generateAlias("jt", occupiedAliases);
+            case JsonTable t -> t.alias() != null ? t.alias().value() : generateAlias("jt", occupiedAliases);
             case QueryTable t -> t.alias() != null ? t.alias().value() : generateAlias("qt", occupiedAliases);
             case ValuesTable t -> t.alias() != null ? t.alias().value() : generateAlias("vt", occupiedAliases);
             case Lateral l -> getOrGenerateTableAlias(l.inner(), occupiedAliases);
@@ -74,7 +74,7 @@ public final class OracleToSqlServerPivotUnpivotRule implements TranspileRule {
         return switch (tableRef) {
             case Table t -> t.alias() != null ? t.alias().value() : null;
             case FunctionTable t -> t.alias() != null ? t.alias().value() : null;
-            case JsonTableRef t -> t.alias() != null ? t.alias().value() : null;
+            case JsonTable t -> t.alias() != null ? t.alias().value() : null;
             case QueryTable t -> t.alias() != null ? t.alias().value() : null;
             case ValuesTable t -> t.alias() != null ? t.alias().value() : null;
             case Lateral l -> getTableAlias(l.inner());
@@ -103,7 +103,7 @@ public final class OracleToSqlServerPivotUnpivotRule implements TranspileRule {
         return switch (tableRef) {
             case Table t -> t.as(alias);
             case FunctionTable t -> t.as(alias);
-            case JsonTableRef t -> t.as(alias);
+            case JsonTable t -> t.as(alias);
             case QueryTable t -> t.as(alias);
             case ValuesTable t -> t.as(alias);
             case Lateral l -> Lateral.of(updateAlias(l.inner(), alias));

@@ -1452,7 +1452,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitJsonTableRef(JsonTableRef t) {
+    public Void visitJsonTableRef(JsonTable t) {
         out.append("jsonTable(");
         appendNode(t.json());
         out.append(", ");

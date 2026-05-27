@@ -35,7 +35,7 @@ class JsonTableVisitorTransformerTest {
 
         assertSame(table, new NoopTransformer().transform(table));
 
-        var transformed = assertInstanceOf(JsonTableRef.class, new RenamePayloadTransformer().transform(table));
+        var transformed = assertInstanceOf(JsonTable.class, new RenamePayloadTransformer().transform(table));
         assertNotSame(table, transformed);
         assertEquals("payload2", transformed.json().matchExpression().column(c -> c.name().value()).orElse("missing"));
 
@@ -47,7 +47,7 @@ class JsonTableVisitorTransformerTest {
         assertEquals("child2", nestedScalar.name().value());
     }
 
-    private static JsonTableRef sampleTable() {
+    private static JsonTable sampleTable() {
         return jsonTable(
             col("payload"),
             jsonPath("$.items[*]"),
@@ -74,7 +74,7 @@ class JsonTableVisitorTransformerTest {
         }
 
         @Override
-        public Void visitJsonTableRef(JsonTableRef t) {
+        public Void visitJsonTableRef(JsonTable t) {
             visited.add("JsonTableRef");
             return super.visitJsonTableRef(t);
         }

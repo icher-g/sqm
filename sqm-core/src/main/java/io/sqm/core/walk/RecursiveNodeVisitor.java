@@ -631,13 +631,13 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
-     * Visits a {@link JsonTableRef}.
+     * Visits a {@link JsonTable}.
      *
      * @param t JSON table reference
      * @return a result produced by the visitor
      */
     @Override
-    public R visitJsonTableRef(JsonTableRef t) {
+    public R visitJsonTableRef(JsonTable t) {
         accept(t.json());
         t.columns().forEach(this::accept);
         return defaultResult();

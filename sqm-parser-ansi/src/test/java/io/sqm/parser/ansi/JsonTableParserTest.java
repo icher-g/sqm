@@ -2,7 +2,7 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.JsonTableNestedPathColumn;
 import io.sqm.core.JsonTableOrdinalityColumn;
-import io.sqm.core.JsonTableRef;
+import io.sqm.core.JsonTable;
 import io.sqm.core.JsonTableScalarColumn;
 import io.sqm.core.JsonTableExistsColumn;
 import io.sqm.core.JsonTableBehavior;
@@ -15,7 +15,7 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class JsonTableRefParserTest {
+class JsonTableParserTest {
     private final ParseContext enabled = ParseContext.of(new TestSpecs());
     private final ParseContext ansi = ParseContext.of(new AnsiSpecs());
 
@@ -34,7 +34,7 @@ class JsonTableRefParserTest {
 
         assertTrue(result.ok(), result::errorMessage);
         var query = assertInstanceOf(SelectQuery.class, result.value());
-        var table = assertInstanceOf(JsonTableRef.class, query.from());
+        var table = assertInstanceOf(JsonTable.class, query.from());
         assertEquals("payload", table.json().matchExpression().column(c -> c.name().value()).orElse("missing"));
         assertEquals("$.items[*]", table.rootPath().text());
         assertEquals("jt", table.alias().value());
@@ -65,7 +65,7 @@ class JsonTableRefParserTest {
 
         assertTrue(result.ok(), result::errorMessage);
         var query = assertInstanceOf(SelectQuery.class, result.value());
-        var table = assertInstanceOf(JsonTableRef.class, query.from());
+        var table = assertInstanceOf(JsonTable.class, query.from());
 
         assertEquals("path", table.json().matchExpression().column(c -> c.name().value()).orElse("missing"));
 

@@ -307,7 +307,7 @@ public final class SchemaValidationContext {
                 functionTable.alias(),
                 functionTable.columnAliases()
             );
-            case JsonTableRef jsonTable -> registerDerivedSource(
+            case JsonTable jsonTable -> registerDerivedSource(
                 jsonTable.alias(),
                 jsonTableColumnNames(jsonTable.columns())
             );
@@ -344,7 +344,7 @@ public final class SchemaValidationContext {
             case FunctionTable functionTable -> functionTable.alias() == null
                 ? Optional.empty()
                 : Optional.of(normalize(functionTable.alias()));
-            case JsonTableRef jsonTable -> jsonTable.alias() == null
+            case JsonTable jsonTable -> jsonTable.alias() == null
                 ? Optional.empty()
                 : Optional.of(normalize(jsonTable.alias()));
             default -> Optional.empty();

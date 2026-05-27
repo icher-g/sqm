@@ -284,8 +284,8 @@ public final class Dsl {
      * @param columns output columns
      * @return JSON table reference
      */
-    public static JsonTableRef jsonTable(Expression json, JsonPathSpec rootPath, JsonTableColumn... columns) {
-        return JsonTableRef.of(json, rootPath, List.of(columns));
+    public static JsonTable jsonTable(Expression json, JsonPathSpec rootPath, JsonTableColumn... columns) {
+        return JsonTable.of(json, rootPath, List.of(columns));
     }
 
     /**

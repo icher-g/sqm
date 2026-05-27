@@ -803,18 +803,18 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
-     * Visits a {@link JsonTableRef}.
+     * Visits a {@link JsonTable}.
      *
      * @param t JSON table reference to transform
      * @return transformed JSON table reference, or the original instance if unchanged
      */
     @Override
-    public Node visitJsonTableRef(JsonTableRef t) {
+    public Node visitJsonTableRef(JsonTable t) {
         var json = apply(t.json());
         List<JsonTableColumn> columns = new ArrayList<>(t.columns().size());
         boolean columnsChanged = apply(t.columns(), columns);
         if (json != t.json() || columnsChanged) {
-            return JsonTableRef.of(json, t.rootPath(), columns, t.alias());
+            return JsonTable.of(json, t.rootPath(), columns, t.alias());
         }
         return t;
     }

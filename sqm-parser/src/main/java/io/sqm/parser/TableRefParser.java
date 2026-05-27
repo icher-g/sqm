@@ -78,7 +78,7 @@ public class TableRefParser implements Parser<TableRef> {
         }
 
         if (cur.match(TokenType.JSON_TABLE)) {
-            matched = ctx.parseIfMatch(JsonTableRef.class, cur);
+            matched = ctx.parseIfMatch(JsonTable.class, cur);
             if (matched.match()) {
                 return parseRelationTransforms(matched.result(), cur, ctx);
             }

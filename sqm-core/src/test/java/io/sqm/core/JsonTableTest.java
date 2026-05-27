@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-class JsonTableRefTest {
+class JsonTableTest {
     @Test
     void jsonPathRejectsBlankText() {
         assertThrows(IllegalArgumentException.class, () -> jsonPath(" "));
@@ -15,11 +15,11 @@ class JsonTableRefTest {
 
     @Test
     void jsonTableRequiresAtLeastOneColumnAndCopiesColumns() {
-        assertThrows(IllegalArgumentException.class, () -> JsonTableRef.of(col("payload"), jsonPath("$"), java.util.List.of()));
+        assertThrows(IllegalArgumentException.class, () -> JsonTable.of(col("payload"), jsonPath("$"), java.util.List.of()));
 
         var columns = new ArrayList<JsonTableColumn>();
         columns.add(jsonScalar("id", type("NUMBER"), jsonPath("$.id")));
-        var table = JsonTableRef.of(col("payload"), jsonPath("$"), columns);
+        var table = JsonTable.of(col("payload"), jsonPath("$"), columns);
 
         columns.add(jsonOrdinality("ord"));
 

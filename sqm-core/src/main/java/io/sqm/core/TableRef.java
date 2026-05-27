@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Anything that can appear in FROM/JOIN: table, subquery, VALUES, etc.
  */
-public sealed interface TableRef extends FromItem permits AliasedTableRef, DialectTableRef, JsonTableRef, Lateral, PivotTable, Table, UnpivotTable, VariableTable {
+public sealed interface TableRef extends FromItem permits AliasedTableRef, DialectTableRef, JsonTable, Lateral, PivotTable, Table, UnpivotTable, VariableTable {
     /**
      * Creates a table with the provided name. All other fields are set to NULL.
      *
@@ -79,15 +79,15 @@ public sealed interface TableRef extends FromItem permits AliasedTableRef, Diale
     }
 
     /**
-     * Creates a {@link JsonTableRef}.
+     * Creates a {@link JsonTable}.
      *
      * @param json JSON expression that supplies the context item
      * @param rootPath row-pattern JSON path
      * @param columns output column definitions
      * @return JSON table reference
      */
-    static JsonTableRef jsonTable(Expression json, JsonPathSpec rootPath, List<JsonTableColumn> columns) {
-        return JsonTableRef.of(json, rootPath, columns);
+    static JsonTable jsonTable(Expression json, JsonPathSpec rootPath, List<JsonTableColumn> columns) {
+        return JsonTable.of(json, rootPath, columns);
     }
 
     /**
