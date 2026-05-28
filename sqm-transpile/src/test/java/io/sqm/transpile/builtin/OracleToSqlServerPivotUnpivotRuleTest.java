@@ -358,6 +358,28 @@ class OracleToSqlServerPivotUnpivotRuleTest {
     }
 
     @Test
+    void rewritesCrossApplyForUnaliasedSampledTableSource() {
+        var source = sampled(
+            tbl("sampled_sales"),
+            tableSample(TableSampleSpec.SampleMethod.SYSTEM, TableSampleSpec.SampleUnit.PERCENT, lit(10), null));
+        var query = multiColumnUnpivotQuery(
+            source,
+            col("region").toSelectItem(),
+            col("amount").toSelectItem(),
+            col("quarter").toSelectItem()
+        );
+
+        var result = new OracleToSqlServerPivotUnpivotRule().apply(query, context());
+
+        assertTrue(result.changed());
+        assertEquals(RewriteFidelity.APPROXIMATE, result.fidelity());
+        var rewritten = assertInstanceOf(SelectQuery.class, result.statement());
+        var rewrittenSource = assertInstanceOf(SampledTable.class, rewritten.from());
+        assertEquals("ss", rewrittenSource.alias().value());
+        assertEquals(1, rewritten.joins().size());
+    }
+
+    @Test
     void rewritesCrossApplyForDialectSpecificSource() {
         var source = new TestDialectTableRef();
         var query = multiColumnUnpivotQuery(

@@ -2,8 +2,11 @@ package io.sqm.parser.ansi;
 
 import io.sqm.core.QueryTable;
 import io.sqm.core.QuoteStyle;
+import io.sqm.core.SampledTable;
 import io.sqm.core.Table;
+import io.sqm.core.TablePartitionSpec;
 import io.sqm.core.TableRef;
+import io.sqm.core.TableVersionSpec;
 import io.sqm.parser.TableRefParser;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.IdentifierQuoting;
@@ -21,6 +24,11 @@ class TableRefParserTest {
 
     private ParseResult<? extends TableRef> parse(String sql) {
         return ctx.parse(parser, Cursor.of(sql, quoting));
+    }
+
+    private ParseResult<? extends TableRef> parseWithAllFeatures(String sql) {
+        var allFeatures = ParseContext.of(new TestSpecs());
+        return allFeatures.parse(parser, Cursor.of(sql, allFeatures.identifierQuoting()));
     }
 
     @Test
@@ -142,6 +150,58 @@ class TableRefParserTest {
     void error_table_sample() {
         var r = parse("products TABLESAMPLE SYSTEM (10)");
         Assertions.assertFalse(r.ok());
+    }
+
+    @Test
+    @DisplayName("Parses table version, partition, and alias when feature gates allow them")
+    void parses_table_access_modifiers_with_enabled_features() {
+        var r = parseWithAllFeatures("orders AS OF SCN 123 PARTITION (p0, p1) o");
+
+        Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
+        var t = Assertions.assertInstanceOf(Table.class, r.value());
+        Assertions.assertEquals("o", t.alias().value());
+        Assertions.assertEquals(TableVersionSpec.TableVersionKind.AS_OF_SCN, t.version().kind());
+        Assertions.assertEquals(TablePartitionSpec.TablePartitionSpecKind.PARTITION, t.partitionSpec().kind());
+        Assertions.assertEquals("p0", t.partitionSpec().names().getFirst().value());
+        Assertions.assertEquals("p1", t.partitionSpec().names().get(1).value());
+    }
+
+    @Test
+    @DisplayName("Parses SQL Server style table version selectors through ANSI table parser hooks")
+    void parses_system_time_version_selectors_with_enabled_features() {
+        var fromTo = Assertions.assertInstanceOf(Table.class,
+            parseWithAllFeatures("orders FOR SYSTEM_TIME FROM 10 TO 20").value());
+        var between = Assertions.assertInstanceOf(Table.class,
+            parseWithAllFeatures("orders FOR SYSTEM_TIME BETWEEN 10 AND 20").value());
+        var contained = Assertions.assertInstanceOf(Table.class,
+            parseWithAllFeatures("orders FOR SYSTEM_TIME CONTAINED IN (10, 20)").value());
+        var all = Assertions.assertInstanceOf(Table.class,
+            parseWithAllFeatures("orders FOR SYSTEM_TIME ALL").value());
+
+        Assertions.assertEquals(TableVersionSpec.TableVersionKind.FROM_TO, fromTo.version().kind());
+        Assertions.assertEquals(TableVersionSpec.TableVersionKind.BETWEEN, between.version().kind());
+        Assertions.assertEquals(TableVersionSpec.TableVersionKind.CONTAINED_IN, contained.version().kind());
+        Assertions.assertEquals(TableVersionSpec.TableVersionKind.ALL, all.version().kind());
+    }
+
+    @Test
+    @DisplayName("Parses TABLESAMPLE as a relation transform when feature gates allow it")
+    void parses_table_sample_transform_with_enabled_features() {
+        var r = parseWithAllFeatures("products TABLESAMPLE BERNOULLI (10 ROWS) sampled_products");
+
+        Assertions.assertTrue(r.ok(), () -> "problems: " + r.problems());
+        var sampled = Assertions.assertInstanceOf(SampledTable.class, r.value());
+        Assertions.assertEquals("sampled_products", sampled.alias().value());
+        Assertions.assertEquals("products", Assertions.assertInstanceOf(Table.class, sampled.source()).name().value());
+    }
+
+    @Test
+    @DisplayName("Reports malformed table access modifier syntax")
+    void errors_on_malformed_table_access_modifiers() {
+        Assertions.assertFalse(parseWithAllFeatures("orders AS OF").ok());
+        Assertions.assertFalse(parseWithAllFeatures("orders FOR SYSTEM_TIME").ok());
+        Assertions.assertFalse(parseWithAllFeatures("orders PARTITION ()").ok());
+        Assertions.assertFalse(parseWithAllFeatures("orders SUBPARTITION (sp0").ok());
     }
 
     @Test

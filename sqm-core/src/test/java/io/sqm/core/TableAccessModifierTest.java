@@ -1,6 +1,7 @@
 package io.sqm.core;
 
 import io.sqm.core.transform.IdentifierNormalizationTransformer;
+import io.sqm.core.transform.IdentifierNormalizationCaseMode;
 import io.sqm.core.transform.RecursiveNodeTransformer;
 import io.sqm.core.walk.RecursiveNodeVisitor;
 import org.junit.jupiter.api.Test;
@@ -89,6 +90,45 @@ class TableAccessModifierTest {
         assertEquals("sales", normalized.name().value());
         assertEquals("sales_q1", normalized.partitionSpec().names().getFirst().value());
         assertEquals("sales_q2", normalized.partitionSpec().names().get(1).value());
+    }
+
+    @Test
+    void tableUpdatesPreserveAccessModifiers() {
+        var table = tbl("orders")
+            .withVersion(asOfScn(lit(42)))
+            .withPartitionSpec(tablePartition("orders_p1"));
+
+        var hinted = table.withHints(java.util.List.of(TableHint.of("NOLOCK")));
+        var aliased = hinted.as("o");
+        var schemed = aliased.inSchema("sales");
+
+        assertSame(table.version(), hinted.version());
+        assertSame(table.partitionSpec(), hinted.partitionSpec());
+        assertSame(table.version(), aliased.version());
+        assertSame(table.partitionSpec(), aliased.partitionSpec());
+        assertSame(table.version(), schemed.version());
+        assertSame(table.partitionSpec(), schemed.partitionSpec());
+        assertEquals("sales", schemed.schema().value());
+        assertEquals("o", schemed.alias().value());
+        assertEquals(1, schemed.hints().size());
+    }
+
+    @Test
+    void identifierNormalizationPreservesAlreadyNormalizedAndQuotedPartitionNames() {
+        var lower = tbl("sales").withPartitionSpec(tablePartition("sales_q1"));
+        assertSame(lower, new IdentifierNormalizationTransformer().transform(lower));
+
+        var quoted = Table.of(Identifier.of("Sales"))
+            .withPartitionSpec(TablePartitionSpec.partition(java.util.List.of(Identifier.of("Q1", QuoteStyle.DOUBLE_QUOTE))));
+        var normalizedQuoted = assertInstanceOf(Table.class, new IdentifierNormalizationTransformer().transform(quoted));
+        assertEquals("sales", normalizedQuoted.name().value());
+        assertEquals("Q1", normalizedQuoted.partitionSpec().names().getFirst().value());
+        assertEquals(QuoteStyle.DOUBLE_QUOTE, normalizedQuoted.partitionSpec().names().getFirst().quoteStyle());
+
+        var upper = assertInstanceOf(Table.class,
+            new IdentifierNormalizationTransformer(IdentifierNormalizationCaseMode.UPPER).transform(lower));
+        assertEquals("SALES", upper.name().value());
+        assertEquals("SALES_Q1", upper.partitionSpec().names().getFirst().value());
     }
 
     private static final class Collector extends RecursiveNodeVisitor<Void> {
