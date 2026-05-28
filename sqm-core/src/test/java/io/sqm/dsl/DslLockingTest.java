@@ -1,6 +1,7 @@
 package io.sqm.dsl;
 
 import io.sqm.core.LockMode;
+import io.sqm.core.LockWaitMode;
 import io.sqm.core.LockTarget;
 import io.sqm.core.Identifier;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +35,12 @@ class DslLockingTest {
     @DisplayName("keyShare() returns KEY_SHARE mode")
     void keyShareMode() {
         assertEquals(LockMode.KEY_SHARE, keyShare());
+    }
+
+    @Test
+    @DisplayName("waitLock() returns WAIT mode")
+    void waitLockMode() {
+        assertEquals(LockWaitMode.WAIT, waitLock());
     }
 
     @Test

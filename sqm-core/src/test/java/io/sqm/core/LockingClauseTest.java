@@ -74,6 +74,15 @@ class LockingClauseTest {
     }
 
     @Test
+    @DisplayName("Null wait mode defaults to dialect blocking behavior")
+    void nullWaitModeDefaultsToDefault() {
+        var clause = LockingClause.of(LockMode.UPDATE, List.of(), null, null);
+
+        assertEquals(LockWaitMode.DEFAULT, clause.waitMode());
+        assertNull(clause.waitSeconds());
+    }
+
+    @Test
     @DisplayName("Create FOR UPDATE OF with table targets")
     void createWithOfTables() {
         var targets = ofTables("users", "orders");

@@ -50,6 +50,39 @@ class LockingClauseFeatureValidationRuleTest {
     }
 
     @Test
+    void acceptsDefaultWaitModeWithoutWaitFeature() {
+        var context = context();
+        var rule = new LockingClauseFeatureValidationRule(
+            "test",
+            VERSION,
+            VersionedDialectCapabilities.builder(VERSION)
+                .supports(SqlFeature.LOCKING_CLAUSE)
+                .build()
+        );
+
+        rule.validate(LockingClause.of(LockMode.UPDATE, List.of(), LockWaitMode.DEFAULT, null), context);
+
+        assertTrue(context.problems().isEmpty());
+    }
+
+    @Test
+    void acceptsNowaitWhenFeatureIsSupported() {
+        var context = context();
+        var rule = new LockingClauseFeatureValidationRule(
+            "test",
+            VERSION,
+            VersionedDialectCapabilities.builder(VERSION)
+                .supports(SqlFeature.LOCKING_CLAUSE)
+                .supports(SqlFeature.LOCKING_NOWAIT)
+                .build()
+        );
+
+        rule.validate(LockingClause.of(LockMode.UPDATE, List.of(), LockWaitMode.NOWAIT, null), context);
+
+        assertTrue(context.problems().isEmpty());
+    }
+
+    @Test
     void reportsUnsupportedSpecificModesAndWaitPolicies() {
         var context = context();
         var rule = new LockingClauseFeatureValidationRule(

@@ -92,6 +92,26 @@ class LockingClauseParserTest {
     }
 
     @Test
+    @DisplayName("Parse locking wait policies when features are enabled")
+    void parseWaitPoliciesWhenFeaturesEnabled() {
+        var testContext = ParseContext.of(new TestSpecs());
+
+        assertEquals(LockWaitMode.NOWAIT,
+            testContext.parse(LockingClause.class, "FOR UPDATE NOWAIT").value().waitMode());
+        assertEquals(LockWaitMode.SKIP_LOCKED,
+            testContext.parse(LockingClause.class, "FOR UPDATE SKIP LOCKED").value().waitMode());
+    }
+
+    @Test
+    @DisplayName("Parse FOR UPDATE WAIT without expression fails when feature is enabled")
+    void parseForUpdateWaitWithoutExpressionFailsWhenFeatureEnabled() {
+        var result = ParseContext.of(new TestSpecs()).parse(LockingClause.class, "FOR UPDATE WAIT");
+
+        assertFalse(result.ok());
+        assertNotNull(result.errorMessage());
+    }
+
+    @Test
     @DisplayName("Parse FOR without UPDATE fails")
     void parseForWithoutUpdate() {
         var result = ctx.parse(LockingClause.class, "FOR");
