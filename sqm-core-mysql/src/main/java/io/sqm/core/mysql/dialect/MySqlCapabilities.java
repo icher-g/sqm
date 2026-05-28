@@ -52,7 +52,8 @@ public final class MySqlCapabilities {
                 SqlFeature.UPDATE_JOIN,
                 SqlFeature.STRAIGHT_JOIN,
                 SqlFeature.DELETE_USING_JOIN,
-                SqlFeature.JSON_TABLE
+                SqlFeature.JSON_TABLE,
+                SqlFeature.TABLE_PARTITION_SPEC
             )
             .supports(MYSQL_80_14, SqlFeature.LATERAL)
             .build();

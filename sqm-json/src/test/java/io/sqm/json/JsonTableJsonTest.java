@@ -1,7 +1,7 @@
 package io.sqm.json;
 
 import io.sqm.core.JsonTableBehavior;
-import io.sqm.core.JsonTableRef;
+import io.sqm.core.JsonTable;
 import io.sqm.core.JsonTableScalarColumn;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +29,7 @@ class JsonTableJsonTest {
         ).as("jt");
 
         var json = mapper.writeValueAsString(table);
-        var roundTrip = mapper.readValue(json, JsonTableRef.Impl.class);
+        var roundTrip = mapper.readValue(json, JsonTable.Impl.class);
 
         assertEquals(table, roundTrip);
         assertTrue(json.contains("\"kind\":\"json_table\""));

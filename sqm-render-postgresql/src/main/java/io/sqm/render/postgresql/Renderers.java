@@ -39,6 +39,7 @@ public final class Renderers {
             .register(new AnyAllPredicateRenderer())
             .register(new FunctionExprRenderer())
             .register(new SequenceValueExprRenderer())
+            .register(new SampledTableRenderer())
             .register(new CastExprRenderer());
     }
 }

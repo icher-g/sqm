@@ -562,6 +562,8 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitTable(Table t) {
         t.hints().forEach(this::accept);
+        accept(t.version());
+        accept(t.partitionSpec());
         return defaultResult();
     }
 
@@ -631,13 +633,13 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
-     * Visits a {@link JsonTableRef}.
+     * Visits a {@link JsonTable}.
      *
      * @param t JSON table reference
      * @return a result produced by the visitor
      */
     @Override
-    public R visitJsonTableRef(JsonTableRef t) {
+    public R visitJsonTableRef(JsonTable t) {
         accept(t.json());
         t.columns().forEach(this::accept);
         return defaultResult();
@@ -728,6 +730,19 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         t.measures().forEach(this::accept);
         accept(t.forExpression());
         t.values().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link SampledTable}.
+     *
+     * @param t sampled table
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitSampledTable(SampledTable t) {
+        accept(t.source());
+        accept(t.sampleSpec());
         return defaultResult();
     }
 
@@ -1742,6 +1757,44 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     @Override
     public R visitLateral(Lateral i) {
         accept(i.inner());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link TableVersionSpec}.
+     *
+     * @param spec table version selector
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitTableVersionSpec(TableVersionSpec spec) {
+        accept(spec.value());
+        accept(spec.start());
+        accept(spec.end());
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link TablePartitionSpec}.
+     *
+     * @param spec table partition specification
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitTablePartitionSpec(TablePartitionSpec spec) {
+        return defaultResult();
+    }
+
+    /**
+     * Visits a {@link TableSampleSpec}.
+     *
+     * @param sample table sample
+     * @return a result produced by the visitor
+     */
+    @Override
+    public R visitTableSampleSpec(TableSampleSpec sample) {
+        accept(sample.amount());
+        accept(sample.repeatableSeed());
         return defaultResult();
     }
 

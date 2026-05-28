@@ -237,6 +237,112 @@ public final class Dsl {
     }
 
     /**
+     * Creates a table version selector for timestamp-based access.
+     *
+     * @param value timestamp expression
+     * @return table version selector
+     */
+    public static TableVersionSpec asOfTimestamp(Expression value) {
+        return TableVersionSpec.of(TableVersionSpec.TableVersionKind.AS_OF_TIMESTAMP, value);
+    }
+
+    /**
+     * Creates a table version selector for SCN-based access.
+     *
+     * @param value SCN expression
+     * @return table version selector
+     */
+    public static TableVersionSpec asOfScn(Expression value) {
+        return TableVersionSpec.of(TableVersionSpec.TableVersionKind.AS_OF_SCN, value);
+    }
+
+    /**
+     * Creates a table version selector for a half-open version interval.
+     *
+     * @param start start version expression
+     * @param end end version expression
+     * @return table version selector
+     */
+    public static TableVersionSpec tableVersionFromTo(Expression start, Expression end) {
+        return TableVersionSpec.range(TableVersionSpec.TableVersionKind.FROM_TO, start, end);
+    }
+
+    /**
+     * Creates a table version selector for an inclusive version interval.
+     *
+     * @param start start version expression
+     * @param end end version expression
+     * @return table version selector
+     */
+    public static TableVersionSpec tableVersionBetween(Expression start, Expression end) {
+        return TableVersionSpec.range(TableVersionSpec.TableVersionKind.BETWEEN, start, end);
+    }
+
+    /**
+     * Creates a table version selector for rows contained in a version interval.
+     *
+     * @param start start version expression
+     * @param end end version expression
+     * @return table version selector
+     */
+    public static TableVersionSpec tableVersionContainedIn(Expression start, Expression end) {
+        return TableVersionSpec.range(TableVersionSpec.TableVersionKind.CONTAINED_IN, start, end);
+    }
+
+    /**
+     * Creates a table version selector for all available row versions.
+     *
+     * @return table version selector
+     */
+    public static TableVersionSpec tableVersionAll() {
+        return TableVersionSpec.all();
+    }
+
+    /**
+     * Creates a table partition specification.
+     *
+     * @param names partition names
+     * @return table partition specification
+     */
+    public static TablePartitionSpec tablePartition(String... names) {
+        return TablePartitionSpec.partition(java.util.Arrays.stream(names).map(Identifier::of).toList());
+    }
+
+    /**
+     * Creates a table subpartition specification.
+     *
+     * @param names subpartition names
+     * @return table subpartition specification
+     */
+    public static TablePartitionSpec subpartition(String... names) {
+        return TablePartitionSpec.subpartition(java.util.Arrays.stream(names).map(Identifier::of).toList());
+    }
+
+    /**
+     * Creates a table sample specification.
+     *
+     * @param method sampling method
+     * @param unit sampling unit
+     * @param amount sample amount expression
+     * @param repeatableSeed optional repeatable seed expression
+     * @return table sample
+     */
+    public static TableSampleSpec tableSample(TableSampleSpec.SampleMethod method, TableSampleSpec.SampleUnit unit, Expression amount, Expression repeatableSeed) {
+        return TableSampleSpec.of(method, unit, amount, repeatableSeed);
+    }
+
+    /**
+     * Creates a sampled table.
+     *
+     * @param source source table reference
+     * @param sample table sample
+     * @return sampled table
+     */
+    public static SampledTable sampled(TableRef source, TableSampleSpec sample) {
+        return SampledTable.of(source, sample);
+    }
+
+    /**
      * Wraps a query as a table for use in FROM statement.
      *
      * @param query a query to wrap.
@@ -284,8 +390,8 @@ public final class Dsl {
      * @param columns output columns
      * @return JSON table reference
      */
-    public static JsonTableRef jsonTable(Expression json, JsonPathSpec rootPath, JsonTableColumn... columns) {
-        return JsonTableRef.of(json, rootPath, List.of(columns));
+    public static JsonTable jsonTable(Expression json, JsonPathSpec rootPath, JsonTableColumn... columns) {
+        return JsonTable.of(json, rootPath, List.of(columns));
     }
 
     /**

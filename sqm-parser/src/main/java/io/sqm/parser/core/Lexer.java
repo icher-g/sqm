@@ -90,6 +90,16 @@ public final class Lexer {
         KEYWORDS.put("SIBLINGS", SIBLINGS);
         KEYWORDS.put("ROW", ROW);
         KEYWORDS.put("ROWS", ROWS);
+        KEYWORDS.put("SCN", SCN);
+        KEYWORDS.put("SAMPLE", SAMPLE);
+        KEYWORDS.put("BLOCK", BLOCK);
+        KEYWORDS.put("SEED", SEED);
+        KEYWORDS.put("TABLESAMPLE", TABLESAMPLE);
+        KEYWORDS.put("BERNOULLI", BERNOULLI);
+        KEYWORDS.put("SYSTEM", SYSTEM);
+        KEYWORDS.put("SYSTEM_TIME", SYSTEM_TIME);
+        KEYWORDS.put("CONTAINED", CONTAINED);
+        KEYWORDS.put("REPEATABLE", REPEATABLE);
         KEYWORDS.put("ONLY", ONLY);
         KEYWORDS.put("BY", BY);
         KEYWORDS.put("TOP", TOP);
@@ -127,6 +137,7 @@ public final class Lexer {
         KEYWORDS.put("WINDOW", WINDOW);
         KEYWORDS.put("OVER", OVER);
         KEYWORDS.put("PARTITION", PARTITION);
+        KEYWORDS.put("SUBPARTITION", SUBPARTITION);
         KEYWORDS.put("RANGE", RANGE);
         KEYWORDS.put("GROUPS", GROUPS);
         KEYWORDS.put("UNBOUNDED", UNBOUNDED);

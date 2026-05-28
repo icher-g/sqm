@@ -744,6 +744,79 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
             out.append(".");
             this.visitTableHint(hint);
         }
+        if (t.version() != null) {
+            out.append(".withVersion(");
+            appendNode(t.version());
+            out.append(")");
+        }
+        if (t.partitionSpec() != null) {
+            out.append(".withPartitionSpec(");
+            appendNode(t.partitionSpec());
+            out.append(")");
+        }
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitTableVersionSpec(TableVersionSpec spec) {
+        switch (spec.kind()) {
+            case AS_OF_TIMESTAMP -> {
+                out.append("asOfTimestamp(");
+                appendNode(spec.value());
+                out.append(")");
+            }
+            case AS_OF_SCN -> {
+                out.append("asOfScn(");
+                appendNode(spec.value());
+                out.append(")");
+            }
+            case FROM_TO -> {
+                out.append("tableVersionFromTo(");
+                appendNode(spec.start());
+                out.append(", ");
+                appendNode(spec.end());
+                out.append(")");
+            }
+            case BETWEEN -> {
+                out.append("tableVersionBetween(");
+                appendNode(spec.start());
+                out.append(", ");
+                appendNode(spec.end());
+                out.append(")");
+            }
+            case CONTAINED_IN -> {
+                out.append("tableVersionContainedIn(");
+                appendNode(spec.start());
+                out.append(", ");
+                appendNode(spec.end());
+                out.append(")");
+            }
+            case ALL -> out.append("tableVersionAll()");
+        }
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitTablePartitionSpec(TablePartitionSpec spec) {
+        out.append(spec.kind() == TablePartitionSpec.TablePartitionSpecKind.SUBPARTITION ? "subpartition(" : "tablePartition(");
+        out.comma(spec.names(), i -> out.quote(i.value()));
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitTableSampleSpec(TableSampleSpec sample) {
+        out.append("tableSample(TableSampleSpec.SampleMethod.").append(sample.method().name())
+            .append(", TableSampleSpec.SampleUnit.").append(sample.unit().name()).append(", ");
+        appendNode(sample.amount());
+        out.append(", ");
+        if (sample.repeatableSeed() == null) {
+            out.append("null");
+        }
+        else {
+            appendNode(sample.repeatableSeed());
+        }
+        out.append(")");
         return defaultResult();
     }
 
@@ -831,6 +904,19 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         out.append(", ").comma(t.values(), this::appendNode).append(")");
         if (t.alias() != null) {
             out.append(".as(").quote(t.alias().value()).append(")");
+        }
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitSampledTable(SampledTable t) {
+        out.append("sampled(");
+        appendNode(t.source());
+        out.append(", ");
+        appendNode(t.sampleSpec());
+        out.append(")");
+        if (t.alias() != null) {
+            out.append(".as(id(").quote(t.alias().value()).append("))");
         }
         return defaultResult();
     }
@@ -1452,7 +1538,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitJsonTableRef(JsonTableRef t) {
+    public Void visitJsonTableRef(JsonTable t) {
         out.append("jsonTable(");
         appendNode(t.json());
         out.append(", ");

@@ -82,6 +82,18 @@ class TableRefParserTest {
     }
 
     @Test
+    void appliesRegisteredSampledTableTransform() {
+        var repo = contextWithTableRefParsers().parsers()
+            .register(SampledTable.class, new MatchingSampledTableParser());
+        var ctx = TestSupport.context(repo);
+
+        var result = ctx.parse(TableRef.class, "table sampled");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertInstanceOf(SampledTable.class, result.value());
+    }
+
+    @Test
     void errorsOnUnexpectedToken() {
         var ctx = contextWithTableRefParsers();
 
@@ -249,6 +261,33 @@ class TableRefParserTest {
         @Override
         public Class<UnpivotTable> targetType() {
             return UnpivotTable.class;
+        }
+    }
+
+    private static final class MatchingSampledTableParser implements MatchableParser<SampledTable>, InfixParser<TableRef, SampledTable> {
+        @Override
+        public boolean match(Cursor cur, ParseContext ctx) {
+            return cur.match(TokenType.IDENT) && "sampled".equalsIgnoreCase(cur.peek().lexeme());
+        }
+
+        @Override
+        public ParseResult<? extends SampledTable> parse(Cursor cur, ParseContext ctx) {
+            return ParseResult.error("Unexpected sampled parser invocation", cur.fullPos());
+        }
+
+        @Override
+        public ParseResult<SampledTable> parse(TableRef source, Cursor cur, ParseContext ctx) {
+            cur.expect("Expected sampled marker", TokenType.IDENT);
+            return ParseResult.ok(SampledTable.of(source, TableSampleSpec.of(
+                TableSampleSpec.SampleMethod.SYSTEM,
+                TableSampleSpec.SampleUnit.UNSPECIFIED,
+                Expression.literal(10),
+                null)));
+        }
+
+        @Override
+        public Class<SampledTable> targetType() {
+            return SampledTable.class;
         }
     }
 }

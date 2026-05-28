@@ -41,6 +41,7 @@ public final class Parsers {
             .register(new MergeInsertActionParser())
             .register(new HierarchicalQueryClauseParser())
             .register(new SequenceValueExprParser())
+            .register(new SampledTableParser())
             .register(new PriorExprParser())
             .register(new LimitOffsetParser());
     }

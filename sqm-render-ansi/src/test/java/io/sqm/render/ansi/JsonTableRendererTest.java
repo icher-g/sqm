@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-class JsonTableRefRendererTest {
+class JsonTableRendererTest {
     @Test
     void rendersJsonTableWhenFeatureEnabled() {
         var table = jsonTable(

@@ -251,6 +251,20 @@ class TableRefMatchTest {
     }
 
     @Test
+    @DisplayName("Match sampled table")
+    void matchSampledTable() {
+        TableRef table = sampled(
+            tbl("users"),
+            tableSample(TableSampleSpec.SampleMethod.SYSTEM, TableSampleSpec.SampleUnit.PERCENT, lit(10), null)).as(id("u_sample"));
+
+        var result = table.matchTableRef()
+            .sampled(s -> s.alias().value())
+            .orElse("Unknown");
+
+        assertEquals("u_sample", result);
+    }
+
+    @Test
     @DisplayName("Match unpivot table reference")
     void matchUnpivotTable() {
         TableRef table = unpivot(

@@ -45,6 +45,9 @@ public final class OracleCapabilities {
             .supports(SqlFeature.PIVOT_TABLE)
             .supports(SqlFeature.UNPIVOT_TABLE)
             .supports(SqlFeature.JSON_TABLE)
+            .supports(SqlFeature.TABLE_VERSIONING)
+            .supports(SqlFeature.TABLE_PARTITION_SPEC)
+            .supports(SqlFeature.TABLE_SAMPLE)
             .supports(ORACLE_12_1, SqlFeature.LATERAL)
             .build();
     }

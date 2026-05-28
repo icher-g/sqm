@@ -325,6 +325,9 @@ class OracleToSqlServerPivotUnpivotRuleTest {
         var querySource = QueryTable.of(select(col("q1_amount"), col("q1_quantity")).from(tbl("base_sales")).build()).as("q");
         var valuesSource = ValuesTable.of(RowListExpr.of(java.util.List.of(RowExpr.of(java.util.List.of(lit(1), lit(2)))))).as("v");
         var functionSource = FunctionTable.of(func("sales_rows"));
+        var sampledSource = sampled(
+            tbl("sampled_sales"),
+            tableSample(TableSampleSpec.SampleMethod.BLOCK, TableSampleSpec.SampleUnit.PERCENT, lit(10), lit(42))).as(id("ss"));
         var pivotSource = pivot(
             tbl("sales"),
             java.util.List.of(pivotMeasure(func("sum", col("amount")))),
@@ -338,7 +341,7 @@ class OracleToSqlServerPivotUnpivotRuleTest {
             unpivotInput("q1_amount", lit("Q1"))
         );
 
-        for (var source : java.util.List.of(querySource, valuesSource, functionSource, pivotSource, unpivotSource)) {
+        for (var source : java.util.List.of(querySource, valuesSource, functionSource, sampledSource, pivotSource, unpivotSource)) {
             var query = multiColumnUnpivotQuery(
                 source,
                 col("region").toSelectItem(),
@@ -352,6 +355,28 @@ class OracleToSqlServerPivotUnpivotRuleTest {
             assertEquals(RewriteFidelity.APPROXIMATE, result.fidelity());
             assertEquals(1, assertInstanceOf(SelectQuery.class, result.statement()).joins().size());
         }
+    }
+
+    @Test
+    void rewritesCrossApplyForUnaliasedSampledTableSource() {
+        var source = sampled(
+            tbl("sampled_sales"),
+            tableSample(TableSampleSpec.SampleMethod.SYSTEM, TableSampleSpec.SampleUnit.PERCENT, lit(10), null));
+        var query = multiColumnUnpivotQuery(
+            source,
+            col("region").toSelectItem(),
+            col("amount").toSelectItem(),
+            col("quarter").toSelectItem()
+        );
+
+        var result = new OracleToSqlServerPivotUnpivotRule().apply(query, context());
+
+        assertTrue(result.changed());
+        assertEquals(RewriteFidelity.APPROXIMATE, result.fidelity());
+        var rewritten = assertInstanceOf(SelectQuery.class, result.statement());
+        var rewrittenSource = assertInstanceOf(SampledTable.class, rewritten.from());
+        assertEquals("ss", rewrittenSource.alias().value());
+        assertEquals(1, rewritten.joins().size());
     }
 
     @Test

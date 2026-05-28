@@ -374,7 +374,7 @@ public final class SchemaStatementValidator implements StatementValidator {
          * @return default result
          */
         @Override
-        public Void visitJsonTableRef(JsonTableRef table) {
+        public Void visitJsonTableRef(JsonTable table) {
             super.visitJsonTableRef(table);
             registry.validate(table, context);
             return defaultResult();

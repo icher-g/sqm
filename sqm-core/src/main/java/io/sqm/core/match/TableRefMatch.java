@@ -58,12 +58,12 @@ public interface TableRefMatch<R> extends Match<TableRef, R> {
     TableRefMatch<R> function(Function<FunctionTable, R> f);
 
     /**
-     * Registers a handler for a {@link JsonTableRef}.
+     * Registers a handler for a {@link JsonTable}.
      *
-     * @param f handler for {@code JsonTableRef}
+     * @param f handler for {@code JsonTable}
      * @return {@code this} for fluent chaining
      */
-    TableRefMatch<R> jsonTable(Function<JsonTableRef, R> f);
+    TableRefMatch<R> jsonTable(Function<JsonTable, R> f);
 
     /**
      * Registers a handler for a table-variable reference.
@@ -88,6 +88,14 @@ public interface TableRefMatch<R> extends Match<TableRef, R> {
      * @return {@code this} for fluent chaining
      */
     TableRefMatch<R> unpivot(Function<UnpivotTable, R> f);
+
+    /**
+     * Registers a handler for a {@link SampledTable}.
+     *
+     * @param f handler for {@code SampledTable}
+     * @return {@code this} for fluent chaining
+     */
+    TableRefMatch<R> sampled(Function<SampledTable, R> f);
 
     /**
      * Matches a {@link Lateral}.

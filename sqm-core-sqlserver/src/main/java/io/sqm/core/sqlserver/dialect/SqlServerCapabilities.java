@@ -38,6 +38,8 @@ public final class SqlServerCapabilities {
             .supports(SqlFeature.PIVOT_TABLE)
             .supports(SqlFeature.UNPIVOT_TABLE)
             .supports(SqlFeature.TABLE_LOCK_HINT)
+            .supports(SqlFeature.TABLE_VERSIONING)
+            .supports(SqlFeature.TABLE_SAMPLE)
             .build();
     }
 

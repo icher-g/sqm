@@ -8,7 +8,7 @@ import io.sqm.core.JsonTableColumn;
 import io.sqm.core.JsonTableExistsColumn;
 import io.sqm.core.JsonTableNestedPathColumn;
 import io.sqm.core.JsonTableOrdinalityColumn;
-import io.sqm.core.JsonTableRef;
+import io.sqm.core.JsonTable;
 import io.sqm.core.JsonTableScalarColumn;
 import io.sqm.core.TypeName;
 import io.sqm.core.dialect.SqlFeature;
@@ -29,11 +29,11 @@ import static io.sqm.parser.spi.ParseResult.ok;
 /**
  * Parses SQL/JSON {@code JSON_TABLE} table references.
  */
-public class JsonTableRefParser implements MatchableParser<JsonTableRef> {
+public class JsonTableParser implements MatchableParser<JsonTable> {
     /**
      * Creates a JSON table-reference parser.
      */
-    public JsonTableRefParser() {
+    public JsonTableParser() {
     }
 
     @Override
@@ -42,7 +42,7 @@ public class JsonTableRefParser implements MatchableParser<JsonTableRef> {
     }
 
     @Override
-    public ParseResult<? extends JsonTableRef> parse(Cursor cur, ParseContext ctx) {
+    public ParseResult<? extends JsonTable> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected JSON_TABLE", TokenType.JSON_TABLE);
         if (!ctx.capabilities().supports(SqlFeature.JSON_TABLE)) {
             return error("JSON_TABLE is not supported by this dialect", cur.fullPos());
@@ -62,12 +62,12 @@ public class JsonTableRefParser implements MatchableParser<JsonTableRef> {
         cur.expect("Expected ')' after JSON_TABLE", TokenType.RPAREN);
 
         Identifier alias = parseAliasIdentifier(cur);
-        return ok(JsonTableRef.of(json.value(), rootPath, columns, alias));
+        return ok(JsonTable.of(json.value(), rootPath, columns, alias));
     }
 
     @Override
-    public Class<? extends JsonTableRef> targetType() {
-        return JsonTableRef.class;
+    public Class<? extends JsonTable> targetType() {
+        return JsonTable.class;
     }
 
     private List<JsonTableColumn> parseColumns(Cursor cur, ParseContext ctx) {

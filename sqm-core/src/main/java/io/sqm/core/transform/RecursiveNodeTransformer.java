@@ -750,8 +750,11 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     public Node visitTable(Table t) {
         List<TableHint> hints = new ArrayList<>(t.hints().size());
         boolean changed = apply(t.hints(), hints);
+        var version = apply(t.version());
+        var partitionSpec = apply(t.partitionSpec());
+        changed |= version != t.version() || partitionSpec != t.partitionSpec();
         if (changed) {
-            return t.withHints(hints);
+            return Table.of(t.schema(), t.name(), t.alias(), t.inheritance(), hints, version, partitionSpec);
         }
         return t;
     }
@@ -803,18 +806,18 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
-     * Visits a {@link JsonTableRef}.
+     * Visits a {@link JsonTable}.
      *
      * @param t JSON table reference to transform
      * @return transformed JSON table reference, or the original instance if unchanged
      */
     @Override
-    public Node visitJsonTableRef(JsonTableRef t) {
+    public Node visitJsonTableRef(JsonTable t) {
         var json = apply(t.json());
         List<JsonTableColumn> columns = new ArrayList<>(t.columns().size());
         boolean columnsChanged = apply(t.columns(), columns);
         if (json != t.json() || columnsChanged) {
-            return JsonTableRef.of(json, t.rootPath(), columns, t.alias());
+            return JsonTable.of(json, t.rootPath(), columns, t.alias());
         }
         return t;
     }
@@ -921,6 +924,22 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         boolean valuesChanged = apply(t.values(), values);
         if (source != t.source() || measuresChanged || forExpression != t.forExpression() || valuesChanged) {
             return PivotTable.of(source, measures, forExpression, values, t.alias());
+        }
+        return t;
+    }
+
+    /**
+     * Visits a {@link SampledTable}.
+     *
+     * @param t sampled table to transform
+     * @return transformed sampled table, or the original instance if unchanged
+     */
+    @Override
+    public Node visitSampledTable(SampledTable t) {
+        var source = apply(t.source());
+        var sample = apply(t.sampleSpec());
+        if (source != t.source() || sample != t.sampleSpec()) {
+            return SampledTable.of(source, sample, t.alias());
         }
         return t;
     }
@@ -2068,6 +2087,50 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             return i;
         }
         return Lateral.of(inner);
+    }
+
+    /**
+     * Transforms a {@link TableVersionSpec}.
+     *
+     * @param spec table version selector
+     * @return transformed selector, or the original instance if unchanged
+     */
+    @Override
+    public Node visitTableVersionSpec(TableVersionSpec spec) {
+        var value = apply(spec.value());
+        var start = apply(spec.start());
+        var end = apply(spec.end());
+        if (value == spec.value() && start == spec.start() && end == spec.end()) {
+            return spec;
+        }
+        return new TableVersionSpec.Impl(spec.kind(), value, start, end);
+    }
+
+    /**
+     * Transforms a {@link TablePartitionSpec}.
+     *
+     * @param spec table partition specification
+     * @return original spec
+     */
+    @Override
+    public Node visitTablePartitionSpec(TablePartitionSpec spec) {
+        return spec;
+    }
+
+    /**
+     * Transforms a {@link TableSampleSpec}.
+     *
+     * @param sample table sample
+     * @return transformed sample, or the original instance if unchanged
+     */
+    @Override
+    public Node visitTableSampleSpec(TableSampleSpec sample) {
+        var amount = apply(sample.amount());
+        var seed = apply(sample.repeatableSeed());
+        if (amount == sample.amount() && seed == sample.repeatableSeed()) {
+            return sample;
+        }
+        return TableSampleSpec.of(sample.method(), sample.unit(), amount, seed);
     }
 
     /**

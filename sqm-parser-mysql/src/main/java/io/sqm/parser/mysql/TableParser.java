@@ -3,6 +3,7 @@ package io.sqm.parser.mysql;
 import io.sqm.core.Identifier;
 import io.sqm.core.Table;
 import io.sqm.core.TableHint;
+import io.sqm.core.TablePartitionSpec;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.Token;
@@ -45,9 +46,24 @@ public class TableParser extends io.sqm.parser.ansi.TableParser {
         Table.Inheritance inheritance) {
 
         var hints = new ArrayList<TableHint>();
+        TablePartitionSpec partitionSpec = null;
         Identifier alias = null;
 
         while (true) {
+            if (partitionSpec == null && cur.match(TokenType.PARTITION)) {
+                if (!ctx.capabilities().supports(SqlFeature.TABLE_PARTITION_SPEC)) {
+                    return error("Table partition specifications are not supported by this dialect", cur.fullPos());
+                }
+                var parsedPartitionSpec = parsePartitionSpec(cur);
+                if (parsedPartitionSpec.isError()) {
+                    return error(parsedPartitionSpec);
+                }
+                if (parsedPartitionSpec.value().kind() == TablePartitionSpec.TablePartitionSpecKind.SUBPARTITION) {
+                    return error("MySQL SUBPARTITION table selector is not supported", cur.fullPos());
+                }
+                partitionSpec = parsedPartitionSpec.value();
+                continue;
+            }
             if (cur.matchAny(TokenType.USE, TokenType.IGNORE, TokenType.FORCE)) {
                 if (!ctx.capabilities().supports(SqlFeature.TABLE_INDEX_HINT)) {
                     return error("Table index hints are not supported by this dialect", cur.fullPos());
@@ -66,7 +82,7 @@ public class TableParser extends io.sqm.parser.ansi.TableParser {
             break;
         }
 
-        return ok(Table.of(schema, name, alias, inheritance, hints));
+        return ok(Table.of(schema, name, alias, inheritance, hints, null, partitionSpec));
     }
 
     private boolean looksLikeAliasStart(Cursor cur) {

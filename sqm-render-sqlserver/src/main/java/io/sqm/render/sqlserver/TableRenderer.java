@@ -2,6 +2,7 @@ package io.sqm.render.sqlserver;
 
 import io.sqm.core.Table;
 import io.sqm.core.TableHint;
+import io.sqm.core.TableVersionSpec;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
@@ -18,6 +19,23 @@ public class TableRenderer extends io.sqm.render.ansi.TableRenderer {
      * Creates a SQL Server table renderer.
      */
     public TableRenderer() {
+    }
+
+    @Override
+    protected void renderTableVersion(Table node, RenderContext ctx, SqlWriter w) {
+        TableVersionSpec version = node.version();
+        if (version == null) {
+            return;
+        }
+        w.space().append("FOR SYSTEM_TIME");
+        switch (version.kind()) {
+            case AS_OF_TIMESTAMP -> w.space().append("AS OF").space().append(version.value());
+            case FROM_TO -> w.space().append("FROM").space().append(version.start()).space().append("TO").space().append(version.end());
+            case BETWEEN -> w.space().append("BETWEEN").space().append(version.start()).space().append("AND").space().append(version.end());
+            case CONTAINED_IN -> w.space().append("CONTAINED IN").space().append("(").append(version.start()).append(", ").append(version.end()).append(")");
+            case ALL -> w.space().append("ALL");
+            default -> super.renderTableVersion(node, ctx, w);
+        }
     }
 
     @Override
