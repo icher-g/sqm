@@ -1096,7 +1096,11 @@ Acceptance:
 
 - `AtTimeZoneExpr` Javadocs/docs become dialect-neutral.
 - Oracle parser/render/validation supports compatible `AT TIME ZONE`.
-- `LockingClause` supports Oracle gaps only through generic extensions.
+- `LockingClause` supports Oracle gaps only through generic extensions:
+  - `FOR UPDATE OF ...` uses the existing target list.
+  - `NOWAIT` and `SKIP LOCKED` use the shared lock wait policy.
+  - `WAIT n` uses a generic `WAIT` policy with a timeout expression.
+- Other dialects keep explicit support boundaries through parser/render/validation capability checks.
 - DSL/codegen/docs/tests updated where needed.
 
 ### R11-8: Defer Or Design Advanced Row Pattern Features

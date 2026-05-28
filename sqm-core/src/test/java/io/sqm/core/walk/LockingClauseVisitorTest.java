@@ -1,6 +1,7 @@
 package io.sqm.core.walk;
 
 import io.sqm.core.LockMode;
+import io.sqm.core.LockWaitMode;
 import io.sqm.core.LockingClause;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -90,6 +91,17 @@ class LockingClauseVisitorTest {
     }
 
     @Test
+    @DisplayName("Recursive visitor visits WAIT timeout expression")
+    void recursiveVisitorVisitsWaitTimeoutExpression() {
+        var clause = LockingClause.of(LockMode.UPDATE, List.of(), LockWaitMode.WAIT, lit(5));
+        var visitor = new LiteralCountingVisitor();
+
+        clause.accept(visitor);
+
+        assertEquals(1, visitor.literalCount);
+    }
+
+    @Test
     @DisplayName("Query without locking clause does not visit locking clause")
     void queryWithoutLockingClause() {
         var query = select(col("*"))
@@ -161,6 +173,21 @@ class LockingClauseVisitorTest {
             hasNowait = clause.nowait();
             hasSkipLocked = clause.skipLocked();
             return super.visitLockingClause(clause);
+        }
+    }
+
+    private static class LiteralCountingVisitor extends RecursiveNodeVisitor<Void> {
+        int literalCount = 0;
+
+        @Override
+        protected Void defaultResult() {
+            return null;
+        }
+
+        @Override
+        public Void visitLiteralExpr(io.sqm.core.LiteralExpr l) {
+            literalCount++;
+            return super.visitLiteralExpr(l);
         }
     }
 }

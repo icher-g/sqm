@@ -70,18 +70,27 @@ public class LockingClauseRenderer implements Renderer<LockingClause> {
             }
         }
 
-        if (node.nowait()) {
-            if (!ctx.dialect().capabilities().supports(SqlFeature.LOCKING_NOWAIT)) {
-                throw new UnsupportedDialectFeatureException("NOWAIT", ctx.dialect().name());
+        switch (node.waitMode()) {
+            case DEFAULT -> {
             }
-            w.space().append("NOWAIT");
-        }
-
-        if (node.skipLocked()) {
-            if (!ctx.dialect().capabilities().supports(SqlFeature.LOCKING_SKIP_LOCKED)) {
-                throw new UnsupportedDialectFeatureException("SKIP LOCKED", ctx.dialect().name());
+            case NOWAIT -> {
+                if (!ctx.dialect().capabilities().supports(SqlFeature.LOCKING_NOWAIT)) {
+                    throw new UnsupportedDialectFeatureException("NOWAIT", ctx.dialect().name());
+                }
+                w.space().append("NOWAIT");
             }
-            w.space().append("SKIP LOCKED");
+            case SKIP_LOCKED -> {
+                if (!ctx.dialect().capabilities().supports(SqlFeature.LOCKING_SKIP_LOCKED)) {
+                    throw new UnsupportedDialectFeatureException("SKIP LOCKED", ctx.dialect().name());
+                }
+                w.space().append("SKIP LOCKED");
+            }
+            case WAIT -> {
+                if (!ctx.dialect().capabilities().supports(SqlFeature.LOCKING_WAIT_TIMEOUT)) {
+                    throw new UnsupportedDialectFeatureException("WAIT", ctx.dialect().name());
+                }
+                w.space().append("WAIT").space().append(node.waitSeconds());
+            }
         }
     }
 

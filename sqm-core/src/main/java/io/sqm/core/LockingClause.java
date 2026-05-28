@@ -21,6 +21,7 @@ import java.util.List;
  * FOR SHARE
  * FOR UPDATE OF t1, t2
  * FOR UPDATE NOWAIT
+ * FOR UPDATE WAIT 5
  * FOR UPDATE SKIP LOCKED
  * </pre>
  */
@@ -41,7 +42,33 @@ public non-sealed interface LockingClause extends Node {
         boolean nowait,
         boolean skipLocked
     ) {
-        return new Impl(mode, ofTables, nowait, skipLocked);
+        if (nowait && skipLocked) {
+            throw new IllegalArgumentException("NOWAIT and SKIP LOCKED are mutually exclusive");
+        }
+        return new Impl(
+            mode,
+            ofTables,
+            nowait ? LockWaitMode.NOWAIT : skipLocked ? LockWaitMode.SKIP_LOCKED : LockWaitMode.DEFAULT,
+            null
+        );
+    }
+
+    /**
+     * Creates a locking clause instance with explicit wait behavior.
+     *
+     * @param mode        lock mode
+     * @param ofTables    lock targets specified in FOR ... OF clause, or empty for all tables
+     * @param waitMode    wait behavior
+     * @param waitSeconds wait timeout expression; required only for {@link LockWaitMode#WAIT}
+     * @return locking clause
+     */
+    static LockingClause of(
+        LockMode mode,
+        List<LockTarget> ofTables,
+        LockWaitMode waitMode,
+        Expression waitSeconds
+    ) {
+        return new Impl(mode, ofTables, waitMode, waitSeconds);
     }
 
     /**
@@ -69,7 +96,9 @@ public non-sealed interface LockingClause extends Node {
      *
      * @return true if NOWAIT is used
      */
-    boolean nowait();
+    default boolean nowait() {
+        return waitMode() == LockWaitMode.NOWAIT;
+    }
 
     /**
      * Indicates whether the SKIP LOCKED modifier is specified.
@@ -79,7 +108,23 @@ public non-sealed interface LockingClause extends Node {
      *
      * @return true if SKIP LOCKED is used
      */
-    boolean skipLocked();
+    default boolean skipLocked() {
+        return waitMode() == LockWaitMode.SKIP_LOCKED;
+    }
+
+    /**
+     * Returns the configured lock wait behavior.
+     *
+     * @return wait behavior
+     */
+    LockWaitMode waitMode();
+
+    /**
+     * Returns the wait timeout expression.
+     *
+     * @return wait timeout expression or {@code null} unless {@link #waitMode()} is {@link LockWaitMode#WAIT}
+     */
+    Expression waitSeconds();
 
     /**
      * Accepts a {@link NodeVisitor} and dispatches control to the
@@ -99,14 +144,14 @@ public non-sealed interface LockingClause extends Node {
      *
      * @param mode       lock mode
      * @param ofTables   lock targets specified in FOR ... OF clause, or empty for all tables
-     * @param nowait     whether NOWAIT is specified
-     * @param skipLocked whether SKIP LOCKED is specified
+     * @param waitMode    wait behavior
+     * @param waitSeconds wait timeout expression
      */
     record Impl(
         LockMode mode,
         List<LockTarget> ofTables,
-        boolean nowait,
-        boolean skipLocked
+        LockWaitMode waitMode,
+        Expression waitSeconds
     ) implements LockingClause {
 
         /**
@@ -114,14 +159,18 @@ public non-sealed interface LockingClause extends Node {
          *
          * @param mode       lock mode
          * @param ofTables   lock targets
-         * @param nowait     whether NOWAIT is specified
-         * @param skipLocked whether SKIP LOCKED is specified
+         * @param waitMode    wait behavior
+         * @param waitSeconds wait timeout expression
          */
         public Impl {
-            if (nowait && skipLocked) {
-                throw new IllegalArgumentException(
-                    "NOWAIT and SKIP LOCKED are mutually exclusive"
-                );
+            if (waitMode == null) {
+                waitMode = LockWaitMode.DEFAULT;
+            }
+            if (waitMode == LockWaitMode.WAIT && waitSeconds == null) {
+                throw new IllegalArgumentException("WAIT requires a timeout expression");
+            }
+            if (waitMode != LockWaitMode.WAIT && waitSeconds != null) {
+                throw new IllegalArgumentException("waitSeconds is only valid with WAIT");
             }
             ofTables = ofTables == null ? List.of() : List.copyOf(ofTables);
         }

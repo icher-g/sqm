@@ -1,7 +1,9 @@
 package io.sqm.parser.ansi;
 
+import io.sqm.core.Expression;
 import io.sqm.core.LockMode;
 import io.sqm.core.LockTarget;
+import io.sqm.core.LockWaitMode;
 import io.sqm.core.LockingClause;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
@@ -89,24 +91,35 @@ public class LockingClauseParser implements Parser<LockingClause> {
             while (cur.consumeIf(TokenType.COMMA));
         }
 
-        boolean nowait = false;
+        LockWaitMode waitMode = LockWaitMode.DEFAULT;
+        Expression waitSeconds = null;
+
         if (cur.consumeIf(TokenType.NOWAIT)) {
             if (!ctx.capabilities().supports(SqlFeature.LOCKING_NOWAIT)) {
                 return error("NOWAIT is not supported by this dialect", cur.fullPos());
             }
-            nowait = true;
+            waitMode = LockWaitMode.NOWAIT;
         }
-
-        boolean skipLocked = false;
-        if (cur.consumeIf(TokenType.SKIP)) {
+        else if (cur.consumeIf(TokenType.SKIP)) {
             cur.expect("Expected LOCKED after SKIP", TokenType.LOCKED);
             if (!ctx.capabilities().supports(SqlFeature.LOCKING_SKIP_LOCKED)) {
                 return error("SKIP LOCKED is not supported by this dialect", cur.fullPos());
             }
-            skipLocked = true;
+            waitMode = LockWaitMode.SKIP_LOCKED;
+        }
+        else if (cur.consumeIf(TokenType.WAIT)) {
+            if (!ctx.capabilities().supports(SqlFeature.LOCKING_WAIT_TIMEOUT)) {
+                return error("WAIT is not supported by this dialect", cur.fullPos());
+            }
+            var seconds = ctx.parse(Expression.class, cur);
+            if (seconds.isError()) {
+                return error(seconds);
+            }
+            waitMode = LockWaitMode.WAIT;
+            waitSeconds = seconds.value();
         }
 
-        return ok(LockingClause.of(mode, targets, nowait, skipLocked));
+        return ok(LockingClause.of(mode, targets, waitMode, waitSeconds));
     }
 
     /**

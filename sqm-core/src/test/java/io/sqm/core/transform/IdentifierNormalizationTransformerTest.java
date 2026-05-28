@@ -5,9 +5,10 @@ import org.junit.jupiter.api.Test;
 
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class IdentifierNormalizationTransformerTest {
@@ -224,6 +225,11 @@ class IdentifierNormalizationTransformerTest {
 
         var lockingNoTargets = LockingClause.of(update(), java.util.List.of(), false, false);
         assertSame(lockingNoTargets, tx.apply(lockingNoTargets));
+
+        var lockingWait = LockingClause.of(update(), java.util.List.of(), LockWaitMode.WAIT, col("T", "SECONDS"));
+        var lockingWaitOut = tx.apply(lockingWait);
+        assertNotSame(lockingWait, lockingWaitOut);
+        assertEquals("t", ((ColumnExpr) lockingWaitOut.waitSeconds()).tableAlias().value());
 
         var keywordType = type(TypeKeyword.DOUBLE_PRECISION);
         assertSame(keywordType, tx.apply(keywordType));

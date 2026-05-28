@@ -2134,13 +2134,17 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
-     * Visits a PostgreSQL SELECT locking clause.
+     * Visits a SELECT locking clause.
      *
      * @param clause locking clause node
      * @return transformed node if the transformation has been applied or an original node if nothing has changed.
      */
     @Override
     public Node visitLockingClause(LockingClause clause) {
+        var waitSeconds = apply(clause.waitSeconds());
+        if (waitSeconds != clause.waitSeconds()) {
+            return LockingClause.of(clause.mode(), clause.ofTables(), clause.waitMode(), waitSeconds);
+        }
         return clause;
     }
 

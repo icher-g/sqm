@@ -7,7 +7,7 @@ import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
 /**
- * ANSI renderer for PostgreSQL {@code AT TIME ZONE} expression.
+ * Renderer for {@code AT TIME ZONE} expressions.
  * <p>
  * Renders expressions of the form: {@code <timestamp_expr> AT TIME ZONE <timezone_expr>}
  */

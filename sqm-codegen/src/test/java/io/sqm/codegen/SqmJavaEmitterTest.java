@@ -476,6 +476,7 @@ class SqmJavaEmitterTest {
         var noKeyUpdateLock = select(star()).from(tbl("users")).lockFor(noKeyUpdate(), ofTables("users"), false, true).build();
         var shareLock = select(star()).from(tbl("users")).lockFor(share(), ofTables("users"), false, false).build();
         var keyShareLock = select(star()).from(tbl("users")).lockFor(keyShare(), ofTables("users"), true, false).build();
+        var waitLock = select(star()).from(tbl("users")).lockFor(update(), ofTables("users"), waitLock(), lit(5)).build();
 
         var doNothingSource = emitter.emit(insertDoNothing);
         var doUpdateSource = emitter.emit(insertDoUpdate);
@@ -492,6 +493,7 @@ class SqmJavaEmitterTest {
         assertTrue(emitter.emit(noKeyUpdateLock).contains(".lockFor(noKeyUpdate(), ofTables(\"users\"), false, true)"));
         assertTrue(emitter.emit(shareLock).contains(".lockFor(share(), ofTables(\"users\"), false, false)"));
         assertTrue(emitter.emit(keyShareLock).contains(".lockFor(keyShare(), ofTables(\"users\"), true, false)"));
+        assertTrue(emitter.emit(waitLock).contains(".lockFor(update(), ofTables(\"users\"), waitLock(), lit(5))"));
     }
 
     @Test

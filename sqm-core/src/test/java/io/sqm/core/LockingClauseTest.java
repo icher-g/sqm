@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static io.sqm.dsl.Dsl.ofTables;
+import static io.sqm.dsl.Dsl.lit;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("LockingClause Tests")
@@ -50,6 +51,35 @@ class LockingClauseTest {
     void nowaitAndSkipLockedMutuallyExclusive() {
         assertThrows(IllegalArgumentException.class, 
             () -> LockingClause.of(LockMode.UPDATE, List.of(), true, true));
+    }
+
+    @Test
+    @DisplayName("Create FOR UPDATE with WAIT")
+    void createWithWait() {
+        var clause = LockingClause.of(LockMode.UPDATE, List.of(), LockWaitMode.WAIT, lit(5));
+
+        assertEquals(LockWaitMode.WAIT, clause.waitMode());
+        assertEquals(5, clause.waitSeconds().matchExpression().literal(l -> l.value()).orElseThrow(AssertionError::new));
+        assertFalse(clause.nowait());
+        assertFalse(clause.skipLocked());
+    }
+
+    @Test
+    @DisplayName("WAIT validates timeout expression state")
+    void waitValidatesTimeoutExpressionState() {
+        assertThrows(IllegalArgumentException.class,
+            () -> LockingClause.of(LockMode.UPDATE, List.of(), LockWaitMode.WAIT, null));
+        assertThrows(IllegalArgumentException.class,
+            () -> LockingClause.of(LockMode.UPDATE, List.of(), LockWaitMode.DEFAULT, lit(5)));
+    }
+
+    @Test
+    @DisplayName("Null wait mode defaults to dialect blocking behavior")
+    void nullWaitModeDefaultsToDefault() {
+        var clause = LockingClause.of(LockMode.UPDATE, List.of(), null, null);
+
+        assertEquals(LockWaitMode.DEFAULT, clause.waitMode());
+        assertNull(clause.waitSeconds());
     }
 
     @Test

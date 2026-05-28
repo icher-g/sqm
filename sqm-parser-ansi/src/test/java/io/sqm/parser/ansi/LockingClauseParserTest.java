@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.LockMode;
+import io.sqm.core.LockWaitMode;
 import io.sqm.core.LockingClause;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.IdentifierQuoting;
@@ -70,6 +71,44 @@ class LockingClauseParserTest {
     void parseForUpdateSkipLockedThrows() {
         var result = parser.parse(Cursor.of("FOR UPDATE SKIP LOCKED", quoting), ctx);
         assertFalse(result.ok());
+    }
+
+    @Test
+    @DisplayName("Parse FOR UPDATE WAIT throws unsupported exception")
+    void parseForUpdateWaitThrows() {
+        var result = parser.parse(Cursor.of("FOR UPDATE WAIT 5", quoting), ctx);
+        assertFalse(result.ok());
+    }
+
+    @Test
+    @DisplayName("Parse FOR UPDATE WAIT when feature is enabled")
+    void parseForUpdateWaitWhenFeatureEnabled() {
+        var testContext = ParseContext.of(new TestSpecs());
+        var result = testContext.parse(LockingClause.class, "FOR UPDATE WAIT 5");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(LockWaitMode.WAIT, result.value().waitMode());
+        assertEquals(5L, result.value().waitSeconds().matchExpression().literal(l -> l.value()).orElseThrow(AssertionError::new));
+    }
+
+    @Test
+    @DisplayName("Parse locking wait policies when features are enabled")
+    void parseWaitPoliciesWhenFeaturesEnabled() {
+        var testContext = ParseContext.of(new TestSpecs());
+
+        assertEquals(LockWaitMode.NOWAIT,
+            testContext.parse(LockingClause.class, "FOR UPDATE NOWAIT").value().waitMode());
+        assertEquals(LockWaitMode.SKIP_LOCKED,
+            testContext.parse(LockingClause.class, "FOR UPDATE SKIP LOCKED").value().waitMode());
+    }
+
+    @Test
+    @DisplayName("Parse FOR UPDATE WAIT without expression fails when feature is enabled")
+    void parseForUpdateWaitWithoutExpressionFailsWhenFeatureEnabled() {
+        var result = ParseContext.of(new TestSpecs()).parse(LockingClause.class, "FOR UPDATE WAIT");
+
+        assertFalse(result.ok());
+        assertNotNull(result.errorMessage());
     }
 
     @Test

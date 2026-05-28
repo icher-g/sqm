@@ -693,6 +693,10 @@ public enum TokenType {
      */
     NOWAIT,
     /**
+     * WAIT keyword token.
+     */
+    WAIT,
+    /**
      * SKIP keyword token.
      */
     SKIP,

@@ -5,7 +5,7 @@ import io.sqm.core.walk.NodeVisitor;
 import java.util.Objects;
 
 /**
- * Represents a PostgreSQL {@code AT TIME ZONE} expression for timezone conversion.
+ * Represents an {@code AT TIME ZONE} expression for timezone conversion.
  * <p>
  * This expression converts a timestamp to a different time zone. The operand is typically
  * a timestamp (with or without time zone), and the timezone argument can be a string literal,

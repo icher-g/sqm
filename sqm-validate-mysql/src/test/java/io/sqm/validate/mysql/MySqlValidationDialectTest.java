@@ -171,6 +171,8 @@ class MySqlValidationDialectTest {
         assertTrue(dialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.LATERAL));
         assertFalse(versionedDialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.LATERAL));
         assertFalse(dialect.additionalRules().isEmpty());
+        assertTrue(dialect.additionalRules().stream()
+            .anyMatch(rule -> rule.getClass().getSimpleName().equals("LockingClauseFeatureValidationRule")));
     }
 
     @Test

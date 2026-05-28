@@ -3,8 +3,13 @@ package io.sqm.render.ansi;
 import io.sqm.core.Identifier;
 import io.sqm.core.LockMode;
 import io.sqm.core.LockTarget;
+import io.sqm.core.LockWaitMode;
 import io.sqm.core.LockingClause;
+import io.sqm.core.dialect.DialectCapabilities;
+import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
+import io.sqm.core.dialect.VersionedDialectCapabilities;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.spi.RenderContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -119,6 +124,39 @@ class LockingClauseRendererTest {
     }
 
     @Test
+    @DisplayName("FOR UPDATE WAIT throws unsupported exception")
+    void forUpdateWaitThrows() {
+        var clause = LockingClause.of(LockMode.UPDATE, List.of(), LockWaitMode.WAIT, lit(5));
+
+        assertThrows(UnsupportedDialectFeatureException.class,
+            () -> renderContext.render(clause));
+    }
+
+    @Test
+    @DisplayName("Render FOR UPDATE modifiers when features are enabled")
+    void renderForUpdateModifiersWhenFeaturesEnabled() {
+        var ctx = RenderContext.of(new LockingDialect());
+
+        assertEquals("FOR UPDATE NOWAIT", normalizeWhitespace(ctx.render(
+            LockingClause.of(LockMode.UPDATE, List.of(), true, false)).sql()));
+        assertEquals("FOR UPDATE SKIP LOCKED", normalizeWhitespace(ctx.render(
+            LockingClause.of(LockMode.UPDATE, List.of(), false, true)).sql()));
+        assertEquals("FOR UPDATE WAIT 5", normalizeWhitespace(ctx.render(
+            LockingClause.of(LockMode.UPDATE, List.of(), LockWaitMode.WAIT, lit(5))).sql()));
+    }
+
+    @Test
+    @DisplayName("Render FOR UPDATE OF when feature is enabled")
+    void renderForUpdateOfWhenFeatureEnabled() {
+        var ctx = RenderContext.of(new LockingDialect());
+        var targets = List.of(LockTarget.of(Identifier.of("users")), LockTarget.of(Identifier.of("orders")));
+
+        var sql = ctx.render(LockingClause.of(LockMode.UPDATE, targets, false, false)).sql();
+
+        assertEquals("FOR UPDATE OF users, orders", normalizeWhitespace(sql));
+    }
+
+    @Test
     @DisplayName("Render FOR UPDATE at end of complex query")
     void renderForUpdateInComplexQuery() {
         var query = select(col("u", "id"), col("u", "name"))
@@ -152,5 +190,20 @@ class LockingClauseRendererTest {
 
     private String normalizeWhitespace(String sql) {
         return sql.replaceAll("\\s+", " ").trim();
+    }
+
+    private static final class LockingDialect extends AnsiDialect {
+        private final DialectCapabilities capabilities = VersionedDialectCapabilities.builder(SqlDialectVersion.of(2016))
+            .supports(SqlFeature.LOCKING_CLAUSE)
+            .supports(SqlFeature.LOCKING_OF)
+            .supports(SqlFeature.LOCKING_NOWAIT)
+            .supports(SqlFeature.LOCKING_SKIP_LOCKED)
+            .supports(SqlFeature.LOCKING_WAIT_TIMEOUT)
+            .build();
+
+        @Override
+        public DialectCapabilities capabilities() {
+            return capabilities;
+        }
     }
 }

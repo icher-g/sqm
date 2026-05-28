@@ -1035,13 +1035,15 @@ class SqlServerValidationDialectTest {
         var versionedDialect = SqlServerValidationDialect.of(SqlDialectVersion.of(2014, 0));
 
         assertEquals("sqlserver", dialect.name());
-        assertEquals(14, dialect.additionalRules().size());
+        assertEquals(15, dialect.additionalRules().size());
         assertTrue(dialect.additionalRules().stream()
             .anyMatch(rule -> rule.getClass().getSimpleName().equals("PivotFeatureValidationRule")));
         assertTrue(dialect.additionalRules().stream()
             .anyMatch(rule -> rule.getClass().getSimpleName().equals("SqlServerPivotValidationRule")));
         assertTrue(dialect.additionalRules().stream()
             .anyMatch(rule -> rule.getClass().getSimpleName().equals("JsonTableFeatureValidationRule")));
+        assertTrue(dialect.additionalRules().stream()
+            .anyMatch(rule -> rule.getClass().getSimpleName().equals("LockingClauseFeatureValidationRule")));
         assertEquals(SqlDialectVersion.of(2019, 0), dialect.version());
         assertTrue(dialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.LATERAL));
         assertFalse(versionedDialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.AT_TIME_ZONE));

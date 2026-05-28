@@ -294,7 +294,8 @@ public final class IdentifierNormalizationTransformer extends RecursiveNodeTrans
 
     @Override
     public Node visitLockingClause(LockingClause clause) {
-        if (clause.ofTables().isEmpty()) {
+        var waitSeconds = apply(clause.waitSeconds());
+        if (clause.ofTables().isEmpty() && waitSeconds == clause.waitSeconds()) {
             return clause;
         }
         boolean changed = false;
@@ -308,10 +309,11 @@ public final class IdentifierNormalizationTransformer extends RecursiveNodeTrans
                 targets.add(target);
             }
         }
+        changed |= waitSeconds != clause.waitSeconds();
         if (!changed) {
             return clause;
         }
-        return LockingClause.of(clause.mode(), targets, clause.nowait(), clause.skipLocked());
+        return LockingClause.of(clause.mode(), targets, clause.waitMode(), waitSeconds);
     }
 
     private Identifier normalizeIdentifier(Identifier identifier) {

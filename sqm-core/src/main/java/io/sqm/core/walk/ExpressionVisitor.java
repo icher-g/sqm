@@ -320,9 +320,10 @@ public interface ExpressionVisitor<R> {
      */
     R visitCollateExpr(CollateExpr expr);
 
-    /**     * Visits an {@link AtTimeZoneExpr}}.
+    /**
+     * Visits an {@link AtTimeZoneExpr}.
      * <p>
-     * This represents a PostgreSQL {@code <expr> AT TIME ZONE <timezone>} expression
+     * This represents an {@code <expr> AT TIME ZONE <timezone>} expression
      * used for timezone conversion of timestamp values.
      * <p>
      * The visitor is applied recursively to both the timestamp and timezone expressions.

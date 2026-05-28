@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.lit;
 import static io.sqm.dsl.Dsl.statementHint;
 import static io.sqm.dsl.Dsl.window;
 
@@ -52,6 +53,18 @@ class SelectQueryBuilderTest {
         assertNotNull(query.topSpec());
         assertTrue(query.topSpec().percent());
         assertTrue(query.topSpec().withTies());
+    }
+
+    @Test
+    void lockForSupportsExplicitWaitPolicy() {
+        var query = SelectQuery.builder()
+            .select(col("id"))
+            .lockFor(LockMode.UPDATE, java.util.List.of(), LockWaitMode.WAIT, lit(5))
+            .build();
+
+        assertNotNull(query.lockFor());
+        assertEquals(LockWaitMode.WAIT, query.lockFor().waitMode());
+        assertEquals(5, assertInstanceOf(LiteralExpr.class, query.lockFor().waitSeconds()).value());
     }
 
     @Test
