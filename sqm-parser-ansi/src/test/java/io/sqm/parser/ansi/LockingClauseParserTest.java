@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.LockMode;
+import io.sqm.core.LockWaitMode;
 import io.sqm.core.LockingClause;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.IdentifierQuoting;
@@ -70,6 +71,24 @@ class LockingClauseParserTest {
     void parseForUpdateSkipLockedThrows() {
         var result = parser.parse(Cursor.of("FOR UPDATE SKIP LOCKED", quoting), ctx);
         assertFalse(result.ok());
+    }
+
+    @Test
+    @DisplayName("Parse FOR UPDATE WAIT throws unsupported exception")
+    void parseForUpdateWaitThrows() {
+        var result = parser.parse(Cursor.of("FOR UPDATE WAIT 5", quoting), ctx);
+        assertFalse(result.ok());
+    }
+
+    @Test
+    @DisplayName("Parse FOR UPDATE WAIT when feature is enabled")
+    void parseForUpdateWaitWhenFeatureEnabled() {
+        var testContext = ParseContext.of(new TestSpecs());
+        var result = testContext.parse(LockingClause.class, "FOR UPDATE WAIT 5");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(LockWaitMode.WAIT, result.value().waitMode());
+        assertEquals(5L, result.value().waitSeconds().matchExpression().literal(l -> l.value()).orElseThrow(AssertionError::new));
     }
 
     @Test

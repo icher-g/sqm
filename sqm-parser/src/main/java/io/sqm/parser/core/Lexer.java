@@ -163,6 +163,7 @@ public final class Lexer {
         KEYWORDS.put("INDEX", INDEX);
         KEYWORDS.put("OF", OF);
         KEYWORDS.put("NOWAIT", NOWAIT);
+        KEYWORDS.put("WAIT", WAIT);
         KEYWORDS.put("SKIP", SKIP);
         KEYWORDS.put("LOCKED", LOCKED);
     }

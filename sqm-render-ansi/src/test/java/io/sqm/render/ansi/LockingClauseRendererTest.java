@@ -3,6 +3,7 @@ package io.sqm.render.ansi;
 import io.sqm.core.Identifier;
 import io.sqm.core.LockMode;
 import io.sqm.core.LockTarget;
+import io.sqm.core.LockWaitMode;
 import io.sqm.core.LockingClause;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.ansi.spi.AnsiDialect;
@@ -113,6 +114,15 @@ class LockingClauseRendererTest {
     @DisplayName("FOR UPDATE SKIP LOCKED throws unsupported exception")
     void forUpdateSkipLockedThrows() {
         var clause = LockingClause.of(LockMode.UPDATE, List.of(), false, true);
+
+        assertThrows(UnsupportedDialectFeatureException.class,
+            () -> renderContext.render(clause));
+    }
+
+    @Test
+    @DisplayName("FOR UPDATE WAIT throws unsupported exception")
+    void forUpdateWaitThrows() {
+        var clause = LockingClause.of(LockMode.UPDATE, List.of(), LockWaitMode.WAIT, lit(5));
 
         assertThrows(UnsupportedDialectFeatureException.class,
             () -> renderContext.render(clause));

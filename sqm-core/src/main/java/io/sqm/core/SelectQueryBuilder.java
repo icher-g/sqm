@@ -413,6 +413,19 @@ public interface SelectQueryBuilder {
     }
 
     /**
+     * Sets the locking clause from explicit wait policy parameters.
+     *
+     * @param mode        lock mode
+     * @param ofTables    lock target tables
+     * @param waitMode    wait behavior
+     * @param waitSeconds wait timeout expression; required only for {@link LockWaitMode#WAIT}
+     * @return this builder
+     */
+    default SelectQueryBuilder lockFor(LockMode mode, List<LockTarget> ofTables, LockWaitMode waitMode, Expression waitSeconds) {
+        return lockFor(LockingClause.of(mode, ofTables, waitMode, waitSeconds));
+    }
+
+    /**
      * Builds an immutable {@link SelectQuery}.
      *
      * @return immutable select query

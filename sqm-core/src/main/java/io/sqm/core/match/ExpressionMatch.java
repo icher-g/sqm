@@ -290,7 +290,7 @@ public interface ExpressionMatch<R> extends Match<Expression, R> {
      * Matches an {@link AtTimeZoneExpr} expression.
      *
      * <p>This matcher is invoked when the inspected expression represents
-     * a PostgreSQL {@code AT TIME ZONE} timezone conversion expression.</p>
+     * an {@code AT TIME ZONE} timezone conversion expression.</p>
      *
      * @param f a mapping function applied to the matched {@link AtTimeZoneExpr}
      * @return an {@link ExpressionMatch} representing this match branch

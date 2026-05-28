@@ -1,6 +1,7 @@
 package io.sqm.core.transform;
 
 import io.sqm.core.LockMode;
+import io.sqm.core.LockWaitMode;
 import io.sqm.core.LockingClause;
 import io.sqm.core.Node;
 import io.sqm.core.SelectQuery;
@@ -66,6 +67,19 @@ class LockingClauseTransformerTest {
     }
 
     @Test
+    @DisplayName("Transformer applies to WAIT timeout expression")
+    void transformerAppliedToWaitTimeoutExpression() {
+        var clause = LockingClause.of(LockMode.UPDATE, List.of(), LockWaitMode.WAIT, lit(5));
+        var transformer = new WaitTimeoutTransformer();
+
+        var result = (LockingClause) transformer.visitLockingClause(clause);
+
+        assertNotSame(clause, result);
+        assertEquals(LockWaitMode.WAIT, result.waitMode());
+        assertEquals(6, ((io.sqm.core.LiteralExpr) result.waitSeconds()).value());
+    }
+
+    @Test
     @DisplayName("Transformer preserves query without locking clause")
     void transformerPreservesQueryWithoutLocking() {
         var query = select(col("*"))
@@ -99,6 +113,16 @@ class LockingClauseTransformerTest {
                     true, false);
             }
             return clause;
+        }
+    }
+
+    private static class WaitTimeoutTransformer extends RecursiveNodeTransformer {
+        @Override
+        public Node visitLiteralExpr(io.sqm.core.LiteralExpr l) {
+            if (Integer.valueOf(5).equals(l.value())) {
+                return io.sqm.core.LiteralExpr.of(6);
+            }
+            return l;
         }
     }
 }

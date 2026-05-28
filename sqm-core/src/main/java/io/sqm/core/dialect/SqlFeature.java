@@ -136,6 +136,10 @@ public enum SqlFeature {
      */
     LOCKING_SKIP_LOCKED("SKIP LOCKED locking modifier"),
     /**
+     * WAIT locking modifier with a bounded timeout.
+     */
+    LOCKING_WAIT_TIMEOUT("WAIT timeout locking modifier"),
+    /**
      * PostgreSQL ONLY table inheritance modifier to exclude child tables.
      */
     TABLE_INHERITANCE_ONLY("PostgreSQL ONLY table inheritance modifier"),
@@ -233,10 +237,10 @@ public enum SqlFeature {
      */
     CUSTOM_OPERATOR("Dialect-specific binary operators"),
     /**
-     * PostgreSQL AT TIME ZONE operator for timezone conversion.
+     * AT TIME ZONE operator for timezone conversion.
      * Example: {@code timestamp_col AT TIME ZONE 'UTC'}
      */
-    AT_TIME_ZONE("PostgreSQL AT TIME ZONE operator"),
+    AT_TIME_ZONE("AT TIME ZONE operator"),
     /**
      * Expression-level COLLATE support.
      * Example: {@code name COLLATE "de-CH"}

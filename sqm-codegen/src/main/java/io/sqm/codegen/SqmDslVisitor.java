@@ -2111,7 +2111,13 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         appendLockMode(lock.mode());
         out.append(", ");
         appendLockTargets(lock.ofTables());
-        out.append(", ").append(String.valueOf(lock.nowait())).append(", ").append(String.valueOf(lock.skipLocked()));
+        if (lock.waitMode() == LockWaitMode.WAIT) {
+            out.append(", waitLock(), ");
+            appendNode(lock.waitSeconds());
+        }
+        else {
+            out.append(", ").append(String.valueOf(lock.nowait())).append(", ").append(String.valueOf(lock.skipLocked()));
+        }
         return defaultResult();
     }
 

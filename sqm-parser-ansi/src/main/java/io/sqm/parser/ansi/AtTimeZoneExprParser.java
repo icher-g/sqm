@@ -15,7 +15,7 @@ import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
 /**
- * Parser for PostgreSQL {@code AT TIME ZONE} expression.
+ * Parser for {@code AT TIME ZONE} expressions.
  * <p>
  * AT TIME ZONE is not part of ANSI SQL. This parser validates that the feature is supported
  * by the target dialect before attempting to parse the syntax. If the feature is not supported,

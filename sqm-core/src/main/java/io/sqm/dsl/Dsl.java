@@ -2701,6 +2701,18 @@ public final class Dsl {
     }
 
     /**
+     * Returns the bounded WAIT lock behavior.
+     *
+     * <p>Use with {@link io.sqm.core.SelectQueryBuilder#lockFor(LockMode, List, LockWaitMode, Expression)}
+     * to model dialects such as Oracle that support {@code FOR UPDATE WAIT n}.</p>
+     *
+     * @return WAIT lock behavior
+     */
+    public static LockWaitMode waitLock() {
+        return LockWaitMode.WAIT;
+    }
+
+    /**
      * Creates lock targets for a FOR ... OF locking clause.
      *
      * <p>Each identifier must refer to a table name or table alias visible

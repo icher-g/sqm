@@ -988,7 +988,7 @@ public sealed interface Expression extends Node, QuantifiedSource
     /**
      * Creates an AT TIME ZONE expression to convert this timestamp to a different time zone.
      * <p>
-     * This models PostgreSQL {@code <expr> AT TIME ZONE <timezone>}.
+     * This models dialects with {@code <expr> AT TIME ZONE <timezone>} semantics.
      * <p>
      * The timezone argument can be:
      * <ul>

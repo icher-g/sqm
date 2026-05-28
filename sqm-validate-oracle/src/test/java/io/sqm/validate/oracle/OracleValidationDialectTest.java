@@ -61,6 +61,11 @@ class OracleValidationDialectTest {
 
         assertEquals("oracle", dialect.name());
         assertTrue(dialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.MERGE_STATEMENT));
+        assertTrue(dialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.AT_TIME_ZONE));
+        assertTrue(dialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.LOCKING_OF));
+        assertTrue(dialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.LOCKING_WAIT_TIMEOUT));
+        assertTrue(dialect.additionalRules().stream()
+            .anyMatch(rule -> rule.getClass().getSimpleName().equals("LockingClauseFeatureValidationRule")));
         assertTrue(dialect.functionCatalog().resolve("nvl").isPresent());
         assertThrows(NullPointerException.class, () -> OracleValidationDialect.of(null));
     }

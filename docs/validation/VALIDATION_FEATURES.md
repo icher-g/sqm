@@ -103,7 +103,7 @@ PostgreSQL-specific validation is implemented in a dedicated dialect module:
 - Version-gated PostgreSQL features (`DIALECT_FEATURE_UNSUPPORTED`), including:
   - `MERGE`
   - `DISTINCT ON`
-  - locking variants (`FOR SHARE`, `FOR KEY SHARE`, `FOR NO KEY UPDATE`, `OF`, `NOWAIT`, `SKIP LOCKED`)
+  - locking variants (`FOR SHARE`, `FOR KEY SHARE`, `FOR NO KEY UPDATE`, `OF`, `NOWAIT`, `SKIP LOCKED`, `WAIT n`)
   - `LATERAL`, function tables and `WITH ORDINALITY`
   - `PIVOT` and `UNPIVOT` relation transforms, which are not supported by the PostgreSQL dialect slice
   - PostgreSQL expression/predicate features (`ILIKE`, `SIMILAR TO`, regex predicates, arrays, `COLLATE`, `AT TIME ZONE`, custom operators, PostgreSQL cast syntax, power operator)

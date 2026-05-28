@@ -163,7 +163,7 @@ public interface StatementVisitor<R> {
     R visitTypeName(TypeName typeName);
 
     /**
-     * Visits a PostgreSQL SELECT locking clause.
+     * Visits a SELECT locking clause.
      *
      * @param clause locking clause node
      * @return result produced by the visitor
