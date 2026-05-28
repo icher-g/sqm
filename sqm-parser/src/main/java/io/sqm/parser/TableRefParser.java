@@ -113,7 +113,7 @@ public class TableRefParser implements Parser<TableRef> {
 
         TableRef table = result.value();
         while (true) {
-            MatchResult<? extends TableRef> matched = ctx.parseIfMatch(PivotTable.class, table, cur);
+            MatchResult<? extends TableRef> matched = parseTransformIfRegistered(PivotTable.class, table, cur, ctx);
             if (matched.match()) {
                 if (matched.result().isError()) {
                     return matched.result();
@@ -122,7 +122,7 @@ public class TableRefParser implements Parser<TableRef> {
                 continue;
             }
 
-            matched = ctx.parseIfMatch(UnpivotTable.class, table, cur);
+            matched = parseTransformIfRegistered(UnpivotTable.class, table, cur, ctx);
             if (matched.match()) {
                 if (matched.result().isError()) {
                     return matched.result();
@@ -131,7 +131,7 @@ public class TableRefParser implements Parser<TableRef> {
                 continue;
             }
 
-            matched = ctx.parseIfMatch(SampledTable.class, table, cur);
+            matched = parseTransformIfRegistered(SampledTable.class, table, cur, ctx);
             if (matched.match()) {
                 if (matched.result().isError()) {
                     return matched.result();
@@ -142,5 +142,17 @@ public class TableRefParser implements Parser<TableRef> {
 
             return ParseResult.ok(table);
         }
+    }
+
+    private static <T extends TableRef> MatchResult<? extends TableRef> parseTransformIfRegistered(
+        Class<T> type,
+        TableRef table,
+        Cursor cur,
+        ParseContext ctx
+    ) {
+        if (ctx.parsers().get(type) == null) {
+            return MatchResult.notMatched();
+        }
+        return ctx.parseIfMatch(type, table, cur);
     }
 }
