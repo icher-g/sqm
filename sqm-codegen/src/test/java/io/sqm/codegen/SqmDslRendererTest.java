@@ -2,6 +2,7 @@ package io.sqm.codegen;
 
 import io.sqm.core.JsonTableBehavior;
 import io.sqm.core.JsonTableScalarColumn;
+import io.sqm.core.Statement;
 import io.sqm.core.TableSampleSpec;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,8 @@ import java.util.Set;
 import static io.sqm.dsl.Dsl.col;
 import static io.sqm.dsl.Dsl.hierarchy;
 import static io.sqm.dsl.Dsl.id;
+import static io.sqm.dsl.Dsl.asOfScn;
+import static io.sqm.dsl.Dsl.asOfTimestamp;
 import static io.sqm.dsl.Dsl.jsonBehavior;
 import static io.sqm.dsl.Dsl.jsonExists;
 import static io.sqm.dsl.Dsl.jsonNested;
@@ -30,9 +33,13 @@ import static io.sqm.dsl.Dsl.prior;
 import static io.sqm.dsl.Dsl.select;
 import static io.sqm.dsl.Dsl.sampled;
 import static io.sqm.dsl.Dsl.star;
+import static io.sqm.dsl.Dsl.subpartition;
 import static io.sqm.dsl.Dsl.tablePartition;
 import static io.sqm.dsl.Dsl.tableSample;
+import static io.sqm.dsl.Dsl.tableVersionAll;
 import static io.sqm.dsl.Dsl.tableVersionBetween;
+import static io.sqm.dsl.Dsl.tableVersionContainedIn;
+import static io.sqm.dsl.Dsl.tableVersionFromTo;
 import static io.sqm.dsl.Dsl.tbl;
 import static io.sqm.dsl.Dsl.unpivot;
 import static io.sqm.dsl.Dsl.unpivotInput;
@@ -304,5 +311,49 @@ class SqmDslRendererTest {
         assertTrue(source.contains("sampled("));
         assertTrue(source.contains("tableSample(TableSampleSpec.SampleMethod.SYSTEM, TableSampleSpec.SampleUnit.PERCENT, lit(10), lit(42))"));
         assertTrue(source.contains(".as(id(\"s\"))"));
+    }
+
+    @Test
+    void renderEmitsAllTableVersionAndPartitionHelperVariants() {
+        List<Statement> statements = List.of(
+            select(star()).from(tbl("orders").withVersion(asOfTimestamp(lit(1)))).build(),
+            select(star()).from(tbl("orders").withVersion(asOfScn(lit(2)))).build(),
+            select(star()).from(tbl("orders").withVersion(tableVersionFromTo(lit(3), lit(4)))).build(),
+            select(star()).from(tbl("orders").withVersion(tableVersionContainedIn(lit(5), lit(6)))).build(),
+            select(star()).from(tbl("orders").withVersion(tableVersionAll())).build(),
+            select(star()).from(tbl("sales").withPartitionSpec(subpartition("sales_q1_eu"))).build()
+        );
+        var user = Path.of("table-access-variants");
+        var group = new SqlFolderGroup(
+            user,
+            "TableAccessVariantQueries",
+            List.of(new SqlSourceFile(
+                Path.of("table-access-variants", "variants.sql"),
+                user,
+                "variants",
+                Set.of(),
+                "hash-7",
+                statements
+            ))
+        );
+        var options = SqlFileCodegenOptions.of(
+            Path.of("sql"),
+            Path.of("generated"),
+            "io.sqm.codegen.generated",
+            SqlCodegenDialect.SQLSERVER,
+            false,
+            false,
+            null,
+            true
+        );
+
+        var source = new SqmDslRenderer(options).render(group);
+
+        assertTrue(source.contains(".withVersion(asOfTimestamp(lit(1)))"));
+        assertTrue(source.contains(".withVersion(asOfScn(lit(2)))"));
+        assertTrue(source.contains(".withVersion(tableVersionFromTo(lit(3), lit(4)))"));
+        assertTrue(source.contains(".withVersion(tableVersionContainedIn(lit(5), lit(6)))"));
+        assertTrue(source.contains(".withVersion(tableVersionAll())"));
+        assertTrue(source.contains(".withPartitionSpec(subpartition(\"sales_q1_eu\"))"));
     }
 }

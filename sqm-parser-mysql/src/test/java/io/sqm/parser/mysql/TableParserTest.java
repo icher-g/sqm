@@ -91,6 +91,25 @@ class TableParserTest {
     }
 
     @Test
+    void parsesPartitionSpecAfterAliasAndBeforeIndexHint() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(Table.class, "users u PARTITION (p0) USE INDEX (idx_users)");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals("u", result.value().alias().value());
+        assertEquals("p0", result.value().partitionSpec().names().getFirst().value());
+        assertEquals("USE_INDEX", result.value().hints().getFirst().name().value());
+    }
+
+    @Test
+    void rejectsSubpartitionAsTrailingSyntax() {
+        var ctx = ParseContext.of(new MySqlSpecs());
+        var result = ctx.parse(io.sqm.core.SelectQuery.class, "SELECT * FROM users SUBPARTITION (sp0)");
+
+        assertTrue(result.isError());
+    }
+
+    @Test
     void parsesAliasAfterIndexHint() {
         var ctx = ParseContext.of(new MySqlSpecs());
         var result = ctx.parse(Table.class, "users USE INDEX (idx_users_name) AS u");

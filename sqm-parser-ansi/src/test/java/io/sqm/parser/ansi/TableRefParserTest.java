@@ -124,6 +124,27 @@ class TableRefParserTest {
     }
 
     @Test
+    @DisplayName("Rejects table versioning in ANSI")
+    void error_table_versioning() {
+        var r = parse("products AS OF SCN 42");
+        Assertions.assertFalse(r.ok());
+    }
+
+    @Test
+    @DisplayName("Rejects table partition spec in ANSI")
+    void error_table_partition_spec() {
+        var r = parse("products PARTITION (p0)");
+        Assertions.assertFalse(r.ok());
+    }
+
+    @Test
+    @DisplayName("Rejects table sample in ANSI")
+    void error_table_sample() {
+        var r = parse("products TABLESAMPLE SYSTEM (10)");
+        Assertions.assertFalse(r.ok());
+    }
+
+    @Test
     @DisplayName("From a sub query")
     void select_from_subquery() {
         var r = parse("(SELECT * FROM t)");

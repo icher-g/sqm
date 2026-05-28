@@ -3,6 +3,7 @@ package io.sqm.render.mysql;
 import io.sqm.core.Identifier;
 import io.sqm.core.Table;
 import io.sqm.core.TableHint;
+import io.sqm.core.TablePartitionSpec;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.mysql.spi.MySqlDialect;
 import io.sqm.render.spi.RenderContext;
@@ -57,6 +58,29 @@ class TableRendererTest {
         var sql = RenderContext.of(new MySqlDialect()).render(table).sql();
 
         assertTrue(sql.contains("IGNORE INDEX FOR GROUP BY (idx_a, idx_b)"));
+    }
+
+    @Test
+    void rendersPartitionSpecBeforeIndexHints() {
+        var table = Table.of(null, Identifier.of("sales"), Identifier.of("s"), Table.Inheritance.DEFAULT,
+            List.of(TableHint.of("USE_INDEX", Identifier.of("idx_sales"))),
+            null,
+            TablePartitionSpec.partition(List.of(Identifier.of("p0"), Identifier.of("p1"))));
+
+        var sql = RenderContext.of(new MySqlDialect()).render(table).sql();
+
+        assertEquals("sales PARTITION (p0, p1) AS s USE INDEX (idx_sales)", normalize(sql));
+    }
+
+    @Test
+    void rejectsSubpartitionSpec() {
+        var table = Table.of(null, Identifier.of("sales"), null, Table.Inheritance.DEFAULT,
+            List.of(),
+            null,
+            TablePartitionSpec.subpartition(List.of(Identifier.of("sp0"))));
+
+        assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new MySqlDialect()).render(table));
     }
 
     @Test
