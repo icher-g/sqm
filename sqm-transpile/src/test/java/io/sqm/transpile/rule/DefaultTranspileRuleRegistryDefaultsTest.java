@@ -22,7 +22,8 @@ class DefaultTranspileRuleRegistryDefaultsTest {
                 "postgres-to-mysql-regex-variant-unsupported",
                 "postgres-to-mysql-returning-unsupported",
                 "postgres-to-mysql-similar-to-unsupported",
-                "sequence-value-unsupported"
+                "sequence-value-unsupported",
+                "table-access-modifier-unsupported"
             ),
             rules.stream().map(TranspileRule::id).sorted().toList()
         );
@@ -39,7 +40,8 @@ class DefaultTranspileRuleRegistryDefaultsTest {
                 "mysql-to-postgres-insert-mode-unsupported",
                 "mysql-to-postgres-json-function-unsupported",
                 "mysql-to-postgres-null-safe-comparison",
-                "mysql-to-postgres-on-duplicate-key-unsupported"
+                "mysql-to-postgres-on-duplicate-key-unsupported",
+                "table-access-modifier-unsupported"
             ),
             rules.stream().map(TranspileRule::id).sorted().toList()
         );
@@ -61,7 +63,8 @@ class DefaultTranspileRuleRegistryDefaultsTest {
                 "postgres-to-sqlserver-distinct-on-unsupported",
                 "postgres-to-sqlserver-returning-unsupported",
                 "sequence-value-unsupported",
-                "standard-limit-to-sqlserver-top"
+                "standard-limit-to-sqlserver-top",
+                "table-access-modifier-unsupported"
             ),
             postgresToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()
         );
@@ -71,12 +74,13 @@ class DefaultTranspileRuleRegistryDefaultsTest {
                 "sqlserver-hint-dropping",
                 "sqlserver-merge-unsupported",
                 "sqlserver-output-unsupported",
-                "sqlserver-top-to-limit"
+                "sqlserver-top-to-limit",
+                "table-access-modifier-unsupported"
             ),
             sqlServerToPostgresRules.stream().map(TranspileRule::id).sorted().toList()
         );
         assertEquals(
-            java.util.List.of("hierarchical-query-unsupported", "sequence-value-unsupported", "standard-limit-to-sqlserver-top"),
+            java.util.List.of("hierarchical-query-unsupported", "sequence-value-unsupported", "standard-limit-to-sqlserver-top", "table-access-modifier-unsupported"),
             ansiToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()
         );
     }
@@ -97,7 +101,8 @@ class DefaultTranspileRuleRegistryDefaultsTest {
                 "oracle-result-clause-unsupported",
                 "postgres-merge-do-nothing-unsupported",
                 "postgres-merge-not-matched-by-source-to-oracle-unsupported",
-                "postgres-to-oracle-distinct-on-unsupported"
+                "postgres-to-oracle-distinct-on-unsupported",
+                "table-access-modifier-unsupported"
             ),
             postgresToOracleRules.stream().map(TranspileRule::id).sorted().toList()
         );
@@ -106,7 +111,8 @@ class DefaultTranspileRuleRegistryDefaultsTest {
                 "hierarchical-query-to-recursive-cte",
                 "oracle-hint-dropping",
                 "oracle-returning-into-unsupported",
-                "pivot-unpivot-approximate-rewrite"
+                "pivot-unpivot-approximate-rewrite",
+                "table-access-modifier-unsupported"
             ),
             oracleToPostgresRules.stream().map(TranspileRule::id).sorted().toList()
         );
@@ -116,7 +122,8 @@ class DefaultTranspileRuleRegistryDefaultsTest {
                 "sqlserver-hint-dropping",
                 "sqlserver-merge-unsupported",
                 "sqlserver-output-unsupported",
-                "sqlserver-top-to-limit"
+                "sqlserver-top-to-limit",
+                "table-access-modifier-unsupported"
             ),
             sqlServerToOracleRules.stream().map(TranspileRule::id).sorted().toList()
         );
@@ -127,7 +134,8 @@ class DefaultTranspileRuleRegistryDefaultsTest {
                 "oracle-returning-into-unsupported",
                 "oracle-to-sqlserver-pivot-unpivot-rule",
                 "sequence-value-unsupported",
-                "standard-limit-to-sqlserver-top"
+                "standard-limit-to-sqlserver-top",
+                "table-access-modifier-unsupported"
             ),
             oracleToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()
         );

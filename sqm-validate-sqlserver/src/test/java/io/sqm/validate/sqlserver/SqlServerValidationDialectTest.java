@@ -1035,7 +1035,7 @@ class SqlServerValidationDialectTest {
         var versionedDialect = SqlServerValidationDialect.of(SqlDialectVersion.of(2014, 0));
 
         assertEquals("sqlserver", dialect.name());
-        assertEquals(13, dialect.additionalRules().size());
+        assertEquals(14, dialect.additionalRules().size());
         assertTrue(dialect.additionalRules().stream()
             .anyMatch(rule -> rule.getClass().getSimpleName().equals("PivotFeatureValidationRule")));
         assertTrue(dialect.additionalRules().stream()

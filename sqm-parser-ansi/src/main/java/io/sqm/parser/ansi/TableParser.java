@@ -121,11 +121,24 @@ public class TableParser implements MatchableParser<Table> {
         return ok(Table.of(schema, name, alias, inheritance, List.of(), version, partitionSpec));
     }
 
+    /**
+     * Checks if the cursor is currently on a statement that looks like a version syntax.
+     *
+     * @param cur a cursor.
+     * @return true if the cursor is currently positioned on a version and false otherwise.
+     */
     protected boolean isVersionSyntax(Cursor cur) {
         return (cur.match(TokenType.AS) && cur.match(TokenType.OF, 1))
             || (cur.match(TokenType.FOR) && cur.match(TokenType.SYSTEM_TIME, 1));
     }
 
+    /**
+     * Parses a table version.
+     *
+     * @param cur a cursor.
+     * @param ctx a context.
+     * @return a parsed version specification.
+     */
     protected ParseResult<TableVersionSpec> parseTableVersion(Cursor cur, ParseContext ctx) {
         if (cur.consumeIf(TokenType.AS)) {
             cur.expect("Expected OF after AS", TokenType.OF);
@@ -202,6 +215,12 @@ public class TableParser implements MatchableParser<Table> {
         return error("Expected SYSTEM_TIME selector", cur.fullPos());
     }
 
+    /**
+     * Parses partition specification.
+     *
+     * @param cur a cursor.
+     * @return a parsed partition specification.
+     */
     protected ParseResult<TablePartitionSpec> parsePartitionSpec(Cursor cur) {
         boolean subpartition = cur.consumeIf(TokenType.SUBPARTITION);
         if (!subpartition) {

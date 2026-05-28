@@ -303,6 +303,6 @@ class SqmDslRendererTest {
         assertTrue(source.contains(".withPartitionSpec(tablePartition(\"sales_q1\"))"));
         assertTrue(source.contains("sampled("));
         assertTrue(source.contains("tableSample(TableSampleSpec.SampleMethod.SYSTEM, TableSampleSpec.SampleUnit.PERCENT, lit(10), lit(42))"));
-        assertTrue(source.contains(".as(Identifier.of(\"s\"))"));
+        assertTrue(source.contains(".as(id(\"s\"))"));
     }
 }
