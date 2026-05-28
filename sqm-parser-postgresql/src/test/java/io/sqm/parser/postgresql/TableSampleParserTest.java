@@ -8,6 +8,7 @@ import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -22,5 +23,22 @@ class TableSampleParserTest {
         var sampled = assertInstanceOf(SampledTable.class, result.value().from());
         assertEquals(TableSampleSpec.SampleMethod.BERNOULLI, sampled.sampleSpec().method());
         assertEquals("u", sampled.alias().value());
+    }
+
+    @Test
+    void parsesSystemTableSample() {
+        var result = ctx.parse(SelectQuery.class, "SELECT * FROM users TABLESAMPLE SYSTEM (25)");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var sampled = assertInstanceOf(SampledTable.class, result.value().from());
+        assertEquals(TableSampleSpec.SampleMethod.SYSTEM, sampled.sampleSpec().method());
+        assertEquals(TableSampleSpec.SampleUnit.UNSPECIFIED, sampled.sampleSpec().unit());
+    }
+
+    @Test
+    void rejectsOracleSampleSyntax() {
+        var result = ctx.parse(SelectQuery.class, "SELECT * FROM users SAMPLE (10)");
+
+        assertFalse(result.ok());
     }
 }

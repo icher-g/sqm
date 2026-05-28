@@ -724,18 +724,18 @@ This is not DDL. It is a query access selector that affects which physical parti
 
 ### Model Decision
 
-Add a generic table access selector if manipulation value is clear.
+Add a generic table partition specification if manipulation value is clear.
 
 ```java
-TableAccessSelector {
-    partitionSpec partition;
-    SubpartitionSpec subpartition;
+TablePartitionSpec {
+    PARTITION(List<Identifier> names)
+    SUBPARTITION(List<Identifier> names)
 }
 ```
 
 ```java
-partitionSpec(List<Identifier> names)
-SubpartitionSpec(List<Identifier> names)
+TablePartitionSpec.partition(List<Identifier> names)
+TablePartitionSpec.subpartition(List<Identifier> names)
 ```
 
 Attach to `Table`, not to every `TableRef`, unless a dialect allows partition selection on derived references.
@@ -978,7 +978,7 @@ Required unsupported rule families:
 - `unpivot-unsupported`
 - `json-table-unsupported`
 - `table-version-unsupported`
-- `partition-selector-unsupported`
+- `table-partition-spec-unsupported`
 - `table-sample-unsupported`
 - `match-recognize-unsupported`
 - `model-clause-unsupported`

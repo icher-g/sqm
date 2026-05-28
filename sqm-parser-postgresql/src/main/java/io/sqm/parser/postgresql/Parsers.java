@@ -35,6 +35,7 @@ public class Parsers {
             .register(new MergeInsertActionParser())
             .register(new AnyAllPredicateParser())
             .register(new FunctionExprParser())
+            .register(new SampledTableParser())
             .register(new SequenceValueExprParser())
             .register(new ConcatExprParser())
             .register(new BinaryOperatorExprParser())

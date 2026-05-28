@@ -39,6 +39,7 @@ public final class Parsers {
             .register(new MergeDoNothingActionParser())
             .register(new MergeInsertActionParser())
             .register(new VariableTableParser())
+            .register(new SampledTableParser())
             .register(new PivotMeasureParser())
             .register(new PivotValueParser())
             .register(new UnpivotInputParser())

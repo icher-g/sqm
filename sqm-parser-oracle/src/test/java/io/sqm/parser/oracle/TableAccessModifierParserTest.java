@@ -10,9 +10,9 @@ import io.sqm.parser.oracle.spi.OracleSpecs;
 import io.sqm.parser.spi.ParseContext;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Objects;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class TableAccessModifierParserTest {
     private final ParseContext ctx = ParseContext.of(new OracleSpecs());
@@ -38,6 +38,17 @@ class TableAccessModifierParserTest {
     }
 
     @Test
+    void parsesSubpartitionList() {
+        var result = ctx.parse(SelectQuery.class, "SELECT * FROM sales SUBPARTITION (sales_q1_eu, sales_q1_us) s");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var table = assertInstanceOf(Table.class, result.value().from());
+        assertEquals(TablePartitionSpec.TablePartitionSpecKind.SUBPARTITION, table.partitionSpec().kind());
+        assertEquals("sales_q1_us", table.partitionSpec().names().get(1).value());
+        assertEquals("s", table.alias().value());
+    }
+
+    @Test
     void parsesSampleBlockSeed() {
         var result = ctx.parse(SelectQuery.class, "SELECT * FROM users SAMPLE BLOCK (10) SEED (42) u");
 
@@ -46,5 +57,24 @@ class TableAccessModifierParserTest {
         assertEquals(TableSampleSpec.SampleMethod.BLOCK, sampled.sampleSpec().method());
         assertEquals(TableSampleSpec.SampleUnit.PERCENT, sampled.sampleSpec().unit());
         assertEquals("u", sampled.alias().value());
+    }
+
+    @Test
+    void parsesRowSampleWithoutSeed() {
+        var result = ctx.parse(SelectQuery.class, "SELECT * FROM users SAMPLE (10)");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var sampled = assertInstanceOf(SampledTable.class, result.value().from());
+        assertEquals(TableSampleSpec.SampleMethod.DIALECT_DEFAULT, sampled.sampleSpec().method());
+        assertEquals(TableSampleSpec.SampleUnit.PERCENT, sampled.sampleSpec().unit());
+        assertNull(sampled.sampleSpec().repeatableSeed());
+    }
+
+    @Test
+    void rejectsIncompleteFlashbackSyntax() {
+        var result = ctx.parse(SelectQuery.class, "SELECT * FROM orders AS OF 42");
+
+        assertFalse(result.ok());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected SCN or TIMESTAMP"));
     }
 }
