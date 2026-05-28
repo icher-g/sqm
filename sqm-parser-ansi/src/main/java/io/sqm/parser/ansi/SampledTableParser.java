@@ -50,36 +50,19 @@ public class SampledTableParser implements MatchableParser<SampledTable>, InfixP
         if (!ctx.capabilities().supports(SqlFeature.TABLE_SAMPLE)) {
             return error("Table sampling is not supported by this dialect", cur.fullPos());
         }
-
-        TableSampleSpec.SampleMethod method = TableSampleSpec.SampleMethod.DIALECT_DEFAULT;
-        TableSampleSpec.SampleUnit unit = TableSampleSpec.SampleUnit.UNSPECIFIED;
-
-        if (cur.consumeIf(TokenType.SAMPLE)) {
-            unit = TableSampleSpec.SampleUnit.PERCENT;
-            if (cur.consumeIf(TokenType.BLOCK)) {
-                method = TableSampleSpec.SampleMethod.BLOCK;
-            }
-        }
-        else {
-            cur.expect("Expected TableSampleSpec", TokenType.TABLESAMPLE);
-            method = parseTableSampleMethod(cur);
-        }
+        var prefix = parseSample(cur);
+        var unit = prefix.unit();
 
         cur.expect("Expected '(' after table sample", TokenType.LPAREN);
         var amount = ctx.parse(Expression.class, cur);
         if (amount.isError()) {
             return error(amount);
         }
-        if (cur.consumeIf(TokenType.PERCENT)) {
-            unit = TableSampleSpec.SampleUnit.PERCENT;
-        }
-        else if (cur.consumeIf(TokenType.ROWS)) {
-            unit = TableSampleSpec.SampleUnit.ROWS;
-        }
+        unit = parseSampleUnit(cur, unit);
         cur.expect("Expected ')' after table sample amount", TokenType.RPAREN);
 
         Expression seed = null;
-        if (cur.consumeIf(TokenType.SEED) || cur.consumeIf(TokenType.REPEATABLE)) {
+        if (consumeSeedKeyword(cur)) {
             cur.expect("Expected '(' before table sample seed", TokenType.LPAREN);
             var seedResult = ctx.parse(Expression.class, cur);
             if (seedResult.isError()) {
@@ -91,9 +74,47 @@ public class SampledTableParser implements MatchableParser<SampledTable>, InfixP
 
         return ok(SampledTable.of(
             source,
-            TableSampleSpec.of(method, unit, amount.value(), seed),
+            TableSampleSpec.of(prefix.method(), unit, amount.value(), seed),
             parseAliasIdentifier(cur)
         ));
+    }
+
+    /**
+     * Parses the dialect-specific table sampling introducer.
+     *
+     * @param cur cursor positioned at the sampling keyword
+     * @return parsed sampling prefix
+     */
+    protected SamplePrefix parseSample(Cursor cur) {
+        cur.expect("Expected TABLESAMPLE", TokenType.TABLESAMPLE);
+        return samplePrefix(parseTableSampleMethod(cur), TableSampleSpec.SampleUnit.UNSPECIFIED);
+    }
+
+    /**
+     * Parses the dialect-specific sample unit suffix inside the amount parentheses.
+     *
+     * @param cur cursor positioned after the amount expression
+     * @param defaultUnit unit selected by the sampling introducer
+     * @return parsed sample unit
+     */
+    protected TableSampleSpec.SampleUnit parseSampleUnit(Cursor cur, TableSampleSpec.SampleUnit defaultUnit) {
+        if (cur.consumeIf(TokenType.PERCENT)) {
+            return TableSampleSpec.SampleUnit.PERCENT;
+        }
+        if (cur.consumeIf(TokenType.ROWS)) {
+            return TableSampleSpec.SampleUnit.ROWS;
+        }
+        return defaultUnit;
+    }
+
+    /**
+     * Consumes a dialect-specific repeatable seed keyword when present.
+     *
+     * @param cur cursor positioned after the amount parentheses
+     * @return {@code true} if a seed keyword was consumed
+     */
+    protected boolean consumeSeedKeyword(Cursor cur) {
+        return cur.consumeIf(TokenType.REPEATABLE);
     }
 
     /**
@@ -105,7 +126,7 @@ public class SampledTableParser implements MatchableParser<SampledTable>, InfixP
      */
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
-        return cur.match(TokenType.SAMPLE) || cur.match(TokenType.TABLESAMPLE);
+        return cur.match(TokenType.TABLESAMPLE);
     }
 
     /**
@@ -118,7 +139,13 @@ public class SampledTableParser implements MatchableParser<SampledTable>, InfixP
         return SampledTable.class;
     }
 
-    private static TableSampleSpec.SampleMethod parseTableSampleMethod(Cursor cur) {
+    /**
+     * Parses an optional TABLESAMPLE method.
+     *
+     * @param cur cursor positioned after TABLESAMPLE
+     * @return parsed sample method, or {@link TableSampleSpec.SampleMethod#SYSTEM} when omitted
+     */
+    protected static TableSampleSpec.SampleMethod parseTableSampleMethod(Cursor cur) {
         if (cur.consumeIf(TokenType.BERNOULLI)) {
             return TableSampleSpec.SampleMethod.BERNOULLI;
         }
@@ -126,5 +153,25 @@ public class SampledTableParser implements MatchableParser<SampledTable>, InfixP
             return TableSampleSpec.SampleMethod.SYSTEM;
         }
         return TableSampleSpec.SampleMethod.SYSTEM;
+    }
+
+    /**
+     * Creates a parsed table sampling prefix.
+     *
+     * @param method sampling method
+     * @param unit default sampling unit
+     * @return parsed sampling prefix
+     */
+    protected static SamplePrefix samplePrefix(TableSampleSpec.SampleMethod method, TableSampleSpec.SampleUnit unit) {
+        return new SamplePrefix(method, unit);
+    }
+
+    /**
+     * Parsed table sampling prefix.
+     *
+     * @param method sampling method
+     * @param unit default sampling unit
+     */
+    protected record SamplePrefix(TableSampleSpec.SampleMethod method, TableSampleSpec.SampleUnit unit) {
     }
 }
