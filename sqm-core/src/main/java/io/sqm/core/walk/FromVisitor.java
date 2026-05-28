@@ -70,6 +70,14 @@ public interface FromVisitor<R> {
     R visitPivotTable(PivotTable t);
 
     /**
+     * Visits a {@link SampledTable}.
+     *
+     * @param t sampled table
+     * @return a result produced by the visitor
+     */
+    R visitSampledTable(SampledTable t);
+
+    /**
      * Visits an {@link UnpivotTable}.
      *
      * @param t unpivot table reference
@@ -125,5 +133,29 @@ public interface FromVisitor<R> {
      * @return the visitor result
      */
     R visitLateral(Lateral i);
+
+    /**
+     * Visits a {@link TableVersionSpec}.
+     *
+     * @param spec table version selector
+     * @return a result produced by the visitor
+     */
+    R visitTableVersionSpec(TableVersionSpec spec);
+
+    /**
+     * Visits a {@link TablePartitionSpec}.
+     *
+     * @param selector table partition specification
+     * @return a result produced by the visitor
+     */
+    R visitTablePartitionSpec(TablePartitionSpec selector);
+
+    /**
+     * Visits a {@link TableSampleSpec}.
+     *
+     * @param sample table sample
+     * @return a result produced by the visitor
+     */
+    R visitTableSampleSpec(TableSampleSpec sample);
 }
 

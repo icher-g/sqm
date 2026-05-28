@@ -40,12 +40,28 @@ public final class IdentifierNormalizationTransformer extends RecursiveNodeTrans
         var name = normalizeIdentifier(t.name());
         var alias = normalizeIdentifier(t.alias());
         List<TableHint> hints = new ArrayList<>(t.hints().size());
+        var version = apply(t.version());
+        var partitionSpec = apply(t.partitionSpec());
         boolean changed = apply(t.hints(), hints);
-        changed |= schema != t.schema() || name != t.name() || alias != t.alias();
+        changed |= schema != t.schema() || name != t.name() || alias != t.alias() || version != t.version() || partitionSpec != t.partitionSpec();
         if (!changed) {
             return t;
         }
-        return Table.of(schema, name, alias, t.inheritance(), hints);
+        return Table.of(schema, name, alias, t.inheritance(), hints, version, partitionSpec);
+    }
+
+    @Override
+    public Node visitTablePartitionSpec(TablePartitionSpec spec) {
+        List<Identifier> names = spec.names().stream()
+            .map(this::normalizeIdentifier)
+            .toList();
+        if (names.equals(spec.names())) {
+            return spec;
+        }
+        return switch (spec.kind()) {
+            case PARTITION -> TablePartitionSpec.partition(names);
+            case SUBPARTITION -> TablePartitionSpec.subpartition(names);
+        };
     }
 
     @Override

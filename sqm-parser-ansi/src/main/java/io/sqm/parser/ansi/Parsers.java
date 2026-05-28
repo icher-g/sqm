@@ -111,6 +111,7 @@ public final class Parsers {
             .register(new UnpivotInputParser())
             .register(new PivotTableParser())
             .register(new UnpivotTableParser())
+            .register(new SampledTableParser())
             .register(new QueryTableParser())
             .register(new ValuesTableParser())
             .register(new VariableTableParser())

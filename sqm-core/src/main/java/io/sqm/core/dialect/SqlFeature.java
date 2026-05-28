@@ -263,6 +263,18 @@ public enum SqlFeature {
      */
     JSON_TABLE("JSON_TABLE table reference"),
     /**
+     * Versioned table access such as Oracle {@code AS OF} or SQL Server {@code FOR SYSTEM_TIME}.
+     */
+    TABLE_VERSIONING("Versioned table access"),
+    /**
+     * Table partition specification in a table reference.
+     */
+    TABLE_PARTITION_SPEC("Table partition specification"),
+    /**
+     * Table sampling in a table reference.
+     */
+    TABLE_SAMPLE("Table sampling"),
+    /**
      * PostgreSQL exponentiation operator.
      * Example: {@code a ^ b}
      */

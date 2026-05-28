@@ -38,21 +38,21 @@ This document only covers features beyond that baseline.
 
 ## Design Summary
 
-| Priority | Feature                     | Existing Node Reuse                                       | Proposed Shape                                                | Dialect Generality                                                                     |
-|----------|-----------------------------|-----------------------------------------------------------|---------------------------------------------------------------|----------------------------------------------------------------------------------------|
-| 1        | Oracle `RETURNING ... INTO` | Reuse `ResultClause` items                                | Generalize result targets beyond relation targets             | Oracle now; SQL Server relation target already exists; PostgreSQL direct-return target |
-| 1        | Sequence value expressions  | No existing semantic node                                 | New generic `SequenceValueExpr`                               | Oracle, PostgreSQL, SQL Server, DB2-style dialects                                     |
-| 1        | `CONNECT BY` / `START WITH` | No existing semantic node                                 | New `HierarchicalQueryClause` family                          | Oracle first, generic semantic name                                                    |
-| 2        | `PIVOT` / `UNPIVOT`         | Relation model can host it, but no node                   | New generic relation transform nodes                          | Oracle and SQL Server first                                                            |
-| 2        | `JSON_TABLE`                | Do not force into `FunctionTable`                         | New generic `JsonTableRef` family                             | Oracle, MySQL, and PostgreSQL 17+ first, SQL-standard-friendly                         |
-| 2        | Flashback query `AS OF`     | `Table` can be decorated only with new field/node         | New generic table version spec                                | Oracle and SQL Server temporal access first; other time-travel dialects later          |
-| 2        | Table partition selector    | `Table` identifies base table but not selected partitions | Generic table access selector                                 | Oracle and MySQL selector syntax first                                                 |
-| 2        | Table sampling              | No current table sample node                              | Generic `SampledTable` relation wrapper plus `TableSample`     | Oracle, PostgreSQL, and SQL Server sampling syntax                                     |
-| 3        | Oracle `AT TIME ZONE`       | Reuse `AtTimeZoneExpr`                                    | Add Oracle parse/render/validation                            | PostgreSQL and SQL Server already have related support                                 |
-| 3        | Oracle locking variants     | Reuse `LockingClause` where possible                      | Extend locking for `WAIT n` only if needed                    | Oracle, PostgreSQL, SQL Server variants                                                |
-| 3        | `MATCH_RECOGNIZE`           | No existing semantic node                                 | New row-pattern recognition clause                            | SQL standard, Oracle, Snowflake, Trino-style dialects                                  |
-| 4        | Oracle `MODEL` clause       | No existing semantic node                                 | Dedicated model-clause family, deferred                       | Mostly Oracle-specific                                                                 |
-| 4        | Legacy outer join `(+)`     | Existing joins can represent normalized semantics         | Migration/transpile parser story, not a persisted syntax node | Oracle legacy only                                                                     |
+| Priority | Feature                       | Existing Node Reuse                                       | Proposed Shape                                                 | Dialect Generality                                                                     |
+|----------|-------------------------------|-----------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| 1        | Oracle `RETURNING ... INTO`   | Reuse `ResultClause` items                                | Generalize result targets beyond relation targets              | Oracle now; SQL Server relation target already exists; PostgreSQL direct-return target |
+| 1        | Sequence value expressions    | No existing semantic node                                 | New generic `SequenceValueExpr`                                | Oracle, PostgreSQL, SQL Server, DB2-style dialects                                     |
+| 1        | `CONNECT BY` / `START WITH`   | No existing semantic node                                 | New `HierarchicalQueryClause` family                           | Oracle first, generic semantic name                                                    |
+| 2        | `PIVOT` / `UNPIVOT`           | Relation model can host it, but no node                   | New generic relation transform nodes                           | Oracle and SQL Server first                                                            |
+| 2        | `JSON_TABLE`                  | Do not force into `FunctionTable`                         | New generic `JsonTableRef` family                              | Oracle, MySQL, and PostgreSQL 17+ first, SQL-standard-friendly                         |
+| 2        | Flashback query `AS OF`       | `Table` can be decorated only with new field/node         | New generic table version spec                                 | Oracle and SQL Server temporal access first; other time-travel dialects later          |
+| 2        | Table partition specification | `Table` identifies base table but not selected partitions | Generic table access selector                                  | Oracle and MySQL selector syntax first                                                 |
+| 2        | Table sampling                | No current table sample node                              | Generic `SampledTable` relation wrapper plus `TableSampleSpec` | Oracle, PostgreSQL, and SQL Server sampling syntax                                     |
+| 3        | Oracle `AT TIME ZONE`         | Reuse `AtTimeZoneExpr`                                    | Add Oracle parse/render/validation                             | PostgreSQL and SQL Server already have related support                                 |
+| 3        | Oracle locking variants       | Reuse `LockingClause` where possible                      | Extend locking for `WAIT n` only if needed                     | Oracle, PostgreSQL, SQL Server variants                                                |
+| 3        | `MATCH_RECOGNIZE`             | No existing semantic node                                 | New row-pattern recognition clause                             | SQL standard, Oracle, Snowflake, Trino-style dialects                                  |
+| 4        | Oracle `MODEL` clause         | No existing semantic node                                 | Dedicated model-clause family, deferred                        | Mostly Oracle-specific                                                                 |
+| 4        | Legacy outer join `(+)`       | Existing joins can represent normalized semantics         | Migration/transpile parser story, not a persisted syntax node  | Oracle legacy only                                                                     |
 
 ## Reuse-First Decisions
 
@@ -728,14 +728,14 @@ Add a generic table access selector if manipulation value is clear.
 
 ```java
 TableAccessSelector {
-    PartitionSelector partition;
-    SubpartitionSelector subpartition;
+    partitionSpec partition;
+    SubpartitionSpec subpartition;
 }
 ```
 
 ```java
-PartitionSelector(List<Identifier> names)
-SubpartitionSelector(List<Identifier> names)
+partitionSpec(List<Identifier> names)
+SubpartitionSpec(List<Identifier> names)
 ```
 
 Attach to `Table`, not to every `TableRef`, unless a dialect allows partition selection on derived references.
@@ -757,7 +757,7 @@ PostgreSQL/SQL Server/ANSI:
 
 ### Transpilation
 
-Unsupported by default. Dropping a partition selector changes performance and possibly data visibility when partition names encode retention windows, so it should not be approximate by default.
+Unsupported by default. Dropping a partition specification changes performance and possibly data visibility when partition names encode retention windows, so it should not be approximate by default.
 
 ## 8. Table Sampling
 
@@ -776,7 +776,7 @@ Other dialects also support table sampling with different syntax.
 Add a generic relation modifier:
 
 ```java
-TableSample {
+TableSampleSpec {
     SampleMethod method;
     SampleUnit unit;
     Expression amount;
@@ -801,7 +801,7 @@ Units:
 Attach to a wrapper `SampledTable`, not directly to `Table`. A wrapper is more flexible and avoids overloading `Table` with every relation modifier:
 
 ```java
-SampledTable(TableRef source, TableSample sample)
+SampledTable(TableRef source, TableSampleSpec sampleSpec)
 ```
 
 ### Dialect Behavior
@@ -924,7 +924,7 @@ Add or review these `SqlFeature` entries:
 - `UNPIVOT`
 - `JSON_TABLE`
 - `TABLE_VERSION_AS_OF`
-- `TABLE_PARTITION_SELECTOR`
+- `TABLE_PARTITION_SPEC`
 - `TABLE_SAMPLE`
 - `MATCH_RECOGNIZE`
 - `MODEL_CLAUSE`
@@ -959,7 +959,7 @@ Examples:
 - `PIVOT`: pivot measures must be aggregate expressions in dialects that require aggregates.
 - `JSON_TABLE`: duplicate column names should be rejected where visible.
 - Flashback: `SCN` must be numeric-like if type info is available.
-- Partition selector: partition names may be catalog-validated only after catalog model supports partitions.
+- partition specification: partition names may be catalog-validated only after catalog model supports partitions.
 
 ## Transpilation Rules
 
@@ -1075,7 +1075,7 @@ Acceptance:
 Scope:
 
 - Flashback/temporal table versioning for Oracle and SQL Server.
-- Partition/subpartition selectors for Oracle, plus MySQL `PARTITION (...)`.
+- Partition/subpartition specifications for Oracle, plus MySQL `PARTITION (...)`.
 - Table sampling for Oracle, PostgreSQL, and SQL Server.
 - Explicit rejection for dialects without matching table-reference semantics.
 
@@ -1085,7 +1085,7 @@ Acceptance:
 - Oracle support is implemented.
 - SQL Server temporal table access is implemented for supported `FOR SYSTEM_TIME` forms, or any intentionally deferred form is rejected explicitly with tests.
 - PostgreSQL and SQL Server table sampling support is implemented.
-- MySQL table partition selector support is implemented.
+- MySQL table partition specification support is implemented.
 - Unsupported dialect/feature combinations are rejected at parse, validation, and render time.
 - Transpilation rules are conservative.
 - DSL/codegen/docs/tests updated.
@@ -1119,7 +1119,7 @@ Acceptance:
 3. Hierarchical queries.
 4. Pivot/unpivot.
 5. JSON_TABLE.
-6. Table access modifiers: flashback, partition selector, sampling.
+6. Table access modifiers: flashback, partition specification, sampling.
 7. Time-zone and locking gaps.
 8. Advanced deferred features.
 

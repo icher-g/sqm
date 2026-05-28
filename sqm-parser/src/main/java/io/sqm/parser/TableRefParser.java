@@ -131,6 +131,15 @@ public class TableRefParser implements Parser<TableRef> {
                 continue;
             }
 
+            matched = ctx.parseIfMatch(SampledTable.class, table, cur);
+            if (matched.match()) {
+                if (matched.result().isError()) {
+                    return matched.result();
+                }
+                table = matched.result().value();
+                continue;
+            }
+
             return ParseResult.ok(table);
         }
     }

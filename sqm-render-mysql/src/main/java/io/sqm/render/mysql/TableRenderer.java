@@ -2,6 +2,7 @@ package io.sqm.render.mysql;
 
 import io.sqm.core.Table;
 import io.sqm.core.TableHint;
+import io.sqm.core.TablePartitionSpec;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
@@ -16,6 +17,20 @@ public class TableRenderer extends io.sqm.render.ansi.TableRenderer {
      * Creates a MySQL table renderer.
      */
     public TableRenderer() {
+    }
+
+    @Override
+    protected void renderPartitionSpec(Table node, RenderContext ctx, SqlWriter w) {
+        TablePartitionSpec selector = node.partitionSpec();
+        if (selector == null) {
+            return;
+        }
+        if (selector.kind() == TablePartitionSpec.TablePartitionSpecKind.SUBPARTITION) {
+            throw new UnsupportedDialectFeatureException("table subpartition specification", ctx.dialect().name());
+        }
+        w.space().append("PARTITION").space().append("(");
+        w.comma(selector.names(), ctx.dialect().quoter());
+        w.append(")");
     }
 
     @Override

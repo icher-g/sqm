@@ -44,12 +44,36 @@ public non-sealed interface Table extends TableRef {
      * @return a newly created table instance
      */
     static Table of(Identifier schema, Identifier name, Identifier alias, Inheritance inheritance, List<? extends TableHint> hints) {
+        return of(schema, name, alias, inheritance, hints, null, null);
+    }
+
+    /**
+     * Creates a table with quote-aware identifiers, typed table hints, and table access selectors.
+     *
+     * @param schema            optional schema identifier
+     * @param name              table name identifier (unqualified)
+     * @param alias             optional table alias identifier
+     * @param inheritance       inheritance behavior
+     * @param hints             optional table hints
+     * @param version           optional table version selector
+     * @param partitionSpec optional partition specification
+     * @return a newly created table instance
+     */
+    static Table of(Identifier schema,
+                    Identifier name,
+                    Identifier alias,
+                    Inheritance inheritance,
+                    List<? extends TableHint> hints,
+                    TableVersionSpec version,
+                    TablePartitionSpec partitionSpec) {
         return new Impl(
             schema,
             Objects.requireNonNull(name),
             alias,
             inheritance,
-            copyHints(hints)
+            copyHints(hints),
+            version,
+            partitionSpec
         );
     }
 
@@ -114,13 +138,51 @@ public non-sealed interface Table extends TableRef {
     }
 
     /**
+     * Returns the table version selector.
+     *
+     * @return table version selector or {@code null}
+     */
+    default TableVersionSpec version() {
+        return null;
+    }
+
+    /**
+     * Returns the table partition specification.
+     *
+     * @return table partition specification or {@code null}
+     */
+    default TablePartitionSpec partitionSpec() {
+        return null;
+    }
+
+    /**
      * Replaces all table hints.
      *
      * @param hints table hints.
      * @return a new table with replaced hints.
      */
     default Table withHints(List<? extends TableHint> hints) {
-        return new Impl(schema(), name(), alias(), inheritance(), copyHints(hints));
+        return new Impl(schema(), name(), alias(), inheritance(), copyHints(hints), version(), partitionSpec());
+    }
+
+    /**
+     * Replaces the table version selector.
+     *
+     * @param version table version selector
+     * @return a new table with replaced version selector
+     */
+    default Table withVersion(TableVersionSpec version) {
+        return new Impl(schema(), name(), alias(), inheritance(), hints(), version, partitionSpec());
+    }
+
+    /**
+     * Replaces the table partition specification.
+     *
+     * @param partitionSpec table partition specification
+     * @return a new table with replaced partition specification
+     */
+    default Table withPartitionSpec(TablePartitionSpec partitionSpec) {
+        return new Impl(schema(), name(), alias(), inheritance(), hints(), version(), partitionSpec);
     }
 
     /**
@@ -195,7 +257,7 @@ public non-sealed interface Table extends TableRef {
      * @return A newly created table with the provide alias. All other fields are preserved.
      */
     default Table as(String alias) {
-        return new Impl(schema(), name(), alias == null ? null : Identifier.of(alias), inheritance(), hints());
+        return new Impl(schema(), name(), alias == null ? null : Identifier.of(alias), inheritance(), hints(), version(), partitionSpec());
     }
 
     /**
@@ -205,7 +267,7 @@ public non-sealed interface Table extends TableRef {
      * @return a newly created table with the provided alias.
      */
     default Table as(Identifier alias) {
-        return new Impl(schema(), name(), alias, inheritance(), hints());
+        return new Impl(schema(), name(), alias, inheritance(), hints(), version(), partitionSpec());
     }
 
     /**
@@ -215,7 +277,7 @@ public non-sealed interface Table extends TableRef {
      * @return A newly created table with the provided schema. All other fields are preserved.
      */
     default Table inSchema(String schema) {
-        return new Impl(schema == null ? null : Identifier.of(schema), name(), alias(), inheritance(), hints());
+        return new Impl(schema == null ? null : Identifier.of(schema), name(), alias(), inheritance(), hints(), version(), partitionSpec());
     }
 
     /**
@@ -225,7 +287,7 @@ public non-sealed interface Table extends TableRef {
      * @return a newly created table with the provided schema.
      */
     default Table inSchema(Identifier schema) {
-        return new Impl(schema, name(), alias(), inheritance(), hints());
+        return new Impl(schema, name(), alias(), inheritance(), hints(), version(), partitionSpec());
     }
 
     /**
@@ -234,7 +296,7 @@ public non-sealed interface Table extends TableRef {
      * @return A new instance with ONLY inheritance.
      */
     default Table only() {
-        return new Impl(schema(), name(), alias(), Inheritance.ONLY, hints());
+        return new Impl(schema(), name(), alias(), Inheritance.ONLY, hints(), version(), partitionSpec());
     }
 
     /**
@@ -243,7 +305,7 @@ public non-sealed interface Table extends TableRef {
      * @return A new instance with descendants included.
      */
     default Table includingDescendants() {
-        return new Impl(schema(), name(), alias(), Inheritance.INCLUDE_DESCENDANTS, hints());
+        return new Impl(schema(), name(), alias(), Inheritance.INCLUDE_DESCENDANTS, hints(), version(), partitionSpec());
     }
 
     /**
@@ -312,12 +374,16 @@ public non-sealed interface Table extends TableRef {
      * @param alias       a table alias identifier.
      * @param inheritance table inheritance behavior.
      * @param hints       optional table hints.
+     * @param version     optional table version selector.
+     * @param partitionSpec optional partition specification.
      */
     record Impl(Identifier schema,
                 Identifier name,
                 Identifier alias,
                 Inheritance inheritance,
-                List<TableHint> hints) implements Table {
+                List<TableHint> hints,
+                TableVersionSpec version,
+                TablePartitionSpec partitionSpec) implements Table {
         /**
          * Creates a table implementation.
          *
@@ -326,6 +392,8 @@ public non-sealed interface Table extends TableRef {
          * @param alias       table alias identifier
          * @param inheritance table inheritance behavior
          * @param hints       table hints.
+         * @param version     table version selector.
+         * @param partitionSpec partition specification.
          */
         public Impl {
             Objects.requireNonNull(name, "name");
@@ -342,9 +410,22 @@ public non-sealed interface Table extends TableRef {
          * @param name        table name identifier
          * @param alias       table alias identifier
          * @param inheritance table inheritance behavior
+         * @param hints       table hints
+         */
+        public Impl(Identifier schema, Identifier name, Identifier alias, Inheritance inheritance, List<TableHint> hints) {
+            this(schema, name, alias, inheritance, hints, null, null);
+        }
+
+        /**
+         * Creates a table implementation without hints.
+         *
+         * @param schema      table schema identifier
+         * @param name        table name identifier
+         * @param alias       table alias identifier
+         * @param inheritance table inheritance behavior
          */
         public Impl(Identifier schema, Identifier name, Identifier alias, Inheritance inheritance) {
-            this(schema, name, alias, inheritance, List.of());
+            this(schema, name, alias, inheritance, List.of(), null, null);
         }
     }
 }

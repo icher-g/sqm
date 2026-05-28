@@ -257,6 +257,10 @@ public enum TokenType {
      */
     PARTITION,
     /**
+     * SUBPARTITION keyword token.
+     */
+    SUBPARTITION,
+    /**
      * RANGE keyword token.
      */
     RANGE,
@@ -456,6 +460,46 @@ public enum TokenType {
      * ROWS keyword token.
      */
     ROWS,
+    /**
+     * SCN keyword token.
+     */
+    SCN,
+    /**
+     * SAMPLE keyword token.
+     */
+    SAMPLE,
+    /**
+     * BLOCK keyword token.
+     */
+    BLOCK,
+    /**
+     * SEED keyword token.
+     */
+    SEED,
+    /**
+     * TABLESAMPLE keyword token.
+     */
+    TABLESAMPLE,
+    /**
+     * BERNOULLI keyword token.
+     */
+    BERNOULLI,
+    /**
+     * SYSTEM keyword token.
+     */
+    SYSTEM,
+    /**
+     * SYSTEM_TIME keyword token.
+     */
+    SYSTEM_TIME,
+    /**
+     * CONTAINED keyword token.
+     */
+    CONTAINED,
+    /**
+     * REPEATABLE keyword token.
+     */
+    REPEATABLE,
     /**
      * ONLY keyword token.
      */

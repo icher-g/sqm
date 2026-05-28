@@ -87,7 +87,7 @@ public class TableRefMatchImpl<R> implements TableRefMatch<R> {
     /**
      * Registers a handler for a {@link JsonTable}.
      *
-     * @param f handler for {@code JsonTableRef}
+     * @param f handler for {@code JsonTable}
      * @return {@code this} for fluent chaining
      */
     @Override
@@ -138,6 +138,21 @@ public class TableRefMatchImpl<R> implements TableRefMatch<R> {
     @Override
     public TableRefMatch<R> unpivot(Function<UnpivotTable, R> f) {
         if (!matched && table instanceof UnpivotTable t) {
+            result = f.apply(t);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Registers a handler for a {@link SampledTable}.
+     *
+     * @param f handler for {@code SampledTable}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public TableRefMatch<R> sampled(Function<SampledTable, R> f) {
+        if (!matched && table instanceof SampledTable t) {
             result = f.apply(t);
             matched = true;
         }

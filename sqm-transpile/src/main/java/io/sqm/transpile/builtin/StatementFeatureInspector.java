@@ -249,6 +249,31 @@ final class StatementFeatureInspector {
         return found.get();
     }
 
+    static boolean hasTableAccessModifier(Statement statement) {
+        var found = new AtomicBoolean(false);
+        statement.accept(new RecursiveNodeVisitor<Void>() {
+            @Override
+            protected Void defaultResult() {
+                return null;
+            }
+
+            @Override
+            public Void visitTable(Table table) {
+                if (table.version() != null || table.partitionSpec() != null) {
+                    found.set(true);
+                }
+                return super.visitTable(table);
+            }
+
+            @Override
+            public Void visitSampledTable(SampledTable table) {
+                found.set(true);
+                return super.visitSampledTable(table);
+            }
+        });
+        return found.get();
+    }
+
     static boolean hasLikeMode(Statement statement, LikeMode mode) {
         var found = new AtomicBoolean(false);
         statement.accept(new RecursiveNodeVisitor<Void>() {

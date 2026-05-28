@@ -2,6 +2,7 @@ package io.sqm.codegen;
 
 import io.sqm.core.JsonTableBehavior;
 import io.sqm.core.JsonTableScalarColumn;
+import io.sqm.core.TableSampleSpec;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
@@ -27,7 +28,11 @@ import static io.sqm.dsl.Dsl.pivotMeasure;
 import static io.sqm.dsl.Dsl.pivotValue;
 import static io.sqm.dsl.Dsl.prior;
 import static io.sqm.dsl.Dsl.select;
+import static io.sqm.dsl.Dsl.sampled;
 import static io.sqm.dsl.Dsl.star;
+import static io.sqm.dsl.Dsl.tablePartition;
+import static io.sqm.dsl.Dsl.tableSample;
+import static io.sqm.dsl.Dsl.tableVersionBetween;
 import static io.sqm.dsl.Dsl.tbl;
 import static io.sqm.dsl.Dsl.unpivot;
 import static io.sqm.dsl.Dsl.unpivotInput;
@@ -256,5 +261,48 @@ class SqmDslRendererTest {
         assertTrue(source.contains("jsonExists(id(\"present\")"));
         assertTrue(source.contains("jsonNested("));
         assertTrue(source.contains(".as(\"jt\")"));
+    }
+
+    @Test
+    void renderEmitsTableAccessModifierDslHelpers() {
+        var statement = select(star())
+            .from(sampled(
+                tbl("sales")
+                    .withVersion(tableVersionBetween(lit(10), lit(20)))
+                    .withPartitionSpec(tablePartition("sales_q1")),
+                tableSample(TableSampleSpec.SampleMethod.SYSTEM, TableSampleSpec.SampleUnit.PERCENT, lit(10), lit(42))).as(id("s")))
+            .build();
+        var user = Path.of("table-access");
+        var group = new SqlFolderGroup(
+            user,
+            "TableAccessQueries",
+            List.of(new SqlSourceFile(
+                Path.of("table-access", "sales.sql"),
+                user,
+                "sales",
+                Set.of(),
+                "hash-6",
+                List.of(statement)
+            ))
+        );
+
+        var options = SqlFileCodegenOptions.of(
+            Path.of("sql"),
+            Path.of("generated"),
+            "io.sqm.codegen.generated",
+            SqlCodegenDialect.SQLSERVER,
+            false,
+            false,
+            null,
+            true
+        );
+
+        var source = new SqmDslRenderer(options).render(group);
+
+        assertTrue(source.contains(".withVersion(tableVersionBetween(lit(10), lit(20)))"));
+        assertTrue(source.contains(".withPartitionSpec(tablePartition(\"sales_q1\"))"));
+        assertTrue(source.contains("sampled("));
+        assertTrue(source.contains("tableSample(TableSampleSpec.SampleMethod.SYSTEM, TableSampleSpec.SampleUnit.PERCENT, lit(10), lit(42))"));
+        assertTrue(source.contains(".as(Identifier.of(\"s\"))"));
     }
 }

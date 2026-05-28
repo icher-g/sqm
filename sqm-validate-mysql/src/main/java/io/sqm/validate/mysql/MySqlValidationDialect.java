@@ -18,6 +18,7 @@ import io.sqm.validate.schema.rule.JsonTableFeatureValidationRule;
 import io.sqm.validate.schema.rule.PivotFeatureValidationRule;
 import io.sqm.validate.schema.rule.SequenceValueFeatureValidationRule;
 import io.sqm.validate.schema.rule.SchemaValidationRule;
+import io.sqm.validate.schema.rule.TableAccessFeatureValidationRule;
 
 import java.util.List;
 import java.util.Objects;
@@ -102,7 +103,8 @@ public final class MySqlValidationDialect implements SchemaValidationDialect {
             new SequenceValueFeatureValidationRule(name(), version, capabilities, false),
             new HierarchicalQueryFeatureValidationRule(name(), version, capabilities),
             new PivotFeatureValidationRule(name(), version, capabilities),
-            new JsonTableFeatureValidationRule(name(), version, capabilities)
+            new JsonTableFeatureValidationRule(name(), version, capabilities),
+            new TableAccessFeatureValidationRule(name(), version, capabilities)
         );
     }
 }

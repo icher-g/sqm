@@ -63,6 +63,7 @@ public final class OracleToSqlServerPivotUnpivotRule implements TranspileRule {
             case QueryTable t -> t.alias() != null ? t.alias().value() : generateAlias("qt", occupiedAliases);
             case ValuesTable t -> t.alias() != null ? t.alias().value() : generateAlias("vt", occupiedAliases);
             case Lateral l -> getOrGenerateTableAlias(l.inner(), occupiedAliases);
+            case SampledTable t -> t.alias() != null ? t.alias().value() : getOrGenerateTableAlias(t.source(), occupiedAliases);
             case PivotTable t -> t.alias() != null ? t.alias().value() : generateAlias("pt", occupiedAliases);
             case UnpivotTable t -> t.alias() != null ? t.alias().value() : generateAlias("upt", occupiedAliases);
             case VariableTable t -> generateAlias(shortenTableName(t.name().value()), occupiedAliases);
@@ -78,6 +79,7 @@ public final class OracleToSqlServerPivotUnpivotRule implements TranspileRule {
             case QueryTable t -> t.alias() != null ? t.alias().value() : null;
             case ValuesTable t -> t.alias() != null ? t.alias().value() : null;
             case Lateral l -> getTableAlias(l.inner());
+            case SampledTable t -> t.alias() != null ? t.alias().value() : getTableAlias(t.source());
             case PivotTable t -> t.alias() != null ? t.alias().value() : null;
             case UnpivotTable t -> t.alias() != null ? t.alias().value() : null;
             case VariableTable ignore -> null;
@@ -107,6 +109,7 @@ public final class OracleToSqlServerPivotUnpivotRule implements TranspileRule {
             case QueryTable t -> t.as(alias);
             case ValuesTable t -> t.as(alias);
             case Lateral l -> Lateral.of(updateAlias(l.inner(), alias));
+            case SampledTable t -> t.as(Identifier.of(alias));
             case PivotTable t -> t.as(alias);
             case UnpivotTable t -> t.as(alias);
             case VariableTable t -> t;

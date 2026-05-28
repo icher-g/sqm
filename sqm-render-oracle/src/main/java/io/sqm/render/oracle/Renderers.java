@@ -46,6 +46,8 @@ public final class Renderers {
             .register(new SequenceValueExprRenderer())
             .register(new PriorExprRenderer())
             .register(new HierarchicalQueryClauseRenderer())
+            .register(new TableRenderer())
+            .register(new SampledTableRenderer())
             .register(new NamedParamExprRenderer())
             .register(new OrdinalParamExprRenderer());
     }

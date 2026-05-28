@@ -20,6 +20,7 @@ import io.sqm.core.*;
     @JsonSubTypes.Type(value = VariableTable.Impl.class, name = "variable_table"),
     @JsonSubTypes.Type(value = JsonTable.Impl.class, name = "json_table"),
     @JsonSubTypes.Type(value = PivotTable.Impl.class, name = "pivot_table"),
+    @JsonSubTypes.Type(value = SampledTable.Impl.class, name = "sampled_table"),
     @JsonSubTypes.Type(value = UnpivotTable.Impl.class, name = "unpivot_table"),
     @JsonSubTypes.Type(value = Lateral.Impl.class, name = "lateral")
 })

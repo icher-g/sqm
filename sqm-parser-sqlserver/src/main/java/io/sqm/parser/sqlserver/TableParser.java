@@ -3,6 +3,7 @@ package io.sqm.parser.sqlserver;
 import io.sqm.core.Identifier;
 import io.sqm.core.Table;
 import io.sqm.core.TableHint;
+import io.sqm.core.TableVersionSpec;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -45,6 +46,18 @@ public class TableParser extends io.sqm.parser.ansi.TableParser {
         Identifier name,
         Table.Inheritance inheritance) {
 
+        TableVersionSpec version = null;
+        if (isVersionSyntax(cur)) {
+            if (!ctx.capabilities().supports(SqlFeature.TABLE_VERSIONING)) {
+                return error("Table versioning is not supported by this dialect", cur.fullPos());
+            }
+            var parsedVersion = parseTableVersion(cur, ctx);
+            if (parsedVersion.isError()) {
+                return error(parsedVersion);
+            }
+            version = parsedVersion.value();
+        }
+
         Identifier alias = null;
         if (looksLikeAliasStart(cur)) {
             alias = parseAliasIdentifier(cur);
@@ -65,7 +78,7 @@ public class TableParser extends io.sqm.parser.ansi.TableParser {
             cur.expect("Expected ) after SQL Server table hints", TokenType.RPAREN);
         }
 
-        return ok(Table.of(schema, name, alias, inheritance, hints));
+        return ok(Table.of(schema, name, alias, inheritance, hints, version, null));
     }
 
     private boolean looksLikeAliasStart(Cursor cur) {

@@ -39,6 +39,8 @@ public class TableRenderer implements Renderer<Table> {
             w.append(".");
         }
         w.append(renderIdentifier(node.name(), quoter));
+        renderTableVersion(node, ctx, w);
+        renderPartitionSpec(node, ctx, w);
         if (node.inheritance() == Table.Inheritance.INCLUDE_DESCENDANTS) {
             if (!ctx.dialect().capabilities().supports(SqlFeature.TABLE_INHERITANCE_DESCENDANTS)) {
                 throw new UnsupportedDialectFeatureException("table *", ctx.dialect().name());
@@ -64,6 +66,32 @@ public class TableRenderer implements Renderer<Table> {
     protected void renderTableHints(Table node, RenderContext ctx, SqlWriter w) {
         if (!node.hints().isEmpty()) {
             throw new UnsupportedDialectFeatureException("table hints", ctx.dialect().name());
+        }
+    }
+
+    /**
+     * Renders optional table version selector.
+     *
+     * @param node table node
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected void renderTableVersion(Table node, RenderContext ctx, SqlWriter w) {
+        if (node.version() != null) {
+            throw new UnsupportedDialectFeatureException("table versioning", ctx.dialect().name());
+        }
+    }
+
+    /**
+     * Renders optional table partition selector.
+     *
+     * @param node table node
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected void renderPartitionSpec(Table node, RenderContext ctx, SqlWriter w) {
+        if (node.partitionSpec() != null) {
+            throw new UnsupportedDialectFeatureException("table partition selector", ctx.dialect().name());
         }
     }
 

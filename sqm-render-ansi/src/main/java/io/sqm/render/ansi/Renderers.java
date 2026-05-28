@@ -114,6 +114,7 @@ public final class Renderers {
             .register(new StarSelectItemRenderer())
             .register(new StarResultItemRenderer())
             .register(new TableRenderer())
+            .register(new SampledTableRenderer())
             .register(new UsingJoinRenderer())
             .register(new ValuesTableRenderer())
             .register(new WhenThenRenderer())

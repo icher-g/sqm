@@ -1,7 +1,6 @@
 package io.sqm.parser.ansi;
 
-import io.sqm.core.Identifier;
-import io.sqm.core.Table;
+import io.sqm.core.*;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
@@ -69,9 +68,10 @@ public class TableParser implements MatchableParser<Table> {
         if (parts.size() == 2) {
             schema = parts.getFirst();
         }
-        else if (parts.size() > 2) {
-            schema = Identifier.of(String.join(".", parts.subList(0, parts.size() - 1).stream().map(Identifier::value).toList()));
-        }
+        else
+            if (parts.size() > 2) {
+                schema = Identifier.of(String.join(".", parts.subList(0, parts.size() - 1).stream().map(Identifier::value).toList()));
+            }
 
         return parseAfterQualifiedName(cur, ctx, schema, name, inheritance);
     }
@@ -92,8 +92,128 @@ public class TableParser implements MatchableParser<Table> {
         Identifier schema,
         Identifier name,
         Table.Inheritance inheritance) {
+        TableVersionSpec version = null;
+        TablePartitionSpec partitionSpec = null;
+
+        if (isVersionSyntax(cur)) {
+            if (!ctx.capabilities().supports(SqlFeature.TABLE_VERSIONING)) {
+                return error("Table versioning is not supported by this dialect", cur.fullPos());
+            }
+            var parsedVersion = parseTableVersion(cur, ctx);
+            if (parsedVersion.isError()) {
+                return error(parsedVersion);
+            }
+            version = parsedVersion.value();
+        }
+
+        if (cur.match(TokenType.PARTITION) || cur.match(TokenType.SUBPARTITION)) {
+            if (!ctx.capabilities().supports(SqlFeature.TABLE_PARTITION_SPEC)) {
+                return error("Table partition specifications are not supported by this dialect", cur.fullPos());
+            }
+            var parsedSelector = parsePartitionSpec(cur);
+            if (parsedSelector.isError()) {
+                return error(parsedSelector);
+            }
+            partitionSpec = parsedSelector.value();
+        }
+
         Identifier alias = parseAliasIdentifier(cur);
-        return ok(Table.of(schema, name, alias, inheritance));
+        return ok(Table.of(schema, name, alias, inheritance, List.of(), version, partitionSpec));
+    }
+
+    protected boolean isVersionSyntax(Cursor cur) {
+        return (cur.match(TokenType.AS) && cur.match(TokenType.OF, 1))
+            || (cur.match(TokenType.FOR) && cur.match(TokenType.SYSTEM_TIME, 1));
+    }
+
+    protected ParseResult<TableVersionSpec> parseTableVersion(Cursor cur, ParseContext ctx) {
+        if (cur.consumeIf(TokenType.AS)) {
+            cur.expect("Expected OF after AS", TokenType.OF);
+            if (cur.consumeIf(TokenType.SCN)) {
+                var value = ctx.parse(Expression.class, cur);
+                if (value.isError()) {
+                    return error(value);
+                }
+                return ok(TableVersionSpec.of(TableVersionSpec.TableVersionKind.AS_OF_SCN, value.value()));
+            }
+            if (cur.match(TokenType.IDENT, "TIMESTAMP")) {
+                cur.advance();
+                var value = ctx.parse(Expression.class, cur);
+                if (value.isError()) {
+                    return error(value);
+                }
+                return ok(TableVersionSpec.of(TableVersionSpec.TableVersionKind.AS_OF_TIMESTAMP, value.value()));
+            }
+            return error("Expected SCN or TIMESTAMP after AS OF", cur.fullPos());
+        }
+
+        cur.expect("Expected FOR", TokenType.FOR);
+        cur.expect("Expected SYSTEM_TIME after FOR", TokenType.SYSTEM_TIME);
+        if (cur.consumeIf(TokenType.AS)) {
+            cur.expect("Expected OF after AS", TokenType.OF);
+            var value = ctx.parse(Expression.class, cur);
+            if (value.isError()) {
+                return error(value);
+            }
+            return ok(TableVersionSpec.of(TableVersionSpec.TableVersionKind.AS_OF_TIMESTAMP, value.value()));
+        }
+        if (cur.consumeIf(TokenType.FROM)) {
+            var start = ctx.parse(Expression.class, cur);
+            if (start.isError()) {
+                return error(start);
+            }
+            cur.expect("Expected TO in FOR SYSTEM_TIME FROM", TokenType.TO);
+            var end = ctx.parse(Expression.class, cur);
+            if (end.isError()) {
+                return error(end);
+            }
+            return ok(TableVersionSpec.range(TableVersionSpec.TableVersionKind.FROM_TO, start.value(), end.value()));
+        }
+        if (cur.consumeIf(TokenType.BETWEEN)) {
+            var start = ctx.parse(Expression.class, cur);
+            if (start.isError()) {
+                return error(start);
+            }
+            cur.expect("Expected AND in FOR SYSTEM_TIME BETWEEN", TokenType.AND);
+            var end = ctx.parse(Expression.class, cur);
+            if (end.isError()) {
+                return error(end);
+            }
+            return ok(TableVersionSpec.range(TableVersionSpec.TableVersionKind.BETWEEN, start.value(), end.value()));
+        }
+        if (cur.consumeIf(TokenType.CONTAINED)) {
+            cur.expect("Expected IN after CONTAINED", TokenType.IN);
+            cur.expect("Expected '(' after CONTAINED IN", TokenType.LPAREN);
+            var start = ctx.parse(Expression.class, cur);
+            if (start.isError()) {
+                return error(start);
+            }
+            cur.expect("Expected comma in CONTAINED IN", TokenType.COMMA);
+            var end = ctx.parse(Expression.class, cur);
+            if (end.isError()) {
+                return error(end);
+            }
+            cur.expect("Expected ')' after CONTAINED IN", TokenType.RPAREN);
+            return ok(TableVersionSpec.range(TableVersionSpec.TableVersionKind.CONTAINED_IN, start.value(), end.value()));
+        }
+        if (cur.consumeIf(TokenType.ALL)) {
+            return ok(TableVersionSpec.all());
+        }
+        return error("Expected SYSTEM_TIME selector", cur.fullPos());
+    }
+
+    protected ParseResult<TablePartitionSpec> parsePartitionSpec(Cursor cur) {
+        boolean subpartition = cur.consumeIf(TokenType.SUBPARTITION);
+        if (!subpartition) {
+            cur.expect("Expected PARTITION", TokenType.PARTITION);
+        }
+        cur.expect("Expected '(' after partition specification", TokenType.LPAREN);
+        List<Identifier> names = new ArrayList<>();
+        do {
+            names.add(toIdentifier(cur.expect("Expected partition name", TokenType.IDENT)));
+        } while (cur.consumeIf(TokenType.COMMA));
+        cur.expect("Expected ')' after partition specification", TokenType.RPAREN);
+        return ok(subpartition ? TablePartitionSpec.subpartition(names) : TablePartitionSpec.partition(names));
     }
 
     /**
