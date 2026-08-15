@@ -1,0 +1,15 @@
+package io.sqm.dbit.oracle;
+
+enum OracleLiveFeature {
+    DOUBLE_QUOTED_IDENTIFIERS,
+    FETCH_FIRST,
+    OFFSET_FETCH,
+    OPTIMIZER_HINT_COMMENT,
+    INSERT,
+    UPDATE,
+    DELETE,
+    RETURNING_INTO,
+    MERGE_MATCHED_UPDATE,
+    MERGE_NOT_MATCHED_INSERT,
+    SEQUENCE_NEXT_VALUE
+}

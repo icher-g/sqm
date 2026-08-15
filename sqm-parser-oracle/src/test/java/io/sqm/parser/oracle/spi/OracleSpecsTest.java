@@ -145,6 +145,17 @@ class OracleSpecsTest {
     }
 
     @Test
+    void parses_parenthesized_oracle_merge_condition() {
+        var context = ParseContext.of(new OracleSpecs());
+        var result = context.parse(
+            MergeStatement.class,
+            "MERGE INTO users USING src_users AS s ON (users.id = s.id) WHEN MATCHED THEN UPDATE SET name = s.name"
+        );
+
+        assertTrue(result.ok(), result.errorMessage());
+    }
+
+    @Test
     void rejects_non_oracle_dml_result_clauses() {
         var context = ParseContext.of(new OracleSpecs());
 
