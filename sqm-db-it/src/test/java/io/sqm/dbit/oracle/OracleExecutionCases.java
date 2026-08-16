@@ -1,8 +1,12 @@
 package io.sqm.dbit.oracle;
 
+import io.sqm.core.LockWaitMode;
 import io.sqm.core.QuoteStyle;
+import io.sqm.core.TableSampleSpec;
 import io.sqm.dbit.support.DialectExecutionCase;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -173,14 +177,143 @@ final class OracleExecutionCases {
             }
         ),
         new DialectExecutionCase<>(
-            "sequence-next-value",
-            EnumSet.of(OracleLiveFeature.SEQUENCE_NEXT_VALUE),
+            "sequence-next-and-current-value",
+            EnumSet.of(OracleLiveFeature.SEQUENCE_NEXT_VALUE, OracleLiveFeature.SEQUENCE_CURRENT_VALUE),
             harness -> {
-                var query = select(nextValue("users_seq")).from(tbl("dual")).build();
+                var query = select(nextValue("users_seq"), currentValue("users_seq")).from(tbl("dual")).build();
 
                 var sql = harness.render(query);
                 assertTrue(sql.contains("users_seq.NEXTVAL"));
-                assertEquals(List.of("100"), harness.queryRows(sql));
+                assertTrue(sql.contains("users_seq.CURRVAL"));
+                assertEquals(List.of("100|100"), harness.queryRows(sql));
+            }
+        ),
+        new DialectExecutionCase<>(
+            "hierarchical-connect-by",
+            EnumSet.of(OracleLiveFeature.HIERARCHICAL_QUERY),
+            harness -> {
+                var query = select(col("id"), col("LEVEL"))
+                    .from(tbl("categories"))
+                    .hierarchical(hierarchy(
+                        col("parent_id").isNull(),
+                        prior(col("id")).eq(col("parent_id")),
+                        false,
+                        orderBy(col("name"))
+                    ))
+                    .build();
+
+                var sql = harness.render(query);
+                assertTrue(sql.contains("START WITH parent_id IS NULL CONNECT BY PRIOR id = parent_id ORDER SIBLINGS BY name"));
+                assertEquals(List.of("1|1", "2|2", "3|2"), harness.queryRows(sql));
+            }
+        ),
+        new DialectExecutionCase<>(
+            "pivot-and-unpivot",
+            EnumSet.of(OracleLiveFeature.PIVOT, OracleLiveFeature.UNPIVOT),
+            harness -> {
+                var pivotQuery = select(star())
+                    .from(pivot(
+                        tbl("sales"),
+                        List.of(pivotMeasure(func("sum", col("amount")), "total")),
+                        col("quarter"),
+                        pivotValue(lit("Q1"), "q1"), pivotValue(lit("Q2"), "q2")
+                    ))
+                    .build();
+                var unpivotQuery = select(col("quarter"), col("amount"))
+                    .from(unpivot(
+                        tbl("sales_wide"),
+                        "amount",
+                        "quarter",
+                        unpivotInput("q1", lit("Q1")), unpivotInput("q2", lit("Q2"))
+                    ))
+                    .orderBy(col("quarter"))
+                    .build();
+
+                var pivotSql = harness.render(pivotQuery);
+                var unpivotSql = harness.render(unpivotQuery);
+                assertTrue(pivotSql.contains("PIVOT"));
+                assertTrue(unpivotSql.contains("UNPIVOT"));
+                assertEquals(List.of("30|30"), harness.queryRows(pivotSql));
+                assertEquals(List.of("Q1|10", "Q2|20"), harness.queryRows(unpivotSql));
+            }
+        ),
+        new DialectExecutionCase<>(
+            "json-table",
+            EnumSet.of(OracleLiveFeature.JSON_TABLE),
+            harness -> {
+                var query = select(col("jt", "id"))
+                    .from(jsonTable(
+                        lit("{\"id\":42}"),
+                        jsonPath("$"),
+                        jsonScalar("id", type("NUMBER"), jsonPath("$.id"))
+                    ).as("jt"))
+                    .build();
+
+                var sql = harness.render(query);
+                assertTrue(sql.contains("JSON_TABLE"));
+                assertFalse(sql.contains(") AS jt"));
+                assertEquals(List.of("42"), harness.queryRows(sql));
+            }
+        ),
+        new DialectExecutionCase<>(
+            "table-access-modifiers",
+            EnumSet.of(
+                OracleLiveFeature.FLASHBACK_AS_OF_TIMESTAMP,
+                OracleLiveFeature.TABLE_PARTITION,
+                OracleLiveFeature.TABLE_SAMPLING
+            ),
+            harness -> {
+                var flashbackQuery = select(col("id"))
+                    .from(tbl("users").withVersion(asOfTimestamp(param("as_of"))))
+                    .orderBy(col("id"))
+                    .build();
+                var partitionQuery = select(col("id"))
+                    .from(tbl("sales").withPartitionSpec(tablePartition("sales_q1")))
+                    .orderBy(col("id"))
+                    .build();
+                var samplingQuery = select(col("u", "id"))
+                    .from(sampled(
+                        tbl("users"),
+                        tableSample(
+                            TableSampleSpec.SampleMethod.DIALECT_DEFAULT,
+                            TableSampleSpec.SampleUnit.PERCENT,
+                            lit(100),
+                            lit(42)
+                        )
+                    ).as(id("u")))
+                    .orderBy(col("u", "id"))
+                    .build();
+
+                var flashbackSql = harness.render(flashbackQuery);
+                var partitionSql = harness.render(partitionQuery);
+                var samplingSql = harness.render(samplingQuery);
+                assertTrue(flashbackSql.contains("AS OF TIMESTAMP :as_of"));
+                assertTrue(partitionSql.contains("PARTITION (sales_q1)"));
+                assertTrue(samplingSql.contains("SAMPLE (100) SEED (42)"));
+                assertEquals(List.of("1", "2"), harness.queryRows(flashbackSql, List.of(Timestamp.from(Instant.now()))));
+                assertEquals(List.of("1", "2"), harness.queryRows(partitionSql));
+                assertEquals(List.of("1", "2"), harness.queryRows(samplingSql));
+            }
+        ),
+        new DialectExecutionCase<>(
+            "time-zone-and-lock-wait",
+            EnumSet.of(OracleLiveFeature.AT_TIME_ZONE, OracleLiveFeature.LOCK_WAIT),
+            harness -> {
+                var timeZoneQuery = select(col("created_at").atTimeZone(lit("UTC")))
+                    .from(tbl("events"))
+                    .build();
+                var lockingQuery = select(col("id"))
+                    .from(tbl("users"))
+                    .where(col("id").eq(lit(1)))
+                    .lockFor(update(), List.of(), LockWaitMode.WAIT, lit(1))
+                    .build();
+
+                var timeZoneSql = harness.render(timeZoneQuery);
+                var lockingSql = harness.render(lockingQuery);
+                assertTrue(timeZoneSql.contains("AT TIME ZONE 'UTC'"));
+                assertTrue(lockingSql.endsWith("FOR UPDATE WAIT 1"));
+                assertEquals(1, harness.queryRows(timeZoneSql).size());
+                assertEquals(List.of("1"), harness.queryRows(lockingSql));
             }
         )
     );

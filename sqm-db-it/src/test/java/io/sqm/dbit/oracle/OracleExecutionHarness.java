@@ -69,6 +69,10 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
 
     protected void resetDslSchema() throws Exception {
         dropSequenceIfExists("users_seq");
+        dropTableIfExists("events");
+        dropTableIfExists("sales_wide");
+        dropTableIfExists("sales");
+        dropTableIfExists("categories");
         dropTableIfExists("orders");
         dropTableIfExists("src_users");
         dropTableIfExists("users");
@@ -76,6 +80,11 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
             "create table users (id number(19) primary key, name varchar2(100) not null, active number(1) not null)",
             "create table src_users (id number(19) primary key, name varchar2(100) not null, active number(1) not null)",
             "create table orders (id number(19) primary key, user_id number(19) not null)",
+            "create table categories (id number(19) primary key, parent_id number(19), name varchar2(100) not null)",
+            "create table sales (id number(19) not null, quarter varchar2(2) not null, amount number(19) not null) "
+                + "partition by list (quarter) (partition sales_q1 values ('Q1'), partition sales_q2 values ('Q2'))",
+            "create table sales_wide (id number(19) primary key, q1 number(19) not null, q2 number(19) not null)",
+            "create table events (id number(19) primary key, created_at timestamp with time zone not null)",
             "insert into users(id, name, active) values (1, 'Alice', 1)",
             "insert into users(id, name, active) values (2, 'Bob', 0)",
             "insert into src_users(id, name, active) values (1, 'Alicia', 1)",
@@ -83,6 +92,14 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
             "insert into orders(id, user_id) values (10, 1)",
             "insert into orders(id, user_id) values (11, 1)",
             "insert into orders(id, user_id) values (12, 2)",
+            "insert into categories(id, parent_id, name) values (1, null, 'Root')",
+            "insert into categories(id, parent_id, name) values (2, 1, 'Alpha')",
+            "insert into categories(id, parent_id, name) values (3, 1, 'Beta')",
+            "insert into sales(id, quarter, amount) values (1, 'Q1', 10)",
+            "insert into sales(id, quarter, amount) values (2, 'Q1', 20)",
+            "insert into sales(id, quarter, amount) values (3, 'Q2', 30)",
+            "insert into sales_wide(id, q1, q2) values (1, 10, 20)",
+            "insert into events(id, created_at) values (1, systimestamp)",
             "create sequence users_seq start with 100 increment by 1"
         );
     }

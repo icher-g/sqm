@@ -1,5 +1,11 @@
 # R11 Oracle-Specific Feature Support Design
 
+**Status: R11-1 through R11-7 completed.** The delivered slices cover variable-target
+`RETURNING ... INTO`, sequence values, hierarchical queries, `PIVOT` / `UNPIVOT`,
+`JSON_TABLE`, table access modifiers, and Oracle time-zone/locking support. R11-8
+remains open for explicit design or continued deferral of `MATCH_RECOGNIZE`, `MODEL`,
+and legacy outer-join `(+)` migration syntax. DDL remains out of scope.
+
 ## Purpose
 
 R10 wired Oracle into SQM across the default parser, renderer, validation, transpilation, codegen, catalog, control, middleware, and playground layers. This document designs the next slice: Oracle-specific and Oracle-heavy SQL features that are common enough to matter, while keeping SQM's primary goal in focus: easy, safe query and DML manipulation.
