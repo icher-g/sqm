@@ -7,6 +7,8 @@ import io.sqm.core.QualifiedName;
 import io.sqm.core.repos.Handler;
 import io.sqm.render.SqlWriter;
 
+import java.util.List;
+
 /**
  * A base interface for all renderers.
  *
@@ -30,16 +32,28 @@ public interface Renderer<T extends Node> extends Handler<T> {
      * @param w    a writer.
      */
     default void renderAliased(AliasedTableRef node, RenderContext ctx, SqlWriter w) {
-        var alias = node.alias();
+        renderTableAlias(node.alias(), node.columnAliases(), ctx, w);
+    }
+
+    /**
+     * Renders a table-reference alias and optional derived column aliases.
+     *
+     * @param alias table-reference alias, or {@code null}
+     * @param columnAliases optional derived column aliases
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    default void renderTableAlias(Identifier alias, List<Identifier> columnAliases, RenderContext ctx, SqlWriter w) {
         if (alias != null) {
             var quoter = ctx.dialect().quoter();
-            w.space().append("AS").space().append(renderIdentifier(alias, quoter));
-            var columnAliases = node.columnAliases();
+            w.space();
+            if (ctx.dialect().usesAsForTableAliases()) {
+                w.append("AS").space();
+            }
+            w.append(renderIdentifier(alias, quoter));
             if (columnAliases != null && !columnAliases.isEmpty()) {
                 w.append("(");
-                w.append(String.join(
-                    ", ",
-                    columnAliases.stream().map(a -> renderIdentifier(a, quoter)).toList()));
+                w.comma(columnAliases, quoter);
                 w.append(")");
             }
         }

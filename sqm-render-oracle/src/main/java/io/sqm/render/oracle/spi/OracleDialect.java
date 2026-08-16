@@ -89,6 +89,11 @@ public class OracleDialect implements SqlDialect {
     }
 
     @Override
+    public boolean usesAsForTableAliases() {
+        return false;
+    }
+
+    @Override
     public DialectCapabilities capabilities() {
         return capabilities;
     }

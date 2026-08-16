@@ -59,7 +59,7 @@ class OracleDmlRoundTripIntegrationTest {
                 WHEN NOT MATCHED THEN INSERT (id, name) VALUES (s.id, s.name)
                 """,
             """
-                MERGE INTO users USING src_users AS s ON (users.id = s.id)
+                MERGE INTO users USING src_users s ON (users.id = s.id)
                 WHEN MATCHED THEN UPDATE SET name = s.name
                 WHEN NOT MATCHED THEN INSERT (id, name) VALUES (s.id, s.name)
                 """

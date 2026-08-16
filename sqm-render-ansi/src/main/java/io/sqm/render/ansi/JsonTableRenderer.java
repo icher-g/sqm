@@ -36,9 +36,7 @@ public class JsonTableRenderer implements Renderer<JsonTable> {
         renderColumns(node.columns(), ctx, w);
         w.outdent().newline().append(")");
         w.outdent().newline().append(")");
-        if (node.alias() != null) {
-            w.space().append("AS").space().append(renderIdentifier(node.alias(), ctx.dialect().quoter()));
-        }
+        renderTableAlias(node.alias(), null, ctx, w);
     }
 
     @Override

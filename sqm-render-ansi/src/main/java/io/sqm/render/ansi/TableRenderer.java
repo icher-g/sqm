@@ -48,10 +48,7 @@ public class TableRenderer implements Renderer<Table> {
             w.space().append("*");
         }
 
-        var alias = node.alias();
-        if (alias != null) {
-            w.space().append("AS").space().append(renderIdentifier(alias, quoter));
-        }
+        renderTableAlias(node.alias(), null, ctx, w);
 
         renderTableHints(node, ctx, w);
     }

@@ -48,9 +48,7 @@ public class PivotTableRenderer implements Renderer<PivotTable> {
             .outdent().newline().append(")")
             .outdent().newline().append(")");
 
-        if (node.alias() != null) {
-            w.space().append("AS").space().append(renderIdentifier(node.alias(), ctx.dialect().quoter()));
-        }
+        renderTableAlias(node.alias(), null, ctx, w);
     }
 
     /**

@@ -8,14 +8,18 @@ import java.util.List;
 import java.util.Set;
 
 import static io.sqm.dsl.Dsl.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 final class OracleExecutionCases {
     private static final List<DialectExecutionCase<OracleLiveFeature, OracleExecutionHarness>> CASES = List.of(
         new DialectExecutionCase<>(
             "quoted-fetch-pagination",
-            EnumSet.of(OracleLiveFeature.DOUBLE_QUOTED_IDENTIFIERS, OracleLiveFeature.FETCH_FIRST, OracleLiveFeature.OFFSET_FETCH),
+            EnumSet.of(
+                OracleLiveFeature.DOUBLE_QUOTED_IDENTIFIERS,
+                OracleLiveFeature.TABLE_ALIAS,
+                OracleLiveFeature.FETCH_FIRST,
+                OracleLiveFeature.OFFSET_FETCH
+            ),
             harness -> {
                 var quotedUsers = id("USERS", QuoteStyle.DOUBLE_QUOTE);
                 var quotedAlias = id("U", QuoteStyle.DOUBLE_QUOTE);
@@ -33,6 +37,36 @@ final class OracleExecutionCases {
             }
         ),
         new DialectExecutionCase<>(
+            "derived-and-lateral-table-aliases",
+            EnumSet.of(OracleLiveFeature.DERIVED_TABLE_ALIAS, OracleLiveFeature.LATERAL_DERIVED_TABLE),
+            harness -> {
+                var derived = select(col("id"))
+                    .from(tbl("users"))
+                    .where(col("active").eq(lit(true)))
+                    .build();
+                var derivedQuery = select(col("active_users", "id"))
+                    .from(tbl(derived).as("active_users"))
+                    .orderBy(col("active_users", "id"))
+                    .build();
+                var lateral = select(col("id"))
+                    .from(tbl("orders"))
+                    .where(col("user_id").eq(col("u", "id")))
+                    .build();
+                var lateralQuery = select(col("u", "id"), col("o", "id"))
+                    .from(tbl("users").as("u"))
+                    .join(io.sqm.core.CrossJoin.of(tbl(lateral).as("o").lateral()))
+                    .orderBy(col("u", "id").asc(), col("o", "id").asc())
+                    .build();
+
+                var derivedSql = harness.render(derivedQuery);
+                var lateralSql = harness.render(lateralQuery);
+                assertFalse(derivedSql.contains(") AS active_users"));
+                assertFalse(lateralSql.contains(") AS o"));
+                assertEquals(List.of("1"), harness.queryRows(derivedSql));
+                assertEquals(List.of("1|10", "1|11", "2|12"), harness.queryRows(lateralSql));
+            }
+        ),
+        new DialectExecutionCase<>(
             "optimizer-hint-query",
             EnumSet.of(OracleLiveFeature.OPTIMIZER_HINT_COMMENT),
             harness -> {
@@ -45,6 +79,36 @@ final class OracleExecutionCases {
                 var sql = harness.render(query);
                 assertTrue(sql.contains("/*+ FULL(users) */"));
                 assertEquals(List.of("1", "2"), harness.queryRows(sql));
+            }
+        ),
+        new DialectExecutionCase<>(
+            "dml-optimizer-hints",
+            EnumSet.of(OracleLiveFeature.DML_OPTIMIZER_HINT_COMMENT),
+            harness -> {
+                var insert = insert("users")
+                    .hint("APPEND")
+                    .columns(id("id"), id("name"), id("active"))
+                    .values(row(lit(4), lit("Dana"), lit(true)))
+                    .build();
+                var update = update("users")
+                    .hint("FULL", id("users"))
+                    .set("name", lit("Dana Updated"))
+                    .where(col("id").eq(lit(4)))
+                    .build();
+                var delete = delete("users")
+                    .hint("FULL", id("users"))
+                    .where(col("id").eq(lit(4)))
+                    .build();
+
+                var insertSql = harness.render(insert);
+                var updateSql = harness.render(update);
+                var deleteSql = harness.render(delete);
+                assertTrue(insertSql.startsWith("INSERT /*+ APPEND */"));
+                assertTrue(updateSql.startsWith("UPDATE /*+ FULL(users) */"));
+                assertTrue(deleteSql.startsWith("DELETE /*+ FULL(users) */"));
+                assertEquals(1, harness.executeUpdate(insertSql, List.of()));
+                assertEquals(1, harness.executeUpdate(updateSql, List.of()));
+                assertEquals(1, harness.executeUpdate(deleteSql, List.of()));
             }
         ),
         new DialectExecutionCase<>(

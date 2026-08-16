@@ -88,6 +88,18 @@ public interface SqlDialect {
     PaginationStyle paginationStyle();
 
     /**
+     * Determines whether table aliases are introduced with the {@code AS} keyword.
+     * <p>
+     * This applies only to table references. Column and expression aliases are
+     * rendered independently by their dedicated renderers.
+     *
+     * @return {@code true} when table aliases use {@code AS}; {@code false} when they are bare
+     */
+    default boolean usesAsForTableAliases() {
+        return true;
+    }
+
+    /**
      * Returns dialect capabilities used for feature gating during rendering.
      *
      * @return dialect capabilities

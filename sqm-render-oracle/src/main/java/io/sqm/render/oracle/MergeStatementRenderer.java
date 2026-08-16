@@ -29,14 +29,13 @@ public class MergeStatementRenderer extends io.sqm.render.ansi.MergeStatementRen
         if (node.result() != null) {
             throw new UnsupportedDialectFeatureException("MERGE RETURNING / OUTPUT", ctx.dialect().name());
         }
-        if (!node.hints().isEmpty()) {
-            throw new UnsupportedDialectFeatureException("MERGE statement hints", ctx.dialect().name());
-        }
         if (node.clauses().stream().anyMatch(clause -> clause.action() instanceof MergeDoNothingAction)) {
             throw new UnsupportedOperationException("Oracle MERGE DO NOTHING actions are not supported");
         }
 
-        w.append("MERGE INTO").space().append(node.target());
+        w.append("MERGE");
+        OracleHintRenderSupport.renderStatementHints(node.hints(), "MERGE optimizer hints", ctx, w);
+        w.space().append("INTO").space().append(node.target());
         w.newline().append("USING").space().append(node.source());
         w.newline().append("ON").space().append("(").append(node.on()).append(")");
         for (var clause : node.clauses()) {

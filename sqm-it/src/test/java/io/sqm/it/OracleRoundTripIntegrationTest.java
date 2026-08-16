@@ -30,7 +30,7 @@ class OracleRoundTripIntegrationTest {
 
         assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
         assertEquals(
-            "SELECT \"u\".\"id\", \"u\".\"name\" FROM \"users\" AS \"u\" "
+            "SELECT \"u\".\"id\", \"u\".\"name\" FROM \"users\" \"u\" "
                 + "ORDER BY \"u\".\"id\" OFFSET 5 ROWS FETCH FIRST 10 ROWS ONLY",
             rendered
         );
@@ -50,8 +50,8 @@ class OracleRoundTripIntegrationTest {
 
         assertEquals(Utils.canonicalJson(parsed), Utils.canonicalJson(reparsed));
         assertEquals(
-            "SELECT u.id FROM users AS u CROSS JOIN LATERAL "
-                + "( SELECT id FROM orders WHERE user_id = u.id ) AS o",
+            "SELECT u.id FROM users u CROSS JOIN LATERAL "
+                + "( SELECT id FROM orders WHERE user_id = u.id ) o",
             rendered
         );
     }

@@ -27,7 +27,7 @@ class OracleTimeZoneAndLockingRendererTest {
             .lockFor(update(), ofTables("u"), LockWaitMode.WAIT, lit(5))
             .build();
 
-        assertEquals("SELECT * FROM users AS u FOR UPDATE OF u WAIT 5", normalize(ctx.render(query).sql()));
+        assertEquals("SELECT * FROM users u FOR UPDATE OF u WAIT 5", normalize(ctx.render(query).sql()));
     }
 
     private static String normalize(String sql) {

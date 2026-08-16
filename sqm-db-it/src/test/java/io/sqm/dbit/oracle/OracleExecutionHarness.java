@@ -69,15 +69,20 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
 
     protected void resetDslSchema() throws Exception {
         dropSequenceIfExists("users_seq");
+        dropTableIfExists("orders");
         dropTableIfExists("src_users");
         dropTableIfExists("users");
         executeStatements(
             "create table users (id number(19) primary key, name varchar2(100) not null, active number(1) not null)",
             "create table src_users (id number(19) primary key, name varchar2(100) not null, active number(1) not null)",
+            "create table orders (id number(19) primary key, user_id number(19) not null)",
             "insert into users(id, name, active) values (1, 'Alice', 1)",
             "insert into users(id, name, active) values (2, 'Bob', 0)",
             "insert into src_users(id, name, active) values (1, 'Alicia', 1)",
             "insert into src_users(id, name, active) values (3, 'Carol', 1)",
+            "insert into orders(id, user_id) values (10, 1)",
+            "insert into orders(id, user_id) values (11, 1)",
+            "insert into orders(id, user_id) values (12, 2)",
             "create sequence users_seq start with 100 increment by 1"
         );
     }
