@@ -26,6 +26,7 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
         .withEnv("APP_USER", "sqm")
         .withEnv("APP_USER_PASSWORD", DATABASE_PASSWORD)
         .withExposedPorts(1521)
+        .withLogConsumer(containerLogConsumer("Oracle"))
         .waitingFor(Wait.forHealthcheck())
         .withStartupTimeout(Duration.ofMinutes(5));
 

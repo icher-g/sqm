@@ -1,6 +1,7 @@
 package io.sqm.dbit.support;
 
 import io.sqm.core.Statement;
+import org.testcontainers.containers.output.OutputFrame;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -8,11 +9,28 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Shared helper base for live-database execution suites.
  */
 public abstract class DialectExecutionHarness {
+    /**
+     * Streams a live database container's output to the active test log.
+     *
+     * @param dialectName dialect label to prefix each container output frame
+     * @return a Testcontainers log consumer
+     */
+    protected static Consumer<OutputFrame> containerLogConsumer(String dialectName) {
+        return frame -> {
+            String output = frame.getUtf8String();
+            if (!output.isBlank()) {
+                System.err.print('[' + dialectName + "] " + output);
+                System.err.flush();
+            }
+        };
+    }
+
     protected abstract Connection openConnection() throws Exception;
 
     protected abstract String render(Statement statement);

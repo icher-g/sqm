@@ -15,7 +15,8 @@ abstract class MySqlExecutionHarness extends DialectExecutionHarness {
     protected static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0.36")
         .withDatabaseName("sqm")
         .withUsername("sqm")
-        .withPassword("sqm");
+        .withPassword("sqm")
+        .withLogConsumer(containerLogConsumer("MySQL"));
 
     private final RenderContext renderContext = RenderContext.of(new MySqlDialect());
 
