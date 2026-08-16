@@ -41,6 +41,7 @@ public final class Renderers {
             .register(new MergeClauseRenderer())
             .register(new MergeUpdateActionRenderer())
             .register(new MergeInsertActionRenderer())
+            .register(new SelectQueryRenderer())
             .register(new LimitOffsetRenderer())
             .register(new VariableResultTargetRenderer())
             .register(new SequenceValueExprRenderer())

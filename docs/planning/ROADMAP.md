@@ -140,9 +140,9 @@ Reference epic doc: `docs/epics/R7_TYPED_HINT_MODELING_COMPLETED.md`
 - Ensure catalog schema loading supports new dialect quirks.
 - Add conformance tests per dialect for schema/validator interplay.
 
-### Epic ORACLE-R1: Oracle Dialect Support
-- Add parser/renderer/specs modules for Oracle-specific syntax.
-- Focus on top query constructs and compatibility gaps.
+### Epic ORACLE-R1: Oracle Dialect Support (Completed as R10)
+- Delivered the Oracle 19c parser/renderer/specs modules and top query/DML compatibility support.
+- R11 contains the completed advanced modeled features and the intentionally deferred advanced Oracle syntax design work.
 
 ## P2 (Nice to Have)
 

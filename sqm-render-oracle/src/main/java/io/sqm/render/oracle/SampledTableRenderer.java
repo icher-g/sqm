@@ -25,8 +25,6 @@ public class SampledTableRenderer extends io.sqm.render.ansi.SampledTableRendere
         if (node.sampleSpec().repeatableSeed() != null) {
             w.space().append("SEED").space().append("(").append(node.sampleSpec().repeatableSeed()).append(")");
         }
-        if (node.alias() != null) {
-            w.space().append("AS").space().append(renderIdentifier(node.alias(), ctx.dialect().quoter()));
-        }
+        renderTableAlias(node.alias(), null, ctx, w);
     }
 }

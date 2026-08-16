@@ -1,6 +1,7 @@
 package io.sqm.render.oracle;
 
 import io.sqm.core.ResultClause;
+import io.sqm.core.DeleteStatement;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 
@@ -13,6 +14,11 @@ public class DeleteStatementRenderer extends io.sqm.render.ansi.DeleteStatementR
      * Creates an Oracle delete-statement renderer.
      */
     public DeleteStatementRenderer() {
+    }
+
+    @Override
+    protected void renderAfterDeleteKeyword(DeleteStatement node, RenderContext ctx, SqlWriter w) {
+        OracleHintRenderSupport.renderStatementHints(node.hints(), "DELETE optimizer hints", ctx, w);
     }
 
     @Override

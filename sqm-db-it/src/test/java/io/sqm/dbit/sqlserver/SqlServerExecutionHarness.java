@@ -14,7 +14,8 @@ abstract class SqlServerExecutionHarness extends DialectExecutionHarness {
     @Container
     protected static final MSSQLServerContainer<?> SQL_SERVER =
         new MSSQLServerContainer<>("mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04")
-            .acceptLicense();
+            .acceptLicense()
+            .withLogConsumer(containerLogConsumer("SQL Server"));
 
     private final RenderContext renderContext = RenderContext.of(new SqlServerDialect());
 

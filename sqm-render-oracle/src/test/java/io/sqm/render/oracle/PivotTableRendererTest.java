@@ -40,7 +40,7 @@ class PivotTableRendererTest {
             .build();
 
         assertEquals(
-            "SELECT * FROM sales UNPIVOT ( amount FOR quarter IN ( q1 AS 'Q1', q2 AS 'Q2' ) ) AS u",
+            "SELECT * FROM sales UNPIVOT ( amount FOR quarter IN ( q1 AS 'Q1', q2 AS 'Q2' ) ) u",
             normalize(ctx.render(query).sql())
         );
     }

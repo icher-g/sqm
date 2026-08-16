@@ -52,7 +52,7 @@ public class MergeStatementParser extends io.sqm.parser.ansi.MergeStatementParse
         }
 
         cur.expect("Expected ON after MERGE source", TokenType.ON);
-        var on = ctx.parse(Predicate.class, cur);
+        var on = ctx.parseEnclosed(Predicate.class, cur);
         if (on.isError()) {
             return error(on);
         }

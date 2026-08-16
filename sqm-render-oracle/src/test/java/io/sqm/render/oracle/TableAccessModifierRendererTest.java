@@ -29,7 +29,21 @@ class TableAccessModifierRendererTest {
             TableSampleSpec.of(TableSampleSpec.SampleMethod.BLOCK, TableSampleSpec.SampleUnit.PERCENT, lit(10), lit(42)),
             io.sqm.core.Identifier.of("u"));
 
-        assertEquals("users SAMPLE BLOCK (10) SEED (42) AS u", normalize(ctx.render(sampled).sql()));
+        assertEquals("users SAMPLE BLOCK (10) SEED (42) u", normalize(ctx.render(sampled).sql()));
+    }
+
+    @Test
+    void omitsAsForJsonTableAlias() {
+        var table = jsonTable(
+            col("payload"),
+            jsonPath("$"),
+            jsonScalar("id", type("NUMBER"), jsonPath("$.id"))
+        ).as("jt");
+
+        assertEquals(
+            "JSON_TABLE ( payload, '$' COLUMNS ( id NUMBER PATH '$.id' ) ) jt",
+            normalize(ctx.render(table).sql())
+        );
     }
 
     private static String normalize(String sql) {

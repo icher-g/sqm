@@ -20,6 +20,8 @@ jobs:
             it_test: MySqlDslExecutionIT
           - id: sqlserver
             it_test: SqlServerDslExecutionIT
+          - id: oracle
+            it_test: OracleDslExecutionIT
     name: Live DB (${{ matrix.dialect.id }})
     steps:
       - uses: actions/checkout@v4

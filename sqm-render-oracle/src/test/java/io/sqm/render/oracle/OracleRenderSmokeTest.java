@@ -86,8 +86,20 @@ class OracleRenderSmokeTest {
         var sql = RenderContext.of(new OracleDialect()).render(query).sql();
 
         assertEquals(
-            "SELECT u.id FROM users AS u CROSS JOIN LATERAL ( SELECT id FROM orders ) AS o",
+            "SELECT u.id FROM users u CROSS JOIN LATERAL ( SELECT id FROM orders ) o",
             sql.replaceAll("\\s+", " ").trim()
+        );
+    }
+
+    @Test
+    void omitsAsForTableAliasesButRetainsItForColumnAliases() {
+        var query = select(col("u", "id").as("user_id"))
+            .from(tbl("users").as("u"))
+            .build();
+
+        assertEquals(
+            "SELECT u.id AS user_id FROM users u",
+            normalize(RenderContext.of(new OracleDialect()).render(query).sql())
         );
     }
 
@@ -163,8 +175,32 @@ class OracleRenderSmokeTest {
         var sql = RenderContext.of(new OracleDialect()).render(statement).sql();
 
         assertEquals(
-            "MERGE INTO users USING src_users AS s ON (users.id = s.id) WHEN MATCHED THEN UPDATE SET name = s.name WHEN NOT MATCHED THEN INSERT (id, name) VALUES (s.id, s.name)",
+            "MERGE INTO users USING src_users s ON (users.id = s.id) WHEN MATCHED THEN UPDATE SET name = s.name WHEN NOT MATCHED THEN INSERT (id, name) VALUES (s.id, s.name)",
             normalize(sql)
+        );
+    }
+
+    @Test
+    void rendersOracleOptimizerHintsAfterStatementVerbs() {
+        var dialect = new OracleDialect();
+        var select = select(col("id")).hint("FULL", id("users")).from(tbl("users")).build();
+        var insert = insert("users").hint("APPEND").values(row(lit(1L))).build();
+        var update = update("users").hint("FULL", id("users")).set("name", lit("alice")).build();
+        var delete = delete("users").hint("FULL", id("users")).build();
+        var merge = merge("users")
+            .hint("MERGE")
+            .source(tbl("src_users").as("s"))
+            .on(col("users", "id").eq(col("s", "id")))
+            .whenMatchedUpdate(java.util.List.of(set("name", col("s", "name"))))
+            .build();
+
+        assertEquals("SELECT /*+ FULL(users) */ id FROM users", normalize(RenderContext.of(dialect).render(select).sql()));
+        assertEquals("INSERT /*+ APPEND */ INTO users VALUES (1)", normalize(RenderContext.of(dialect).render(insert).sql()));
+        assertEquals("UPDATE /*+ FULL(users) */ users SET name = 'alice'", normalize(RenderContext.of(dialect).render(update).sql()));
+        assertEquals("DELETE /*+ FULL(users) */ FROM users", normalize(RenderContext.of(dialect).render(delete).sql()));
+        assertEquals(
+            "MERGE /*+ MERGE */ INTO users USING src_users s ON (users.id = s.id) WHEN MATCHED THEN UPDATE SET name = s.name",
+            normalize(RenderContext.of(dialect).render(merge).sql())
         );
     }
 
@@ -187,12 +223,6 @@ class OracleRenderSmokeTest {
             .whenMatchedUpdate(java.util.List.of(set("name", col("s", "name"))))
             .result(col("id"))
             .build();
-        var hint = merge("users")
-            .source(tbl("src").as("s"))
-            .on(col("users", "id").eq(col("s", "id")))
-            .hint("MERGE_HINT")
-            .whenMatchedUpdate(java.util.List.of(set("name", col("s", "name"))))
-            .build();
         var doNothing = merge("users")
             .source(tbl("src").as("s"))
             .on(col("users", "id").eq(col("s", "id")))
@@ -202,7 +232,6 @@ class OracleRenderSmokeTest {
         assertThrows(UnsupportedDialectFeatureException.class, () -> RenderContext.of(new OracleDialect()).render(top));
         assertThrows(UnsupportedDialectFeatureException.class, () -> RenderContext.of(new OracleDialect()).render(bySource));
         assertThrows(UnsupportedDialectFeatureException.class, () -> RenderContext.of(new OracleDialect()).render(returning));
-        assertThrows(UnsupportedDialectFeatureException.class, () -> RenderContext.of(new OracleDialect()).render(hint));
         assertThrows(UnsupportedOperationException.class, () -> RenderContext.of(new OracleDialect()).render(doNothing));
         assertThrows(UnsupportedDialectFeatureException.class, () -> RenderContext.of(new NoMergeOracleDialect()).render(doNothing));
     }

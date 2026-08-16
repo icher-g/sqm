@@ -3,6 +3,8 @@
 ### Title
 `Epic: R10 Oracle Dialect Support`
 
+**Status: Completed.** Oracle 19c baseline support is delivered across the parser, renderer, validation, transpilation, control, codegen, catalog, middleware, playground, fast integration-test, and Docker-backed live-DB test layers. The advanced features that require further semantic design remain explicitly tracked in R11; Oracle DDL remains out of scope.
+
 ### Problem Statement
 
 SQM currently ships ANSI, PostgreSQL, MySQL, and SQL Server dialect slices. Oracle is the next high-value enterprise dialect because it differs materially from the existing set in areas that matter to a SQL manipulation framework:
@@ -481,7 +483,7 @@ Integration test requirements:
 - middleware parse/render/validate flow with `dialect=oracle`
 - playground API dialect listing
 - codegen Maven plugin sample with Oracle SQL files
-- optional `sqm-db-it` Oracle container profile only if project infrastructure can support Oracle XE or Free images deterministically
+- `sqm-db-it` Oracle Free Testcontainers execution suite for the baseline query and DML features, run through the `docker-it` profile
 
 Test examples should use DSL/helper methods. If the Oracle scenario feels awkward to express, add a helper before writing final tests.
 

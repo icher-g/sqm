@@ -72,9 +72,7 @@ public class UnpivotTableRenderer implements Renderer<UnpivotTable> {
         w.outdent().newline().append(")");
         w.outdent().newline().append(")");
 
-        if (node.alias() != null) {
-            w.space().append("AS").space().append(renderIdentifier(node.alias(), quoter));
-        }
+        renderTableAlias(node.alias(), null, ctx, w);
     }
 
     /**
