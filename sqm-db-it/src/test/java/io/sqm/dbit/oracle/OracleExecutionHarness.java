@@ -12,6 +12,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Duration;
 
@@ -64,6 +65,23 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
                 }
                 return resultSet.getLong(1);
             }
+        }
+    }
+
+    /**
+     * Returns the current database timestamp for a flashback query that must be later than fixture DDL.
+     *
+     * @return current Oracle database timestamp
+     * @throws Exception when the timestamp cannot be read
+     */
+    protected Timestamp currentDatabaseTimestamp() throws Exception {
+        try (var connection = openConnection();
+             var statement = connection.createStatement();
+             var resultSet = statement.executeQuery("select systimestamp from dual")) {
+            if (!resultSet.next()) {
+                throw new IllegalStateException("Oracle did not return SYSTIMESTAMP");
+            }
+            return resultSet.getTimestamp(1);
         }
     }
 

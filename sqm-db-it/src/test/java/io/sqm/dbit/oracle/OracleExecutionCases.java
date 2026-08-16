@@ -5,8 +5,6 @@ import io.sqm.core.QuoteStyle;
 import io.sqm.core.TableSampleSpec;
 import io.sqm.dbit.support.DialectExecutionCase;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -203,7 +201,7 @@ final class OracleExecutionCases {
                     .build();
 
                 var sql = harness.render(query);
-                assertTrue(sql.contains("START WITH parent_id IS NULL CONNECT BY PRIOR id = parent_id ORDER SIBLINGS BY name"));
+                assertTrue(normalizeSql(sql).contains("START WITH parent_id IS NULL CONNECT BY PRIOR id = parent_id ORDER SIBLINGS BY name"));
                 assertEquals(List.of("1|1", "2|2", "3|2"), harness.queryRows(sql));
             }
         ),
@@ -211,9 +209,12 @@ final class OracleExecutionCases {
             "pivot-and-unpivot",
             EnumSet.of(OracleLiveFeature.PIVOT, OracleLiveFeature.UNPIVOT),
             harness -> {
+                var pivotSource = select(col("quarter"), col("amount"))
+                    .from(tbl("sales"))
+                    .build();
                 var pivotQuery = select(star())
                     .from(pivot(
-                        tbl("sales"),
+                        tbl(pivotSource).as("source"),
                         List.of(pivotMeasure(func("sum", col("amount")), "total")),
                         col("quarter"),
                         pivotValue(lit("Q1"), "q1"), pivotValue(lit("Q2"), "q2")
@@ -290,7 +291,7 @@ final class OracleExecutionCases {
                 assertTrue(flashbackSql.contains("AS OF TIMESTAMP :as_of"));
                 assertTrue(partitionSql.contains("PARTITION (sales_q1)"));
                 assertTrue(samplingSql.contains("SAMPLE (100) SEED (42)"));
-                assertEquals(List.of("1", "2"), harness.queryRows(flashbackSql, List.of(Timestamp.from(Instant.now()))));
+                assertEquals(List.of("1", "2"), harness.queryRows(flashbackSql, List.of(harness.currentDatabaseTimestamp())));
                 assertEquals(List.of("1", "2"), harness.queryRows(partitionSql));
                 assertEquals(List.of("1", "2"), harness.queryRows(samplingSql));
             }
@@ -331,5 +332,9 @@ final class OracleExecutionCases {
             covered.addAll(testCase.features());
         }
         return covered;
+    }
+
+    private static String normalizeSql(String sql) {
+        return sql.replaceAll("\\s+", " ").trim();
     }
 }
