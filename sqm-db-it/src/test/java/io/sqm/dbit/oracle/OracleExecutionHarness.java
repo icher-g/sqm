@@ -27,7 +27,7 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
         .withEnv("APP_USER_PASSWORD", DATABASE_PASSWORD)
         .withExposedPorts(1521)
         .withLogConsumer(containerLogConsumer("Oracle"))
-        .waitingFor(Wait.forHealthcheck())
+        .waitingFor(Wait.forLogMessage(".*DATABASE IS READY TO USE!.*\\s", 1))
         .withStartupTimeout(Duration.ofMinutes(5));
 
     private final RenderContext renderContext = RenderContext.of(new OracleDialect());
