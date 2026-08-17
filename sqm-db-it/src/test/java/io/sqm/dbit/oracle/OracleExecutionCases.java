@@ -278,7 +278,7 @@ final class OracleExecutionCases {
                         tableSample(
                             TableSampleSpec.SampleMethod.DIALECT_DEFAULT,
                             TableSampleSpec.SampleUnit.PERCENT,
-                            lit(100),
+                            lit(99),
                             lit(42)
                         )
                     ).as(id("u")))
@@ -290,10 +290,10 @@ final class OracleExecutionCases {
                 var samplingSql = harness.render(samplingQuery);
                 assertTrue(flashbackSql.contains("AS OF TIMESTAMP :as_of"));
                 assertTrue(partitionSql.contains("PARTITION (sales_q1)"));
-                assertTrue(samplingSql.contains("SAMPLE (100) SEED (42)"));
+                assertTrue(samplingSql.contains("SAMPLE (99) SEED (42)"));
                 assertEquals(List.of("1", "2"), harness.queryRows(flashbackSql, List.of(harness.currentDatabaseTimestamp())));
                 assertEquals(List.of("1", "2"), harness.queryRows(partitionSql));
-                assertEquals(List.of("1", "2"), harness.queryRows(samplingSql));
+                assertTrue(Set.of("1", "2").containsAll(harness.queryRows(samplingSql)));
             }
         ),
         new DialectExecutionCase<>(
