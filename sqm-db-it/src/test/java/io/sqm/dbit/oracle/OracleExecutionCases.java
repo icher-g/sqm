@@ -265,7 +265,7 @@ final class OracleExecutionCases {
             ),
             harness -> {
                 var flashbackQuery = select(col("id"))
-                    .from(tbl("users").withVersion(asOfTimestamp(param("as_of"))))
+                    .from(tbl("flashback_users").withVersion(asOfTimestamp(param("as_of"))))
                     .orderBy(col("id"))
                     .build();
                 var partitionQuery = select(col("id"))

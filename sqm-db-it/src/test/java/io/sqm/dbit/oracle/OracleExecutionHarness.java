@@ -18,6 +18,7 @@ import java.time.Duration;
 
 abstract class OracleExecutionHarness extends DialectExecutionHarness {
     private static final String DATABASE_PASSWORD = "SqmOracle1!";
+    private static boolean flashbackFixtureInitialized;
 
     @Container
     protected static final GenericContainer<?> ORACLE = new GenericContainer<>(
@@ -86,6 +87,7 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
     }
 
     protected void resetDslSchema() throws Exception {
+        initializeFlashbackFixture();
         dropSequenceIfExists("users_seq");
         dropTableIfExists("events");
         dropTableIfExists("sales_wide");
@@ -120,6 +122,18 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
             "insert into events(id, created_at) values (1, systimestamp)",
             "create sequence users_seq start with 100 increment by 1"
         );
+    }
+
+    private void initializeFlashbackFixture() throws Exception {
+        if (flashbackFixtureInitialized) {
+            return;
+        }
+        executeStatements(
+            "create table flashback_users (id number(19) primary key, name varchar2(100) not null)",
+            "insert into flashback_users(id, name) values (1, 'Alice')",
+            "insert into flashback_users(id, name) values (2, 'Bob')"
+        );
+        flashbackFixtureInitialized = true;
     }
 
     private void dropTableIfExists(String tableName) throws Exception {
