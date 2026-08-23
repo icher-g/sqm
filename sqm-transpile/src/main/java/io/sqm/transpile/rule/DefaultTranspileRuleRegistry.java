@@ -54,6 +54,7 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
             new PostgresToSqlServerReturningUnsupportedRule(),
             new SequenceValueUnsupportedRule(),
             new TableAccessModifierUnsupportedRule(),
+            new MatchRecognizeUnsupportedRule(),
             new PivotUnpivotApproximateRewriteRule(),
             new HierarchicalQueryToRecursiveCteRule(),
             new HierarchicalQueryUnsupportedRule(),

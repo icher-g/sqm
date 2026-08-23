@@ -1229,6 +1229,16 @@ Examples include:
 - dialect-specific JSON/operator families
 - planner or execution semantics that are not just syntax differences
 
+`MATCH_RECOGNIZE` is handled by a global capability rejection rule. The rule
+locates every `PatternRecognitionTable`, including relations nested in queries,
+joins, CTEs, and DML query sources. Oracle-to-Oracle is currently the only exact
+native pair. Every other current pair reports `UNSUPPORTED_MATCH_RECOGNIZE`
+with a stable semantic relation path. The rule exposes an exact-compatibility
+predicate for future native dialect implementations so all modeled pattern,
+row-output, skip, subset, exclusion, navigation, and evaluation options can be
+checked before exact pass-through is enabled. No approximate rewrite is
+performed.
+
 ## Current Slice Backlog And Limitations
 
 For the current PostgreSQL -> MySQL slice, the following items remain intentionally out of scope or only partially covered and should stay visible as follow-up backlog:
@@ -1271,6 +1281,7 @@ The current initial transpilation slice should stay explicit about what is exact
 | Unsupported | Oracle hierarchical queries targeting SQL Server   | Rejected with `UNSUPPORTED_HIERARCHICAL_QUERY`                                           | SQL Server recursive CTE rendering does not use `WITH RECURSIVE` and needs a dedicated renderer/model story                            |
 | Approximate | Simple Oracle/SQL Server `PIVOT` / `UNPIVOT`       | Rewritten to conditional aggregation or `UNION ALL` for PostgreSQL/MySQL/ANSI targets    | Requires `allowApproximateRewrites`; limited to explicit top-level projections and conservative query shapes                           |
 | Unsupported | Complex Oracle/SQL Server `PIVOT` / `UNPIVOT`      | Rejected with `UNSUPPORTED_PIVOT_UNPIVOT_REWRITE`                                        | Nested transforms, star projections, multiple pivot measures, and surrounding clauses need separate lowering rules                     |
+| Unsupported | Oracle `MATCH_RECOGNIZE` to a non-Oracle target     | Rejected with `UNSUPPORTED_MATCH_RECOGNIZE` and a stable relation path                    | No approximate lowering; future native targets must pass the full exact-compatibility check                                               |
 
 ### MySQL -> PostgreSQL
 

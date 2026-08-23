@@ -90,7 +90,16 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
     private static List<TranspileProblem> validationProblems(List<io.sqm.validate.api.ValidationProblem> validationProblems) {
         var problems = new ArrayList<TranspileProblem>(validationProblems.size());
         for (var problem : validationProblems) {
-            problems.add(new TranspileProblem(problem.code().name(), problem.message(), TranspileStage.VALIDATE));
+            problems.add(new TranspileProblem(
+                problem.code().name(),
+                problem.message(),
+                TranspileStage.VALIDATE,
+                null,
+                null,
+                null,
+                null,
+                problem.clausePath()
+            ));
         }
         return List.copyOf(problems);
     }

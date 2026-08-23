@@ -3,6 +3,11 @@ package io.sqm.transpile.builtin;
 import io.sqm.core.*;
 import io.sqm.core.walk.RecursiveNodeVisitor;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -353,6 +358,10 @@ final class StatementFeatureInspector {
         return found.get();
     }
 
+    static List<LocatedPatternRecognition> patternRecognitionTables(Statement statement) {
+        return new PatternRecognitionLocationVisitor().find(statement);
+    }
+
     static boolean hasInsertMode(Statement statement, InsertStatement.InsertMode mode) {
         var found = new AtomicBoolean(false);
         statement.accept(new RecursiveNodeVisitor<Void>() {
@@ -389,5 +398,75 @@ final class StatementFeatureInspector {
             }
         });
         return found.get();
+    }
+
+    record LocatedPatternRecognition(PatternRecognitionTable table, String path) {
+    }
+
+    private static final class PatternRecognitionLocationVisitor extends RecursiveNodeVisitor<Void> {
+        private final ArrayDeque<String> segments = new ArrayDeque<>();
+        private final Map<String, Integer> occurrences = new LinkedHashMap<>();
+        private final List<LocatedPatternRecognition> located = new ArrayList<>();
+
+        List<LocatedPatternRecognition> find(Statement statement) {
+            accept(statement);
+            return List.copyOf(located);
+        }
+
+        @Override
+        protected Void defaultResult() {
+            return null;
+        }
+
+        @Override
+        protected Void accept(Node node) {
+            if (node == null) {
+                return null;
+            }
+            var segment = pathSegment(node);
+            if (segment != null) {
+                segments.addLast(segment);
+            }
+            try {
+                return node.accept(this);
+            }
+            finally {
+                if (segment != null) {
+                    segments.removeLast();
+                }
+            }
+        }
+
+        @Override
+        public Void visitPatternRecognitionTable(PatternRecognitionTable table) {
+            var basePath = String.join(".", segments);
+            var occurrence = occurrences.merge(basePath, 1, Integer::sum) - 1;
+            located.add(new LocatedPatternRecognition(table, basePath + "[" + occurrence + "]"));
+            return super.visitPatternRecognitionTable(table);
+        }
+
+        private static String pathSegment(Node node) {
+            return switch (node) {
+                case InsertStatement ignored -> "insert";
+                case UpdateStatement ignored -> "update";
+                case DeleteStatement ignored -> "delete";
+                case MergeStatement ignored -> "merge";
+                case SelectQuery ignored -> "select";
+                case CompositeQuery ignored -> "set";
+                case WithQuery ignored -> "with";
+                case CteDef ignored -> "cte";
+                case QueryTable ignored -> "queryTable";
+                case QueryExpr ignored -> "subquery";
+                case Join ignored -> "join";
+                case PatternRecognitionTable ignored -> "matchRecognize";
+                case Lateral ignored -> "lateral";
+                case PivotTable ignored -> "pivot";
+                case UnpivotTable ignored -> "unpivot";
+                case SampledTable ignored -> "sampled";
+                case JsonTable ignored -> "jsonTable";
+                case ExistsPredicate ignored -> "exists";
+                default -> null;
+            };
+        }
     }
 }

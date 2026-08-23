@@ -47,6 +47,9 @@ class TranspileRuleResultTest {
         var unsupported = TranspileRuleResult.unsupported(statement, "UNSUPPORTED", "No mapping");
         assertEquals(RewriteFidelity.UNSUPPORTED, unsupported.fidelity());
         assertEquals("UNSUPPORTED", unsupported.problems().getFirst().code());
+
+        var located = TranspileRuleResult.unsupported(statement, "LOCATED", "No mapping", "select.from");
+        assertEquals("select.from", located.problems().getFirst().clausePath());
     }
 
     @Test

@@ -164,6 +164,7 @@ combined render result and `result.params()` preserves statement order.
   - Oracle statement and table hints are dropped for non-Oracle targets
   - simple top-level `PIVOT`/`UNPIVOT` transforms are rewritten approximately to conditional aggregation or `UNION ALL` for PostgreSQL/MySQL/ANSI targets when `allowApproximateRewrites` is enabled
 - Unsupported:
+  - `MATCH_RECOGNIZE` is rejected with `UNSUPPORTED_MATCH_RECOGNIZE`; the problem includes a stable relation path such as `select.matchRecognize[0]`
   - Oracle DML `RETURNING ... INTO` is modeled and parsed, but exact transpilation to non-Oracle result channels is unsupported until an explicit conversion rule is designed
   - Complex Oracle hierarchical queries, including `NOCYCLE`, `ORDER SIBLINGS BY`, joins, grouping, pagination, locking, or non-column projections, are rejected with `UNSUPPORTED_HIERARCHICAL_QUERY_REWRITE`
   - complex or nested `PIVOT`/`UNPIVOT` shapes are rejected with `UNSUPPORTED_PIVOT_UNPIVOT_REWRITE`
@@ -193,6 +194,7 @@ combined render result and `result.params()` preserves statement order.
 | Oracle                | SQL Server            | limit-only row limiting                   | Exact rewrite to `TOP`                                                    |
 | Oracle                | non-Oracle            | hints                                     | Approximate drop with `ORACLE_HINTS_DROPPED`                              |
 | Oracle                | non-Oracle            | `RETURNING ... INTO`                      | Unsupported with `UNSUPPORTED_ORACLE_RETURNING_INTO`                      |
+| Oracle                | non-Oracle            | `MATCH_RECOGNIZE`                         | Unsupported with `UNSUPPORTED_MATCH_RECOGNIZE` and a relation path        |
 | Oracle                | PostgreSQL/MySQL/ANSI | simple hierarchical query (`CONNECT BY`)  | Exact rewrite to recursive CTE                                            |
 | Oracle                | PostgreSQL/MySQL/ANSI | complex hierarchical query (`CONNECT BY`) | Unsupported with `UNSUPPORTED_HIERARCHICAL_QUERY_REWRITE`                 |
 | Oracle/SQL Server     | PostgreSQL/MySQL/ANSI | simple top-level `PIVOT` / `UNPIVOT`      | Approximate rewrite with `APPROXIMATE_PIVOT_UNPIVOT_REWRITE` when enabled |
@@ -229,6 +231,13 @@ Use:
 - `result.problems()` for blocking issues
 - `result.warnings()` for non-blocking rewrites or dropped behavior
 - `result.steps()` for the ordered rule trace
+
+For `MATCH_RECOGNIZE`, `problem.clausePath()` identifies the unsupported
+relation even when it is nested in a subquery, join, CTE, or DML query source.
+Oracle-to-Oracle transpilation passes the complete modeled clause through
+exactly. Other current targets are rejected before rendering because SQM does
+not approximate row-pattern semantics with windows, joins, recursive CTEs, or
+procedural SQL.
 
 SQL Server note:
 

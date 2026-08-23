@@ -740,7 +740,7 @@ graph TD
   ANSI explicitly rejects this node, and other dialects do not currently ship parser or renderer support for it.
 
 - **PatternRecognitionTable**
-  Shared relation transform for SQL row-pattern recognition. It stores a source relation, optional partitioning and ordering, named measures, output-cardinality and after-match behavior, a typed `MatchPattern`, subsets, definitions, and an optional result alias. The shared model is implemented independently of dialect syntax; Oracle 12.1+ parser, renderer, validation, and live-engine support are delivered by the remaining R11-8 stories.
+  Shared relation transform for SQL row-pattern recognition. It stores a source relation, optional partitioning and ordering, named measures, output-cardinality and after-match behavior, a typed `MatchPattern`, subsets, definitions, and an optional result alias. The shared model is implemented independently of dialect syntax. Oracle 12.1+ parsing, rendering, validation, DSL code generation, and exact Oracle-to-Oracle transpilation are implemented; non-Oracle targets receive an explicit path-aware unsupported diagnostic. Broad live-engine coverage remains in R11-8E.
 
 - **MatchPattern**
   Sealed typed grammar family for primary variables, sequences, alternations, permutations, anchors, empty patterns, exclusions, and greedy or reluctant quantifiers. Parentheses used only for precedence are not persisted, and no variant stores raw SQL.

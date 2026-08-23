@@ -26,7 +26,7 @@ class ExampleServiceTest {
         assertTrue(response.success());
         assertNotNull(response.requestId());
         assertFalse(response.requestId().isBlank());
-        assertEquals(11, response.examples().size());
+        assertEquals(12, response.examples().size());
         assertEquals("basic-select", response.examples().getFirst().id());
         assertEquals("ansi", response.examples().getFirst().dialect().name());
         assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("ansi-analytics-report")));
@@ -36,6 +36,7 @@ class ExampleServiceTest {
         assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("oracle-offset-fetch")));
         assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("oracle-hierarchical-query")));
         assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("oracle-pivot-query")));
+        assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("oracle-match-recognize")));
     }
 
     @Test
@@ -53,5 +54,22 @@ class ExampleServiceTest {
 
         assertEquals(TranspileStatus.SUCCESS, result.status());
         assertTrue(result.sql().orElseThrow().contains("WITH RECURSIVE"));
+    }
+
+    @Test
+    void oracleMatchRecognizeExampleParsesValidatesAndRenders() {
+        var example = new ExampleCatalog().examples().stream()
+            .filter(item -> item.id().equals("oracle-match-recognize"))
+            .findFirst()
+            .orElseThrow();
+
+        var result = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ORACLE)
+            .targetDialect(SqlDialectId.ORACLE)
+            .build()
+            .transpile(example.sql());
+
+        assertEquals(TranspileStatus.SUCCESS, result.status());
+        assertTrue(result.sql().orElseThrow().contains("MATCH_RECOGNIZE"));
     }
 }
