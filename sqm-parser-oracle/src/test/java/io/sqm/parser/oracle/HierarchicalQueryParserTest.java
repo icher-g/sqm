@@ -79,4 +79,14 @@ class HierarchicalQueryParserTest {
         assertTrue(result.isError());
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Expected CONNECT BY"));
     }
+
+    @Test
+    void rejectsInvalidOrderSiblingsItem() {
+        var result = ctx.parse(HierarchicalQueryClause.class, """
+            CONNECT BY PRIOR id = parent_id
+            ORDER SIBLINGS BY name,
+            """);
+
+        assertTrue(result.isError());
+    }
 }

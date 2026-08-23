@@ -8,7 +8,6 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -58,18 +57,13 @@ public class TypeNameParser implements Parser<TypeName> {
         return TypeKeyword.NATIONAL_CHARACTER;
     }
 
-    private static List<Expression> parseModifiers(Cursor cur, ParseContext ctx) {
-        List<Expression> expressions = new ArrayList<>();
-        do {
-            var result = ctx.parse(Expression.class, cur);
-            if (!result.ok()) {
-                var problem = result.problems().getFirst();
-                throw new ParserException(problem.message(), problem.pos());
-            }
-            expressions.add(result.value());
+    private List<Expression> parseModifiers(Cursor cur, ParseContext ctx) {
+        var result = parseItems(Expression.class, cur, ctx);
+        if (!result.ok()) {
+            var problem = result.problems().getFirst();
+            throw new ParserException(problem.message(), problem.pos());
         }
-        while (cur.consumeIf(TokenType.COMMA));
-        return expressions;
+        return result.value();
     }
 
     /**

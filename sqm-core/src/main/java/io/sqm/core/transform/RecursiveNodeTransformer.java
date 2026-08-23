@@ -4,6 +4,7 @@ import io.sqm.core.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * An abstract class providing default implementation for recursive transformation.
@@ -27,6 +28,21 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     @SuppressWarnings("unchecked")
     protected <T extends Node> T apply(T n) {
         return (T) transform(n);
+    }
+
+    /**
+     * Transforms a declaration or reference in pattern-variable scope.
+     *
+     * <p>The default implementation preserves the identifier. Subclasses that
+     * rename a pattern variable should override this single hook so primary and
+     * union declarations, pattern occurrences, subset memberships, skip targets,
+     * and scoped expression references remain synchronized.</p>
+     *
+     * @param identifier pattern-scope identifier
+     * @return transformed non-null identifier
+     */
+    protected Identifier transformPatternIdentifier(Identifier identifier) {
+        return identifier;
     }
 
     /**
@@ -906,6 +922,209 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             return JsonTableBehavior.of(behavior.kind(), defaultExpression);
         }
         return behavior;
+    }
+
+    /**
+     * Transforms a pattern-recognition relation and preserves structural sharing.
+     *
+     * @param table relation to transform
+     * @return transformed relation, or the original instance when unchanged
+     */
+    @Override
+    public Node visitPatternRecognitionTable(PatternRecognitionTable table) {
+        var source = apply(table.source());
+        var partitionBy = apply(table.partitionBy());
+        var orderBy = apply(table.orderBy());
+        List<PatternMeasure> measures = new ArrayList<>(table.measures().size());
+        boolean changed = source != table.source()
+            || partitionBy != table.partitionBy()
+            || orderBy != table.orderBy();
+        changed |= apply(table.measures(), measures);
+        var rowsPerMatch = apply(table.rowsPerMatch());
+        var afterMatchSkip = apply(table.afterMatchSkip());
+        var pattern = apply(table.pattern());
+        changed |= rowsPerMatch != table.rowsPerMatch()
+            || afterMatchSkip != table.afterMatchSkip()
+            || pattern != table.pattern();
+        List<PatternSubset> subsets = new ArrayList<>(table.subsets().size());
+        List<PatternDefinition> definitions = new ArrayList<>(table.definitions().size());
+        changed |= apply(table.subsets(), subsets);
+        changed |= apply(table.definitions(), definitions);
+        if (changed) {
+            return PatternRecognitionTable.of(
+                source,
+                partitionBy,
+                orderBy,
+                measures,
+                rowsPerMatch,
+                afterMatchSkip,
+                pattern,
+                subsets,
+                definitions,
+                table.alias()
+            );
+        }
+        return table;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitPatternMeasure(PatternMeasure measure) {
+        var expression = apply(measure.expression());
+        return expression == measure.expression()
+            ? measure
+            : PatternMeasure.of(expression, measure.alias());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitPatternDefinition(PatternDefinition definition) {
+        var variable = requirePatternIdentifier(definition.variable());
+        var condition = apply(definition.condition());
+        return variable.equals(definition.variable()) && condition == definition.condition()
+            ? definition
+            : PatternDefinition.of(variable, condition);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitPatternSubset(PatternSubset subset) {
+        var name = requirePatternIdentifier(subset.name());
+        List<Identifier> variables = new ArrayList<>(subset.variables().size());
+        boolean changed = !name.equals(subset.name());
+        for (var variable : subset.variables()) {
+            var transformed = requirePatternIdentifier(variable);
+            changed |= !transformed.equals(variable);
+            variables.add(transformed);
+        }
+        return changed ? PatternSubset.of(name, variables) : subset;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitRowsPerMatch(RowsPerMatch rowsPerMatch) {
+        return rowsPerMatch;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitAfterMatchSkip(AfterMatchSkip afterMatchSkip) {
+        if (afterMatchSkip.variable() == null) {
+            return afterMatchSkip;
+        }
+        var variable = requirePatternIdentifier(afterMatchSkip.variable());
+        return variable.equals(afterMatchSkip.variable())
+            ? afterMatchSkip
+            : AfterMatchSkip.of(afterMatchSkip.kind(), afterMatchSkip.position(), variable);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitPatternVariable(MatchPattern.Variable pattern) {
+        var name = requirePatternIdentifier(pattern.name());
+        return name.equals(pattern.name()) ? pattern : MatchPattern.Variable.of(name);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitPatternSequence(MatchPattern.Sequence pattern) {
+        List<MatchPattern> elements = new ArrayList<>(pattern.elements().size());
+        return apply(pattern.elements(), elements) ? MatchPattern.Sequence.of(elements) : pattern;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitPatternAlternation(MatchPattern.Alternation pattern) {
+        List<MatchPattern> alternatives = new ArrayList<>(pattern.alternatives().size());
+        return apply(pattern.alternatives(), alternatives)
+            ? MatchPattern.Alternation.of(alternatives)
+            : pattern;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitPatternPermutation(MatchPattern.Permutation pattern) {
+        List<MatchPattern> elements = new ArrayList<>(pattern.elements().size());
+        return apply(pattern.elements(), elements) ? MatchPattern.Permutation.of(elements) : pattern;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitPatternAnchor(MatchPattern.Anchor pattern) {
+        return pattern;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitEmptyPattern(MatchPattern.Empty pattern) {
+        return pattern;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitPatternExclusion(MatchPattern.Exclusion pattern) {
+        var child = apply(pattern.pattern());
+        return child == pattern.pattern() ? pattern : MatchPattern.Exclusion.of(child);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitQuantifiedPattern(MatchPattern.Quantified pattern) {
+        var child = apply(pattern.pattern());
+        return child == pattern.pattern()
+            ? pattern
+            : MatchPattern.Quantified.of(child, pattern.minimum(), pattern.maximum(), pattern.reluctant());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitPatternColumnExpr(PatternColumnExpr expression) {
+        var variable = requirePatternIdentifier(expression.variable());
+        return variable.equals(expression.variable())
+            ? expression
+            : PatternColumnExpr.of(variable, expression.column());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitClassifierExpr(ClassifierExpr expression) {
+        if (expression.variable() == null) {
+            return expression;
+        }
+        var variable = requirePatternIdentifier(expression.variable());
+        return variable.equals(expression.variable()) ? expression : ClassifierExpr.of(variable);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitMatchNumberExpr(MatchNumberExpr expression) {
+        return expression;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitPatternNavigationExpr(PatternNavigationExpr expression) {
+        var child = apply(expression.expression());
+        var offset = apply(expression.offset());
+        return child == expression.expression() && offset == expression.offset()
+            ? expression
+            : PatternNavigationExpr.of(expression.kind(), child, offset);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitPatternEvaluationExpr(PatternEvaluationExpr expression) {
+        var child = apply(expression.expression());
+        return child == expression.expression()
+            ? expression
+            : PatternEvaluationExpr.of(expression.mode(), child);
+    }
+
+    private Identifier requirePatternIdentifier(Identifier identifier) {
+        return Objects.requireNonNull(
+            transformPatternIdentifier(identifier),
+            "transformPatternIdentifier returned null"
+        );
     }
 
     /**

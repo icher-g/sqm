@@ -8,8 +8,6 @@ import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import static io.sqm.parser.spi.ParseResult.error;
@@ -34,19 +32,13 @@ public class RowExprParser implements MatchableParser<RowExpr> {
      */
     @Override
     public ParseResult<RowExpr> parse(Cursor cur, ParseContext ctx) {
-        final List<Expression> list = new ArrayList<>();
         cur.expect("Expected (", TokenType.LPAREN);
-
-        do {
-            var vr = ctx.parse(Expression.class, cur);
-            if (vr.isError()) {
-                return error(vr);
-            }
-            list.add(vr.value());
-        } while (cur.consumeIf(TokenType.COMMA));
-
+        var items = parseItems(Expression.class, cur, ctx);
+        if (items.isError()) {
+            return error(items);
+        }
         cur.expect("Expected )", TokenType.RPAREN);
-        return ok(RowExpr.of(list));
+        return ok(RowExpr.of(items.value()));
     }
 
     /**

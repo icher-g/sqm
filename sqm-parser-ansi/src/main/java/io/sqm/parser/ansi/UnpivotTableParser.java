@@ -12,7 +12,6 @@ import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static io.sqm.parser.spi.ParseResult.error;
@@ -123,15 +122,7 @@ public class UnpivotTableParser implements MatchableParser<UnpivotTable>, InfixP
         return columns;
     }
 
-    private static ParseResult<List<UnpivotInput>> parseInputs(Cursor cur, ParseContext ctx) {
-        List<UnpivotInput> inputs = new ArrayList<>();
-        do {
-            var input = ctx.parse(UnpivotInput.class, cur);
-            if (input.isError()) {
-                return error(input);
-            }
-            inputs.add(input.value());
-        } while (cur.consumeIf(TokenType.COMMA));
-        return ok(List.copyOf(inputs));
+    private ParseResult<List<UnpivotInput>> parseInputs(Cursor cur, ParseContext ctx) {
+        return parseItems(UnpivotInput.class, cur, ctx);
     }
 }

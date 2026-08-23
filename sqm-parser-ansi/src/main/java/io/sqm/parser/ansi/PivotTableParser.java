@@ -13,7 +13,6 @@ import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static io.sqm.parser.spi.ParseResult.error;
@@ -61,7 +60,7 @@ public class PivotTableParser implements MatchableParser<PivotTable>, InfixParse
         }
 
         cur.expect("Expected '(' after PIVOT", TokenType.LPAREN);
-        var measures = parseMeasures(cur, ctx);
+        var measures = parseItems(PivotMeasure.class, cur, ctx);
         if (measures.isError()) {
             return error(measures);
         }
@@ -72,7 +71,7 @@ public class PivotTableParser implements MatchableParser<PivotTable>, InfixParse
         }
         cur.expect("Expected IN in PIVOT", TokenType.IN);
         cur.expect("Expected '(' after PIVOT IN", TokenType.LPAREN);
-        var values = parseValues(cur, ctx);
+        var values = parseItems(PivotValue.class, cur, ctx);
         if (values.isError()) {
             return error(values);
         }
@@ -102,29 +101,5 @@ public class PivotTableParser implements MatchableParser<PivotTable>, InfixParse
     @Override
     public boolean match(Cursor cur, ParseContext ctx) {
         return cur.match(TokenType.PIVOT);
-    }
-
-    private static ParseResult<List<PivotMeasure>> parseMeasures(Cursor cur, ParseContext ctx) {
-        List<PivotMeasure> measures = new ArrayList<>();
-        do {
-            var measure = ctx.parse(PivotMeasure.class, cur);
-            if (measure.isError()) {
-                return error(measure);
-            }
-            measures.add(measure.value());
-        } while (cur.consumeIf(TokenType.COMMA));
-        return ok(List.copyOf(measures));
-    }
-
-    private static ParseResult<List<PivotValue>> parseValues(Cursor cur, ParseContext ctx) {
-        List<PivotValue> values = new ArrayList<>();
-        do {
-            var value = ctx.parse(PivotValue.class, cur);
-            if (value.isError()) {
-                return error(value);
-            }
-            values.add(value.value());
-        } while (cur.consumeIf(TokenType.COMMA));
-        return ok(List.copyOf(values));
     }
 }

@@ -5,6 +5,7 @@ import io.sqm.core.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Minimal, ergonomic, static-import friendly helpers to build the core model
@@ -340,6 +341,537 @@ public final class Dsl {
      */
     public static SampledTable sampled(TableRef source, TableSampleSpec sample) {
         return SampledTable.of(source, sample);
+    }
+
+    /**
+     * Starts construction of a pattern-recognition relation.
+     *
+     * @param source source relation
+     * @return pattern-recognition builder initialized with the source
+     */
+    public static PatternRecognitionTable.Builder matchRecognize(TableRef source) {
+        return PatternRecognitionTable.builder().source(source);
+    }
+
+    /**
+     * Creates a pattern measure with a string alias.
+     *
+     * @param expression measure expression
+     * @param alias required output alias
+     * @return pattern measure
+     */
+    public static PatternMeasure patternMeasure(Expression expression, String alias) {
+        return PatternMeasure.of(expression, Identifier.of(alias));
+    }
+
+    /**
+     * Creates a pattern measure with a quote-aware alias.
+     *
+     * @param expression measure expression
+     * @param alias required output alias
+     * @return pattern measure
+     */
+    public static PatternMeasure patternMeasure(Expression expression, Identifier alias) {
+        return PatternMeasure.of(expression, alias);
+    }
+
+    /**
+     * Creates a pattern-variable definition.
+     *
+     * @param variable primary variable name
+     * @param condition variable condition
+     * @return pattern definition
+     */
+    public static PatternDefinition patternDefinition(String variable, Predicate condition) {
+        return PatternDefinition.of(Identifier.of(variable), condition);
+    }
+
+    /**
+     * Creates a pattern-variable definition using a quote-aware identifier.
+     *
+     * @param variable primary variable name
+     * @param condition variable condition
+     * @return pattern definition
+     */
+    public static PatternDefinition patternDefinition(Identifier variable, Predicate condition) {
+        return PatternDefinition.of(variable, condition);
+    }
+
+    /**
+     * Creates a named subset using string identifiers.
+     *
+     * @param name subset name
+     * @param variables primary variables included in the subset
+     * @return pattern subset
+     */
+    public static PatternSubset patternSubset(String name, String... variables) {
+        return PatternSubset.of(
+            Identifier.of(name),
+            Arrays.stream(variables).map(Identifier::of).toList()
+        );
+    }
+
+    /**
+     * Creates a named subset using quote-aware identifiers.
+     *
+     * @param name subset name
+     * @param variables primary variables included in the subset
+     * @return pattern subset
+     */
+    public static PatternSubset patternSubset(Identifier name, Identifier... variables) {
+        return PatternSubset.of(name, List.of(variables));
+    }
+
+    /**
+     * Creates a primary pattern-variable occurrence.
+     *
+     * @param name variable name
+     * @return variable pattern
+     */
+    public static MatchPattern.Variable patternVar(String name) {
+        return patternVar(Identifier.of(name));
+    }
+
+    /**
+     * Creates a primary pattern-variable occurrence.
+     *
+     * @param name quote-aware variable name
+     * @return variable pattern
+     */
+    public static MatchPattern.Variable patternVar(Identifier name) {
+        return MatchPattern.Variable.of(name);
+    }
+
+    /**
+     * Creates a pattern-variable column expression.
+     *
+     * @param variable pattern variable
+     * @param column input-column name
+     * @return pattern column expression
+     */
+    public static PatternColumnExpr patternColumn(String variable, String column) {
+        return patternColumn(Identifier.of(variable), Identifier.of(column));
+    }
+
+    /**
+     * Creates a pattern-variable column expression.
+     *
+     * @param variable quote-aware pattern variable
+     * @param column quote-aware input-column name
+     * @return pattern column expression
+     */
+    public static PatternColumnExpr patternColumn(Identifier variable, Identifier column) {
+        return PatternColumnExpr.of(variable, column);
+    }
+
+    /**
+     * Creates an ordered sequence, collapsing a single element to that element.
+     *
+     * @param patterns ordered pattern elements
+     * @return sequence or the single supplied element
+     */
+    public static MatchPattern patternSequence(MatchPattern... patterns) {
+        if (patterns.length == 1) {
+            return Objects.requireNonNull(patterns[0], "patterns[0]");
+        }
+        return MatchPattern.Sequence.of(List.of(patterns));
+    }
+
+    /**
+     * Creates an ordered alternation.
+     *
+     * @param patterns ordered alternatives
+     * @return pattern alternation
+     */
+    public static MatchPattern.Alternation patternAlternation(MatchPattern... patterns) {
+        return MatchPattern.Alternation.of(List.of(patterns));
+    }
+
+    /**
+     * Creates a pattern permutation.
+     *
+     * @param patterns elements to match in any order
+     * @return pattern permutation
+     */
+    public static MatchPattern.Permutation patternPermute(MatchPattern... patterns) {
+        return MatchPattern.Permutation.of(List.of(patterns));
+    }
+
+    /**
+     * Creates the partition-start anchor.
+     *
+     * @return start anchor
+     */
+    public static MatchPattern.Anchor patternStart() {
+        return MatchPattern.Anchor.of(MatchPattern.Anchor.Kind.START);
+    }
+
+    /**
+     * Creates the partition-end anchor.
+     *
+     * @return end anchor
+     */
+    public static MatchPattern.Anchor patternEnd() {
+        return MatchPattern.Anchor.of(MatchPattern.Anchor.Kind.END);
+    }
+
+    /**
+     * Returns the empty match pattern.
+     *
+     * @return empty pattern
+     */
+    public static MatchPattern.Empty emptyPattern() {
+        return MatchPattern.empty();
+    }
+
+    /**
+     * Excludes rows matched by a child pattern from all-rows output.
+     *
+     * @param pattern child pattern
+     * @return exclusion pattern
+     */
+    public static MatchPattern.Exclusion excludePattern(MatchPattern pattern) {
+        return MatchPattern.Exclusion.of(pattern);
+    }
+
+    /**
+     * Repeats a pattern zero or more times greedily.
+     *
+     * @param pattern child pattern
+     * @return quantified pattern
+     */
+    public static MatchPattern.Quantified zeroOrMore(MatchPattern pattern) {
+        return repeatPattern(pattern, 0, null, false);
+    }
+
+    /**
+     * Repeats a pattern one or more times greedily.
+     *
+     * @param pattern child pattern
+     * @return quantified pattern
+     */
+    public static MatchPattern.Quantified oneOrMore(MatchPattern pattern) {
+        return repeatPattern(pattern, 1, null, false);
+    }
+
+    /**
+     * Makes a pattern optional using a greedy quantifier.
+     *
+     * @param pattern child pattern
+     * @return quantified pattern
+     */
+    public static MatchPattern.Quantified optionalPattern(MatchPattern pattern) {
+        return repeatPattern(pattern, 0, 1, false);
+    }
+
+    /**
+     * Creates a bounded or unbounded pattern quantifier.
+     *
+     * @param pattern child pattern
+     * @param minimum non-negative minimum repetition count
+     * @param maximum maximum repetition count, or {@code null} when unbounded
+     * @param reluctant whether matching is reluctant
+     * @return quantified pattern
+     */
+    public static MatchPattern.Quantified repeatPattern(
+        MatchPattern pattern,
+        Integer minimum,
+        Integer maximum,
+        boolean reluctant
+    ) {
+        return MatchPattern.Quantified.of(pattern, minimum, maximum, reluctant);
+    }
+
+    /**
+     * Selects one output row per match.
+     *
+     * @return rows-per-match specification
+     */
+    public static RowsPerMatch oneRowPerMatch() {
+        return RowsPerMatch.of(RowsPerMatch.Mode.ONE, RowsPerMatch.EmptyMatchHandling.DEFAULT);
+    }
+
+    /**
+     * Selects all output rows per match with default empty-match handling.
+     *
+     * @return rows-per-match specification
+     */
+    public static RowsPerMatch allRowsPerMatch() {
+        return allRowsPerMatch(RowsPerMatch.EmptyMatchHandling.DEFAULT);
+    }
+
+    /**
+     * Selects all output rows per match with explicit empty-match handling.
+     *
+     * @param emptyMatchHandling empty/unmatched-row behavior
+     * @return rows-per-match specification
+     */
+    public static RowsPerMatch allRowsPerMatch(RowsPerMatch.EmptyMatchHandling emptyMatchHandling) {
+        return RowsPerMatch.of(RowsPerMatch.Mode.ALL, emptyMatchHandling);
+    }
+
+    /**
+     * Resumes after the last row of an accepted match.
+     *
+     * @return after-match skip specification
+     */
+    public static AfterMatchSkip skipPastLastRow() {
+        return AfterMatchSkip.of(AfterMatchSkip.Kind.PAST_LAST_ROW, AfterMatchSkip.Position.DEFAULT, null);
+    }
+
+    /**
+     * Resumes at the next row after the match start.
+     *
+     * @return after-match skip specification
+     */
+    public static AfterMatchSkip skipToNextRow() {
+        return AfterMatchSkip.of(AfterMatchSkip.Kind.TO_NEXT_ROW, AfterMatchSkip.Position.DEFAULT, null);
+    }
+
+    /**
+     * Resumes at a named pattern variable's default occurrence.
+     *
+     * @param variable target variable
+     * @return after-match skip specification
+     */
+    public static AfterMatchSkip skipToPattern(String variable) {
+        return skipToPattern(Identifier.of(variable));
+    }
+
+    /**
+     * Resumes at a named pattern variable's default occurrence.
+     *
+     * @param variable quote-aware target variable
+     * @return after-match skip specification
+     */
+    public static AfterMatchSkip skipToPattern(Identifier variable) {
+        return AfterMatchSkip.of(AfterMatchSkip.Kind.TO_VARIABLE, AfterMatchSkip.Position.DEFAULT, variable);
+    }
+
+    /**
+     * Resumes at the first occurrence of a named pattern variable.
+     *
+     * @param variable target variable
+     * @return after-match skip specification
+     */
+    public static AfterMatchSkip skipToFirst(String variable) {
+        return skipToFirst(Identifier.of(variable));
+    }
+
+    /**
+     * Resumes at the first occurrence of a named pattern variable.
+     *
+     * @param variable quote-aware target variable
+     * @return after-match skip specification
+     */
+    public static AfterMatchSkip skipToFirst(Identifier variable) {
+        return AfterMatchSkip.of(AfterMatchSkip.Kind.TO_VARIABLE, AfterMatchSkip.Position.FIRST, variable);
+    }
+
+    /**
+     * Resumes at the last occurrence of a named pattern variable.
+     *
+     * @param variable target variable
+     * @return after-match skip specification
+     */
+    public static AfterMatchSkip skipToLast(String variable) {
+        return skipToLast(Identifier.of(variable));
+    }
+
+    /**
+     * Resumes at the last occurrence of a named pattern variable.
+     *
+     * @param variable quote-aware target variable
+     * @return after-match skip specification
+     */
+    public static AfterMatchSkip skipToLast(Identifier variable) {
+        return AfterMatchSkip.of(AfterMatchSkip.Kind.TO_VARIABLE, AfterMatchSkip.Position.LAST, variable);
+    }
+
+    /**
+     * Creates an argument-free classifier expression.
+     *
+     * @return classifier expression
+     */
+    public static ClassifierExpr classifier() {
+        return ClassifierExpr.of(null);
+    }
+
+    /**
+     * Creates a classifier expression for a string variable.
+     *
+     * @param variable pattern variable
+     * @return classifier expression
+     */
+    public static ClassifierExpr classifier(String variable) {
+        return classifier(Identifier.of(variable));
+    }
+
+    /**
+     * Creates a classifier expression for a quote-aware variable.
+     *
+     * @param variable pattern variable
+     * @return classifier expression
+     */
+    public static ClassifierExpr classifier(Identifier variable) {
+        return ClassifierExpr.of(variable);
+    }
+
+    /**
+     * Returns the match ordinal within the current partition.
+     *
+     * @return match-number expression
+     */
+    public static MatchNumberExpr matchNumber() {
+        return MatchNumberExpr.of();
+    }
+
+    /**
+     * Navigates to the first row for the wrapped expression.
+     *
+     * @param expression expression to evaluate
+     * @return navigation expression
+     */
+    public static PatternNavigationExpr first(Expression expression) {
+        return first(expression, (Expression) null);
+    }
+
+    /**
+     * Navigates to the first row using an explicit offset expression.
+     *
+     * @param expression expression to evaluate
+     * @param offset offset expression
+     * @return navigation expression
+     */
+    public static PatternNavigationExpr first(Expression expression, Expression offset) {
+        return PatternNavigationExpr.of(PatternNavigationExpr.Kind.FIRST, expression, offset);
+    }
+
+    /**
+     * Navigates to the first row using an integer offset.
+     *
+     * @param expression expression to evaluate
+     * @param offset non-negative offset
+     * @return navigation expression
+     */
+    public static PatternNavigationExpr first(Expression expression, int offset) {
+        return first(expression, lit(offset));
+    }
+
+    /**
+     * Navigates to the last row for the wrapped expression.
+     *
+     * @param expression expression to evaluate
+     * @return navigation expression
+     */
+    public static PatternNavigationExpr last(Expression expression) {
+        return last(expression, (Expression) null);
+    }
+
+    /**
+     * Navigates to the last row using an explicit offset expression.
+     *
+     * @param expression expression to evaluate
+     * @param offset offset expression
+     * @return navigation expression
+     */
+    public static PatternNavigationExpr last(Expression expression, Expression offset) {
+        return PatternNavigationExpr.of(PatternNavigationExpr.Kind.LAST, expression, offset);
+    }
+
+    /**
+     * Navigates to the last row using an integer offset.
+     *
+     * @param expression expression to evaluate
+     * @param offset non-negative offset
+     * @return navigation expression
+     */
+    public static PatternNavigationExpr last(Expression expression, int offset) {
+        return last(expression, lit(offset));
+    }
+
+    /**
+     * Navigates to the previous row for the wrapped expression.
+     *
+     * @param expression expression to evaluate
+     * @return navigation expression
+     */
+    public static PatternNavigationExpr prev(Expression expression) {
+        return prev(expression, (Expression) null);
+    }
+
+    /**
+     * Navigates to the previous row using an explicit offset expression.
+     *
+     * @param expression expression to evaluate
+     * @param offset offset expression
+     * @return navigation expression
+     */
+    public static PatternNavigationExpr prev(Expression expression, Expression offset) {
+        return PatternNavigationExpr.of(PatternNavigationExpr.Kind.PREV, expression, offset);
+    }
+
+    /**
+     * Navigates to the previous row using an integer offset.
+     *
+     * @param expression expression to evaluate
+     * @param offset non-negative offset
+     * @return navigation expression
+     */
+    public static PatternNavigationExpr prev(Expression expression, int offset) {
+        return prev(expression, lit(offset));
+    }
+
+    /**
+     * Navigates to the next row for the wrapped expression.
+     *
+     * @param expression expression to evaluate
+     * @return navigation expression
+     */
+    public static PatternNavigationExpr next(Expression expression) {
+        return next(expression, (Expression) null);
+    }
+
+    /**
+     * Navigates to the next row using an explicit offset expression.
+     *
+     * @param expression expression to evaluate
+     * @param offset offset expression
+     * @return navigation expression
+     */
+    public static PatternNavigationExpr next(Expression expression, Expression offset) {
+        return PatternNavigationExpr.of(PatternNavigationExpr.Kind.NEXT, expression, offset);
+    }
+
+    /**
+     * Navigates to the next row using an integer offset.
+     *
+     * @param expression expression to evaluate
+     * @param offset non-negative offset
+     * @return navigation expression
+     */
+    public static PatternNavigationExpr next(Expression expression, int offset) {
+        return next(expression, lit(offset));
+    }
+
+    /**
+     * Applies running-match evaluation semantics.
+     *
+     * @param expression expression to evaluate
+     * @return running evaluation expression
+     */
+    public static PatternEvaluationExpr running(Expression expression) {
+        return PatternEvaluationExpr.of(PatternEvaluationExpr.Mode.RUNNING, expression);
+    }
+
+    /**
+     * Applies completed-match evaluation semantics.
+     *
+     * @param expression expression to evaluate
+     * @return final evaluation expression
+     */
+    public static PatternEvaluationExpr finalValue(Expression expression) {
+        return PatternEvaluationExpr.of(PatternEvaluationExpr.Mode.FINAL, expression);
     }
 
     /**

@@ -104,6 +104,18 @@ public class TableRefsCollector extends RecursiveNodeVisitor<Void> {
     }
 
     /**
+     * Visits a {@link PatternRecognitionTable} relation transform.
+     *
+     * @param table pattern-recognition table being visited
+     * @return a result produced by the visitor
+     */
+    @Override
+    public Void visitPatternRecognitionTable(PatternRecognitionTable table) {
+        tableRefs.add(table);
+        return super.visitPatternRecognitionTable(table);
+    }
+
+    /**
      * Visits a {@link PivotTable}.
      *
      * @param t pivot table reference

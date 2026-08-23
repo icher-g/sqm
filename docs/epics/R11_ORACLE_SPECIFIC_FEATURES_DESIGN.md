@@ -2,9 +2,12 @@
 
 **Status: R11-1 through R11-7 completed.** The delivered slices cover variable-target
 `RETURNING ... INTO`, sequence values, hierarchical queries, `PIVOT` / `UNPIVOT`,
-`JSON_TABLE`, table access modifiers, and Oracle time-zone/locking support. R11-8
-remains open for explicit design or continued deferral of `MATCH_RECOGNIZE`, `MODEL`,
-and legacy outer-join `(+)` migration syntax. DDL remains out of scope.
+`JSON_TABLE`, table access modifiers, and Oracle time-zone/locking support. The
+R11-8 design decision is now resolved: `MATCH_RECOGNIZE` has a detailed typed-model
+design, `MODEL` remains explicitly deferred, and legacy outer-join `(+)` syntax is
+explicitly unsupported. The shared model, parser, and renderer foundation is
+implemented; Oracle enablement and the remaining integration work remain open.
+DDL remains out of scope.
 
 ## Purpose
 
@@ -859,25 +862,19 @@ This is not a function or window clause. It has row-pattern semantics and is par
 
 ### Model Decision
 
-Defer implementation, but when implemented, use a generic row-pattern model:
+Implement a generic, typed row-pattern relation transform. The complete design is
+in [`R11_8_MATCH_RECOGNIZE_DESIGN.md`](R11_8_MATCH_RECOGNIZE_DESIGN.md).
 
-```java
-RowPatternRecognitionClause {
-    PartitionBy partitionBy;
-    OrderBy orderBy;
-    List<SelectItem> measures;
-    RowPattern pattern;
-    List<RowPatternDefinition> definitions;
-    RowPatternRowsPerMatch rowsPerMatch;
-    RowPatternAfterMatch afterMatch;
-}
-```
-
-Do not model `MATCH_RECOGNIZE` as raw text. If we cannot parse the row pattern meaningfully, keep the feature unsupported.
+The key model decision is `PatternRecognitionTable extends TableRef`: the clause consumes
+a relation and produces a relation. Its pattern, measures, definitions, subsets,
+skip behavior, and special expressions are structured nodes. No raw-text fallback
+is permitted.
 
 ### Dialect Behavior
 
-Oracle first, then any dialect with compatible SQL row pattern recognition.
+Oracle 12.1+ first. ANSI SQL-2008, PostgreSQL, MySQL, and SQL Server reject
+explicitly. The shared model leaves room for future Snowflake, Trino, BigQuery,
+and Flink dialect implementations with their own validation subsets.
 
 ## 10. Oracle `MODEL` Clause
 
@@ -911,13 +908,9 @@ The semantic target is already expressible using `Join` nodes. The issue is lega
 
 Do not add a persisted `(+)` node.
 
-If supported, implement as a parser/transpilation migration feature:
-
-- parse legacy syntax
-- normalize immediately to existing `Join` nodes when safe
-- reject ambiguous or unsupported legacy combinations
-
-This should be separate from the primary Oracle feature model work.
+SQM will not support this syntax. Applications migrating legacy SQL should first
+rewrite it to ANSI joins using a dedicated migration tool. No parser normalization,
+persisted syntax node, or transpilation rule is planned.
 
 ## Capability Additions
 
@@ -1121,6 +1114,14 @@ Acceptance:
 
 - Each feature is either designed as a typed model or explicitly remains unsupported.
 - No raw-string fallback is introduced.
+
+Decision:
+
+- `MATCH_RECOGNIZE`: detailed typed design completed in
+  [`R11_8_MATCH_RECOGNIZE_DESIGN.md`](R11_8_MATCH_RECOGNIZE_DESIGN.md);
+  implementation is split into R11-8A through R11-8E.
+- `MODEL`: explicitly deferred and unsupported pending a separate epic/design.
+- legacy `(+)`: explicitly unsupported; no implementation is planned.
 
 ## Recommended Implementation Order
 

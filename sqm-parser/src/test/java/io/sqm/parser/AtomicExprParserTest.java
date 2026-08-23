@@ -12,9 +12,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static io.sqm.dsl.Dsl.col;
+import static io.sqm.dsl.Dsl.*;
 
 class AtomicExprParserTest {
 
@@ -120,6 +121,31 @@ class AtomicExprParserTest {
         assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Unsupported expression token"));
     }
 
+    @Test
+    void parsesPatternExpressionsOnlyInsidePatternScope() {
+        var ctx = contextWithAtomicExprParsers();
+
+        assertInstanceOf(PatternEvaluationExpr.class,
+            ctx.parse(PatternMeasure.class, "measure evaluation").value().expression());
+        assertInstanceOf(ClassifierExpr.class,
+            ctx.parse(PatternMeasure.class, "measure classifier").value().expression());
+        assertInstanceOf(MatchNumberExpr.class,
+            ctx.parse(PatternMeasure.class, "measure match_number").value().expression());
+        assertInstanceOf(PatternNavigationExpr.class,
+            ctx.parse(PatternMeasure.class, "measure navigation").value().expression());
+        assertInstanceOf(PatternColumnExpr.class,
+            ctx.parse(PatternMeasure.class, "measure pattern_column").value().expression());
+    }
+
+    @Test
+    void recognizesPatternDefinitionAsPatternExpressionScope() {
+        var ctx = contextWithAtomicExprParsers();
+
+        var definition = ctx.parse(PatternDefinition.class, "definition col");
+
+        assertTrue(definition.ok(), definition.errorMessage());
+    }
+
     private static ParseContext contextWithAtomicExprParsers() {
         var repo = new DefaultParsersRepository()
             .register(Expression.class, new AtomicExprWrapper())
@@ -143,7 +169,19 @@ class AtomicExprParserTest {
             .register(AtTimeZoneExpr.class, new NoMatchParser<>(AtTimeZoneExpr.class))
             .register(AtTimeZoneExpr.class, new NoMatchInfixParser<>(AtTimeZoneExpr.class))
             .register(CollateExpr.class, new NoMatchParser<>(CollateExpr.class))
-            .register(CollateExpr.class, new NoMatchInfixParser<>(CollateExpr.class));
+            .register(CollateExpr.class, new NoMatchInfixParser<>(CollateExpr.class))
+            .register(PatternEvaluationExpr.class, new MarkerExpressionParser<>(
+                PatternEvaluationExpr.class, "evaluation", () -> finalValue(col("value"))))
+            .register(ClassifierExpr.class, new MarkerExpressionParser<>(
+                ClassifierExpr.class, "classifier", () -> classifier()))
+            .register(MatchNumberExpr.class, new MarkerExpressionParser<>(
+                MatchNumberExpr.class, "match_number", () -> matchNumber()))
+            .register(PatternNavigationExpr.class, new MarkerExpressionParser<>(
+                PatternNavigationExpr.class, "navigation", () -> prev(col("value"))))
+            .register(PatternColumnExpr.class, new MarkerExpressionParser<>(
+                PatternColumnExpr.class, "pattern_column", () -> patternColumn("A", "value")))
+            .register(PatternMeasure.class, new PatternMeasureScopeParser())
+            .register(PatternDefinition.class, new PatternDefinitionScopeParser());
         return TestSupport.context(repo);
     }
 
@@ -478,6 +516,66 @@ class AtomicExprParserTest {
         @Override
         public Class<T> targetType() {
             return type;
+        }
+    }
+
+    private static final class MarkerExpressionParser<T extends Expression> implements MatchableParser<T> {
+        private final Class<T> type;
+        private final String marker;
+        private final Supplier<T> factory;
+
+        private MarkerExpressionParser(Class<T> type, String marker, Supplier<T> factory) {
+            this.type = type;
+            this.marker = marker;
+            this.factory = factory;
+        }
+
+        @Override
+        public boolean match(Cursor cur, ParseContext ctx) {
+            return cur.match(TokenType.IDENT) && marker.equalsIgnoreCase(cur.peek().lexeme());
+        }
+
+        @Override
+        public ParseResult<? extends T> parse(Cursor cur, ParseContext ctx) {
+            cur.expect("Expected " + marker, TokenType.IDENT);
+            return ParseResult.ok(factory.get());
+        }
+
+        @Override
+        public Class<T> targetType() {
+            return type;
+        }
+    }
+
+    private static final class PatternMeasureScopeParser implements Parser<PatternMeasure> {
+        @Override
+        public ParseResult<? extends PatternMeasure> parse(Cursor cur, ParseContext ctx) {
+            cur.expect("Expected measure marker", TokenType.IDENT);
+            var expression = ctx.parse(Expression.class, cur);
+            return expression.isError()
+                ? ParseResult.error(expression)
+                : ParseResult.ok(PatternMeasure.of(expression.value(), id("measure_value")));
+        }
+
+        @Override
+        public Class<PatternMeasure> targetType() {
+            return PatternMeasure.class;
+        }
+    }
+
+    private static final class PatternDefinitionScopeParser implements Parser<PatternDefinition> {
+        @Override
+        public ParseResult<? extends PatternDefinition> parse(Cursor cur, ParseContext ctx) {
+            cur.expect("Expected definition marker", TokenType.IDENT);
+            var expression = ctx.parse(Expression.class, cur);
+            return expression.isError()
+                ? ParseResult.error(expression)
+                : ParseResult.ok(PatternDefinition.of(id("A"), col("accepted").eq(1)));
+        }
+
+        @Override
+        public Class<PatternDefinition> targetType() {
+            return PatternDefinition.class;
         }
     }
 }

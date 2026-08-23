@@ -296,6 +296,46 @@ public interface ExpressionMatch<R> extends Match<Expression, R> {
      * @return an {@link ExpressionMatch} representing this match branch
      */
     ExpressionMatch<R> atTimeZone(Function<AtTimeZoneExpr, R> f);
+
+    /**
+     * Registers a handler for a {@link PatternColumnExpr}.
+     *
+     * @param f handler for the pattern column
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> patternColumn(Function<PatternColumnExpr, R> f);
+
+    /**
+     * Registers a handler for a {@link ClassifierExpr}.
+     *
+     * @param f handler for the classifier expression
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> classifier(Function<ClassifierExpr, R> f);
+
+    /**
+     * Registers a handler for a {@link MatchNumberExpr}.
+     *
+     * @param f handler for the match-number expression
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> matchNumber(Function<MatchNumberExpr, R> f);
+
+    /**
+     * Registers a handler for a {@link PatternNavigationExpr}.
+     *
+     * @param f handler for the navigation expression
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> patternNavigation(Function<PatternNavigationExpr, R> f);
+
+    /**
+     * Registers a handler for a {@link PatternEvaluationExpr}.
+     *
+     * @param f handler for the evaluation expression
+     * @return {@code this} for fluent chaining
+     */
+    ExpressionMatch<R> patternEvaluation(Function<PatternEvaluationExpr, R> f);
 }
 
 

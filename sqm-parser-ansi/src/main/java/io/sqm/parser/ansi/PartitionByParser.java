@@ -8,9 +8,6 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
@@ -35,16 +32,11 @@ public class PartitionByParser implements Parser<PartitionBy> {
     public ParseResult<PartitionBy> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected PARTITION", TokenType.PARTITION);
         cur.expect("Expected BY after PARTITION", TokenType.BY);
-        List<Expression> items = new ArrayList<>();
-        do {
-            var or = ctx.parse(Expression.class, cur);
-            if (or.isError()) {
-                return error(or);
-            }
-            items.add(or.value());
+        var items = parseItems(Expression.class, cur, ctx);
+        if (items.isError()) {
+            return error(items);
         }
-        while (cur.consumeIf(TokenType.COMMA));
-        return ok(PartitionBy.of(items));
+        return ok(PartitionBy.of(items.value()));
     }
 
     /**

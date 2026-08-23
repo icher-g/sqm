@@ -75,6 +75,18 @@ Agents should read it first and follow it throughout the task.
   - Invalid inputs (error paths)
   - Boundary conditions
 
+### Story Delivery Gates
+
+Implement roadmap stories strictly one at a time and use the following gated workflow:
+
+1. Implement exactly one story and verify it locally.
+2. Stop and present that story for user review. Apply requested design or implementation changes until the user approves it.
+3. Create a local branch, push it to GitHub, and associate the GitHub work with the story only after the user explicitly authorizes this step. Do not infer authorization from approval of the code itself.
+4. Wait for the remote builds, then fix build failures and improve test coverage as needed.
+5. Merge the PR only after the remote checks and review are complete. Do not begin implementation of the next story until the current PR has been merged.
+
+At every gate, preserve the current worktree and wait for the user's explicit instruction before branching, pushing, merging, or moving to another story.
+
 ## Notes
 - Update this file with more specific instructions as needed.
 - Parsers should only accept features supported by their dialect.

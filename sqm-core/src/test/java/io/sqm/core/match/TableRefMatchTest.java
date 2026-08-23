@@ -279,4 +279,30 @@ class TableRefMatchTest {
 
         assertEquals("quarter", result);
     }
+
+    @Test
+    @DisplayName("Match pattern-recognition table reference")
+    void matchPatternRecognitionTable() {
+        TableRef table = matchRecognize(tbl("sales"))
+            .pattern(patternVar("A"))
+            .define("A", col("amount").gt(0))
+            .build();
+
+        var result = table.matchTableRef()
+            .patternRecognition(pattern -> "Pattern")
+            .patternRecognition(pattern -> "Second")
+            .orElse("Unknown");
+
+        assertEquals("Pattern", result);
+    }
+
+    @Test
+    @DisplayName("Pattern-recognition matcher ignores other table references")
+    void patternRecognitionMatcherIgnoresOtherTables() {
+        var result = tbl("sales").matchTableRef()
+            .patternRecognition(pattern -> "Pattern")
+            .orElse("Unknown");
+
+        assertEquals("Unknown", result);
+    }
 }

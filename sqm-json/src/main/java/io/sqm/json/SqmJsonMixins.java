@@ -33,6 +33,7 @@ public final class SqmJsonMixins {
         mapper.addMixIn(FunctionExpr.Arg.class, FunctionArgMixin.class);
         mapper.addMixIn(ParamExpr.class, ParamExprMixin.class);
         mapper.addMixIn(ArithmeticExpr.class, ArithmeticExprMixin.class);
+        mapper.addMixIn(MatchPattern.class, MatchPatternMixin.class);
 
         // Predicate family
         mapper.addMixIn(Predicate.class, PredicateMixin.class);

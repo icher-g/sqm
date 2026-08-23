@@ -10,9 +10,6 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
@@ -39,20 +36,16 @@ public class WithQueryParser implements Parser<WithQuery> {
 
         final boolean recursive = cur.consumeIf(TokenType.RECURSIVE);
 
-        List<CteDef> ctes = new ArrayList<>();
-        do {
-            var cte = ctx.parse(CteDef.class, cur);
-            if (cte.isError()) {
-                return error(cte);
-            }
-            ctes.add(cte.value());
-        } while (cur.consumeIf(TokenType.COMMA));
+        var ctes = parseItems(CteDef.class, cur, ctx);
+        if (ctes.isError()) {
+            return error(ctes);
+        }
 
         var body = ctx.parse(CompositeQuery.class, cur);
         if (body.isError()) {
             return error(body);
         }
-        return ok(Query.with(ctes, body.value(), recursive));
+        return ok(Query.with(ctes.value(), body.value(), recursive));
     }
 
     /**

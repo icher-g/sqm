@@ -160,6 +160,21 @@ public class TableRefMatchImpl<R> implements TableRefMatch<R> {
     }
 
     /**
+     * Registers a handler for a {@link PatternRecognitionTable}.
+     *
+     * @param f handler for {@code PatternRecognitionTable}
+     * @return {@code this} for fluent chaining
+     */
+    @Override
+    public TableRefMatch<R> patternRecognition(Function<PatternRecognitionTable, R> f) {
+        if (!matched && table instanceof PatternRecognitionTable t) {
+            result = f.apply(t);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
      * Matches a {@link Lateral}.
      * <p>
      * This branch is selected when the FROM item is wrapped as lateral,

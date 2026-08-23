@@ -12,8 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Objects;
 
-import static io.sqm.dsl.Dsl.func;
-import static io.sqm.dsl.Dsl.tbl;
+import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TableRefParserTest {
@@ -91,6 +90,30 @@ class TableRefParserTest {
 
         assertTrue(result.ok(), result.errorMessage());
         assertInstanceOf(SampledTable.class, result.value());
+    }
+
+    @Test
+    void appliesRegisteredPatternRecognitionTransform() {
+        var repo = contextWithTableRefParsers().parsers()
+            .register(PatternRecognitionTable.class, new PatternRecognitionTransformParser(false));
+        var ctx = TestSupport.context(repo);
+
+        var result = ctx.parse(TableRef.class, "table match_recognize");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertInstanceOf(PatternRecognitionTable.class, result.value());
+    }
+
+    @Test
+    void returnsRegisteredPatternRecognitionTransformError() {
+        var repo = contextWithTableRefParsers().parsers()
+            .register(PatternRecognitionTable.class, new PatternRecognitionTransformParser(true));
+        var ctx = TestSupport.context(repo);
+
+        var result = ctx.parse(TableRef.class, "table match_recognize");
+
+        assertTrue(result.isError());
+        assertTrue(Objects.requireNonNull(result.errorMessage()).contains("Invalid pattern transform"));
     }
 
     @Test
@@ -288,6 +311,43 @@ class TableRefParserTest {
         @Override
         public Class<SampledTable> targetType() {
             return SampledTable.class;
+        }
+    }
+
+    private static final class PatternRecognitionTransformParser
+        implements MatchableParser<PatternRecognitionTable>, InfixParser<TableRef, PatternRecognitionTable> {
+        private final boolean fail;
+
+        private PatternRecognitionTransformParser(boolean fail) {
+            this.fail = fail;
+        }
+
+        @Override
+        public boolean match(Cursor cur, ParseContext ctx) {
+            return cur.match(TokenType.MATCH_RECOGNIZE);
+        }
+
+        @Override
+        public ParseResult<? extends PatternRecognitionTable> parse(Cursor cur, ParseContext ctx) {
+            return ParseResult.error("Unexpected standalone pattern transform", cur.fullPos());
+        }
+
+        @Override
+        public ParseResult<PatternRecognitionTable> parse(TableRef source, Cursor cur, ParseContext ctx) {
+            cur.expect("Expected MATCH_RECOGNIZE", TokenType.MATCH_RECOGNIZE);
+            if (fail) {
+                return ParseResult.error("Invalid pattern transform", cur.fullPos());
+            }
+            return ParseResult.ok(PatternRecognitionTable.builder()
+                .source(source)
+                .pattern(patternVar("A"))
+                .define("A", col("amount").gt(0))
+                .build());
+        }
+
+        @Override
+        public Class<PatternRecognitionTable> targetType() {
+            return PatternRecognitionTable.class;
         }
     }
 }

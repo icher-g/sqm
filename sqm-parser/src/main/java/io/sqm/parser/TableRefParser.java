@@ -122,6 +122,15 @@ public class TableRefParser implements Parser<TableRef> {
                 continue;
             }
 
+            matched = parseTransformIfRegistered(PatternRecognitionTable.class, table, cur, ctx);
+            if (matched.match()) {
+                if (matched.result().isError()) {
+                    return matched.result();
+                }
+                table = matched.result().value();
+                continue;
+            }
+
             matched = parseTransformIfRegistered(UnpivotTable.class, table, cur, ctx);
             if (matched.match()) {
                 if (matched.result().isError()) {

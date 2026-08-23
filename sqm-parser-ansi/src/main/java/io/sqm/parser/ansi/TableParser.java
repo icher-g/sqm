@@ -227,10 +227,7 @@ public class TableParser implements MatchableParser<Table> {
             cur.expect("Expected PARTITION", TokenType.PARTITION);
         }
         cur.expect("Expected '(' after partition specification", TokenType.LPAREN);
-        List<Identifier> names = new ArrayList<>();
-        do {
-            names.add(toIdentifier(cur.expect("Expected partition name", TokenType.IDENT)));
-        } while (cur.consumeIf(TokenType.COMMA));
+        var names = parseIdentifierItems(cur, "Expected partition name");
         cur.expect("Expected ')' after partition specification", TokenType.RPAREN);
         return ok(subpartition ? TablePartitionSpec.subpartition(names) : TablePartitionSpec.partition(names));
     }
