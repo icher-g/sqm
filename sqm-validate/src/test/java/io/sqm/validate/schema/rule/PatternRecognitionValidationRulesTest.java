@@ -142,6 +142,21 @@ class PatternRecognitionValidationRulesTest {
             problem.code() == ValidationProblem.Code.COLUMN_NOT_FOUND));
     }
 
+    @Test
+    void validatorDispatchesEveryPatternOnlyExpressionOutsidePatternScope() {
+        var result = validator().validate(select(
+            patternColumn("A", "amount"),
+            classifier(),
+            matchNumber(),
+            prev(col("amount")),
+            running(first(col("amount")))
+        ).from(tbl("sales")).build());
+
+        assertEquals(6, result.problems().stream().filter(problem ->
+            problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                && "expression.matchRecognize".equals(problem.clausePath())).count());
+    }
+
     private static PatternRecognitionFeatureValidationRule featureRule(boolean supported) {
         var capabilities = VersionedDialectCapabilities.builder(VERSION);
         if (supported) {
