@@ -57,7 +57,13 @@ public abstract class DialectExecutionHarness {
      * @throws Exception when query execution fails
      */
     public List<String> queryRows(String sql) throws Exception {
-        return queryRows(sql, List.of());
+        try (var connection = openConnection();
+             var statement = connection.createStatement()) {
+            statement.setEscapeProcessing(false);
+            try (var resultSet = statement.executeQuery(sql)) {
+                return readRows(resultSet);
+            }
+        }
     }
 
     /**
@@ -69,21 +75,12 @@ public abstract class DialectExecutionHarness {
      * @throws Exception when query execution fails
      */
     public List<String> queryRows(String sql, List<Object> params) throws Exception {
-        List<String> rows = new ArrayList<>();
         try (var connection = openConnection(); var statement = connection.prepareStatement(sql)) {
             bind(statement, params);
             try (ResultSet resultSet = statement.executeQuery()) {
-                int columns = resultSet.getMetaData().getColumnCount();
-                while (resultSet.next()) {
-                    List<String> values = new ArrayList<>(columns);
-                    for (int index = 1; index <= columns; index++) {
-                        values.add(stringify(resultSet.getObject(index)));
-                    }
-                    rows.add(String.join("|", values));
-                }
+                return readRows(resultSet);
             }
         }
-        return rows;
     }
 
     /**
@@ -105,6 +102,19 @@ public abstract class DialectExecutionHarness {
         for (int index = 0; index < params.size(); index++) {
             statement.setObject(index + 1, params.get(index));
         }
+    }
+
+    private List<String> readRows(ResultSet resultSet) throws Exception {
+        List<String> rows = new ArrayList<>();
+        int columns = resultSet.getMetaData().getColumnCount();
+        while (resultSet.next()) {
+            List<String> values = new ArrayList<>(columns);
+            for (int index = 1; index <= columns; index++) {
+                values.add(stringify(resultSet.getObject(index)));
+            }
+            rows.add(String.join("|", values));
+        }
+        return rows;
     }
 
     private String stringify(Object value) {

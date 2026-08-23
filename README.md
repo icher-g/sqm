@@ -1466,12 +1466,36 @@ mvn -B -pl sqm-db-it -am verify -Pdocker-it
 ```
 
 Per-dialect live DB commands:
-```bash
-mvn -B -pl sqm-db-it -am verify -Pdocker-it -Dit.test=PostgresDslExecutionIT,PostgresMiddlewareExecutionIT -Dsurefire.skip=true -Dfailsafe.failIfNoSpecifiedTests=false
-mvn -B -pl sqm-db-it -am verify -Pdocker-it -Dit.test=MySqlDslExecutionIT -Dsurefire.skip=true -Dfailsafe.failIfNoSpecifiedTests=false
-mvn -B -pl sqm-db-it -am verify -Pdocker-it -Dit.test=SqlServerDslExecutionIT -Dsurefire.skip=true -Dfailsafe.failIfNoSpecifiedTests=false
-mvn -B -pl sqm-db-it -am verify -Pdocker-it -Dit.test=OracleDslExecutionIT -Dsurefire.skip=true -Dfailsafe.failIfNoSpecifiedTests=false
+```powershell
+mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=PostgresDslExecutionIT,PostgresMiddlewareExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
+mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=MySqlDslExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
+mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=SqlServerDslExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
+mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=OracleDslExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
 ```
+
+The quoted `-D` arguments are safe in PowerShell. `surefire.skip` skips reactor
+unit tests while Failsafe runs only the integration class named by `it.test`;
+the Oracle command therefore starts only `OracleDslExecutionIT`.
+
+Oracle `MATCH_RECOGNIZE` can also be built through the typed DSL:
+
+```java
+var recognized = matchRecognize(tbl("events"))
+    .partitionBy(col("account_id"))
+    .orderBy(col("event_id").asc())
+    .measure(first(patternColumn("A", "event_id")), "start_id")
+    .measure(last(patternColumn("B", "event_id")), "end_id")
+    .oneRowPerMatch()
+    .skipPastLastRow()
+    .pattern(patternSequence(patternVar("A"), oneOrMore(patternVar("B"))))
+    .define("A", patternColumn("A", "kind").eq(lit("A")))
+    .define("B", patternColumn("B", "kind").eq(lit("B")))
+    .as("mr")
+    .build();
+```
+
+Oracle 12.1+ is the currently enabled dialect. `MODEL` remains deferred, and
+Oracle's legacy outer-join `(+)` syntax remains intentionally unsupported.
 
 GitHub Actions runs the live DB suites in the separate [`.github/workflows/live-db-it.yml`](.github/workflows/live-db-it.yml) pipeline so the default CI path stays fast.
 

@@ -70,7 +70,8 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
     }
 
     /**
-     * Returns the current database timestamp for a flashback query that must be later than fixture DDL.
+     * Returns a recent database timestamp for a flashback query that is later than fixture DDL but
+     * safely behind Oracle's current SCN-to-timestamp mapping.
      *
      * @return current Oracle database timestamp
      * @throws Exception when the timestamp cannot be read
@@ -78,7 +79,9 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
     protected Timestamp currentDatabaseTimestamp() throws Exception {
         try (var connection = openConnection();
              var statement = connection.createStatement();
-             var resultSet = statement.executeQuery("select systimestamp from dual")) {
+             var resultSet = statement.executeQuery(
+                 "select cast(systimestamp - interval '5' second as timestamp) from dual"
+             )) {
             if (!resultSet.next()) {
                 throw new IllegalStateException("Oracle did not return SYSTIMESTAMP");
             }
@@ -89,6 +92,7 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
     protected void resetDslSchema() throws Exception {
         initializeFlashbackFixture();
         dropSequenceIfExists("users_seq");
+        dropTableIfExists("pattern_events");
         dropTableIfExists("events");
         dropTableIfExists("sales_wide");
         dropTableIfExists("sales");
@@ -105,6 +109,8 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
                 + "partition by list (quarter) (partition sales_q1 values ('Q1'), partition sales_q2 values ('Q2'))",
             "create table sales_wide (id number(19) primary key, q1 number(19) not null, q2 number(19) not null)",
             "create table events (id number(19) primary key, created_at timestamp with time zone not null)",
+            "create table pattern_events (account_id number(19) not null, event_id number(19) not null, "
+                + "amount number(19) not null, kind varchar2(1) not null, primary key (account_id, event_id))",
             "insert into users(id, name, active) values (1, 'Alice', 1)",
             "insert into users(id, name, active) values (2, 'Bob', 0)",
             "insert into src_users(id, name, active) values (1, 'Alicia', 1)",
@@ -120,6 +126,17 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
             "insert into sales(id, quarter, amount) values (3, 'Q2', 30)",
             "insert into sales_wide(id, q1, q2) values (1, 10, 20)",
             "insert into events(id, created_at) values (1, systimestamp)",
+            "insert into pattern_events(account_id, event_id, amount, kind) values (1, 1, 10, 'A')",
+            "insert into pattern_events(account_id, event_id, amount, kind) values (1, 2, 12, 'B')",
+            "insert into pattern_events(account_id, event_id, amount, kind) values (1, 3, 14, 'B')",
+            "insert into pattern_events(account_id, event_id, amount, kind) values (1, 4, 9, 'A')",
+            "insert into pattern_events(account_id, event_id, amount, kind) values (1, 5, 11, 'B')",
+            "insert into pattern_events(account_id, event_id, amount, kind) values (1, 6, 13, 'B')",
+            "insert into pattern_events(account_id, event_id, amount, kind) values (2, 1, 20, 'A')",
+            "insert into pattern_events(account_id, event_id, amount, kind) values (2, 2, 22, 'B')",
+            "insert into pattern_events(account_id, event_id, amount, kind) values (2, 3, 18, 'A')",
+            "insert into pattern_events(account_id, event_id, amount, kind) values (2, 4, 19, 'B')",
+            "insert into pattern_events(account_id, event_id, amount, kind) values (2, 5, 21, 'B')",
             "create sequence users_seq start with 100 increment by 1"
         );
     }

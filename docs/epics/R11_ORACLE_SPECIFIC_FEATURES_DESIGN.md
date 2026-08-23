@@ -1,12 +1,12 @@
 # R11 Oracle-Specific Feature Support Design
 
-**Status: R11-1 through R11-7 completed.** The delivered slices cover variable-target
+**Status: Complete.** R11-1 through R11-8 are delivered. The slices cover variable-target
 `RETURNING ... INTO`, sequence values, hierarchical queries, `PIVOT` / `UNPIVOT`,
 `JSON_TABLE`, table access modifiers, and Oracle time-zone/locking support. The
-R11-8 design decision is now resolved: `MATCH_RECOGNIZE` has a detailed typed-model
-design, `MODEL` remains explicitly deferred, and legacy outer-join `(+)` syntax is
-explicitly unsupported. The shared model, parser, and renderer foundation is
-implemented; Oracle enablement and the remaining integration work remain open.
+R11-8 is resolved and implemented: `MATCH_RECOGNIZE` has a typed shared model,
+Oracle 12.1+ parser/renderer/validation support, transpilation and codegen behavior,
+and deterministic live-engine coverage. `MODEL` remains explicitly deferred, and
+legacy outer-join `(+)` syntax remains explicitly unsupported.
 DDL remains out of scope.
 
 ## Purpose
@@ -1119,7 +1119,7 @@ Decision:
 
 - `MATCH_RECOGNIZE`: detailed typed design completed in
   [`R11_8_MATCH_RECOGNIZE_DESIGN.md`](R11_8_MATCH_RECOGNIZE_DESIGN.md);
-  implementation is split into R11-8A through R11-8E.
+  implementation is complete across R11-8A through R11-8E.
 - `MODEL`: explicitly deferred and unsupported pending a separate epic/design.
 - legacy `(+)`: explicitly unsupported; no implementation is planned.
 
