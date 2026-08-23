@@ -8,9 +8,6 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
@@ -35,16 +32,11 @@ public class OrderByParser implements Parser<OrderBy> {
     public ParseResult<OrderBy> parse(Cursor cur, ParseContext ctx) {
         cur.expect("Expected ORDER", TokenType.ORDER);
         cur.expect("Expected BY after ORDER", TokenType.BY);
-        List<OrderItem> items = new ArrayList<>();
-        do {
-            var or = ctx.parse(OrderItem.class, cur);
-            if (or.isError()) {
-                return error(or);
-            }
-            items.add(or.value());
+        var items = parseItems(OrderItem.class, cur, ctx);
+        if (items.isError()) {
+            return error(items);
         }
-        while (cur.consumeIf(TokenType.COMMA));
-        return ok(OrderBy.of(items));
+        return ok(OrderBy.of(items.value()));
     }
 
     /**

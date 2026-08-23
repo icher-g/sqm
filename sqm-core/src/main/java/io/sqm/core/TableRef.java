@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Anything that can appear in FROM/JOIN: table, subquery, VALUES, etc.
  */
-public sealed interface TableRef extends FromItem permits AliasedTableRef, DialectTableRef, JsonTable, Lateral, PivotTable, SampledTable, Table, UnpivotTable, VariableTable {
+public sealed interface TableRef extends FromItem permits AliasedTableRef, DialectTableRef, JsonTable, Lateral, PatternRecognitionTable, PivotTable, SampledTable, Table, UnpivotTable, VariableTable {
     /**
      * Creates a table with the provided name. All other fields are set to NULL.
      *

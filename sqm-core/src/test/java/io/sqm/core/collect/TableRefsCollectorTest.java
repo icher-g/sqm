@@ -68,4 +68,17 @@ class TableRefsCollectorTest {
             collector.getTableRefs()
         );
     }
+
+    @Test
+    void collectsPatternRecognitionRelationAndItsSource() {
+        var table = matchRecognize(tbl("events"))
+            .pattern(patternVar("A"))
+            .define("A", patternColumn("A", "amount").gt(0))
+            .build();
+        var collector = new TableRefsCollector();
+
+        table.accept(collector);
+
+        assertEquals(List.of(table, table.source()), collector.getTableRefs());
+    }
 }

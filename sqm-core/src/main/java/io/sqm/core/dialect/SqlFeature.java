@@ -259,6 +259,10 @@ public enum SqlFeature {
      */
     PIVOT_TABLE("PIVOT table transform"),
     /**
+     * SQL row-pattern recognition via {@code MATCH_RECOGNIZE}.
+     */
+    MATCH_RECOGNIZE("MATCH_RECOGNIZE table transform"),
+    /**
      * Relational {@code UNPIVOT} table transform.
      */
     UNPIVOT_TABLE("UNPIVOT table transform"),

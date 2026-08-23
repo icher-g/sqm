@@ -503,6 +503,56 @@ public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
         return this;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public ExpressionMatch<R> patternColumn(Function<PatternColumnExpr, R> f) {
+        if (!matched && expr instanceof PatternColumnExpr value) {
+            result = f.apply(value);
+            matched = true;
+        }
+        return this;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ExpressionMatch<R> classifier(Function<ClassifierExpr, R> f) {
+        if (!matched && expr instanceof ClassifierExpr value) {
+            result = f.apply(value);
+            matched = true;
+        }
+        return this;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ExpressionMatch<R> matchNumber(Function<MatchNumberExpr, R> f) {
+        if (!matched && expr instanceof MatchNumberExpr value) {
+            result = f.apply(value);
+            matched = true;
+        }
+        return this;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ExpressionMatch<R> patternNavigation(Function<PatternNavigationExpr, R> f) {
+        if (!matched && expr instanceof PatternNavigationExpr value) {
+            result = f.apply(value);
+            matched = true;
+        }
+        return this;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ExpressionMatch<R> patternEvaluation(Function<PatternEvaluationExpr, R> f) {
+        if (!matched && expr instanceof PatternEvaluationExpr value) {
+            result = f.apply(value);
+            matched = true;
+        }
+        return this;
+    }
+
     /**
      * Terminal operation for this match chain.
      * <p>

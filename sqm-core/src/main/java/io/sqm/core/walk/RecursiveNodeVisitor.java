@@ -719,6 +719,144 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
     }
 
     /**
+     * Visits a pattern-recognition relation and all semantic children.
+     *
+     * @param table relation being visited
+     * @return visitor result
+     */
+    @Override
+    public R visitPatternRecognitionTable(PatternRecognitionTable table) {
+        accept(table.source());
+        accept(table.partitionBy());
+        accept(table.orderBy());
+        table.measures().forEach(this::accept);
+        accept(table.rowsPerMatch());
+        accept(table.afterMatchSkip());
+        accept(table.pattern());
+        table.subsets().forEach(this::accept);
+        table.definitions().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitPatternMeasure(PatternMeasure measure) {
+        accept(measure.expression());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitPatternDefinition(PatternDefinition definition) {
+        accept(definition.condition());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitPatternSubset(PatternSubset subset) {
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitRowsPerMatch(RowsPerMatch rowsPerMatch) {
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitAfterMatchSkip(AfterMatchSkip afterMatchSkip) {
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitPatternVariable(MatchPattern.Variable pattern) {
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitPatternSequence(MatchPattern.Sequence pattern) {
+        pattern.elements().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitPatternAlternation(MatchPattern.Alternation pattern) {
+        pattern.alternatives().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitPatternPermutation(MatchPattern.Permutation pattern) {
+        pattern.elements().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitPatternAnchor(MatchPattern.Anchor pattern) {
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitEmptyPattern(MatchPattern.Empty pattern) {
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitPatternExclusion(MatchPattern.Exclusion pattern) {
+        accept(pattern.pattern());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitQuantifiedPattern(MatchPattern.Quantified pattern) {
+        accept(pattern.pattern());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitPatternColumnExpr(PatternColumnExpr expression) {
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitClassifierExpr(ClassifierExpr expression) {
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitMatchNumberExpr(MatchNumberExpr expression) {
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitPatternNavigationExpr(PatternNavigationExpr expression) {
+        accept(expression.expression());
+        accept(expression.offset());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitPatternEvaluationExpr(PatternEvaluationExpr expression) {
+        accept(expression.expression());
+        return defaultResult();
+    }
+
+    /**
      * Visits a {@link PivotTable}.
      *
      * @param t pivot table reference

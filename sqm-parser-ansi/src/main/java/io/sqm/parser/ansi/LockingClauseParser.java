@@ -12,7 +12,6 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static io.sqm.parser.spi.ParseResult.error;
@@ -79,16 +78,14 @@ public class LockingClauseParser implements Parser<LockingClause> {
             }
         }
 
-        List<LockTarget> targets = new ArrayList<>();
+        List<LockTarget> targets = List.of();
         if (cur.consumeIf(TokenType.OF)) {
             if (!ctx.capabilities().supports(SqlFeature.LOCKING_OF)) {
                 return error("FOR UPDATE OF is not supported by this dialect", cur.fullPos());
             }
-            do {
-                var item = cur.expect("Expected table name after OF", TokenType.IDENT);
-                targets.add(LockTarget.of(toIdentifier(item)));
-            }
-            while (cur.consumeIf(TokenType.COMMA));
+            targets = parseIdentifierItems(cur, "Expected table name after OF").stream()
+                .map(LockTarget::of)
+                .toList();
         }
 
         LockWaitMode waitMode = LockWaitMode.DEFAULT;

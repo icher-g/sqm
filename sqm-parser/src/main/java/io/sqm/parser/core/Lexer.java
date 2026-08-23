@@ -155,6 +155,23 @@ public final class Lexer {
         KEYWORDS.put("ARRAY", ARRAY);
         KEYWORDS.put("FOR", FOR);
         KEYWORDS.put("PIVOT", PIVOT);
+        KEYWORDS.put("MATCH_RECOGNIZE", MATCH_RECOGNIZE);
+        KEYWORDS.put("MEASURES", MEASURES);
+        KEYWORDS.put("PATTERN", PATTERN);
+        KEYWORDS.put("DEFINE", DEFINE);
+        KEYWORDS.put("SUBSET", SUBSET);
+        KEYWORDS.put("PERMUTE", PERMUTE);
+        KEYWORDS.put("ONE", ONE);
+        KEYWORDS.put("PER", PER);
+        KEYWORDS.put("MATCH", MATCH);
+        KEYWORDS.put("AFTER", AFTER);
+        KEYWORDS.put("PAST", PAST);
+        KEYWORDS.put("SHOW", SHOW);
+        KEYWORDS.put("OMIT", OMIT);
+        KEYWORDS.put("EMPTY", EMPTY);
+        KEYWORDS.put("UNMATCHED", UNMATCHED);
+        KEYWORDS.put("RUNNING", RUNNING);
+        KEYWORDS.put("FINAL", FINAL);
         KEYWORDS.put("UNPIVOT", UNPIVOT);
         KEYWORDS.put("JSON_TABLE", JSON_TABLE);
         KEYWORDS.put("UPDATE", UPDATE);
@@ -322,6 +339,12 @@ public final class Lexer {
                 }
                 pos++;
                 return new Token(LBRACKET, "[", start);
+            case '{':
+                pos++;
+                return new Token(LBRACE, "{", start);
+            case '}':
+                pos++;
+                return new Token(RBRACE, "}", start);
             case ']':
                 pos++;
                 return new Token(RBRACKET, "]", start);
@@ -335,6 +358,14 @@ public final class Lexer {
 
         // generic operator (custom operators, non-ANSI symbols, etc.)
         if (isOperatorChar(c)) {
+            // Keep suffixes separate for reluctant row-pattern quantifiers and
+            // for the compact exclusion ending in constructs such as {-A+-}.
+            // Other custom operators retain the normal greedy tokenization.
+            if ((c == '*' || c == '+') && peekNext() == '?'
+                || c == '+' && peekNext() == '-' && pos + 2 < len && s.charAt(pos + 2) == '}') {
+                pos++;
+                return new Token(OPERATOR, String.valueOf(c), start);
+            }
             int j = pos;
             while (j < len && isOperatorChar(s.charAt(j))) j++;
             String op = s.substring(pos, j);

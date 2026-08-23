@@ -17,6 +17,38 @@ class LexerTest {
     }
 
     @Test
+    void lexesMatchRecognizeKeywordsAndPatternPunctuation() {
+        var tokens = Lexer.lexAll(
+            "MATCH_RECOGNIZE MEASURES PATTERN DEFINE SUBSET PERMUTE ONE PER MATCH AFTER PAST SHOW OMIT UNMATCHED RUNNING FINAL "
+                + "A*? A?? A{2,5}? {-A+-} ^A+$",
+            quoting
+        );
+
+        assertEquals(
+            List.of(
+                TokenType.MATCH_RECOGNIZE, TokenType.MEASURES, TokenType.PATTERN, TokenType.DEFINE,
+                TokenType.SUBSET, TokenType.PERMUTE, TokenType.ONE, TokenType.PER, TokenType.MATCH,
+                TokenType.AFTER, TokenType.PAST, TokenType.SHOW, TokenType.OMIT, TokenType.UNMATCHED,
+                TokenType.RUNNING, TokenType.FINAL
+            ),
+            tokens.subList(0, 16).stream().map(Token::type).toList()
+        );
+        assertEquals(
+            List.of("A", "*", "?", "A", "?", "?", "A", "{", "2", ",", "5", "}", "?",
+                "{", "-", "A", "+", "-", "}", "^", "A", "+", "$"),
+            tokens.subList(16, tokens.size() - 1).stream().map(Token::lexeme).toList()
+        );
+    }
+
+    @Test
+    void keepsPatternContextFunctionNamesAsIdentifiers() {
+        var tokens = Lexer.lexAll("classifier match_number prev", quoting);
+
+        assertEquals(List.of(TokenType.IDENT, TokenType.IDENT, TokenType.IDENT),
+            tokens.subList(0, 3).stream().map(Token::type).toList());
+    }
+
+    @Test
     void ansi_double_quotes_in_function_and_collate() {
         String s = "LOWER(\"T\".\"Name\") NULLS FIRST COLLATE \"de-CH\" DESC";
         List<Token> toks = Lexer.lexAll(s, quoting);

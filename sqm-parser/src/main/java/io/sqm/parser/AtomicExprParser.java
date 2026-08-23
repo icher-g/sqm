@@ -124,6 +124,19 @@ public class AtomicExprParser {
             return matched.result();
         }
 
+        if (inPatternExpressionScope(ctx)) {
+            matched = ctx.parseIfMatch(PatternEvaluationExpr.class, cur);
+            if (matched.match()) return matched.result();
+            matched = ctx.parseIfMatch(ClassifierExpr.class, cur);
+            if (matched.match()) return matched.result();
+            matched = ctx.parseIfMatch(MatchNumberExpr.class, cur);
+            if (matched.match()) return matched.result();
+            matched = ctx.parseIfMatch(PatternNavigationExpr.class, cur);
+            if (matched.match()) return matched.result();
+            matched = ctx.parseIfMatch(PatternColumnExpr.class, cur);
+            if (matched.match()) return matched.result();
+        }
+
         matched = ctx.parseIfMatch(FunctionExpr.class, cur);
         if (matched.match()) {
             return matched.result();
@@ -165,6 +178,13 @@ public class AtomicExprParser {
         }
 
         return error("Unsupported expression token: " + cur.peek().lexeme(), cur.fullPos());
+    }
+
+    private static boolean inPatternExpressionScope(ParseContext ctx) {
+        return ctx.callstack().contains(PatternMeasure.class)
+            || ctx.callstack().contains(PatternDefinition.class)
+            || ctx.callstack().contains(PatternNavigationExpr.class)
+            || ctx.callstack().contains(PatternEvaluationExpr.class);
     }
 
     /**

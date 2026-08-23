@@ -205,18 +205,13 @@ public class SelectQueryParser implements Parser<SelectQuery> {
             return ok(null);
         }
 
-        var tableRef = ctx.parse(TableRef.class, cur);
-        if (tableRef.isError()) {
-            return error(tableRef);
+        var tableRefs = parseItems(TableRef.class, cur, ctx);
+        if (tableRefs.isError()) {
+            return error(tableRefs);
         }
-        q.from(tableRef.value());
-
-        while (cur.consumeIf(TokenType.COMMA)) {
-            var crossJoin = ctx.parse(TableRef.class, cur);
-            if (crossJoin.isError()) {
-                return error(crossJoin);
-            }
-            q.join(CrossJoin.of(crossJoin.value()));
+        q.from(tableRefs.value().getFirst());
+        for (var crossJoin : tableRefs.value().subList(1, tableRefs.value().size())) {
+            q.join(CrossJoin.of(crossJoin));
         }
 
         while (isJoinStart(cur)) {
@@ -333,14 +328,11 @@ public class SelectQueryParser implements Parser<SelectQuery> {
      */
     protected ParseResult<Void> parseWindowClause(Cursor cur, ParseContext ctx, SelectQueryBuilder q) {
         while (cur.consumeIf(TokenType.WINDOW)) {
-            do {
-                var window = ctx.parse(WindowDef.class, cur);
-                if (window.isError()) {
-                    return error(window);
-                }
-                q.window(window.value());
+            var windows = parseItems(WindowDef.class, cur, ctx);
+            if (windows.isError()) {
+                return error(windows);
             }
-            while (cur.consumeIf(TokenType.COMMA));
+            windows.value().forEach(q::window);
         }
         return ok(null);
     }

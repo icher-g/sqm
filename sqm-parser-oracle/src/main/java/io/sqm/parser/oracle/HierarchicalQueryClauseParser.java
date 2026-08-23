@@ -9,9 +9,6 @@ import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
@@ -102,14 +99,10 @@ public class HierarchicalQueryClauseParser extends io.sqm.parser.ansi.Hierarchic
         cur.expect("Expected ORDER", TokenType.ORDER);
         cur.expect("Expected SIBLINGS after ORDER", TokenType.SIBLINGS);
         cur.expect("Expected BY after ORDER SIBLINGS", TokenType.BY);
-        List<OrderItem> items = new ArrayList<>();
-        do {
-            var item = ctx.parse(OrderItem.class, cur);
-            if (item.isError()) {
-                return error(item);
-            }
-            items.add(item.value());
-        } while (cur.consumeIf(TokenType.COMMA));
-        return ok(OrderBy.of(items));
+        var items = parseItems(OrderItem.class, cur, ctx);
+        if (items.isError()) {
+            return error(items);
+        }
+        return ok(OrderBy.of(items.value()));
     }
 }

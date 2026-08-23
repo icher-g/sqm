@@ -65,6 +65,14 @@ public enum TokenType {
      */
     RBRACKET,
     /**
+     * Left brace token.
+     */
+    LBRACE,
+    /**
+     * Right brace token.
+     */
+    RBRACE,
+    /**
      * Backtick quote token.
      */
     BACKTICK,
@@ -644,6 +652,38 @@ public enum TokenType {
      * PIVOT keyword token.
      */
     PIVOT,
+    /** SQL row-pattern recognition keyword token. */
+    MATCH_RECOGNIZE,
+    /** Row-pattern measures keyword token. */
+    MEASURES,
+    /** Row-pattern grammar keyword token. */
+    PATTERN,
+    /** Row-pattern definition keyword token. */
+    DEFINE,
+    /** Row-pattern subset keyword token. */
+    SUBSET,
+    /** Row-pattern permutation keyword token. */
+    PERMUTE,
+    /** ONE keyword token. */
+    ONE,
+    /** PER keyword token. */
+    PER,
+    /** MATCH keyword token. */
+    MATCH,
+    /** AFTER keyword token. */
+    AFTER,
+    /** PAST keyword token. */
+    PAST,
+    /** SHOW keyword token. */
+    SHOW,
+    /** OMIT keyword token. */
+    OMIT,
+    /** UNMATCHED keyword token. */
+    UNMATCHED,
+    /** RUNNING keyword token. */
+    RUNNING,
+    /** FINAL keyword token. */
+    FINAL,
     /**
      * UNPIVOT keyword token.
      */

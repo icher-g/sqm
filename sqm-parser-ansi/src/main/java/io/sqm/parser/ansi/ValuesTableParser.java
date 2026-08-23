@@ -7,9 +7,6 @@ import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
 
@@ -37,17 +34,12 @@ public class ValuesTableParser implements MatchableParser<ValuesTable> {
         cur.expect("Expected (", TokenType.LPAREN);
         cur.expect("Expected VALUES", TokenType.VALUES);
 
-        List<RowExpr> items = new ArrayList<>();
-        do {
-            var rowExpr = ctx.parse(RowExpr.class, cur);
-            if (rowExpr.isError()) {
-                return error(rowExpr);
-            }
-            items.add(rowExpr.value());
+        var items = parseItems(RowExpr.class, cur, ctx);
+        if (items.isError()) {
+            return error(items);
         }
-        while (cur.consumeIf(TokenType.COMMA));
 
-        RowValues rows = items.size() == 1 ? items.getFirst() : RowListExpr.of(items);
+        RowValues rows = items.value().size() == 1 ? items.value().getFirst() : RowListExpr.of(items.value());
 
         cur.expect("Expected )", TokenType.RPAREN);
 

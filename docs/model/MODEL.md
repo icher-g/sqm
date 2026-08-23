@@ -36,6 +36,7 @@ Status terms used below:
 | `SequenceValueExpr`                                          | Reads the next or current value from a named sequence                                | `Not supported by the dialect`                                                                   | `Support` through `nextval('seq')` / `currval('seq')`                                            | `Not supported by the dialect`                                                                   | `Support` for next values through `NEXT VALUE FOR`; current values are rejected                  | Sequence syntax is dialect-shaped even when the semantic role is shared                              | Shared expression node for sequence reads; Oracle renders `seq.NEXTVAL` / `seq.CURRVAL`, PostgreSQL renders function syntax, and SQL Server only supports next values        |
 | `HierarchicalQueryClause` / `PriorExpr`                      | Hierarchical traversal semantics attached to `SelectQuery`                           | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | Oracle currently ships parser/renderer/validation support                                            | Shared query clause plus parent-row expression node for Oracle `START WITH`, `CONNECT BY`, `NOCYCLE`, `PRIOR`, and `ORDER SIBLINGS BY`                                       |
 | `PivotTable` / `UnpivotTable`                                | Relation transforms that rotate values between rows and columns                      | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Support` for the shipped compatible subset                                                      | Oracle also supports the shipped subset; unsupported options such as Oracle `PIVOT XML` remain gated | Shared relation-transform nodes with helper nodes for pivot measures, pivot values, and unpivot input branches                                                               |
+| `PatternRecognitionTable` / `MatchPattern`                   | Typed row-pattern recognition relation and grammar                                   | `Not implemented by SQM`                                                                         | `Not implemented by SQM`                                                                         | `Not implemented by SQM`                                                                         | `Not implemented by SQM`                                                                         | Oracle 12.1+ parser, renderer, and validation support is delivered in R11-8C                         | Shared immutable model includes typed measures, definitions, subsets, output/skip options, pattern grammar, and scoped row-pattern expressions; no raw pattern SQL is stored |
 | `ResultClause`                                               | DML statement emits result rows                                                      | `Support` for the shared shape only where delivered by the ANSI-based DML slice                  | `Support` through shipped `RETURNING` support                                                    | `Not supported by the dialect` for current shipped MySQL versions                                | `Support` through shipped `OUTPUT` support                                                       | The database syntax differs by dialect (`RETURNING`, `OUTPUT`, and future equivalents)               | Shared semantics, dialect-specific syntax                                                                                                                                    |
 | `RelationResultTarget`                                       | DML result rows are redirected into a relation target                                | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Support` for `OUTPUT ... INTO`                                                                  | The current shipped support is SQL Server-specific                                                   | Shared sink concept, currently only shipped for SQL Server                                                                                                                   |
 | `VariableResultTarget`                                       | DML result expressions are assigned into variables                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | `Not supported by the dialect`                                                                   | The current shipped support is Oracle-specific                                                       | Shared sink concept for dialects such as Oracle `RETURNING ... INTO`; Oracle support lives in the Oracle modules                                                             |
@@ -76,6 +77,11 @@ Node
 |  |- OutputColumnExpr
 |  |- SequenceValueExpr
 |  |- PriorExpr
+|  |- PatternColumnExpr
+|  |- ClassifierExpr
+|  |- MatchNumberExpr
+|  |- PatternNavigationExpr
+|  |- PatternEvaluationExpr
 |  |- FunctionExpr
 |  |  `- FunctionExpr.Arg
 |  |     |- FunctionExpr.Arg.Column
@@ -175,6 +181,7 @@ Node
 |     |  |- QueryTable
 |     |  `- ValuesTable
 |     |- Lateral
+|     |- PatternRecognitionTable
 |     |- PivotTable
 |     |- SampledTable
 |     |- Table
@@ -215,6 +222,20 @@ Node
 |- OrderItem
 |- PivotMeasure
 |- PivotValue
+|- PatternMeasure
+|- PatternDefinition
+|- PatternSubset
+|- RowsPerMatch
+|- AfterMatchSkip
+|- MatchPattern
+|  |- MatchPattern.Variable
+|  |- MatchPattern.Sequence
+|  |- MatchPattern.Alternation
+|  |- MatchPattern.Permutation
+|  |- MatchPattern.Anchor
+|  |- MatchPattern.Empty
+|  |- MatchPattern.Exclusion
+|  `- MatchPattern.Quantified
 |- WhenThen
 |- TopSpec
 |- LimitOffset
@@ -247,6 +268,11 @@ graph TD
   Expression --> OutputColumnExpr
   Expression --> SequenceValueExpr
   Expression --> PriorExpr
+  Expression --> PatternColumnExpr
+  Expression --> ClassifierExpr
+  Expression --> MatchNumberExpr
+  Expression --> PatternNavigationExpr
+  Expression --> PatternEvaluationExpr
   Expression --> FunctionExpr
   Expression --> ParamExpr
   Expression --> ArithmeticExpr
@@ -354,6 +380,7 @@ graph TD
 
   TableRef --> AliasedTableRef
   TableRef --> Lateral
+  TableRef --> PatternRecognitionTable
   TableRef --> PivotTable
   TableRef --> SampledTable
   TableRef --> Table
@@ -405,6 +432,20 @@ graph TD
   Node --> OrderItem
   Node --> PivotMeasure
   Node --> PivotValue
+  Node --> PatternMeasure
+  Node --> PatternDefinition
+  Node --> PatternSubset
+  Node --> RowsPerMatch
+  Node --> AfterMatchSkip
+  Node --> MatchPattern
+  MatchPattern --> MatchPattern_Variable
+  MatchPattern --> MatchPattern_Sequence
+  MatchPattern --> MatchPattern_Alternation
+  MatchPattern --> MatchPattern_Permutation
+  MatchPattern --> MatchPattern_Anchor
+  MatchPattern --> MatchPattern_Empty
+  MatchPattern --> MatchPattern_Exclusion
+  MatchPattern --> MatchPattern_Quantified
   Node --> WhenThen
   Node --> TopSpec
   Node --> LimitOffset
@@ -669,6 +710,7 @@ graph TD
       - **QueryTable** - derived table or subquery with optional alias and column aliases
       - **ValuesTable** - inline `VALUES` construct with optional alias
     - **VariableTable** - variable-backed table reference such as SQL Server `@audit`, currently used for `OUTPUT INTO`
+    - **PatternRecognitionTable** - relation transform that recognizes typed row patterns over an ordered source
     - **PivotTable** - relation transform that rotates row values into output columns
     - **UnpivotTable** - relation transform that rotates input columns into output rows
     - **SampledTable** - wrapper that applies a `TableSampleSpec` to another table reference
@@ -696,6 +738,27 @@ graph TD
   Shared semantic node for relation-like targets identified by variable semantics rather than catalog-table identity.
   Current shipped support is SQL Server table-variable syntax such as `@audit`.
   ANSI explicitly rejects this node, and other dialects do not currently ship parser or renderer support for it.
+
+- **PatternRecognitionTable**
+  Shared relation transform for SQL row-pattern recognition. It stores a source relation, optional partitioning and ordering, named measures, output-cardinality and after-match behavior, a typed `MatchPattern`, subsets, definitions, and an optional result alias. The shared model is implemented independently of dialect syntax; Oracle 12.1+ parser, renderer, validation, and live-engine support are delivered by the remaining R11-8 stories.
+
+- **MatchPattern**
+  Sealed typed grammar family for primary variables, sequences, alternations, permutations, anchors, empty patterns, exclusions, and greedy or reluctant quantifiers. Parentheses used only for precedence are not persisted, and no variant stores raw SQL.
+
+- **PatternMeasure**
+  A measure expression with a required output alias. It is a dedicated clause item rather than a `SelectItem`, because stars and optional aliases are not valid measures.
+
+- **PatternDefinition**
+  Associates a primary pattern variable with the predicate that classifies its rows.
+
+- **PatternSubset**
+  Names a non-empty union of primary pattern variables.
+
+- **RowsPerMatch** / **AfterMatchSkip**
+  Structured semantic options for output cardinality, empty/unmatched-row handling, and the row at which matching resumes.
+
+- **PatternColumnExpr** / **ClassifierExpr** / **MatchNumberExpr** / **PatternNavigationExpr** / **PatternEvaluationExpr**
+  Expressions whose variable scope or evaluation semantics are specific to row-pattern recognition. Ordinary aggregate functions remain `FunctionExpr`; navigation and running/final evaluation remain explicit wrappers.
 
 - **PivotTable**
   Shared relation transform for `PIVOT`-style row-to-column rotation. It stores the source relation, aggregate `PivotMeasure` list, the pivot-for expression, explicit `PivotValue` list, and an optional relation alias. Oracle and SQL Server ship parser, renderer, validation, JSON, and codegen support for the baseline explicit-value subset; ANSI, PostgreSQL, and MySQL reject it natively. Simple top-level pivot queries can be approximately transpiled to conditional aggregation when approximate rewrites are enabled.

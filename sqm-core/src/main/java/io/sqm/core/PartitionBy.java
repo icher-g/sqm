@@ -5,7 +5,8 @@ import io.sqm.core.walk.NodeVisitor;
 import java.util.List;
 
 /**
- * Represents a PARTITION BY statement used in OVER();
+ * Represents a shared {@code PARTITION BY} clause used by window expressions
+ * and row-pattern recognition.
  * <p>For example:</p>
  * <pre>
  *     {@code
@@ -62,7 +63,7 @@ public non-sealed interface PartitionBy extends Node {
     }
 
     /**
-     * Implements a PARTITION BY statement used in OVER();
+     * Implements a shared {@code PARTITION BY} clause.
      * <p>For example:</p>
      * <pre>
      *     {@code

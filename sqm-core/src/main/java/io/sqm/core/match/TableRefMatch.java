@@ -98,6 +98,14 @@ public interface TableRefMatch<R> extends Match<TableRef, R> {
     TableRefMatch<R> sampled(Function<SampledTable, R> f);
 
     /**
+     * Registers a handler for a {@link PatternRecognitionTable}.
+     *
+     * @param f handler for {@code PatternRecognitionTable}
+     * @return {@code this} for fluent chaining
+     */
+    TableRefMatch<R> patternRecognition(Function<PatternRecognitionTable, R> f);
+
+    /**
      * Matches a {@link Lateral}.
      * <p>
      * This branch is selected when the FROM item is wrapped as lateral,

@@ -4,16 +4,12 @@ import io.sqm.core.Join;
 import io.sqm.core.JoinKind;
 import io.sqm.core.TableRef;
 import io.sqm.core.UsingJoin;
-import io.sqm.core.Identifier;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.InfixParser;
 import io.sqm.parser.spi.MatchableParser;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static io.sqm.parser.JoinParser.parseKind;
 import static io.sqm.parser.spi.ParseResult.error;
@@ -105,10 +101,7 @@ public class UsingJoinParser implements MatchableParser<UsingJoin>, InfixParser<
         cur.expect("Expected USING", TokenType.USING);
         cur.expect("Expected (", TokenType.LPAREN);
 
-        final List<Identifier> columns = new ArrayList<>();
-        do {
-            columns.add(toIdentifier(cur.expect("Expected column identifier", TokenType.IDENT)));
-        } while (cur.consumeIf(TokenType.COMMA));
+        var columns = parseIdentifierItems(cur, "Expected column identifier");
 
         cur.expect("Expected )", TokenType.RPAREN);
         return ok(Join.inner(lhs).using(columns));

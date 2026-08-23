@@ -4,6 +4,8 @@ import io.sqm.core.DeleteStatement;
 import io.sqm.core.Query;
 import io.sqm.core.Statement;
 import io.sqm.core.UpdateStatement;
+import io.sqm.core.PatternRecognitionTable;
+import io.sqm.core.MatchPattern;
 import io.sqm.render.spi.RenderersRepository;
 import org.junit.jupiter.api.Test;
 
@@ -19,5 +21,7 @@ class StatementEntryPointRendererRegistrationTest {
         assertInstanceOf(io.sqm.render.QueryRenderer.class, repo.require(Query.class));
         assertInstanceOf(UpdateStatementRenderer.class, repo.require(UpdateStatement.class));
         assertInstanceOf(DeleteStatementRenderer.class, repo.require(DeleteStatement.class));
+        assertInstanceOf(PatternRecognitionTableRenderer.class, repo.require(PatternRecognitionTable.class));
+        assertInstanceOf(MatchPatternRenderer.class, repo.require(MatchPattern.class));
     }
 }
