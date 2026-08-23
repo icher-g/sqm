@@ -96,7 +96,8 @@ final class PatternGrammar {
                     maximum = 1;
                 }
                 else {
-                    if (cur.consumeIf(TokenType.LBRACE)) {
+                    if (cur.match(TokenType.LBRACE) && !isOperator(cur, "-", 1)) {
+                        cur.advance();
                         if (cur.consumeIf(TokenType.COMMA)) {
                             minimum = 0;
                             maximum = parseBound(cur, "Expected upper quantifier bound");

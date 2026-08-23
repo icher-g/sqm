@@ -86,6 +86,7 @@
         <postgresql.version>42.7.8</postgresql.version>
         <mysql.version>9.6.0</mysql.version>
         <maven.javadoc.skip>false</maven.javadoc.skip>
+        <surefire.skip>false</surefire.skip>
     </properties>
     <build>
         <pluginManagement>
@@ -102,6 +103,7 @@
                     <version>3.2.5</version>
                     <configuration>
                         <useModulePath>false</useModulePath>
+                        <skipTests>${surefire.skip}</skipTests>
                     </configuration>
                 </plugin>
                 <!-- Failsafe: integration tests -->

@@ -8,12 +8,13 @@ import io.sqm.dbit.support.DialectExecutionCase;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 final class OracleExecutionCases {
-    private static final List<DialectExecutionCase<OracleLiveFeature, OracleExecutionHarness>> CASES = List.of(
+    private static final List<DialectExecutionCase<OracleLiveFeature, OracleExecutionHarness>> BASELINE_CASES = List.of(
         new DialectExecutionCase<>(
             "quoted-fetch-pagination",
             EnumSet.of(
@@ -318,6 +319,10 @@ final class OracleExecutionCases {
             }
         )
     );
+    private static final List<DialectExecutionCase<OracleLiveFeature, OracleExecutionHarness>> CASES = Stream.concat(
+        BASELINE_CASES.stream(),
+        OraclePatternRecognitionExecutionCases.cases().stream()
+    ).toList();
 
     private OracleExecutionCases() {
     }

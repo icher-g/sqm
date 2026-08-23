@@ -94,6 +94,15 @@ class PatternRecognitionTableParserTest {
     }
 
     @Test
+    void parsesExclusionAfterUnquantifiedSequenceElement() {
+        var result = enabled.parse(MatchPattern.class, "A {- B -} C");
+
+        assertTrue(result.ok(), result.errorMessage());
+        var sequence = assertInstanceOf(MatchPattern.Sequence.class, result.value());
+        assertInstanceOf(MatchPattern.Exclusion.class, sequence.elements().get(1));
+    }
+
+    @Test
     void parsesEveryQuantifierFormAndRejectsInvalidBounds() {
         assertTrue(enabled.parse(MatchPattern.class, "A*").ok());
         assertTrue(enabled.parse(MatchPattern.class, "A?").ok());
