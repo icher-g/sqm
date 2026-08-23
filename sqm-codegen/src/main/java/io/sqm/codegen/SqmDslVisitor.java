@@ -883,6 +883,247 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
     }
 
     @Override
+    public Void visitPatternRecognitionTable(PatternRecognitionTable table) {
+        out.append("matchRecognize(");
+        appendNode(table.source());
+        out.append(")").in();
+        if (table.partitionBy() != null) {
+            out.nl().append(".partitionBy(");
+            appendNode(table.partitionBy());
+            out.append(")");
+        }
+        if (table.orderBy() != null) {
+            out.nl().append(".orderBy(");
+            appendNode(table.orderBy());
+            out.append(")");
+        }
+        for (var measure : table.measures()) {
+            out.nl().append(".measure(");
+            appendNode(measure);
+            out.append(")");
+        }
+        out.nl().append(".rowsPerMatch(");
+        appendNode(table.rowsPerMatch());
+        out.append(")");
+        out.nl().append(".afterMatchSkip(");
+        appendNode(table.afterMatchSkip());
+        out.append(")");
+        out.nl().append(".pattern(");
+        appendNode(table.pattern());
+        out.append(")");
+        for (var subset : table.subsets()) {
+            out.nl().append(".subset(");
+            appendNode(subset);
+            out.append(")");
+        }
+        for (var definition : table.definitions()) {
+            out.nl().append(".define(");
+            appendNode(definition);
+            out.append(")");
+        }
+        if (table.alias() != null) {
+            out.nl().append(".as(");
+            appendIdentifier(table.alias());
+            out.append(")");
+        }
+        out.nl().append(".build()").out();
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPatternMeasure(PatternMeasure measure) {
+        out.append("patternMeasure(");
+        appendNode(measure.expression());
+        out.append(", ");
+        appendIdentifier(measure.alias());
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPatternDefinition(PatternDefinition definition) {
+        out.append("patternDefinition(");
+        appendIdentifier(definition.variable());
+        out.append(", ");
+        appendNode(definition.condition());
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPatternSubset(PatternSubset subset) {
+        out.append("patternSubset(");
+        appendIdentifier(subset.name());
+        if (!subset.variables().isEmpty()) {
+            out.append(", ").comma(subset.variables(), this::appendIdentifier);
+        }
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitRowsPerMatch(RowsPerMatch rowsPerMatch) {
+        if (rowsPerMatch.mode() == RowsPerMatch.Mode.ONE) {
+            out.append("oneRowPerMatch()");
+        }
+        else if (rowsPerMatch.emptyMatchHandling() == RowsPerMatch.EmptyMatchHandling.DEFAULT) {
+            out.append("allRowsPerMatch()");
+        }
+        else {
+            out.append("allRowsPerMatch(RowsPerMatch.EmptyMatchHandling.")
+                .append(rowsPerMatch.emptyMatchHandling().name())
+                .append(")");
+        }
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitAfterMatchSkip(AfterMatchSkip afterMatchSkip) {
+        switch (afterMatchSkip.kind()) {
+            case PAST_LAST_ROW -> out.append("skipPastLastRow()");
+            case TO_NEXT_ROW -> out.append("skipToNextRow()");
+            case TO_VARIABLE -> {
+                var helper = switch (afterMatchSkip.position()) {
+                    case DEFAULT -> "skipToPattern";
+                    case FIRST -> "skipToFirst";
+                    case LAST -> "skipToLast";
+                };
+                out.append(helper).append("(");
+                appendIdentifier(afterMatchSkip.variable());
+                out.append(")");
+            }
+        }
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPatternVariable(MatchPattern.Variable pattern) {
+        out.append("patternVar(");
+        appendIdentifier(pattern.name());
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPatternSequence(MatchPattern.Sequence pattern) {
+        out.append("patternSequence(").comma(pattern.elements(), this::appendNode).append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPatternAlternation(MatchPattern.Alternation pattern) {
+        out.append("patternAlternation(").comma(pattern.alternatives(), this::appendNode).append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPatternPermutation(MatchPattern.Permutation pattern) {
+        out.append("patternPermute(").comma(pattern.elements(), this::appendNode).append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPatternAnchor(MatchPattern.Anchor pattern) {
+        out.append(pattern.kind() == MatchPattern.Anchor.Kind.START ? "patternStart()" : "patternEnd()");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitEmptyPattern(MatchPattern.Empty pattern) {
+        out.append("emptyPattern()");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPatternExclusion(MatchPattern.Exclusion pattern) {
+        out.append("excludePattern(");
+        appendNode(pattern.pattern());
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitQuantifiedPattern(MatchPattern.Quantified pattern) {
+        if (!pattern.reluctant() && pattern.minimum() == 0 && pattern.maximum() == null) {
+            out.append("zeroOrMore(");
+            appendNode(pattern.pattern());
+            out.append(")");
+            return defaultResult();
+        }
+        if (!pattern.reluctant() && pattern.minimum() == 1 && pattern.maximum() == null) {
+            out.append("oneOrMore(");
+            appendNode(pattern.pattern());
+            out.append(")");
+            return defaultResult();
+        }
+        if (!pattern.reluctant() && pattern.minimum() == 0 && pattern.maximum() != null
+            && pattern.maximum() == 1) {
+            out.append("optionalPattern(");
+            appendNode(pattern.pattern());
+            out.append(")");
+            return defaultResult();
+        }
+        out.append("repeatPattern(");
+        appendNode(pattern.pattern());
+        out.append(", ").append(String.valueOf(pattern.minimum())).append(", ");
+        out.append(pattern.maximum() == null ? "null" : String.valueOf(pattern.maximum()));
+        out.append(", ").append(String.valueOf(pattern.reluctant())).append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPatternColumnExpr(PatternColumnExpr expression) {
+        out.append("patternColumn(");
+        appendIdentifier(expression.variable());
+        out.append(", ");
+        appendIdentifier(expression.column());
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitClassifierExpr(ClassifierExpr expression) {
+        out.append("classifier(");
+        if (expression.variable() != null) {
+            appendIdentifier(expression.variable());
+        }
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitMatchNumberExpr(MatchNumberExpr expression) {
+        out.append("matchNumber()");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPatternNavigationExpr(PatternNavigationExpr expression) {
+        var helper = switch (expression.kind()) {
+            case FIRST -> "first";
+            case LAST -> "last";
+            case PREV -> "prev";
+            case NEXT -> "next";
+        };
+        out.append(helper).append("(");
+        appendNode(expression.expression());
+        if (expression.offset() != null) {
+            out.append(", ");
+            appendNode(expression.offset());
+        }
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
+    public Void visitPatternEvaluationExpr(PatternEvaluationExpr expression) {
+        out.append(expression.mode() == PatternEvaluationExpr.Mode.RUNNING ? "running(" : "finalValue(");
+        appendNode(expression.expression());
+        out.append(")");
+        return defaultResult();
+    }
+
+    @Override
     public Void visitLateral(Lateral l) {
         appendNode(l.inner());
         out.append(".lateral()");

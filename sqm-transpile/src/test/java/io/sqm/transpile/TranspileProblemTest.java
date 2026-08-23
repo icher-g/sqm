@@ -19,6 +19,7 @@ class TranspileProblemTest {
         assertEquals(1, problem.line());
         assertEquals(8, problem.column());
         assertNull(problem.statementIndex());
+        assertNull(problem.clausePath());
     }
 
     @Test
@@ -29,6 +30,7 @@ class TranspileProblemTest {
         assertNull(problem.line());
         assertNull(problem.column());
         assertNull(problem.statementIndex());
+        assertNull(problem.clausePath());
     }
 
     @Test
@@ -39,11 +41,15 @@ class TranspileProblemTest {
         assertNull(problem.line());
         assertNull(problem.column());
         assertNull(problem.statementIndex());
+        assertNull(problem.clausePath());
     }
 
     @Test
     void withStatementIndexCopiesProblemContext() {
-        var problem = new TranspileProblem("PARSE_ERROR", "Expected FROM", TranspileStage.PARSE, 7, 1, 8);
+        var problem = new TranspileProblem(
+            "PARSE_ERROR", "Expected FROM", TranspileStage.PARSE,
+            7, 1, 8, null, "select.matchRecognize[0]"
+        );
 
         var indexed = problem.withStatementIndex(2);
 
@@ -54,6 +60,7 @@ class TranspileProblemTest {
         assertEquals(problem.line(), indexed.line());
         assertEquals(problem.column(), indexed.column());
         assertEquals(2, indexed.statementIndex());
+        assertEquals(problem.clausePath(), indexed.clausePath());
     }
 
     @Test

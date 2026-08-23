@@ -1,7 +1,7 @@
 # R11-8 SQL Row Pattern Recognition (`MATCH_RECOGNIZE`) Design
 
-**Status:** Detailed design complete; R11-8A through R11-8C implemented, with
-transpilation, codegen, and live-engine coverage remaining in R11-8D and R11-8E.
+**Status:** Detailed design complete; R11-8A through R11-8D implemented, with
+live-engine coverage and epic completion remaining in R11-8E.
 
 **Primary delivery target:** Oracle 12.1+.
 

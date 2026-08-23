@@ -162,6 +162,28 @@ public final class ExampleCatalog {
                 WHERE m.active = 1
                 ORDER BY p.region
                 """
+            ),
+            new ExampleDto(
+                "oracle-match-recognize",
+                "Oracle MATCH_RECOGNIZE",
+                SqlDialectDto.oracle,
+                """
+                SELECT *
+                FROM sales MATCH_RECOGNIZE (
+                    PARTITION BY customer_id
+                    ORDER BY sale_date
+                    MEASURES
+                        MATCH_NUMBER() AS match_no,
+                        FIRST(A.amount) AS first_amount,
+                        LAST(B.amount) AS last_amount
+                    ONE ROW PER MATCH
+                    AFTER MATCH SKIP TO NEXT ROW
+                    PATTERN (A B+)
+                    DEFINE
+                        A AS A.amount > 0,
+                        B AS B.amount > PREV(B.amount)
+                ) mr
+                """
             )
         );
     }

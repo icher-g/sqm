@@ -137,6 +137,24 @@ public final class UserQueries {
 - Stable formatting (fixed indentation and import sorting).
 - Output only changes when input SQL/config changes.
 
+## Row-Pattern Recognition
+
+Oracle SQL files containing `MATCH_RECOGNIZE` generate typed public DSL and
+builder calls for the complete modeled family:
+
+- relation options, measures, definitions, subsets, row-output modes, and
+  after-match skip positions;
+- variables, sequences, alternations, permutations, anchors, empty patterns,
+  exclusions, and greedy or reluctant quantifiers;
+- pattern columns, `CLASSIFIER`, `MATCH_NUMBER`, navigation functions, and
+  running/final evaluation.
+
+Generated source preserves quoted identifiers and explicit semantic options.
+It never instantiates `Impl` classes, embeds raw pattern SQL, or replaces typed
+pattern expressions with generic function calls. Golden tests cover compact,
+full-pattern, and expression-heavy Oracle inputs; compile the generated Java;
+reconstruct equal semantic trees; and render equivalent Oracle SQL.
+
 ## Maven Plugin Draft
 
 ### Coordinates

@@ -102,12 +102,39 @@ public record TranspileRuleResult(
      * @return unsupported rule result
      */
     public static TranspileRuleResult unsupported(Statement statement, String code, String message) {
+        return unsupported(statement, code, message, null);
+    }
+
+    /**
+     * Creates an unsupported rule result with a stable semantic clause path.
+     *
+     * @param statement input statement
+     * @param code stable diagnostic code
+     * @param message human-readable problem description
+     * @param clausePath stable semantic path identifying the unsupported node
+     * @return unsupported rule result
+     */
+    public static TranspileRuleResult unsupported(
+        Statement statement,
+        String code,
+        String message,
+        String clausePath
+    ) {
         return new TranspileRuleResult(
             statement,
             false,
             RewriteFidelity.UNSUPPORTED,
             List.of(),
-            List.of(new TranspileProblem(code, message, TranspileStage.REWRITE)),
+            List.of(new TranspileProblem(
+                code,
+                message,
+                TranspileStage.REWRITE,
+                null,
+                null,
+                null,
+                null,
+                clausePath
+            )),
             message
         );
     }

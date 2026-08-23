@@ -10,6 +10,7 @@ package io.sqm.transpile;
  * @param line one-based source line when the problem can be mapped to the input SQL
  * @param column one-based source column when the problem can be mapped to the input SQL
  * @param statementIndex optional one-based statement index when transpiling a statement sequence
+ * @param clausePath optional stable semantic path identifying the affected clause or relation
  */
 public record TranspileProblem(
     String code,
@@ -18,8 +19,32 @@ public record TranspileProblem(
     Integer sourceOffset,
     Integer line,
     Integer column,
-    Integer statementIndex
+    Integer statementIndex,
+    String clausePath
 ) {
+    /**
+     * Creates a transpile problem using the legacy coordinate and statement-index shape.
+     *
+     * @param code stable diagnostic code
+     * @param message human-readable problem description
+     * @param stage pipeline stage where the problem occurred
+     * @param sourceOffset zero-based source character offset when available
+     * @param line one-based source line when available
+     * @param column one-based source column when available
+     * @param statementIndex optional one-based statement index
+     */
+    public TranspileProblem(
+        String code,
+        String message,
+        TranspileStage stage,
+        Integer sourceOffset,
+        Integer line,
+        Integer column,
+        Integer statementIndex
+    ) {
+        this(code, message, stage, sourceOffset, line, column, statementIndex, null);
+    }
+
     /**
      * Creates a transpile problem without source coordinates.
      *
@@ -28,7 +53,7 @@ public record TranspileProblem(
      * @param stage pipeline stage where the problem occurred
      */
     public TranspileProblem(String code, String message, TranspileStage stage) {
-        this(code, message, stage, null, null, null, null);
+        this(code, message, stage, null, null, null, null, null);
     }
 
     /**
@@ -40,7 +65,7 @@ public record TranspileProblem(
      * @param sourceOffset zero-based source character offset when available
      */
     public TranspileProblem(String code, String message, TranspileStage stage, Integer sourceOffset) {
-        this(code, message, stage, sourceOffset, null, null, null);
+        this(code, message, stage, sourceOffset, null, null, null, null);
     }
 
     /**
@@ -54,7 +79,7 @@ public record TranspileProblem(
      * @param column one-based source column when available
      */
     public TranspileProblem(String code, String message, TranspileStage stage, Integer sourceOffset, Integer line, Integer column) {
-        this(code, message, stage, sourceOffset, line, column, null);
+        this(code, message, stage, sourceOffset, line, column, null, null);
     }
 
     /**
@@ -67,6 +92,6 @@ public record TranspileProblem(
         if (statementIndex < 1) {
             throw new IllegalArgumentException("statementIndex must be greater than zero");
         }
-        return new TranspileProblem(code, message, stage, sourceOffset, line, column, statementIndex);
+        return new TranspileProblem(code, message, stage, sourceOffset, line, column, statementIndex, clausePath);
     }
 }

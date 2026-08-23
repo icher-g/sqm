@@ -1757,6 +1757,47 @@ class DefaultSqlTranspilerTest {
         assertEquals("UNSUPPORTED_MYSQL_JSON_FUNCTION", result.problems().getFirst().code());
     }
 
+    @Test
+    void oracleMatchRecognizeIsRejectedBeforeNonOracleRenderingWithRelationPath() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ORACLE)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .build();
+
+        var result = transpiler.transpile("""
+            SELECT *
+            FROM sales MATCH_RECOGNIZE (
+              PATTERN (A)
+              DEFINE A AS A.amount > 0
+            ) mr
+            """);
+
+        assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+        assertTrue(result.sql().isEmpty());
+        assertEquals("UNSUPPORTED_MATCH_RECOGNIZE", result.problems().getFirst().code());
+        assertEquals("select.matchRecognize[0]", result.problems().getFirst().clausePath());
+    }
+
+    @Test
+    void oracleMatchRecognizeRemainsExactForOracleTargets() {
+        var transpiler = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ORACLE)
+            .targetDialect(SqlDialectId.ORACLE)
+            .build();
+
+        var result = transpiler.transpile("""
+            SELECT *
+            FROM sales MATCH_RECOGNIZE (
+              PATTERN (A)
+              DEFINE A AS A.amount > 0
+            ) mr
+            """);
+
+        assertEquals(TranspileStatus.SUCCESS, result.status());
+        assertTrue(normalizeSql(result.sql().orElseThrow()).contains("MATCH_RECOGNIZE"));
+        assertTrue(result.problems().isEmpty());
+    }
+
     private static TranspileRule approximateRule() {
         return new TranspileRule() {
             @Override
