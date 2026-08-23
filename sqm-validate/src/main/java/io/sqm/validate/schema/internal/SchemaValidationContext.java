@@ -29,6 +29,7 @@ public final class SchemaValidationContext {
     private final List<ValidationProblem> problems = new ArrayList<>();
     private final Deque<Scope> scopes = new ArrayDeque<>();
     private final Deque<Map<String, CteSource>> cteScopes = new ArrayDeque<>();
+    private final Deque<PatternExpressionFrame> patternExpressionScopes = new ArrayDeque<>();
 
     /**
      * Creates a context for the provided schema.
@@ -193,6 +194,15 @@ public final class SchemaValidationContext {
     }
 
     /**
+     * Returns the function catalog configured for this validation run.
+     *
+     * @return configured function catalog.
+     */
+    public FunctionCatalog functionCatalog() {
+        return functionCatalog;
+    }
+
+    /**
      * Appends a new validation problem.
      *
      * @param code    problem code.
@@ -242,6 +252,55 @@ public final class SchemaValidationContext {
     }
 
     /**
+     * Opens a row-pattern expression scope.
+     *
+     * @param kind expression location kind.
+     * @param clausePath stable clause path for diagnostics.
+     */
+    public void pushPatternExpressionScope(PatternExpressionKind kind, String clausePath) {
+        patternExpressionScopes.push(new PatternExpressionFrame(
+            Objects.requireNonNull(kind, "kind"),
+            Objects.requireNonNull(clausePath, "clausePath")
+        ));
+    }
+
+    /**
+     * Closes the current row-pattern expression scope.
+     */
+    public void popPatternExpressionScope() {
+        patternExpressionScopes.pop();
+    }
+
+    /**
+     * Returns whether validation is currently inside a row-pattern expression.
+     *
+     * @return {@code true} inside a measure or definition expression.
+     */
+    public boolean inPatternExpressionScope() {
+        return !patternExpressionScopes.isEmpty();
+    }
+
+    /**
+     * Returns the current row-pattern expression kind.
+     *
+     * @return current kind, or {@code null} outside row-pattern expressions.
+     */
+    public PatternExpressionKind patternExpressionKind() {
+        var frame = patternExpressionScopes.peek();
+        return frame == null ? null : frame.kind();
+    }
+
+    /**
+     * Returns the current stable row-pattern clause path.
+     *
+     * @return clause path, or a generic expression path outside row-pattern scope.
+     */
+    public String patternExpressionPath() {
+        var frame = patternExpressionScopes.peek();
+        return frame == null ? "expression.matchRecognize" : frame.clausePath();
+    }
+
+    /**
      * Opens a new CTE scope inheriting previously visible CTEs.
      */
     public void pushWithScope() {
@@ -278,6 +337,7 @@ public final class SchemaValidationContext {
         }
         switch (ref) {
             case Lateral lateral -> registerTableRef(lateral.inner());
+            case PatternRecognitionTable patternRecognition -> registerPatternRecognition(patternRecognition);
             case PivotTable pivot -> {
                 if (pivot.alias() == null) {
                     registerTableRef(pivot.source());
@@ -328,6 +388,9 @@ public final class SchemaValidationContext {
         }
         return switch (ref) {
             case Lateral lateral -> sourceKey(lateral.inner());
+            case PatternRecognitionTable patternRecognition -> patternRecognition.alias() == null
+                ? sourceKey(patternRecognition.source())
+                : Optional.of(normalize(patternRecognition.alias()));
             case PivotTable pivot -> pivot.alias() == null
                 ? sourceKey(pivot.source())
                 : Optional.of(normalize(pivot.alias()));
@@ -468,6 +531,18 @@ public final class SchemaValidationContext {
      */
     public Optional<CatalogColumn> resolveColumn(ColumnExpr column, boolean reportErrors) {
         return resolveColumn(column, ScopeResolutionMode.ALL_SCOPES, reportErrors);
+    }
+
+    /**
+     * Resolves a row-pattern column against the input relation in the current scope.
+     *
+     * @param column column identifier.
+     * @param node source expression used in diagnostics.
+     * @param clausePath stable clause path.
+     * @return resolved input column when known.
+     */
+    public Optional<CatalogColumn> resolvePatternColumn(Identifier column, Node node, String clausePath) {
+        return resolveCurrentScopeColumn(null, column, true, node, clausePath);
     }
 
     /**
@@ -698,6 +773,40 @@ public final class SchemaValidationContext {
             }
         }
         registerSource(alias, ResolvedSource.of(alias, columns, false));
+    }
+
+    /**
+     * Registers the visible output shape of a pattern-recognition relation.
+     *
+     * <p>One-row output has a closed set of nameable partition columns and
+     * measure aliases. All-rows output remains non-strict because Oracle also
+     * exposes input-derived columns whose exact shape is intentionally not
+     * inferred here.</p>
+     */
+    private void registerPatternRecognition(PatternRecognitionTable table) {
+        var sourceName = table.alias() == null
+            ? sourceKey(table.source())
+            : Optional.of(normalize(table.alias()));
+        if (sourceName.isEmpty()) {
+            return;
+        }
+        var alias = Identifier.of(sourceName.orElseThrow());
+        var columns = new LinkedHashMap<String, CatalogColumn>();
+        if (table.partitionBy() != null) {
+            for (var expression : table.partitionBy().items()) {
+                if (expression instanceof ColumnExpr column) {
+                    columns.put(normalize(column.name()), CatalogColumn.of(column.name().value(), CatalogType.UNKNOWN));
+                }
+            }
+        }
+        for (var measure : table.measures()) {
+            columns.put(normalize(measure.alias()), CatalogColumn.of(measure.alias().value(), CatalogType.UNKNOWN));
+        }
+        registerSource(alias, ResolvedSource.of(
+            alias,
+            columns,
+            table.rowsPerMatch().mode() == RowsPerMatch.Mode.ONE
+        ));
     }
 
     /**
@@ -1112,6 +1221,19 @@ public final class SchemaValidationContext {
     private enum ScopeResolutionMode {
         CURRENT_SCOPE,
         ALL_SCOPES
+    }
+
+    /**
+     * Location of a row-pattern-only expression.
+     */
+    public enum PatternExpressionKind {
+        /** Expression declared by a {@link PatternMeasure}. */
+        MEASURE,
+        /** Predicate declared by a {@link PatternDefinition}. */
+        DEFINITION
+    }
+
+    private record PatternExpressionFrame(PatternExpressionKind kind, String clausePath) {
     }
 
     /**

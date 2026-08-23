@@ -91,7 +91,9 @@ public final class SchemaValidationRuleRegistry {
             new UsingJoinValidationRule(),
             new SelectAggregationValidationRule(functionCatalog),
             new FunctionAllowlistValidationRule(),
-            new FunctionSignatureValidationRule(functionCatalog)
+            new FunctionSignatureValidationRule(functionCatalog),
+            new PatternExpressionScopeValidationRule(),
+            new PatternColumnReferenceValidationRule()
         ));
         rules.addAll(additionalRules);
         return new SchemaValidationRuleRegistry(rules);

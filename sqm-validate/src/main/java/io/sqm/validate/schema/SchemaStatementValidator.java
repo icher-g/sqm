@@ -368,6 +368,54 @@ public final class SchemaStatementValidator implements StatementValidator {
         }
 
         /**
+         * Validates a pattern-recognition relation in an input-only scope while
+         * its inferred output shape remains registered in the enclosing query.
+         *
+         * @param table pattern-recognition relation.
+         * @return default result.
+         */
+        @Override
+        public Void visitPatternRecognitionTable(PatternRecognitionTable table) {
+            context.pushScope();
+            try {
+                context.registerTableRef(table.source());
+                accept(table.source());
+                accept(table.partitionBy());
+                accept(table.orderBy());
+                for (var index = 0; index < table.measures().size(); index++) {
+                    context.pushPatternExpressionScope(
+                        SchemaValidationContext.PatternExpressionKind.MEASURE,
+                        "from.matchRecognize.measures[" + index + "]"
+                    );
+                    try {
+                        accept(table.measures().get(index).expression());
+                    } finally {
+                        context.popPatternExpressionScope();
+                    }
+                }
+                accept(table.rowsPerMatch());
+                accept(table.afterMatchSkip());
+                accept(table.pattern());
+                table.subsets().forEach(this::accept);
+                for (var index = 0; index < table.definitions().size(); index++) {
+                    context.pushPatternExpressionScope(
+                        SchemaValidationContext.PatternExpressionKind.DEFINITION,
+                        "from.matchRecognize.definitions[" + index + "]"
+                    );
+                    try {
+                        accept(table.definitions().get(index).condition());
+                    } finally {
+                        context.popPatternExpressionScope();
+                    }
+                }
+                registry.validate(table, context);
+                return defaultResult();
+            } finally {
+                context.popScope();
+            }
+        }
+
+        /**
          * Validates JSON table feature support after traversal.
          *
          * @param table JSON table reference
@@ -390,6 +438,38 @@ public final class SchemaStatementValidator implements StatementValidator {
         public Void visitFunctionExpr(FunctionExpr f) {
             super.visitFunctionExpr(f);
             registry.validate(f, context);
+            return defaultResult();
+        }
+
+        @Override
+        public Void visitPatternColumnExpr(PatternColumnExpr expression) {
+            registry.validate(expression, context);
+            return defaultResult();
+        }
+
+        @Override
+        public Void visitClassifierExpr(ClassifierExpr expression) {
+            registry.validate(expression, context);
+            return defaultResult();
+        }
+
+        @Override
+        public Void visitMatchNumberExpr(MatchNumberExpr expression) {
+            registry.validate(expression, context);
+            return defaultResult();
+        }
+
+        @Override
+        public Void visitPatternNavigationExpr(PatternNavigationExpr expression) {
+            super.visitPatternNavigationExpr(expression);
+            registry.validate(expression, context);
+            return defaultResult();
+        }
+
+        @Override
+        public Void visitPatternEvaluationExpr(PatternEvaluationExpr expression) {
+            super.visitPatternEvaluationExpr(expression);
+            registry.validate(expression, context);
             return defaultResult();
         }
 

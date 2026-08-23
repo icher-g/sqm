@@ -173,6 +173,8 @@ class MySqlValidationDialectTest {
         assertFalse(dialect.additionalRules().isEmpty());
         assertTrue(dialect.additionalRules().stream()
             .anyMatch(rule -> rule.getClass().getSimpleName().equals("LockingClauseFeatureValidationRule")));
+        assertTrue(dialect.additionalRules().stream()
+            .anyMatch(rule -> rule.getClass().getSimpleName().equals("PatternRecognitionFeatureValidationRule")));
     }
 
     @Test

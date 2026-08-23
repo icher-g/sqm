@@ -43,6 +43,7 @@ public final class Parsers {
             .register(new SequenceValueExprParser())
             .register(new SampledTableParser())
             .register(new PriorExprParser())
+            .register(new PatternRecognitionTableParser())
             .register(new LimitOffsetParser());
     }
 }
