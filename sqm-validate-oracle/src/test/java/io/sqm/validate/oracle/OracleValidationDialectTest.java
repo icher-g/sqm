@@ -66,6 +66,10 @@ class OracleValidationDialectTest {
         assertTrue(dialect.capabilities().supports(io.sqm.core.dialect.SqlFeature.LOCKING_WAIT_TIMEOUT));
         assertTrue(dialect.additionalRules().stream()
             .anyMatch(rule -> rule.getClass().getSimpleName().equals("LockingClauseFeatureValidationRule")));
+        assertTrue(dialect.additionalRules().stream()
+            .anyMatch(rule -> rule.getClass().getSimpleName().equals("PatternRecognitionFeatureValidationRule")));
+        assertTrue(dialect.additionalRules().stream()
+            .anyMatch(rule -> rule.getClass().getSimpleName().equals("OraclePatternRecognitionValidationRule")));
         assertTrue(dialect.functionCatalog().resolve("nvl").isPresent());
         assertThrows(NullPointerException.class, () -> OracleValidationDialect.of(null));
     }

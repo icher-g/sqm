@@ -52,6 +52,7 @@ public final class OracleCapabilities {
             .supports(SqlFeature.TABLE_PARTITION_SPEC)
             .supports(SqlFeature.TABLE_SAMPLE)
             .supports(ORACLE_12_1, SqlFeature.LATERAL)
+            .supports(ORACLE_12_1, SqlFeature.MATCH_RECOGNIZE)
             .build();
     }
 

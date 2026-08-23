@@ -49,6 +49,7 @@ public final class Renderers {
             .register(new HierarchicalQueryClauseRenderer())
             .register(new TableRenderer())
             .register(new SampledTableRenderer())
+            .register(new PatternRecognitionTableRenderer())
             .register(new NamedParamExprRenderer())
             .register(new OrdinalParamExprRenderer());
     }

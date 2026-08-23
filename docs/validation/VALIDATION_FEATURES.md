@@ -163,9 +163,26 @@ Oracle-specific validation is implemented in a dedicated dialect module:
   - Oracle `RETURNING ... INTO` variable targets, including expression/variable count matching
   - Oracle hierarchical queries through `HierarchicalQueryClause` (`START WITH`, `CONNECT BY`, `NOCYCLE`, `ORDER SIBLINGS BY`)
   - baseline `PIVOT` and `UNPIVOT` relation transforms
+  - `MATCH_RECOGNIZE` on Oracle 12.1+, with earlier versions rejected
   - PostgreSQL-style and SQL Server-style DML result clauses that do not use Oracle variable targets
   - non-Oracle DML extensions such as `INSERT IGNORE`, `REPLACE`, `ON CONFLICT`, `UPDATE FROM`, `UPDATE JOIN`, and `DELETE USING/JOIN`
   - non-Oracle `MERGE` shapes such as `TOP`, `WHEN NOT MATCHED BY SOURCE`, and `DO NOTHING`
+
+### Oracle Row-Pattern Recognition Validation
+
+- Every primary pattern variable requires exactly one `DEFINE` item; definitions,
+  subsets, subset members, measure aliases, skip targets, and quoted identifiers
+  are checked in Oracle identifier scope.
+- Pattern-variable column references are resolved against the input relation and
+  pattern-only expressions are rejected outside `MEASURES` and `DEFINE`.
+- Oracle restrictions are enforced for `RUNNING`/`FINAL`, navigation offsets,
+  aggregates, window expressions, `CLASSIFIER`, rows-per-match options, and
+  one-row output-name collisions.
+- One-row output exposes nameable partition columns plus measure aliases as a
+  closed relation shape. All-rows output remains intentionally partial because
+  it also includes input-derived columns.
+- PostgreSQL, MySQL, and SQL Server validation explicitly reject the shared
+  `PatternRecognitionTable` model with `DIALECT_FEATURE_UNSUPPORTED`.
 
 ### Oracle Function Catalog
 

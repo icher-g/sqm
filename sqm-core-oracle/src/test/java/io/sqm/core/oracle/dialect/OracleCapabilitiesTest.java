@@ -57,6 +57,13 @@ class OracleCapabilitiesTest {
     }
 
     @Test
+    void supports_match_recognize_starting_with_oracle_12_1() {
+        assertFalse(OracleCapabilities.of(SqlDialectVersion.of(11, 2)).supports(SqlFeature.MATCH_RECOGNIZE));
+        assertTrue(OracleCapabilities.of(SqlDialectVersion.of(12, 1)).supports(SqlFeature.MATCH_RECOGNIZE));
+        assertTrue(OracleCapabilities.of(SqlDialectVersion.of(19, 0)).supports(SqlFeature.MATCH_RECOGNIZE));
+    }
+
+    @Test
     void latest_matches_oracle_19_feature_support() {
         var latest = OracleCapabilities.latest();
         var expected = OracleCapabilities.of(SqlDialectVersion.of(19, 0));
