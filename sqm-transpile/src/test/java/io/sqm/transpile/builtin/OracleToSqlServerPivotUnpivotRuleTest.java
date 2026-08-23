@@ -380,6 +380,30 @@ class OracleToSqlServerPivotUnpivotRuleTest {
     }
 
     @Test
+    void rewritesCrossApplyForPatternRecognitionSources() {
+        var patternSource = matchRecognize(tbl("sales"))
+            .pattern(patternVar("A"))
+            .define("A", col("amount").gt(0))
+            .build();
+
+        for (var source : java.util.List.of(patternSource, patternSource.as("matches"))) {
+            var query = multiColumnUnpivotQuery(
+                source,
+                col("amount").toSelectItem(),
+                col("quantity").toSelectItem(),
+                col("quarter").toSelectItem()
+            );
+
+            var result = new OracleToSqlServerPivotUnpivotRule().apply(query, context());
+
+            assertTrue(result.changed());
+            var rewritten = assertInstanceOf(SelectQuery.class, result.statement());
+            assertNotNull(assertInstanceOf(PatternRecognitionTable.class, rewritten.from()).alias());
+            assertEquals(1, rewritten.joins().size());
+        }
+    }
+
+    @Test
     void rewritesCrossApplyForDialectSpecificSource() {
         var source = new TestDialectTableRef();
         var query = multiColumnUnpivotQuery(

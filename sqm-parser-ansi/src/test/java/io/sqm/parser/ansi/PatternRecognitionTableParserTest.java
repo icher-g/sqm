@@ -94,6 +94,36 @@ class PatternRecognitionTableParserTest {
     }
 
     @Test
+    void parsesEveryQuantifierFormAndRejectsInvalidBounds() {
+        assertTrue(enabled.parse(MatchPattern.class, "A*").ok());
+        assertTrue(enabled.parse(MatchPattern.class, "A?").ok());
+        assertTrue(enabled.parse(MatchPattern.class, "A{,5}").ok());
+        assertTrue(enabled.parse(MatchPattern.class, "A{2}").ok());
+        assertTrue(enabled.parse(MatchPattern.class, "|").isError());
+        assertTrue(enabled.parse(MatchPattern.class, "A{999999999999999999999999}").isError());
+    }
+
+    @Test
+    void dedicatedCompositePatternParsersRejectOtherPatternShapes() {
+        assertTrue(enabled.parse(MatchPattern.Alternation.class, "A").isError());
+        assertTrue(enabled.parse(MatchPattern.Sequence.class, "A").isError());
+        assertTrue(enabled.parse(MatchPattern.Quantified.class, "A").isError());
+    }
+
+    @Test
+    void patternMatchersRecognizeAndRejectTheirOwnPrefixes() {
+        var anchor = new PatternAnchorParser();
+        assertTrue(anchor.match(Cursor.of("$", enabled.identifierQuoting()), enabled));
+        assertTrue(anchor.match(Cursor.of("^", enabled.identifierQuoting()), enabled));
+        assertFalse(anchor.match(Cursor.of("A", enabled.identifierQuoting()), enabled));
+
+        var exclusion = new PatternExclusionParser();
+        assertTrue(exclusion.match(Cursor.of("{- A -}", enabled.identifierQuoting()), enabled));
+        assertFalse(exclusion.match(Cursor.of("{ A }", enabled.identifierQuoting()), enabled));
+        assertFalse(exclusion.match(Cursor.of("A", enabled.identifierQuoting()), enabled));
+    }
+
+    @Test
     void keepsPatternSpecificTextOrdinaryOutsidePatternScope() {
         assertInstanceOf(ColumnExpr.class, enabled.parse(Expression.class, "A.amount").value());
         assertInstanceOf(FunctionExpr.class, enabled.parse(Expression.class, "CLASSIFIER()").value());
@@ -168,6 +198,7 @@ class PatternRecognitionTableParserTest {
         assertTrue(enabled.parse(MatchNumberExpr.class, "MATCH_NUMBER()").ok());
         assertTrue(enabled.parse(PatternNavigationExpr.class, "PREV(A.amount, 2)").ok());
         assertTrue(enabled.parse(PatternEvaluationExpr.class, "FINAL LAST(A.amount)").ok());
+        assertTrue(enabled.parse(PatternEvaluationExpr.class, "RUNNING FIRST(A.amount)").ok());
     }
 
     @Test

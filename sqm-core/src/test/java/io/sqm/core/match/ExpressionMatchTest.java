@@ -373,4 +373,41 @@ public class ExpressionMatchTest {
 
         assertEquals("INSERTED:id", out);
     }
+
+    @Test
+    void matchesPatternRecognitionExpressionsWithoutOverridingEarlierMatches() {
+        assertEquals("PATTERN_COLUMN", Match.<String>expression(patternColumn("A", "amount"))
+            .patternColumn(c -> "PATTERN_COLUMN")
+            .patternColumn(c -> "SECOND")
+            .orElse("OTHER"));
+        assertEquals("CLASSIFIER", Match.<String>expression(classifier())
+            .classifier(c -> "CLASSIFIER")
+            .classifier(c -> "SECOND")
+            .orElse("OTHER"));
+        assertEquals("MATCH_NUMBER", Match.<String>expression(matchNumber())
+            .matchNumber(m -> "MATCH_NUMBER")
+            .matchNumber(m -> "SECOND")
+            .orElse("OTHER"));
+        assertEquals("NAVIGATION", Match.<String>expression(prev(patternColumn("A", "amount")))
+            .patternNavigation(n -> "NAVIGATION")
+            .patternNavigation(n -> "SECOND")
+            .orElse("OTHER"));
+        assertEquals("EVALUATION", Match.<String>expression(finalValue(last(patternColumn("A", "amount"))))
+            .patternEvaluation(e -> "EVALUATION")
+            .patternEvaluation(e -> "SECOND")
+            .orElse("OTHER"));
+    }
+
+    @Test
+    void patternRecognitionMatchersIgnoreOtherExpressions() {
+        var result = Match.<String>expression(lit(1))
+            .patternColumn(c -> "PATTERN_COLUMN")
+            .classifier(c -> "CLASSIFIER")
+            .matchNumber(m -> "MATCH_NUMBER")
+            .patternNavigation(n -> "NAVIGATION")
+            .patternEvaluation(e -> "EVALUATION")
+            .orElse("OTHER");
+
+        assertEquals("OTHER", result);
+    }
 }

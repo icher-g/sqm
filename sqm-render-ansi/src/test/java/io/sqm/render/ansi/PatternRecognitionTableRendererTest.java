@@ -70,6 +70,20 @@ class PatternRecognitionTableRendererTest {
     }
 
     @Test
+    void rendersMinimalPatternRecognitionTableWithoutOptionalClauses() {
+        var table = matchRecognize(tbl("sales"))
+            .pattern(patternVar("A"))
+            .define("A", col("amount").gt(0))
+            .build();
+
+        assertEquals(
+            "sales MATCH_RECOGNIZE ( ONE ROW PER MATCH AFTER MATCH SKIP PAST LAST ROW "
+                + "PATTERN (A) DEFINE A AS amount > 0 )",
+            normalize(enabled.render(table).sql())
+        );
+    }
+
+    @Test
     void rendersPatternPrecedenceWithoutPersistedGroupingNodes() {
         assertEquals("(A | B)+", renderPattern(oneOrMore(patternAlternation(patternVar("A"), patternVar("B")))));
         assertEquals("A (B | C)", renderPattern(patternSequence(

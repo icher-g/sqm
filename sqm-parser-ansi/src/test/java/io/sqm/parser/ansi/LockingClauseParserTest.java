@@ -92,6 +92,17 @@ class LockingClauseParserTest {
     }
 
     @Test
+    @DisplayName("Parse multiple FOR UPDATE OF targets when feature is enabled")
+    void parseForUpdateTargetsWhenFeatureEnabled() {
+        var result = ParseContext.of(new TestSpecs()).parse(LockingClause.class, "FOR UPDATE OF users, orders");
+
+        assertTrue(result.ok(), result.errorMessage());
+        assertEquals(2, result.value().ofTables().size());
+        assertEquals("users", result.value().ofTables().getFirst().identifier().value());
+        assertEquals("orders", result.value().ofTables().get(1).identifier().value());
+    }
+
+    @Test
     @DisplayName("Parse locking wait policies when features are enabled")
     void parseWaitPoliciesWhenFeaturesEnabled() {
         var testContext = ParseContext.of(new TestSpecs());
