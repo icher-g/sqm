@@ -22,6 +22,161 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
      */
     protected abstract R defaultResult();
 
+    /** {@inheritDoc} */
+    @Override
+    public R visitModelColumn(ModelColumn node) {
+        accept(node.expression());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitCellRefExpr(CellRefExpr node) {
+        node.selectors().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitCellTarget(CellTarget node) {
+        node.addresses().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitModelAggregateExpr(ModelAggregateExpr node) {
+        accept(node.aggregate());
+        node.selectors().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitCurrentDimensionExpr(CurrentDimensionExpr node) {
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitIterationNumberExpr(IterationNumberExpr node) {
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitPreviousModelValueExpr(PreviousModelValueExpr node) {
+        accept(node.cell());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitPresenceValueExpr(PresenceValueExpr node) {
+        accept(node.cell());
+        accept(node.whenPresent());
+        accept(node.whenAbsent());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitCellPresentPredicate(CellPresentPredicate node) {
+        accept(node.cell());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitIterationSpec(IterationSpec node) {
+        accept(node.limit());
+        accept(node.until());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitModelRule(ModelRule node) {
+        accept(node.target());
+        accept(node.orderBy());
+        accept(node.value());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitModelRules(ModelRules node) {
+        accept(node.iteration());
+        node.rules().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitMainModel(MainModel node) {
+        node.partitions().forEach(this::accept);
+        node.dimensions().forEach(this::accept);
+        node.measures().forEach(this::accept);
+        accept(node.rules());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitReferenceModel(ReferenceModel node) {
+        accept(node.query());
+        node.dimensions().forEach(this::accept);
+        node.measures().forEach(this::accept);
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitModelClause(ModelClause node) {
+        node.references().forEach(this::accept);
+        accept(node.main());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitCellSelectorValue(CellSelector.Value node) {
+        accept(node.value());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitCellSelectorCondition(CellSelector.Condition node) {
+        accept(node.predicate());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitIsAnyPredicate(IsAnyPredicate node) {
+        accept(node.dimension());
+        return defaultResult();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitCellForValues(CellFor.Values node) {
+        accept(node.values());
+        return defaultResult();
+    }
+
+
+    /** {@inheritDoc} */
+    @Override
+    public R visitCellForRange(CellFor.Range node) {
+        accept(node.likePattern());
+        accept(node.from());
+        accept(node.to());
+        accept(node.step());
+        return defaultResult();
+    }
+
     /**
      * Accepts a node if non-null.
      *
@@ -1348,6 +1503,7 @@ public abstract class RecursiveNodeVisitor<R> implements NodeVisitor<R> {
         accept(q.hierarchical());
         accept(q.groupBy());
         accept(q.having());
+        accept(q.model());
         q.windows().forEach(this::accept);
         accept(q.orderBy());
         accept(q.limitOffset());

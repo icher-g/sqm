@@ -29,6 +29,10 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
      */
     @Override
     public void render(SelectQuery node, RenderContext ctx, SqlWriter w) {
+        // Core representation precedes SQL support; never silently omit the clause.
+        if (node.model() != null) {
+            throw new UnsupportedDialectFeatureException("MODEL clause", ctx.dialect().name());
+        }
         validateQuery(node, ctx);
 
         w.append("SELECT");

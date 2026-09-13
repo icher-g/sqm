@@ -11,6 +11,18 @@ import static org.junit.jupiter.api.Assertions.*;
 class SelectQueryImplTest {
 
     @Test
+    void legacyConstructorDefaultsModelToAbsent() {
+        var expected = select(col("id")).from(tbl("users")).build();
+        // The legacy constructor itself is the compatibility API under test.
+        var legacy = new SelectQuery.Impl(expected.items(), expected.from(), expected.joins(),
+            expected.where(), expected.hierarchical(), expected.groupBy(), expected.having(),
+            expected.orderBy(), expected.distinct(), expected.topSpec(), expected.limitOffset(),
+            expected.lockFor(), expected.windows());
+        assertNull(legacy.model());
+        assertEquals(expected, legacy);
+    }
+
+    @Test
     void testEquals() {
         var q1 = Query.select(col("c"), col("d"))
             .distinct(DistinctSpec.TRUE)
@@ -142,8 +154,7 @@ class SelectQueryImplTest {
             null,
             List.of(),
             List.of(SelectModifier.CALC_FOUND_ROWS),
-            List.of(statementHint("MAX_EXECUTION_TIME", 1000))
-        );
+            List.of(statementHint("MAX_EXECUTION_TIME", 1000)), null);
 
         assertEquals(SelectModifier.CALC_FOUND_ROWS, query.modifiers().getFirst());
         assertEquals("MAX_EXECUTION_TIME", query.hints().getFirst().name().value());
@@ -168,8 +179,7 @@ class SelectQueryImplTest {
             null,
             List.of(),
             List.of(),
-            List.of()
-        );
+            List.of(), null);
 
         assertEquals(List.of(), query.modifiers());
         assertEquals(List.of(), query.hints());
@@ -192,8 +202,7 @@ class SelectQueryImplTest {
             null,
             List.of(),
             null,
-            null
-        );
+            null, null);
 
         assertEquals(List.of(), query.modifiers());
         assertEquals(List.of(), query.hints());

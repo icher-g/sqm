@@ -14,6 +14,47 @@ import java.util.function.Function;
  * @param <R> the result type produced by the match
  */
 public interface ExpressionMatch<R> extends Match<Expression, R> {
+    /**
+     * Matches a {@link CellRefExpr}.
+     * @param handler variant handler
+     * @return this matcher
+     */
+    ExpressionMatch<R> cellRefExpr(Function<CellRefExpr, R> handler);
+
+    /**
+     * Matches a {@link ModelAggregateExpr}.
+     * @param handler variant handler
+     * @return this matcher
+     */
+    ExpressionMatch<R> modelAggregateExpr(Function<ModelAggregateExpr, R> handler);
+
+    /**
+     * Matches a {@link CurrentDimensionExpr}.
+     * @param handler variant handler
+     * @return this matcher
+     */
+    ExpressionMatch<R> currentDimensionExpr(Function<CurrentDimensionExpr, R> handler);
+
+    /**
+     * Matches a {@link IterationNumberExpr}.
+     * @param handler variant handler
+     * @return this matcher
+     */
+    ExpressionMatch<R> iterationNumberExpr(Function<IterationNumberExpr, R> handler);
+
+    /**
+     * Matches a {@link PreviousModelValueExpr}.
+     * @param handler variant handler
+     * @return this matcher
+     */
+    ExpressionMatch<R> previousModelValueExpr(Function<PreviousModelValueExpr, R> handler);
+
+    /**
+     * Matches a {@link PresenceValueExpr}.
+     * @param handler variant handler
+     * @return this matcher
+     */
+    ExpressionMatch<R> presenceValueExpr(Function<PresenceValueExpr, R> handler);
 
     /**
      * Creates a new matcher for the given {@link Expression}.

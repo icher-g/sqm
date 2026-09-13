@@ -14,6 +14,89 @@ import java.util.function.Function;
  * @param <R> the result type produced by the match
  */
 public class ExpressionMatchImpl<R> implements ExpressionMatch<R> {
+    /**
+     * Matches a {@link CellRefExpr}.
+     * @param handler variant handler
+     * @return this matcher
+     */
+    @Override
+    public ExpressionMatch<R> cellRefExpr(Function<CellRefExpr, R> handler) {
+        if (!matched && expr instanceof CellRefExpr value) {
+            result = handler.apply(value);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Matches a {@link ModelAggregateExpr}.
+     * @param handler variant handler
+     * @return this matcher
+     */
+    @Override
+    public ExpressionMatch<R> modelAggregateExpr(Function<ModelAggregateExpr, R> handler) {
+        if (!matched && expr instanceof ModelAggregateExpr value) {
+            result = handler.apply(value);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Matches a {@link CurrentDimensionExpr}.
+     * @param handler variant handler
+     * @return this matcher
+     */
+    @Override
+    public ExpressionMatch<R> currentDimensionExpr(Function<CurrentDimensionExpr, R> handler) {
+        if (!matched && expr instanceof CurrentDimensionExpr value) {
+            result = handler.apply(value);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Matches a {@link IterationNumberExpr}.
+     * @param handler variant handler
+     * @return this matcher
+     */
+    @Override
+    public ExpressionMatch<R> iterationNumberExpr(Function<IterationNumberExpr, R> handler) {
+        if (!matched && expr instanceof IterationNumberExpr value) {
+            result = handler.apply(value);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Matches a {@link PreviousModelValueExpr}.
+     * @param handler variant handler
+     * @return this matcher
+     */
+    @Override
+    public ExpressionMatch<R> previousModelValueExpr(Function<PreviousModelValueExpr, R> handler) {
+        if (!matched && expr instanceof PreviousModelValueExpr value) {
+            result = handler.apply(value);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Matches a {@link PresenceValueExpr}.
+     * @param handler variant handler
+     * @return this matcher
+     */
+    @Override
+    public ExpressionMatch<R> presenceValueExpr(Function<PresenceValueExpr, R> handler) {
+        if (!matched && expr instanceof PresenceValueExpr value) {
+            result = handler.apply(value);
+            matched = true;
+        }
+        return this;
+    }
 
     private final Expression expr;
     private boolean matched = false;

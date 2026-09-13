@@ -13,6 +13,14 @@ import io.sqm.core.*;
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
+    @JsonSubTypes.Type(value = IsAnyPredicate.Impl.class, name = "is-any"),
+    @JsonSubTypes.Type(value = CellPresentPredicate.Impl.class, name = "cell-present-predicate"),
+    @JsonSubTypes.Type(value = CellRefExpr.Impl.class, name = "cell-ref-expr"),
+    @JsonSubTypes.Type(value = ModelAggregateExpr.Impl.class, name = "model-aggregate-expr"),
+    @JsonSubTypes.Type(value = CurrentDimensionExpr.Impl.class, name = "current-dimension-expr"),
+    @JsonSubTypes.Type(value = IterationNumberExpr.Impl.class, name = "iteration-number-expr"),
+    @JsonSubTypes.Type(value = PreviousModelValueExpr.Impl.class, name = "previous-model-value-expr"),
+    @JsonSubTypes.Type(value = PresenceValueExpr.Impl.class, name = "presence-value-expr"),
     @JsonSubTypes.Type(value = ArithmeticExpr.class, name = "arithmetic"),
     @JsonSubTypes.Type(value = ParamExpr.class, name = "param"),
     @JsonSubTypes.Type(value = CaseExpr.Impl.class, name = "case"),

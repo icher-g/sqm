@@ -22,23 +22,9 @@ class SelectQueryRendererTest {
 
     @Test
     void rendersSqlCalcFoundRowsAndStatementHints() {
-        SelectQuery query = SelectQuery.of(
-            List.of(Dsl.col("id").toSelectItem()),
-            Dsl.tbl("users"),
-            List.of(),
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            List.of(),
-            List.of(SelectModifier.CALC_FOUND_ROWS),
-            List.of(statementHint("MAX_EXECUTION_TIME", 1000))
-        );
+        SelectQuery query = Dsl.select(Dsl.col("id")).from(Dsl.tbl("users"))
+            .selectModifier(SelectModifier.CALC_FOUND_ROWS)
+            .hint("MAX_EXECUTION_TIME", 1000).build();
 
         var sql = RenderContext.of(new MySqlDialect()).render(query).sql();
 
@@ -48,23 +34,9 @@ class SelectQueryRendererTest {
 
     @Test
     void preservesStatementHintsByDefault() {
-        SelectQuery query = SelectQuery.of(
-            List.of(Dsl.col("id").toSelectItem()),
-            Dsl.tbl("users"),
-            List.of(),
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            List.of(),
-            List.of(),
-            List.of(statementHint("MAX_EXECUTION_TIME", 1000), statementHint("BKA", "users"))
-        );
+        SelectQuery query = Dsl.select(Dsl.col("id")).from(Dsl.tbl("users"))
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .hint("BKA", "users").build();
 
         var sql = RenderContext.of(new MySqlDialect()).render(query).sql();
 
@@ -73,23 +45,9 @@ class SelectQueryRendererTest {
 
     @Test
     void normalizesStatementHintsWhenPolicyIsEnabled() {
-        SelectQuery query = SelectQuery.of(
-            List.of(Dsl.col("id").toSelectItem()),
-            Dsl.tbl("users"),
-            List.of(),
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            List.of(),
-            List.of(),
-            List.of(statementHint("MAX_EXECUTION_TIME", 1000), statementHint("BKA", "users"))
-        );
+        SelectQuery query = Dsl.select(Dsl.col("id")).from(Dsl.tbl("users"))
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .hint("BKA", "users").build();
 
         var sql = RenderContext.of(new MySqlDialect(
             io.sqm.core.dialect.SqlDialectVersion.of(8, 0),
@@ -101,23 +59,8 @@ class SelectQueryRendererTest {
 
     @Test
     void rejectsCalcFoundRowsInUnsupportedDialect() {
-        SelectQuery query = SelectQuery.of(
-            List.of(Dsl.col("id").toSelectItem()),
-            Dsl.tbl("users"),
-            List.of(),
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            List.of(),
-            List.of(SelectModifier.CALC_FOUND_ROWS),
-            List.of()
-        );
+        SelectQuery query = Dsl.select(Dsl.col("id")).from(Dsl.tbl("users"))
+            .selectModifier(SelectModifier.CALC_FOUND_ROWS).build();
 
         var renderer = new SelectQueryRenderer();
         var ctx = RenderContext.of(new AnsiDialect());

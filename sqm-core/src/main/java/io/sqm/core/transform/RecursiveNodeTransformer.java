@@ -18,6 +18,206 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     protected RecursiveNodeTransformer() {
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public Node visitModelColumn(ModelColumn node) {
+        var expression = apply(node.expression());
+        return expression == node.expression()
+            ? node
+            : ModelColumn.of(expression, node.name());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitCellRefExpr(CellRefExpr node) {
+        List<CellSelector> selectors = new ArrayList<>();
+        boolean selectorsChanged = apply(node.selectors(), selectors);
+        return !selectorsChanged
+            ? node
+            : CellRefExpr.of(node.model(), node.measure(), selectors);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitCellTarget(CellTarget node) {
+        List<CellAddress> addresses = new ArrayList<>();
+        boolean addressesChanged = apply(node.addresses(), addresses);
+        return !addressesChanged
+            ? node
+            : CellTarget.of(node.measure(), addresses);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitModelAggregateExpr(ModelAggregateExpr node) {
+        var aggregate = apply(node.aggregate());
+        List<CellSelector> selectors = new ArrayList<>();
+        boolean selectorsChanged = apply(node.selectors(), selectors);
+        return aggregate == node.aggregate() && !selectorsChanged
+            ? node
+            : ModelAggregateExpr.of(aggregate, selectors);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitCurrentDimensionExpr(CurrentDimensionExpr node) {
+        return node;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitIterationNumberExpr(IterationNumberExpr node) {
+        return node;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitPreviousModelValueExpr(PreviousModelValueExpr node) {
+        var cell = apply(node.cell());
+        return cell == node.cell()
+            ? node
+            : PreviousModelValueExpr.of(cell);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitPresenceValueExpr(PresenceValueExpr node) {
+        var cell = apply(node.cell());
+        var whenPresent = apply(node.whenPresent());
+        var whenAbsent = apply(node.whenAbsent());
+        return cell == node.cell() && whenPresent == node.whenPresent() && whenAbsent == node.whenAbsent()
+            ? node
+            : PresenceValueExpr.of(node.mode(), cell, whenPresent, whenAbsent);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitCellPresentPredicate(CellPresentPredicate node) {
+        var cell = apply(node.cell());
+        return cell == node.cell()
+            ? node
+            : CellPresentPredicate.of(cell);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitIterationSpec(IterationSpec node) {
+        var limit = apply(node.limit());
+        var until = apply(node.until());
+        return limit == node.limit() && until == node.until()
+            ? node
+            : IterationSpec.of(limit, until);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitModelRule(ModelRule node) {
+        var target = apply(node.target());
+        var orderBy = apply(node.orderBy());
+        var value = apply(node.value());
+        return target == node.target() && orderBy == node.orderBy() && value == node.value()
+            ? node
+            : ModelRule.of(node.mode(), target, orderBy, value);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitModelRules(ModelRules node) {
+        var iteration = apply(node.iteration());
+        List<ModelRule> rules = new ArrayList<>();
+        boolean rulesChanged = apply(node.rules(), rules);
+        return iteration == node.iteration() && !rulesChanged
+            ? node
+            : ModelRules.of(node.defaultMode(), node.order(), iteration, rules);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitMainModel(MainModel node) {
+        List<ModelColumn> partitions = new ArrayList<>();
+        boolean partitionsChanged = apply(node.partitions(), partitions);
+        List<ModelColumn> dimensions = new ArrayList<>();
+        boolean dimensionsChanged = apply(node.dimensions(), dimensions);
+        List<ModelColumn> measures = new ArrayList<>();
+        boolean measuresChanged = apply(node.measures(), measures);
+        var rules = apply(node.rules());
+        return !partitionsChanged && !dimensionsChanged && !measuresChanged && rules == node.rules()
+            ? node
+            : MainModel.of(node.name(), partitions, dimensions, measures, node.navigationMode(), node.uniquenessMode(), rules);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitReferenceModel(ReferenceModel node) {
+        var query = apply(node.query());
+        List<ModelColumn> dimensions = new ArrayList<>();
+        boolean dimensionsChanged = apply(node.dimensions(), dimensions);
+        List<ModelColumn> measures = new ArrayList<>();
+        boolean measuresChanged = apply(node.measures(), measures);
+        return query == node.query() && !dimensionsChanged && !measuresChanged
+            ? node
+            : ReferenceModel.of(node.name(), query, dimensions, measures, node.navigationMode(), node.uniquenessMode());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitModelClause(ModelClause node) {
+        List<ReferenceModel> references = new ArrayList<>();
+        boolean referencesChanged = apply(node.references(), references);
+        var main = apply(node.main());
+        return !referencesChanged && main == node.main()
+            ? node
+            : ModelClause.of(node.returnRows(), references, main);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitCellSelectorValue(CellSelector.Value node) {
+        var value = apply(node.value());
+        return value == node.value()
+            ? node
+            : CellSelector.Value.of(value);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitCellSelectorCondition(CellSelector.Condition node) {
+        var predicate = apply(node.predicate());
+        return predicate == node.predicate()
+            ? node
+            : CellSelector.Condition.of(predicate);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitIsAnyPredicate(IsAnyPredicate node) {
+        var dimension = apply(node.dimension());
+        return dimension == node.dimension()
+            ? node
+            : IsAnyPredicate.of(dimension);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitCellForValues(CellFor.Values node) {
+        var values = apply(node.values());
+        return values == node.values()
+            ? node
+            : CellFor.Values.of(node.dimensions(), values);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Node visitCellForRange(CellFor.Range node) {
+        var likePattern = apply(node.likePattern());
+        var from = apply(node.from());
+        var to = apply(node.to());
+        var step = apply(node.step());
+        return likePattern == node.likePattern() && from == node.from() && to == node.to() && step == node.step()
+            ? node
+            : CellFor.Range.of(node.dimension(), likePattern, from, to, node.direction(), step);
+    }
+
     /**
      * Apples the transformation logic and casts the result to the same type of the node.
      *
@@ -1654,6 +1854,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         changed |= hierarchical != q.hierarchical();
         var groupBy = apply(q.groupBy());
         changed |= groupBy != q.groupBy();
+        var model = apply(q.model());
+        changed |= model != q.model();
         var having = apply(q.having());
         changed |= having != q.having();
         List<WindowDef> windows = new ArrayList<>();
@@ -1675,6 +1877,7 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
                 .where(where)
                 .hierarchical(hierarchical)
                 .having(having)
+                .model(model)
                 .window(windows);
 
             if (groupBy != null) {

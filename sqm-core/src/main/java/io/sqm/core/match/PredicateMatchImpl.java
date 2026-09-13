@@ -10,6 +10,34 @@ import java.util.function.Function;
  * @param <R> result type
  */
 public class PredicateMatchImpl<R> implements PredicateMatch<R> {
+    /**
+     * Matches a MODEL wildcard, not a quantified ANY/ALL comparison.
+     *
+     * @param handler wildcard handler
+     * @return this matcher
+     */
+    @Override
+    public PredicateMatch<R> isAny(Function<IsAnyPredicate, R> handler) {
+        if (!matched && predicate instanceof IsAnyPredicate value) {
+            result = handler.apply(value);
+            matched = true;
+        }
+        return this;
+    }
+
+    /**
+     * Matches a {@link CellPresentPredicate}.
+     * @param handler variant handler
+     * @return this matcher
+     */
+    @Override
+    public PredicateMatch<R> cellPresentPredicate(Function<CellPresentPredicate, R> handler) {
+        if (!matched && predicate instanceof CellPresentPredicate value) {
+            result = handler.apply(value);
+            matched = true;
+        }
+        return this;
+    }
 
     private final Predicate predicate;
     private boolean matched = false;

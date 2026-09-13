@@ -77,6 +77,12 @@ Node
 |  |- OutputColumnExpr
 |  |- SequenceValueExpr
 |  |- PriorExpr
+|  |- CellRefExpr
+|  |- ModelAggregateExpr
+|  |- CurrentDimensionExpr
+|  |- IterationNumberExpr
+|  |- PreviousModelValueExpr
+|  |- PresenceValueExpr
 |  |- PatternColumnExpr
 |  |- ClassifierExpr
 |  |- MatchNumberExpr
@@ -115,6 +121,8 @@ Node
 |  |  |- EscapeStringLiteralExpr
 |  |  `- DollarStringLiteralExpr
 |  |- Predicate
+|  |  |- IsAnyPredicate
+|  |  |- CellPresentPredicate
 |  |  |- AnyAllPredicate
 |  |  |- BetweenPredicate
 |  |  |- ComparisonPredicate
@@ -205,6 +213,17 @@ Node
 |  `- GroupItem.Cube
 |- WindowDef
 |- HierarchicalQueryClause
+|- ModelClause
+|- MainModel
+|- ReferenceModel
+|- ModelColumn
+|- ModelRules
+|- ModelRule
+|- IterationSpec
+|- CellTarget
+|- CellAddress
+|  |- CellSelector (Value, Condition)
+|  `- CellFor (Values, Range)
 |- BoundSpec
 |  |- BoundSpec.UnboundedPreceding
 |  |- BoundSpec.Preceding
@@ -242,6 +261,10 @@ Node
 `- UnpivotInput
 ```
 
+Optional MODEL properties use documented nullable fields and accessors rather than
+`Optional` members (for example the range LIKE template, model qualifier, and
+iteration termination condition). Required children remain non-null.
+
 ---
 
 ## Mermaid diagram
@@ -268,6 +291,12 @@ graph TD
   Expression --> OutputColumnExpr
   Expression --> SequenceValueExpr
   Expression --> PriorExpr
+  Expression --> CellRefExpr
+  Expression --> ModelAggregateExpr
+  Expression --> CurrentDimensionExpr
+  Expression --> IterationNumberExpr
+  Expression --> PreviousModelValueExpr
+  Expression --> PresenceValueExpr
   Expression --> PatternColumnExpr
   Expression --> ClassifierExpr
   Expression --> MatchNumberExpr
@@ -327,6 +356,8 @@ graph TD
   Predicate --> NotPredicate
   Predicate --> CompositePredicate
   Predicate --> UnaryPredicate
+  Predicate --> IsAnyPredicate
+  Predicate --> CellPresentPredicate
 
   CompositePredicate --> AndPredicate
   CompositePredicate --> OrPredicate
@@ -334,6 +365,23 @@ graph TD
   ValueSet --> RowExpr
   ValueSet --> QueryExpr
   ValueSet --> RowListExpr
+
+  Node --> ModelClause
+  Node --> MainModel
+  Node --> ReferenceModel
+  Node --> ModelColumn
+  Node --> ModelRules
+  Node --> ModelRule
+  Node --> IterationSpec
+  Node --> CellTarget
+  Node --> CellAddress
+  CellAddress --> CellSelector
+  CellAddress --> CellFor
+  CellSelector --> CellSelector_Value
+  CellSelector --> CellSelector_Condition
+  CellFor --> CellFor_Values
+  CellFor --> CellFor_Range
+  SelectQuery -. model .-> ModelClause
 
   Node --> SelectItem
   SelectItem --> ExprSelectItem
@@ -683,6 +731,102 @@ graph TD
 - **HierarchicalQueryClause**
   Shared semantic clause for hierarchical traversal attached to `SelectQuery`. It stores an optional `startWith` root predicate, a required `connectBy` parent-child predicate, a `noCycle` flag, and optional sibling ordering. Oracle currently renders this as `START WITH`, `CONNECT BY [NOCYCLE]`, and `ORDER SIBLINGS BY`; other shipped dialects reject it explicitly.
 
+### Multidimensional MODEL calculations
+
+`SelectQuery.model()` is an optional, nullable `ModelClause`, not a table wrapper.
+The clause owns result-row selection, read-only reference models, and one writable
+main model. It participates in query copying, recursive traversal, identity-preserving
+transformation, and JSON serialization. Old query JSON without the field remains valid.
+
+| Node                             | Represented MODEL fragment / role                                                                                  |
+|----------------------------------|--------------------------------------------------------------------------------------------------------------------|
+| `ModelClause`                    | The complete `MODEL ...` clause                                                                                    |
+| `MainModel`                      | Optional `MAIN name`, declarations, options, and rules                                                             |
+| `ReferenceModel`                 | `REFERENCE name ON (query)` with dimension/measure declarations                                                    |
+| `ModelColumn`                    | Named input expression in `PARTITION BY`, `DIMENSION BY`, or `MEASURES`; role is determined by the containing list |
+| `ModelRules`                     | Rule mode/order, optional iteration, and assignment list                                                           |
+| `ModelRule`                      | Optional mode override, target, optional target order, and assigned expression                                     |
+| `IterationSpec`                  | `ITERATE (10) UNTIL (...)`                                                                                         |
+| `CellTarget`                     | Writable `sales['Bike', 2026]` on a rule's left side                                                               |
+| `CellRefExpr`                    | Readable `sales['Bike', 2025]` or qualified `baseline.sales['Bike']`                                               |
+| `ModelAggregateExpr`             | `SUM(sales)['Bike', sales_year BETWEEN 2023 AND 2025]`                                                             |
+| `CurrentDimensionExpr`           | `CV()` or `CV(product)`                                                                                            |
+| `IterationNumberExpr`            | `ITERATION_NUMBER`                                                                                                 |
+| `PreviousModelValueExpr`         | `PREVIOUS(sales['Bike', 2025])` in an iteration condition                                                          |
+| `PresenceValueExpr`              | `PRESENTV(cell, present, absent)` / `PRESENTNNV(...)`                                                              |
+| `CellPresentPredicate`           | `cell IS PRESENT`                                                                                                  |
+| `CellAddress`                    | Selector or target-only FOR generator                                                                              |
+| `CellSelector.Value / Condition` | Positional expression (`2026`) or complete predicate (`sales_year = 2026`)                                         |
+| `IsAnyPredicate`                 | Named `product IS ANY` or bare `ANY`; a MODEL wildcard, not quantified `AnyAllPredicate`                           |
+| `CellFor.Values / Range`         | Existing `ValueSet` for scalar lists, tuples, or query-produced values; separate bounded stepped ranges            |
+
+Declarations store the input expression and its resolved model name separately.
+For `DIMENSION BY (product)`, both use `product`; for `sales_year AS year_key`,
+the expression reads `sales_year` and the resolved name is `year_key`.
+The DSL derives names for columns:
+
+```java
+var calculation = model()
+    .partition("country")
+    .dimension("product")
+    .dimension("sales_year", "year_key")
+    .measure("amount", "sales")
+    .rule(cellTarget("sales", "Bike", 2026),
+        cellRef("sales", "Bike", 2025).mul(lit(1.1)))
+    .build();
+var query = select(col("product"), col("year_key"), col("sales"))
+    .from(tbl("sales_data"))
+    .model(calculation)
+    .build();
+```
+
+Cells can also be assembled one coordinate at a time without preparing lists:
+
+```java
+var target = cellTarget("sales")
+    .address("Bike")
+    .address(cellForValues("year_key", 2026, 2027))
+    .build();
+var source = cellRef("sales")
+    .model("baseline")
+    .selector("Bike")
+    .selector(currentDimension("year_key"))
+    .build();
+```
+
+The nested builders validate required coordinates at `build()` and produce
+immutable snapshots. The full-state list and compact varargs helpers remain
+available. `cellRefExpr(modelIdentifier, measureIdentifier)` starts the same
+read builder with explicit identifiers. Strings in coordinates are literals,
+not column names; use `col(...)` for a column expression.
+`cellValue("Bike")`, `cellValue(2026)`, and `cellValue(null)` explicitly
+wrap positional values (the last represents SQL NULL).
+
+Conditions reuse existing comparison, BETWEEN, IN, NULL, and composite predicate
+nodes. Their dimension operand is stored only inside the predicate. DSL inputs
+such as `cellTarget("sales", "Bike", col("sales_year").between(2023, 2026))`
+are wrapped as `CellSelector.Condition`, not positional values.
+
+`IsAnyPredicate.dimension()` holds an optional expression: an explicit dimension
+for `product IS ANY`, or empty for bare `ANY`, which relies on selector position.
+Both forms use `CellSelector.Condition`; no separate wildcard-selector node is
+needed. `AnyAllPredicate` instead compares a value against a quantified source.
+Predicate reuse does not remove MODEL's contextual validation requirements.
+
+Options are typed enums: `ReturnRows`, `NavigationMode`, `UniquenessMode`,
+`RuleMode`, `RuleOrder`, `PresenceMode`, and `RangeDirection`.
+Builders are nested in their owning interfaces. Lists, including FOR tuple rows,
+are defensively copied. Required non-empty shapes and numeric literal bounds are
+checked during construction; contextual name/type and Oracle legality checks are
+reserved for validation.
+
+Support boundary for #504: these nodes are representable in core, but SQL support
+is not shipped yet. Query renderers reject MODEL rather than silently dropping it;
+codegen also rejects MODEL queries and expressions. Dedicated parser/renderer pairs
+are #505/#506, downstream validation/transpilation/codegen is #507, and live-engine
+coverage is #508. See the [detailed design](../epics/ORACLE_MODEL_CLAUSE_DESIGN.md).
+Each node's Javadoc includes SQL context and identifies the exact represented fragment.
+
 ### MERGE
 
 - **MergeClause**
@@ -714,7 +858,7 @@ graph TD
     - **PivotTable** - relation transform that rotates row values into output columns
     - **UnpivotTable** - relation transform that rotates input columns into output rows
     - **SampledTable** - wrapper that applies a `TableSampleSpec` to another table reference
-    - **Lateral** - wrapper for `LATERAL`, enabling correlated references to preceding FROM items
+    - **Lateral** - wrapper for `LATERAL`, enabling correlated references to precede FROM items
     - **Table** - base table reference (`schema.table`)
 
 ### Support notes for relation nodes
@@ -746,7 +890,7 @@ graph TD
   Sealed typed grammar family for primary variables, sequences, alternations, permutations, anchors, empty patterns, exclusions, and greedy or reluctant quantifiers. Parentheses used only for precedence are not persisted, and no variant stores raw SQL.
 
 - **PatternMeasure**
-  A measure expression with a required output alias. It is a dedicated clause item rather than a `SelectItem`, because stars and optional aliases are not valid measures.
+  A measure expression with a required to be output alias. It is a dedicated clause item rather than a `SelectItem`, because stars and optional aliases are not valid measures.
 
 - **PatternDefinition**
   Associates a primary pattern variable with the predicate that classifies its rows.

@@ -13,6 +13,20 @@ import java.util.function.Function;
  * @param <R> the result type produced by the match
  */
 public interface PredicateMatch<R> extends Match<Predicate, R> {
+    /**
+     * Matches a MODEL wildcard, not a quantified ANY/ALL comparison.
+     *
+     * @param handler wildcard handler
+     * @return this matcher
+     */
+    PredicateMatch<R> isAny(Function<IsAnyPredicate, R> handler);
+
+    /**
+     * Matches a {@link CellPresentPredicate}.
+     * @param handler variant handler
+     * @return this matcher
+     */
+    PredicateMatch<R> cellPresentPredicate(Function<CellPresentPredicate, R> handler);
 
     /**
      * Creates a new matcher for the given {@link Predicate}.

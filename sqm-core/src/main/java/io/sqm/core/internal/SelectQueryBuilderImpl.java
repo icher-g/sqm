@@ -21,6 +21,7 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
     private Predicate where;
     private HierarchicalQueryClause hierarchical;
     private Predicate having;
+    private ModelClause model;
     private DistinctSpec distinctSpec;
     private TopSpec topSpec;
     private LimitOffset limitOffset;
@@ -46,6 +47,7 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
         this.hierarchical = query.hierarchical();
         this.groupBy = query.groupBy();
         this.having = query.having();
+        this.model = query.model();
         this.orderBy = query.orderBy();
         this.distinctSpec = query.distinct();
         this.topSpec = query.topSpec();
@@ -199,6 +201,13 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
         return this;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public SelectQueryBuilder model(ModelClause model) {
+        this.model = model;
+        return this;
+    }
+
     @Override
     public SelectQuery build() {
         return SelectQuery.of(
@@ -216,7 +225,8 @@ public final class SelectQueryBuilderImpl implements SelectQueryBuilder {
             lockingClause,
             windows,
             modifiers,
-            statementHints
+            statementHints,
+            model
         );
     }
 }

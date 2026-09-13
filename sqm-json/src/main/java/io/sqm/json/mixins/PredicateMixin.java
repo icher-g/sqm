@@ -13,6 +13,8 @@ import io.sqm.core.*;
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
+    @JsonSubTypes.Type(value = IsAnyPredicate.Impl.class, name = "is-any"),
+    @JsonSubTypes.Type(value = CellPresentPredicate.Impl.class, name = "cell-present-predicate"),
     @JsonSubTypes.Type(value = AndPredicate.Impl.class, name = "and"),
     @JsonSubTypes.Type(value = AnyAllPredicate.Impl.class, name = "any_all"),
     @JsonSubTypes.Type(value = BetweenPredicate.Impl.class, name = "between"),

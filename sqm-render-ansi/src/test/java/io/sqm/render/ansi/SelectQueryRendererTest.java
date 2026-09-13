@@ -17,6 +17,15 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class SelectQueryRendererTest {
 
+    @Test
+    void rejectsCoreOnlyModelClauseInsteadOfOmittingIt() {
+        var query = select(col("sales")).model(model().dimension("year").measure("sales")
+            .rule(cellTarget("sales", 2026), lit(100)).build()).build();
+        var error = assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
+            () -> RenderContext.of(new AnsiDialect()).render(query));
+        assertTrue(error.getMessage().contains("MODEL"));
+    }
+
     // -----------------------
     // Test plumbing / helpers
     // -----------------------
@@ -147,23 +156,8 @@ public class SelectQueryRendererTest {
     @Test
     @DisplayName("Rejects SQL_CALC_FOUND_ROWS modifier when capability is unavailable")
     void rejects_calc_found_rows_modifier() {
-        var q = io.sqm.core.SelectQuery.of(
-            java.util.List.of(col("t", "c").toSelectItem()),
-            tbl("t"),
-            java.util.List.of(),
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            java.util.List.of(),
-            java.util.List.of(io.sqm.core.SelectModifier.CALC_FOUND_ROWS),
-            java.util.List.of()
-        );
+        var q = select(col("t", "c")).from(tbl("t"))
+            .selectModifier(io.sqm.core.SelectModifier.CALC_FOUND_ROWS).build();
 
         assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
             () -> RenderContext.of(new AnsiDialect()).render(q));
@@ -172,23 +166,8 @@ public class SelectQueryRendererTest {
     @Test
     @DisplayName("Rejects statement hint comments when capability is unavailable")
     void rejects_statement_hints() {
-        var q = io.sqm.core.SelectQuery.of(
-            java.util.List.of(col("t", "c").toSelectItem()),
-            tbl("t"),
-            java.util.List.of(),
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            java.util.List.of(),
-            java.util.List.of(),
-            java.util.List.of(statementHint("MAX_EXECUTION_TIME", 1000))
-        );
+        var q = select(col("t", "c")).from(tbl("t"))
+            .hint("MAX_EXECUTION_TIME", 1000).build();
 
         assertThrows(io.sqm.core.dialect.UnsupportedDialectFeatureException.class,
             () -> RenderContext.of(new AnsiDialect()).render(q));

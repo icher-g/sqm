@@ -1494,8 +1494,11 @@ var recognized = matchRecognize(tbl("events"))
     .build();
 ```
 
-Oracle 12.1+ is the currently enabled dialect. `MODEL` remains deferred, and
-Oracle's legacy outer-join `(+)` syntax remains intentionally unsupported.
+Oracle 12.1+ is the currently enabled dialect. The `MODEL` core AST and DSL are
+being added in #504; SQL parsing/rendering and downstream support are still pending.
+The staged delivery is specified in the
+[`MODEL` clause design](docs/epics/ORACLE_MODEL_CLAUSE_DESIGN.md). Oracle's
+legacy outer-join `(+)` syntax remains intentionally unsupported.
 
 GitHub Actions runs the live DB suites in the separate [`.github/workflows/live-db-it.yml`](.github/workflows/live-db-it.yml) pipeline so the default CI path stays fast.
 

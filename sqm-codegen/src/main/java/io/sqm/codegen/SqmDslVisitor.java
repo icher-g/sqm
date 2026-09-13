@@ -11,6 +11,48 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
 
     private final CodeBuilder out = CodeBuilder.of();
 
+    // Explicitly reject core-only MODEL expressions until codegen support lands.
+    @Override
+    public Void visitIsAnyPredicate(IsAnyPredicate node) {
+        throw unsupported("MODEL code generation (planned in #507)", node);
+    }
+
+    @Override
+    public Void visitCellRefExpr(CellRefExpr node) {
+        throw unsupported("MODEL code generation (planned in #507)", node);
+    }
+
+    @Override
+    public Void visitModelAggregateExpr(ModelAggregateExpr node) {
+        throw unsupported("MODEL code generation (planned in #507)", node);
+    }
+
+    @Override
+    public Void visitCurrentDimensionExpr(CurrentDimensionExpr node) {
+        throw unsupported("MODEL code generation (planned in #507)", node);
+    }
+
+    @Override
+    public Void visitIterationNumberExpr(IterationNumberExpr node) {
+        throw unsupported("MODEL code generation (planned in #507)", node);
+    }
+
+    @Override
+    public Void visitPreviousModelValueExpr(PreviousModelValueExpr node) {
+        throw unsupported("MODEL code generation (planned in #507)", node);
+    }
+
+    @Override
+    public Void visitPresenceValueExpr(PresenceValueExpr node) {
+        throw unsupported("MODEL code generation (planned in #507)", node);
+    }
+
+    @Override
+    public Void visitCellPresentPredicate(CellPresentPredicate node) {
+        throw unsupported("MODEL code generation (planned in #507)", node);
+    }
+
+
     private static IllegalStateException unsupported(String label, Object value) {
         return new IllegalStateException("Unsupported " + label + ": " + value.getClass().getName());
     }
@@ -217,6 +259,9 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
 
     @Override
     public Void visitSelectQuery(SelectQuery q) {
+        if (q.model() != null) {
+            throw unsupported("MODEL code generation (planned in #507)", q.model());
+        }
         out.append("select(").nl();
         out.in();
         out.comma(q.items(), this::appendNode, true);
