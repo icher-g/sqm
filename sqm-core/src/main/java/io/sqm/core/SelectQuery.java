@@ -14,7 +14,8 @@ import java.util.List;
 public non-sealed interface SelectQuery extends Query {
 
     /**
- * Creates an immutable {@link SelectQuery} from all SELECT clause parts, including select modifiers and typed statement hints.
+     * Creates an immutable {@link SelectQuery} from all SELECT clause parts,
+     * including select modifiers, typed statement hints, and an optional MODEL clause.
      *
      * @param items select items (must not be {@code null})
      * @param from FROM table reference, or {@code null}
@@ -31,6 +32,7 @@ public non-sealed interface SelectQuery extends Query {
      * @param windows WINDOW clause definitions (must not be {@code null})
      * @param modifiers select modifiers
      * @param hints typed statement hints
+     * @param model optional MODEL clause
      * @return immutable {@link SelectQuery} instance
      */
     static SelectQuery of(
@@ -48,8 +50,9 @@ public non-sealed interface SelectQuery extends Query {
         LockingClause lockFor,
         List<WindowDef> windows,
         List<SelectModifier> modifiers,
-        List<StatementHint> hints) {
-        return new Impl(items, from, joins, where, hierarchical, groupBy, having, orderBy, distinct, topSpec, limitOffset, lockFor, windows, modifiers, hints);
+        List<StatementHint> hints,
+        ModelClause model) {
+        return new Impl(items, from, joins, where, hierarchical, groupBy, having, orderBy, distinct, topSpec, limitOffset, lockFor, windows, modifiers, hints, model);
     }
 
     /**
@@ -119,6 +122,12 @@ public non-sealed interface SelectQuery extends Query {
      * @return predicate or {@code null}
      */
     Predicate having();
+
+    /**
+     * Returns the multidimensional MODEL clause.
+     * @return model clause, or null when absent
+     */
+    ModelClause model();
 
     /**
      * Gets window definitions declared in the WINDOW clause.
@@ -202,6 +211,7 @@ public non-sealed interface SelectQuery extends Query {
      * @param windows WINDOW clause definitions (immutable copy)
      * @param modifiers select modifiers (immutable copy)
      * @param hints typed statement hints (immutable copy)
+     * @param model optional MODEL clause
      */
     record Impl(List<SelectItem> items,
                 TableRef from,
@@ -217,7 +227,8 @@ public non-sealed interface SelectQuery extends Query {
                 LockingClause lockFor,
                 List<WindowDef> windows,
                 List<SelectModifier> modifiers,
-                List<StatementHint> hints) implements SelectQuery {
+                List<StatementHint> hints,
+                ModelClause model) implements SelectQuery {
 
         /**
          * Creates an immutable {@link SelectQuery} implementation and defensively copies list inputs.
@@ -260,7 +271,7 @@ public non-sealed interface SelectQuery extends Query {
                     LimitOffset limitOffset,
                     LockingClause lockFor,
                     List<WindowDef> windows) {
-            this(items, from, joins, where, hierarchical, groupBy, having, orderBy, distinct, topSpec, limitOffset, lockFor, windows, List.of(), List.of());
+            this(items, from, joins, where, hierarchical, groupBy, having, orderBy, distinct, topSpec, limitOffset, lockFor, windows, List.of(), List.of(), null);
         }
     }
 }

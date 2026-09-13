@@ -433,6 +433,21 @@ public interface SelectQueryBuilder {
     SelectQuery build();
 
     /**
+     * Sets the query's MODEL clause.
+     * @param model clause, or null to clear
+     * @return this builder
+     */
+    SelectQueryBuilder model(ModelClause model);
+
+    /**
+     * Removes the MODEL clause.
+     * @return this builder
+     */
+    default SelectQueryBuilder clearModel() {
+        return model(null);
+    }
+
+    /**
      * Returns current limit/offset state held by the builder, if any.
      *
      * @return current limit/offset clause or {@code null}

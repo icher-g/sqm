@@ -5,7 +5,9 @@
 `JSON_TABLE`, table access modifiers, and Oracle time-zone/locking support. The
 R11-8 is resolved and implemented: `MATCH_RECOGNIZE` has a typed shared model,
 Oracle 12.1+ parser/renderer/validation support, transpilation and codegen behavior,
-and deterministic live-engine coverage. `MODEL` remains explicitly deferred, and
+and deterministic live-engine coverage. `MODEL` implementation remains deferred,
+with its typed follow-up design recorded in
+[`ORACLE_MODEL_CLAUSE_DESIGN.md`](ORACLE_MODEL_CLAUSE_DESIGN.md), and
 legacy outer-join `(+)` syntax remains explicitly unsupported.
 DDL remains out of scope.
 
@@ -884,9 +886,11 @@ Oracle `MODEL` is complex, multidimensional, and comparatively uncommon in day-t
 
 ### Model Decision
 
-Explicitly defer. If implemented, it needs its own epic/design.
+Implementation remains deferred to a standalone follow-up. Its detailed typed
+design is recorded in
+[`ORACLE_MODEL_CLAUSE_DESIGN.md`](ORACLE_MODEL_CLAUSE_DESIGN.md).
 
-Do not parse it as a raw string. Until designed:
+Do not parse it as a raw string. Until implemented:
 
 - Oracle parser rejects with a clear diagnostic.
 - Transpilation rejects with `UNSUPPORTED_MODEL_CLAUSE`.
@@ -1120,7 +1124,9 @@ Decision:
 - `MATCH_RECOGNIZE`: detailed typed design completed in
   [`R11_8_MATCH_RECOGNIZE_DESIGN.md`](R11_8_MATCH_RECOGNIZE_DESIGN.md);
   implementation is complete across R11-8A through R11-8E.
-- `MODEL`: explicitly deferred and unsupported pending a separate epic/design.
+- `MODEL`: detailed typed follow-up design completed in
+  [`ORACLE_MODEL_CLAUSE_DESIGN.md`](ORACLE_MODEL_CLAUSE_DESIGN.md); implementation
+  remains deferred and unsupported pending its standalone epic.
 - legacy `(+)`: explicitly unsupported; no implementation is planned.
 
 ## Recommended Implementation Order

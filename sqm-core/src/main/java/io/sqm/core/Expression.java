@@ -10,7 +10,7 @@ import java.util.Objects;
  * Any value-producing node (scalar or boolean).
  */
 public sealed interface Expression extends Node, QuantifiedSource
-    permits ArithmeticExpr, ArrayExpr, ArraySliceExpr, ArraySubscriptExpr, AtTimeZoneExpr, BinaryOperatorExpr, CaseExpr, CastExpr, ClassifierExpr, CollateExpr, ColumnExpr, ConcatExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, MatchNumberExpr, OutputColumnExpr, ParamExpr, PatternColumnExpr, PatternEvaluationExpr, PatternNavigationExpr, Predicate, PriorExpr, SequenceValueExpr, UnaryOperatorExpr, ValueSet {
+    permits CellRefExpr, ModelAggregateExpr, CurrentDimensionExpr, IterationNumberExpr, PreviousModelValueExpr, PresenceValueExpr, ArithmeticExpr, ArrayExpr, ArraySliceExpr, ArraySubscriptExpr, AtTimeZoneExpr, BinaryOperatorExpr, CaseExpr, CastExpr, ClassifierExpr, CollateExpr, ColumnExpr, ConcatExpr, DialectExpression, FunctionExpr, FunctionExpr.Arg, LiteralExpr, MatchNumberExpr, OutputColumnExpr, ParamExpr, PatternColumnExpr, PatternEvaluationExpr, PatternNavigationExpr, Predicate, PriorExpr, SequenceValueExpr, UnaryOperatorExpr, ValueSet {
 
     /**
      * Creates a literal expression.
@@ -1047,5 +1047,13 @@ public sealed interface Expression extends Node, QuantifiedSource
     default <R> ExpressionMatch<R> matchExpression() {
         return ExpressionMatch.match(this);
     }
-}
+    /**
+     * Creates a MODEL-only wildcard predicate for this dimension expression.
+     *
+     * @return predicate selecting every dimension value, including null
+     */
+    default IsAnyPredicate isAny() {
+        return IsAnyPredicate.of(this);
+    }
 
+}

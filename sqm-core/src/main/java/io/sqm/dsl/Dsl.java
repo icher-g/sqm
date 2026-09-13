@@ -1,11 +1,9 @@
 package io.sqm.dsl;
 
 import io.sqm.core.*;
+import io.sqm.core.internal.CellInputs;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Minimal, ergonomic, static-import friendly helpers to build the core model
@@ -21,6 +19,585 @@ public final class Dsl {
     public final static Object NULL = null;
 
     private Dsl() {
+    }
+
+    /**
+     * Creates a ModelColumn using the public MODEL API.
+     *
+     * @param expression input expression
+     * @param name       resolved model-column name
+     * @return ModelColumn value
+     */
+    public static ModelColumn modelColumn(Expression expression, Identifier name) {
+        return ModelColumn.of(expression, name);
+    }
+
+    /**
+     * Creates a CellRefExpr using the public MODEL API.
+     *
+     * @param model     optional model qualifier; {@code null} when absent
+     * @param measure   measure name
+     * @param selectors non-empty cell selectors
+     * @return CellRefExpr value
+     */
+    public static CellRefExpr cellRefExpr(Identifier model, Identifier measure, List<CellSelector> selectors) {
+        return CellRefExpr.of(model, measure, selectors);
+    }
+
+    /**
+     * Starts a readable cell whose selectors can be added fluently.
+     * @param model optional qualifier; {@code null} when absent
+     * @param measure measure name
+     * @return cell builder
+     */
+    public static CellRefExpr.Builder cellRefExpr(Identifier model, Identifier measure) {
+        return CellRefExpr.builder().model(model).measure(measure);
+    }
+
+    /**
+     * Starts a readable cell, e.g. {@code cellRef("sales").selector("Bike").selector(2026).build()}.
+     * Use {@code .model("baseline")} to qualify a reference model.
+     * @param measure measure name
+     * @return cell builder
+     */
+    public static CellRefExpr.Builder cellRef(String measure) {
+        return cellRef(id(measure));
+    }
+
+    /**
+     * Starts a readable cell with a possibly quoted measure name.
+     * @param measure measure name
+     * @return cell builder
+     */
+    public static CellRefExpr.Builder cellRef(Identifier measure) {
+        return cellRefExpr(null, measure);
+    }
+
+    /**
+     * Starts a writable cell, e.g. {@code cellTarget("sales").address("Bike").address(2026).build()}.
+     * @param measure writable measure name
+     * @return cell builder
+     */
+    public static CellTarget.Builder cellTarget(String measure) {
+        return cellTarget(id(measure));
+    }
+
+    /**
+     * Starts a writable cell with a possibly quoted measure name.
+     * @param measure writable measure name
+     * @return cell builder
+     */
+    public static CellTarget.Builder cellTarget(Identifier measure) {
+        return CellTarget.builder().measure(measure);
+    }
+
+    /**
+     * Creates a CellTarget using the public MODEL API.
+     *
+     * @param measure   writable measure name
+     * @param addresses non-empty cell addresses
+     * @return CellTarget value
+     */
+    public static CellTarget cellTarget(Identifier measure, List<CellAddress> addresses) {
+        return CellTarget.of(measure, addresses);
+    }
+
+    /**
+     * Creates a ModelAggregateExpr using the public MODEL API.
+     *
+     * @param aggregate aggregate invocation
+     * @param selectors non-empty cell selectors
+     * @return ModelAggregateExpr value
+     */
+    public static ModelAggregateExpr modelAggregateExpr(FunctionExpr aggregate, List<CellSelector> selectors) {
+        return ModelAggregateExpr.of(aggregate, selectors);
+    }
+
+    /**
+     * Creates a CurrentDimensionExpr using the public MODEL API.
+     *
+     * @param dimension optional explicit dimension name; {@code null} when absent
+     * @return CurrentDimensionExpr value
+     */
+    public static CurrentDimensionExpr currentDimensionExpr(Identifier dimension) {
+        return CurrentDimensionExpr.of(dimension);
+    }
+
+    /**
+     * Creates a IterationNumberExpr using the public MODEL API.
+     *
+     * @return IterationNumberExpr value
+     */
+    public static IterationNumberExpr iterationNumberExpr() {
+        return IterationNumberExpr.of();
+    }
+
+    /**
+     * Creates a PreviousModelValueExpr using the public MODEL API.
+     *
+     * @param cell cell from the previous iteration
+     * @return PreviousModelValueExpr value
+     */
+    public static PreviousModelValueExpr previousModelValueExpr(CellRefExpr cell) {
+        return PreviousModelValueExpr.of(cell);
+    }
+
+    /**
+     * Creates a PresenceValueExpr using the public MODEL API.
+     *
+     * @param mode        presence test mode
+     * @param cell        cell whose presence is tested
+     * @param whenPresent value when present
+     * @param whenAbsent  value when absent
+     * @return PresenceValueExpr value
+     */
+    public static PresenceValueExpr presenceValueExpr(PresenceMode mode, CellRefExpr cell, Expression whenPresent, Expression whenAbsent) {
+        return PresenceValueExpr.of(mode, cell, whenPresent, whenAbsent);
+    }
+
+    /**
+     * Creates a CellPresentPredicate using the public MODEL API.
+     *
+     * @param cell cell whose input presence is tested
+     * @return CellPresentPredicate value
+     */
+    public static CellPresentPredicate cellPresentPredicate(CellRefExpr cell) {
+        return CellPresentPredicate.of(cell);
+    }
+
+    /**
+     * Creates a IterationSpec using the public MODEL API.
+     *
+     * @param limit iteration limit
+     * @param until optional termination condition; {@code null} when absent
+     * @return IterationSpec value
+     */
+    public static IterationSpec iterationSpec(Expression limit, Predicate until) {
+        return IterationSpec.of(limit, until);
+    }
+
+    /**
+     * Creates an iteration specification without an UNTIL condition.
+     *
+     * @param limit iteration limit
+     * @return iteration specification
+     */
+    public static IterationSpec iterationSpec(Expression limit) {
+        return iterationSpec(limit, null);
+    }
+
+    /**
+     * Creates a ModelRule using the public MODEL API.
+     *
+     * @param mode    optional override of the rule mode; {@code null} when absent
+     * @param target  writable target
+     * @param orderBy optional target evaluation order; {@code null} when absent
+     * @param value   assigned expression
+     * @return ModelRule value
+     */
+    public static ModelRule modelRule(RuleMode mode, CellTarget target, OrderBy orderBy, Expression value) {
+        return ModelRule.of(mode, target, orderBy, value);
+    }
+
+    /**
+     * Creates a ModelRules using the public MODEL API.
+     *
+     * @param defaultMode default assignment mode
+     * @param order       rule evaluation order
+     * @param iteration   optional iteration specification; {@code null} when absent
+     * @param rules       non-empty rules
+     * @return ModelRules value
+     */
+    public static ModelRules modelRules(RuleMode defaultMode, RuleOrder order, IterationSpec iteration, List<ModelRule> rules) {
+        return ModelRules.of(defaultMode, order, iteration, rules);
+    }
+
+    /**
+     * Creates a MainModel using the public MODEL API.
+     *
+     * @param name           optional main-model name; {@code null} when absent
+     * @param partitions     partition declarations
+     * @param dimensions     non-empty dimensions
+     * @param measures       non-empty measures
+     * @param navigationMode missing and null value behavior
+     * @param uniquenessMode cell uniqueness policy
+     * @param rules          model rules
+     * @return MainModel value
+     */
+    public static MainModel mainModel(Identifier name, List<ModelColumn> partitions, List<ModelColumn> dimensions, List<ModelColumn> measures, NavigationMode navigationMode, UniquenessMode uniquenessMode, ModelRules rules) {
+        return MainModel.of(name, partitions, dimensions, measures, navigationMode, uniquenessMode, rules);
+    }
+
+    /**
+     * Creates a ReferenceModel using the public MODEL API.
+     *
+     * @param name           reference-model name
+     * @param query          reference input query
+     * @param dimensions     non-empty dimensions
+     * @param measures       non-empty measures
+     * @param navigationMode missing and null value behavior
+     * @param uniquenessMode cell uniqueness policy
+     * @return ReferenceModel value
+     */
+    public static ReferenceModel referenceModel(Identifier name, Query query, List<ModelColumn> dimensions, List<ModelColumn> measures, NavigationMode navigationMode, UniquenessMode uniquenessMode) {
+        return ReferenceModel.of(name, query, dimensions, measures, navigationMode, uniquenessMode);
+    }
+
+    /**
+     * Creates a ModelClause using the public MODEL API.
+     *
+     * @param returnRows result row selection
+     * @param references read-only reference models
+     * @param main       main model
+     * @return ModelClause value
+     */
+    public static ModelClause modelClause(ReturnRows returnRows, List<ReferenceModel> references, MainModel main) {
+        return ModelClause.of(returnRows, references, main);
+    }
+
+    /**
+     * Creates a positional cell value, e.g. {@code cellValue("Bike")} or {@code cellValue(currentDimension())}.
+     * Unlike implicit selector conversion, an explicitly wrapped predicate remains a value expression.
+     *
+     * @param value expression or literal value; {@code null} represents SQL NULL
+     * @return CellSelector.Value value
+     */
+    public static CellSelector.Value cellValue(Object value) {
+        return CellInputs.value(value);
+    }
+
+    /**
+     * Wraps a complete predicate as a symbolic MODEL cell selector.
+     *
+     * @param predicate complete predicate, including its dimension operand
+     * @return condition selector
+     */
+    public static CellSelector.Condition cellCondition(Predicate predicate) {
+        return CellSelector.Condition.of(predicate);
+    }
+
+    /**
+     * Creates a wildcard cell selector whose position determines its dimension.
+     *
+     * @return selector wrapping a bare ANY predicate
+     */
+    public static CellSelector.Condition cellAny() {
+        return cellCondition(isAny());
+    }
+
+    /**
+     * Creates bare ANY for a complete MODEL cell-selector condition.
+     *
+     * @return wildcard whose dimension is inferred from the selector position
+     */
+    public static IsAnyPredicate isAny() {
+        return IsAnyPredicate.of(null);
+    }
+
+    /**
+     * Creates a named MODEL wildcard, for example {@code product IS ANY}.
+     *
+     * @param dimension explicit dimension expression
+     * @return wildcard predicate
+     */
+    public static IsAnyPredicate isAny(Expression dimension) {
+        return IsAnyPredicate.of(Objects.requireNonNull(dimension, "dimension"));
+    }
+
+    /**
+     * Creates a MODEL wildcard for an unqualified dimension column.
+     *
+     * @param dimension dimension column name
+     * @return wildcard predicate
+     */
+    public static IsAnyPredicate isAny(String dimension) {
+        return isAny(col(dimension));
+    }
+
+    /**
+     * Creates a CellFor Values using the public MODEL API.
+     *
+     * @param dimensions non-empty dimension names
+     * @param values non-empty explicit values or a query expression producing dimension tuples
+     * @return CellFor.Values value
+     */
+    public static CellFor.Values cellForValues(List<Identifier> dimensions, ValueSet values) {
+        return CellFor.Values.of(dimensions, values);
+    }
+
+    /**
+     * Creates a FOR generator from a query whose columns supply the dimensions in order.
+     *
+     * @param dimensions non-empty dimension names
+     * @param query      query producing dimension tuples
+     * @return query-backed values generator
+     */
+    public static CellFor.Values cellForValues(List<Identifier> dimensions, Query query) {
+        return cellForValues(dimensions, QueryExpr.of(Objects.requireNonNull(query, "query")));
+    }
+
+    /**
+     * Creates a CellFor Range using the public MODEL API.
+     *
+     * @param dimension   dimension name
+     * @param likePattern optional range template; {@code null} when absent
+     * @param from        inclusive start
+     * @param to          inclusive end
+     * @param direction   range direction
+     * @param step        positive range step
+     * @return CellFor.Range value
+     */
+    public static CellFor.Range cellForRange(Identifier dimension, Expression likePattern, Expression from, Expression to, RangeDirection direction, Expression step) {
+        return CellFor.Range.of(dimension, likePattern, from, to, direction, step);
+    }
+
+    /**
+     * Creates a stepped FOR range without a LIKE template.
+     * For example, {@code cellForRange("year", 2026, 2030, RangeDirection.INCREMENT, 2)}.
+     *
+     * @param dimension dimension name
+     * @param from inclusive start, as a literal value or expression
+     * @param to inclusive end, as a literal value or expression
+     * @param direction range direction
+     * @param step positive step, as a literal value or expression
+     * @return range generator
+     */
+    public static CellFor.Range cellForRange(String dimension, Object from, Object to, RangeDirection direction, Object step) {
+        return cellForRange(id(dimension), null,
+            from instanceof Expression expression ? expression : lit(from),
+            to instanceof Expression expression ? expression : lit(to), direction,
+            step instanceof Expression expression ? expression : lit(step));
+    }
+
+    /**
+     * Creates a ModelClause Builder using the public MODEL API.
+     *
+     * @return ModelClause.Builder value
+     */
+    public static ModelClause.Builder model() {
+        return ModelClause.builder();
+    }
+
+    /**
+     * Creates a MainModel Builder using the public MODEL API.
+     *
+     * @return MainModel.Builder value
+     */
+    public static MainModel.Builder mainModel() {
+        return MainModel.builder();
+    }
+
+    /**
+     * Creates a ReferenceModel Builder using the public MODEL API.
+     *
+     * @return ReferenceModel.Builder value
+     */
+    public static ReferenceModel.Builder referenceModel() {
+        return ReferenceModel.builder();
+    }
+
+    /**
+     * Creates a ModelRules Builder using the public MODEL API.
+     *
+     * @return ModelRules.Builder value
+     */
+    public static ModelRules.Builder modelRules() {
+        return ModelRules.builder();
+    }
+
+    /**
+     * Creates a ReferenceModel Builder using the public MODEL API.
+     *
+     * @param name  model name
+     * @param query reference query
+     * @return ReferenceModel.Builder value
+     */
+    public static ReferenceModel.Builder referenceModel(String name, Query query) {
+        return ReferenceModel.builder().name(Identifier.of(name)).query(query);
+    }
+
+    /**
+     * Creates a ModelColumn using the public MODEL API.
+     *
+     * @param column unqualified source column
+     * @return ModelColumn value
+     */
+    public static ModelColumn modelColumn(String column) {
+        return ModelColumn.of(col(column), id(column));
+    }
+
+    /**
+     * Creates a ModelColumn using the public MODEL API.
+     *
+     * @param column source column
+     * @param name   model name
+     * @return ModelColumn value
+     */
+    public static ModelColumn modelColumn(String column, String name) {
+        return ModelColumn.of(col(column), id(name));
+    }
+
+    /**
+     * Creates a ModelColumn using the public MODEL API.
+     *
+     * @param column qualified or quoted source column
+     * @return ModelColumn value
+     */
+    public static ModelColumn modelColumn(ColumnExpr column) {
+        return ModelColumn.of(column, column.name());
+    }
+
+    /**
+     * Creates a ModelColumn using the public MODEL API.
+     *
+     * @param expression source expression
+     * @param name       model name
+     * @return ModelColumn value
+     */
+    public static ModelColumn modelColumn(Expression expression, String name) {
+        return ModelColumn.of(expression, id(name));
+    }
+
+    /**
+     * Creates a CellRefExpr using the public MODEL API.
+     *
+     * @param measure   measure name
+     * @param selectors selectors, expressions, or literal dimension values
+     * @return CellRefExpr value
+     */
+    public static CellRefExpr cellRef(String measure, Object... selectors) {
+        return CellRefExpr.of(null, id(measure), Arrays.stream(selectors)
+            .map(CellInputs::selector).toList());
+    }
+
+    /**
+     * Creates a CellRefExpr using the public MODEL API.
+     *
+     * @param model     model qualifier
+     * @param measure   measure name
+     * @param selectors typed cell selectors
+     * @return CellRefExpr value
+     */
+    public static CellRefExpr cellRef(Identifier model, Identifier measure, CellSelector... selectors) {
+        return CellRefExpr.of(Objects.requireNonNull(model, "model"), measure, List.of(selectors));
+    }
+
+    /**
+     * Creates a CellTarget using the public MODEL API.
+     *
+     * @param measure   writable measure name
+     * @param addresses addresses, expressions, or literal dimension values
+     * @return CellTarget value
+     */
+    public static CellTarget cellTarget(String measure, Object... addresses) {
+        return CellTarget.of(id(measure), Arrays.stream(addresses)
+            .map(CellInputs::address).toList());
+    }
+
+    /**
+     * Creates a ModelRule using the public MODEL API.
+     *
+     * @param target writable target
+     * @param value  assigned expression
+     * @return ModelRule value
+     */
+    public static ModelRule modelRule(CellTarget target, Expression value) {
+        return ModelRule.of(null, target, null, value);
+    }
+
+    /**
+     * Creates a CurrentDimensionExpr using the public MODEL API.
+     *
+     * @return CurrentDimensionExpr value
+     */
+    public static CurrentDimensionExpr currentDimension() {
+        return CurrentDimensionExpr.of(null);
+    }
+
+    /**
+     * Creates a CurrentDimensionExpr using the public MODEL API.
+     *
+     * @param dimension dimension name
+     * @return CurrentDimensionExpr value
+     */
+    public static CurrentDimensionExpr currentDimension(String dimension) {
+        return CurrentDimensionExpr.of(id(dimension));
+    }
+
+    /**
+     * Creates a IterationNumberExpr using the public MODEL API.
+     *
+     * @return IterationNumberExpr value
+     */
+    public static IterationNumberExpr iterationNumber() {
+        return IterationNumberExpr.of();
+    }
+
+    /**
+     * Creates a PresenceValueExpr using the public MODEL API.
+     *
+     * @param cell        tested cell
+     * @param whenPresent present branch
+     * @param whenAbsent  absent branch
+     * @return PresenceValueExpr value
+     */
+    public static PresenceValueExpr presenceValue(CellRefExpr cell, Expression whenPresent, Expression whenAbsent) {
+        return PresenceValueExpr.of(PresenceMode.CELL, cell, whenPresent, whenAbsent);
+    }
+
+    /**
+     * Creates a PresenceValueExpr using the public MODEL API.
+     *
+     * @param cell        tested cell
+     * @param whenPresent present branch
+     * @param whenAbsent  absent branch
+     * @return PresenceValueExpr value
+     */
+    public static PresenceValueExpr presenceNonNullValue(CellRefExpr cell, Expression whenPresent, Expression whenAbsent) {
+        return PresenceValueExpr.of(PresenceMode.NON_NULL_VALUE, cell, whenPresent, whenAbsent);
+    }
+
+    /**
+     * Creates a CellPresentPredicate using the public MODEL API.
+     *
+     * @param cell tested cell
+     * @return CellPresentPredicate value
+     */
+    public static CellPresentPredicate cellIsPresent(CellRefExpr cell) {
+        return CellPresentPredicate.of(cell);
+    }
+
+    /**
+     * Creates a CellFor Values using the public MODEL API.
+     *
+     * @param dimension dimension name
+     * @param values    generated literal values or expressions
+     * @return CellFor.Values value
+     */
+    public static CellFor.Values cellForValues(String dimension, Object... values) {
+        return cellForValues(dimension, row(values));
+    }
+
+    /**
+     * Creates a single-dimension FOR generator from an existing value set.
+     *
+     * @param dimension dimension name
+     * @param values scalar list, one-column tuples, or query expression
+     * @return values generator
+     */
+    public static CellFor.Values cellForValues(String dimension, ValueSet values) {
+        return cellForValues(List.of(id(dimension)), values);
+    }
+
+    /**
+     * Creates a single-dimension FOR generator from a query.
+     *
+     * @param dimension dimension name
+     * @param query query producing dimension values
+     * @return query-backed values generator
+     */
+    public static CellFor.Values cellForValues(String dimension, Query query) {
+        return cellForValues(List.of(id(dimension)), query);
     }
 
     /**
@@ -141,9 +718,9 @@ public final class Dsl {
     /**
      * Creates a hierarchical query clause.
      *
-     * @param startWith optional root-row predicate
-     * @param connectBy parent-child relationship predicate
-     * @param noCycle whether cycle-safe traversal is requested
+     * @param startWith       optional root-row predicate
+     * @param connectBy       parent-child relationship predicate
+     * @param noCycle         whether cycle-safe traversal is requested
      * @param orderSiblingsBy optional sibling ordering clause
      * @return hierarchical query clause
      */
@@ -156,7 +733,7 @@ public final class Dsl {
      *
      * @param startWith optional root-row predicate
      * @param connectBy parent-child relationship predicate
-     * @param noCycle whether cycle-safe traversal is requested
+     * @param noCycle   whether cycle-safe traversal is requested
      * @return hierarchical query clause
      */
     public static HierarchicalQueryClause hierarchy(Predicate startWith, Predicate connectBy, boolean noCycle) {
@@ -261,7 +838,7 @@ public final class Dsl {
      * Creates a table version selector for a half-open version interval.
      *
      * @param start start version expression
-     * @param end end version expression
+     * @param end   end version expression
      * @return table version selector
      */
     public static TableVersionSpec tableVersionFromTo(Expression start, Expression end) {
@@ -272,7 +849,7 @@ public final class Dsl {
      * Creates a table version selector for an inclusive version interval.
      *
      * @param start start version expression
-     * @param end end version expression
+     * @param end   end version expression
      * @return table version selector
      */
     public static TableVersionSpec tableVersionBetween(Expression start, Expression end) {
@@ -283,7 +860,7 @@ public final class Dsl {
      * Creates a table version selector for rows contained in a version interval.
      *
      * @param start start version expression
-     * @param end end version expression
+     * @param end   end version expression
      * @return table version selector
      */
     public static TableVersionSpec tableVersionContainedIn(Expression start, Expression end) {
@@ -322,9 +899,9 @@ public final class Dsl {
     /**
      * Creates a table sample specification.
      *
-     * @param method sampling method
-     * @param unit sampling unit
-     * @param amount sample amount expression
+     * @param method         sampling method
+     * @param unit           sampling unit
+     * @param amount         sample amount expression
      * @param repeatableSeed optional repeatable seed expression
      * @return table sample
      */
@@ -357,7 +934,7 @@ public final class Dsl {
      * Creates a pattern measure with a string alias.
      *
      * @param expression measure expression
-     * @param alias required output alias
+     * @param alias      required output alias
      * @return pattern measure
      */
     public static PatternMeasure patternMeasure(Expression expression, String alias) {
@@ -368,7 +945,7 @@ public final class Dsl {
      * Creates a pattern measure with a quote-aware alias.
      *
      * @param expression measure expression
-     * @param alias required output alias
+     * @param alias      required output alias
      * @return pattern measure
      */
     public static PatternMeasure patternMeasure(Expression expression, Identifier alias) {
@@ -378,7 +955,7 @@ public final class Dsl {
     /**
      * Creates a pattern-variable definition.
      *
-     * @param variable primary variable name
+     * @param variable  primary variable name
      * @param condition variable condition
      * @return pattern definition
      */
@@ -389,7 +966,7 @@ public final class Dsl {
     /**
      * Creates a pattern-variable definition using a quote-aware identifier.
      *
-     * @param variable primary variable name
+     * @param variable  primary variable name
      * @param condition variable condition
      * @return pattern definition
      */
@@ -400,7 +977,7 @@ public final class Dsl {
     /**
      * Creates a named subset using string identifiers.
      *
-     * @param name subset name
+     * @param name      subset name
      * @param variables primary variables included in the subset
      * @return pattern subset
      */
@@ -414,7 +991,7 @@ public final class Dsl {
     /**
      * Creates a named subset using quote-aware identifiers.
      *
-     * @param name subset name
+     * @param name      subset name
      * @param variables primary variables included in the subset
      * @return pattern subset
      */
@@ -446,7 +1023,7 @@ public final class Dsl {
      * Creates a pattern-variable column expression.
      *
      * @param variable pattern variable
-     * @param column input-column name
+     * @param column   input-column name
      * @return pattern column expression
      */
     public static PatternColumnExpr patternColumn(String variable, String column) {
@@ -457,7 +1034,7 @@ public final class Dsl {
      * Creates a pattern-variable column expression.
      *
      * @param variable quote-aware pattern variable
-     * @param column quote-aware input-column name
+     * @param column   quote-aware input-column name
      * @return pattern column expression
      */
     public static PatternColumnExpr patternColumn(Identifier variable, Identifier column) {
@@ -567,9 +1144,9 @@ public final class Dsl {
     /**
      * Creates a bounded or unbounded pattern quantifier.
      *
-     * @param pattern child pattern
-     * @param minimum non-negative minimum repetition count
-     * @param maximum maximum repetition count, or {@code null} when unbounded
+     * @param pattern   child pattern
+     * @param minimum   non-negative minimum repetition count
+     * @param maximum   maximum repetition count, or {@code null} when unbounded
      * @param reluctant whether matching is reluctant
      * @return quantified pattern
      */
@@ -740,7 +1317,7 @@ public final class Dsl {
      * Navigates to the first row using an explicit offset expression.
      *
      * @param expression expression to evaluate
-     * @param offset offset expression
+     * @param offset     offset expression
      * @return navigation expression
      */
     public static PatternNavigationExpr first(Expression expression, Expression offset) {
@@ -751,7 +1328,7 @@ public final class Dsl {
      * Navigates to the first row using an integer offset.
      *
      * @param expression expression to evaluate
-     * @param offset non-negative offset
+     * @param offset     non-negative offset
      * @return navigation expression
      */
     public static PatternNavigationExpr first(Expression expression, int offset) {
@@ -772,7 +1349,7 @@ public final class Dsl {
      * Navigates to the last row using an explicit offset expression.
      *
      * @param expression expression to evaluate
-     * @param offset offset expression
+     * @param offset     offset expression
      * @return navigation expression
      */
     public static PatternNavigationExpr last(Expression expression, Expression offset) {
@@ -783,7 +1360,7 @@ public final class Dsl {
      * Navigates to the last row using an integer offset.
      *
      * @param expression expression to evaluate
-     * @param offset non-negative offset
+     * @param offset     non-negative offset
      * @return navigation expression
      */
     public static PatternNavigationExpr last(Expression expression, int offset) {
@@ -804,7 +1381,7 @@ public final class Dsl {
      * Navigates to the previous row using an explicit offset expression.
      *
      * @param expression expression to evaluate
-     * @param offset offset expression
+     * @param offset     offset expression
      * @return navigation expression
      */
     public static PatternNavigationExpr prev(Expression expression, Expression offset) {
@@ -815,7 +1392,7 @@ public final class Dsl {
      * Navigates to the previous row using an integer offset.
      *
      * @param expression expression to evaluate
-     * @param offset non-negative offset
+     * @param offset     non-negative offset
      * @return navigation expression
      */
     public static PatternNavigationExpr prev(Expression expression, int offset) {
@@ -836,7 +1413,7 @@ public final class Dsl {
      * Navigates to the next row using an explicit offset expression.
      *
      * @param expression expression to evaluate
-     * @param offset offset expression
+     * @param offset     offset expression
      * @return navigation expression
      */
     public static PatternNavigationExpr next(Expression expression, Expression offset) {
@@ -847,7 +1424,7 @@ public final class Dsl {
      * Navigates to the next row using an integer offset.
      *
      * @param expression expression to evaluate
-     * @param offset non-negative offset
+     * @param offset     non-negative offset
      * @return navigation expression
      */
     public static PatternNavigationExpr next(Expression expression, int offset) {
@@ -917,9 +1494,9 @@ public final class Dsl {
     /**
      * Creates a JSON table reference.
      *
-     * @param json JSON context expression
+     * @param json     JSON context expression
      * @param rootPath row-pattern JSON path
-     * @param columns output columns
+     * @param columns  output columns
      * @return JSON table reference
      */
     public static JsonTable jsonTable(Expression json, JsonPathSpec rootPath, JsonTableColumn... columns) {
@@ -941,9 +1518,9 @@ public final class Dsl {
     /**
      * Creates a scalar JSON table column.
      *
-     * @param name column name
-     * @param type SQL result type
-     * @param path JSON path
+     * @param name    column name
+     * @param type    SQL result type
+     * @param path    JSON path
      * @param wrapper wrapper behavior
      * @param onEmpty empty-result behavior
      * @param onError error behavior
@@ -985,9 +1562,9 @@ public final class Dsl {
     /**
      * Creates an existence-test JSON table column.
      *
-     * @param name column name
-     * @param type SQL result type
-     * @param path JSON path
+     * @param name    column name
+     * @param type    SQL result type
+     * @param path    JSON path
      * @param onError error behavior
      * @return existence-test JSON table column
      */
@@ -998,7 +1575,7 @@ public final class Dsl {
     /**
      * Creates a nested-path JSON table column group.
      *
-     * @param path nested JSON path
+     * @param path    nested JSON path
      * @param columns nested output columns
      * @return nested-path JSON table column group
      */
@@ -1019,7 +1596,7 @@ public final class Dsl {
     /**
      * Creates a JSON table empty/error behavior.
      *
-     * @param kind behavior kind
+     * @param kind              behavior kind
      * @param defaultExpression expression used by {@link JsonTableBehavior.Kind#DEFAULT}
      * @return JSON table behavior
      */
@@ -1145,7 +1722,7 @@ public final class Dsl {
      * Creates a pivot measure with an alias.
      *
      * @param aggregateFunction aggregate function used by the pivot
-     * @param alias measure alias
+     * @param alias             measure alias
      * @return pivot measure
      */
     public static PivotMeasure pivotMeasure(FunctionExpr aggregateFunction, String alias) {
@@ -1176,10 +1753,10 @@ public final class Dsl {
     /**
      * Creates a pivot table transform.
      *
-     * @param source source relation to pivot
-     * @param measures aggregate measures to produce
+     * @param source        source relation to pivot
+     * @param measures      aggregate measures to produce
      * @param forExpression expression whose values become output columns
-     * @param values explicit pivot values
+     * @param values        explicit pivot values
      * @return pivot table reference
      */
     public static PivotTable pivot(TableRef source, List<PivotMeasure> measures, Expression forExpression, PivotValue... values) {
@@ -1190,7 +1767,7 @@ public final class Dsl {
      * Creates an unpivot input.
      *
      * @param sourceColumn source column read for this input branch
-     * @param label label emitted into the unpivot name column
+     * @param label        label emitted into the unpivot name column
      * @return unpivot input
      */
     public static UnpivotInput unpivotInput(String sourceColumn, Expression label) {
@@ -1201,7 +1778,7 @@ public final class Dsl {
      * Creates an unpivot input.
      *
      * @param sourceColumns source columns read for this input branch
-     * @param label label emitted into the unpivot name column
+     * @param label         label emitted into the unpivot name column
      * @return unpivot input
      */
     public static UnpivotInput unpivotInput(List<Identifier> sourceColumns, Expression label) {
@@ -1211,10 +1788,10 @@ public final class Dsl {
     /**
      * Creates an unpivot table transform using dialect-default null handling.
      *
-     * @param source source relation to unpivot
+     * @param source      source relation to unpivot
      * @param valueColumn output value column
-     * @param nameColumn output name column
-     * @param inputs input column groups and labels
+     * @param nameColumn  output name column
+     * @param inputs      input column groups and labels
      * @return unpivot table reference
      */
     public static UnpivotTable unpivot(TableRef source, String valueColumn, String nameColumn, UnpivotInput... inputs) {
@@ -1791,7 +2368,7 @@ public final class Dsl {
     public static RowListExpr rows(List<List<Object>> rows) {
         return Expression.rows(rows
             .stream()
-            .map(Expression::row)
+            .map(items -> Expression.row(items.toArray()))
             .toList());
     }
 
