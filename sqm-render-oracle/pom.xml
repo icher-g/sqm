@@ -14,6 +14,12 @@
     <dependencies>
         <dependency>
             <groupId>io.sqm</groupId>
+            <artifactId>sqm-parser-oracle</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.sqm</groupId>
             <artifactId>sqm-core-oracle</artifactId>
             <version>${project.version}</version>
         </dependency>

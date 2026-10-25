@@ -2,12 +2,16 @@ package io.sqm.playground.rest.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.sqm.codegen.SqlFileCodegenException;
 import io.sqm.core.Node;
 import io.sqm.core.StatementSequence;
 import io.sqm.json.SqmJsonMixins;
+import io.sqm.playground.api.DiagnosticPhaseDto;
+import io.sqm.playground.api.DiagnosticSeverityDto;
 import io.sqm.playground.api.ParseRequestDto;
 import io.sqm.playground.api.ParseResponseDto;
 import io.sqm.playground.api.ParseResponseSummaryDto;
+import io.sqm.playground.api.PlaygroundDiagnosticDto;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -67,6 +71,20 @@ public final class ParseService {
         var sequence = parseAttempt.sequence();
         var statements = sequence.statements();
         var root = rootNode(sequence);
+        String dsl = null;
+        List<PlaygroundDiagnosticDto> diagnostics = List.of();
+        try {
+            dsl = dslGenerator.toDsl(root, request.dialect());
+        } catch (SqlFileCodegenException e) {
+            diagnostics = List.of(statementSupport.diagnostic(
+                DiagnosticSeverityDto.warning,
+                "DSL_GENERATION_ERROR",
+                e.getMessage(),
+                DiagnosticPhaseDto.dsl,
+                null,
+                null
+            ));
+        }
 
         return new ParseResponseDto(
             UUID.randomUUID().toString(),
@@ -75,10 +93,10 @@ public final class ParseService {
             statementKind(sequence),
             statements.size() > 1,
             toSqmJson(root),
-            dslGenerator.toDsl(root, request.dialect()),
+            dsl,
             astMapper.toAst(root),
             summary(root),
-            List.of()
+            diagnostics
         );
     }
 

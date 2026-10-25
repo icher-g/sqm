@@ -1494,8 +1494,13 @@ var recognized = matchRecognize(tbl("events"))
     .build();
 ```
 
-Oracle 12.1+ is the currently enabled dialect. The `MODEL` core AST and DSL are
-being added in #504; SQL parsing/rendering and downstream support are still pending.
+Oracle 12.1+ is the currently enabled dialect for `MATCH_RECOGNIZE`. The `MODEL`
+core AST and DSL are available, with basic Oracle parsing/rendering added in #505:
+main-model declarations, options, positional cell reads/targets, and assignments.
+Advanced MODEL syntax and downstream support remain scheduled in #506–#508.
+The playground includes an **Oracle MODEL Sales Forecast** example for AST/JSON
+inspection and SQL formatting. DSL code generation is planned in #507; until
+then, parsing returns the model with a DSL-generation warning.
 The staged delivery is specified in the
 [`MODEL` clause design](docs/epics/ORACLE_MODEL_CLAUSE_DESIGN.md). Oracle's
 legacy outer-join `(+)` syntax remains intentionally unsupported.

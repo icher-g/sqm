@@ -45,6 +45,7 @@ public final class OracleCapabilities {
             .supports(SqlFeature.AT_TIME_ZONE)
             .supports(SqlFeature.SEQUENCE_VALUE_EXPRESSION)
             .supports(SqlFeature.HIERARCHICAL_QUERY)
+            .supports(SqlFeature.MODEL_CLAUSE)
             .supports(SqlFeature.PIVOT_TABLE)
             .supports(SqlFeature.UNPIVOT_TABLE)
             .supports(SqlFeature.JSON_TABLE)

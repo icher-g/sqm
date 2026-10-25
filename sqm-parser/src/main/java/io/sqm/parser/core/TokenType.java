@@ -5,6 +5,102 @@ package io.sqm.parser.core;
  */
 public enum TokenType {
     /**
+     * MODEL keyword token.
+     */
+    MODEL,
+    /**
+     * RULES keyword token.
+     */
+    RULES,
+    /**
+     * UPSERT keyword token.
+     */
+    UPSERT,
+    /**
+     * UPDATED keyword token.
+     */
+    UPDATED,
+    /**
+     * REFERENCE keyword token.
+     */
+    REFERENCE,
+    /**
+     * MAIN keyword token.
+     */
+    MAIN,
+    /**
+     * RETURN keyword token.
+     */
+    RETURN,
+    /**
+     * KEEP keyword token.
+     */
+    KEEP,
+    /**
+     * NAV keyword token.
+     */
+    NAV,
+    /**
+     * UNIQUE keyword token.
+     */
+    UNIQUE,
+    /**
+     * DIMENSION keyword token.
+     */
+    DIMENSION,
+    /**
+     * SINGLE keyword token.
+     */
+    SINGLE,
+    /**
+     * AUTOMATIC keyword token.
+     */
+    AUTOMATIC,
+    /**
+     * SEQUENTIAL keyword token.
+     */
+    SEQUENTIAL,
+    /**
+     * ITERATE keyword token.
+     */
+    ITERATE,
+    /**
+     * UNTIL keyword token.
+     */
+    UNTIL,
+    /**
+     * INCREMENT keyword token.
+     */
+    INCREMENT,
+    /**
+     * DECREMENT keyword token.
+     */
+    DECREMENT,
+    /**
+     * CV keyword token.
+     */
+    CV,
+    /**
+     * ITERATION_NUMBER keyword token.
+     */
+    ITERATION_NUMBER,
+    /**
+     * PRESENTV keyword token.
+     */
+    PRESENTV,
+    /**
+     * PRESENTNNV keyword token.
+     */
+    PRESENTNNV,
+    /**
+     * PREVIOUS keyword token.
+     */
+    PREVIOUS,
+    /**
+     * PRESENT keyword token.
+     */
+    PRESENT,
+    /**
      * Identifier token.
      */
     IDENT,
@@ -652,37 +748,69 @@ public enum TokenType {
      * PIVOT keyword token.
      */
     PIVOT,
-    /** SQL row-pattern recognition keyword token. */
+    /**
+     * SQL row-pattern recognition keyword token.
+     */
     MATCH_RECOGNIZE,
-    /** Row-pattern measures keyword token. */
+    /**
+     * Row-pattern measures keyword token.
+     */
     MEASURES,
-    /** Row-pattern grammar keyword token. */
+    /**
+     * Row-pattern grammar keyword token.
+     */
     PATTERN,
-    /** Row-pattern definition keyword token. */
+    /**
+     * Row-pattern definition keyword token.
+     */
     DEFINE,
-    /** Row-pattern subset keyword token. */
+    /**
+     * Row-pattern subset keyword token.
+     */
     SUBSET,
-    /** Row-pattern permutation keyword token. */
+    /**
+     * Row-pattern permutation keyword token.
+     */
     PERMUTE,
-    /** ONE keyword token. */
+    /**
+     * ONE keyword token.
+     */
     ONE,
-    /** PER keyword token. */
+    /**
+     * PER keyword token.
+     */
     PER,
-    /** MATCH keyword token. */
+    /**
+     * MATCH keyword token.
+     */
     MATCH,
-    /** AFTER keyword token. */
+    /**
+     * AFTER keyword token.
+     */
     AFTER,
-    /** PAST keyword token. */
+    /**
+     * PAST keyword token.
+     */
     PAST,
-    /** SHOW keyword token. */
+    /**
+     * SHOW keyword token.
+     */
     SHOW,
-    /** OMIT keyword token. */
+    /**
+     * OMIT keyword token.
+     */
     OMIT,
-    /** UNMATCHED keyword token. */
+    /**
+     * UNMATCHED keyword token.
+     */
     UNMATCHED,
-    /** RUNNING keyword token. */
+    /**
+     * RUNNING keyword token.
+     */
     RUNNING,
-    /** FINAL keyword token. */
+    /**
+     * FINAL keyword token.
+     */
     FINAL,
     /**
      * UNPIVOT keyword token.

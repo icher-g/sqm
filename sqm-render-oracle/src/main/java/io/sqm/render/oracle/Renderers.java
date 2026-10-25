@@ -34,6 +34,16 @@ public final class Renderers {
 
     private static RenderersRepository registerOracleOverrides(RenderersRepository repository) {
         return repository
+            .register(new ModelClauseRenderer())
+            .register(new MainModelRenderer())
+            .register(new ModelColumnRenderer())
+            .register(new ModelRulesRenderer())
+            .register(new ModelRuleRenderer())
+            .register(new CellTargetRenderer())
+            .register(new CellRefExprRenderer())
+            .register(new CellAddressRenderer())
+            .register(new CellSelectorRenderer())
+            .register(new CellSelectorValueRenderer())
             .register(new InsertStatementRenderer())
             .register(new UpdateStatementRenderer())
             .register(new DeleteStatementRenderer())

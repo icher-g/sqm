@@ -50,8 +50,8 @@ public final class Cursor {
     /**
      * Creates a new instance of {@link Cursor} from the provided specification.
      *
-     * @param spec a specification.
-        * @param identifierQuoting identifier quoting rules used during lexing
+     * @param spec              a specification.
+     * @param identifierQuoting identifier quoting rules used during lexing
      * @return a new instance of {@link Cursor}.
      */
     public static Cursor of(String spec, IdentifierQuoting identifierQuoting) {

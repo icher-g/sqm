@@ -29,10 +29,6 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
      */
     @Override
     public void render(SelectQuery node, RenderContext ctx, SqlWriter w) {
-        // Core representation precedes SQL support; never silently omit the clause.
-        if (node.model() != null) {
-            throw new UnsupportedDialectFeatureException("MODEL clause", ctx.dialect().name());
-        }
         validateQuery(node, ctx);
 
         w.append("SELECT");
@@ -47,6 +43,7 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
         renderHierarchicalQueryClause(node, ctx, w);
         renderGroupByClause(node, ctx, w);
         renderHavingClause(node, ctx, w);
+        renderModelClause(node, ctx, w);
         renderWindowClause(node, ctx, w);
         renderOrderByClause(node, ctx, w);
         renderPaginationClause(node, ctx, w);
@@ -60,13 +57,11 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
      * @param ctx  render context.
      */
     protected void validateQuery(SelectQuery node, RenderContext ctx) {
-        if (!node.hints().isEmpty()
-            && !ctx.dialect().capabilities().supports(SqlFeature.OPTIMIZER_HINT_COMMENT)) {
+        if (!node.hints().isEmpty() && !ctx.dialect().capabilities().supports(SqlFeature.OPTIMIZER_HINT_COMMENT)) {
             throw new UnsupportedDialectFeatureException("optimizer hint comments", ctx.dialect().name());
         }
 
-        if (node.modifiers().contains(SelectModifier.CALC_FOUND_ROWS)
-            && !ctx.dialect().capabilities().supports(SqlFeature.CALC_FOUND_ROWS_MODIFIER)) {
+        if (node.modifiers().contains(SelectModifier.CALC_FOUND_ROWS) && !ctx.dialect().capabilities().supports(SqlFeature.CALC_FOUND_ROWS_MODIFIER)) {
             throw new UnsupportedDialectFeatureException("SQL_CALC_FOUND_ROWS", ctx.dialect().name());
         }
 
@@ -74,10 +69,23 @@ public class SelectQueryRenderer implements Renderer<SelectQuery> {
             throw new UnsupportedOperationException("TOP is not supported by " + ctx.dialect().name());
         }
 
-        if (node.hierarchical() != null
-            && !ctx.dialect().capabilities().supports(SqlFeature.HIERARCHICAL_QUERY)) {
+        if (node.hierarchical() != null && !ctx.dialect().capabilities().supports(SqlFeature.HIERARCHICAL_QUERY)) {
             throw new UnsupportedDialectFeatureException(SqlFeature.HIERARCHICAL_QUERY.description(), ctx.dialect().name());
         }
+
+        if (node.model() != null && !ctx.dialect().capabilities().supports(SqlFeature.MODEL_CLAUSE)) {
+            throw new UnsupportedDialectFeatureException(SqlFeature.MODEL_CLAUSE.description(), ctx.dialect().name());
+        }
+    }
+
+    /**
+     * Renders MODEL after HAVING and before WINDOW/final ordering.
+     * @param node query
+     * @param ctx render context
+     * @param w SQL writer
+     */
+    protected void renderModelClause(SelectQuery node, RenderContext ctx, SqlWriter w) {
+        if (node.model() != null) w.newline().append(node.model());
     }
 
     /**

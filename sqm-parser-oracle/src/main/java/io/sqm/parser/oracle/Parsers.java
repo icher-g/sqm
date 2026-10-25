@@ -1,5 +1,6 @@
 package io.sqm.parser.oracle;
 
+import io.sqm.parser.ansi.PowerArithmeticExprParser;
 import io.sqm.parser.spi.ParsersRepository;
 
 /**
@@ -31,7 +32,19 @@ public final class Parsers {
     }
 
     private static ParsersRepository registerOracleOverrides(ParsersRepository repository) {
+        var postfix = new PostfixExprParser(new AtomicExprParser());
         return repository
+            .register(new PowerArithmeticExprParser(postfix))
+            .register(new ModelClauseParser())
+            .register(new MainModelParser())
+            .register(new ModelColumnParser())
+            .register(new ModelRulesParser())
+            .register(new ModelRuleParser())
+            .register(new CellTargetParser())
+            .register(new CellAddressParser())
+            .register(new CellSelectorParser())
+            .register(new CellSelectorValueParser())
+            .register(new CellRefExprParser())
             .register(new InsertStatementParser())
             .register(new UpdateStatementParser())
             .register(new DeleteStatementParser())

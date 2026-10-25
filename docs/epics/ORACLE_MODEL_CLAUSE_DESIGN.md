@@ -1,6 +1,6 @@
 # Oracle `MODEL` Clause Detailed Design
 
-**Status:** #504 core model/DSL implemented locally and awaiting maintainer review. SQL and downstream support are not yet available.
+**Status:** #504 core model/DSL merged. #505 basic Oracle parser/renderer support is implemented locally and awaiting maintainer review. Advanced syntax and downstream support remain scheduled in #506–#508.
 
 **Origin:** Standalone follow-up to R11. R11 remains complete. This document
 resolves the deferred design decision in
@@ -658,6 +658,17 @@ Expression parsing gains narrow atomic/postfix hooks for Oracle to recognize
 MODEL expressions while this scope is active. It must not copy the full
 expression parser.
 
+The #505 implementation carries this scope in an immutable, local
+`ModelParseContext` wrapper. It delegates parser services and the call stack to
+its parent; entering a subquery restores the parent context. Clause defaults are
+passed through the same wrapper until the main model resolves its local options.
+No MODEL state is stored on the shared context, cursor, or parser singleton.
+
+MODEL words receive dedicated lexer tokens. There is no special identifier
+matching in `Cursor`; identifiers that collide with these keywords must be
+quoted. Existing tests that used `reference` and `present` as names now quote
+them instead of changing production identifier matching.
+
 ### Grammar Order
 
 Enforce Oracle order rather than accepting any order that fits object fields:
@@ -697,6 +708,27 @@ Oracle renderer:
 
 Checks occur at query entry and directly invoked node renderers so detached-node
 rendering cannot bypass support boundaries.
+
+### Basic Syntax Slice (#505)
+
+The current Oracle handlers cover optional MAIN naming and PARTITION BY,
+required DIMENSION BY/MEASURES, effective NAV/uniqueness options, RETURN ALL or
+UPDATED ROWS, rule mode/order options, positional single-cell reads/targets,
+and assignments. RULES may be omitted when no rule options are specified.
+Canonical rendering writes RULES, resolves declaration aliases, and places
+effective cell options on the main model.
+The MODEL body is indented one level. Multiple assignments render one per line
+inside RULES, indented one further level, with the closing parenthesis aligned
+with RULES. A single assignment stays inline; subsequent query clauses return
+to the surrounding query's indentation.
+Rule separators use the shared `SqlWriter.comma(parts, enclose, multiline)`
+overload; the MODEL renderer controls the surrounding indentation and brackets.
+
+All MODEL node types have dedicated ANSI parser/renderer registrations.
+Reference models, symbolic selectors, FOR generators, aggregate cell suffixes,
+iteration, ordered rules, and special MODEL expressions retain explicit
+unsupported handlers with #506 diagnostics. Codegen and contextual validation /
+transpilation remain the #507 boundary; live MODEL execution remains #508.
 
 ## 11. Validation
 

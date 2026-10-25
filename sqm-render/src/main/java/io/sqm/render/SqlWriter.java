@@ -100,11 +100,31 @@ public interface SqlWriter {
      * @return this.
      */
     default <T extends Node> SqlWriter comma(List<T> parts, boolean enclose) {
+        return comma(parts, enclose, false);
+    }
+
+    /**
+     * Appends nodes separated by a comma and either a space or a newline.
+     * The caller controls indentation and any leading or trailing newlines.
+     * In single-line mode, requested newlines follow {@link #newline()} behavior.
+     *
+     * @param parts     nodes to append; {@code null} or empty lists append nothing
+     * @param enclose   whether to wrap each node in parentheses
+     * @param multiline whether to start each node after the first on a new line
+     * @param <T>       node type
+     * @return this writer
+     */
+    default <T extends Node> SqlWriter comma(List<T> parts, boolean enclose, boolean multiline) {
         if (parts == null || parts.isEmpty()) return this;
         for (int i = 0; i < parts.size(); i++) {
             if (i > 0) {
                 append(",");
-                append(" ");
+                if (multiline) {
+                    newline();
+                }
+                else {
+                    space();
+                }
             }
             append(parts.get(i), enclose);
         }

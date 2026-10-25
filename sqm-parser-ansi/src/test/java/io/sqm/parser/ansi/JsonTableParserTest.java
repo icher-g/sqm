@@ -59,7 +59,7 @@ class JsonTableParserTest {
               no_wrap NUMBER path '$.no' without wrapper empty on empty,
               wrap_col NUMBER path '$.wrap' with wrapper,
               conditional_col NUMBER path '$.conditional' with conditional wrapper,
-              present BOOLEAN exists path '$.present' null on error
+              "present" BOOLEAN exists path '$.present' null on error
             )) jt
             """);
 
