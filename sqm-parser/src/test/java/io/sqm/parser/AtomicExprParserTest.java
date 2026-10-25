@@ -5,6 +5,7 @@ import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.InfixParser;
 import io.sqm.parser.spi.MatchableParser;
+import io.sqm.parser.spi.MatchResult;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
@@ -18,6 +19,80 @@ import static org.junit.jupiter.api.Assertions.*;
 import static io.sqm.dsl.Dsl.*;
 
 class AtomicExprParserTest {
+
+    @Test
+    void dialectAtomicHookTakesPrecedenceOverSharedParsing() {
+        var expected = lit(42);
+        var parser = new AtomicExprParser() {
+            @Override
+            protected MatchResult<? extends Expression> parseDialectExpression(Cursor cur, ParseContext ctx) {
+                cur.expect("Expected dialect marker", TokenType.IDENT);
+                return MatchResult.matched(ParseResult.ok(expected));
+            }
+        };
+        var ctx = contextWithAtomicExprParsers();
+        var cursor = Cursor.of("col", ctx.identifierQuoting());
+
+        var parsed = parser.parse(cursor, ctx);
+
+        assertTrue(parsed.ok(), parsed::errorMessage);
+        assertSame(expected, parsed.value());
+        assertTrue(cursor.match(TokenType.EOF));
+    }
+
+    @Test
+    void dialectAtomicHookFailureDoesNotFallBackToSharedParsing() {
+        var parser = new AtomicExprParser() {
+            @Override
+            protected MatchResult<? extends Expression> parseDialectExpression(Cursor cur, ParseContext ctx) {
+                return MatchResult.matched(ParseResult.error("Invalid dialect expression", cur.fullPos()));
+            }
+        };
+        var ctx = contextWithAtomicExprParsers();
+
+        var parsed = parser.parse(Cursor.of("col", ctx.identifierQuoting()), ctx);
+
+        assertTrue(parsed.isError());
+        assertTrue(parsed.errorMessage().contains("Invalid dialect expression"));
+    }
+
+    @Test
+    void dialectPostfixHooksCanChainBeforeSharedSuffixes() {
+        var parser = new PostfixExprParser(new AtomicExprParser()) {
+            @Override
+            protected MatchResult<? extends Expression> parseDialectPostfix(Expression lhs, Cursor cur, ParseContext ctx) {
+                if (!cur.consumeIf(TokenType.LBRACKET)) return MatchResult.notMatched();
+                var index = ctx.parse(LiteralExpr.class, cur);
+                cur.expect("Expected ]", TokenType.RBRACKET);
+                return MatchResult.matched(ParseResult.ok(lhs.at(index.value())));
+            }
+        };
+        var ctx = contextWithAtomicExprParsers();
+        var cursor = Cursor.of("col[1][2] cast", ctx.identifierQuoting());
+
+        var parsed = ctx.parse(new AtomicExprWrapper(parser), cursor);
+
+        assertTrue(parsed.ok(), parsed::errorMessage);
+        var cast = assertInstanceOf(CastExpr.class, parsed.value());
+        assertEquals(col("col").at(1).at(2), cast.expr());
+        assertTrue(cursor.match(TokenType.EOF));
+    }
+
+    @Test
+    void dialectPostfixFailureIsReturnedWithoutSharedFallback() {
+        var parser = new PostfixExprParser(new AtomicExprParser()) {
+            @Override
+            protected MatchResult<? extends Expression> parseDialectPostfix(Expression lhs, Cursor cur, ParseContext ctx) {
+                return MatchResult.matched(ParseResult.error("Invalid dialect suffix", cur.fullPos()));
+            }
+        };
+        var ctx = contextWithAtomicExprParsers();
+
+        var parsed = ctx.parse(new AtomicExprWrapper(parser), "col cast");
+
+        assertTrue(parsed.isError());
+        assertTrue(parsed.errorMessage().contains("Invalid dialect suffix"));
+    }
 
     @Test
     void parsesGroupedExpression() {
@@ -211,9 +286,19 @@ class AtomicExprParserTest {
     }
 
     private static final class AtomicExprWrapper implements Parser<Expression> {
+        private final PostfixExprParser parser;
+
+        private AtomicExprWrapper() {
+            this(new PostfixExprParser(new AtomicExprParser()));
+        }
+
+        private AtomicExprWrapper(PostfixExprParser parser) {
+            this.parser = parser;
+        }
+
         @Override
         public ParseResult<? extends Expression> parse(Cursor cur, ParseContext ctx) {
-            return new PostfixExprParser(new AtomicExprParser()).parse(cur, ctx);
+            return parser.parse(cur, ctx);
         }
 
         @Override

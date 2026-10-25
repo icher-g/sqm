@@ -4,8 +4,11 @@ import io.sqm.core.*;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.defaults.DefaultSqlWriter;
+import io.sqm.render.SqlWriter;
 import io.sqm.render.oracle.spi.OracleDialect;
 import io.sqm.render.spi.RenderContext;
+import io.sqm.render.spi.Renderer;
+import io.sqm.render.spi.RenderersRepository;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -64,6 +67,75 @@ class ModelRendererRegistrationTest {
         var ctx = RenderContext.of(new OracleDialect());
         render(CellAddress.class, cellForValues("year_key", 2026), ctx, true);
         render(CellSelector.class, cellAny(), ctx, true);
+    }
+
+    @Test
+    void familyRoutersUseExplicitChildTypesForSuccessfulDelegation() {
+        var generator = cellForValues("year_key", 2026);
+        var condition = cellCondition(col("year_key").eq(2026));
+        var renderers = Renderers.oracleCopy()
+            .register(new Renderer<CellFor>() {
+                @Override
+                public void render(CellFor node, RenderContext ctx, SqlWriter w) {
+                    assertSame(generator, node);
+                    w.append("FOR STUB");
+                }
+
+                @Override
+                public Class<CellFor> targetType() {
+                    return CellFor.class;
+                }
+            })
+            .register(new Renderer<CellSelector.Condition>() {
+                @Override
+                public void render(CellSelector.Condition node, RenderContext ctx, SqlWriter w) {
+                    assertSame(condition, node);
+                    w.append("CONDITION STUB");
+                }
+
+                @Override
+                public Class<CellSelector.Condition> targetType() {
+                    return CellSelector.Condition.class;
+                }
+            });
+        var ctx = RenderContext.of(new OracleDialect() {
+            @Override
+            public RenderersRepository renderers() {
+                return renderers;
+            }
+        });
+        var writer = new DefaultSqlWriter(ctx);
+
+        writer.append(CellAddress.class, generator).space().append(CellSelector.class, condition);
+
+        assertEquals("FOR STUB CONDITION STUB", writer.toText(List.of()).sql());
+    }
+
+    @Test
+    void modelClauseDelegatesReferenceToItsRegisteredRenderer() {
+        var reference = referenceModel("baseline", select(lit(1)).build())
+            .dimension("year_key").measure("sales").build();
+        var clause = model().reference(reference).dimension("year_key").measure("sales")
+            .rule(cellTarget("sales", 2026), lit(1)).build();
+        var renderers = Renderers.oracleCopy().register(new Renderer<ReferenceModel>() {
+            @Override
+            public void render(ReferenceModel node, RenderContext ctx, SqlWriter w) {
+                assertSame(reference, node);
+            }
+
+            @Override
+            public Class<ReferenceModel> targetType() {
+                return ReferenceModel.class;
+            }
+        });
+        var ctx = RenderContext.of(new OracleDialect() {
+            @Override
+            public RenderersRepository renderers() {
+                return renderers;
+            }
+        });
+
+        assertTrue(ctx.render(clause).sql().startsWith("MODEL\n  DIMENSION BY"));
     }
 
     private <T extends Node> void render(Class<T> type, Node node, RenderContext ctx, boolean rejected) {

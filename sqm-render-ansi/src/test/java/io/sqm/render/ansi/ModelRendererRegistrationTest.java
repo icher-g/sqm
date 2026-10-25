@@ -4,7 +4,10 @@ import io.sqm.core.*;
 import io.sqm.core.dialect.*;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.defaults.DefaultSqlWriter;
+import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
+import io.sqm.render.spi.Renderer;
+import io.sqm.render.spi.RenderersRepository;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,6 +17,40 @@ import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ModelRendererRegistrationTest {
+    @Test
+    void sharedQueryRendererDelegatesModelBetweenHavingAndOrderBy() {
+        var clause = model().dimension("year_key").measure("sales")
+            .rule(cellTarget("sales", 2026), lit(1)).build();
+        var renderers = Renderers.ansiCopy().register(new Renderer<ModelClause>() {
+            @Override
+            public void render(ModelClause node, RenderContext ctx, SqlWriter w) {
+                assertSame(clause, node);
+                w.append("MODEL STUB");
+            }
+
+            @Override
+            public Class<ModelClause> targetType() {
+                return ModelClause.class;
+            }
+        });
+        var ctx = RenderContext.of(new AnsiDialect() {
+            @Override
+            public DialectCapabilities capabilities() {
+                return VersionedDialectCapabilities.builder(SqlDialectVersion.of(1, 0))
+                    .supports(SqlFeature.MODEL_CLAUSE).build();
+            }
+
+            @Override
+            public RenderersRepository renderers() {
+                return renderers;
+            }
+        });
+        var query = select(col("sales")).having(col("sales").gt(0))
+            .model(clause).orderBy(col("sales")).build();
+
+        assertEquals("SELECT sales\nHAVING sales > 0\nMODEL STUB\nORDER BY sales", ctx.render(query).sql());
+    }
+
     private Map<Class<? extends Node>, Node> samples() {
         var cell = cellRef("sales", 2025);
         var target = cellTarget("sales", 2026);
