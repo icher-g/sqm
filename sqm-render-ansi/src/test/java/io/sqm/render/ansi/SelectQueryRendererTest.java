@@ -1,6 +1,9 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.dialect.DialectCapabilities;
+import io.sqm.core.dialect.SqlDialectVersion;
+import io.sqm.core.dialect.SqlFeature;
+import io.sqm.core.dialect.VersionedDialectCapabilities;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.defaults.DefaultRenderContext;
 import io.sqm.render.spi.*;
@@ -16,6 +19,25 @@ import static org.junit.jupiter.api.Assertions.*;
  * Uses actual model entities + BufferSqlWriter; no mocks.
  */
 public class SelectQueryRendererTest {
+
+    @Test
+    void sharedValidationAcceptsFeaturesWhenTheirCapabilitiesAreEnabled() {
+        var query = select(col("id")).from(tbl("categories"))
+            .hint("MAX_EXECUTION_TIME", 1000)
+            .selectModifier(io.sqm.core.SelectModifier.CALC_FOUND_ROWS)
+            .hierarchical(hierarchy(null, prior(col("id")).eq(col("parent_id")), false))
+            .build();
+        var ctx = RenderContext.of(new AnsiDialect() {
+            @Override
+            public DialectCapabilities capabilities() {
+                return VersionedDialectCapabilities.builder(SqlDialectVersion.of(1, 0))
+                    .supports(SqlDialectVersion.minimum(), SqlFeature.OPTIMIZER_HINT_COMMENT,
+                        SqlFeature.CALC_FOUND_ROWS_MODIFIER, SqlFeature.HIERARCHICAL_QUERY).build();
+            }
+        });
+
+        assertDoesNotThrow(() -> new SelectQueryRenderer().validateQuery(query, ctx));
+    }
 
     @Test
     void rejectsCoreOnlyModelClauseInsteadOfOmittingIt() {
