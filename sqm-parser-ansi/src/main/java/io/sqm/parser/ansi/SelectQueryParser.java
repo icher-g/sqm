@@ -84,6 +84,11 @@ public class SelectQueryParser implements Parser<SelectQuery> {
             return error(having);
         }
 
+        var model = parseModelClause(cur, ctx, q);
+        if (model.isError()) {
+            return error(model);
+        }
+
         var window = parseWindowClause(cur, ctx, q);
         if (window.isError()) {
             return error(window);
@@ -432,5 +437,20 @@ public class SelectQueryParser implements Parser<SelectQuery> {
     @Override
     public Class<SelectQuery> targetType() {
         return SelectQuery.class;
+    }
+
+    /**
+     * Parses MODEL between HAVING and WINDOW through the registered dialect parser.
+     * @param cur token cursor
+     * @param ctx parse context
+     * @param q query builder
+     * @return parse status
+     */
+    protected ParseResult<Void> parseModelClause(Cursor cur, ParseContext ctx, SelectQueryBuilder q) {
+        if (!cur.match(TokenType.MODEL)) return ok(null);
+        var model = ctx.parse(ModelClause.class, cur);
+        if (model.isError()) return error(model);
+        q.model(model.value());
+        return ok(null);
     }
 }

@@ -85,6 +85,11 @@ public class AtomicExprParser {
      * or an error result if parsing fails
      */
     public ParseResult<? extends Expression> parse(Cursor cur, ParseContext ctx) {
+        var dialect = parseDialectExpression(cur, ctx);
+        if (dialect.match()) {
+            return dialect.result();
+        }
+
         if (isMinus(cur.peek())) {
             return ctx.parse(NegativeArithmeticExpr.class, cur);
         }
@@ -178,6 +183,16 @@ public class AtomicExprParser {
         }
 
         return error("Unsupported expression token: " + cur.peek().lexeme(), cur.fullPos());
+    }
+
+    /**
+     * Attempts a dialect-specific atomic form before shared expression parsing.
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return match result; unmatched by default
+     */
+    protected MatchResult<? extends Expression> parseDialectExpression(Cursor cur, ParseContext ctx) {
+        return MatchResult.notMatched();
     }
 
     private static boolean inPatternExpressionScope(ParseContext ctx) {

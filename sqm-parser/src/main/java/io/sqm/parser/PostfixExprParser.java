@@ -71,6 +71,13 @@ public class PostfixExprParser {
 
         // parse postfix operators
         while (true) {
+            var dialect = parseDialectPostfix(left.value(), cur, ctx);
+            if (dialect.match()) {
+                left = dialect.result();
+                if (left.isError()) return left;
+                continue;
+            }
+
             // support of a::int::text
             MatchResult<? extends Expression> matched = ctx.parseIfMatch(CastExpr.class, left.value(), cur);
             if (matched.match()) {
@@ -114,5 +121,16 @@ public class PostfixExprParser {
         }
 
         return ok(left.value());
+    }
+
+    /**
+     * Attempts a dialect-specific suffix before shared postfix rules.
+     * @param lhs already parsed expression
+     * @param cur token cursor
+     * @param ctx parse context
+     * @return match result; unmatched by default
+     */
+    protected MatchResult<? extends Expression> parseDialectPostfix(Expression lhs, Cursor cur, ParseContext ctx) {
+        return MatchResult.notMatched();
     }
 }

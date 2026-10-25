@@ -184,6 +184,24 @@ public final class ExampleCatalog {
                         B AS B.amount > PREV(B.amount)
                 ) mr
                 """
+            ),
+            new ExampleDto(
+                "oracle-model",
+                "Oracle MODEL Sales Forecast",
+                SqlDialectDto.oracle,
+                """
+                SELECT country, product, sales_year, sales
+                FROM sales_data
+                MODEL
+                    PARTITION BY (country)
+                    DIMENSION BY (product, sales_year)
+                    MEASURES (amount AS sales)
+                    RULES UPSERT SEQUENTIAL ORDER (
+                        sales['Bike', 2026] = sales['Bike', 2025] * 1.10,
+                        sales['Car', 2026] = sales['Car', 2025] * 1.05
+                    )
+                ORDER BY country, product, sales_year
+                """
             )
         );
     }

@@ -280,7 +280,7 @@ class ComprehensivePredicateParserTest {
 
     @Test
     void parsesIsDistinctFromPredicate() {
-        var result = ctx.parse(Predicate.class, "value IS DISTINCT FROM reference");
+        var result = ctx.parse(Predicate.class, "value IS DISTINCT FROM \"reference\"");
         assertTrue(result.ok());
         var pred = result.value();
         assertInstanceOf(IsDistinctFromPredicate.class, pred);
@@ -290,7 +290,7 @@ class ComprehensivePredicateParserTest {
 
     @Test
     void parsesIsNotDistinctFromPredicate() {
-        var result = ctx.parse(Predicate.class, "value IS NOT DISTINCT FROM reference");
+        var result = ctx.parse(Predicate.class, "value IS NOT DISTINCT FROM \"reference\"");
         assertTrue(result.ok());
         var pred = result.value();
         assertInstanceOf(IsDistinctFromPredicate.class, pred);

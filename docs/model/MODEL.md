@@ -820,11 +820,14 @@ are defensively copied. Required non-empty shapes and numeric literal bounds are
 checked during construction; contextual name/type and Oracle legality checks are
 reserved for validation.
 
-Support boundary for #504: these nodes are representable in core, but SQL support
-is not shipped yet. Query renderers reject MODEL rather than silently dropping it;
-codegen also rejects MODEL queries and expressions. Dedicated parser/renderer pairs
-are #505/#506, downstream validation/transpilation/codegen is #507, and live-engine
-coverage is #508. See the [detailed design](../epics/ORACLE_MODEL_CLAUSE_DESIGN.md).
+Support boundary for #505: Oracle parses and renders basic main-model declarations,
+options, positional single-cell reads/targets, and assignments. MODEL is placed
+after HAVING and before final ordering. ANSI, PostgreSQL, MySQL, and SQL Server
+reject the clause explicitly. Every MODEL node has a dedicated ANSI parser and
+renderer; advanced Oracle syntax remains explicitly unsupported pending #506.
+Codegen still rejects MODEL queries and expressions. Contextual validation,
+transpilation, and codegen are #507; live-engine coverage is #508.
+See the [detailed design](../epics/ORACLE_MODEL_CLAUSE_DESIGN.md).
 Each node's Javadoc includes SQL context and identifies the exact represented fragment.
 
 ### MERGE

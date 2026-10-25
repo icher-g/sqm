@@ -263,6 +263,10 @@ public enum SqlFeature {
      */
     MATCH_RECOGNIZE("MATCH_RECOGNIZE table transform"),
     /**
+     * Multidimensional query calculations through MODEL.
+     */
+    MODEL_CLAUSE("MODEL clause"),
+    /**
      * Relational {@code UNPIVOT} table transform.
      */
     UNPIVOT_TABLE("UNPIVOT table transform"),

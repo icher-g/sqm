@@ -47,6 +47,49 @@ class DefaultSqlWriterTest {
     }
 
     @Test
+    void appendsMultilineCommaSeparatedListsWithOptionalParentheses() {
+        var ctx = RenderContext.of(new RenderTestDialect().register(new ColumnRenderer()));
+        for (var enclose : List.of(false, true)) {
+            var writer = new DefaultSqlWriter(ctx);
+            writer.append("SELECT").newline().indent();
+
+            writer.comma(List.of(Dsl.col("a"), Dsl.col("b"), Dsl.col("c")), enclose, true);
+            writer.outdent().newline().append("FROM t");
+
+            var expected = enclose
+                ? "SELECT\n  (a),\n  (b),\n  (c)\nFROM t"
+                : "SELECT\n  a,\n  b,\n  c\nFROM t";
+            assertEquals(expected, writer.toText(List.of()).sql());
+        }
+    }
+
+    @Test
+    void commaListsWithoutMultipleElementsDoNotAddSeparatorsOrNewlines() {
+        var ctx = RenderContext.of(new RenderTestDialect().register(new ColumnRenderer()));
+        var writer = new DefaultSqlWriter(ctx);
+
+        writer.comma(null, false, true);
+        writer.comma(List.of(), false, true);
+        assertEquals("", writer.toText(List.of()).sql());
+
+        writer.comma(List.of(Dsl.col("a")), false, true);
+        assertEquals("a", writer.toText(List.of()).sql());
+    }
+
+    @Test
+    void multilineCommaListsRespectSingleLineMode() {
+        var ctx = RenderContext.of(new RenderTestDialect().register(new ColumnRenderer()));
+        var writer = new DefaultSqlWriter(ctx);
+        writer.singleLine();
+
+        writer.comma(List.of(Dsl.col("a"), Dsl.col("b")), false, true);
+        writer.multiLine();
+        writer.newline().append("FROM t");
+
+        assertEquals("a, b\nFROM t", writer.toText(List.of()).sql());
+    }
+
+    @Test
     void appendsNodeUsingExplicitTypeRenderer() {
         var dialect = new RenderTestDialect()
             .register(new RowValuesRootRenderer())
