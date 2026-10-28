@@ -40,7 +40,7 @@ class ExamplesControllerIntegrationTest {
         assertTrue(response.getBody().success());
         assertNotNull(response.getBody().requestId());
         assertFalse(response.getBody().requestId().isBlank());
-        assertEquals(13, response.getBody().examples().size());
+        assertEquals(14, response.getBody().examples().size());
         assertEquals("basic-select", response.getBody().examples().getFirst().id());
         assertTrue(response.getBody().examples().stream().anyMatch(example -> example.id().equals("ansi-analytics-report")));
         assertTrue(response.getBody().examples().stream().anyMatch(example -> example.id().equals("postgres-merge-returning")));
@@ -51,5 +51,11 @@ class ExamplesControllerIntegrationTest {
         assertTrue(response.getBody().examples().stream().anyMatch(example -> example.id().equals("oracle-pivot-query")));
         assertTrue(response.getBody().examples().stream().anyMatch(example -> example.id().equals("oracle-match-recognize")));
         assertTrue(response.getBody().examples().stream().anyMatch(example -> example.id().equals("oracle-model")));
+        var forecast = response.getBody().examples().stream()
+            .filter(example -> example.id().equals("oracle-model-reference-forecast"))
+            .findFirst().orElseThrow();
+        assertEquals("Oracle MODEL Reference Forecast", forecast.title());
+        assertTrue(forecast.sql().contains("REFERENCE growth ON"));
+        assertTrue(forecast.sql().contains("FOR year_key FROM 2026 TO 2028 INCREMENT 1"));
     }
 }

@@ -21,12 +21,10 @@ public class ModelClauseRenderer extends io.sqm.render.ansi.ModelClauseRenderer 
     @Override
     public void render(ModelClause node, RenderContext ctx, SqlWriter w) {
         ModelRenderSupport.require(ctx);
-        if (!node.references().isEmpty()) {
-            // The registered reference-model renderer supplies the #506 diagnostic.
-            w.append(node.references().getFirst());
-        }
         w.append("MODEL");
         if (node.returnRows() == ReturnRows.UPDATED) w.space().append("RETURN UPDATED ROWS");
-        w.newline().indent().append(node.main()).outdent();
+        w.newline().indent();
+        for (var reference : node.references()) w.append(reference).newline();
+        w.append(node.main()).outdent();
     }
 }

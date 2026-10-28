@@ -1,14 +1,13 @@
 package io.sqm.render.ansi;
 
 import io.sqm.core.PresenceValueExpr;
-import io.sqm.core.dialect.SqlFeature;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.spi.Renderer;
 
 /**
- * Explicit unsupported boundary for PresenceValueExpr. Oracle support follows in #506.
+ * Explicit ANSI unsupported boundary for PresenceValueExpr; supporting dialects override it.
  */
 public class PresenceValueExprRenderer implements Renderer<PresenceValueExpr> {
     /**
@@ -22,7 +21,7 @@ public class PresenceValueExprRenderer implements Renderer<PresenceValueExpr> {
      */
     @Override
     public void render(PresenceValueExpr node, RenderContext ctx, SqlWriter w) {
-        throw new UnsupportedDialectFeatureException(ctx.dialect().capabilities().supports(SqlFeature.MODEL_CLAUSE) ? "MODEL PresenceValueExpr is not supported yet (#506)" : "MODEL PresenceValueExpr is not supported by this dialect", ctx.dialect().name());
+        throw new UnsupportedDialectFeatureException("MODEL PresenceValueExpr is not supported by this dialect", ctx.dialect().name());
     }
 
     /**

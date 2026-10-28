@@ -13,15 +13,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ModelRendererRegistrationTest {
-    private static final Set<Class<? extends Node>> BASIC = Set.of(
-        ModelClause.class, MainModel.class, ModelColumn.class, ModelRules.class, ModelRule.class, CellTarget.class, CellRefExpr.class, CellAddress.class, CellSelector.class, CellSelector.Value.class);
-
     private Map<Class<? extends Node>, Node> samples() {
         var cell = cellRef("sales", 2025);
         var target = cellTarget("sales", 2026);
@@ -58,15 +54,15 @@ class ModelRendererRegistrationTest {
         for (var entry : samples().entrySet()) {
             assertNotNull(Renderers.oracleCopy().require(entry.getKey()));
             render(entry.getKey(), entry.getValue(), incapable, true);
-            render(entry.getKey(), entry.getValue(), oracle, !BASIC.contains(entry.getKey()));
+            render(entry.getKey(), entry.getValue(), oracle, false);
         }
     }
 
     @Test
     void familyRoutersDelegateToEveryChildVariant() {
         var ctx = RenderContext.of(new OracleDialect());
-        render(CellAddress.class, cellForValues("year_key", 2026), ctx, true);
-        render(CellSelector.class, cellAny(), ctx, true);
+        render(CellAddress.class, cellForValues("year_key", 2026), ctx, false);
+        render(CellSelector.class, cellAny(), ctx, false);
     }
 
     @Test
@@ -121,6 +117,7 @@ class ModelRendererRegistrationTest {
             @Override
             public void render(ReferenceModel node, RenderContext ctx, SqlWriter w) {
                 assertSame(reference, node);
+                w.append("REFERENCE STUB");
             }
 
             @Override
@@ -135,7 +132,7 @@ class ModelRendererRegistrationTest {
             }
         });
 
-        assertTrue(ctx.render(clause).sql().startsWith("MODEL\n  DIMENSION BY"));
+        assertTrue(ctx.render(clause).sql().startsWith("MODEL\n  REFERENCE STUB\n  DIMENSION BY"));
     }
 
     private <T extends Node> void render(Class<T> type, Node node, RenderContext ctx, boolean rejected) {

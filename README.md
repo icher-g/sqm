@@ -1495,15 +1495,37 @@ var recognized = matchRecognize(tbl("events"))
 ```
 
 Oracle 12.1+ is the currently enabled dialect for `MATCH_RECOGNIZE`. The `MODEL`
-core AST and DSL are available, with basic Oracle parsing/rendering added in #505:
-main-model declarations, options, positional cell reads/targets, and assignments.
-Advanced MODEL syntax and downstream support remain scheduled in #506–#508.
-The playground includes an **Oracle MODEL Sales Forecast** example for AST/JSON
-inspection and SQL formatting. DSL code generation is planned in #507; until
+core AST and DSL are available. Oracle parsing/rendering covers main and reference
+models, options, positional/symbolic cell addressing, FOR generators, aggregates,
+ordered/iterative rules, and dedicated MODEL functions and predicates (#505–#506).
+Oracle's validator reports MODEL value limits, generator cardinality/template
+restrictions, and explicit FOR-query width errors separately from parsing/rendering.
+Full MODEL scope/type validation, transpilation, and DSL code generation remain #507;
+live MODEL execution coverage remains #508.
+The playground includes **Oracle MODEL Sales Forecast** and **Oracle MODEL Reference Forecast**
+examples for AST/JSON inspection and SQL formatting. The reference forecast demonstrates
+a named reference model, a FOR range, qualified cell reads, and CV().
+DSL code generation is planned in #507; until
 then, parsing returns the model with a DSL-generation warning.
 The staged delivery is specified in the
 [`MODEL` clause design](docs/epics/ORACLE_MODEL_CLAUSE_DESIGN.md). Oracle's
 legacy outer-join `(+)` syntax remains intentionally unsupported.
+
+For example, generated MODEL targets can forecast several products and years:
+
+```sql
+SELECT product, year_key, sales
+FROM sales_data
+MODEL
+  DIMENSION BY (product, year_key)
+  MEASURES (amount AS sales)
+  RULES UPSERT ALL (
+    sales[FOR product IN ('Bike', 'Car'),
+          FOR year_key FROM 2026 TO 2028 INCREMENT 1] =
+      sales[CV(product), CV(year_key) - 1] * 1.1
+  )
+ORDER BY product, year_key
+```
 
 GitHub Actions runs the live DB suites in the separate [`.github/workflows/live-db-it.yml`](.github/workflows/live-db-it.yml) pipeline so the default CI path stays fast.
 

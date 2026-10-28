@@ -1,6 +1,6 @@
 # Oracle `MODEL` Clause Detailed Design
 
-**Status:** #504 core model/DSL merged. #505 basic Oracle parser/renderer support is implemented locally and awaiting maintainer review. Advanced syntax and downstream support remain scheduled in #506–#508.
+**Status:** #504 core model/DSL and #505 basic Oracle parser/renderer support merged. #506 advanced grammar and its review-driven separation of value validation are implemented and approved for PR delivery; merge remains gated on remote verification and explicit maintainer authorization. Full contextual validation, transpilation, and codegen remain #507; live MODEL coverage remains #508.
 
 **Origin:** Standalone follow-up to R11. R11 remains complete. This document
 resolves the deferred design decision in
@@ -447,8 +447,8 @@ enum RangeDirection { INCREMENT, DECREMENT }
 list with one dimension, `RowListExpr` for non-empty tuples whose widths match
 the dimension count, and `QueryExpr` for query-produced tuples. There is no
 separate query-generator variant. The constructor checks explicit source shape;
-query projection width, correlation, and other Oracle restrictions belong to
-the contextual parser/render/validation work in #505/#506/#507. Child sources
+query projection width and correlation are semantic validation responsibilities,
+not parser/renderer grammar checks. Child sources
 must use their existing registered parser/renderer pairs.
 
 `Range` retains its bounds, positive step, direction, and optional
@@ -725,10 +725,52 @@ Rule separators use the shared `SqlWriter.comma(parts, enclose, multiline)`
 overload; the MODEL renderer controls the surrounding indentation and brackets.
 
 All MODEL node types have dedicated ANSI parser/renderer registrations.
-Reference models, symbolic selectors, FOR generators, aggregate cell suffixes,
-iteration, ordered rules, and special MODEL expressions retain explicit
-unsupported handlers with #506 diagnostics. Codegen and contextual validation /
-transpilation remain the #507 boundary; live MODEL execution remains #508.
+Oracle overrides every advanced pair in #506. ANSI handlers keep permanent,
+explicit unsupported-dialect diagnostics without temporary story placeholders.
+
+### Advanced Syntax Slice (#506)
+
+Oracle parses and renders named reference queries and qualified main/reference
+reads, symbolic comparison/BETWEEN/IN-values/null/LIKE/wildcard selectors and
+boolean composition, target-only scalar/tuple/query/range/LIKE FOR generators,
+aggregate cell suffixes, ordered rules, and ITERATE with optional UNTIL.
+CV, ITERATION_NUMBER, PREVIOUS, PRESENTV/PRESENTNNV, and IS PRESENT use their
+dedicated typed nodes rather than generic function/column/array fallbacks.
+
+The local immutable scope carries quote-aware main/reference measure and
+dimension names. Query boundaries restore ordinary expression grammar, including
+inside reference and FOR-source queries. Detached node parsing derives MODEL
+syntax context from the parser call stack instead of mutating the shared cursor.
+Shared atomic-predicate hooks handle vendor suffixes and grouped-selector
+terminators; ordinary predicate precedence and registered child parsers are reused.
+
+`ModelSyntaxChecker` in `sqm-core-oracle` shares only syntax-shape restrictions
+between parsing and rendering: scalar/subquery placement, supported symbolic
+predicate forms, explicit scalar/tuple expression shapes, and ordinal-free rule
+ordering. It does not evaluate values, compute cardinality, or inspect query aliases.
+Existing core construction invariants and parser-local declaration checks remain unchanged.
+
+As a #506 review correction, value-dependent checks are separated into the registered
+`OracleModelValidationRule` in `sqm-validate-oracle`: literal iteration limits,
+AUTOMATIC ORDER/ITERATE compatibility, range steps and LIKE templates, statically
+known FOR limits/combinations, and explicit query projection width. These checks
+accumulate path-aware `DIALECT_CLAUSE_INVALID` problems through the normal validator;
+they are not called by parsers or renderers. Thus syntactically representable SQL
+with semantic errors can be parsed and formatted before validation reports them.
+
+The former flat-alias correlation heuristic has been removed, not moved into the
+validator. Proper nested-scope/schema-aware correlation analysis for reference/FOR
+queries remains explicit #507 work; no parser/renderer correlation guarantee is implied.
+
+Reference queries, generated source queries, and nested cell expressions remain
+visible to JSON, visitors, and immutable transformers. Query-source composition
+is tested through existing DML nodes without introducing MODEL-specific DML.
+
+Context-dependent legality (including PREVIOUS/ITERATION_NUMBER/CV placement,
+aggregate classification, nested-reference restrictions, query-derived row
+counts, schema-dependent correlation, and post-model name/type resolution),
+transpilation, and codegen remain #507. Live execution and the full example
+matrix remain #508; parser/renderer round trips do not establish engine execution.
 
 ## 11. Validation
 

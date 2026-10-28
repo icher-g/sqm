@@ -4,6 +4,7 @@ import io.sqm.core.*;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
 import io.sqm.parser.oracle.spi.OracleSpecs;
 import io.sqm.parser.spi.ParseContext;
+import io.sqm.render.ansi.SelectQueryRenderer;
 import io.sqm.render.ansi.spi.AnsiDialect;
 import io.sqm.render.defaults.DefaultSqlWriter;
 import io.sqm.render.oracle.spi.OracleDialect;
@@ -157,30 +158,28 @@ class ModelRendererTest {
         var query = select(col("sales")).model(model().dimension("year_key").measure("sales")
             .rule(cellTarget("sales", 2026), lit(1)).build()).build();
         assertThrows(UnsupportedDialectFeatureException.class,
-            () -> new io.sqm.render.ansi.SelectQueryRenderer().render(query, ansi, writer));
+            () -> new SelectQueryRenderer().render(query, ansi, writer));
         assertEquals("", writer.toText(List.of()).sql());
     }
 
     @Test
-    void rejectsAdvancedCompositionsExplicitly() {
-        var cell = cellRef("sales", 2025);
+    void rejectsInvalidModelGrammar() {
         var target = cellTarget("sales", 2026);
-        var rules = modelRules().rule(target, lit(1)).build();
-        var main = mainModel().dimension("year_key").measure("sales").rules(rules).build();
         for (Node node : List.of(
-            model().main(main).reference(referenceModel("base", select(lit(1)).build())
-                .dimension("year_key").measure("sales").build()).build(),
-            modelRules().rule(target, lit(1)).iteration(iterationSpec(lit(2))).build(),
-            modelRule(null, target, orderBy(col("year_key")), lit(1)),
-            cellRef("sales").model("base").selector(2025).build(),
-            cellTarget("sales", cellAny()),
-            cellTarget("sales", cellForValues("year_key", 2025, 2026)),
-            cellRef("sales", cellValue(col("year_key").eq(2026))),
-            currentDimension(), iterationNumber(), previousModelValueExpr(cell),
-            presenceValue(cell, lit(1), lit(0)), cellIsPresent(cell),
-            modelAggregateExpr(func("SUM", col("sales")), List.of(cellAny())))) {
-            var error = assertThrows(UnsupportedDialectFeatureException.class, () -> ctx.render(node), node.toString());
-            assertTrue(error.getMessage().contains("#506"), error::getMessage);
+            modelRule(null, target, orderBy(order(1)), lit(1)),
+            cellValue(col("year_key").eq(2026)),
+            cellValue(expr(select(lit(1)).build())))) {
+            var error = assertThrows(IllegalArgumentException.class, () -> ctx.render(node), node.toString());
+            assertTrue(error.getMessage().contains("MODEL"), error::getMessage);
         }
+    }
+
+    @Test
+    void leavesSemanticRestrictionsToTheValidator() {
+        assertDoesNotThrow(() -> ctx.render(iterationSpec(col("limit_value"))));
+        assertDoesNotThrow(() -> ctx.render(modelRules().order(RuleOrder.AUTOMATIC)
+            .rule(cellTarget("sales", 2026), lit(1)).iteration(iterationSpec(lit(2))).build()));
+        assertDoesNotThrow(() -> ctx.render(cellForRange("year_key", 1, 10001, RangeDirection.INCREMENT, 1)));
+        assertDoesNotThrow(() -> ctx.render(cellForValues(List.of(id("p"), id("y")), select(lit(1)).build())));
     }
 }

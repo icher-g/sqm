@@ -22,10 +22,10 @@ public class ModelRulesRenderer extends io.sqm.render.ansi.ModelRulesRenderer {
     @Override
     public void render(ModelRules node, RenderContext ctx, SqlWriter w) {
         ModelRenderSupport.require(ctx);
-        if (node.iteration() != null) w.append(node.iteration());
         w.append("RULES");
         if (node.defaultMode() != RuleMode.UPSERT) w.space().append(ModelRenderSupport.mode(node.defaultMode()));
         if (node.order() == RuleOrder.AUTOMATIC) w.append(" AUTOMATIC ORDER");
+        if (node.iteration() != null) w.space().append(node.iteration());
         var multiline = node.rules().size() > 1;
         w.append(" (");
         if (multiline) w.newline().indent();

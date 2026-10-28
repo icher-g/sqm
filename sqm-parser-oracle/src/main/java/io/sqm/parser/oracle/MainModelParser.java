@@ -1,9 +1,6 @@
 package io.sqm.parser.oracle;
 
-import io.sqm.core.Identifier;
-import io.sqm.core.MainModel;
-import io.sqm.core.ModelColumn;
-import io.sqm.core.ModelRules;
+import io.sqm.core.*;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
@@ -43,7 +40,10 @@ public class MainModelParser extends io.sqm.parser.ansi.MainModelParser {
         var defaults = ctx instanceof ModelParseContext local ? local.options() : ModelGrammar.Options.DEFAULT;
         var options = ModelGrammar.options(cur, defaults);
         var parent = ctx instanceof ModelParseContext local ? local.parent() : ctx;
-        var scoped = new ModelParseContext(parent, options, ModelParseScope.of(measures));
+        var references = ctx instanceof ModelParseContext local && local.scope() != null
+            ? List.copyOf(local.scope().references().values())
+            : List.<ReferenceModel>of();
+        var scoped = new ModelParseContext(parent, options, ModelParseScope.of(name, dimensions, measures, references));
         var rules = ModelGrammar.node(ModelRules.class, cur, scoped);
         return ParseResult.ok(MainModel.of(name, partitions, dimensions, measures, options.navigation(), options.uniqueness(), rules));
     }

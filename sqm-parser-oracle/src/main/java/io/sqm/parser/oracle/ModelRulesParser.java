@@ -25,6 +25,7 @@ public class ModelRulesParser extends io.sqm.parser.ansi.ModelRulesParser {
         ModelGrammar.require(cur, ctx);
         RuleMode mode = RuleMode.UPSERT;
         RuleOrder order = RuleOrder.SEQUENTIAL;
+        IterationSpec iteration = null;
         if (cur.consumeIf(RULES)) {
             var explicitMode = ModelGrammar.mode(cur);
             if (explicitMode != null) mode = explicitMode;
@@ -32,9 +33,9 @@ public class ModelRulesParser extends io.sqm.parser.ansi.ModelRulesParser {
                 order = cur.advance().type() == AUTOMATIC ? RuleOrder.AUTOMATIC : RuleOrder.SEQUENTIAL;
                 cur.expect("Expected ORDER after rule ordering", ORDER);
             }
-            if (cur.match(ITERATE)) return ParseResult.error(ctx.parse(IterationSpec.class, cur));
+            if (cur.match(ITERATE)) iteration = ModelGrammar.node(IterationSpec.class, cur, ctx);
         }
         var rules = ModelGrammar.list(this, ModelRule.class, cur, ctx, LPAREN, RPAREN);
-        return ParseResult.ok(ModelRules.of(mode, order, null, rules));
+        return ParseResult.ok(ModelRules.of(mode, order, iteration, rules));
     }
 }

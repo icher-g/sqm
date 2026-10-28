@@ -4,9 +4,11 @@ import io.sqm.core.*;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.ParserException;
 import io.sqm.parser.core.TokenType;
+import io.sqm.parser.spi.MatchResult;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
+import java.util.Locale;
 import java.util.Set;
 
 import static io.sqm.parser.core.OperatorTokens.isComparison;
@@ -155,7 +157,7 @@ public class AtomicPredicateParser {
             var inner = ctx.parse(Predicate.class, cur);
             cur.expect("Expected )", TokenType.RPAREN);
 
-            if (cur.matchAny(TokenType.AND, TokenType.OR, TokenType.RPAREN, TokenType.EOF)) {
+            if (canFinishGroupedPredicate(cur, ctx)) {
                 // Yes, this is a proper grouped predicate
                 return inner;
             }
@@ -195,6 +197,9 @@ public class AtomicPredicateParser {
         if (leftExpr.isError()) {
             return error(leftExpr);
         }
+
+        var dialect = parseDialectPredicate(leftExpr.value(), cur, ctx);
+        if (dialect.match()) return dialect.result();
 
         if (isComparison(cur.peek())) {
             if (cur.match(TokenType.ANY, 1) || cur.match(TokenType.ALL, 1)) {
@@ -274,11 +279,34 @@ public class AtomicPredicateParser {
         return ctx.parse(UnaryPredicate.class, leftExpr.value(), cur);
     }
 
+    /**
+     * Attempts a dialect-specific suffix before shared predicate forms.
+     *
+     * @param lhs already parsed left-hand expression
+     * @param cur cursor at the potential predicate suffix
+     * @param ctx parse context
+     * @return matched predicate result, or an unmatched result without consuming input
+     */
+    protected MatchResult<? extends Predicate> parseDialectPredicate(Expression lhs, Cursor cur, ParseContext ctx) {
+        return MatchResult.notMatched();
+    }
+
+    /**
+     * Recognizes tokens that can follow a complete parenthesized predicate.
+     *
+     * @param cur cursor after the closing parenthesis
+     * @param ctx parse context
+     * @return whether the group is complete rather than an expression prefix
+     */
+    protected boolean canFinishGroupedPredicate(Cursor cur, ParseContext ctx) {
+        return cur.matchAny(TokenType.AND, TokenType.OR, TokenType.RPAREN, TokenType.EOF);
+    }
+
     private boolean looksLikeRegexKeyword(Cursor cur, int offset) {
         if (!cur.match(TokenType.IDENT, offset)) {
             return false;
         }
-        return regexKeywords.contains(cur.peek(offset).lexeme().toUpperCase(java.util.Locale.ROOT));
+        return regexKeywords.contains(cur.peek(offset).lexeme().toUpperCase(Locale.ROOT));
     }
 }
 

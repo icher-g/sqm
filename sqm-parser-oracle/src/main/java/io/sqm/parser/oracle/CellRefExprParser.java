@@ -37,11 +37,11 @@ public class CellRefExprParser extends io.sqm.parser.ansi.CellRefExprParser impl
     public ParseResult<CellRefExpr> parse(Expression lhs, Cursor cur, ParseContext ctx) {
         ModelGrammar.require(cur, ctx);
         if (!(lhs instanceof ColumnExpr column)) return ParseResult.error("Expected a MODEL measure before [", cur.fullPos());
-        if (column.tableAlias() != null) return ParseResult.error("MODEL qualified cell reads are not supported yet (#506)", cur.fullPos());
-        if (ctx instanceof ModelParseContext local && local.scope() != null && !local.scope().contains(column.name())) {
+        if (ctx instanceof ModelParseContext local && local.scope() != null && !local.scope().contains(column.tableAlias(), column.name())) {
             return ParseResult.error("Unknown MODEL measure: " + column.name().value(), cur.fullPos());
         }
         var selectors = ModelGrammar.list(this, CellSelector.class, cur, ctx, TokenType.LBRACKET, TokenType.RBRACKET);
-        return ParseResult.ok(CellRefExpr.of(null, column.name(), selectors));
+        ModelGrammar.arity(column.tableAlias(), selectors, cur, ctx);
+        return ParseResult.ok(CellRefExpr.of(column.tableAlias(), column.name(), selectors));
     }
 }

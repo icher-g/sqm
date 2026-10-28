@@ -1,9 +1,6 @@
 package io.sqm.parser.oracle;
 
-import io.sqm.core.NavigationMode;
-import io.sqm.core.Node;
-import io.sqm.core.RuleMode;
-import io.sqm.core.UniquenessMode;
+import io.sqm.core.*;
 import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.ParserException;
@@ -85,6 +82,46 @@ final class ModelGrammar {
         if (cur.consumeIf(UPDATE)) return RuleMode.UPDATE;
         if (cur.consumeIf(UPSERT)) return cur.consumeIf(ALL) ? RuleMode.UPSERT_ALL : RuleMode.UPSERT;
         return null;
+    }
+
+    /**
+     * Recognizes a MODEL expression context without leaking through nested SELECTs.
+     */
+    static boolean inRules(ParseContext ctx) {
+        for (var type : ctx.callstack()) {
+            if (Query.class.isAssignableFrom(type) || type == QueryExpr.class) return false;
+            if (type == ModelRules.class || type == ModelRule.class || type == IterationSpec.class
+                || type == CellRefExpr.class || type == CellTarget.class || type == ModelAggregateExpr.class
+                || CellSelector.class.isAssignableFrom(type) || CellFor.class.isAssignableFrom(type)
+                || type == PreviousModelValueExpr.class || type == PresenceValueExpr.class
+                || type == CellPresentPredicate.class || type == IsAnyPredicate.class) return true;
+        }
+        return ctx instanceof ModelParseContext local && local.scope() != null && !local.scope().measures().isEmpty();
+    }
+
+    /**
+     * Checks declared dimension names in FOR (product, year_key).
+     */
+    static void dimensions(List<Identifier> dimensions, Cursor cur, ParseContext ctx) {
+        if (ctx instanceof ModelParseContext local && local.scope() != null && !local.scope().dimensions().isEmpty()) {
+            for (var dimension : dimensions) {
+                if (!local.scope().containsDimension(dimension)) {
+                    throw new ParserException("Unknown MODEL FOR dimension: " + dimension.value(), cur.fullPos());
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks the locally known coordinate count, including tuple FOR generators.
+     */
+    static void arity(Identifier model, List<? extends CellAddress> addresses, Cursor cur, ParseContext ctx) {
+        if (ctx instanceof ModelParseContext local && local.scope() != null && !local.scope().dimensions().isEmpty()) {
+            int count = addresses.stream().mapToInt(address -> address instanceof CellFor generator ? generator.dimensions().size() : 1).sum();
+            if (count != local.scope().dimensionCount(model)) {
+                throw new ParserException("MODEL address must match the declared dimension count", cur.fullPos());
+            }
+        }
     }
 
     /**

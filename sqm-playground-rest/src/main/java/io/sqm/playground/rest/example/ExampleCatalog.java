@@ -202,6 +202,31 @@ public final class ExampleCatalog {
                     )
                 ORDER BY country, product, sales_year
                 """
+            ),
+            new ExampleDto(
+                "oracle-model-reference-forecast",
+                "Oracle MODEL Reference Forecast",
+                SqlDialectDto.oracle,
+                """
+                SELECT product, year_key, sales
+                FROM sales_data
+                MODEL
+                    REFERENCE growth ON (
+                        SELECT product, rate
+                        FROM product_growth
+                    )
+                        DIMENSION BY (product)
+                        MEASURES (rate)
+                    MAIN forecast
+                        DIMENSION BY (product, year_key)
+                        MEASURES (amount AS sales)
+                        RULES UPSERT SEQUENTIAL ORDER (
+                            sales['Bike', FOR year_key FROM 2026 TO 2028 INCREMENT 1] =
+                                sales['Bike', 2025]
+                                * POWER(growth.rate['Bike'], CV(year_key) - 2025)
+                        )
+                ORDER BY product, year_key
+                """
             )
         );
     }

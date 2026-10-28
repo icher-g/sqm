@@ -5,6 +5,7 @@ import io.sqm.core.Lateral;
 import io.sqm.core.QueryTable;
 import io.sqm.core.RowExpr;
 import io.sqm.core.RowListExpr;
+import io.sqm.core.TableSampleSpec;
 import io.sqm.core.ValuesTable;
 import io.sqm.core.VariableTable;
 import org.junit.jupiter.api.Test;
@@ -80,5 +81,17 @@ class TableRefsCollectorTest {
         table.accept(collector);
 
         assertEquals(List.of(table, table.source()), collector.getTableRefs());
+    }
+
+    @Test
+    void collectsSampledRelationAndItsSource() {
+        var source = tbl("events");
+        var table = sampled(source, tableSample(TableSampleSpec.SampleMethod.BERNOULLI,
+            TableSampleSpec.SampleUnit.PERCENT, lit(10), null)).as(id("e"));
+        var collector = new TableRefsCollector();
+
+        table.accept(collector);
+
+        assertEquals(List.of(table, source), collector.getTableRefs());
     }
 }

@@ -1,8 +1,16 @@
 package io.sqm.it;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import io.sqm.catalog.model.CatalogSchema;
+import io.sqm.core.ColumnExpr;
+import io.sqm.core.Node;
 import io.sqm.core.Query;
+import io.sqm.core.SelectQuery;
 import io.sqm.core.Statement;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
+import io.sqm.core.transform.RecursiveNodeTransformer;
+import io.sqm.core.walk.RecursiveNodeVisitor;
+import io.sqm.json.SqmJsonMixins;
 import io.sqm.parser.ansi.AnsiSpecs;
 import io.sqm.parser.mysql.spi.MySqlSpecs;
 import io.sqm.parser.oracle.spi.OracleSpecs;
@@ -16,8 +24,12 @@ import io.sqm.render.oracle.spi.OracleDialect;
 import io.sqm.render.postgresql.spi.PostgresDialect;
 import io.sqm.render.spi.RenderContext;
 import io.sqm.render.sqlserver.spi.SqlServerDialect;
+import io.sqm.validate.api.ValidationProblem;
+import io.sqm.validate.oracle.OracleValidationDialect;
+import io.sqm.validate.schema.SchemaStatementValidator;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -26,6 +38,70 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ModelBoundaryIntegrationTest {
     private static final String SQL = "SELECT sales FROM sales_data MODEL DIMENSION BY (year_key) MEASURES (sales) (sales[2026] = sales[2025] + 1)";
+
+    @Test
+    void semanticIssuesAreReportedByValidationNotParsingOrRendering() {
+        var parser = ParseContext.of(new OracleSpecs());
+        var renderer = RenderContext.of(new OracleDialect());
+        var validator = SchemaStatementValidator.of(
+            CatalogSchema.allowEverything(), OracleValidationDialect.of());
+        for (var sql : List.of(
+            "SELECT sales FROM sales_data MODEL DIMENSION BY (year_key) MEASURES (sales) "
+                + "RULES ITERATE (-1) (sales[FOR year_key FROM 1 TO 10001 INCREMENT 1] = 1)",
+            "SELECT sales FROM sales_data MODEL DIMENSION BY (product, year_key) MEASURES (sales) "
+                + "RULES (sales[FOR (product, year_key) IN (SELECT product FROM years)] = 1)")) {
+            var parsed = parser.parse(Query.class, sql);
+            assertTrue(parsed.ok(), parsed::errorMessage);
+            var rendered = renderer.render(parsed.value()).sql();
+            assertEquals(parsed.value(), parser.parse(Query.class, rendered).value());
+            var result = validator.validate(parsed.value());
+            assertTrue(result.problems().stream().anyMatch(problem ->
+                problem.code() == ValidationProblem.Code.DIALECT_CLAUSE_INVALID
+                    && problem.clausePath().startsWith("model.main.rules")), result.problems().toString());
+        }
+    }
+
+    @Test
+    void advancedReferenceAndForQueriesRemainVisibleToJsonVisitorsAndTransformers() throws Exception {
+        var parser = ParseContext.of(new OracleSpecs());
+        var renderer = RenderContext.of(new OracleDialect());
+        var sql = "SELECT sales FROM sales_data MODEL "
+            + "REFERENCE rates ON (SELECT code, rate FROM fx) DIMENSION BY (code) MEASURES (rate) "
+            + "DIMENSION BY (year_key) MEASURES (sales) RULES ITERATE (2) "
+            + "UNTIL (PREVIOUS(sales[2026]) = sales[2026]) "
+            + "(sales[FOR year_key IN (SELECT forecast_year FROM years)] = rates.rate['USD'] * ITERATION_NUMBER)";
+        var parsed = parser.parse(Query.class, sql);
+        assertTrue(parsed.ok(), parsed::errorMessage);
+        var original = parsed.value();
+        // Preserve the SQL parser's Long representation for integer literals.
+        var mapper = SqmJsonMixins.createDefault().enable(DeserializationFeature.USE_LONG_FOR_INTS);
+        assertEquals(original, mapper.readValue(mapper.writeValueAsString(original), Query.class));
+        var visited = new ArrayList<String>();
+        original.accept(new RecursiveNodeVisitor<Void>() {
+            @Override protected Void defaultResult() { return null; }
+            @Override public Void visitColumnExpr(ColumnExpr node) {
+                visited.add(node.name().value());
+                return null;
+            }
+        });
+        assertTrue(visited.containsAll(List.of("code", "rate", "forecast_year")));
+        assertSame(original, new RecursiveNodeTransformer() {}.transform(original));
+        var transformed = (SelectQuery) new RecursiveNodeTransformer() {
+            @Override public Node visitColumnExpr(ColumnExpr node) {
+                return node.name().value().equals("forecast_year") ? col("next_year") : node;
+            }
+        }.transform(original);
+        assertNotSame(original, transformed);
+        assertSame(((SelectQuery) original).model().references().getFirst(), transformed.model().references().getFirst());
+        var rendered = renderer.render(transformed).sql();
+        assertTrue(rendered.contains("SELECT next_year"));
+        var reparsed = parser.parse(Query.class, rendered);
+        assertTrue(reparsed.ok(), reparsed::errorMessage);
+        assertEquals(transformed, reparsed.value());
+        var insert = parser.parse(Statement.class, "INSERT INTO forecasts (sales) " + rendered);
+        assertTrue(insert.ok(), insert::errorMessage);
+        assertEquals(insert.value(), parser.parse(Statement.class, renderer.render(insert.value()).sql()).value());
+    }
 
     @Test
     void nonOracleDialectsRejectModelAtBothBoundaries() {
