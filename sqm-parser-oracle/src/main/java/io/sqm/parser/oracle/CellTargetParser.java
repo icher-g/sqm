@@ -28,6 +28,8 @@ public class CellTargetParser extends io.sqm.parser.ansi.CellTargetParser {
             return ParseResult.error("Unknown MODEL measure: " + measure.value(), cur.fullPos());
         }
         var addresses = ModelGrammar.list(this, CellAddress.class, cur, ctx, TokenType.LBRACKET, TokenType.RBRACKET);
-        return ParseResult.ok(CellTarget.of(measure, addresses));
+        ModelGrammar.arity(null, addresses, cur, ctx);
+        var target = CellTarget.of(measure, addresses);
+        return ParseResult.ok(target);
     }
 }

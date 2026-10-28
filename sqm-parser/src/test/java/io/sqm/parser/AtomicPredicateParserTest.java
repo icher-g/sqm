@@ -4,6 +4,7 @@ import io.sqm.core.*;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.TokenType;
 import io.sqm.parser.spi.InfixParser;
+import io.sqm.parser.spi.MatchResult;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
@@ -16,6 +17,42 @@ import static org.junit.jupiter.api.Assertions.*;
 import static io.sqm.dsl.Dsl.col;
 
 class AtomicPredicateParserTest {
+
+    @Test
+    void dialectPredicateSuffixTakesPrecedenceOverSharedIsForms() {
+        var parser = new AtomicPredicateParser() {
+            @Override
+            protected MatchResult<? extends Predicate> parseDialectPredicate(Expression lhs, Cursor cur, ParseContext ctx) {
+                cur.expect("Expected IS", TokenType.IS);
+                cur.expect("Expected ANY", TokenType.ANY);
+                return MatchResult.matched(ParseResult.ok(lhs.isAny()));
+            }
+        };
+        var ctx = contextWithPredicateParsers();
+
+        var parsed = ctx.parse(new AtomicPredicateWrapper(parser), "dimension_key IS ANY");
+
+        assertTrue(parsed.ok(), parsed::errorMessage);
+        assertEquals(col("dimension_key").isAny(), parsed.value());
+        assertTrue(ctx.callstack().isEmpty());
+    }
+
+    @Test
+    void failedDialectPredicateSuffixDoesNotFallBackToSharedForms() {
+        var parser = new AtomicPredicateParser() {
+            @Override
+            protected MatchResult<? extends Predicate> parseDialectPredicate(Expression lhs, Cursor cur, ParseContext ctx) {
+                return MatchResult.matched(ParseResult.error("Invalid dialect predicate", cur.fullPos()));
+            }
+        };
+        var ctx = contextWithPredicateParsers();
+
+        var parsed = ctx.parse(new AtomicPredicateWrapper(parser), "dimension_key IS NULL");
+
+        assertTrue(parsed.isError());
+        assertTrue(Objects.requireNonNull(parsed.errorMessage()).contains("Invalid dialect predicate"));
+        assertTrue(ctx.callstack().isEmpty());
+    }
 
     @Test
     void parsesGroupedPredicate() {
@@ -184,9 +221,19 @@ class AtomicPredicateParserTest {
     }
 
     private static final class AtomicPredicateWrapper implements Parser<Predicate> {
+        private final AtomicPredicateParser parser;
+
+        private AtomicPredicateWrapper() {
+            this(new AtomicPredicateParser());
+        }
+
+        private AtomicPredicateWrapper(AtomicPredicateParser parser) {
+            this.parser = parser;
+        }
+
         @Override
         public ParseResult<? extends Predicate> parse(Cursor cur, ParseContext ctx) {
-            return new AtomicPredicateParser().parse(cur, ctx);
+            return parser.parse(cur, ctx);
         }
 
         @Override

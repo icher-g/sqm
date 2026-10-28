@@ -44,6 +44,7 @@ Agents should read it first and follow it throughout the task.
 - Unless the repo instructions are explicitly updated with a DDL decision, keep DDL out of implementation and planning acceptance criteria to avoid accidental scope creep.
 
 ## Conventions
+- Use imports instead of fully qualified class names in method calls and construction expressions; retain qualification only when a genuine name collision requires it.
 - Prefer small, focused tests that cover edge cases and error handling.
 - Keep tests deterministic; avoid external I/O unless explicitly required.
 - Use existing test utilities and patterns already in the repo.

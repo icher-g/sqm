@@ -1,6 +1,7 @@
 package io.sqm.render.oracle;
 
 import io.sqm.core.ModelRule;
+import io.sqm.core.oracle.internal.ModelSyntaxChecker;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 
@@ -20,8 +21,11 @@ public class ModelRuleRenderer extends io.sqm.render.ansi.ModelRuleRenderer {
     @Override
     public void render(ModelRule node, RenderContext ctx, SqlWriter w) {
         ModelRenderSupport.require(ctx);
-        if (node.orderBy() != null) throw ModelRenderSupport.unsupported("ordered rules", ctx);
+        ModelSyntaxChecker.orderBy(node.orderBy());
+        ModelSyntaxChecker.scalar(node.value());
         if (node.mode() != null) w.append(ModelRenderSupport.mode(node.mode())).space();
-        w.append(node.target()).append(" = ").append(node.value());
+        w.append(node.target());
+        if (node.orderBy() != null) w.space().append(node.orderBy());
+        w.append(" = ").append(node.value());
     }
 }

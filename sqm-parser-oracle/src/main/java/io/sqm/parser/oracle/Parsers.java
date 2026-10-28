@@ -1,14 +1,17 @@
 package io.sqm.parser.oracle;
 
+import io.sqm.parser.ansi.NotPredicateParser;
 import io.sqm.parser.ansi.PowerArithmeticExprParser;
 import io.sqm.parser.spi.ParsersRepository;
+
+import static io.sqm.parser.ansi.Parsers.ansiCopy;
 
 /**
  * Entry point for Oracle parser registrations.
  */
 public final class Parsers {
 
-    private static final ParsersRepository defaultRepository = registerOracleOverrides(io.sqm.parser.ansi.Parsers.ansiCopy());
+    private static final ParsersRepository defaultRepository = registerOracleOverrides(ansiCopy());
 
     private Parsers() {
     }
@@ -28,13 +31,27 @@ public final class Parsers {
      * @return isolated Oracle parsers repository.
      */
     public static ParsersRepository oracleCopy() {
-        return registerOracleOverrides(io.sqm.parser.ansi.Parsers.ansiCopy());
+        return registerOracleOverrides(ansiCopy());
     }
 
     private static ParsersRepository registerOracleOverrides(ParsersRepository repository) {
         var postfix = new PostfixExprParser(new AtomicExprParser());
         return repository
             .register(new PowerArithmeticExprParser(postfix))
+            .register(new NotPredicateParser(new AtomicPredicateParser()))
+            .register(new ReferenceModelParser())
+            .register(new CellSelectorConditionParser())
+            .register(new CellForParser())
+            .register(new CellForValuesParser())
+            .register(new CellForRangeParser())
+            .register(new ModelAggregateExprParser())
+            .register(new IterationSpecParser())
+            .register(new CurrentDimensionExprParser())
+            .register(new IterationNumberExprParser())
+            .register(new PreviousModelValueExprParser())
+            .register(new PresenceValueExprParser())
+            .register(new CellPresentPredicateParser())
+            .register(new IsAnyPredicateParser())
             .register(new ModelClauseParser())
             .register(new MainModelParser())
             .register(new ModelColumnParser())

@@ -9,11 +9,12 @@ import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import static io.sqm.parser.core.TokenType.*;
 
 /**
- * Parses MODEL options followed by a basic main model.
+ * Parses MODEL options, reference models, and the main model in Oracle grammar order.
  */
 public class ModelClauseParser extends io.sqm.parser.ansi.ModelClauseParser {
     /**
@@ -37,9 +38,11 @@ public class ModelClauseParser extends io.sqm.parser.ansi.ModelClauseParser {
                 : ReturnRows.UPDATED;
             cur.expect("Expected ROWS after RETURN", ROWS);
         }
-        if (cur.match(REFERENCE)) return ParseResult.error(ctx.parse(ReferenceModel.class, cur));
         var local = new ModelParseContext(ctx, options, null);
+        var references = new ArrayList<ReferenceModel>();
+        while (cur.match(REFERENCE)) references.add(ModelGrammar.node(ReferenceModel.class, cur, local));
+        local = new ModelParseContext(ctx, options, ModelParseScope.of(null, List.of(), List.of(), references));
         var main = ModelGrammar.node(MainModel.class, cur, local);
-        return ParseResult.ok(ModelClause.of(rows, List.of(), main));
+        return ParseResult.ok(ModelClause.of(rows, references, main));
     }
 }

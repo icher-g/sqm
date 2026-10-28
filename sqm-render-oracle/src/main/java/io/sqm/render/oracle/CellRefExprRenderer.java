@@ -20,7 +20,7 @@ public class CellRefExprRenderer extends io.sqm.render.ansi.CellRefExprRenderer 
     @Override
     public void render(CellRefExpr node, RenderContext ctx, SqlWriter w) {
         ModelRenderSupport.require(ctx);
-        if (node.model() != null) throw ModelRenderSupport.unsupported("qualified cell reads", ctx);
+        if (node.model() != null) w.append(renderIdentifier(node.model(), ctx.dialect().quoter())).append(".");
         w.append(renderIdentifier(node.measure(), ctx.dialect().quoter())).append("[");
         w.comma(node.selectors()).append("]");
     }

@@ -1,14 +1,13 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.IterationSpec;
-import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
 /**
- * Explicit unsupported boundary for IterationSpec. Oracle support follows in #506.
+ * Explicit ANSI unsupported boundary for IterationSpec; supporting dialects override it.
  */
 public class IterationSpecParser implements Parser<IterationSpec> {
     /**
@@ -22,7 +21,7 @@ public class IterationSpecParser implements Parser<IterationSpec> {
      */
     @Override
     public ParseResult<? extends IterationSpec> parse(Cursor cur, ParseContext ctx) {
-        return ParseResult.error(ctx.capabilities().supports(SqlFeature.MODEL_CLAUSE) ? "MODEL IterationSpec is not supported yet (#506)" : "MODEL IterationSpec is not supported by this dialect", cur.fullPos());
+        return ParseResult.error("MODEL IterationSpec is not supported by this dialect", cur.fullPos());
     }
 
     /**

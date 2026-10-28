@@ -27,10 +27,10 @@ public class PostfixExprParser extends io.sqm.parser.PostfixExprParser {
      */
     @Override
     protected MatchResult<? extends Expression> parseDialectPostfix(Expression lhs, Cursor cur, ParseContext ctx) {
-        if (!(ctx instanceof ModelParseContext local) || local.scope() == null || !cur.match(TokenType.LBRACKET)) {
+        if (!ModelGrammar.inRules(ctx) || !cur.match(TokenType.LBRACKET)) {
             return MatchResult.notMatched();
         }
-        if (lhs instanceof FunctionExpr) return MatchResult.matched(ctx.parse(ModelAggregateExpr.class, cur));
+        if (lhs instanceof FunctionExpr) return MatchResult.matched(ctx.parse(ModelAggregateExpr.class, lhs, cur));
         return MatchResult.matched(ctx.parse(CellRefExpr.class, lhs, cur));
     }
 }

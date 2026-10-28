@@ -2,6 +2,8 @@ package io.sqm.render.oracle;
 
 import io.sqm.render.spi.RenderersRepository;
 
+import static io.sqm.render.ansi.Renderers.ansiCopy;
+
 /**
  * Factory for Oracle renderers repository.
  */
@@ -18,7 +20,7 @@ public final class Renderers {
      */
     public static RenderersRepository oracle() {
         if (repository == null) {
-            repository = registerOracleOverrides(io.sqm.render.ansi.Renderers.ansiCopy());
+            repository = registerOracleOverrides(ansiCopy());
         }
         return repository;
     }
@@ -29,13 +31,26 @@ public final class Renderers {
      * @return isolated Oracle renderers repository.
      */
     public static RenderersRepository oracleCopy() {
-        return registerOracleOverrides(io.sqm.render.ansi.Renderers.ansiCopy());
+        return registerOracleOverrides(ansiCopy());
     }
 
     private static RenderersRepository registerOracleOverrides(RenderersRepository repository) {
         return repository
             .register(new ModelClauseRenderer())
             .register(new MainModelRenderer())
+            .register(new ReferenceModelRenderer())
+            .register(new CellSelectorConditionRenderer())
+            .register(new CellForRenderer())
+            .register(new CellForValuesRenderer())
+            .register(new CellForRangeRenderer())
+            .register(new ModelAggregateExprRenderer())
+            .register(new IterationSpecRenderer())
+            .register(new CurrentDimensionExprRenderer())
+            .register(new IterationNumberExprRenderer())
+            .register(new PreviousModelValueExprRenderer())
+            .register(new PresenceValueExprRenderer())
+            .register(new CellPresentPredicateRenderer())
+            .register(new IsAnyPredicateRenderer())
             .register(new ModelColumnRenderer())
             .register(new ModelRulesRenderer())
             .register(new ModelRuleRenderer())

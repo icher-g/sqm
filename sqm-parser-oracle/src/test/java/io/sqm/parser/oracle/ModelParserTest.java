@@ -128,9 +128,9 @@ class ModelParserTest {
     }
 
     @Test
-    void rejectsAdvancedSyntaxWithStorySpecificDiagnostics() {
+    void parsesFormerlyDeferredAdvancedSyntax() {
         for (var clause : List.of(
-            "REFERENCE baseline ON (SELECT 1 FROM dual) " + COLUMNS + RULE,
+            "REFERENCE baseline ON (SELECT year_key, amount FROM t) " + COLUMNS + " " + COLUMNS + RULE,
             COLUMNS + " RULES ITERATE (2) " + RULE,
             COLUMNS + " (sales[FOR year_key IN (2025, 2026)] = 1)",
             COLUMNS + " (sales[ANY] = 1)",
@@ -139,7 +139,6 @@ class ModelParserTest {
             COLUMNS + " (sales[year_key BETWEEN 2025 AND 2026] = 1)",
             COLUMNS + " (sales[year_key IS NULL] = 1)",
             COLUMNS + " (sales[1] ORDER BY year_key = 1)",
-            COLUMNS + " (sales[1] = baseline.sales[2])",
             COLUMNS + " (sales[1] = SUM(sales)[2])",
             COLUMNS + " (sales[1] = CV())",
             COLUMNS + " (sales[1] = ITERATION_NUMBER)",
@@ -147,8 +146,7 @@ class ModelParserTest {
             COLUMNS + " (sales[1] = PRESENTV(sales[2], 1, 0))",
             COLUMNS + " (sales[1] = PRESENTNNV(sales[2], 1, 0))")) {
             var parsed = ctx.parse(Query.class, "SELECT sales FROM sales_data MODEL " + clause);
-            assertTrue(parsed.isError(), clause);
-            assertTrue(parsed.errorMessage().contains("#506"), clause + ": " + parsed.errorMessage());
+            assertTrue(parsed.ok(), () -> clause + ": " + parsed.errorMessage());
         }
     }
 

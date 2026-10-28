@@ -2,6 +2,7 @@ package io.sqm.render.oracle;
 
 import io.sqm.core.CellSelector;
 import io.sqm.core.Predicate;
+import io.sqm.core.oracle.internal.ModelSyntaxChecker;
 import io.sqm.render.SqlWriter;
 import io.sqm.render.spi.RenderContext;
 
@@ -21,7 +22,7 @@ public class CellSelectorValueRenderer extends io.sqm.render.ansi.CellSelectorVa
     @Override
     public void render(CellSelector.Value node, RenderContext ctx, SqlWriter w) {
         ModelRenderSupport.require(ctx);
-        if (node.value() instanceof Predicate) throw ModelRenderSupport.unsupported("predicate-valued selectors", ctx);
+        ModelSyntaxChecker.scalar(node.value());
         w.append(node.value());
     }
 }

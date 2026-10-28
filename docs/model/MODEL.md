@@ -820,12 +820,15 @@ are defensively copied. Required non-empty shapes and numeric literal bounds are
 checked during construction; contextual name/type and Oracle legality checks are
 reserved for validation.
 
-Support boundary for #505: Oracle parses and renders basic main-model declarations,
-options, positional single-cell reads/targets, and assignments. MODEL is placed
-after HAVING and before final ordering. ANSI, PostgreSQL, MySQL, and SQL Server
-reject the clause explicitly. Every MODEL node has a dedicated ANSI parser and
-renderer; advanced Oracle syntax remains explicitly unsupported pending #506.
-Codegen still rejects MODEL queries and expressions. Contextual validation,
+Support boundary for #505–#506: Oracle parses and renders main/reference models,
+effective options, positional and symbolic addressing, target-only FOR generators,
+aggregate cells, ordered and iterative rules, and the dedicated MODEL functions
+and predicates. MODEL is placed after HAVING and before final ordering. ANSI,
+PostgreSQL, MySQL, and SQL Server reject the clause explicitly. Every MODEL node
+has a dedicated ANSI rejecting pair and an Oracle syntax implementation.
+Oracle value-limit, generator-cardinality/template, and explicit query-width checks
+produce structured validation problems rather than parser/renderer exceptions.
+Codegen still rejects MODEL queries and expressions. Full contextual validation,
 transpilation, and codegen are #507; live-engine coverage is #508.
 See the [detailed design](../epics/ORACLE_MODEL_CLAUSE_DESIGN.md).
 Each node's Javadoc includes SQL context and identifies the exact represented fragment.

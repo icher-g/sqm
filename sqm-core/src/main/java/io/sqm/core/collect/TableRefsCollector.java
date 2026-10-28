@@ -43,6 +43,18 @@ public class TableRefsCollector extends RecursiveNodeVisitor<Void> {
     }
 
     /**
+     * Visits a sampled relation and retains its alias-bearing wrapper.
+     *
+     * @param table sampled table reference
+     * @return the visitor result
+     */
+    @Override
+    public Void visitSampledTable(SampledTable table) {
+        tableRefs.add(table);
+        return super.visitSampledTable(table);
+    }
+
+    /**
      * Visits a {@link ValuesTable}, representing an inline {@code VALUES} construct.
      *
      * @param t the values table being visited

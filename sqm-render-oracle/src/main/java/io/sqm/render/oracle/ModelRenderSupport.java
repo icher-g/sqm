@@ -18,10 +18,6 @@ final class ModelRenderSupport {
         }
     }
 
-    static UnsupportedDialectFeatureException unsupported(String feature, RenderContext ctx) {
-        return new UnsupportedDialectFeatureException("MODEL " + feature + " is not supported yet (#506)", ctx.dialect().name());
-    }
-
     static String mode(RuleMode mode) {
         return switch (mode) {
             case UPDATE -> "UPDATE";

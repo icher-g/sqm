@@ -1,14 +1,13 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.CellFor;
-import io.sqm.core.dialect.SqlFeature;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.spi.ParseContext;
 import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
 /**
- * Explicit unsupported boundary for CellFor.Values. Oracle support follows in #506.
+ * Explicit ANSI unsupported boundary for CellFor.Values; supporting dialects override it.
  */
 public class CellForValuesParser implements Parser<CellFor.Values> {
     /**
@@ -22,7 +21,7 @@ public class CellForValuesParser implements Parser<CellFor.Values> {
      */
     @Override
     public ParseResult<? extends CellFor.Values> parse(Cursor cur, ParseContext ctx) {
-        return ParseResult.error(ctx.capabilities().supports(SqlFeature.MODEL_CLAUSE) ? "MODEL CellFor.Values is not supported yet (#506)" : "MODEL CellFor.Values is not supported by this dialect", cur.fullPos());
+        return ParseResult.error("MODEL CellFor.Values is not supported by this dialect", cur.fullPos());
     }
 
     /**
