@@ -93,7 +93,7 @@ class ExampleServiceTest {
     }
 
     @Test
-    void oracleModelExampleCanBeInspectedAndFormattedWhileCodegenIsPending() {
+    void oracleModelExampleCanBeInspectedFormattedAndGeneratedAsDsl() {
         var example = new ExampleCatalog().examples().stream()
             .filter(item -> item.id().equals("oracle-model"))
             .findFirst()
@@ -110,13 +110,9 @@ class ExampleServiceTest {
             .filter(slot -> slot.slot().equals("model"))
             .findFirst().orElseThrow().nodes().getFirst();
         assertEquals("ModelClause", model.nodeType());
-        assertNull(parsed.sqmDsl());
-        assertEquals(1, parsed.diagnostics().size());
-        var diagnostic = parsed.diagnostics().getFirst();
-        assertEquals(DiagnosticPhaseDto.dsl, diagnostic.phase());
-        assertEquals(DiagnosticSeverityDto.warning, diagnostic.severity());
-        assertEquals("DSL_GENERATION_ERROR", diagnostic.code());
-        assertTrue(diagnostic.message().contains("MODEL code generation"));
+        assertTrue(parsed.sqmDsl().contains(".model(model()"));
+        assertTrue(parsed.sqmDsl().contains("cellTarget("));
+        assertTrue(parsed.diagnostics().isEmpty());
 
         var rendered = new RenderService(support).render(new RenderRequestDto(
             example.sql(), example.dialect(), example.dialect()));
@@ -150,10 +146,10 @@ class ExampleServiceTest {
         assertTrue(parsed.sqmJson().contains("reference-model"));
         assertTrue(parsed.sqmJson().contains("cell-for-range"));
         assertTrue(parsed.sqmJson().contains("current-dimension-expr"));
-        assertNull(parsed.sqmDsl());
-        assertEquals(1, parsed.diagnostics().size());
-        assertEquals(DiagnosticSeverityDto.warning, parsed.diagnostics().getFirst().severity());
-        assertEquals("DSL_GENERATION_ERROR", parsed.diagnostics().getFirst().code());
+        assertTrue(parsed.sqmDsl().contains("referenceModel()"));
+        assertTrue(parsed.sqmDsl().contains("cellForRange("));
+        assertTrue(parsed.sqmDsl().contains("currentDimension("));
+        assertTrue(parsed.diagnostics().isEmpty());
 
         var query = assertInstanceOf(SelectQuery.class, support.parse(example.sql(), example.dialect()).statement());
         assertEquals("growth", query.model().references().getFirst().name().value());

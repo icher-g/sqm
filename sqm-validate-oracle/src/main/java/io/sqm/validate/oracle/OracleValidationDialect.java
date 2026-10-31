@@ -9,10 +9,13 @@ import io.sqm.validate.oracle.function.OracleFunctionCatalog;
 import io.sqm.validate.oracle.rule.OracleDmlFeatureValidationRule;
 import io.sqm.validate.oracle.rule.OracleMergeFeatureValidationRule;
 import io.sqm.validate.oracle.rule.OracleModelValidationRule;
+import io.sqm.validate.oracle.rule.ModelSemanticValidationRule;
+import io.sqm.validate.oracle.rule.ModelQueryCompatibilityValidationRule;
 import io.sqm.validate.oracle.rule.OraclePatternRecognitionValidationRule;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
 import io.sqm.validate.schema.function.FunctionCatalog;
 import io.sqm.validate.schema.rule.HierarchicalQueryFeatureValidationRule;
+import io.sqm.validate.schema.rule.ModelClauseFeatureValidationRule;
 import io.sqm.validate.schema.rule.JsonTableFeatureValidationRule;
 import io.sqm.validate.schema.rule.LockingClauseFeatureValidationRule;
 import io.sqm.validate.schema.rule.PivotFeatureValidationRule;
@@ -94,6 +97,9 @@ public final class OracleValidationDialect implements SchemaValidationDialect {
             new OracleDmlFeatureValidationRule(capabilities, version),
             new OracleMergeFeatureValidationRule(capabilities, version),
             new OracleModelValidationRule(),
+            new ModelClauseFeatureValidationRule(name(), true),
+            new ModelSemanticValidationRule(),
+            new ModelQueryCompatibilityValidationRule(),
             new LockingClauseFeatureValidationRule(name(), version, capabilities),
             new SequenceValueFeatureValidationRule(name(), version, capabilities, true),
             new HierarchicalQueryFeatureValidationRule(name(), version, capabilities),

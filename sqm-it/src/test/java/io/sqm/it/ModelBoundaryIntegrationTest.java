@@ -8,6 +8,9 @@ import io.sqm.core.Query;
 import io.sqm.core.SelectQuery;
 import io.sqm.core.Statement;
 import io.sqm.core.dialect.UnsupportedDialectFeatureException;
+import io.sqm.core.dialect.SqlDialectId;
+import io.sqm.transpile.SqlTranspiler;
+import io.sqm.transpile.TranspileStatus;
 import io.sqm.core.transform.RecursiveNodeTransformer;
 import io.sqm.core.walk.RecursiveNodeVisitor;
 import io.sqm.json.SqmJsonMixins;
@@ -38,6 +41,33 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ModelBoundaryIntegrationTest {
     private static final String SQL = "SELECT sales FROM sales_data MODEL DIMENSION BY (year_key) MEASURES (sales) (sales[2026] = sales[2025] + 1)";
+
+    @Test
+    void nativeTranspilationPreservesModelAcrossCteSubqueryAndEveryExistingDmlSource() {
+        var parser = ParseContext.of(new OracleSpecs());
+        var nativeTarget = SqlTranspiler.builder().sourceDialect(SqlDialectId.ORACLE).targetDialect(SqlDialectId.ORACLE)
+            .targetSchema(CatalogSchema.allowEverything()).build();
+        for (var sql : List.of(SQL, "WITH forecast AS (" + SQL + ") SELECT sales FROM forecast",
+            "INSERT INTO forecasts (sales) " + SQL,
+            "UPDATE forecasts SET sales = (" + SQL + ")",
+            "DELETE FROM forecasts WHERE EXISTS (" + SQL + ")",
+            "MERGE INTO forecasts f USING (" + SQL + ") s ON (f.sales = s.sales) WHEN MATCHED THEN UPDATE SET f.sales = s.sales")) {
+            var original = parser.parse(Statement.class, sql);
+            assertTrue(original.ok(), original::errorMessage);
+            var exact = nativeTarget.transpile(original.value());
+            assertEquals(TranspileStatus.SUCCESS, exact.status(), () -> exact.problems().toString());
+            assertSame(original.value(), exact.transpiledAst().orElseThrow());
+            assertEquals(original.value(), parser.parse(Statement.class, exact.sql().orElseThrow()).value());
+            for (var target : List.of(SqlDialectId.ANSI, SqlDialectId.MYSQL, SqlDialectId.POSTGRESQL, SqlDialectId.SQLSERVER)) {
+                var result = SqlTranspiler.builder().sourceDialect(SqlDialectId.ORACLE).targetDialect(target).build().transpile(original.value());
+                assertEquals(TranspileStatus.UNSUPPORTED, result.status());
+                assertSame(original.value(), result.transpiledAst().orElseThrow());
+                assertTrue(result.sql().isEmpty());
+                assertTrue(result.problems().stream().allMatch(p -> p.code().equals("UNSUPPORTED_MODEL_CLAUSE")
+                    && p.sourceDialect().equals(SqlDialectId.ORACLE) && p.targetDialect().equals(target) && p.clausePath().contains("model")));
+            }
+        }
+    }
 
     @Test
     void semanticIssuesAreReportedByValidationNotParsingOrRendering() {

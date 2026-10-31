@@ -1,23 +1,9 @@
 package io.sqm.core.transform;
 
-import io.sqm.core.ColumnExpr;
-import io.sqm.core.CrossJoin;
-import io.sqm.core.Join;
-import io.sqm.core.Lateral;
-import io.sqm.core.NaturalJoin;
-import io.sqm.core.Node;
-import io.sqm.core.OnJoin;
-import io.sqm.core.Query;
-import io.sqm.core.SelectQuery;
-import io.sqm.core.Table;
-import io.sqm.core.TableRef;
-import io.sqm.core.UsingJoin;
+import io.sqm.core.*;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Qualifies unqualified {@link ColumnExpr} references using visible table bindings provided by a resolver.
@@ -29,6 +15,7 @@ import java.util.Objects;
 public final class ColumnQualificationTransformer extends RecursiveNodeTransformer {
     private final ColumnQualificationResolver resolver;
     private final Deque<List<VisibleTableBinding>> scopes = new ArrayDeque<>();
+    private final Deque<Integer> modelBoundaries = new ArrayDeque<>();
 
     private ColumnQualificationTransformer(ColumnQualificationResolver resolver) {
         this.resolver = resolver;
@@ -42,52 +29,6 @@ public final class ColumnQualificationTransformer extends RecursiveNodeTransform
      */
     public static ColumnQualificationTransformer of(ColumnQualificationResolver resolver) {
         return new ColumnQualificationTransformer(Objects.requireNonNull(resolver, "resolver"));
-    }
-
-    /**
-     * Applies column qualification to a query tree.
-     *
-     * @param query query to transform
-     * @return transformed query or original instance when unchanged
-     */
-    public Query apply(Query query) {
-        return (Query) transform(query);
-    }
-
-    @Override
-    public Node visitSelectQuery(SelectQuery q) {
-        scopes.push(collectLocalScope(q));
-        try {
-            return super.visitSelectQuery(q);
-        } finally {
-            scopes.pop();
-        }
-    }
-
-    @Override
-    public Node visitColumnExpr(ColumnExpr c) {
-        if (c.tableAlias() != null) {
-            return c;
-        }
-        ColumnQualification result = resolver.resolve(c.name().value(), visibleTables());
-        if (result instanceof ColumnQualification.Unresolved) {
-            return c;
-        }
-        if (result instanceof ColumnQualification.Ambiguous) {
-            throw new AmbiguousColumnQualificationException(c.name().value());
-        }
-        return c.inTable(((ColumnQualification.Qualified) result).qualifier());
-    }
-
-    private List<VisibleTableBinding> visibleTables() {
-        if (scopes.isEmpty()) {
-            return List.of();
-        }
-        ArrayList<VisibleTableBinding> visible = new ArrayList<>();
-        for (List<VisibleTableBinding> scope : scopes) {
-            visible.addAll(scope);
-        }
-        return List.copyOf(visible);
     }
 
     private static List<VisibleTableBinding> collectLocalScope(SelectQuery q) {
@@ -125,6 +66,87 @@ public final class ColumnQualificationTransformer extends RecursiveNodeTransform
                 // Query/values/function tables are intentionally skipped here because no catalog mapping
                 // is available in the generic core transformer.
             }
+        }
+    }
+
+    /**
+     * Applies column qualification to a query tree.
+     *
+     * @param query query to transform
+     * @return transformed query or original instance when unchanged
+     */
+    public Query apply(Query query) {
+        return (Query) transform(query);
+    }
+
+    @Override
+    public Node visitSelectQuery(SelectQuery q) {
+        scopes.push(collectLocalScope(q));
+        try {
+            return super.visitSelectQuery(q);
+        } finally {
+            scopes.pop();
+        }
+    }
+
+    @Override
+    public Node visitColumnExpr(ColumnExpr c) {
+        if (c.tableAlias() != null || !modelBoundaries.isEmpty() && modelBoundaries.peek() == scopes.size()) {
+            return c;
+        }
+        ColumnQualification result = resolver.resolve(c.name().value(), visibleTables());
+        if (result instanceof ColumnQualification.Unresolved) {
+            return c;
+        }
+        if (result instanceof ColumnQualification.Ambiguous) {
+            throw new AmbiguousColumnQualificationException(c.name().value());
+        }
+        return c.inTable(((ColumnQualification.Qualified) result).qualifier());
+    }
+
+    private List<VisibleTableBinding> visibleTables() {
+        if (scopes.isEmpty()) {
+            return List.of();
+        }
+        ArrayList<VisibleTableBinding> visible = new ArrayList<>();
+        var count = modelBoundaries.isEmpty() ? scopes.size() : scopes.size() - modelBoundaries.peek();
+        for (List<VisibleTableBinding> scope : scopes.stream().limit(count).toList()) {
+            visible.addAll(scope);
+        }
+        return List.copyOf(visible);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <T extends Node> T applySelectOutput(SelectQuery query, T node) {
+        return query.model() == null ? super.applySelectOutput(query, node)
+            : inModelNamespace(() -> super.applySelectOutput(query, node));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Node visitModelRules(ModelRules rules) {
+        return inModelNamespace(() -> super.visitModelRules(rules));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Node visitReferenceModel(ReferenceModel reference) {
+        return inModelNamespace(() -> super.visitReferenceModel(reference));
+    }
+
+    private <T> T inModelNamespace(Supplier<T> action) {
+        modelBoundaries.push(scopes.size());
+        try {
+            return action.get();
+        } finally {
+            modelBoundaries.pop();
         }
     }
 

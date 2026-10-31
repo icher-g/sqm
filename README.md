@@ -1500,13 +1500,16 @@ models, options, positional/symbolic cell addressing, FOR generators, aggregates
 ordered/iterative rules, and dedicated MODEL functions and predicates (#505–#506).
 Oracle's validator reports MODEL value limits, generator cardinality/template
 restrictions, and explicit FOR-query width errors separately from parsing/rendering.
-Full MODEL scope/type validation, transpilation, and DSL code generation remain #507;
-live MODEL execution coverage remains #508.
+MODEL validation also resolves input/main/reference/output namespaces, checks
+cell roles and known assignment types, and rejects invalid expression placement,
+correlation, recursive members, and locking. Oracle-to-Oracle transpilation preserves
+MODEL exactly; other targets receive a path-aware `UNSUPPORTED_MODEL_CLAUSE` problem
+before any rewrite. Live MODEL execution coverage remains #508.
 The playground includes **Oracle MODEL Sales Forecast** and **Oracle MODEL Reference Forecast**
-examples for AST/JSON inspection and SQL formatting. The reference forecast demonstrates
+examples for AST/JSON inspection, SQL formatting, and Java DSL generation. The reference forecast demonstrates
 a named reference model, a FOR range, qualified cell reads, and CV().
-DSL code generation is planned in #507; until
-then, parsing returns the model with a DSL-generation warning.
+Generated Java uses the public MODEL DSL, including reference/FOR queries and
+iterative expressions, and is supported by the codegen Maven plugin.
 The staged delivery is specified in the
 [`MODEL` clause design](docs/epics/ORACLE_MODEL_CLAUSE_DESIGN.md). Oracle's
 legacy outer-join `(+)` syntax remains intentionally unsupported.

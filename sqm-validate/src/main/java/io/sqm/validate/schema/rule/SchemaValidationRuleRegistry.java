@@ -93,8 +93,12 @@ public final class SchemaValidationRuleRegistry {
             new FunctionAllowlistValidationRule(),
             new FunctionSignatureValidationRule(functionCatalog),
             new PatternExpressionScopeValidationRule(),
+            new ModelExpressionScopeValidationRule(),
             new PatternColumnReferenceValidationRule()
         ));
+        if (additionalRules.stream().noneMatch(ModelClauseFeatureValidationRule.class::isInstance)) {
+            rules.add(new ModelClauseFeatureValidationRule("ANSI", false));
+        }
         rules.addAll(additionalRules);
         return new SchemaValidationRuleRegistry(rules);
     }

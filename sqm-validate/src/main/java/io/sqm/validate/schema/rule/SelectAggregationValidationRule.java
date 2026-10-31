@@ -43,7 +43,7 @@ final class SelectAggregationValidationRule implements SchemaValidationRule<Sele
     public void validate(SelectQuery node, SchemaValidationContext context) {
         var groupedExpressions = groupedExpressions(node);
         var groupedColumnKeys = groupedColumnKeys(groupedExpressions);
-        if (!groupedExpressions.isEmpty()) {
+        if (node.model() == null && !groupedExpressions.isEmpty()) {
             validateGroupedSelectItems(node, groupedExpressions, groupedColumnKeys, context);
         }
         validateHaving(node, groupedExpressions, groupedColumnKeys, context);

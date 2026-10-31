@@ -15,6 +15,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
             java.util.List.of(
                 "function-table-to-mysql-unsupported",
                 "match-recognize-unsupported",
+                "model-clause-unsupported",
                 "postgres-merge-unsupported",
                 "postgres-to-mysql-distinct-on-unsupported",
                 "postgres-to-mysql-ilike",
@@ -38,6 +39,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         assertEquals(
             java.util.List.of(
                 "match-recognize-unsupported",
+                "model-clause-unsupported",
                 "mysql-hint-dropping",
                 "mysql-to-postgres-insert-mode-unsupported",
                 "mysql-to-postgres-json-function-unsupported",
@@ -62,6 +64,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
             java.util.List.of(
                 "hierarchical-query-unsupported",
                 "match-recognize-unsupported",
+                "model-clause-unsupported",
                 "postgres-merge-do-nothing-unsupported",
                 "postgres-to-sqlserver-distinct-on-unsupported",
                 "postgres-to-sqlserver-returning-unsupported",
@@ -74,6 +77,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         assertEquals(
             java.util.List.of(
                 "match-recognize-unsupported",
+                "model-clause-unsupported",
                 "pivot-unpivot-approximate-rewrite",
                 "sqlserver-hint-dropping",
                 "sqlserver-merge-unsupported",
@@ -84,7 +88,8 @@ class DefaultTranspileRuleRegistryDefaultsTest {
             sqlServerToPostgresRules.stream().map(TranspileRule::id).sorted().toList()
         );
         assertEquals(
-            java.util.List.of("hierarchical-query-unsupported", "match-recognize-unsupported", "sequence-value-unsupported", "standard-limit-to-sqlserver-top", "table-access-modifier-unsupported"),
+            java.util.List.of("hierarchical-query-unsupported", "match-recognize-unsupported",
+                "model-clause-unsupported", "sequence-value-unsupported", "standard-limit-to-sqlserver-top", "table-access-modifier-unsupported"),
             ansiToSqlServerRules.stream().map(TranspileRule::id).sorted().toList()
         );
     }
@@ -103,6 +108,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         assertEquals(
             java.util.List.of(
                 "match-recognize-unsupported",
+                "model-clause-unsupported",
                 "oracle-result-clause-unsupported",
                 "postgres-merge-do-nothing-unsupported",
                 "postgres-merge-not-matched-by-source-to-oracle-unsupported",
@@ -115,6 +121,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
             java.util.List.of(
                 "hierarchical-query-to-recursive-cte",
                 "match-recognize-unsupported",
+                "model-clause-unsupported",
                 "oracle-hint-dropping",
                 "oracle-returning-into-unsupported",
                 "pivot-unpivot-approximate-rewrite",
@@ -125,6 +132,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
         assertEquals(
             java.util.List.of(
                 "match-recognize-unsupported",
+                "model-clause-unsupported",
                 "oracle-result-clause-unsupported",
                 "sqlserver-hint-dropping",
                 "sqlserver-merge-unsupported",
@@ -138,6 +146,7 @@ class DefaultTranspileRuleRegistryDefaultsTest {
             java.util.List.of(
                 "hierarchical-query-unsupported",
                 "match-recognize-unsupported",
+                "model-clause-unsupported",
                 "oracle-hint-dropping",
                 "oracle-returning-into-unsupported",
                 "oracle-to-sqlserver-pivot-unpivot-rule",

@@ -20,6 +20,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Tests playground transpile service behavior.
  */
 class TranspileServiceTest {
+    @Test
+    void modelDiagnosticsRetainClauseAndDialectMetadataAndNativeOracleIsExact() {
+        var service = new TranspileService(new PlaygroundStatementSupport());
+        var sql = "SELECT sales FROM data MODEL DIMENSION BY (y) MEASURES (sales) (sales[2026] = sales[2025] + 1)";
+        var exact = service.transpile(new TranspileRequestDto(sql, SqlDialectDto.oracle, SqlDialectDto.oracle));
+        assertTrue(exact.success(), () -> exact.diagnostics().toString());
+        assertEquals(TranspileOutcomeDto.exact, exact.outcome());
+        for (var target : List.of(SqlDialectDto.ansi, SqlDialectDto.mysql, SqlDialectDto.postgresql, SqlDialectDto.sqlserver)) {
+            var result = service.transpile(new TranspileRequestDto(sql, SqlDialectDto.oracle, target));
+            assertFalse(result.success());
+            assertNull(result.renderedSql());
+            var problem = result.diagnostics().getFirst();
+            assertEquals("UNSUPPORTED_MODEL_CLAUSE", problem.code());
+            assertEquals("select.model[0]", problem.clausePath());
+            assertEquals("oracle", problem.sourceDialect());
+            assertEquals(target.name(), problem.targetDialect());
+            assertEquals(1, problem.statementIndex());
+        }
+    }
 
     @Test
     void transpileReturnsRenderedSqlForExactRewrite() {

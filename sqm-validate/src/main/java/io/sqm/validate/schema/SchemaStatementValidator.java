@@ -8,12 +8,11 @@ import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.api.ValidationResult;
 import io.sqm.validate.schema.dialect.SchemaValidationDialect;
 import io.sqm.validate.schema.function.FunctionCatalog;
+import io.sqm.validate.schema.internal.ModelScope;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
 import io.sqm.validate.schema.rule.SchemaValidationRuleRegistry;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Validates {@link Statement} models against {@link CatalogSchema}.
@@ -24,6 +23,7 @@ import java.util.Objects;
  *     <li>column existence for qualified and unqualified references</li>
  *     <li>duplicate table aliases in one SELECT scope</li>
  *     <li>basic comparison type compatibility when both operand types are known</li>
+ *     <li>MODEL input, rule, reference, and output scopes and final ORDER BY aliases</li>
  * </ul>
  */
 public final class SchemaStatementValidator implements StatementValidator {
@@ -167,6 +167,8 @@ public final class SchemaStatementValidator implements StatementValidator {
     private static final class ValidationVisitor extends RecursiveNodeVisitor<Void> {
         private final SchemaValidationContext context;
         private final SchemaValidationRuleRegistry registry;
+        private final Deque<String> modelPaths = new ArrayDeque<>();
+        private final Deque<Query> queryBlocks = new ArrayDeque<>();
 
         /**
          * Creates traversal visitor.
@@ -199,13 +201,14 @@ public final class SchemaStatementValidator implements StatementValidator {
         @Override
         public Void visitWithQuery(WithQuery q) {
             context.pushWithScope();
+            queryBlocks.push(q);
             try {
-                registry.validate(q, context);
                 if (q.recursive()) {
                     for (var cte : q.ctes()) {
                         context.registerCte(cte);
                     }
                 }
+                registry.validate(q, context);
                 for (var cte : q.ctes()) {
                     if (cte.body() != null) {
                         accept(cte.body());
@@ -217,6 +220,7 @@ public final class SchemaStatementValidator implements StatementValidator {
                 }
                 accept(q.body());
             } finally {
+                queryBlocks.pop();
                 context.popWithScope();
             }
             return defaultResult();
@@ -295,6 +299,7 @@ public final class SchemaStatementValidator implements StatementValidator {
         @Override
         public Void visitSelectQuery(SelectQuery q) {
             context.pushScope();
+            queryBlocks.push(q);
             try {
                 // Register visible FROM/JOIN sources before traversal so column validation
                 // in SELECT items and predicates can resolve aliases immediately.
@@ -307,12 +312,224 @@ public final class SchemaStatementValidator implements StatementValidator {
                     baseSources.add(q.from());
                 }
                 registerJoinVisibility(baseSources, q.joins());
-                super.visitSelectQuery(q);
-                registry.validate(q, context);
+                if (q.model() == null) {
+                    super.visitSelectQuery(q);
+                    registry.validate(q, context);
+                }
+                else {
+                    visitModelSelect(q);
+                }
                 return defaultResult();
             } finally {
+                queryBlocks.pop();
                 context.popScope();
             }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Void visitOrderBy(OrderBy order) {
+            if (!(queryBlocks.peek() instanceof SelectQuery query) || query.orderBy() != order) {
+                return super.visitOrderBy(order);
+            }
+            for (var item : order.items()) {
+                if (item.expr() instanceof ColumnExpr column && column.tableAlias() == null) {
+                    var aliases = query.items().stream()
+                        .filter(ExprSelectItem.class::isInstance)
+                        .map(ExprSelectItem.class::cast)
+                        .map(ExprSelectItem::alias)
+                        .filter(Objects::nonNull)
+                        .filter(alias -> query.model() == null
+                            ? alias.value().equalsIgnoreCase(column.name().value())
+                            : ModelScope.key(alias).equals(ModelScope.key(column.name()))
+                        ).count();
+                    if (aliases > 0) {
+                        if (aliases > 1) context.addProblem(
+                            ValidationProblem.Code.COLUMN_AMBIGUOUS,
+                            "Ambiguous ORDER BY projection alias: " + column.name().value(), column, "orderBy.alias");
+                        continue;
+                    }
+                }
+                accept(item);
+            }
+            return defaultResult();
+        }
+
+        private void visitModelSelect(SelectQuery query) {
+            accept(query.from());
+            query.joins().forEach(this::accept);
+            accept(query.where());
+            accept(query.hierarchical());
+            accept(query.groupBy());
+            accept(query.having());
+            var output = context.modelOutputColumns(query.model().main());
+            accept(query.model());
+            context.pushDeclaredColumns(output, "model.output");
+            try {
+                query.items().forEach(this::accept);
+                query.hints().forEach(this::accept);
+                accept(query.distinct());
+                accept(query.topSpec());
+                query.windows().forEach(this::accept);
+                accept(query.orderBy());
+                accept(query.limitOffset());
+                accept(query.lockFor());
+                registry.validate(query, context);
+            } finally {
+                context.popDeclaredColumns();
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Void visitModelClause(ModelClause clause) {
+            var model = context.modelScope(clause);
+            for (var index = 0; index < clause.references().size(); index++) {
+                modelPaths.push("model.references[" + index + "]");
+                try {
+                    accept(clause.references().get(index));
+                } finally {
+                    modelPaths.pop();
+                }
+            }
+            var main = clause.main();
+            main.partitions().forEach(this::accept);
+            main.dimensions().forEach(this::accept);
+            main.measures().forEach(this::accept);
+            context.pushDeclaredColumns(model.columns(), "model.main.rules");
+            context.pushModelScope(model);
+            try {
+                registry.validate(clause, context);
+                accept(main.rules().iteration());
+                for (var index = 0; index < main.rules().rules().size(); index++) {
+                    modelPaths.push("model.main.rules.rules[" + index + "]");
+                    try {
+                        accept(main.rules().rules().get(index));
+                    } finally {
+                        modelPaths.pop();
+                    }
+                }
+            } finally {
+                context.popModelScope();
+                context.popDeclaredColumns();
+            }
+            return defaultResult();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Void visitReferenceModel(ReferenceModel reference) {
+            var path = modelPaths.isEmpty() ? "model.reference" : modelPaths.peek();
+            context.pushQueryIsolation(path + ".query");
+            try {
+                accept(reference.query());
+            } finally {
+                context.popQueryIsolation();
+            }
+            context.pushQueryOutput(reference.query(), path + ".declarations");
+            try {
+                reference.dimensions().forEach(this::accept);
+                reference.measures().forEach(this::accept);
+            } finally {
+                context.popDeclaredColumns();
+            }
+            return defaultResult();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Void visitCellForValues(CellFor.Values values) {
+            if (values.values() instanceof QueryExpr query) {
+                var path = modelPaths.isEmpty() ? "model.for.values" : modelPaths.peek() + ".target.for.values";
+                context.pushQueryIsolation(path);
+                try {
+                    accept(query);
+                } finally {
+                    context.popQueryIsolation();
+                }
+                return defaultResult();
+            }
+            return super.visitCellForValues(values);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Void visitCellRefExpr(CellRefExpr node) {
+            registry.validate(node, context);
+            return super.visitCellRefExpr(node);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Void visitModelAggregateExpr(ModelAggregateExpr node) {
+            registry.validate(node, context);
+            return super.visitModelAggregateExpr(node);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Void visitCurrentDimensionExpr(CurrentDimensionExpr node) {
+            registry.validate(node, context);
+            return super.visitCurrentDimensionExpr(node);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Void visitIterationNumberExpr(IterationNumberExpr node) {
+            registry.validate(node, context);
+            return super.visitIterationNumberExpr(node);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Void visitPreviousModelValueExpr(PreviousModelValueExpr node) {
+            registry.validate(node, context);
+            return super.visitPreviousModelValueExpr(node);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Void visitPresenceValueExpr(PresenceValueExpr node) {
+            registry.validate(node, context);
+            return super.visitPresenceValueExpr(node);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Void visitCellPresentPredicate(CellPresentPredicate node) {
+            registry.validate(node, context);
+            return super.visitCellPresentPredicate(node);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Void visitIsAnyPredicate(IsAnyPredicate node) {
+            registry.validate(node, context);
+            return super.visitIsAnyPredicate(node);
         }
 
         @Override
@@ -592,9 +809,14 @@ public final class SchemaStatementValidator implements StatementValidator {
          */
         @Override
         public Void visitCompositeQuery(CompositeQuery q) {
-            super.visitCompositeQuery(q);
-            registry.validate(q, context);
-            return defaultResult();
+            queryBlocks.push(q);
+            try {
+                super.visitCompositeQuery(q);
+                registry.validate(q, context);
+                return defaultResult();
+            } finally {
+                queryBlocks.pop();
+            }
         }
 
         /**

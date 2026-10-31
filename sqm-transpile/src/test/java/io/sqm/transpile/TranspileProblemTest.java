@@ -1,5 +1,7 @@
 package io.sqm.transpile;
 
+import io.sqm.core.dialect.SqlDialectId;
+
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -7,6 +9,23 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TranspileProblemTest {
+    @Test
+    void dialectAnnotationsSurviveStatementIndexingAndRetainCoordinatesAndPaths() {
+        var original = new TranspileProblem("UNSUPPORTED_MODEL_CLAUSE", "MODEL is unsupported", TranspileStage.REWRITE,
+            10, 2, 3, null, "select.model[0]");
+        assertNull(original.sourceDialect());
+        assertNull(original.targetDialect());
+        var annotated = original.withDialects(SqlDialectId.ORACLE, SqlDialectId.MYSQL).withStatementIndex(2);
+        assertEquals(SqlDialectId.ORACLE, annotated.sourceDialect());
+        assertEquals(SqlDialectId.MYSQL, annotated.targetDialect());
+        assertEquals("select.model[0]", annotated.clausePath());
+        assertEquals(10, annotated.sourceOffset());
+        assertEquals(2, annotated.line());
+        assertEquals(3, annotated.column());
+        assertEquals(2, annotated.statementIndex());
+        assertThrows(NullPointerException.class, () -> original.withDialects(null, SqlDialectId.MYSQL));
+        assertThrows(NullPointerException.class, () -> original.withDialects(SqlDialectId.ORACLE, null));
+    }
 
     @Test
     void storesProblemFieldsIncludingOptionalSourceOffset() {

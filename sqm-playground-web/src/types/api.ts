@@ -34,6 +34,9 @@ export interface PlaygroundDiagnosticDto {
   line: number | null;
   column: number | null;
   statementIndex?: number | null;
+  clausePath?: string | null;
+  sourceDialect?: string | null;
+  targetDialect?: string | null;
 }
 
 /**

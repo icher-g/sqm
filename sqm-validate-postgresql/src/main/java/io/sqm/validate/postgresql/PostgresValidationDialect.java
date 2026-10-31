@@ -1,6 +1,7 @@
 package io.sqm.validate.postgresql;
 
 import io.sqm.core.Node;
+import io.sqm.validate.schema.rule.ModelClauseFeatureValidationRule;
 import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.core.dialect.SqlDialectVersion;
@@ -93,6 +94,7 @@ public final class PostgresValidationDialect implements SchemaValidationDialect 
     @Override
     public List<SchemaValidationRule<? extends Node>> additionalRules() {
         return List.of(
+            new ModelClauseFeatureValidationRule(name(), false),
             new PostgresSelectFeatureValidationRule(capabilities, version),
             new PostgresSelectClauseConsistencyRule(capabilities),
             new PostgresDistinctOnValidationRule(),

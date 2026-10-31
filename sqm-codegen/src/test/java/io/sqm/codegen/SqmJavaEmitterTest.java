@@ -808,7 +808,7 @@ class SqmJavaEmitterTest {
         assertTrue(valuesSource.contains("rows(row(lit(1), lit(\"a\")))"));
         assertTrue(withSource.contains("with("));
         assertTrue(withSource.contains("cte("));
-        assertTrue(withSource.contains(".columnAliases(\"id\", \"name\")"));
+        assertTrue(withSource.contains(".columnAliases(id(\"id\"), id(\"name\"))"));
         assertTrue(withSource.contains(".materialization(CteDef.Materialization.MATERIALIZED)"));
         assertTrue(withSource.contains(".recursive(true)"));
         assertTrue(withSource.contains(".body("));
