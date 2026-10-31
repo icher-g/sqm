@@ -106,8 +106,8 @@ public final class TranspileService {
                 problem.column(),
                 problem.statementIndex(),
                 problem.clausePath(),
-                problem.sourceDialect() == null ? null : problem.sourceDialect().value(),
-                problem.targetDialect() == null ? null : problem.targetDialect().value()
+                problem.sourceDialect().value(),
+                problem.targetDialect().value()
             ));
         }
         for (var warning : result.warnings()) {

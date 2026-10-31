@@ -164,6 +164,8 @@ class TranspileServiceTest {
         assertEquals("PARSE_ERROR", response.diagnostics().getFirst().code());
         assertEquals(1, response.diagnostics().getFirst().line());
         assertEquals(8, response.diagnostics().getFirst().column());
+        assertEquals("ansi", response.diagnostics().getFirst().sourceDialect());
+        assertEquals("mysql", response.diagnostics().getFirst().targetDialect());
     }
 
     @Test
