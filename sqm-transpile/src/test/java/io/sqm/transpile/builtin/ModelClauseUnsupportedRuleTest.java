@@ -24,7 +24,11 @@ class ModelClauseUnsupportedRuleTest {
         assertTrue(rule.preflight());
         assertEquals(Set.of(), rule.sourceDialects());
         assertEquals(Set.of(), rule.targetDialects());
-        assertThrows(NullPointerException.class, () -> new ModelClauseUnsupportedRule(null));
+        var query = modelQuery();
+        for (var target : List.of(SqlDialectId.ORACLE, SqlDialectId.MYSQL)) {
+            assertEquals(rule.apply(query, context(target)),
+                new ModelClauseUnsupportedRule(null).apply(query, context(target)));
+        }
         var result = rule.apply(select(lit(1)).build(), context(SqlDialectId.MYSQL));
         assertTrue(result.problems().isEmpty());
         assertFalse(result.changed());
@@ -61,7 +65,12 @@ class ModelClauseUnsupportedRuleTest {
     @Test
     void configuredRegistryDelegatesCapabilitiesAndNativePairPolicyToTheModelRule() {
         var query = modelQuery();
-        assertThrows(NullPointerException.class, () -> DefaultTranspileRuleRegistry.defaults(null));
+        var baseline = DefaultTranspileRuleRegistry.defaults(null);
+        for (var target : List.of(SqlDialectId.ORACLE, SqlDialectId.MYSQL)) {
+            var guard = baseline.rulesFor(SqlDialectId.ORACLE, target).stream()
+                .filter(rule -> rule.id().equals("model-clause-unsupported")).findFirst().orElseThrow();
+            assertEquals(target.equals(SqlDialectId.ORACLE), guard.apply(query, context(target)).problems().isEmpty());
+        }
         for (var supported : List.of(true, false)) {
             var registry = DefaultTranspileRuleRegistry.defaults(feature -> supported && feature == SqlFeature.MODEL_CLAUSE);
             for (var target : List.of(SqlDialectId.ORACLE, SqlDialectId.MYSQL)) {

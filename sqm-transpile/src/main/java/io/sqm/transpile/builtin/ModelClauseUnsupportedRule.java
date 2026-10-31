@@ -31,7 +31,8 @@ public final class ModelClauseUnsupportedRule implements TranspileRule {
      * Creates a guard for the configured target capabilities. Native MODEL preservation
      * requires an Oracle-to-Oracle pair and target support for the complete clause.
      *
-     * @param targetCapabilities configured target dialect capabilities
+     * @param targetCapabilities configured target dialect capabilities, or {@code null}
+     *                           for the latest supported Oracle capabilities
      */
     public ModelClauseUnsupportedRule(DialectCapabilities targetCapabilities) {
         this.targetCapabilities = targetCapabilities != null ? targetCapabilities : OracleCapabilities.latest();

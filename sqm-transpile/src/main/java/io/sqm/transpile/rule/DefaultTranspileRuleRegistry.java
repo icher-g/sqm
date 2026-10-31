@@ -33,7 +33,8 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
      * Returns built-in rules with target capabilities forwarded to rules that need them.
      * Each rule owns its feature support and compatibility policy.
      *
-     * @param targetCapabilities configured target dialect capabilities
+     * @param targetCapabilities configured target dialect capabilities, or {@code null}
+     *                           to use each rule's baseline policy
      * @return default rule registry
      */
     public static DefaultTranspileRuleRegistry defaults(DialectCapabilities targetCapabilities) {
