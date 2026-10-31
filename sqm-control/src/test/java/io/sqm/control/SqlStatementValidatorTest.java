@@ -23,6 +23,21 @@ import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SqlStatementValidatorTest {
+    @Test
+    void oracleModelValidationSurvivesTheDecisionPipeline() {
+        var validator = SqlStatementValidator.standard(SCHEMA);
+        var model = model().dimension("id").measure("name").rule(cellTarget("name", 1), lit("updated")).build();
+        var query = select(col("name")).from(tbl("users")).model(model).build();
+        var oracle = ExecutionContext.of("oracle", ExecutionMode.ANALYZE);
+        assertEquals(ReasonCode.NONE, validator.validate(query, oracle).code());
+        var invalid = select(col("name")).from(tbl("users")).model(model().dimension("id").measure("name")
+            .rule(cellTarget("id", 1), lit("invalid")).build()).build();
+        var result = validator.validate(invalid, oracle);
+        assertEquals(ReasonCode.DENY_UNSUPPORTED_DIALECT_FEATURE, result.code());
+        assertTrue(result.message().contains("assignment target"));
+        assertEquals(ReasonCode.DENY_UNSUPPORTED_DIALECT_FEATURE,
+            validator.validate(query, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE)).code());
+    }
     private static final CatalogSchema SCHEMA = CatalogSchema.of(
         CatalogTable.of("public", "users",
             CatalogColumn.of("id", CatalogType.LONG),

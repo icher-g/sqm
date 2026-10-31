@@ -11,6 +11,44 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CellDslBuilderTest {
     @Test
+    void compactReadsCanBeQualifiedImmutablyWithoutRebuildingSelectors() {
+        var original = cellRef("rate", "Bike");
+        var qualified = original.inModel("growth");
+        assertEquals(cellRef("rate").model("growth").selector("Bike").build(), qualified);
+        assertNull(original.model());
+        assertSame(qualified, qualified.inModel("growth"));
+        assertEquals(original, qualified.inModel((String) null));
+        assertEquals(original, qualified.inModel((Identifier) null));
+        assertSame(original, original.inModel((Identifier) null));
+        var quoted = id("Growth Model", QuoteStyle.DOUBLE_QUOTE);
+        var quotedCell = original.inModel(quoted);
+        assertEquals(quoted, quotedCell.model());
+        assertSame(quotedCell, quotedCell.inModel(quoted));
+        assertEquals(original.selectors(), quotedCell.selectors());
+        assertThrows(UnsupportedOperationException.class, () -> qualified.selectors().clear());
+        // The compact helper's second string remains a coordinate, never a model/measure pair.
+        assertEquals("rate", original.measure().value());
+        assertEquals(cellValue("Bike"), original.selectors().getFirst());
+    }
+
+    @Test
+    void compactRangesAndCurrentDimensionsPreserveQuotedNamesAndExpressionBounds() {
+        var dimension = id("Year Key", QuoteStyle.DOUBLE_QUOTE);
+        assertEquals(currentDimensionExpr(dimension), currentDimension(dimension));
+        assertEquals(currentDimensionExpr(id("year_key")), currentDimension("year_key"));
+        assertEquals(cellForRange(dimension, null, lit(2026L), lit(2028L), RangeDirection.INCREMENT, lit(1L)),
+            cellForRange(dimension, 2026L, 2028L, RangeDirection.INCREMENT, 1L));
+        assertEquals(cellForRange(id("year_key"), 2026L, 2028L, RangeDirection.INCREMENT, 1L),
+            cellForRange("year_key", 2026L, 2028L, RangeDirection.INCREMENT, 1L));
+        var from = currentDimension("year_key");
+        assertEquals(cellForRange(dimension, null, from, col("last_year"), RangeDirection.DECREMENT, col("step")),
+            cellForRange(dimension, from, col("last_year"), RangeDirection.DECREMENT, col("step")));
+        assertThrows(NullPointerException.class, () -> currentDimension((Identifier) null));
+        assertThrows(NullPointerException.class, () -> cellForRange((Identifier) null, 1, 2, RangeDirection.INCREMENT, 1));
+        assertThrows(IllegalArgumentException.class, () -> cellForRange(dimension, 1, 2, RangeDirection.INCREMENT, -1));
+    }
+
+    @Test
     void fluentCellsReadLikeTheirCoordinatesAndMatchCompactHelpers() {
         var read = cellRef("sales").selector("Bike").selector(2025).build();
         var target = cellTarget("sales").address("Bike").address(2026).build();

@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import javax.tools.ToolProvider;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,6 +26,36 @@ class GenerateMojoTest {
 
     @TempDir
     Path tempDir;
+
+    @Test
+    void oracleModelGenerationProducesCompilablePublicDsl() throws Exception {
+        var sqlDir = tempDir.resolve("oracle-model");
+        var outDir = tempDir.resolve("oracle-model-generated");
+        Files.createDirectories(sqlDir);
+        Files.writeString(sqlDir.resolve("forecast.sql"), """
+            SELECT sales FROM data MODEL DIMENSION BY (y) MEASURES (amount AS sales)
+              RULES ITERATE (2) (
+                sales[FOR y FROM 2026 TO 2028 INCREMENT 1] = sales[CV(y)-1] + ITERATION_NUMBER
+              )
+            """, StandardCharsets.UTF_8);
+        var mojo = new GenerateMojo();
+        var project = new MavenProject();
+        setField(mojo, "project", project);
+        setField(mojo, "dialect", "oracle");
+        setField(mojo, "basePackage", "generated");
+        setField(mojo, "sqlDirectory", sqlDir.toString());
+        setField(mojo, "generatedSourcesDirectory", outDir.toString());
+        mojo.execute();
+        assertTrue(project.getCompileSourceRoots().contains(outDir.toString()));
+        var source = outDir.resolve("generated/RootQueries.java");
+        assertTrue(Files.exists(source));
+        var classes = tempDir.resolve("oracle-model-classes");
+        Files.createDirectories(classes);
+        var compiler = ToolProvider.getSystemJavaCompiler();
+        assertNotNull(compiler);
+        assertEquals(0, compiler.run(null, null, null, "-classpath", System.getProperty("java.class.path"),
+            "-d", classes.toString(), source.toString()));
+    }
 
     @Test
     void removesStaleGeneratedFilesWhenEnabled() throws Exception {

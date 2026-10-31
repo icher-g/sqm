@@ -24,6 +24,28 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TransportParityIntegrationTest {
+    @Test
+    void oracleModelAndItsValidationMessageSurviveAllTransports() {
+        var service = SqlMiddlewareServices.create(SqlDecisionServiceConfig.builder(SCHEMA).buildValidationAndRewriteConfig());
+        var rest = new SqlMiddlewareRestController(new SqlMiddlewareRestAdapter(service));
+        var mcp = new SqlMiddlewareMcpToolRouter(new SqlMiddlewareMcpAdapter(service));
+        var context = new ExecutionContextDto("oracle", null, null, null, null);
+        var sql = "SELECT name FROM users MODEL DIMENSION BY (id) MEASURES (name) (name[1] = 'updated')";
+        var request = new AnalyzeRequest(sql, context);
+        var result = service.analyze(request);
+        assertEquals(DecisionKindDto.REWRITE, result.kind(), result::message);
+        assertTrue(result.rewrittenSql().contains("MODEL"));
+        assertTrue(result.rewrittenSql().contains("name[1] = 'updated'"));
+        assertEquals(result.rewrittenSql(), rest.analyze(request).rewrittenSql());
+        assertEquals(result.rewrittenSql(), ((DecisionResultDto) mcp.invoke(SqlMiddlewareMcpToolRouter.ANALYZE_TOOL, request)).rewrittenSql());
+        var invalid = new AnalyzeRequest("SELECT name FROM users MODEL DIMENSION BY (id) MEASURES (name) (name[1] = PREVIOUS(name[1]))", context);
+        var denied = service.analyze(invalid);
+        assertEquals(DecisionKindDto.DENY, denied.kind());
+        assertEquals(ReasonCodeDto.DENY_UNSUPPORTED_DIALECT_FEATURE, denied.reasonCode());
+        assertTrue(denied.message().contains("PREVIOUS"));
+        assertEquals(denied.message(), rest.analyze(invalid).message());
+        assertEquals(denied.message(), ((DecisionResultDto) mcp.invoke(SqlMiddlewareMcpToolRouter.ANALYZE_TOOL, invalid)).message());
+    }
 
     private static final CatalogSchema SCHEMA = CatalogSchema.of(
         CatalogTable.of("public", "users",

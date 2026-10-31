@@ -97,14 +97,17 @@ public final class TranspileService {
     private List<PlaygroundDiagnosticDto> toDiagnostics(TranspileResult result) {
         var diagnostics = new ArrayList<PlaygroundDiagnosticDto>(result.problems().size() + result.warnings().size());
         for (var problem : result.problems()) {
-            diagnostics.add(statementSupport.diagnostic(
+            diagnostics.add(new PlaygroundDiagnosticDto(
                 DiagnosticSeverityDto.error,
                 problem.code(),
                 problem.message(),
                 DiagnosticPhaseDto.transpile,
                 problem.line(),
                 problem.column(),
-                problem.statementIndex()
+                problem.statementIndex(),
+                problem.clausePath(),
+                problem.sourceDialect().value(),
+                problem.targetDialect().value()
             ));
         }
         for (var warning : result.warnings()) {

@@ -11,50 +11,366 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
 
     private final CodeBuilder out = CodeBuilder.of();
 
-    // Explicitly reject core-only MODEL expressions until codegen support lands.
-    @Override
-    public Void visitIsAnyPredicate(IsAnyPredicate node) {
-        throw unsupported("MODEL code generation (planned in #507)", node);
-    }
-
-    @Override
-    public Void visitCellRefExpr(CellRefExpr node) {
-        throw unsupported("MODEL code generation (planned in #507)", node);
-    }
-
-    @Override
-    public Void visitModelAggregateExpr(ModelAggregateExpr node) {
-        throw unsupported("MODEL code generation (planned in #507)", node);
-    }
-
-    @Override
-    public Void visitCurrentDimensionExpr(CurrentDimensionExpr node) {
-        throw unsupported("MODEL code generation (planned in #507)", node);
-    }
-
-    @Override
-    public Void visitIterationNumberExpr(IterationNumberExpr node) {
-        throw unsupported("MODEL code generation (planned in #507)", node);
-    }
-
-    @Override
-    public Void visitPreviousModelValueExpr(PreviousModelValueExpr node) {
-        throw unsupported("MODEL code generation (planned in #507)", node);
-    }
-
-    @Override
-    public Void visitPresenceValueExpr(PresenceValueExpr node) {
-        throw unsupported("MODEL code generation (planned in #507)", node);
-    }
-
-    @Override
-    public Void visitCellPresentPredicate(CellPresentPredicate node) {
-        throw unsupported("MODEL code generation (planned in #507)", node);
-    }
-
-
     private static IllegalStateException unsupported(String label, Object value) {
         return new IllegalStateException("Unsupported " + label + ": " + value.getClass().getName());
+    }
+
+    private void appendNullable(Node node) {
+        if (node == null) out.append("null");
+        else appendNode(node);
+    }
+
+    private void appendModelColumns(String method, List<ModelColumn> columns) {
+        for (var column : columns) {
+            out.nl().append(".").append(method).append("(");
+            appendModelColumnArguments(column);
+            out.append(")");
+        }
+    }
+
+    private void appendModelColumnArguments(ModelColumn column) {
+        if (column.expression() instanceof ColumnExpr source) {
+            if (source.name().equals(column.name())) {
+                if (source.tableAlias() == null && !source.name().quoted()) out.quote(source.name().value());
+                else appendNode(source);
+                return;
+            }
+            if (source.tableAlias() == null && !source.name().quoted() && !column.name().quoted()) {
+                out.quote(source.name().value()).append(", ").quote(column.name().value());
+                return;
+            }
+        }
+        appendNode(column.expression());
+        out.append(", ");
+        appendName(column.name());
+    }
+
+    private void appendModelRuleArguments(ModelRule rule) {
+        var options = rule.mode() != null || rule.orderBy() != null;
+        if (options) out.append(rule.mode() == null ? "null" : "RuleMode." + rule.mode().name()).append(", ");
+        appendNode(rule.target());
+        out.append(", ");
+        if (options) {
+            appendNullable(rule.orderBy());
+            out.append(", ");
+        }
+        appendNode(rule.value());
+    }
+
+    private void appendModelOptions(NavigationMode navigation, UniquenessMode uniqueness) {
+        out.nl().append(".navigationMode(NavigationMode.").append(navigation.name()).append(")")
+            .nl().append(".uniquenessMode(UniquenessMode.").append(uniqueness.name()).append(")");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitModelClause(ModelClause node) {
+        out.append("model()").in().nl().append(".returnRows(ReturnRows.").append(node.returnRows().name()).append(")");
+        for (var reference : node.references()) {
+            out.nl().append(".reference(");
+            appendNode(reference);
+            out.append(")");
+        }
+        out.nl().append(".main(");
+        appendNode(node.main());
+        out.append(")").nl().append(".build()").out();
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitMainModel(MainModel node) {
+        out.append("mainModel()").in();
+        if (node.name() != null) {
+            out.nl().append(".name(");
+            appendName(node.name());
+            out.append(")");
+        }
+        appendModelColumns("partition", node.partitions());
+        appendModelColumns("dimension", node.dimensions());
+        appendModelColumns("measure", node.measures());
+        appendModelOptions(node.navigationMode(), node.uniquenessMode());
+        out.nl().append(".rules(");
+        appendNode(node.rules());
+        out.append(")").nl().append(".build()").out();
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitReferenceModel(ReferenceModel node) {
+        out.append("referenceModel().name(");
+        appendIdentifier(node.name());
+        out.append(")").in().nl().append(".query(");
+        appendNode(node.query());
+        out.append(")");
+        appendModelColumns("dimension", node.dimensions());
+        appendModelColumns("measure", node.measures());
+        appendModelOptions(node.navigationMode(), node.uniquenessMode());
+        out.nl().append(".build()").out();
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitModelColumn(ModelColumn node) {
+        out.append("modelColumn(");
+        appendNode(node.expression());
+        out.append(", ");
+        appendIdentifier(node.name());
+        out.append(")");
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitModelRules(ModelRules node) {
+        out.append("modelRules()").in()
+            .nl().append(".defaultMode(RuleMode.").append(node.defaultMode().name()).append(")")
+            .nl().append(".order(RuleOrder.").append(node.order().name()).append(")");
+        if (node.iteration() != null) {
+            out.nl().append(".iteration(");
+            appendNode(node.iteration());
+            out.append(")");
+        }
+        for (var rule : node.rules()) {
+            out.nl().append(".rule(");
+            appendModelRuleArguments(rule);
+            out.append(")");
+        }
+        out.nl().append(".build()").out();
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitModelRule(ModelRule node) {
+        out.append("modelRule(");
+        appendModelRuleArguments(node);
+        out.append(")");
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitIterationSpec(IterationSpec node) {
+        out.append("iterationSpec(");
+        appendNode(node.limit());
+        out.append(", ");
+        appendNullable(node.until());
+        out.append(")");
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitCellTarget(CellTarget node) {
+        out.append("cellTarget(");
+        appendName(node.measure());
+        if (node.measure().quoted()) out.append(")");
+        for (var address : node.addresses()) {
+            out.append(node.measure().quoted() ? ".address(" : ", ");
+            appendCellInput(address);
+            if (node.measure().quoted()) out.append(")");
+        }
+        out.append(node.measure().quoted() ? ".build()" : ")");
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitCellRefExpr(CellRefExpr node) {
+        out.append("cellRef(");
+        appendName(node.measure());
+        if (node.measure().quoted()) out.append(")");
+        for (var selector : node.selectors()) {
+            out.append(node.measure().quoted() ? ".selector(" : ", ");
+            appendCellInput(selector);
+            if (node.measure().quoted()) out.append(")");
+        }
+        out.append(node.measure().quoted() ? ".build()" : ")");
+        if (node.model() != null) {
+            out.append(".inModel(");
+            appendName(node.model());
+            out.append(")");
+        }
+        return defaultResult();
+    }
+
+    private void appendCellInput(CellAddress address) {
+        if (address instanceof CellSelector.Value value && !(value.value() instanceof Predicate)) {
+            appendScalarInput(value.value());
+        } else if (address instanceof CellSelector.Condition condition) {
+            appendNode(condition.predicate());
+        } else {
+            appendNode(address);
+        }
+    }
+
+    private void appendScalarInput(Expression expression) {
+        // Keep lit(null) explicit so a sole SQL NULL is not interpreted as a null varargs array.
+        if (expression instanceof LiteralExpr literal && literal.value() != null) appendLiteralValue(literal.value());
+        else appendNode(expression);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitCellSelectorValue(CellSelector.Value node) {
+        out.append("cellValue(");
+        appendNode(node.value());
+        out.append(")");
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitCellSelectorCondition(CellSelector.Condition node) {
+        out.append("cellCondition(");
+        appendNode(node.predicate());
+        out.append(")");
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitCellForValues(CellFor.Values node) {
+        out.append("cellForValues(");
+        appendIdentifierList(node.dimensions());
+        out.append(", ");
+        appendNode(node.values());
+        out.append(")");
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitCellForRange(CellFor.Range node) {
+        out.append("cellForRange(");
+        if (node.likePattern() == null) {
+            appendName(node.dimension());
+            out.append(", ");
+            appendScalarInput(node.from());
+            out.append(", ");
+            appendScalarInput(node.to());
+        } else {
+            appendIdentifier(node.dimension());
+            out.append(", ");
+            appendNode(node.likePattern());
+            out.append(", ");
+            appendNode(node.from());
+            out.append(", ");
+            appendNode(node.to());
+        }
+        out.append(", RangeDirection.").append(node.direction().name()).append(", ");
+        if (node.likePattern() == null) appendScalarInput(node.step());
+        else appendNode(node.step());
+        out.append(")");
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitIsAnyPredicate(IsAnyPredicate node) {
+        out.append("isAny(");
+        if (node.dimension() != null) appendNode(node.dimension());
+        out.append(")");
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitModelAggregateExpr(ModelAggregateExpr node) {
+        out.append("modelAggregateExpr(");
+        appendNode(node.aggregate());
+        out.append(", List.of(").comma(node.selectors(), this::appendNode).append("))");
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitCurrentDimensionExpr(CurrentDimensionExpr node) {
+        out.append("currentDimension(");
+        if (node.dimension() != null) appendName(node.dimension());
+        out.append(")");
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitIterationNumberExpr(IterationNumberExpr node) {
+        out.append("iterationNumber()");
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitPreviousModelValueExpr(PreviousModelValueExpr node) {
+        out.append("previousModelValueExpr(");
+        appendNode(node.cell());
+        out.append(")");
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitPresenceValueExpr(PresenceValueExpr node) {
+        out.append(node.mode() == PresenceMode.CELL ? "presenceValue(" : "presenceNonNullValue(");
+        appendNode(node.cell());
+        out.append(", ");
+        appendNode(node.whenPresent());
+        out.append(", ");
+        appendNode(node.whenAbsent());
+        out.append(")");
+        return defaultResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Void visitCellPresentPredicate(CellPresentPredicate node) {
+        out.append("cellIsPresent(");
+        appendNode(node.cell());
+        out.append(")");
+        return defaultResult();
     }
 
     private void appendExcludeOrNull(OverSpec.Exclude exclude) {
@@ -98,6 +414,11 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         else {
             out.append("id(").quote(value.value()).append(", QuoteStyle." + value.quoteStyle().name() + ")");
         }
+    }
+
+    private void appendName(Identifier value) {
+        if (value.quoted()) appendIdentifier(value);
+        else out.quote(value.value());
     }
 
     private void appendIdentifierList(List<Identifier> values) {
@@ -259,9 +580,6 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
 
     @Override
     public Void visitSelectQuery(SelectQuery q) {
-        if (q.model() != null) {
-            throw unsupported("MODEL code generation (planned in #507)", q.model());
-        }
         out.append("select(").nl();
         out.in();
         out.comma(q.items(), this::appendNode, true);
@@ -304,6 +622,11 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         if (q.having() != null) {
             out.nl().append(".having(");
             appendNode(q.having());
+            out.append(")");
+        }
+        if (q.model() != null) {
+            out.nl().append(".model(");
+            appendNode(q.model());
             out.append(")");
         }
         if (q.windows() != null && !q.windows().isEmpty()) {
@@ -388,7 +711,10 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
 
     @Override
     public Void visitCte(CteDef cte) {
-        out.append("cte(").quote(cte.name().value()).append(", ");
+        out.append("cte(");
+        if (cte.name().quoted()) appendIdentifier(cte.name());
+        else out.quote(cte.name().value());
+        out.append(", ");
         if (cte.body() == null) out.append("null");
         else {
             try (var ignore = new CodeScope(out, false)) {
@@ -397,11 +723,15 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         }
         out.nl().append(")");
 
-        if (cte.columnAliases() != null && !cte.columnAliases().isEmpty()) {
-            out.append(".columnAliases(")
-                .comma(cte.columnAliases(), i -> out.quote(i.value()))
-                .append(")");
+        if (cte.columnAliases() != null && cte.columnAliases().isEmpty()) {
+            out.append(".columnAliases(List.of())");
         }
+        else
+            if (cte.columnAliases() != null) {
+                out.append(".columnAliases(")
+                    .comma(cte.columnAliases(), this::appendIdentifier)
+                    .append(")");
+            }
 
         if (cte.materialization() != null && cte.materialization() != CteDef.Materialization.DEFAULT) {
             out.append(".materialization(CteDef.Materialization.")
@@ -749,7 +1079,9 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         appendNode(i.expr());
         if (i.alias() != null) {
             try (var ignore = new CodeScope(out, lineNumber == out.currentLineNumber())) {
-                out.append(".as(").quote(i.alias().value()).append(")");
+                out.append(".as(");
+                appendName(i.alias());
+                out.append(")");
             }
         }
         return defaultResult();
@@ -763,21 +1095,28 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
 
     @Override
     public Void visitQualifiedStarSelectItem(QualifiedStarSelectItem i) {
-        out.append("star(").quote(i.qualifier().value()).append(")");
+        out.append("star(");
+        appendName(i.qualifier());
+        out.append(")");
         return defaultResult();
     }
 
     @Override
     public Void visitTable(Table t) {
-        if (t.schema() == null) {
-            out.append("tbl(").quote(t.name().value()).append(")");
+        out.append("tbl(");
+        if (t.schema() != null) {
+            if (t.schema().quoted() || t.name().quoted()) appendIdentifier(t.schema());
+            else appendName(t.schema());
+            out.append(", ");
         }
-        else {
-            out.append("tbl(").quote(t.schema().value()).append(", ").quote(t.name().value()).append(")");
-        }
+        if (t.schema() != null && t.schema().quoted()) appendIdentifier(t.name());
+        else appendName(t.name());
+        out.append(")");
 
         if (t.alias() != null) {
-            out.append(".as(").quote(t.alias().value()).append(")");
+            out.append(".as(");
+            appendName(t.alias());
+            out.append(")");
         }
         if (t.inheritance() == Table.Inheritance.ONLY) {
             out.append(".only()");
@@ -919,7 +1258,9 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         }
         out.nl().append(")");
         if (t.alias() != null) {
-            out.append(".as(").quote(t.alias().value()).append(")");
+            out.append(".as(");
+            appendName(t.alias());
+            out.append(")");
         }
         if (t.columnAliases() != null && !t.columnAliases().isEmpty()) {
             out.append(".columnAliases(").comma(t.columnAliases(), i -> out.quote(i.value())).append(")");
@@ -1011,14 +1352,15 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         if (rowsPerMatch.mode() == RowsPerMatch.Mode.ONE) {
             out.append("oneRowPerMatch()");
         }
-        else if (rowsPerMatch.emptyMatchHandling() == RowsPerMatch.EmptyMatchHandling.DEFAULT) {
-            out.append("allRowsPerMatch()");
-        }
-        else {
-            out.append("allRowsPerMatch(RowsPerMatch.EmptyMatchHandling.")
-                .append(rowsPerMatch.emptyMatchHandling().name())
-                .append(")");
-        }
+        else
+            if (rowsPerMatch.emptyMatchHandling() == RowsPerMatch.EmptyMatchHandling.DEFAULT) {
+                out.append("allRowsPerMatch()");
+            }
+            else {
+                out.append("allRowsPerMatch(RowsPerMatch.EmptyMatchHandling.")
+                    .append(rowsPerMatch.emptyMatchHandling().name())
+                    .append(")");
+            }
         return defaultResult();
     }
 
@@ -1101,8 +1443,7 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
             out.append(")");
             return defaultResult();
         }
-        if (!pattern.reluctant() && pattern.minimum() == 0 && pattern.maximum() != null
-            && pattern.maximum() == 1) {
+        if (!pattern.reluctant() && pattern.minimum() == 0 && pattern.maximum() == 1) {
             out.append("optionalPattern(");
             appendNode(pattern.pattern());
             out.append(")");
@@ -1359,18 +1700,19 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
         if (i.expr() != null) {
             appendNode(i.expr());
         }
-        else if (i.ordinal() != null) {
-            if (i.direction() == null && i.nulls() == null && i.collate() == null && i.usingOperator() == null) {
-                out.append(i.ordinal().toString());
+        else
+            if (i.ordinal() != null) {
+                if (i.direction() == null && i.nulls() == null && i.collate() == null && i.usingOperator() == null) {
+                    out.append(i.ordinal().toString());
+                }
+                else {
+                    out.append("order(").append(i.ordinal().toString()).append(")");
+                    orderItemEmitted = true;
+                }
             }
             else {
-                out.append("order(").append(i.ordinal().toString()).append(")");
-                orderItemEmitted = true;
+                throw new IllegalStateException("Order item must have expression or ordinal");
             }
-        }
-        else {
-            throw new IllegalStateException("Order item must have expression or ordinal");
-        }
         if (i.direction() != null) {
             out.append(i.direction().name().equals("ASC") ? ".asc()" : ".desc()");
             orderItemEmitted = true;
@@ -1586,12 +1928,15 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
 
     @Override
     public Void visitColumnExpr(ColumnExpr c) {
-        if (c.tableAlias() == null) {
-            out.append("col(").quote(c.name().value()).append(")");
+        out.append("col(");
+        if (c.tableAlias() != null) {
+            if (c.tableAlias().quoted() || c.name().quoted()) appendIdentifier(c.tableAlias());
+            else appendName(c.tableAlias());
+            out.append(", ");
         }
-        else {
-            out.append("col(").quote(c.tableAlias().value()).append(", ").quote(c.name().value()).append(")");
-        }
+        if (c.tableAlias() != null && c.tableAlias().quoted()) appendIdentifier(c.name());
+        else appendName(c.name());
+        out.append(")");
         return defaultResult();
     }
 

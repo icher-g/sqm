@@ -18,7 +18,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     protected RecursiveNodeTransformer() {
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitModelColumn(ModelColumn node) {
         var expression = apply(node.expression());
@@ -27,7 +29,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : ModelColumn.of(expression, node.name());
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitCellRefExpr(CellRefExpr node) {
         List<CellSelector> selectors = new ArrayList<>();
@@ -37,7 +41,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : CellRefExpr.of(node.model(), node.measure(), selectors);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitCellTarget(CellTarget node) {
         List<CellAddress> addresses = new ArrayList<>();
@@ -47,7 +53,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : CellTarget.of(node.measure(), addresses);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitModelAggregateExpr(ModelAggregateExpr node) {
         var aggregate = apply(node.aggregate());
@@ -58,19 +66,25 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : ModelAggregateExpr.of(aggregate, selectors);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitCurrentDimensionExpr(CurrentDimensionExpr node) {
         return node;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitIterationNumberExpr(IterationNumberExpr node) {
         return node;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitPreviousModelValueExpr(PreviousModelValueExpr node) {
         var cell = apply(node.cell());
@@ -79,7 +93,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : PreviousModelValueExpr.of(cell);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitPresenceValueExpr(PresenceValueExpr node) {
         var cell = apply(node.cell());
@@ -90,7 +106,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : PresenceValueExpr.of(node.mode(), cell, whenPresent, whenAbsent);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitCellPresentPredicate(CellPresentPredicate node) {
         var cell = apply(node.cell());
@@ -99,7 +117,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : CellPresentPredicate.of(cell);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitIterationSpec(IterationSpec node) {
         var limit = apply(node.limit());
@@ -109,7 +129,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : IterationSpec.of(limit, until);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitModelRule(ModelRule node) {
         var target = apply(node.target());
@@ -120,7 +142,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : ModelRule.of(node.mode(), target, orderBy, value);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitModelRules(ModelRules node) {
         var iteration = apply(node.iteration());
@@ -131,7 +155,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : ModelRules.of(node.defaultMode(), node.order(), iteration, rules);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitMainModel(MainModel node) {
         List<ModelColumn> partitions = new ArrayList<>();
@@ -146,7 +172,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : MainModel.of(node.name(), partitions, dimensions, measures, node.navigationMode(), node.uniquenessMode(), rules);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitReferenceModel(ReferenceModel node) {
         var query = apply(node.query());
@@ -159,7 +187,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : ReferenceModel.of(node.name(), query, dimensions, measures, node.navigationMode(), node.uniquenessMode());
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitModelClause(ModelClause node) {
         List<ReferenceModel> references = new ArrayList<>();
@@ -170,7 +200,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : ModelClause.of(node.returnRows(), references, main);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitCellSelectorValue(CellSelector.Value node) {
         var value = apply(node.value());
@@ -179,7 +211,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : CellSelector.Value.of(value);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitCellSelectorCondition(CellSelector.Condition node) {
         var predicate = apply(node.predicate());
@@ -188,7 +222,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : CellSelector.Condition.of(predicate);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitIsAnyPredicate(IsAnyPredicate node) {
         var dimension = apply(node.dimension());
@@ -197,7 +233,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : IsAnyPredicate.of(dimension);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitCellForValues(CellFor.Values node) {
         var values = apply(node.values());
@@ -206,7 +244,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : CellFor.Values.of(node.dimensions(), values);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitCellForRange(CellFor.Range node) {
         var likePattern = apply(node.likePattern());
@@ -1167,7 +1207,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         return table;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitPatternMeasure(PatternMeasure measure) {
         var expression = apply(measure.expression());
@@ -1176,7 +1218,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : PatternMeasure.of(expression, measure.alias());
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitPatternDefinition(PatternDefinition definition) {
         var variable = requirePatternIdentifier(definition.variable());
@@ -1186,7 +1230,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : PatternDefinition.of(variable, condition);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitPatternSubset(PatternSubset subset) {
         var name = requirePatternIdentifier(subset.name());
@@ -1200,13 +1246,17 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         return changed ? PatternSubset.of(name, variables) : subset;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitRowsPerMatch(RowsPerMatch rowsPerMatch) {
         return rowsPerMatch;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitAfterMatchSkip(AfterMatchSkip afterMatchSkip) {
         if (afterMatchSkip.variable() == null) {
@@ -1218,21 +1268,27 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : AfterMatchSkip.of(afterMatchSkip.kind(), afterMatchSkip.position(), variable);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitPatternVariable(MatchPattern.Variable pattern) {
         var name = requirePatternIdentifier(pattern.name());
         return name.equals(pattern.name()) ? pattern : MatchPattern.Variable.of(name);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitPatternSequence(MatchPattern.Sequence pattern) {
         List<MatchPattern> elements = new ArrayList<>(pattern.elements().size());
         return apply(pattern.elements(), elements) ? MatchPattern.Sequence.of(elements) : pattern;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitPatternAlternation(MatchPattern.Alternation pattern) {
         List<MatchPattern> alternatives = new ArrayList<>(pattern.alternatives().size());
@@ -1241,33 +1297,43 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : pattern;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitPatternPermutation(MatchPattern.Permutation pattern) {
         List<MatchPattern> elements = new ArrayList<>(pattern.elements().size());
         return apply(pattern.elements(), elements) ? MatchPattern.Permutation.of(elements) : pattern;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitPatternAnchor(MatchPattern.Anchor pattern) {
         return pattern;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitEmptyPattern(MatchPattern.Empty pattern) {
         return pattern;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitPatternExclusion(MatchPattern.Exclusion pattern) {
         var child = apply(pattern.pattern());
         return child == pattern.pattern() ? pattern : MatchPattern.Exclusion.of(child);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitQuantifiedPattern(MatchPattern.Quantified pattern) {
         var child = apply(pattern.pattern());
@@ -1276,7 +1342,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : MatchPattern.Quantified.of(child, pattern.minimum(), pattern.maximum(), pattern.reluctant());
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitPatternColumnExpr(PatternColumnExpr expression) {
         var variable = requirePatternIdentifier(expression.variable());
@@ -1285,7 +1353,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : PatternColumnExpr.of(variable, expression.column());
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitClassifierExpr(ClassifierExpr expression) {
         if (expression.variable() == null) {
@@ -1295,13 +1365,17 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         return variable.equals(expression.variable()) ? expression : ClassifierExpr.of(variable);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitMatchNumberExpr(MatchNumberExpr expression) {
         return expression;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitPatternNavigationExpr(PatternNavigationExpr expression) {
         var child = apply(expression.expression());
@@ -1311,7 +1385,9 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
             : PatternNavigationExpr.of(expression.kind(), child, offset);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node visitPatternEvaluationExpr(PatternEvaluationExpr expression) {
         var child = apply(expression.expression());
@@ -1829,18 +1905,47 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
     }
 
     /**
-     * Visits a simple {@link SelectQuery}, the basic {@code SELECT ... FROM ...} form.
+     * Transforms a node evaluated against a SELECT block's output row namespace.
+     * Subclasses can distinguish MODEL output columns from input-row expressions.
      *
-     * @param q the select query being visited
-     * @return a result produced by the visitor
+     * @param query owning query
+     * @param node  output expression or clause
+     * @param <T>   node type
+     * @return transformed node
+     */
+    protected <T extends Node> T applySelectOutput(SelectQuery query, T node) {
+        return apply(node);
+    }
+
+    /**
+     * Transforms a list evaluated against a SELECT block's output row namespace.
+     *
+     * @param query  owning query
+     * @param nodes  input nodes
+     * @param output transformed nodes
+     * @param <T>    node type
+     * @return whether any node changed
+     */
+    protected <T extends Node> boolean applySelectOutput(SelectQuery query, List<T> nodes, List<T> output) {
+        boolean changed = false;
+        for (var node : nodes) {
+            var transformed = applySelectOutput(query, node);
+            output.add(transformed);
+            changed |= transformed != node;
+        }
+        return changed;
+    }
+
+    /**
+     * {@inheritDoc}
      */
     @Override
     public Node visitSelectQuery(SelectQuery q) {
         List<SelectItem> items = new ArrayList<>();
-        boolean changed = apply(q.items(), items);
+        boolean changed = applySelectOutput(q, q.items(), items);
         List<StatementHint> statementHints = new ArrayList<>(q.hints().size());
         changed |= apply(q.hints(), statementHints);
-        var distinct = apply(q.distinct());
+        var distinct = applySelectOutput(q, q.distinct());
         changed |= distinct != q.distinct();
         var topSpec = apply(q.topSpec());
         changed |= topSpec != q.topSpec();
@@ -1859,8 +1964,8 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
         var having = apply(q.having());
         changed |= having != q.having();
         List<WindowDef> windows = new ArrayList<>();
-        changed |= apply(q.windows(), windows);
-        var orderBy = apply(q.orderBy());
+        changed |= applySelectOutput(q, q.windows(), windows);
+        var orderBy = applySelectOutput(q, q.orderBy());
         changed |= orderBy != q.orderBy();
         var limitOffset = apply(q.limitOffset());
         changed |= limitOffset != q.limitOffset();
@@ -2404,7 +2509,6 @@ public abstract class RecursiveNodeTransformer implements NodeTransformer {
      * @param expr the array slice expression to visit
      * @return the original expression if unchanged, or a new transformed expression
      */
-    @SuppressWarnings("DataFlowIssue")
     @Override
     public Node visitArraySliceExpr(ArraySliceExpr expr) {
         var baseExpr = apply(expr.base());

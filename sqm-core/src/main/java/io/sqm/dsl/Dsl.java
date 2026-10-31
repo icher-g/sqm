@@ -363,7 +363,20 @@ public final class Dsl {
      * @return range generator
      */
     public static CellFor.Range cellForRange(String dimension, Object from, Object to, RangeDirection direction, Object step) {
-        return cellForRange(id(dimension), null,
+        return cellForRange(id(dimension), from, to, direction, step);
+    }
+
+    /**
+     * Creates a stepped FOR range without a LIKE template, preserving dimension quoting.
+     * @param dimension quote-aware dimension name
+     * @param from inclusive start, as a literal value or expression
+     * @param to inclusive end, as a literal value or expression
+     * @param direction range direction
+     * @param step positive step, as a literal value or expression
+     * @return range generator
+     */
+    public static CellFor.Range cellForRange(Identifier dimension, Object from, Object to, RangeDirection direction, Object step) {
+        return cellForRange(dimension, null,
             from instanceof Expression expression ? expression : lit(from),
             to instanceof Expression expression ? expression : lit(to), direction,
             step instanceof Expression expression ? expression : lit(step));
@@ -521,7 +534,16 @@ public final class Dsl {
      * @return CurrentDimensionExpr value
      */
     public static CurrentDimensionExpr currentDimension(String dimension) {
-        return CurrentDimensionExpr.of(id(dimension));
+        return currentDimension(id(dimension));
+    }
+
+    /**
+     * Creates an explicit CV expression with a quote-aware dimension name.
+     * @param dimension dimension name
+     * @return current dimension value expression
+     */
+    public static CurrentDimensionExpr currentDimension(Identifier dimension) {
+        return CurrentDimensionExpr.of(Objects.requireNonNull(dimension, "dimension"));
     }
 
     /**
@@ -1310,7 +1332,7 @@ public final class Dsl {
      * @return navigation expression
      */
     public static PatternNavigationExpr first(Expression expression) {
-        return first(expression, (Expression) null);
+        return first(expression, null);
     }
 
     /**
@@ -1342,7 +1364,7 @@ public final class Dsl {
      * @return navigation expression
      */
     public static PatternNavigationExpr last(Expression expression) {
-        return last(expression, (Expression) null);
+        return last(expression, null);
     }
 
     /**
@@ -1374,7 +1396,7 @@ public final class Dsl {
      * @return navigation expression
      */
     public static PatternNavigationExpr prev(Expression expression) {
-        return prev(expression, (Expression) null);
+        return prev(expression, null);
     }
 
     /**
@@ -1406,7 +1428,7 @@ public final class Dsl {
      * @return navigation expression
      */
     public static PatternNavigationExpr next(Expression expression) {
-        return next(expression, (Expression) null);
+        return next(expression, null);
     }
 
     /**
@@ -3559,6 +3581,17 @@ public final class Dsl {
      */
     public static CteDef cte(String name, Statement body) {
         return Query.cte(Identifier.of(name), body);
+    }
+
+    /**
+     * Creates a CTE while preserving identifier quoting.
+     *
+     * @param name quote-aware CTE name
+     * @param body statement wrapped by the CTE
+     * @return CTE definition
+     */
+    public static CteDef cte(Identifier name, Statement body) {
+        return Query.cte(name, body);
     }
 
     /**

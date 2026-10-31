@@ -100,7 +100,20 @@ public non-sealed interface ModelClause extends Node {
          * @return this builder
          */
         public Builder rule(CellTarget target, Expression value) {
-            return rule(ModelRule.of(null, target, null, value));
+            return rule(null, target, null, value);
+        }
+
+        /**
+         * Adds an assignment directly, including optional per-rule overrides.
+         * @param mode assignment mode override; {@code null} to inherit the rules default
+         * @param target writable cell target
+         * @param orderBy evaluation ordering; {@code null} when absent
+         * @param value assigned expression
+         * @return this builder
+         */
+        public Builder rule(RuleMode mode, CellTarget target, OrderBy orderBy, Expression value) {
+            main.rule(mode, target, orderBy, value);
+            return this;
         }
 
         /**

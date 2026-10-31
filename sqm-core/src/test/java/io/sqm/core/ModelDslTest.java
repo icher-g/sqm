@@ -6,6 +6,44 @@ import static io.sqm.dsl.Dsl.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ModelDslTest {
+    @Test void modelBuildersAcceptDeclarationsAndCompleteRulesDirectly() {
+        var target = cellTarget("sales", 2026);
+        var value = cellRef("sales", 2025);
+        var ordering = orderBy(col("year_key").desc());
+        var rules = modelRules().defaultMode(RuleMode.UPSERT_ALL)
+            .rule(RuleMode.UPDATE, target, ordering, value)
+            .rule(target, lit(1)).build();
+        assertEquals(RuleMode.UPDATE, rules.rules().getFirst().mode());
+        assertSame(ordering, rules.rules().getFirst().orderBy());
+        assertSame(value, rules.rules().getFirst().value());
+        assertNull(rules.rules().getLast().mode());
+        assertNull(rules.rules().getLast().orderBy());
+        var mainBuilder = mainModel().name("forecast").partition("country").dimension("year_key").measure("amount", "sales")
+            .rule(RuleMode.UPDATE, target, ordering, value);
+        var main = mainBuilder.build();
+        var clauseBuilder = model().partition("country").dimension("year_key").measure("amount", "sales")
+            .rule(RuleMode.UPDATE, target, ordering, value);
+        var clause = clauseBuilder.build();
+        assertEquals(main.rules(), clause.main().rules());
+        assertEquals(modelColumn("year_key"), main.dimensions().getFirst());
+        assertEquals(modelColumn("amount", "sales"), main.measures().getFirst());
+        mainBuilder.rule(target, lit(1));
+        clauseBuilder.rule(target, lit(1));
+        assertEquals(1, main.rules().rules().size());
+        assertEquals(1, clause.main().rules().rules().size());
+        assertEquals(2, mainBuilder.build().rules().rules().size());
+        assertEquals(2, clauseBuilder.build().main().rules().rules().size());
+        assertThrows(NullPointerException.class, () -> modelRules().rule(RuleMode.UPDATE, null, ordering, value));
+        assertThrows(NullPointerException.class, () -> modelRules().rule(null, target, null, null));
+    }
+
+    @Test void cteHelperPreservesQuotedNamesForGeneratedModelSources() {
+        var name = id("Years", QuoteStyle.DOUBLE_QUOTE);
+        var query = select(lit(2026).as("y")).build();
+        var cte = cte(name, query);
+        assertEquals(name, cte.name());
+        assertSame(query, cte.body());
+    }
     @Test
     void fullStateHelpersRetainEveryField() {
         var modelColumnNode = modelColumn(lit(10), "sales");

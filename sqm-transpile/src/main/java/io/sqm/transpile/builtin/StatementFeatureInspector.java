@@ -359,7 +359,13 @@ final class StatementFeatureInspector {
     }
 
     static List<LocatedPatternRecognition> patternRecognitionTables(Statement statement) {
-        return new PatternRecognitionLocationVisitor().find(statement);
+        return new FeatureLocationVisitor().find(statement);
+    }
+
+    static List<LocatedModelClause> modelClauses(Statement statement) {
+        var visitor = new FeatureLocationVisitor();
+        visitor.find(statement);
+        return List.copyOf(visitor.models);
     }
 
     static boolean hasInsertMode(Statement statement, InsertStatement.InsertMode mode) {
@@ -403,10 +409,14 @@ final class StatementFeatureInspector {
     record LocatedPatternRecognition(PatternRecognitionTable table, String path) {
     }
 
-    private static final class PatternRecognitionLocationVisitor extends RecursiveNodeVisitor<Void> {
+    record LocatedModelClause(ModelClause model, String path) {
+    }
+
+    private static final class FeatureLocationVisitor extends RecursiveNodeVisitor<Void> {
         private final ArrayDeque<String> segments = new ArrayDeque<>();
         private final Map<String, Integer> occurrences = new LinkedHashMap<>();
         private final List<LocatedPatternRecognition> located = new ArrayList<>();
+        private final List<LocatedModelClause> models = new ArrayList<>();
 
         List<LocatedPatternRecognition> find(Statement statement) {
             accept(statement);
@@ -445,6 +455,14 @@ final class StatementFeatureInspector {
             return super.visitPatternRecognitionTable(table);
         }
 
+        @Override
+        public Void visitModelClause(ModelClause model) {
+            var basePath = String.join(".", segments);
+            var occurrence = occurrences.merge(basePath, 1, Integer::sum) - 1;
+            models.add(new LocatedModelClause(model, basePath + "[" + occurrence + "]"));
+            return super.visitModelClause(model);
+        }
+
         private static String pathSegment(Node node) {
             return switch (node) {
                 case InsertStatement ignored -> "insert";
@@ -459,6 +477,9 @@ final class StatementFeatureInspector {
                 case QueryExpr ignored -> "subquery";
                 case Join ignored -> "join";
                 case PatternRecognitionTable ignored -> "matchRecognize";
+                case ModelClause ignored -> "model";
+                case ReferenceModel ignored -> "reference";
+                case CellFor.Values ignored -> "for";
                 case Lateral ignored -> "lateral";
                 case PivotTable ignored -> "pivot";
                 case UnpivotTable ignored -> "unpivot";

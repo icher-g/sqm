@@ -34,6 +34,89 @@ public final class IdentifierNormalizationTransformer extends RecursiveNodeTrans
         this.caseMode = Objects.requireNonNull(caseMode, "caseMode");
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Node visitModelColumn(ModelColumn column) {
+        var transformed = (ModelColumn) super.visitModelColumn(column);
+        var name = normalizeIdentifier(column.name());
+        return name == column.name() ? transformed : ModelColumn.of(transformed.expression(), name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Node visitMainModel(MainModel model) {
+        var transformed = (MainModel) super.visitMainModel(model);
+        var name = normalizeIdentifier(model.name());
+        return name == model.name() ? transformed : MainModel.of(name, transformed.partitions(), transformed.dimensions(),
+            transformed.measures(), transformed.navigationMode(), transformed.uniquenessMode(), transformed.rules());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Node visitReferenceModel(ReferenceModel model) {
+        var transformed = (ReferenceModel) super.visitReferenceModel(model);
+        var name = normalizeIdentifier(model.name());
+        return name == model.name() ? transformed : ReferenceModel.of(name, transformed.query(), transformed.dimensions(),
+            transformed.measures(), transformed.navigationMode(), transformed.uniquenessMode());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Node visitCellTarget(CellTarget target) {
+        var transformed = (CellTarget) super.visitCellTarget(target);
+        var name = normalizeIdentifier(target.measure());
+        return name == target.measure() ? transformed : CellTarget.of(name, transformed.addresses());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Node visitCellRefExpr(CellRefExpr cell) {
+        var transformed = (CellRefExpr) super.visitCellRefExpr(cell);
+        var model = normalizeIdentifier(cell.model());
+        var measure = normalizeIdentifier(cell.measure());
+        return model == cell.model() && measure == cell.measure() ? transformed : CellRefExpr.of(model, measure, transformed.selectors());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Node visitCurrentDimensionExpr(CurrentDimensionExpr current) {
+        var dimension = normalizeIdentifier(current.dimension());
+        return dimension == current.dimension() ? current : CurrentDimensionExpr.of(dimension);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Node visitCellForValues(CellFor.Values values) {
+        var transformed = (CellFor.Values) super.visitCellForValues(values);
+        var dimensions = normalizeIdentifiers(values.dimensions());
+        return dimensions == values.dimensions() ? transformed : CellFor.Values.of(dimensions, transformed.values());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Node visitCellForRange(CellFor.Range range) {
+        var transformed = (CellFor.Range) super.visitCellForRange(range);
+        var dimension = normalizeIdentifier(range.dimension());
+        return dimension == range.dimension() ? transformed : CellFor.Range.of(dimension, transformed.likePattern(),
+            transformed.from(), transformed.to(), transformed.direction(), transformed.step());
+    }
+
     @Override
     public Node visitTable(Table t) {
         var schema = normalizeIdentifier(t.schema());
@@ -305,7 +388,8 @@ public final class IdentifierNormalizationTransformer extends RecursiveNodeTrans
             if (normalized != target.identifier()) {
                 changed = true;
                 targets.add(LockTarget.of(normalized));
-            } else {
+            }
+            else {
                 targets.add(target);
             }
         }

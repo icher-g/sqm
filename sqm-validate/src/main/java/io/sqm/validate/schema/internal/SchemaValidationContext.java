@@ -1,15 +1,15 @@
 package io.sqm.validate.schema.internal;
 
-import io.sqm.catalog.model.CatalogTable;
-import io.sqm.core.*;
 import io.sqm.catalog.access.CatalogAccessPolicies;
 import io.sqm.catalog.access.CatalogAccessPolicy;
 import io.sqm.catalog.model.CatalogColumn;
 import io.sqm.catalog.model.CatalogSchema;
+import io.sqm.catalog.model.CatalogTable;
+import io.sqm.catalog.model.CatalogType;
+import io.sqm.core.*;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.function.DefaultFunctionCatalog;
 import io.sqm.validate.schema.function.FunctionCatalog;
-import io.sqm.catalog.model.CatalogType;
 import io.sqm.validate.schema.model.CatalogTypeSemantics;
 
 import java.util.*;
@@ -28,6 +28,8 @@ public final class SchemaValidationContext {
     private final String principal;
     private final List<ValidationProblem> problems = new ArrayList<>();
     private final Deque<Scope> scopes = new ArrayDeque<>();
+    private final Deque<QueryIsolation> queryIsolations = new ArrayDeque<>();
+    private final Deque<ModelFrame> modelScopes = new ArrayDeque<>();
     private final Deque<Map<String, CteSource>> cteScopes = new ArrayDeque<>();
     private final Deque<PatternExpressionFrame> patternExpressionScopes = new ArrayDeque<>();
 
@@ -53,10 +55,10 @@ public final class SchemaValidationContext {
     /**
      * Creates a context for the provided schema, function catalog, and access policy.
      *
-     * @param schema schema used for table and column resolution.
+     * @param schema          schema used for table and column resolution.
      * @param functionCatalog function signature catalog used for return-type inference.
-     * @param accessPolicy schema access policy.
-     * @param principal principal identifier used for access checks, may be {@code null}.
+     * @param accessPolicy    schema access policy.
+     * @param principal       principal identifier used for access checks, may be {@code null}.
      */
     public SchemaValidationContext(
         CatalogSchema schema,
@@ -70,11 +72,11 @@ public final class SchemaValidationContext {
     /**
      * Creates a context for the provided schema, function catalog, and access policy.
      *
-     * @param schema schema used for table and column resolution.
+     * @param schema          schema used for table and column resolution.
      * @param functionCatalog function signature catalog used for return-type inference.
-     * @param accessPolicy schema access policy.
-     * @param tenant tenant identifier used for access checks, may be {@code null}.
-     * @param principal principal identifier used for access checks, may be {@code null}.
+     * @param accessPolicy    schema access policy.
+     * @param tenant          tenant identifier used for access checks, may be {@code null}.
+     * @param principal       principal identifier used for access checks, may be {@code null}.
      */
     public SchemaValidationContext(
         CatalogSchema schema,
@@ -127,6 +129,56 @@ public final class SchemaValidationContext {
         return CatalogType.INTEGER;
     }
 
+    private static void copyOutputColumns(Map<String, CatalogColumn> output, ResolvedSource source) {
+        if (source.quoteAware()) output.putAll(source.columns());
+        else source.columns().values().forEach(column -> output.put(column.name().toUpperCase(Locale.ROOT), column));
+    }
+
+    private static boolean hasModelOutput(Query query) {
+        return switch (query) {
+            case SelectQuery select -> select.model() != null;
+            case WithQuery with -> hasModelOutput(with.body());
+            case CompositeQuery composite -> hasModelOutput(composite.terms().getFirst());
+            default -> false;
+        };
+    }
+
+    private static Map<String, CatalogColumn> renamedProjection(QueryOutput output, List<Identifier> aliases) {
+        if (aliases == null || aliases.isEmpty()) return output.columns();
+        var result = new LinkedHashMap<String, CatalogColumn>();
+        for (var index = 0; index < aliases.size(); index++) {
+            var alias = aliases.get(index);
+            result.put(ModelScope.key(alias), CatalogColumn.of(alias.value(),
+                output.types().size() == aliases.size() ? output.types().get(index) : CatalogType.UNKNOWN));
+        }
+        return result;
+    }
+
+    private static List<Identifier> jsonTableColumnNames(List<JsonTableColumn> columns) {
+        var names = new ArrayList<Identifier>();
+        collectJsonTableColumnNames(columns, names);
+        return names;
+    }
+
+    private static void collectJsonTableColumnNames(List<JsonTableColumn> columns, List<Identifier> names) {
+        for (var column : columns) {
+            if (column instanceof JsonTableNestedPathColumn nested) {
+                collectJsonTableColumnNames(nested.columns(), names);
+            }
+            else
+                if (column.name() != null) {
+                    names.add(column.name());
+                }
+        }
+    }
+
+    private static String functionName(FunctionExpr functionExpr) {
+        if (functionExpr == null || functionExpr.name() == null) {
+            return null;
+        }
+        return functionExpr.name().parts().getLast().value();
+    }
+
     /**
      * Returns immutable snapshot of collected validation problems.
      *
@@ -149,7 +201,7 @@ public final class SchemaValidationContext {
      * Returns true when table access is denied for the current principal.
      *
      * @param schemaName table schema, may be {@code null}.
-     * @param tableName table name.
+     * @param tableName  table name.
      * @return true when denied.
      */
     public boolean isTableDenied(String schemaName, String tableName) {
@@ -238,6 +290,228 @@ public final class SchemaValidationContext {
     }
 
     /**
+     * Opens a query boundary that cannot capture rows from enclosing query blocks.
+     * Nested queries inside this boundary may still correlate to its own sources.
+     *
+     * @param path stable reference/FOR query diagnostic path
+     */
+    public void pushQueryIsolation(String path) {
+        queryIsolations.push(new QueryIsolation(scopes.size(), path, true));
+    }
+
+    /**
+     * Closes the current isolated-query boundary.
+     */
+    public void popQueryIsolation() {
+        queryIsolations.pop();
+    }
+
+    /**
+     * Opens a closed, quote-aware declaration namespace without exposing input-row columns.
+     *
+     * @param columns resolved declarations keyed by SQL identifier equality
+     * @param path    stable scope diagnostic path
+     */
+    public void pushDeclaredColumns(Map<String, CatalogColumn> columns, String path) {
+        pushDeclaredColumns(columns, path, true);
+    }
+
+    private void pushDeclaredColumns(Map<String, CatalogColumn> columns, String path, boolean strict) {
+        queryIsolations.push(new QueryIsolation(scopes.size(), path, false));
+        pushScope();
+        var source = new ResolvedSource(Identifier.of("$MODEL"), Collections.unmodifiableMap(new LinkedHashMap<>(columns)), strict, true);
+        scopes.peek().sources.add(source);
+    }
+
+    /**
+     * Closes a declaration namespace and restores its input scope.
+     */
+    public void popDeclaredColumns() {
+        popScope();
+        queryIsolations.pop();
+    }
+
+    /**
+     * Opens MODEL rule type resolution at the current query depth.
+     *
+     * @param model immutable declaration/type snapshot
+     */
+    public void pushModelScope(ModelScope model) {
+        modelScopes.push(new ModelFrame(model, scopes.size()));
+    }
+
+    /**
+     * Restores the enclosing MODEL rule context.
+     */
+    public void popModelScope() {
+        modelScopes.pop();
+    }
+
+    /**
+     * Returns the active MODEL namespace, excluding nested ordinary query scopes.
+     *
+     * @return active snapshot, or null outside MODEL rules
+     */
+    public ModelScope modelScope() {
+        var frame = modelScopes.peek();
+        return frame != null && frame.depth() == scopes.size() ? frame.model() : null;
+    }
+
+    /**
+     * Infers declaration types against input rows and each reference query's own output.
+     *
+     * @param clause MODEL clause
+     * @return immutable main/reference type snapshot
+     */
+    public ModelScope modelScope(ModelClause clause) {
+        var columns = declarationColumns(clause.main().partitions(), clause.main().dimensions(), clause.main().measures());
+        var references = new LinkedHashMap<String, Map<String, CatalogColumn>>();
+        for (var reference : clause.references()) {
+            pushQueryOutput(reference.query(), "model.reference.declarations");
+            try {
+                references.putIfAbsent(ModelScope.key(reference.name()),
+                    declarationColumns(List.of(), reference.dimensions(), reference.measures()));
+            } finally {
+                popDeclaredColumns();
+            }
+        }
+        return new ModelScope(clause, columns, references);
+    }
+
+    /**
+     * Derives the closed post-MODEL row schema in partition/dimension/measure order.
+     *
+     * @param main main model
+     * @return declared output columns and their input-derived types
+     */
+    public Map<String, CatalogColumn> modelOutputColumns(MainModel main) {
+        return Collections.unmodifiableMap(declarationColumns(main.partitions(), main.dimensions(), main.measures()));
+    }
+
+    private Map<String, CatalogColumn> declarationColumns(List<ModelColumn> partitions,
+        List<ModelColumn> dimensions, List<ModelColumn> measures) {
+        var result = new LinkedHashMap<String, CatalogColumn>();
+        for (var list : List.of(partitions, dimensions, measures)) {
+            for (var column : list) {
+                result.putIfAbsent(ModelScope.key(column.name()), CatalogColumn.of(column.name().value(),
+                    inferType(column.expression()).orElse(CatalogType.UNKNOWN)));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Derives nameable query output columns, including MODEL's closed output shape.
+     *
+     * @param query source query
+     * @return columns and known types under quote-aware SQL keys
+     */
+    public Map<String, CatalogColumn> queryOutputColumns(Query query) {
+        return queryOutput(query).columns();
+    }
+
+    /**
+     * Opens a reference-query output namespace. Unknown star expansions remain
+     * permissive; explicit projections and MODEL output are closed namespaces.
+     *
+     * @param query reference source
+     * @param path  diagnostic scope path
+     */
+    public void pushQueryOutput(Query query, String path) {
+        var output = queryOutput(query);
+        pushDeclaredColumns(output.columns(), path, output.known());
+    }
+
+    private QueryOutput queryOutput(Query query) {
+        var problemCount = problems.size();
+        try {
+            return inferQueryOutput(query);
+        } finally {
+            // Metadata inference must not duplicate traversal's table/policy diagnostics.
+            problems.subList(problemCount, problems.size()).clear();
+        }
+    }
+
+    private QueryOutput inferQueryOutput(Query query) {
+        if (query instanceof WithQuery with) {
+            pushWithScope();
+            try {
+                for (var cte : with.ctes()) {
+                    registerCte(cte);
+                }
+                return queryOutput(with.body());
+            } finally {
+                popWithScope();
+            }
+        }
+        if (query instanceof CompositeQuery composite) return queryOutput(composite.terms().getFirst());
+        if (!(query instanceof SelectQuery select)) return new QueryOutput(Map.of(), false, List.of());
+        pushScope();
+        try {
+            registerTableRef(select.from());
+            select.joins().forEach(join -> registerTableRef(join.right()));
+            var output = new LinkedHashMap<String, CatalogColumn>();
+            var types = new ArrayList<CatalogType>();
+            Map<String, CatalogColumn> model = select.model() == null ? null
+                : declarationColumns(select.model().main().partitions(), select.model().main().dimensions(), select.model().main().measures());
+            if (model != null) pushDeclaredColumns(model, "model.output");
+            try {
+                boolean known = true;
+                for (var item : select.items()) {
+                    if (item instanceof ExprSelectItem expression) {
+                        var type = inferType(expression.expr()).orElse(CatalogType.UNKNOWN);
+                        types.add(type);
+                        var name = expression.alias() != null ? expression.alias()
+                            : expression.expr() instanceof ColumnExpr column ? column.name() : null;
+                        if (name != null) output.put(ModelScope.key(name), CatalogColumn.of(name.value(), type));
+                    }
+                    else
+                        if (model != null && item instanceof StarSelectItem) {
+                            output.putAll(model);
+                            model.values().forEach(column -> types.add(column.type()));
+                        }
+                        else
+                            if (item instanceof StarSelectItem) {
+                                for (var source : scopes.peek().sources) {
+                                    known &= source.strictColumns();
+                                    copyOutputColumns(output, source);
+                                    source.columns().values().forEach(column -> types.add(column.type()));
+                                }
+                            }
+                            else
+                                if (item instanceof QualifiedStarSelectItem star) {
+                                    var source = findSource(star.qualifier(), ScopeResolutionMode.CURRENT_SCOPE);
+                                    known &= source.isPresent() && source.get().strictColumns();
+                                    source.ifPresent(binding -> copyOutputColumns(output, binding));
+                                    source.ifPresent(binding -> binding.columns().values().forEach(column -> types.add(column.type())));
+                                }
+                }
+                return new QueryOutput(Collections.unmodifiableMap(output), known, known ? List.copyOf(types) : List.of());
+            } finally {
+                if (model != null) popDeclaredColumns();
+            }
+        } finally {
+            popScope();
+        }
+    }
+
+    private Map<String, CatalogColumn> renamedProjection(Query query, List<Identifier> aliases) {
+        return renamedProjection(queryOutput(query), aliases);
+    }
+
+    private boolean reportIsolatedReference(ColumnExpr column, boolean reportErrors) {
+        var boundary = queryIsolations.peek();
+        if (boundary == null || !boundary.uncorrelated()) return false;
+        var blocked = scopes.stream().skip(Math.max(0, scopes.size() - boundary.depth())).toList();
+        boolean found = blocked.stream().anyMatch(scope -> column.tableAlias() == null
+            ? scope.sources().stream().anyMatch(source -> source.lookup(column.name()) != null)
+            : scope.byAlias().containsKey(normalize(column.tableAlias())));
+        if (found && reportErrors) addProblem(ValidationProblem.Code.DIALECT_CLAUSE_INVALID,
+            "MODEL reference/FOR query cannot contain correlated outer references", column, boundary.path());
+        return found;
+    }
+
+    /**
      * Opens a new table-alias scope for a SELECT block.
      */
     public void pushScope() {
@@ -254,7 +528,7 @@ public final class SchemaValidationContext {
     /**
      * Opens a row-pattern expression scope.
      *
-     * @param kind expression location kind.
+     * @param kind       expression location kind.
      * @param clausePath stable clause path for diagnostics.
      */
     public void pushPatternExpressionScope(PatternExpressionKind kind, String clausePath) {
@@ -316,6 +590,12 @@ public final class SchemaValidationContext {
         var ctes = cteScopes.peek();
         if (ctes != null) {
             ctes.put(normalize(cte.name()), CteSource.from(cte));
+            if (cte.body() instanceof Query query) {
+                var output = queryOutput(query);
+                var fields = renamedProjection(output, cte.columnAliases());
+                var explicitAliases = cte.columnAliases() != null && !cte.columnAliases().isEmpty();
+                ctes.put(normalize(cte.name()), new CteSource(fields, explicitAliases || output.known(), true));
+            }
         }
     }
 
@@ -324,6 +604,16 @@ public final class SchemaValidationContext {
      */
     public void popWithScope() {
         cteScopes.pop();
+    }
+
+    /**
+     * Indicates whether an unqualified table name resolves to a visible CTE.
+     *
+     * @param table table reference
+     * @return whether the reference names a CTE rather than a physical table
+     */
+    public boolean isCteReference(Table table) {
+        return table.schema() == null && currentCtes().containsKey(normalize(table.name()));
     }
 
     /**
@@ -355,10 +645,15 @@ public final class SchemaValidationContext {
                 }
             }
             case Table table -> registerPhysicalTable(table);
-            case QueryTable queryTable -> registerDerivedSource(
-                queryTable.alias(),
-                queryTable.columnAliases()
-            );
+            case QueryTable queryTable -> {
+                if (queryTable.alias() != null && hasModelOutput(queryTable.query())) {
+                    registerSource(queryTable.alias(), new ResolvedSource(queryTable.alias(),
+                        renamedProjection(queryTable.query(), queryTable.columnAliases()), true, true));
+                }
+                else {
+                    registerDerivedSource(queryTable.alias(), queryTable.columnAliases());
+                }
+            }
             case ValuesTable valuesTable -> registerDerivedSource(
                 valuesTable.alias(),
                 valuesTable.columnAliases()
@@ -412,23 +707,6 @@ public final class SchemaValidationContext {
                 : Optional.of(normalize(jsonTable.alias()));
             default -> Optional.empty();
         };
-    }
-
-    private static List<Identifier> jsonTableColumnNames(List<JsonTableColumn> columns) {
-        var names = new ArrayList<Identifier>();
-        collectJsonTableColumnNames(columns, names);
-        return names;
-    }
-
-    private static void collectJsonTableColumnNames(List<JsonTableColumn> columns, List<Identifier> names) {
-        for (var column : columns) {
-            if (column instanceof JsonTableNestedPathColumn nested) {
-                collectJsonTableColumnNames(nested.columns(), names);
-            }
-            else if (column.name() != null) {
-                names.add(column.name());
-            }
-        }
     }
 
     /**
@@ -536,8 +814,8 @@ public final class SchemaValidationContext {
     /**
      * Resolves a row-pattern column against the input relation in the current scope.
      *
-     * @param column column identifier.
-     * @param node source expression used in diagnostics.
+     * @param column     column identifier.
+     * @param node       source expression used in diagnostics.
      * @param clausePath stable clause path.
      * @return resolved input column when known.
      */
@@ -582,7 +860,7 @@ public final class SchemaValidationContext {
     /**
      * Resolves a physical target-table column directly from the catalog.
      *
-     * @param table target table.
+     * @param table  target table.
      * @param column column identifier.
      * @return resolved catalog column when the physical table is known.
      */
@@ -696,14 +974,23 @@ public final class SchemaValidationContext {
             for (var join : select.joins()) {
                 registerTableRef(join.right());
             }
-            var types = new ArrayList<Optional<CatalogType>>(select.items().size());
-            for (var item : select.items()) {
-                if (!(item instanceof ExprSelectItem exprItem)) {
-                    return Optional.empty();
+            if (select.model() != null) pushDeclaredColumns(modelOutputColumns(select.model().main()), "model.output");
+            try {
+                var types = new ArrayList<Optional<CatalogType>>(select.items().size());
+                for (var item : select.items()) {
+                    if (item instanceof StarSelectItem && select.model() != null) {
+                        scopes.peek().sources.getFirst().columns().values().forEach(column -> types.add(Optional.of(column.type())));
+                        continue;
+                    }
+                    if (!(item instanceof ExprSelectItem exprItem)) {
+                        return Optional.empty();
+                    }
+                    types.add(inferTypeInCurrentScope(exprItem.expr()));
                 }
-                types.add(inferTypeInCurrentScope(exprItem.expr()));
+                return Optional.of(List.copyOf(types));
+            } finally {
+                if (select.model() != null) popDeclaredColumns();
             }
-            return Optional.of(List.copyOf(types));
         } finally {
             popScope();
         }
@@ -728,7 +1015,7 @@ public final class SchemaValidationContext {
         var aliasOrName = table.alias() == null ? table.name() : table.alias();
         var cte = currentCtes().get(normalize(table.name()));
         if (table.schema() == null && cte != null) {
-            registerSource(aliasOrName, ResolvedSource.of(aliasOrName, cte.columns(), cte.strictColumns()));
+            registerSource(aliasOrName, new ResolvedSource(aliasOrName, cte.columns(), cte.strictColumns(), cte.quoteAware()));
             return;
         }
 
@@ -862,6 +1149,7 @@ public final class SchemaValidationContext {
         if (column.tableAlias() != null) {
             var source = findSource(column.tableAlias(), mode);
             if (source.isEmpty()) {
+                if (reportIsolatedReference(column, reportErrors)) return Optional.empty();
                 if (reportErrors) {
                     addProblem(
                         ValidationProblem.Code.UNKNOWN_TABLE_ALIAS,
@@ -876,7 +1164,7 @@ public final class SchemaValidationContext {
             if (!resolvedSource.strictColumns()) {
                 return Optional.empty();
             }
-            var dbColumn = resolvedSource.columns().get(normalize(column.name()));
+            var dbColumn = resolvedSource.lookup(column.name());
             if (dbColumn == null && reportErrors) {
                 addProblem(
                     ValidationProblem.Code.COLUMN_NOT_FOUND,
@@ -896,13 +1184,17 @@ public final class SchemaValidationContext {
                     unknownSourceVisible = true;
                     continue;
                 }
-                var dbColumn = source.columns().get(normalize(column.name()));
+                var dbColumn = source.lookup(column.name());
                 if (dbColumn != null) {
                     matches.add(dbColumn);
                 }
             }
+            // A local binding shadows outer scopes. An unknown local row shape
+            // also prevents proving that an unqualified name belongs to an outer row.
+            if (!matches.isEmpty() || unknownSourceVisible) break;
         }
         if (matches.isEmpty()) {
+            if (!unknownSourceVisible && reportIsolatedReference(column, reportErrors)) return Optional.empty();
             if (reportErrors && (!unknownSourceVisible || mode == ScopeResolutionMode.CURRENT_SCOPE)) {
                 addProblem(
                     ValidationProblem.Code.COLUMN_NOT_FOUND,
@@ -930,11 +1222,11 @@ public final class SchemaValidationContext {
     /**
      * Resolves a column against current-scope sources only and reports DML-specific clause paths.
      *
-     * @param sourceAlias optional source alias qualifier.
-     * @param columnName column identifier.
+     * @param sourceAlias  optional source alias qualifier.
+     * @param columnName   column identifier.
      * @param reportErrors whether lookup failures should be recorded as problems.
-     * @param node source node for structured problem reporting.
-     * @param clausePath clause/path hint.
+     * @param node         source node for structured problem reporting.
+     * @param clausePath   clause/path hint.
      * @return resolved column metadata when available.
      */
     private Optional<CatalogColumn> resolveCurrentScopeColumn(
@@ -964,7 +1256,7 @@ public final class SchemaValidationContext {
             if (!resolvedSource.strictColumns()) {
                 return Optional.empty();
             }
-            var dbColumn = resolvedSource.columns().get(normalize(columnName));
+            var dbColumn = resolvedSource.lookup(columnName);
             if (dbColumn == null && reportErrors) {
                 addProblem(
                     ValidationProblem.Code.COLUMN_NOT_FOUND,
@@ -984,7 +1276,7 @@ public final class SchemaValidationContext {
                     unknownSourceVisible = true;
                     continue;
                 }
-                var dbColumn = source.columns().get(normalize(columnName));
+                var dbColumn = source.lookup(columnName);
                 if (dbColumn != null) {
                     matches.add(dbColumn);
                 }
@@ -1024,6 +1316,14 @@ public final class SchemaValidationContext {
      */
     private Optional<CatalogType> inferType(Expression expression, ScopeResolutionMode mode) {
         return switch (expression) {
+            case CellRefExpr cell -> Optional.ofNullable(modelScope()).map(scope -> scope.resolve(cell.model(), cell.measure()))
+                .map(CatalogColumn::type);
+            case ModelAggregateExpr aggregate -> inferType(aggregate.aggregate(), mode);
+            case CurrentDimensionExpr current -> current.dimension() == null ? Optional.empty()
+                : Optional.ofNullable(modelScope()).map(scope -> scope.resolve(null, current.dimension())).map(CatalogColumn::type);
+            case IterationNumberExpr ignored -> Optional.of(CatalogType.INTEGER);
+            case PreviousModelValueExpr previous -> inferType(previous.cell(), mode);
+            case PresenceValueExpr presence -> inferType(presence.whenPresent(), mode);
             case LiteralExpr literalExpr -> CatalogTypeSemantics.fromLiteral(literalExpr.value());
             case ColumnExpr columnExpr -> resolveColumn(columnExpr, mode, false).map(column -> column.type());
             case QueryExpr queryExpr -> inferSingleColumnType(queryExpr.subquery());
@@ -1110,9 +1410,9 @@ public final class SchemaValidationContext {
     /**
      * Counts strict sources with a matching column under selected scope visibility.
      *
-     * @param columnName column name to lookup.
+     * @param columnName        column name to lookup.
      * @param excludedSourceKey optional normalized source key to exclude.
-     * @param mode scope resolution mode.
+     * @param mode              scope resolution mode.
      * @return number of matching strict sources.
      */
     private int countStrictSourcesWithColumn(
@@ -1143,9 +1443,9 @@ public final class SchemaValidationContext {
     /**
      * Returns type of a column in a strict source under selected scope visibility.
      *
-     * @param sourceKey normalized or raw source key.
+     * @param sourceKey  normalized or raw source key.
      * @param columnName column name.
-     * @param mode scope resolution mode.
+     * @param mode       scope resolution mode.
      * @return column type when source and column are known.
      */
     private Optional<CatalogType> sourceColumnType(
@@ -1193,7 +1493,9 @@ public final class SchemaValidationContext {
             var current = currentScope().orElse(null);
             return current == null ? List.of() : List.of(current);
         }
-        return scopes;
+        var boundary = queryIsolations.peek();
+        return boundary == null ? scopes : scopes.stream()
+            .limit(Math.max(0, scopes.size() - boundary.depth())).toList();
     }
 
     /**
@@ -1227,10 +1529,23 @@ public final class SchemaValidationContext {
      * Location of a row-pattern-only expression.
      */
     public enum PatternExpressionKind {
-        /** Expression declared by a {@link PatternMeasure}. */
+        /**
+         * Expression declared by a {@link PatternMeasure}.
+         */
         MEASURE,
-        /** Predicate declared by a {@link PatternDefinition}. */
+        /**
+         * Predicate declared by a {@link PatternDefinition}.
+         */
         DEFINITION
+    }
+
+    private record QueryOutput(Map<String, CatalogColumn> columns, boolean known, List<CatalogType> types) {
+    }
+
+    private record QueryIsolation(int depth, String path, boolean uncorrelated) {
+    }
+
+    private record ModelFrame(ModelScope model, int depth) {
     }
 
     private record PatternExpressionFrame(PatternExpressionKind kind, String clausePath) {
@@ -1263,7 +1578,8 @@ public final class SchemaValidationContext {
      * @param columns       visible columns by normalized name.
      * @param strictColumns whether unresolved columns should be reported.
      */
-    private record ResolvedSource(Identifier aliasOrName, Map<String, CatalogColumn> columns, boolean strictColumns) {
+    private record ResolvedSource(Identifier aliasOrName, Map<String, CatalogColumn> columns,
+                                  boolean strictColumns, boolean quoteAware) {
         /**
          * Creates immutable source metadata.
          *
@@ -1273,7 +1589,15 @@ public final class SchemaValidationContext {
          * @return source metadata.
          */
         private static ResolvedSource of(Identifier aliasOrName, Map<String, CatalogColumn> columns, boolean strictColumns) {
-            return new ResolvedSource(aliasOrName, Map.copyOf(columns), strictColumns);
+            return new ResolvedSource(aliasOrName, Collections.unmodifiableMap(new LinkedHashMap<>(columns)), strictColumns, false);
+        }
+
+        private CatalogColumn lookup(Identifier name) {
+            return columns.get(quoteAware ? ModelScope.key(name) : normalize(name));
+        }
+
+        private CatalogColumn lookup(String name) {
+            return lookup(Identifier.of(name));
         }
     }
 
@@ -1282,8 +1606,9 @@ public final class SchemaValidationContext {
      *
      * @param columns       CTE result columns.
      * @param strictColumns whether column list is explicit and strict.
+     * @param quoteAware    whether columns use SQL identifier equality
      */
-    private record CteSource(Map<String, CatalogColumn> columns, boolean strictColumns) {
+    private record CteSource(Map<String, CatalogColumn> columns, boolean strictColumns, boolean quoteAware) {
         /**
          * Creates CTE metadata from definition.
          *
@@ -1292,21 +1617,14 @@ public final class SchemaValidationContext {
          */
         private static CteSource from(CteDef cte) {
             if (cte.columnAliases() == null || cte.columnAliases().isEmpty()) {
-                return new CteSource(Map.of(), false);
+                return new CteSource(Map.of(), false, false);
             }
             var columns = new LinkedHashMap<String, CatalogColumn>(cte.columnAliases().size());
             for (var alias : cte.columnAliases()) {
-                columns.put(normalize(alias), CatalogColumn.of(alias.value(), CatalogType.STRING));
+                columns.put(normalize(alias), CatalogColumn.of(alias.value(), CatalogType.UNKNOWN));
             }
-            return new CteSource(Map.copyOf(columns), true);
+            return new CteSource(Collections.unmodifiableMap(new LinkedHashMap<>(columns)), true, false);
         }
-    }
-
-    private static String functionName(FunctionExpr functionExpr) {
-        if (functionExpr == null || functionExpr.name() == null) {
-            return null;
-        }
-        return functionExpr.name().parts().getLast().value();
     }
 }
 

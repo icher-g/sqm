@@ -1,5 +1,6 @@
 package io.sqm.transpile.rule;
 
+import io.sqm.core.dialect.DialectCapabilities;
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.transpile.builtin.*;
 
@@ -19,11 +20,24 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
     }
 
     /**
-     * Returns the default built-in registry.
+     * Returns the default built-in registry using each rule's baseline policy.
+     * Use {@link #defaults(DialectCapabilities)} to supply configured target capabilities.
      *
      * @return default rule registry
      */
     public static DefaultTranspileRuleRegistry defaults() {
+        return defaults(null);
+    }
+
+    /**
+     * Returns built-in rules with target capabilities forwarded to rules that need them.
+     * Each rule owns its feature support and compatibility policy.
+     *
+     * @param targetCapabilities configured target dialect capabilities, or {@code null}
+     *                           to use each rule's baseline policy
+     * @return default rule registry
+     */
+    public static DefaultTranspileRuleRegistry defaults(DialectCapabilities targetCapabilities) {
         return new DefaultTranspileRuleRegistry(List.of(
             new PostgresToMySqlNullSafeComparisonRule(),
             new PostgresToMySqlIlikeRule(),
@@ -55,6 +69,7 @@ public final class DefaultTranspileRuleRegistry implements TranspileRuleRegistry
             new SequenceValueUnsupportedRule(),
             new TableAccessModifierUnsupportedRule(),
             new MatchRecognizeUnsupportedRule(),
+            new ModelClauseUnsupportedRule(targetCapabilities),
             new PivotUnpivotApproximateRewriteRule(),
             new HierarchicalQueryToRecursiveCteRule(),
             new HierarchicalQueryUnsupportedRule(),

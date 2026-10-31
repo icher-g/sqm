@@ -59,7 +59,18 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
         this.sourceSchema = builder.sourceSchema;
         this.targetSchema = builder.targetSchema;
         this.options = builder.options != null ? builder.options : TranspileOptions.defaults();
-        this.registry = builder.registry != null ? builder.registry : DefaultTranspileRuleRegistry.defaults();
+        this.registry = builder.registry != null ? builder.registry : DefaultTranspileRuleRegistry.defaults(rendererFactory.get().capabilities());
+    }
+
+    private TranspileResult withDialects(TranspileResult result) {
+        return new TranspileResult(
+            result.status(),
+            result.sourceAst(),
+            result.transpiledAst(),
+            result.sql(),
+            result.params(),
+            result.steps(),
+            result.problems().stream().map(problem -> problem.withDialects(sourceDialect, targetDialect)).toList(), result.warnings());
     }
 
     private static TranspileStatus highestFailureStatus(List<TranspileProblem> problems) {
@@ -185,7 +196,7 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
         var ctx = ParseContext.of(parserFactory.get());
         var parseResult = ctx.parse(StatementSequence.class, sql);
         if (parseResult.isError() || parseResult.value() == null) {
-            return new TranspileResult(
+            return withDialects(new TranspileResult(
                 TranspileStatus.PARSE_FAILED,
                 null,
                 null,
@@ -193,7 +204,7 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
                 List.of(),
                 parseProblems(parseResult),
                 List.of()
-            );
+            ));
         }
         var sequence = parseResult.value();
         return transpile(sequence);
@@ -215,7 +226,22 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
         var warnings = new ArrayList<TranspileWarning>();
         var problems = new ArrayList<TranspileProblem>();
 
-        for (TranspileRule rule : registry.rulesFor(sourceDialect, targetDialect)) {
+        var applicable = registry.rulesFor(sourceDialect, targetDialect);
+        for (var guard : applicable) {
+            if (!guard.preflight()) continue;
+            var result = guard.apply(statement, context);
+            if (result.changed() || result.statement() != statement) {
+                throw new IllegalStateException("Preflight rules cannot rewrite the statement: " + guard.id());
+            }
+            steps.add(new TranspileStep(guard.id(), result.fidelity(), result.description(), false));
+            warnings.addAll(result.warnings());
+            if (!result.problems().isEmpty()) {
+                return withDialects(new TranspileResult(TranspileStatus.UNSUPPORTED, statement, statement, null,
+                    steps, result.problems(), result.warnings()));
+            }
+        }
+        for (TranspileRule rule : applicable) {
+            if (rule.preflight()) continue;
             var result = rule.apply(current, context);
             current = result.statement();
 
@@ -233,7 +259,7 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
         }
 
         if (!problems.isEmpty()) {
-            return new TranspileResult(
+            return withDialects(new TranspileResult(
                 TranspileStatus.UNSUPPORTED,
                 statement,
                 current,
@@ -241,11 +267,11 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
                 steps,
                 problems,
                 warnings
-            );
+            ));
         }
 
         if (options.failOnWarnings() && !warnings.isEmpty()) {
-            return new TranspileResult(
+            return withDialects(new TranspileResult(
                 TranspileStatus.UNSUPPORTED,
                 statement,
                 current,
@@ -257,13 +283,13 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
                     TranspileStage.REWRITE
                 )),
                 warnings
-            );
+            ));
         }
 
         if (options.validateTarget() && targetSchema != null) {
             var validationResult = SchemaStatementValidator.of(targetSchema, validationFactory.get()).validate(current);
             if (!validationResult.ok()) {
-                return new TranspileResult(
+                return withDialects(new TranspileResult(
                     TranspileStatus.VALIDATION_FAILED,
                     statement,
                     current,
@@ -271,7 +297,7 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
                     steps,
                     validationProblems(validationResult.problems()),
                     warnings
-                );
+                ));
             }
         }
 
@@ -283,7 +309,7 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
                 sql = Optional.of(text.sql());
                 params = text.params();
             } catch (RuntimeException ex) {
-                return new TranspileResult(
+                return withDialects(new TranspileResult(
                     TranspileStatus.RENDER_FAILED,
                     statement,
                     current,
@@ -291,11 +317,11 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
                     steps,
                     List.of(new TranspileProblem("RENDER_FAILED", ex.getMessage(), TranspileStage.RENDER)),
                     warnings
-                );
+                ));
             }
         }
 
-        return new TranspileResult(
+        return withDialects(new TranspileResult(
             warnings.isEmpty() ? TranspileStatus.SUCCESS : TranspileStatus.SUCCESS_WITH_WARNINGS,
             Optional.of(statement),
             Optional.of(current),
@@ -304,7 +330,7 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
             steps,
             List.of(),
             warnings
-        );
+        ));
     }
 
     @Override
@@ -335,7 +361,7 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
         }
 
         if (!problems.isEmpty()) {
-            return new TranspileResult(
+            return withDialects(new TranspileResult(
                 highestFailureStatus(problems),
                 sequence,
                 null,
@@ -343,7 +369,7 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
                 steps,
                 problems,
                 warnings
-            );
+            ));
         }
 
         var transpiledSequence = StatementSequence.of(transpiledStatements);
@@ -355,7 +381,7 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
                 sql = Optional.of(text.sql());
                 params = text.params();
             } catch (RuntimeException ex) {
-                return new TranspileResult(
+                return withDialects(new TranspileResult(
                     TranspileStatus.RENDER_FAILED,
                     sequence,
                     transpiledSequence,
@@ -363,11 +389,11 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
                     steps,
                     List.of(new TranspileProblem("RENDER_FAILED", ex.getMessage(), TranspileStage.RENDER)),
                     warnings
-                );
+                ));
             }
         }
 
-        return new TranspileResult(
+        return withDialects(new TranspileResult(
             warnings.isEmpty() ? TranspileStatus.SUCCESS : TranspileStatus.SUCCESS_WITH_WARNINGS,
             Optional.of(sequence),
             Optional.of(transpiledSequence),
@@ -376,7 +402,7 @@ public final class DefaultSqlTranspiler implements SqlTranspiler {
             steps,
             List.of(),
             warnings
-        );
+        ));
     }
 
     /**

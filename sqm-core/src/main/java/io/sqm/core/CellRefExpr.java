@@ -56,6 +56,25 @@ public non-sealed interface CellRefExpr extends Expression {
      */
     List<CellSelector> selectors();
 
+    /**
+     * Qualifies this cell without rebuilding its selectors, for example
+     * {@code cellRef("rate", "Bike").inModel("growth")}.
+     * @param model unquoted model qualifier; {@code null} removes it
+     * @return qualified cell, or this instance when the qualifier is unchanged
+     */
+    default CellRefExpr inModel(String model) {
+        return inModel(model == null ? null : Identifier.of(model));
+    }
+
+    /**
+     * Qualifies this cell while preserving identifier quoting and immutable selectors.
+     * @param model model qualifier; {@code null} removes it
+     * @return qualified cell, or this instance when the qualifier is unchanged
+     */
+    default CellRefExpr inModel(Identifier model) {
+        return Objects.equals(model(), model) ? this : CellRefExpr.of(model, measure(), selectors());
+    }
+
 
     /**
      * Starts a cell builder. A measure and at least one selector are required at build time.

@@ -780,6 +780,13 @@ var query = select(col("product"), col("year_key"), col("sales"))
     .build();
 ```
 
+The generated DSL uses the same declaration shortcuts, including
+`.dimension("product")` and `.measure("amount", "sales")`.
+Rules, main models, and MODEL clauses accept `.rule(target, value)` and
+`.rule(mode, target, orderBy, value)` directly; callers do not need to construct
+a `ModelRule` first. A null mode inherits the rule-list default, and a null
+ordering omits a per-rule evaluation order.
+
 Cells can also be assembled one coordinate at a time without preparing lists:
 
 ```java
@@ -799,6 +806,17 @@ immutable snapshots. The full-state list and compact varargs helpers remain
 available. `cellRefExpr(modelIdentifier, measureIdentifier)` starts the same
 read builder with explicit identifiers. Strings in coordinates are literals,
 not column names; use `col(...)` for a column expression.
+Compact reads can be qualified without reopening a builder:
+`cellRef("rate", "Bike").inModel("growth")`. The qualifier operation returns
+an immutable cell and preserves the original selectors. Quoted names use
+`inModel(id("Growth Model", QuoteStyle.DOUBLE_QUOTE))`.
+Generated cell targets and reads use compact literal coordinates where possible,
+for example `cellTarget("sales", "Bike", 2026L)` and
+`cellRef("sales", "Bike", 2025L)`. SQL NULL remains `lit(null)` in generated
+varargs calls so Java cannot interpret it as a null argument array.
+An absent range template uses
+`cellForRange("year_key", 2026L, 2028L, RangeDirection.INCREMENT, 1L)`,
+and CV uses `currentDimension("year_key")` or `currentDimension()`.
 `cellValue("Bike")`, `cellValue(2026)`, and `cellValue(null)` explicitly
 wrap positional values (the last represents SQL NULL).
 
@@ -828,8 +846,14 @@ PostgreSQL, MySQL, and SQL Server reject the clause explicitly. Every MODEL node
 has a dedicated ANSI rejecting pair and an Oracle syntax implementation.
 Oracle value-limit, generator-cardinality/template, and explicit query-width checks
 produce structured validation problems rather than parser/renderer exceptions.
-Codegen still rejects MODEL queries and expressions. Full contextual validation,
-transpilation, and codegen are #507; live-engine coverage is #508.
+Contextual validation (#507) separates input declarations, main rules, reference
+queries, and the closed output namespace; preserves quote-aware names and known
+types; and checks Oracle expression/query restrictions. MODEL-only expressions
+cannot leak into nested ordinary query scopes. Oracle-to-Oracle transpilation is
+exact; unsupported targets fail before rewrites and report the clause path and
+source/target dialects. Java DSL generation and the Maven plugin reconstruct all
+MODEL node families. Identifier normalization and column qualification preserve
+MODEL namespaces. Live-engine coverage is #508.
 See the [detailed design](../epics/ORACLE_MODEL_CLAUSE_DESIGN.md).
 Each node's Javadoc includes SQL context and identifies the exact represented fragment.
 

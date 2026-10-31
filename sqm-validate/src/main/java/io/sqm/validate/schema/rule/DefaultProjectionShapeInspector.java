@@ -52,7 +52,7 @@ class DefaultProjectionShapeInspector implements ProjectionShapeInspector {
     @Override
     public Optional<Integer> projectionArity(Query query) {
         return switch (query) {
-            case SelectQuery select -> Optional.of(select.items().size());
+            case SelectQuery select -> Optional.of(selectProjectionExpressions(select).map(List::size).orElse(select.items().size()));
             case WithQuery with -> projectionArity(with.body());
             case CompositeQuery composite -> composite.terms().isEmpty()
                 ? Optional.empty()
@@ -108,14 +108,8 @@ class DefaultProjectionShapeInspector implements ProjectionShapeInspector {
         SchemaValidationContext context
     ) {
         if (context == null) {
-            var unknownTypes = new ArrayList<Optional<CatalogType>>(select.items().size());
-            for (var item : select.items()) {
-                if (!(item instanceof ExprSelectItem)) {
-                    return Optional.empty();
-                }
-                unknownTypes.add(Optional.empty());
-            }
-            return Optional.of(List.copyOf(unknownTypes));
+            return selectProjectionExpressions(select).map(expressions -> expressions.stream()
+                .map(ignored -> Optional.<CatalogType>empty()).toList());
         }
         return context.inferProjectionTypes(select);
     }
@@ -129,6 +123,13 @@ class DefaultProjectionShapeInspector implements ProjectionShapeInspector {
     private Optional<List<Expression>> selectProjectionExpressions(SelectQuery select) {
         var expressions = new ArrayList<Expression>(select.items().size());
         for (var item : select.items()) {
+            if (item instanceof StarSelectItem && select.model() != null) {
+                var main = select.model().main();
+                for (var columns : List.of(main.partitions(), main.dimensions(), main.measures())) {
+                    columns.forEach(column -> expressions.add(ColumnExpr.of(null, column.name())));
+                }
+                continue;
+            }
             if (!(item instanceof ExprSelectItem exprItem)) {
                 return Optional.empty();
             }

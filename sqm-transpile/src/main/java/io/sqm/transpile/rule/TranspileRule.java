@@ -12,6 +12,16 @@ import java.util.Set;
  */
 public interface TranspileRule {
     /**
+     * Identifies a capability guard that runs before any tree-changing rewrite.
+     * Preflight rules must return the original statement unchanged; blocking
+     * diagnostics stop the pipeline before normal rules run.
+     *
+     * @return whether this rule is a non-mutating preflight guard
+     */
+    default boolean preflight() {
+        return false;
+    }
+    /**
      * Returns a stable rule identifier.
      *
      * @return rule identifier

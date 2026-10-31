@@ -578,7 +578,7 @@ class PostgresValidationDialectTest {
         assertNotNull(catalog);
         assertTrue(catalog.resolve("to_json").isPresent());
         assertFalse(catalog.resolve("to_jsonb").isPresent());
-        assertEquals(15, rules.size());
+        assertEquals(16, rules.size());
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectFeatureValidationRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresSelectClauseConsistencyRule")));
         assertTrue(rules.stream().anyMatch(r -> r.getClass().getSimpleName().equals("PostgresDistinctOnValidationRule")));

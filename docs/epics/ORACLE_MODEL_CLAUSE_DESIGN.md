@@ -1,6 +1,6 @@
 # Oracle `MODEL` Clause Detailed Design
 
-**Status:** #504 core model/DSL and #505 basic Oracle parser/renderer support merged. #506 advanced grammar and its review-driven separation of value validation are implemented and approved for PR delivery; merge remains gated on remote verification and explicit maintainer authorization. Full contextual validation, transpilation, and codegen remain #507; live MODEL coverage remains #508.
+**Status:** #504–#506 are merged. #507 full contextual validation, transpilation, Java DSL generation, and downstream integration are being implemented locally for maintainer review. Live MODEL coverage remains #508.
 
 **Origin:** Standalone follow-up to R11. R11 remains complete. This document
 resolves the deferred design decision in
@@ -568,6 +568,16 @@ expression has no reliable natural model name. The canonical node factory stays
 and DSL rather than telescoping factories. If tests or generated code feel
 awkward, improve these helpers before merge.
 
+Generated Java uses these declaration overloads directly: `.dimension("product")`,
+`.measure("amount", "sales")`, or `.dimension(col("s", "product"))`. It retains
+an explicit alias only when the resolved model name differs, including quote metadata.
+
+`ModelRules.Builder`, `MainModel.Builder`, and `ModelClause.Builder` accept
+`.rule(target, value)` for inherited options and
+`.rule(mode, target, orderBy, value)` for per-rule overrides. The latter accepts
+null mode/order values where an override is absent. Generated `.rule(...)` calls
+pass these arguments directly without a nested `modelRule(...)` factory.
+
 Cell construction supports both compact varargs and incremental builders:
 
 ```java
@@ -591,6 +601,24 @@ Builders require a measure and at least one coordinate at `build()`, copy lists,
 and produce immutable snapshots. `cellRefExpr(Identifier, Identifier)` is the
 identifier-based entry point without a prebuilt selector list. The full-state
 list helpers and canonical node factories remain available.
+
+Codegen prefers compact coordinate arguments, preserving numeric literal types:
+
+```java
+.rule(
+    cellTarget("sales", "Bike",
+        cellForRange("year_key", 2026L, 2028L, RangeDirection.INCREMENT, 1L)),
+    cellRef("sales", "Bike", 2025L).mul(func("POWER",
+        cellRef("rate", "Bike").inModel("growth"),
+        currentDimension("year_key").sub(lit(2025L)))))
+```
+
+`inModel(String/Identifier)` qualifies an immutable cell without rebuilding its
+selectors. Two strings passed to `cellRef(...)` still mean measure and coordinate.
+Quoted measures retain their identifier-aware builders, with raw scalar inputs;
+quoted dimension names also work with the no-template range and CV helpers.
+Codegen keeps `lit(null)` explicit in varargs calls and preserves an explicit
+`cellValue(predicate)` as a value rather than converting it into a condition.
 
 Both DSL styles share conversions: literals (including Java `null` as SQL NULL),
 expressions, predicates, and explicit selectors are accepted; only targets accept
@@ -758,19 +786,31 @@ accumulate path-aware `DIALECT_CLAUSE_INVALID` problems through the normal valid
 they are not called by parsers or renderers. Thus syntactically representable SQL
 with semantic errors can be parsed and formatted before validation reports them.
 
-The former flat-alias correlation heuristic has been removed, not moved into the
-validator. Proper nested-scope/schema-aware correlation analysis for reference/FOR
-queries remains explicit #507 work; no parser/renderer correlation guarantee is implied.
+The former flat-alias correlation heuristic was removed in #506. #507 now uses
+query-scope barriers in schema validation for reference/FOR sources: local aliases
+can shadow outer names, and nested queries can correlate within the isolated source,
+but the source cannot capture enclosing MODEL/input rows. FOR-source subqueries,
+binds, and WITH-table references are separately rejected under Oracle's restrictions.
+No parser/renderer correlation guarantee is implied.
 
 Reference queries, generated source queries, and nested cell expressions remain
 visible to JSON, visitors, and immutable transformers. Query-source composition
 is tested through existing DML nodes without introducing MODEL-specific DML.
 
-Context-dependent legality (including PREVIOUS/ITERATION_NUMBER/CV placement,
-aggregate classification, nested-reference restrictions, query-derived row
-counts, schema-dependent correlation, and post-model name/type resolution),
-transpilation, and codegen remain #507. Live execution and the full example
+#507 adds PREVIOUS/ITERATION_NUMBER/CV placement, aggregate/analytic and nested-cell
+checks, schema-dependent correlation, and closed post-model name/type resolution.
+Known explicit/range generator cardinalities are checked statically; the number
+of rows produced by an arbitrary query remains an engine-time constraint.
+Transpilation, compiling DSL codegen/plugin output, namespace-preserving rewrites,
+and downstream transport coverage are included. Live execution and the full example
 matrix remain #508; parser/renderer round trips do not establish engine execution.
+
+The semantic checks follow Oracle's [SELECT/MODEL reference](https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/SELECT.html),
+[model expressions](https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/Model-Expressions.html),
+and [FOR source restrictions (ORA-32632)](https://docs.oracle.com/en/error-help/db/ora-32632/).
+UPSERT with symbolic predicates and UPSERT ALL without mixed predicates can be
+implicitly treated as UPDATE/UPSERT; validation accounts for these conversions
+rather than rejecting valid modes merely because the written keyword differs.
 
 ## 11. Validation
 
@@ -805,6 +845,9 @@ Establish four scopes:
 Verify declaration resolution and unique aliases, symbolic dimension names,
 measure/model resolution, unambiguous unqualified reads, uncorrelated reference
 queries, post-model column visibility, and isolation of nested subqueries.
+Final `ORDER BY` resolves SELECT projection aliases without exposing them in
+input predicates, nested query blocks, or MODEL rules; duplicate aliases remain
+ambiguous. MODEL output alias comparisons preserve quoted identifier case.
 
 ### Oracle Semantic Validation
 
@@ -863,7 +906,16 @@ subtypes, or dialect implementations. Do not add empty dialect adapters.
 
 ## 14. Transpilation
 
-Add a path-aware `ModelClauseUnsupportedRule`:
+The path-aware `ModelClauseUnsupportedRule` runs as a non-mutating preflight guard
+before any tree-changing rule. A blocking guard preserves the entire source tree,
+including unrelated limiting, hints, and DML clauses; it cannot leave a partially
+rewritten MODEL statement. Other rewrite rules retain their existing ordering.
+
+The transpiler supplies target `DialectCapabilities` to the default registry.
+The registry only constructs and wires the rules; `ModelClauseUnsupportedRule`
+owns both native-pair compatibility and the `MODEL_CLAUSE` capability check.
+
+Its policy is:
 
 - Oracle to a MODEL-capable Oracle target is exact and retains the node;
 - incapable targets report an unsupported problem at the clause path;
