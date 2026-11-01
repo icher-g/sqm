@@ -20,7 +20,18 @@ var ctx = ParseContext.of(new PostgresSpecs());
 var result = ctx.parse(Query.class, "select distinct on (u.id) u.id from users u");
 ```
 
-## Error Handling
+## Oracle Parsing
+
+```java
+var oracleParser = ParseContext.of(new OracleSpecs());
+var oracleQuery = oracleParser.parse(Query.class,
+    "SELECT id FROM users ORDER BY id FETCH FIRST 10 ROWS ONLY");
+```
+
+See [Oracle Dialect](Oracle-Dialect) for query/DML syntax and capability versions.
+For DML, parse `Statement.class`; see [DML Statements](DML-Statements).
+
+## Checking errors
 
 - Always check `result.ok()`.
 - Bubble `errorMessage()` to logs/build output.

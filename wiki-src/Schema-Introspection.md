@@ -31,7 +31,20 @@ CatalogSchema schema = provider.load();
 3. Use snapshot for default/dev builds.
 4. Refresh snapshot periodically.
 
-## Next
+## Oracle type mapping
+
+Use `OracleSqlTypeMapper.standard()` from `sqm-catalog-oracle` when introspecting
+Oracle schemas, in place of the PostgreSQL mapper in the example above.
+
+```java
+var oracleSchema = JdbcSchemaProvider.of(
+    ds, null, "SQM", List.of("TABLE", "VIEW"), OracleSqlTypeMapper.standard()
+).load();
+```
+
+See [Oracle Dialect](Oracle-Dialect) and [SQL File Codegen Schema Validation](SQL-File-Codegen-Schema-Validation).
+
+## Related guides
 
 - [SQL File Codegen Schema Validation](SQL-File-Codegen-Schema-Validation)
 

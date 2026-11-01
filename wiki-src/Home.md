@@ -11,6 +11,7 @@ Support note:
 ## Start Here
 
 - [Getting Started](Getting-Started)
+- [Architecture](Architecture)
 - [Examples Module Guide](Examples-Module-Guide)
 - [Troubleshooting](Troubleshooting)
 
@@ -45,18 +46,23 @@ More:
 - Core model and traversal:
   - [Core Model](Core-Model)
   - [DSL Usage](DSL-Usage)
+  - [DML Statements](DML-Statements)
+  - [Traversal and Matching](Traversal-and-Matching)
 - SQL processing:
   - [Parsing SQL](Parsing-SQL)
   - [Rendering SQL](Rendering-SQL)
   - [PostgreSQL Dialect](PostgreSQL-Dialect)
   - [MySQL Dialect](MySQL-Dialect)
   - [SQL Server Dialect](SQL-Server-Dialect)
+  - [Oracle Dialect](Oracle-Dialect)
+  - [Parameters and Binding](Parameters-and-Binding)
   - [Unsupported Features](Unsupported-Features)
   - [SQM Playground](SQM-Playground)
   - [SQL Transpilation](SQL-Transpilation)
   - [SQL Transpilation Examples](SQL-Transpilation-Examples)
   - [Query Transform Helpers](Query-Transform-Helpers)
   - [SQL Middleware Framework](SQL-Middleware-Framework)
+  - [Middleware Transports](Middleware-Transports)
 - Serialization:
   - [JSON Serialization](JSON-Serialization)
 - Semantic validation:
@@ -65,9 +71,10 @@ More:
 - Schema sources:
   - [Schema Introspection](Schema-Introspection)
 - Build-time generation:
-- [SQL File Codegen](SQL-File-Codegen)
+  - [SQL File Codegen](SQL-File-Codegen)
   - [SQL File Codegen Schema Validation](SQL-File-Codegen-Schema-Validation)
 - Testing and operations:
+  - [Development and Testing](Development-and-Testing)
   - [Integration Testing with Docker](Integration-Testing-with-Docker)
   - [FAQ](FAQ)
 
@@ -76,6 +83,7 @@ Current shipped model highlights:
 - shared typed statement and table hints
 - statement-level `hints()` on `SELECT`, `INSERT`, `UPDATE`, `DELETE`, and `MERGE`
 - cross-dialect hint dropping with warnings during transpilation when a target dialect does not share the source hint system
+- Oracle query/DML support, including typed pattern recognition and MODEL, with live-engine coverage
 
 ## Top Commands
 

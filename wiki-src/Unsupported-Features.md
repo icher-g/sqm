@@ -108,6 +108,24 @@ Not supported in SQM:
 - DDL in general
 - SQL Server features outside the shipped parser/render/model scope
 
+### Oracle
+
+Supported in SQM:
+
+- query and DML grammar in the shipped Oracle parser/renderer/validation scope
+- RETURNING ... INTO variable targets, baseline MERGE, and sequence expressions
+- hierarchical queries, PIVOT/UNPIVOT, JSON_TABLE, table access modifiers, and locking
+- typed MATCH_RECOGNIZE and MODEL, including downstream/codegen and live-engine coverage
+
+Not supported in SQM:
+
+- legacy outer-join `(+)` syntax
+- PL/SQL blocks, packages, procedure invocation, and stored routine bodies
+- general DDL and Oracle features outside the shipped framework scope
+- general approximate cross-dialect rewriting of MODEL
+
+See [Oracle Dialect](Oracle-Dialect) for examples and the precise support boundary.
+
 ## How To Interpret "Unsupported"
 
 There are two different cases:
@@ -126,13 +144,14 @@ This is unsupported because stored procedure invocation is not part of the frame
 
 This page should mention such cases only when the framework intentionally supports that feature family but the specific dialect slice is still incomplete.
 
-For SQL Server, PostgreSQL, and MySQL, stored procedures belong to the first category, not the second one.
+For all shipped dialects, stored procedures belong to the first category, not the second one.
 
 ## Related Pages
 
 - [Home](Home)
 - [Getting Started](Getting-Started)
 - [SQL Server Dialect](SQL-Server-Dialect)
+- [Oracle Dialect](Oracle-Dialect)
 - [Parsing SQL](Parsing-SQL)
 - [Rendering SQL](Rendering-SQL)
 - [SQL Transpilation](SQL-Transpilation)

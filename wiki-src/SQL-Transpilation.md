@@ -74,7 +74,7 @@ Expected SQL:
 SELECT * FROM users WHERE LOWER(name) LIKE LOWER('al%')
 ```
 
-## Current Initial Slice
+## Representative conversions
 
 ### PostgreSQL -> MySQL
 
@@ -89,6 +89,18 @@ SELECT * FROM users WHERE LOWER(name) LIKE LOWER('al%')
   - `DISTINCT ON`
   - `SIMILAR TO`
   - representative PostgreSQL operator families
+
+### Oracle
+
+Oracle is a built-in source and target dialect. Native Oracle-to-Oracle conversion
+preserves supported MODEL and MATCH_RECOGNIZE trees exactly. Other targets reject
+these features explicitly; MODEL diagnostics include the source/target dialect
+and semantic clause path, with rejection before rewriting.
+
+Other Oracle feature families have their own exact, approximate, and unsupported
+rules. See [Oracle Dialect](Oracle-Dialect), the
+[usage reference](https://github.com/icher-g/sqm/blob/main/docs/transpilation/SQL_TRANSPILATION_USAGE.md),
+and the [downstream matrix](https://github.com/icher-g/sqm/blob/main/docs/downstream/DOWNSTREAM_SUPPORT_MATRIX.md).
 
 ### MySQL -> non-MySQL target
 

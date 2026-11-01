@@ -5,1590 +5,219 @@
 [![Packages](https://img.shields.io/badge/Maven-GitHub%20Packages-blue)](https://github.com/icher-g/sqm/packages)
 [![codecov](https://codecov.io/gh/icher-g/sqm/graph/badge.svg)](https://codecov.io/gh/icher-g/sqm)
 
-## Description
+SQM represents SQL as a typed, immutable Java model. Build queries and DML with a
+fluent DSL, parse existing SQL, validate and rewrite it, then render it for your
+database. The same model supports JSON, Java code generation, and SQL middleware.
 
-**SQM (Structured Query Model)** is a Java framework for representing SQL as a typed immutable model and running end-to-end SQL pipelines.
-It supports parse, validate, transform/rewrite, render, serialize, and runtime policy enforcement across multiple dialects and transports.
+SQL text → model → validation / transformation → SQL + parameters
 
-The AST example can be seen on the right side of the SQM Playground App.
+## Get started
 
-![Overview](images/main-view.png)
-
-To run the app locally: docker run --rm -p 8080:8080 igorcher/sqm-playground:latest
-
-Live dialect confidence is backed by real-engine execution coverage: shipped PostgreSQL, MySQL, and SQL Server syntax is exercised in Docker/Testcontainers suites against the actual database engines, not only parser/renderer round trips.
-
-## Wiki
-
-Project wiki with feature guides and examples: https://github.com/icher-g/sqm/wiki
-
-Direct wiki guides:
-
-- PostgreSQL syntax guide: [wiki-src/PostgreSQL-Dialect.md](wiki-src/PostgreSQL-Dialect.md)
-- MySQL syntax guide: [wiki-src/MySQL-Dialect.md](wiki-src/MySQL-Dialect.md)
-- SQL Server syntax guide: [wiki-src/SQL-Server-Dialect.md](wiki-src/SQL-Server-Dialect.md)
-- Query transform helpers: [wiki-src/Query-Transform-Helpers.md](wiki-src/Query-Transform-Helpers.md)
-- Unsupported features and scope boundaries: [wiki-src/Unsupported-Features.md](wiki-src/Unsupported-Features.md)
-
-## Contributor Rules
-
-Repository development rules for contributors and coding agents are defined in `AGENTS.md`.
-
----
-
-## Features
-
-- **Typed immutable SQL model** - composable AST for statements (queries + DML), expressions, predicates, joins, typed hints, and dialect-specific nodes.
-- **Dialect support** - ANSI + PostgreSQL + MySQL + SQL Server parser/renderer/spec implementations.
-- **Validation framework** - schema-aware statement validation with configurable limits and access policies (principal/tenant aware).
-- **Rewrite and normalization pipeline** - built-in and custom rewrite rules (limit injection, qualification, canonicalization, tenant predicate, etc.).
-- **Transformation ergonomics** - task-oriented helper APIs for identifier, relation, statement, and literal rewrites, with canonical examples in the wiki.
-- **SQL transpilation** - source-to-target PostgreSQL/MySQL/SQL Server slice with exact, approximate, and unsupported diagnostics, including warning-based dropping of dialect-local hints across non-native targets.
-- **Middleware decision engine** - analyze/enforce/explain workflow with guardrails, telemetry, auditing, and flow control.
-- **Transport hosts** - REST and MCP runtimes for externalized middleware usage.
-- **DSL and code generation** - fluent SQL construction plus SQL-file-to-Java generation for queries and DML statements.
-- **JSON support** - model serialization/deserialization via Jackson mixins.
-- **Extensibility** - registries/contracts for dialects, functions, validation rules, and rewrite strategies.
-
----
-
-## Architecture Overview
-
-Base SQL model flow:
-
-```text
-       ┌─────────────┐
-       │   SQL Text  │
-       └──────┬──────┘
-              │ parse
-              ▼
-       ┌─────────────┐
-       │    Model    │ <───> JSON / DSL
-       └──────┬──────┘
-              │ transform / rewrite / optimize
-              ▼
-       ┌─────────────┐
-       │    Model    │
-       └──────┬──────┘
-              │ render
-              ▼
-       ┌─────────────┐
-       │   SQL Text  │
-       └─────────────┘
-```
-
-Middleware decision flow:
-
-```text
-       ┌─────────────┐
-       │   SQL Text  │
-       └──────┬──────┘
-              │ parse
-              ▼
-       ┌─────────────┐
-       │    Model    │
-       └──────┬──────┘
-              │ validate
-              ▼
-       ┌─────────────┐
-       │ Guardrails  │
-       │ + Policies  │
-       └──────┬──────┘
-              │ transform / rewrite / optimize
-              ▼
-       ┌─────────────┐
-       │  Rewritten  │
-       │    Model    │
-       └──────┬──────┘
-              │ render
-              ▼
-       ┌─────────────┐
-       │   SQL Text  │
-       │ + Bind Data │
-       └──────┬──────┘
-              │ decide
-              ▼
-       ┌─────────────┐
-       │  Decision   │
-       │ allow/deny/ │
-       │   rewrite   │
-       └─────────────┘
-```
-
-Core components:
-- **Model (sqm-core)** - AST nodes, visitor/transformer infrastructure, match API, DSL primitives.
-- **Parsers (sqm-parser-*)** - dialect parsing into model nodes.
-- **Renderers (sqm-render-*)** - dialect rendering from model nodes.
-- **Validation (sqm-validate*)** - schema/function/access-policy semantic checks.
-- **Transpilation (sqm-transpile)** - source-to-target dialect conversion with rule diagnostics.
-- **Catalog (sqm-catalog*)** - schema sources (JSON/JDBC) and type mapping.
-- **Control/Middleware (sqm-control, sqm-middleware-*)** - decision engine, rewrites, runtime hosts, telemetry/audit.
-- **JSON (sqm-json)** - serialization mixins.
-- **Codegen (sqm-codegen*)** - SQL file code generation and plugin integration.
-- **Integration tests (sqm-it)** - cross-module/runtime verification.
-
----
-
-## Model Hierarchy
-
-SQM defines a rich, type-safe model (AST) to represent SQL statements internally.
-This model is shared across DSL, parser, renderer, validator, transform/rewrite, middleware, JSON, and codegen modules.
-
-Model presence and dialect support are intentionally different concepts:
-
-- a node in `sqm-core` is representable by the framework
-- parser, renderer, validation, and transpilation support remain dialect-specific
-- support details and ambiguous node notes live in `docs/model/MODEL.md`
-
-Multi-statement SQL text is represented by `StatementSequence`. Parsers ignore
-empty statements, renderers emit semicolon-separated SQL for real scripts, and
-validation/transpilation/middleware process the sequence as an all-or-nothing
-unit. DDL remains out of scope unless it is introduced by a separate design
-decision.
-
-➡️ [View the full hierarchy in docs/model/MODEL.md](docs/model/MODEL.md)
-
-## DML Statement Support
-
-DML foundation is delivered with a statement-level model and ANSI baseline parser/renderer support for:
-
-- `INSERT INTO ... VALUES (...)` and `INSERT INTO ... SELECT ...`
-- `UPDATE ... SET ... [WHERE ...]`
-- `DELETE FROM ... [WHERE ...]`
-
-PostgreSQL DML extensions are delivered for:
-
-- `MERGE` (PostgreSQL 15+)
-- SQL Server `MERGE` with `TOP (...)` and `OUTPUT`
-- `INSERT ... RETURNING`
-- `UPDATE ... FROM`
-- `DELETE ... USING`
-- `INSERT ... ON CONFLICT DO NOTHING / DO UPDATE`
-- writable CTE `INSERT ... RETURNING`, `UPDATE ... RETURNING`, and `DELETE ... RETURNING` shapes
-
-MySQL DML extensions are delivered for:
-
-- `INSERT IGNORE`
-- `INSERT ... ON DUPLICATE KEY UPDATE`
-  - `REPLACE INTO`
-  - joined `UPDATE`
-  - qualified joined-`UPDATE` assignment targets
-  - optimizer hint comments on `SELECT`, `UPDATE`, and `DELETE`
-  - canonical `DELETE FROM ... USING ... JOIN ...`
-  - alias and index-hint canonicalization for prioritized joined DML edge cases
-  - `STRAIGHT_JOIN`
-
-Current scope boundary:
-
-- Baseline DML is cross-dialect through ANSI base components.
-- PostgreSQL writable CTE coverage includes `INSERT ... RETURNING`, `UPDATE ... RETURNING`, and `DELETE ... RETURNING`.
-- MySQL `RETURNING` remains capability-gated and unsupported for current supported MySQL versions.
-- MySQL joined DML support includes qualified assignment targets such as `SET u.name = ...`.
-- SQL Server baseline support includes query + shared-model DML with:
-  - bracket-quoted identifiers
-  - `TOP`, `TOP ... PERCENT`, `TOP ... WITH TIES`, and `OFFSET/FETCH`
-  - table hints `WITH (NOLOCK)`, `WITH (UPDLOCK)`, and `WITH (HOLDLOCK)` in supported statement contexts
-  - first-wave SQL Server functions such as `LEN`, `DATEADD`, `DATEDIFF`, `ISNULL`, and `STRING_AGG`
-  - baseline `INSERT`, `UPDATE`, and `DELETE`
-  - `OUTPUT` and `OUTPUT ... INTO` through shared `ResultClause` support
-- SQL Server `MERGE` support includes:
-  - `WHEN MATCHED` update/delete
-  - `WHEN NOT MATCHED` insert
-  - `WHEN NOT MATCHED BY SOURCE` update/delete
-  - clause predicates (`WHEN ... AND ...`)
-  - `OUTPUT`
-  - `TOP (...)`
-  - `TOP (...) PERCENT`
-
-Typed hint modeling is also delivered across the shared model:
-
-- statement-owned hints are exposed structurally through `Statement.hints()`
-- table-owned hints are exposed structurally through `Table.hints()`
-- DSL and codegen use typed `hint(...)`, `statementHint(...)`, and `tableHint(...)` construction
-- cross-dialect transpilation currently drops vendor-native MySQL and SQL Server hints with warnings rather than trying to translate them semantically
-
-### PostgreSQL DML Example
-
-```java
-var parseCtx = ParseContext.of(new PostgresSpecs());
-var renderCtx = RenderContext.of(new PostgresDialect());
-
-var statement = parseCtx.parse(Statement.class, """
-    WITH ins AS (
-        INSERT INTO users (name)
-        VALUES ('alice')
-        RETURNING id
-    )
-    SELECT id FROM ins
-    """).value();
-
-var sql = renderCtx.render(statement).sql();
-System.out.println(sql);
-```
-
-Supported PostgreSQL DML examples include:
-
-```sql
-MERGE INTO users AS u USING incoming_users AS s ON u.id = s.id WHEN MATCHED AND s.active = true THEN UPDATE SET name = s.name WHEN NOT MATCHED BY SOURCE AND u.name IS NOT NULL THEN DO NOTHING WHEN NOT MATCHED AND s.name IS NOT NULL THEN INSERT (id, name) VALUES (s.id, s.name) RETURNING u.id
-INSERT INTO users (name) VALUES ('alice') RETURNING id
-UPDATE users u SET name = src.name FROM source_users src WHERE u.id = src.id
-DELETE FROM users USING source_users src WHERE users.id = src.id
-INSERT INTO users (id, name) VALUES (1, 'alice') ON CONFLICT (id) DO UPDATE SET name = 'alice2'
-WITH ins AS ( INSERT INTO users (name) VALUES ('alice') RETURNING id ) SELECT id FROM ins
-WITH upd AS ( UPDATE users SET name = 'alice' WHERE id = 1 RETURNING id ) SELECT id FROM upd
-WITH del AS ( DELETE FROM users WHERE id = 1 RETURNING id ) SELECT id FROM del
-```
-
-Current PostgreSQL `MERGE` scope:
-- supported: `WHEN MATCHED` update/delete, `WHEN NOT MATCHED` insert, `WHEN NOT MATCHED BY SOURCE` update/delete, clause predicates (`WHEN ... AND ...`), `DO NOTHING`, and `RETURNING`
-
-### MySQL DML Example
-
-```java
-var parseCtx = ParseContext.of(new MySqlSpecs());
-var renderCtx = RenderContext.of(new MySqlDialect());
-
-var statement = parseCtx.parse(Statement.class, """
-    UPDATE users USE INDEX (idx_users_name) AS u
-    INNER JOIN orders FORCE INDEX FOR JOIN (idx_orders_user) AS o ON u.id = o.user_id
-    SET name = 'alice'
-    WHERE o.state = 'closed'
-    """).value();
-
-var sql = renderCtx.render(statement).sql();
-System.out.println(sql);
-```
-
-Supported MySQL DML examples include:
-
-```sql
-INSERT IGNORE INTO users (id, name) VALUES (1, 'alice')
-  INSERT INTO users (id, name) VALUES (1, 'alice') ON DUPLICATE KEY UPDATE name = 'alice2'
-  REPLACE INTO users (id, name) VALUES (1, 'alice')
-  UPDATE /*+ BKA(users) */ users INNER JOIN orders ON users.id = orders.user_id SET name = 'alice' WHERE orders.state = 'closed'
-  UPDATE users AS u USE INDEX (idx_users_name) INNER JOIN orders AS o FORCE INDEX FOR JOIN (idx_orders_user) ON u.id = o.user_id SET name = 'alice' WHERE o.state = 'closed'
-  UPDATE users AS u STRAIGHT_JOIN orders AS o ON u.id = o.user_id SET u.name = 'alice' WHERE o.state = 'closed'
-  DELETE /*+ BKA(users) */ FROM users USING users INNER JOIN orders ON users.id = orders.user_id WHERE orders.state = 'closed'
-  DELETE FROM users AS u USE INDEX (idx_users_name) USING users AS u USE INDEX (idx_users_name) INNER JOIN orders AS o FORCE INDEX FOR JOIN (idx_orders_user) ON u.id = o.user_id WHERE o.state = 'closed'
-  ```
-
-### SQL Server Query and DML Example
-
-```java
-var parseCtx = ParseContext.of(new SqlServerSpecs());
-var renderCtx = RenderContext.of(new SqlServerDialect());
-
-var query = parseCtx.parse(Query.class, """
-    SELECT TOP (5) [u].[id], LEN([u].[name]) AS [name_len]
-    FROM [users] AS [u]
-    ORDER BY [u].[id]
-    """).value();
-
-var statement = parseCtx.parse(Statement.class, """
-    UPDATE [users]
-    SET [name] = ISNULL([name], 'unknown')
-    WHERE [id] = 1
-    """).value();
-
-System.out.println(renderCtx.render(query).sql());
-System.out.println(renderCtx.render(statement).sql());
-```
-
-Supported SQL Server baseline examples include:
-
-```sql
-SELECT TOP (5) [id], [name] FROM [users] ORDER BY [id]
-SELECT [id], [name] FROM [users] ORDER BY [name] OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY
-INSERT INTO [users] ([id], [name]) VALUES (1, 'alice')
-INSERT INTO [users] ([name]) OUTPUT inserted.[id] VALUES ('alice')
-UPDATE [users] SET [name] = 'alice' OUTPUT deleted.[name], inserted.[name] INTO [audit] ([old_name], [new_name]) WHERE [id] = 1
-UPDATE [users] SET [name] = 'alice' WHERE [id] = 1
-DELETE FROM [users] WHERE [id] = 1
-MERGE TOP (10) PERCENT INTO [users] USING [src] AS [s] ON [users].[id] = [s].[id] WHEN MATCHED THEN DELETE OUTPUT deleted.[id]
-```
-
----
-
-## 🚀 Quick Example
-
-### Build a query with the DSL and Render
-
-```java
-Query q = select(
-        col("u", "user_name"),
-        col("o", "status"),
-        func("count", starArg()).as("cnt")
-    )
-    .from(tbl("orders").as("o"))
-    .join(
-        inner(tbl("users").as("u"))
-            .on(col("u", "id").eq(col("o", "user_id")))
-    )
-    .where(col("o", "status").in("A", "B"))
-    .groupBy(group("u", "user_name"), group("o", "status"))
-    .having(func("count", starArg()).gt(10))
-    .orderBy(order("cnt"))
-    .limit(10)
-    .offset(20)
-    .build();
-
-var ctx = RenderContext.of(new AnsiDialect());
-var sql = ctx.render(q).sql();
-
-System.out.println(sql);
-```
-
-Explicit MySQL SQL-mode parser options are available through `MySqlSpecs`:
-
-```java
-var defaultCtx = ParseContext.of(new MySqlSpecs());
-var ansiQuotesCtx = ParseContext.of(
-    new MySqlSpecs(SqlDialectVersion.of(8, 0), java.util.Set.of(MySqlSqlMode.ANSI_QUOTES))
-);
-```
-
-`ANSI_QUOTES` mode enables double-quoted identifiers during parsing while the default behavior remains backtick-only.
-
-MySQL rendering also supports opt-in optimizer-hint normalization through
-`MySqlOptimizerHintNormalizationPolicy`, while the default dialect behavior
-preserves hint bodies exactly as stored on the statement model.
-
-### Transpile SQL Between Dialects
-
-```java
-var transpiler = SqlTranspiler.builder()
-    .sourceDialect(SqlDialectId.of("postgresql"))
-    .targetDialect(SqlDialectId.of("mysql"))
-    .build();
-
-var result = transpiler.transpile(
-    "SELECT first_name || ' ' || last_name AS full_name FROM users"
-);
-
-System.out.println(result.status());
-System.out.println(result.sql().orElseThrow());
-```
-
-Expected SQL:
-
-```sql
-SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM users
-```
-
-Approximate rewrites such as PostgreSQL `ILIKE` are disabled by default and must be enabled through `TranspileOptions`.
-The same option gate also controls cross-dialect hint dropping, because dropped vendor hints are treated as approximate rewrites.
-
-**Rendered (ANSI):**
-
-```sql
-SELECT u.user_name, o.status, count(*) AS cnt
-FROM orders AS o
-INNER JOIN users AS u ON u.id = o.user_id
-WHERE o.status IN ('A', 'B')
-GROUP BY u.user_name, o.status
-HAVING count(*) > 10
-ORDER BY cnt
-OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY
-```
----
-
-### Parse SQL into a Model
-
-```java
-var sql = """
-    SELECT u.user_name, o.status, count(*) AS cnt
-    FROM orders AS o
-    INNER JOIN users AS u ON u.id = o.user_id
-    WHERE o.status in ('A', 'B')
-    GROUP BY u.user_name, o.status
-    HAVING count(*) > 10""";
-
-var ctx = ParseContext.of(new AnsiSpecs());
-var pr = ctx.parse(Query.class, sql);
-if (pr.isError()) {
-    throw new RuntimeException(pr.errorMessage());
-}
-var query = pr.value();
-```
----
-
-### SQL Middleware Framework (`sqm-control`)
-
-SQM includes a framework layer for runtime SQL governance (including AI-generated SQL traffic).
-
-Entry points:
-
-- `analyze(sql, context)`
-- `enforce(sql, context)`
-- `explainDecision(sql, context)`
-
-Validation-only setup:
-
-```java
-var middleware = SqlDecisionService.create(
-    SqlDecisionServiceConfig.builder(schema)
-        .validationSettings(SchemaValidationSettings.defaults())
-        .buildValidationConfig()
-);
-
-var decision = middleware.analyze(sql, ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
-```
-
-Full flow with rewrite + bind rendering:
-
-`BuiltInRewriteRules` provides built-in rule lists, and `SqlStatementRewriter.builder()` composes
-those rules into the effective rewriter pipeline.
-
-```java
-var middleware = SqlDecisionService.create(
-    SqlDecisionServiceConfig.builder(schema)
-        .validationSettings(SchemaValidationSettings.defaults())
-        .builtInRewriteSettings(
-            BuiltInRewriteSettings.defaults()
-                .tenantTablePolicy("public.users", TenantRewriteTablePolicy.required("tenant_id"))
-                .tenantTablePolicy("public.orders", TenantRewriteTablePolicy.required("tenant_id"))
-        )
-        .rewriteRules(
-            BuiltInRewriteRule.TENANT_PREDICATE,
-            BuiltInRewriteRule.LIMIT_INJECTION,
-            BuiltInRewriteRule.CANONICALIZATION
-        )
-        .buildValidationAndRewriteConfig()
-);
-
-var decision = middleware.enforce(
-    sql,
-    ExecutionContext.of("postgresql", "agent", "tenant-a", ExecutionMode.EXECUTE, ParameterizationMode.BIND)
-);
-```
-
-See:
-
-- Wiki guide: [wiki-src/SQL-Middleware-Framework.md](wiki-src/SQL-Middleware-Framework.md)
-- Example class: [examples/src/main/java/io/sqm/examples/Middleware_EndToEndPolicyFlow.java](examples/src/main/java/io/sqm/examples/Middleware_EndToEndPolicyFlow.java)
-
-#### Transport Runtimes (REST + MCP)
-
-REST runtime (Spring Boot application):
-
-```bash
-mvn -pl sqm-middleware-rest -am spring-boot:run
-```
-
-HTTP endpoints:
-
-- `POST /sqm/middleware/v1/analyze`
-- `POST /sqm/middleware/v1/enforce`
-- `POST /sqm/middleware/v1/explain`
-
-The request contract remains a single `sql` text field. That field may contain
-a single statement or a semicolon-separated script; no separate batch DTO is
-required. Script decisions are all-or-nothing: any denied statement denies the
-request, rewrites are rendered back as one combined SQL script, and DDL remains
-out of scope.
-
-Versioning:
-
-- REST API is path-versioned.
-- Current version: `v1` (no unversioned compatibility routes).
-
-Example request body:
-
-```json
-{
-    "sql": "insert ignore into users (id, name) values (1, 'alice')",
-    "context": {
-        "dialect": "mysql",
-        "principal": "agent-app",
-        "tenant": "tenant-a",
-        "mode": "EXECUTE",
-        "parameterizationMode": "OFF"
-    }
-}
-```
-
-MCP runtime (long-running stdio JSON-RPC server):
-
-```bash
-mvn -pl sqm-middleware-mcp -am exec:java -Dexec.mainClass=io.sqm.middleware.mcp.SqlMiddlewareMcpApplication
-```
-
-MCP uses framed messages on stdio (`Content-Length` + JSON-RPC body).
-
-`initialize` request:
-
-```text
-Content-Length: 58
-
-{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}
-```
-
-`tools/list` request:
-
-```text
-Content-Length: 58
-
-{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
-```
-
-`tools/call` request (`middleware.analyze`):
-
-```text
-Content-Length: 205
-
-{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"middleware.analyze","arguments":{"sql":"delete from users where id = 1","context":{"dialect":"mysql","mode":"ANALYZE","parameterizationMode":"OFF"}}}}
-```
-
-Tool names exposed by MCP runtime:
-
-- `middleware.analyze`
-- `middleware.enforce`
-- `middleware.explain`
-
-MCP lifecycle and protocol hardening:
-
-- `tools/list` and `tools/call` require `initialize` first (default behavior)
-- `shutdown` marks server as draining; further tool calls are rejected
-- `exit` terminates the serving loop
-- invalid framing is mapped to deterministic JSON-RPC errors with `error.data.category="INVALID_FRAME"`
-
-Transport error contracts:
-
-- REST error envelope:
-    - shape: `{"code":"...","message":"...","path":"..."}`
-    - examples:
-        - `UNAUTHORIZED` (`401`)
-        - `RATE_LIMIT_EXCEEDED` (`429`)
-        - `REQUEST_TOO_LARGE` (`413`)
-        - `INVALID_REQUEST` (`400`, malformed payload)
-- MCP JSON-RPC error mapping:
-    - parse error: `-32700`
-    - invalid request (protocol shape): `-32600`
-    - method not found: `-32601`
-    - invalid params/tool arguments: `-32602` with `error.data.category="INVALID_PARAMS"`
-    - internal failures: `-32603` with `error.data.category="INTERNAL_ERROR"`
-
-REST correlation id:
-
-- every `/sqm/middleware/v1/**` response includes `X-Correlation-Id`
-- if client sends `X-Correlation-Id`, the same value is echoed back
-- if missing, runtime generates one per request
-
-Runtime configuration (applies to both REST and MCP hosts):
-
-Complete generated key table (single source of truth):
-- [docs/middleware/MIDDLEWARE_CONFIG_KEYS.md](docs/middleware/MIDDLEWARE_CONFIG_KEYS.md) (generated from `ConfigKeys`; run `scripts/generate-middleware-config-keys-doc.ps1`)
-
-- Schema source:
-    - `sqm.middleware.schema.source` (`manual` | `json` | `jdbc`)
-    - env: `SQM_MIDDLEWARE_SCHEMA_SOURCE`
-    - `sqm.middleware.schema.bootstrap.failFast` / `SQM_MIDDLEWARE_SCHEMA_BOOTSTRAP_FAIL_FAST` (`true` by default)
-      - `true`: startup fails when schema bootstrap fails
-      - `false`: startup continues in degraded mode (not-ready, requests denied with pipeline error)
-    - `manual` loads default schema from JSON file/resource, not from hardcoded Java model
-    - optional manual default JSON override: `sqm.middleware.schema.defaultJson.path` / `SQM_MIDDLEWARE_SCHEMA_DEFAULT_JSON_PATH`
-- Runtime mode:
-    - `sqm.middleware.runtime.mode` / `SQM_MIDDLEWARE_RUNTIME_MODE` (`dev` | `production`)
-    - `sqm.middleware.productionMode` / `SQM_MIDDLEWARE_PRODUCTION_MODE` (`true` enables strict production mode)
-    - production mode is also activated by Spring profile `prod`/`production` (`spring.profiles.active` / `SPRING_PROFILES_ACTIVE`)
-    - in production mode:
-        - `sqm.middleware.schema.source` must be explicitly configured
-        - `manual` source requires explicit `sqm.middleware.schema.defaultJson.path` (bundled fallback is disallowed)
-- JSON schema source:
-    - `sqm.middleware.schema.json.path`
-    - env: `SQM_MIDDLEWARE_SCHEMA_JSON_PATH`
-- JDBC schema source:
-    - `sqm.middleware.jdbc.url` / `SQM_MIDDLEWARE_JDBC_URL` (required for `jdbc` source)
-    - `sqm.middleware.jdbc.user` / `SQM_MIDDLEWARE_JDBC_USER`
-    - `sqm.middleware.jdbc.password` / `SQM_MIDDLEWARE_JDBC_PASSWORD`
-    - `sqm.middleware.jdbc.driver` / `SQM_MIDDLEWARE_JDBC_DRIVER` (optional class name)
-    - `sqm.middleware.jdbc.schemaPattern` / `SQM_MIDDLEWARE_JDBC_SCHEMA_PATTERN`
-- Rewrite and validation:
-    - `sqm.validation.settings.json` / `SQM_VALIDATION_SETTINGS_JSON` (inline JSON text for `SchemaValidationSettings`)
-    - `sqm.validation.settings.yaml` / `SQM_VALIDATION_SETTINGS_YAML` (inline YAML text for `SchemaValidationSettings`)
-    - `sqm.middleware.rewrite.enabled` / `SQM_MIDDLEWARE_REWRITE_ENABLED` (`true` by default)
-    - `sqm.middleware.rewrite.rules` / `SQM_MIDDLEWARE_REWRITE_RULES` (comma-separated built-in rule names)
-    - `sqm.middleware.rewrite.tenant.tablePolicies` / `SQM_MIDDLEWARE_REWRITE_TENANT_TABLE_POLICIES` (CSV: `schema.table:tenant_column[:REQUIRED|OPTIONAL|SKIP],...`)
-    - `sqm.middleware.rewrite.tenant.fallbackMode` / `SQM_MIDDLEWARE_REWRITE_TENANT_FALLBACK_MODE` (`DENY` | `SKIP`)
-    - `sqm.middleware.rewrite.tenant.ambiguityMode` / `SQM_MIDDLEWARE_REWRITE_TENANT_AMBIGUITY_MODE` (`DENY` | `SKIP`)
-    - `sqm.middleware.validation.maxJoinCount` / `SQM_MIDDLEWARE_VALIDATION_MAX_JOIN_COUNT`
-    - `sqm.middleware.validation.maxSelectColumns` / `SQM_MIDDLEWARE_VALIDATION_MAX_SELECT_COLUMNS`
-    - `sqm.middleware.validation.tenantRequirementMode` / `SQM_MIDDLEWARE_VALIDATION_TENANT_REQUIREMENT_MODE` (`OPTIONAL` | `REQUIRED`)
-- Guardrails:
-    - `sqm.middleware.guardrails.maxSqlLength` / `SQM_MIDDLEWARE_GUARDRAILS_MAX_SQL_LENGTH`
-    - `sqm.middleware.guardrails.timeoutMillis` / `SQM_MIDDLEWARE_GUARDRAILS_TIMEOUT_MILLIS`
-    - `sqm.middleware.guardrails.maxRows` / `SQM_MIDDLEWARE_GUARDRAILS_MAX_ROWS`
-    - `sqm.middleware.guardrails.explainDryRun` / `SQM_MIDDLEWARE_GUARDRAILS_EXPLAIN_DRY_RUN`
-- Audit:
-    - `sqm.middleware.audit.publisher` / `SQM_MIDDLEWARE_AUDIT_PUBLISHER` (`noop` | `logging` | `file`)
-    - `sqm.middleware.audit.logger.name` / `SQM_MIDDLEWARE_AUDIT_LOGGER_NAME`
-    - `sqm.middleware.audit.logger.level` / `SQM_MIDDLEWARE_AUDIT_LOGGER_LEVEL`
-    - `sqm.middleware.audit.file.path` / `SQM_MIDDLEWARE_AUDIT_FILE_PATH` (required for `file` mode)
-- Telemetry:
-    - `sqm.middleware.metrics.enabled` / `SQM_MIDDLEWARE_METRICS_ENABLED`
-    - `sqm.middleware.metrics.logger.name` / `SQM_MIDDLEWARE_METRICS_LOGGER_NAME`
-    - `sqm.middleware.metrics.logger.level` / `SQM_MIDDLEWARE_METRICS_LOGGER_LEVEL`
-- Host flow control:
-    - `sqm.middleware.host.maxInFlight` / `SQM_MIDDLEWARE_HOST_MAX_IN_FLIGHT`
-    - `sqm.middleware.host.acquireTimeoutMillis` / `SQM_MIDDLEWARE_HOST_ACQUIRE_TIMEOUT_MILLIS`
-    - `sqm.middleware.host.requestTimeoutMillis` / `SQM_MIDDLEWARE_HOST_REQUEST_TIMEOUT_MILLIS`
-- MCP protocol hardening:
-    - `sqm.middleware.mcp.maxContentLengthBytes` / `SQM_MIDDLEWARE_MCP_MAX_CONTENT_LENGTH_BYTES`
-    - `sqm.middleware.mcp.maxHeaderLineLengthBytes` / `SQM_MIDDLEWARE_MCP_MAX_HEADER_LINE_LENGTH_BYTES`
-    - `sqm.middleware.mcp.maxHeaderBytes` / `SQM_MIDDLEWARE_MCP_MAX_HEADER_BYTES`
-    - `sqm.middleware.mcp.requireInitializeBeforeTools` / `SQM_MIDDLEWARE_MCP_REQUIRE_INITIALIZE_BEFORE_TOOLS`
-
-Example (JSON schema source + rewrite rules):
-
-```bash
-mvn -pl sqm-middleware-rest -am spring-boot:run \
-    -Dsqm.middleware.schema.source=json \
-    -Dsqm.middleware.schema.json.path=./schema.json \
-    -Dsqm.middleware.rewrite.rules=TENANT_PREDICATE,LIMIT_INJECTION,CANONICALIZATION \
-    -Dsqm.middleware.rewrite.tenant.tablePolicies=public.users:tenant_id:REQUIRED,public.orders:tenant_id:OPTIONAL \
-    -Dsqm.middleware.rewrite.tenant.fallbackMode=DENY \
-    -Dsqm.middleware.rewrite.tenant.ambiguityMode=DENY
-```
-
-Runtime status endpoints (REST host):
-
-- `GET /sqm/middleware/v1/health`
-  - liveness-style signal (`status=UP`) + schema bootstrap diagnostics
-- `GET /sqm/middleware/v1/readiness`
-  - readiness signal:
-    - `status=READY` when schema bootstrap is ready
-    - `status=NOT_READY` when started in degraded mode
-  - includes schema source, state, description, and optional error message
-
-Production operations docs:
-
-- NFR suite: [docs/middleware/MIDDLEWARE_NFR.md](docs/middleware/MIDDLEWARE_NFR.md)
-- Deployment profiles/artifacts: [docs/middleware/MIDDLEWARE_DEPLOYMENT_PROFILES.md](docs/middleware/MIDDLEWARE_DEPLOYMENT_PROFILES.md)
-- SLO/SLI: [docs/middleware/MIDDLEWARE_SLO_SLI.md](docs/middleware/MIDDLEWARE_SLO_SLI.md)
-- Runbook: [docs/middleware/MIDDLEWARE_RUNBOOK.md](docs/middleware/MIDDLEWARE_RUNBOOK.md)
-- Release checklist: [docs/middleware/MIDDLEWARE_RELEASE_CHECKLIST.md](docs/middleware/MIDDLEWARE_RELEASE_CHECKLIST.md)
-
-Validation settings example with tenant access policies (JSON):
-
-```json
-{
-  "tenantRequirementMode": "REQUIRED",
-  "accessPolicy": {
-    "deniedTables": ["users"],
-    "principals": [
-      {
-        "name": "analyst",
-        "deniedColumns": ["users.email"]
-      }
-    ],
-    "tenants": [
-      {
-        "name": "tenant-a",
-        "deniedTables": ["payments"],
-        "deniedColumns": ["users.ssn"],
-        "allowedFunctions": ["count", "lower"]
-      },
-      {
-        "name": "tenant-b",
-        "deniedTables": ["audit_logs"]
-      }
-    ]
-  }
-}
-```
-
-Equivalent YAML:
-
-```yaml
-tenantRequirementMode: REQUIRED
-accessPolicy:
-  deniedTables:
-    - users
-  principals:
-    - name: analyst
-      deniedColumns:
-        - users.email
-  tenants:
-    - name: tenant-a
-      deniedTables:
-        - payments
-      deniedColumns:
-        - users.ssn
-      allowedFunctions:
-        - count
-        - lower
-    - name: tenant-b
-      deniedTables:
-        - audit_logs
-```
-
-Policy evaluation precedence for a request:
-- `global rules` + `principal rules` + `tenant rules` + `tenant+principal rules`
-- deny rules are additive across scopes
-- function allowlists are additive across scopes
-
-Config templates included in the repo:
-
-- [sqm-middleware-rest/src/main/resources/application.properties](sqm-middleware-rest/src/main/resources/application.properties)
-- [sqm-middleware-mcp/.env.example](sqm-middleware-mcp/.env.example)
-
-Windows named-pipe bridge helpers:
-
-```powershell
-# terminal 1: start bridge (stdio MCP <-> named pipes)
-powershell -ExecutionPolicy Bypass -File .\scripts\start-mcp-named-pipe-bridge.ps1
-
-# terminal 2: run sample requests through the named pipes
-powershell -ExecutionPolicy Bypass -File .\scripts\test-mcp-named-pipe.ps1
-```
-
----
-
-### SQL File Codegen (Maven)
-
-Generate Java query classes from `src/main/sql/**/*.sql` at build time.
-
-```xml
-<plugin>
-  <groupId>io.sqm</groupId>
-  <artifactId>sqm-codegen-maven-plugin</artifactId>
-  <version>${project.version}</version>
-  <executions>
-    <execution>
-      <goals>
-        <goal>generate</goal>
-      </goals>
-    </execution>
-  </executions>
-  <configuration>
-    <dialect>postgresql</dialect>
-    <basePackage>com.acme.generated</basePackage>
-    <sqlDirectory>${project.basedir}/src/main/sql</sqlDirectory>
-    <generatedSourcesDirectory>${project.build.directory}/generated-sources/sqm-codegen</generatedSourcesDirectory>
-  </configuration>
-</plugin>
-```
-
-Example SQL file:
-
-```sql
--- src/main/sql/user/find_by_id.sql
-select u.id, u.user_name
-from users u
-where u.id = :id
-```
-
-Generated usage:
-
-```java
-import com.acme.generated.UserQueries;
-
-var query = UserQueries.findById();
-var params = UserQueries.findByIdParams(); // ["id"]
-```
-
-Multi-statement `.sql` files are parsed as `StatementSequence`. Generated code
-exposes a sequence-level method plus per-statement methods with stable names,
-and parameter metadata is collected across the whole script.
-
-The plugin runs in `generate-sources`, writes generated Java files under `target/generated-sources/sqm-codegen`, and Maven compiles them together with your source code.
-
-### Schema-Aware Codegen Validation
-
-`sqm-codegen-maven-plugin` can validate parsed SQL files against a schema before generating Java classes.
-The schema can be loaded from:
-- JSON snapshot (`JsonSchemaProvider`)
-- JDBC introspection (`JdbcSchemaProvider`) with optional local cache reuse
-
-See full setup and all configuration options in:
-- [docs/codegen/SQL_FILE_CODEGEN_SCHEMA_VALIDATION.md](docs/codegen/SQL_FILE_CODEGEN_SCHEMA_VALIDATION.md)
-
-Quick-start (JSON snapshot):
-
-```xml
-<configuration>
-  <dialect>postgresql</dialect>
-  <schemaProvider>json</schemaProvider>
-  <schemaSnapshotPath>${project.basedir}/src/main/sqm/schema.json</schemaSnapshotPath>
-</configuration>
-```
-
-Examples module also provides JDBC mode via profile:
-
-```bash
-mvn -pl examples -am generate-sources -Pjdbc-schema-validate
-```
----
-
-### PostgreSQL Dialect Support
-
-SQM includes PostgreSQL parsing and rendering with dialect-specific capabilities.
-
-```java
-var sql = """
-    SELECT a OPERATOR(pg_catalog.##) b
-    FROM t
-    WHERE ts AT TIME ZONE 'UTC' > now() - interval '1 day'
-""";
-
-var parseCtx = ParseContext.of(new PostgresSpecs());
-var query = parseCtx.parse(Query.class, sql).value();
-
-var renderCtx = RenderContext.of(new PostgresDialect());
-var rendered = renderCtx.render(query).sql();
-```
-
-Highlights:
-- Custom operators (including OPERATOR(...)) with PostgreSQL-style precedence tiers
-- PostgreSQL `::` type casts
-- Expression `COLLATE`
-- `AT TIME ZONE` expressions
-- Exponentiation operator (`^`)
-- DISTINCT ON
-- ILIKE / SIMILAR TO
-- IS DISTINCT FROM / IS NOT DISTINCT FROM
-- Regex predicates (~, ~*, !~, !~*)
-- Arrays (ARRAY literals, subscripts, slices)
-- LATERAL, function tables, WITH ORDINALITY
-- GROUPING SETS / ROLLUP / CUBE
-- ORDER BY ... USING
-- SELECT locking clauses (FOR UPDATE/SHARE, NOWAIT, SKIP LOCKED)
-
-### MySQL Dialect Support
-
-SQM includes MySQL parsing and rendering with dialect-specific capabilities.
-
-```java
-var sql = """
-    SELECT id, name
-    FROM users
-    WHERE email <=> ? AND name RLIKE '^adm'
-    GROUP BY role, region WITH ROLLUP
-    FOR SHARE SKIP LOCKED
-""";
-
-var parseCtx = ParseContext.of(new MySqlSpecs());
-var query = parseCtx.parse(Query.class, sql).value();
-
-var renderCtx = RenderContext.of(new MySqlDialect());
-var rendered = renderCtx.render(query).sql();
-```
-
-Highlights:
-  - MySQL null-safe equality (`<=>`)
-  - Regex predicates (`REGEXP`, `RLIKE`) with canonical rendering
-  - Locking modifiers (`FOR SHARE`, `NOWAIT`, `SKIP LOCKED`)
-  - `GROUP BY ... WITH ROLLUP` parsing and canonical rendering
-  - optimizer hint comments for `SELECT`, `UPDATE`, and `DELETE`
-  - `STRAIGHT_JOIN` parsing and canonical rendering
-  - selected MySQL built-in JSON/date/string functions, including `JSON_EXTRACT`, `JSON_OBJECT`, `DATE_ADD`, `DATE_SUB`, `CONCAT_WS`, and `SUBSTRING_INDEX`
-  - MySQL interval literals in date arithmetic function arguments, including canonical `INTERVAL '...'` and MySQL input forms like `INTERVAL 1 DAY` and `INTERVAL -1 DAY`
-
-### Schema Validation (sqm-validate)
-
-SQM includes semantic statement validation against a provided schema model.
-
-Add dependency:
-
-```xml
-<dependency>
-  <groupId>io.sqm</groupId>
-  <artifactId>sqm-validate</artifactId>
-  <version>0.3.3</version>
-</dependency>
-```
-
-Basic usage:
-
-```java
-import io.sqm.catalog.model.CatalogColumn;
-import io.sqm.catalog.model.CatalogSchema;
-import io.sqm.catalog.model.CatalogTable;
-import io.sqm.catalog.model.CatalogType;
-import io.sqm.validate.schema.SchemaStatementValidator;
-
-CatalogSchema schema = CatalogSchema.of(
-    CatalogTable.of("public", "users",
-        CatalogColumn.of("id", CatalogType.LONG),
-        CatalogColumn.of("name", CatalogType.STRING)
-    )
-);
-
-var validator = SchemaStatementValidator.of(schema);
-var result = validator.validate(query);
-
-if (!result.ok()) {
-    result.problems().forEach(System.out::println);
-}
-```
-
-Custom settings and dialect extension:
-
-```java
-import io.sqm.validate.schema.SchemaValidationSettings;
-
-var settings = SchemaValidationSettings.builder()
-    .functionCatalog(customCatalog)
-    .addRule(customRule)
-    .build();
-
-var validator1 = SchemaStatementValidator.of(schema, settings);
-var validator2 = SchemaStatementValidator.of(schema, myDialect); // SchemaValidationDialect
-```
-
-For optional dialect-specific validation, `sqm-validate-mysql` currently adds
-early detection for overlapping `USE INDEX` and `FORCE INDEX` combinations on
-the same effective MySQL table-hint scope.
-
-See full validation features and planned improvements in [docs/validation/VALIDATION_FEATURES.md](docs/validation/VALIDATION_FEATURES.md).
-
-### Serialize to JSON
-
-```java
-ObjectMapper mapper = SqmJsonMixins.createPretty();
-String json = mapper.writeValueAsString(query);
-```
-
-Output example:
-```json
-{
-  "kind" : "on",
-  "right" : {
-    "kind": "table",
-    "name": { "value": "users", "quoteStyle": "NONE" },
-    "alias": { "value": "u", "quoteStyle": "NONE" }
-  },
-  "joinKind" : "INNER",
-  "on" : {
-    "kind": "comparison",
-    "lhs":  {
-      "kind" : "column",
-      "tableAlias" : { "value": "u", "quoteStyle": "NONE" },
-      "name" : { "value": "id", "quoteStyle": "NONE" }
-    },
-    "operator": "EQ",
-    "rhs": {
-      "kind" : "column",
-      "tableAlias" : { "value": "o", "quoteStyle": "NONE" },
-      "name" : { "value": "user_id", "quoteStyle": "NONE" }
-    }
-  }
-}
-```
-
----
-
-### Collectors & Transformers
-
-The SQM model provides powerful traversal and transformation mechanisms built on top of the **Visitor pattern**.  
-Two common examples are *collectors* (for extracting information from a query tree) and *transformers* (for producing modified copies).
-
----
-
-#### Column Collector Example
-
-A **collector** walks through the query tree and gathers information, such as all referenced column names.  
-Collectors typically extend `RecursiveNodeVisitor<R>` and accumulate results internally.
-
-```java
-private static class QueryColumnCollector extends RecursiveNodeVisitor<Void> {
-    private final Set<String> columns = new LinkedHashSet<>();
-
-    @Override
-    protected Void defaultResult() {
-        return null;
-    }
-    public Set<String> getColumns() {
-        return columns;
-    }
-    @Override
-    public Void visitColumnExpr(ColumnExpr c) {
-        columns.add(c.tableAlias() == null
-            ? c.name().value()
-            : c.tableAlias().value() + "." + c.name().value());
-        return super.visitColumnExpr(c);
-    }
-}
-```
-
-##### Usage
-
-```java
-var collector = new QueryColumnCollector();
-query.accept(collector);
-Set<String> usedColumns = collector.getColumns();
-usedColumns.forEach(System.out::println);
-```
-
-This visitor automatically traverses all expressions, so you only need to override the specific node type you want to handle (in this case `ColumnExpr`).  
-The recursive base visitor (`RecursiveNodeVisitor`) ensures all sub-nodes are visited.
-
----
-
-#### Column Transformer Example
-
-A **transformer** produces a modified copy of the query tree.  
-Transformers extend `RecursiveNodeTransformer` (a subclass of `NodeTransformer<Node>`) and return new node instances where changes are required.
-
-```java
-public static class RenameColumnTransformer extends RecursiveNodeTransformer {
-    @Override
-    public Node visitColumnExpr(ColumnExpr c) {
-        if (c.tableAlias() != null
-            && "u".equals(c.tableAlias().value())
-            && "id".equals(c.name().value())) {
-            return col("u", "user_id");
-        }
-        return c;
-    }
-}
-```
-
-##### Usage
-
-```java
-var transformer = new RenameColumnTransformer();
-Query transformed = transformer.transform(originalQuery);
-```
-
-The `RecursiveNodeTransformer` automatically handles traversal and reconstruction of immutable nodes.  
-You only override methods for nodes you wish to modify - all others are traversed and returned unchanged.
-
----
-
-#### Summary
-
-| Concept                             | Description                                                  |
-|-------------------------------------|--------------------------------------------------------------|
-| **Visitor**                         | Walks the query tree and can perform analysis or collection. |
-| **Transformer**                     | Walks the query tree and produces a modified copy.           |
-| **Recursive Visitors/Transformers** | Provide automatic traversal of all subnodes.                 |
-| **Collectors**                      | Typically accumulate results in a `Set`, `List`, or `Map`.   |
-| **Transformers**                    | Typically override a few methods to replace or rename nodes. |
-
----
-
-#### Typical Use Cases
-
-- Collect all referenced tables or columns in a query.  
-- Rewrite column names, table aliases, or function calls.  
-- Apply dialect-specific rewrites or optimizations.  
-- Extract metadata for validation or analysis.  
-- Implement automatic query normalization or anonymization.
-
----
-
-### Match API
-
-The `Match` API provides a fluent, pattern-style mechanism to perform type-safe dispatching across SQM model node hierarchies. It replaces complex `instanceof` chains with a clear, functional interface for handling each node subtype.
-
-#### Overview
-
-A `Match<R>` represents a lazy evaluation of matching arms (handlers) against a specific model node. The result type `R` defines what each handler returns.
-
-The core idea:
-
-```java
-var result = Match
-    .<String>query(query)
-    .select(q -> renderSelect(q))
-    .with(w -> renderWith(w))
-    .composite(c -> renderComposite(c))
-    .orElseThrow(() -> new IllegalStateException("Unknown query type"));
-```
-
-Each subtype of the SQM hierarchy (e.g., `Query`, `Expression`, `Predicate`, `Join`) has a corresponding `Match` interface. These interfaces define dedicated handler registration methods for each subtype and terminate with `otherwise(...)` or convenience variants like `orElse(...)`.
-
-#### Common Methods
-
-| Method                        | Description                                                                        |
-|-------------------------------|------------------------------------------------------------------------------------|
-| `otherwise(Function<T,R> f)`  | Terminal operation that finalizes the match and applies `f` if no handler matched. |
-| `otherwiseEmpty()`            | Returns an `Optional<R>` containing the matched result or empty if no arm matched. |
-| `orElse(R defaultValue)`      | Returns the matched result or `defaultValue` if none matched.                      |
-| `orElseGet(Supplier<R> s)`    | Returns the matched result or a lazily supplied default value.                     |
-| `orElseThrow(Supplier<X> ex)` | Throws an exception if no handler matched.                                         |
-
-The `Match` interface also includes an internal `sneakyThrow(Throwable)` helper to rethrow checked exceptions without declaring them. This enables fluent use of `orElseThrow(...)` with checked exceptions.
-
-#### Specialized Matchers
-
-Each major SQM node type has its own specialized matcher interface:
-
-* **`QueryMatch<R>`** - matches query subtypes (`SelectQuery`, `WithQuery`, `CompositeQuery`).
-* **`JoinMatch<R>`** - matches join types (`OnJoin`, `UsingJoin`, `NaturalJoin`, `CrossJoin`).
-* **`ExpressionMatch<R>`** - matches expression types (`CaseExpr`, `ColumnExpr`, `FunctionExpr`, etc.).
-* **`PredicateMatch<R>`** - matches predicate kinds (`BetweenPredicate`, `InPredicate`, `LikePredicate`, etc.).
-* **`SelectItemMatch<R>`** - matches select item types (`ExprSelectItem`, `StarSelectItem`, `QualifiedStarSelectItem`).
-* **`TableMatch<R>`** - matches table reference types (`Table`, `QueryTable`, `ValuesTable`).
-* etc.
-
-Each provides fluent methods corresponding to their subtype structure. For example:
-
-```java
-String result = Match
-    .<String>predicate(predicate)
-    .comparison(p -> renderComparison(p))
-    .in(p -> renderIn(p))
-    .isNull(p -> renderIsNull(p))
-    .orElse("(unsupported predicate)");
-```
-
-#### Advantages
-
-* Eliminates verbose `instanceof`/casting chains.
-* Enforces type safety for each node subtype.
-* Provides a single, expressive entry point per hierarchy.
-* Integrates cleanly with functional style and lambda expressions.
-
-#### Expression Match Example
-
-```java
-String sql = Match
-    .<String>expression(expr)
-    .column(c -> c.tableAlias() == null
-        ? c.name().value()
-        : c.tableAlias().value() + "." + c.name().value())
-    .literal(l -> String.valueOf(l.value()))
-    .func(f -> String.join(".", f.name().values()) + "(...)" )
-    .orElse("<unknown expression>");
-```
-
-This example demonstrates how the `Match` API cleanly separates handling logic per subtype without requiring explicit type checks.
-
-#### Accessing Specific Field Example
-
-```text
-SELECT u.user_name, o.status, count(*) AS cnt
-FROM orders AS o
-INNER JOIN users AS u ON u.id = o.user_id
-```
-
-```java
-// get the name of the column in a join.
-// here the Match class is called internally on each sub type.
-var columnName = q.matchQuery()
-    .select(s -> s.joins().getFirst().matchJoin()
-        .on(j -> j.on().matchPredicate()
-            .comparison(cmp -> cmp.rhs().matchExpression()
-                .column(c -> c.name().value())
-                .orElse(null) // each match needs to provide alternative.
-            )
-            .orElse(null)
-        )
-        .orElse(null)
-    )
-    .orElse(null);
-```
-
-In this example a specific node is accessed via matchX() methods. Each matchX() method calls Match.x() internally.
-
----
-
-### Parameters & Binding
-
-SQM provides a unified model for representing parameters inside SQL queries and a flexible rendering pipeline that determines how these parameters appear in the final SQL string.  
-The core idea is that parameterization is **dialect-independent** at the model level and **dialect-dependent** at render time.
-
-The parameterization workflow consists of three parts:
-
-1. **Parameter Expressions in the AST** (`OrdinalParamExpr`, `NamedParamExpr`, `AnonymousParamExpr`)
-2. **Parameterization Mode** (`ParameterizationMode`)
-
----
-
-#### Parameter Types in the Model
-
-##### **1. Literals**
-Any value embedded directly in the AST:
-
-```java
-col("age").gt(lit(21))
-```
-
-Depending on the parameterization mode, literals may be:
-- kept inline (default rendering), or
-- converted into bind parameters (Bind mode)
-
----
-
-##### **2. Named Parameters**
-Explicit parameters such as:
-
-```sql
-WHERE a = :name
-```
-
-Represented by:
-
-```java
-NamedParamExpr.of("name")
-```
-
----
-
-##### **3. Anonymous Parameters**
-Parameters without names - the typical `?` placeholder:
-
-```sql
-WHERE a = ?
-```
-
-Represented internally by:
-
-```java
-AnonymousParamExpr.of()
-```
-
-These are typically introduced automatically by the renderer or during parameterization.
-
----
-
-#### Parameterization Modes
-
-Controlled by:
-
-```java
-RenderOptions(parameterizationMode)
-```
-
-SQM supports two main strategies:
-
-##### **1. `Inline`**
-(Default)  
-Literals stay inline; named parameters are kept as `:name`.
-
-```sql
-WHERE age > 21
-WHERE a = :x AND b = :y
-```
-
-##### **2. `Bind`**
-All literals are converted to `?` placeholders, and a `SqlText` is produced with a fully ordered parameter list.
-
-This mode is used for JDBC-style parameter binding and safety.
-
----
-
-#### Rendering Example
-
-##### Code
-
-```java
-var q = select(col("a"), col("b"))
-    .from(tbl("t"))
-    .where(
-        col("a").eq(10).and(col("b").eq("x"))
-    )
-    .build();
-
-var opts = RenderOptions.of(ParameterizationMode.Bind);
-
-SqlText t = ctx.render(q, opts);
-```
-
-##### Output
-
-**SQL**
-
-```sql
-SELECT a, b
-FROM t
-WHERE a = ? AND b = ?
-```
-
-**Parameters:**
-
-```
-[10, "x"]
-```
-
----
-
-### Arithmetic Expressions
-
-SQM supports arithmetic expressions as part of the SQL model.  
-Arithmetic nodes allow SQL engines and transformations to handle numeric operations in a fully structured and type-safe way.
-
-#### Supported operations
-
-**Unary**
-
-- `-a` -> `NegativeArithmeticExpr`
-
-**Additive**
-
-- `a + b` -> `AddArithmeticExpr`
-- `a - b` -> `SubArithmeticExpr`
-
-**Multiplicative**
-
-- `a * b` -> `MulArithmeticExpr`
-- `a / b` -> `DivArithmeticExpr`
-- `a % b` -> `ModArithmeticExpr`
-
-#### Example
-
-```java
-var expr = col("price").add(col("quantity").mul(lit(2)));
-```
-
-This produces a model equivalent to:
-
-```sql
-price + quantity * 2
-```
-
-#### Notes
-
-- Operator precedence is preserved by the parser (`* / %` before `+ -`).
-- Arithmetic expressions can be nested and combined with predicates, functions, CASE statements, and more.
-- All arithmetic nodes extend `ArithmeticExpr` and integrate seamlessly with visitors and transformations.
-
----
-
-## Core Modules
-
-| Module                     | Description                                                                 |
-|----------------------------|-----------------------------------------------------------------------------|
-| `sqm-core`                 | Core SQL model (AST), visitors/transformers, match API, base DSL primitives |
-| `sqm-core-mysql`           | MySQL-specific model capabilities                                           |
-| `sqm-core-postgresql`      | PostgreSQL-specific model capabilities                                      |
-| `sqm-parser`               | Parser SPI and shared parser contracts                                      |
-| `sqm-parser-ansi`          | ANSI parser implementation                                                  |
-| `sqm-parser-mysql`         | MySQL parser implementation                                                 |
-| `sqm-parser-postgresql`    | PostgreSQL parser implementation                                            |
-| `sqm-render`               | Renderer SPI and shared rendering contracts                                 |
-| `sqm-render-ansi`          | ANSI renderer implementation                                                |
-| `sqm-render-mysql`         | MySQL renderer implementation                                               |
-| `sqm-render-postgresql`    | PostgreSQL renderer implementation                                          |
-| `sqm-json`                 | Jackson mixins and JSON serialization support                               |
-| `sqm-catalog`              | Schema/catalog model and providers (JSON/JDBC)                              |
-| `sqm-catalog-mysql`        | MySQL catalog-specific implementations                                      |
-| `sqm-catalog-postgresql`   | PostgreSQL catalog-specific implementations                                 |
-| `sqm-catalog-sqlserver`    | SQL Server catalog-specific implementations                                 |
-| `sqm-validate`             | Schema-aware semantic validator                                             |
-| `sqm-validate-mysql`       | MySQL validation extensions                                                 |
-| `sqm-validate-postgresql`  | PostgreSQL validation extensions                                            |
-| `sqm-transpile`            | Source-to-target SQL transpilation and rule diagnostics                     |
-| `sqm-control`              | Decision engine, rewrites, guardrails, audit abstractions                   |
-| `sqm-middleware-api`       | Transport-neutral middleware request/response contracts                     |
-| `sqm-middleware-core`      | Runtime factory/services (flow control, telemetry, bootstrap)               |
-| `sqm-middleware-rest`      | Spring Boot REST host adapter                                               |
-| `sqm-middleware-mcp`       | MCP stdio host adapter                                                      |
-| `sqm-codegen`              | SQL-to-Java statement model/code generation                                 |
-| `sqm-codegen-maven-plugin` | Maven plugin for SQL file code generation                                   |
-| `sqm-it`                   | Cross-module fast integration tests without live DB containers              |
-| `sqm-db-it`                | Live database integration tests using Docker/Testcontainers                 |
-| `sqm-middleware-it`        | Middleware end-to-end integration/NFR tests                                 |
-| `examples`                 | Usage examples and reference flows                                          |
-
----
-
-## Example Use Cases
-
-- Building complex SQL dynamically in backend applications
-- Converting SQL text into structured form for static analysis or auditing
-- Generating dialect-specific SQL (PostgreSQL, MySQL, SQL Server, etc.)
-- Visual query builders or query explorers
-- Integrating with DSL or JSON-based query definitions
-
----
-
-## Testing & Validation
-
-SQM includes:
-- Round-trip tests: SQL -> Model -> SQL (golden files)
-- Fuzz & property tests: verify idempotency and equivalence
-- Renderer compatibility checks per dialect
-- JSON serialization consistency tests
-- Middleware runtime integration and NFR suites
-- Live DB syntax execution suites in `sqm-db-it` for PostgreSQL, MySQL, SQL Server, and Oracle
-
----
-
-## Development Setup
-
-```bash
-git clone https://github.com/icher-g/sqm.git
-cd sqm
-mvn clean install
-```
-
-## Playground Docker
-
-The SQM playground can be packaged as a single Docker image that serves both the frontend and the REST API from one container.
-
-Build the image locally from the repository root:
-
-```bash
-docker build -f deploy/docker/playground/Dockerfile -t sqm-playground:local .
-```
-
-Run it:
-
-```bash
-docker run --rm -p 8080:8080 sqm-playground:local
-```
-
-Then open:
-
-- `http://localhost:8080` for the playground UI
-- `http://localhost:8080/sqm/playground/api/v1/health` for the backend health endpoint
-
-Once the image is published to Docker Hub, the intended end-user flow becomes a single command:
-
-```bash
-docker run --rm -p 8080:8080 igorcher/sqm-playground:latest
-```
-
-### Docker Hub publishing
-
-The repository includes [`.github/workflows/publish-playground-image.yml`](.github/workflows/publish-playground-image.yml) to publish the single `sqm-playground` image on pushes to `main`, version tags like `v0.4.0`, and manual workflow runs.
-
-Configure these repository secrets before enabling publishing:
-
-- `DOCKERHUB_USERNAME`
-- `DOCKERHUB_TOKEN`
-
-Optionally configure this repository variable if the Docker Hub namespace differs from the username:
-
-- `DOCKERHUB_NAMESPACE`
-
-To run tests:
-```bash
-mvn test
-```
-
-To run the live DB suites separately:
-```bash
-mvn -B -pl sqm-db-it -am verify -Pdocker-it
-```
-
-Per-dialect live DB commands:
-```powershell
-mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=PostgresDslExecutionIT,PostgresMiddlewareExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
-mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=MySqlDslExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
-mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=SqlServerDslExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
-mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=OracleDslExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
-mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=OracleDslExecutionIT#executes_oracle_model_cases_against_live_db" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
-```
-
-The quoted `-D` arguments are safe in PowerShell. `surefire.skip` skips reactor
-unit tests while Failsafe runs only the integration class named by `it.test`;
-the two Oracle commands select the complete Oracle suite and only its MODEL test
-factory, respectively. Both run in the existing Oracle CI integration and share
-one container when the complete suite is selected. The compact committed
-fixtures and complete ordered-row assertions cover the
-[MODEL live execution matrix](docs/testing/ORACLE_MODEL_LIVE_EXECUTION.md).
-
-Oracle `MATCH_RECOGNIZE` can also be built through the typed DSL:
-
-```java
-var recognized = matchRecognize(tbl("events"))
-    .partitionBy(col("account_id"))
-    .orderBy(col("event_id").asc())
-    .measure(first(patternColumn("A", "event_id")), "start_id")
-    .measure(last(patternColumn("B", "event_id")), "end_id")
-    .oneRowPerMatch()
-    .skipPastLastRow()
-    .pattern(patternSequence(patternVar("A"), oneOrMore(patternVar("B"))))
-    .define("A", patternColumn("A", "kind").eq(lit("A")))
-    .define("B", patternColumn("B", "kind").eq(lit("B")))
-    .as("mr")
-    .build();
-```
-
-Oracle 12.1+ is the currently enabled dialect for `MATCH_RECOGNIZE`. The `MODEL`
-core AST and DSL are available. Oracle parsing/rendering covers main and reference
-models, options, positional/symbolic cell addressing, FOR generators, aggregates,
-ordered/iterative rules, and dedicated MODEL functions and predicates (#505–#506).
-Oracle's validator reports MODEL value limits, generator cardinality/template
-restrictions, and explicit FOR-query width errors separately from parsing/rendering.
-MODEL validation also resolves input/main/reference/output namespaces, checks
-cell roles and known assignment types, and rejects invalid expression placement,
-correlation, recursive members, and locking. Oracle-to-Oracle transpilation preserves
-MODEL exactly; other targets receive a path-aware `UNSUPPORTED_MODEL_CLAUSE` problem
-before any rewrite. The MODEL test factory in `OracleDslExecutionIT` (#508) covers
-options, modes/order, cell addressing/generation, iteration, presence, references,
-and existing DML query sources; completion remains subject to the story delivery gates.
-The playground includes **Oracle MODEL Sales Forecast**, **Oracle MODEL Reference Forecast**, and **Oracle MODEL Iterative Forecast**
-examples for AST/JSON inspection, SQL formatting, and Java DSL generation. The basic forecast is itself
-constructed with concise public DSL declarations and direct rules. The reference forecast demonstrates
-a named reference model, a FOR range, qualified cell reads, and CV().
-The iterative example uses only DUAL and generates a three-year forecast with
-ITERATION_NUMBER, so it can be executed without setting up sample tables.
-Generated Java uses the public MODEL DSL, including reference/FOR queries and
-iterative expressions, and is supported by the codegen Maven plugin.
-The staged delivery is specified in the
-[`MODEL` clause design](docs/epics/ORACLE_MODEL_CLAUSE_DESIGN.md). Oracle's
-legacy outer-join `(+)` syntax remains intentionally unsupported.
-
-For example, generated MODEL targets can forecast several products and years:
-
-```sql
-SELECT product, year_key, sales
-FROM sales_data
-MODEL
-  DIMENSION BY (product, year_key)
-  MEASURES (amount AS sales)
-  RULES UPSERT ALL (
-    sales[FOR product IN ('Bike', 'Car'),
-          FOR year_key FROM 2026 TO 2028 INCREMENT 1] =
-      sales[CV(product), CV(year_key) - 1] * 1.1
-  )
-ORDER BY product, year_key
-```
-
-GitHub Actions runs the live DB suites in the separate [`.github/workflows/live-db-it.yml`](.github/workflows/live-db-it.yml) pipeline so the default CI path stays fast.
-
----
-
-## Maven Coordinates
+Use Java 21 or later and the same SQM version for every dependency. Set
+`sqm.version` to the release you want to use.
 
 ```xml
 <dependency>
   <groupId>io.sqm</groupId>
   <artifactId>sqm-core</artifactId>
-  <version>${project.version}</version>
+  <version>${sqm.version}</version>
+</dependency>
+<dependency>
+  <groupId>io.sqm</groupId>
+  <artifactId>sqm-render-ansi</artifactId>
+  <version>${sqm.version}</version>
 </dependency>
 ```
 
-Current version in this repository: `0.3.3`.
+```java
+import static io.sqm.dsl.Dsl.*;
+import io.sqm.render.ansi.spi.AnsiDialect;
+import io.sqm.render.spi.RenderContext;
 
----
+var query = select(col("u", "id"), col("u", "name"))
+    .from(tbl("users").as("u"))
+    .where(col("u", "id").eq(lit(7L)))
+    .build();
+var renderer = RenderContext.of(new AnsiDialect());
+var sql = renderer.render(query).sql();
+```
 
-## Roadmap
+[Getting started and dependencies](wiki-src/Getting-Started.md) ·
+[DSL examples, joins, grouping, and arithmetic](wiki-src/DSL-Usage.md)
 
-Roadmap is tracked in project docs and GitHub issues:
+The following examples reuse `query` and `renderer`; each guide covers its module
+dependencies and full setup.
 
-- [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md)
-- [docs/downstream/DOWNSTREAM_SUPPORT_MATRIX.md](docs/downstream/DOWNSTREAM_SUPPORT_MATRIX.md)
-- https://github.com/icher-g/sqm/issues
+## Parse existing SQL
 
-Current downstream support spans ANSI, PostgreSQL, MySQL, and SQL Server query and DML flows across
-validation, control/middleware, code generation, and Maven plugin schema-backed generation.
+Add the parser module for your dialect and inspect errors before using the model.
 
----
+```java
+var parser = ParseContext.of(new AnsiSpecs());
+var parsed = parser.parse(Query.class, "SELECT id, name FROM users");
+if (!parsed.ok()) throw new IllegalArgumentException(parsed.errorMessage());
+var model = parsed.value();
+```
+
+[Parsing and statement sequences](wiki-src/Parsing-SQL.md) ·
+[Rendering SQL](wiki-src/Rendering-SQL.md)
+
+## Choose a dialect
+
+| Dialect | Guide |
+|---|---|
+| ANSI | [Shared model and support boundaries](wiki-src/Core-Model.md) |
+| PostgreSQL | [PostgreSQL dialect](wiki-src/PostgreSQL-Dialect.md) |
+| MySQL | [MySQL dialect](wiki-src/MySQL-Dialect.md) |
+| SQL Server | [SQL Server dialect](wiki-src/SQL-Server-Dialect.md) |
+| Oracle | [Oracle dialect](wiki-src/Oracle-Dialect.md) |
+
+For example, render the same common query with Oracle's renderer:
+
+```java
+var oracleSql = RenderContext.of(new OracleDialect()).render(query).sql();
+```
+
+A shared node is representable in the model; each dialect decides which syntax
+it can parse, render, validate, and transpile. See the
+[support matrix](docs/downstream/DOWNSTREAM_SUPPORT_MATRIX.md) and
+[unsupported features](wiki-src/Unsupported-Features.md).
+
+## Build DML statements
+
+```java
+var change = update("users")
+    .set("name", lit("Alice"))
+    .where(col("id").eq(lit(7L)))
+    .build();
+```
+
+[INSERT, UPDATE, DELETE, MERGE, and returned values](wiki-src/DML-Statements.md)
+
+## Validate against a schema
+
+```java
+var schema = CatalogSchema.of(
+    CatalogTable.of("public", "users",
+        CatalogColumn.of("id", CatalogType.LONG),
+        CatalogColumn.of("name", CatalogType.STRING)));
+var validation = SchemaStatementValidator.of(schema).validate(query);
+validation.problems().forEach(System.out::println);
+```
+
+[Schema validation and policies](wiki-src/Schema-Validation.md) ·
+[JSON/JDBC schema providers](wiki-src/Schema-Introspection.md)
+
+## Transform and inspect models
+
+```java
+var renamed = IdentifierTransforms.renameColumn(query, "u", "name", "display_name");
+var kind = Match.<String>query(query).select(q -> "SELECT").orElse("other query");
+```
+
+[Task-oriented transform helpers](wiki-src/Query-Transform-Helpers.md) ·
+[Visitors, transformers, collectors, and matching](wiki-src/Traversal-and-Matching.md)
+
+## Render bind parameters
+
+```java
+var bound = renderer.render(query, RenderOptions.of(ParameterizationMode.Bind));
+System.out.println(bound.sql());    // WHERE u.id = ?
+System.out.println(bound.params()); // [7]
+```
+
+[Parameter types, rendering modes, and binding](wiki-src/Parameters-and-Binding.md)
+
+## Transpile between dialects
+
+```java
+var result = SqlTranspiler.builder()
+    .sourceDialect(SqlDialectId.POSTGRESQL)
+    .targetDialect(SqlDialectId.MYSQL)
+    .build()
+    .transpile("SELECT first_name || ' ' || last_name AS full_name FROM users");
+System.out.println(result.sql().orElseThrow());
+```
+
+The result distinguishes exact conversions, opted-in approximations, and
+unsupported features.
+
+[Transpilation setup and diagnostics](wiki-src/SQL-Transpilation.md) ·
+[Dialect conversion examples](wiki-src/SQL-Transpilation-Examples.md)
+
+## Apply runtime SQL policies
+
+```java
+var middleware = SqlDecisionService.create(
+    SqlDecisionServiceConfig.builder(schema).buildValidationConfig());
+var decision = middleware.analyze(
+    "SELECT id FROM users", ExecutionContext.of("postgresql", ExecutionMode.ANALYZE));
+System.out.println(decision.kind());
+```
+
+[Middleware, guardrails, and rewrite policies](wiki-src/SQL-Middleware-Framework.md) ·
+[REST and MCP hosts, configuration, and named pipes](wiki-src/Middleware-Transports.md)
+
+## Serialize models as JSON
+
+```java
+var mapper = SqmJsonMixins.createPretty();
+var json = mapper.writeValueAsString(query);
+var restored = mapper.readValue(json, Query.class);
+```
+
+[JSON serialization and round trips](wiki-src/JSON-Serialization.md)
+
+## Generate Java from SQL files
+
+Put SQL in `src/main/sql/user/find_by_id.sql` and configure the codegen plugin:
+
+```sql
+SELECT id, name FROM users WHERE id = :id
+```
+
+Use the generated factory and parameter metadata:
+
+```java
+var generated = UserQueries.findById();
+var parameterNames = UserQueries.findByIdParams();
+```
+
+[Maven code generation](wiki-src/SQL-File-Codegen.md) ·
+[Schema-aware generation](wiki-src/SQL-File-Codegen-Schema-Validation.md)
+
+## Explore the playground
+
+Inspect the model, SQL, JSON, generated DSL, and diagnostics in the playground.
+
+```bash
+docker run --rm -p 8080:8080 igorcher/sqm-playground:latest
+```
+
+Open [localhost:8080](http://localhost:8080).
+
+![SQM playground](images/main-view.png)
+
+[Playground guide, local builds, and Docker publishing](wiki-src/SQM-Playground.md)
+
+## Develop and test
+
+```bash
+mvn -B verify
+```
+
+[Development setup and test suites](wiki-src/Development-and-Testing.md) ·
+[Live PostgreSQL, MySQL, SQL Server, and Oracle tests](wiki-src/Integration-Testing-with-Docker.md)
+
+## Architecture and reference
+
+- [Architecture, module families, and data flow](wiki-src/Architecture.md)
+- [Core model](wiki-src/Core-Model.md) and [full node hierarchy](docs/model/MODEL.md)
+- [Runnable examples](wiki-src/Examples-Module-Guide.md)
+- [Published wiki](https://github.com/icher-g/sqm/wiki) and [wiki source index](wiki-src/Home.md)
+- [Roadmap](docs/planning/ROADMAP.md) and [issues](https://github.com/icher-g/sqm/issues)
+- [Contributor rules](AGENTS.md)
 
 ## License
 
-Licensed under the **MIT License**.  
-See [LICENSE](LICENSE) for details.
-
----
-
-## Learn More
-
-- [Project wiki](https://github.com/icher-g/sqm/wiki)
-- [Project docs folder](docs)
-- [Transpilation usage doc](docs/transpilation/SQL_TRANSPILATION_USAGE.md)
-- [Project examples](examples/src/main/java/io/sqm/examples)
-- [GitHub Issues](https://github.com/icher-g/sqm/issues)
-
----
-
-### About
-
-**SQM (Structured Query Model)** is developed and maintained by [icher-g](https://github.com/icher-g).
-
+[MIT](LICENSE). Developed and maintained by [icher-g](https://github.com/icher-g).

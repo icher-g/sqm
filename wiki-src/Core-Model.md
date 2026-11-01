@@ -1,10 +1,12 @@
 # Core Model
 
-SQM represents queries as immutable, typed nodes.
+SQM represents queries and DML as immutable, typed nodes.
 
 ## Main Concepts
 
 - `Query`: root query node (`SelectQuery`, `WithQuery`, `CompositeQuery`)
+- `Statement`: queries, INSERT, UPDATE, DELETE, and MERGE
+- `StatementSequence`: ordered scripts processed as a single unit
 - `Expression`: columns, literals, functions, arithmetic, etc.
 - `Predicate`: `AND/OR`, comparison, `IN`, `EXISTS`, etc.
 - `TableRef` and joins
@@ -61,4 +63,7 @@ class ColumnCollector extends RecursiveNodeVisitor<Void> {
 
 - [DSL Usage](DSL-Usage)
 - [Schema Validation](Schema-Validation)
+- [DML Statements](DML-Statements)
+- [Traversal and Matching](Traversal-and-Matching)
+- [Architecture](Architecture)
 

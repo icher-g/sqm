@@ -16,6 +16,18 @@ var renderCtx = RenderContext.of(new PostgresDialect());
 var sql = renderCtx.render(query).sql();
 ```
 
+## Oracle Rendering
+
+For Oracle:
+
+```java
+var oracleSql = RenderContext.of(new OracleDialect()).render(query).sql();
+```
+
+See [Oracle Dialect](Oracle-Dialect) for pagination, aliases, MODEL, and pattern
+recognition, and [Parameters and Binding](Parameters-and-Binding) for literal
+parameterization and bind output.
+
 ## Behavior
 
 - Renderers only emit syntax supported by their dialect.
@@ -31,4 +43,5 @@ var sql = renderCtx.render(query).sql();
 
 - [PostgreSQL Validation](PostgreSQL-Validation)
 - [Integration Testing with Docker](Integration-Testing-with-Docker)
+- [Parameters and Binding](Parameters-and-Binding)
 
