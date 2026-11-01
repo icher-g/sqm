@@ -853,7 +853,11 @@ cannot leak into nested ordinary query scopes. Oracle-to-Oracle transpilation is
 exact; unsupported targets fail before rewrites and report the clause path and
 source/target dialects. Java DSL generation and the Maven plugin reconstruct all
 MODEL node families. Identifier normalization and column qualification preserve
-MODEL namespaces. Live-engine coverage is #508.
+MODEL namespaces. The dedicated `OracleModelExecutionIT` suite (#508) covers
+options, cell addressing/generation, rule modes/order, iteration, presence,
+references, and existing DML query sources using complete deterministic row
+assertions. See the [live execution matrix](../testing/ORACLE_MODEL_LIVE_EXECUTION.md)
+for the focused Maven selector and delivery status.
 See the [detailed design](../epics/ORACLE_MODEL_CLAUSE_DESIGN.md).
 Each node's Javadoc includes SQL context and identifies the exact represented fragment.
 

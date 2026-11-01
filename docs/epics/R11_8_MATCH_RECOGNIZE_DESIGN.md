@@ -1343,7 +1343,7 @@ Acceptance:
 - All Oracle live cases assert result contents.
 - The dedicated Oracle integration-test selection works in Maven and CI.
 - Unit, integration, JSON, codegen, validation, and transpilation suites pass.
-- `MODEL` implementation remains deferred to its typed
+- `MODEL` is tracked separately in epic #503 (#504–#507 merged, #508 live-engine delivery in progress), with its typed
   [`ORACLE_MODEL_CLAUSE_DESIGN.md`](ORACLE_MODEL_CLAUSE_DESIGN.md) follow-up and
   legacy `(+)` remains explicitly unsupported; neither receives a raw-string
   fallback.

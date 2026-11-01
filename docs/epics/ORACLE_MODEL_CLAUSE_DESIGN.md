@@ -1,6 +1,6 @@
 # Oracle `MODEL` Clause Detailed Design
 
-**Status:** #504–#506 are merged. #507 full contextual validation, transpilation, Java DSL generation, and downstream integration are being implemented locally for maintainer review. Live MODEL coverage remains #508.
+**Status:** #504–#507 are merged. #508 is implemented locally for maintainer review: all 41 dedicated Oracle live cases pass, and DSL-built catalog examples and completion documentation are included. Epic #503 remains open until #508 passes the remaining delivery gates and is merged. See the [live execution matrix, commands, and evidence](../testing/ORACLE_MODEL_LIVE_EXECUTION.md).
 
 **Origin:** Standalone follow-up to R11. R11 remains complete. This document
 resolves the deferred design decision in

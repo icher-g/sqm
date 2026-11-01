@@ -153,7 +153,13 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
         flashbackFixtureInitialized = true;
     }
 
-    private void dropTableIfExists(String tableName) throws Exception {
+    /**
+     * Drops a fixture table, ignoring only Oracle's table-not-found error.
+     *
+     * @param tableName trusted fixture table name
+     * @throws Exception when dropping the table fails for any other reason
+     */
+    protected void dropTableIfExists(String tableName) throws Exception {
         try {
             executeStatements("drop table " + tableName + " purge");
         }

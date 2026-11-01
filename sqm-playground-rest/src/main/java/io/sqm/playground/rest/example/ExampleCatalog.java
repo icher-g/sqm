@@ -2,9 +2,13 @@ package io.sqm.playground.rest.example;
 
 import io.sqm.playground.api.ExampleDto;
 import io.sqm.playground.api.SqlDialectDto;
+import io.sqm.render.oracle.spi.OracleDialect;
+import io.sqm.render.spi.RenderContext;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+
+import static io.sqm.dsl.Dsl.*;
 
 /**
  * In-memory catalog of built-in SQL examples for the playground.
@@ -189,19 +193,13 @@ public final class ExampleCatalog {
                 "oracle-model",
                 "Oracle MODEL Sales Forecast",
                 SqlDialectDto.oracle,
-                """
-                SELECT country, product, sales_year, sales
-                FROM sales_data
-                MODEL
-                    PARTITION BY (country)
-                    DIMENSION BY (product, sales_year)
-                    MEASURES (amount AS sales)
-                    RULES UPSERT SEQUENTIAL ORDER (
-                        sales['Bike', 2026] = sales['Bike', 2025] * 1.10,
-                        sales['Car', 2026] = sales['Car', 2025] * 1.05
-                    )
-                ORDER BY country, product, sales_year
-                """
+                modelSalesForecast()
+            ),
+            new ExampleDto(
+                "oracle-model-iterative-forecast",
+                "Oracle MODEL Iterative Forecast",
+                SqlDialectDto.oracle,
+                iterativeModelForecast()
             ),
             new ExampleDto(
                 "oracle-model-reference-forecast",
@@ -229,5 +227,28 @@ public final class ExampleCatalog {
                 """
             )
         );
+    }
+
+    private static String modelSalesForecast() {
+        var query = select(col("country"), col("product"), col("sales_year"), col("sales"))
+            .from(tbl("sales_data"))
+            .model(model().partition("country").dimension("product").dimension("sales_year").measure("amount", "sales")
+                .rule(cellTarget("sales", "Bike", 2026L), cellRef("sales", "Bike", 2025L).mul(lit(1.1)))
+                .rule(cellTarget("sales", "Car", 2026L), cellRef("sales", "Car", 2025L).mul(lit(1.05)))
+                .build())
+            .orderBy(col("country"), col("product"), col("sales_year"))
+            .build();
+        return RenderContext.of(new OracleDialect()).render(query).sql();
+    }
+
+    private static String iterativeModelForecast() {
+        var query = select(col("year_key"), col("sales")).from(tbl("dual"))
+            .model(model().dimension(lit(2025L), "year_key").measure(lit(100L), "sales")
+                .rules(modelRules().iteration(iterationSpec(lit(3L)))
+                    .rule(cellTarget("sales", lit(2026L).add(iterationNumber())),
+                        cellRef("sales", lit(2025L).add(iterationNumber())).mul(lit(2L)))
+                    .build()).build())
+            .orderBy(col("year_key")).build();
+        return RenderContext.of(new OracleDialect()).render(query).sql();
     }
 }
