@@ -11,6 +11,8 @@ class OracleLiveFeatureCoverageTest {
     @Test
     void all_oracle_live_features_have_execution_coverage() {
         Set<OracleLiveFeature> expected = EnumSet.allOf(OracleLiveFeature.class);
-        assertEquals(expected, OracleExecutionCases.coveredFeatures());
+        var covered = EnumSet.copyOf(OracleExecutionCases.coveredFeatures());
+        OracleModelExecutionCases.cases().forEach(testCase -> covered.addAll(testCase.features()));
+        assertEquals(expected, covered);
     }
 }

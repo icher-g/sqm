@@ -43,7 +43,7 @@ class ExampleServiceTest {
         assertTrue(response.success());
         assertNotNull(response.requestId());
         assertFalse(response.requestId().isBlank());
-        assertEquals(14, response.examples().size());
+        assertEquals(15, response.examples().size());
         assertEquals("basic-select", response.examples().getFirst().id());
         assertEquals("ansi", response.examples().getFirst().dialect().name());
         assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("ansi-analytics-report")));
@@ -55,6 +55,7 @@ class ExampleServiceTest {
         assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("oracle-pivot-query")));
         assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("oracle-match-recognize")));
         assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("oracle-model")));
+        assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("oracle-model-iterative-forecast")));
         assertTrue(response.examples().stream().anyMatch(example -> example.id().equals("oracle-model-reference-forecast")));
     }
 
@@ -112,6 +113,8 @@ class ExampleServiceTest {
         assertEquals("ModelClause", model.nodeType());
         assertTrue(parsed.sqmDsl().contains(".model(model()"));
         assertTrue(parsed.sqmDsl().contains("cellTarget("));
+        assertTrue(parsed.sqmDsl().contains(".dimension(\"product\")"));
+        assertTrue(parsed.sqmDsl().contains(".measure(\"amount\", \"sales\")"));
         assertTrue(parsed.diagnostics().isEmpty());
 
         var rendered = new RenderService(support).render(new RenderRequestDto(
@@ -127,6 +130,29 @@ class ExampleServiceTest {
         var reparsed = parser.parse(new ParseRequestDto(rendered.renderedSql(), example.dialect()));
         assertTrue(reparsed.success());
         assertEquals(parsed.sqmJson(), reparsed.sqmJson());
+    }
+
+    @Test
+    void selfContainedIterativeModelExampleParsesValidatesRendersAndGeneratesDsl() {
+        var example = new ExampleCatalog().examples().stream()
+            .filter(item -> item.id().equals("oracle-model-iterative-forecast")).findFirst().orElseThrow();
+        var support = new PlaygroundStatementSupport();
+        var parsed = new ParseService(new SqmAstMapper(), new SqmDslGenerator(), support)
+            .parse(new ParseRequestDto(example.sql(), example.dialect()));
+        assertTrue(parsed.success(), () -> parsed.diagnostics().toString());
+        assertTrue(parsed.diagnostics().isEmpty());
+        assertTrue(parsed.sqmDsl().contains("iterationSpec("));
+        assertTrue(parsed.sqmDsl().contains("iterationNumber()"));
+        var query = assertInstanceOf(SelectQuery.class, support.parse(example.sql(), example.dialect()).statement());
+        assertNotNull(query.model().main().rules().iteration());
+        var validation = SchemaStatementValidator.of(CatalogSchema.allowEverything(), OracleValidationDialect.of()).validate(query);
+        assertTrue(validation.ok(), () -> validation.problems().toString());
+        var rendered = new RenderService(support).render(new RenderRequestDto(example.sql(), example.dialect(), example.dialect()));
+        assertTrue(rendered.success(), () -> rendered.diagnostics().toString());
+        assertEquals(example.sql(), rendered.renderedSql());
+        var transpiled = SqlTranspiler.builder().sourceDialect(SqlDialectId.ORACLE).targetDialect(SqlDialectId.ORACLE)
+            .build().transpile(example.sql());
+        assertEquals(TranspileStatus.SUCCESS, transpiled.status());
     }
 
     @Test

@@ -1471,11 +1471,16 @@ mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=PostgresDslExecutionIT,Po
 mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=MySqlDslExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
 mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=SqlServerDslExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
 mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=OracleDslExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
+mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=OracleDslExecutionIT#executes_oracle_model_cases_against_live_db" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
 ```
 
 The quoted `-D` arguments are safe in PowerShell. `surefire.skip` skips reactor
 unit tests while Failsafe runs only the integration class named by `it.test`;
-the Oracle command therefore starts only `OracleDslExecutionIT`.
+the two Oracle commands select the complete Oracle suite and only its MODEL test
+factory, respectively. Both run in the existing Oracle CI integration and share
+one container when the complete suite is selected. The compact committed
+fixtures and complete ordered-row assertions cover the
+[MODEL live execution matrix](docs/testing/ORACLE_MODEL_LIVE_EXECUTION.md).
 
 Oracle `MATCH_RECOGNIZE` can also be built through the typed DSL:
 
@@ -1504,10 +1509,15 @@ MODEL validation also resolves input/main/reference/output namespaces, checks
 cell roles and known assignment types, and rejects invalid expression placement,
 correlation, recursive members, and locking. Oracle-to-Oracle transpilation preserves
 MODEL exactly; other targets receive a path-aware `UNSUPPORTED_MODEL_CLAUSE` problem
-before any rewrite. Live MODEL execution coverage remains #508.
-The playground includes **Oracle MODEL Sales Forecast** and **Oracle MODEL Reference Forecast**
-examples for AST/JSON inspection, SQL formatting, and Java DSL generation. The reference forecast demonstrates
+before any rewrite. The MODEL test factory in `OracleDslExecutionIT` (#508) covers
+options, modes/order, cell addressing/generation, iteration, presence, references,
+and existing DML query sources; completion remains subject to the story delivery gates.
+The playground includes **Oracle MODEL Sales Forecast**, **Oracle MODEL Reference Forecast**, and **Oracle MODEL Iterative Forecast**
+examples for AST/JSON inspection, SQL formatting, and Java DSL generation. The basic forecast is itself
+constructed with concise public DSL declarations and direct rules. The reference forecast demonstrates
 a named reference model, a FOR range, qualified cell reads, and CV().
+The iterative example uses only DUAL and generates a three-year forecast with
+ITERATION_NUMBER, so it can be executed without setting up sample tables.
 Generated Java uses the public MODEL DSL, including reference/FOR queries and
 iterative expressions, and is supported by the codegen Maven plugin.
 The staged delivery is specified in the

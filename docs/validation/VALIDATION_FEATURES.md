@@ -184,6 +184,23 @@ Oracle-specific validation is implemented in a dedicated dialect module:
 - PostgreSQL, MySQL, and SQL Server validation explicitly reject the shared
   `PatternRecognitionTable` model with `DIALECT_FEATURE_UNSUPPORTED`.
 
+### Oracle MODEL Validation
+
+- Input declarations, main rules, reference queries, and post-model output have
+  distinct scopes. Declared names use Oracle quote-aware equality; output is the
+  closed partition/dimension/measure schema with known types preserved.
+- Rules check measure-only targets, addressing arity, coordinate types, symbolic
+  selectors, FOR generators, references, known assignment types, aggregates and
+  analytics, and MODEL-only expression placement.
+- Iteration, PREVIOUS/UNTIL, presence checks, nested cells, generator limits, and
+  template/query shape restrictions have dedicated checks. Reference/FOR sources
+  cannot capture outer rows; recursive members and locking cannot contain MODEL.
+- Unsupported dialects reject MODEL explicitly. Checks depending on actual input
+  rows, such as dimension uniqueness, remain Oracle runtime constraints.
+- The [dedicated Oracle live matrix](../testing/ORACLE_MODEL_LIVE_EXECUTION.md)
+  exercises the accepted rule families and existing DML query-source positions;
+  see its delivery status for completion evidence.
+
 ### Oracle Function Catalog
 
 - Oracle-aware function signatures and return-type inference are provided by

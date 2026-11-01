@@ -5,8 +5,8 @@
 `JSON_TABLE`, table access modifiers, and Oracle time-zone/locking support. The
 R11-8 is resolved and implemented: `MATCH_RECOGNIZE` has a typed shared model,
 Oracle 12.1+ parser/renderer/validation support, transpilation and codegen behavior,
-and deterministic live-engine coverage. `MODEL` implementation remains deferred,
-with its typed follow-up design recorded in
+and deterministic live-engine coverage. `MODEL` is tracked separately in epic #503,
+with stories #504–#508 and final delivery [PR #513](https://github.com/icher-g/sqm/pull/513) recorded in
 [`ORACLE_MODEL_CLAUSE_DESIGN.md`](ORACLE_MODEL_CLAUSE_DESIGN.md), and
 legacy outer-join `(+)` syntax remains explicitly unsupported.
 DDL remains out of scope.
@@ -62,7 +62,7 @@ This document only covers features beyond that baseline.
 | 3        | Oracle `AT TIME ZONE`         | Reuse `AtTimeZoneExpr`                                    | Add Oracle parse/render/validation                             | PostgreSQL and SQL Server already have related support                                 |
 | 3        | Oracle locking variants       | Reuse `LockingClause` where possible                      | Extend locking for `WAIT n` only if needed                     | Oracle, PostgreSQL, SQL Server variants                                                |
 | 3        | `MATCH_RECOGNIZE`             | No existing semantic node                                 | New row-pattern recognition clause                             | SQL standard, Oracle, Snowflake, Trino-style dialects                                  |
-| 4        | Oracle `MODEL` clause         | No existing semantic node                                 | Dedicated model-clause family, deferred                        | Mostly Oracle-specific                                                                 |
+| 4        | Oracle `MODEL` clause         | No existing semantic node                                 | Dedicated model-clause family; standalone epic #503            | Mostly Oracle-specific                                                                 |
 | 4        | Legacy outer join `(+)`       | Existing joins can represent normalized semantics         | Migration/transpile parser story, not a persisted syntax node  | Oracle legacy only                                                                     |
 
 ## Reuse-First Decisions
@@ -886,15 +886,15 @@ Oracle `MODEL` is complex, multidimensional, and comparatively uncommon in day-t
 
 ### Model Decision
 
-Implementation remains deferred to a standalone follow-up. Its detailed typed
-design is recorded in
+MODEL is delivered through standalone epic #503 rather than reopening R11. Its detailed typed
+design and delivery status are recorded in
 [`ORACLE_MODEL_CLAUSE_DESIGN.md`](ORACLE_MODEL_CLAUSE_DESIGN.md).
 
-Do not parse it as a raw string. Until implemented:
-
-- Oracle parser rejects with a clear diagnostic.
-- Transpilation rejects with `UNSUPPORTED_MODEL_CLAUSE`.
-- Docs list it as deferred.
+The follow-up uses typed semantic nodes, with Oracle parsing, rendering,
+validation, DSL/codegen, and downstream support merged in #504–#507. #508 adds
+the dedicated live-engine matrix and final delivery evidence. Incapable target
+dialects receive `UNSUPPORTED_MODEL_CLAUSE`; approximate rewriting and DDL remain
+out of scope. Epic #503 is complete only after all five stories are merged.
 
 ## 11. Legacy Outer Join Operator `(+)`
 
@@ -1125,8 +1125,8 @@ Decision:
   [`R11_8_MATCH_RECOGNIZE_DESIGN.md`](R11_8_MATCH_RECOGNIZE_DESIGN.md);
   implementation is complete across R11-8A through R11-8E.
 - `MODEL`: detailed typed follow-up design completed in
-  [`ORACLE_MODEL_CLAUSE_DESIGN.md`](ORACLE_MODEL_CLAUSE_DESIGN.md); implementation
-  remains deferred and unsupported pending its standalone epic.
+  [`ORACLE_MODEL_CLAUSE_DESIGN.md`](ORACLE_MODEL_CLAUSE_DESIGN.md); #504–#507 are
+  merged, with final live-engine and completion delivery in [PR #513](https://github.com/icher-g/sqm/pull/513) for #508 under epic #503.
 - legacy `(+)`: explicitly unsupported; no implementation is planned.
 
 ## Recommended Implementation Order

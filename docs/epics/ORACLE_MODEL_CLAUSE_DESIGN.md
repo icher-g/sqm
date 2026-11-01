@@ -1,6 +1,6 @@
 # Oracle `MODEL` Clause Detailed Design
 
-**Status:** #504–#506 are merged. #507 full contextual validation, transpilation, Java DSL generation, and downstream integration are being implemented locally for maintainer review. Live MODEL coverage remains #508.
+**Status:** Implementation and verification are complete across #504–#508. Delivery of this design is complete when [PR #513](https://github.com/icher-g/sqm/pull/513), the final story, is merged; [epic #503](https://github.com/icher-g/sqm/issues/503) records final closure. The shared Oracle integration passes 70 cases, including all 41 MODEL cases, using one container. See the [live execution matrix, commands, and evidence](../testing/ORACLE_MODEL_LIVE_EXECUTION.md).
 
 **Origin:** Standalone follow-up to R11. R11 remains complete. This document
 resolves the deferred design decision in
@@ -803,7 +803,8 @@ Known explicit/range generator cardinalities are checked statically; the number
 of rows produced by an arbitrary query remains an engine-time constraint.
 Transpilation, compiling DSL codegen/plugin output, namespace-preserving rewrites,
 and downstream transport coverage are included. Live execution and the full example
-matrix remain #508; parser/renderer round trips do not establish engine execution.
+matrix are supplied by #508, with actual Oracle results recorded in the
+[execution evidence](../testing/ORACLE_MODEL_LIVE_EXECUTION.md).
 
 The semantic checks follow Oracle's [SELECT/MODEL reference](https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/SELECT.html),
 [model expressions](https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/Model-Expressions.html),
