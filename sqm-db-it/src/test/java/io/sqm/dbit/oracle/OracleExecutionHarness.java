@@ -19,6 +19,7 @@ import java.time.Duration;
 abstract class OracleExecutionHarness extends DialectExecutionHarness {
     private static final String DATABASE_PASSWORD = "SqmOracle1!";
     private static boolean flashbackFixtureInitialized;
+    private static long flashbackFixtureCommitScn;
 
     @Container
     protected static final GenericContainer<?> ORACLE = new GenericContainer<>(
@@ -70,23 +71,46 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
     }
 
     /**
-     * Returns a recent database timestamp for a flashback query that is later than fixture DDL but
-     * safely behind Oracle's current SCN-to-timestamp mapping.
+     * Returns a database timestamp whose mapped SCN includes the committed flashback fixture.
+     * Oracle's approximate timestamp mapping is checked explicitly rather than assuming a fixture age.
      *
-     * @return current Oracle database timestamp
-     * @throws Exception when the timestamp cannot be read
+     * @return Oracle timestamp resolving at or after the fixture commit SCN
+     * @throws Exception when reading or waiting for the timestamp mapping fails
      */
     protected Timestamp currentDatabaseTimestamp() throws Exception {
+        initializeFlashbackFixture();
         try (var connection = openConnection();
-             var statement = connection.createStatement();
-             var resultSet = statement.executeQuery(
-                 "select cast(systimestamp - interval '5' second as timestamp) from dual"
-             )) {
-            if (!resultSet.next()) {
-                throw new IllegalStateException("Oracle did not return SYSTIMESTAMP");
+             var clock = connection.createStatement();
+             var mapping = connection.prepareStatement("select timestamp_to_scn(?) from dual")) {
+            var deadline = System.nanoTime() + Duration.ofSeconds(30).toNanos();
+            do {
+                Timestamp candidate;
+                try (var resultSet = clock.executeQuery("select cast(systimestamp as timestamp) from dual")) {
+                    if (!resultSet.next()) throw new IllegalStateException("Oracle did not return SYSTIMESTAMP");
+                    candidate = resultSet.getTimestamp(1);
+                }
+                // Check the exact JDBC value that the flashback query will bind.
+                mapping.setTimestamp(1, candidate);
+                try (var resultSet = mapping.executeQuery()) {
+                    if (!resultSet.next()) throw new IllegalStateException("Oracle did not return TIMESTAMP_TO_SCN");
+                    if (resultSet.getLong(1) >= flashbackFixtureCommitScn) return candidate;
+                }
+                Thread.sleep(100);
             }
-            return resultSet.getTimestamp(1);
+            while (System.nanoTime() < deadline);
+            throw new SQLException("Oracle timestamp mapping did not reach fixture commit SCN " + flashbackFixtureCommitScn);
         }
+    }
+
+    /**
+     * Recreates the flashback fixture for immediate-after-DDL regression checks.
+     *
+     * @throws Exception when fixture setup fails
+     */
+    protected void resetFlashbackFixture() throws Exception {
+        dropTableIfExists("flashback_users");
+        flashbackFixtureInitialized = false;
+        initializeFlashbackFixture();
     }
 
     protected void resetDslSchema() throws Exception {
@@ -183,6 +207,8 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
             "insert into flashback_users(id, name) values (1, 'Alice')",
             "insert into flashback_users(id, name) values (2, 'Bob')"
         );
+        // ORA_ROWSCN gives a conservative commit boundary without requiring catalog/package grants.
+        flashbackFixtureCommitScn = Long.parseLong(queryRows("select max(ora_rowscn) from flashback_users").getFirst());
         flashbackFixtureInitialized = true;
     }
 

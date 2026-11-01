@@ -1,6 +1,6 @@
 # Oracle `MODEL` Clause Detailed Design
 
-**Status:** Implementation and verification are complete across #504–#508. Delivery of this design is complete when [PR #513](https://github.com/icher-g/sqm/pull/513), the final story, is merged; [epic #503](https://github.com/icher-g/sqm/issues/503) records final closure. The shared Oracle integration passes 69 cases, including all 41 MODEL cases, using one container. See the [live execution matrix, commands, and evidence](../testing/ORACLE_MODEL_LIVE_EXECUTION.md).
+**Status:** Implementation and verification are complete across #504–#508. Delivery of this design is complete when [PR #513](https://github.com/icher-g/sqm/pull/513), the final story, is merged; [epic #503](https://github.com/icher-g/sqm/issues/503) records final closure. The shared Oracle integration passes 70 cases, including all 41 MODEL cases, using one container. See the [live execution matrix, commands, and evidence](../testing/ORACLE_MODEL_LIVE_EXECUTION.md).
 
 **Origin:** Standalone follow-up to R11. R11 remains complete. This document
 resolves the deferred design decision in

@@ -88,11 +88,13 @@ the offline MODEL matrix, and the playground service/endpoint tests. JaCoCo
 reports 100% line coverage for `ExampleCatalog`, the only changed production
 class. No production classes are introduced.
 
-The Oracle CI job in [PR #513](https://github.com/icher-g/sqm/pull/513) passed all
-69 baseline, MATCH_RECOGNIZE, and MODEL cases with zero failures, errors, or skips
-and one container startup. All four live database jobs and the main CI build
-passed; Codecov reported 100% patch coverage. The PR records the final checks
-for the delivery commit.
+The complete `OracleDslExecutionIT` run passed 70 baseline, MATCH_RECOGNIZE, MODEL,
+and flashback-regression cases with zero failures, errors, or skips and one
+container startup. The new regression reads a freshly recreated flashback fixture
+three times. Its timestamp is checked with TIMESTAMP_TO_SCN against the committed
+fixture's ORA_ROWSCN boundary, replacing the fixed timestamp offset and assumptions
+about time spent in earlier cases. [PR #513](https://github.com/icher-g/sqm/pull/513)
+records the final CI, live-engine, and Codecov checks for the delivery commit.
 
 ## Support and completion boundary
 
