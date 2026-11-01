@@ -71,8 +71,24 @@ if (!result.ok()) {
 }
 ```
 
-## Next
+## Dialect rule packs
+
+Supply the dialect's validation pack for feature/version checks and semantic rules:
+
+```java
+var oracleValidator = SchemaStatementValidator.of(schema, OracleValidationDialect.of());
+var oracleValidation = oracleValidator.validate(query);
+```
+
+The optional packs are `sqm-validate-postgresql`, `sqm-validate-mysql`,
+`sqm-validate-sqlserver`, and `sqm-validate-oracle`. Oracle rules include MODEL
+scopes, pattern-recognition variables, and query/DML compatibility checks.
+
+Full reference: [Validation Features](https://github.com/icher-g/sqm/blob/main/docs/validation/VALIDATION_FEATURES.md).
+
+## Related guides
 
 - [PostgreSQL Validation](PostgreSQL-Validation)
 - [Schema Introspection](Schema-Introspection)
+- [Oracle Dialect](Oracle-Dialect)
 

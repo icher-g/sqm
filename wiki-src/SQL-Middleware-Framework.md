@@ -345,128 +345,15 @@ if (decision.kind() == DecisionKind.DENY) {
 - Docker-backed middleware integration: `sqm-it/src/test/java/io/sqm/it/PostgresMiddlewareIntegrationTest.java`
 - Docker-free flow checks: `sqm-control/src/test/java/io/sqm/control/AiSqlMiddlewareFlowTest.java`
 
-## 8) Runtime Transport Hosts
 
-The middleware service can be hosted in two runtime transports:
+## Runtime transports
 
-- REST host (`sqm-middleware-rest`) â€” Spring Boot HTTP API
-- MCP host (`sqm-middleware-mcp`) â€” long-running stdio JSON-RPC server
+See [Middleware Transports](Middleware-Transports) for REST/MCP startup,
+request framing, endpoints, error contracts, configuration, and named-pipe tools.
 
-Both hosts delegate to the same transport-neutral service (`SqlMiddlewareService`) so decision behavior remains parity-aligned.
+## Runtime validation settings and access policies
 
-### 8.1 REST host
 
-Run:
-
-```bash
-mvn -pl sqm-middleware-rest -am spring-boot:run
-```
-
-Endpoints:
-
-- `POST /sqm/middleware/v1/analyze`
-- `POST /sqm/middleware/v1/enforce`
-- `POST /sqm/middleware/v1/explain`
-
-### 8.2 MCP host (stdio JSON-RPC)
-
-Run:
-
-```bash
-mvn -pl sqm-middleware-mcp -am exec:java -Dexec.mainClass=io.sqm.middleware.mcp.SqlMiddlewareMcpApplication
-```
-
-The MCP host is a persistent process waiting for framed messages on stdin and writing framed responses on stdout.
-
-Frame format:
-
-```text
-Content-Length: <bytes>
-
-<json-rpc-body>
-```
-
-Common requests:
-
-`initialize`
-
-```text
-Content-Length: 58
-
-{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}
-```
-
-`tools/list`
-
-```text
-Content-Length: 58
-
-{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
-```
-
-`tools/call` (`middleware.enforce`)
-
-```text
-Content-Length: 205
-
-{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"middleware.enforce","arguments":{"sql":"update users set name = 'alice' where id = 1","context":{"dialect":"mysql","mode":"EXECUTE","parameterizationMode":"OFF"}}}}
-```
-
-`tools/call` (`middleware.explain`) with MySQL DML
-
-```text
-Content-Length: 225
-
-{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"middleware.explain","arguments":{"sql":"delete from users where id = 1","context":{"dialect":"mysql","mode":"ANALYZE","parameterizationMode":"OFF"}}}}
-```
-
-Tool names:
-
-- `middleware.analyze`
-- `middleware.enforce`
-- `middleware.explain`
-
-### 8.3 Host configuration (REST + MCP)
-
-Both hosts load runtime configuration from Java system properties (or corresponding environment variables):
-
-Complete generated key table (single source of truth):
-- `docs/middleware/MIDDLEWARE_CONFIG_KEYS.md` (generated from `ConfigKeys`; run `scripts/generate-middleware-config-keys-doc.ps1`)
-
-- `sqm.middleware.schema.source` (`manual|json|jdbc`)
-- `sqm.middleware.schema.defaultJson.path` (optional file path used by `manual` source)
-- `sqm.middleware.schema.json.path`
-- `sqm.middleware.jdbc.url`, `sqm.middleware.jdbc.user`, `sqm.middleware.jdbc.password`
-- `sqm.middleware.jdbc.driver`, `sqm.middleware.jdbc.schemaPattern`
-- `sqm.middleware.rewrite.enabled`
-- `sqm.middleware.rewrite.rules` (comma-separated built-in names)
-- `sqm.middleware.validation.maxJoinCount`, `sqm.middleware.validation.maxSelectColumns`
-- `sqm.middleware.guardrails.maxSqlLength`, `sqm.middleware.guardrails.timeoutMillis`, `sqm.middleware.guardrails.maxRows`, `sqm.middleware.guardrails.explainDryRun`
-- `sqm.validation.settings.json` / `SQM_VALIDATION_SETTINGS_JSON`
-- `sqm.validation.settings.yaml` / `SQM_VALIDATION_SETTINGS_YAML`
-
-Optional rewrite setting keys:
-
-- `sqm.middleware.rewrite.defaultLimitInjectionValue`
-- `sqm.middleware.rewrite.maxAllowedLimit`
-- `sqm.middleware.rewrite.limitExcessMode`
-- `sqm.middleware.rewrite.qualificationDefaultSchema`
-- `sqm.middleware.rewrite.qualificationFailureMode`
-- `sqm.middleware.rewrite.identifierNormalizationCaseMode`
-- `sqm.middleware.rewrite.tenant.tablePolicies` (format: `schema.table:tenant_column[:REQUIRED|OPTIONAL|SKIP],...`)
-- `sqm.middleware.rewrite.tenant.fallbackMode` (`DENY|SKIP`)
-- `sqm.middleware.rewrite.tenant.ambiguityMode` (`DENY|SKIP`)
-
-Tenant rewrite example keys:
-
-```properties
-sqm.middleware.rewrite.rules=TENANT_PREDICATE,LIMIT_INJECTION
-sqm.middleware.rewrite.tenant.tablePolicies=public.users:tenant_id:REQUIRED,public.orders:tenant_id:OPTIONAL
-sqm.middleware.rewrite.tenant.fallbackMode=DENY
-sqm.middleware.rewrite.tenant.ambiguityMode=DENY
-```
-
-### 8.4 Validation access policy config examples (JSON/YAML)
 
 `SqlDecisionServiceConfig.builder(schema)` now resolves validation settings in this order:
 
@@ -525,5 +412,3 @@ limits:
   maxJoinCount: 5
   maxSelectColumns: 50
 ```
-
-

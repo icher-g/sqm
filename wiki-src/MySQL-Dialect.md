@@ -123,3 +123,22 @@ WHERE orders.state = 'closed'
 - [Rendering SQL](Rendering-SQL)
 - [Unsupported Features](Unsupported-Features)
 - [SQL Middleware Framework](SQL-Middleware-Framework)
+
+## SQL modes and hint normalization
+
+Explicit MySQL SQL-mode parser options are available through `MySqlSpecs`:
+
+```java
+import java.util.Set;
+
+var defaultCtx = ParseContext.of(new MySqlSpecs());
+var ansiQuotesCtx = ParseContext.of(
+    new MySqlSpecs(SqlDialectVersion.of(8, 0), Set.of(MySqlSqlMode.ANSI_QUOTES))
+);
+```
+
+`ANSI_QUOTES` mode enables double-quoted identifiers during parsing while the default behavior remains backtick-only.
+
+MySQL rendering also supports opt-in optimizer-hint normalization through
+`MySqlOptimizerHintNormalizationPolicy`, while the default dialect behavior
+preserves hint bodies exactly as stored on the statement model.

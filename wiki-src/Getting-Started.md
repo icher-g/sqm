@@ -57,9 +57,10 @@ var rendered = renderCtx.render(parsed.value()).sql();
 ## Minimal DSL + Render
 
 ```java
-Query q = select(sel("u", "id"))
+Query q = select(col("u", "id"))
   .from(tbl("users").as("u"))
-  .where(col("u", "id").eq(param("id")));
+  .where(col("u", "id").eq(param("id")))
+  .build();
 
 var sql = RenderContext.of(new AnsiDialect()).render(q).sql();
 ```
@@ -69,3 +70,6 @@ var sql = RenderContext.of(new AnsiDialect()).render(q).sql();
 - [Core Model](Core-Model)
 - [Parsing SQL](Parsing-SQL)
 - [Rendering SQL](Rendering-SQL)
+- [Oracle Dialect](Oracle-Dialect)
+- [Architecture](Architecture)
+- [Development and Testing](Development-and-Testing)

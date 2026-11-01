@@ -143,3 +143,19 @@ npm run dev
 
 When running frontend and backend separately, make sure the frontend
 `VITE_PLAYGROUND_API_BASE_URL` points to the backend playground API.
+
+## Build and publish the image
+
+```bash
+docker build -f deploy/docker/playground/Dockerfile -t sqm-playground:local .
+docker run --rm -p 8080:8080 sqm-playground:local
+```
+
+The [publishing workflow](https://github.com/icher-g/sqm/blob/main/.github/workflows/publish-playground-image.yml)
+publishes on main, version tags, and manual runs. Configure `DOCKERHUB_USERNAME`
+and `DOCKERHUB_TOKEN`, with optional `DOCKERHUB_NAMESPACE` when the namespace
+differs from the username.
+
+Oracle examples include a basic MODEL forecast, a reference-model forecast,
+and a self-contained iterative forecast using DUAL. See [Oracle Dialect](Oracle-Dialect)
+for syntax, DSL, validation, and support boundaries.
