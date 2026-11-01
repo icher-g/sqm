@@ -1471,13 +1471,14 @@ mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=PostgresDslExecutionIT,Po
 mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=MySqlDslExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
 mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=SqlServerDslExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
 mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=OracleDslExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
-mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=OracleModelExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
+mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=OracleDslExecutionIT#executes_oracle_model_cases_against_live_db" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
 ```
 
 The quoted `-D` arguments are safe in PowerShell. `surefire.skip` skips reactor
 unit tests while Failsafe runs only the integration class named by `it.test`;
-the two Oracle commands select the baseline suite and the dedicated MODEL suite,
-respectively. MODEL has its own `oracle-model` CI job. Its compact committed
+the two Oracle commands select the complete Oracle suite and only its MODEL test
+factory, respectively. Both run in the existing Oracle CI integration and share
+one container when the complete suite is selected. The compact committed
 fixtures and complete ordered-row assertions cover the
 [MODEL live execution matrix](docs/testing/ORACLE_MODEL_LIVE_EXECUTION.md).
 
@@ -1508,7 +1509,7 @@ MODEL validation also resolves input/main/reference/output namespaces, checks
 cell roles and known assignment types, and rejects invalid expression placement,
 correlation, recursive members, and locking. Oracle-to-Oracle transpilation preserves
 MODEL exactly; other targets receive a path-aware `UNSUPPORTED_MODEL_CLAUSE` problem
-before any rewrite. The dedicated `OracleModelExecutionIT` matrix (#508) covers
+before any rewrite. The MODEL test factory in `OracleDslExecutionIT` (#508) covers
 options, modes/order, cell addressing/generation, iteration, presence, references,
 and existing DML query sources; completion remains subject to the story delivery gates.
 The playground includes **Oracle MODEL Sales Forecast**, **Oracle MODEL Reference Forecast**, and **Oracle MODEL Iterative Forecast**

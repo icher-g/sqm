@@ -1,22 +1,24 @@
 # Oracle MODEL live execution
 
-Story [#508](https://github.com/icher-g/sqm/issues/508) supplies the dedicated
-`OracleModelExecutionIT` suite in `sqm-db-it`. It complements the Oracle baseline
-and MATCH_RECOGNIZE cases in `OracleDslExecutionIT`.
+Story [#508](https://github.com/icher-g/sqm/issues/508) adds a MODEL test factory
+to the existing `OracleDslExecutionIT` suite in `sqm-db-it`. MODEL, the Oracle
+baseline, and MATCH_RECOGNIZE share the same container and Oracle CI job.
 
 ## Run only MODEL
 
 From the repository root, with Docker running:
 
 ```powershell
-mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=OracleModelExecutionIT" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
+mvn -B -pl sqm-db-it -am verify -Pdocker-it "-Dit.test=OracleDslExecutionIT#executes_oracle_model_cases_against_live_db" "-Dsurefire.skip=true" "-Dfailsafe.failIfNoSpecifiedTests=false" "-Dapi.version=1.44"
 ```
 
 Quote the entire `-D` argument in PowerShell. `surefire.skip` skips the reactor's
-unit tests; `it.test` selects exactly this Failsafe integration class. The suite
+unit tests; `it.test` selects exactly the MODEL factory in the existing integration class. The suite
 fails when Docker is unavailable instead of silently reporting a skipped live
-test. The `oracle-model` job in `.github/workflows/live-db-it.yml` uses the same
-selection on Linux, with its Unix Docker socket configured explicitly.
+test. The existing `oracle` job in `.github/workflows/live-db-it.yml` selects
+`OracleDslExecutionIT`, running both factories on Linux with its Unix Docker
+socket configured explicitly. For the same complete Oracle run locally, replace
+the method selector with `"-Dit.test=OracleDslExecutionIT"`.
 
 For fast fixture checks without Docker:
 
@@ -76,8 +78,8 @@ positive cases read an unchanged measure, avoiding that dependency problem.
 
 ## Local execution evidence
 
-On 2026-11-01, the dedicated Maven selector executed only
-`io.sqm.dbit.oracle.OracleModelExecutionIT` against the shared
+On 2026-11-01, the method selector above executed only the MODEL factory in
+`io.sqm.dbit.oracle.OracleDslExecutionIT` against the shared
 `gvenzl/oracle-free:23-slim-faststart` container: **41 tests, zero failures, zero
 errors, zero skips**. This covers 35 queries, four DML statements, and two runtime
 rejections. JavaDoc generation was skipped on the final focused rerun; a separate

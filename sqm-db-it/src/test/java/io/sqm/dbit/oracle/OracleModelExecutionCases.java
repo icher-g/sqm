@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/** Deterministic MODEL queries, shared by the focused live suite and its offline checks. */
+/** Deterministic MODEL queries, shared by the Oracle live factory and its offline checks. */
 final class OracleModelExecutionCases {
     private static final String INPUT = "SELECT product, year_key, sales FROM model_sales WHERE region = 'N' MODEL ";
     private static final String DECLARATIONS = "DIMENSION BY (product, year_key) MEASURES (amount AS sales) ";

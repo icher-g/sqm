@@ -35,7 +35,7 @@ class OracleModelExecutionCasesTest {
     }
 
     @Test
-    void the_dedicated_suite_covers_every_model_feature_with_unique_case_ids() {
+    void the_model_factory_covers_every_model_feature_with_unique_case_ids() {
         var expected = EnumSet.noneOf(OracleLiveFeature.class);
         for (var feature : OracleLiveFeature.values()) {
             if (feature.name().startsWith("MODEL_")) expected.add(feature);
