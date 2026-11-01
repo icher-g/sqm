@@ -86,8 +86,13 @@ rejections. JavaDoc generation was skipped on the final focused rerun; a separat
 `mvn -B verify` passed all 43 repository modules, including JavaDoc generation,
 the offline MODEL matrix, and the playground service/endpoint tests. JaCoCo
 reports 100% line coverage for `ExampleCatalog`, the only changed production
-class. No production classes are introduced. Remote CI and Codecov remain
-delivery gates after the maintainer authorizes a PR.
+class. No production classes are introduced.
+
+The Oracle CI job in [PR #513](https://github.com/icher-g/sqm/pull/513) passed all
+69 baseline, MATCH_RECOGNIZE, and MODEL cases with zero failures, errors, or skips
+and one container startup. All four live database jobs and the main CI build
+passed; Codecov reported 100% patch coverage. The PR records the final checks
+for the delivery commit.
 
 ## Support and completion boundary
 
@@ -108,7 +113,8 @@ starts with 100 in 2025 and generates 200, 400, and 800 for 2026–2028 using
 ITERATION_NUMBER. It requires only Oracle's DUAL table; the live matrix checks
 the same query and all four result rows.
 
-#504–#507 are merged. #508 and epic #503 remain open until maintainer review,
-remote CI/live jobs and Codecov, explicit merge authorization, and the merge are
-complete. The detailed design records the delivery status; adding a suite is not
-itself evidence that its live execution has passed.
+Final MODEL delivery is [PR #513](https://github.com/icher-g/sqm/pull/513) for
+#508, following the merged #504–#507 stories. The design is complete once that
+PR is merged; [epic #503](https://github.com/icher-g/sqm/issues/503) records
+closure after all five stories are merged. The execution and coverage evidence
+above supports that completion record.

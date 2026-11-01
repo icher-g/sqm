@@ -6,7 +6,7 @@
 R11-8 is resolved and implemented: `MATCH_RECOGNIZE` has a typed shared model,
 Oracle 12.1+ parser/renderer/validation support, transpilation and codegen behavior,
 and deterministic live-engine coverage. `MODEL` is tracked separately in epic #503,
-with #504–#507 merged and its final live-engine story #508 in progress as recorded in
+with stories #504–#508 and final delivery [PR #513](https://github.com/icher-g/sqm/pull/513) recorded in
 [`ORACLE_MODEL_CLAUSE_DESIGN.md`](ORACLE_MODEL_CLAUSE_DESIGN.md), and
 legacy outer-join `(+)` syntax remains explicitly unsupported.
 DDL remains out of scope.
@@ -1126,7 +1126,7 @@ Decision:
   implementation is complete across R11-8A through R11-8E.
 - `MODEL`: detailed typed follow-up design completed in
   [`ORACLE_MODEL_CLAUSE_DESIGN.md`](ORACLE_MODEL_CLAUSE_DESIGN.md); #504–#507 are
-  merged, with final live-engine and completion work in #508 under epic #503.
+  merged, with final live-engine and completion delivery in [PR #513](https://github.com/icher-g/sqm/pull/513) for #508 under epic #503.
 - legacy `(+)`: explicitly unsupported; no implementation is planned.
 
 ## Recommended Implementation Order
