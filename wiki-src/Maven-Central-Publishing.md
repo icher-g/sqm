@@ -61,9 +61,50 @@ validation, review the deployment in the
 [Central Portal](https://central.sonatype.com/publishing/deployments) and publish
 it there. A successful upload/validation does not mean the release is public yet.
 
-The ordinary build keeps its existing GitHub Packages deployment target.
-Use `-Pcentral-release` explicitly to select Central. Publishing profile changes
-alone do not create Central credentials, signing keys, or a GitHub Actions workflow.
+The ordinary local build keeps its existing GitHub Packages deployment target.
+Use `-Pcentral-release` explicitly to select Central when publishing locally.
+
+## GitHub Actions
+
+The `publish-maven` workflow routes versions to two destinations:
+
+| Trigger/version                               | Destination                                                      |
+|-----------------------------------------------|------------------------------------------------------------------|
+| Push to `main`                                | GitHub Packages, using the POM version with a `-SNAPSHOT` suffix |
+| Release tag such as `v0.6.0` or `v0.6.0-rc.1` | Central Portal                                                   |
+| Manual run with an explicit release version   | Central Portal                                                   |
+| Manual run with a `-SNAPSHOT` version         | GitHub Packages                                                  |
+
+For a manual run with a blank version, a selected tag supplies the version; a
+selected branch uses the POM-based snapshot version. If a version is supplied
+while selecting a tag, it must match that tag. Snapshots stay in GitHub Packages.
+
+Configure these repository Actions secrets:
+
+| Secret                   | Value                                               |
+|--------------------------|-----------------------------------------------------|
+| `CENTRAL_TOKEN_USERNAME` | Generated Central Portal token username             |
+| `CENTRAL_TOKEN_PASSWORD` | Generated Central Portal token password             |
+| `MAVEN_GPG_PRIVATE_KEY`  | Complete ASCII-armored exported private signing key |
+| `MAVEN_GPG_PASSPHRASE`   | Signing key passphrase, if set                      |
+
+The Central job generates Maven settings for server `central` and uses Maven GPG
+Plugin's Bouncy Castle signer. The exported key is supplied through
+`MAVEN_GPG_KEY` in the signing step; no interactive key import is needed.
+The public signing key must already be published as described above.
+
+Both jobs run the full default verification and installation reactor before
+publishing, making the codegen plugin available to the example module. They use
+`-Drevision` to apply the selected version consistently, and serialize publication
+of the same version to avoid concurrent uploads. The Central job archives its
+deployment bundle and waits for validation. Final publication remains manual in
+the Portal, as with local `central-release` builds. GitHub release notes are
+managed independently.
+
+To publish an existing release whose old tag predates this workflow, select
+`main` (or another reviewed ref containing the Central configuration) in
+Actions → `publish-maven` → Run workflow, and enter the release version, such as
+`0.5.0`. The selected checkout is the source being published.
 
 ## Check a bundle locally
 

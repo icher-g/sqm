@@ -2,76 +2,118 @@ name: publish-maven
 
 on:
   push:
-    branches: ['main']      # SNAPSHOT builds on main
-    tags: ['v*']            # Release builds on tags like v0.2.0
+    branches: ['main']
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (e.g.v0.3.0, v0.3.0-rc1, v0.3.0-rc.1+meta, v0.3.0-SNAPSHOT)'
+        description: 'Version to publish (e.g. 0.5.0, v0.6.0-rc.1, 0.6.0-SNAPSHOT). Blank uses the selected tag or a POM-based snapshot.'
         required: false
         type: string
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
-  publish:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      destination: ${{ steps.version.outputs.destination }}
     steps:
       - uses: actions/checkout@v4
+      - name: Compute publication version and destination
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: python3 .github/scripts/maven_publish_version.py
 
-      - uses: actions/setup-java@v4
+  publish-snapshot:
+    needs: prepare
+    if: needs.prepare.outputs.destination == 'github'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    concurrency:
+      group: maven-github-${{ needs.prepare.outputs.version }}
+      cancel-in-progress: false
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
-          cache: 'maven'
+          cache: maven
           server-id: github
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
-
-      - name: Compute version
-        id: ver
-        shell: bash
-        run: |
-          if [ "${{ github.ref_type }}" = "tag" ]; then
-            VERSION="${GITHUB_REF_NAME#v}"; VERSION="${VERSION#V}"
-          elif [ -n "${{ github.event.inputs.version }}" ]; then
-            RAW="${{ github.event.inputs.version }}"; RAW="${RAW//[[:space:]]/}"
-            VERSION="${RAW#v}"; VERSION="${VERSION#V}"
-          else
-            BASE=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version | tail -n1)
-            [[ "$BASE" == *-SNAPSHOT ]] && VERSION="$BASE" || VERSION="${BASE}-SNAPSHOT"
-          fi
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "Computed VERSION=$VERSION"
-
-      - name: Validate version
-        shell: bash
-        run: |
-          if ! echo "$VERSION" | grep -Eq '^[0-9]+(\.[0-9]+){2}([.-][0-9A-Za-z][0-9A-Za-z.-]*)?(\+[0-9A-Za-z.-]+)?$'; then
-            echo "Invalid version: $VERSION"; exit 1
-          fi
-
-      - name: Show POM distributionManagement (debug)
-        run: |
-          echo "repoUrl=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.distributionManagement.repository.url || true)"
-          echo "repoId=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.distributionManagement.repository.id || true)"
-
-      - name: Set Maven project version (all modules)
-        run: mvn -B -ntp -DprocessAllModules -DgenerateBackupPoms=false versions:set -DnewVersion="$VERSION"
-
-      - name: Build (install to local repo)
-        run: mvn -B -ntp -DskipTests install
-
-      - name: Debug deploy flags / target
-        run: |
-          echo "maven.deploy.skip = $(mvn -q -DforceStdout help:evaluate -Dexpression=maven.deploy.skip || echo '<undefined>')"
-          echo "distMgmt.repoId   = $(mvn -q -DforceStdout help:evaluate -Dexpression=project.distributionManagement.repository.id || true)"
-          echo "distMgmt.repoUrl  = $(mvn -q -DforceStdout help:evaluate -Dexpression=project.distributionManagement.repository.url || true)"
-
-      - name: Deploy to GitHub Packages
+      - name: Verify and install snapshot locally
+        run: mvn -B -ntp "-Drevision=$VERSION" install
+      - name: Publish snapshot to GitHub Packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mvn -B -ntp "-Drevision=$VERSION" "-Dsurefire.skip=true" deploy
+
+  publish-central:
+    needs: prepare
+    if: needs.prepare.outputs.destination == 'central'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: maven-central-${{ needs.prepare.outputs.version }}
+      cancel-in-progress: false
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Central publishing secrets
+        env:
+          CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
+          MAVEN_GPG_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+        shell: bash
         run: |
-          mvn -B -ntp -DskipTests deploy
+          for variable in CENTRAL_TOKEN_USERNAME CENTRAL_TOKEN_PASSWORD MAVEN_GPG_KEY; do
+            if [[ -z "${!variable}" ]]; then
+              secret="$variable"
+              if [[ "$variable" == MAVEN_GPG_KEY ]]; then
+                secret=MAVEN_GPG_PRIVATE_KEY
+              fi
+              echo "::error::Missing required publishing secret: $secret"
+              exit 1
+            fi
+          done
+          if [[ "$MAVEN_GPG_KEY" != *'-----BEGIN PGP PRIVATE KEY BLOCK-----'* ]]; then
+            echo "::error::MAVEN_GPG_PRIVATE_KEY must contain the ASCII-armored private key"
+            exit 1
+          fi
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_TOKEN_USERNAME
+          server-password: CENTRAL_TOKEN_PASSWORD
+      - name: Verify and install release locally
+        run: mvn -B -ntp "-Drevision=$VERSION" install
+      - name: Sign and upload release to Central Portal
+        env:
+          CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
+          MAVEN_GPG_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+        run: mvn -B -ntp -Pcentral-release "-Drevision=$VERSION" "-Dsurefire.skip=true" "-Dgpg.signer=bc" deploy
+      - name: Save Central deployment bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: central-${{ needs.prepare.outputs.version }}
+          path: target/central-publishing/central-bundle.zip
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Record Central publication status
+        run: |
+          printf 'Version `%s` was uploaded and validated. Finish publishing in [Central Portal](https://central.sonatype.com/publishing/deployments).\n' "$VERSION" >> "$GITHUB_STEP_SUMMARY"

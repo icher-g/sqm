@@ -13,6 +13,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Test publication routing
+        run: |
+          python3 -m venv "$RUNNER_TEMP/publication-tests"
+          "$RUNNER_TEMP/publication-tests/bin/python" -m pip install coverage==7.13.0
+          mkdir -p target
+          "$RUNNER_TEMP/publication-tests/bin/python" -m coverage run --branch --source=.github/scripts --omit='*/test_*.py' --data-file=target/publication.coverage -m unittest discover -s .github/scripts -p test_maven_publish_version.py
+          "$RUNNER_TEMP/publication-tests/bin/python" -m coverage xml --data-file=target/publication.coverage -o target/publication-coverage.xml
+          "$RUNNER_TEMP/publication-tests/bin/python" -m coverage report --data-file=target/publication.coverage --fail-under=80
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -26,6 +35,6 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: '**/target/site/jacoco/jacoco.xml'
+          files: '**/target/site/jacoco/jacoco.xml,target/publication-coverage.xml'
           flags: unittests
           fail_ci_if_error: true
