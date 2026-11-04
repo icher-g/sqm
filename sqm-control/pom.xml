@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>io.sqm</groupId>
+        <groupId>io.github.icher-g</groupId>
         <artifactId>sqm-parent</artifactId>
         <version>${revision}</version>
     </parent>
@@ -12,92 +12,92 @@
     <name>SQM (control)</name>
     <dependencies>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-parser</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-parser-ansi</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-parser-postgresql</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-parser-mysql</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-parser-sqlserver</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-parser-oracle</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-validate</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-validate-postgresql</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-validate-mysql</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-validate-sqlserver</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-validate-oracle</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-render</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-render-ansi</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-render-postgresql</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-render-mysql</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-render-sqlserver</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-render-oracle</artifactId>
             <version>${project.version}</version>
         </dependency>

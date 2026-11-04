@@ -6,7 +6,7 @@
 
 ```xml
 <plugin>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-codegen-maven-plugin</artifactId>
   <version>${sqm.version}</version>
   <executions>

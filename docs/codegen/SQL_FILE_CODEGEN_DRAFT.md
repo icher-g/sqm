@@ -163,7 +163,7 @@ reconstruct equal semantic trees; and render equivalent Oracle SQL.
 ### Minimal configuration
 ```xml
 <plugin>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-codegen-maven-plugin</artifactId>
   <version>${project.version}</version>
   <executions>

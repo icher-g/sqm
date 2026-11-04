@@ -20,7 +20,7 @@ Validation is executed after parsing and before Java emission.
 
 ```xml
 <plugin>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-codegen-maven-plugin</artifactId>
   <version>${project.version}</version>
   <configuration>
@@ -35,7 +35,7 @@ Validation is executed after parsing and before Java emission.
 
 ```xml
 <plugin>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-codegen-maven-plugin</artifactId>
   <version>${project.version}</version>
   <configuration>
@@ -58,7 +58,7 @@ Validation is executed after parsing and before Java emission.
 
 ```xml
 <plugin>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-codegen-maven-plugin</artifactId>
   <version>${project.version}</version>
   <configuration>
@@ -196,7 +196,7 @@ JSON report includes `formatVersion` (currently `1`) for forward-compatible repo
 
 ```xml
 <plugin>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-codegen-maven-plugin</artifactId>
   <version>${project.version}</version>
   <configuration>

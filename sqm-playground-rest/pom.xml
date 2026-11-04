@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.sqm</groupId>
+        <groupId>io.github.icher-g</groupId>
         <artifactId>sqm-parent</artifactId>
         <version>${revision}</version>
     </parent>
@@ -19,67 +19,67 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-playground-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-catalog</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-control</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-parser-ansi</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-parser-postgresql</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-parser-mysql</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-parser-sqlserver</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-parser-oracle</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-json</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-transpile</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-validate-oracle</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-codegen</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -102,6 +102,7 @@
     </dependencies>
 
     <build>
+        <finalName>sqm-playground-rest</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

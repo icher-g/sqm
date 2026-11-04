@@ -16,14 +16,17 @@ SQL text → model → validation / transformation → SQL + parameters
 Use Java 21 or later and the same SQM version for every dependency. Set
 `sqm.version` to the release you want to use.
 
+Maven coordinates use `io.github.icher-g`; Java packages remain `io.sqm.*`.
+See [Maven Central publishing](wiki-src/Maven-Central-Publishing.md) for release setup.
+
 ```xml
 <dependency>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-core</artifactId>
   <version>${sqm.version}</version>
 </dependency>
 <dependency>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-render-ansi</artifactId>
   <version>${sqm.version}</version>
 </dependency>

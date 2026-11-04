@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>io.sqm</groupId>
+        <groupId>io.github.icher-g</groupId>
         <artifactId>sqm-parent</artifactId>
         <version>${revision}</version>
     </parent>
@@ -12,7 +12,7 @@
     <name>SQM (parser-ANSI)</name>
     <dependencies>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-parser</artifactId>
             <version>${project.version}</version>
         </dependency>

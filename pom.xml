@@ -1,14 +1,38 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
+         child.project.url.inherit.append.path="false"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>io.sqm</groupId>
+    <groupId>io.github.icher-g</groupId>
     <artifactId>sqm-parent</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
     <name>SQM (parent)</name>
+    <description>Typed immutable SQL models, fluent DSL, parsing, rendering, validation, and transpilation for Java.</description>
     <url>https://github.com/icher-g/sqm</url>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/license/mit</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>icher-g</id>
+            <name>Igor Cher</name>
+            <url>https://github.com/icher-g</url>
+        </developer>
+    </developers>
+    <scm child.scm.connection.inherit.append.path="false"
+         child.scm.developerConnection.inherit.append.path="false"
+         child.scm.url.inherit.append.path="false">
+        <connection>scm:git:https://github.com/icher-g/sqm.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/icher-g/sqm.git</developerConnection>
+        <url>https://github.com/icher-g/sqm</url>
+        <tag>HEAD</tag>
+    </scm>
     <distributionManagement>
         <repository>
             <id>github</id>
@@ -72,13 +96,9 @@
         <module>sqm-middleware-core</module>
         <module>sqm-middleware-rest</module>
         <module>sqm-middleware-mcp</module>
-        <module>sqm-middleware-it</module>
-        <module>sqm-it</module>
-        <module>sqm-db-it</module>
-        <module>examples</module>
     </modules>
     <properties>
-        <revision>0.4.1-SNAPSHOT</revision>
+        <revision>0.5.0-SNAPSHOT</revision>
         <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.2</junit.version>
@@ -87,6 +107,7 @@
         <mysql.version>9.6.0</mysql.version>
         <maven.javadoc.skip>false</maven.javadoc.skip>
         <surefire.skip>false</surefire.skip>
+        <maven.deploy.skip>false</maven.deploy.skip>
     </properties>
     <build>
         <pluginManagement>
@@ -122,16 +143,29 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <version>3.1.3</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.1</version>
                 <configuration>
-                    <skip>true</skip>
+                    <skipSource>${maven.deploy.skip}</skipSource>
                 </configuration>
-                <inherited>false</inherited>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.11.2</version>
-                    <configuration>
+                <version>3.11.2</version>
+                <configuration>
                     <skip>${maven.javadoc.skip}</skip>
                 </configuration>
                 <executions>
@@ -154,9 +188,16 @@
                 <executions>
                     <execution>
                         <id>flatten</id>
-                        <phase>install</phase>
+                        <phase>process-resources</phase>
                         <goals>
                             <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten-clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -191,6 +232,68 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>development</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <modules>
+                <module>sqm-middleware-it</module>
+                <module>sqm-it</module>
+                <module>sqm-db-it</module>
+                <module>examples</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>central-release</id>
+            <properties>
+                <central.skipUpload>false</central.skipUpload>
+                <gpg.skip>${maven.deploy.skip}</gpg.skip>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.8</version>
+                        <configuration>
+                            <bestPractices>true</bestPractices>
+                            <skip>${gpg.skip}</skip>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>sign-release</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.12.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>false</autoPublish>
+                            <waitUntil>validated</waitUntil>
+                            <skipPublishing>${maven.deploy.skip}</skipPublishing>
+                            <skipUpload>${central.skipUpload}</skipUpload>
+                            <excludeArtifacts>
+                                <excludeArtifact>examples</excludeArtifact>
+                                <excludeArtifact>sqm-it</excludeArtifact>
+                                <excludeArtifact>sqm-db-it</excludeArtifact>
+                                <excludeArtifact>sqm-middleware-it</excludeArtifact>
+                            </excludeArtifacts>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
 
 

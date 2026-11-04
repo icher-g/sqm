@@ -11,12 +11,12 @@ Add the Oracle parser and renderer with the same version as your other SQM modul
 
 ```xml
 <dependency>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-parser-oracle</artifactId>
   <version>${sqm.version}</version>
 </dependency>
 <dependency>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-render-oracle</artifactId>
   <version>${sqm.version}</version>
 </dependency>

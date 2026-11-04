@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>io.sqm</groupId>
+        <groupId>io.github.icher-g</groupId>
         <artifactId>sqm-parent</artifactId>
         <version>${revision}</version>
     </parent>
@@ -18,34 +18,34 @@
     <dependencies>
         <!-- Depend on the modules that expose your model, DSL, renderers, parser, json mixins, etc. -->
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-parser-ansi</artifactId>
             <version>${project.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-render-ansi</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-json</artifactId>
             <version>${project.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-control</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-transpile</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -60,7 +60,7 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>io.sqm</groupId>
+                <groupId>io.github.icher-g</groupId>
                 <artifactId>sqm-codegen-maven-plugin</artifactId>
                 <version>${project.version}</version>
                 <executions>
@@ -90,7 +90,7 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>io.sqm</groupId>
+                        <groupId>io.github.icher-g</groupId>
                         <artifactId>sqm-codegen-maven-plugin</artifactId>
                         <version>${project.version}</version>
                         <configuration>

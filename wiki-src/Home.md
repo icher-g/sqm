@@ -11,6 +11,7 @@ Support note:
 ## Start Here
 
 - [Getting Started](Getting-Started)
+- [Maven Central Publishing](Maven-Central-Publishing)
 - [Architecture](Architecture)
 - [Examples Module Guide](Examples-Module-Guide)
 - [Troubleshooting](Troubleshooting)

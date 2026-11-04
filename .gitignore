@@ -1,6 +1,7 @@
 target/
 .m2/
 .wiki-tmp/
+.flattened-pom.xml
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

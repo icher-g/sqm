@@ -6,7 +6,7 @@
 
 ```xml
 <dependency>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-validate-postgresql</artifactId>
   <version>${sqm.version}</version>
 </dependency>

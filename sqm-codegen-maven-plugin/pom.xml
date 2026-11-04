@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>io.sqm</groupId>
+        <groupId>io.github.icher-g</groupId>
         <artifactId>sqm-parent</artifactId>
         <version>${revision}</version>
     </parent>
@@ -14,27 +14,27 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-codegen</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-catalog-postgresql</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-catalog-mysql</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-catalog-sqlserver</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.sqm</groupId>
+            <groupId>io.github.icher-g</groupId>
             <artifactId>sqm-catalog-oracle</artifactId>
             <version>${project.version}</version>
         </dependency>

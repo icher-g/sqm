@@ -22,19 +22,24 @@ SQM includes:
 - Middleware runtime integration and NFR suites
 - Live DB syntax execution suites in `sqm-db-it` for PostgreSQL, MySQL, SQL Server, and Oracle
 
-| Track | Run |
-|---|---|
-| Unit tests | `mvn -B test` |
-| Full verification, coverage, and JavaDoc | `mvn -B verify` |
-| Runnable examples | `mvn -B -pl examples -am test` |
-| Codegen and plugin checks | `mvn -B -pl sqm-codegen-maven-plugin -am test` |
-| Docker/live engines | See [Integration Testing with Docker](Integration-Testing-with-Docker) |
-| Playground frontend/backend | See [SQM Playground](SQM-Playground) |
+| Track                                    | Run                                                                    |
+|------------------------------------------|------------------------------------------------------------------------|
+| Unit tests                               | `mvn -B test`                                                          |
+| Full verification, coverage, and JavaDoc | `mvn -B verify`                                                        |
+| Runnable examples                        | `mvn -B -pl examples -am test`                                         |
+| Codegen and plugin checks                | `mvn -B -pl sqm-codegen-maven-plugin -am test`                         |
+| Docker/live engines                      | See [Integration Testing with Docker](Integration-Testing-with-Docker) |
+| Playground frontend/backend              | See [SQM Playground](SQM-Playground)                                   |
 
 `sqm-it` and `sqm-middleware-it` provide cross-module and transport integration
 coverage. Docker-backed execution lives in `sqm-db-it` under the `docker-it`
 profile, with one CI job per database. Oracle's baseline, pattern recognition,
 MODEL, and flashback regression share one container.
+
+## Maven Central releases
+
+For library release coordinates, signing, credentials, and local bundle checks,
+see [Maven Central Publishing](Maven-Central-Publishing).
 
 ## Documentation and wiki publishing
 

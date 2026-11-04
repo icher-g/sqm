@@ -11,17 +11,17 @@
 
 ```xml
 <dependency>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-core</artifactId>
   <version>${sqm.version}</version>
 </dependency>
 <dependency>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-parser-ansi</artifactId>
   <version>${sqm.version}</version>
 </dependency>
 <dependency>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-render-ansi</artifactId>
   <version>${sqm.version}</version>
 </dependency>
@@ -31,12 +31,12 @@ For PostgreSQL parsing/rendering:
 
 ```xml
 <dependency>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-parser-postgresql</artifactId>
   <version>${sqm.version}</version>
 </dependency>
 <dependency>
-  <groupId>io.sqm</groupId>
+  <groupId>io.github.icher-g</groupId>
   <artifactId>sqm-render-postgresql</artifactId>
   <version>${sqm.version}</version>
 </dependency>

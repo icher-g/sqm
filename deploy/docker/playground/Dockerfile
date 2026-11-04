@@ -24,7 +24,7 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /opt/sqm
 
-COPY --from=app-build /workspace/sqm-playground-rest/target/sqm-playground-rest-*.jar app.jar
+COPY --from=app-build /workspace/sqm-playground-rest/target/sqm-playground-rest.jar app.jar
 COPY --from=web-build /workspace/sqm-playground-web/dist /opt/sqm/static
 
 ENV SPRING_WEB_RESOURCES_STATIC_LOCATIONS=file:/opt/sqm/static/

@@ -35,6 +35,7 @@
 - [SQL File Codegen Schema Validation](SQL-File-Codegen-Schema-Validation)
 - [Integration Testing with Docker](Integration-Testing-with-Docker)
 - [Development and Testing](Development-and-Testing)
+- [Maven Central Publishing](Maven-Central-Publishing)
 - [Examples Module Guide](Examples-Module-Guide)
 - [Troubleshooting](Troubleshooting)
 - [FAQ](FAQ)
