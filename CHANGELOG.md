@@ -2,12 +2,19 @@
 
 ## [Unreleased]
 
+## [v0.5.1] - 2026-11-07
+
 ### Added
 - Maven Central publishing profile and workflow with signed artifacts, source/Javadoc packaging, and Central Portal validation.
 
 ### Changed
 - Maven artifact group ID changed from `io.sqm` to `io.github.icher-g`, with dependency examples updated accordingly.
 - Publishing documentation now covers Maven Central.
+
+### Fixed
+- Trailing `ORDER BY` and pagination on unparenthesized `UNION`, `INTERSECT`, and `EXCEPT` queries now belong to the combined result, while parenthesized terms retain their local clauses ([#516](https://github.com/icher-g/sqm/issues/516), [#518](https://github.com/icher-g/sqm/pull/518)).
+- Composite query rendering, validation, SQL Server pagination, and Java code generation now preserve result-level ordering and pagination.
+- Comparisons followed immediately by anonymous JDBC parameters, such as `tenant_id=?` and `id>=?`, now parse without requiring whitespace. PostgreSQL question-mark operators and explicit custom operator names remain supported ([#517](https://github.com/icher-g/sqm/issues/517), [#519](https://github.com/icher-g/sqm/pull/519)).
 
 ## [v0.5.0] - 2026-11-04
 
