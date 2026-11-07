@@ -2,6 +2,43 @@
 
 ## [Unreleased]
 
+### Added
+- Maven Central publishing profile and workflow with signed artifacts, source/Javadoc packaging, and Central Portal validation.
+
+### Changed
+- Maven artifact group ID changed from `io.sqm` to `io.github.icher-g`, with dependency examples updated accordingly.
+- Publishing documentation now covers Maven Central.
+
+## [v0.5.0] - 2026-11-04
+
+### Added
+- First-class Oracle support through new `sqm-core-oracle`, `sqm-parser-oracle`, `sqm-render-oracle`, `sqm-validate-oracle`, and `sqm-catalog-oracle` modules.
+- Oracle query and DML support including pagination, optimizer hints, INSERT/UPDATE/DELETE, baseline MERGE, and `RETURNING ... INTO` variable targets.
+- Shared semantic models and Oracle support for:
+  - sequence value expressions (`NEXTVAL` and `CURRVAL`)
+  - hierarchical queries (`START WITH`, `CONNECT BY`, `NOCYCLE`, `PRIOR`, and `ORDER SIBLINGS BY`)
+  - PIVOT and UNPIVOT relation transforms
+  - JSON_TABLE relations and typed columns
+  - flashback, partition selection, and table sampling
+  - time-zone expressions and extended `FOR UPDATE` locking options
+- Typed `MATCH_RECOGNIZE` model, Oracle parsing/rendering and semantic validation, DSL, Java codegen, JSON, traversal, and transformation support.
+- Typed Oracle `MODEL` clauses with reference models, cell rules, FOR generators, iteration, semantic validation, and downstream DSL, codegen, JSON, control, middleware, and playground support.
+- Oracle JDBC type mapping, schema-aware codegen, SQL-file codegen plugin dialect selection, control/middleware integration, and playground examples.
+- Oracle live-engine integration coverage, including MATCH_RECOGNIZE and MODEL execution cases, with supporting examples and verification documentation.
+
+### Changed
+- Transpilation now recognizes Oracle and provides explicit exact, approximate, and unsupported outcomes for query and DML features, including expanded MERGE handling, hierarchical queries, and PIVOT/UNPIVOT rewrites.
+- Oracle-to-Oracle transpilation preserves supported MATCH_RECOGNIZE and MODEL trees; other target dialects receive feature-specific unsupported diagnostics.
+- Shared DML result targets now represent Oracle `RETURNING ... INTO` variables alongside existing result-clause forms.
+- Maven builds use a shared revision property for consistent module versions and release publishing.
+- README, wiki navigation, dialect support matrices, and downstream guides now document Oracle support.
+- Unit, round-trip, validation, transpilation, and codegen test coverage expanded across Oracle and shared infrastructure.
+
+### Fixed
+- Oracle table-alias rendering no longer emits unsupported `AS` syntax.
+- Oracle live-engine fixtures and container readiness handling were hardened, including flashback timestamp verification against committed fixture data.
+- Playground transpilation diagnostics now use guaranteed source/target dialect metadata.
+
 ## [v0.4.1] - 2026-05-02
 
 ### Added
