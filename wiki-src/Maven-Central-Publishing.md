@@ -7,11 +7,36 @@ declarations should use the new groupId.
 
 The `central-release` profile stages a complete reactor deployment through the
 Sonatype Central Publisher Portal. It includes `sqm-parent`, the library modules,
-middleware, playground, and codegen plugin. It excludes `examples`, `sqm-it`,
-`sqm-db-it`, and `sqm-middleware-it`.
-Those four modules belong to the default `development` profile. They run in the
+middleware, playground API, and codegen plugin. It excludes the standalone
+`sqm-playground-rest` application, which is distributed through the
+[playground Docker image](SQM-Playground.md#build-and-publish-the-image), as well
+as `examples`, `sqm-it`, `sqm-db-it`, and `sqm-middleware-it`.
+The four example/integration modules belong to the default `development` profile. They run in the
 ordinary reactor; selecting `central-release` leaves them out of the release
 reactor. Run `mvn -B verify` before preparing a release to include their checks.
+The playground REST application still builds in the release reactor; only its
+Central publication is excluded.
+
+## Publishing usage
+
+The Central plugin uses `<checksums>required</checksums>`: MD5 and SHA-1 checksums
+are uploaded; the optional SHA-256 and SHA-512 checksum files are omitted.
+The main artifact, POM, sources, Javadoc, and GPG signatures remain included.
+A standard library module therefore contributes 16 files rather than 24.
+With the current module set and the playground application excluded, a signed
+release contains 596 files rather than the 918 files in v0.5.1. Counts will change
+when modules or attached artifacts change.
+
+Before publishing, review the bundle and the organization's
+[Usage Center](https://central.sonatype.org/publish/maven-central-publishing-limits/#how-to-monitor-usage).
+Limits are measured per calendar month; the smaller bundle can still exceed the
+default file limit when multiple full releases are published in one month.
+For SQM's legitimate multi-module open-source releases, consider requesting
+higher limits or an exemption under
+[Sonatype's community publishing policy](https://central.sonatype.org/publish/maven-central-publishing-limits/#community-open-source-publishing).
+Include the namespace `io.github.icher-g`, module count, expected release frequency,
+and whether a burst of releases is due to security fixes. Changing future bundle
+settings does not reduce usage from releases already published.
 
 ## Credentials and signing
 

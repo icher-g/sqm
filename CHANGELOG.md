@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Future Maven Central releases generate only required MD5/SHA-1 checksums and exclude the standalone playground REST application to reduce publishing file count and size. The reusable playground API remains published.
+
 ## [v0.5.1] - 2026-11-07
 
 ### Added

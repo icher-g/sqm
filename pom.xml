@@ -726,11 +726,14 @@
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>
+                            <checksums>required</checksums>
                             <autoPublish>false</autoPublish>
                             <waitUntil>validated</waitUntil>
                             <skipPublishing>${maven.deploy.skip}</skipPublishing>
                             <skipUpload>${central.skipUpload}</skipUpload>
                             <excludeArtifacts>
+                                <!-- Deploy the playground application through Docker, not Maven Central. -->
+                                <excludeArtifact>sqm-playground-rest</excludeArtifact>
                                 <excludeArtifact>examples</excludeArtifact>
                                 <excludeArtifact>sqm-it</excludeArtifact>
                                 <excludeArtifact>sqm-db-it</excludeArtifact>
