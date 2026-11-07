@@ -8,6 +8,29 @@ permissions:
   pull-requests: write
 
 jobs:
+  frontend-test-and-coverage:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sqm-playground-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: sqm-playground-web/package-lock.json
+      - run: npm ci
+      - run: npm audit
+      - run: npm test -- --coverage --coverage.reporter=lcov --coverage.reporter=text
+      - run: npm run build
+      - name: Upload frontend coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: sqm-playground-web/coverage/lcov.info
+          flags: frontend
+          fail_ci_if_error: true
+
   test-and-coverage:
     runs-on: ubuntu-latest
     steps:
