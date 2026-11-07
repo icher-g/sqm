@@ -44,6 +44,7 @@ class CompositeQueryRendererTest {
         assertTrue(sql.contains("( SELECT u.id, u.name FROM users AS u ) UNION ALL ( SELECT a.id, a.name FROM archived_users AS a )"),
             "Expected parenthesized terms with UNION ALL");
         assertTrue(sql.contains("ORDER BY"), "Expected ORDER BY at the end");
+        assertFalse(sql.contains("ORDER BY ORDER BY"), "ORDER BY is rendered by its registered renderer");
         assertTrue(sql.endsWith("FETCH NEXT 10 ROWS ONLY"), "Expected ANSI FETCH NEXT");
     }
 

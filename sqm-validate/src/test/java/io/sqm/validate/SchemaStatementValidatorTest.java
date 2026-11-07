@@ -1055,6 +1055,29 @@ class SchemaStatementValidatorTest {
     }
 
     @Test
+    void validate_setResultOrderingUsesOutputNamesInsteadOfTermScopes() {
+        var left = select(col("u", "id")).from(tbl("users").as("u")).build();
+        var right = select(col("o", "id")).from(tbl("orders").as("o")).build();
+        assertTrue(validator.validate(left.union(right).orderBy(col("id"))).ok());
+        var aliased = select(lit(1L).as("result_id")).build()
+            .union(select(lit(2L).as("other_id")).build());
+        assertTrue(validator.validate(aliased.orderBy(col("result_id"))).ok());
+        assertTrue(validator.validate(aliased.union(select(lit(3L)).build()).orderBy(col("result_id"))).ok());
+        var withTerm = with(cte("x", select(lit(1L)).build()))
+            .body(select(lit(1L).as("result_id")).build());
+        assertTrue(validator.validate(withTerm.union(select(lit(2L)).build()).orderBy(col("result_id"))).ok());
+        for (var query : List.of(aliased.orderBy(col("other_id")), aliased.orderBy(col("missing")),
+            left.union(right).orderBy(col("name")),
+            select(lit(1L).as("id"), lit(2L).as("id")).build()
+                .union(select(lit(3L), lit(4L)).build()).orderBy(col("id")))) {
+            var result = validator.validate(query);
+            assertFalse(result.ok());
+            assertTrue(result.problems().stream()
+                .anyMatch(problem -> problem.code() == ValidationProblem.Code.SET_OPERATION_ORDER_BY_INVALID));
+        }
+    }
+
+    @Test
     void validate_reportsSetOperationOrderByExpressionWhenOutputShapeIsNotExpressionOnly() {
         Query query = select(star())
             .from(tbl("users").as("u")).build()

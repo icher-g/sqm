@@ -3796,6 +3796,19 @@ public final class Dsl {
         return Query.compose(terms, ops);
     }
 
+    /**
+     * Creates a set query with result-level ordering and pagination.
+     *
+     * @param terms query terms
+     * @param ops set operators between terms
+     * @param orderBy result-level ordering, or {@code null}
+     * @param limitOffset result-level pagination, or {@code null}
+     * @return the composite query
+     */
+    public static CompositeQuery compose(List<Query> terms, List<SetOperator> ops, OrderBy orderBy, LimitOffset limitOffset) {
+        return Query.compose(terms, ops, orderBy, limitOffset);
+    }
+
     /* ========================= Locking Clause ========================= */
 
     /**
