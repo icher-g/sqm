@@ -63,6 +63,18 @@ and pagination arguments may be `null`.
 Validation resolves composite ordering names against the first term's projected
 output, including aliases, rather than against an individual term's table scope.
 
+## JDBC parameter spacing
+
+Anonymous JDBC placeholders do not require whitespace after comparison operators.
+For example, `tenant_id=?` and `tenant_id = ?` produce the same model, with an
+`AnonymousParamExpr` as the comparison's right operand. The same applies to
+`>=?`, `<=?`, `<>?`, `!=?`, `>?`, and `<?`.
+
+Question-mark operators such as PostgreSQL's `@?`, `?|`, and `?&` remain operators.
+For a PostgreSQL custom operator whose name itself combines a comparison and
+`?`, use explicit syntax such as `a OPERATOR(custom.=?) b` to distinguish the
+operator name from a comparison followed by a JDBC placeholder.
+
 ## Checking errors
 
 - Always check `result.ok()`.

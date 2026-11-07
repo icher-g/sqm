@@ -1,6 +1,7 @@
 package io.sqm.parser.ansi;
 
 import io.sqm.core.*;
+import io.sqm.core.collect.ParametersCollector;
 import io.sqm.parser.core.Cursor;
 import io.sqm.parser.core.ParserException;
 import io.sqm.parser.spi.ParseContext;
@@ -9,6 +10,47 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ParamExprParserTest {
+
+    @Test
+    void parsesComparisonsWithAdjacentJdbcParameters() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        for (var operator : new String[]{"=", ">=", "<=", "<>", "!=", ">", "<"}) {
+            for (var suffix : new String[]{"", " order by u1_0.id", " order by u1_0.id limit 5 offset 2"}) {
+                var prefix = "select u1_0.id from users u1_0 where u1_0.tenant_id";
+                var compact = ctx.parse(Statement.class, prefix + operator + "?" + suffix);
+                var spaced = ctx.parse(Statement.class, prefix + " " + operator + " ?" + suffix);
+                assertTrue(compact.ok(), compact::errorMessage);
+                assertTrue(spaced.ok(), spaced::errorMessage);
+                assertEquals(spaced.value(), compact.value());
+                var query = assertInstanceOf(SelectQuery.class, compact.value());
+                var comparison = assertInstanceOf(ComparisonPredicate.class, query.where());
+                assertInstanceOf(AnonymousParamExpr.class, comparison.rhs());
+                var parameters = new ParametersCollector();
+                query.accept(parameters);
+                assertEquals(1, parameters.positional().size());
+                assertInstanceOf(AnonymousParamExpr.class, parameters.positional().getFirst());
+            }
+        }
+    }
+
+    @Test
+    void adjacentParametersKeepExpressionAndPredicateBoundaries() {
+        var compact = parseSelect("SELECT id FROM users WHERE (tenant_id=?) AND id>=?+1;");
+        var spaced = parseSelect("SELECT id FROM users WHERE (tenant_id = ?) AND id >= ? + 1;");
+        assertEquals(spaced, compact);
+        var parameters = new ParametersCollector();
+        compact.accept(parameters);
+        assertEquals(2, parameters.positional().size());
+    }
+
+    @Test
+    void missingComparisonOperandsStillFail() {
+        var ctx = ParseContext.of(new AnsiSpecs());
+        for (var sql : new String[]{"SELECT id FROM users WHERE id=", "SELECT id FROM users WHERE id>= ORDER BY id",
+            "SELECT id FROM users WHERE id=? AND", "SELECT id FROM users WHERE id=? ORDER BY"}) {
+            assertFalse(ctx.parse(Statement.class, sql).ok(), sql);
+        }
+    }
 
     private SelectQuery parseSelect(String sql) {
         var ctx = ParseContext.of(new AnsiSpecs());
