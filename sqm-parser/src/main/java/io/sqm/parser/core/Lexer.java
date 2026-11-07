@@ -13,6 +13,7 @@ import static io.sqm.parser.core.TokenType.*;
  */
 public final class Lexer {
     private static final Map<String, TokenType> KEYWORDS = new HashMap<>();
+    private static final Set<String> COMPARISON_OPERATORS = Set.of("=", "<", ">", "<=", ">=", "<>", "!=");
     private static final Pattern NUM = Pattern.compile("(?:\\d+\\.\\d*|\\d*\\.\\d+|\\d+)(?:[eE][+-]?\\d+)?");
 
     static {
@@ -391,7 +392,14 @@ public final class Lexer {
                 return new Token(OPERATOR, String.valueOf(c), start);
             }
             int j = pos;
-            while (j < len && isOperatorChar(s.charAt(j))) j++;
+            while (j < len && isOperatorChar(s.charAt(j))) {
+                // A JDBC placeholder can immediately follow a comparison. Other
+                // question-mark operators, such as @?, retain greedy scanning.
+                if (s.charAt(j) == '?' && j - pos <= 2 && COMPARISON_OPERATORS.contains(s.substring(pos, j))) {
+                    break;
+                }
+                j++;
+            }
             String op = s.substring(pos, j);
             pos = j;
             return new Token(OPERATOR, op, start);

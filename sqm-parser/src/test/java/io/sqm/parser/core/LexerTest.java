@@ -12,6 +12,31 @@ class LexerTest {
 
     private final TestIdentifierQuoting quoting = new TestIdentifierQuoting();
 
+    @Test
+    void separatesComparisonsFromAdjacentJdbcParameters() {
+        for (var operator : List.of("=", ">=", "<=", "<>", "!=", ">", "<")) {
+            for (var suffix : List.of("", " ORDER BY id", ")", ";", "+1")) {
+                var tokens = Lexer.lexAll("id" + operator + "?" + suffix, quoting);
+                assertEquals(TokenType.OPERATOR, tokens.get(1).type());
+                assertEquals(operator, tokens.get(1).lexeme());
+                assertEquals(2, tokens.get(1).pos());
+                assertEquals(TokenType.QMARK, tokens.get(2).type());
+                assertEquals("?", tokens.get(2).lexeme());
+                assertEquals(2 + operator.length(), tokens.get(2).pos());
+            }
+        }
+    }
+
+    @Test
+    void preservesQuestionMarkOperatorsOtherThanAdjacentComparisons() {
+        for (var operator : List.of("@?", "?|", "?&", "#?", "!?", "<@?", ">=#?", "~?")) {
+            var tokens = Lexer.lexAll("data" + operator + "'key'", quoting);
+            assertEquals(TokenType.OPERATOR, tokens.get(1).type());
+            assertEquals(operator, tokens.get(1).lexeme());
+            assertEquals(TokenType.STRING, tokens.get(2).type());
+        }
+    }
+
     private static Token t(List<Token> ts, int i) {
         return ts.get(i);
     }

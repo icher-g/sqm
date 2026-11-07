@@ -1,6 +1,7 @@
 package io.sqm.parser.postgresql;
 
 import io.sqm.core.BinaryOperatorExpr;
+import io.sqm.core.AnonymousParamExpr;
 import io.sqm.core.ColumnExpr;
 import io.sqm.core.Expression;
 import io.sqm.core.QuoteStyle;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -23,6 +25,40 @@ class OperatorSyntaxParserTest {
     @BeforeEach
     void setUp() {
         ctx = ParseContext.of(new PostgresSpecs());
+    }
+
+    @Test
+    void preservesQuestionMarkOperatorsAndTheirParameterOperands() {
+        for (var operator : new String[]{"?", "?|", "?&", "@?", "#?", "!?", "<@?", ">=#?"}) {
+            var result = ctx.parse(Expression.class, "data " + operator + " ?");
+            assertTrue(result.ok(), result::errorMessage);
+            var expr = assertInstanceOf(BinaryOperatorExpr.class, result.value());
+            assertEquals(operator, expr.operator().symbol());
+            assertInstanceOf(AnonymousParamExpr.class, expr.right());
+        }
+        var explicit = ctx.parse(Expression.class, "data OPERATOR(pg_catalog.@?) '$.a'");
+        assertTrue(explicit.ok(), explicit::errorMessage);
+        assertEquals("@?", assertInstanceOf(BinaryOperatorExpr.class, explicit.value()).operator().symbol());
+    }
+
+    @Test
+    void explicitOperatorNamesCanContainComparisonAndQuestionMarkSymbols() {
+        for (var schema : new String[]{"", "custom."}) {
+            for (var symbol : new String[]{"=?", ">=?", "<=?", "<>?", "!=?", ">?", "<?", "=??", "=?|"}) {
+                var result = ctx.parse(Expression.class, "a OPERATOR(" + schema + symbol + ") ?");
+                assertTrue(result.ok(), result::errorMessage);
+                var expression = assertInstanceOf(BinaryOperatorExpr.class, result.value());
+                assertTrue(expression.operator().operatorKeywordSyntax());
+                assertEquals(symbol, expression.operator().symbol());
+                assertInstanceOf(AnonymousParamExpr.class, expression.right());
+            }
+        }
+    }
+
+    @Test
+    void explicitOperatorNamesCannotJoinSymbolsAcrossWhitespace() {
+        assertFalse(ctx.parse(Expression.class, "a OPERATOR(= ?) b").ok());
+        assertFalse(ctx.parse(Expression.class, "a OPERATOR(custom.>= ?|) b").ok());
     }
 
     @Test

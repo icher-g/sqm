@@ -160,10 +160,19 @@ public class BinaryOperatorExprParser implements Parser<Expression>, InfixParser
         }
 
         var opToken = cur.expect("Expected operator name in OPERATOR()", TokenType.OPERATOR, TokenType.QMARK);
+        // Inside OPERATOR(...), adjacent symbols form an explicit operator name,
+        // even when the shared lexer separates a comparison from a JDBC marker.
+        var symbol = new StringBuilder(opToken.lexeme());
+        int end = opToken.pos() + opToken.lexeme().length();
+        while (cur.matchAny(TokenType.OPERATOR, TokenType.QMARK) && cur.peek().pos() == end) {
+            var part = cur.advance();
+            symbol.append(part.lexeme());
+            end = part.pos() + part.lexeme().length();
+        }
         cur.expect("Expected ')' after OPERATOR()", TokenType.RPAREN);
 
         return ok(schemaName == null
-            ? OperatorName.operator(opToken.lexeme())
-            : OperatorName.operator(schemaName, opToken.lexeme()));
+            ? OperatorName.operator(symbol.toString())
+            : OperatorName.operator(schemaName, symbol.toString()));
     }
 }
