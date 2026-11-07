@@ -67,4 +67,6 @@ The full `mvn -B -ntp install` reactor passed: 5,565 tests, zero failures, error
 
 After the IntelliJ findings were addressed, the full reactor passed again with Javadoc generation skipped: 5,565 tests, zero failures, errors, or skips. The middleware integration-test consumer was retested after its transitive Jackson/Logback alignment. Frontend validation passed all 30 tests and the production build. The new editor initialization has 100% statement, line, and function coverage. `npm audit` reports zero findings, with no audit suppressions.
 
+The first remote Oracle live-engine run exposed an immediate-after-DDL flashback fixture timing failure (`ORA-01466`). The fixture now verifies the actual snapshot with the same JDBC binding used by the test query, in addition to checking the approximate timestamp-to-SCN mapping. Only this readiness error is retried within the existing timeout; other SQL errors still fail immediately. The existing regression recreates the fixture three times to exercise this boundary.
+
 The Central bundle build also passed with release revision `0.5.1`, `central.skipUpload=true`, `gpg.skip=true`, and tests skipped after the successful reactor run. It generated the local release bundle without uploading artifacts. Signing and server-side Central validation remain release workflow checks.
