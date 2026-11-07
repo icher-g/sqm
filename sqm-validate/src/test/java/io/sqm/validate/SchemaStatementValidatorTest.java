@@ -1067,6 +1067,8 @@ class SchemaStatementValidatorTest {
             .body(select(lit(1L).as("result_id")).build());
         assertTrue(validator.validate(withTerm.union(select(lit(2L)).build()).orderBy(col("result_id"))).ok());
         for (var query : List.of(aliased.orderBy(col("other_id")), aliased.orderBy(col("missing")),
+            aliased.orderBy(col("other", "result_id")),
+            select(lit(1L)).build().union(select(lit(2L)).build()).orderBy(col("id")),
             left.union(right).orderBy(col("name")),
             select(lit(1L).as("id"), lit(2L).as("id")).build()
                 .union(select(lit(3L), lit(4L)).build()).orderBy(col("id")))) {
@@ -1075,6 +1077,17 @@ class SchemaStatementValidatorTest {
             assertTrue(result.problems().stream()
                 .anyMatch(problem -> problem.code() == ValidationProblem.Code.SET_OPERATION_ORDER_BY_INVALID));
         }
+    }
+
+    @Test
+    void validate_functionOrderingInCompositePaginationKeepsItsOwnScope() {
+        var query = select(lit(1L)).build().union(select(lit(2L)).build())
+            .orderBy(1)
+            .limit(func("sum", lit(1L)).orderBy(col("missing")));
+        var result = validator.validate(query);
+        assertFalse(result.ok());
+        assertTrue(result.problems().stream()
+            .anyMatch(problem -> problem.code() == ValidationProblem.Code.COLUMN_NOT_FOUND));
     }
 
     @Test
