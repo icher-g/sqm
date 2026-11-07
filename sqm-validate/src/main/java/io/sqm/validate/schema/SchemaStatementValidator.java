@@ -331,6 +331,11 @@ public final class SchemaStatementValidator implements StatementValidator {
          */
         @Override
         public Void visitOrderBy(OrderBy order) {
+            if (queryBlocks.peek() instanceof CompositeQuery query && query.orderBy() == order) {
+                // Set-result expressions are checked against the projected output by
+                // SetOperationValidationRule, rather than against a SELECT's table scope.
+                return defaultResult();
+            }
             if (!(queryBlocks.peek() instanceof SelectQuery query) || query.orderBy() != order) {
                 return super.visitOrderBy(order);
             }

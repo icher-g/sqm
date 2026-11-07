@@ -697,13 +697,32 @@ final class SqmDslVisitor extends RecursiveNodeVisitor<Void> {
             .comma(q.terms(), this::appendNode, true)
             .out()
             .nl().append(")");
-        if (!q.ops().isEmpty()) {
-            out.append(",").nl()
-                .append("List.of(").nl()
-                .in()
-                .comma(q.ops(), op -> out.append("SetOperator." + op.name()))
-                .out().nl()
-                .append(")");
+        out.append(",").nl()
+            .append("List.of(").nl()
+            .in()
+            .comma(q.ops(), op -> out.append("SetOperator." + op.name()))
+            .out().nl()
+            .append(")");
+        if (q.orderBy() != null || q.limitOffset() != null) {
+            out.append(",").nl();
+            appendNullable(q.orderBy());
+            out.append(",").nl();
+            var pagination = q.limitOffset();
+            if (pagination == null) {
+                out.append("null");
+            }
+            else if (pagination.limitAll()) {
+                out.append("limitAll(");
+                if (pagination.offset() != null) appendNode(pagination.offset());
+                out.append(")");
+            }
+            else {
+                out.append("limitOffset(");
+                appendNullable(pagination.limit());
+                out.append(", ");
+                appendNullable(pagination.offset());
+                out.append(")");
+            }
         }
         out.out().nl().append(")");
         return defaultResult();

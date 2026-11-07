@@ -9,7 +9,9 @@ import io.sqm.parser.spi.ParseResult;
 import io.sqm.parser.spi.Parser;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import static io.sqm.parser.spi.ParseResult.error;
 import static io.sqm.parser.spi.ParseResult.ok;
@@ -18,6 +20,15 @@ import static io.sqm.parser.spi.ParseResult.ok;
  * Parser for set-operation composite queries.
  */
 public class CompositeQueryParser implements Parser<Query> {
+
+    private static final Set<TokenType> COMPOSITE_QUERY_BOUNDARY = EnumSet.of(
+        TokenType.UNION, TokenType.INTERSECT, TokenType.EXCEPT, TokenType.RPAREN, TokenType.SEMICOLON
+    );
+
+    private static final Set<TokenType> END_QUERY_INDICATOR = EnumSet.of(
+        TokenType.UNION, TokenType.INTERSECT, TokenType.EXCEPT, TokenType.RPAREN, TokenType.SEMICOLON,
+        TokenType.ORDER, TokenType.LIMIT, TokenType.OFFSET, TokenType.FETCH
+    );
 
     private final AtomicQueryParser atomicQueryParser;
 
@@ -42,10 +53,25 @@ public class CompositeQueryParser implements Parser<Query> {
         List<Query> terms = new ArrayList<>();
         List<SetOperator> ops = new ArrayList<>();
 
+        int boundary = cur.find(COMPOSITE_QUERY_BOUNDARY);
+        boolean composite = boundary < cur.size() && Indicators.COMPOSITE_QUERY.contains(cur.peek(boundary - cur.pos()).type());
+
         do {
-            var term = atomicQueryParser.parse(cur, ctx);
+            // A bare SELECT in a set expression ends before the result-level tail.
+            // Parenthesized terms still parse a complete nested query of their own.
+            Cursor termCursor = cur;
+            if (composite && !cur.match(TokenType.LPAREN)) {
+                int end = Math.min(cur.find(END_QUERY_INDICATOR), cur.size() - 1);
+                termCursor = cur.advance(end);
+            }
+
+            var term = atomicQueryParser.parse(termCursor, ctx);
             if (term.isError()) {
                 return error(term);
+            }
+
+            if (termCursor != cur && !termCursor.isEof()) {
+                return error("Unexpected token in set-query term: " + termCursor.peek().lexeme(), termCursor.fullPos());
             }
             terms.add(term.value());
 

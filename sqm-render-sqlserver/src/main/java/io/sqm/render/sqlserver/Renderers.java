@@ -47,6 +47,7 @@ public final class Renderers {
             .register(new CrossJoinRenderer())
             .register(new OnJoinRenderer())
             .register(new SelectQueryRenderer())
+            .register(new CompositeQueryRenderer())
             .register(new ResultClauseRenderer())
             .register(new RelationResultTargetRenderer());
     }

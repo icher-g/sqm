@@ -11,6 +11,19 @@ import static org.junit.jupiter.api.Assertions.*;
 class DslAdditionalHelpersTest {
 
     @Test
+    void composePreservesResultLevelClauses() {
+        var terms = List.<Query>of(select(lit(1L)).build(), select(lit(2L)).build());
+        var ordering = orderBy(order(1));
+        var pagination = limitOffset(lit(5L), lit(2L));
+        var query = compose(terms, List.of(SetOperator.UNION), ordering, pagination);
+        assertSame(ordering, query.orderBy());
+        assertSame(pagination, query.limitOffset());
+        assertEquals(terms, query.terms());
+        assertNull(compose(terms, List.of(SetOperator.UNION), null, null).orderBy());
+        assertThrows(IllegalArgumentException.class, () -> compose(terms, List.of(), ordering, pagination));
+    }
+
+    @Test
     void orderOrdinalAndNullsHelpers() {
         var item = order(1).desc().nullsLast();
         assertEquals(1, item.ordinal());

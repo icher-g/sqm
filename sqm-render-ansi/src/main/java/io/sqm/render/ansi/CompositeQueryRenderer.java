@@ -11,7 +11,6 @@ import io.sqm.render.spi.Renderer;
 public class CompositeQueryRenderer implements Renderer<CompositeQuery> {
 
     private final SetOperatorRenderer operatorRenderer = new SetOperatorRenderer();
-    private final LimitOffsetRenderer limitOffsetRenderer = new LimitOffsetRenderer();
 
     /**
      * Creates a composite-query renderer.
@@ -45,14 +44,13 @@ public class CompositeQueryRenderer implements Renderer<CompositeQuery> {
 
         // Final ORDER BY (applies to the whole composite)
         if (node.orderBy() != null) {
-            w.newline().append("ORDER BY").space();
-            w.append(node.orderBy());
+            w.newline().append(node.orderBy());
         }
 
         // Final pagination (ANSI OFFSET/FETCH)
         // Pagination tail — pick the right style
         if (node.limitOffset() != null) {
-            limitOffsetRenderer.render(node.limitOffset(), ctx, w);
+            w.append(node.limitOffset());
         }
     }
 

@@ -5,11 +5,16 @@ import io.sqm.catalog.model.CatalogSchema;
 import io.sqm.catalog.model.CatalogTable;
 import io.sqm.catalog.model.CatalogType;
 import io.sqm.core.Node;
+import io.sqm.core.CompositeQuery;
+import io.sqm.core.Query;
+import io.sqm.core.SelectQuery;
 import io.sqm.core.Statement;
 import io.sqm.core.StatementSequence;
 import io.sqm.core.dialect.SqlDialectId;
 import io.sqm.dsl.Dsl;
 import io.sqm.parser.spi.Specs;
+import io.sqm.parser.spi.ParseContext;
+import io.sqm.parser.postgresql.spi.PostgresSpecs;
 import io.sqm.render.spi.PreparedNode;
 import io.sqm.render.spi.ParameterizationMode;
 import io.sqm.transpile.rule.DefaultTranspileRuleRegistry;
@@ -24,6 +29,29 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.junit.jupiter.api.Assertions.*;
 
 class DefaultSqlTranspilerTest {
+
+    @Test
+    void transpilationPreservesSetResultClauseOwnership() {
+        var result = SqlTranspiler.builder()
+            .sourceDialect(SqlDialectId.ANSI)
+            .targetDialect(SqlDialectId.POSTGRESQL)
+            .build()
+            .transpile("SELECT 1 AS id UNION SELECT 2 AS id ORDER BY id LIMIT 5 OFFSET 2");
+        assertTrue(result.success(), () -> result.problems().toString());
+        var source = assertInstanceOf(CompositeQuery.class,
+            assertInstanceOf(StatementSequence.class, result.sourceAst().orElseThrow()).statements().getFirst());
+        var target = assertInstanceOf(CompositeQuery.class,
+            assertInstanceOf(StatementSequence.class, result.transpiledAst().orElseThrow()).statements().getFirst());
+        assertNotNull(source.orderBy());
+        assertEquals(source.orderBy(), target.orderBy());
+        assertEquals(source.limitOffset(), target.limitOffset());
+        for (var term : target.terms()) {
+            assertNull(assertInstanceOf(SelectQuery.class, term).orderBy());
+        }
+        var reparsed = ParseContext.of(new PostgresSpecs()).parse(Query.class, result.sql().orElseThrow());
+        assertTrue(reparsed.ok(), reparsed::errorMessage);
+        assertEquals(target, reparsed.value());
+    }
 
     @Test
     void transpilesAnsiConcatToMySqlRendering() {

@@ -1,6 +1,11 @@
 package io.sqm.validate.schema.rule;
 
 import io.sqm.core.CompositeQuery;
+import io.sqm.core.ColumnExpr;
+import io.sqm.core.ExprSelectItem;
+import io.sqm.core.Query;
+import io.sqm.core.SelectQuery;
+import io.sqm.core.WithQuery;
 import io.sqm.validate.api.ValidationProblem;
 import io.sqm.validate.schema.internal.SchemaValidationContext;
 import io.sqm.catalog.model.CatalogType;
@@ -137,6 +142,9 @@ final class SetOperationValidationRule implements SchemaValidationRule<Composite
             if (projections.get().contains(item.expr())) {
                 continue;
             }
+            if (item.expr() instanceof ColumnExpr column && column.tableAlias() == null && isProjectedName(node, column)) {
+                continue;
+            }
             context.addProblem(
                 ValidationProblem.Code.SET_OPERATION_ORDER_BY_INVALID,
                 "Set operation ORDER BY expression must reference projected result expression",
@@ -144,6 +152,23 @@ final class SetOperationValidationRule implements SchemaValidationRule<Composite
                 "set_operation.order_by"
             );
         }
+    }
+
+    private static boolean isProjectedName(Query query, ColumnExpr column) {
+        return switch (query) {
+            case CompositeQuery composite -> isProjectedName(composite.terms().getFirst(), column);
+            case WithQuery with -> isProjectedName(with.body(), column);
+            case SelectQuery select -> select.items().stream()
+                .filter(ExprSelectItem.class::isInstance)
+                .map(ExprSelectItem.class::cast)
+                .filter(item -> {
+                    var name = item.alias() != null
+                        ? item.alias()
+                        : item.expr() instanceof ColumnExpr projected ? projected.name() : null;
+                    return name != null && name.value().equalsIgnoreCase(column.name().value());
+                }).count() == 1;
+            default -> false;
+        };
     }
 }
 

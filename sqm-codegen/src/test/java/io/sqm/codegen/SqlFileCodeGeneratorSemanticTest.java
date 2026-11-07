@@ -43,6 +43,35 @@ class SqlFileCodeGeneratorSemanticTest {
     Path tempDir;
 
     @Test
+    void generatedSetQueriesPreserveLocalAndGlobalTails() throws Exception {
+        var sqlDir = tempDir.resolve("sql");
+        Files.createDirectories(sqlDir);
+        var queries = List.of(
+            "SELECT 1 AS id UNION SELECT 2 AS id ORDER BY id LIMIT 5 OFFSET 2",
+            "SELECT 1 AS id UNION (SELECT 2 AS id ORDER BY id LIMIT 4) ORDER BY id LIMIT 5",
+            "SELECT 1 UNION SELECT 2 LIMIT ALL OFFSET 2",
+            "SELECT 1 UNION SELECT 2 LIMIT ALL",
+            "SELECT 1 UNION SELECT 2 OFFSET 2",
+            "SELECT 1 UNION SELECT 2 ORDER BY 1",
+            "SELECT 1 UNION SELECT 2"
+        );
+        for (int i = 0; i < queries.size(); i++) {
+            Files.writeString(sqlDir.resolve("query_" + i + ".sql"), queries.get(i));
+        }
+        var options = SqlFileCodegenOptions.of(sqlDir, tempDir.resolve("generated"), "io.sqm.codegen.generated");
+        var sources = SqlFileCodeGenerator.of(options).generate();
+        var classes = compileGeneratedSources(sources, tempDir.resolve("compiled"));
+        var className = sources.getFirst().getFileName().toString().replace(".java", "");
+        try (var loader = URLClassLoader.newInstance(new URL[]{classes.toUri().toURL()}, getClass().getClassLoader())) {
+            for (int i = 0; i < queries.size(); i++) {
+                var expected = parseSql(queries.get(i), Path.of("query_" + i + ".sql"));
+                assertEquals(expected, invokeQueryMethod(loader, options.basePackage() + "." + className,
+                    NameNormalizer.toMethodName("query_" + i)));
+            }
+        }
+    }
+
+    @Test
     void generate_producesQueriesEquivalentToOriginalSqlModel() throws Exception {
         var sqlDir = tempDir.resolve("sql");
         var outDir = tempDir.resolve("generated");
