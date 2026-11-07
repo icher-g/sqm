@@ -2,12 +2,27 @@
 
 ## [Unreleased]
 
+## [v0.5.1] - 2026-11-07
+
 ### Added
 - Maven Central publishing profile and workflow with signed artifacts, source/Javadoc packaging, and Central Portal validation.
 
 ### Changed
 - Maven artifact group ID changed from `io.sqm` to `io.github.icher-g`, with dependency examples updated accordingly.
 - Publishing documentation now covers Maven Central.
+- Playground and REST middleware hosts now use Spring Boot 4 / Spring Framework 7, with existing HTTP and JSON contracts preserved. Core SQL library APIs continue to use Jackson 2.
+
+### Security
+- Audited all 43 Maven POMs, resolved dependencies, and build/release plugin classpaths; updated vulnerable libraries, JDBC drivers, and Maven tooling.
+- Removed Maven Release's unused JGit provider and its legacy cryptography dependencies in favor of native Git.
+- Addressed additional IntelliJ/Mend findings in Oracle JDBC, ASM (including Maven plugin classpaths), Jackson 2/3, Logback, JSON Smart, and the Android JSON test dependency.
+- Updated playground Vite/Vitest and frontend transitive dependencies; the editor now uses a local Monaco bundle with patched DOMPurify instead of the CDN distribution and its vendored sanitizer. Frontend tooling requires Node 22.12+ on the 22.x line, Node 24, or Node 26+.
+- Documented the remaining upstream Jetty findings in Maven Site's unused preview server in [the v0.5.1 security audit](docs/reports/SECURITY_AUDIT_0.5.1.md).
+
+### Fixed
+- Trailing `ORDER BY` and pagination on unparenthesized `UNION`, `INTERSECT`, and `EXCEPT` queries now belong to the combined result, while parenthesized terms retain their local clauses ([#516](https://github.com/icher-g/sqm/issues/516), [#518](https://github.com/icher-g/sqm/pull/518)).
+- Composite query rendering, validation, SQL Server pagination, and Java code generation now preserve result-level ordering and pagination.
+- Comparisons followed immediately by anonymous JDBC parameters, such as `tenant_id=?` and `id>=?`, now parse without requiring whitespace. PostgreSQL question-mark operators and explicit custom operator names remain supported ([#517](https://github.com/icher-g/sqm/issues/517), [#519](https://github.com/icher-g/sqm/pull/519)).
 
 ## [v0.5.0] - 2026-11-04
 

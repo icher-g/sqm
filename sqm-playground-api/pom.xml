@@ -11,10 +11,6 @@
     <artifactId>sqm-playground-api</artifactId>
     <name>SQM (playground-api)</name>
 
-    <properties>
-        <playground.jackson.version>2.19.4</playground.jackson.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -24,7 +20,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${playground.jackson.version}</version>
+            <version>${jackson.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

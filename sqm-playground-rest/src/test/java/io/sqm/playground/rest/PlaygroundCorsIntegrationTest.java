@@ -3,7 +3,8 @@ package io.sqm.playground.rest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -15,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * Integration tests for playground CORS configuration.
  */
+@AutoConfigureTestRestTemplate
 @SpringBootTest(
     classes = SqmPlaygroundRestApplication.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,

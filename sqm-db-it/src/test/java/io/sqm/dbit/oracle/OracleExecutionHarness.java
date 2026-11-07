@@ -72,7 +72,8 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
 
     /**
      * Returns a database timestamp whose mapped SCN includes the committed flashback fixture.
-     * Oracle's approximate timestamp mapping is checked explicitly rather than assuming a fixture age.
+     * Both Oracle's approximate timestamp mapping and the bound flashback snapshot are checked
+     * explicitly rather than assuming a fixture age.
      *
      * @return Oracle timestamp resolving at or after the fixture commit SCN
      * @throws Exception when reading or waiting for the timestamp mapping fails
@@ -81,7 +82,8 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
         initializeFlashbackFixture();
         try (var connection = openConnection();
              var clock = connection.createStatement();
-             var mapping = connection.prepareStatement("select timestamp_to_scn(?) from dual")) {
+             var mapping = connection.prepareStatement("select timestamp_to_scn(?) from dual");
+             var snapshot = connection.prepareStatement("select count(*) from flashback_users as of timestamp ?")) {
             var deadline = System.nanoTime() + Duration.ofSeconds(30).toNanos();
             do {
                 Timestamp candidate;
@@ -90,15 +92,25 @@ abstract class OracleExecutionHarness extends DialectExecutionHarness {
                     candidate = resultSet.getTimestamp(1);
                 }
                 // Check the exact JDBC value that the flashback query will bind.
-                mapping.setTimestamp(1, candidate);
+                mapping.setObject(1, candidate);
                 try (var resultSet = mapping.executeQuery()) {
                     if (!resultSet.next()) throw new IllegalStateException("Oracle did not return TIMESTAMP_TO_SCN");
-                    if (resultSet.getLong(1) >= flashbackFixtureCommitScn) return candidate;
+                    if (resultSet.getLong(1) >= flashbackFixtureCommitScn) {
+                        // A mapped SCN alone can still encounter ORA-01466 just after DDL.
+                        // Use the same setObject binding as queryRows to verify the actual snapshot.
+                        snapshot.setObject(1, candidate);
+                        try (var rows = snapshot.executeQuery()) {
+                            if (rows.next() && rows.getLong(1) == 2) return candidate;
+                        }
+                        catch (SQLException exception) {
+                            if (exception.getErrorCode() != 1466) throw exception;
+                        }
+                    }
                 }
                 Thread.sleep(100);
             }
             while (System.nanoTime() < deadline);
-            throw new SQLException("Oracle timestamp mapping did not reach fixture commit SCN " + flashbackFixtureCommitScn);
+            throw new SQLException("Oracle flashback snapshot did not include fixture commit SCN " + flashbackFixtureCommitScn);
         }
     }
 

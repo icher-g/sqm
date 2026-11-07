@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import java.util.Objects;
@@ -33,7 +34,8 @@ class PlaygroundExceptionHandlerTest {
         var handler = new PlaygroundExceptionHandler();
         var request = request(PlaygroundApiPaths.BASE_PATH + "/parse");
 
-        @SuppressWarnings("deprecation") var response = handler.handleUnreadablePayload(new HttpMessageNotReadableException("bad payload"), request);
+        var response = handler.handleUnreadablePayload(
+                new HttpMessageNotReadableException("bad payload", new MockHttpInputMessage(new byte[0])), request);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("INVALID_REQUEST", Objects.requireNonNull(response.getBody()).code());

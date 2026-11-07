@@ -135,6 +135,9 @@ mvn -pl sqm-playground-rest -am spring-boot:run
 
 Run the frontend locally:
 
+Use Node 22.12+ on the 22.x line, Node 24, or Node 26+. The editor and its worker
+are bundled locally, including the patched DOMPurify sanitizer.
+
 ```bash
 cd sqm-playground-web
 npm install

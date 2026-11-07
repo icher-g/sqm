@@ -4,7 +4,8 @@ import io.sqm.playground.rest.error.PlaygroundErrorResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 /**
  * Integration tests for playground request-size guardrails.
  */
+@AutoConfigureTestRestTemplate
 @SpringBootTest(
     classes = SqmPlaygroundRestApplication.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -46,7 +48,7 @@ class PlaygroundRequestSizeIntegrationTest {
             PlaygroundErrorResponse.class
         );
 
-        assertEquals(HttpStatus.PAYLOAD_TOO_LARGE, response.getStatusCode());
+        assertEquals(HttpStatus.CONTENT_TOO_LARGE, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("REQUEST_TOO_LARGE", response.getBody().code());
     }
